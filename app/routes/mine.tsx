@@ -9,6 +9,7 @@ import VibesDIYLogo from '../components/VibesDIYLogo';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../hooks/useSession';
 import { useVibes } from '../hooks/useVibes';
+import { VibeSyncer } from '../hooks/VibeSyncer';
 
 export function meta() {
   return [
@@ -28,6 +29,7 @@ export default function MyVibesRoute(): ReactElement {
 
   // Use our custom hook for vibes state management
   const { vibes, isLoading } = useVibes();
+  console.log('vibes', vibes);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   // Filter vibes based on the showOnlyFavorites toggle
@@ -96,6 +98,7 @@ export default function MyVibesRoute(): ReactElement {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <div>
+                <VibeSyncer userId={userId} vibes={vibes} />
                 <h2 className="mb-4 text-2xl font-bold">My Vibes</h2>
                 {userId && (
                   <p className="text-accent-01 dark:text-accent-01 mb-6">
