@@ -1,6 +1,20 @@
 {
-  "include": ["**/*", "**/.server/**/*", "**/.client/**/*", ".react-router/types/**/*"],
-  "exclude": ["netlify/edge-functions/**/*"],
+  "include": [
+    "app/**/*",
+    "tests/**/*",
+    "**/.server/**/*",
+    "**/.client/**/*",
+    ".react-router/types/**/*",
+    "*.ts",
+    "*.tsx"
+  ],
+  "exclude": [
+    "netlify/edge-functions/**/*",
+    "node_modules/**/*",
+    "**/node_modules/**/*",
+    "**/@fireproof/**/*",
+    "**/use-fireproof/**/*"
+  ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["node", "vite/client"],
@@ -14,11 +28,14 @@
       "~/*": ["./app/*"]
     },
     "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
+    "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": false,
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "strict": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "maxNodeModuleJsDepth": 0
   }
 }
