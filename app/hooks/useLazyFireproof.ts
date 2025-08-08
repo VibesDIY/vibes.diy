@@ -98,7 +98,7 @@ class LazyDB {
   query = async <K extends IndexKeyType, T extends DocTypes, R extends DocFragment = T>(
     field: string,
     options?: any
-  ): Promise<any> => this.inner.query<K, T, R>(field, options);
+  ): Promise<any> => this.inner.query(field, options);
 
   // Write operations - ensure real DB before operation
   put = async <T extends DocTypes>(doc: T) => {

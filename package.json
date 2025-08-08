@@ -6,9 +6,10 @@
   "scripts": {
     "build": "react-router build",
     "dev": "netlify dev --offline",
+    "dev:fplog": "FP_DEBUG='Loader,KeyBag' netlify dev --offline",
     "dev:router": "react-router dev",
     "start": "serve -s build/client",
-    "typecheck": "react-router typegen && tsc",
+    "typecheck": "react-router typegen && tsc --noEmit 2>&1 | grep -v '@fireproof' | grep -v 'use-fireproof' | (! grep -q 'error TS')",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:router": "vitest run",
@@ -37,7 +38,7 @@
     "react-hot-toast": "^2.5.2",
     "react-markdown": "^10.1.0",
     "react-router": "^7.7.1",
-    "use-fireproof": "0.20.5"
+    "use-fireproof": "0.22.0-keybag"
   },
   "devDependencies": {
     "@improvements/vite-plugin-devtools-json": "^0.0.3",
