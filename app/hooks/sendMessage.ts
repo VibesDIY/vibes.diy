@@ -15,7 +15,10 @@ export interface SendMessageContext {
   setIsStreaming: (v: boolean) => void;
   ensureApiKey: () => Promise<{ key: string } | null>;
   setNeedsLogin: (v: boolean, reason: string) => void;
-  ensureSystemPrompt: () => Promise<string>;
+  ensureSystemPrompt: (overrides?: {
+    userPrompt?: string;
+    history?: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>;
+  }) => Promise<string>;
   submitUserMessage: () => Promise<any>;
   buildMessageHistory: () => any[];
   modelToUse: string;
@@ -108,10 +111,14 @@ export async function sendMessage(
 
   // Credit checking no longer needed - proxy handles it
 
-  const currentSystemPrompt = await ensureSystemPrompt();
-
-  // Now proceed with AI processing for authenticated users
+  // Build the history that will be used for the code-writing prompt
   const messageHistory = buildMessageHistory();
+
+  // Compose system prompt with schema-based module selection using prompt + history
+  const currentSystemPrompt = await ensureSystemPrompt({
+    userPrompt: promptText,
+    history: messageHistory,
+  });
 
   return streamAI(
     modelToUse,

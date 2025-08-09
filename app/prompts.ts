@@ -1,3 +1,7 @@
+import { callAI, type Message, type CallAIOptions } from 'call-ai';
+import { APP_MODE, CALLAI_ENDPOINT } from './config/env';
+
+// Load module metadata from app/llms/*.json
 const llmsModules = import.meta.glob('./llms/*.json', { eager: true });
 const llmsList = Object.values(llmsModules).map(
   (mod) =>
@@ -10,6 +14,7 @@ const llmsList = Object.values(llmsModules).map(
           module: string;
           importModule: string;
           importName: string;
+          description?: string;
         };
       }
     ).default
@@ -28,6 +33,81 @@ async function loadLlmsTextByName(name: string): Promise<string | undefined> {
     // In dev or test, the .txt may be missing until script runs. Swallow and let caller decide.
     console.warn('Failed to load raw LLM text for:', name, _err);
     return undefined;
+  }
+}
+
+// Escape for RegExp construction
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+type HistoryMessage = { role: 'user' | 'assistant' | 'system'; content: string };
+
+// Detect modules already referenced in history imports
+function detectModulesInHistory(history: HistoryMessage[]): Set<string> {
+  const detected = new Set<string>();
+  if (!Array.isArray(history)) return detected;
+  for (const msg of history) {
+    const content = msg?.content || '';
+    if (!content || typeof content !== 'string') continue;
+    for (const llm of llmsList) {
+      if (!llm.importModule || !llm.importName) continue;
+      const mod = escapeRegExp(llm.importModule);
+      const name = escapeRegExp(llm.importName);
+      const named = new RegExp(
+        `import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['\\\"]${mod}['\\\"]`
+      );
+      const def = new RegExp(`import\\s+${name}\\s+from\\s*['\\\"]${mod}['\\\"]`);
+      if (named.test(content) || def.test(content)) detected.add(llm.name);
+    }
+  }
+  return detected;
+}
+
+// Ask LLM which modules to include based on catalog + user prompt + history
+async function selectLlmsModules(
+  model: string,
+  userPrompt: string,
+  history: HistoryMessage[]
+): Promise<string[]> {
+  if (APP_MODE === 'test') return llmsList.map((l) => l.name);
+
+  const catalog = llmsList.map((l) => ({ name: l.name, description: l.description || '' }));
+  const payload = { catalog, userPrompt: userPrompt || '', history: history || [] };
+
+  const messages: Message[] = [
+    {
+      role: 'system',
+      content:
+        'You select which library modules from a catalog should be included. Read the JSON payload and return JSON with a single property "selected": an array of module identifiers using the catalog "name" values. Only choose from the catalog. Include any libraries already used in history. Respond with JSON only.',
+    },
+    { role: 'user', content: JSON.stringify(payload) },
+  ];
+
+  const options: CallAIOptions = {
+    chatUrl: CALLAI_ENDPOINT,
+    apiKey: 'sk-vibes-proxy-managed',
+    model,
+    schema: {
+      name: 'module_selection',
+      properties: { selected: { type: 'array', items: { type: 'string' } } },
+    },
+    max_tokens: 2000,
+    headers: {
+      'HTTP-Referer': 'https://vibes.diy',
+      'X-Title': 'Vibes DIY',
+      'X-VIBES-Token': localStorage.getItem('auth_token') || '',
+    },
+  };
+
+  try {
+    const raw = (await callAI(messages, options)) as string;
+    const parsed = JSON.parse(raw);
+    const arr = Array.isArray(parsed?.selected) ? parsed.selected : [];
+    return arr.filter((v: unknown) => typeof v === 'string');
+  } catch (err) {
+    console.warn('Module selection call failed:', err);
+    return [];
   }
 }
 
@@ -64,9 +144,21 @@ export function generateImportStatements(llms: typeof llmsList) {
 
 // Base system prompt for the AI
 export async function makeBaseSystemPrompt(model: string, sessionDoc?: any) {
-  let concatenatedLlmsTxt = '';
+  // Inputs for module selection
+  const userPrompt = sessionDoc?.userPrompt || '';
+  const history: HistoryMessage[] = Array.isArray(sessionDoc?.history) ? sessionDoc.history : [];
 
-  for (const llm of llmsList) {
+  // 1) Ask AI which modules to include
+  const aiSelected = await selectLlmsModules(model, userPrompt, history);
+
+  // 2) Ensure we retain any modules already used in history
+  const detected = detectModulesInHistory(history);
+  const finalNames = new Set<string>([...aiSelected, ...detected]);
+  const chosenLlms = llmsList.filter((l) => finalNames.has(l.name));
+
+  // 3) Concatenate docs for chosen modules
+  let concatenatedLlmsTxt = '';
+  for (const llm of chosenLlms) {
     // Prefer cached content (preloaded on focus). If missing, try dynamic raw import as a fallback.
     let text = llmsTextCache[llm.name] || llmsTextCache[llm.llmsTxtUrl];
     if (!text) {
@@ -88,9 +180,6 @@ ${text || ''}
 
   // Get style prompt from session document if available
   const stylePrompt = sessionDoc?.stylePrompt || defaultStylePrompt;
-
-  // Get user prompt from session document if available
-  const userPrompt = sessionDoc?.userPrompt || '';
 
   return `
 You are an AI assistant tasked with creating React components. You should create components that:
@@ -137,7 +226,7 @@ Provide a title and brief explanation followed by the component code. The compon
 Begin the component with the import statements. Use react and the following libraries:
 
 \`\`\`js
-import React, { ... } from "react"${generateImportStatements(llmsList)}
+import React, { ... } from "react"${generateImportStatements(chosenLlms)}
 
 // other imports only when requested
 \`\`\`

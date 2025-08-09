@@ -27,19 +27,28 @@ export function useSystemPromptManager(settingsDoc: UserSettings | undefined) {
   }, [settingsDoc, systemPrompt]);
 
   // Function to ensure we have a system prompt
-  const ensureSystemPrompt = useCallback(async () => {
-    if (systemPrompt) return systemPrompt;
+  const ensureSystemPrompt = useCallback(
+    async (overrides?: {
+      userPrompt?: string;
+      history?: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>;
+    }) => {
+      if (systemPrompt) return systemPrompt;
 
-    let newPrompt = '';
-    if (APP_MODE === 'test') {
-      newPrompt = 'Test system prompt';
-    } else {
-      newPrompt = await makeBaseSystemPrompt(CODING_MODEL, settingsDoc);
-    }
+      let newPrompt = '';
+      if (APP_MODE === 'test') {
+        newPrompt = 'Test system prompt';
+      } else {
+        newPrompt = await makeBaseSystemPrompt(CODING_MODEL, {
+          ...(settingsDoc || {}),
+          ...(overrides || {}),
+        });
+      }
 
-    setSystemPrompt(newPrompt);
-    return newPrompt;
-  }, [systemPrompt, settingsDoc]);
+      setSystemPrompt(newPrompt);
+      return newPrompt;
+    },
+    [systemPrompt, settingsDoc]
+  );
 
   return { systemPrompt, setSystemPrompt, ensureSystemPrompt };
 }
