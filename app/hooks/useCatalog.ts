@@ -44,9 +44,11 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
       // Get all already cataloged vibe IDs using fireproof 0.23.0 API
       const allDocsResult = await database.allDocs({ includeDocs: true });
-      
-      console.log(`📋 Starting catalog - ${allDocsResult.rows.length} already cataloged in allDocs`);
-      
+
+      console.log(
+        `📋 Starting catalog - ${allDocsResult.rows.length} already cataloged in allDocs`
+      );
+
       // Console a random doc from allDocs
       if (allDocsResult.rows.length > 0) {
         const randomDoc = allDocsResult.rows[Math.floor(Math.random() * allDocsResult.rows.length)];
@@ -62,7 +64,7 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
       // Filter to only catalog uncataloged vibes
       const uncatalogedVibes = vibes.filter((vibe) => !catalogedVibeIds.has(vibe.id));
-      
+
       // Console a random vibe from useVibes
       if (vibes.length > 0) {
         const randomVibe = vibes[Math.floor(Math.random() * vibes.length)];
@@ -86,7 +88,9 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
       // Get final count after processing
       const finalDocsResult = await database.allDocs({ includeDocs: true });
-      console.log(`📋 Finished catalog - ${finalDocsResult.rows.length} total cataloged in allDocs (added ${docsToCatalog.length})`);
+      console.log(
+        `📋 Finished catalog - ${finalDocsResult.rows.length} total cataloged in allDocs (added ${docsToCatalog.length})`
+      );
 
       // Mark this key as cataloged and reset in-progress flag
       lastCatalogedKey = vibeKey;
