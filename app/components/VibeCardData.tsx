@@ -5,6 +5,9 @@ import { loadVibeDocument, loadVibeScreenshot } from '../utils/vibeUtils';
 import type { LocalVibe } from '../utils/vibeUtils';
 import { useVibes } from '../hooks/useVibes';
 
+// Module-level flag to only log the first loaded vibe document
+let hasLoggedVibeDoc = false;
+
 interface VibeCardDataProps {
   vibeId: string;
 }
@@ -98,6 +101,13 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
         const vibeData = await loadVibeDocument(vibeId);
         if (isMounted) {
           setVibe(vibeData);
+          
+          // Log the first loaded vibe document to show full data structure
+          if (vibeData && !hasLoggedVibeDoc) {
+            console.log('First loaded vibe document with full metadata:', vibeData);
+            hasLoggedVibeDoc = true;
+          }
+          
           setIsLoading(false);
         }
       } catch (error) {

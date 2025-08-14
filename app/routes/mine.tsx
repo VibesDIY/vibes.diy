@@ -29,7 +29,6 @@ export default function MyVibesRoute(): ReactElement {
 
   // Use our custom hook for vibes state management
   const { vibes, isLoading } = useVibes();
-  console.log('vibes', vibes);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   // Filter vibes based on the showOnlyFavorites toggle
@@ -39,6 +38,14 @@ export default function MyVibesRoute(): ReactElement {
     }
     return vibes;
   }, [vibes, showOnlyFavorites]);
+
+  // Log a random loaded vibeDoc as used for render
+  useEffect(() => {
+    if (filteredVibes.length > 0) {
+      const randomVibe = filteredVibes[Math.floor(Math.random() * filteredVibes.length)];
+      console.log('Random loaded vibeDoc for render:', randomVibe);
+    }
+  }, [filteredVibes]);
 
   // Simple state for how many vibes to show
   const [itemsToShow, setItemsToShow] = useState(9);
