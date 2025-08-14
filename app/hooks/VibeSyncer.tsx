@@ -10,7 +10,7 @@ function VibeSyncerImpl({ userId, vibes }: { userId: string; vibes: Array<LocalV
 
   return (
     <span style={{ display: 'inline-block', marginBottom: 8, fontWeight: 500 }}>
-      {count !== null ? `Syncing ${count} vibes` : '...'}
+      {count !== null ? `Tracking ${count} vibes` : '...'}
     </span>
   );
 }
