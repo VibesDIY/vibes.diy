@@ -10,7 +10,6 @@ import { useFireproof } from 'use-fireproof';
 import { encodeTitle } from '../components/SessionSidebar/utils';
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from '../llms/catalog';
 import { resolveEffectiveModel, isValidModelId } from '../prompts';
-import { useFireproof } from 'use-fireproof';
 import { SETTINGS_DBNAME } from '../config/env';
 import type { UserSettings } from '../types/settings';
 
