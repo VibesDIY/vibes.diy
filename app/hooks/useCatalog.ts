@@ -30,7 +30,7 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
     const catalog = async () => {
       // Wait 2000ms to allow database to be fully initialized after page load
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       if (cancelled) return;
 
       console.log(`📋 Starting catalog - ${vibes.length} vibes from useVibes`);
