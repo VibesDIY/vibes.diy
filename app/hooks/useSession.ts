@@ -9,12 +9,10 @@ import { getSessionDatabaseName } from '../utils/databaseManager';
 import { useFireproof } from 'use-fireproof';
 import { encodeTitle } from '../components/SessionSidebar/utils';
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from '../llms/catalog';
-import models from '../data/models.json';
+import { resolveEffectiveModel, isValidModelId } from '../prompts';
 import { useFireproof } from 'use-fireproof';
 import { SETTINGS_DBNAME } from '../config/env';
 import type { UserSettings } from '../types/settings';
-
-const DEFAULT_MODEL = 'anthropic/claude-sonnet-4';
 
 export function useSession(routedSessionId?: string) {
   const [generatedSessionId] = useState(
@@ -200,11 +198,10 @@ export function useSession(routedSessionId?: string) {
     [sessionDatabase]
   );
 
-  // --- Model selection management ---
-  const modelIds = useMemo(() => new Set((models as Array<{ id: string }>).map((m) => m.id)), []);
-
   const updateSelectedModel = useCallback(
     async (modelId: string) => {
+      // Validate against centralized model list; no-op on invalid input
+      if (!isValidModelId(modelId)) return;
       const base = vibeRef.current;
       const updatedDoc = {
         ...base,
@@ -220,13 +217,10 @@ export function useSession(routedSessionId?: string) {
   const { useDocument: useSettingsDocument } = useFireproof(SETTINGS_DBNAME);
   const { doc: settingsDoc } = useSettingsDocument<UserSettings>({ _id: 'user_settings' });
 
-  const effectiveModel = useMemo(() => {
-    const sessionChoice = vibeDoc?.selectedModel;
-    if (sessionChoice && modelIds.has(sessionChoice)) return sessionChoice;
-    const globalChoice = settingsDoc?.model;
-    if (globalChoice && modelIds.has(globalChoice)) return globalChoice;
-    return DEFAULT_MODEL;
-  }, [vibeDoc?.selectedModel, settingsDoc?.model, modelIds]);
+  const effectiveModel = useMemo(
+    () => resolveEffectiveModel(settingsDoc, vibeDoc),
+    [settingsDoc?.model, vibeDoc?.selectedModel]
+  );
 
   // Add a screenshot to the session (in session-specific database)
   const addScreenshot = useCallback(

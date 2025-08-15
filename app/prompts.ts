@@ -19,13 +19,23 @@ import type { VibeDocument } from './types/chat';
 
 export const DEFAULT_CODING_MODEL = 'anthropic/claude-sonnet-4';
 
+// Public: stable set of valid model IDs sourced from app/data/models.json
+// Exposed as ReadonlySet in TypeScript to discourage mutation by consumers.
+export const MODEL_IDS: ReadonlySet<string> = new Set(
+  (models as Array<{ id: string }>).map((m) => m.id)
+);
+
+// Public: validator helper for model IDs
+export function isValidModelId(id: unknown): id is string {
+  return typeof id === 'string' && MODEL_IDS.has(id);
+}
+
 // Resolve the effective model id given optional session and global settings
 export function resolveEffectiveModel(settingsDoc?: UserSettings, vibeDoc?: VibeDocument): string {
-  const modelIds = new Set((models as Array<{ id: string }>).map((m) => m.id));
   const sessionChoice = vibeDoc?.selectedModel;
-  if (sessionChoice && modelIds.has(sessionChoice)) return sessionChoice;
+  if (isValidModelId(sessionChoice)) return sessionChoice;
   const globalChoice = settingsDoc?.model;
-  if (globalChoice && modelIds.has(globalChoice)) return globalChoice;
+  if (isValidModelId(globalChoice)) return globalChoice;
   return DEFAULT_CODING_MODEL;
 }
 
