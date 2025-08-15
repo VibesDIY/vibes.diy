@@ -48,8 +48,10 @@ describe('useSession', () => {
     // Verify we have a session ID generated (in the session document)
     expect(result.current.session._id).toBeTruthy();
     // Verify the database is initialized eagerly on first render
-    expect(mockUseFireproof).toHaveBeenCalledTimes(1);
+    // Called for the session DB and the settings DB
+    expect(mockUseFireproof).toHaveBeenCalledTimes(2);
     expect(mockUseFireproof).toHaveBeenCalledWith(expect.stringMatching(/^session-/));
+    expect(mockUseFireproof).toHaveBeenCalledWith('test-chat-history');
   });
 
   /**
@@ -63,7 +65,8 @@ describe('useSession', () => {
     const { result } = renderHook(() => useSession(undefined));
 
     // Step 1: Database should be initialized immediately on first render
-    expect(mockUseFireproof).toHaveBeenCalledTimes(1);
+    // One call for the session DB and one for the settings DB
+    expect(mockUseFireproof).toHaveBeenCalledTimes(2);
 
     // Step 2: Session document and functions should be available
     expect(result.current.session._id).toBeTruthy();
