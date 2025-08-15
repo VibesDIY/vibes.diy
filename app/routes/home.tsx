@@ -4,6 +4,7 @@ import { encodeTitle } from '~/components/SessionSidebar/utils';
 import AppLayout from '../components/AppLayout';
 import ChatHeaderContent from '../components/ChatHeaderContent';
 import ChatInput, { type ChatInputRef } from '../components/ChatInput';
+import models from '../data/models.json';
 import ChatInterface from '../components/ChatInterface';
 import QuickSuggestions from '../components/QuickSuggestions';
 import ResultPreview from '../components/ResultPreview/ResultPreview';
@@ -341,6 +342,13 @@ export default function UnifiedSession() {
           <ChatInput
             ref={chatInputRef}
             chatState={chatState}
+            currentModel={chatState.effectiveModel}
+            onModelChange={async (modelId: string) => {
+              if (chatState.updateSelectedModel) {
+                await chatState.updateSelectedModel(modelId);
+              }
+            }}
+            models={models as Array<{ id: string; name: string; description: string }>}
             onSend={() => {
               setMessageHasBeenSent(true);
               setHasSubmittedMessage(true);

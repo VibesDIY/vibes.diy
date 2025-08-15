@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
 import { APP_MODE } from '../config/env';
-import { makeBaseSystemPrompt } from '../prompts';
+import { makeBaseSystemPrompt, resolveEffectiveModel } from '../prompts';
 import type { UserSettings } from '../types/settings';
 import type { VibeDocument } from '../types/chat';
 
-// Model constant used for system prompts
-const CODING_MODEL = 'anthropic/claude-sonnet-4';
+// Default model is resolved via resolveEffectiveModel using settings + session
 
 /**
  * Hook for managing system prompts based on settings
@@ -29,7 +28,7 @@ export function useSystemPromptManager(
         return 'Test system prompt';
       }
       return makeBaseSystemPrompt(
-        CODING_MODEL,
+        resolveEffectiveModel(settingsDoc, vibeDoc),
         {
           ...(settingsDoc || {}),
           ...(vibeDoc || {}),
