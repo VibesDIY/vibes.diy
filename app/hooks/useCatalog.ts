@@ -2,10 +2,6 @@ import { useFireproof } from 'use-fireproof';
 import { useEffect, useMemo } from 'react';
 import type { LocalVibe } from '../utils/vibeUtils';
 
-// Module-level singleton flags for better catalog protection
-let catalogInProgress = false;
-let lastCatalogedKey: string | null = null;
-
 export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
   if (!userId) throw new Error('No user ID provided');
 
@@ -30,20 +26,18 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
   useEffect(() => {
     if (!vibes || vibes.length === 0) return;
 
-    // Prevent double cataloging with module-level singleton behavior
-    if (catalogInProgress || lastCatalogedKey === vibeKey) {
-      return;
-    }
-    catalogInProgress = true;
+    let cancelled = false;
 
     const catalog = async () => {
       // Wait 2000ms to allow database to be fully initialized after page load
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (cancelled) return;
 
       console.log(`📋 Starting catalog - ${vibes.length} vibes from useVibes`);
 
       // Get all already cataloged vibe IDs using fireproof 0.23.0 API
       const allDocsResult = await database.allDocs({ includeDocs: true });
+      if (cancelled) return;
 
       console.log(
         `📋 Starting catalog - ${allDocsResult.rows.length} already cataloged in allDocs`
@@ -82,26 +76,24 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
       }));
 
       // Bulk catalog all uncataloged vibes at once
-      if (docsToCatalog.length > 0) {
+      if (docsToCatalog.length > 0 && !cancelled) {
         await database.bulk(docsToCatalog);
       }
 
       // Get final count after processing
+      if (cancelled) return;
       const finalDocsResult = await database.allDocs({ includeDocs: true });
       console.log(
         `📋 Finished catalog - ${finalDocsResult.rows.length} total cataloged in allDocs (added ${docsToCatalog.length})`
       );
-
-      // Mark this key as cataloged and reset in-progress flag
-      lastCatalogedKey = vibeKey;
-      catalogInProgress = false;
     };
 
     catalog().catch((error) => {
       console.error('❌ Catalog failed:', error);
-      // Reset flags on error
-      catalogInProgress = false;
     });
+    return () => {
+      cancelled = true;
+    };
   }, [userId, vibeKey, database]); // Use vibeKey instead of vibes array
 
   return { count };
