@@ -5,9 +5,14 @@ import React from 'react';
 // Import our module setup which configures the use-fireproof mock
 import './moduleSetup';
 
-// Mock the makeBaseSystemPrompt function
+// Mock the prompts module to avoid network/file IO during tests
 vi.mock('../app/prompts', () => ({
   makeBaseSystemPrompt: vi.fn().mockReturnValue('mocked system prompt'),
+  // Minimal resolver used by hooks that depend on prompts
+  resolveEffectiveModel: vi
+    .fn()
+    .mockImplementation((_settings?: any, _vibe?: any) => 'anthropic/claude-sonnet-4'),
+  isValidModelId: vi.fn().mockImplementation((id: unknown) => typeof id === 'string'),
   RESPONSE_FORMAT: {
     dependencies: {
       format: '{dependencies: { "package-name": "version" }}',
