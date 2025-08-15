@@ -13,6 +13,21 @@ import {
   type LlmsCatalogEntry,
   CATALOG_DEPENDENCY_NAMES,
 } from './llms/catalog';
+import models from './data/models.json';
+import type { UserSettings } from './types/settings';
+import type { VibeDocument } from './types/chat';
+
+export const DEFAULT_CODING_MODEL = 'anthropic/claude-sonnet-4';
+
+// Resolve the effective model id given optional session and global settings
+export function resolveEffectiveModel(settingsDoc?: UserSettings, vibeDoc?: VibeDocument): string {
+  const modelIds = new Set((models as Array<{ id: string }>).map((m) => m.id));
+  const sessionChoice = vibeDoc?.selectedModel;
+  if (sessionChoice && modelIds.has(sessionChoice)) return sessionChoice;
+  const globalChoice = settingsDoc?.model;
+  if (globalChoice && modelIds.has(globalChoice)) return globalChoice;
+  return DEFAULT_CODING_MODEL;
+}
 
 // Static mapping of LLM text content
 const llmsTextContent: Record<string, string> = {

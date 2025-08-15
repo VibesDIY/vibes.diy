@@ -19,7 +19,6 @@ import { useSystemPromptManager } from './useSystemPromptManager';
 import { useThrottledUpdates } from './useThrottledUpdates';
 
 // Constants
-const CODING_MODEL = 'anthropic/claude-sonnet-4';
 const TITLE_MODEL = 'meta-llama/llama-3.1-8b-instruct';
 
 /**
@@ -55,6 +54,8 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
     aiMessage,
     vibeDoc,
     updateAiSelectedDependencies,
+    effectiveModel,
+    updateSelectedModel,
   } = useSession(sessionId);
 
   // Get main database directly for settings document
@@ -101,11 +102,7 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
   // setNeedsLogin is now obtained from AuthContext above
 
   // Derive model to use from settings or default
-  const modelToUse = useMemo(
-    () =>
-      settingsDoc?.model && settingsDoc.model.trim() !== '' ? settingsDoc.model : CODING_MODEL,
-    [settingsDoc?.model]
-  );
+  const modelToUse = effectiveModel;
 
   // Create callback to store AI-selected dependencies
   const handleAiDecisions = useCallback(
@@ -312,6 +309,8 @@ ${code}
   return {
     sessionId: session._id,
     vibeDoc,
+    selectedModel: vibeDoc?.selectedModel,
+    effectiveModel,
     addScreenshot,
     docs: messages,
     setSelectedResponseId,
@@ -332,5 +331,6 @@ ${code}
     advisoryErrors,
     addError,
     isEmpty: docs.length === 0,
+    updateSelectedModel,
   };
 }

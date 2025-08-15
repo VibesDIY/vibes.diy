@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import type {
   AiChatMessageDocument,
   UserChatMessageDocument,
@@ -9,6 +9,12 @@ import { getSessionDatabaseName } from '../utils/databaseManager';
 import { useFireproof } from 'use-fireproof';
 import { encodeTitle } from '../components/SessionSidebar/utils';
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from '../llms/catalog';
+import models from '../data/models.json';
+import { useFireproof } from 'use-fireproof';
+import { SETTINGS_DBNAME } from '../config/env';
+import type { UserSettings } from '../types/settings';
+
+const DEFAULT_MODEL = 'anthropic/claude-sonnet-4';
 
 export function useSession(routedSessionId?: string) {
   const [generatedSessionId] = useState(
@@ -194,6 +200,34 @@ export function useSession(routedSessionId?: string) {
     [sessionDatabase]
   );
 
+  // --- Model selection management ---
+  const modelIds = useMemo(() => new Set((models as Array<{ id: string }>).map((m) => m.id)), []);
+
+  const updateSelectedModel = useCallback(
+    async (modelId: string) => {
+      const base = vibeRef.current;
+      const updatedDoc = {
+        ...base,
+        selectedModel: modelId,
+      } as VibeDocument;
+      mergeRef.current(updatedDoc);
+      await sessionDatabase.put(updatedDoc);
+    },
+    [sessionDatabase]
+  );
+
+  // Access global settings to compute effective model fallback
+  const { useDocument: useSettingsDocument } = useFireproof(SETTINGS_DBNAME);
+  const { doc: settingsDoc } = useSettingsDocument<UserSettings>({ _id: 'user_settings' });
+
+  const effectiveModel = useMemo(() => {
+    const sessionChoice = vibeDoc?.selectedModel;
+    if (sessionChoice && modelIds.has(sessionChoice)) return sessionChoice;
+    const globalChoice = settingsDoc?.model;
+    if (globalChoice && modelIds.has(globalChoice)) return globalChoice;
+    return DEFAULT_MODEL;
+  }, [vibeDoc?.selectedModel, settingsDoc?.model, modelIds]);
+
   // Add a screenshot to the session (in session-specific database)
   const addScreenshot = useCallback(
     async (screenshotData: string | null) => {
@@ -263,9 +297,12 @@ export function useSession(routedSessionId?: string) {
     saveAiMessage,
     // Vibe document management
     vibeDoc,
+    selectedModel: vibeDoc?.selectedModel,
+    effectiveModel,
     updateDependencies,
     updateInstructionalTextOverride,
     updateDemoDataOverride,
     updateAiSelectedDependencies,
+    updateSelectedModel,
   };
 }

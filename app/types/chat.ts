@@ -16,6 +16,13 @@ export interface VibeDocument {
   firehoseShared?: boolean;
   titleSetManually?: boolean;
   /**
+   * Optional per‑chat model override. When set to a valid model id
+   * from app/data/models.json it will be used for subsequent LLM calls
+   * in this session. When absent or invalid, fall back to user settings
+   * (global) model and finally the default.
+   */
+  selectedModel?: string;
+  /**
    * Per‑vibe selected dependency modules (by catalog name).
    * These control which helper libraries and docs are injected into prompts.
    */
@@ -164,6 +171,10 @@ export interface ChatState {
   selectedResponseDoc?: ChatMessageDocument;
   selectedSegments?: Segment[];
   selectedCode?: Segment;
+  // Per‑chat model selection
+  selectedModel?: string;
+  updateSelectedModel?: (modelId: string) => Promise<void>;
+  effectiveModel?: string;
 
   // Error tracking
   immediateErrors: RuntimeError[];
