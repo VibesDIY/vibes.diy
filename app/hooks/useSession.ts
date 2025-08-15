@@ -197,7 +197,7 @@ export function useSession(routedSessionId?: string) {
     },
     [sessionDatabase]
   );
-
+  // --- Model selection management ---
   const updateSelectedModel = useCallback(
     async (modelId: string) => {
       // Validate against centralized model list; no-op on invalid input
