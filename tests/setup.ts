@@ -8,10 +8,13 @@ import './moduleSetup';
 // Mock the prompts module to avoid network/file IO during tests
 vi.mock('../app/prompts', () => ({
   makeBaseSystemPrompt: vi.fn().mockReturnValue('mocked system prompt'),
-  // Minimal resolver used by hooks that depend on prompts
+  // Minimal stubs used by hooks that depend on prompts
   resolveEffectiveModel: vi
     .fn()
-    .mockImplementation((_settings?: any, _vibe?: any) => 'anthropic/claude-sonnet-4'),
+    .mockImplementation(
+      (settingsDoc?: { model?: string }, vibeDoc?: { selectedModel?: string }) =>
+        vibeDoc?.selectedModel || settingsDoc?.model || 'anthropic/claude-sonnet-4'
+    ),
   isValidModelId: vi.fn().mockImplementation((id: unknown) => typeof id === 'string'),
   RESPONSE_FORMAT: {
     dependencies: {
