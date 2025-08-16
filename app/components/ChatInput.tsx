@@ -84,7 +84,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             rows={2}
           />
           <div className="flex items-center justify-between gap-2">
-            {models && onModelChange ? (
+            {Array.isArray(models) && models.length > 0 && onModelChange ? (
               <ModelPicker
                 currentModel={currentModel}
                 onModelChange={onModelChange}
