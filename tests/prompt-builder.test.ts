@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 
+// Use a known finite set for testing, excluding three-js to keep tests stable
+const knownModuleNames = ['callai', 'fireproof', 'image-gen', 'web-audio'];
+
 // Ensure we use the real implementation of ../app/prompts in this file only
 // Some tests and the global setup mock this module; undo that here before importing it.
 (vi as any).doUnmock?.('../app/prompts');
@@ -7,8 +10,18 @@ vi.unmock('../app/prompts');
 // Reset the module registry and mock env before importing the module under test.
 vi.resetModules();
 vi.mock('../app/config/env', () => ({
-  APP_MODE: 'test',
   CALLAI_ENDPOINT: 'http://localhost/test',
+}));
+
+// Mock the callAI function to return our known finite set for testing
+vi.mock('call-ai', () => ({
+  callAI: vi.fn().mockResolvedValue(
+    JSON.stringify({
+      selected: knownModuleNames,
+      instructionalText: true,
+      demoData: true,
+    })
+  ),
 }));
 
 // Will be assigned in beforeAll after we unmock and re-import the module
@@ -24,8 +37,9 @@ const llmsJsonModules = import.meta.glob('../app/llms/*.json', { eager: true }) 
   { default: any }
 >;
 
-// Deterministic order by filepath to avoid FS-dependent ordering
+// Filter to only include our known set, deterministic order by name
 const orderedLlms = Object.entries(llmsJsonModules)
+  .filter(([path, _]) => knownModuleNames.some((name) => path.includes(`${name}.json`)))
   .sort((a, b) => a[0].localeCompare(b[0]))
   .map(([_, mod]) => mod.default);
 
@@ -42,7 +56,7 @@ function textForName(name: string): string {
 
 beforeAll(async () => {
   const mod = await import('../app/prompts');
-  // Pull real exported functions from the actual module
+  // Pull exported functions from the mocked module
   generateImportStatements = (mod as any).generateImportStatements;
   makeBaseSystemPrompt = mod.makeBaseSystemPrompt;
   preloadLlmsText = mod.preloadLlmsText;
@@ -93,9 +107,10 @@ describe('prompt builder (real implementation)', () => {
       userPrompt: undefined,
     });
 
-    // In test mode, schema selector returns all modules
-    const chosenLlms = orderedLlms;
+    // The mocked AI call should return our known finite set
+    const chosenLlms = orderedLlms.filter((llm) => knownModuleNames.includes(llm.name));
     const importBlock = generateImportStatements(chosenLlms);
+
     expect(prompt).toContain('```js');
     expect(prompt).toContain('import React, { ... } from "react"' + importBlock);
 
@@ -118,7 +133,7 @@ describe('prompt builder (real implementation)', () => {
       userPrompt: 'hello',
     });
 
-    const chosenLlms = orderedLlms; // test mode selects all
+    const chosenLlms = orderedLlms.filter((llm) => knownModuleNames.includes(llm.name)); // mocked AI call returns finite set
     const importBlock = generateImportStatements(chosenLlms);
     expect(prompt).toContain('import React, { ... } from "react"' + importBlock);
 

@@ -107,3 +107,11 @@ This is a React Router v7 SPA application for building AI-powered mini apps. Key
 - Vite plugins: Tailwind, TypeScript paths, devtools JSON
 - Test environment configured to disable React Router when needed
 - Coverage tracking for critical components and utilities
+
+# important-instruction-reminders
+
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (\*.md) or README files. Only create documentation files if explicitly requested by the User.
+NEVER put test mode checks in production code - instead mock upstream dependencies in tests if you need deterministic behavior.

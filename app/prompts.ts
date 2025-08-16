@@ -1,5 +1,5 @@
 import { callAI, type Message, type CallAIOptions } from 'call-ai';
-import { APP_MODE, CALLAI_ENDPOINT } from './config/env';
+import { CALLAI_ENDPOINT } from './config/env';
 // Import all LLM text files statically
 import callaiTxt from './llms/callai.txt?raw';
 import fireproofTxt from './llms/fireproof.txt?raw';
@@ -82,10 +82,6 @@ export async function selectLlmsAndOptions(
   userPrompt: string,
   history: HistoryMessage[]
 ): Promise<LlmSelectionDecisions> {
-  if (APP_MODE === 'test') {
-    return { selected: llmsCatalog.map((l) => l.name), instructionalText: true, demoData: true };
-  }
-
   const catalog = llmsCatalog.map((l) => ({ name: l.name, description: l.description || '' }));
   const payload = { catalog, userPrompt: userPrompt || '', history: history || [] };
 
