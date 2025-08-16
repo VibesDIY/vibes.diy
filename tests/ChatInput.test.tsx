@@ -160,4 +160,26 @@ describe('ChatInput Component', () => {
     expect(sendMessage).not.toHaveBeenCalled();
     expect(onSend).not.toHaveBeenCalled();
   });
+
+  it('does not render the model picker when models are missing or empty', () => {
+    const { rerender } = render(
+      <MockThemeProvider>
+        <ChatInput chatState={mockChatState} onSend={onSend} />
+      </MockThemeProvider>
+    );
+    expect(screen.queryByRole('button', { name: /ai model/i })).toBeNull();
+
+    const emptyModels: Array<{ id: string; name: string; description: string }> = [];
+    rerender(
+      <MockThemeProvider>
+        <ChatInput
+          chatState={mockChatState}
+          onSend={onSend}
+          models={emptyModels}
+          onModelChange={vi.fn()}
+        />
+      </MockThemeProvider>
+    );
+    expect(screen.queryByRole('button', { name: /ai model/i })).toBeNull();
+  });
 });
