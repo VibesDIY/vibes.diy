@@ -53,11 +53,23 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
   }, [open, currentModel]);
 
   // Compute floating menu position relative to trigger
-  const [menuStyle, setMenuStyle] = useState<{ top: number; left: number } | null>(null);
+  const [menuStyle, setMenuStyle] = useState<{
+    left: number;
+    bottom: number;
+    maxHeight: number; // px, fit to available space above trigger
+  } | null>(null);
   useEffect(() => {
     if (open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setMenuStyle({ top: rect.bottom + 8, left: rect.left });
+      const gap = 8; // space between trigger and menu
+      const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
+      // Default to opening upward: anchor the menu's bottom to just above the trigger
+      const bottom = Math.max(0, viewportH - rect.top + gap);
+      // Available space above the trigger, minus a small padding
+      const availableAbove = Math.max(0, rect.top - gap * 2);
+      // Cap to the previous visual max (Tailwind max-h-80 = 20rem ≈ 320px) but never exceed available space
+      const maxHeight = Math.min(320, Math.floor(availableAbove));
+      setMenuStyle({ left: rect.left, bottom, maxHeight });
     }
   }, [open]);
 
@@ -96,7 +108,7 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
       >
         <span aria-hidden="true">✨</span>
         <span aria-hidden="true" className="text-light-secondary dark:text-dark-secondary">
-          {updating ? '⟳' : '▾'}
+          {updating ? '⟳' : open ? '▴' : '▾'}
         </span>
       </button>
 
@@ -110,7 +122,8 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
               aria-labelledby={buttonId}
               className="ring-opacity-5 dark:bg-dark-background-01 absolute z-[9999] w-64 rounded-md bg-white p-1 shadow-lg ring-1 ring-black/10 dark:ring-white/10"
               style={{
-                top: menuStyle?.top ?? 0,
+                // Open upward by default by specifying `bottom` instead of `top`.
+                bottom: menuStyle?.bottom ?? 0,
                 left: menuStyle?.left ?? 0,
                 position: 'fixed',
               }}
@@ -136,7 +149,10 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
                 }
               }}
             >
-              <div className="max-h-80 overflow-auto py-1">
+              <div
+                className="max-h-80 overflow-auto py-1"
+                style={{ maxHeight: menuStyle?.maxHeight }}
+              >
                 {models.map((m) => {
                   const selected = m.id === currentModel;
                   return (
