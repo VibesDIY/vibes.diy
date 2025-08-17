@@ -16,7 +16,14 @@ interface ModelPickerProps {
  * Compact, accessible model picker for per‑chat runtime selection.
  * Renders an icon‑only trigger (✨) that opens a dropdown list of models.
  */
-export default function ModelPicker({ currentModel, onModelChange, models, globalModel, compact, showAllModels }: ModelPickerProps) {
+export default function ModelPicker({
+  currentModel,
+  onModelChange,
+  models,
+  globalModel,
+  compact,
+  showAllModels,
+}: ModelPickerProps) {
   const buttonId = useId();
   const menuId = `model-menu-${buttonId}`;
   const [open, setOpen] = useState(false);
@@ -28,14 +35,14 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
   const displayModels = useMemo(() => {
     // Choose base list based on showAllModels setting
     const baseModels = showAllModels ? models : models.filter((m) => m.featured);
-    
+
     if (!globalModel) {
       return baseModels;
     }
-    
+
     // Find global model in full models list
     const globalModelObj = models.find((m) => m.id === globalModel);
-    
+
     if (globalModelObj) {
       // Remove global model from base list to avoid duplicates, then add it at the top
       const baseWithoutGlobal = baseModels.filter((m) => m.id !== globalModel);
@@ -44,16 +51,17 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
       // Create synthetic entry for models not in the list
       const syntheticGlobalModel: ModelOption = {
         id: globalModel,
-        name: `${globalModel} (Global Setting)`,
-        description: 'Model from global settings',
-        featured: false
+        name: `${globalModel} (Custom)`,
+        description: 'Custom openrouter model',
+        featured: false,
       };
       return [syntheticGlobalModel, ...baseModels];
     }
   }, [models, globalModel, showAllModels]);
 
   // Find current model for tooltip text from display models (includes synthetic entries)
-  const current = displayModels.find((m) => m.id === currentModel) || models.find((m) => m.id === currentModel);
+  const current =
+    displayModels.find((m) => m.id === currentModel) || models.find((m) => m.id === currentModel);
 
   // Manage outside clicks
   useEffect(() => {
@@ -137,7 +145,7 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
           }
         }}
       >
-        <span aria-hidden="true" className="saturate-0 invert">
+        <span aria-hidden="true" className="invert saturate-0">
           ✨
         </span>
         {!compact && <span className="truncate">{current?.name}</span>}

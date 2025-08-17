@@ -348,7 +348,9 @@ export default function UnifiedSession() {
                 await chatState.updateSelectedModel(modelId);
               }
             }}
-            models={models as Array<{ id: string; name: string; description: string; featured?: boolean }>}
+            models={
+              models as Array<{ id: string; name: string; description: string; featured?: boolean }>
+            }
             globalModel={chatState.globalModel}
             showAllModels={chatState.showAllModels}
             onSend={() => {
