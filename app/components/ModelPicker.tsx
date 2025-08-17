@@ -145,7 +145,7 @@ export default function ModelPicker({
           }
         }}
       >
-        <span aria-hidden="true" className="invert saturate-0">
+        <span aria-hidden="true" className="invert saturate-0 dark:invert-0">
           ✨
         </span>
         {!compact && <span className="truncate">{current?.name}</span>}
