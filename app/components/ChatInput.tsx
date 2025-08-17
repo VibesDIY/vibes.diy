@@ -12,6 +12,7 @@ interface ChatInputProps {
   onModelChange?: (modelId: string) => void | Promise<void>;
   models?: ModelOption[];
   globalModel?: string;
+  showAllModels?: boolean;
 }
 
 export interface ChatInputRef {
@@ -19,7 +20,7 @@ export interface ChatInputRef {
 }
 
 const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
-  ({ chatState, onSend, currentModel, onModelChange, models, globalModel }, ref) => {
+  ({ chatState, onSend, currentModel, onModelChange, models, globalModel, showAllModels }, ref) => {
     // Refs
     const submitButtonRef = useRef<HTMLButtonElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -116,6 +117,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 models={models}
                 globalModel={globalModel}
                 compact={isCompact}
+                showAllModels={showAllModels}
               />
             ) : (
               <span aria-hidden="true" />

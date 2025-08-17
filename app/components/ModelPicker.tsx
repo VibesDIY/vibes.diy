@@ -9,13 +9,14 @@ interface ModelPickerProps {
   models: ModelOption[];
   globalModel?: string;
   compact?: boolean;
+  showAllModels?: boolean;
 }
 
 /**
  * Compact, accessible model picker for per‑chat runtime selection.
  * Renders an icon‑only trigger (✨) that opens a dropdown list of models.
  */
-export default function ModelPicker({ currentModel, onModelChange, models, globalModel, compact }: ModelPickerProps) {
+export default function ModelPicker({ currentModel, onModelChange, models, globalModel, compact, showAllModels }: ModelPickerProps) {
   const buttonId = useId();
   const menuId = `model-menu-${buttonId}`;
   const [open, setOpen] = useState(false);
@@ -23,21 +24,22 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Create display list: global model + featured models (deduplicated)
+  // Create display list: global model + (all models OR featured models) (deduplicated)
   const displayModels = useMemo(() => {
-    const featuredModels = models.filter((m) => m.featured);
+    // Choose base list based on showAllModels setting
+    const baseModels = showAllModels ? models : models.filter((m) => m.featured);
     
     if (!globalModel) {
-      return featuredModels;
+      return baseModels;
     }
     
     // Find global model in full models list
     const globalModelObj = models.find((m) => m.id === globalModel);
     
     if (globalModelObj) {
-      // Remove global model from featured list to avoid duplicates, then add it at the top
-      const featuredWithoutGlobal = featuredModels.filter((m) => m.id !== globalModel);
-      return [globalModelObj, ...featuredWithoutGlobal];
+      // Remove global model from base list to avoid duplicates, then add it at the top
+      const baseWithoutGlobal = baseModels.filter((m) => m.id !== globalModel);
+      return [globalModelObj, ...baseWithoutGlobal];
     } else {
       // Create synthetic entry for models not in the list
       const syntheticGlobalModel: ModelOption = {
@@ -46,9 +48,9 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
         description: 'Model from global settings',
         featured: false
       };
-      return [syntheticGlobalModel, ...featuredModels];
+      return [syntheticGlobalModel, ...baseModels];
     }
-  }, [models, globalModel]);
+  }, [models, globalModel, showAllModels]);
 
   // Find current model for tooltip text from display models (includes synthetic entries)
   const current = displayModels.find((m) => m.id === currentModel) || models.find((m) => m.id === currentModel);
