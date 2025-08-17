@@ -8,13 +8,14 @@ interface ModelPickerProps {
   onModelChange: (modelId: string) => void | Promise<void>;
   models: ModelOption[];
   globalModel?: string;
+  compact?: boolean;
 }
 
 /**
  * Compact, accessible model picker for per‑chat runtime selection.
  * Renders an icon‑only trigger (✨) that opens a dropdown list of models.
  */
-export default function ModelPicker({ currentModel, onModelChange, models, globalModel }: ModelPickerProps) {
+export default function ModelPicker({ currentModel, onModelChange, models, globalModel, compact }: ModelPickerProps) {
   const buttonId = useId();
   const menuId = `model-menu-${buttonId}`;
   const [open, setOpen] = useState(false);
@@ -137,7 +138,7 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
         <span aria-hidden="true" className="saturate-0 invert">
           ✨
         </span>
-        <span className="hidden truncate sm:block">{current?.name}</span>
+        {!compact && <span className="truncate">{current?.name}</span>}
         <span aria-hidden="true" className="text-light-secondary dark:text-dark-secondary">
           {updating ? '⟳' : open ? '▴' : '▾'}
         </span>
