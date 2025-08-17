@@ -98,6 +98,61 @@ describe('prompt builder (real implementation)', () => {
     }
   });
 
+  it('generateImportStatements: supports namespace imports for three-js', () => {
+    // Create a mock three-js entry with namespace import type
+    const threeJsEntry = {
+      name: 'three-js',
+      label: 'Three.js',
+      module: 'three-js',
+      importModule: 'three',
+      importName: 'THREE',
+      importType: 'namespace' as const,
+    };
+
+    const importBlock = generateImportStatements([threeJsEntry]);
+    const lines = importBlock.trim().split('\n').filter(Boolean);
+
+    expect(lines.length).toBe(1);
+    expect(lines[0]).toBe('import * as THREE from "three"');
+  });
+
+  it('generateImportStatements: supports different import types', () => {
+    const testEntries = [
+      {
+        name: 'named-import',
+        label: 'Named',
+        module: 'named',
+        importModule: 'named-module',
+        importName: 'NamedExport',
+        importType: 'named' as const,
+      },
+      {
+        name: 'namespace-import',
+        label: 'Namespace',
+        module: 'namespace',
+        importModule: 'namespace-module',
+        importName: 'NS',
+        importType: 'namespace' as const,
+      },
+      {
+        name: 'default-import',
+        label: 'Default',
+        module: 'default',
+        importModule: 'default-module',
+        importName: 'DefaultExport',
+        importType: 'default' as const,
+      },
+    ];
+
+    const importBlock = generateImportStatements(testEntries);
+    const lines = importBlock.trim().split('\n').filter(Boolean);
+
+    expect(lines.length).toBe(3);
+    expect(lines[0]).toBe('import DefaultExport from "default-module"');
+    expect(lines[1]).toBe('import { NamedExport } from "named-module"');
+    expect(lines[2]).toBe('import * as NS from "namespace-module"');
+  });
+
   it('makeBaseSystemPrompt: in test mode, non-override path includes all catalog imports and docs; default stylePrompt', async () => {
     // Warm cache so docs are available via raw imports
     await preloadLlmsText();

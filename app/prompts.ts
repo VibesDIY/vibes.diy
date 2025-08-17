@@ -5,6 +5,7 @@ import callaiTxt from './llms/callai.txt?raw';
 import fireproofTxt from './llms/fireproof.txt?raw';
 import imageGenTxt from './llms/image-gen.txt?raw';
 import webAudioTxt from './llms/web-audio.txt?raw';
+import threeJsTxt from './llms/three-js.md?raw';
 import {
   DEFAULT_DEPENDENCIES,
   llmsCatalog,
@@ -18,6 +19,7 @@ const llmsTextContent: Record<string, string> = {
   fireproof: fireproofTxt,
   'image-gen': imageGenTxt,
   'web-audio': webAudioTxt,
+  'three-js': threeJsTxt,
 };
 
 // Cache for LLM text documents to prevent redundant fetches/imports
@@ -47,12 +49,17 @@ const llmImportRegexes = llmsCatalog
   .map((l) => {
     const mod = escapeRegExp(l.importModule);
     const name = escapeRegExp(l.importName);
+    const importType = l.importType || 'named';
+
     return {
       name: l.name,
       // Matches: import { ..., <name>, ... } from '<module>'
       named: new RegExp(`import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['\\\"]${mod}['\\\"]`),
       // Matches: import <name> from '<module>'
       def: new RegExp(`import\\s+${name}\\s+from\\s*['\\\"]${mod}['\\\"]`),
+      // Matches: import * as <name> from '<module>'
+      namespace: new RegExp(`import\\s*\\*\\s*as\\s+${name}\\s+from\\s*['\\\"]${mod}['\\\"]`),
+      importType,
     } as const;
   });
 
@@ -63,8 +70,10 @@ function detectModulesInHistory(history: HistoryMessage[]): Set<string> {
   for (const msg of history) {
     const content = msg?.content || '';
     if (!content || typeof content !== 'string') continue;
-    for (const { name, named, def } of llmImportRegexes) {
-      if (named.test(content) || def.test(content)) detected.add(name);
+    for (const { name, named, def, namespace } of llmImportRegexes) {
+      if (named.test(content) || def.test(content) || namespace.test(content)) {
+        detected.add(name);
+      }
     }
   }
   return detected;
@@ -133,11 +142,13 @@ export async function selectLlmsAndOptions(
 // Public: preload all llms text files (triggered on form focus)
 export async function preloadLlmsText(): Promise<void> {
   llmsCatalog.forEach((llm) => {
-    if (llmsTextCache[llm.name] || llmsTextCache[llm.llmsTxtUrl]) return;
+    if (llmsTextCache[llm.name] || (llm.llmsTxtUrl && llmsTextCache[llm.llmsTxtUrl])) return;
     const text = loadLlmsTextByName(llm.name);
     if (text) {
       llmsTextCache[llm.name] = text;
-      llmsTextCache[llm.llmsTxtUrl] = text;
+      if (llm.llmsTxtUrl) {
+        llmsTextCache[llm.llmsTxtUrl] = text;
+      }
     }
   });
 }
@@ -155,7 +166,18 @@ export function generateImportStatements(llms: LlmsCatalogEntry[]) {
       seen.add(key);
       return true;
     })
-    .map((l) => `\nimport { ${l.importName} } from "${l.importModule}"`)
+    .map((l) => {
+      const importType = l.importType || 'named';
+      switch (importType) {
+        case 'namespace':
+          return `\nimport * as ${l.importName} from "${l.importModule}"`;
+        case 'default':
+          return `\nimport ${l.importName} from "${l.importModule}"`;
+        case 'named':
+        default:
+          return `\nimport { ${l.importName} } from "${l.importModule}"`;
+      }
+    })
     .join('');
 }
 
@@ -210,12 +232,15 @@ export async function makeBaseSystemPrompt(
   let concatenatedLlmsTxt = '';
   for (const llm of chosenLlms) {
     // Prefer cached content (preloaded on focus). If missing, try static import as a fallback.
-    let text = llmsTextCache[llm.name] || llmsTextCache[llm.llmsTxtUrl];
+    let text =
+      llmsTextCache[llm.name] || (llm.llmsTxtUrl ? llmsTextCache[llm.llmsTxtUrl] : undefined);
     if (!text) {
       text = loadLlmsTextByName(llm.name) || '';
       if (text) {
         llmsTextCache[llm.name] = text;
-        llmsTextCache[llm.llmsTxtUrl] = text;
+        if (llm.llmsTxtUrl) {
+          llmsTextCache[llm.llmsTxtUrl] = text;
+        }
       }
     }
 

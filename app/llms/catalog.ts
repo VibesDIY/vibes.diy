@@ -7,7 +7,7 @@ const modules = import.meta.glob('./*.json', { eager: true }) as Record<
     default: {
       name: string;
       label: string;
-      llmsTxtUrl: string;
+      llmsTxtUrl?: string; // Optional - if not provided, loads from local repo
       module: string;
       description?: string;
       importModule: string;
@@ -16,7 +16,9 @@ const modules = import.meta.glob('./*.json', { eager: true }) as Record<
   }
 >;
 
-export type LlmsCatalogEntry = (typeof modules)[string]['default'];
+export type LlmsCatalogEntry = (typeof modules)[string]['default'] & {
+  importType?: 'named' | 'namespace' | 'default'; // Support for different import types
+};
 
 export const llmsCatalog: LlmsCatalogEntry[] = Object.values(modules).map((m) => m.default);
 
