@@ -6,6 +6,7 @@ import fireproofTxt from './llms/fireproof.txt?raw';
 import imageGenTxt from './llms/image-gen.txt?raw';
 import webAudioTxt from './llms/web-audio.txt?raw';
 import threeJsTxt from './llms/three-js.md?raw';
+import d3Txt from './llms/d3.md?raw';
 import {
   DEFAULT_DEPENDENCIES,
   llmsCatalog,
@@ -20,6 +21,7 @@ const llmsTextContent: Record<string, string> = {
   'image-gen': imageGenTxt,
   'web-audio': webAudioTxt,
   'three-js': threeJsTxt,
+  'd3': d3Txt,
 };
 
 // Cache for LLM text documents to prevent redundant fetches/imports
