@@ -18,7 +18,7 @@
   {
     "id": "openai/gpt-4.1",
     "name": "GPT-4.1",
-    "description": "Coding assistant",
+    "description": "OpenAI coding assistant",
     "featured": true
   },
   {
@@ -60,7 +60,8 @@
   {
     "id": "openai/gpt-oss-120b",
     "name": "GPT OSS 120B",
-    "description": "Large open-source model from OpenAI"
+    "description": "Large open-source model from OpenAI",
+    "featured": true
   },
   {
     "id": "openai/gpt-oss-20b",
