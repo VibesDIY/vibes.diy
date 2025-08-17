@@ -349,10 +349,7 @@ export default function UnifiedSession() {
               }
             }}
             models={models as Array<{ id: string; name: string; description: string; featured?: boolean }>}
-            globalModel={(() => {
-              console.log('home.tsx passing globalModel:', chatState.globalModel);
-              return chatState.globalModel;
-            })()}
+            globalModel={chatState.globalModel}
             onSend={() => {
               setMessageHasBeenSent(true);
               setHasSubmittedMessage(true);

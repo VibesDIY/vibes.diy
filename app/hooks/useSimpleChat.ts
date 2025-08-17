@@ -306,10 +306,6 @@ ${code}
     // No additional action needed here
   }, [advisoryErrors]);
 
-  // Debug: log what we're returning
-  console.log('useSimpleChat return - settingsDoc?.model:', settingsDoc?.model);
-  console.log('useSimpleChat return - effectiveModel:', effectiveModel);
-
   return {
     sessionId: session._id,
     vibeDoc,
