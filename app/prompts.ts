@@ -46,7 +46,7 @@ const llmsTextContent: Record<string, string> = {
   'image-gen': imageGenTxt,
   'web-audio': webAudioTxt,
   'three-js': threeJsTxt,
-  'd3': d3Txt,
+  d3: d3Txt,
 };
 
 // Cache for LLM text documents to prevent redundant fetches/imports
