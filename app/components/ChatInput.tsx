@@ -1,5 +1,5 @@
 import type { ChangeEvent, KeyboardEvent } from 'react';
-import { useEffect, memo, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, memo, useCallback, useRef, forwardRef, useImperativeHandle, useState } from 'react';
 import type { ChatState } from '../types/chat';
 import ModelPicker, { type ModelOption } from './ModelPicker';
 import { preloadLlmsText } from '../prompts';
@@ -20,8 +20,12 @@ export interface ChatInputRef {
 
 const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
   ({ chatState, onSend, currentModel, onModelChange, models, globalModel }, ref) => {
-    // Ref for the submit button
+    // Refs
     const submitButtonRef = useRef<HTMLButtonElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    
+    // State for responsive behavior
+    const [isCompact, setIsCompact] = useState(false);
 
     // Expose the click function to parent components
     useImperativeHandle(ref, () => ({
@@ -55,8 +59,28 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       autoResizeTextarea();
     }, [chatState.input, autoResizeTextarea]);
 
+    // ResizeObserver to detect container width and set compact mode
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
+          // Set breakpoint at 500px - adjust as needed
+          setIsCompact(width < 400);
+        }
+      });
+
+      resizeObserver.observe(container);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, []);
+
     return (
-      <div className="px-4 py-2">
+      <div ref={containerRef} className="px-4 py-2">
         <div className="space-y-1">
           <textarea
             ref={chatState.inputRef}
@@ -91,6 +115,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 onModelChange={onModelChange}
                 models={models}
                 globalModel={globalModel}
+                compact={isCompact}
               />
             ) : (
               <span aria-hidden="true" />
