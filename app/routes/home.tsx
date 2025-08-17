@@ -350,6 +350,7 @@ export default function UnifiedSession() {
             }}
             models={models as Array<{ id: string; name: string; description: string; featured?: boolean }>}
             globalModel={chatState.globalModel}
+            showAllModels={chatState.showAllModels}
             onSend={() => {
               setMessageHasBeenSent(true);
               setHasSubmittedMessage(true);

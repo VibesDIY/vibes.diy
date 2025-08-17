@@ -312,6 +312,7 @@ ${code}
     selectedModel: vibeDoc?.selectedModel,
     effectiveModel,
     globalModel: settingsDoc?.model,
+    showAllModels: settingsDoc?.showAllModels,
     addScreenshot,
     docs: messages,
     setSelectedResponseId,
