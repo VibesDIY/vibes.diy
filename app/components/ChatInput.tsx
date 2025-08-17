@@ -1,13 +1,5 @@
 import type { ChangeEvent, KeyboardEvent } from 'react';
-import {
-  useEffect,
-  memo,
-  useCallback,
-  useRef,
-  forwardRef,
-  useImperativeHandle,
-  useState,
-} from 'react';
+import { useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useState } from 'react';
 import type { ChatState } from '../types/chat';
 import ModelPicker, { type ModelOption } from './ModelPicker';
 import { preloadLlmsText } from '../prompts';
