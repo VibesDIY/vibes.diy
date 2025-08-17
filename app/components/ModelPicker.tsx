@@ -22,31 +22,21 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Debug logging
-  console.log('ModelPicker render - globalModel:', globalModel);
-  console.log('ModelPicker render - currentModel:', currentModel);
-
   // Create display list: global model + featured models (deduplicated)
   const displayModels = useMemo(() => {
-    console.log('useMemo recalculating displayModels - globalModel:', globalModel);
     const featuredModels = models.filter((m) => m.featured);
-    console.log('featuredModels:', featuredModels.map(m => m.id));
     
     if (!globalModel) {
-      console.log('No globalModel, returning featuredModels only');
       return featuredModels;
     }
     
     // Find global model in full models list
     const globalModelObj = models.find((m) => m.id === globalModel);
-    console.log('globalModelObj found:', !!globalModelObj, globalModelObj?.name);
     
     if (globalModelObj) {
       // Remove global model from featured list to avoid duplicates, then add it at the top
       const featuredWithoutGlobal = featuredModels.filter((m) => m.id !== globalModel);
-      const result = [globalModelObj, ...featuredWithoutGlobal];
-      console.log('Final displayModels with globalModel:', result.map(m => m.id));
-      return result;
+      return [globalModelObj, ...featuredWithoutGlobal];
     } else {
       // Create synthetic entry for models not in the list
       const syntheticGlobalModel: ModelOption = {
@@ -55,17 +45,12 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
         description: 'Model from global settings',
         featured: false
       };
-      const result = [syntheticGlobalModel, ...featuredModels];
-      console.log('Final displayModels with synthetic globalModel:', result.map(m => m.id));
-      return result;
+      return [syntheticGlobalModel, ...featuredModels];
     }
   }, [models, globalModel]);
 
   // Find current model for tooltip text from display models (includes synthetic entries)
   const current = displayModels.find((m) => m.id === currentModel) || models.find((m) => m.id === currentModel);
-  
-  // Debug: log the actual list of options that will be rendered
-  console.log('ModelPicker - displayModels in dropdown:', displayModels.map(m => ({ id: m.id, name: m.name })));
 
   // Manage outside clicks
   useEffect(() => {
