@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-export type ModelOption = { id: string; name: string; description: string };
+export type ModelOption = { id: string; name: string; description: string; featured?: boolean };
 
 interface ModelPickerProps {
   currentModel?: string;
@@ -20,6 +20,9 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
   const [updating, setUpdating] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Filter to only show featured models
+  const featuredModels = models.filter((m) => m.featured);
 
   // Find current model for tooltip text
   const current = models.find((m) => m.id === currentModel);
@@ -90,7 +93,7 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
         ref={buttonRef}
         id={buttonId}
         type="button"
-        className="border-light-decorative-00 dark:border-dark-decorative-00 text-light-primary dark:text-dark-primary bg-light-background-01 dark:bg-dark-background-01 hover:bg-light-decorative-01/40 dark:hover:bg-dark-decorative-01/40 inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm"
+        className="border-light-decorative-00 dark:border-dark-decorative-00 text-light-primary dark:text-dark-primary inline-flex items-center gap-1 rounded-md border bg-gray-100 px-2 py-1 text-sm hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
@@ -106,7 +109,10 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
           }
         }}
       >
-        <span aria-hidden="true">✨</span>
+        <span aria-hidden="true" className="saturate-5">
+          ✨
+        </span>
+        <span className="hidden truncate sm:block">{current?.name}</span>
         <span aria-hidden="true" className="text-light-secondary dark:text-dark-secondary">
           {updating ? '⟳' : open ? '▴' : '▾'}
         </span>
@@ -120,7 +126,7 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
               role="menu"
               id={menuId}
               aria-labelledby={buttonId}
-              className="ring-opacity-5 dark:bg-dark-background-01 absolute z-[9999] w-64 rounded-md bg-white p-1 shadow-lg ring-1 ring-black/10 dark:ring-white/10"
+              className="ring-opacity-5 absolute z-[9999] w-64 rounded-md bg-gray-100 p-1 shadow-lg ring-1 ring-black/10 dark:bg-gray-800 dark:ring-white/10"
               style={{
                 // Open upward by default by specifying `bottom` instead of `top`.
                 bottom: menuStyle?.bottom ?? 0,
@@ -153,7 +159,7 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
                 className="max-h-80 overflow-auto py-1"
                 style={{ maxHeight: menuStyle?.maxHeight }}
               >
-                {models.map((m) => {
+                {featuredModels.map((m) => {
                   const selected = m.id === currentModel;
                   return (
                     <button
@@ -161,9 +167,9 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
                       type="button"
                       role="menuitemradio"
                       aria-checked={selected}
-                      className={
-                        'hover:bg-light-background-01 dark:hover:bg-dark-decorative-00 flex w-full items-start gap-2 rounded px-2 py-2 text-left text-sm'
-                      }
+                      className={`flex w-full items-start gap-2 rounded px-2 py-2 text-left text-sm hover:bg-white dark:hover:bg-gray-700 ${
+                        selected ? 'bg-white dark:bg-gray-700' : ''
+                      }`}
                       onClick={() => handleSelect(m.id)}
                     >
                       <span aria-hidden="true" className="w-4 text-center">
