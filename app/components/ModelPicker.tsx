@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
 export type ModelOption = { id: string; name: string; description: string; featured?: boolean };
@@ -7,13 +7,14 @@ interface ModelPickerProps {
   currentModel?: string;
   onModelChange: (modelId: string) => void | Promise<void>;
   models: ModelOption[];
+  globalModel?: string;
 }
 
 /**
  * Compact, accessible model picker for per‑chat runtime selection.
  * Renders an icon‑only trigger (✨) that opens a dropdown list of models.
  */
-export default function ModelPicker({ currentModel, onModelChange, models }: ModelPickerProps) {
+export default function ModelPicker({ currentModel, onModelChange, models, globalModel }: ModelPickerProps) {
   const buttonId = useId();
   const menuId = `model-menu-${buttonId}`;
   const [open, setOpen] = useState(false);
@@ -21,11 +22,50 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter to only show featured models
-  const featuredModels = models.filter((m) => m.featured);
+  // Debug logging
+  console.log('ModelPicker render - globalModel:', globalModel);
+  console.log('ModelPicker render - currentModel:', currentModel);
 
-  // Find current model for tooltip text
-  const current = models.find((m) => m.id === currentModel);
+  // Create display list: global model + featured models (deduplicated)
+  const displayModels = useMemo(() => {
+    console.log('useMemo recalculating displayModels - globalModel:', globalModel);
+    const featuredModels = models.filter((m) => m.featured);
+    console.log('featuredModels:', featuredModels.map(m => m.id));
+    
+    if (!globalModel) {
+      console.log('No globalModel, returning featuredModels only');
+      return featuredModels;
+    }
+    
+    // Find global model in full models list
+    const globalModelObj = models.find((m) => m.id === globalModel);
+    console.log('globalModelObj found:', !!globalModelObj, globalModelObj?.name);
+    
+    if (globalModelObj) {
+      // Remove global model from featured list to avoid duplicates, then add it at the top
+      const featuredWithoutGlobal = featuredModels.filter((m) => m.id !== globalModel);
+      const result = [globalModelObj, ...featuredWithoutGlobal];
+      console.log('Final displayModels with globalModel:', result.map(m => m.id));
+      return result;
+    } else {
+      // Create synthetic entry for models not in the list
+      const syntheticGlobalModel: ModelOption = {
+        id: globalModel,
+        name: `${globalModel} (Global Setting)`,
+        description: 'Model from global settings',
+        featured: false
+      };
+      const result = [syntheticGlobalModel, ...featuredModels];
+      console.log('Final displayModels with synthetic globalModel:', result.map(m => m.id));
+      return result;
+    }
+  }, [models, globalModel]);
+
+  // Find current model for tooltip text from display models (includes synthetic entries)
+  const current = displayModels.find((m) => m.id === currentModel) || models.find((m) => m.id === currentModel);
+  
+  // Debug: log the actual list of options that will be rendered
+  console.log('ModelPicker - displayModels in dropdown:', displayModels.map(m => ({ id: m.id, name: m.name })));
 
   // Manage outside clicks
   useEffect(() => {
@@ -109,7 +149,7 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
           }
         }}
       >
-        <span aria-hidden="true" className="saturate-5">
+        <span aria-hidden="true" className="saturate-0 invert">
           ✨
         </span>
         <span className="hidden truncate sm:block">{current?.name}</span>
@@ -159,7 +199,7 @@ export default function ModelPicker({ currentModel, onModelChange, models }: Mod
                 className="max-h-80 overflow-auto py-1"
                 style={{ maxHeight: menuStyle?.maxHeight }}
               >
-                {featuredModels.map((m) => {
+                {displayModels.map((m) => {
                   const selected = m.id === currentModel;
                   return (
                     <button

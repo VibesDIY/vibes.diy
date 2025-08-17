@@ -175,6 +175,7 @@ export interface ChatState {
   selectedModel?: string;
   updateSelectedModel?: (modelId: string) => Promise<void>;
   effectiveModel?: string;
+  globalModel?: string;
 
   // Error tracking
   immediateErrors: RuntimeError[];

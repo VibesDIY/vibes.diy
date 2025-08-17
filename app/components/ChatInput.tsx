@@ -11,6 +11,7 @@ interface ChatInputProps {
   currentModel?: string;
   onModelChange?: (modelId: string) => void | Promise<void>;
   models?: ModelOption[];
+  globalModel?: string;
 }
 
 export interface ChatInputRef {
@@ -18,7 +19,7 @@ export interface ChatInputRef {
 }
 
 const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
-  ({ chatState, onSend, currentModel, onModelChange, models }, ref) => {
+  ({ chatState, onSend, currentModel, onModelChange, models, globalModel }, ref) => {
     // Ref for the submit button
     const submitButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -89,6 +90,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 currentModel={currentModel}
                 onModelChange={onModelChange}
                 models={models}
+                globalModel={globalModel}
               />
             ) : (
               <span aria-hidden="true" />
@@ -112,5 +114,5 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
 ChatInput.displayName = 'ChatInput';
 
-// Use memo to optimize rendering
-export default memo(ChatInput);
+// Temporarily disable memo to fix globalModel prop updates
+export default ChatInput;
