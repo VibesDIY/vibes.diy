@@ -1053,3 +1053,577 @@ composer.addPass(new OutputPass());
 ---
 
 _This guide focuses on Three.js's most impressive capabilities. Each example demonstrates advanced techniques that create visually stunning results with minimal code complexity._
+
+# Real world example
+
+```javascript
+import React, { useState, useEffect, useRef, useCallback } from "react"
+import { useFireproof } from "use-fireproof"
+
+export default function SkyGlider() {
+  const { database, useLiveQuery } = useFireproof("sky-glider-scores")
+  const canvasRef = useRef(null)
+  const gameStateRef = useRef({
+    scene: null,
+    camera: null,
+    renderer: null,
+    glider: null,
+    clouds: [],
+    balloons: [],
+    smokeTrail: [],
+    lastSmokeTime: 0,
+    score: 0,
+    gameRunning: false,
+    keys: {},
+    velocity: { x: 0, y: 0, z: 0 },
+    heading: 0, // Current heading in radians
+    forwardSpeed: 0 // Speed in current heading direction
+  })
+  
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentScore, setCurrentScore] = useState(0)
+  const [gameInitialized, setGameInitialized] = useState(false)
+
+  // Live query for high scores with proper fallback
+  const { docs: scoreData } = useLiveQuery("type", { key: "score" }) || { docs: [] }
+  const highScores = scoreData || []
+
+  const saveScore = useCallback(async (score) => {
+    const timestamp = Date.now()
+    await database.put({
+      _id: `score-${timestamp}`,
+      type: "score",
+      value: score,
+      timestamp,
+      date: new Date().toISOString()
+    })
+  }, [database])
+
+  const initThreeJS = useCallback(() => {
+    if (!canvasRef.current || gameInitialized || !window.THREE) return
+
+    try {
+      // Scene setup
+      const scene = new window.THREE.Scene()
+      scene.background = new window.THREE.Color(0x70d6ff)
+      scene.fog = new window.THREE.Fog(0x70d6ff, 50, 300)
+
+      // Camera
+      const camera = new window.THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+      camera.position.set(0, 10, 20)
+
+      // Renderer
+      const renderer = new window.THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true })
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.shadowMap.enabled = true
+      renderer.shadowMap.type = window.THREE.PCFSoftShadowMap
+
+      // Lighting
+      const ambientLight = new window.THREE.AmbientLight(0xffffff, 0.6)
+      scene.add(ambientLight)
+
+      const directionalLight = new window.THREE.DirectionalLight(0xffffff, 0.8)
+      directionalLight.position.set(50, 100, 50)
+      directionalLight.castShadow = true
+      scene.add(directionalLight)
+
+      // Triangular Glider - pointing in direction of movement
+      const gliderGeometry = new window.THREE.Group()
+      
+      // Main triangular body (pointing forward in Z direction)
+      const triangleGeometry = new window.THREE.ConeGeometry(2, 8, 3)
+      const triangleMaterial = new window.THREE.MeshLambertMaterial({ color: 0xff70a6 })
+      const triangle = new window.THREE.Mesh(triangleGeometry, triangleMaterial)
+      triangle.rotation.x = Math.PI / 2 // Point forward in Z direction
+      gliderGeometry.add(triangle)
+      
+      // Wings (smaller triangular fins)
+      const wingGeometry = new window.THREE.ConeGeometry(1.5, 3, 3)
+      const wingMaterial = new window.THREE.MeshLambertMaterial({ color: 0xff9770 })
+      
+      const leftWing = new window.THREE.Mesh(wingGeometry, wingMaterial)
+      leftWing.rotation.x = Math.PI / 2
+      leftWing.rotation.z = Math.PI / 3
+      leftWing.position.set(-3, 0, -1)
+      gliderGeometry.add(leftWing)
+      
+      const rightWing = new window.THREE.Mesh(wingGeometry, wingMaterial)
+      rightWing.rotation.x = Math.PI / 2
+      rightWing.rotation.z = -Math.PI / 3
+      rightWing.position.set(3, 0, -1)
+      gliderGeometry.add(rightWing)
+      
+      // Tail fin
+      const tailGeometry = new window.THREE.ConeGeometry(1, 2, 3)
+      const tailMaterial = new window.THREE.MeshLambertMaterial({ color: 0xffd670 })
+      const tail = new window.THREE.Mesh(tailGeometry, tailMaterial)
+      tail.rotation.x = -Math.PI / 2
+      tail.position.z = -3
+      gliderGeometry.add(tail)
+
+      gliderGeometry.position.set(0, 10, 0)
+      gliderGeometry.castShadow = true
+      scene.add(gliderGeometry)
+
+      // Create clouds (150 clouds with size range from current to 10x larger)
+      const clouds = []
+      for (let i = 0; i < 150; i++) {
+        const cloudGroup = new window.THREE.Group()
+        
+        // Random scale factor from 1x to 10x
+        const scaleFactor = 1 + Math.random() * 9
+        
+        // Number of cloud parts based on size (larger clouds have more parts)
+        const numParts = Math.floor(4 + scaleFactor * 2)
+        
+        // Multiple spheres for cloud effect
+        for (let j = 0; j < numParts; j++) {
+          const baseRadius = (Math.random() * 2 + 1) * scaleFactor
+          const cloudGeometry = new window.THREE.SphereGeometry(baseRadius, 8, 6)
+          const cloudMaterial = new window.THREE.MeshLambertMaterial({ 
+            color: 0xffffff, 
+            transparent: true, 
+            opacity: Math.max(0.3, 0.8 - scaleFactor * 0.05) // Larger clouds slightly more transparent
+          })
+          const cloudPart = new window.THREE.Mesh(cloudGeometry, cloudMaterial)
+          cloudPart.position.set(
+            (Math.random() - 0.5) * 4 * scaleFactor,
+            (Math.random() - 0.5) * 2 * scaleFactor,
+            (Math.random() - 0.5) * 4 * scaleFactor
+          )
+          cloudGroup.add(cloudPart)
+        }
+        
+        // Position clouds in a much larger area to accommodate more clouds
+        cloudGroup.position.set(
+          (Math.random() - 0.5) * 800, // Much wider spread
+          Math.random() * 50 + 5, // Higher altitude range
+          (Math.random() - 0.5) * 800  // Much deeper spread
+        )
+        
+        clouds.push({
+          mesh: cloudGroup,
+          scale: scaleFactor,
+          drift: { 
+            x: (Math.random() - 0.5) * 0.01 * (2 - scaleFactor * 0.1), // Larger clouds drift slower
+            y: Math.random() * 0.005 * (2 - scaleFactor * 0.1), 
+            z: (Math.random() - 0.5) * 0.01 * (2 - scaleFactor * 0.1) 
+          }
+        })
+        scene.add(cloudGroup)
+      }
+
+      // Create hot air balloons
+      const balloons = []
+      for (let i = 0; i < 6; i++) {
+        const balloonGroup = new window.THREE.Group()
+        
+        // Balloon
+        const balloonGeometry = new window.THREE.SphereGeometry(3, 12, 8)
+        const colors = [0xe9ff70, 0xff70a6, 0xff9770, 0xffd670]
+        const balloonMaterial = new window.THREE.MeshLambertMaterial({ 
+          color: colors[Math.floor(Math.random() * colors.length)]
+        })
+        const balloonMesh = new window.THREE.Mesh(balloonGeometry, balloonMaterial)
+        balloonGroup.add(balloonMesh)
+        
+        // Basket
+        const basketGeometry = new window.THREE.BoxGeometry(1.5, 1, 1.5)
+        const basketMaterial = new window.THREE.MeshLambertMaterial({ color: 0x8B4513 })
+        const basket = new window.THREE.Mesh(basketGeometry, basketMaterial)
+        basket.position.y = -4
+        balloonGroup.add(basket)
+        
+        balloonGroup.position.set(
+          (Math.random() - 0.5) * 300, // Wider spread to match cloud distribution
+          Math.random() * 20 + 5,
+          (Math.random() - 0.5) * 300
+        )
+        
+        balloons.push({
+          mesh: balloonGroup,
+          drift: { x: (Math.random() - 0.5) * 0.01, y: Math.random() * 0.02 + 0.01, z: (Math.random() - 0.5) * 0.01 }
+        })
+        scene.add(balloonGroup)
+      }
+
+      // Store in ref
+      gameStateRef.current = {
+        ...gameStateRef.current,
+        scene,
+        camera,
+        renderer,
+        glider: gliderGeometry,
+        clouds,
+        balloons,
+        smokeTrail: [],
+        lastSmokeTime: 0,
+        heading: 0,
+        forwardSpeed: 0
+      }
+
+      setGameInitialized(true)
+    } catch (error) {
+      console.error('Error initializing Three.js:', error)
+    }
+  }, [gameInitialized])
+
+  const createSmokeCloud = useCallback((position) => {
+    const state = gameStateRef.current
+    if (!state.scene || !window.THREE) return
+
+    // Create a tiny dark smoke puff (much smaller than glider fin)
+    const smokeGeometry = new window.THREE.SphereGeometry(0.08 + Math.random() * 0.05, 4, 3)
+    const smokeMaterial = new window.THREE.MeshLambertMaterial({ 
+      color: 0x242424, 
+      transparent: true, 
+      opacity: 0.7 + Math.random() * 0.2
+    })
+    const smokeCloud = new window.THREE.Mesh(smokeGeometry, smokeMaterial)
+    
+    // Position behind the glider's engine area (back of fuselage) accounting for heading
+    const heading = state.heading
+    const offsetX = Math.sin(heading) * -4 // Behind in heading direction
+    const offsetZ = Math.cos(heading) * -4 // Behind in heading direction
+    
+    smokeCloud.position.set(
+      position.x + offsetX + (Math.random() - 0.5) * 0.2,
+      position.y - 0.2 + (Math.random() - 0.5) * 0.1,
+      position.z + offsetZ + Math.random() * 0.3
+    )
+    
+    state.scene.add(smokeCloud)
+    state.smokeTrail.push({
+      mesh: smokeCloud,
+      createdAt: Date.now()
+    })
+
+    // Remove old smoke clouds to prevent memory issues (keep last 300 for longer trail)
+    while (state.smokeTrail.length > 300) {
+      const oldSmoke = state.smokeTrail.shift()
+      state.scene.remove(oldSmoke.mesh)
+    }
+  }, [])
+
+  const handleKeyDown = useCallback((event) => {
+    // Prevent space from causing any default behavior (like scrolling)
+    if (event.code === 'Space') {
+      event.preventDefault()
+    }
+    gameStateRef.current.keys[event.code] = true
+  }, [])
+
+  const handleKeyUp = useCallback((event) => {
+    // Prevent space from causing any default behavior
+    if (event.code === 'Space') {
+      event.preventDefault()
+    }
+    gameStateRef.current.keys[event.code] = false
+  }, [])
+
+  const updateGame = useCallback(() => {
+    const state = gameStateRef.current
+    if (!state.gameRunning || !state.glider || !window.THREE) return
+
+    try {
+      const { keys, glider } = state
+
+      // Turning mechanics - left/right changes heading (FIXED: reversed the directions)
+      const turnRate = 0.03
+      if (keys['ArrowLeft'] || keys['KeyA']) {
+        state.heading += turnRate // Turn left = increase heading (counter-clockwise)
+      }
+      if (keys['ArrowRight'] || keys['KeyD']) {
+        state.heading -= turnRate // Turn right = decrease heading (clockwise)
+      }
+
+      // Vertical movement
+      const verticalAccel = 0.002
+      const maxVerticalSpeed = 0.15
+      const verticalDrag = 0.95
+      
+      if (keys['ArrowUp'] || keys['KeyW']) state.velocity.y += verticalAccel
+      if (keys['ArrowDown'] || keys['KeyS']) state.velocity.y -= verticalAccel
+      
+      state.velocity.y = Math.max(-maxVerticalSpeed, Math.min(maxVerticalSpeed, state.velocity.y * verticalDrag))
+
+      // Forward/backward speed in heading direction - ONLY space does thrust
+      const forwardAccel = 0.003
+      const maxForwardSpeed = 0.25
+      const forwardDrag = 0.98
+      
+      if (keys['Space']) {
+        state.forwardSpeed += forwardAccel // Only space increases thrust
+      }
+      if (keys['ShiftLeft']) {
+        state.forwardSpeed -= forwardAccel // Shift decreases thrust
+      }
+      
+      state.forwardSpeed = Math.max(-maxForwardSpeed, Math.min(maxForwardSpeed, state.forwardSpeed * forwardDrag))
+
+      // Convert heading and forward speed to world velocity
+      state.velocity.x = Math.sin(state.heading) * state.forwardSpeed
+      state.velocity.z = Math.cos(state.heading) * state.forwardSpeed
+
+      // Update glider position
+      glider.position.add(new window.THREE.Vector3(state.velocity.x, state.velocity.y, state.velocity.z))
+
+      // Update glider rotation to match heading and movement
+      glider.rotation.y = state.heading // Face the heading direction
+      glider.rotation.z = (keys['ArrowLeft'] || keys['KeyA'] ? 0.5 : 0) - (keys['ArrowRight'] || keys['KeyD'] ? 0.5 : 0) // Bank in turns (fixed direction)
+      glider.rotation.x = -state.velocity.y * 1.5 // Pitch based on vertical movement
+
+      // Create tiny smoke trail at irregular intervals
+      const currentTime = Date.now()
+      const timeSinceLastSmoke = currentTime - state.lastSmokeTime
+      const smokeInterval = 150 + Math.random() * 200 // 150-350ms irregular intervals
+      
+      if (timeSinceLastSmoke > smokeInterval) {
+        createSmokeCloud(glider.position)
+        state.lastSmokeTime = currentTime
+      }
+
+      // Update camera to follow glider from behind based on heading
+      const cameraDistance = 15
+      const cameraHeight = 8
+      const idealCameraPosition = new window.THREE.Vector3(
+        glider.position.x - Math.sin(state.heading) * cameraDistance,
+        glider.position.y + cameraHeight,
+        glider.position.z - Math.cos(state.heading) * cameraDistance
+      )
+      state.camera.position.lerp(idealCameraPosition, 0.05)
+      state.camera.lookAt(glider.position)
+
+      // Animate clouds with different behaviors based on size
+      state.clouds.forEach(cloud => {
+        cloud.mesh.position.x += cloud.drift.x
+        cloud.mesh.position.y += cloud.drift.y
+        cloud.mesh.position.z += cloud.drift.z
+        
+        // Add gentle rotation for larger clouds
+        if (cloud.scale > 5) {
+          cloud.mesh.rotation.y += 0.001
+        }
+        
+        // Reset position if too far (larger area due to more clouds)
+        const resetDistance = 400
+        if (Math.abs(cloud.mesh.position.x - glider.position.x) > resetDistance) {
+          cloud.mesh.position.x = glider.position.x + (Math.random() - 0.5) * resetDistance * 2
+        }
+        if (Math.abs(cloud.mesh.position.z - glider.position.z) > resetDistance) {
+          cloud.mesh.position.z = glider.position.z + (Math.random() - 0.5) * resetDistance * 2
+        }
+        
+        // Keep clouds in reasonable altitude range
+        if (cloud.mesh.position.y > 60) {
+          cloud.mesh.position.y = 5
+        }
+        if (cloud.mesh.position.y < 0) {
+          cloud.mesh.position.y = 55
+        }
+      })
+
+      // Animate balloons
+      state.balloons.forEach(balloon => {
+        balloon.mesh.position.x += balloon.drift.x
+        balloon.mesh.position.y += balloon.drift.y
+        balloon.mesh.position.z += balloon.drift.z
+        
+        // Gentle swaying
+        balloon.mesh.rotation.z = Math.sin(Date.now() * 0.001) * 0.1
+        
+        // Reset position if too far
+        if (Math.abs(balloon.mesh.position.x - glider.position.x) > 200) {
+          balloon.mesh.position.x = glider.position.x + (Math.random() - 0.5) * 300
+        }
+        if (Math.abs(balloon.mesh.position.z - glider.position.z) > 200) {
+          balloon.mesh.position.z = glider.position.z + (Math.random() - 0.5) * 300
+        }
+      })
+
+      // Fade out old smoke clouds gradually
+      state.smokeTrail.forEach(smoke => {
+        const age = currentTime - smoke.createdAt
+        const maxAge = 30000 // 30 seconds
+        if (age > maxAge) {
+          smoke.mesh.material.opacity = 0
+        } else {
+          const fadeStart = 15000 // Start fading after 15 seconds
+          if (age > fadeStart) {
+            const fadeProgress = (age - fadeStart) / (maxAge - fadeStart)
+            smoke.mesh.material.opacity = (0.7 + Math.random() * 0.2) * (1 - fadeProgress)
+          }
+        }
+      })
+
+      // Update score (distance traveled)
+      state.score += Math.sqrt(state.velocity.x * state.velocity.x + state.velocity.y * state.velocity.y + state.velocity.z * state.velocity.z) * 10
+      setCurrentScore(Math.floor(state.score))
+
+      // Render
+      state.renderer.render(state.scene, state.camera)
+    } catch (error) {
+      console.error('Error in game loop:', error)
+    }
+  }, [createSmokeCloud])
+
+  const startGame = useCallback(() => {
+    if (!gameInitialized) return
+    
+    gameStateRef.current.gameRunning = true
+    gameStateRef.current.score = 0
+    gameStateRef.current.lastSmokeTime = Date.now()
+    gameStateRef.current.heading = 0
+    gameStateRef.current.forwardSpeed = 0
+    gameStateRef.current.velocity = { x: 0, y: 0, z: 0 }
+    
+    // Clear old smoke trail
+    gameStateRef.current.smokeTrail.forEach(smoke => {
+      gameStateRef.current.scene.remove(smoke.mesh)
+    })
+    gameStateRef.current.smokeTrail = []
+    
+    setCurrentScore(0)
+    setIsPlaying(true)
+
+    const gameLoop = () => {
+      if (gameStateRef.current.gameRunning) {
+        updateGame()
+        requestAnimationFrame(gameLoop)
+      }
+    }
+    gameLoop()
+  }, [gameInitialized, updateGame])
+
+  const stopGame = useCallback(async () => {
+    gameStateRef.current.gameRunning = false
+    setIsPlaying(false)
+    
+    if (currentScore > 0) {
+      await saveScore(currentScore)
+    }
+  }, [currentScore, saveScore])
+
+  useEffect(() => {
+    // Load Three.js
+    if (!window.THREE) {
+      const script = document.createElement('script')
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
+      script.onload = () => {
+        setTimeout(initThreeJS, 100)
+      }
+      document.head.appendChild(script)
+      
+      return () => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script)
+        }
+      }
+    } else {
+      initThreeJS()
+    }
+  }, [initThreeJS])
+
+  useEffect(() => {
+    // Event listeners
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
+    // Resize handler
+    const handleResize = () => {
+      if (gameStateRef.current.camera && gameStateRef.current.renderer) {
+        gameStateRef.current.camera.aspect = window.innerWidth / window.innerHeight
+        gameStateRef.current.camera.updateProjectionMatrix()
+        gameStateRef.current.renderer.setSize(window.innerWidth, window.innerHeight)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('resize', handleResize)
+      if (gameStateRef.current.gameRunning) {
+        gameStateRef.current.gameRunning = false
+      }
+    }
+  }, [handleKeyDown, handleKeyUp])
+
+  return (
+    <div className="relative w-full h-screen overflow-hidden bg-[#70d6ff]" 
+         style={{
+           backgroundImage: `radial-gradient(circle at 20% 30%, #ff70a6 2px, transparent 2px),
+                            radial-gradient(circle at 60% 70%, #ffd670 2px, transparent 2px),
+                            radial-gradient(circle at 80% 20%, #e9ff70 2px, transparent 2px),
+                            radial-gradient(circle at 40% 80%, #ff9770 2px, transparent 2px)`,
+           backgroundSize: '40px 40px, 60px 60px, 50px 50px, 45px 45px'
+         }}>
+      
+      {/* Game Canvas */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+      
+      {/* UI Overlay */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Top HUD */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-auto">
+          <div className="bg-[#ffffff] border-4 border-[#242424] px-4 py-2 rounded-none shadow-[4px_4px_0px_#242424]">
+            <div className="text-[#242424] font-bold text-lg">Score: {currentScore}</div>
+          </div>
+          
+          <div className="flex gap-2">
+            {!isPlaying ? (
+              <button 
+                onClick={startGame}
+                disabled={!gameInitialized}
+                className="bg-[#e9ff70] hover:bg-[#ffd670] border-4 border-[#242424] px-6 py-3 font-bold text-[#242424] shadow-[4px_4px_0px_#242424] hover:shadow-[2px_2px_0px_#242424] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {gameInitialized ? 'Start Flying' : 'Loading...'}
+              </button>
+            ) : (
+              <button 
+                onClick={stopGame}
+                className="bg-[#ff70a6] hover:bg-[#ff9770] border-4 border-[#242424] px-6 py-3 font-bold text-[#242424] shadow-[4px_4px_0px_#242424] hover:shadow-[2px_2px_0px_#242424] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              >
+                Land
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Controls Help */}
+        {!isPlaying && gameInitialized && (
+          <div className="absolute bottom-4 left-4 bg-[#ffffff] border-4 border-[#242424] p-4 shadow-[4px_4px_0px_#242424] max-w-xs">
+            <h3 className="text-[#242424] font-bold mb-2">Controls</h3>
+            <div className="text-[#242424] text-sm space-y-1">
+              <div><strong>A/← Left</strong>: Turn left</div>
+              <div><strong>D/→ Right</strong>: Turn right</div>
+              <div><strong>W/S or ↑/↓</strong>: Climb/dive</div>
+              <div><strong>Space</strong>: Thrust forward</div>
+              <div><strong>Shift</strong>: Reverse thrust</div>
+              <div className="mt-2 text-xs italic">Turn in circles to see your smoke trail!</div>
+            </div>
+          </div>
+        )}
+
+        {/* High Scores */}
+        {!isPlaying && highScores.length > 0 && (
+          <div className="absolute bottom-4 right-4 bg-[#ffffff] border-4 border-[#242424] p-4 shadow-[4px_4px_0px_#242424] max-w-xs">
+            <h3 className="text-[#242424] font-bold mb-2">High Scores</h3>
+            <div className="space-y-1">
+              {highScores
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 5)
+                .map((score, index) => (
+                  <div key={score._id} className="text-[#242424] text-sm flex justify-between">
+                    <span>#{index + 1}</span>
+                    <span className="font-bold">{Math.floor(score.value)}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+```
