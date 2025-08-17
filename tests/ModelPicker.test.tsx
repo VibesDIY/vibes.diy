@@ -4,8 +4,18 @@ import ModelPicker from '../app/components/ModelPicker';
 import { MockThemeProvider } from './utils/MockThemeProvider';
 
 const MODELS = [
-  { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Best for coding' },
-  { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', description: 'Fast + frugal' },
+  {
+    id: 'anthropic/claude-sonnet-4',
+    name: 'Claude Sonnet 4',
+    description: 'Best for coding',
+    featured: true,
+  },
+  {
+    id: 'meta-llama/llama-3.1-8b-instruct',
+    name: 'Llama 3.1 8B',
+    description: 'Fast + frugal',
+    featured: true,
+  },
 ];
 
 describe('ModelPicker', () => {

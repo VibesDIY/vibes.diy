@@ -92,6 +92,16 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// Mock ResizeObserver for tests
+global.ResizeObserver = class ResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  constructor(callback: ResizeObserverCallback) {
+    // Mock constructor
+  }
+};
+
 // Mock clipboard API
 Object.assign(navigator, {
   clipboard: {

@@ -1,13 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-// Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
 import { AuthContext } from '../app/contexts/AuthContext';
 import UnifiedSession from '../app/routes/home';
 import { MockThemeProvider } from './utils/MockThemeProvider';
