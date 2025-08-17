@@ -1,5 +1,13 @@
 import type { ChangeEvent, KeyboardEvent } from 'react';
-import { useEffect, memo, useCallback, useRef, forwardRef, useImperativeHandle, useState } from 'react';
+import {
+  useEffect,
+  memo,
+  useCallback,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useState,
+} from 'react';
 import type { ChatState } from '../types/chat';
 import ModelPicker, { type ModelOption } from './ModelPicker';
 import { preloadLlmsText } from '../prompts';
@@ -24,7 +32,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     // Refs
     const submitButtonRef = useRef<HTMLButtonElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    
+
     // State for responsive behavior
     const [isCompact, setIsCompact] = useState(false);
 

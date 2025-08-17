@@ -25,17 +25,22 @@ export const MODEL_IDS: ReadonlySet<string> = new Set(
   (models as Array<{ id: string }>).map((m) => m.id)
 );
 
-// Public: validator helper for model IDs
+// Public: validator helper for model IDs (strict - only known models)
 export function isValidModelId(id: unknown): id is string {
   return typeof id === 'string' && MODEL_IDS.has(id);
+}
+
+// Relaxed validator for any reasonable model ID format (for custom models)
+function isReasonableModelId(id: unknown): id is string {
+  return typeof id === 'string' && id.trim().length > 0 && /^[a-zA-Z0-9\/_.-]+$/.test(id.trim());
 }
 
 // Resolve the effective model id given optional session and global settings
 export function resolveEffectiveModel(settingsDoc?: UserSettings, vibeDoc?: VibeDocument): string {
   const sessionChoice = vibeDoc?.selectedModel;
-  if (isValidModelId(sessionChoice)) return sessionChoice;
+  if (isReasonableModelId(sessionChoice)) return sessionChoice;
   const globalChoice = settingsDoc?.model;
-  if (isValidModelId(globalChoice)) return globalChoice;
+  if (isReasonableModelId(globalChoice)) return globalChoice;
   return DEFAULT_CODING_MODEL;
 }
 
