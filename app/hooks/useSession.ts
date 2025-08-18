@@ -9,7 +9,7 @@ import { getSessionDatabaseName } from '../utils/databaseManager';
 import { useFireproof } from 'use-fireproof';
 import { encodeTitle } from '../components/SessionSidebar/utils';
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from '../llms/catalog';
-import { resolveEffectiveModel, isValidModelId } from '../prompts';
+import { resolveEffectiveModel, normalizeModelId } from '../prompts';
 import { SETTINGS_DBNAME } from '../config/env';
 import type { UserSettings } from '../types/settings';
 
@@ -199,12 +199,13 @@ export function useSession(routedSessionId?: string) {
   // --- Model selection management ---
   const updateSelectedModel = useCallback(
     async (modelId: string) => {
-      // Validate against centralized model list; no-op on invalid input
-      if (!isValidModelId(modelId)) return;
+      // Accept relaxed policy: any non-empty string; persist normalized (trimmed)
+      const normalized = normalizeModelId(modelId);
+      if (!normalized) return; // no-op on empty/whitespace
       const base = vibeRef.current;
       const updatedDoc = {
         ...base,
-        selectedModel: modelId,
+        selectedModel: normalized,
       } as VibeDocument;
       mergeRef.current(updatedDoc);
       await sessionDatabase.put(updatedDoc);

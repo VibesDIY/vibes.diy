@@ -342,6 +342,7 @@ export default function UnifiedSession() {
           <ChatInput
             ref={chatInputRef}
             chatState={chatState}
+            showModelPickerInChat={chatState.showModelPickerInChat}
             currentModel={chatState.effectiveModel}
             onModelChange={async (modelId: string) => {
               if (chatState.updateSelectedModel) {
@@ -352,7 +353,6 @@ export default function UnifiedSession() {
               models as Array<{ id: string; name: string; description: string; featured?: boolean }>
             }
             globalModel={chatState.globalModel}
-            showAllModels={chatState.showAllModels}
             onSend={() => {
               setMessageHasBeenSent(true);
               setHasSubmittedMessage(true);

@@ -11,6 +11,7 @@ vi.unmock('../app/prompts');
 vi.resetModules();
 vi.mock('../app/config/env', () => ({
   CALLAI_ENDPOINT: 'http://localhost/test',
+  APP_MODE: 'test',
 }));
 
 // Mock the callAI function to return our known finite set for testing

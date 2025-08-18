@@ -177,9 +177,45 @@ describe('ChatInput Component', () => {
           onSend={onSend}
           models={emptyModels}
           onModelChange={vi.fn()}
+          showModelPickerInChat
         />
       </MockThemeProvider>
     );
     expect(screen.queryByRole('button', { name: /ai model/i })).toBeNull();
+  });
+
+  it('renders the model picker only when showModelPickerInChat is true', () => {
+    const models = [
+      { id: 'a', name: 'A', description: 'A' },
+      { id: 'b', name: 'B', description: 'B' },
+    ];
+
+    // Flag false → no picker
+    const { rerender } = render(
+      <MockThemeProvider>
+        <ChatInput
+          chatState={mockChatState}
+          onSend={onSend}
+          models={models}
+          onModelChange={vi.fn()}
+          showModelPickerInChat={false}
+        />
+      </MockThemeProvider>
+    );
+    expect(screen.queryByRole('button', { name: /ai model/i })).toBeNull();
+
+    // Flag true → picker renders
+    rerender(
+      <MockThemeProvider>
+        <ChatInput
+          chatState={mockChatState}
+          onSend={onSend}
+          models={models}
+          onModelChange={vi.fn()}
+          showModelPickerInChat
+        />
+      </MockThemeProvider>
+    );
+    expect(screen.getByRole('button', { name: /ai model/i })).toBeInTheDocument();
   });
 });

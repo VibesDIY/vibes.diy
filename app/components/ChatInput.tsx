@@ -12,7 +12,7 @@ interface ChatInputProps {
   onModelChange?: (modelId: string) => void | Promise<void>;
   models?: ModelOption[];
   globalModel?: string;
-  showAllModels?: boolean;
+  showModelPickerInChat?: boolean;
 }
 
 export interface ChatInputRef {
@@ -20,7 +20,10 @@ export interface ChatInputRef {
 }
 
 const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
-  ({ chatState, onSend, currentModel, onModelChange, models, globalModel, showAllModels }, ref) => {
+  (
+    { chatState, onSend, currentModel, onModelChange, models, globalModel, showModelPickerInChat },
+    ref
+  ) => {
     // Refs
     const submitButtonRef = useRef<HTMLButtonElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -110,14 +113,16 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             rows={2}
           />
           <div className="flex items-center justify-between gap-2">
-            {Array.isArray(models) && models.length > 0 && onModelChange ? (
+            {showModelPickerInChat &&
+            Array.isArray(models) &&
+            models.length > 0 &&
+            onModelChange ? (
               <ModelPicker
                 currentModel={currentModel}
                 onModelChange={onModelChange}
                 models={models}
                 globalModel={globalModel}
                 compact={isCompact}
-                showAllModels={showAllModels}
               />
             ) : (
               <span aria-hidden="true" />

@@ -16,6 +16,12 @@ const MODELS = [
     description: 'Fast + frugal',
     featured: true,
   },
+  {
+    id: 'openai/gpt-4.1',
+    name: 'GPT-4.1',
+    description: 'OpenAI coding assistant',
+    featured: false,
+  },
 ];
 
 describe('ModelPicker', () => {
@@ -165,5 +171,23 @@ describe('ModelPicker', () => {
       configurable: true,
       value: originalInnerHeight,
     });
+  });
+
+  it('lists featured models first and includes all models', () => {
+    const onChange = vi.fn();
+    render(
+      <MockThemeProvider>
+        <ModelPicker currentModel={MODELS[0].id} models={MODELS} onModelChange={onChange} />
+      </MockThemeProvider>
+    );
+
+    const trigger = screen.getByRole('button', { name: /ai model/i });
+    fireEvent.click(trigger);
+
+    const items = screen.getAllByRole('menuitemradio');
+    const labels = items.map((el) => el.textContent || '');
+    expect(labels[0]).toMatch(/Claude Sonnet 4/);
+    expect(labels[1]).toMatch(/Llama 3.1 8B/);
+    expect(labels.some((t) => /GPT-4.1/.test(t))).toBe(true);
   });
 });

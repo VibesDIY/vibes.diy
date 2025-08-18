@@ -8,14 +8,25 @@ import './moduleSetup';
 // Mock the prompts module to avoid network/file IO during tests
 vi.mock('../app/prompts', () => ({
   makeBaseSystemPrompt: vi.fn().mockReturnValue('mocked system prompt'),
-  // Minimal stubs used by hooks that depend on prompts
+  // Minimal stubs used by hooks that depend on prompts (reflect relaxed policy + normalization)
+  normalizeModelId: vi
+    .fn()
+    .mockImplementation((id: unknown) =>
+      typeof id === 'string' && id.trim() ? id.trim() : undefined
+    ),
+  isPermittedModelId: vi
+    .fn()
+    .mockImplementation((id: unknown) => typeof id === 'string' && !!id.trim()),
   resolveEffectiveModel: vi
     .fn()
     .mockImplementation(
-      (settingsDoc?: { model?: string }, vibeDoc?: { selectedModel?: string }) =>
-        vibeDoc?.selectedModel || settingsDoc?.model || 'anthropic/claude-sonnet-4'
+      (settingsDoc?: { model?: string }, vibeDoc?: { selectedModel?: string }) => {
+        const session =
+          typeof vibeDoc?.selectedModel === 'string' ? vibeDoc!.selectedModel.trim() : '';
+        const global = typeof settingsDoc?.model === 'string' ? settingsDoc!.model.trim() : '';
+        return session || global || 'anthropic/claude-sonnet-4';
+      }
     ),
-  isValidModelId: vi.fn().mockImplementation((id: unknown) => typeof id === 'string'),
   RESPONSE_FORMAT: {
     dependencies: {
       format: '{dependencies: { "package-name": "version" }}',

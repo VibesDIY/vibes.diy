@@ -9,7 +9,6 @@ interface ModelPickerProps {
   models: ModelOption[];
   globalModel?: string;
   compact?: boolean;
-  showAllModels?: boolean;
 }
 
 /**
@@ -22,7 +21,6 @@ export default function ModelPicker({
   models,
   globalModel,
   compact,
-  showAllModels,
 }: ModelPickerProps) {
   const buttonId = useId();
   const menuId = `model-menu-${buttonId}`;
@@ -31,33 +29,31 @@ export default function ModelPicker({
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Create display list: global model + (all models OR featured models) (deduplicated)
+  // Create display list: include all models, ensure featured-first ordering, and include
+  // a synthetic global model entry if it's not present in the list.
   const displayModels = useMemo(() => {
-    // Choose base list based on showAllModels setting
-    const baseModels = showAllModels ? models : models.filter((m) => m.featured);
+    const base = Array.isArray(models) ? models.slice() : [];
 
-    if (!globalModel) {
-      return baseModels;
-    }
-
-    // Find global model in full models list
-    const globalModelObj = models.find((m) => m.id === globalModel);
-
-    if (globalModelObj) {
-      // Remove global model from base list to avoid duplicates, then add it at the top
-      const baseWithoutGlobal = baseModels.filter((m) => m.id !== globalModel);
-      return [globalModelObj, ...baseWithoutGlobal];
-    } else {
-      // Create synthetic entry for models not in the list
-      const syntheticGlobalModel: ModelOption = {
+    // Include synthetic global model if provided and not already present
+    if (globalModel && !base.some((m) => m.id === globalModel)) {
+      base.push({
         id: globalModel,
         name: `${globalModel} (Custom)`,
         description: 'Custom openrouter model',
         featured: false,
-      };
-      return [syntheticGlobalModel, ...baseModels];
+      });
     }
-  }, [models, globalModel, showAllModels]);
+
+    // Stable featured-first ordering
+    const indexed = base.map((m, i) => ({ m, i }));
+    indexed.sort((a, b) => {
+      const af = a.m.featured ? 1 : 0;
+      const bf = b.m.featured ? 1 : 0;
+      if (af !== bf) return bf - af; // featured first
+      return a.i - b.i; // preserve original order among equals
+    });
+    return indexed.map(({ m }) => m);
+  }, [models, globalModel]);
 
   // Find current model for tooltip text from display models (includes synthetic entries)
   const current =
