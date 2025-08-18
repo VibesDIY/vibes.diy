@@ -79,7 +79,7 @@ describe('About Route', () => {
     // Check for the repo link
     const repoLink = screen.getByText('builder repo');
     expect(repoLink).toBeInTheDocument();
-    expect(repoLink.getAttribute('href')).toBe('https://github.com/fireproof-storage/vibes.diy');
+    expect(repoLink.getAttribute('href')).toBe('https://github.com/vibesDIY/vibes.diy');
   });
 
   it('displays the "Key Features" section with bullet points', () => {

@@ -1,6 +1,6 @@
 # Creating a Vite Template Repository for **vibes.diy**
 
-This note captures the plan discussed in [Issue #77](https://github.com/fireproof-storage/vibes.diy/issues/77) – **shipping a GitHub template that can be consumed from both the Vite CLI and the “Use this template” button.**
+This note captures the plan discussed in [Issue #77](https://github.com/vibesDIY/vibes.diy/issues/77) – **shipping a GitHub template that can be consumed from both the Vite CLI and the “Use this template” button.**
 
 ---
 
@@ -8,7 +8,7 @@ This note captures the plan discussed in [Issue #77](https://github.com/fireproo
 
 ```bash
 # From anywhere
-pnpm create vite@latest my-app -- --template fireproof-storage/eject-vibe
+pnpm create vite@latest my-app -- --template vibesDIY/eject-vibe
 # (yarn create / npm create work too)
 ```
 
@@ -43,7 +43,7 @@ Tips:
 - Keep **`name`, `version`, `description`, `repository`** fields generic so `create-vite` can rewrite them.
 - Prefer **npm** in `README` and `package.json` scripts (`dev`, `build`, `preview`, `lint`, `test`).
 - Don’t check in `.env` – ship an `env-template` instead.
-- If we ever need a sub-folder template we can use `fireproof-storage/eject-vibe#templates/xyz`, but flat root keeps the CLI syntax simplest.
+- If we ever need a sub-folder template we can use `vibesDIY/eject-vibe#templates/xyz`, but flat root keeps the CLI syntax simplest.
 
 ---
 
@@ -68,7 +68,7 @@ Enabling the flag therefore:
 ## 4⃣ Smoke-testing before we publish
 
 ```bash
-npm create vite@latest my-test-app -- --template fireproof-storage/eject-vibe
+npm create vite@latest my-test-app -- --template vibesDIY/eject-vibe
 cd my-test-app
 npm install
 npm dev
@@ -82,7 +82,7 @@ Run `npm test` and `npm lint` to ensure a clean slate. Remember the team prefere
 
 ## 5⃣ Next steps / checklist
 
-- [ ] Create **`fireproof-storage/eject-vibe`** repository.
+- [ ] Create **`vibesDIY/eject-vibe`** repository.
 - [ ] Copy the layout above into the repo root.
 - [ ] Add a **concise README** explaining both usage paths (`create-vite` + "Use this template").
 - [ ] Push → Settings → **Template repository ➜ Enable**.
