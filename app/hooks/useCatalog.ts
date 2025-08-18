@@ -9,7 +9,7 @@ import type { LocalVibe } from '../utils/vibeUtils';
 export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
   if (!userId) throw new Error('No user ID provided');
 
-  const dbName = `vibe-catalog-${userId}`;
+  const dbName = `vibe-datalog-${userId}`;
   const { database, useAllDocs } = useFireproof(dbName, {
     // attach: toCloud()
   });
@@ -86,7 +86,10 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
         await database.bulk(docsToCatalog);
       }
 
-      // Copy screenshots from session databases to catalog, checking CIDs to avoid redundant updates
+      // Batch-check CIDs to determine which screenshots need updating
+      const vibesNeedingScreenshotUpdate = [];
+
+      // First pass: collect session screenshot CIDs
       for (const vibe of vibes) {
         if (cancelled) break;
 
@@ -111,27 +114,44 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
               const catalogCurrentCid = (catalogDoc as any).screenshotCid;
 
               if (catalogCurrentCid !== sessionScreenshotDoc.cid) {
-                // CIDs differ, copy screenshot to catalog
-                const screenshotFile =
-                  typeof sessionScreenshotDoc._files.screenshot.file === 'function'
-                    ? await sessionScreenshotDoc._files.screenshot.file()
-                    : sessionScreenshotDoc._files.screenshot;
-
-                const updatedFiles: any = { ...catalogDoc._files };
-                updatedFiles.screenshot = screenshotFile;
-
-                const updatedDoc = {
-                  ...catalogDoc,
-                  _files: updatedFiles,
-                  screenshotCid: sessionScreenshotDoc.cid,
-                  lastUpdated: Date.now(),
-                };
-
-                await database.put(updatedDoc);
-                console.log(`📸 Updated catalog screenshot for vibe ${vibe.id} (CID changed)`);
+                // CIDs differ, queue for update
+                vibesNeedingScreenshotUpdate.push({
+                  vibe,
+                  catalogDoc,
+                  sessionScreenshotDoc,
+                  sessionDb,
+                });
               }
             }
           }
+        } catch (error) {
+          console.error(`Failed to check screenshot CID for vibe ${vibe.id}:`, error);
+        }
+      }
+
+      // Second pass: only update the ones that actually need it
+      for (const { vibe, catalogDoc, sessionScreenshotDoc } of vibesNeedingScreenshotUpdate) {
+        if (cancelled) break;
+
+        try {
+          // CIDs differ, copy screenshot to catalog
+          const screenshotFile =
+            typeof sessionScreenshotDoc._files.screenshot.file === 'function'
+              ? await sessionScreenshotDoc._files.screenshot.file()
+              : sessionScreenshotDoc._files.screenshot;
+
+          const updatedFiles: any = { ...catalogDoc._files };
+          updatedFiles.screenshot = screenshotFile;
+
+          const updatedDoc = {
+            ...catalogDoc,
+            _files: updatedFiles,
+            screenshotCid: sessionScreenshotDoc.cid,
+            lastUpdated: Date.now(),
+          };
+
+          await database.put(updatedDoc);
+          console.log(`📸 Updated catalog screenshot for vibe ${vibe.id} (CID changed)`);
         } catch (error) {
           console.error(`Failed to sync screenshot for vibe ${vibe.id}:`, error);
         }
