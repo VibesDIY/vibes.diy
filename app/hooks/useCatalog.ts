@@ -92,7 +92,6 @@ function filterValidCatalogDocs(docs: Array<any>): Array<any> {
     return (
       doc._id?.startsWith('catalog-') &&
       doc.vibeId &&
-      !doc.vibeId.startsWith('fatalog-') &&
       doc.vibeId.length > 10
     );
   });
