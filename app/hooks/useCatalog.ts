@@ -9,7 +9,7 @@ import type { LocalVibe } from '../utils/vibeUtils';
 export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
   if (!userId) throw new Error('No user ID provided');
 
-  const dbName = `vibe-datalog-${userId}`;
+  const dbName = `vibe-fatalog-${userId}`;
   const { database, useAllDocs } = useFireproof(dbName, {
     // attach: toCloud()
   });
@@ -62,8 +62,53 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
           .map((key) => key.replace('catalog-', ''))
       );
 
-      // Filter to only catalog uncataloged vibes
-      const uncatalogedVibes = vibes.filter((vibe) => !catalogedVibeIds.has(vibe.id));
+      // Pre-compute which vibes need screenshot updates by checking CIDs
+      const vibesNeedingUpdates = [];
+
+      // Check all vibes for both new catalog entries and screenshot updates
+      for (const vibe of vibes) {
+        if (cancelled) break;
+
+        try {
+          const catalogDocId = `catalog-${vibe.id}`;
+          const catalogDoc = await database.get(catalogDocId).catch(() => null);
+
+          const isNewCatalogEntry = !catalogedVibeIds.has(vibe.id);
+          let needsScreenshotUpdate = false;
+          let sessionScreenshotDoc = null;
+
+          // Check for screenshot updates if catalog doc exists
+          if (catalogDoc) {
+            const sessionDb = fireproof(`vibe-session-${vibe.id}`);
+            const sessionResult = await sessionDb.query('type', {
+              key: 'screenshot',
+              includeDocs: true,
+              descending: true,
+              limit: 1,
+            });
+
+            if (sessionResult.rows.length > 0) {
+              sessionScreenshotDoc = sessionResult.rows[0].doc as any;
+              if (sessionScreenshotDoc._files?.screenshot && sessionScreenshotDoc.cid) {
+                const catalogCurrentCid = (catalogDoc as any).screenshotCid;
+                needsScreenshotUpdate = catalogCurrentCid !== sessionScreenshotDoc.cid;
+              }
+            }
+          }
+
+          if (isNewCatalogEntry || needsScreenshotUpdate) {
+            vibesNeedingUpdates.push({
+              vibe,
+              catalogDoc,
+              sessionScreenshotDoc,
+              isNewCatalogEntry,
+              needsScreenshotUpdate,
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to check vibe ${vibe.id}:`, error);
+        }
+      }
 
       // Console a random vibe from useVibes
       if (vibes.length > 0) {
@@ -71,97 +116,80 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
         console.log('Random vibe from useVibes:', randomVibe);
       }
 
-      // Prepare documents for bulk insert
-      const docsToCatalog = uncatalogedVibes.map((vibe) => ({
-        _id: `catalog-${vibe.id}`,
-        created: Date.now(),
-        userId,
-        vibeId: vibe.id,
-        title: vibe.title,
-        url: vibe.publishedUrl,
-      }));
+      // Prepare documents for single bulk operation
+      const docsToBulkUpdate = [];
 
-      // Bulk catalog all uncataloged vibes at once
-      if (docsToCatalog.length > 0 && !cancelled) {
-        await database.bulk(docsToCatalog);
-      }
-
-      // Batch-check CIDs to determine which screenshots need updating
-      const vibesNeedingScreenshotUpdate = [];
-
-      // First pass: collect session screenshot CIDs
-      for (const vibe of vibes) {
+      for (const {
+        vibe,
+        catalogDoc,
+        sessionScreenshotDoc,
+        isNewCatalogEntry,
+        needsScreenshotUpdate,
+      } of vibesNeedingUpdates) {
         if (cancelled) break;
 
         try {
-          const catalogDocId = `catalog-${vibe.id}`;
-          const catalogDoc = await database.get(catalogDocId).catch(() => null);
-          if (!catalogDoc) continue;
+          let docToUpdate: any;
 
-          // Get session database for this vibe
-          const sessionDb = fireproof(`vibe-session-${vibe.id}`);
-          const sessionResult = await sessionDb.query('type', {
-            key: 'screenshot',
-            includeDocs: true,
-            descending: true,
-            limit: 1,
-          });
-
-          if (sessionResult.rows.length > 0) {
-            const sessionScreenshotDoc = sessionResult.rows[0].doc as any;
-            if (sessionScreenshotDoc._files?.screenshot && sessionScreenshotDoc.cid) {
-              // Check if catalog already has this CID
-              const catalogCurrentCid = (catalogDoc as any).screenshotCid;
-
-              if (catalogCurrentCid !== sessionScreenshotDoc.cid) {
-                // CIDs differ, queue for update
-                vibesNeedingScreenshotUpdate.push({
-                  vibe,
-                  catalogDoc,
-                  sessionScreenshotDoc,
-                  sessionDb,
-                });
-              }
-            }
+          if (isNewCatalogEntry) {
+            // New catalog entry
+            docToUpdate = {
+              _id: `catalog-${vibe.id}`,
+              created: Date.now(),
+              userId,
+              vibeId: vibe.id,
+              title: vibe.title,
+              url: vibe.publishedUrl,
+            };
+          } else {
+            // Existing entry needing screenshot update
+            docToUpdate = { ...catalogDoc };
           }
+
+          // Add screenshot if needed
+          if (needsScreenshotUpdate && sessionScreenshotDoc) {
+            const screenshotFile =
+              typeof sessionScreenshotDoc._files.screenshot.file === 'function'
+                ? await sessionScreenshotDoc._files.screenshot.file()
+                : sessionScreenshotDoc._files.screenshot;
+
+            const updatedFiles: any = { ...docToUpdate._files };
+            updatedFiles.screenshot = screenshotFile;
+
+            docToUpdate._files = updatedFiles;
+            docToUpdate.screenshotCid = sessionScreenshotDoc.cid;
+            docToUpdate.lastUpdated = Date.now();
+
+            console.log(
+              `📸 Preparing catalog screenshot update for vibe ${vibe.id} (CID: ${sessionScreenshotDoc.cid})`
+            );
+          }
+
+          docsToBulkUpdate.push(docToUpdate);
         } catch (error) {
-          console.error(`Failed to check screenshot CID for vibe ${vibe.id}:`, error);
+          console.error(`Failed to prepare update for vibe ${vibe.id}:`, error);
         }
       }
 
-      // Second pass: only update the ones that actually need it
-      for (const { vibe, catalogDoc, sessionScreenshotDoc } of vibesNeedingScreenshotUpdate) {
-        if (cancelled) break;
-
-        try {
-          // CIDs differ, copy screenshot to catalog
-          const screenshotFile =
-            typeof sessionScreenshotDoc._files.screenshot.file === 'function'
-              ? await sessionScreenshotDoc._files.screenshot.file()
-              : sessionScreenshotDoc._files.screenshot;
-
-          const updatedFiles: any = { ...catalogDoc._files };
-          updatedFiles.screenshot = screenshotFile;
-
-          const updatedDoc = {
-            ...catalogDoc,
-            _files: updatedFiles,
-            screenshotCid: sessionScreenshotDoc.cid,
-            lastUpdated: Date.now(),
-          };
-
-          await database.put(updatedDoc);
-          console.log(`📸 Updated catalog screenshot for vibe ${vibe.id} (CID changed)`);
-        } catch (error) {
-          console.error(`Failed to sync screenshot for vibe ${vibe.id}:`, error);
+      // Bulk operations in chunks of 10 documents
+      if (docsToBulkUpdate.length > 0 && !cancelled) {
+        const chunkSize = 10;
+        for (let i = 0; i < docsToBulkUpdate.length; i += chunkSize) {
+          if (cancelled) break;
+          const chunk = docsToBulkUpdate.slice(i, i + chunkSize);
+          await database.bulk(chunk);
         }
+        const screenshotUpdates = docsToBulkUpdate.filter((doc) => doc.screenshotCid).length;
+        console.log(
+          `📋 Bulk updated ${docsToBulkUpdate.length} catalog documents (${screenshotUpdates} with screenshots)`
+        );
       }
 
       // Get final count after processing
       if (cancelled) return;
       const finalDocsResult = await database.allDocs({ includeDocs: true });
       console.log(
-        `📋 Finished catalog - ${finalDocsResult.rows.length} total cataloged in allDocs (added ${docsToCatalog.length})`
+        `📋 Finished catalog - ${finalDocsResult.rows.length} total cataloged in allDocs (updated ${docsToBulkUpdate.length})`
       );
     };
 
