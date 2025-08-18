@@ -11,9 +11,19 @@ import { getCatalogDbName, createCatalogDocId } from '../utils/catalogUtils';
 // Helper function to get vibe document from session database
 async function getVibeDocument(vibeId: string): Promise<VibeDocument | null> {
   try {
-    const sessionDb = fireproof(`vibe-${vibeId}`);
+    const dbName = `vibe-${vibeId}`;
+    const sessionDb = fireproof(dbName);
     await new Promise((resolve) => setTimeout(resolve, 50));
-    return (await sessionDb.get('vibe').catch(() => null)) as VibeDocument | null;
+    const vibeDoc = (await sessionDb.get('vibe').catch(() => null)) as VibeDocument | null;
+
+    console.log(`🐛 getVibeDocument for ${vibeId}:`, {
+      dbName,
+      hasVibeDoc: !!vibeDoc,
+      vibeDocKeys: vibeDoc ? Object.keys(vibeDoc) : null,
+      vibeDocTitle: vibeDoc?.title,
+    });
+
+    return vibeDoc;
   } catch (error) {
     console.error(`Failed to get vibe document for ${vibeId}:`, error);
     return null;
@@ -23,7 +33,8 @@ async function getVibeDocument(vibeId: string): Promise<VibeDocument | null> {
 // Helper function to get latest screenshot from session database
 async function getLatestScreenshot(vibeId: string): Promise<ScreenshotDocument | null> {
   try {
-    const sessionDb = fireproof(`vibe-${vibeId}`);
+    const dbName = `vibe-${vibeId}`;
+    const sessionDb = fireproof(dbName);
     const sessionResult = await sessionDb.query('type', {
       key: 'screenshot',
       includeDocs: true,
@@ -31,8 +42,31 @@ async function getLatestScreenshot(vibeId: string): Promise<ScreenshotDocument |
       limit: 1,
     });
 
+    console.log(`🐛 getLatestScreenshot for ${vibeId}:`, {
+      dbName,
+      queryResultsCount: sessionResult.rows.length,
+      queryResults: sessionResult.rows.map((row) => ({
+        id: row.id,
+        key: row.key,
+        hasDoc: !!row.doc,
+        docType: (row.doc as ScreenshotDocument)?.type,
+        docCid: (row.doc as ScreenshotDocument)?.cid,
+        hasFiles: !!row.doc?._files,
+        filesKeys: row.doc?._files ? Object.keys(row.doc._files) : null,
+        hasScreenshotFile: !!row.doc?._files?.screenshot,
+      })),
+    });
+
     if (sessionResult.rows.length > 0) {
       const screenshot = sessionResult.rows[0].doc as ScreenshotDocument;
+      console.log(`🐛 Screenshot doc structure for ${vibeId}:`, {
+        docKeys: Object.keys(screenshot),
+        hasFiles: !!screenshot._files,
+        hasCid: !!screenshot.cid,
+        hasScreenshotFile: !!screenshot._files?.screenshot,
+        screenshotFileType: typeof screenshot._files?.screenshot,
+      });
+
       if (screenshot._files?.screenshot && screenshot.cid) {
         return screenshot;
       }
@@ -96,6 +130,16 @@ function filterValidCatalogDocs(docs: Array<any>): Array<any> {
 
 // Helper function to transform catalog document to LocalVibe format
 function transformToLocalVibe(doc: any): LocalVibe {
+  // Debug logging for screenshot transformation
+  console.log(`🐛 transformToLocalVibe[${doc.vibeId}]:`, {
+    hasFiles: !!doc._files,
+    hasScreenshot: !!doc._files?.screenshot,
+    screenshotType: typeof doc._files?.screenshot,
+    filesKeys: doc._files ? Object.keys(doc._files) : [],
+    docKeys: Object.keys(doc),
+    doc: doc,
+  });
+
   return {
     id: doc.vibeId,
     title: doc.title,
@@ -177,6 +221,16 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
           const vibeDoc = await getVibeDocument(vibe.id);
           const sessionScreenshotDoc = await getLatestScreenshot(vibe.id);
 
+          console.log(`🐛 Screenshot check for ${vibe.id}:`, {
+            hasVibeDoc: !!vibeDoc,
+            hasSessionScreenshot: !!sessionScreenshotDoc,
+            sessionScreenshotCid: sessionScreenshotDoc?.cid,
+            sessionScreenshotFiles: sessionScreenshotDoc?._files
+              ? Object.keys(sessionScreenshotDoc._files)
+              : null,
+            catalogCurrentCid: (catalogDoc as any)?.screenshotCid,
+          });
+
           // Check if screenshot needs updating
           let needsScreenshotUpdate = false;
           if (sessionScreenshotDoc) {
@@ -226,7 +280,19 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
           // Add screenshot if needed
           if (needsScreenshotUpdate && sessionScreenshotDoc) {
+            console.log(`🐛 Before addScreenshotToCatalogDoc for ${vibe.id}:`, {
+              sessionScreenshotCid: sessionScreenshotDoc.cid,
+              hasSessionFiles: !!sessionScreenshotDoc._files,
+              sessionScreenshotKeys: sessionScreenshotDoc._files
+                ? Object.keys(sessionScreenshotDoc._files)
+                : [],
+            });
             await addScreenshotToCatalogDoc(docToUpdate, sessionScreenshotDoc);
+            console.log(`🐛 After addScreenshotToCatalogDoc for ${vibe.id}:`, {
+              docHasFiles: !!docToUpdate._files,
+              docFilesKeys: docToUpdate._files ? Object.keys(docToUpdate._files) : [],
+              docScreenshotCid: docToUpdate.screenshotCid,
+            });
             console.log(
               `📸 Preparing catalog screenshot update for vibe ${vibe.id} (CID: ${sessionScreenshotDoc.cid})`
             );

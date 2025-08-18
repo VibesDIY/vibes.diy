@@ -13,6 +13,15 @@ export function VibeCardCatalog({ catalogVibe }: VibeCardCatalogProps) {
   const navigate = useNavigate();
   const { toggleFavorite, deleteVibe } = useVibes();
 
+  // Debug logging for screenshot data
+  console.log(`🐛 VibeCardCatalog[${catalogVibe.id}]:`, {
+    hasScreenshot: !!catalogVibe.screenshot,
+    screenshotType: catalogVibe.screenshot?.type,
+    screenshotFile: typeof catalogVibe.screenshot?.file,
+    vibeTitle: catalogVibe.title,
+    catalogVibe: catalogVibe,
+  });
+
   // Navigation functions
   const handleEditClick = (id: string, encodedTitle: string) => {
     navigate(`/chat/${id}/${encodedTitle}/app`);
