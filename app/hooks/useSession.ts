@@ -9,6 +9,7 @@ import { getSessionDatabaseName } from '../utils/databaseManager';
 import { useFireproof } from 'use-fireproof';
 import { encodeTitle } from '../components/SessionSidebar/utils';
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from '../llms/catalog';
+import { generateCid } from '../utils/cidUtils';
 
 export function useSession(routedSessionId?: string) {
   const [generatedSessionId] = useState(
@@ -200,6 +201,9 @@ export function useSession(routedSessionId?: string) {
       if (!sessionId || !screenshotData) return;
 
       try {
+        // Generate CID for the screenshot
+        const cid = await generateCid(screenshotData);
+
         const response = await fetch(screenshotData);
         const blob = await response.blob();
         const file = new File([blob], 'screenshot.png', {
@@ -209,6 +213,7 @@ export function useSession(routedSessionId?: string) {
         const screenshot = {
           type: 'screenshot',
           session_id: sessionId,
+          cid, // Store CID for deduplication
           _files: {
             screenshot: file,
           },

@@ -11,7 +11,6 @@
 
 # VS Code settings
 .vscode/settings.json
-.claude/settings.local.json
 
 *storybook.log
 storybook-static

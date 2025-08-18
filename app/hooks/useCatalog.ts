@@ -1,8 +1,9 @@
 import {
   useFireproof,
+  fireproof,
   // toCloud
 } from 'use-fireproof';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { LocalVibe } from '../utils/vibeUtils';
 
 export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
@@ -85,6 +86,57 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
         await database.bulk(docsToCatalog);
       }
 
+      // Copy screenshots from session databases to catalog, checking CIDs to avoid redundant updates
+      for (const vibe of vibes) {
+        if (cancelled) break;
+
+        try {
+          const catalogDocId = `catalog-${vibe.id}`;
+          const catalogDoc = await database.get(catalogDocId).catch(() => null);
+          if (!catalogDoc) continue;
+
+          // Get session database for this vibe
+          const sessionDb = fireproof(`vibe-session-${vibe.id}`);
+          const sessionResult = await sessionDb.query('type', {
+            key: 'screenshot',
+            includeDocs: true,
+            descending: true,
+            limit: 1,
+          });
+
+          if (sessionResult.rows.length > 0) {
+            const sessionScreenshotDoc = sessionResult.rows[0].doc as any;
+            if (sessionScreenshotDoc._files?.screenshot && sessionScreenshotDoc.cid) {
+              // Check if catalog already has this CID
+              const catalogCurrentCid = (catalogDoc as any).screenshotCid;
+
+              if (catalogCurrentCid !== sessionScreenshotDoc.cid) {
+                // CIDs differ, copy screenshot to catalog
+                const screenshotFile =
+                  typeof sessionScreenshotDoc._files.screenshot.file === 'function'
+                    ? await sessionScreenshotDoc._files.screenshot.file()
+                    : sessionScreenshotDoc._files.screenshot;
+
+                const updatedFiles: any = { ...catalogDoc._files };
+                updatedFiles.screenshot = screenshotFile;
+
+                const updatedDoc = {
+                  ...catalogDoc,
+                  _files: updatedFiles,
+                  screenshotCid: sessionScreenshotDoc.cid,
+                  lastUpdated: Date.now(),
+                };
+
+                await database.put(updatedDoc);
+                console.log(`📸 Updated catalog screenshot for vibe ${vibe.id} (CID changed)`);
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to sync screenshot for vibe ${vibe.id}:`, error);
+        }
+      }
+
       // Get final count after processing
       if (cancelled) return;
       const finalDocsResult = await database.allDocs({ includeDocs: true });
@@ -101,5 +153,57 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
     };
   }, [userId, vibeKey, database]); // Use vibeKey instead of vibes array
 
-  return { count };
+  // Add screenshot and source to catalog document
+  const addCatalogScreenshot = useCallback(
+    async (vibeId: string, screenshotData: string | null, sourceCode?: string) => {
+      if (!vibeId) return;
+
+      try {
+        const docId = `catalog-${vibeId}`;
+
+        // Get existing catalog document
+        const existingDoc = await database.get(docId).catch(() => null);
+        if (!existingDoc) {
+          console.warn('No catalog document found for vibe:', vibeId);
+          return;
+        }
+
+        const updatedFiles: any = { ...existingDoc._files };
+
+        // Add screenshot if provided
+        if (screenshotData) {
+          const response = await fetch(screenshotData);
+          const blob = await response.blob();
+          const screenshotFile = new File([blob], 'screenshot.png', {
+            type: 'image/png',
+            lastModified: Date.now(),
+          });
+          updatedFiles.screenshot = screenshotFile;
+        }
+
+        // Add source code if provided
+        if (sourceCode) {
+          const sourceFile = new File([sourceCode], 'App.jsx', {
+            type: 'text/javascript',
+            lastModified: Date.now(),
+          });
+          updatedFiles.source = sourceFile;
+        }
+
+        // Update catalog document with files
+        const updatedDoc = {
+          ...existingDoc,
+          _files: updatedFiles,
+          lastUpdated: Date.now(),
+        };
+
+        await database.put(updatedDoc);
+      } catch (error) {
+        console.error('Failed to update catalog with screenshot/source:', error);
+      }
+    },
+    [database]
+  );
+
+  return { count, addCatalogScreenshot };
 }
