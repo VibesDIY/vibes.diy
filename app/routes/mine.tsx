@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { StarIcon } from '../components/SessionSidebar/StarIcon';
 import { EditIcon } from '../components/ChatHeaderIcons';
 import SimpleAppLayout from '../components/SimpleAppLayout';
-import { VibeCardData } from '../components/VibeCardData';
+import { VibeCardCatalog } from '../components/VibeCardCatalog';
 import VibesDIYLogo from '../components/VibesDIYLogo';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../hooks/useSession';
@@ -154,7 +154,7 @@ export default function MyVibesRoute(): ReactElement {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {/* Render vibes with simple slicing */}
                 {filteredVibes.slice(0, itemsToShow).map((vibe) => (
-                  <VibeCardData key={vibe.id} vibeId={vibe.id} />
+                  <VibeCardCatalog key={vibe.id} catalogVibe={vibe} />
                 ))}
 
                 {/* Invisible loading trigger for infinite scroll */}
