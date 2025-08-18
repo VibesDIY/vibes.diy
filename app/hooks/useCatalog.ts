@@ -7,9 +7,9 @@ import { useCallback, useEffect, useMemo } from 'react';
 import type { LocalVibe } from '../utils/vibeUtils';
 
 export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
-  if (!userId) throw new Error('No user ID provided');
+  userId = userId || 'local';
 
-  const dbName = `vibe-fatalog-${userId}`;
+  const dbName = `vibez-catalog-${userId}`;
   const { database, useAllDocs } = useFireproof(dbName, {
     // attach: toCloud()
   });
@@ -253,5 +253,30 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
     [database]
   );
 
-  return { count, addCatalogScreenshot };
+  // Get catalog documents for display
+  const { docs: catalogDocs } = useAllDocs() as {
+    docs: Array<any>;
+  };
+
+  // Transform catalog documents to LocalVibe format for compatibility
+  const catalogVibes = useMemo(() => {
+    return catalogDocs
+      .filter(doc => doc._id?.startsWith('catalog-'))
+      .map(doc => ({
+        id: doc.vibeId,
+        title: doc.title,
+        encodedTitle: doc.title?.toLowerCase().replace(/\s+/g, '-') || '',
+        slug: doc.vibeId,
+        created: new Date(doc.created).toISOString(),
+        favorite: false, // TODO: Add favorite tracking to catalog
+        publishedUrl: doc.url,
+        screenshot: doc._files?.screenshot ? {
+          file: () => Promise.resolve(doc._files.screenshot),
+          type: 'image/png'
+        } : undefined,
+      }))
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+  }, [catalogDocs]);
+
+  return { count, addCatalogScreenshot, catalogVibes };
 }

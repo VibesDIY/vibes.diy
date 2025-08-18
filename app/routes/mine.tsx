@@ -9,6 +9,7 @@ import VibesDIYLogo from '../components/VibesDIYLogo';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../hooks/useSession';
 import { useVibes } from '../hooks/useVibes';
+import { useCatalog } from '../hooks/useCatalog';
 import { VibeCatalog } from '../hooks/VibeCatalog';
 
 export function meta() {
@@ -29,15 +30,19 @@ export default function MyVibesRoute(): ReactElement {
 
   // Use our custom hook for vibes state management
   const { vibes, isLoading } = useVibes();
+  const { catalogVibes } = useCatalog(userId || '', vibes);
+  
+  // Use catalog vibes if available, fallback to useVibes
+  const displayVibes = catalogVibes.length > 0 ? catalogVibes : vibes;
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   // Filter vibes based on the showOnlyFavorites toggle
   const filteredVibes = useMemo(() => {
     if (showOnlyFavorites) {
-      return vibes.filter((vibe) => vibe.favorite);
+      return displayVibes.filter((vibe) => vibe.favorite);
     }
-    return vibes;
-  }, [vibes, showOnlyFavorites]);
+    return displayVibes;
+  }, [displayVibes, showOnlyFavorites]);
 
   // Log a random loaded vibeDoc as used for render
   useEffect(() => {
