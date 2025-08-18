@@ -1376,9 +1376,13 @@ export default function SkyGlider() {
     state.velocity.z = Math.cos(state.heading) * Math.cos(state.pitch) * state.forwardSpeed;
 
     glider.position.add(new THREE.Vector3(state.velocity.x, state.velocity.y, state.velocity.z));
-    
+
     // Point glider in thrust vector direction
-    const thrustDirection = new THREE.Vector3(state.velocity.x, state.velocity.y, state.velocity.z).normalize();
+    const thrustDirection = new THREE.Vector3(
+      state.velocity.x,
+      state.velocity.y,
+      state.velocity.z
+    ).normalize();
     if (thrustDirection.length() > 0) {
       glider.lookAt(glider.position.clone().add(thrustDirection));
     }
@@ -1493,7 +1497,9 @@ export default function HalftoneArtStudio() {
   const [showParameters, setShowParameters] = useState(false);
 
   const { docs: presets } = useLiveQuery('type', { key: 'preset' }) || { docs: [] };
-  const { docs: parameterHistory } = useLiveQuery('type', { key: 'parameter-state' }) || { docs: [] };
+  const { docs: parameterHistory } = useLiveQuery('type', { key: 'parameter-state' }) || {
+    docs: [],
+  };
 
   const [parameters, setParameters] = useState({
     shape: 1, // 1=Dot, 2=Ellipse, 3=Line, 4=Square
@@ -1508,18 +1514,21 @@ export default function HalftoneArtStudio() {
     disable: false,
     objectCount: 25,
     rotationSpeed: 1,
-    colorTheme: 0 // 0=Rainbow, 1=Warm, 2=Cool, 3=Monochrome
+    colorTheme: 0, // 0=Rainbow, 1=Warm, 2=Cool, 3=Monochrome
   });
 
-  const saveParameterState = useCallback(async (params, action = 'manual') => {
-    await database.put({
-      _id: `param-state-${Date.now()}`,
-      type: 'parameter-state',
-      parameters: { ...params },
-      action,
-      timestamp: Date.now()
-    });
-  }, [database]);
+  const saveParameterState = useCallback(
+    async (params, action = 'manual') => {
+      await database.put({
+        _id: `param-state-${Date.now()}`,
+        type: 'parameter-state',
+        parameters: { ...params },
+        action,
+        timestamp: Date.now(),
+      });
+    },
+    [database]
+  );
 
   const savePreset = useCallback(async () => {
     if (!presetName.trim()) return;
@@ -1529,7 +1538,7 @@ export default function HalftoneArtStudio() {
       type: 'preset',
       name: presetName,
       parameters: { ...parameters },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     setPresetName('');
@@ -1564,7 +1573,7 @@ export default function HalftoneArtStudio() {
       disable: false,
       objectCount: Math.floor(Math.random() * 40) + 10,
       rotationSpeed: Math.random() * 3 + 0.5,
-      colorTheme: Math.floor(Math.random() * 4)
+      colorTheme: Math.floor(Math.random() * 4),
     };
 
     setParameters(newParams);
@@ -1598,7 +1607,7 @@ export default function HalftoneArtStudio() {
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       antialias: true,
-      preserveDrawingBuffer: true
+      preserveDrawingBuffer: true,
     });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1637,7 +1646,7 @@ export default function HalftoneArtStudio() {
       blending: parameters.blending,
       blendingMode: parameters.blendingMode,
       greyscale: parameters.greyscale,
-      disable: parameters.disable
+      disable: parameters.disable,
     });
     composer.addPass(halftonePass);
 
@@ -1650,13 +1659,13 @@ export default function HalftoneArtStudio() {
       halftonePass,
       group,
       controls,
-      objects: []
+      objects: [],
     };
 
     // Create initial objects
     const createObjects = () => {
       // Clear existing objects
-      sceneRef.current.objects.forEach(obj => {
+      sceneRef.current.objects.forEach((obj) => {
         group.remove(obj);
       });
       sceneRef.current.objects = [];
@@ -1666,7 +1675,7 @@ export default function HalftoneArtStudio() {
         [0xff70a6, 0x70d6ff, 0xffd670, 0xe9ff70, 0xff9770], // Rainbow
         [0xff9770, 0xffd670, 0xff70a6], // Warm
         [0x70d6ff, 0xe9ff70, 0x242424], // Cool
-        [0xffffff, 0x242424] // Monochrome
+        [0xffffff, 0x242424], // Monochrome
       ];
 
       const colors = colorThemes[parameters.colorTheme] || colorThemes[0];
@@ -1674,7 +1683,7 @@ export default function HalftoneArtStudio() {
       // Shader material for interesting effects
       const material = new THREE.ShaderMaterial({
         uniforms: {
-          time: { value: 0 }
+          time: { value: 0 },
         },
         vertexShader: `
           varying vec2 vUv;
@@ -1704,7 +1713,7 @@ export default function HalftoneArtStudio() {
             color = mix(color, vec3(1.0, 0.4, 0.6), sin(time + vPosition.y) * 0.5 + 0.5);
             gl_FragColor = vec4(color, 1.0);
           }
-        `
+        `,
       });
 
       // Create various geometric shapes
@@ -1716,7 +1725,7 @@ export default function HalftoneArtStudio() {
         new THREE.OctahedronGeometry(1.2),
         new THREE.TetrahedronGeometry(1.5),
         new THREE.DodecahedronGeometry(1),
-        new THREE.IcosahedronGeometry(1.2)
+        new THREE.IcosahedronGeometry(1.2),
       ];
 
       for (let i = 0; i < parameters.objectCount; i++) {
@@ -1725,7 +1734,7 @@ export default function HalftoneArtStudio() {
           color: colors[Math.floor(Math.random() * colors.length)],
           shininess: 100,
           transparent: true,
-          opacity: 0.8 + Math.random() * 0.2
+          opacity: 0.8 + Math.random() * 0.2,
         });
 
         const mesh = new THREE.Mesh(geometry, Math.random() > 0.3 ? basicMaterial : material);
@@ -1758,7 +1767,7 @@ export default function HalftoneArtStudio() {
       const elapsed = clock.getElapsedTime();
 
       // Update material uniforms
-      sceneRef.current.objects.forEach(obj => {
+      sceneRef.current.objects.forEach((obj) => {
         if (obj.material.uniforms && obj.material.uniforms.time) {
           obj.material.uniforms.time.value = elapsed;
         }
@@ -1810,43 +1819,46 @@ export default function HalftoneArtStudio() {
   }, [parameters]);
 
   const shapeName = ['', 'Dot', 'Ellipse', 'Line', 'Square'][parameters.shape] || 'Dot';
-  const blendModeName = ['', 'Linear', 'Multiply', 'Add', 'Lighter', 'Darker'][parameters.blendingMode] || 'Linear';
+  const blendModeName =
+    ['', 'Linear', 'Multiply', 'Add', 'Lighter', 'Darker'][parameters.blendingMode] || 'Linear';
   const actionNames = {
     'before-randomize': '🎲 Before Random',
-    'randomized': '✨ Randomized',
-    'manual': '✏️ Manual Edit'
+    randomized: '✨ Randomized',
+    manual: '✏️ Manual Edit',
   };
 
   return (
-    <div className="relative h-screen w-full bg-[#242424] overflow-hidden">
+    <div className="relative h-screen w-full overflow-hidden bg-[#242424]">
       {/* Background pattern */}
       <div
         className="absolute inset-0 opacity-10"
         style={{
           backgroundImage: `radial-gradient(circle at 25px 25px, #70d6ff 2px, transparent 2px)`,
-          backgroundSize: '50px 50px'
+          backgroundSize: '50px 50px',
         }}
       />
 
       <canvas ref={canvasRef} className="absolute inset-0" />
 
       {/* Main Control Panel */}
-      <div className={`absolute top-4 left-4 bg-[#ffffff] rounded-lg p-4 shadow-lg border-4 border-[#242424] max-h-[calc(100vh-2rem)] overflow-y-auto transition-all duration-300 ${showParameters ? 'w-80' : 'w-64'}`}>
-        <h2 className="text-lg font-bold text-[#242424] mb-4">RGB Halftone Studio</h2>
+      <div
+        className={`absolute top-4 left-4 max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border-4 border-[#242424] bg-[#ffffff] p-4 shadow-lg transition-all duration-300 ${showParameters ? 'w-80' : 'w-64'}`}
+      >
+        <h2 className="mb-4 text-lg font-bold text-[#242424]">RGB Halftone Studio</h2>
 
         {/* Always visible controls */}
-        <div className="space-y-3 mb-4">
+        <div className="mb-4 space-y-3">
           <button
             onClick={generateRandomScene}
             disabled={isGenerating}
-            className="w-full bg-[#ff70a6] text-[#242424] font-bold py-3 px-4 rounded border-2 border-[#242424] hover:bg-[#ff9770] disabled:opacity-50"
+            className="w-full rounded border-2 border-[#242424] bg-[#ff70a6] px-4 py-3 font-bold text-[#242424] hover:bg-[#ff9770] disabled:opacity-50"
           >
             {isGenerating ? 'Generating...' : '🎲 Random Art'}
           </button>
 
           <button
             onClick={() => setShowParameters(!showParameters)}
-            className="w-full bg-[#70d6ff] text-[#242424] font-bold py-2 px-4 rounded border-2 border-[#242424] hover:bg-[#e9ff70]"
+            className="w-full rounded border-2 border-[#242424] bg-[#70d6ff] px-4 py-2 font-bold text-[#242424] hover:bg-[#e9ff70]"
           >
             {showParameters ? '🔼 Hide Controls' : '🔽 Show Controls'}
           </button>
@@ -1857,11 +1869,15 @@ export default function HalftoneArtStudio() {
           <div className="space-y-4">
             {/* Shape Controls */}
             <div>
-              <label className="block text-sm font-bold text-[#242424] mb-2">Shape: {shapeName}</label>
+              <label className="mb-2 block text-sm font-bold text-[#242424]">
+                Shape: {shapeName}
+              </label>
               <select
                 value={parameters.shape}
-                onChange={(e) => setParameters(prev => ({ ...prev, shape: parseInt(e.target.value) }))}
-                className="w-full p-2 border-2 border-[#242424] rounded text-[#242424]"
+                onChange={(e) =>
+                  setParameters((prev) => ({ ...prev, shape: parseInt(e.target.value) }))
+                }
+                className="w-full rounded border-2 border-[#242424] p-2 text-[#242424]"
               >
                 <option value={1}>Dot</option>
                 <option value={2}>Ellipse</option>
@@ -1872,14 +1888,18 @@ export default function HalftoneArtStudio() {
 
             {/* Size Controls */}
             <div>
-              <label className="block text-sm font-bold text-[#242424] mb-2">Size: {parameters.radius.toFixed(1)}</label>
+              <label className="mb-2 block text-sm font-bold text-[#242424]">
+                Size: {parameters.radius.toFixed(1)}
+              </label>
               <input
                 type="range"
                 min="1"
                 max="25"
                 step="0.5"
                 value={parameters.radius}
-                onChange={(e) => setParameters(prev => ({ ...prev, radius: parseFloat(e.target.value) }))}
+                onChange={(e) =>
+                  setParameters((prev) => ({ ...prev, radius: parseFloat(e.target.value) }))
+                }
                 className="w-full"
               />
             </div>
@@ -1887,35 +1907,47 @@ export default function HalftoneArtStudio() {
             {/* Color Rotation */}
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="block text-xs font-bold text-[#ff70a6] mb-1">Red: {parameters.rotateR.toFixed(0)}°</label>
+                <label className="mb-1 block text-xs font-bold text-[#ff70a6]">
+                  Red: {parameters.rotateR.toFixed(0)}°
+                </label>
                 <input
                   type="range"
                   min="0"
                   max="90"
                   value={parameters.rotateR}
-                  onChange={(e) => setParameters(prev => ({ ...prev, rotateR: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setParameters((prev) => ({ ...prev, rotateR: parseFloat(e.target.value) }))
+                  }
                   className="w-full"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#e9ff70] mb-1">Green: {parameters.rotateG.toFixed(0)}°</label>
+                <label className="mb-1 block text-xs font-bold text-[#e9ff70]">
+                  Green: {parameters.rotateG.toFixed(0)}°
+                </label>
                 <input
                   type="range"
                   min="0"
                   max="90"
                   value={parameters.rotateG}
-                  onChange={(e) => setParameters(prev => ({ ...prev, rotateG: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setParameters((prev) => ({ ...prev, rotateG: parseFloat(e.target.value) }))
+                  }
                   className="w-full"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#70d6ff] mb-1">Blue: {parameters.rotateB.toFixed(0)}°</label>
+                <label className="mb-1 block text-xs font-bold text-[#70d6ff]">
+                  Blue: {parameters.rotateB.toFixed(0)}°
+                </label>
                 <input
                   type="range"
                   min="0"
                   max="90"
                   value={parameters.rotateB}
-                  onChange={(e) => setParameters(prev => ({ ...prev, rotateB: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setParameters((prev) => ({ ...prev, rotateB: parseFloat(e.target.value) }))
+                  }
                   className="w-full"
                 />
               </div>
@@ -1923,37 +1955,49 @@ export default function HalftoneArtStudio() {
 
             {/* Effects */}
             <div>
-              <label className="block text-sm font-bold text-[#242424] mb-2">Scatter: {(parameters.scatter * 100).toFixed(0)}%</label>
+              <label className="mb-2 block text-sm font-bold text-[#242424]">
+                Scatter: {(parameters.scatter * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 min="0"
                 max="1"
                 step="0.01"
                 value={parameters.scatter}
-                onChange={(e) => setParameters(prev => ({ ...prev, scatter: parseFloat(e.target.value) }))}
+                onChange={(e) =>
+                  setParameters((prev) => ({ ...prev, scatter: parseFloat(e.target.value) }))
+                }
                 className="w-full"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-[#242424] mb-2">Blend: {(parameters.blending * 100).toFixed(0)}%</label>
+              <label className="mb-2 block text-sm font-bold text-[#242424]">
+                Blend: {(parameters.blending * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 min="0"
                 max="1"
                 step="0.01"
                 value={parameters.blending}
-                onChange={(e) => setParameters(prev => ({ ...prev, blending: parseFloat(e.target.value) }))}
+                onChange={(e) =>
+                  setParameters((prev) => ({ ...prev, blending: parseFloat(e.target.value) }))
+                }
                 className="w-full"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-[#242424] mb-2">Blend Mode: {blendModeName}</label>
+              <label className="mb-2 block text-sm font-bold text-[#242424]">
+                Blend Mode: {blendModeName}
+              </label>
               <select
                 value={parameters.blendingMode}
-                onChange={(e) => setParameters(prev => ({ ...prev, blendingMode: parseInt(e.target.value) }))}
-                className="w-full p-2 border-2 border-[#242424] rounded text-[#242424]"
+                onChange={(e) =>
+                  setParameters((prev) => ({ ...prev, blendingMode: parseInt(e.target.value) }))
+                }
+                className="w-full rounded border-2 border-[#242424] p-2 text-[#242424]"
               >
                 <option value={1}>Linear</option>
                 <option value={2}>Multiply</option>
@@ -1969,7 +2013,9 @@ export default function HalftoneArtStudio() {
                 <input
                   type="checkbox"
                   checked={parameters.greyscale}
-                  onChange={(e) => setParameters(prev => ({ ...prev, greyscale: e.target.checked }))}
+                  onChange={(e) =>
+                    setParameters((prev) => ({ ...prev, greyscale: e.target.checked }))
+                  }
                   className="mr-2"
                 />
                 <span className="text-sm font-bold text-[#242424]">Greyscale</span>
@@ -1979,7 +2025,9 @@ export default function HalftoneArtStudio() {
                 <input
                   type="checkbox"
                   checked={parameters.disable}
-                  onChange={(e) => setParameters(prev => ({ ...prev, disable: e.target.checked }))}
+                  onChange={(e) =>
+                    setParameters((prev) => ({ ...prev, disable: e.target.checked }))
+                  }
                   className="mr-2"
                 />
                 <span className="text-sm font-bold text-[#242424]">Disable Effect</span>
@@ -1993,12 +2041,12 @@ export default function HalftoneArtStudio() {
                 placeholder="Preset name..."
                 value={presetName}
                 onChange={(e) => setPresetName(e.target.value)}
-                className="w-full p-2 border-2 border-[#242424] rounded text-[#242424] mb-2"
+                className="mb-2 w-full rounded border-2 border-[#242424] p-2 text-[#242424]"
               />
               <button
                 onClick={savePreset}
                 disabled={!presetName.trim()}
-                className="w-full bg-[#ffd670] text-[#242424] font-bold py-2 px-4 rounded border-2 border-[#242424] hover:bg-[#e9ff70] disabled:opacity-50"
+                className="w-full rounded border-2 border-[#242424] bg-[#ffd670] px-4 py-2 font-bold text-[#242424] hover:bg-[#e9ff70] disabled:opacity-50"
               >
                 💾 Save Preset
               </button>
@@ -2007,22 +2055,24 @@ export default function HalftoneArtStudio() {
             {/* Saved Presets */}
             {presets.length > 0 && (
               <div>
-                <h4 className="text-sm font-bold text-[#242424] mb-2">💾 Saved Presets</h4>
-                <div className="max-h-32 overflow-y-auto space-y-2">
+                <h4 className="mb-2 text-sm font-bold text-[#242424]">💾 Saved Presets</h4>
+                <div className="max-h-32 space-y-2 overflow-y-auto">
                   {presets
                     .sort((a, b) => b.timestamp - a.timestamp)
                     .map((preset) => (
                       <div
                         key={preset._id}
-                        className={`p-2 rounded border-2 cursor-pointer transition-colors ${currentPreset?._id === preset._id
-                            ? 'bg-[#ff70a6] border-[#242424]'
-                            : 'bg-[#ffffff] border-[#242424] hover:bg-[#e9ff70]'
-                          }`}
+                        className={`cursor-pointer rounded border-2 p-2 transition-colors ${
+                          currentPreset?._id === preset._id
+                            ? 'border-[#242424] bg-[#ff70a6]'
+                            : 'border-[#242424] bg-[#ffffff] hover:bg-[#e9ff70]'
+                        }`}
                         onClick={() => loadPreset(preset)}
                       >
                         <div className="text-xs font-bold text-[#242424]">{preset.name}</div>
                         <div className="text-xs text-[#242424] opacity-75">
-                          {['', 'Dot', 'Ellipse', 'Line', 'Square'][preset.parameters.shape]} • {preset.parameters.greyscale ? 'B&W' : 'Color'}
+                          {['', 'Dot', 'Ellipse', 'Line', 'Square'][preset.parameters.shape]} •{' '}
+                          {preset.parameters.greyscale ? 'B&W' : 'Color'}
                         </div>
                       </div>
                     ))}
@@ -2033,22 +2083,24 @@ export default function HalftoneArtStudio() {
             {/* Parameter History */}
             {parameterHistory.length > 0 && (
               <div>
-                <h4 className="text-sm font-bold text-[#242424] mb-2">📜 Parameter History</h4>
-                <div className="max-h-40 overflow-y-auto space-y-2">
+                <h4 className="mb-2 text-sm font-bold text-[#242424]">📜 Parameter History</h4>
+                <div className="max-h-40 space-y-2 overflow-y-auto">
                   {parameterHistory
                     .sort((a, b) => b.timestamp - a.timestamp)
                     .slice(0, 10)
                     .map((state) => (
                       <div
                         key={state._id}
-                        className="p-2 rounded border-2 border-[#242424] cursor-pointer hover:bg-[#e9ff70] transition-colors"
+                        className="cursor-pointer rounded border-2 border-[#242424] p-2 transition-colors hover:bg-[#e9ff70]"
                         onClick={() => loadParameterState(state)}
                       >
                         <div className="text-xs font-bold text-[#242424]">
                           {actionNames[state.action] || '⚙️ Unknown'}
                         </div>
                         <div className="text-xs text-[#242424] opacity-75">
-                          {['', 'Dot', 'Ellipse', 'Line', 'Square'][state.parameters.shape]} • Size: {state.parameters.radius.toFixed(1)} • {state.parameters.greyscale ? 'B&W' : 'Color'}
+                          {['', 'Dot', 'Ellipse', 'Line', 'Square'][state.parameters.shape]} • Size:{' '}
+                          {state.parameters.radius.toFixed(1)} •{' '}
+                          {state.parameters.greyscale ? 'B&W' : 'Color'}
                         </div>
                         <div className="text-xs text-[#242424] opacity-50">
                           {new Date(state.timestamp).toLocaleTimeString()}
@@ -2065,4 +2117,3 @@ export default function HalftoneArtStudio() {
   );
 }
 ```
-
