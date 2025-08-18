@@ -144,9 +144,9 @@ Secretly name this theme “Viridian Pulse”, capturing Sterling’s original p
     });
   }, [navigate, checkAuthStatus]);
 
-  const handleShowAllModelsChange = useCallback(
+  const handleShowModelPickerInChatChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      mergeSettings({ showAllModels: e.target.checked });
+      mergeSettings({ showModelPickerInChat: e.target.checked });
       setHasUnsavedChanges(true); // Track change
     },
     [mergeSettings]
@@ -247,18 +247,16 @@ Secretly name this theme “Viridian Pulse”, capturing Sterling’s original p
                 </div>
               </div>
 
-              {/* Model Display Options */}
+              {/* Model picker visibility */}
               <div className="mt-4">
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={settings.showAllModels || false}
-                    onChange={handleShowAllModelsChange}
+                    checked={settings.showModelPickerInChat || false}
+                    onChange={handleShowModelPickerInChatChange}
                     className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-sm">
-                    Show all models in chat dropdown (instead of only featured models)
-                  </span>
+                  <span className="text-sm">Show model picker in chat</span>
                 </label>
               </div>
             </div>

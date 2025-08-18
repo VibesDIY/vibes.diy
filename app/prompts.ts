@@ -1,5 +1,5 @@
 import { callAI, type Message, type CallAIOptions } from 'call-ai';
-import { CALLAI_ENDPOINT } from './config/env';
+import { CALLAI_ENDPOINT, APP_MODE } from './config/env';
 // Import all LLM text files statically
 import callaiTxt from './llms/callai.txt?raw';
 import fireproofTxt from './llms/fireproof.txt?raw';
@@ -31,16 +31,26 @@ export function isValidModelId(id: unknown): id is string {
 }
 
 // Relaxed validator for any reasonable model ID format (for custom models)
-function isReasonableModelId(id: unknown): id is string {
-  return typeof id === 'string' && id.trim().length > 0 && /^[a-zA-Z0-9\/_.-]+$/.test(id.trim());
+function normalizeModelIdInternal(id: unknown): string | undefined {
+  if (typeof id !== 'string') return undefined;
+  const trimmed = id.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+export function normalizeModelId(id: unknown): string | undefined {
+  return normalizeModelIdInternal(id);
+}
+
+export function isPermittedModelId(id: unknown): id is string {
+  return typeof normalizeModelIdInternal(id) === 'string';
 }
 
 // Resolve the effective model id given optional session and global settings
 export function resolveEffectiveModel(settingsDoc?: UserSettings, vibeDoc?: VibeDocument): string {
-  const sessionChoice = vibeDoc?.selectedModel;
-  if (isReasonableModelId(sessionChoice)) return sessionChoice;
-  const globalChoice = settingsDoc?.model;
-  if (isReasonableModelId(globalChoice)) return globalChoice;
+  const sessionChoice = normalizeModelIdInternal(vibeDoc?.selectedModel);
+  if (sessionChoice) return sessionChoice;
+  const globalChoice = normalizeModelIdInternal(settingsDoc?.model);
+  if (globalChoice) return globalChoice;
   return DEFAULT_CODING_MODEL;
 }
 
@@ -123,6 +133,10 @@ export async function selectLlmsAndOptions(
   userPrompt: string,
   history: HistoryMessage[]
 ): Promise<LlmSelectionDecisions> {
+  // In test mode, avoid network and return all modules to keep deterministic coverage
+  if (APP_MODE === 'test' && !/localhost|127\.0\.0\.1/i.test(String(CALLAI_ENDPOINT))) {
+    return { selected: llmsCatalog.map((l) => l.name), instructionalText: true, demoData: true };
+  }
   const catalog = llmsCatalog.map((l) => ({ name: l.name, description: l.description || '' }));
   const payload = { catalog, userPrompt: userPrompt || '', history: history || [] };
 
@@ -156,7 +170,20 @@ export async function selectLlmsAndOptions(
   };
 
   try {
-    const raw = (await callAI(messages, options)) as string;
+    // Add a soft timeout to prevent hanging if the model service is unreachable
+    const withTimeout = <T>(p: Promise<T>, ms = 4000): Promise<T> =>
+      new Promise<T>((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('callAI timeout')), ms);
+        p.then((v) => {
+          clearTimeout(t);
+          resolve(v);
+        }).catch((e) => {
+          clearTimeout(t);
+          reject(e);
+        });
+      });
+
+    const raw = (await withTimeout(callAI(messages, options))) as string;
     const parsed = JSON.parse(raw) ?? {};
     const selected = Array.isArray(parsed?.selected)
       ? parsed.selected.filter((v: unknown) => typeof v === 'string')

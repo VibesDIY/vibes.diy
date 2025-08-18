@@ -312,7 +312,7 @@ ${code}
     selectedModel: vibeDoc?.selectedModel,
     effectiveModel,
     globalModel: settingsDoc?.model,
-    showAllModels: settingsDoc?.showAllModels,
+    showModelPickerInChat: settingsDoc?.showModelPickerInChat || false,
     addScreenshot,
     docs: messages,
     setSelectedResponseId,

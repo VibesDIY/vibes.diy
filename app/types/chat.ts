@@ -176,7 +176,7 @@ export interface ChatState {
   updateSelectedModel?: (modelId: string) => Promise<void>;
   effectiveModel?: string;
   globalModel?: string;
-  showAllModels?: boolean;
+  showModelPickerInChat?: boolean;
 
   // Error tracking
   immediateErrors: RuntimeError[];
