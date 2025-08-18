@@ -14,7 +14,7 @@
     "dev:with-storybook": "concurrently \"pnpm dev\" \"pnpm storybook\"",
     "start": "serve -s build/client",
     "typecheck": "react-router typegen && tsc --noEmit",
-    "format": "prettier --write .",
+    "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
     "test:router": "vitest run",
     "test": "DISABLE_REACT_ROUTER=true vitest run",

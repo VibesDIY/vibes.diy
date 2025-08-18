@@ -1,7 +1,7 @@
 import {
   useFireproof,
   fireproof,
-  // toCloud
+  toCloud
 } from 'use-fireproof';
 import { useCallback, useEffect, useMemo } from 'react';
 import type { LocalVibe } from '../utils/vibeUtils';
@@ -221,9 +221,9 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
       };
     }
   }, [dbName]);
-
+console.log('🐛 Catalog database name:', dbName);
   const { database, useAllDocs } = useFireproof(dbName, {
-    // attach: toCloud()
+    attach: toCloud()
   });
 
   // Get real-time count of cataloged vibes
