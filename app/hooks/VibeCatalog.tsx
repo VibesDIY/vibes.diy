@@ -5,7 +5,7 @@ import type { LocalVibe } from '~/utils/vibeUtils';
  * Implementation component that contains all the hooks and logic.
  * This is only rendered when userId and vibes are available.
  */
-function VibeCatalogImpl({ userId, vibes }: { userId: string; vibes: Array<LocalVibe> }) {
+function VibeCatalogImpl({ userId, vibes }: { userId?: string; vibes: Array<LocalVibe> }) {
   const { count } = useCatalog(userId, vibes);
 
   return (
@@ -20,6 +20,6 @@ function VibeCatalogImpl({ userId, vibes }: { userId: string; vibes: Array<Local
  * Users can include this without checking for userId themselves.
  */
 export function VibeCatalog({ userId, vibes }: { userId?: string; vibes?: Array<LocalVibe> }) {
-  if (!userId || !vibes) return null;
+  if (!vibes) return null;
   return <VibeCatalogImpl userId={userId} vibes={vibes} />;
 }

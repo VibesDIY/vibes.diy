@@ -192,11 +192,11 @@ function transformToLocalVibe(doc: any): LocalVibe {
   };
 }
 
-export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
+export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) {
   userId = userId || 'local';
 
   const dbName = getCatalogDbName(userId);
-  
+
   // Check for idb_reset=catalog URL parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
