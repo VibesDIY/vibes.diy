@@ -10,7 +10,7 @@ function VibeCatalogImpl({ userId, vibes }: { userId: string; vibes: Array<Local
 
   return (
     <span style={{ display: 'inline-block', marginBottom: 8, fontWeight: 500 }}>
-      {count !== null ? `Cataloging ${count} vibes locally` : '...'}
+      Cataloging {count} vibes locally
     </span>
   );
 }

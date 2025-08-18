@@ -7,6 +7,116 @@ import { useCallback, useEffect, useMemo } from 'react';
 import type { LocalVibe } from '../utils/vibeUtils';
 import type { VibeDocument, ScreenshotDocument } from '../types/chat';
 
+// Helper function to get vibe document from session database
+async function getVibeDocument(vibeId: string): Promise<VibeDocument | null> {
+  try {
+    const sessionDb = fireproof(`vibe-${vibeId}`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    return (await sessionDb.get('vibe').catch(() => null)) as VibeDocument | null;
+  } catch (error) {
+    console.error(`Failed to get vibe document for ${vibeId}:`, error);
+    return null;
+  }
+}
+
+// Helper function to get latest screenshot from session database
+async function getLatestScreenshot(vibeId: string): Promise<ScreenshotDocument | null> {
+  try {
+    const sessionDb = fireproof(`vibe-${vibeId}`);
+    const sessionResult = await sessionDb.query('type', {
+      key: 'screenshot',
+      includeDocs: true,
+      descending: true,
+      limit: 1,
+    });
+
+    if (sessionResult.rows.length > 0) {
+      const screenshot = sessionResult.rows[0].doc as ScreenshotDocument;
+      if (screenshot._files?.screenshot && screenshot.cid) {
+        return screenshot;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(`Failed to get screenshot for ${vibeId}:`, error);
+    return null;
+  }
+}
+
+// Helper function to create new catalog document
+function createCatalogDocument(vibe: LocalVibe, vibeDoc: VibeDocument | null, userId: string): any {
+  return {
+    _id: `catalog-${vibe.id}`,
+    created: vibeDoc?.created_at || Date.now(),
+    userId,
+    vibeId: vibe.id,
+    title: vibeDoc?.title || 'Untitled',
+    url: vibeDoc?.publishedUrl,
+  };
+}
+
+// Helper function to update existing catalog document
+function updateCatalogDocument(catalogDoc: any, vibeDoc: VibeDocument | null): any {
+  const docToUpdate = { ...catalogDoc };
+
+  if (vibeDoc) {
+    docToUpdate.title = vibeDoc.title || 'Untitled';
+    docToUpdate.url = vibeDoc.publishedUrl;
+    docToUpdate.created = vibeDoc.created_at || docToUpdate.created || Date.now();
+  }
+
+  return docToUpdate;
+}
+
+// Helper function to add screenshot to catalog document
+async function addScreenshotToCatalogDoc(
+  docToUpdate: any,
+  sessionScreenshotDoc: ScreenshotDocument
+): Promise<void> {
+  const screenshotFile =
+    typeof (sessionScreenshotDoc._files!.screenshot as any).file === 'function'
+      ? await (sessionScreenshotDoc._files!.screenshot as any).file()
+      : sessionScreenshotDoc._files!.screenshot;
+
+  const updatedFiles: any = { ...docToUpdate._files };
+  updatedFiles.screenshot = screenshotFile;
+
+  docToUpdate._files = updatedFiles;
+  docToUpdate.screenshotCid = sessionScreenshotDoc.cid;
+  docToUpdate.lastUpdated = Date.now();
+}
+
+// Helper function to filter valid catalog documents
+function filterValidCatalogDocs(docs: Array<any>): Array<any> {
+  return docs.filter((doc) => {
+    return (
+      doc._id?.startsWith('catalog-') &&
+      doc.vibeId &&
+      !doc.vibeId.startsWith('fatalog-') &&
+      doc.vibeId.length > 10
+    );
+  });
+}
+
+// Helper function to transform catalog document to LocalVibe format
+function transformToLocalVibe(doc: any): LocalVibe {
+  return {
+    id: doc.vibeId,
+    title: doc.title,
+    encodedTitle: doc.title?.toLowerCase().replace(/\s+/g, '-') || '',
+    slug: doc.vibeId,
+    created: new Date(doc.created).toISOString(),
+    favorite: false,
+    publishedUrl: doc.url,
+    screenshot: doc._files?.screenshot
+      ? {
+          file: () => Promise.resolve(doc._files.screenshot),
+          type: 'image/png',
+        }
+      : undefined,
+  };
+}
+
 export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
   userId = userId || 'local';
 
@@ -67,31 +177,15 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
           const catalogDoc = await database.get(catalogDocId).catch(() => null);
           const isNewCatalogEntry = !catalogedVibeIds.has(vibe.id);
 
-          // Get session database and vibe document for complete data
-          const sessionDb = fireproof(`vibe-${vibe.id}`);
+          // Get vibe document and latest screenshot using helper functions
+          const vibeDoc = await getVibeDocument(vibe.id);
+          const sessionScreenshotDoc = await getLatestScreenshot(vibe.id);
 
-          // Brief delay to ensure database is ready (similar to what VibeCardData might have)
-          await new Promise((resolve) => setTimeout(resolve, 50));
-
-          const vibeDoc = (await sessionDb.get('vibe').catch(() => null)) as VibeDocument | null;
-
-          // Get latest screenshot from session
-          const sessionResult = await sessionDb.query('type', {
-            key: 'screenshot',
-            includeDocs: true,
-            descending: true,
-            limit: 1,
-          });
-
-          let sessionScreenshotDoc = null;
+          // Check if screenshot needs updating
           let needsScreenshotUpdate = false;
-
-          if (sessionResult.rows.length > 0) {
-            sessionScreenshotDoc = sessionResult.rows[0].doc as ScreenshotDocument;
-            if (sessionScreenshotDoc._files?.screenshot && sessionScreenshotDoc.cid) {
-              const catalogCurrentCid = (catalogDoc as any)?.screenshotCid;
-              needsScreenshotUpdate = catalogCurrentCid !== sessionScreenshotDoc.cid;
-            }
+          if (sessionScreenshotDoc) {
+            const catalogCurrentCid = (catalogDoc as any)?.screenshotCid;
+            needsScreenshotUpdate = catalogCurrentCid !== sessionScreenshotDoc.cid;
           }
 
           // Force update all entries to populate missing titles
@@ -129,45 +223,14 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
           let docToUpdate: any;
 
           if (isNewCatalogEntry) {
-            // New catalog entry with complete vibe document data
-            docToUpdate = {
-              _id: `catalog-${vibe.id}`,
-              created: vibeDoc?.created_at || Date.now(),
-              userId,
-              vibeId: vibe.id,
-              title: vibeDoc?.title || 'Untitled',
-              url: vibeDoc?.publishedUrl,
-            };
+            docToUpdate = createCatalogDocument(vibe, vibeDoc, userId);
           } else {
-            // Existing entry needing update (screenshot or title)
-            docToUpdate = { ...catalogDoc };
-
-            // Update title and metadata if vibe document was found
-            if (vibeDoc) {
-              docToUpdate.title = vibeDoc.title || 'Untitled';
-              docToUpdate.url = vibeDoc.publishedUrl;
-              docToUpdate.created = vibeDoc.created_at || docToUpdate.created || Date.now();
-            }
+            docToUpdate = updateCatalogDocument(catalogDoc, vibeDoc);
           }
 
           // Add screenshot if needed
-          if (
-            needsScreenshotUpdate &&
-            sessionScreenshotDoc &&
-            sessionScreenshotDoc._files?.screenshot
-          ) {
-            const screenshotFile =
-              typeof (sessionScreenshotDoc._files.screenshot as any).file === 'function'
-                ? await (sessionScreenshotDoc._files.screenshot as any).file()
-                : sessionScreenshotDoc._files.screenshot;
-
-            const updatedFiles: any = { ...docToUpdate._files };
-            updatedFiles.screenshot = screenshotFile;
-
-            docToUpdate._files = updatedFiles;
-            docToUpdate.screenshotCid = sessionScreenshotDoc.cid;
-            docToUpdate.lastUpdated = Date.now();
-
+          if (needsScreenshotUpdate && sessionScreenshotDoc) {
+            await addScreenshotToCatalogDoc(docToUpdate, sessionScreenshotDoc);
             console.log(
               `📸 Preparing catalog screenshot update for vibe ${vibe.id} (CID: ${sessionScreenshotDoc.cid})`
             );
@@ -268,31 +331,8 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
   // Transform catalog documents to LocalVibe format for compatibility
   const catalogVibes = useMemo(() => {
-    return catalogDocs
-      .filter((doc) => {
-        // Filter out corrupted catalog docs and ensure we have valid vibe data
-        return (
-          doc._id?.startsWith('catalog-') &&
-          doc.vibeId &&
-          !doc.vibeId.startsWith('fatalog-') && // Filter out corrupted entries
-          doc.vibeId.length > 10
-        ); // Basic vibe ID validation
-      })
-      .map((doc) => ({
-        id: doc.vibeId,
-        title: doc.title,
-        encodedTitle: doc.title?.toLowerCase().replace(/\s+/g, '-') || '',
-        slug: doc.vibeId,
-        created: new Date(doc.created).toISOString(),
-        favorite: false, // TODO: Add favorite tracking to catalog
-        publishedUrl: doc.url,
-        screenshot: doc._files?.screenshot
-          ? {
-              file: () => Promise.resolve(doc._files.screenshot),
-              type: 'image/png',
-            }
-          : undefined,
-      }))
+    return filterValidCatalogDocs(catalogDocs)
+      .map(transformToLocalVibe)
       .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
   }, [catalogDocs]);
 

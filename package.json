@@ -13,7 +13,7 @@
     "dev:router": "react-router dev",
     "dev:with-storybook": "concurrently \"pnpm dev\" \"pnpm storybook\"",
     "start": "serve -s build/client",
-    "typecheck": "react-router typegen && tsc --noEmit 2>&1 | grep -v '@fireproof' | grep -v 'use-fireproof' | (! grep -q 'error TS')",
+    "typecheck": "react-router typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:router": "vitest run",
