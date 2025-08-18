@@ -72,33 +72,35 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
         try {
           const catalogDocId = `catalog-${vibe.id}`;
           const catalogDoc = await database.get(catalogDocId).catch(() => null);
-
           const isNewCatalogEntry = !catalogedVibeIds.has(vibe.id);
-          let needsScreenshotUpdate = false;
+
+          // Get session database and vibe document for complete data
+          const sessionDb = fireproof(`vibe-${vibe.id}`);
+          const vibeDoc = await sessionDb.get('vibe').catch(() => null);
+
+          // Get latest screenshot from session
+          const sessionResult = await sessionDb.query('type', {
+            key: 'screenshot',
+            includeDocs: true,
+            descending: true,
+            limit: 1,
+          });
+
           let sessionScreenshotDoc = null;
+          let needsScreenshotUpdate = false;
 
-          // Check for screenshot updates if catalog doc exists
-          if (catalogDoc) {
-            const sessionDb = fireproof(`vibe-${vibe.id}`);
-            const sessionResult = await sessionDb.query('type', {
-              key: 'screenshot',
-              includeDocs: true,
-              descending: true,
-              limit: 1,
-            });
-
-            if (sessionResult.rows.length > 0) {
-              sessionScreenshotDoc = sessionResult.rows[0].doc as any;
-              if (sessionScreenshotDoc._files?.screenshot && sessionScreenshotDoc.cid) {
-                const catalogCurrentCid = (catalogDoc as any).screenshotCid;
-                needsScreenshotUpdate = catalogCurrentCid !== sessionScreenshotDoc.cid;
-              }
+          if (sessionResult.rows.length > 0) {
+            sessionScreenshotDoc = sessionResult.rows[0].doc as any;
+            if (sessionScreenshotDoc._files?.screenshot && sessionScreenshotDoc.cid) {
+              const catalogCurrentCid = (catalogDoc as any)?.screenshotCid;
+              needsScreenshotUpdate = catalogCurrentCid !== sessionScreenshotDoc.cid;
             }
           }
 
           if (isNewCatalogEntry || needsScreenshotUpdate) {
             vibesNeedingUpdates.push({
               vibe,
+              vibeDoc,
               catalogDoc,
               sessionScreenshotDoc,
               isNewCatalogEntry,
@@ -121,6 +123,7 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
       for (const {
         vibe,
+        vibeDoc,
         catalogDoc,
         sessionScreenshotDoc,
         isNewCatalogEntry,
@@ -132,14 +135,14 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
           let docToUpdate: any;
 
           if (isNewCatalogEntry) {
-            // New catalog entry
+            // New catalog entry with complete vibe document data
             docToUpdate = {
               _id: `catalog-${vibe.id}`,
-              created: Date.now(),
+              created: vibeDoc?.created_at || Date.now(),
               userId,
               vibeId: vibe.id,
-              title: vibe.title,
-              url: vibe.publishedUrl,
+              title: vibeDoc?.title || 'Untitled',
+              url: vibeDoc?.publishedUrl,
             };
           } else {
             // Existing entry needing screenshot update
