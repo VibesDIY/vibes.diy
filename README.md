@@ -40,9 +40,11 @@ Create beautiful, interactive mini apps with zero setup. Your creations are auto
 2. Or set up your own:
    - Clone the repository
    - Install with `pnpm i`
-   - Copy `.env.example` to `.env`
-   - Add your AI account key from [OpenRouter](https://openrouter.ai/settings/keys)
-   - Run `pnpm dev`
+   - Approve dependency build scripts with `pnpm approve-builds`
+   - Run `pnpm dev` and view in browser.
+
+For more control over API endpoints and usage, copy the `.env.example` file to `.env` and modify for your use case.
+
 
 ## Developer previews on the main domain (no redirects)
 
