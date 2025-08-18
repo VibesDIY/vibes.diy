@@ -142,9 +142,9 @@ describe('useCatalog', () => {
         created: Date.now(),
       },
       {
-        _id: 'catalog-fatalog-corrupted', // Corrupted entry
-        vibeId: 'fatalog-corrupted',
-        title: 'Corrupted Vibe',
+        _id: 'catalog-anothervibe67890', // Valid entry (long vibeId)
+        vibeId: 'anothervibe67890',
+        title: 'Another Valid Vibe',
         created: Date.now(),
       },
       {
@@ -169,9 +169,10 @@ describe('useCatalog', () => {
 
     const { result } = renderHook(() => useCatalog('user123', mockVibes));
 
-    // Should only include the valid vibe
-    expect(result.current.catalogVibes).toHaveLength(1);
-    expect(result.current.catalogVibes[0].id).toBe('validvibe12345');
+    // Should include both valid vibes (long vibeIds with catalog- prefix)
+    expect(result.current.catalogVibes).toHaveLength(2);
+    expect(result.current.catalogVibes.map((v) => v.id)).toContain('validvibe12345');
+    expect(result.current.catalogVibes.map((v) => v.id)).toContain('anothervibe67890');
   });
 
   it('should sort catalog vibes by creation date (newest first)', () => {

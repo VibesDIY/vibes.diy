@@ -6,10 +6,12 @@ import { publishApp } from '../app/utils/publishUtils';
 vi.mock('use-fireproof');
 vi.mock('../app/utils/databaseManager');
 vi.mock('../app/utils/normalizeComponentExports');
+vi.mock('../app/utils/catalogUtils');
 
 // Import mocked modules
 import { fireproof } from 'use-fireproof';
 import { getSessionDatabaseName } from '../app/utils/databaseManager';
+import { addCatalogScreenshotStandalone } from '../app/utils/catalogUtils';
 
 // We need to mock the import.meta.env
 vi.stubGlobal('import', {
@@ -90,6 +92,7 @@ describe('publishApp', () => {
     (fireproof as any).mockReturnValue(mockFireproofDb);
     (getSessionDatabaseName as any).mockReturnValue('test-session-db');
     (normalizeComponentExports as any).mockImplementation((code: string) => code);
+    (addCatalogScreenshotStandalone as any).mockResolvedValue(undefined);
 
     // Re-setup fetch mock after reset
     mockFetch.mockImplementation(async () => ({
@@ -239,5 +242,33 @@ describe('publishApp', () => {
     const [_url, options] = mockFetch.mock.calls[0];
     expect(options.headers).not.toHaveProperty('Authorization');
     expect(options.headers).toHaveProperty('Content-Type', 'application/json');
+  });
+
+  it('calls addCatalogScreenshotStandalone with correct parameters when publishing', async () => {
+    // Arrange
+    const sessionId = 'test-session-id';
+    const userId = 'test-user-id';
+    const testCode = 'const App = () => <div>Test App</div>; export default App;';
+    const normalizedCode = 'normalized-code';
+
+    // Mock normalized exports to return a specific value
+    (normalizeComponentExports as any).mockReturnValue(normalizedCode);
+
+    // Act: Call the publishApp function
+    await publishApp({
+      sessionId,
+      code: testCode,
+      userId,
+      prompt: 'Create a test app',
+      token: 'test-token',
+    });
+
+    // Assert: Check that addCatalogScreenshotStandalone was called with correct parameters
+    expect(addCatalogScreenshotStandalone).toHaveBeenCalledWith(
+      userId,
+      sessionId,
+      expect.stringMatching(/^data:image\/png;base64,/), // Screenshot data URL
+      normalizedCode // Transformed source code
+    );
   });
 });

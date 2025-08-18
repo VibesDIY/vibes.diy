@@ -6,6 +6,7 @@ import {
 import { useCallback, useEffect, useMemo } from 'react';
 import type { LocalVibe } from '../utils/vibeUtils';
 import type { VibeDocument, ScreenshotDocument } from '../types/chat';
+import { getCatalogDbName, createCatalogDocId } from '../utils/catalogUtils';
 
 // Helper function to get vibe document from session database
 async function getVibeDocument(vibeId: string): Promise<VibeDocument | null> {
@@ -46,7 +47,7 @@ async function getLatestScreenshot(vibeId: string): Promise<ScreenshotDocument |
 // Helper function to create new catalog document
 function createCatalogDocument(vibe: LocalVibe, vibeDoc: VibeDocument | null, userId: string): any {
   return {
-    _id: `catalog-${vibe.id}`,
+    _id: createCatalogDocId(vibe.id),
     created: vibeDoc?.created_at || Date.now(),
     userId,
     vibeId: vibe.id,
@@ -89,11 +90,7 @@ async function addScreenshotToCatalogDoc(
 // Helper function to filter valid catalog documents
 function filterValidCatalogDocs(docs: Array<any>): Array<any> {
   return docs.filter((doc) => {
-    return (
-      doc._id?.startsWith('catalog-') &&
-      doc.vibeId &&
-      doc.vibeId.length > 10
-    );
+    return doc._id?.startsWith('catalog-') && doc.vibeId && doc.vibeId.length > 10;
   });
 }
 
@@ -119,7 +116,7 @@ function transformToLocalVibe(doc: any): LocalVibe {
 export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
   userId = userId || 'local';
 
-  const dbName = `vibez-catalog-${userId}`;
+  const dbName = getCatalogDbName(userId);
   const { database, useAllDocs } = useFireproof(dbName, {
     // attach: toCloud()
   });
@@ -172,7 +169,7 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
         if (cancelled) break;
 
         try {
-          const catalogDocId = `catalog-${vibe.id}`;
+          const catalogDocId = createCatalogDocId(vibe.id);
           const catalogDoc = await database.get(catalogDocId).catch(() => null);
           const isNewCatalogEntry = !catalogedVibeIds.has(vibe.id);
 
@@ -277,7 +274,7 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
       if (!vibeId) return;
 
       try {
-        const docId = `catalog-${vibeId}`;
+        const docId = createCatalogDocId(vibeId);
 
         // Get existing catalog document
         const existingDoc = await database.get(docId).catch(() => null);

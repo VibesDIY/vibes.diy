@@ -6,6 +6,7 @@ import { fireproof } from 'use-fireproof';
 import { APP_HOST_BASE_URL, API_BASE_URL } from '../config/env';
 import { getSessionDatabaseName, updateUserVibespaceDoc } from './databaseManager';
 import { normalizeComponentExports } from './normalizeComponentExports';
+import { addCatalogScreenshotStandalone } from './catalogUtils';
 
 /**
  * Publish an app to the server
@@ -168,9 +169,6 @@ export async function publishApp({
       // Store screenshot in catalog database for this published vibe
       if (sessionId && userId) {
         try {
-          // Get the catalog database directly and call addCatalogScreenshot
-          const catalogDb = fireproof(`vibe-catalog-${userId}`);
-
           // Get the most recent screenshot from session database
           if (result.rows.length > 0) {
             const screenshotDoc = result.rows[0].doc as any;
@@ -185,38 +183,13 @@ export async function publishApp({
                   reader.readAsDataURL(screenshotFile);
                 });
 
-                // Use the same logic as useCatalog addCatalogScreenshot function
-                const docId = `catalog-${sessionId}`;
-                const existingDoc = await catalogDb.get(docId).catch(() => null);
-
-                if (existingDoc) {
-                  const updatedFiles: any = { ...existingDoc._files };
-
-                  // Add screenshot
-                  const response = await fetch(screenshotDataUrl);
-                  const blob = await response.blob();
-                  const newScreenshotFile = new File([blob], 'screenshot.png', {
-                    type: 'image/png',
-                    lastModified: Date.now(),
-                  });
-                  updatedFiles.screenshot = newScreenshotFile;
-
-                  // Add source code
-                  const sourceFile = new File([transformedCode], 'App.jsx', {
-                    type: 'text/javascript',
-                    lastModified: Date.now(),
-                  });
-                  updatedFiles.source = sourceFile;
-
-                  // Update catalog document with files
-                  const updatedDoc = {
-                    ...existingDoc,
-                    _files: updatedFiles,
-                    lastUpdated: Date.now(),
-                  };
-
-                  await catalogDb.put(updatedDoc);
-                }
+                // Use shared catalog utility function
+                await addCatalogScreenshotStandalone(
+                  userId,
+                  sessionId,
+                  screenshotDataUrl,
+                  transformedCode
+                );
               } catch (err) {
                 console.error('Failed to store catalog screenshot:', err);
               }
