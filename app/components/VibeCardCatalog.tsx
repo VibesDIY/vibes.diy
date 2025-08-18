@@ -16,8 +16,6 @@ export function VibeCardCatalog({ catalogVibe }: VibeCardCatalogProps) {
   // Debug logging for screenshot data
   console.log(`🐛 VibeCardCatalog[${catalogVibe.id}]:`, {
     hasScreenshot: !!catalogVibe.screenshot,
-    screenshotType: catalogVibe.screenshot?.type,
-    screenshotFile: typeof catalogVibe.screenshot?.file,
     vibeTitle: catalogVibe.title,
     catalogVibe: catalogVibe,
   });

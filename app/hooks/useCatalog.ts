@@ -63,11 +63,18 @@ async function getLatestScreenshot(vibeId: string): Promise<ScreenshotDocument |
         docKeys: Object.keys(screenshot),
         hasFiles: !!screenshot._files,
         hasCid: !!screenshot.cid,
-        hasScreenshotFile: !!screenshot._files?.screenshot,
-        screenshotFileType: typeof screenshot._files?.screenshot,
       });
 
-      if (screenshot._files?.screenshot && screenshot.cid) {
+      // Log the full file structure to find where CID is stored
+      console.log(`🐛 File structure for ${vibeId}:`, screenshot._files.screenshot);
+
+      // Extract CID from file metadata
+      const fileCid = screenshot._files?.screenshot?.cid;
+      console.log(`🐛 File CID for ${vibeId}:`, fileCid);
+
+      if (screenshot._files?.screenshot && fileCid) {
+        // Add the file CID to the screenshot document for deduplication
+        screenshot.cid = fileCid.toString();
         return screenshot;
       }
     }
@@ -108,17 +115,50 @@ async function addScreenshotToCatalogDoc(
   docToUpdate: any,
   sessionScreenshotDoc: ScreenshotDocument
 ): Promise<void> {
-  const screenshotFile =
-    typeof (sessionScreenshotDoc._files!.screenshot as any).file === 'function'
-      ? await (sessionScreenshotDoc._files!.screenshot as any).file()
-      : sessionScreenshotDoc._files!.screenshot;
+  try {
+    // GET: Extract binary data from source database
+    const sourceFile = sessionScreenshotDoc._files!.screenshot;
+    console.log('🐛 Source file structure:', {
+      hasFileMethod: typeof (sourceFile as any).file === 'function',
+      type: (sourceFile as any).type,
+      size: (sourceFile as any).size,
+    });
 
-  const updatedFiles: any = { ...docToUpdate._files };
-  updatedFiles.screenshot = screenshotFile;
+    const fileData = await (sourceFile as any).file();
+    console.log('🐛 File data extracted:', {
+      dataType: typeof fileData,
+      dataConstructor: fileData.constructor.name,
+      isFile: fileData instanceof File,
+      isBlob: fileData instanceof Blob,
+      size: fileData.size,
+      type: fileData.type,
+    });
 
-  docToUpdate._files = updatedFiles;
-  docToUpdate.screenshotCid = sessionScreenshotDoc.cid;
-  docToUpdate.lastUpdated = Date.now();
+    // PUT: Create new File object for target database with proper metadata
+    const newFile = new File([fileData], 'screenshot.png', {
+      type: (sourceFile as any).type || 'image/png',
+      lastModified: (sourceFile as any).lastModified || Date.now(),
+    });
+
+    console.log('🐛 New file created:', {
+      name: newFile.name,
+      size: newFile.size,
+      type: newFile.type,
+      lastModified: newFile.lastModified,
+    });
+
+    // Update the catalog document with the new file
+    const updatedFiles: any = { ...docToUpdate._files };
+    updatedFiles.screenshot = newFile;
+    docToUpdate._files = updatedFiles;
+    docToUpdate.screenshotCid = sessionScreenshotDoc.cid;
+    docToUpdate.lastUpdated = Date.now();
+
+    console.log('🐛 File transfer completed successfully');
+  } catch (error) {
+    console.error('🐛 File transfer failed:', error);
+    throw error;
+  }
 }
 
 // Helper function to filter valid catalog documents
@@ -148,12 +188,7 @@ function transformToLocalVibe(doc: any): LocalVibe {
     created: new Date(doc.created).toISOString(),
     favorite: false,
     publishedUrl: doc.url,
-    screenshot: doc._files?.screenshot
-      ? {
-          file: () => Promise.resolve(doc._files.screenshot),
-          type: 'image/png',
-        }
-      : undefined,
+    screenshot: doc._files?.screenshot || undefined,
   };
 }
 
@@ -161,6 +196,30 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
   userId = userId || 'local';
 
   const dbName = getCatalogDbName(userId);
+  
+  // Check for idb_reset=catalog URL parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('idb_reset') === 'catalog') {
+      console.log('🗑️ Resetting catalog database due to idb_reset=catalog parameter');
+      const deleteReq = indexedDB.deleteDatabase(`fp.${dbName}`);
+      deleteReq.onsuccess = () => {
+        console.log('✅ Successfully deleted catalog database');
+        // Remove the parameter and reload
+        urlParams.delete('idb_reset');
+        const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
+        window.history.replaceState({}, '', newUrl);
+        window.location.reload();
+      };
+      deleteReq.onerror = () => {
+        console.error('❌ Failed to delete catalog database:', deleteReq.error);
+      };
+      deleteReq.onblocked = () => {
+        console.warn('⚠️ Delete blocked - catalog database may be in use');
+      };
+    }
+  }, [dbName]);
+
   const { database, useAllDocs } = useFireproof(dbName, {
     // attach: toCloud()
   });
