@@ -79,7 +79,7 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
           // Check for screenshot updates if catalog doc exists
           if (catalogDoc) {
-            const sessionDb = fireproof(`vibe-session-${vibe.id}`);
+            const sessionDb = fireproof(`vibe-${vibe.id}`);
             const sessionResult = await sessionDb.query('type', {
               key: 'screenshot',
               includeDocs: true,
