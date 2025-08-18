@@ -3,13 +3,16 @@
 ## Problem Analysis
 
 ### Current State Issues
+
 1. **Missing Titles**: Catalog documents show `title: undefined` because `useVibes()` only provides session IDs
 2. **Incomplete Data**: Catalog lacks `publishedUrl`, proper `created_at`, and other vibe metadata
 3. **Inefficient Operations**: Separate loops for catalog creation and screenshot sync
 4. **IndexedDB Dependencies**: My vibes page falls back to IndexedDB when catalog data is incomplete
 
 ### Root Cause
+
 The `useCatalog` hook depends on `useVibes()` which only returns:
+
 ```js
 [{id: 'sessionId1'}, {id: 'sessionId2'}, ...]
 ```
@@ -19,16 +22,19 @@ But catalog documents need full vibe metadata from the actual `VibeDocument` sto
 ## Solution Strategy
 
 ### Keep Session ID Discovery
+
 - Continue using `useVibes()` to discover which sessions exist
 - This maintains compatibility with existing session management
 
 ### Enhance Data Collection
+
 - For each session ID, open the session database: `fireproof('vibe-${sessionId}')`
 - Query for the `VibeDocument` with `_id: 'vibe'`
 - Query for screenshots with `type: 'screenshot'`
 - Compose complete catalog documents with all necessary data
 
 ### Single Bulk Write Operation
+
 - Collect all data first (vibe docs + screenshots + CIDs)
 - Create complete catalog documents in memory
 - Perform single bulk write with chunking (max 10 docs per chunk)
@@ -37,23 +43,24 @@ But catalog documents need full vibe metadata from the actual `VibeDocument` sto
 ## Implementation Details
 
 ### Data Collection Flow
+
 ```js
 // For each uncataloged vibe
 for (const vibe of uncatalogedVibes) {
   // 1. Get session database
   const sessionDb = fireproof(`vibe-${vibe.id}`);
-  
+
   // 2. Get full vibe document
   const vibeDoc = await sessionDb.get('vibe').catch(() => null);
-  
+
   // 3. Get latest screenshot
   const screenshotResult = await sessionDb.query('type', {
     key: 'screenshot',
     includeDocs: true,
     descending: true,
-    limit: 1
+    limit: 1,
   });
-  
+
   // 4. Compose complete catalog document
   const catalogDoc = {
     _id: `catalog-${vibe.id}`,
@@ -63,23 +70,24 @@ for (const vibe of uncatalogedVibes) {
     title: vibeDoc?.title || 'Untitled',
     url: vibeDoc?.publishedUrl,
   };
-  
+
   // 5. Add screenshot and CID if available
   if (screenshotResult.rows.length > 0) {
     const screenshotDoc = screenshotResult.rows[0].doc;
     if (screenshotDoc._files?.screenshot && screenshotDoc.cid) {
-      catalogDoc._files = { 
-        screenshot: screenshotDoc._files.screenshot 
+      catalogDoc._files = {
+        screenshot: screenshotDoc._files.screenshot,
       };
       catalogDoc.screenshotCid = screenshotDoc.cid;
     }
   }
-  
+
   catalogDocsToCreate.push(catalogDoc);
 }
 ```
 
 ### Bulk Write with Chunking
+
 ```js
 // Write in chunks of 10 documents
 const chunkSize = 10;
@@ -93,18 +101,21 @@ for (let i = 0; i < catalogDocsToCreate.length; i += chunkSize) {
 ## Expected Benefits
 
 ### Complete Catalog Data
+
 - Proper titles from vibe documents
 - Correct published URLs
 - Accurate creation timestamps
 - Screenshots with CID deduplication
 
 ### Performance Improvements
+
 - Single data collection pass
 - Bulk write operations
 - Eliminated redundant screenshot sync
 - Reduced database operations
 
 ### Independence from IndexedDB
+
 - Catalog becomes complete standalone data source
 - My vibes page can work with only catalog database
 - Remote catalog sync will display properly
@@ -134,16 +145,19 @@ for (let i = 0; i < catalogDocsToCreate.length; i += chunkSize) {
 ## Migration Considerations
 
 ### Backward Compatibility
+
 - Existing catalog documents will be updated with proper data
 - No breaking changes to API interfaces
 - Graceful handling of missing vibe documents
 
 ### Performance Impact
+
 - Initial sync will be slower (more database queries)
 - Subsequent syncs will be faster (complete data, fewer operations)
 - Overall improvement in my vibes page load time
 
 ### Error Handling
+
 - Handle missing vibe documents gracefully
 - Continue processing if individual session queries fail
 - Maintain catalog consistency even with partial failures
