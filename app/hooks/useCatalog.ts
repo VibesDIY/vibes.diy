@@ -221,10 +221,9 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
       };
     }
   }, [dbName]);
-console.log('🐛 Catalog database name:', dbName);
-  const { database, useAllDocs } = useFireproof(dbName, {
-    attach: toCloud()
-  });
+  const { database, useAllDocs } = useFireproof(dbName, 
+    userId && userId !== 'local' ? { attach: toCloud() } : {}
+  );
 
   // Get real-time count of cataloged vibes
   const allDocsResult = useAllDocs() as {
