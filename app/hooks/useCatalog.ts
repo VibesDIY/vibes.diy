@@ -40,21 +40,13 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       if (cancelled) return;
 
-      console.log(`📋 Starting catalog - ${vibes.length} vibes from useVibes`);
+      console.log(`📋 Catalog - ${vibes.length} vibes from useVibes/idb`);
 
       // Get all already cataloged vibe IDs using fireproof 0.23.0 API
       const allDocsResult = await database.allDocs({ includeDocs: true });
       if (cancelled) return;
 
-      console.log(
-        `📋 Starting catalog - ${allDocsResult.rows.length} already cataloged in allDocs`
-      );
-
-      // Console a random doc from allDocs
-      if (allDocsResult.rows.length > 0) {
-        const randomDoc = allDocsResult.rows[Math.floor(Math.random() * allDocsResult.rows.length)];
-        console.log('Random catalog doc:', randomDoc);
-      }
+      console.log(`📋 Catalog - ${allDocsResult.rows.length} already in "${database.name}"`);
 
       const catalogedVibeIds = new Set(
         allDocsResult.rows
@@ -67,11 +59,8 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
       const vibesNeedingUpdates = [];
 
       // Check all vibes for both new catalog entries and screenshot updates
-      for (const [index, vibe] of vibes.entries()) {
+      for (const vibe of vibes) {
         if (cancelled) break;
-
-        // Limit debug output to first 3 vibes to avoid spam
-        const shouldDebug = index < 3;
 
         try {
           const catalogDocId = `catalog-${vibe.id}`;
@@ -84,40 +73,7 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
           // Brief delay to ensure database is ready (similar to what VibeCardData might have)
           await new Promise((resolve) => setTimeout(resolve, 50));
 
-          // Debug: check what documents exist in session database (only for first few)
-          let allSessionDocs: { rows: any[] } = { rows: [] };
-          if (shouldDebug) {
-            allSessionDocs = await sessionDb
-              .allDocs({ includeDocs: true })
-              .catch(() => ({ rows: [] }));
-            console.log(`📊 Session ${vibe.id} has ${allSessionDocs.rows.length} documents`);
-          }
-
-          const vibeDoc = (await sessionDb.get('vibe').catch((error) => {
-            if (shouldDebug) {
-              console.log(`⚠️ No vibe document found for session ${vibe.id}:`, error.message);
-            }
-            return null;
-          })) as VibeDocument | null;
-
-          if (shouldDebug) {
-            if (vibeDoc) {
-              console.log(
-                `✅ Found vibe document for ${vibe.id}:`,
-                JSON.stringify({ title: vibeDoc.title, created_at: vibeDoc.created_at })
-              );
-            } else {
-              console.log(
-                `❌ No vibe document found for ${vibe.id}, but session has ${allSessionDocs.rows.length} docs`
-              );
-              if (allSessionDocs.rows.length > 0) {
-                console.log(
-                  `📄 First few docs in session:`,
-                  allSessionDocs.rows.slice(0, 3).map((row: any) => ({ id: row.id, key: row.key }))
-                );
-              }
-            }
-          }
+          const vibeDoc = (await sessionDb.get('vibe').catch(() => null)) as VibeDocument | null;
 
           // Get latest screenshot from session
           const sessionResult = await sessionDb.query('type', {
@@ -156,12 +112,6 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
         }
       }
 
-      // Console a random vibe from useVibes
-      if (vibes.length > 0) {
-        const randomVibe = vibes[Math.floor(Math.random() * vibes.length)];
-        console.log('Random vibe from useVibes:', randomVibe);
-      }
-
       // Prepare documents for single bulk operation
       const docsToBulkUpdate = [];
 
@@ -197,9 +147,6 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
               docToUpdate.title = vibeDoc.title || 'Untitled';
               docToUpdate.url = vibeDoc.publishedUrl;
               docToUpdate.created = vibeDoc.created_at || docToUpdate.created || Date.now();
-              console.log(`🔄 Updating catalog ${vibe.id} with title: ${vibeDoc.title}`);
-            } else {
-              console.log(`⚠️ No vibeDoc found for catalog update of ${vibe.id}`);
             }
           }
 
@@ -244,23 +191,6 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
         console.log(
           `📋 Bulk updated ${docsToBulkUpdate.length} catalog documents (${screenshotUpdates} with screenshots)`
         );
-
-        // Debug: check what was actually written to catalog
-        if (docsToBulkUpdate.length > 0) {
-          const sampleUpdate = docsToBulkUpdate[0];
-          console.log(
-            '📝 Sample updated document:',
-            JSON.stringify(
-              {
-                _id: sampleUpdate._id,
-                title: sampleUpdate.title,
-                vibeId: sampleUpdate.vibeId,
-              },
-              null,
-              2
-            )
-          );
-        }
       }
 
       // Get final count after processing
@@ -269,26 +199,6 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
       console.log(
         `📋 Finished catalog - ${finalDocsResult.rows.length} total cataloged in allDocs (updated ${docsToBulkUpdate.length})`
       );
-
-      // Debug: check what's actually in database after bulk update
-      if (finalDocsResult.rows.length > 0) {
-        const firstRow = finalDocsResult.rows[0] as any;
-        if (firstRow.doc && firstRow.doc._id?.startsWith('catalog-')) {
-          const catalogDoc = firstRow.doc;
-          console.log(
-            '🔍 First catalog doc after update:',
-            JSON.stringify(
-              {
-                _id: catalogDoc._id,
-                title: catalogDoc.title,
-                vibeId: catalogDoc.vibeId,
-              },
-              null,
-              2
-            )
-          );
-        }
-      }
     };
 
     catalog().catch((error) => {
@@ -358,27 +268,6 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
 
   // Transform catalog documents to LocalVibe format for compatibility
   const catalogVibes = useMemo(() => {
-    // Debug: log a sample catalog document to see what data we have
-    if (catalogDocs.length > 0) {
-      const sampleDoc = catalogDocs.find((doc) => doc._id?.startsWith('catalog-'));
-      if (sampleDoc) {
-        console.log(
-          '📄 Sample catalog document structure:',
-          JSON.stringify(
-            {
-              _id: sampleDoc._id,
-              title: sampleDoc.title,
-              vibeId: sampleDoc.vibeId,
-              created: sampleDoc.created,
-              url: sampleDoc.url,
-            },
-            null,
-            2
-          )
-        );
-      }
-    }
-
     return catalogDocs
       .filter((doc) => {
         // Filter out corrupted catalog docs and ensure we have valid vibe data

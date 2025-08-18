@@ -32,11 +32,6 @@ export default function MyVibesRoute(): ReactElement {
   const { vibes, isLoading } = useVibes();
   const { catalogVibes } = useCatalog(userId || '', vibes);
 
-  // Debug logging to compare IndexedDB vs Catalog data
-  console.log('🗄️ IndexedDB vibes (first):', vibes[0]);
-  console.log('📋 Catalog vibes (first):', catalogVibes[0]);
-  console.log(`📊 Counts - IndexedDB: ${vibes.length}, Catalog: ${catalogVibes.length}`);
-
   // Use catalog vibes if available, fallback to useVibes
   const displayVibes = catalogVibes.length > 0 ? catalogVibes : vibes;
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
@@ -48,14 +43,6 @@ export default function MyVibesRoute(): ReactElement {
     }
     return displayVibes;
   }, [displayVibes, showOnlyFavorites]);
-
-  // Log a random loaded vibeDoc as used for render
-  useEffect(() => {
-    if (filteredVibes.length > 0) {
-      const randomVibe = filteredVibes[Math.floor(Math.random() * filteredVibes.length)];
-      console.log('Random loaded vibeDoc for render:', randomVibe);
-    }
-  }, [filteredVibes]);
 
   // Simple state for how many vibes to show
   const [itemsToShow, setItemsToShow] = useState(9);
