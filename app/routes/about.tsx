@@ -58,7 +58,7 @@ export default function About() {
                 </a>{' '}
                 and fork the{' '}
                 <a
-                  href="https://github.com/fireproof-storage/vibes.diy"
+                  href="https://github.com/vibesDIY/vibes.diy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline dark:text-blue-400"
