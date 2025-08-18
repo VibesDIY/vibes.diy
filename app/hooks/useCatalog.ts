@@ -261,8 +261,8 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
   // Transform catalog documents to LocalVibe format for compatibility
   const catalogVibes = useMemo(() => {
     return catalogDocs
-      .filter(doc => doc._id?.startsWith('catalog-'))
-      .map(doc => ({
+      .filter((doc) => doc._id?.startsWith('catalog-'))
+      .map((doc) => ({
         id: doc.vibeId,
         title: doc.title,
         encodedTitle: doc.title?.toLowerCase().replace(/\s+/g, '-') || '',
@@ -270,10 +270,12 @@ export function useCatalog(userId: string, vibes: Array<LocalVibe>) {
         created: new Date(doc.created).toISOString(),
         favorite: false, // TODO: Add favorite tracking to catalog
         publishedUrl: doc.url,
-        screenshot: doc._files?.screenshot ? {
-          file: () => Promise.resolve(doc._files.screenshot),
-          type: 'image/png'
-        } : undefined,
+        screenshot: doc._files?.screenshot
+          ? {
+              file: () => Promise.resolve(doc._files.screenshot),
+              type: 'image/png',
+            }
+          : undefined,
       }))
       .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
   }, [catalogDocs]);

@@ -31,7 +31,7 @@ export default function MyVibesRoute(): ReactElement {
   // Use our custom hook for vibes state management
   const { vibes, isLoading } = useVibes();
   const { catalogVibes } = useCatalog(userId || '', vibes);
-  
+
   // Use catalog vibes if available, fallback to useVibes
   const displayVibes = catalogVibes.length > 0 ? catalogVibes : vibes;
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
