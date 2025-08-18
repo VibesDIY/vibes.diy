@@ -66,10 +66,12 @@ async function getLatestScreenshot(vibeId: string): Promise<ScreenshotDocument |
       });
 
       // Log the full file structure to find where CID is stored
-      console.log(`🐛 File structure for ${vibeId}:`, screenshot._files.screenshot);
+      console.log(`🐛 File structure for ${vibeId}:`, screenshot._files?.screenshot);
 
       // Extract CID from file metadata
-      const fileCid = screenshot._files?.screenshot?.cid;
+      const fileCid = screenshot._files?.screenshot
+        ? (screenshot._files.screenshot as any)?.cid
+        : null;
       console.log(`🐛 File CID for ${vibeId}:`, fileCid);
 
       if (screenshot._files?.screenshot && fileCid) {

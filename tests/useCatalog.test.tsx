@@ -77,13 +77,16 @@ describe('useCatalog', () => {
   it('should use local as default userId when empty', () => {
     renderHook(() => useCatalog('', mockVibes));
 
-    expect(useFireproof).toHaveBeenCalledWith('vibez-catalog-local', expect.any(Object));
+    expect(useFireproof).toHaveBeenCalledWith(expect.stringMatching(/-local$/), expect.any(Object));
   });
 
   it('should create correct database name with userId', () => {
     renderHook(() => useCatalog('user123', mockVibes));
 
-    expect(useFireproof).toHaveBeenCalledWith('vibez-catalog-user123', expect.any(Object));
+    expect(useFireproof).toHaveBeenCalledWith(
+      expect.stringMatching(/-user123$/),
+      expect.any(Object)
+    );
   });
 
   it('should transform catalog docs to LocalVibe format', () => {

@@ -4,6 +4,7 @@
  */
 
 import { fireproof } from 'use-fireproof';
+import { CATALOG_DBNAME } from '../config/env';
 
 /**
  * Get the standardized catalog database name for a user
@@ -12,7 +13,7 @@ import { fireproof } from 'use-fireproof';
  */
 export function getCatalogDbName(userId: string): string {
   const cleanUserId = userId || 'local';
-  return `vibez-catalog-${cleanUserId}`;
+  return `${CATALOG_DBNAME}-${cleanUserId}`;
 }
 
 /**

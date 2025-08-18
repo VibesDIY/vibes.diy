@@ -62,3 +62,6 @@ export const CALLAI_ENDPOINT = import.meta.env.VITE_CALLAI_ENDPOINT || API_BASE_
 // Chat History Database
 export const SETTINGS_DBNAME =
   (import.meta.env.VITE_VIBES_CHAT_HISTORY || 'vibes-chats') + getVersionSuffix();
+
+// Catalog Database
+export const CATALOG_DBNAME = import.meta.env.VITE_CATALOG_DBNAME || 'vz-catalog';
