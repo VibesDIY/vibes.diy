@@ -15,6 +15,7 @@ vi.mock('use-fireproof', () => ({
     database: {},
     useLiveQuery: () => ({ docs: [] }),
   }),
+  toCloud: vi.fn().mockReturnValue({}),
 }));
 
 // Prepare mock data

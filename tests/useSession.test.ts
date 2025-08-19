@@ -23,6 +23,7 @@ vi.mock('use-fireproof', () => {
 
   return {
     useFireproof: mockUseFireproof,
+    toCloud: vi.fn().mockReturnValue({}),
   };
 });
 

@@ -85,6 +85,7 @@ vi.mock('use-fireproof', () => {
         ],
       })),
     })),
+    toCloud: vi.fn().mockReturnValue({}),
   };
 });
 

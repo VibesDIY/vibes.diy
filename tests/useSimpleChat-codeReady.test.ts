@@ -35,6 +35,7 @@ vi.mock('use-fireproof', () => ({
       delete: vi.fn().mockResolvedValue({ ok: true }),
     },
   }),
+  toCloud: vi.fn().mockReturnValue({}),
 }));
 
 // Define shared state and reset function *outside* the mock factory

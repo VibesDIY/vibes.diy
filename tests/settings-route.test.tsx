@@ -35,6 +35,7 @@ const mockUseFireproof = vi.fn().mockReturnValue({
 // Mock Fireproof
 vi.mock('use-fireproof', () => ({
   useFireproof: () => mockUseFireproof(),
+  toCloud: vi.fn().mockReturnValue({}),
 }));
 
 // Create mock implementations for react-router-dom

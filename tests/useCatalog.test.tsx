@@ -26,6 +26,7 @@ vi.mock('use-fireproof', () => ({
     useAllDocs: mockUseAllDocs,
   })),
   fireproof: vi.fn(() => mockSessionDb),
+  toCloud: vi.fn().mockReturnValue({}),
 }));
 
 describe('useCatalog', () => {

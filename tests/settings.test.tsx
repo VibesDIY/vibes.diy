@@ -32,6 +32,7 @@ vi.mock('use-fireproof', () => ({
       save: vi.fn(),
     }),
   }),
+  toCloud: vi.fn().mockReturnValue({}),
 }));
 
 // Mock localStorage
