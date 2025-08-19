@@ -6,7 +6,7 @@ import type {
   ChatMessageDocument,
 } from '../types/chat';
 import { getSessionDatabaseName } from '../utils/databaseManager';
-import { useFireproof } from 'use-fireproof';
+import { toCloud, useFireproof } from 'use-fireproof';
 import { encodeTitle } from '../components/SessionSidebar/utils';
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from '../llms/catalog';
 import { generateCid } from '../utils/cidUtils';
@@ -36,7 +36,7 @@ export function useSession(routedSessionId?: string) {
     database: sessionDatabase,
     useDocument: useSessionDocument,
     useLiveQuery: useSessionLiveQuery,
-  } = useFireproof(sessionDbName);
+  } = useFireproof(sessionDbName, { attach: toCloud() });
 
   // User message is stored in the session-specific database
   const {

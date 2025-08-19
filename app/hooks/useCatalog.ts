@@ -1,8 +1,4 @@
-import {
-  useFireproof,
-  fireproof,
-  //toCloud
-} from 'use-fireproof';
+import { useFireproof, fireproof, toCloud } from 'use-fireproof';
 import { useCallback, useEffect, useMemo } from 'react';
 import type { LocalVibe } from '../utils/vibeUtils';
 import type { VibeDocument, ScreenshotDocument } from '../types/chat';
@@ -152,12 +148,11 @@ async function addScreenshotToCatalogDoc(
   }
 }
 
-
 // Helper function to create File from stored Uint8Array data
 function createFileFromUint8Array(data: Uint8Array | any, size: number, type: string): File {
   // Convert back to Uint8Array if it was serialized as an object
   const uint8Array = data instanceof Uint8Array ? data : new Uint8Array(Object.values(data));
-  
+
   console.log('🐛 createFileFromUint8Array:', {
     originalDataType: typeof data,
     originalDataConstructor: data.constructor.name,
@@ -166,7 +161,7 @@ function createFileFromUint8Array(data: Uint8Array | any, size: number, type: st
     expectedSize: size,
     lengthMatchesSize: uint8Array.length === size,
     type,
-    first10Bytes: Array.from(uint8Array.slice(0, 10))
+    first10Bytes: Array.from(uint8Array.slice(0, 10)),
   });
 
   const file = new File([uint8Array], 'screenshot.png', {
@@ -179,7 +174,7 @@ function createFileFromUint8Array(data: Uint8Array | any, size: number, type: st
     size: file.size,
     type: file.type,
     lastModified: file.lastModified,
-    sizeMatches: file.size === size
+    sizeMatches: file.size === size,
   });
 
   return file;
@@ -255,10 +250,9 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
     }
   }, [dbName]);
   const { database, useAllDocs } = useFireproof(
-    dbName
-    // userId && userId !== 'local' ? { attach: toCloud() } : {}
+    dbName,
+    userId && userId !== 'local' ? { attach: toCloud() } : {}
   );
-
 
   // Get real-time count of cataloged vibes
   const allDocsResult = useAllDocs() as {
