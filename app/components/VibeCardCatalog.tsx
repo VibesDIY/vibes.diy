@@ -14,11 +14,7 @@ export function VibeCardCatalog({ catalogVibe }: VibeCardCatalogProps) {
   const { toggleFavorite, deleteVibe } = useVibes();
 
   // Debug logging for screenshot data
-  console.log(`🐛 VibeCardCatalog[${catalogVibe.id}]:`, {
-    hasScreenshot: !!catalogVibe.screenshot,
-    vibeTitle: catalogVibe.title,
-    catalogVibe: catalogVibe,
-  });
+  console.log(`🐛 VibeCardCatalog:`, catalogVibe);
 
   // Navigation functions
   const handleEditClick = (id: string, encodedTitle: string) => {

@@ -182,6 +182,16 @@ function transformToLocalVibe(doc: any): LocalVibe {
     doc: doc,
   });
 
+  // test screenshot
+  if (doc._files?.screenshot) {
+    doc._files.screenshot.file().then((file: File) => {
+      console.log(`🐛 Screenshot size for ${doc.vibeId}:`, file.size);
+    }).catch((error: Error) => {
+      console.error(`🐛 Failed to get Screenshot size for ${doc.vibeId}:`, error);
+    });
+  }
+    
+
   return {
     id: doc.vibeId,
     title: doc.title,
