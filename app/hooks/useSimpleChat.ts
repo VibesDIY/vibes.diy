@@ -58,7 +58,10 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
   } = useSession(sessionId);
 
   // Get main database directly for settings document
-  const { useDocument } = useFireproof(SETTINGS_DBNAME, isAuthenticated ? { attach: toCloud() } : {});
+  const { useDocument } = useFireproof(
+    SETTINGS_DBNAME,
+    isAuthenticated ? { attach: toCloud() } : {}
+  );
 
   // Function to save errors as system messages to the session database
   const saveErrorAsSystemMessageCb = useCallback(

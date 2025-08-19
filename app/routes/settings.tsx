@@ -21,7 +21,10 @@ export default function Settings() {
   const navigate = useNavigate();
   // Use the main database directly instead of through useSession
   const { isAuthenticated, checkAuthStatus } = useAuth();
-  const { useDocument } = useFireproof(SETTINGS_DBNAME, isAuthenticated ? { attach: toCloud() } : {});
+  const { useDocument } = useFireproof(
+    SETTINGS_DBNAME,
+    isAuthenticated ? { attach: toCloud() } : {}
+  );
 
   const {
     doc: settings,
