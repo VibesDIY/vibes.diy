@@ -28,6 +28,12 @@
   to = "/storybook/:splat"
   status = 200
 
+# Support page - serve static HTML
+[[redirects]]
+  from = "/support"
+  to = "/support.html"
+  status = 200
+
 # Main app catch-all routing (must come after storybook redirects)
 [[redirects]]
   from = "/*"

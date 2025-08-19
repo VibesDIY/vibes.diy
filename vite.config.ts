@@ -32,6 +32,8 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
         ignored: ['**/tests/**'],
       },
     },
+    // Configure static file handling for HTML pages
+    publicDir: 'public',
     // Ensure JSON imports are properly handled
     json: {
       stringify: true,
