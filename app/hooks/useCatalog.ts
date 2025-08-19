@@ -1,7 +1,7 @@
 import {
   useFireproof,
   fireproof,
-  toCloud
+  //toCloud
 } from 'use-fireproof';
 import { useCallback, useEffect, useMemo } from 'react';
 import type { LocalVibe } from '../utils/vibeUtils';
@@ -112,7 +112,7 @@ function updateCatalogDocument(catalogDoc: any, vibeDoc: VibeDocument | null): a
   return docToUpdate;
 }
 
-// Helper function to add screenshot to catalog document
+// Helper function to add screenshot to catalog document using Uint8Array storage
 async function addScreenshotToCatalogDoc(
   docToUpdate: any,
   sessionScreenshotDoc: ScreenshotDocument
@@ -120,47 +120,44 @@ async function addScreenshotToCatalogDoc(
   try {
     // GET: Extract binary data from source database
     const sourceFile = sessionScreenshotDoc._files!.screenshot;
-    console.log('🐛 Source file structure:', {
-      hasFileMethod: typeof (sourceFile as any).file === 'function',
-      type: (sourceFile as any).type,
-      size: (sourceFile as any).size,
-    });
-
     const fileData = await (sourceFile as any).file();
-    console.log('🐛 File data extracted:', {
-      dataType: typeof fileData,
-      dataConstructor: fileData.constructor.name,
-      isFile: fileData instanceof File,
-      isBlob: fileData instanceof Blob,
+
+    console.log('🐛 Extracting screenshot data:', {
       size: fileData.size,
       type: fileData.type,
     });
 
-    // PUT: Create new File object for target database with proper metadata
-    const newFile = new File([fileData], 'screenshot.png', {
-      type: (sourceFile as any).type || 'image/png',
-      lastModified: (sourceFile as any).lastModified || Date.now(),
-    });
+    // Convert File to Uint8Array for direct storage
+    const arrayBuffer = await fileData.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
 
-    console.log('🐛 New file created:', {
-      name: newFile.name,
-      size: newFile.size,
-      type: newFile.type,
-      lastModified: newFile.lastModified,
-    });
+    // Store as Uint8Array data directly in document (bypasses broken _files system)
+    docToUpdate.screenshot = {
+      data: uint8Array,
+      size: fileData.size,
+      type: fileData.type || 'image/png',
+    };
 
-    // Update the catalog document with the new file
-    const updatedFiles: any = { ...docToUpdate._files };
-    updatedFiles.screenshot = newFile;
-    docToUpdate._files = updatedFiles;
     docToUpdate.screenshotCid = sessionScreenshotDoc.cid;
     docToUpdate.lastUpdated = Date.now();
 
-    console.log('🐛 File transfer completed successfully');
+    console.log('🐛 Screenshot stored as Uint8Array:', {
+      dataLength: uint8Array.length,
+      size: fileData.size,
+      type: docToUpdate.screenshot.type,
+    });
   } catch (error) {
-    console.error('🐛 File transfer failed:', error);
+    console.error('🐛 Screenshot storage failed:', error);
     throw error;
   }
+}
+
+// Helper function to create File from stored Uint8Array data
+function createFileFromUint8Array(data: Uint8Array, size: number, type: string): File {
+  return new File([data], 'screenshot.png', {
+    type,
+    lastModified: Date.now(),
+  });
 }
 
 // Helper function to filter valid catalog documents
@@ -174,23 +171,24 @@ function filterValidCatalogDocs(docs: Array<any>): Array<any> {
 function transformToLocalVibe(doc: any): LocalVibe {
   // Debug logging for screenshot transformation
   console.log(`🐛 transformToLocalVibe[${doc.vibeId}]:`, {
-    hasFiles: !!doc._files,
-    hasScreenshot: !!doc._files?.screenshot,
-    screenshotType: typeof doc._files?.screenshot,
-    filesKeys: doc._files ? Object.keys(doc._files) : [],
+    hasScreenshotData: !!doc.screenshot?.data,
+    screenshotSize: doc.screenshot?.size,
+    screenshotType: doc.screenshot?.type,
     docKeys: Object.keys(doc),
-    doc: doc,
   });
 
-  // test screenshot
-  if (doc._files?.screenshot) {
-    doc._files.screenshot.file().then((file: File) => {
-      console.log(`🐛 Screenshot size for ${doc.vibeId}:`, file.size);
-    }).catch((error: Error) => {
-      console.error(`🐛 Failed to get Screenshot size for ${doc.vibeId}:`, error);
-    });
+  // Create screenshot interface from Uint8Array data
+  let screenshot: { file: () => Promise<File>; type: string } | undefined;
+
+  if (doc.screenshot?.data && doc.screenshot?.size && doc.screenshot?.type) {
+    screenshot = {
+      file: () =>
+        Promise.resolve(
+          createFileFromUint8Array(doc.screenshot.data, doc.screenshot.size, doc.screenshot.type)
+        ),
+      type: doc.screenshot.type,
+    };
   }
-    
 
   return {
     id: doc.vibeId,
@@ -200,7 +198,7 @@ function transformToLocalVibe(doc: any): LocalVibe {
     created: new Date(doc.created).toISOString(),
     favorite: false,
     publishedUrl: doc.url,
-    screenshot: doc._files?.screenshot || undefined,
+    screenshot,
   };
 }
 
@@ -231,8 +229,9 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
       };
     }
   }, [dbName]);
-  const { database, useAllDocs } = useFireproof(dbName, 
-    userId && userId !== 'local' ? { attach: toCloud() } : {}
+  const { database, useAllDocs } = useFireproof(
+    dbName
+    // userId && userId !== 'local' ? { attach: toCloud() } : {}
   );
 
   // Get real-time count of cataloged vibes

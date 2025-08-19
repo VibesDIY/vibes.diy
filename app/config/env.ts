@@ -64,4 +64,4 @@ export const SETTINGS_DBNAME =
   (import.meta.env.VITE_VIBES_CHAT_HISTORY || 'vibes-chats') + getVersionSuffix();
 
 // Catalog Database
-export const CATALOG_DBNAME = import.meta.env.VITE_CATALOG_DBNAME || 'vx-catalog';
+export const CATALOG_DBNAME = import.meta.env.VITE_CATALOG_DBNAME || 'vy-catalog';
