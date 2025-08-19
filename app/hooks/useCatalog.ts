@@ -152,12 +152,37 @@ async function addScreenshotToCatalogDoc(
   }
 }
 
+
 // Helper function to create File from stored Uint8Array data
-function createFileFromUint8Array(data: Uint8Array, size: number, type: string): File {
-  return new File([data], 'screenshot.png', {
+function createFileFromUint8Array(data: Uint8Array | any, size: number, type: string): File {
+  // Convert back to Uint8Array if it was serialized as an object
+  const uint8Array = data instanceof Uint8Array ? data : new Uint8Array(Object.values(data));
+  
+  console.log('🐛 createFileFromUint8Array:', {
+    originalDataType: typeof data,
+    originalDataConstructor: data.constructor.name,
+    isOriginalUint8Array: data instanceof Uint8Array,
+    convertedLength: uint8Array.length,
+    expectedSize: size,
+    lengthMatchesSize: uint8Array.length === size,
+    type,
+    first10Bytes: Array.from(uint8Array.slice(0, 10))
+  });
+
+  const file = new File([uint8Array], 'screenshot.png', {
     type,
     lastModified: Date.now(),
   });
+
+  console.log('🐛 Created File:', {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    lastModified: file.lastModified,
+    sizeMatches: file.size === size
+  });
+
+  return file;
 }
 
 // Helper function to filter valid catalog documents
@@ -233,6 +258,7 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
     dbName
     // userId && userId !== 'local' ? { attach: toCloud() } : {}
   );
+
 
   // Get real-time count of cataloged vibes
   const allDocsResult = useAllDocs() as {
