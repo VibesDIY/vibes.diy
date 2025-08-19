@@ -28,6 +28,20 @@ vi.mock('../app/config/env', () => ({
   SETTINGS_DBNAME: 'test-chat-history',
 }));
 
+// Mock AuthContext
+vi.mock('../app/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    userPayload: null,
+    isAuthenticated: false,
+    isLoading: false,
+    token: null,
+    needsLogin: false,
+    setNeedsLogin: vi.fn(),
+    checkAuthStatus: vi.fn(),
+    processToken: vi.fn(),
+  }),
+}));
+
 // Now mock use-fireproof
 vi.mock('use-fireproof', () => {
   const mockMergeSession = vi.fn();

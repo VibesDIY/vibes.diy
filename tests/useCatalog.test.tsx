@@ -106,8 +106,10 @@ describe('useCatalog', () => {
         title: 'Catalog Vibe 2',
         created: Date.now() - 2000,
         url: 'https://example.com/vibe2',
-        _files: {
-          screenshot: new File([''], 'screenshot.png', { type: 'image/png' }),
+        screenshot: {
+          data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAGAzGNrpgAAAABJRU5ErkJggg==',
+          size: 95,
+          type: 'image/png',
         },
       },
     ];

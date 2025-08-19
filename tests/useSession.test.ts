@@ -31,6 +31,19 @@ vi.mock('../app/utils/databaseManager', () => ({
   getSessionDatabaseName: vi.fn().mockImplementation((id) => `session-${id || 'default'}`),
 }));
 
+vi.mock('../app/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    userPayload: null,
+    isAuthenticated: false,
+    isLoading: false,
+    token: null,
+    needsLogin: false,
+    setNeedsLogin: vi.fn(),
+    checkAuthStatus: vi.fn(),
+    processToken: vi.fn(),
+  }),
+}));
+
 // Tests focused on eager database initialization behavior
 describe('useSession', () => {
   const mockUseFireproof = vi.mocked(useFireproof);
@@ -41,7 +54,7 @@ describe('useSession', () => {
 
   it('should initialize database eagerly with provided sessionId', () => {
     renderHook(() => useSession('test-id'));
-    expect(mockUseFireproof).toHaveBeenCalledWith('session-test-id');
+    expect(mockUseFireproof).toHaveBeenCalledWith('session-test-id', {});
   });
 
   it('should initialize database eagerly even when sessionId is not provided', () => {
@@ -50,7 +63,7 @@ describe('useSession', () => {
     expect(result.current.session._id).toBeTruthy();
     // Verify the database is initialized eagerly on first render
     expect(mockUseFireproof).toHaveBeenCalledTimes(1);
-    expect(mockUseFireproof).toHaveBeenCalledWith(expect.stringMatching(/^session-/));
+    expect(mockUseFireproof).toHaveBeenCalledWith(expect.stringMatching(/^session-/), {});
   });
 
   /**
@@ -98,6 +111,6 @@ describe('useSession', () => {
     // Verify new database is initialized with the new session ID
     // The call count should have increased
     expect(mockUseFireproof.mock.calls.length).toBeGreaterThan(initialCallCount);
-    expect(mockUseFireproof).toHaveBeenCalledWith('session-new-session-id');
+    expect(mockUseFireproof).toHaveBeenCalledWith('session-new-session-id', {});
   });
 });
