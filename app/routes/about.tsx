@@ -125,10 +125,10 @@ export default function About() {
           </a>
           {' · '}
           <a
-            href="mailto:help@vibes.diy"
+            href="/support"
             className="text-blue-600 hover:underline dark:text-blue-400"
           >
-            Email Support
+            Support
           </a>
           {' · '}
           <a href="/legal/privacy" className="text-blue-600 hover:underline dark:text-blue-400">
