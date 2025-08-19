@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useFireproof } from 'use-fireproof';
+import { toCloud, useFireproof } from 'use-fireproof';
 import { HomeIcon } from '../components/SessionSidebar/HomeIcon';
 import SimpleAppLayout from '../components/SimpleAppLayout';
 import { SETTINGS_DBNAME } from '../config/env';
@@ -20,8 +20,8 @@ export function meta() {
 export default function Settings() {
   const navigate = useNavigate();
   // Use the main database directly instead of through useSession
-  const { useDocument } = useFireproof(SETTINGS_DBNAME);
   const { isAuthenticated, checkAuthStatus } = useAuth();
+  const { useDocument } = useFireproof(SETTINGS_DBNAME, isAuthenticated ? { attach: toCloud() } : {});
 
   const {
     doc: settings,

@@ -10,6 +10,7 @@ import { toCloud, useFireproof } from 'use-fireproof';
 import { encodeTitle } from '../components/SessionSidebar/utils';
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from '../llms/catalog';
 import { generateCid } from '../utils/cidUtils';
+import { useAuth } from '~/contexts/AuthContext';
 
 export function useSession(routedSessionId?: string) {
   const [generatedSessionId] = useState(
@@ -32,11 +33,12 @@ export function useSession(routedSessionId?: string) {
 
   const sessionId = effectiveSessionId;
   const sessionDbName = getSessionDatabaseName(sessionId);
+  const { isAuthenticated } = useAuth();
   const {
     database: sessionDatabase,
     useDocument: useSessionDocument,
     useLiveQuery: useSessionLiveQuery,
-  } = useFireproof(sessionDbName, { attach: toCloud() });
+  } = useFireproof(sessionDbName, isAuthenticated ? { attach: toCloud() } : {});
 
   // User message is stored in the session-specific database
   const {

@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { AiChatMessageDocument, ChatMessageDocument, ChatState } from '../types/chat';
 import type { UserSettings } from '../types/settings';
 
-import { useFireproof } from 'use-fireproof';
+import { toCloud, useFireproof } from 'use-fireproof';
 import { SETTINGS_DBNAME } from '../config/env';
 import { saveErrorAsSystemMessage } from './saveErrorAsSystemMessage';
 import { useApiKey } from './useApiKey';
@@ -58,7 +58,7 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
   } = useSession(sessionId);
 
   // Get main database directly for settings document
-  const { useDocument } = useFireproof(SETTINGS_DBNAME);
+  const { useDocument } = useFireproof(SETTINGS_DBNAME, isAuthenticated ? { attach: toCloud() } : {});
 
   // Function to save errors as system messages to the session database
   const saveErrorAsSystemMessageCb = useCallback(

@@ -7,7 +7,7 @@ import Wild from './vibespace/Wild';
 import ExplodingBrain from './vibespace/ExplodingBrain';
 import Cyberpunk from './vibespace/Cyberpunk';
 import type { ReactElement } from 'react';
-import { useFireproof } from 'use-fireproof';
+import { toCloud, useFireproof } from 'use-fireproof';
 
 // Define the structure of our vibe documents
 interface VibeDocument {
@@ -335,7 +335,7 @@ export default function VibespaceComponent({
   }
 
   // Use Fireproof with the user-specific database
-  const { useAllDocs } = useFireproof(`vu-${userId}`);
+  const { useAllDocs } = useFireproof(`vu-${userId}`, { attach: toCloud() });
 
   // Query all documents in the database
   const allDocsResult = useAllDocs() as { docs: VibeDocument[] };
