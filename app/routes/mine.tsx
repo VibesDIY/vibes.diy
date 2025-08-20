@@ -32,30 +32,11 @@ export default function MyVibesRoute(): ReactElement {
   const { catalogVibes } = useCatalog(userId || '', vibes, isEnableSyncEnabled);
 
   // Use catalog vibes if available, fallback to useVibes
-  const displayVibes = catalogVibes.length > 0 ? catalogVibes : vibes;
+  const displayVibes = catalogVibes.length > 0 ? catalogVibes : [{
+    publishedUrl: ' ',
+    title: `Loading ${vibes.length} vibes...`,
+  }];
 
-  // Debug logging for catalog vs regular vibes
-  console.log(`🐛 mine.tsx displayVibes:`, {
-    catalogVibesCount: catalogVibes.length,
-    regularVibesCount: vibes.length,
-    usingCatalog: catalogVibes.length > 0,
-    firstCatalogVibe: catalogVibes[0]
-      ? {
-          id: catalogVibes[0].id,
-          title: catalogVibes[0].title,
-          hasScreenshot: !!catalogVibes[0].screenshot,
-          screenshotType: catalogVibes[0].screenshot?.type,
-        }
-      : null,
-    firstDisplayVibe: displayVibes[0]
-      ? {
-          id: displayVibes[0].id,
-          title: displayVibes[0].title,
-          hasScreenshot: !!displayVibes[0].screenshot,
-          screenshotType: displayVibes[0].screenshot?.type,
-        }
-      : null,
-  });
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   // Filter vibes based on the showOnlyFavorites toggle

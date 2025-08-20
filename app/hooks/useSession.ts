@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router';
 import type {
   AiChatMessageDocument,
   UserChatMessageDocument,
@@ -28,6 +29,7 @@ export function useSession(routedSessionId?: string) {
   // Update effectiveSessionId whenever routedSessionId changes
   useEffect(() => {
     if (routedSessionId) {
+      console.log('useSession: routedSessionId changed to', routedSessionId);
       setEffectiveSessionId(routedSessionId);
     }
   }, [routedSessionId]);
@@ -36,13 +38,18 @@ export function useSession(routedSessionId?: string) {
   const sessionDbName = getSessionDatabaseName(sessionId);
   const { isAuthenticated } = useAuth();
   const { isEnableSyncEnabled } = useUserSettings();
+  const location = useLocation();
+  
+  // Only attach toCloud() when we're actually on a chat route (not just home page with session)
+  const isOnChatRoute = location?.pathname?.startsWith('/chat/') || false;
+  
   const {
     database: sessionDatabase,
     useDocument: useSessionDocument,
     useLiveQuery: useSessionLiveQuery,
   } = useFireproof(
     sessionDbName,
-    isEnableSyncEnabled && isAuthenticated && routedSessionId ? { attach: toCloud() } : {}
+    isEnableSyncEnabled && isAuthenticated && routedSessionId && isOnChatRoute ? { attach: toCloud() } : {}
   );
 
   // User message is stored in the session-specific database
