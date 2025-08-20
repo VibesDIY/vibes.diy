@@ -308,6 +308,12 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
 
           // Get vibe document and latest screenshot using helper functions
           const vibeDoc = await getVibeDocument(vibe.id);
+          
+          // Skip vibes without valid vibe documents
+          if (!vibeDoc) {
+            continue;
+          }
+          
           const sessionScreenshotDoc = await getLatestScreenshot(vibe.id);
 
           console.log(`🐛 Screenshot check for ${vibe.id}:`, {
