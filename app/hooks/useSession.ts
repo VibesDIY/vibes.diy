@@ -11,6 +11,7 @@ import { encodeTitle } from '../components/SessionSidebar/utils';
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from '../llms/catalog';
 import { generateCid } from '../utils/cidUtils';
 import { useAuth } from '~/contexts/AuthContext';
+import { useUserSettings } from './useUserSettings';
 
 export function useSession(routedSessionId?: string) {
   const [generatedSessionId] = useState(
@@ -34,11 +35,15 @@ export function useSession(routedSessionId?: string) {
   const sessionId = effectiveSessionId;
   const sessionDbName = getSessionDatabaseName(sessionId);
   const { isAuthenticated } = useAuth();
+  const { isEnableSyncEnabled } = useUserSettings();
   const {
     database: sessionDatabase,
     useDocument: useSessionDocument,
     useLiveQuery: useSessionLiveQuery,
-  } = useFireproof(sessionDbName, isAuthenticated && false ? { attach: toCloud() } : {});
+  } = useFireproof(
+    sessionDbName,
+    isEnableSyncEnabled && isAuthenticated ? { attach: toCloud() } : {}
+  );
 
   // User message is stored in the session-specific database
   const {

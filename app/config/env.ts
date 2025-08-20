@@ -64,4 +64,18 @@ export const SETTINGS_DBNAME =
   (import.meta.env.VITE_VIBES_CHAT_HISTORY || 'vibes-chats') + getVersionSuffix();
 
 // Catalog Database
-export const CATALOG_DBNAME = import.meta.env.VITE_CATALOG_DBNAME || 'vy-catalog';
+export const CATALOG_DBNAME = import.meta.env.VITE_CATALOG_DBNAME || 'v-catalog';
+
+// Set up Fireproof debugging if in browser environment
+if (typeof window !== 'undefined') {
+  // Method 1: Using FP_ENV Symbol (direct approach)
+  // @ts-ignore - Setting up Fireproof debug environment
+  window[Symbol.for('FP_ENV')] = window[Symbol.for('FP_ENV')] || new Map();
+  // @ts-ignore - Enable full Fireproof debugging
+  window[Symbol.for('FP_ENV')].set('FP_DEBUG', '*');
+
+  // Method 2: Using logger (alternative approach from Fireproof README)
+  // Uncomment this if you prefer using the logger method:
+  // import { logger } from 'use-fireproof';
+  // logger.setDebug('*');
+}

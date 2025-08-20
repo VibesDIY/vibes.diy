@@ -8,6 +8,8 @@ import ExplodingBrain from './vibespace/ExplodingBrain';
 import Cyberpunk from './vibespace/Cyberpunk';
 import type { ReactElement } from 'react';
 import { toCloud, useFireproof } from 'use-fireproof';
+import { useUserSettings } from '../hooks/useUserSettings';
+import { useAuth } from '../contexts/AuthContext';
 
 // Define the structure of our vibe documents
 interface VibeDocument {
@@ -334,8 +336,15 @@ export default function VibespaceComponent({
     return <div>Invalid user space</div>;
   }
 
+  // Get sync setting
+  const { isAuthenticated } = useAuth();
+  const { isEnableSyncEnabled } = useUserSettings();
+
   // Use Fireproof with the user-specific database
-  const { useAllDocs } = useFireproof(`vu-${userId}`, { attach: toCloud() });
+  const { useAllDocs } = useFireproof(
+    `vu-${userId}`,
+    isEnableSyncEnabled && isAuthenticated ? { attach: toCloud() } : {}
+  );
 
   // Query all documents in the database
   const allDocsResult = useAllDocs() as { docs: VibeDocument[] };

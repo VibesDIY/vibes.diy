@@ -10,6 +10,7 @@ import { useApiKey } from './useApiKey';
 import { useImmediateErrorAutoSend } from './useImmediateErrorAutoSend';
 import { type ErrorCategory, type RuntimeError, useRuntimeErrors } from './useRuntimeErrors';
 import { useSession } from './useSession';
+import { useUserSettings } from './useUserSettings';
 
 import { useMessageSelection } from './useMessageSelection';
 // Import our custom hooks
@@ -57,10 +58,13 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
     updateAiSelectedDependencies,
   } = useSession(sessionId);
 
+  // Get user settings including sync preference
+  const { isEnableSyncEnabled } = useUserSettings();
+
   // Get main database directly for settings document
   const { useDocument } = useFireproof(
     SETTINGS_DBNAME,
-    true && isAuthenticated ? { attach: toCloud() } : {}
+    isEnableSyncEnabled && isAuthenticated ? { attach: toCloud() } : {}
   );
 
   // Function to save errors as system messages to the session database

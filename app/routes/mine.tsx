@@ -10,7 +10,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../hooks/useSession';
 import { useVibes } from '../hooks/useVibes';
 import { useCatalog } from '../hooks/useCatalog';
-import { VibeCatalog } from '../hooks/VibeCatalog';
+import { useUserSettings } from '../hooks/useUserSettings';
+// import { VibeCatalog } from '../hooks/VibeCatalog';
 
 export function meta() {
   return [
@@ -30,7 +31,8 @@ export default function MyVibesRoute(): ReactElement {
 
   // Use our custom hook for vibes state management
   const { vibes, isLoading } = useVibes();
-  const { catalogVibes } = useCatalog(userId || '', vibes);
+  const { isEnableSyncEnabled } = useUserSettings();
+  const { catalogVibes } = useCatalog(userId || '', vibes, isEnableSyncEnabled);
 
   // Use catalog vibes if available, fallback to useVibes
   const displayVibes = catalogVibes.length > 0 ? catalogVibes : vibes;
@@ -125,7 +127,7 @@ export default function MyVibesRoute(): ReactElement {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <VibeCatalog userId={userId} vibes={vibes} />
+                {/* <VibeCatalog userId={userId} vibes={vibes} /> */}
                 <h2 className="mb-4 text-2xl font-bold">My Vibes</h2>
                 {userId && (
                   <p className="text-accent-01 dark:text-accent-01 mb-6">

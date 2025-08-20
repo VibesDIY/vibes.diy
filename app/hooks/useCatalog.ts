@@ -222,36 +222,18 @@ function transformToLocalVibe(doc: any): LocalVibe {
   };
 }
 
-export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) {
+export function useCatalog(
+  userId: string | undefined,
+  vibes: Array<LocalVibe>,
+  sync: boolean = false
+) {
   userId = userId || 'local';
 
   const dbName = getCatalogDbName(userId);
 
-  // Check for idb_reset=catalog URL parameter
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('idb_reset') === 'catalog') {
-      console.log('🗑️ Resetting catalog database due to idb_reset=catalog parameter');
-      const deleteReq = indexedDB.deleteDatabase(`fp.${dbName}`);
-      deleteReq.onsuccess = () => {
-        console.log('✅ Successfully deleted catalog database');
-        // Remove the parameter and reload
-        urlParams.delete('idb_reset');
-        const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
-        window.history.replaceState({}, '', newUrl);
-        window.location.reload();
-      };
-      deleteReq.onerror = () => {
-        console.error('❌ Failed to delete catalog database:', deleteReq.error);
-      };
-      deleteReq.onblocked = () => {
-        console.warn('⚠️ Delete blocked - catalog database may be in use');
-      };
-    }
-  }, [dbName]);
   const { database, useAllDocs } = useFireproof(
     dbName,
-    false && userId && userId !== 'local' ? { attach: toCloud() } : {}
+    sync && userId && userId !== 'local' ? { attach: toCloud() } : {}
   );
 
   // Get real-time count of cataloged vibes
@@ -308,12 +290,12 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
 
           // Get vibe document and latest screenshot using helper functions
           const vibeDoc = await getVibeDocument(vibe.id);
-          
+
           // Skip vibes without valid vibe documents
           if (!vibeDoc) {
             continue;
           }
-          
+
           const sessionScreenshotDoc = await getLatestScreenshot(vibe.id);
 
           console.log(`🐛 Screenshot check for ${vibe.id}:`, {
@@ -399,14 +381,9 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
         }
       }
 
-      // Bulk operations in chunks of 10 documents
+      // Do one big bulk operation
       if (docsToBulkUpdate.length > 0 && !cancelled) {
-        const chunkSize = 100;
-        for (let i = 0; i < docsToBulkUpdate.length; i += chunkSize) {
-          if (cancelled) break;
-          const chunk = docsToBulkUpdate.slice(i, i + chunkSize);
-          await database.bulk(chunk);
-        }
+        await database.bulk(docsToBulkUpdate);
         const screenshotUpdates = docsToBulkUpdate.filter((doc) => doc.screenshotCid).length;
         console.log(
           `📋 Bulk updated ${docsToBulkUpdate.length} catalog documents (${screenshotUpdates} with screenshots)`
