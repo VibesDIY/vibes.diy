@@ -42,7 +42,7 @@ export function useSession(routedSessionId?: string) {
     useLiveQuery: useSessionLiveQuery,
   } = useFireproof(
     sessionDbName,
-    isEnableSyncEnabled && isAuthenticated ? { attach: toCloud() } : {}
+    isEnableSyncEnabled && isAuthenticated && routedSessionId ? { attach: toCloud() } : {}
   );
 
   // User message is stored in the session-specific database
