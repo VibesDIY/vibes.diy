@@ -251,7 +251,7 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
   }, [dbName]);
   const { database, useAllDocs } = useFireproof(
     dbName,
-    userId && userId !== 'local' ? { attach: toCloud() } : {}
+    false && userId && userId !== 'local' ? { attach: toCloud() } : {}
   );
 
   // Get real-time count of cataloged vibes
@@ -395,7 +395,7 @@ export function useCatalog(userId: string | undefined, vibes: Array<LocalVibe>) 
 
       // Bulk operations in chunks of 10 documents
       if (docsToBulkUpdate.length > 0 && !cancelled) {
-        const chunkSize = 10;
+        const chunkSize = 100;
         for (let i = 0; i < docsToBulkUpdate.length; i += chunkSize) {
           if (cancelled) break;
           const chunk = docsToBulkUpdate.slice(i, i + chunkSize);
