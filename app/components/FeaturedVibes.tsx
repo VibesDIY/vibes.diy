@@ -4,6 +4,10 @@ import PublishedVibeCard from './PublishedVibeCard';
 // Featured vibes data
 export const publishedVibes = [
   {
+    name: 'Create Emotional Playlists',
+    slug: 'occupational-basilisk-4371',
+  },
+  {
     name: 'Dr. Deas Drum Machine',
     slug: 'excited-wombat-4753',
   },
