@@ -99,6 +99,65 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
   const [selectedResponseId, setSelectedResponseId] = useState<string>('');
   const [pendingAiMessage, setPendingAiMessage] = useState<ChatMessageDocument | null>(null);
 
+  // Image attachment state for the pending user message
+  const [attachedImages, setAttachedImages] = useState<
+    Array<{ id: string; previewUrl: string; mimeType: string }>
+  >([]);
+
+  const attachImages = useCallback(
+    async (files: File[] | FileList): Promise<string[]> => {
+      const list = Array.from(files || []).filter((f) => f && f.type.startsWith('image/'));
+      if (!session?._id || list.length === 0) return [];
+      const ids: string[] = [];
+      for (const file of list) {
+        const imageDoc = {
+          type: 'image' as const,
+          session_id: session._id,
+          created_at: Date.now(),
+          _files: { image: file as any },
+        };
+        const { id } = await sessionDatabase.put(imageDoc);
+        ids.push(id);
+        const url = URL.createObjectURL(file);
+        setAttachedImages((prev) => [...prev, { id, previewUrl: url, mimeType: file.type }]);
+      }
+      return ids;
+    },
+    [session?._id, sessionDatabase]
+  );
+
+  const removeAttachedImage = useCallback(
+    async (imageId: string) => {
+      setAttachedImages((prev) => {
+        const img = prev.find((i) => i.id === imageId);
+        if (img?.previewUrl) {
+          try {
+            URL.revokeObjectURL(img.previewUrl);
+          } catch {}
+        }
+        return prev.filter((img) => img.id !== imageId);
+      });
+      try {
+        await (sessionDatabase as any).delete?.({ _id: imageId });
+      } catch (_) {
+        // ignore if not found
+      }
+    },
+    [sessionDatabase]
+  );
+
+  const clearAttachedImages = useCallback(() => {
+    // Do not delete here; these are referenced by the saved message now
+    setAttachedImages((prev) => {
+      for (const img of prev) {
+        try {
+          URL.revokeObjectURL(img.previewUrl);
+        } catch {}
+      }
+      return [];
+    });
+  }, []);
+
   // setNeedsLogin is now obtained from AuthContext above
 
   // Derive model to use from settings or default
@@ -186,6 +245,8 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
         isProcessingRef,
         aiMessage,
         sessionDatabase,
+        attachedImages,
+        clearAttachedImages,
         setPendingAiMessage,
         setSelectedResponseId,
         updateTitle,
@@ -314,6 +375,11 @@ ${code}
     globalModel: settingsDoc?.model,
     showModelPickerInChat: settingsDoc?.showModelPickerInChat || false,
     addScreenshot,
+    // Image attachments for pending message
+    attachedImages,
+    attachImages,
+    removeAttachedImage,
+    clearAttachedImages,
     docs: messages,
     setSelectedResponseId,
     selectedResponseDoc,

@@ -26,15 +26,53 @@ export async function streamAI(
   onContent: (content: string) => void,
   apiKey: string, // API key (can be dummy key for proxy)
   userId?: string,
-  setNeedsLogin?: (value: boolean, reason: string) => void
+  setNeedsLogin?: (value: boolean, reason: string) => void,
+  userImageIds?: string[],
+  sessionDatabase?: any
 ): Promise<string> {
   // Stream process starts
 
-  // Format messages for call-ai
+  // Helper: convert a File into a data URL for multimodal content
+  const fileToDataUrl = async (file: File): Promise<string> =>
+    await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result));
+      reader.readAsDataURL(file);
+    });
+
+  // Build user content, possibly multimodal with images
+  let userContent: any = userMessage;
+  if (sessionDatabase && Array.isArray(userImageIds) && userImageIds.length > 0) {
+    const segments: any[] = [];
+    if (userMessage && userMessage.trim().length > 0) {
+      segments.push({ type: 'text', text: userMessage });
+    }
+    for (const id of userImageIds) {
+      try {
+        const doc = await sessionDatabase.get(id);
+        const fpFiles = doc?._files || {};
+        const key = 'image' in fpFiles ? 'image' : Object.keys(fpFiles)[0];
+        const fileRef = key ? fpFiles[key] : undefined;
+        const file = fileRef && typeof fileRef.file === 'function' ? await fileRef.file() : null;
+        if (file) {
+          const url = await fileToDataUrl(file);
+          segments.push({ type: 'image_url', image_url: { url } });
+        }
+      } catch (e) {
+        // skip missing image
+        console.warn('Could not load image for AI request:', id, e);
+      }
+    }
+    if (segments.length > 0) {
+      userContent = segments;
+    }
+  }
+
+  // Format messages for call-ai (support multimodal content on the last user message)
   const messages: Message[] = [
     { role: 'system', content: systemPrompt },
     ...messageHistory,
-    { role: 'user', content: userMessage },
+    { role: 'user', content: userContent as any },
   ];
   // Configure call-ai options with default maximum token limit
   const defaultMaxTokens = userId ? 150000 : 75000;

@@ -2,6 +2,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react';
 import { useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useState } from 'react';
 import type { ChatState } from '../types/chat';
 import ModelPicker, { type ModelOption } from './ModelPicker';
+import ImagePreview from './ImagePreview';
 import { preloadLlmsText } from '../prompts';
 
 interface ChatInputProps {
@@ -30,6 +31,8 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
     // State for responsive behavior
     const [isCompact, setIsCompact] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Expose the click function to parent components
     useImperativeHandle(ref, () => ({
@@ -83,9 +86,38 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       };
     }, []);
 
+    const handleFilesSelected = useCallback(
+      async (files: FileList | null) => {
+        if (!files || !chatState.attachImages) return;
+        await chatState.attachImages(files);
+      },
+      [chatState.attachImages]
+    );
+
+    const onDropFiles = useCallback(
+      async (e: React.DragEvent<HTMLTextAreaElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const files = e.dataTransfer?.files;
+        if (files && chatState.attachImages) {
+          await chatState.attachImages(files);
+        }
+      },
+      [chatState.attachImages]
+    );
+
     return (
       <div ref={containerRef} className="px-4 py-2">
-        <div className="space-y-1">
+        <div className="space-y-2">
+          {/* Attached images preview */}
+          {Array.isArray(chatState.attachedImages) && chatState.attachedImages.length > 0 && (
+            <ImagePreview
+              images={chatState.attachedImages}
+              onRemove={(id) => chatState.removeAttachedImage?.(id)}
+            />
+          )}
+
           <textarea
             ref={chatState.inputRef}
             value={chatState.input}
@@ -94,6 +126,19 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 chatState.setInput(e.target.value);
               }
             }}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+            }}
+            onDrop={onDropFiles}
             onFocus={() => {
               // Fire and forget: warm the LLMs text cache using raw imports
               void preloadLlmsText();
@@ -104,7 +149,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 handleSendMessage();
               }
             }}
-            className="border-light-decorative-00 dark:border-dark-decorative-00 text-light-primary dark:text-dark-primary bg-light-background-01 dark:bg-dark-background-01 focus:ring-accent-01-light dark:focus:ring-accent-01-dark max-h-[200px] min-h-[90px] w-full resize-y rounded-lg border p-2.5 text-sm focus:border-transparent focus:ring-2 focus:outline-none"
+            className={`border-light-decorative-00 dark:border-dark-decorative-00 text-light-primary dark:text-dark-primary bg-light-background-01 dark:bg-dark-background-01 focus:ring-accent-01-light dark:focus:ring-accent-01-dark max-h-[200px] min-h-[90px] w-full resize-y rounded-lg border p-2.5 text-sm focus:border-transparent focus:ring-2 focus:outline-none ${isDragging ? 'ring-2 ring-blue-500' : ''}`}
             placeholder={
               chatState.docs.length || chatState.isStreaming
                 ? 'Continue coding...'
@@ -125,18 +170,42 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 compact={isCompact}
               />
             ) : (
-              <span aria-hidden="true" />
+              <span className="flex items-center gap-2" aria-hidden="true" />
             )}
-            <button
-              ref={submitButtonRef}
-              type="button"
-              onClick={handleSendMessage}
-              disabled={chatState.isStreaming}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
-              aria-label={chatState.isStreaming ? 'Generating' : 'Send message'}
-            >
-              {chatState.isStreaming ? '•••' : 'Code'}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  void handleFilesSelected(e.target.files);
+                  // Allow selecting the same file(s) consecutively
+                  e.currentTarget.value = '';
+                }}
+              />
+              <button
+                type="button"
+                aria-label="Attach images"
+                className="border-light-decorative-00 text-light-primary hover:bg-light-decorative-00/40 dark:border-dark-decorative-00 dark:text-dark-primary dark:hover:bg-dark-decorative-00/40 rounded-md border px-2 py-1 text-sm transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={chatState.isStreaming}
+              >
+                +
+              </button>
+              <button
+                ref={submitButtonRef}
+                type="button"
+                onClick={handleSendMessage}
+                disabled={chatState.isStreaming}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+                aria-label={chatState.isStreaming ? 'Generating' : 'Send message'}
+              >
+                {chatState.isStreaming ? '•••' : 'Code'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -26,6 +26,10 @@ export interface SendMessageContext {
   isProcessingRef: { current: boolean };
   aiMessage: AiChatMessageDocument;
   sessionDatabase: any;
+  attachedImages:
+    | Array<{ id: string }>
+    | Array<{ id: string; previewUrl?: string; mimeType?: string }>;
+  clearAttachedImages: () => void;
   setPendingAiMessage: (doc: ChatMessageDocument | null) => void;
   setSelectedResponseId: (id: string) => void;
   updateTitle: (title: string, isManual?: boolean) => Promise<void>;
@@ -82,10 +86,21 @@ export async function sendMessage(
     mergeUserMessage({ text: textOverride });
   }
 
+  // Merge any pending image IDs into the user message before submit
+  if (!skipSubmit && Array.isArray(ctx.attachedImages) && ctx.attachedImages.length > 0) {
+    const imageIds = ctx.attachedImages.map((i) => i.id);
+    mergeUserMessage({ images: imageIds });
+  }
+
   setPendingUserDoc({
     ...userMessage,
     text: promptText,
   });
+
+  // Capture the image IDs now (will be cleared from UI state after submit)
+  const currentUserImageIds = Array.isArray(ctx.attachedImages)
+    ? ctx.attachedImages.map((i) => i.id)
+    : [];
 
   // Always submit the user message first unless we are retrying the same
   // message (e.g. after login / API key refresh)
@@ -93,6 +108,10 @@ export async function sendMessage(
     await submitUserMessage();
     // Clear the chat input once the user message has been submitted
     setInput('');
+    // Clear local attachments after saving
+    if (Array.isArray(ctx.attachedImages) && ctx.attachedImages.length > 0) {
+      ctx.clearAttachedImages();
+    }
   }
 
   setIsStreaming(true);
@@ -128,7 +147,9 @@ export async function sendMessage(
     (content) => throttledMergeAiMessage(content),
     currentApiKey,
     userId,
-    setNeedsLogin
+    setNeedsLogin,
+    currentUserImageIds,
+    sessionDatabase
   )
     .then(async (finalContent) => {
       isProcessingRef.current = true;

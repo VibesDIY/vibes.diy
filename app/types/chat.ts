@@ -68,6 +68,12 @@ export type BaseChatMessageDocument = {
 
 export type UserChatMessageDocument = BaseChatMessageDocument & {
   type: 'user';
+  /**
+   * Optional list of Fireproof image document IDs attached to this user message.
+   * Each ID refers to an ImageDocument persisted in the session database.
+   * Only IDs are stored in message history; no base64 image data is persisted.
+   */
+  images?: string[];
 };
 
 export type AiChatMessageDocument = BaseChatMessageDocument & {
@@ -102,6 +108,17 @@ export interface ScreenshotDocument extends DocBase {
   session_id: string;
   _files?: {
     screenshot: { file: () => Promise<File>; type: string };
+  };
+}
+
+/** Document type for image attachments persisted in Fireproof */
+export interface ImageDocument extends DocBase {
+  type: 'image';
+  session_id: string;
+  created_at?: number;
+  _files?: {
+    /** The original uploaded image */
+    image: { file: () => Promise<File>; type: string };
   };
 }
 
@@ -183,6 +200,16 @@ export interface ChatState {
   advisoryErrors: RuntimeError[];
   addError: (error: RuntimeError) => void;
   vibeDoc?: VibeDocument;
+
+  // Image attachment state for pending user message
+  /** List of currently attached image objects (not persisted), used for previews */
+  attachedImages?: Array<{ id: string; previewUrl: string; mimeType: string }>;
+  /** Attach one or more image files. Persists ImageDocument(s) and returns their IDs. */
+  attachImages?: (files: File[] | FileList) => Promise<string[]>;
+  /** Remove an attached image (deletes the temp ImageDocument if it hasn't been sent). */
+  removeAttachedImage?: (imageId: string) => Promise<void>;
+  /** Clear all attached images after sending */
+  clearAttachedImages?: () => void;
 }
 
 export interface ChatInterfaceProps extends ChatState {
