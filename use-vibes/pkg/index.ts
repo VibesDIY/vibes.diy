@@ -5,7 +5,10 @@ export * from 'use-fireproof';
 import { useFireproof as originalUseFireproof } from 'use-fireproof';
 
 // Custom useFireproof hook with vibes-specific logging
-export const useFireproof = (...args: Parameters<typeof originalUseFireproof>) => {
+// Preserve the exact function type (including generics) of the original hook
+export const useFireproof: typeof originalUseFireproof = (
+  ...args: Parameters<typeof originalUseFireproof>
+) => {
   console.log('Using vibes-customized useFireproof');
   return originalUseFireproof(...args);
 };
