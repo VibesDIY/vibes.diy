@@ -114,7 +114,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     );
 
     const onDropFiles = useCallback(
-      async (e: React.DragEvent<HTMLTextAreaElement>) => {
+      async (e: React.DragEvent<HTMLElement>) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
@@ -127,7 +127,32 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     );
 
     return (
-      <div ref={containerRef} className="px-4 py-2">
+      <div
+        ref={containerRef}
+        className="px-4 py-2"
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragOver={(e) => {
+          // Prevent default to avoid the browser opening the file
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+        }}
+        onDrop={(e) => {
+          // Prevent navigation and route valid file drops to the shared handler
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+          if (e.dataTransfer?.files?.length) {
+            void onDropFiles(e);
+          }
+        }}
+      >
         <div className="space-y-2">
           {/* Attached images preview */}
           {Array.isArray(chatState.attachedImages) &&
