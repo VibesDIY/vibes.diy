@@ -17,9 +17,9 @@ describe("exportHtml utilities", () => {
       expect(iframeTemplateRaw).not.toContain("window.SESSION_ID");
 
       const code = "const a = 1;";
-      const sessionId = "my-session-123";
+      const sessionId = "my-session-123"; // Keep this to test that it doesn't appear in output
 
-      const html = generateStandaloneHtml({ code, sessionId });
+      const html = generateStandaloneHtml({ code });
 
       // Code should be present and the placeholders should be gone
       expect(html).toContain(code);
