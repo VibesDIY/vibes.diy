@@ -42,7 +42,7 @@ export { type ImageDocument } from './hooks/image-gen/types.js';
 export { addNewVersion } from './hooks/image-gen/utils.js';
 
 export { ImgGenDisplay } from './components/ImgGenUtils/ImgGenDisplay.js';
-export { ImgGenModal } from './components/ImgGenUtils/ImgGenModal.jsx';
+export { ImgGenModal } from './components/ImgGenUtils/ImgGenModal.js';
 
 export { ImgGenDisplayPlaceholder } from './components/ImgGenUtils/ImgGenDisplayPlaceholder.js';
 
