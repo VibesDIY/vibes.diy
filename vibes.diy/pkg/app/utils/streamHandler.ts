@@ -3,6 +3,7 @@
  */
 
 import { type CallAIOptions, type Message, callAI } from "call-ai";
+import { Database } from "use-fireproof";
 import { CALLAI_ENDPOINT } from "../config/env.js";
 
 /**
@@ -16,6 +17,8 @@ import { CALLAI_ENDPOINT } from "../config/env.js";
  * @param apiKey - The API key to use for the callAI service
  * @param userId - The user ID
  * @param setNeedsLogin - Optional callback to set needs login flag
+ * @param sessionDatabase - Optional database for loading images
+ * @param imageIds - Optional array of image document IDs for multimodal support
  * @returns A promise that resolves to the complete response when streaming is complete
  */
 export async function streamAI(
@@ -30,14 +33,83 @@ export async function streamAI(
   apiKey: string, // API key (can be dummy key for proxy)
   userId?: string,
   // setNeedsLogin?: (value: boolean, reason: string) => void,
+  sessionDatabase?: Database,
+  imageIds?: string[],
 ): Promise<string> {
   // Stream process starts
+
+  // Load images if we have image IDs and a database
+  const imageDataUrls: string[] = [];
+  if (imageIds && imageIds.length > 0 && sessionDatabase) {
+    for (const imageId of imageIds) {
+      try {
+        const doc = await sessionDatabase.get(imageId);
+        const fpFiles = doc?._files || {};
+        const key = "image" in fpFiles ? "image" : Object.keys(fpFiles)[0];
+        const ref = key ? fpFiles[key] : undefined;
+        if (ref) {
+          const anyRef: any = ref as any;
+          let file: File;
+          if (typeof anyRef.file === "function") {
+            // Fireproof DocFileMeta
+            file = await anyRef.file();
+          } else if (anyRef instanceof File) {
+            // Raw File
+            file = anyRef;
+          } else {
+            continue;
+          }
+          // Convert to data URL (browser-compatible)
+          const reader = new FileReader();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          imageDataUrls.push(dataUrl);
+        }
+      } catch (error) {
+        console.warn(`Failed to load image ${imageId}:`, error);
+      }
+    }
+  }
+
+  // Build user message content - multimodal if we have images
+  let userContent:
+    | string
+    | Array<{
+        type: "text" | "image_url";
+        text?: string;
+        image_url?: { url: string };
+      }>;
+
+  if (imageDataUrls.length > 0) {
+    // Multimodal message with text and images
+    const contentParts: Array<{
+      type: "text" | "image_url";
+      text?: string;
+      image_url?: { url: string };
+    }> = [{ type: "text", text: userMessage }];
+
+    // Add image segments
+    for (const dataUrl of imageDataUrls) {
+      contentParts.push({
+        type: "image_url",
+        image_url: { url: dataUrl },
+      });
+    }
+
+    userContent = contentParts;
+  } else {
+    // Text-only message
+    userContent = userMessage;
+  }
 
   // Format messages for call-ai
   const messages: Message[] = [
     { role: "system", content: systemPrompt },
     ...messageHistory,
-    { role: "user", content: userMessage },
+    { role: "user", content: userContent },
   ];
   // Configure call-ai options with default maximum token limit
   const defaultMaxTokens = userId ? 150000 : 75000;

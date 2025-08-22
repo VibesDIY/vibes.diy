@@ -1,13 +1,17 @@
-import React, { memo } from "react";
+import React, { memo, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import StructuredMessage from "./StructuredMessage.js";
 import type {
   ChatMessageDocument,
   AiChatMessageDocument,
   SystemChatMessageDocument,
+  UserChatMessageDocument,
   ViewType,
 } from "../types/chat.js";
 import { parseContent } from "../utils/segmentParser.js";
+import { useFireproof, type DocFileMeta } from "use-fireproof";
+import { getSessionDatabaseName } from "../utils/databaseManager.js";
+import { ImgFile } from "./SessionSidebar/ImgFile.js";
 
 interface MessageProps {
   message: ChatMessageDocument;
@@ -106,10 +110,90 @@ const AIMessage = memo(
   },
 );
 
+const UserImages = ({
+  sessionId,
+  imageIds,
+}: {
+  sessionId: string;
+  imageIds: string[];
+}) => {
+  const dbName = getSessionDatabaseName(sessionId);
+  const { database } = useFireproof(dbName);
+  const [files, setFiles] = useState<DocFileMeta[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const result: DocFileMeta[] = [];
+      for (const id of imageIds) {
+        try {
+          const doc = await database.get(id);
+          const fpFiles = doc?._files || {};
+          const key = "image" in fpFiles ? "image" : Object.keys(fpFiles)[0];
+          const ref = key ? fpFiles[key] : undefined;
+          if (ref) {
+            const anyRef: any = ref as any;
+            if (typeof anyRef.file === "function") {
+              // Fireproof DocFileMeta
+              result.push(anyRef as DocFileMeta);
+            } else if (ref instanceof File) {
+              // Raw File stored in _files (dev/testing scenarios)
+              const wrapped: DocFileMeta = {
+                file: async () => ref,
+                type: ref.type || "application/octet-stream",
+                size: ref.size,
+                cid: undefined as any,
+              };
+              result.push(wrapped);
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to load image ${id}:`, err);
+        }
+      }
+      if (!cancelled) {
+        setFiles(result);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [database, imageIds]);
+
+  if (files.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-2 mb-2">
+      {files.map((file, index) => (
+        <div
+          key={`${sessionId}-${imageIds[index]}`}
+          className="border-light-decorative-00 dark:border-dark-decorative-00 overflow-hidden rounded border"
+        >
+          <ImgFile
+            file={file}
+            alt="User attachment"
+            className="max-w-xs"
+            maxHeight="12rem"
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
+  const userMessage = message as UserChatMessageDocument;
+  const hasImages = userMessage.images && userMessage.images.length > 0;
   return (
     <div className="mb-4 flex flex-row justify-end px-4">
       <div className="bg-light-background-02 dark:bg-dark-decorative-00 text-light-primary dark:text-dark-primary max-w-[85%] rounded-xl px-5 py-3 shadow-md">
+        {hasImages && (
+          <UserImages
+            sessionId={userMessage.session_id}
+            imageIds={userMessage.images!}
+          />
+        )}
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           <ReactMarkdown>{message.text}</ReactMarkdown>
         </div>

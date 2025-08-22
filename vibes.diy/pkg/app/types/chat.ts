@@ -68,6 +68,7 @@ export interface BaseChatMessageDocument {
 
 export type UserChatMessageDocument = BaseChatMessageDocument & {
   type: "user";
+  images?: string[]; // Array of Fireproof image document IDs
 };
 
 export type AiChatMessageDocument = BaseChatMessageDocument & {
@@ -102,6 +103,18 @@ export interface ScreenshotDocument extends DocBase {
   session_id: string;
   _files?: {
     screenshot: { file: () => Promise<File>; type: string };
+  };
+}
+
+/**
+ * Document type for image attachments
+ */
+export interface ImageDocument extends DocBase {
+  type: "image";
+  session_id: string;
+  created_at: number;
+  _files?: {
+    image: { file: () => Promise<File>; type: string };
   };
 }
 
@@ -186,6 +199,12 @@ export interface ChatState {
   advisoryErrors: RuntimeError[];
   addError: (error: RuntimeError) => void;
   vibeDoc?: VibeDocument;
+
+  // Image management
+  attachedImages?: Array<{ id: string; previewUrl: string; mimeType: string }>;
+  attachImages?: (files: FileList) => Promise<void>;
+  removeAttachedImage?: (id: string) => Promise<void>;
+  clearAttachedImages?: () => void;
 }
 
 export interface ChatInterfaceProps extends ChatState {

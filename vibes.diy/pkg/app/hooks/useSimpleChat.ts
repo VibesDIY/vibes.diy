@@ -110,6 +110,11 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
   const [pendingAiMessage, setPendingAiMessage] =
     useState<ChatMessageDocument | null>(null);
 
+  // Image attachment state
+  const [attachedImages, setAttachedImages] = useState<
+    Array<{ id: string; previewUrl: string; mimeType: string }>
+  >([]);
+
   // setNeedsLogin is now obtained from AuthContext above
 
   // Derive model to use from settings or default
@@ -191,6 +196,17 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
    * Send a message and process the AI response
    * @param textOverride Optional text to use instead of the current userMessage
    */
+  // Image management functions
+  const clearAttachedImages = useCallback(() => {
+    // Revoke all preview URLs
+    attachedImages.forEach((img) => {
+      URL.revokeObjectURL(img.previewUrl);
+    });
+
+    // Clear state
+    setAttachedImages([]);
+  }, [attachedImages]);
+
   const sendMessage = useCallback(
     (textOverride?: string, skipSubmit = false) => {
       const ctx: SendMessageContext = {
@@ -216,6 +232,8 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
         titleModel: TITLE_MODEL,
         isAuthenticated,
         vibeDoc,
+        attachedImages,
+        clearAttachedImages,
       };
       return sendChatMessage(ctx, textOverride, skipSubmit);
     },
@@ -236,6 +254,8 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
       boundCheckCredits,
       ensureApiKey,
       isAuthenticated,
+      attachedImages,
+      clearAttachedImages,
     ],
   );
 
@@ -338,6 +358,74 @@ ${code}
     // No additional action needed here
   }, [advisoryErrors]);
 
+  // Image management functions
+  const attachImages = useCallback(
+    async (files: FileList) => {
+      if (!sessionId) return;
+
+      const newImages: Array<{
+        id: string;
+        previewUrl: string;
+        mimeType: string;
+      }> = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith("image/")) continue;
+
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+
+        // Create image document in Fireproof
+        const imageDoc = {
+          type: "image" as const,
+          session_id: sessionId,
+          created_at: Date.now(),
+          _files: {
+            image: file,
+          },
+        };
+
+        try {
+          const result = await sessionDatabase.put(imageDoc);
+          newImages.push({
+            id: result.id,
+            previewUrl,
+            mimeType: file.type,
+          });
+        } catch (error) {
+          console.error("Failed to store image:", error);
+          URL.revokeObjectURL(previewUrl);
+        }
+      }
+
+      setAttachedImages((prev) => [...prev, ...newImages]);
+    },
+    [sessionId, sessionDatabase],
+  );
+
+  const removeAttachedImage = useCallback(
+    async (id: string) => {
+      // Find the image in our state
+      const imageToRemove = attachedImages.find((img) => img.id === id);
+      if (!imageToRemove) return;
+
+      // Revoke the preview URL
+      URL.revokeObjectURL(imageToRemove.previewUrl);
+
+      // Remove from Fireproof
+      try {
+        await sessionDatabase.del(id);
+      } catch (error) {
+        console.error("Failed to delete image from database:", error);
+      }
+
+      // Remove from state
+      setAttachedImages((prev) => prev.filter((img) => img.id !== id));
+    },
+    [attachedImages, sessionDatabase],
+  );
+
   return {
     sessionId: session._id,
     vibeDoc,
@@ -366,5 +454,10 @@ ${code}
     addError,
     isEmpty: docs.length === 0,
     updateSelectedModel,
+    // Image management
+    attachedImages,
+    attachImages,
+    removeAttachedImage,
+    clearAttachedImages,
   };
 }
