@@ -6,3 +6,18 @@ packages:
   - "use-vibes/tests"
   - "vibes.diy/pkg"
   - "vibes.diy/tests"
+
+# Avoid needing to interactively run 'pnpm approve-build' step during quickstart
+onlyBuiltDependencies:
+  - "@parcel/watcher"
+  - "@tailwindcss/oxide"
+  - "core-js"
+  - "es5-ext"
+  - "esbuild"
+  - "netlify"
+  - "netlify-cli"
+  - "playwright-chromium"
+  - "sharp"
+  - "unix-dgram"
+  - "unrs-resolver"
+  - "workerd"
