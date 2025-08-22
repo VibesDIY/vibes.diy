@@ -363,45 +363,111 @@ ${code}
     async (files: FileList) => {
       if (!sessionId) return;
 
-      const newImages: Array<{
-        id: string;
-        previewUrl: string;
-        mimeType: string;
-      }> = [];
+      // Guardrails (values pending confirmation in review)
+      const MAX_ATTACHMENTS = 6; // maximum images per message
+      const MAX_FILE_MB = 10; // maximum size per image (MB)
+      const MAX_BYTES = MAX_FILE_MB * 1024 * 1024;
 
-      for (let i = 0; i < files.length; i++) {
+      // Respect remaining slots based on current attachments
+      const remaining = Math.max(0, MAX_ATTACHMENTS - attachedImages.length);
+      if (remaining <= 0) return;
+
+      // Filter and cap incoming files before creating any preview URLs
+      const candidates: File[] = [];
+      for (let i = 0; i < files.length && candidates.length < remaining; i++) {
         const file = files[i];
+        // Only images
         if (!file.type.startsWith("image/")) continue;
+        // Enforce per-file size limit
+        if (file.size > MAX_BYTES) continue;
+        candidates.push(file);
+      }
 
-        // Create preview URL
+      if (candidates.length === 0) return;
+
+      // Prepare docs and previews (create previews only for accepted candidates)
+      const prepared = candidates.map((file) => {
         const previewUrl = URL.createObjectURL(file);
-
-        // Create image document in Fireproof
-        const imageDoc = {
+        const doc = {
           type: "image" as const,
           session_id: sessionId,
           created_at: Date.now(),
-          _files: {
-            image: file,
-          },
+          _files: { image: file },
         };
+        return { file, previewUrl, doc } as const;
+      });
 
-        try {
-          const result = await sessionDatabase.put(imageDoc);
-          newImages.push({
-            id: result.id,
-            previewUrl,
-            mimeType: file.type,
-          });
-        } catch (error) {
-          console.error("Failed to store image:", error);
-          URL.revokeObjectURL(previewUrl);
+      try {
+        // Prefer single bulk write; fall back to sequential puts if bulk is unavailable
+        const hasBulk = typeof (sessionDatabase as any)?.bulk === "function";
+        const results = hasBulk
+          ? await (sessionDatabase as any).bulk(prepared.map((p) => p.doc))
+          : (async () => {
+              const out: any[] = [];
+              for (const p of prepared) {
+                try {
+                  // sequential to avoid introducing concurrency
+                  // eslint-disable-next-line no-await-in-loop
+                  const r = await sessionDatabase.put(p.doc as any);
+                  out.push(r);
+                } catch (e) {
+                  out.push({ error: e });
+                }
+              }
+              return out;
+            })();
+
+        const newImages: Array<{
+          id: string;
+          previewUrl: string;
+          mimeType: string;
+        }> = [];
+
+        // Map results to previews; revoke previews for failed writes
+        if (Array.isArray(results)) {
+          for (let i = 0; i < prepared.length; i++) {
+            const res = results[i] as any;
+            const id = res?.id || res?._id; // support different return shapes
+            if (id && !res?.error) {
+              newImages.push({
+                id,
+                previewUrl: prepared[i].previewUrl,
+                mimeType: prepared[i].file.type,
+              });
+            } else {
+              URL.revokeObjectURL(prepared[i].previewUrl);
+            }
+          }
+        } else {
+          // If bulk did not return per-doc results, treat as failure and clean up
+          prepared.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+          return;
         }
-      }
 
-      setAttachedImages((prev) => [...prev, ...newImages]);
+        if (newImages.length > 0) {
+          setAttachedImages((prev) => {
+            const available = Math.max(0, MAX_ATTACHMENTS - prev.length);
+            if (available <= 0) {
+              // no room left — cleanup all previews we created
+              newImages.forEach((ni) => URL.revokeObjectURL(ni.previewUrl));
+              return prev;
+            }
+            if (newImages.length > available) {
+              // cleanup any previews that won't be added due to capacity
+              for (let i = available; i < newImages.length; i++) {
+                URL.revokeObjectURL(newImages[i].previewUrl);
+              }
+            }
+            return [...prev, ...newImages.slice(0, available)];
+          });
+        }
+      } catch (error) {
+        console.error("Failed to store images:", error);
+        // Revoke all previews on bulk failure
+        prepared.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      }
     },
-    [sessionId, sessionDatabase],
+    [sessionId, sessionDatabase, attachedImages.length],
   );
 
   const removeAttachedImage = useCallback(
