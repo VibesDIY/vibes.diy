@@ -1,3 +1,15 @@
+// Re-export everything from use-fireproof for drop-in compatibility
+export * from 'use-fireproof';
+
+// Import original useFireproof for customization
+import { useFireproof as originalUseFireproof } from 'use-fireproof';
+
+// Custom useFireproof hook with vibes-specific logging
+export const useFireproof = (...args: Parameters<typeof originalUseFireproof>) => {
+  console.log('Using vibes-customized useFireproof');
+  return originalUseFireproof(...args);
+};
+
 // Re-export specific functions and types from call-ai
 import { imageGen, callAi, type ImageGenOptions, type ImageResponse } from 'call-ai';
 export { imageGen, callAi, type ImageGenOptions, type ImageResponse };
