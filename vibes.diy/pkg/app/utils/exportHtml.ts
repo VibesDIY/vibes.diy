@@ -9,14 +9,11 @@ export function generateStandaloneHtml(params: {
 }): string {
   const normalized = normalizeComponentExports(params.code);
   const transformed = transformImports(normalized);
-  // Don't include session ID in exported HTML - use empty string
-  const exportSessionId = "";
 
   return iframeTemplateRaw
     .replaceAll("{{API_KEY}}", "sk-vibes-proxy-managed")
     .replaceAll("{{CALLAI_ENDPOINT}}", CALLAI_ENDPOINT)
-    .replace("{{APP_CODE}}", transformed)
-    .replace("{{SESSION_ID}}", exportSessionId);
+    .replace("{{APP_CODE}}", transformed);
 }
 
 export function downloadTextFile(

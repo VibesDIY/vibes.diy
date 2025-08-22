@@ -7,12 +7,14 @@ import iframeTemplateRaw from "~/vibes.diy/app/components/ResultPreview/template
 
 describe("exportHtml utilities", () => {
   describe("generateStandaloneHtml", () => {
-    it("injects code and environment tokens into the iframe template, but removes sessionId", () => {
+    it("injects code and environment tokens into the iframe template", () => {
       // Sanity-check: the raw template has the placeholders we expect to replace
       expect(iframeTemplateRaw).toContain("{{APP_CODE}}");
-      expect(iframeTemplateRaw).toContain("{{SESSION_ID}}");
       expect(iframeTemplateRaw).toContain("{{CALLAI_ENDPOINT}}");
       expect(iframeTemplateRaw).toContain("{{API_KEY}}");
+      // SESSION_ID placeholder no longer exists in template
+      expect(iframeTemplateRaw).not.toContain("{{SESSION_ID}}");
+      expect(iframeTemplateRaw).not.toContain("window.SESSION_ID");
 
       const code = "const a = 1;";
       const sessionId = "my-session-123";
@@ -23,10 +25,9 @@ describe("exportHtml utilities", () => {
       expect(html).toContain(code);
       expect(html).not.toContain("{{APP_CODE}}");
 
-      // Session id should be replaced with empty string in exported HTML
-      expect(html).toContain('window.SESSION_ID = ""');
+      // Session id should not appear anywhere in the exported HTML
+      expect(html).not.toContain("SESSION_ID");
       expect(html).not.toContain(sessionId);
-      expect(html).not.toContain("{{SESSION_ID}}");
 
       // Environment tokens should be replaced with values from env.ts fallbacks
       const expectedEndpoint = "https://vibes-diy-api.com"; // API_BASE_URL default, used by CALLAI_ENDPOINT fallback
@@ -41,11 +42,12 @@ describe("exportHtml utilities", () => {
       expect(html).not.toContain("{{API_KEY}}");
     });
 
-    it("sets sessionId to empty string when omitted", () => {
+    it("ignores sessionId parameter even when provided", () => {
       const code = "const a = 1;";
       const html = generateStandaloneHtml({ code });
 
-      expect(html).toContain('window.SESSION_ID = ""');
+      // SESSION_ID should not appear in the HTML at all
+      expect(html).not.toContain("SESSION_ID");
       expect(html).not.toContain("{{SESSION_ID}}");
     });
   });
