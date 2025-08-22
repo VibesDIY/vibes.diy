@@ -22,6 +22,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       //      cloudflare(),
       ...(!disableReactRouter ? [reactRouter()] : []),
     ],
+    base: process.env.VITE_APP_BASENAME || "/",
     build: {
       outDir: "build",
     },

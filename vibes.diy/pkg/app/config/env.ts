@@ -42,6 +42,7 @@ export const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || "";
 // Application Behavior
 export const IS_DEV_MODE = import.meta.env.DEV || false;
 export const APP_MODE = import.meta.env.MODE || "production"; // typically 'development', 'production', 'test'
+export const APP_BASENAME = import.meta.env.VITE_APP_BASENAME || "/";
 
 // Fireproof Connect & Auth
 export const CONNECT_URL =

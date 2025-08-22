@@ -10,7 +10,12 @@ import {
 } from "react-router";
 
 import { PostHogProvider } from "posthog-js/react";
-import { POSTHOG_KEY, POSTHOG_HOST, IS_DEV_MODE } from "./config/env.js";
+import {
+  POSTHOG_KEY,
+  POSTHOG_HOST,
+  IS_DEV_MODE,
+  APP_BASENAME,
+} from "./config/env.js";
 import type { Route } from "./+types/root";
 import "./app.css";
 import ClientOnly from "./components/ClientOnly.js";
@@ -19,8 +24,8 @@ import { AuthProvider } from "./contexts/AuthContext.js";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 
 export const links: Route.LinksFunction = () => [
-  { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-  { rel: "alternate icon", href: "/favicon.ico" },
+  { rel: "icon", type: "image/svg+xml", href: `${APP_BASENAME}favicon.svg` },
+  { rel: "alternate icon", href: `${APP_BASENAME}favicon.ico` },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
