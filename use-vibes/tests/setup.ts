@@ -11,7 +11,7 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 
 // Setup global mock for call-ai module
 vi.mock('call-ai', async () => {
-  return await import('./mocks/call-ai.mock.js');
+  return await import('./mocks/call-ai.mock.ts');
 });
 
 // Mock react-dom's createPortal to render children directly in the component
