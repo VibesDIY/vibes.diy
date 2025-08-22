@@ -7,7 +7,7 @@ import iframeTemplateRaw from "~/vibes.diy/app/components/ResultPreview/template
 
 describe("exportHtml utilities", () => {
   describe("generateStandaloneHtml", () => {
-    it("injects code, sessionId, and environment tokens into the iframe template", () => {
+    it("injects code and environment tokens into the iframe template, but removes sessionId", () => {
       // Sanity-check: the raw template has the placeholders we expect to replace
       expect(iframeTemplateRaw).toContain("{{APP_CODE}}");
       expect(iframeTemplateRaw).toContain("{{SESSION_ID}}");
@@ -23,8 +23,9 @@ describe("exportHtml utilities", () => {
       expect(html).toContain(code);
       expect(html).not.toContain("{{APP_CODE}}");
 
-      // Session id should be substituted
-      expect(html).toContain(sessionId);
+      // Session id should be replaced with empty string in exported HTML
+      expect(html).toContain('window.SESSION_ID = ""');
+      expect(html).not.toContain(sessionId);
       expect(html).not.toContain("{{SESSION_ID}}");
 
       // Environment tokens should be replaced with values from env.ts fallbacks
@@ -40,11 +41,11 @@ describe("exportHtml utilities", () => {
       expect(html).not.toContain("{{API_KEY}}");
     });
 
-    it("defaults sessionId to 'default-session' when omitted", () => {
+    it("sets sessionId to empty string when omitted", () => {
       const code = "const a = 1;";
       const html = generateStandaloneHtml({ code });
 
-      expect(html).toContain(`window.SESSION_ID = "default-session"`);
+      expect(html).toContain('window.SESSION_ID = ""');
       expect(html).not.toContain("{{SESSION_ID}}");
     });
   });
