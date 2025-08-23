@@ -53,7 +53,7 @@ vi.mock('use-fireproof', () => {
 import type { UseImageGenOptions, UseImageGenResult } from 'use-vibes-core';
 
 // Mock the image generation hook
-vi.mock('../pkg/hooks/image-gen/use-image-gen', () => {
+vi.mock('use-vibes-core/hooks/image-gen/use-image-gen', () => {
   let regenerationCompleted = false;
 
   return {

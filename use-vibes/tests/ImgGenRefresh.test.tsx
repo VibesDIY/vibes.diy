@@ -84,7 +84,7 @@ const generateImage = vi.fn(async ({ db, _id, prompt }) => {
 });
 
 // Mock the use-image-gen module
-vi.mock('../src/hooks/image-gen/use-image-gen', () => ({
+vi.mock('use-vibes-core/hooks/image-gen/use-image-gen', () => ({
   regenerateImage,
   generateImage,
 }));

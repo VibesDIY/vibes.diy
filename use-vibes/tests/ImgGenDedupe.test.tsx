@@ -160,12 +160,12 @@ const MockImgGen = vi.hoisted(() => {
 });
 
 // Mock the ImgGen component with proper hoisting
-vi.mock('../src/components/ImgGen', () => ({
+vi.mock('use-vibes-core/components/ImgGen', () => ({
   __esModule: true,
   default: MockImgGen,
 }));
 
-vi.mock('../src/hooks/image-gen/image-generator', () => ({
+vi.mock('use-vibes-core/hooks/image-gen/image-generator', () => ({
   imageGen: mockImageGen,
   createImageGenerator: mockCreateImageGenerator,
   // Ensure the direct function is also mocked

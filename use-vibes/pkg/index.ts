@@ -3,16 +3,16 @@ export {
   // Primary component
   ImgGen,
   type ImgGenProps,
-  
+
   // Fireproof integration
   useFireproof,
   fireproof,
   ImgFile,
-  
+
   // AI integration
   callAI,
   callAi,
-  
+
   // Type namespaces
   type Fireproof,
   type CallAI,

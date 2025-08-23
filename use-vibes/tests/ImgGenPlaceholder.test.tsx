@@ -4,7 +4,7 @@ import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Mock ImageOverlay component
-vi.mock('../pkg/components/ImgGenUtils/overlays/ImageOverlay', () => ({
+vi.mock('use-vibes-core/components/ImgGenUtils/overlays/ImageOverlay', () => ({
   ImageOverlay: vi.fn(({ promptText, showControls }) => (
     <div
       data-testid="mock-image-overlay"

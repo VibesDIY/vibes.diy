@@ -27,12 +27,12 @@ vi.mock('use-fireproof', () => ({
 }));
 
 // Mock the ImageOverlay component
-vi.mock('../src/components/ImgGenUtils/overlays/ImageOverlay', () => ({
+vi.mock('use-vibes-core/components/ImgGenUtils/overlays/ImageOverlay', () => ({
   ImageOverlay: vi.fn(() => <div data-testid="mock-image-overlay">Mocked Image Overlay</div>),
 }));
 
 // Mock the DeleteConfirmationOverlay component
-vi.mock('../src/components/ImgGenUtils/overlays/DeleteConfirmationOverlay', () => ({
+vi.mock('use-vibes-core/components/ImgGenUtils/overlays/DeleteConfirmationOverlay', () => ({
   DeleteConfirmationOverlay: vi.fn(() => (
     <div data-testid="mock-delete-confirmation">Mocked Delete Confirmation</div>
   )),

@@ -17,10 +17,12 @@ const mockDocument = {
 const mockCalls: { prompt?: string; _id?: string; regenerate?: boolean }[] = [];
 
 // Mock for the useImageGen hook
-vi.mock('../pkg/hooks/image-gen/use-image-gen', () => {
-  let versionCount = 1;
+let versionCount = 1;
 
+vi.mock('use-vibes-core', async () => {
+  const actual = await vi.importActual('use-vibes-core');
   return {
+    ...actual,
     useImageGen: vi.fn().mockImplementation(({ prompt, _id, regenerate }) => {
       // Track function calls for test assertions
       mockCalls.push({ prompt, _id, regenerate });
