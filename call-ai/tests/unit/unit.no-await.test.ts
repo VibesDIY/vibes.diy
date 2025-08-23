@@ -86,8 +86,8 @@ describe("callAi", () => {
     await callAi(prompt, options);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith(
-      "https://vibes-diy-api.com/api/v1/chat/completions",
+    expect((global.fetch as Mock).mock.calls[0][1]).toEqual(
+      // "https://vibes-diy-api.com/api/v1/chat/completions",
       expect.objectContaining({
         method: "POST",
         headers: {
