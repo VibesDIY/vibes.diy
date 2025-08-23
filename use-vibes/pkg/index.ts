@@ -1,8 +1,9 @@
-// Re-export everything from use-fireproof for drop-in compatibility
-export * from 'use-fireproof';
+// Re-export specific items from use-fireproof
+import { fireproof, useFireproof as originalUseFireproof, ImgFile } from 'use-fireproof';
+export { fireproof, ImgFile };
 
-// Import original useFireproof for customization
-import { useFireproof as originalUseFireproof } from 'use-fireproof';
+// Re-export all types under a namespace
+export type * as Fireproof from 'use-fireproof';
 
 // Custom useFireproof hook with vibes-specific logging
 // Preserve the exact function type (including generics) of the original hook
