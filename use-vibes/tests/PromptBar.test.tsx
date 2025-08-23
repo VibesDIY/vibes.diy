@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { PromptBar } from 'use-vibes-base';
+import { PromptBar } from '@vibes.diy/use-vibes-base';
 
 describe('PromptBar Component', () => {
   it('should display the prompt text in view mode', () => {

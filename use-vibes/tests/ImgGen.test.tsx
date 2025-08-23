@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import React from 'react';
 import { act, render, screen, RenderResult } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
-import { ImgGen } from 'use-vibes-base';
+import { ImgGen } from '@vibes.diy/use-vibes-base';
 
 // Create a mock base64 image for testing
 const mockBase64Image =

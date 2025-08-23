@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { MODULE_STATE } from 'use-vibes-base';
+import { MODULE_STATE } from '@vibes.diy/use-vibes-base';
 
 // This test focuses specifically on the document deduplication mechanism
 // without involving the full component rendering pipeline

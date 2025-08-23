@@ -160,8 +160,8 @@ const MockImgGen = vi.hoisted(() => {
 });
 
 // Mock the ImgGen component with proper hoisting
-vi.mock('use-vibes-base', async () => {
-  const actual = await vi.importActual('use-vibes-base');
+vi.mock('@vibes.diy/use-vibes-base', async () => {
+  const actual = await vi.importActual('@vibes.diy/use-vibes-base');
   return {
     ...actual,
     ImgGen: MockImgGen,
@@ -183,7 +183,7 @@ vi.mock('use-fireproof', () => ({
 }));
 
 // Import after mocks
-import { ImgGenProps, MODULE_STATE, UseImageGenOptions } from 'use-vibes-base';
+import { ImgGenProps, MODULE_STATE, UseImageGenOptions } from '@vibes.diy/use-vibes-base';
 
 describe('ImgGen Document Deduplication', () => {
   beforeEach(() => {

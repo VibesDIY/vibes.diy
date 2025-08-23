@@ -27,8 +27,8 @@ vi.mock('use-fireproof', () => ({
 }));
 
 // Mock components from use-vibes-base
-vi.mock('use-vibes-base', async () => {
-  const actual = await vi.importActual('use-vibes-base');
+vi.mock('@vibes.diy/use-vibes-base', async () => {
+  const actual = await vi.importActual('@vibes.diy/use-vibes-base');
   return {
     ...actual,
     ImageOverlay: vi.fn(() => <div data-testid="mock-image-overlay">Mocked Image Overlay</div>),
@@ -39,7 +39,7 @@ vi.mock('use-vibes-base', async () => {
 });
 
 // Import after mocks
-import { ImgGenDisplay } from 'use-vibes-base';
+import { ImgGenDisplay } from '@vibes.diy/use-vibes-base';
 
 // Type simplification for testing purposes
 interface TestDoc {

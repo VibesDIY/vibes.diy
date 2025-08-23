@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ImgGen } from 'use-vibes-base';
+import { ImgGen } from '@vibes.diy/use-vibes-base';
 
 // Define mock modules first (these are hoisted to the top by Vitest)
 vi.mock('call-ai', () => {

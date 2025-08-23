@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { ImageOverlay, defaultClasses } from 'use-vibes-base';
+import { ImageOverlay, defaultClasses } from '@vibes.diy/use-vibes-base';
 
 describe('ImageOverlay Component', () => {
   // Mock functions for all the callbacks
