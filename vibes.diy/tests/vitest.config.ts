@@ -10,7 +10,8 @@ export default defineConfig({
     //}),
     tsconfigPaths({
       configNames: ["tsconfig.test.json"],
-    }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any,
     //    react()
   ],
   test: {

@@ -157,12 +157,16 @@ export async function pollForAuthToken(
   resultId: string,
   intervalMs = 1500,
   timeoutMs = 60000,
+  mock: {
+    fetch: typeof fetch;
+    toast: { success: (s: string) => void };
+  } = { fetch, toast },
 ): Promise<string | null> {
   const endpoint = `${CONNECT_API_URL}/token/${resultId}`;
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const res = await fetch(endpoint, {
+      const res = await mock.fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -258,11 +262,12 @@ export async function verifyToken(
  */
 export async function extendToken(
   currentToken: string,
+  mock = { fetch },
 ): Promise<string | null> {
   try {
     const endpoint = CONNECT_API_URL;
 
-    const res = await fetch(endpoint, {
+    const res = await mock.fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

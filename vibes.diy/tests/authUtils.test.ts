@@ -8,9 +8,9 @@ vi.mock("jose", () => ({
 }));
 
 // Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  default: { success: vi.fn() },
-}));
+// vi.mock("react-hot-toast", () => ({
+//   default: { success: vi.fn() },
+// }));
 
 // Using 'any' for mocked functions since vitest doesn't export its mock types easily
 
@@ -117,17 +117,17 @@ describe("auth utils", () => {
 
     it("can extend a token when needed", async () => {
       // Mock successful API response for token extension
-      global.fetch = vi.fn().mockResolvedValue({
+      const fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ token: "new.extended.token" }),
       });
 
       // Test the extendToken function directly
-      const result = await auth.extendToken("old.token");
+      const result = await auth.extendToken("old.token", { fetch });
 
       // Verify correct behavior
       expect(result).toBe("new.extended.token");
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api"),
         expect.objectContaining({
           method: "POST",
@@ -142,26 +142,26 @@ describe("auth utils", () => {
   describe("extendToken", () => {
     it("returns new token and stores it", async () => {
       setEnv({ VITE_CONNECT_API_URL: "https://api" });
-      global.fetch = vi.fn().mockResolvedValue({
+      const fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ token: "newtoken123" }),
       });
-      const result = await auth.extendToken("oldtoken");
+      const result = await auth.extendToken("oldtoken", { fetch });
       expect(result).toBe("newtoken123");
       expect(window.localStorage.getItem("auth_token")).toBe("newtoken123");
     });
     it("returns null on network error", async () => {
       setEnv({ VITE_CONNECT_API_URL: "https://api" });
-      global.fetch = vi.fn().mockRejectedValue(new Error("fail"));
-      const result = await auth.extendToken("token");
+      const fetch = vi.fn().mockRejectedValue(new Error("fail"));
+      const result = await auth.extendToken("token", { fetch });
       expect(result).toBeNull();
     });
     it("returns null on invalid response", async () => {
       setEnv({ VITE_CONNECT_API_URL: "https://api" });
-      global.fetch = vi
+      const fetch = vi
         .fn()
         .mockResolvedValue({ ok: true, json: async () => ({}) });
-      const result = await auth.extendToken("token");
+      const result = await auth.extendToken("token", { fetch });
       expect(result).toBeNull();
     });
   });
@@ -197,7 +197,7 @@ describe("auth utils", () => {
     it("returns token if found", async () => {
       setEnv({ VITE_CONNECT_API_URL: "https://api" });
       let called = 0;
-      global.fetch = vi.fn().mockImplementation(() => {
+      const fetch = vi.fn().mockImplementation(() => {
         called++;
         return Promise.resolve({
           ok: true,
@@ -207,17 +207,31 @@ describe("auth utils", () => {
 
       // Toast is already mocked at the top of the file
 
-      const token = await auth.pollForAuthToken("resultid", 1, 10);
+      const token = await auth.pollForAuthToken("resultid", 1, 10, {
+        fetch,
+        toast: {
+          success: () => {
+            /* no-op */
+          },
+        },
+      });
       expect(token).toBe("tok123");
     });
 
     it("returns null if timed out", async () => {
       setEnv({ VITE_CONNECT_API_URL: "https://api" });
-      global.fetch = vi
+      const fetch = vi
         .fn()
         .mockResolvedValue({ ok: true, json: async () => ({}) });
 
-      const token = await auth.pollForAuthToken("resultid", 1, 5);
+      const token = await auth.pollForAuthToken("resultid", 1, 5, {
+        fetch,
+        toast: {
+          success: () => {
+            /* no-op */
+          },
+        },
+      });
       expect(token).toBeNull();
     });
   });
