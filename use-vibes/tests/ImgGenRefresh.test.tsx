@@ -84,10 +84,14 @@ const generateImage = vi.fn(async ({ db, _id, prompt }) => {
 });
 
 // Mock the use-image-gen module
-vi.mock('use-vibes-core/hooks/image-gen/use-image-gen', () => ({
-  regenerateImage,
-  generateImage,
-}));
+vi.mock('use-vibes-core', async () => {
+  const actual = await vi.importActual('use-vibes-core');
+  return {
+    ...actual,
+    regenerateImage,
+    generateImage,
+  };
+});
 
 describe('Image Generation Refresh Functionality', () => {
   beforeEach(() => {

@@ -4,21 +4,25 @@ import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Mock ImageOverlay component
-vi.mock('use-vibes-core/components/ImgGenUtils/overlays/ImageOverlay', () => ({
-  ImageOverlay: vi.fn(({ promptText, showControls }) => (
-    <div
-      data-testid="mock-image-overlay"
-      data-prompt={promptText}
-      data-show-controls={showControls}
-      data-status="Generating..."
-      className="imggen-overlay"
-    >
-      <div className="imggen-controls">
-        {showControls === false && <div className="imggen-status-text">Generating...</div>}
+vi.mock('use-vibes-core', async () => {
+  const actual = await vi.importActual('use-vibes-core');
+  return {
+    ...actual,
+    ImageOverlay: vi.fn(({ promptText, showControls }) => (
+      <div
+        data-testid="mock-image-overlay"
+        data-prompt={promptText}
+        data-show-controls={showControls}
+        data-status="Generating..."
+        className="imggen-overlay"
+      >
+        <div className="imggen-controls">
+          {showControls === false && <div className="imggen-status-text">Generating...</div>}
+        </div>
       </div>
-    </div>
-  )),
-}));
+    )),
+  };
+});
 
 import { ImgGenDisplayPlaceholder, defaultClasses } from 'use-vibes-core';
 

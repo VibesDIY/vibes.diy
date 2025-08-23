@@ -26,17 +26,17 @@ vi.mock('use-fireproof', () => ({
   File: vi.fn().mockImplementation((data, name, options) => ({ name, type: options?.type })),
 }));
 
-// Mock the ImageOverlay component
-vi.mock('use-vibes-core/components/ImgGenUtils/overlays/ImageOverlay', () => ({
-  ImageOverlay: vi.fn(() => <div data-testid="mock-image-overlay">Mocked Image Overlay</div>),
-}));
-
-// Mock the DeleteConfirmationOverlay component
-vi.mock('use-vibes-core/components/ImgGenUtils/overlays/DeleteConfirmationOverlay', () => ({
-  DeleteConfirmationOverlay: vi.fn(() => (
-    <div data-testid="mock-delete-confirmation">Mocked Delete Confirmation</div>
-  )),
-}));
+// Mock components from use-vibes-core
+vi.mock('use-vibes-core', async () => {
+  const actual = await vi.importActual('use-vibes-core');
+  return {
+    ...actual,
+    ImageOverlay: vi.fn(() => <div data-testid="mock-image-overlay">Mocked Image Overlay</div>),
+    DeleteConfirmationOverlay: vi.fn(() => (
+      <div data-testid="mock-delete-confirmation">Mocked Delete Confirmation</div>
+    )),
+  };
+});
 
 // Import after mocks
 import { ImgGenDisplay } from 'use-vibes-core';

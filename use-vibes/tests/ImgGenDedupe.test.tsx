@@ -160,17 +160,13 @@ const MockImgGen = vi.hoisted(() => {
 });
 
 // Mock the ImgGen component with proper hoisting
-vi.mock('use-vibes-core/components/ImgGen', () => ({
-  __esModule: true,
-  default: MockImgGen,
-}));
-
-vi.mock('use-vibes-core/hooks/image-gen/image-generator', () => ({
-  imageGen: mockImageGen,
-  createImageGenerator: mockCreateImageGenerator,
-  // Ensure the direct function is also mocked
-  callImageGeneration: mockCallImageGen,
-}));
+vi.mock('use-vibes-core', async () => {
+  const actual = await vi.importActual('use-vibes-core');
+  return {
+    ...actual,
+    ImgGen: MockImgGen,
+  };
+});
 
 vi.mock('use-fireproof', () => ({
   useFireproof: () => ({
