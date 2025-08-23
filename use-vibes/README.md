@@ -498,7 +498,7 @@ Easily create image galleries using document IDs:
 
 ### Loading Existing Documents
 
-Load existing documents by ID:
+Load existing documents by `_id`:
 
 ```jsx
 <ImgGen _id="existing-document-id" />
