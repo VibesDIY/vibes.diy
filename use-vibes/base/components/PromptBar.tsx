@@ -49,6 +49,7 @@ export function PromptBar({
           />
         ) : (
           <div
+            className="imggen-prompt-text"
             onClick={() => {
               // Enter edit mode on single click
               setEditedPrompt(promptText);

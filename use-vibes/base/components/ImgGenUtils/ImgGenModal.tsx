@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { ImageOverlay } from './overlays/ImageOverlay.js';
 import { ImgGenError } from './ImgGenError.js';
 import { defaultClasses, ImgGenClasses } from '../../utils/style-utils.js';
+import { imgGenStyles } from '../../utils/styles.js';
 
 export interface ImgGenModalProps {
   readonly isOpen: boolean;
@@ -76,21 +77,66 @@ export function ImgGenModal({
   return createPortal(
     <div
       className="imggen-backdrop"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px',
+        boxSizing: 'border-box',
+      }}
       onClick={(e) => {
         e.stopPropagation(); // Prevent click from propagating beyond
         onClose();
       }}
       role="presentation"
     >
-      <figure className="imggen-full-wrapper" onClick={(e) => e.stopPropagation()}>
+      <figure
+        className="imggen-full-wrapper"
+        role="figure"
+        style={{
+          position: 'relative',
+          margin: 0,
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {error ? (
-          <div className="imggen-backdrop-error">
+          <div
+            className="imggen-backdrop-error"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '400px',
+              padding: '2rem',
+            }}
+          >
             <ImgGenError message={error.message} />
           </div>
         ) : (
           <ImgFile
             file={currentFile}
             className="imggen-backdrop-image"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '70vh',
+              objectFit: 'contain',
+              display: 'block',
+            }}
             alt={alt || 'Generated image'}
           />
         )}

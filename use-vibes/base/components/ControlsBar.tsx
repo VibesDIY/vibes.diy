@@ -100,18 +100,14 @@ export function ControlsBar({
         <div
           className="imggen-progress"
           style={{
+            ...imgGenStyles.progress,
             width: `${progress}%`,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            height: 'var(--imggen-progress-height)',
-            zIndex: 20,
           }}
         />
       )}
 
       {/* Bottom row with controls or status */}
-      <div className={combineClasses('imggen-controls', classes.controls)}>
+      <div className={combineClasses(classes.controls)} style={imgGenStyles.controls}>
         {showControls ? (
           <>
             {/* Left side: Delete button */}
@@ -123,12 +119,12 @@ export function ControlsBar({
                     onClick={onDeleteClick}
                     className={combineClasses('imggen-button imggen-delete-button', classes.button)}
                     style={{
-                      position: 'static',
-                      width: 'var(--imggen-button-size)',
-                      height: 'var(--imggen-button-size)',
-                      backgroundColor: isConfirming ? 'var(--imggen-error-border)' : undefined,
-                      color: isConfirming ? 'white' : undefined,
-                      opacity: isConfirming ? 1 : undefined,
+                      ...imgGenStyles.button,
+                      backgroundColor: isConfirming
+                        ? imgGenTheme.colors.errorBorder
+                        : imgGenStyles.button.background,
+                      color: isConfirming ? 'white' : imgGenStyles.button.color,
+                      opacity: isConfirming ? 1 : imgGenStyles.button.opacity,
                     }}
                   >
                     ✕
@@ -142,13 +138,13 @@ export function ControlsBar({
                         }}
                         aria-label="Confirm delete"
                         style={{
-                          fontSize: 'var(--imggen-font-size)',
+                          fontSize: imgGenTheme.typography.fontSize,
                           fontWeight: 'bold',
                           whiteSpace: 'nowrap',
-                          border: '1px solid var(--imggen-error-border, #ff3333)',
-                          background: 'var(--imggen-error-border, #ff3333)',
+                          border: `1px solid ${imgGenTheme.colors.errorBorder}`,
+                          background: imgGenTheme.colors.errorBorder,
                           color: 'white',
-                          borderRadius: '4px',
+                          borderRadius: imgGenTheme.dimensions.borderRadius,
                           cursor: 'pointer',
                           padding: '2px 8px',
                         }}
@@ -165,11 +161,11 @@ export function ControlsBar({
                         }}
                         aria-label="Cancel delete"
                         style={{
-                          fontSize: 'var(--imggen-font-size)',
+                          fontSize: imgGenTheme.typography.fontSize,
                           whiteSpace: 'nowrap',
                           border: 'none',
                           background: 'none',
-                          color: 'var(--imggen-font-color)',
+                          color: imgGenTheme.colors.text,
                           cursor: 'pointer',
                           padding: '0 4px',
                         }}
@@ -183,7 +179,7 @@ export function ControlsBar({
             </div>
 
             {/* Right side: Version controls */}
-            <div className="imggen-control-group">
+            <div className="imggen-control-group" style={imgGenStyles.controlGroup}>
               {/* Previous version button - only when multiple versions */}
               {totalVersions > 1 && (
                 <button
@@ -191,6 +187,7 @@ export function ControlsBar({
                   disabled={versionIndex === 0}
                   onClick={handlePrevVersion}
                   className={combineClasses('imggen-button', classes.button)}
+                  style={imgGenStyles.button}
                 >
                   ◀︎
                 </button>
@@ -215,6 +212,7 @@ export function ControlsBar({
                   disabled={versionIndex >= totalVersions - 1}
                   onClick={handleNextVersion}
                   className={combineClasses('imggen-button', classes.button)}
+                  style={imgGenStyles.button}
                 >
                   ▶︎
                 </button>
@@ -236,13 +234,24 @@ export function ControlsBar({
                     : '',
                   isRegenerating ? 'imggen-button-disabled' : ''
                 )}
+                style={{
+                  ...imgGenStyles.button,
+                  backgroundColor:
+                    editedPrompt !== null && editedPrompt.trim() !== promptText
+                      ? imgGenTheme.colors.accent
+                      : imgGenStyles.button.background,
+                  opacity: isRegenerating ? 0.3 : imgGenStyles.button.opacity,
+                  cursor: isRegenerating ? 'not-allowed' : imgGenStyles.button.cursor,
+                }}
               >
                 <span className={isRegenerating ? 'imggen-regen-spinning' : ''}>⟳</span>
               </button>
             </div>
           </>
         ) : progress < 100 ? (
-          <div className="imggen-status-text">Generating...</div>
+          <div className="imggen-status-text" style={imgGenStyles.statusText}>
+            Generating...
+          </div>
         ) : null}
       </div>
     </>
