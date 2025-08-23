@@ -1,5 +1,5 @@
 {
-  "name": "use-vibes-core",
+  "name": "use-vibes-base",
   "version": "0.0.0",
   "type": "module",
   "description": "Core components and utilities for use-vibes (internal workspace package)",

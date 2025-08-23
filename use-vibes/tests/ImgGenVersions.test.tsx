@@ -33,7 +33,7 @@ vi.mock('use-fireproof', () => ({
 }));
 
 // Import the components directly to test them individually
-import { ImageOverlay } from 'use-vibes-core';
+import { ImageOverlay } from 'use-vibes-base';
 
 describe('ImageOverlay Component Versions', () => {
   beforeEach(() => {

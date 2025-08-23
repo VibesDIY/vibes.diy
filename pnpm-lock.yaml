@@ -182,7 +182,7 @@ importers:
       react:
         specifier: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
         version: 19.1.1
-      use-vibes-core:
+      use-vibes-base:
         specifier: workspace:0.0.0
         version: link:../core/pkg
     devDependencies:
@@ -273,7 +273,7 @@ importers:
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
-      use-vibes-core:
+      use-vibes-base:
         specifier: workspace:0.0.0
         version: link:../core/pkg
       vite:

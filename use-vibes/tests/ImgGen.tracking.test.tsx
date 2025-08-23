@@ -54,7 +54,7 @@ vi.mock('use-fireproof', () => {
 });
 
 // Import after mocks
-import { ImgGen } from 'use-vibes-core';
+import { ImgGen } from 'use-vibes-base';
 
 describe('ImgGen Document ID Tracking', () => {
   beforeEach(() => {

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ControlsBar } from 'use-vibes-core';
+import { ControlsBar } from 'use-vibes-base';
 
 describe('ControlsBar Component', () => {
   const defaultProps = {

@@ -4,8 +4,8 @@ import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Mock ImageOverlay component
-vi.mock('use-vibes-core', async () => {
-  const actual = await vi.importActual('use-vibes-core');
+vi.mock('use-vibes-base', async () => {
+  const actual = await vi.importActual('use-vibes-base');
   return {
     ...actual,
     ImageOverlay: vi.fn(({ promptText, showControls }) => (
@@ -24,7 +24,7 @@ vi.mock('use-vibes-core', async () => {
   };
 });
 
-import { ImgGenDisplayPlaceholder, defaultClasses } from 'use-vibes-core';
+import { ImgGenDisplayPlaceholder, defaultClasses } from 'use-vibes-base';
 
 describe('ImgGenDisplayPlaceholder Component', () => {
   // Reset mocks before each test

@@ -16,4 +16,4 @@ export {
   // Type namespaces
   type Fireproof,
   type CallAI,
-} from 'use-vibes-core';
+} from 'use-vibes-base';

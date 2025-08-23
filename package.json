@@ -16,7 +16,7 @@
     "url": "https://github.com/VibesDIY/vibes.diy/issues"
   },
   "scripts": {
-    "build:core": "pnpm --filter use-vibes-core build",
+    "build:core": "pnpm --filter use-vibes-base build",
     "build": "pnpm run build:core && core-cli tsc",
     "lint": "eslint .",
     "test": "vitest --run",
