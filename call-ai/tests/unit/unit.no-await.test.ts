@@ -87,7 +87,7 @@ describe("callAi", () => {
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://openrouter.ai/api/v1/chat/completions",
+      "https://vibes-diy-api.com/api/v1/chat/completions",
       expect.objectContaining({
         method: "POST",
         headers: {
