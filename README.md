@@ -4,29 +4,6 @@ Turn your **ideas** into **interactive apps** instantly. [Try it now](https://vi
 
 Create beautiful, interactive mini apps with zero setup. Your creations are automatically saved and can be shared instantly.
 
-## Example Projects
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <img src="./public/fractal.png" alt="Fractal Explorer" width="400"/>
-        <br />
-        <b>Fractal Explorer</b>
-        <br />
-        Interactive fractal visualization with save and load
-      </td>
-      <td align="center">
-        <img src="./public/trivia.png" alt="Trivia Game" width="400"/>
-        <br />
-        <b>Trivia Game</b>
-        <br />
-        AI powered questions on any topic
-      </td>
-    </tr>
-  </table>
-</div>
-
 ## Features
 
 - Create interactive mini apps using AI
