@@ -44,7 +44,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.31.0",
-    "@fireproof/core-cli": "^0.23.7",
+    "@fireproof/core-cli": "^0.23.11",
     "@types/deno": "^2.3.0",
     "@types/node": "^24.1.0",
     "@typescript/native-preview": "7.0.0-dev.20250806.1",

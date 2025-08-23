@@ -37,7 +37,7 @@
     "vibes-diy": "workspace:*"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.7",
+    "@fireproof/core-cli": "^0.23.11",
     "@improvements/vite-plugin-devtools-json": "^0.0.3",
     "@react-router/dev": "^7.4.1",
     "@rollup/plugin-typescript": "^12.1.4",
