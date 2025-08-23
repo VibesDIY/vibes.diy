@@ -3,29 +3,10 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Transform any DOM element into an AI-powered micro-app",
-  "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "import": "./index.js"
-    },
-    "./style-loader": {
-      "types": "./style-loader.d.ts",
-      "import": "./style-loader.js"
-    }
-  },
   "scripts": {
     "build": "core-cli tsc",
     "copy-css": "mkdir -p dist/components && cp src/components/ImgGen.css dist/components/",
-    "build:watch": "tsc --watch",
-    "dev:build": "tsc --watch",
-    "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix --rule 'no-unused-vars: 1' --rule 'no-empty: 1' --rule '@typescript-eslint/no-unused-vars: 1'",
-    "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,md}\"",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "clean": "rimraf dist",
-    "typecheck": "tsc --noEmit",
-    "check": "pnpm lint && pnpm format && pnpm typecheck && pnpm test",
+   "test": "vitest run",
     "pack": "core-cli build -x '^' --doPack",
     "publish": "core-cli build -x '^'"
   },
@@ -44,10 +25,10 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "use-vibes-base": "workspace:0.0.0"
+    "use-vibes-base": "workspace:*"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+    "react": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
