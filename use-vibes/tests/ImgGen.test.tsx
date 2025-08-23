@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import React from 'react';
-import { act, render, RenderResult } from '@testing-library/react';
+import { act, render, screen, RenderResult } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { ImgGen } from 'use-vibes-base';
 
@@ -125,12 +125,8 @@ describe('ImgGen Component', () => {
     // Render the component with a test prompt
     const { container } = render(<ImgGen prompt="test image" />);
 
-    // Check that the placeholder is rendered
-    // The placeholder could be showing either 'Generating image...' or an error state
-    // We need to look for both old and new class names after refactoring
-    const placeholder = container.querySelector(
-      '.imggen-placeholder, .imggen-upload-waiting, .imggen-display-progress'
-    );
+    // Check that the placeholder is rendered by looking for its aria role and content
+    const placeholder = screen.getByRole('img', { name: /image placeholder|test image/i });
     expect(placeholder).toBeInTheDocument();
   });
 

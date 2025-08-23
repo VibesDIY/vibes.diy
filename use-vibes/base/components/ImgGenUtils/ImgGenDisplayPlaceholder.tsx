@@ -111,7 +111,6 @@ export function ImgGenDisplayPlaceholder({
   return (
     <div
       className={combineClasses(className, classes.placeholder)}
-      data-testid="imggen-placeholder"
       aria-label={alt || prompt || 'Image placeholder'}
       role="img"
       style={{
@@ -124,10 +123,9 @@ export function ImgGenDisplayPlaceholder({
     >
       {/* Progress bar at the very top */}
       {prompt && (
-        <div style={imgGenStyles.progressContainer} data-testid="imggen-progress-container">
+        <div style={imgGenStyles.progressContainer}>
           <div
             className={combineClasses(classes.progress)}
-            data-testid="imggen-progress"
             style={{
               ...imgGenStyles.progress,
               width: `${visibleProgress}%`,

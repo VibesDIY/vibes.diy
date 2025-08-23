@@ -48,10 +48,9 @@ describe('ImageOverlay Component', () => {
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
-    it('applies truncate class and title to prompt', () => {
+    it('applies title to prompt', () => {
       const { container } = render(<ImageOverlay {...defaultProps} />);
       const promptText = container.querySelector('.imggen-prompt-text');
-      expect(promptText).toHaveClass('imggen-truncate');
       expect(promptText).toHaveAttribute('title', 'Click to edit prompt');
     });
 

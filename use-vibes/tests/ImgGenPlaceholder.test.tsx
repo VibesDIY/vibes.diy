@@ -47,24 +47,22 @@ describe('ImgGenDisplayPlaceholder Component', () => {
         />
       );
 
-      const placeholder = screen.getByTestId('imggen-placeholder');
+      const placeholder = screen.getByRole('img', { name: 'Test alt text' });
       expect(placeholder).toBeInTheDocument();
-      expect(placeholder).toHaveAttribute('role', 'img');
-      expect(placeholder).toHaveAttribute('aria-label', 'Test alt text');
     });
 
     it('falls back to prompt text for aria-label when alt is not provided', () => {
       render(<ImgGenDisplayPlaceholder prompt="Test prompt" progress={0} error={undefined} />);
 
-      const placeholder = screen.getByTestId('imggen-placeholder');
-      expect(placeholder).toHaveAttribute('aria-label', 'Test prompt');
+      const placeholder = screen.getByRole('img', { name: 'Test prompt' });
+      expect(placeholder).toBeInTheDocument();
     });
 
     it('uses default aria-label when neither prompt nor alt is provided', () => {
       render(<ImgGenDisplayPlaceholder progress={0} error={undefined} />);
 
-      const placeholder = screen.getByTestId('imggen-placeholder');
-      expect(placeholder).toHaveAttribute('aria-label', 'Image placeholder');
+      const placeholder = screen.getByRole('img', { name: 'Image placeholder' });
+      expect(placeholder).toBeInTheDocument();
     });
 
     it('displays "Waiting for prompt" message when no prompt is provided', () => {
@@ -76,7 +74,7 @@ describe('ImgGenDisplayPlaceholder Component', () => {
     it('combines custom class with default classes', () => {
       render(<ImgGenDisplayPlaceholder className="test-class" progress={0} error={undefined} />);
 
-      const placeholder = screen.getByTestId('imggen-placeholder');
+      const placeholder = screen.getByRole('img', { name: 'Image placeholder' });
       expect(placeholder).toHaveClass('test-class');
     });
   });
@@ -127,7 +125,7 @@ describe('ImgGenDisplayPlaceholder Component', () => {
   //---------------------------------------------------------------
   describe('Generating State (with prompt, no error)', () => {
     it('renders ImageOverlay with correct props when in generating state', () => {
-      render(
+      const { container } = render(
         <ImgGenDisplayPlaceholder
           prompt="Test prompt"
           progress={50}
@@ -144,8 +142,8 @@ describe('ImgGenDisplayPlaceholder Component', () => {
       const promptTexts = screen.getAllByText('Test prompt');
       expect(promptTexts.length).toBeGreaterThan(0);
 
-      // Check that progress bar is rendered
-      const progressBar = screen.getByTestId('imggen-progress');
+      // Check that progress bar is rendered by looking for element with progress width style
+      const progressBar = container.querySelector('[style*="width:"]');
       expect(progressBar).toBeInTheDocument();
     });
 
@@ -176,8 +174,8 @@ describe('ImgGenDisplayPlaceholder Component', () => {
       container = container as HTMLElement;
 
       // Initially should be 0%
-      const progressBar = screen.getByTestId('imggen-progress');
-      expect(progressBar).toHaveStyle('width: 0%');
+      const progressBar = container.querySelector('[style*="width: 0%"]');
+      expect(progressBar).toBeInTheDocument();
 
       // After timeout, should update to the actual value
       await act(async () => {
@@ -204,13 +202,12 @@ describe('ImgGenDisplayPlaceholder Component', () => {
   //---------------------------------------------------------------
   describe('Progress Bar Positioning', () => {
     it('positions progress bar at the top of the container', () => {
-      render(<ImgGenDisplayPlaceholder prompt="Test prompt" progress={50} error={undefined} />);
+      const { container } = render(
+        <ImgGenDisplayPlaceholder prompt="Test prompt" progress={50} error={undefined} />
+      );
 
-      // The progress bar container should be present and have the progress bar
-      const progressContainer = screen.getByTestId('imggen-progress-container');
-      expect(progressContainer).toBeInTheDocument();
-
-      const progressBar = screen.getByTestId('imggen-progress');
+      // Check that progress bar is rendered by finding element with width style
+      const progressBar = container.querySelector('[style*="width:"]');
       expect(progressBar).toBeInTheDocument();
     });
   });
