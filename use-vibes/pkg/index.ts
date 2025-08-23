@@ -14,8 +14,11 @@ export const useFireproof: typeof originalUseFireproof = (
 };
 
 // Re-export specific functions and types from call-ai
-import * as callAI from 'call-ai';
+import { callAI } from 'call-ai';
 export { callAI, callAI as callAi };
+
+// Re-export all types under a namespace
+export type * as CallAI from 'call-ai';
 
 // Export ImgGen component
 export { default as ImgGen } from './components/ImgGen.js';
