@@ -50,7 +50,7 @@ vi.mock('use-fireproof', () => {
 });
 
 // Import the type for proper typing in mock implementation
-import type { UseImageGenOptions, UseImageGenResult } from 'use-vibes';
+import type { UseImageGenOptions, UseImageGenResult } from 'use-vibes-core';
 
 // Mock the image generation hook
 vi.mock('../pkg/hooks/image-gen/use-image-gen', () => {
@@ -136,7 +136,7 @@ import '@testing-library/jest-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Import the component to test
-import { ImgGen, useImageGen } from 'use-vibes';
+import { ImgGen, useImageGen } from 'use-vibes-core';
 
 // Get the mocked version of useImageGen after imports
 const useImageGenMock = vi.mocked(useImageGen);

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
-import { addNewVersion, ImageDocument } from 'use-vibes';
+import { addNewVersion, ImageDocument } from 'use-vibes-core';
 import { DocWithId } from 'use-fireproof';
 import { fail } from 'assert';
 

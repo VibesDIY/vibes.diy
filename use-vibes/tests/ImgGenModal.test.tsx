@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ImgGenModal } from 'use-vibes';
+import { ImgGenModal } from 'use-vibes-core';
 
 // Mock ImgFile component
 vi.mock('use-fireproof', () => ({

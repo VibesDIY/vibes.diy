@@ -20,7 +20,7 @@ vi.mock('../pkg/components/ImgGenUtils/overlays/ImageOverlay', () => ({
   )),
 }));
 
-import { ImgGenDisplayPlaceholder, defaultClasses } from 'use-vibes';
+import { ImgGenDisplayPlaceholder, defaultClasses } from 'use-vibes-core';
 
 describe('ImgGenDisplayPlaceholder Component', () => {
   // Reset mocks before each test

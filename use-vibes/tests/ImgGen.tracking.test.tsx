@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ImgGen } from 'use-vibes';
+import { ImgGen } from 'use-vibes-core';
 
 // Mock document that will be returned when ImgGen is used with a prompt
 const mockDocument = {
@@ -100,7 +100,7 @@ vi.mock('use-fireproof', () => {
 });
 
 // Expose the mocked useImageGen for assertions
-// import { useImageGen } from 'use-vibes'
+// import { useImageGen } from 'use-vibes-core'
 
 describe('ImgGen Document ID Tracking', () => {
   beforeEach(() => {

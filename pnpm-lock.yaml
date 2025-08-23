@@ -149,11 +149,11 @@ importers:
         specifier: ^8.7.1
         version: 8.8.1
 
-  use-vibes/pkg:
+  use-vibes/core/pkg:
     dependencies:
       call-ai:
         specifier: workspace:0.0.0
-        version: link:../../call-ai/pkg
+        version: link:../../../call-ai/pkg
       react:
         specifier: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
         version: 19.1.1
@@ -163,6 +163,28 @@ importers:
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
+    devDependencies:
+      '@fireproof/core-cli':
+        specifier: ^0.23.6
+        version: 0.23.7(typescript@5.9.2)
+      '@types/react':
+        specifier: ^19.1.0
+        version: 19.1.11
+      '@types/react-dom':
+        specifier: ^19.1.2
+        version: 19.1.7(@types/react@19.1.11)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.2
+
+  use-vibes/pkg:
+    dependencies:
+      react:
+        specifier: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+        version: 19.1.1
+      use-vibes-core:
+        specifier: workspace:0.0.0
+        version: link:../core/pkg
     devDependencies:
       '@eslint/js':
         specifier: ^9.31.0

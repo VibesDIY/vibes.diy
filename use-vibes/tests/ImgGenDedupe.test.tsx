@@ -187,7 +187,7 @@ vi.mock('use-fireproof', () => ({
 }));
 
 // Import after mocks
-import { ImgGenProps, MODULE_STATE, UseImageGenOptions } from 'use-vibes';
+import { ImgGenProps, MODULE_STATE, UseImageGenOptions } from 'use-vibes-core';
 
 describe('ImgGen Document Deduplication', () => {
   beforeEach(() => {

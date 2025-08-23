@@ -2,6 +2,7 @@ packages:
   - "call-ai/pkg"
   - "call-ai/tests/unit"
   - "call-ai/tests/integration"
+  - "use-vibes/core/pkg"
   - "use-vibes/pkg"
   - "use-vibes/tests"
   - "vibes.diy/pkg"

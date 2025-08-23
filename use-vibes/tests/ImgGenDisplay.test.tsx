@@ -39,7 +39,7 @@ vi.mock('../src/components/ImgGenUtils/overlays/DeleteConfirmationOverlay', () =
 }));
 
 // Import after mocks
-import { ImgGenDisplay } from 'use-vibes';
+import { ImgGenDisplay } from 'use-vibes-core';
 
 // Type simplification for testing purposes
 interface TestDoc {

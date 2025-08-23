@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist"
   },
@@ -7,8 +7,8 @@
     "**/*"
   ],
   "exclude": [
-    "../tests/**/*",
-    "node_modules", 
+    "../../tests/**/*",
+    "node_modules",
     "dist"
   ]
 }
