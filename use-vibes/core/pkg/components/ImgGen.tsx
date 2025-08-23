@@ -21,7 +21,8 @@ import { ImgGenClasses, defaultClasses } from '../utils/style-utils.js';
 import { logDebug } from '../utils/debug.js';
 import './ImgGen.css';
 
-export interface ImgGenProps {
+export interface ImgGenProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onError' | 'className'> {
   /** Text prompt for image generation (required unless _id is provided) */
   readonly prompt: string;
 
@@ -89,6 +90,8 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
     classes = defaultClasses,
     debug,
     useImageGen,
+    // Extract HTML attributes
+    ...htmlAttributes
   } = props;
 
   // Get access to the Fireproof database directly
@@ -465,7 +468,8 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
   }
 
   // Always render through the render function - no conditional returns in the main component body
-  return renderContent();
+  // Wrap the content in a div to accept HTML attributes like data-testid
+  return <div {...htmlAttributes}>{renderContent()}</div>;
 }
 
 /**
