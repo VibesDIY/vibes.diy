@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { useViewState } from "~/vibes.diy/app/utils/ViewState.js";
+import { useViewState, ViewState } from "~/vibes.diy/app/utils/ViewState.js";
 import { vi, describe, test, expect, beforeEach } from "vitest";
 
 // Mock react-router-dom hooks
@@ -41,7 +41,7 @@ describe("ViewState Coverage Tests", () => {
     // Mock location to base path
     vi.mocked(useLocation).mockReturnValue({
       pathname: `/chat/${mockSessionId}/${mockTitle}`, // Not in data or code view
-    } as any);
+    } as ReturnType<typeof useLocation>);
 
     // Initialize with props
     const initialProps = {
@@ -52,7 +52,7 @@ describe("ViewState Coverage Tests", () => {
       previewReady: false, // Start with previewReady=false to test the transition
     };
 
-    let hookResult: any;
+    let hookResult: Partial<ViewState>;
 
     // First initialize with streaming state
     const { unmount } = renderHook(
@@ -102,7 +102,7 @@ describe("ViewState Coverage Tests", () => {
     // Mock location
     vi.mocked(useLocation).mockReturnValue({
       pathname: `/chat/${mockSessionId}/${mockTitle}`,
-    } as any);
+    } as ReturnType<typeof useLocation>);
 
     // Setup props
     const props = {
@@ -144,7 +144,7 @@ describe("ViewState Coverage Tests", () => {
     // Mock location
     vi.mocked(useLocation).mockReturnValue({
       pathname: `/chat/${mockSessionId}/${mockTitle}`,
-    } as any);
+    } as ReturnType<typeof useLocation>);
 
     // Setup props with data view disabled (during streaming)
     const props = {
@@ -170,9 +170,9 @@ describe("ViewState Coverage Tests", () => {
     // Mock location to base path - not in data or code view
     vi.mocked(useLocation).mockReturnValue({
       pathname: `/chat/${mockSessionId}/${mockTitle}`,
-    } as any);
+    } as ReturnType<typeof useLocation>);
 
-    let hookResult: any;
+    let hookResult: Partial<ViewState>;
 
     // First render to establish the wasStreamingRef value as true
     const { unmount } = renderHook(

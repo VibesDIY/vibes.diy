@@ -131,6 +131,7 @@ export type SessionOrScreenshot = SessionDocument | ScreenshotDocument;
 export type ChatMessage = ChatMessageDocument & {
   text: string;
   timestamp?: number;
+  dependenciesString?: string
 };
 
 // User chat message type used in the UI

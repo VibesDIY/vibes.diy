@@ -4,6 +4,7 @@ import { useLocation } from "react-router";
 import { GA_TRACKING_ID } from "../config/env.js";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { initGA, pageview } from "../utils/analytics.js";
+import  { CookieConsent, getCookieConsentValue } from "react-cookie-consent";
 
 // We'll use any type for dynamic imports to avoid TypeScript errors with the cookie consent component
 
@@ -18,8 +19,8 @@ export default function CookieBanner() {
       : true; // Default to dark mode for SSR
 
   // Dynamic import for client-side only
-  const [CookieConsent, setCookieConsent] = useState<any>(null);
-  const [getCookieConsentValue, setGetCookieConsentValue] = useState<any>(null);
+  const [XCookieConsent, setXCookieConsent] = useState<typeof CookieConsent | null>(null);
+  const [getXCookieConsentValue, setXGetCookieConsentValue] = useState<typeof getCookieConsentValue | null>(null);
 
   const posthog = usePostHog();
 
@@ -28,21 +29,21 @@ export default function CookieBanner() {
   // Load the cookie consent library on client side only
   useEffect(() => {
     import("react-cookie-consent").then((module) => {
-      setCookieConsent(() => module.default);
-      setGetCookieConsentValue(() => module.getCookieConsentValue);
+      setXCookieConsent(() => module.default);
+      setXGetCookieConsentValue(() => module.getCookieConsentValue);
     });
   }, []);
 
   // Check for existing cookie consent
   useEffect(() => {
-    if (getCookieConsentValue) {
-      const consentValue = getCookieConsentValue("cookieConsent");
+    if (getXCookieConsentValue) {
+      const consentValue = getXCookieConsentValue("cookieConsent");
       if (consentValue === "true") {
         setHasConsent(true);
         initGA();
       }
     }
-  }, [getCookieConsentValue]);
+  }, [getXCookieConsentValue]);
 
   // Track page views when location changes (only if consent was given)
   useEffect(() => {
@@ -65,15 +66,15 @@ export default function CookieBanner() {
 
       // Define window.dataLayer with proper TypeScript type
       interface WindowWithDataLayer extends Window {
-        dataLayer: any[];
-        gtag: (...args: any[]) => void;
+        dataLayer: unknown[];
+        gtag: (...args: unknown[]) => void;
       }
 
       const windowWithDataLayer = window as unknown as WindowWithDataLayer;
       windowWithDataLayer.dataLayer = windowWithDataLayer.dataLayer || [];
 
-      function gtag(...args: any[]) {
-        windowWithDataLayer.dataLayer.push(arguments);
+      function gtag(...args: unknown[]) {
+        windowWithDataLayer.dataLayer.push(args);
       }
 
       windowWithDataLayer.gtag = gtag;
@@ -98,10 +99,10 @@ export default function CookieBanner() {
   // 1. CookieConsent is not loaded
   // 2. No message has been sent yet
   // 3. Google Analytics ID is not set (making analytics optional)
-  if (!CookieConsent || !messageHasBeenSent || !GA_TRACKING_ID) return null;
+  if (!XCookieConsent || !messageHasBeenSent || !GA_TRACKING_ID) return null;
 
   return (
-    <CookieConsent
+    <XCookieConsent
       location="bottom"
       buttonText="Accept"
       declineButtonText="Decline"
@@ -138,6 +139,6 @@ export default function CookieBanner() {
     >
       This website uses cookies to enhance the user experience and analyze site
       traffic.
-    </CookieConsent>
+    </XCookieConsent>
   );
 }

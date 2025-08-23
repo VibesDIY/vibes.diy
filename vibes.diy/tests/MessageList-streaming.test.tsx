@@ -12,10 +12,12 @@ beforeEach(() => {
 
 // Mock Message component to simplify testing
 vi.mock("~/vibes.diy/app/components/Message", () => ({
-  default: ({ message }: any) => (
+  default: ({ message }: {
+    message: { text?: string; segments: { type: string; content: string }[] };
+  }) => (
     <div data-testid="mock-message">
       {message.segments &&
-        message.segments.map((segment: any, i: number) => (
+        message.segments.map((segment, i: number) => (
           <div key={i} data-testid={segment.type}>
             {segment.content}
           </div>

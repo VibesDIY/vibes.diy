@@ -1,4 +1,3 @@
-import React from "react";
 import { vi } from "vitest";
 
 // Create a simple mock database that can be returned by fireproof

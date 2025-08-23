@@ -1,4 +1,4 @@
-import { fireproof } from "use-fireproof";
+import { DocResponse, fireproof } from "use-fireproof";
 
 /**
  * Get the database name for a session
@@ -20,9 +20,8 @@ export const getSessionDatabaseName = (sessionId: string) => {
 export async function updateUserVibespaceDoc(
   userId: string,
   slug: string,
-  data: Record<string, any>,
-): Promise<any> {
-  try {
+  data: Record<string, unknown>,
+): Promise<DocResponse> {
     if (!userId || !slug) {
       throw new Error("userId and slug are required for updating vibespace");
     }
@@ -48,8 +47,4 @@ export async function updateUserVibespaceDoc(
     // Update the document
     const result = await userVibespaceDb.put(updatedDoc);
     return result;
-  } catch (error) {
-    // Re-throw the error to be handled by the caller
-    throw error;
-  }
 }

@@ -28,7 +28,7 @@ describe("useSimpleChat", () => {
     const mockPendingPut = vi.fn(async () => {
       return Promise.resolve({ id: pendingId });
     });
-    (vi.mocked(useSession)(undefined) as any).sessionDatabase.put =
+    (vi.mocked(useSession)(undefined)).sessionDatabase.put =
       mockPendingPut;
 
     act(() => {

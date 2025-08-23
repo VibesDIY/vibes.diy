@@ -21,7 +21,7 @@ vi.mock("use-fireproof", () => ({
 // Prepare mock data
 const mockChatState: ChatState & {
   setMobilePreviewShown: (shown: boolean) => void;
-  navigateToView: (view: any) => void;
+  navigateToView: (view: unknown) => void;
 } = {
   ...mockChatStateProps,
   docs: [],

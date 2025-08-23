@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import DynamicTable from "./DynamicTable.js";
 import { headersForDocs } from "./dynamicTableHelpers.js";
 // Import Fireproof for database access
-import { useFireproof } from "use-fireproof";
+import { DocBase, useFireproof } from "use-fireproof";
 
 // Component for displaying database data
 const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({
@@ -48,7 +48,7 @@ const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({
 
   const { database } = useFireproof(dbName);
 
-  const [docs, setDocs] = useState<any[]>([]);
+  const [docs, setDocs] = useState<DocBase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   // Fetch documents function - separated so it can be called manually if needed
   const fetchDocs = async () => {

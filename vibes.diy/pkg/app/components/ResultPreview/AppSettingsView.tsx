@@ -142,8 +142,8 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
       setHasUnsavedDeps(false);
       setSaveDepsOk(true);
       setTimeout(() => setSaveDepsOk(false), 2000);
-    } catch (e: any) {
-      setSaveDepsErr(e?.message || "Failed to save libraries");
+    } catch (e) {
+      setSaveDepsErr((e as Error)?.message || "Failed to save libraries");
     }
   }, [deps, onUpdateDependencies, catalogNames]);
 

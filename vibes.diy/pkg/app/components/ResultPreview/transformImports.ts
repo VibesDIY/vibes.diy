@@ -9,7 +9,7 @@ export const coreImportMap = [
 
 export function transformImports(code: string): string {
   return code.replace(
-    /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"\/][^'"]*)['"];?/g,
+    /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^/][^'"]*)['"];?/g,
     (match, importPath) => {
       if (coreImportMap.includes(importPath)) {
         return match;

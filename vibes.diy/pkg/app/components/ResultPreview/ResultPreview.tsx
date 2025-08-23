@@ -14,7 +14,7 @@ import { useSession } from "../../hooks/useSession.js";
 
 function ResultPreview({
   code,
-  dependencies,
+  // dependencies,
   onScreenshotCaptured,
   sessionId,
   title,

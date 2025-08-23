@@ -9,8 +9,8 @@ import type {
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 // Mock the Message component
-vi.mock("~/vibes.diy/app/components/Message", () => ({
-  default: ({ message }: any) => (
+vi.mock("~/vibes.diy/app/components/Message.js", () => ({
+  default: ({ message }: { message: UserChatMessage | AiChatMessage } ) => (
     <div data-testid="mock-message">{message.text}</div>
   ),
   WelcomeScreen: () => <div data-testid="welcome-screen">Welcome Screen</div>,

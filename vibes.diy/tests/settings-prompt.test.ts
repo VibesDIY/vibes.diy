@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { makeBaseSystemPrompt } from "~/vibes.diy/app/prompts.js";
+import { UserSettings } from "~/vibes.diy/app/types/settings.js";
 
 // Mock the import.meta.glob function
 vi.mock("~/vibes.diy/app/prompts.js", async () => {
@@ -15,7 +16,7 @@ vi.mock("~/vibes.diy/app/prompts.js", async () => {
 
   // Return the actual implementation with our mocked modules
   return {
-    makeBaseSystemPrompt: async (model: string, sessionDoc?: any) => {
+    makeBaseSystemPrompt: async (model: string, sessionDoc?: Partial<UserSettings>) => {
       let concatenatedLlmsTxt = "";
       const llmsList = Object.values(llmsModules).map((mod) => mod.default);
 

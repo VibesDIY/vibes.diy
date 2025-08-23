@@ -1,6 +1,5 @@
-import React from "react";
 import { renderHook, act } from "@testing-library/react";
-import { useSession } from "~/vibes.diy/app/hooks/useSession";
+import { useSession } from "~/vibes.diy/app/hooks/useSession.js";
 import { vi, describe, test, expect, beforeEach } from "vitest";
 
 // Mock the databaseManager module first

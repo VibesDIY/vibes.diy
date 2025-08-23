@@ -274,7 +274,7 @@ export function generateImportStatements(llms: LlmsCatalogEntry[]) {
 // Base system prompt for the AI
 export async function makeBaseSystemPrompt(
   model: string,
-  sessionDoc?: any,
+  sessionDoc?: Partial<UserSettings>,
   onAiDecisions?: (decisions: { selected: string[] }) => void,
 ) {
   // Inputs for module selection

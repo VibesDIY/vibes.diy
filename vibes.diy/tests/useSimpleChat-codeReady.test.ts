@@ -142,7 +142,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
         docs: mockDocs,
         updateTitle: vi
           .fn()
-          .mockImplementation(async (title) => Promise.resolve()),
+          .mockImplementation(async () => Promise.resolve()),
         addScreenshot: vi.fn(),
         // Keep database mock simple
         sessionDatabase: {
@@ -160,7 +160,6 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
             async (field: string, options: Record<string, unknown>) => {
               const key = options?.key;
               const filtered = mockDocs.filter((doc) => {
-                // @ts-ignore - we know the field exists
                 return doc[field] === key;
               });
               return Promise.resolve({

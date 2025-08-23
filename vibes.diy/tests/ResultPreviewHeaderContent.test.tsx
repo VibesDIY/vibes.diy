@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import type { ChatMessageDocument } from "~/vibes.diy/app/types/chat.js";
 
 // Mock all imports before importing the component to test
@@ -99,7 +99,7 @@ vi.mock("~/vibes.diy/app/components/ResultPreview/ShareModal", () => ({
         publishedAppUrl,
         onPublish,
         isPublishing,
-        buttonRef,
+        // buttonRef,
       }: {
         isOpen: boolean;
         onClose: () => void;
@@ -187,25 +187,25 @@ describe("ResultPreviewHeaderContent", () => {
     vi.resetAllMocks();
 
     // Default mocks
-    (useParams as any).mockReturnValue({
+    (useParams as Mock).mockReturnValue({
       sessionId: "url-session-id",
       view: "url-view",
     });
 
-    (useSession as any).mockReturnValue({
+    (useSession as Mock).mockReturnValue({
       session: mockSession,
       docs: mockMessages,
       updatePublishedUrl: mockUpdatePublishedUrl,
     });
 
-    (useViewState as any).mockReturnValue({
+    (useViewState as Mock).mockReturnValue({
       currentView: "preview",
       displayView: "preview",
       viewControls: mockViewControls,
       showViewControls: true,
     });
 
-    (usePublish as any).mockReturnValue({
+    (usePublish as Mock).mockReturnValue({
       isPublishing: false,
       urlCopied: false,
       publishedAppUrl: undefined,
@@ -263,7 +263,7 @@ describe("ResultPreviewHeaderContent", () => {
 
   it("uses title from props over URL params when available", () => {
     // Mock the usePublish hook to verify it receives the proper title
-    (usePublish as any).mockReturnValue({
+    (usePublish as Mock).mockReturnValue({
       isPublishing: false,
       urlCopied: false,
       publishedAppUrl: undefined,
@@ -298,7 +298,7 @@ describe("ResultPreviewHeaderContent", () => {
 
   it("updates activeView when displayView changes", () => {
     // Mock displayView different from activeView
-    (useViewState as any).mockReturnValue({
+    (useViewState as Mock).mockReturnValue({
       currentView: "preview",
       displayView: "code", // Different from activeView
       viewControls: mockViewControls,
@@ -421,7 +421,7 @@ describe("ResultPreviewHeaderContent", () => {
   it("passes correct props to usePublish hook", () => {
     // Mock session with a published URL
     const publishedUrl = "https://existing-app.vibesdiy.app";
-    (useSession as any).mockReturnValue({
+    (useSession as Mock).mockReturnValue({
       session: { publishedUrl },
       docs: mockMessages,
       updatePublishedUrl: mockUpdatePublishedUrl,

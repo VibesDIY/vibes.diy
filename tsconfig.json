@@ -7,9 +7,6 @@
     "lib": ["DOM", "DOM.Iterable", "ES2023"],
 
     "paths": {
-      "//+types/root": [
-        "./vibes.diy/pkg/.react-router/types/app/+types/root.js"
-      ],
       "~/vibes.diy/*": ["./vibes.diy/pkg/*"]
     },
 
