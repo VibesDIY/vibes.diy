@@ -26,8 +26,8 @@
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
     "check": "pnpm lint && pnpm format && pnpm typecheck && pnpm test",
-    "pack": "core-cli build --doPack",
-    "publish": "core-cli build"
+    "pack": "core-cli build -x '^' --doPack",
+    "publish": "core-cli build -x '^'"
   },
   "keywords": [
     "ai",
@@ -45,7 +45,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "call-ai": "workspace:0.0.0",
-    "use-fireproof": "0.23.5",
+    "use-fireproof": "^0.23.7",
     "uuid": "^11.1.0"
   },
   "peerDependencies": {

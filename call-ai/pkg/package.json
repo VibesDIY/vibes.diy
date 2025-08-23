@@ -13,8 +13,8 @@
   },
   "scripts": {
     "build": "core-cli tsc",
-    "pack": "core-cli build --doPack",
-    "publish": "core-cli build"
+    "pack": "core-cli build -x '^' --doPack",
+    "publish": "core-cli build -x '^'"
   },
   "keywords": [
     "ai",
@@ -31,7 +31,7 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.6",
+    "@fireproof/core-cli": "^0.23.7",
     "@types/node": "^24.0.15",
     "typescript": "^5.8.3"
   },
