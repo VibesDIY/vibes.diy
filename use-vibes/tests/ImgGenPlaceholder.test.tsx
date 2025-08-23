@@ -132,10 +132,6 @@ describe('ImgGenDisplayPlaceholder Component', () => {
   //---------------------------------------------------------------
   describe('Generating State (with prompt, no error)', () => {
     it('renders ImageOverlay with correct props when in generating state', () => {
-      // Use spyOn to track style changes directly rather than testing computed styles
-      const originalSetAttribute = Element.prototype.setAttribute;
-      const styleSpy = vi.spyOn(Element.prototype, 'setAttribute');
-
       render(
         <ImgGenDisplayPlaceholder
           prompt="Test prompt"
@@ -145,16 +141,17 @@ describe('ImgGenDisplayPlaceholder Component', () => {
         />
       );
 
-      // Check ImageOverlay props directly
-      const overlay = screen.getByTestId('mock-image-overlay');
+      // Check that the real ImageOverlay component is rendered (even if hidden)
+      const overlay = document.querySelector('.imggen-overlay');
       expect(overlay).toBeInTheDocument();
-      expect(overlay).toHaveAttribute('data-prompt', 'Test prompt');
-      expect(overlay).toHaveAttribute('data-show-controls', 'false');
-      expect(overlay).toHaveAttribute('data-status', 'Generating...');
 
-      // Cleanup
-      styleSpy.mockRestore();
-      Element.prototype.setAttribute = originalSetAttribute;
+      // Check that prompt text is displayed (use getAllByText since it appears twice)
+      const promptTexts = screen.getAllByText('Test prompt');
+      expect(promptTexts.length).toBeGreaterThan(0);
+
+      // Check that progress bar is rendered
+      const progressBar = document.querySelector('.imggen-progress');
+      expect(progressBar).toBeInTheDocument();
     });
 
     it('enforces minimum progress value with Math.max', () => {

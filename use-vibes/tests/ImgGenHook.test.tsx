@@ -25,14 +25,31 @@ vi.mock('call-ai', () => {
 
 // Mock Fireproof
 vi.mock('use-fireproof', () => {
-  return {
-    useFireproof: () => ({
-      database: {
-        get: vi.fn().mockRejectedValue(new Error('Not found')),
-        put: vi.fn().mockResolvedValue({ ok: true }),
-        del: vi.fn().mockResolvedValue({ ok: true }),
-      },
+  const mockDb = {
+    get: vi.fn().mockImplementation(async (id) => {
+      // Return a basic document structure for any ID to avoid "Not found" errors
+      return {
+        _id: id,
+        type: 'image',
+        created: Date.now(),
+        prompt: 'Test prompt',
+        currentVersion: 0,
+        currentPromptKey: 'p1',
+        versions: [{ id: 'v1', created: Date.now(), promptKey: 'p1' }],
+        prompts: { p1: { text: 'Test prompt', created: Date.now() } },
+        _files: { v1: new File(['test'], 'test.png', { type: 'image/png' }) },
+      };
     }),
+    put: vi.fn().mockResolvedValue({ ok: true, id: 'test-id', rev: 'test-rev' }),
+    del: vi.fn().mockResolvedValue({ ok: true }),
+    query: vi.fn().mockResolvedValue({ rows: [] }),
+    remove: vi.fn().mockResolvedValue({ ok: true }),
+    getAttachment: vi.fn(),
+    putAttachment: vi.fn(),
+  };
+
+  return {
+    useFireproof: () => ({ database: mockDb }),
     ImgFile: ({ alt }: { alt?: string }) => <div data-testid="mock-img">{alt}</div>,
   };
 });
