@@ -12,7 +12,6 @@ pnpm add use-vibes
 
 ```jsx
 import { ImgGen } from 'use-vibes';
-import 'use-vibes/style-loader'; // Quick setup for CSS
 
 function MyComponent() {
   // You can use ImgGen without any props - it includes its own form UI
@@ -270,33 +269,9 @@ This guide covers the implementation, configuration, and best practices for usin
 pnpm add use-vibes
 ```
 
-### CSS Setup
+### Styling
 
-The ImgGen component requires CSS styles. You have two options:
-
-#### Option A: Explicit CSS Link (Recommended for Production)
-
-Add a CSS link tag to your HTML:
-
-```html
-<link rel="stylesheet" href="/node_modules/use-vibes/dist/components/ImgGen.css" />
-```
-
-Or for ESM/CDN environments:
-
-```html
-<link rel="stylesheet" href="https://esm.sh/use-vibes@latest/dist/components/ImgGen.css" />
-```
-
-#### Option B: Automatic CSS Loading (Convenient for Prototyping)
-
-Import the style-loader early in your application:
-
-```js
-import 'use-vibes/style-loader'; // Auto-loads CSS when imported
-```
-
-This approach is perfect for quick prototypes, but for production sites, Option A gives you better control over CSS loading order and timing.
+The ImgGen component uses inline styles with centralized theme constants, so **no separate CSS setup is required**. All styling is self-contained within the component.
 
 ## Basic Usage
 
@@ -472,37 +447,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
 
 ### CSS Variables
 
-Override the default styles by setting CSS custom properties in your CSS:
-
-```css
-/* In your CSS file */
-:root {
-  --imggen-text-color: #222;
-  --imggen-overlay-bg: rgba(245, 245, 245, 0.85);
-  --imggen-accent: #0088ff;
-  --imggen-border-radius: 4px;
-}
-
-/* Dark theme example */
-.dark-theme {
-  --imggen-text-color: #f0f0f0;
-  --imggen-overlay-bg: rgba(25, 25, 25, 0.85);
-  --imggen-accent: #66b2ff;
-}
-```
-
-### Available CSS Variables
-
-| Variable                 | Default                    | Description                       |
-| ------------------------ | -------------------------- | --------------------------------- |
-| `--imggen-text-color`    | `#333`                     | Main text color                   |
-| `--imggen-background`    | `#333333`                  | Background color for placeholder  |
-| `--imggen-overlay-bg`    | `rgba(255, 255, 255, 0.5)` | Overlay panel background          |
-| `--imggen-accent`        | `#0066cc`                  | Accent color (progress bar, etc.) |
-| `--imggen-error-text`    | `#ff6666`                  | Error message text color          |
-| `--imggen-border-radius` | `8px`                      | Border radius for containers      |
-| `--imggen-button-bg`     | `rgba(255, 255, 255, 0.7)` | Button background color           |
-| `--imggen-font-size`     | `14px`                     | Default font size                 |
+The component uses centralized theme constants from `imgGenTheme` for consistent styling. All styles are applied inline using JavaScript objects, eliminating the need for external CSS files.
 
 ### Custom Classes
 

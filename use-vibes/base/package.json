@@ -7,10 +7,6 @@
     ".": {
       "types": "./index.d.ts",
       "import": "./index.js"
-    },
-    "./style-loader": {
-      "types": "./style-loader.d.ts",
-      "import": "./style-loader.js"
     }
   },
   "scripts": {
