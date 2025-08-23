@@ -1,5 +1,5 @@
 name: "call-ai-publish"
-description: "publish-the-call-ai"
+description: "publish-the-call-ai -- we don't use this, the use-vibes-publish workflow handles it, this file is just here for manual updates someday maybe"
 inputs:
   NPM_TOKEN:
     description: "NPM token for publishing packages"
