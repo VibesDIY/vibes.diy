@@ -19,7 +19,6 @@ import { ImgGenUploadWaiting } from './ImgGenUtils/ImgGenUploadWaiting.js';
 import { getImgGenMode } from './ImgGenUtils/ImgGenModeUtils.js';
 import { ImgGenClasses, defaultClasses } from '../utils/style-utils.js';
 import { logDebug } from '../utils/debug.js';
-import './ImgGen.css';
 
 export interface ImgGenProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onError' | 'className'> {

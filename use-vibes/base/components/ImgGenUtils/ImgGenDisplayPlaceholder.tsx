@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ImgGenPlaceholderProps } from './types.js';
 import { combineClasses, defaultClasses } from '../../utils/style-utils.js';
+import { imgGenStyles, imgGenTheme } from '../../utils/styles.js';
 import { ImageOverlay } from './overlays/ImageOverlay.js';
 
 // Component for loading/placeholder state
@@ -83,36 +84,21 @@ export function ImgGenDisplayPlaceholder({
   if (error) {
     return (
       <div
-        className={combineClasses(
-          'imggen-placeholder',
-          'imggen-error-container',
-          className,
-          classes.placeholder
-        )}
+        className={combineClasses(className, classes.placeholder)}
         style={{
-          backgroundColor: '#222', // Dark gray background
-          width: '100%',
-          height: '100%',
+          ...imgGenStyles.errorContainer,
           minHeight: '512px', // Standard image height
-          aspectRatio: '1 / 1', // Square aspect ratio like images
         }}
         aria-label={alt || 'Error display'}
         role="img"
       >
-        <div className={combineClasses('imggen-error', classes.error)}>
+        <div className={combineClasses(classes.error)} style={imgGenStyles.error}>
           {(() => {
             const { title, body } = parseErrorInfo(error);
             return (
               <>
-                <h3
-                  className="imggen-error-title"
-                  style={{ color: '#ff4d4d', margin: '0 0 0.75rem 0' }}
-                >
-                  {title}
-                </h3>
-                <p className="imggen-error-message" style={{ color: '#e0e0e0', margin: '0' }}>
-                  {body}
-                </p>
+                <h3 style={imgGenStyles.errorTitle}>{title}</h3>
+                <p style={imgGenStyles.errorMessage}>{body}</p>
               </>
             );
           })()}
@@ -124,43 +110,27 @@ export function ImgGenDisplayPlaceholder({
   // Regular placeholder when no error
   return (
     <div
-      className={combineClasses('imggen-placeholder', className, classes.placeholder)}
+      className={combineClasses(className, classes.placeholder)}
+      data-testid="imggen-placeholder"
       aria-label={alt || prompt || 'Image placeholder'}
       role="img"
       style={{
-        display: 'flex',
+        ...imgGenStyles.placeholder,
         flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
         textAlign: 'center',
         minHeight: '200px',
-        position: 'relative',
-        backgroundColor: '#222', // Ensure dark background
         color: '#eee', // Light text color
       }}
     >
       {/* Progress bar at the very top */}
       {prompt && (
-        <div
-          className="imggen-progress-container"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '6px',
-            overflow: 'hidden',
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            zIndex: 10,
-          }}
-        >
+        <div style={imgGenStyles.progressContainer} data-testid="imggen-progress-container">
           <div
-            className={combineClasses('imggen-progress', classes.progress)}
+            className={combineClasses(classes.progress)}
+            data-testid="imggen-progress"
             style={{
+              ...imgGenStyles.progress,
               width: `${visibleProgress}%`,
-              height: '100%',
-              backgroundColor: 'var(--imggen-accent-color, #0074d9)',
-              transition: 'width 0.5s ease-out',
             }}
             aria-hidden="true"
           />
@@ -171,8 +141,8 @@ export function ImgGenDisplayPlaceholder({
       {!prompt && (
         <div
           style={{
+            ...imgGenStyles.statusText,
             color: '#eee',
-            fontSize: 'var(--imggen-font-size)',
             padding: '20px',
           }}
         >
@@ -187,11 +157,11 @@ export function ImgGenDisplayPlaceholder({
           <div
             style={{
               color: '#eee',
-              fontSize: 'var(--imggen-font-size)',
+              fontSize: imgGenTheme.typography.fontSize,
               padding: '20px',
               maxWidth: '90%',
               wordBreak: 'break-word',
-              fontWeight: 'bold',
+              fontWeight: imgGenTheme.typography.fontWeight,
               textAlign: 'center',
             }}
           >

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "core-cli tsc",
     "copy-css": "mkdir -p dist/components && cp src/components/ImgGen.css dist/components/",
-   "test": "vitest run",
+    "test": "vitest run",
     "pack": "core-cli build -x '^' --doPack",
     "publish": "core-cli build -x '^'"
   },

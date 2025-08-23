@@ -3,7 +3,6 @@ import type { PartialImageDocument } from '../../hooks/image-gen/types.js';
 import { useFireproof, ImgFile, Database } from 'use-fireproof';
 import { ImgGenFileDrop } from '../ImgGenUtils/ImgGenFileDrop.js';
 import { ImgGenClasses, combineClasses } from '../../utils/style-utils.js';
-import '../ImgGen.css';
 
 interface ImgGenUploadWaitingProps {
   /** Document with uploaded files (optional) */

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { combineClasses, defaultClasses, ImgGenClasses } from '../utils/style-utils.js';
+import { imgGenStyles, imgGenTheme } from '../utils/styles.js';
 import { logDebug } from '../utils/debug.js';
 
 interface ControlsBarProps {

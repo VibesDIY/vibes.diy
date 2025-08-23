@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { combineClasses, defaultClasses, ImgGenClasses } from '../utils/style-utils.js';
+import { imgGenStyles } from '../utils/styles.js';
 
 interface PromptBarProps {
   readonly promptText: string;
@@ -23,8 +24,8 @@ export function PromptBar({
   classes = defaultClasses,
 }: PromptBarProps) {
   return (
-    <div className="imggen-top-line">
-      <div className={combineClasses('imggen-prompt', classes.prompt)}>
+    <div style={imgGenStyles.topLine}>
+      <div className={combineClasses(classes.prompt)} style={imgGenStyles.prompt}>
         {editedPrompt !== null ? (
           <input
             type="text"
@@ -40,7 +41,10 @@ export function PromptBar({
             }}
             // Removed onBlur handler to prevent edit mode from being exited when clicking buttons
             autoFocus
-            className="imggen-prompt-input imggen-edit-mode"
+            style={{
+              ...imgGenStyles.promptInput,
+              ...imgGenStyles.promptInputEditMode,
+            }}
             aria-label="Edit prompt"
           />
         ) : (
@@ -49,7 +53,10 @@ export function PromptBar({
               // Enter edit mode on single click
               setEditedPrompt(promptText);
             }}
-            className="imggen-prompt-text imggen-truncate"
+            style={{
+              ...imgGenStyles.promptText,
+              ...imgGenStyles.truncate,
+            }}
             title="Click to edit prompt"
           >
             {promptText}
