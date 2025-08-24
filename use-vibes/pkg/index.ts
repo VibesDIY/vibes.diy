@@ -12,6 +12,11 @@ export {
   callAI,
   callAi,
 
+  // Auth components (Phase 2)
+  ClerkAuthProvider,
+  VibesClerkAuth,
+  useClerkAuth,
+
   // Type namespaces
   type Fireproof,
   type CallAI,

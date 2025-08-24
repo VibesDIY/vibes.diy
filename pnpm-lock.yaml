@@ -418,6 +418,9 @@ importers:
       use-fireproof:
         specifier: 0.23.11
         version: 0.23.11(@adviser/cement@0.4.26(typescript@5.9.2))(react@19.1.1)(typescript@5.9.2)
+      use-vibes:
+        specifier: workspace:*
+        version: link:../../use-vibes/pkg
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: ^1.11.6
