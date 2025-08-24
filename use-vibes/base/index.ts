@@ -53,4 +53,10 @@ export {
   VibesClerkAuth,
   useClerkAuth,
   type ClerkAuthState,
+  // Token utilities (Phase 3)
+  generateFireproofToken,
+  verifyFireproofToken,
+  storeFireproofToken,
+  getStoredFireproofToken,
+  type FireproofTokenPayload,
 } from './auth/index.js';

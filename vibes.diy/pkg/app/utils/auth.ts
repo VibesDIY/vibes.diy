@@ -1,115 +1,16 @@
 /**
  * Authentication utilities for handling token-based auth
  */
-import { importJWK, jwtVerify } from "jose";
 import { toast } from "react-hot-toast";
 import {
   CLOUD_SESSION_TOKEN_PUBLIC_KEY,
   CONNECT_API_URL,
   CONNECT_URL,
 } from "../config/env.js";
-import { base58btc } from "multiformats/bases/base58";
+import { verifyFireproofToken, type FireproofTokenPayload } from "use-vibes";
 
-// Export the interface
-export interface TokenPayload {
-  email?: string; // Assuming email might be added or needed later
-  userId: string;
-  tenants: {
-    id: string;
-    role: string;
-  }[];
-  ledgers: {
-    id: string;
-    role: string;
-    right: string;
-  }[];
-  iat: number;
-  iss: string;
-  aud: string;
-  exp: number;
-}
-
-// Base58 alphabet for base58btc
-// const BASE58BTC_ALPHABET =
-//   "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
-// Define JWK type
-interface JWK {
-  kty: string;
-  crv?: string;
-  x?: string;
-  y?: string;
-  n?: string;
-  e?: string;
-  ext?: boolean;
-  key_ops?: string[];
-}
-
-/**
- * Decode a base58btc-encoded string to bytes
- * @param {string} str - The base58btc-encoded string
- * @returns {Uint8Array} - The decoded bytes
- */
-function base58btcDecode(str: string): Uint8Array {
-  return base58btc.decode(str);
-  // // Remove the 'z' prefix for base58btc if present
-  // let input = str;
-  // if (input.startsWith("z")) {
-  //   input = input.slice(1);
-  // }
-
-  // let num = BigInt(0);
-  // for (let i = 0; i < input.length; i++) {
-  //   const char = input[i];
-  //   const value = BASE58BTC_ALPHABET.indexOf(char);
-  //   if (value === -1) throw new Error(`Invalid base58 character: ${char}`);
-  //   num = num * BigInt(58) + BigInt(value);
-  // }
-
-  // // Convert to bytes
-  // const bytes = [];
-  // while (num > 0) {
-  //   bytes.unshift(Number(num % BigInt(256)));
-  //   num = num / BigInt(256);
-  // }
-
-  // // Account for leading zeros in the input
-  // for (let i = 0; i < input.length; i++) {
-  //   if (input[i] === "1") {
-  //     bytes.unshift(0);
-  //   } else {
-  //     break;
-  //   }
-  // }
-
-  // return new Uint8Array(bytes);
-}
-
-/**
- * Decode a base58btc-encoded JWK string to a public key JWK
- * @param {string} encodedString - The base58btc-encoded JWK string
- * @returns {JWK} - The decoded JWK public key
- */
-function decodePublicKeyJWK(encodedString: string): JWK {
-  // Decode the base58btc string
-  const decoded = base58btcDecode(encodedString);
-
-  // Try to parse as JSON
-  try {
-    const rawText = new TextDecoder().decode(decoded);
-    return JSON.parse(rawText);
-  } catch (error) {
-    // If parsing fails, log the error and return a default JWK
-    console.error("Failed to parse JWK from base58btc string:", error);
-
-    return {
-      kty: "EC",
-      crv: "P-256",
-      x: "",
-      y: "",
-    };
-  }
-}
+// Re-export the interface from use-vibes for backwards compatibility
+export type TokenPayload = FireproofTokenPayload;
 
 /**
  * Initiates the authentication flow by generating a resultId and returning the connect URL.
@@ -190,47 +91,23 @@ export async function pollForAuthToken(
 }
 
 /**
- * Verify the token using jose library and return payload if valid.
- * This provides proper cryptographic verification of JWT tokens.
- * If the token is about to expire, it will attempt to extend it automatically.
- * Returns an object with the decoded payload and potentially extended token if valid, otherwise null.
+ * Verify the token using the enhanced verifier from use-vibes
+ * Supports both regular Fireproof tokens and Clerk-generated tokens
  */
 export async function verifyToken(
   token: string,
 ): Promise<{ payload: TokenPayload } | null> {
   try {
-    // Base58btc-encoded public key (replace with actual key)
-    const encodedPublicKey = CLOUD_SESSION_TOKEN_PUBLIC_KEY;
+    const result = await verifyFireproofToken(
+      token,
+      CLOUD_SESSION_TOKEN_PUBLIC_KEY,
+    );
+    if (!result) return null;
 
-    // Decode the base58btc-encoded JWK
-    const publicKey = decodePublicKeyJWK(encodedPublicKey);
+    const { payload } = result;
 
-    // Import the JWK
-    const key = await importJWK(publicKey, "ES256");
-
-    // Verify the token
-    const { payload } = await jwtVerify(token, key, {
-      issuer: "FP_CLOUD",
-      audience: "PUBLIC",
-    });
-
-    // If we got here, verification succeeded
-    if (!payload.exp || typeof payload.exp !== "number") {
-      console.error("Token missing expiration");
-      return null; // Missing expiration
-    }
-
-    // Check if token is expired
-    if (payload.exp * 1000 < Date.now()) {
-      // Convert to milliseconds
-      console.error("Token has expired");
-      return null; // Token expired
-    }
-
-    const tokenPayload = payload as unknown as TokenPayload;
-
-    // Check if token is about to expire and extend it if needed
-    if (isTokenAboutToExpire(tokenPayload)) {
+    // Check if token is about to expire and extend it if needed (for regular tokens)
+    if (payload.source !== "clerk" && isTokenAboutToExpire(payload)) {
       const extendedToken = await extendToken(token);
       if (extendedToken) {
         // Verify the extended token to get its payload
@@ -238,7 +115,6 @@ export async function verifyToken(
         if (extendedResult) {
           return extendedResult;
         }
-        // If extended token verification failed, fall back to original
         console.warn(
           "Extended token verification failed, using original token",
         );
@@ -247,11 +123,10 @@ export async function verifyToken(
       }
     }
 
-    // Return the payload
-    return { payload: tokenPayload };
+    return { payload };
   } catch (error) {
-    console.error("Error verifying or decoding token:", error);
-    return null; // Verification failed
+    console.error("Error verifying token:", error);
+    return null;
   }
 }
 

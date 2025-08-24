@@ -17,6 +17,13 @@ export {
   VibesClerkAuth,
   useClerkAuth,
 
+  // Fireproof token utilities (Phase 3)
+  generateFireproofToken,
+  verifyFireproofToken,
+  storeFireproofToken,
+  getStoredFireproofToken,
+  type FireproofTokenPayload,
+
   // Type namespaces
   type Fireproof,
   type CallAI,

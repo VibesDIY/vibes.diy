@@ -1,11 +1,16 @@
 import React, { useEffect } from 'react';
 import { SignIn, SignUp, useAuth, useUser } from '@clerk/clerk-react';
+import { generateFireproofToken, storeFireproofToken } from '../utils/tokenGeneration.js';
 
 interface VibesClerkAuthProps {
   mode?: 'signin' | 'signup';
   onAuthSuccess?: (user: any) => void;
   onClose?: () => void;
   className?: string;
+  /** Public key for Fireproof token generation */
+  fireproofPublicKey?: string;
+  /** Enable automatic Fireproof token generation (default: true) */
+  enableFireproofIntegration?: boolean;
 }
 
 /**
@@ -17,16 +22,42 @@ export function VibesClerkAuth({
   onAuthSuccess,
   onClose,
   className = '',
+  fireproofPublicKey,
+  enableFireproofIntegration = true,
 }: VibesClerkAuthProps) {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
 
-  // Handle successful authentication
+  // Handle successful authentication with automatic Fireproof integration
   useEffect(() => {
-    if (isSignedIn && user && onAuthSuccess) {
-      onAuthSuccess(user);
+    if (isSignedIn && user) {
+      handleAuthSuccess();
     }
-  }, [isSignedIn, user, onAuthSuccess]);
+  }, [isSignedIn, user]);
+
+  const handleAuthSuccess = async () => {
+    try {
+      // Generate and store Fireproof token if integration is enabled
+      if (enableFireproofIntegration && fireproofPublicKey && user) {
+        console.log('Generating Fireproof token for user:', user.id);
+        const fireproofToken = await generateFireproofToken(user, fireproofPublicKey);
+        storeFireproofToken(fireproofToken);
+        console.log('Fireproof token stored successfully');
+      }
+
+      // Call the consumer's success handler
+      if (onAuthSuccess && user) {
+        onAuthSuccess(user);
+      }
+    } catch (error) {
+      console.error('Error in auth success handler:', error);
+
+      // Still call the success handler even if token generation failed
+      if (onAuthSuccess && user) {
+        onAuthSuccess(user);
+      }
+    }
+  };
 
   const commonAppearance = {
     elements: {

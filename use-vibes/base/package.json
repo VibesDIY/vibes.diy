@@ -18,6 +18,8 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.43.1",
     "call-ai": "workspace:*",
+    "jose": "^6.0.10",
+    "multiformats": "^13.3.7",
     "use-fireproof": "^0.23.11",
     "uuid": "^11.1.0"
   },

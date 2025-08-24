@@ -3,7 +3,10 @@ import { useNavigate } from "react-router";
 import { ClerkAuthProvider, VibesClerkAuth } from "use-vibes";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { useAuth } from "../contexts/AuthContext.js";
-import { CLERK_PUBLISHABLE_KEY } from "../config/env.js";
+import {
+  CLERK_PUBLISHABLE_KEY,
+  CLOUD_SESSION_TOKEN_PUBLIC_KEY,
+} from "../config/env.js";
 
 export function meta() {
   return [
@@ -23,9 +26,10 @@ function SignUpContent() {
     }
   }, [isVibesAuth, navigate]);
 
-  // Handle successful Clerk authentication
+  // Handle successful Clerk authentication (Fireproof integration happens automatically)
   const handleAuthSuccess = (user: any) => {
     console.log("Clerk signup successful:", user);
+    // Navigate home - user is now fully authenticated via Fireproof integration
     navigate("/");
   };
 
@@ -47,6 +51,8 @@ function SignUpContent() {
               mode="signup"
               onAuthSuccess={handleAuthSuccess}
               className="mx-auto"
+              fireproofPublicKey={CLOUD_SESSION_TOKEN_PUBLIC_KEY}
+              enableFireproofIntegration={true}
             />
           </div>
 
