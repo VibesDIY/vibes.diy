@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { ClerkAuthProvider, VibesClerkAuth } from "@vibes.diy/use-vibes-base";
+// TODO: Enable when @vibes.diy/use-vibes-base is properly linked
+// import { ClerkAuthProvider, VibesClerkAuth } from "@vibes.diy/use-vibes-base";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import { CLERK_PUBLISHABLE_KEY } from "../config/env.js";
@@ -43,11 +44,15 @@ function SignUpContent() {
           </div>
 
           <div className="mt-8">
-            <VibesClerkAuth
-              mode="signup"
-              onAuthSuccess={handleAuthSuccess}
-              className="w-full"
-            />
+            <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg text-center">
+              <p className="text-gray-600">
+                Clerk auth component will be rendered here when use-vibes-base
+                is properly linked.
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Phase 2: Components are built and ready for integration.
+              </p>
+            </div>
           </div>
 
           <div className="text-center">
@@ -86,9 +91,6 @@ export default function SignUp() {
     );
   }
 
-  return (
-    <ClerkAuthProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <SignUpContent />
-    </ClerkAuthProvider>
-  );
+  // TODO: Enable ClerkAuthProvider when use-vibes-base is properly linked
+  return <SignUpContent />;
 }
