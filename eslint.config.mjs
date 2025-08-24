@@ -13,6 +13,9 @@ const opts = tseslint.config(
         queueMicrotask: "readonly",
       },
     },
+    parserOptions: {
+      tsconfigRootDir: new URL("./", import.meta.url).pathname, // => repo root
+    },
   },
   {
     ignores: [

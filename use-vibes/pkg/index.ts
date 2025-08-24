@@ -5,7 +5,6 @@ export {
   type ImgGenProps,
 
   // Fireproof integration
-  useFireproof,
   fireproof,
   ImgFile,
 
@@ -17,3 +16,15 @@ export {
   type Fireproof,
   type CallAI,
 } from '@vibes.diy/use-vibes-base';
+
+// Custom useFireproof hook with vibes-specific logging
+// Import the original hook and customize it at the package level
+import { useFireproof as originalUseFireproof } from '@vibes.diy/use-vibes-base';
+
+// Preserve the exact function type (including generics) of the original hook
+export const useFireproof: typeof originalUseFireproof = (
+  ...args: Parameters<typeof originalUseFireproof>
+) => {
+  console.log('Using vibes-customized useFireproof');
+  return originalUseFireproof(...args);
+};

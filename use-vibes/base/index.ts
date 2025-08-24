@@ -1,18 +1,9 @@
 // Re-export specific items from use-fireproof
-import { fireproof, useFireproof as originalUseFireproof, ImgFile } from 'use-fireproof';
-export { fireproof, ImgFile };
+import { fireproof, useFireproof, ImgFile } from 'use-fireproof';
+export { fireproof, useFireproof, ImgFile };
 
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
-
-// Custom useFireproof hook with vibes-specific logging
-// Preserve the exact function type (including generics) of the original hook
-export const useFireproof: typeof originalUseFireproof = (
-  ...args: Parameters<typeof originalUseFireproof>
-) => {
-  console.log('Using vibes-customized useFireproof');
-  return originalUseFireproof(...args);
-};
 
 // Re-export specific functions and types from call-ai
 import { callAI } from 'call-ai';
