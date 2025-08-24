@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router";
 import {
   type AiChatMessageDocument,
   type UserChatMessageDocument,
@@ -11,9 +12,12 @@ import {
   getLlmCatalog,
 } from "@vibes.diy/prompts";
 import { getSessionDatabaseName } from "../utils/databaseManager.js";
-import { Database, DocResponse, DocWithId, useFireproof } from "use-fireproof";
+import { Database, DocResponse, DocWithId, toCloud, useFireproof } from "use-fireproof";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { VibesDiyEnv } from "../config/env.js";
+import { generateCid } from "../utils/cidUtils.js";
+import { useAuth } from "../contexts/AuthContext.js";
+import { useUserSettings } from "./useUserSettings.js";
 
 interface SessionView {
   _id: string;
@@ -67,11 +71,23 @@ export function useSession(sessionId: string): UseSession {
     throw new Error("useSession requires a valid sessionId");
   }
   const sessionDbName = getSessionDatabaseName(sessionId);
+  const { isAuthenticated } = useAuth();
+  const { isEnableSyncEnabled } = useUserSettings();
+  const location = useLocation();
+
+  // Only attach toCloud() when we're actually on a chat route (not just home page with session)
+  const isOnChatRoute = location?.pathname?.startsWith("/chat/") || false;
+
   const {
     database: sessionDatabase,
     useDocument: useSessionDocument,
     useLiveQuery: useSessionLiveQuery,
-  } = useFireproof(sessionDbName);
+  } = useFireproof(
+    sessionDbName,
+    isEnableSyncEnabled && isAuthenticated && sessionId && isOnChatRoute
+      ? { attach: toCloud() }
+      : {},
+  );
 
   // User message is stored in the session-specific database
   const {
@@ -277,6 +293,9 @@ export function useSession(sessionId: string): UseSession {
       if (!sessionId || !screenshotData) return;
 
       try {
+        // Generate CID for the screenshot
+        const cid = await generateCid(screenshotData);
+
         const response = await fetch(screenshotData);
         const blob = await response.blob();
         const file = new File([blob], "screenshot.png", {
@@ -286,6 +305,7 @@ export function useSession(sessionId: string): UseSession {
         const screenshot = {
           type: "screenshot",
           session_id: sessionId,
+          cid, // Store CID for deduplication
           _files: {
             screenshot: file,
           },

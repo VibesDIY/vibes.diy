@@ -9,6 +9,7 @@ vi.mock("use-fireproof", () => ({
   useFireproof: vi.fn(() => ({
     useAllDocs: vi.fn(() => ({ docs: [] })),
   })),
+  toCloud: vi.fn().mockReturnValue({}),
 }));
 
 // Mock the vibespace theme components
