@@ -7,7 +7,7 @@ import type {
 } from "../types/chat.js";
 import type { UserSettings } from "../types/settings.js";
 
-import { useFireproof } from "use-fireproof";
+import { toCloud, useFireproof } from "use-fireproof";
 import { SETTINGS_DBNAME } from "../config/env.js";
 import { saveErrorAsSystemMessage } from "./saveErrorAsSystemMessage.js";
 import { useApiKey } from "./useApiKey.js";
@@ -18,6 +18,7 @@ import {
   useRuntimeErrors,
 } from "./useRuntimeErrors.js";
 import { useSession } from "./useSession.js";
+import { useUserSettings } from "./useUserSettings.js";
 
 import { useMessageSelection } from "./useMessageSelection.js";
 // Import our custom hooks
@@ -66,8 +67,14 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
     updateSelectedModel,
   } = useSession(sessionId);
 
+  // Get user settings including sync preference
+  const { isEnableSyncEnabled } = useUserSettings();
+
   // Get main database directly for settings document
-  const { useDocument } = useFireproof(SETTINGS_DBNAME);
+  const { useDocument } = useFireproof(
+    SETTINGS_DBNAME,
+    isEnableSyncEnabled && isAuthenticated ? { attach: toCloud() } : {},
+  );
 
   // Function to save errors as system messages to the session database
   const saveErrorAsSystemMessageCb = useCallback(

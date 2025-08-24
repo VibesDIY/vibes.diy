@@ -102,6 +102,7 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
     const loadData = async () => {
       try {
         setIsLoading(true);
+        console.log(`Loading vibe document for ${vibeId}`);
         const vibeData = await loadVibeDocument(vibeId);
         if (isMounted) {
           setVibe(vibeData);
@@ -171,6 +172,7 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
 
   // If the vibe wasn't found (not loading and no data), return null to filter it out
   if (!vibe) {
+    console.log(`Vibe not found: ${vibeId}`);
     return null;
   }
 

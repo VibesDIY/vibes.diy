@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { StarIcon } from "../components/SessionSidebar/StarIcon.js";
 import { EditIcon } from "../components/ChatHeaderIcons.js";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
-import { VibeCardData } from "../components/VibeCardData.js";
+import { VibeCardCatalog } from "../components/VibeCardCatalog.js";
 import VibesDIYLogo from "../components/VibesDIYLogo.js";
 import { useAuth } from "../contexts/AuthContext.js";
-import { useSession } from "../hooks/useSession.js";
 import { useVibes } from "../hooks/useVibes.js";
+import { useCatalog } from "../hooks/useCatalog.js";
+import { useUserSettings } from "../hooks/useUserSettings.js";
+// import { VibeCatalog } from '../hooks/VibeCatalog';
 
 export function meta() {
   return [
@@ -19,8 +21,6 @@ export function meta() {
 
 export default function MyVibesRoute(): ReactElement {
   const navigate = useNavigate();
-  // We need to call useSession() to maintain context but don't need its values yet
-  useSession();
 
   // Use the new hook and get userId from payload
   const { userPayload } = useAuth();
@@ -28,15 +28,28 @@ export default function MyVibesRoute(): ReactElement {
 
   // Use our custom hook for vibes state management
   const { vibes, isLoading } = useVibes();
+  const { isEnableSyncEnabled } = useUserSettings();
+  const { catalogVibes } = useCatalog(userId || "", vibes, isEnableSyncEnabled);
+
+  // Use catalog vibes if available, fallback to useVibes
+  const displayVibes =
+    catalogVibes.length > 0
+      ? catalogVibes
+      : [
+          {
+            publishedUrl: " ",
+            title: `Loading ${vibes.length} vibes...`,
+          },
+        ];
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   // Filter vibes based on the showOnlyFavorites toggle
   const filteredVibes = useMemo(() => {
     if (showOnlyFavorites) {
-      return vibes.filter((vibe) => vibe.favorite);
+      return displayVibes.filter((vibe) => "favorite" in vibe && vibe.favorite);
     }
-    return vibes;
-  }, [vibes, showOnlyFavorites]);
+    return displayVibes;
+  }, [displayVibes, showOnlyFavorites]);
 
   // Simple state for how many vibes to show
   const [itemsToShow, setItemsToShow] = useState(9);
@@ -100,6 +113,7 @@ export default function MyVibesRoute(): ReactElement {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <div>
+                {/* <VibeCatalog userId={userId} vibes={vibes} /> */}
                 <h2 className="mb-4 text-2xl font-bold">My Vibes</h2>
                 {userId && (
                   <p className="text-accent-01 dark:text-accent-01 mb-6">
@@ -158,9 +172,18 @@ export default function MyVibesRoute(): ReactElement {
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {/* Render vibes with simple slicing */}
-                {filteredVibes.slice(0, itemsToShow).map((vibe) => (
-                  <VibeCardData key={vibe.id} vibeId={vibe.id} />
-                ))}
+                {filteredVibes.slice(0, itemsToShow).map((vibe, index) =>
+                  "id" in vibe ? (
+                    <VibeCardCatalog key={vibe.id} catalogVibe={vibe} />
+                  ) : (
+                    <div
+                      key={index}
+                      className="border-light-decorative-01 dark:border-dark-decorative-01 rounded-md border p-4"
+                    >
+                      <h3 className="text-lg font-medium">{vibe.title}</h3>
+                    </div>
+                  ),
+                )}
 
                 {/* Invisible loading trigger for infinite scroll */}
                 {itemsToShow < filteredVibes.length && (

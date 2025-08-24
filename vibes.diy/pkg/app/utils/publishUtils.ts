@@ -10,6 +10,7 @@ import {
 } from "./databaseManager.js";
 import { normalizeComponentExports } from "./normalizeComponentExports.js";
 import { VibeDocument } from "../types/chat.js";
+import { addCatalogScreenshotStandalone } from "./catalogUtils.js";
 
 /**
  * Publish an app to the server
@@ -181,6 +182,43 @@ export async function publishApp({
       // Update the firehose shared state if callback provided
       if (updateFirehoseShared && shareToFirehose !== undefined) {
         await updateFirehoseShared(shareToFirehose);
+      }
+
+      // Store screenshot in catalog database for this published vibe
+      if (sessionId && userId) {
+        try {
+          // Get the most recent screenshot from session database
+          if (result.rows.length > 0) {
+            const screenshotDoc = result.rows[0].doc as any;
+            if (screenshotDoc._files && screenshotDoc._files.screenshot) {
+              try {
+                // Get the File and convert to data URL
+                const screenshotFile =
+                  await screenshotDoc._files.screenshot.file();
+                const screenshotDataUrl = await new Promise<string>(
+                  (resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(screenshotFile);
+                  },
+                );
+
+                // Use shared catalog utility function
+                await addCatalogScreenshotStandalone(
+                  userId,
+                  sessionId,
+                  screenshotDataUrl,
+                  transformedCode,
+                );
+              } catch (err) {
+                console.error("Failed to store catalog screenshot:", err);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Failed to update catalog:", error);
+        }
       }
 
       return appUrl;
