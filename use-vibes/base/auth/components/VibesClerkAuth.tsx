@@ -83,21 +83,9 @@ export function VibesClerkAuth({
 
       {/* Render SignIn or SignUp based on mode */}
       {mode === 'signin' ? (
-        <SignIn
-          appearance={commonAppearance}
-          routing="path"
-          path="/login"
-          redirectUrl="/"
-          afterSignInUrl="/"
-        />
+        <SignIn appearance={commonAppearance} routing="path" path="/login" />
       ) : (
-        <SignUp
-          appearance={commonAppearance}
-          routing="path"
-          path="/signup"
-          redirectUrl="/"
-          afterSignUpUrl="/"
-        />
+        <SignUp appearance={commonAppearance} routing="path" path="/signup" />
       )}
     </div>
   );
