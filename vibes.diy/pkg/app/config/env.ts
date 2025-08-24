@@ -56,7 +56,8 @@ export const CLOUD_SESSION_TOKEN_PUBLIC_KEY =
 
 // Clerk Auth (Phase 2)
 export const CLERK_PUBLISHABLE_KEY =
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "pk_test_cHJlY2lzZS1jb2x0LTQ5LmNsZXJrLmFjY291bnRzLmRldiQ" ||
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+  "pk_test_cHJlY2lzZS1jb2x0LTQ5LmNsZXJrLmFjY291bnRzLmRldiQ" ||
   "pk_live_Y2xlcmsuZmlyZXByb29mLmRpcmVjdCQ";
 
 // Vibes Service API
