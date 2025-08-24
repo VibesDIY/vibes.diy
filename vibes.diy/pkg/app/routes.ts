@@ -23,6 +23,8 @@ export default [
 
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
+  route("login", "./routes/login.tsx", { id: "login" }),
+  route("signup", "./routes/signup.tsx", { id: "signup" }),
   route("auth/callback", "./routes/auth-callback.tsx", { id: "auth-callback" }),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
   route("vibe/:vibeSlug", "./routes/vibe.tsx", { id: "vibe-iframe" }),
