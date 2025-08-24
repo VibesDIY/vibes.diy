@@ -39,6 +39,9 @@ export interface SendMessageContext {
   titleModel: string;
   isAuthenticated: boolean;
   vibeDoc: VibeDocument;
+  // Image support
+  attachedImages: Array<{ id: string; previewUrl: string; mimeType: string }>;
+  clearAttachedImages: () => void;
 }
 
 export async function sendMessage(
@@ -69,6 +72,8 @@ export async function sendMessage(
     titleModel,
     isAuthenticated,
     vibeDoc,
+    attachedImages,
+    clearAttachedImages,
   } = ctx;
 
   const promptText =
@@ -82,23 +87,39 @@ export async function sendMessage(
     setNeedsLogin(true, "sendMessage not authenticated");
   }
 
+  // Capture image IDs before clearing
+  const imageIds = attachedImages.map((img) => img.id);
+
   if (typeof textOverride === "string" && !skipSubmit) {
     // Update the transient userMessage state so UI reflects any override text
     // Only update when we are not in retry mode (skipSubmit === false)
-    mergeUserMessage({ text: textOverride });
+    mergeUserMessage({
+      text: textOverride,
+      images: imageIds.length > 0 ? imageIds : undefined,
+    });
+  } else if (imageIds.length > 0) {
+    // Add images to the current user message
+    mergeUserMessage({ images: imageIds });
   }
 
-  setPendingUserDoc({
-    ...userMessage,
+  const userDoc: UserChatMessageDocument = {
+    ...(userMessage as UserChatMessageDocument),
     text: promptText,
-  });
+  };
+
+  if (imageIds.length > 0) {
+    userDoc.images = imageIds;
+  }
+
+  setPendingUserDoc(userDoc);
 
   // Always submit the user message first unless we are retrying the same
   // message (e.g. after login / API key refresh)
   if (!skipSubmit) {
     await submitUserMessage();
-    // Clear the chat input once the user message has been submitted
+    // Clear the chat input and attached images once the user message has been submitted
     setInput("");
+    clearAttachedImages();
   }
 
   setIsStreaming(true);
@@ -135,6 +156,8 @@ export async function sendMessage(
     currentApiKey,
     userId,
     // setNeedsLogin,
+    sessionDatabase, // Pass sessionDatabase for image loading
+    imageIds, // Pass image IDs for multimodal support
   )
     .then(async (finalContent) => {
       isProcessingRef.current = true;
