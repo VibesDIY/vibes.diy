@@ -16,6 +16,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@clerk/clerk-react": "^5.43.1",
     "call-ai": "workspace:*",
     "use-fireproof": "^0.23.11",
     "uuid": "^11.1.0"

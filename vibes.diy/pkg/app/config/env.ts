@@ -54,6 +54,11 @@ export const CLOUD_SESSION_TOKEN_PUBLIC_KEY =
   import.meta.env.VITE_CLOUD_SESSION_TOKEN_PUBLIC ||
   "zeWndr5LEoaySgKSo2aZniYqWtx2vKfVz4dd5GQwAuby3fPKcNyLp6mFpf9nCRFYbUcPiN2YT1ZApJ6f3WipiVjuMvyP1JYgHwkaoxDBpJiLoz1grRYkbao9ntukNNo2TQ4uSznUmNPrr4ZxjihoavHwB1zLhLNp5Qj78fBkjgEMA";
 
+// Clerk Auth (Phase 2)
+export const CLERK_PUBLISHABLE_KEY = 
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 
+  "pk_test_demo-clerk-key-for-phase2-testing";
+
 // Vibes Service API
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://vibes-diy-api.com";

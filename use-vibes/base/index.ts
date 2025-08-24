@@ -46,3 +46,11 @@ export {
   type UseImageGenResult,
   type PartialImageDocument,
 } from './hooks/image-gen/types.js';
+
+// Export auth components and hooks (Phase 2)
+export {
+  ClerkAuthProvider,
+  VibesClerkAuth,
+  useClerkAuth,
+  type ClerkAuthState,
+} from './auth/index.js';
