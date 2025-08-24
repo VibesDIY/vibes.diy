@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { ClerkAuthProvider, VibesClerkAuth } from "use-vibes";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { useAuth } from "../contexts/AuthContext.js";
@@ -27,8 +27,8 @@ function LoginContent() {
   }, [isVibesAuth, navigate]);
 
   // Handle successful Clerk authentication (Fireproof integration happens automatically)
-  const handleAuthSuccess = (user: any) => {
-    console.log("Clerk auth successful:", user);
+  const handleAuthSuccess = (_user: unknown) => {
+    console.log("Clerk auth successful");
     // Navigate home - user is now fully authenticated via Fireproof integration
     navigate("/");
   };

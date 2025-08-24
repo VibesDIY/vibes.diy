@@ -82,13 +82,23 @@ export async function generateFireproofToken(clerkJwt: string, publicKey: string
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        type: 'reqClerkTokenExchange',
-        clerkJwt: clerkJwt,
+        type: 'reqCloudSessionToken',  // ✅ Correct endpoint
+        auth: {
+          token: clerkJwt,
+          type: 'clerk'
+        }
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Dashboard API error: ${response.status} ${response.statusText}`);
+      let errorDetails;
+      try {
+        errorDetails = await response.json();
+      } catch {
+        errorDetails = await response.text();
+      }
+      console.error('Dashboard API error details:', errorDetails);
+      throw new Error(`Dashboard API error: ${response.status} ${response.statusText}: ${JSON.stringify(errorDetails)}`);
     }
 
     const data = await response.json();

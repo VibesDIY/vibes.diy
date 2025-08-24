@@ -4,7 +4,7 @@ import { generateFireproofToken, storeFireproofToken } from '../utils/tokenGener
 
 interface VibesClerkAuthProps {
   mode?: 'signin' | 'signup';
-  onAuthSuccess?: (user: any) => void;
+  onAuthSuccess?: (user: unknown) => void;
   onClose?: () => void;
   className?: string;
   /** Public key for Fireproof token generation */
