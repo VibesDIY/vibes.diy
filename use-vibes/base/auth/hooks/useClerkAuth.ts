@@ -23,7 +23,7 @@ export function useClerkAuth(): ClerkAuthState {
     isLoading: !isLoaded,
     user: user ?? null,
     userId: user?.id ?? null,
-    
+
     // Expose Clerk's token getter for future token conversion
     getToken: async () => {
       try {
@@ -33,7 +33,7 @@ export function useClerkAuth(): ClerkAuthState {
         return null;
       }
     },
-    
+
     // Clerk sign out
     signOut: async () => {
       try {

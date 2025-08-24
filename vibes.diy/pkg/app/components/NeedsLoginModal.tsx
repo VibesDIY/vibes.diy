@@ -29,10 +29,10 @@ export function NeedsLoginModal() {
       label: "Get Credits Modal",
       isUserAuthenticated: false,
     });
-    
+
     // Navigate to inline login page
     setIsOpen(false);
-    navigate('/login');
+    navigate("/login");
   };
 
   if (!isOpen) return null;

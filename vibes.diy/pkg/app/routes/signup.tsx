@@ -1,32 +1,32 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router';
-import { ClerkAuthProvider, VibesClerkAuth } from '@vibes.diy/use-vibes-base';
-import SimpleAppLayout from '../components/SimpleAppLayout.js';
-import { useAuth } from '../contexts/AuthContext.js';
-import { CLERK_PUBLISHABLE_KEY } from '../config/env.js';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router";
+import { ClerkAuthProvider, VibesClerkAuth } from "@vibes.diy/use-vibes-base";
+import SimpleAppLayout from "../components/SimpleAppLayout.js";
+import { useAuth } from "../contexts/AuthContext.js";
+import { CLERK_PUBLISHABLE_KEY } from "../config/env.js";
 
 export function meta() {
   return [
-    { title: 'Sign Up - Vibes DIY' },
-    { name: 'description', content: 'Create your Vibes DIY account' },
+    { title: "Sign Up - Vibes DIY" },
+    { name: "description", content: "Create your Vibes DIY account" },
   ];
 }
 
 function SignUpContent() {
   const navigate = useNavigate();
   const { isAuthenticated: isVibesAuth } = useAuth();
-  
+
   // If user is already authenticated via existing system, redirect home
   useEffect(() => {
     if (isVibesAuth) {
-      navigate('/');
+      navigate("/");
     }
   }, [isVibesAuth, navigate]);
 
   // Handle successful Clerk authentication
   const handleAuthSuccess = (user: any) => {
-    console.log('Clerk signup successful:', user);
-    navigate('/');
+    console.log("Clerk signup successful:", user);
+    navigate("/");
   };
 
   return (
@@ -50,12 +50,11 @@ function SignUpContent() {
             />
           </div>
 
-
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate("/login")}
                 className="font-medium text-orange-500 hover:text-orange-600"
               >
                 Sign in
@@ -78,7 +77,8 @@ export default function SignUp() {
               Configuration Error
             </h2>
             <p className="text-gray-600">
-              Clerk publishable key not found. Please add VITE_CLERK_PUBLISHABLE_KEY to your environment.
+              Clerk publishable key not found. Please add
+              VITE_CLERK_PUBLISHABLE_KEY to your environment.
             </p>
           </div>
         </div>

@@ -184,7 +184,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                           label: "Sidebar Login",
                           isUserAuthenticated: false,
                         });
-                        navigate('/login');
+                        navigate("/login");
                         onClose();
                       }}
                       style={{

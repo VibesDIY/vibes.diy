@@ -19,14 +19,14 @@ interface ClerkAuthProviderProps {
 /**
  * Wraps Clerk's ClerkProvider with vibes-specific configuration
  * This component provides the foundation for all Clerk functionality
- * 
+ *
  * @param publishableKey - Clerk publishable key (get from Clerk dashboard)
  * @param appearance - Optional custom styling overrides
  */
-export function ClerkAuthProvider({ 
-  children, 
+export function ClerkAuthProvider({
+  children,
   publishableKey,
-  appearance = {}
+  appearance = {},
 }: ClerkAuthProviderProps) {
   if (!publishableKey) {
     throw new Error('ClerkAuthProvider requires a publishableKey prop');
@@ -55,10 +55,7 @@ export function ClerkAuthProvider({
   };
 
   return (
-    <ClerkProvider 
-      publishableKey={publishableKey}
-      appearance={defaultAppearance}
-    >
+    <ClerkProvider publishableKey={publishableKey} appearance={defaultAppearance}>
       {children}
     </ClerkProvider>
   );
