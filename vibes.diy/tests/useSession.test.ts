@@ -56,7 +56,7 @@ describe("useSession", () => {
 
   it("should initialize database eagerly with provided sessionId", () => {
     renderHook(() => useSession("test-id"));
-    expect(mockUseFireproof).toHaveBeenCalledWith("session-test-id");
+    expect(mockUseFireproof).toHaveBeenCalledWith("session-test-id", {});
   });
 
   it("should initialize database eagerly even when sessionId is not provided", () => {
@@ -64,12 +64,13 @@ describe("useSession", () => {
     // Verify we have a session ID generated (in the session document)
     expect(result.current.session._id).toBeTruthy();
     // Verify the database is initialized eagerly on first render
-    // Called for the session DB and the settings DB
-    expect(mockUseFireproof).toHaveBeenCalledTimes(2);
+    // Called for the session DB, settings DB, and useUserSettings DB
+    expect(mockUseFireproof).toHaveBeenCalledTimes(3);
     expect(mockUseFireproof).toHaveBeenCalledWith(
       expect.stringMatching(/^session-/),
+      {},
     );
-    expect(mockUseFireproof).toHaveBeenCalledWith("test-chat-history");
+    expect(mockUseFireproof).toHaveBeenCalledWith("test-chat-history", {});
   });
 
   /**
@@ -83,8 +84,8 @@ describe("useSession", () => {
     const { result } = renderHook(() => useSession(undefined));
 
     // Step 1: Database should be initialized immediately on first render
-    // One call for the session DB and one for the settings DB
-    expect(mockUseFireproof).toHaveBeenCalledTimes(2);
+    // One call for the session DB, one for settings DB, and one for useUserSettings DB
+    expect(mockUseFireproof).toHaveBeenCalledTimes(3);
 
     // Step 2: Session document and functions should be available
     expect(result.current.session._id).toBeTruthy();
@@ -109,8 +110,12 @@ describe("useSession", () => {
 
     // Get the initial call count
     const initialCallCount = mockUseFireproof.mock.calls.length;
-    const initialCall = mockUseFireproof.mock.calls[0][0];
-    expect(initialCall).toMatch(/^session-/);
+    // The first call is now to settings DB, second call is to session DB
+    const sessionCall = mockUseFireproof.mock.calls.find(
+      (call) => typeof call[0] === "string" && call[0].startsWith("session-"),
+    );
+    expect(sessionCall).toBeTruthy();
+    expect(sessionCall![0]).toMatch(/^session-/);
 
     // Simulate URL update with new session ID (after first message response)
     rerender({ id: "new-session-id" as any });
@@ -120,6 +125,6 @@ describe("useSession", () => {
     expect(mockUseFireproof.mock.calls.length).toBeGreaterThan(
       initialCallCount,
     );
-    expect(mockUseFireproof).toHaveBeenCalledWith("session-new-session-id");
+    expect(mockUseFireproof).toHaveBeenCalledWith("session-new-session-id", {});
   });
 });
