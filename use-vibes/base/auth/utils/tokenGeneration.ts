@@ -21,8 +21,9 @@ export interface FireproofTokenPayload {
   iss: string;
   aud: string;
   exp: number;
-  source?: string;
-  clerkUserId?: string;
+  nickname?: string;
+  provider?: 'github' | 'google' | 'clerk';
+  created?: string;
 }
 
 // JWK type definition
@@ -65,73 +66,53 @@ function decodePublicKeyJWK(encodedString: string): JWK {
 }
 
 /**
- * Generate a Fireproof-compatible token from Clerk user data
- * This creates a token that works with existing Fireproof auth infrastructure
+ * Exchange a Clerk JWT for a proper Fireproof token via dashboard API
+ * This creates a real Fireproof token with correct user ID format
  */
-export async function generateFireproofToken(clerkUser: any, publicKey: string): Promise<string> {
+export async function generateFireproofToken(clerkJwt: string, publicKey: string): Promise<string> {
   try {
-    // Extract user information from Clerk user
-    const userId = clerkUser.id;
-    const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+    console.log('Exchanging Clerk JWT for Fireproof token...');
 
-    // Create the token payload matching Fireproof format
-    const now = Math.floor(Date.now() / 1000);
+    // Use Fireproof's default connect API URL
+    const connectApiUrl = 'https://connect.fireproof.direct/api';
 
-    const tokenData = {
-      userId,
-      email,
-      tenants: [],
-      ledgers: [],
-      iat: now,
-      iss: 'FP_CLOUD',
-      aud: 'PUBLIC',
-      exp: now + 60 * 60, // 1 hour from now
-      source: 'clerk',
-      clerkUserId: clerkUser.id,
-    };
+    const response = await fetch(connectApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'reqClerkTokenExchange',
+        clerkJwt: clerkJwt,
+      }),
+    });
 
-    // Create a JWT-like token structure
-    const header = btoa(JSON.stringify({ alg: 'ES256', typ: 'JWT' }));
-    const payload = btoa(JSON.stringify(tokenData));
-    const signature = btoa('clerk-generated-token');
+    if (!response.ok) {
+      throw new Error(`Dashboard API error: ${response.status} ${response.statusText}`);
+    }
 
-    return `${header}.${payload}.${signature}`;
+    const data = await response.json();
+
+    if (!data.token) {
+      throw new Error('No token returned from dashboard API');
+    }
+
+    console.log('Successfully exchanged Clerk JWT for Fireproof token');
+    return data.token;
   } catch (error) {
-    console.error('Error generating Fireproof token:', error);
-    throw new Error('Failed to generate Fireproof token');
+    console.error('Error exchanging Clerk JWT for Fireproof token:', error);
+    throw new Error('Failed to exchange Clerk JWT for Fireproof token');
   }
 }
 
 /**
- * Verify a token (supports both regular Fireproof tokens and Clerk-generated tokens)
+ * Verify a Fireproof token using the public key
  */
 export async function verifyFireproofToken(
   token: string,
   publicKey: string
 ): Promise<{ payload: FireproofTokenPayload } | null> {
   try {
-    // Check if this is a Clerk-generated token
-    try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payloadPart = parts[1];
-        const decoded = JSON.parse(atob(payloadPart));
-
-        if (decoded.source === 'clerk') {
-          // Check expiration
-          if (decoded.exp * 1000 < Date.now()) {
-            console.error('Clerk token has expired');
-            return null;
-          }
-
-          return { payload: decoded as FireproofTokenPayload };
-        }
-      }
-    } catch (clerkError) {
-      // Continue with regular verification
-    }
-
-    // Regular Fireproof token verification
     const publicKeyJWK = decodePublicKeyJWK(publicKey);
     const key = await importJWK(publicKeyJWK, 'ES256');
 

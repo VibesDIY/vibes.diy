@@ -25,7 +25,7 @@ export function VibesClerkAuth({
   fireproofPublicKey,
   enableFireproofIntegration = true,
 }: VibesClerkAuthProps) {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
 
   // Handle successful authentication with automatic Fireproof integration
@@ -39,8 +39,16 @@ export function VibesClerkAuth({
     try {
       // Generate and store Fireproof token if integration is enabled
       if (enableFireproofIntegration && fireproofPublicKey && user) {
-        console.log('Generating Fireproof token for user:', user.id);
-        const fireproofToken = await generateFireproofToken(user, fireproofPublicKey);
+        console.log('Exchanging Clerk JWT for Fireproof token for user:', user.id);
+
+        // Get the real Clerk JWT
+        const clerkJwt = await getToken();
+        if (!clerkJwt) {
+          throw new Error('Failed to get Clerk JWT');
+        }
+
+        // Exchange it for a real Fireproof token
+        const fireproofToken = await generateFireproofToken(clerkJwt, fireproofPublicKey);
         storeFireproofToken(fireproofToken);
         console.log('Fireproof token stored successfully');
       }

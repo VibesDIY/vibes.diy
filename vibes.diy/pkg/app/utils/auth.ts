@@ -106,8 +106,8 @@ export async function verifyToken(
 
     const { payload } = result;
 
-    // Check if token is about to expire and extend it if needed (for regular tokens)
-    if (payload.source !== "clerk" && isTokenAboutToExpire(payload)) {
+    // Check if token is about to expire and extend it if needed
+    if (isTokenAboutToExpire(payload)) {
       const extendedToken = await extendToken(token);
       if (extendedToken) {
         // Verify the extended token to get its payload
