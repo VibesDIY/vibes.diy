@@ -23,6 +23,7 @@ vi.mock("use-fireproof", () => {
 
   return {
     useFireproof: mockUseFireproof,
+    toCloud: vi.fn().mockReturnValue({}),
   };
 });
 
@@ -30,6 +31,19 @@ vi.mock("~/vibes.diy/app/utils/databaseManager", () => ({
   getSessionDatabaseName: vi
     .fn()
     .mockImplementation((id) => `session-${id || "default"}`),
+}));
+
+vi.mock("~/vibes.diy/app/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    userPayload: null,
+    isAuthenticated: false,
+    isLoading: false,
+    token: null,
+    needsLogin: false,
+    setNeedsLogin: vi.fn(),
+    checkAuthStatus: vi.fn(),
+    processToken: vi.fn(),
+  }),
 }));
 
 // Tests focused on eager database initialization behavior

@@ -48,6 +48,9 @@ const getQueryResult = (queryType: string) => {
 // Mock the fireproof function - this is imported directly in databaseManager.ts
 const fireproof = vi.fn().mockImplementation(() => mockDb);
 
+// Mock toCloud function
+const toCloud = vi.fn().mockReturnValue({});
+
 // Mock the useFireproof hook - this is used in components
 const useFireproof = vi.fn().mockImplementation(() => ({
   database: mockDb,
@@ -67,7 +70,8 @@ const useFireproof = vi.fn().mockImplementation(() => ({
 export default {
   fireproof,
   useFireproof,
+  toCloud,
 };
 
 // Named exports for ESM compatibility
-export { fireproof, useFireproof };
+export { fireproof, useFireproof, toCloud };

@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useRef, useMemo } from "react";
+import { useLocation } from "react-router";
 import type {
   AiChatMessageDocument,
   UserChatMessageDocument,
@@ -6,12 +7,15 @@ import type {
   ChatMessageDocument,
 } from "../types/chat.js";
 import { getSessionDatabaseName } from "../utils/databaseManager.js";
-import { useFireproof } from "use-fireproof";
+import { toCloud, useFireproof } from "use-fireproof";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from "../llms/catalog.js";
 import { resolveEffectiveModel, normalizeModelId } from "../prompts.js";
 import { SETTINGS_DBNAME } from "../config/env.js";
 import type { UserSettings } from "../types/settings.js";
+import { generateCid } from "../utils/cidUtils.js";
+import { useAuth } from "../contexts/AuthContext.js";
+import { useUserSettings } from "./useUserSettings.js";
 
 export function useSession(routedSessionId?: string) {
   const [generatedSessionId] = useState(
@@ -28,17 +32,30 @@ export function useSession(routedSessionId?: string) {
   // Update effectiveSessionId whenever routedSessionId changes
   useEffect(() => {
     if (routedSessionId) {
+      console.log("useSession: routedSessionId changed to", routedSessionId);
       setEffectiveSessionId(routedSessionId);
     }
   }, [routedSessionId]);
 
   const sessionId = effectiveSessionId;
   const sessionDbName = getSessionDatabaseName(sessionId);
+  const { isAuthenticated } = useAuth();
+  const { isEnableSyncEnabled } = useUserSettings();
+  const location = useLocation();
+
+  // Only attach toCloud() when we're actually on a chat route (not just home page with session)
+  const isOnChatRoute = location?.pathname?.startsWith("/chat/") || false;
+
   const {
     database: sessionDatabase,
     useDocument: useSessionDocument,
     useLiveQuery: useSessionLiveQuery,
-  } = useFireproof(sessionDbName);
+  } = useFireproof(
+    sessionDbName,
+    isEnableSyncEnabled && isAuthenticated && routedSessionId && isOnChatRoute
+      ? { attach: toCloud() }
+      : {},
+  );
 
   // User message is stored in the session-specific database
   const {
@@ -234,6 +251,9 @@ export function useSession(routedSessionId?: string) {
       if (!sessionId || !screenshotData) return;
 
       try {
+        // Generate CID for the screenshot
+        const cid = await generateCid(screenshotData);
+
         const response = await fetch(screenshotData);
         const blob = await response.blob();
         const file = new File([blob], "screenshot.png", {
@@ -243,6 +263,7 @@ export function useSession(routedSessionId?: string) {
         const screenshot = {
           type: "screenshot",
           session_id: sessionId,
+          cid, // Store CID for deduplication
           _files: {
             screenshot: file,
           },

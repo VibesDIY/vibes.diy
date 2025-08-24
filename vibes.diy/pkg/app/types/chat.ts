@@ -49,6 +49,14 @@ export interface VibeDocument {
    * When undefined, use LLM decision.
    */
   demoDataOverride?: boolean;
+  /**
+   * Screenshot and source code file attachments for catalog storage.
+   * Stored in the catalog database for persistent vibe screenshots and source.
+   */
+  _files?: {
+    screenshot: File;
+    source: File;
+  };
 }
 
 // ===== Content Segment Types =====
@@ -100,8 +108,9 @@ export interface DocBase {
 export interface ScreenshotDocument extends DocBase {
   type: "screenshot";
   session_id: string;
+  cid?: string; // Content identifier for deduplication
   _files?: {
-    screenshot: { file: () => Promise<File>; type: string };
+    screenshot: File;
   };
 }
 

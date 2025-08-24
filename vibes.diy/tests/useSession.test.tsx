@@ -86,8 +86,23 @@ vi.mock("use-fireproof", () => {
         ],
       })),
     })),
+    toCloud: vi.fn().mockReturnValue({}),
   };
 });
+
+// Mock AuthContext
+vi.mock("~/vibes.diy/app/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    userPayload: null,
+    isAuthenticated: false,
+    isLoading: false,
+    token: null,
+    needsLogin: false,
+    setNeedsLogin: vi.fn(),
+    checkAuthStatus: vi.fn(),
+    processToken: vi.fn(),
+  }),
+}));
 
 describe("useSession", () => {
   // Reset mocks before each test
