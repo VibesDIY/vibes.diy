@@ -82,11 +82,11 @@ export async function generateFireproofToken(clerkJwt: string, publicKey: string
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        type: 'reqCloudSessionToken',  // ✅ Correct endpoint
+        type: 'reqCloudSessionToken', // ✅ Correct endpoint
         auth: {
           token: clerkJwt,
-          type: 'clerk'
-        }
+          type: 'clerk',
+        },
       }),
     });
 
@@ -98,7 +98,9 @@ export async function generateFireproofToken(clerkJwt: string, publicKey: string
         errorDetails = await response.text();
       }
       console.error('Dashboard API error details:', errorDetails);
-      throw new Error(`Dashboard API error: ${response.status} ${response.statusText}: ${JSON.stringify(errorDetails)}`);
+      throw new Error(
+        `Dashboard API error: ${response.status} ${response.statusText}: ${JSON.stringify(errorDetails)}`
+      );
     }
 
     const data = await response.json();
