@@ -24,9 +24,13 @@ export default [
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
   route("login", "./routes/login.tsx", { id: "login" }),
-  route("login/sso-callback", "./routes/login.tsx", { id: "login-sso-callback" }),
+  route("login/sso-callback", "./routes/login.tsx", {
+    id: "login-sso-callback",
+  }),
   route("signup", "./routes/signup.tsx", { id: "signup" }),
-  route("signup/sso-callback", "./routes/signup.tsx", { id: "signup-sso-callback" }),
+  route("signup/sso-callback", "./routes/signup.tsx", {
+    id: "signup-sso-callback",
+  }),
   route("auth/callback", "./routes/auth-callback.tsx", { id: "auth-callback" }),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
   route("vibe/:vibeSlug", "./routes/vibe.tsx", { id: "vibe-iframe" }),

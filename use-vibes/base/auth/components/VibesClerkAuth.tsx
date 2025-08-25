@@ -36,34 +36,90 @@ export function VibesClerkAuth({
   }, [isSignedIn, user]);
 
   const handleAuthSuccess = async () => {
+    console.group('🔐 === CLERK AUTH SUCCESS HANDLER ===');
     try {
       // Generate and store Fireproof token if integration is enabled
       if (enableFireproofIntegration && fireproofPublicKey && user) {
-        console.log('Exchanging Clerk JWT for Fireproof token for user:', user.id);
+        console.log('🔄 Starting Fireproof token exchange for user:', user.id);
+        console.log('📋 User details:', {
+          id: user.id,
+          emailAddresses: user.emailAddresses?.map((e) => e.emailAddress),
+          username: user.username,
+        });
 
         // Get the real Clerk JWT
+        console.log('🎫 Requesting Clerk JWT...');
         const clerkJwt = await getToken();
         if (!clerkJwt) {
-          throw new Error('Failed to get Clerk JWT');
+          throw new Error('Failed to get Clerk JWT from Clerk');
         }
+        console.log('✅ Got Clerk JWT, length:', clerkJwt.length);
+        console.log('🔍 JWT preview (first 50 chars):', clerkJwt.substring(0, 50) + '...');
 
         // Exchange it for a real Fireproof token
+        console.log('📡 Calling Fireproof API for token exchange...');
+        console.log('🔑 Using public key:', fireproofPublicKey);
         const fireproofToken = await generateFireproofToken(clerkJwt, fireproofPublicKey);
+
+        console.log('✅ Got Fireproof token, length:', fireproofToken.length);
+        console.log(
+          '🔍 Fireproof token preview (first 50 chars):',
+          fireproofToken.substring(0, 50) + '...'
+        );
+        console.log('💾 Storing in localStorage...');
         storeFireproofToken(fireproofToken);
-        console.log('Fireproof token stored successfully');
+
+        // Verify it was stored
+        const stored = localStorage.getItem('auth_token');
+        console.log('🔍 Verification - token stored?', !!stored, 'length:', stored?.length);
+        console.log('🔍 Stored token matches?', stored === fireproofToken);
+
+        // Try to verify the token immediately
+        console.log('🧪 Testing token verification...');
+        try {
+          // Import verifyFireproofToken to test locally
+          const { verifyFireproofToken } = await import('../utils/tokenGeneration.js');
+          const verifyResult = await verifyFireproofToken(fireproofToken, fireproofPublicKey);
+          if (verifyResult) {
+            console.log('✅ Token verification successful! User ID:', verifyResult.payload.userId);
+            console.log('📋 Token payload:', verifyResult.payload);
+          } else {
+            console.error('❌ Token verification failed!');
+          }
+        } catch (verifyError) {
+          console.error('❌ Error during token verification test:', verifyError);
+        }
+
+        console.log('🎉 Fireproof token exchange completed successfully!');
+      } else {
+        console.log('⚠️ Fireproof integration disabled or missing requirements:', {
+          enableFireproofIntegration,
+          hasPublicKey: !!fireproofPublicKey,
+          hasUser: !!user,
+        });
       }
 
       // Call the consumer's success handler
       if (onAuthSuccess && user) {
+        console.log('📞 Calling consumer success handler...');
         onAuthSuccess(user);
+      } else {
+        console.log('⚠️ No success handler or user to call');
       }
     } catch (error) {
-      console.error('Error in auth success handler:', error);
+      console.error('❌ Error in auth success handler:', error);
+      if (error instanceof Error) {
+        console.error('❌ Error stack:', error.stack);
+      }
 
       // Still call the success handler even if token generation failed
       if (onAuthSuccess && user) {
+        console.log('🔄 Calling success handler despite error...');
         onAuthSuccess(user);
       }
+    } finally {
+      console.groupEnd();
+      console.log('⏱️ Auth success handler completed at:', new Date().toISOString());
     }
   };
 

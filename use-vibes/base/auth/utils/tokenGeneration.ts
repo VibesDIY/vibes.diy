@@ -70,50 +70,72 @@ function decodePublicKeyJWK(encodedString: string): JWK {
  * This creates a real Fireproof token with correct user ID format
  */
 export async function generateFireproofToken(clerkJwt: string, publicKey: string): Promise<string> {
+  console.group('📡 === FIREPROOF TOKEN EXCHANGE ===');
   try {
-    console.log('Exchanging Clerk JWT for Fireproof token...');
+    console.log('🔑 Input JWT length:', clerkJwt.length);
+    console.log('🔑 Public key:', publicKey);
 
     // Use Fireproof's default connect API URL
     const connectApiUrl = 'https://connect.fireproof.direct/api';
+    console.log('🌐 API URL:', connectApiUrl);
 
+    const requestBody = {
+      type: 'reqCloudSessionToken', // ✅ Correct endpoint
+      auth: {
+        token: clerkJwt,
+        type: 'clerk',
+      },
+    };
+    console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
+
+    console.log('🌐 Making fetch request...');
     const response = await fetch(connectApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        type: 'reqCloudSessionToken', // ✅ Correct endpoint
-        auth: {
-          token: clerkJwt,
-          type: 'clerk',
-        },
-      }),
+      body: JSON.stringify(requestBody),
+    }).catch((fetchError) => {
+      console.error('🚫 Fetch failed with error:', fetchError);
+      console.error('🚫 Error name:', fetchError.name);
+      console.error('🚫 Error message:', fetchError.message);
+      console.error('🚫 Error cause:', fetchError.cause);
+      throw fetchError;
     });
+
+    console.log('📥 Response status:', response.status, response.statusText);
+    console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       let errorDetails;
       try {
         errorDetails = await response.json();
+        console.log('❌ Error response JSON:', errorDetails);
       } catch {
         errorDetails = await response.text();
+        console.log('❌ Error response text:', errorDetails);
       }
-      console.error('Dashboard API error details:', errorDetails);
+      console.error('❌ Dashboard API error details:', errorDetails);
       throw new Error(
         `Dashboard API error: ${response.status} ${response.statusText}: ${JSON.stringify(errorDetails)}`
       );
     }
 
     const data = await response.json();
+    console.log('📥 Success response:', data);
 
     if (!data.token) {
+      console.error('❌ No token field in response!');
       throw new Error('No token returned from dashboard API');
     }
 
-    console.log('Successfully exchanged Clerk JWT for Fireproof token');
+    console.log('✅ Token exchange successful, token length:', data.token.length);
     return data.token;
   } catch (error) {
-    console.error('Error exchanging Clerk JWT for Fireproof token:', error);
-    throw new Error('Failed to exchange Clerk JWT for Fireproof token');
+    console.error('❌ Error exchanging Clerk JWT for Fireproof token:', error);
+    throw error; // Re-throw the original error with full context
+  } finally {
+    console.groupEnd();
   }
 }
 

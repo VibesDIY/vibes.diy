@@ -19,9 +19,9 @@ function LoginContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated: isVibesAuth } = useAuth();
-  
+
   // Check if this is an SSO callback route
-  const isSSCallback = location.pathname.includes('/sso-callback');
+  const isSSCallback = location.pathname.includes("/sso-callback");
 
   // If user is already authenticated via existing system, redirect home
   useEffect(() => {
@@ -37,17 +37,8 @@ function LoginContent() {
     navigate("/");
   };
 
-  // Handle SSO callback case - show processing UI
+  // Handle SSO callback case - show processing UI but still render Clerk component
   if (isSSCallback) {
-    useEffect(() => {
-      // Give Clerk a moment to process the callback, then redirect to home
-      const timer = setTimeout(() => {
-        navigate("/");
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }, [navigate]);
-
     return (
       <SimpleAppLayout>
         <div className="flex min-h-screen items-center justify-center py-12 px-4">
@@ -63,6 +54,16 @@ function LoginContent() {
 
             <div className="mt-8">
               <div className="mx-auto h-2 w-24 animate-pulse rounded-full bg-orange-500" />
+            </div>
+
+            {/* Hidden Clerk component to process SSO callback */}
+            <div className="sr-only">
+              <VibesClerkAuth
+                mode="signin"
+                onAuthSuccess={handleAuthSuccess}
+                fireproofPublicKey={CLOUD_SESSION_TOKEN_PUBLIC_KEY}
+                enableFireproofIntegration={true}
+              />
             </div>
           </div>
         </div>
