@@ -16,12 +16,16 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@clerk/clerk-react": "^5.43.1",
     "call-ai": "workspace:*",
+    "jose": "^6.0.10",
+    "multiformats": "^13.3.7",
     "use-fireproof": "^0.23.11",
     "uuid": "^11.1.0"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@fireproof/core-cli": "^0.23.11",

@@ -19,21 +19,19 @@ vi.mock("~/vibes.diy/app/contexts/AuthContext", async () => {
 // Use __mocks__/useAuth helpers to manipulate auth state in tests
 // (setMockAuthState / resetMockAuthState imported below)
 
-// Mock the auth utility functions
-vi.mock("~/vibes.diy/app/utils/auth", () => ({
-  initiateAuthFlow: vi.fn(),
-}));
+// Mock navigation - SessionSidebar now uses navigate() instead of popup auth
 
 vi.mock("~/vibes.diy/app/utils/analytics", () => ({
   trackAuthClick: vi.fn(),
 }));
 
 import { trackAuthClick } from "~/vibes.diy/app/utils/analytics.js";
-// Import mocked functions
-import { initiateAuthFlow } from "~/vibes.diy/app/utils/auth.js";
 
-// Mock Link component from react-router
-vi.mock("react-router", () => {
+// Create mock navigate function
+const mockNavigate = vi.fn();
+
+// Mock react-router-dom components
+vi.mock("react-router-dom", () => {
   return {
     Link: vi.fn(({ to, children, onClick, ...props }) => {
       // Use React.createElement instead of JSX
@@ -48,6 +46,7 @@ vi.mock("react-router", () => {
         children,
       );
     }),
+    useNavigate: () => mockNavigate,
   };
 });
 
@@ -71,9 +70,8 @@ describe("SessionSidebar component", () => {
     vi.clearAllMocks();
     resetMockAuthState();
     // Reset mocks
-    vi.mocked(initiateAuthFlow).mockClear();
+    mockNavigate.mockClear();
     vi.mocked(trackAuthClick).mockClear();
-    // No window event listeners needed anymore
     // Reset DOM
     document.body.innerHTML = "";
   });
@@ -139,9 +137,12 @@ describe("SessionSidebar component", () => {
       await Promise.resolve();
     });
 
-    // Verify that initiateAuthFlow and trackAuthClick were called
-    expect(initiateAuthFlow).toHaveBeenCalledTimes(1);
-    expect(trackAuthClick).toHaveBeenCalledTimes(1);
+    // Verify that navigate and trackAuthClick were called
+    expect(mockNavigate).toHaveBeenCalledWith("/login");
+    expect(trackAuthClick).toHaveBeenCalledWith({
+      label: "Sidebar Login",
+      isUserAuthenticated: false,
+    });
   });
 
   // Test removed - needsLogin functionality no longer exists

@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
-import { useAuthPopup } from "../hooks/useAuthPopup.js";
+import { trackAuthClick } from "../utils/analytics.js";
 import type { SessionSidebarProps } from "../types/chat.js";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
@@ -17,7 +17,7 @@ import { dark, light } from "./colorways.js";
 function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, isLoading } = useAuth();
-  const { isPolling, pollError, initiateLogin } = useAuthPopup();
+  const navigate = useNavigate();
   // Use CSS-based dark mode detection like the rest of the UI
   const isDarkMode =
     typeof document !== "undefined"
@@ -155,32 +155,17 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                 <li className="flex items-center rounded-md px-4 py-3 text-sm font-medium text-gray-400">
                   <span className="animate-pulse">Loading...</span>
                 </li>
-              ) : isAuthenticated ? null : isPolling ? (
-                <li>
-                  <div className="flex flex-col gap-1 px-4 py-3 text-sm font-medium">
-                    <span className="">Opening log in window...</span>
-                    <span className="font-small text-xs italic">
-                      Don't see it? Please check your browser for a blocked
-                      pop-up window
-                    </span>
-                  </div>
-                </li>
-              ) : (
+              ) : isAuthenticated ? null : (
                 <>
-                  <li>
-                    <div className="flex flex-col px-1 py-1 text-sm font-medium">
-                      {pollError && (
-                        <span className="font-small text-xs text-gray-400 italic">
-                          {pollError}
-                        </span>
-                      )}
-                    </div>
-                  </li>
                   <li>
                     <button
                       type="button"
-                      onClick={async () => {
-                        await initiateLogin();
+                      onClick={() => {
+                        trackAuthClick({
+                          label: "Sidebar Login",
+                          isUserAuthenticated: false,
+                        });
+                        navigate("/login");
                         onClose();
                       }}
                       style={{
