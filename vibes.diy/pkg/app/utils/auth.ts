@@ -9,6 +9,7 @@ import {
   CONNECT_URL,
 } from "../config/env.js";
 import { base58btc } from "multiformats/bases/base58";
+import { systemFetch } from "./systemFetch.js";
 
 // Export the interface
 export interface TokenPayload {
@@ -160,7 +161,7 @@ export async function pollForAuthToken(
   mock: {
     fetch: typeof fetch;
     toast: { success: (s: string) => void };
-  } = { fetch: fetch.bind(globalThis), toast },
+  } = { fetch: systemFetch, toast },
 ): Promise<string | null> {
   const endpoint = `${CONNECT_API_URL}/token/${resultId}`;
   const start = Date.now();
@@ -262,7 +263,7 @@ export async function verifyToken(
  */
 export async function extendToken(
   currentToken: string,
-  mock = { fetch },
+  mock = { fetch: systemFetch },
 ): Promise<string | null> {
   try {
     const endpoint = CONNECT_API_URL;
