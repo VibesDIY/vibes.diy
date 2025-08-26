@@ -160,7 +160,7 @@ export async function pollForAuthToken(
   mock: {
     fetch: typeof fetch;
     toast: { success: (s: string) => void };
-  } = { fetch: window.fetch.bind(window), toast },
+  } = { fetch: fetch.bind(globalThis), toast },
 ): Promise<string | null> {
   const endpoint = `${CONNECT_API_URL}/token/${resultId}`;
   const start = Date.now();
