@@ -11,7 +11,7 @@ import type {
   ChatMessage,
   Segment,
   UserChatMessage,
-} from "~/vibes.diy/app/types/chat.js";
+} from "@vibes.diy/prompts";
 import * as segmentParser from "~/vibes.diy/app/utils/segmentParser.js";
 import { mockChatStateProps } from "./mockData.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";

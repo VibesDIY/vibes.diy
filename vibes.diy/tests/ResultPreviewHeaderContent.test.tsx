@@ -1,7 +1,11 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { ChatMessageDocument } from "~/vibes.diy/app/types/chat.js";
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
+import type {
+  ChatMessageDocument,
+  ViewState,
+  ViewTypeItem,
+} from "@vibes.diy/prompts";
 
 // Mock all imports before importing the component to test
 vi.mock("react-router", () => ({
@@ -16,12 +20,12 @@ vi.mock("~/vibes.diy/app/utils/ViewState", () => ({
   useViewState: vi.fn(),
 }));
 
-vi.mock("~/vibes.diy/app/components/ResultPreview/usePublish", () => ({
+vi.mock("~/vibes.diy/app/components/ResultPreview/usePublish.js", () => ({
   usePublish: vi.fn(),
 }));
 
 // Mock child components
-vi.mock("~/vibes.diy/app/components/ResultPreview/BackButton", () => ({
+vi.mock("~/vibes.diy/app/components/ResultPreview/BackButton.js", () => ({
   BackButton: ({ onBackClick }: { onBackClick: () => void }) => (
     <button data-testid="back-button" onClick={onBackClick}>
       Back
@@ -29,26 +33,28 @@ vi.mock("~/vibes.diy/app/components/ResultPreview/BackButton", () => ({
   ),
 }));
 
-vi.mock("~/vibes.diy/app/components/ResultPreview/ViewControls", () => ({
+vi.mock("~/vibes.diy/app/components/ResultPreview/ViewControls.js", () => ({
   ViewControls: ({
     viewControls,
     currentView,
   }: {
-    viewControls: any;
+    viewControls: ViewState;
     currentView: string;
   }) => {
     // Handle both the old array format and the new object format
     const controls = Array.isArray(viewControls)
       ? viewControls
-      : Object.entries(viewControls).map(([key, value]: [string, any]) => ({
-          id: key,
-          label: value.label,
-          ...value,
-        }));
+      : Object.entries(viewControls).map(
+          ([key, value]: [string, ViewTypeItem]) => ({
+            id: key,
+            // label: value.label,
+            ...value,
+          }),
+        );
 
     return (
       <div data-testid="view-controls" data-view={currentView}>
-        {controls.map((control: any, i: number) => (
+        {controls.map((control, i) => (
           <span key={i} data-control-id={control.id}>
             {control.label}
           </span>
@@ -90,38 +96,36 @@ vi.mock("~/vibes.diy/app/components/ResultPreview/ShareButton", () => ({
 }));
 
 vi.mock("~/vibes.diy/app/components/ResultPreview/ShareModal", () => ({
-  ShareModal: vi
-    .fn()
-    .mockImplementation(
-      ({
-        isOpen,
-        onClose,
-        publishedAppUrl,
-        onPublish,
-        isPublishing,
-        buttonRef,
-      }: {
-        isOpen: boolean;
-        onClose: () => void;
-        publishedAppUrl?: string;
-        onPublish: () => void;
-        isPublishing: boolean;
-        buttonRef?: React.RefObject<HTMLButtonElement>;
-      }) =>
-        isOpen ? (
-          <div data-testid="share-modal">
-            <span>URL: {publishedAppUrl || "none"}</span>
-            <button onClick={onClose}>Close</button>
-            <button
-              onClick={onPublish}
-              disabled={isPublishing}
-              data-testid="modal-publish-button"
-            >
-              {isPublishing ? "Publishing..." : "Publish"}
-            </button>
-          </div>
-        ) : null,
-    ),
+  ShareModal: vi.fn().mockImplementation(
+    ({
+      isOpen,
+      onClose,
+      publishedAppUrl,
+      onPublish,
+      isPublishing,
+      // buttonRef,
+    }: {
+      isOpen: boolean;
+      onClose: () => void;
+      publishedAppUrl?: string;
+      onPublish: () => void;
+      isPublishing: boolean;
+      buttonRef?: React.RefObject<HTMLButtonElement>;
+    }) =>
+      isOpen ? (
+        <div data-testid="share-modal">
+          <span>URL: {publishedAppUrl || "none"}</span>
+          <button onClick={onClose}>Close</button>
+          <button
+            onClick={onPublish}
+            disabled={isPublishing}
+            data-testid="modal-publish-button"
+          >
+            {isPublishing ? "Publishing..." : "Publish"}
+          </button>
+        </div>
+      ) : null,
+  ),
 }));
 
 // Import after all mocks are set up
@@ -187,25 +191,25 @@ describe("ResultPreviewHeaderContent", () => {
     vi.resetAllMocks();
 
     // Default mocks
-    (useParams as any).mockReturnValue({
+    (useParams as Mock).mockReturnValue({
       sessionId: "url-session-id",
       view: "url-view",
     });
 
-    (useSession as any).mockReturnValue({
+    (useSession as Mock).mockReturnValue({
       session: mockSession,
       docs: mockMessages,
       updatePublishedUrl: mockUpdatePublishedUrl,
     });
 
-    (useViewState as any).mockReturnValue({
+    (useViewState as Mock).mockReturnValue({
       currentView: "preview",
       displayView: "preview",
       viewControls: mockViewControls,
       showViewControls: true,
     });
 
-    (usePublish as any).mockReturnValue({
+    (usePublish as Mock).mockReturnValue({
       isPublishing: false,
       urlCopied: false,
       publishedAppUrl: undefined,
@@ -263,7 +267,7 @@ describe("ResultPreviewHeaderContent", () => {
 
   it("uses title from props over URL params when available", () => {
     // Mock the usePublish hook to verify it receives the proper title
-    (usePublish as any).mockReturnValue({
+    (usePublish as Mock).mockReturnValue({
       isPublishing: false,
       urlCopied: false,
       publishedAppUrl: undefined,
@@ -298,7 +302,7 @@ describe("ResultPreviewHeaderContent", () => {
 
   it("updates activeView when displayView changes", () => {
     // Mock displayView different from activeView
-    (useViewState as any).mockReturnValue({
+    (useViewState as Mock).mockReturnValue({
       currentView: "preview",
       displayView: "code", // Different from activeView
       viewControls: mockViewControls,
@@ -421,7 +425,7 @@ describe("ResultPreviewHeaderContent", () => {
   it("passes correct props to usePublish hook", () => {
     // Mock session with a published URL
     const publishedUrl = "https://existing-app.vibesdiy.app";
-    (useSession as any).mockReturnValue({
+    (useSession as Mock).mockReturnValue({
       session: { publishedUrl },
       docs: mockMessages,
       updatePublishedUrl: mockUpdatePublishedUrl,

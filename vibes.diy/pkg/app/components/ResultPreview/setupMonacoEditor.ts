@@ -1,5 +1,5 @@
 import { shikiToMonaco } from "@shikijs/monaco";
-import { createHighlighterCore } from "shiki/core";
+import { createHighlighterCore, HighlighterCore } from "shiki/core";
 import langJavaScript from "shiki/langs/javascript.mjs";
 import langTypeScript from "shiki/langs/typescript.mjs";
 import langJsx from "shiki/langs/jsx.mjs";
@@ -8,6 +8,8 @@ import themeGithubDark from "shiki/themes/github-dark-default.mjs";
 import themeGithubLite from "shiki/themes/github-light-default.mjs";
 import { createOnigurumaEngine } from "shiki/engine/oniguruma";
 import type React from "react";
+import * as monaco from "monaco-editor";
+import { Monaco } from "@monaco-editor/react";
 
 interface Options {
   isStreaming: boolean;
@@ -15,13 +17,16 @@ interface Options {
   isDarkMode: boolean;
   userScrolledRef: React.MutableRefObject<boolean>;
   disposablesRef: React.MutableRefObject<{ dispose: () => void }[]>;
-  setRefs: (editor: any, monaco: any) => void;
-  setHighlighter: (highlighter: any) => void;
+  setRefs: (
+    editor: monaco.editor.IStandaloneCodeEditor,
+    monaco: Monaco,
+  ) => void;
+  setHighlighter: (highlighter: HighlighterCore) => void;
 }
 
 export async function setupMonacoEditor(
-  editor: any,
-  monaco: any,
+  editor: monaco.editor.IStandaloneCodeEditor,
+  monaco: Monaco,
   {
     isStreaming,
     codeReady,

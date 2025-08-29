@@ -1,11 +1,11 @@
 import React from "react";
-import type { ViewType } from "../../utils/ViewState.js";
 import {
   CodeIcon,
   DataIcon,
   PreviewIcon,
   SettingsIcon,
 } from "../HeaderContent/SvgIcons.js";
+import { ViewType } from "@vibes.diy/prompts";
 
 interface ViewControlsProps {
   viewControls: Record<

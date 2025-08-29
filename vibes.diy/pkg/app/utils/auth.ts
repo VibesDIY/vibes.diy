@@ -3,13 +3,10 @@
  */
 import { importJWK, jwtVerify } from "jose";
 import { toast } from "react-hot-toast";
-import {
-  CLOUD_SESSION_TOKEN_PUBLIC_KEY,
-  CONNECT_API_URL,
-  CONNECT_URL,
-} from "../config/env.js";
+// import { VibesDiyEnv } from "../config/env.js";
 import { base58btc } from "multiformats/bases/base58";
 import { systemFetch } from "./systemFetch.js";
+import { VibesDiyEnv } from "../config/env.js";
 
 // Export the interface
 export interface TokenPayload {
@@ -143,7 +140,7 @@ export function initiateAuthFlow(): {
   sessionStorage.setItem("auth_result_id", resultId);
 
   // Compose the connect URL (no redirect, just return)
-  const connectUrl = `${CONNECT_URL}?result_id=${resultId}&countdownSecs=0&skipChooser=1&fromApp=vibesdiy`;
+  const connectUrl = `${VibesDiyEnv.CONNECT_URL()}?result_id=${resultId}&countdownSecs=0&skipChooser=1&fromApp=vibesdiy`;
   return { connectUrl, resultId };
 }
 
@@ -163,7 +160,7 @@ export async function pollForAuthToken(
     toast: { success: (s: string) => void };
   } = { fetch: systemFetch, toast },
 ): Promise<string | null> {
-  const endpoint = `${CONNECT_API_URL}/token/${resultId}`;
+  const endpoint = `${VibesDiyEnv.CONNECT_API_URL()}/token/${resultId}`;
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
@@ -201,7 +198,7 @@ export async function verifyToken(
 ): Promise<{ payload: TokenPayload } | null> {
   try {
     // Base58btc-encoded public key (replace with actual key)
-    const encodedPublicKey = CLOUD_SESSION_TOKEN_PUBLIC_KEY;
+    const encodedPublicKey = VibesDiyEnv.CLOUD_SESSION_TOKEN_PUBLIC_KEY();
 
     // Decode the base58btc-encoded JWK
     const publicKey = decodePublicKeyJWK(encodedPublicKey);
@@ -266,7 +263,7 @@ export async function extendToken(
   mock = { fetch: systemFetch },
 ): Promise<string | null> {
   try {
-    const endpoint = CONNECT_API_URL;
+    const endpoint = VibesDiyEnv.CONNECT_API_URL();
 
     const res = await mock.fetch(endpoint, {
       method: "POST",

@@ -1,22 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { trackErrorEvent } from "../utils/analytics.js";
-
-export interface RuntimeError {
-  type: string; // 'error' or 'unhandledrejection'
-  message: string;
-  source?: string;
-  lineno?: number;
-  colno?: number;
-  stack?: string;
-  reason?: string;
-  timestamp: string;
-  errorType?:
-    | "SyntaxError"
-    | "ReferenceError"
-    | "TypeError"
-    | "DatabaseError"
-    | "Other";
-}
+import { RuntimeError } from "use-vibes";
 
 export type ErrorCategory = "immediate" | "advisory";
 
@@ -78,7 +62,7 @@ export function useRuntimeErrors({
       // Track error event with processed info
       try {
         // Only send minimal stack for privacy and size
-        const details: Record<string, any> = {};
+        const details: Record<string, unknown> = {};
         if (error.stack) {
           details.stack = error.stack.slice(0, 300);
         }

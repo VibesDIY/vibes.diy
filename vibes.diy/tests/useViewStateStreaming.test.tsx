@@ -4,9 +4,9 @@ import { renderHook } from "@testing-library/react";
 import {
   useViewState,
   ViewStateProps,
-  type ViewState,
 } from "~/vibes.diy/app/utils/ViewState.js";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { ViewState } from "../../prompts/pkg/view-state.js";
 
 // Mock react-router-dom hooks
 vi.mock("react-router-dom", () => ({

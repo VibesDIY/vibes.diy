@@ -1,5 +1,5 @@
-import type { RuntimeError } from "../../hooks/useRuntimeErrors.js";
-import type { ViewType } from "../../utils/ViewState.js";
+import { ViewType } from "@vibes.diy/prompts";
+import { RuntimeError } from "use-vibes";
 
 export interface ResultPreviewProps {
   code: string;

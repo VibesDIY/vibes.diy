@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, cleanup } from "@testing-library/react";
 import { vi, describe, test, expect, afterEach } from "vitest";
 import StructuredMessage from "~/vibes.diy/app/components/StructuredMessage.js";
-import type { Segment } from "~/vibes.diy/app/types/chat.js";
+import type { Segment } from "@vibes.diy/prompts";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 // Mock the window.location for any URL operations

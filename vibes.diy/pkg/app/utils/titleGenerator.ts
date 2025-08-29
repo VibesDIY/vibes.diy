@@ -1,6 +1,6 @@
 import { callAI, type Message } from "call-ai";
-import { CALLAI_ENDPOINT } from "../config/env.js";
-import type { Segment } from "../types/chat.js";
+import { VibesDiyEnv } from "../config/env.js";
+import type { Segment } from "@vibes.diy/prompts";
 
 /**
  * Generate a title based on the first two segments (markdown and code)
@@ -47,7 +47,7 @@ export async function generateTitle(
 
   // Configure callAI options
   const options = {
-    chatUrl: CALLAI_ENDPOINT,
+    chatUrl: VibesDiyEnv.CALLAI_ENDPOINT(),
     apiKey: apiKey || "sk-vibes-proxy-managed", // Use dummy key if no key provided
     model: model,
     headers: {

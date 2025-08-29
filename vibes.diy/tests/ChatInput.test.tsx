@@ -2,7 +2,7 @@ import React from "react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import ChatInput from "~/vibes.diy/app/components/ChatInput.js";
-import type { ChatState } from "~/vibes.diy/app/types/chat.js";
+import type { ChatState } from "@vibes.diy/prompts";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 // Create mock functions we can control

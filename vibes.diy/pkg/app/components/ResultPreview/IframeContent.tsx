@@ -2,7 +2,7 @@ import { Editor, Monaco } from "@monaco-editor/react";
 import React, { useEffect, useRef, useState } from "react";
 import type { IframeFiles } from "./ResultPreviewTypes.js";
 // API key import removed - proxy handles authentication
-import { CALLAI_ENDPOINT } from "../../config/env.js";
+import { VibesDiyEnv } from "../../config/env.js";
 import { normalizeComponentExports } from "../../utils/normalizeComponentExports.js";
 import { DatabaseListView } from "./DataView/index.js";
 import { setupMonacoEditor } from "./setupMonacoEditor.js";
@@ -44,8 +44,10 @@ const IframeContent: React.FC<IframeContentProps> = ({
   // Reference to store the Monaco API instance
   const monacoApiRef = useRef<Monaco>(null);
   // Reference to store the current Shiki highlighter
-  const highlighterRef =
-    useRef<HighlighterGeneric<BundledLanguage, BundledTheme>>(null);
+  const highlighterRef = useRef<HighlighterGeneric<
+    BundledLanguage,
+    BundledTheme
+  > | null>(null);
   // Reference to store disposables for cleanup
   const disposablesRef = useRef<{ dispose: () => void }[]>([]);
   // Flag to track if user has manually scrolled during streaming
@@ -184,7 +186,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
               code: transformedCode,
               apiKey: "sk-vibes-proxy-managed",
               sessionId: sessionIdValue,
-              endpoint: CALLAI_ENDPOINT,
+              endpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
             },
             "*",
           );
@@ -289,7 +291,10 @@ const IframeContent: React.FC<IframeContentProps> = ({
                 monacoApiRef.current = mo;
               },
               setHighlighter: (h) => {
-                highlighterRef.current = h;
+                highlighterRef.current = h as HighlighterGeneric<
+                  BundledLanguage,
+                  BundledTheme
+                >;
               },
             });
 

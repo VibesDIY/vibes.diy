@@ -1,6 +1,6 @@
 export interface TransformState {
   input: string;
-  patterns: Record<string, any>;
+  patterns: Record<string, unknown>;
   hasAppDeclared: boolean;
   beforeExport?: string;
   afterExport?: string;

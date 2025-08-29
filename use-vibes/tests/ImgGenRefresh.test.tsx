@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
-import { fail } from 'assert';
 
 // Create a mock File
 const mockFile = new File(['test content'], 'test-image.png', { type: 'image/png' });
@@ -107,6 +106,7 @@ vi.mock('@vibes.diy/use-vibes-base', async () => {
 
 // Import after mocks
 import { ImageDocument } from '@vibes.diy/use-vibes-base';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DocWithId } from 'use-fireproof';
 
 describe('Image Generation Refresh Functionality', () => {

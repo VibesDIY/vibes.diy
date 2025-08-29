@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from "react";
-import type { RuntimeError } from "../../hooks/useRuntimeErrors.js";
+import type { RuntimeError } from "use-vibes";
 import { animationStyles } from "./ResultPreviewTemplates.js";
 import type { IframeFiles, ResultPreviewProps } from "./ResultPreviewTypes.js";
 // import { encodeTitle } from '../SessionSidebar/utils';
@@ -14,7 +14,7 @@ import { useSession } from "../../hooks/useSession.js";
 
 function ResultPreview({
   code,
-  dependencies,
+  // dependencies,
   onScreenshotCaptured,
   sessionId,
   title,

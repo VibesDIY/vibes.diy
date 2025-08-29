@@ -1,24 +1,30 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
-import type * as mod from "~/vibes.diy/app/prompts.js";
+import * as mod from "@vibes.diy/prompts";
 
 // Ensure real implementation
 // (vi as any).doUnmock?.("~/vibes.diy/app/prompts");
-vi.unmock("~/vibes.diy/app/prompts.js");
+//vi.unmock("~/vibes.diy/app/prompts.js");
 vi.resetModules();
 
-let makeBaseSystemPrompt: typeof mod.makeBaseSystemPrompt;
-let preloadLlmsText: () => Promise<void>;
+// let makeBaseSystemPrompt: typeof mod.makeBaseSystemPrompt;
+// let preloadLlmsText: () => Promise<void>;
 
 beforeAll(async () => {
-  const mod = await import("~/vibes.diy/app/prompts.js");
-  makeBaseSystemPrompt = mod.makeBaseSystemPrompt;
-  preloadLlmsText = mod.preloadLlmsText;
+  // const mod = await import("~/vibes.diy/app/prompts.js");
+  // makeBaseSystemPrompt = mod.makeBaseSystemPrompt;
+  // preloadLlmsText = mod.preloadLlmsText;
 });
+
+const opts = {
+  fallBackUrl: new URL("https://example.com/fallback"),
+  callAiEndpoint: "https://example.com/call-ai",
+};
 
 describe("makeBaseSystemPrompt dependency selection", () => {
   it("when override is false/absent, uses schema-driven selection (test mode => all); includes core libs", async () => {
-    await preloadLlmsText();
-    const prompt = await makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
+    // await preloadLlmsText();
+    const prompt = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
+      ...opts,
       _id: "user_settings",
     });
     // Should include at least the core libs
@@ -32,11 +38,12 @@ describe("makeBaseSystemPrompt dependency selection", () => {
   });
 
   it("honors explicit dependencies only when override=true", async () => {
-    await preloadLlmsText();
-    const prompt = await makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
+    // await preloadLlmsText();
+    const prompt = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
       _id: "user_settings",
       dependencies: ["fireproof"],
       dependenciesUserOverride: true,
+      ...opts,
     });
     expect(prompt).toMatch(/<useFireproof-docs>/);
     expect(prompt).not.toMatch(/<callAI-docs>/);
@@ -48,11 +55,12 @@ describe("makeBaseSystemPrompt dependency selection", () => {
   });
 
   it("ignores explicit dependencies when override=false (still schema-driven)", async () => {
-    await preloadLlmsText();
-    const prompt = await makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
+    // await preloadLlmsText();
+    const prompt = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
       _id: "user_settings",
       dependencies: ["fireproof"],
       dependenciesUserOverride: false,
+      ...opts,
     });
     // Should include at least both core libs
     expect(prompt).toMatch(/<useFireproof-docs>/);

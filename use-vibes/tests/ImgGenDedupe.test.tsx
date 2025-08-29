@@ -45,7 +45,7 @@ const mockCallImageGen = vi.hoisted(() => {
 });
 
 // Mock the createImageGenerator function which creates callImageGeneration
-const mockCreateImageGenerator = vi.hoisted(() => {
+vi.hoisted(() => {
   return vi.fn().mockImplementation((_requestId) => {
     // Return a function that immediately calls mockCallImageGen when invoked
     // This ensures that the hook can call it properly with the right parameters

@@ -1,7 +1,14 @@
+import {
+  generateImportStatements,
+  getJsonDocs,
+  getTxtDocs,
+  JsonDocs,
+  LlmCatalogEntry,
+  makeBaseSystemPrompt,
+  TxtDocs,
+} from "@vibes.diy/prompts";
 import { describe, it, expect, beforeAll, vi } from "vitest";
-import llmJsonDocs from "~/vibes.diy/app/llms/json-docs.js";
-import llmTxtDocs from "~/vibes.diy/app/llms/txt-docs.js";
-import type * as mod from "~/vibes.diy/app/prompts.js";
+// await import("~/vibes.diy/app/llms/catalog.js");
 
 // import * as mod from "~/vibes.diy/app/prompts.js";
 
@@ -13,18 +20,12 @@ const knownModuleNames = ["callai", "fireproof", "image-gen", "web-audio"];
 // (vi as any).doUnmock?.("~/vibes.diy/app/prompts");
 // vi.unmock("~/vibes.diy/app/prompts");
 // Reset the module registry and mock env before importing the module under test.
-vi.resetModules();
-vi.mock(import("~/vibes.diy/app/prompts.js"), async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    // your mocked methods
-  };
-});
-vi.mock("~/vibes.diy/app/config/env.js", () => ({
-  CALLAI_ENDPOINT: "http://localhost/test",
-  APP_MODE: "test",
-}));
+// vi.resetModules();
+
+// vi.mock("~/vibes.diy/app/config/env.js", () => ({
+//   CALLAI_ENDPOINT: "http://localhost/test",
+//   APP_MODE: "test",
+// }));
 
 // Mock the callAI function to return our known finite set for testing
 vi.mock("call-ai", () => ({
@@ -38,29 +39,24 @@ vi.mock("call-ai", () => ({
 }));
 
 // Will be assigned in beforeAll after we unmock and re-import the module
-let generateImportStatements: typeof mod.generateImportStatements; // (llms: unknown[]) => string;
-let makeBaseSystemPrompt: typeof mod.makeBaseSystemPrompt;
-let preloadLlmsText: () => Promise<void>;
+// let generateImportStatements: typeof generateImportStatements; // (llms: unknown[]) => string;
+// let makeBaseSystemPrompt: typeof makeBaseSystemPrompt;
+// let preloadLlmsText: () => Promise<void>;
 // no-op vars (past defaults not needed with schema-based selection)
 
 // Load actual LLM configs and txt content from app/llms
 // Use eager glob so it's resolved at import time in Vitest/Vite environment
-const llmsJsonModules = llmJsonDocs;
+let llmsJsonModules: JsonDocs;
 // import.meta.glob("~/vibes.diy/app/llms/*.json", {
 //   eager: true,
 // }) as Record<string, { default: unknown }>;
 
 // Filter to only include our known set, deterministic order by name
 // console.log("llmsJsonModules", llmsJsonModules);
-const orderedLlms = Object.entries(llmsJsonModules)
-  .filter(([path, _]) =>
-    knownModuleNames.some((name) => path.includes(`${name}.json`)),
-  )
-  .sort((a, b) => a[0].localeCompare(b[0]))
-  .map(([_, mod]) => mod.default);
+let orderedLlms: LlmCatalogEntry[];
 
 // Load the raw text files; key by filepath, value is file contents
-const llmsTxtModules = llmTxtDocs;
+let llmsTxtModules: TxtDocs;
 //  import.meta.glob("~/vibes.diy/app/llms/*.txt", {
 //   eager: true,
 //   as: "raw",
@@ -73,19 +69,34 @@ function textForName(name: string): string {
   return entry ? (entry[1] as unknown as string) : "";
 }
 
+const opts = {
+  fallBackUrl: new URL("http://localhost/test"),
+  callAiEndpoint: "http://localhost/test/call-ai",
+};
+
 beforeAll(async () => {
+  llmsJsonModules = await getJsonDocs(new URL("http://localhost/test"));
+
+  llmsTxtModules = await getTxtDocs(new URL("http://localhost/test"));
+
+  orderedLlms = Object.entries(llmsJsonModules)
+    .filter(([path, _]) =>
+      knownModuleNames.some((name) => path.includes(`${name}.json`)),
+    )
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([_, mod]) => mod.obj);
+
   // Pull exported functions from the mocked module
-  const mod = await import("~/vibes.diy/app/prompts.js");
-  generateImportStatements = mod.generateImportStatements;
-  makeBaseSystemPrompt = mod.makeBaseSystemPrompt;
-  preloadLlmsText = mod.preloadLlmsText;
+  // const mod = await import("~/vibes.diy/app/prompts.js");
+  // generateImportStatements = mod.generateImportStatements;
+  // makeBaseSystemPrompt = mod.makeBaseSystemPrompt;
+  // preloadLlmsText = mod.preloadLlmsText;
   // ensure catalog loads for glob ordering
-  await import("~/vibes.diy/app/llms/catalog.js");
 });
 
 describe("prompt builder (real implementation)", () => {
   it("generateImportStatements: deterministic, one line per JSON, no duplicates", () => {
-    expect(typeof generateImportStatements).toBe("function");
+    expect(generateImportStatements).toBe("function");
 
     const importBlock = generateImportStatements(orderedLlms);
     const lines = importBlock.trim().split("\n").filter(Boolean);
@@ -174,11 +185,12 @@ describe("prompt builder (real implementation)", () => {
 
   it("makeBaseSystemPrompt: in test mode, non-override path includes all catalog imports and docs; default stylePrompt", async () => {
     // Warm cache so docs are available via raw imports
-    await preloadLlmsText();
+    // await preloadLlmsText();
 
     const prompt = await makeBaseSystemPrompt("test-model", {
       stylePrompt: undefined,
       userPrompt: undefined,
+      ...opts,
     });
 
     // The mocked AI call should return our known finite set
@@ -207,9 +219,10 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: supports custom stylePrompt and userPrompt", async () => {
-    await preloadLlmsText();
+    // await preloadLlmsText();
 
     const prompt = await makeBaseSystemPrompt("test-model", {
+      ...opts,
       stylePrompt: "custom",
       userPrompt: "hello",
     });
@@ -233,8 +246,9 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: honors explicit dependencies only when override=true", async () => {
-    await preloadLlmsText();
+    // await preloadLlmsText();
     const prompt = await makeBaseSystemPrompt("test-model", {
+      ...opts,
       dependencies: ["fireproof"],
       dependenciesUserOverride: true,
     });
@@ -243,8 +257,9 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: includes instructional-text and demo-data guidance when selector enables them (test mode)", async () => {
-    await preloadLlmsText();
+    // await preloadLlmsText();
     const prompt = await makeBaseSystemPrompt("test-model", {
+      ...opts,
       stylePrompt: undefined,
       userPrompt: undefined,
       history: [],
@@ -254,8 +269,9 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: respects instructionalTextOverride=false to disable instructional text", async () => {
-    await preloadLlmsText();
+    // await preloadLlmsText();
     const prompt = await makeBaseSystemPrompt("test-model", {
+      ...opts,
       stylePrompt: undefined,
       userPrompt: undefined,
       history: [],
@@ -269,8 +285,9 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: respects instructionalTextOverride=true to force instructional text", async () => {
-    await preloadLlmsText();
+    // await preloadLlmsText();
     const prompt = await makeBaseSystemPrompt("test-model", {
+      ...opts,
       stylePrompt: undefined,
       userPrompt: undefined,
       history: [],
@@ -281,8 +298,9 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=false to disable demo data", async () => {
-    await preloadLlmsText();
+    // await preloadLlmsText();
     const prompt = await makeBaseSystemPrompt("test-model", {
+      ...opts,
       stylePrompt: undefined,
       userPrompt: undefined,
       history: [],
@@ -294,8 +312,9 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=true to force demo data", async () => {
-    await preloadLlmsText();
+    // await preloadLlmsText();
     const prompt = await makeBaseSystemPrompt("test-model", {
+      ...opts,
       stylePrompt: undefined,
       userPrompt: undefined,
       history: [],
@@ -306,8 +325,9 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: respects both overrides simultaneously", async () => {
-    await preloadLlmsText();
+    // await preloadLlmsText();
     const prompt = await makeBaseSystemPrompt("test-model", {
+      ...opts,
       stylePrompt: undefined,
       userPrompt: undefined,
       history: [],

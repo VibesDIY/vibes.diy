@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import type { Segment, ViewType } from "../types/chat.js";
+import type { Segment, ViewType } from "@vibes.diy/prompts";
 
 interface StructuredMessageProps {
   segments: Segment[];

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createWrapper } from "./setup.js";
 import { useSimpleChat } from "~/vibes.diy/app/hooks/useSimpleChat.js";
 import { useSession } from "~/vibes.diy/app/hooks/useSession.js";
-import { DocBase } from "use-fireproof";
+import { DocResponse } from "use-fireproof";
 
 describe("useSimpleChat", () => {
   it("prioritizes selectedResponseDoc correctly", async () => {
@@ -25,11 +25,12 @@ describe("useSimpleChat", () => {
     await act(async () => {
       result.current.setSelectedResponseId("");
     });
-    const mockPendingPut = vi.fn(async () => {
-      return Promise.resolve({ id: pendingId });
+    const mockPendingPut = vi.fn<
+      ReturnType<typeof useSession>["sessionDatabase"]["put"]
+    >(async () => {
+      return Promise.resolve({ id: pendingId } as DocResponse);
     });
-    (vi.mocked(useSession)(undefined) as any).sessionDatabase.put =
-      mockPendingPut;
+    vi.mocked(useSession)(undefined).sessionDatabase.put = mockPendingPut;
 
     act(() => {
       result.current.setInput("trigger pending");
@@ -38,11 +39,13 @@ describe("useSimpleChat", () => {
       await result.current.sendMessage();
     });
 
-    const originalPut = vi.fn(async (doc: DocBase) => {
+    const originalPut = vi.fn<
+      ReturnType<typeof useSession>["sessionDatabase"]["put"]
+    >(async (doc) => {
       const id = doc._id || `ai-message-${Date.now()}`;
-      return Promise.resolve({ id });
+      return Promise.resolve({ id } as DocResponse);
     });
-    (vi.mocked(useSession)(undefined) as any).sessionDatabase.put = originalPut;
+    vi.mocked(useSession)(undefined).sessionDatabase.put = originalPut;
 
     await act(async () => {
       result.current.setSelectedResponseId("");

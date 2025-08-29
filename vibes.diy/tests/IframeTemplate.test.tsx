@@ -96,7 +96,8 @@ describe("Iframe Template", () => {
         /* no-op */
       };
     const originalGetItem = Storage.prototype.getItem;
-    let messageEventHandlers: ((event: MessageEvent) => void)[] = [];
+    let messageEventHandlers: EventListenerOrEventListenerObject[] = [];
+    // ((event: EventListenerOrEventListenerObject) => void)[] = [];
 
     beforeEach(() => {
       // Clear message handlers from previous tests
@@ -122,9 +123,9 @@ describe("Iframe Template", () => {
       vi.spyOn(window, "addEventListener").mockImplementation(
         (event, handler) => {
           if (event === "message") {
-            messageEventHandlers.push(handler as any);
+            messageEventHandlers.push(handler);
           }
-          return undefined as any;
+          return undefined as ReturnType<typeof window.addEventListener>;
         },
       );
 
@@ -147,7 +148,7 @@ describe("Iframe Template", () => {
             // Create a postMessage that triggers parent's message handlers
             postMessage: vi
               .fn()
-              .mockImplementation((message: any, targetOrigin: string) => {
+              .mockImplementation((message, _targetOrigin: string) => {
                 // Simulate the iframe sending a message to the parent
                 messageEventHandlers.forEach((handler) => {
                   // Create a partial MessageEvent and cast to unknown first to satisfy TypeScript
@@ -186,7 +187,9 @@ describe("Iframe Template", () => {
                     NONE: 0,
                   } as unknown as MessageEvent;
 
-                  handler(mockEvent);
+                  if (typeof handler === "function") {
+                    handler(mockEvent);
+                  }
                 });
               }),
           };

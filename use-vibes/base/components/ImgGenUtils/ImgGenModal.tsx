@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import { ImageOverlay } from './overlays/ImageOverlay.js';
 import { ImgGenError } from './ImgGenError.js';
 import { defaultClasses, ImgGenClasses } from '../../utils/style-utils.js';
-import { imgGenStyles } from '../../utils/styles.js';
 
 export interface ImgGenModalProps {
   readonly isOpen: boolean;

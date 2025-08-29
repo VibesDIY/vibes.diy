@@ -1,19 +1,68 @@
-import { useCallback, useState, useEffect, useRef, useMemo } from "react";
-import type {
-  AiChatMessageDocument,
-  UserChatMessageDocument,
-  VibeDocument,
-  ChatMessageDocument,
-} from "../types/chat.js";
+import { useCallback, useState, useEffect, useRef } from "react";
+import {
+  type AiChatMessageDocument,
+  type UserChatMessageDocument,
+  type VibeDocument,
+  type ChatMessageDocument,
+  normalizeModelId,
+  UserSettings,
+  resolveEffectiveModel,
+  getLlmCatalogNames,
+  getLlmCatalog,
+} from "@vibes.diy/prompts";
 import { getSessionDatabaseName } from "../utils/databaseManager.js";
-import { useFireproof } from "use-fireproof";
+import { Database, DocResponse, DocWithId, useFireproof } from "use-fireproof";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
-import { CATALOG_DEPENDENCY_NAMES, llmsCatalog } from "../llms/catalog.js";
-import { resolveEffectiveModel, normalizeModelId } from "../prompts.js";
-import { SETTINGS_DBNAME } from "../config/env.js";
-import type { UserSettings } from "../types/settings.js";
+import { VibesDiyEnv } from "../config/env.js";
 
-export function useSession(routedSessionId?: string) {
+interface SessionView {
+  _id: string;
+  title: string;
+  publishedUrl?: string;
+  firehoseShared?: boolean;
+}
+
+export interface UseSession {
+  // // Session information
+  session: SessionView;
+  docs: ChatMessageDocument[];
+
+  // // Databases
+  sessionDatabase: Database;
+  // openSessionDatabase: () => void;
+
+  // // Session management functions
+  updateTitle: (title: string) => Promise<void>;
+  updatePublishedUrl: (publishedUrl: string) => Promise<void>;
+  updateFirehoseShared: (firehoseShared: boolean) => Promise<void>;
+  addScreenshot: (screenshotData: string | null) => Promise<void>;
+  // // Message management
+  userMessage: UserChatMessageDocument;
+  submitUserMessage: () => Promise<void>;
+  mergeUserMessage: (newDoc: Partial<UserChatMessageDocument>) => void;
+  // saveUserMessage: (newDoc: UserChatMessageDocument) => Promise<void>;
+  aiMessage: AiChatMessageDocument;
+  selectedModel?: string;
+  effectiveModel: string[];
+  submitAiMessage: (e?: Event) => Promise<void>;
+  mergeAiMessage: (newDoc: Partial<AiChatMessageDocument>) => void;
+  updateDependencies: (deps: string[], userOverride?: boolean) => Promise<void>;
+  updateInstructionalTextOverride: (
+    override?: boolean | undefined,
+  ) => Promise<void>;
+  updateDemoDataOverride: (override?: boolean | undefined) => Promise<void>;
+  updateAiSelectedDependencies: (
+    aiSelectedDependencies: string[],
+  ) => Promise<void>;
+  updateSelectedModel: (modelId: string) => Promise<void>;
+  saveAiMessage: (
+    existingDoc?: DocWithId<AiChatMessageDocument> | undefined,
+  ) => Promise<DocResponse>;
+  // // Vibe document management
+  vibeDoc: VibeDocument;
+}
+
+export function useSession(routedSessionId?: string): UseSession {
   const [generatedSessionId] = useState(
     () =>
       `${Date.now().toString(36).padStart(9, "f")}${Math.random().toString(36).slice(2, 11).padEnd(9, "0")}`,
@@ -139,8 +188,14 @@ export function useSession(routedSessionId?: string) {
         ? deps.filter((n): n is string => typeof n === "string")
         : [];
       // Validate and de‑dupe by catalog names
+      const catalogNames = await getLlmCatalogNames(
+        VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      );
       const deduped = Array.from(
-        new Set(input.filter((n) => CATALOG_DEPENDENCY_NAMES.has(n))),
+        new Set(input.filter((n) => catalogNames.has(n))),
+      );
+      const llmsCatalog = await getLlmCatalog(
+        VibesDiyEnv.PROMPT_FALL_BACKURL(),
       );
       // Canonicalize order by catalog order
       const order = new Map(llmsCatalog.map((l, i) => [l.name, i] as const));
@@ -218,15 +273,23 @@ export function useSession(routedSessionId?: string) {
   );
 
   // Access global settings to compute effective model fallback
-  const { useDocument: useSettingsDocument } = useFireproof(SETTINGS_DBNAME);
+  const { useDocument: useSettingsDocument } = useFireproof(
+    VibesDiyEnv.SETTINGS_DBNAME(),
+  );
   const { doc: settingsDoc } = useSettingsDocument<UserSettings>({
     _id: "user_settings",
   });
 
-  const effectiveModel = useMemo(
-    () => resolveEffectiveModel(settingsDoc, vibeDoc),
-    [settingsDoc?.model, vibeDoc?.selectedModel],
-  );
+  const [effectiveModel, setEffectiveModel] = useState<string[]>([]);
+  useEffect(() => {
+    resolveEffectiveModel(settingsDoc, vibeDoc).then((i) => {
+      setEffectiveModel([i]);
+      // return [settingsDoc?.model, vibeDoc?.selectedModel]
+    });
+  });
+  // const effectiveModel = useMemo(
+  //   () => resolveEffectiveModel(settingsDoc, vibeDoc), [settingsDoc?.model, vibeDoc?.selectedModel],
+  // );
 
   // Add a screenshot to the session (in session-specific database)
   const addScreenshot = useCallback(

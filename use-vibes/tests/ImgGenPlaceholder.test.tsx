@@ -37,7 +37,7 @@ describe('ImgGenDisplayPlaceholder Component', () => {
   //---------------------------------------------------------------
   describe('Base Rendering', () => {
     it('renders basic placeholder container with appropriate role and aria-label', () => {
-      const { container } = render(
+      render(
         <ImgGenDisplayPlaceholder
           className="test-class"
           alt="Test alt text"

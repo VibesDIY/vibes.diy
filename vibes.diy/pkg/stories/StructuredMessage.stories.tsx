@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React, { useState } from "react";
 import StructuredMessage from "../app/components/StructuredMessage.js";
-import type { Segment, ViewType } from "../app/types/chat.js";
+import type { Segment, ViewType } from "@vibes.diy/prompts";
 
 // Mock wrapper component for Storybook
 const StructuredMessageWrapper = ({

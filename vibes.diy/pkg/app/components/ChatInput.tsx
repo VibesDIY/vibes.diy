@@ -7,9 +7,8 @@ import React, {
   useImperativeHandle,
   useState,
 } from "react";
-import type { ChatState } from "../types/chat.js";
+import type { ChatState } from "@vibes.diy/prompts";
 import ModelPicker, { type ModelOption } from "./ModelPicker.js";
-import { preloadLlmsText } from "../prompts.js";
 
 interface ChatInputProps {
   chatState: ChatState;
@@ -115,7 +114,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             }}
             onFocus={() => {
               // Fire and forget: warm the LLMs text cache using raw imports
-              void preloadLlmsText();
+              // void preloadLlmsText();
             }}
             onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
               if (e.key === "Enter" && !e.shiftKey && !chatState.isStreaming) {

@@ -13,7 +13,7 @@ export function LoginMenu({
   isOpen,
   onLogin,
   onClose,
-  buttonRef,
+  // buttonRef,
 }: LoginMenuProps) {
   if (!isOpen) return null;
 

@@ -2,7 +2,7 @@ import React, { memo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
-import type { SessionSidebarProps } from "../types/chat.js";
+import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";

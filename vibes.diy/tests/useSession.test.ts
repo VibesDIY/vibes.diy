@@ -89,9 +89,12 @@ describe("useSession", () => {
    */
   it("should initialize new database when sessionId changes", () => {
     // Start with no session ID (first message scenario)
-    const { rerender } = renderHook(({ id }: any) => useSession(id), {
-      initialProps: { id: undefined },
-    });
+    const { rerender } = renderHook(
+      ({ id }: { id?: string }) => useSession(id),
+      {
+        initialProps: { id: undefined } as { id?: string },
+      },
+    );
 
     // Get the initial call count
     const initialCallCount = mockUseFireproof.mock.calls.length;
@@ -99,7 +102,7 @@ describe("useSession", () => {
     expect(initialCall).toMatch(/^session-/);
 
     // Simulate URL update with new session ID (after first message response)
-    rerender({ id: "new-session-id" as any });
+    rerender({ id: "new-session-id" });
 
     // Verify new database is initialized with the new session ID
     // The call count should have increased

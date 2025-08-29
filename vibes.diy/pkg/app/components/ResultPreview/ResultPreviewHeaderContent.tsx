@@ -1,7 +1,7 @@
 import React, { /*useEffect,*/ useRef } from "react"; // useEffect no longer needed here
 import { useParams } from "react-router";
 import { useSession } from "../../hooks/useSession.js";
-import type { ViewControlsType, ViewType } from "../../utils/ViewState.js";
+import type { ViewControlsType, ViewType } from "@vibes.diy/prompts";
 // import { useViewState } from '../../utils/ViewState'; // useViewState is now lifted to home.tsx
 import { BackButton } from "./BackButton.js";
 import { SaveButton } from "./SaveButton.js";

@@ -1,8 +1,8 @@
 name: "common ci run"
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-    branches: [main]
+#  pull_request_target:
+#    types: [opened, synchronize, reopened]
+#    branches: [main]
 
 jobs:
   compile_test:

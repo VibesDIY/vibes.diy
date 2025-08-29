@@ -39,7 +39,19 @@ function StarfieldEmpty({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(null);
-  const starsRef = useRef<any[]>([]);
+  const starsRef = useRef<
+    {
+      x: number;
+      y: number;
+      z: number;
+      prevX: number;
+      prevY: number;
+      color: string;
+      hue: number;
+      shape: string;
+      rotation: number;
+    }[]
+  >([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

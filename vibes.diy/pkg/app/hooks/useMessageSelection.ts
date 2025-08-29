@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState, useEffect } from "react";
-import type { Segment, ChatMessageDocument } from "../types/chat.js";
+import type { Segment, ChatMessageDocument } from "@vibes.diy/prompts";
 import { parseContent } from "../utils/segmentParser.js";
 
 /**
@@ -14,7 +14,7 @@ export function useMessageSelection({
   selectedResponseId,
   pendingAiMessage,
 }: {
-  docs: any[];
+  docs: ChatMessageDocument[];
   isStreaming: boolean;
   aiMessage: ChatMessageDocument;
   selectedResponseId: string;
@@ -36,7 +36,7 @@ export function useMessageSelection({
   const messages = useMemo(() => {
     // First filter the docs to get messages we want to display
     const baseDocs = docs.filter(
-      (doc: any) =>
+      (doc) =>
         doc.type === "ai" || doc.type === "user" || doc.type === "system",
     ) as unknown as ChatMessageDocument[];
 
@@ -86,7 +86,7 @@ export function useMessageSelection({
     // Priority 1: Explicit user selection (from confirmed docs)
     if (selectedResponseId) {
       const foundInDocs = docs.find(
-        (doc: any) => doc.type === "ai" && doc._id === selectedResponseId,
+        (doc) => doc.type === "ai" && doc._id === selectedResponseId,
       );
       if (foundInDocs) return foundInDocs;
     }
@@ -102,7 +102,7 @@ export function useMessageSelection({
     }
 
     // Priority 4: Default to latest AI message from docs that contains code
-    const aiDocs = docs.filter((doc: any) => doc.type === "ai");
+    const aiDocs = docs.filter((doc) => doc.type === "ai");
 
     // Find all docs that contain code when parsed
     const docsWithCode = aiDocs.filter((doc) => {
@@ -113,8 +113,8 @@ export function useMessageSelection({
     // Sort by document ID - this is more reliable than timestamps
     // when determining the most recent message, especially since IDs often have
     // chronological information encoded in them
-    const sortedDocsWithCode = docsWithCode.sort((a: any, b: any) =>
-      b._id.localeCompare(a._id),
+    const sortedDocsWithCode = docsWithCode.sort(
+      (a, b) => b._id?.localeCompare(a._id ?? "") || 0,
     );
 
     const latestAiDocWithCode = sortedDocsWithCode[0];
@@ -136,8 +136,8 @@ export function useMessageSelection({
     if (!code && selectedResponseDoc) {
       // Get all AI messages sorted from newest to oldest
       const aiMessages = docs
-        .filter((doc: any) => doc.type === "ai")
-        .sort((a: any, b: any) => b.created_at - a.created_at);
+        .filter((doc) => doc.type === "ai")
+        .sort((a, b) => b.created_at - a.created_at);
 
       // Look through each AI message until we find code
       for (const message of aiMessages) {
@@ -161,15 +161,14 @@ export function useMessageSelection({
 
   // Build message history for AI requests
   const filteredDocs = docs.filter(
-    (doc: any) =>
-      doc.type === "ai" || doc.type === "user" || doc.type === "system",
+    (doc) => doc.type === "ai" || doc.type === "user" || doc.type === "system",
   );
   const buildMessageHistory = useCallback((): {
     role: "user" | "assistant" | "system";
     content: string;
   }[] => {
     // Map all messages to the correct format first
-    const allMessages = filteredDocs.map((msg: any) => {
+    const allMessages = filteredDocs.map((msg) => {
       const role =
         msg.type === "user"
           ? ("user" as const)

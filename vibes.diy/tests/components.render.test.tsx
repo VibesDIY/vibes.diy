@@ -15,7 +15,7 @@ import type {
   AiChatMessage,
   ChatMessageDocument,
   UserChatMessage,
-} from "~/vibes.diy/app/types/chat.js";
+} from "@vibes.diy/prompts";
 import { mockSessionSidebarProps } from "./mockData.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 

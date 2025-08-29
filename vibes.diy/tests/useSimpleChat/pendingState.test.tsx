@@ -3,6 +3,7 @@ import { describe, it, vi } from "vitest";
 import { createWrapper, formatAsSSE } from "./setup.js";
 import { useSimpleChat } from "~/vibes.diy/app/hooks/useSimpleChat.js";
 import { useSession } from "~/vibes.diy/app/hooks/useSession.js";
+import { DocResponse } from "use-fireproof";
 
 describe("useSimpleChat", () => {
   it("handles pending AI message state correctly", async () => {
@@ -35,10 +36,12 @@ describe("useSimpleChat", () => {
       wrapper,
     });
 
-    const mockPut = vi.fn(async () => {
-      return Promise.resolve({ id: generatedId });
+    const mockPut = vi.fn<
+      ReturnType<typeof useSession>["sessionDatabase"]["put"]
+    >(async () => {
+      return Promise.resolve({ id: generatedId } as DocResponse);
     });
-    (vi.mocked(useSession)(undefined) as any).sessionDatabase.put = mockPut;
+    vi.mocked(useSession)(undefined).sessionDatabase.put = mockPut;
 
     act(() => {
       result.current.setInput("Trigger stream");
@@ -48,8 +51,8 @@ describe("useSimpleChat", () => {
     });
 
     act(() => {
-      const sessionHookResult = vi.mocked(useSession)(undefined);
-      const mockDocs = (sessionHookResult as any).docs as {
+      const sessionHookResult = useSession();
+      const mockDocs = sessionHookResult.docs as unknown as {
         _id: string;
         type: string;
         text: string;

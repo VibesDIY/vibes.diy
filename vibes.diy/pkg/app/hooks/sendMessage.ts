@@ -1,10 +1,11 @@
 import { Database } from "use-fireproof";
-import type {
-  AiChatMessageDocument,
-  ChatMessageDocument,
-  UserChatMessageDocument,
-  VibeDocument,
-} from "../types/chat.js";
+import {
+  resolveEffectiveModel,
+  type AiChatMessageDocument,
+  type ChatMessageDocument,
+  type UserChatMessageDocument,
+  type VibeDocument,
+} from "@vibes.diy/prompts";
 import { trackChatInputClick } from "../utils/analytics.js";
 import { parseContent } from "../utils/segmentParser.js";
 import { streamAI } from "../utils/streamHandler.js";
@@ -26,7 +27,7 @@ export interface SendMessageContext {
     role: "user" | "assistant" | "system";
     content: string;
   }[];
-  modelToUse: string;
+  modelToUse: string[];
   throttledMergeAiMessage: (content: string) => void;
   isProcessingRef: { current: boolean };
   aiMessage: AiChatMessageDocument;
@@ -56,7 +57,6 @@ export async function sendMessage(
     ensureSystemPrompt,
     submitUserMessage,
     buildMessageHistory,
-    modelToUse,
     throttledMergeAiMessage,
     isProcessingRef,
     aiMessage,
@@ -125,6 +125,8 @@ export async function sendMessage(
     userPrompt: promptText,
     history: messageHistory,
   });
+
+  const modelToUse = await resolveEffectiveModel(ctx, vibeDoc);
 
   return streamAI(
     modelToUse,

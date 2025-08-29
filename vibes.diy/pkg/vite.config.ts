@@ -4,7 +4,7 @@ import type { ConfigEnv, UserConfig } from "vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-import { cloudflare } from "@cloudflare/vite-plugin";
+// import { cloudflare } from "@cloudflare/vite-plugin";
 
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   // Disable React Router plugin for tests or when explicitly disabled

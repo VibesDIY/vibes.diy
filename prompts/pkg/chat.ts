@@ -1,7 +1,6 @@
-import type { DocTypes } from "use-fireproof";
-import type { RuntimeError } from "../hooks/useRuntimeErrors.js";
-import type { ViewType } from "../utils/ViewState.js"; // Import ViewType
-export type { ViewType } from "../utils/ViewState.js"; // Re-export ViewType
+import type { DocTypes } from "@fireproof/core-types-base";
+import type { RuntimeError } from "use-vibes";
+import { ViewType } from "./view-state.js";
 
 // ===== Vibe Document Type =====
 export interface VibeDocument {
@@ -131,6 +130,7 @@ export type SessionOrScreenshot = SessionDocument | ScreenshotDocument;
 export type ChatMessage = ChatMessageDocument & {
   text: string;
   timestamp?: number;
+  dependenciesString?: string;
 };
 
 // User chat message type used in the UI

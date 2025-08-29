@@ -1,34 +1,46 @@
 import { callAI, type Message, type CallAIOptions } from "call-ai";
-import { CALLAI_ENDPOINT, APP_MODE } from "./config/env.js";
+
 // Import all LLM text files statically
-import callaiTxt from "./llms/callai.txt?raw";
-import fireproofTxt from "./llms/fireproof.txt?raw";
-import imageGenTxt from "./llms/image-gen.txt?raw";
-import webAudioTxt from "./llms/web-audio.txt?raw";
-import threeJsTxt from "./llms/three-js.md?raw";
-import d3Txt from "./llms/d3.md?raw";
+// import { getTxtDocs } from "./llms/txt-docs.js";
+// import callaiTxt from "./llms/callai.txt?raw";
+// import fireproofTxt from "./llms/fireproof.txt?raw";
+// import imageGenTxt from "./llms/image-gen.txt?raw";
+// import webAudioTxt from "./llms/web-audio.txt?raw";
+// import threeJsTxt from "./llms/three-js.md?raw";
+// import d3Txt from "./llms/d3.md?raw";
+// import {
+//   DEFAULT_DEPENDENCIES,
+//   llmsCatalog,
+//   type LlmsCatalogEntry,
+//   CATALOG_DEPENDENCY_NAMES,
+// } from "./llms/catalog.js";
+// import models from "./data/models.json" with { type: "json" };
+import type { HistoryMessage, UserSettings } from "./settings.js";
+import type { VibeDocument } from "./chat.js";
+import { Lazy } from "@adviser/cement";
 import {
-  DEFAULT_DEPENDENCIES,
-  llmsCatalog,
-  type LlmsCatalogEntry,
-  CATALOG_DEPENDENCY_NAMES,
-} from "./llms/catalog.js";
-import models from "./data/models.json" with { type: "json" };
-import type { UserSettings } from "./types/settings.js";
-import type { VibeDocument } from "./types/chat.js";
+  getJsonDocs,
+  getLlmCatalog,
+  getLlmCatalogNames,
+  LlmCatalogEntry,
+} from "./json-docs.js";
+import { getDefaultDependencies } from "./catalog.js";
+import { getTexts } from "./txt-docs.js";
 
-export const DEFAULT_CODING_MODEL = "anthropic/claude-sonnet-4";
-
-// Public: stable set of valid model IDs sourced from app/data/models.json
-// Exposed as ReadonlySet in TypeScript to discourage mutation by consumers.
-export const MODEL_IDS: ReadonlySet<string> = new Set(
-  (models as { id: string }[]).map((m) => m.id),
-);
-
-// Public: validator helper for model IDs (strict - only known models)
-export function isValidModelId(id: unknown): id is string {
-  return typeof id === "string" && MODEL_IDS.has(id);
+export async function defaultCodingModel() {
+  return "anthropic/claude-sonnet-4";
 }
+
+// // Public: stable set of valid model IDs sourced from app/data/models.json
+// // Exposed as ReadonlySet in TypeScript to discourage mutation by consumers.
+// export const MODEL_IDS: ReadonlySet<string> = new Set(
+//   (models as { id: string }[]).map((m) => m.id),
+// );
+
+// // Public: validator helper for model IDs (strict - only known models)
+// export function isValidModelId(id: unknown): id is string {
+//   return typeof id === "string" && MODEL_IDS.has(id);
+// }
 
 // Relaxed validator for any reasonable model ID format (for custom models)
 function normalizeModelIdInternal(id: unknown): string | undefined {
@@ -46,83 +58,88 @@ export function isPermittedModelId(id: unknown): id is string {
 }
 
 // Resolve the effective model id given optional session and global settings
-export function resolveEffectiveModel(
+export async function resolveEffectiveModel(
   settingsDoc?: UserSettings,
   vibeDoc?: VibeDocument,
-): string {
+): Promise<string> {
   const sessionChoice = normalizeModelIdInternal(vibeDoc?.selectedModel);
   if (sessionChoice) return sessionChoice;
   const globalChoice = normalizeModelIdInternal(settingsDoc?.model);
   if (globalChoice) return globalChoice;
-  return DEFAULT_CODING_MODEL;
+  return defaultCodingModel();
 }
 
 // Static mapping of LLM text content
-const llmsTextContent: Record<string, string> = {
-  callai: callaiTxt,
-  fireproof: fireproofTxt,
-  "image-gen": imageGenTxt,
-  "web-audio": webAudioTxt,
-  "three-js": threeJsTxt,
-  d3: d3Txt,
-};
+// const llmsTextContent: Record<string, string> = {
+//   callai: callaiTxt,
+//   fireproof: fireproofTxt,
+//   "image-gen": imageGenTxt,
+//   "web-audio": webAudioTxt,
+//   "three-js": threeJsTxt,
+//   d3: d3Txt,
+// };
 
 // Cache for LLM text documents to prevent redundant fetches/imports
-const llmsTextCache: Record<string, string> = {};
+// const llmsTextCache: Record<string, string> = {};
 
 // Load raw text for a single LLM by name using static imports
-function loadLlmsTextByName(name: string): string | undefined {
-  try {
-    const text = llmsTextContent[name] || "";
-    return text || undefined;
-  } catch (_err) {
-    console.warn("Failed to load raw LLM text for:", name, _err);
-    return undefined;
-  }
-}
+// function loadLlmsTextByName(name: string): string | undefined {
+//   try {
+//     const text = llmsTextContent[name] || "";
+//     return text || undefined;
+//   } catch (_err) {
+//     console.warn("Failed to load raw LLM text for:", name, _err);
+//     return undefined;
+//   }
+// }
 
 // Escape for RegExp construction
 function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-interface HistoryMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
-
 // Precompile import-detection regexes once per module entry
-const llmImportRegexes = llmsCatalog
-  .filter((l) => l.importModule && l.importName)
-  .map((l) => {
-    const mod = escapeRegExp(l.importModule);
-    const name = escapeRegExp(l.importName);
-    const importType = l.importType || "named";
+const llmImportRegexes = Lazy((fallBackUrl: URL) => {
+  return getJsonDocs(fallBackUrl).then((docs) =>
+    Object.values(docs)
+      .map((d) => d.obj)
+      .filter((l) => l.importModule && l.importName)
+      .map((l) => {
+        const mod = escapeRegExp(l.importModule);
+        const name = escapeRegExp(l.importName);
+        const importType = l.importType || "named";
 
-    return {
-      name: l.name,
-      // Matches: import { ..., <name>, ... } from '<module>'
-      named: new RegExp(
-        `import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['\\"]${mod}['\\"]`,
-      ),
-      // Matches: import <name> from '<module>'
-      def: new RegExp(`import\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`),
-      // Matches: import * as <name> from '<module>'
-      namespace: new RegExp(
-        `import\\s*\\*\\s*as\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`,
-      ),
-      importType,
-    } as const;
-  });
+        return {
+          name: l.name,
+          // Matches: import { ..., <name>, ... } from '<module>'
+          named: new RegExp(
+            `import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['\\"]${mod}['\\"]`,
+          ),
+          // Matches: import <name> from '<module>'
+          def: new RegExp(`import\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`),
+          // Matches: import * as <name> from '<module>'
+          namespace: new RegExp(
+            `import\\s*\\*\\s*as\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`,
+          ),
+          importType,
+        } as const;
+      }),
+  );
+});
 
 // Detect modules already referenced in history imports
-function detectModulesInHistory(history: HistoryMessage[]): Set<string> {
+async function detectModulesInHistory(
+  history: HistoryMessage[],
+  opts: LlmSelectionWithFallbackUrl,
+): Promise<Set<string>> {
   const detected = new Set<string>();
   if (!Array.isArray(history)) return detected;
   for (const msg of history) {
     const content = msg?.content || "";
     if (!content || typeof content !== "string") continue;
-    for (const { name, named, def, namespace } of llmImportRegexes) {
+    for (const { name, named, def, namespace } of await llmImportRegexes(
+      opts.fallBackUrl,
+    )) {
       if (named.test(content) || def.test(content) || namespace.test(content)) {
         detected.add(name);
       }
@@ -137,16 +154,36 @@ export interface LlmSelectionDecisions {
   demoData: boolean; // whether to instruct adding Demo Data button/flow
 }
 
+export interface LlmSelectionOptions {
+  readonly appMode?: "test" | "production";
+  readonly callAiEndpoint: string;
+  readonly fallBackUrl?: URL;
+}
+
+export type LlmSelectionWithFallbackUrl = Omit<
+  LlmSelectionOptions,
+  "fallBackUrl"
+> & {
+  readonly fallBackUrl: URL;
+};
+
 // Ask LLM which modules and options to include based on catalog + user prompt + history
 export async function selectLlmsAndOptions(
   model: string,
   userPrompt: string,
   history: HistoryMessage[],
+  iopts: LlmSelectionOptions,
 ): Promise<LlmSelectionDecisions> {
+  const opts: LlmSelectionWithFallbackUrl = {
+    appMode: "production",
+    fallBackUrl: new URL("https://esm.sh/use-vibes/prompt-catalog/llms"),
+    ...iopts,
+  };
+  const llmsCatalog = await getLlmCatalog(opts.fallBackUrl);
   // In test mode, avoid network and return all modules to keep deterministic coverage
   if (
-    APP_MODE === "test" &&
-    !/localhost|127\.0\.0\.1/i.test(String(CALLAI_ENDPOINT))
+    opts.appMode === "test" &&
+    !/localhost|127\.0\.0\.1/i.test(String(opts.callAiEndpoint))
   ) {
     return {
       selected: llmsCatalog.map((l) => l.name),
@@ -174,7 +211,7 @@ export async function selectLlmsAndOptions(
   ];
 
   const options: CallAIOptions = {
-    chatUrl: CALLAI_ENDPOINT,
+    chatUrl: opts.callAiEndpoint,
     apiKey: "sk-vibes-proxy-managed",
     model,
     schema: {
@@ -226,25 +263,25 @@ export async function selectLlmsAndOptions(
 }
 
 // Public: preload all llms text files (triggered on form focus)
-export async function preloadLlmsText(): Promise<void> {
-  llmsCatalog.forEach((llm) => {
-    if (
-      llmsTextCache[llm.name] ||
-      (llm.llmsTxtUrl && llmsTextCache[llm.llmsTxtUrl])
-    )
-      return;
-    const text = loadLlmsTextByName(llm.name);
-    if (text) {
-      llmsTextCache[llm.name] = text;
-      if (llm.llmsTxtUrl) {
-        llmsTextCache[llm.llmsTxtUrl] = text;
-      }
-    }
-  });
-}
+// export async function preloadLlmsText(): Promise<void> {
+//   llmsCatalog.forEach((llm) => {
+//     if (
+//       llmsTextCache[llm.name] ||
+//       (llm.llmsTxtUrl && llmsTextCache[llm.llmsTxtUrl])
+//     )
+//       return;
+//     const text = loadLlmsTextByName(llm.name);
+//     if (text) {
+//       llmsTextCache[llm.name] = text;
+//       if (llm.llmsTxtUrl) {
+//         llmsTextCache[llm.llmsTxtUrl] = text;
+//       }
+//     }
+//   });
+// }
 
 // Generate dynamic import statements from LLM configuration
-export function generateImportStatements(llms: LlmsCatalogEntry[]) {
+export function generateImportStatements(llms: LlmCatalogEntry[]) {
   const seen = new Set<string>();
   return llms
     .slice()
@@ -274,7 +311,7 @@ export function generateImportStatements(llms: LlmsCatalogEntry[]) {
 // Base system prompt for the AI
 export async function makeBaseSystemPrompt(
   model: string,
-  sessionDoc?: any,
+  sessionDoc: Partial<UserSettings> & LlmSelectionWithFallbackUrl,
   onAiDecisions?: (decisions: { selected: string[] }) => void,
 ) {
   // Inputs for module selection
@@ -289,32 +326,40 @@ export async function makeBaseSystemPrompt(
   let includeInstructional = true;
   let includeDemoData = true;
 
+  const llmsCatalog = await getLlmCatalog(sessionDoc.fallBackUrl);
+  const llmsCatalogNames = await getLlmCatalogNames(sessionDoc.fallBackUrl);
   if (useOverride && Array.isArray(sessionDoc?.dependencies)) {
     selectedNames = (sessionDoc.dependencies as unknown[])
       .filter((v): v is string => typeof v === "string")
-      .filter((name) => CATALOG_DEPENDENCY_NAMES.has(name));
+      .filter((name) => llmsCatalogNames.has(name));
   } else {
     // Non‑override path: schema‑driven LLM selection (plus history retention)
-    const decisions = await selectLlmsAndOptions(model, userPrompt, history);
+    const decisions = await selectLlmsAndOptions(
+      model,
+      userPrompt,
+      history,
+      sessionDoc,
+    );
     includeInstructional = decisions.instructionalText;
     includeDemoData = decisions.demoData;
 
-    const detected = detectModulesInHistory(history);
+    const detected = await detectModulesInHistory(history, sessionDoc);
     const finalNames = new Set<string>([...decisions.selected, ...detected]);
     selectedNames = Array.from(finalNames);
 
     // Fallback if empty: use deterministic DEFAULT_DEPENDENCIES
-    if (selectedNames.length === 0) selectedNames = [...DEFAULT_DEPENDENCIES];
+    if (selectedNames.length === 0)
+      selectedNames = [...(await getDefaultDependencies())];
 
     // Store AI decisions for UI display
     onAiDecisions?.({ selected: selectedNames });
   }
 
   // Apply per-vibe overrides for instructional text and demo data
-  if (sessionDoc?.instructionalTextOverride !== undefined) {
+  if (sessionDoc?.instructionalTextOverride) {
     includeInstructional = sessionDoc.instructionalTextOverride;
   }
-  if (sessionDoc?.demoDataOverride !== undefined) {
+  if (sessionDoc?.demoDataOverride) {
     includeDemoData = sessionDoc.demoDataOverride;
   }
 
@@ -324,17 +369,14 @@ export async function makeBaseSystemPrompt(
   let concatenatedLlmsTxt = "";
   for (const llm of chosenLlms) {
     // Prefer cached content (preloaded on focus). If missing, try static import as a fallback.
-    let text =
-      llmsTextCache[llm.name] ||
-      (llm.llmsTxtUrl ? llmsTextCache[llm.llmsTxtUrl] : undefined);
+    const text = await getTexts(llm.name, sessionDoc.fallBackUrl);
     if (!text) {
-      text = loadLlmsTextByName(llm.name) || "";
-      if (text) {
-        llmsTextCache[llm.name] = text;
-        if (llm.llmsTxtUrl) {
-          llmsTextCache[llm.llmsTxtUrl] = text;
-        }
-      }
+      console.warn(
+        "Failed to load raw LLM text for:",
+        llm.name,
+        sessionDoc.fallBackUrl,
+      );
+      continue;
     }
 
     concatenatedLlmsTxt += `

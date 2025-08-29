@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { makeBaseSystemPrompt } from "~/vibes.diy/app/prompts.js";
+import { makeBaseSystemPrompt } from "../../pkg/prompts.js";
+import { UserSettings } from "../../pkg/settings.js";
+import { VibesDiyEnv } from "~/vibes.diy/app/config/env.js";
 
 // Mock the import.meta.glob function
 vi.mock("~/vibes.diy/app/prompts.js", async () => {
@@ -15,7 +17,10 @@ vi.mock("~/vibes.diy/app/prompts.js", async () => {
 
   // Return the actual implementation with our mocked modules
   return {
-    makeBaseSystemPrompt: async (model: string, sessionDoc?: any) => {
+    makeBaseSystemPrompt: async (
+      model: string,
+      sessionDoc?: Partial<UserSettings>,
+    ) => {
       let concatenatedLlmsTxt = "";
       const llmsList = Object.values(llmsModules).map((mod) => mod.default);
 
@@ -88,7 +93,10 @@ afterEach(() => {
 describe("Settings and Prompt Integration", () => {
   it("generates a base system prompt with default values when no settings provided", async () => {
     const model = "test-model";
-    const prompt = await makeBaseSystemPrompt(model);
+    const prompt = await makeBaseSystemPrompt(model, {
+      fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
+    });
 
     // Check that the prompt includes the default style
     expect(prompt).toContain("have a DIY zine vibe");
@@ -102,6 +110,8 @@ describe("Settings and Prompt Integration", () => {
     const settingsDoc = {
       _id: "user_settings",
       stylePrompt: "synthwave (80s digital aesthetic)",
+      fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
     };
 
     const prompt = await makeBaseSystemPrompt(model, settingsDoc);
@@ -118,6 +128,8 @@ describe("Settings and Prompt Integration", () => {
     const settingsDoc = {
       _id: "user_settings",
       userPrompt: userPromptText,
+      fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
     };
 
     const prompt = await makeBaseSystemPrompt(model, settingsDoc);
@@ -134,6 +146,8 @@ describe("Settings and Prompt Integration", () => {
       _id: "user_settings",
       stylePrompt: stylePromptText,
       userPrompt: userPromptText,
+      fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
     };
 
     const prompt = await makeBaseSystemPrompt(model, settingsDoc);
@@ -146,7 +160,11 @@ describe("Settings and Prompt Integration", () => {
 
   it("handles empty settings document gracefully", async () => {
     const model = "test-model";
-    const settingsDoc = { _id: "user_settings" };
+    const settingsDoc = {
+      _id: "user_settings",
+      fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
+    };
 
     const prompt = await makeBaseSystemPrompt(model, settingsDoc);
 
@@ -156,7 +174,10 @@ describe("Settings and Prompt Integration", () => {
 
   it("includes LLM documentation in the prompt", async () => {
     const model = "test-model";
-    const prompt = await makeBaseSystemPrompt(model);
+    const prompt = await makeBaseSystemPrompt(model, {
+      fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
+    });
 
     // Check that the LLM documentation is included
     expect(prompt).toContain("<llm1-docs>");

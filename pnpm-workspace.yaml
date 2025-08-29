@@ -7,6 +7,8 @@ packages:
   - "use-vibes/tests"
   - "vibes.diy/pkg"
   - "vibes.diy/tests"
+  - "prompts/pkg"
+  - "prompts/tests"
 
 # Avoid needing to interactively run 'pnpm approve-build' step during quickstart
 onlyBuiltDependencies:

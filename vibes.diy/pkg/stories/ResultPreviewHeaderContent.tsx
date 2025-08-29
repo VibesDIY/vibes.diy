@@ -1,6 +1,6 @@
 import React from "react";
 import ResultPreviewHeaderContent from "../app/components/ResultPreview/ResultPreviewHeaderContent.js";
-import type { ViewType, ViewControlsType } from "../app/utils/ViewState.js";
+import type { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { AuthProvider } from "../app/contexts/AuthContext.js";
 import { BrowserRouter } from "react-router-dom";
 

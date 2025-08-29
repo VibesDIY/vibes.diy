@@ -1,5 +1,5 @@
 import { renderHook } from "@testing-library/react";
-import { useViewState, ViewState } from "~/vibes.diy/app/utils/ViewState.js";
+import { useViewState } from "~/vibes.diy/app/utils/ViewState.js";
 import { vi, describe, test, expect, beforeEach } from "vitest";
 
 // Mock react-router-dom hooks
@@ -20,6 +20,7 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar/utils", () => {
 
 // Import mocked modules
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { ViewState } from "@vibes.diy/prompts";
 
 describe("useViewState", () => {
   const mockNavigate = vi.fn();

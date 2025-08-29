@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "@testing-library/react";
 import { vi, describe, it, expect } from "vitest";
 import ChatInterface from "~/vibes.diy/app/components/ChatInterface.js";
-import type { ChatState } from "~/vibes.diy/app/types/chat.js";
+import type { ChatState } from "@vibes.diy/prompts";
 import { mockChatStateProps } from "./mockData.js";
 
 /**
@@ -21,7 +21,7 @@ vi.mock("use-fireproof", () => ({
 // Prepare mock data
 const mockChatState: ChatState & {
   setMobilePreviewShown: (shown: boolean) => void;
-  navigateToView: (view: any) => void;
+  navigateToView: (view: unknown) => void;
 } = {
   ...mockChatStateProps,
   docs: [],

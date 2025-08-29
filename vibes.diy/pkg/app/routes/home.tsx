@@ -12,12 +12,8 @@ import ResultPreviewHeaderContent from "../components/ResultPreview/ResultPrevie
 import SessionSidebar from "../components/SessionSidebar.js";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
-import {
-  isMobileViewport,
-  useViewState,
-  ViewControlsType,
-  ViewType,
-} from "../utils/ViewState.js";
+import { isMobileViewport, useViewState } from "../utils/ViewState.js";
+import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 
 export function meta() {
   return [

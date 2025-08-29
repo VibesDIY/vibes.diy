@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useMessageSelection } from "~/vibes.diy/app/hooks/useMessageSelection.js";
-import type { ChatMessageDocument } from "~/vibes.diy/app/types/chat.js";
+import type { ChatMessageDocument } from "@vibes.diy/prompts";
 
 describe("useMessageSelection", () => {
   // Sample data for testing

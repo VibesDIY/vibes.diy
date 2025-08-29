@@ -1,33 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
+import { ViewControlsType, ViewState, ViewType } from "@vibes.diy/prompts";
 
 // Helper to detect mobile viewport
 export const isMobileViewport = () => {
   return typeof window !== "undefined" && window.innerWidth < 768;
 };
-
-export type ViewType = "preview" | "code" | "data" | "chat" | "settings";
-
-export type ViewControlsType = Record<
-  Exclude<ViewType, "chat">,
-  {
-    enabled: boolean;
-    icon: string;
-    label: string;
-    loading?: boolean; // Made loading optional
-  }
->;
-
-export interface ViewState {
-  readonly currentView: ViewType;
-  readonly displayView: ViewType;
-  readonly navigateToView: (view: ViewType) => void;
-  readonly viewControls: ViewControlsType;
-  readonly showViewControls: boolean;
-  readonly sessionId: string;
-  readonly encodedTitle: string;
-}
 
 export interface ViewStateProps {
   sessionId?: string;

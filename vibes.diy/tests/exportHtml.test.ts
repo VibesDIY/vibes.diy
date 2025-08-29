@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  MockInstance,
+  vi,
+} from "vitest";
 import {
   generateStandaloneHtml,
   downloadTextFile,
@@ -59,8 +67,8 @@ describe("exportHtml utilities", () => {
 
     let blobUrl: string;
     let anchorEl: HTMLAnchorElement;
-    let clickSpy: any;
-    let appendSpy: any;
+    let clickSpy: MockInstance<() => void>;
+    let appendSpy: MockInstance<<T extends Node>(node: T) => T>;
 
     beforeEach(() => {
       blobUrl = "blob:http://localhost/mock-blob-url";
@@ -83,7 +91,7 @@ describe("exportHtml utilities", () => {
       ) => {
         if (tagName.toLowerCase() === "a") return anchorEl as HTMLAnchorElement;
         // fallback to the real implementation for everything else
-        return (realCreateElement as any).call(document, tagName, options);
+        return realCreateElement.call(document, tagName, options);
       }) as typeof document.createElement);
     });
 

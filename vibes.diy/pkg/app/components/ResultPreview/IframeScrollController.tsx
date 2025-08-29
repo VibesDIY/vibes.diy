@@ -18,7 +18,7 @@ interface SandpackScrollControllerProps {
 
 const SandpackScrollController: React.FC<SandpackScrollControllerProps> = ({
   isStreaming,
-  shouldEnableScrolling = isStreaming, // Default to isStreaming if not provided
+  // shouldEnableScrolling = isStreaming, // Default to isStreaming if not provided
   codeReady = false,
   activeView = "preview", // Default to preview view
 }) => {

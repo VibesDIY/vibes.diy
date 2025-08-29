@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import type { RuntimeError } from "./useRuntimeErrors.js";
-import type { UserChatMessageDocument } from "../types/chat.js";
+import type { UserChatMessageDocument } from "@vibes.diy/prompts";
+import { RuntimeError } from "use-vibes";
 
 interface Params {
   immediateErrors: RuntimeError[];

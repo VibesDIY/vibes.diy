@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React, { useRef, useState } from "react";
 import ChatInput, { ChatInputRef } from "../app/components/ChatInput.js";
-import type { ChatState } from "../app/types/chat.js";
+import type { ChatState } from "@vibes.diy/prompts";
 
 // Mock wrapper component for Storybook
 function ChatInputWrapper({

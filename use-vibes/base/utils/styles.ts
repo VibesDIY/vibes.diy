@@ -271,26 +271,26 @@ export const imgGenStyles = {
 
 // Helper function to merge styles with theme variants
 export function createStyledVariant(
-  baseStyle: Record<string, any>,
-  variants: Record<string, any> = {}
-): Record<string, any> {
+  baseStyle: Record<string, unknown>,
+  variants: Record<string, unknown> = {}
+): Record<string, unknown> {
   return { ...baseStyle, ...variants };
 }
 
 // Utility functions for common style patterns
 export const styleUtils = {
   // Create hover state styles (for use with CSS-in-JS)
-  hover: (styles: Record<string, any>) => ({
+  hover: (styles: Record<string, unknown>) => ({
     '&:hover': styles,
   }),
 
   // Create disabled state styles
-  disabled: (styles: Record<string, any>) => ({
+  disabled: (styles: Record<string, unknown>) => ({
     '&:disabled': styles,
   }),
 
   // Create media query styles
-  mediaQuery: (query: string, styles: Record<string, any>) => ({
+  mediaQuery: (query: string, styles: Record<string, unknown>) => ({
     [`@media ${query}`]: styles,
   }),
 

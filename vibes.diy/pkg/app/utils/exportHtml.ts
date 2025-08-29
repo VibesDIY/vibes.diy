@@ -1,4 +1,4 @@
-import { CALLAI_ENDPOINT } from "../config/env.js";
+import { VibesDiyEnv } from "../config/env.js";
 import iframeTemplateRaw from "../components/ResultPreview/templates/iframe-template.html?raw";
 import { normalizeComponentExports } from "./normalizeComponentExports.js";
 import { transformImports } from "../components/ResultPreview/transformImports.js";
@@ -9,7 +9,7 @@ export function generateStandaloneHtml(params: { code: string }): string {
 
   return iframeTemplateRaw
     .replaceAll("{{API_KEY}}", "sk-vibes-proxy-managed")
-    .replaceAll("{{CALLAI_ENDPOINT}}", CALLAI_ENDPOINT)
+    .replaceAll("{{CALLAI_ENDPOINT}}", VibesDiyEnv.CALLAI_ENDPOINT())
     .replace("{{APP_CODE}}", transformed);
 }
 

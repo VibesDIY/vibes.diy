@@ -1,3 +1,9 @@
+import {
+  getLlmCatalogNames,
+  getDefaultDependencies,
+  getLlmCatalog,
+  LlmCatalogEntry,
+} from "@vibes.diy/prompts";
 import React, {
   useCallback,
   useEffect,
@@ -5,11 +11,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  CATALOG_DEPENDENCY_NAMES,
-  DEFAULT_DEPENDENCIES,
-  llmsCatalog,
-} from "../../llms/catalog.js";
+import { VibesDiyEnv } from "../../config/env.js";
 
 interface AppSettingsViewProps {
   title: string;
@@ -48,8 +50,20 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(title);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const [catalogNames, setCatalogNames] = useState<Set<string>>(new Set());
+  const [llmsCatalog, setLlmsCatalog] = useState<LlmCatalogEntry[]>([]);
+
   // Per‑vibe libraries selection state
-  const catalogNames = useMemo(() => CATALOG_DEPENDENCY_NAMES, []);
+  useEffect(() => {
+    getLlmCatalogNames(VibesDiyEnv.PROMPT_FALL_BACKURL()).then((names) =>
+      setCatalogNames(names),
+    );
+    getLlmCatalog(VibesDiyEnv.PROMPT_FALL_BACKURL()).then((catalog) =>
+      setLlmsCatalog(catalog),
+    );
+  }, []);
+
   const initialDeps = useMemo(() => {
     const useManual = !!dependenciesUserOverride;
     let input: string[];
@@ -136,14 +150,14 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
     try {
       const valid = deps.filter((n) => catalogNames.has(n));
       await onUpdateDependencies?.(
-        valid.length ? valid : DEFAULT_DEPENDENCIES,
+        valid.length ? valid : await getDefaultDependencies(),
         true,
       );
       setHasUnsavedDeps(false);
       setSaveDepsOk(true);
       setTimeout(() => setSaveDepsOk(false), 2000);
-    } catch (e: any) {
-      setSaveDepsErr(e?.message || "Failed to save libraries");
+    } catch (e) {
+      setSaveDepsErr((e as Error)?.message || "Failed to save libraries");
     }
   }, [deps, onUpdateDependencies, catalogNames]);
 

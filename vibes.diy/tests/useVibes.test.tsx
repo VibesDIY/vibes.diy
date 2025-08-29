@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "~/vibes.diy/app/contexts/AuthContext.js";
 import { useVibes } from "~/vibes.diy/app/hooks/useVibes.js";
 // Import VibeDocument from the correct location
-import type { VibeDocument } from "~/vibes.diy/app/types/chat.js";
+import type { VibeDocument } from "@vibes.diy/prompts";
 // Import TokenPayload for our mock
 import type { TokenPayload } from "~/vibes.diy/app/utils/auth.js";
 import type { LocalVibe } from "~/vibes.diy/app/utils/vibeUtils.js";

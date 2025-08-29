@@ -1,8 +1,11 @@
 import { useCallback } from "react";
-import { APP_MODE } from "../config/env.js";
-import { makeBaseSystemPrompt, resolveEffectiveModel } from "../prompts.js";
-import type { UserSettings } from "../types/settings.js";
-import type { VibeDocument } from "../types/chat.js";
+import { VibesDiyEnv } from "../config/env.js";
+import {
+  makeBaseSystemPrompt,
+  resolveEffectiveModel,
+  UserSettings,
+  VibeDocument,
+} from "@vibes.diy/prompts";
 
 // Default model is resolved via resolveEffectiveModel using settings + session
 
@@ -27,12 +30,14 @@ export function useSystemPromptManager(
         content: string;
       }[];
     }) => {
-      if (APP_MODE === "test") {
+      if (VibesDiyEnv.APP_MODE() === "test") {
         return "Test system prompt";
       }
       return makeBaseSystemPrompt(
-        resolveEffectiveModel(settingsDoc, vibeDoc),
+        await resolveEffectiveModel(settingsDoc, vibeDoc),
         {
+          fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+          callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
           ...(settingsDoc || {}),
           ...(vibeDoc || {}),
           ...(overrides || {}),

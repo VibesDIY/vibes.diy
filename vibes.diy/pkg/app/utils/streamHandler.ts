@@ -3,7 +3,7 @@
  */
 
 import { type CallAIOptions, type Message, callAI } from "call-ai";
-import { CALLAI_ENDPOINT } from "../config/env.js";
+import { VibesDiyEnv } from "../config/env.js";
 
 /**
  * Stream AI responses with accumulated content callback
@@ -42,7 +42,7 @@ export async function streamAI(
   // Configure call-ai options with default maximum token limit
   const defaultMaxTokens = userId ? 150000 : 75000;
   const options: CallAIOptions = {
-    chatUrl: CALLAI_ENDPOINT,
+    chatUrl: VibesDiyEnv.CALLAI_ENDPOINT(),
     apiKey: apiKey, // Pass through the API key (including dummy keys)
     model: model,
     transforms: ["middle-out"],
@@ -94,7 +94,7 @@ export async function streamAI(
             ? streamError.message
             : String(streamError);
         // Return error message for debugging
-        return `Error: ${errorMsg}. If using proxy, ensure it's running at ${CALLAI_ENDPOINT}`;
+        return `Error: ${errorMsg}. If using proxy, ensure it's running at ${VibesDiyEnv.CALLAI_ENDPOINT()}`;
       }
     } else {
       throw new Error("Unexpected response type from callAI");
@@ -127,6 +127,6 @@ export async function streamAI(
         ? initialError.message
         : String(initialError);
     // Return error message for debugging
-    return `Error: ${errorMsg}. If using proxy, ensure it's running at ${CALLAI_ENDPOINT}`;
+    return `Error: ${errorMsg}. If using proxy, ensure it's running at ${VibesDiyEnv.CALLAI_ENDPOINT()}`;
   }
 }

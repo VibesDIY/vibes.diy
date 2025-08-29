@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext.js";
-import type { ChatMessageDocument } from "../../types/chat.js";
 import { trackPublishClick } from "../../utils/analytics.js";
 import { publishApp } from "../../utils/publishUtils.js";
+import { ChatMessageDocument } from "@vibes.diy/prompts";
 
 interface UsePublishProps {
   sessionId: string | undefined;

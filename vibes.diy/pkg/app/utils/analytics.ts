@@ -1,12 +1,12 @@
 import ReactGA from "react-ga";
-import { GA_TRACKING_ID } from "../config/env.js";
+import { VibesDiyEnv } from "../config/env.js";
 
 /**
  * Initialize Google Analytics
  */
 export function initGA() {
-  if (GA_TRACKING_ID) {
-    ReactGA.initialize(GA_TRACKING_ID);
+  if (VibesDiyEnv.GA_TRACKING_ID()) {
+    ReactGA.initialize(VibesDiyEnv.GA_TRACKING_ID());
   }
 }
 
@@ -15,7 +15,7 @@ export function initGA() {
  * @param path - The page path
  */
 export function pageview(path: string): void {
-  if (GA_TRACKING_ID) {
+  if (VibesDiyEnv.GA_TRACKING_ID()) {
     ReactGA.send({ hitType: "pageview", page: path });
   }
 }
@@ -33,7 +33,7 @@ export const event = (
   label?: string,
   value?: number,
 ): void => {
-  if (GA_TRACKING_ID) {
+  if (VibesDiyEnv.GA_TRACKING_ID()) {
     ReactGA.event({
       category,
       action,
@@ -78,7 +78,7 @@ export const trackAuthClick = (
   additionalParams?: Record<string, unknown>,
 ): void => {
   trackEvent("auth", {
-    send_to: GA_TRACKING_ID,
+    send_to: VibesDiyEnv.GA_TRACKING_ID(),
     ...additionalParams,
   });
 };
@@ -91,7 +91,7 @@ export const trackPublishClick = (
   additionalParams?: Record<string, unknown>,
 ): void => {
   trackEvent("publish", {
-    send_to: GA_TRACKING_ID,
+    send_to: VibesDiyEnv.GA_TRACKING_ID(),
     ...additionalParams,
   });
 };
@@ -106,7 +106,7 @@ export const trackChatInputClick = (
   additionalParams?: Record<string, unknown>,
 ): void => {
   trackEvent("chat", {
-    send_to: GA_TRACKING_ID,
+    send_to: VibesDiyEnv.GA_TRACKING_ID(),
     message_length: messageLength,
     ...additionalParams,
   });
@@ -124,7 +124,7 @@ export const trackErrorEvent = (
   details?: Record<string, unknown>,
 ): void => {
   trackEvent("error", {
-    send_to: GA_TRACKING_ID,
+    send_to: VibesDiyEnv.GA_TRACKING_ID(),
     error_type: errorType,
     error_message: message,
     ...details,

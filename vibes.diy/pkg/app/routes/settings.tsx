@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useFireproof } from "use-fireproof";
 import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
-import { SETTINGS_DBNAME } from "../config/env.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import modelsList from "../data/models.json" with { type: "json" };
-import type { UserSettings } from "../types/settings.js";
+import { VibesDiyEnv } from "../config/env.js";
+import { UserSettings } from "@vibes.diy/prompts";
 // Dependency chooser moved to per‑vibe App Settings view
 
 export function meta() {
@@ -20,7 +20,7 @@ export function meta() {
 export default function Settings() {
   const navigate = useNavigate();
   // Use the main database directly instead of through useSession
-  const { useDocument } = useFireproof(SETTINGS_DBNAME);
+  const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
   const { isAuthenticated, checkAuthStatus } = useAuth();
 
   const {

@@ -1,8 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import {
-  makeBaseSystemPrompt,
-  RESPONSE_FORMAT,
-} from "~/vibes.diy/app/prompts.js";
+import { makeBaseSystemPrompt, RESPONSE_FORMAT } from "@vibes.diy/prompts";
 
 // We need to mock the module properly, not test the real implementation yet
 vi.mock("~/vibes.diy/app/prompts.js", () => ({
@@ -22,13 +19,17 @@ vi.mock("~/vibes.diy/app/prompts.js", () => ({
 }));
 
 describe("Prompts Utility", () => {
+  const opts = {
+    fallBackUrl: new URL("https://example.com/fallback"),
+    callAiEndpoint: "https://example.com/call-ai",
+  };
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("generates a base system prompt with model documentation", async () => {
     const model = "gpt-4";
-    const prompt = await makeBaseSystemPrompt(model);
+    const prompt = await makeBaseSystemPrompt(model, opts);
 
     // Check that the prompt includes expected content from the mock
     expect(prompt).toBe("mocked system prompt");
@@ -37,7 +38,7 @@ describe("Prompts Utility", () => {
   it("handles different models", async () => {
     // Test with a different model
     const model = "claude-3";
-    const prompt = await makeBaseSystemPrompt(model);
+    const prompt = await makeBaseSystemPrompt(model, opts);
 
     // The base prompt should be the same regardless of model (in current implementation)
     expect(prompt).toBe("mocked system prompt");
@@ -66,7 +67,7 @@ describe("Prompts Utility", () => {
     vi.mocked(makeBaseSystemPrompt).mockImplementationOnce(mockImplementation);
 
     try {
-      await makeBaseSystemPrompt("gpt-4");
+      await makeBaseSystemPrompt("gpt-4", opts);
       // If we don't catch an error, the test should fail
       expect.fail("Expected makeBaseSystemPrompt to throw an error");
     } catch (error) {
@@ -79,7 +80,7 @@ describe("Prompts Utility", () => {
   it("handles empty llms list", async () => {
     // For this test we just verify that the mock was called
     const model = "gpt-4";
-    await makeBaseSystemPrompt(model);
+    await makeBaseSystemPrompt(model, opts);
 
     expect(makeBaseSystemPrompt).toHaveBeenCalledWith(model);
   });

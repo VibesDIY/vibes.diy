@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import type { ChatInterfaceProps } from "../types/chat.js"; // Updated import
+import type { ChatInterfaceProps } from "@vibes.diy/prompts";
 import MessageList from "./MessageList.js";
 import WelcomeScreen from "./WelcomeScreen.js";
 

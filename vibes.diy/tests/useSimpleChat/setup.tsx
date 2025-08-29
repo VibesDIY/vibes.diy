@@ -31,9 +31,8 @@ import type {
   AiChatMessage,
   ChatMessage,
   UserChatMessage,
-} from "~/vibes.diy/app/types/chat.js";
+} from "@vibes.diy/prompts";
 import { parseContent } from "~/vibes.diy/app/utils/segmentParser.js";
-import { QueryOpts } from "use-fireproof";
 
 // Helper function to convert chunks into SSE format
 function formatAsSSE(chunks: string[]): string[] {
@@ -242,11 +241,11 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
             ...currentUserMessage,
             _id: id,
           };
-          mockDocs.push(newDoc as any);
+          mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
         aiMessage: currentAiMessage,
-        mergeAiMessage: vi.fn((data: any) => {
+        mergeAiMessage: vi.fn((data) => {
           if (data && typeof data.text === "string") {
             currentAiMessage.text = data.text;
           }
@@ -257,17 +256,17 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
             ...currentAiMessage,
             _id: id,
           };
-          mockDocs.push(newDoc as any);
+          mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
-        saveAiMessage: vi.fn().mockImplementation(async (existingDoc: any) => {
+        saveAiMessage: vi.fn().mockImplementation(async (existingDoc) => {
           const id = existingDoc?._id || `ai-message-${Date.now()}`;
           const newDoc = {
             ...currentAiMessage,
             ...existingDoc,
             _id: id,
           };
-          mockDocs.push(newDoc as any);
+          mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
         // Mock message handling
@@ -343,7 +342,7 @@ export default HelloWorld;`,
                     '{"react": "^18.2.0", "react-dom": "^18.2.0"}}',
                   isStreaming,
                   timestamp: now,
-                } as any;
+                };
               }
               // Special case for the dependencies test
               else if (
@@ -612,7 +611,7 @@ export default HelloWorld;`,
                     '{"react": "^18.2.0", "react-dom": "^18.2.0"}}',
                   isStreaming,
                   timestamp: now,
-                } as any;
+                };
               }
               // Special case for the dependencies test
               else if (

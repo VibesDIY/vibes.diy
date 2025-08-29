@@ -1,16 +1,25 @@
 import React from "react";
+import { DocBase } from "use-fireproof";
+
+interface DynamicTableProps {
+  dbName: string;
+  headers: string[];
+  rows: DocBase[];
+  onRowClick?: (id: string, dbName: string) => void;
+  th?: string;
+}
 
 export default function DynamicTable({
-  hrefFn,
+  // hrefFn,
   dbName,
   headers,
   rows,
   th = "_id",
-  link = ["_id"],
+  // link = ["_id"],
   onRowClick = () => {
     /* no-op */
   },
-}: any) {
+}: DynamicTableProps) {
   return (
     <div className="relative mt-[40px] max-h-[calc(100vh-140px)] overflow-x-auto overflow-y-auto">
       <table className="text-light-primary dark:text-dark-primary w-full border-collapse text-left">
@@ -28,53 +37,59 @@ export default function DynamicTable({
           </tr>
         </thead>
         <tbody className="text-14 border-light-decorative-01 dark:border-dark-decorative-00 dark:bg-dark-background-01 border bg-white">
-          {rows.map((fields: any) => (
-            <tr
-              key={fields._id}
-              className="border-light-decorative-01 hover:bg-light-background-01 dark:border-dark-decorative-00 dark:hover:bg-dark-decorative-00 cursor-pointer border-b"
-              onClick={() => {
-                onRowClick(fields._id, dbName);
-              }}
-            >
-              {headers.map((header: string) =>
-                header === th ? (
-                  <th
-                    key={header}
-                    scope="row"
-                    className="px-[15px] py-[12px] text-xs whitespace-nowrap"
-                  >
-                    {formatTableCellContent(fields[header], header)}
-                  </th>
-                ) : (
-                  <td
-                    key={header}
-                    className="px-[15px] py-[12px] text-xs"
-                    title="Click to copy"
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent row click handler from firing
-                      const originalValue =
-                        fields[header] !== undefined
+          {rows
+            .map(
+              (i) => i as unknown as Record<string, string | null | undefined>,
+            )
+            .map((fields) => (
+              <tr
+                key={fields._id}
+                className="border-light-decorative-01 hover:bg-light-background-01 dark:border-dark-decorative-00 dark:hover:bg-dark-decorative-00 cursor-pointer border-b"
+                onClick={() => {
+                  onRowClick(fields._id as string, dbName);
+                }}
+              >
+                {headers.map((header: string) =>
+                  header === th ? (
+                    <th
+                      key={header}
+                      scope="row"
+                      className="px-[15px] py-[12px] text-xs whitespace-nowrap"
+                    >
+                      {formatTableCellContent(fields[header], header)}
+                    </th>
+                  ) : (
+                    <td
+                      key={header}
+                      className="px-[15px] py-[12px] text-xs"
+                      title="Click to copy"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent row click handler from firing
+                        const originalValue = fields[header]
                           ? typeof fields[header] === "string"
                             ? fields[header]
                             : JSON.stringify(fields[header])
                           : "";
-                      navigator.clipboard.writeText(originalValue);
-                    }}
-                  >
-                    {formatTableCellContent(fields[header], header)}
-                  </td>
-                ),
-              )}
-            </tr>
-          ))}
+                        navigator.clipboard.writeText(originalValue);
+                      }}
+                    >
+                      {formatTableCellContent(fields[header], header)}
+                    </td>
+                  ),
+                )}
+              </tr>
+            ))}
         </tbody>
       </table>
     </div>
   );
 }
 
-function formatTableCellContent(obj: any, header: string): string {
-  if (obj === undefined) return "";
+function formatTableCellContent(
+  obj: null | undefined | null | string,
+  header: string,
+): string {
+  if (!obj) return "";
   if (header === "_id")
     return obj.substring(0, 4) + ".." + obj.substring(obj.length - 4);
   const strOut = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);

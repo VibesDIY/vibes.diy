@@ -123,7 +123,7 @@ describe('ImgGen Component', () => {
 
   it('should render a placeholder while loading', () => {
     // Render the component with a test prompt
-    const { container } = render(<ImgGen prompt="test image" />);
+    render(<ImgGen prompt="test image" />);
 
     // Check that the placeholder is rendered by looking for its aria role and content
     const placeholder = screen.getByRole('img', { name: /image placeholder|test image/i });

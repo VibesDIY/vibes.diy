@@ -1,9 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
-import {
-  useRuntimeErrors,
-  type RuntimeError,
-} from "~/vibes.diy/app/hooks/useRuntimeErrors.js";
+import { useRuntimeErrors } from "~/vibes.diy/app/hooks/useRuntimeErrors.js";
 import { vi, describe, test, expect, beforeEach } from "vitest";
+import { RuntimeError } from "use-vibes";
 
 describe("useRuntimeErrors", () => {
   // Reset mocks before each test

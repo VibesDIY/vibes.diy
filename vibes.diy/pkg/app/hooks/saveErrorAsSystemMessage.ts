@@ -1,5 +1,6 @@
 import { Database } from "use-fireproof";
-import type { RuntimeError, ErrorCategory } from "./useRuntimeErrors.js";
+import type { ErrorCategory } from "./useRuntimeErrors.js";
+import { RuntimeError } from "use-vibes";
 
 export async function saveErrorAsSystemMessage(
   sessionDatabase: Database,

@@ -1,10 +1,10 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, act, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Create a simpler mock approach that works with the new structure
-const mockCalls: Array<{ prompt?: string; _id?: string; regenerate?: boolean }> = [];
+const mockCalls: { prompt?: string; _id?: string; regenerate?: boolean }[] = [];
 
 // Mock call-ai to avoid actual AI calls
 vi.mock('call-ai', () => ({

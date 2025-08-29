@@ -1,4 +1,3 @@
-import React from "react";
 // Mock implementation of database manager for testing
 import { vi } from "vitest";
 

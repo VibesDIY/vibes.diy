@@ -6,7 +6,7 @@ import type {
   AiChatMessageDocument,
   SystemChatMessageDocument,
   ViewType,
-} from "../types/chat.js";
+} from "@vibes.diy/prompts";
 import { parseContent } from "../utils/segmentParser.js";
 
 interface MessageProps {

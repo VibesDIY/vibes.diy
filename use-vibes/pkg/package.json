@@ -30,25 +30,6 @@
     "react": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.31.0",
-    "@fireproof/core-cli": "^0.23.11",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^4.4.1",
-    "@vitest/browser": "^3.2.4",
-    "eslint": "^9.31.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-react": "^7.37.5",
-    "jsdom": "^26.1.0",
-    "playwright": "^1.54.1",
-    "playwright-chromium": "^1.54.1",
-    "prettier": "^3.6.2",
-    "react-dom": "^19.1.0",
-    "rimraf": "^5.0.5",
-    "typescript": "^5.8.2",
-    "typescript-eslint": "^8.36.0",
-    "vitest": "^3.2.4"
+    "@fireproof/core-cli": "^0.23.11"
   }
 }

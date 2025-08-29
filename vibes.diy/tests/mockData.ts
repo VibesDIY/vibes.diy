@@ -1,4 +1,3 @@
-import React from "react";
 export const mockResultPreviewProps = {
   displayView: "code" as const, // Changed from activeView
   // setActiveView: () => { /* no-op */ }, // Removed

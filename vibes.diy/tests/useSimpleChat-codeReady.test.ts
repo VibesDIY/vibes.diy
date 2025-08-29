@@ -2,7 +2,7 @@ import React from "react";
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useSimpleChat } from "~/vibes.diy/app/hooks/useSimpleChat.js";
-import type { AiChatMessage, ChatMessage } from "~/vibes.diy/app/types/chat.js";
+import type { AiChatMessage, ChatMessage } from "@vibes.diy/prompts";
 import {
   parseContent,
   parseDependencies,
@@ -140,9 +140,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
           created_at: Date.now(),
         },
         docs: mockDocs,
-        updateTitle: vi
-          .fn()
-          .mockImplementation(async (title) => Promise.resolve()),
+        updateTitle: vi.fn().mockImplementation(async () => Promise.resolve()),
         addScreenshot: vi.fn(),
         // Keep database mock simple
         sessionDatabase: {
@@ -160,8 +158,9 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
             async (field: string, options: Record<string, unknown>) => {
               const key = options?.key;
               const filtered = mockDocs.filter((doc) => {
-                // @ts-ignore - we know the field exists
-                return doc[field] === key;
+                return (
+                  (doc as unknown as Record<string, unknown>)[field] === key
+                );
               });
               return Promise.resolve({
                 rows: filtered.map((doc) => ({ id: doc._id, doc })),

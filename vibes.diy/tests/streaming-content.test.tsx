@@ -2,7 +2,7 @@ import React from "react";
 import { describe, test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import StructuredMessage from "~/vibes.diy/app/components/StructuredMessage.js";
-import type { Segment } from "~/vibes.diy/app/types/chat.js";
+import type { Segment } from "@vibes.diy/prompts";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 describe("Streaming Content Tests", () => {
