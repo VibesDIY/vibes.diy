@@ -123,7 +123,7 @@ let locationMock = {
 };
 
 // Mock React Router
-vi.mock("react-router", () => ({
+vi.mock("react-router-dom", () => ({
   useParams: () => ({ vibeSlug: "test-app-slug" }),
   useNavigate: () => navigateMock,
   useLocation: () => locationMock,
