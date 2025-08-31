@@ -110,6 +110,11 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
   const [pendingAiMessage, setPendingAiMessage] =
     useState<ChatMessageDocument | null>(null);
 
+  // Image attachment state
+  const [attachedImages, setAttachedImages] = useState<
+    Array<{ id: string; previewUrl: string; mimeType: string }>
+  >([]);
+
   // setNeedsLogin is now obtained from AuthContext above
 
   // Derive model to use from settings or default
@@ -191,6 +196,17 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
    * Send a message and process the AI response
    * @param textOverride Optional text to use instead of the current userMessage
    */
+  // Image management functions
+  const clearAttachedImages = useCallback(() => {
+    // Revoke all preview URLs
+    attachedImages.forEach((img) => {
+      URL.revokeObjectURL(img.previewUrl);
+    });
+
+    // Clear state
+    setAttachedImages([]);
+  }, [attachedImages]);
+
   const sendMessage = useCallback(
     (textOverride?: string, skipSubmit = false) => {
       const ctx: SendMessageContext = {
@@ -216,6 +232,8 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
         titleModel: TITLE_MODEL,
         isAuthenticated,
         vibeDoc,
+        attachedImages,
+        clearAttachedImages,
       };
       return sendChatMessage(ctx, textOverride, skipSubmit);
     },
@@ -236,6 +254,8 @@ export function useSimpleChat(sessionId: string | undefined): ChatState {
       boundCheckCredits,
       ensureApiKey,
       isAuthenticated,
+      attachedImages,
+      clearAttachedImages,
     ],
   );
 
@@ -338,6 +358,140 @@ ${code}
     // No additional action needed here
   }, [advisoryErrors]);
 
+  // Image management functions
+  const attachImages = useCallback(
+    async (files: FileList) => {
+      if (!sessionId) return;
+
+      // Guardrails (values pending confirmation in review)
+      const MAX_ATTACHMENTS = 6; // maximum images per message
+      const MAX_FILE_MB = 10; // maximum size per image (MB)
+      const MAX_BYTES = MAX_FILE_MB * 1024 * 1024;
+
+      // Respect remaining slots based on current attachments
+      const remaining = Math.max(0, MAX_ATTACHMENTS - attachedImages.length);
+      if (remaining <= 0) return;
+
+      // Filter and cap incoming files before creating any preview URLs
+      const candidates: File[] = [];
+      for (let i = 0; i < files.length && candidates.length < remaining; i++) {
+        const file = files[i];
+        // Only images
+        if (!file.type.startsWith("image/")) continue;
+        // Enforce per-file size limit
+        if (file.size > MAX_BYTES) continue;
+        candidates.push(file);
+      }
+
+      if (candidates.length === 0) return;
+
+      // Prepare docs and previews (create previews only for accepted candidates)
+      const prepared = candidates.map((file) => {
+        const previewUrl = URL.createObjectURL(file);
+        const doc = {
+          type: "image" as const,
+          session_id: sessionId,
+          created_at: Date.now(),
+          _files: { image: file },
+        };
+        return { file, previewUrl, doc } as const;
+      });
+
+      try {
+        // Prefer single bulk write; fall back to sequential puts if bulk is unavailable
+        const hasBulk = typeof (sessionDatabase as any)?.bulk === "function";
+        const results = hasBulk
+          ? await (sessionDatabase as any).bulk(prepared.map((p) => p.doc))
+          : (async () => {
+              const out: any[] = [];
+              for (const p of prepared) {
+                try {
+                  // sequential to avoid introducing concurrency
+                  // eslint-disable-next-line no-await-in-loop
+                  const r = await sessionDatabase.put(p.doc as any);
+                  out.push(r);
+                } catch (e) {
+                  out.push({ error: e });
+                }
+              }
+              return out;
+            })();
+
+        const newImages: Array<{
+          id: string;
+          previewUrl: string;
+          mimeType: string;
+        }> = [];
+
+        // Map results to previews; revoke previews for failed writes
+        if (Array.isArray(results)) {
+          for (let i = 0; i < prepared.length; i++) {
+            const res = results[i] as any;
+            const id = res?.id || res?._id; // support different return shapes
+            if (id && !res?.error) {
+              newImages.push({
+                id,
+                previewUrl: prepared[i].previewUrl,
+                mimeType: prepared[i].file.type,
+              });
+            } else {
+              URL.revokeObjectURL(prepared[i].previewUrl);
+            }
+          }
+        } else {
+          // If bulk did not return per-doc results, treat as failure and clean up
+          prepared.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+          return;
+        }
+
+        if (newImages.length > 0) {
+          setAttachedImages((prev) => {
+            const available = Math.max(0, MAX_ATTACHMENTS - prev.length);
+            if (available <= 0) {
+              // no room left — cleanup all previews we created
+              newImages.forEach((ni) => URL.revokeObjectURL(ni.previewUrl));
+              return prev;
+            }
+            if (newImages.length > available) {
+              // cleanup any previews that won't be added due to capacity
+              for (let i = available; i < newImages.length; i++) {
+                URL.revokeObjectURL(newImages[i].previewUrl);
+              }
+            }
+            return [...prev, ...newImages.slice(0, available)];
+          });
+        }
+      } catch (error) {
+        console.error("Failed to store images:", error);
+        // Revoke all previews on bulk failure
+        prepared.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      }
+    },
+    [sessionId, sessionDatabase, attachedImages.length],
+  );
+
+  const removeAttachedImage = useCallback(
+    async (id: string) => {
+      // Find the image in our state
+      const imageToRemove = attachedImages.find((img) => img.id === id);
+      if (!imageToRemove) return;
+
+      // Revoke the preview URL
+      URL.revokeObjectURL(imageToRemove.previewUrl);
+
+      // Remove from Fireproof
+      try {
+        await sessionDatabase.del(id);
+      } catch (error) {
+        console.error("Failed to delete image from database:", error);
+      }
+
+      // Remove from state
+      setAttachedImages((prev) => prev.filter((img) => img.id !== id));
+    },
+    [attachedImages, sessionDatabase],
+  );
+
   return {
     sessionId: session._id,
     vibeDoc,
@@ -366,5 +520,10 @@ ${code}
     addError,
     isEmpty: docs.length === 0,
     updateSelectedModel,
+    // Image management
+    attachedImages,
+    attachImages,
+    removeAttachedImage,
+    clearAttachedImages,
   };
 }
