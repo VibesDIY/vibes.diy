@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import type { VibeDocument } from "../types/chat.js";
 import { useSession } from "../hooks/useSession.js";

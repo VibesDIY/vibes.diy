@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import AppLayout from "../components/AppLayout.js";
 import ChatHeaderContent from "../components/ChatHeaderContent.js";
