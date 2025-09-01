@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SignIn, SignUp, useAuth, useUser } from '@clerk/clerk-react';
 import { generateFireproofToken, storeFireproofToken } from '../utils/tokenGeneration.js';
 
@@ -24,16 +24,22 @@ export function VibesClerkAuth({
 }: VibesClerkAuthProps) {
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
+  
+  // State management for Fireproof token processing
+  const [isProcessingFireproof, setIsProcessingFireproof] = useState(false);
+  const [authCompleted, setAuthCompleted] = useState(false);
 
   // Handle successful authentication with automatic Fireproof integration
   useEffect(() => {
-    if (isSignedIn && user) {
+    if (isSignedIn && user && !authCompleted && !isProcessingFireproof) {
       handleAuthSuccess();
     }
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, authCompleted, isProcessingFireproof]);
 
   const handleAuthSuccess = async () => {
     console.group('🔐 === CLERK AUTH SUCCESS HANDLER ===');
+    setIsProcessingFireproof(true);
+    
     try {
       // Generate and store Fireproof token if integration is enabled
       if (fireproofPublicKey && user) {
@@ -95,6 +101,9 @@ export function VibesClerkAuth({
         });
       }
 
+      // Mark auth as completed
+      setAuthCompleted(true);
+      
       // Call the consumer's success handler
       if (onAuthSuccess && user) {
         console.log('📞 Calling consumer success handler...');
@@ -113,7 +122,11 @@ export function VibesClerkAuth({
         console.log('🔄 Calling success handler despite error...');
         onAuthSuccess(user);
       }
+      
+      // Mark auth as completed even on error
+      setAuthCompleted(true);
     } finally {
+      setIsProcessingFireproof(false);
       console.groupEnd();
       console.log('⏱️ Auth success handler completed at:', new Date().toISOString());
     }
@@ -159,6 +172,29 @@ export function VibesClerkAuth({
     },
   };
 
+  // Show loading state during Fireproof token processing to prevent Clerk redirect
+  if (isSignedIn && user && isProcessingFireproof && !authCompleted) {
+    return (
+      <div className={`vibes-clerk-auth ${className}`}>
+        <div className="flex flex-col items-center justify-center p-8 space-y-4">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Processing authentication...
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Setting up your secure session
+            </p>
+          </div>
+          
+          {/* Orange loading bar matching vibes.diy style */}
+          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-orange-500 animate-pulse rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`vibes-clerk-auth ${className}`}>
       {/* Close button if modal usage */}
@@ -172,11 +208,15 @@ export function VibesClerkAuth({
         </button>
       )}
 
-      {/* Render SignIn or SignUp based on mode */}
-      {mode === 'signin' ? (
-        <SignIn appearance={commonAppearance} routing="path" path="/login" />
-      ) : (
-        <SignUp appearance={commonAppearance} routing="path" path="/signup" />
+      {/* Render SignIn or SignUp based on mode - hidden during processing */}
+      {!isProcessingFireproof && !authCompleted && (
+        <>
+          {mode === 'signin' ? (
+            <SignIn appearance={commonAppearance} routing="path" path="/login" />
+          ) : (
+            <SignUp appearance={commonAppearance} routing="path" path="/signup" />
+          )}
+        </>
       )}
     </div>
   );
