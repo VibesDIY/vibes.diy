@@ -48,62 +48,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Updated function to process token using verifyToken
   const processToken = useCallback(async (newToken: string | null) => {
-    console.log(
-      "🔄 Processing token:",
-      !!newToken ? "token present" : "no token",
-    );
     if (newToken) {
-      console.log("🔍 Token length:", newToken.length);
-      console.log("🧪 Verifying token...");
       const payload = await verifyToken(newToken);
       if (payload) {
         // Valid token and payload
-        console.log("✅ Token verification successful!");
-        console.log("📋 User payload:", payload.payload);
         setToken(newToken);
         setUserPayload(payload.payload); // Store the full payload
-        console.log("✅ Auth state updated - user is authenticated");
       } else {
         // Token is invalid or expired
-        console.log("❌ Token verification failed - removing from storage");
         localStorage.removeItem("auth_token");
         setToken(null);
         setUserPayload(null);
-        console.log("❌ Auth state cleared - user is not authenticated");
       }
     } else {
       // No token provided
-      console.log("⚠️ No token provided - clearing auth state");
       setToken(null);
       setUserPayload(null);
-      console.log("❌ Auth state cleared - user is not authenticated");
     }
   }, []); // verifyToken is stable, no dependency needed unless it changes
 
   // Updated checkAuthStatus to be async
   const checkAuthStatus = useCallback(async () => {
-    console.group("🔍 === AUTH STATUS CHECK ===");
-    console.log("⏱️ Starting auth status check at:", new Date().toISOString());
     setIsLoading(true);
     try {
       const storedToken = localStorage.getItem("auth_token");
-      console.log("🔍 Token in localStorage?", !!storedToken);
-      if (storedToken) {
-        console.log("🔍 Token length:", storedToken.length);
-        console.log(
-          "🔍 Token preview (first 50 chars):",
-          storedToken.substring(0, 50) + "...",
-        );
-      }
-      console.log("🔄 Processing token...");
       await processToken(storedToken);
     } catch (error) {
-      console.error("❌ Error reading auth token from storage:", error);
+      console.error("Error reading auth token from storage:", error);
       await processToken(null); // Ensure state is cleared on error
     } finally {
       setIsLoading(false);
-      console.log("✅ Auth status check completed");
-      console.groupEnd();
     }
   }, [processToken]);
 
