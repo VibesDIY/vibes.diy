@@ -9,8 +9,6 @@ interface VibesClerkAuthProps {
   className?: string;
   /** Public key for Fireproof token generation */
   fireproofPublicKey?: string;
-  /** Enable automatic Fireproof token generation (default: true) */
-  enableFireproofIntegration?: boolean;
 }
 
 /**
@@ -22,8 +20,7 @@ export function VibesClerkAuth({
   onAuthSuccess,
   onClose,
   className = '',
-  fireproofPublicKey,
-  enableFireproofIntegration = true,
+  fireproofPublicKey
 }: VibesClerkAuthProps) {
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
@@ -39,7 +36,7 @@ export function VibesClerkAuth({
     console.group('🔐 === CLERK AUTH SUCCESS HANDLER ===');
     try {
       // Generate and store Fireproof token if integration is enabled
-      if (enableFireproofIntegration && fireproofPublicKey && user) {
+      if (fireproofPublicKey && user) {
         console.log('🔄 Starting Fireproof token exchange for user:', user.id);
         console.log('📋 User details:', {
           id: user.id,
@@ -92,8 +89,7 @@ export function VibesClerkAuth({
 
         console.log('🎉 Fireproof token exchange completed successfully!');
       } else {
-        console.log('⚠️ Fireproof integration disabled or missing requirements:', {
-          enableFireproofIntegration,
+        console.log('⚠️ Fireproof integration missing requirements:', {
           hasPublicKey: !!fireproofPublicKey,
           hasUser: !!user,
         });

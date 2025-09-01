@@ -62,7 +62,6 @@ function LoginContent() {
                 mode="signin"
                 onAuthSuccess={handleAuthSuccess}
                 fireproofPublicKey={CLOUD_SESSION_TOKEN_PUBLIC_KEY}
-                enableFireproofIntegration={true}
               />
             </div>
           </div>
@@ -90,7 +89,6 @@ function LoginContent() {
               onAuthSuccess={handleAuthSuccess}
               className="mx-auto"
               fireproofPublicKey={CLOUD_SESSION_TOKEN_PUBLIC_KEY}
-              enableFireproofIntegration={true}
             />
           </div>
 
