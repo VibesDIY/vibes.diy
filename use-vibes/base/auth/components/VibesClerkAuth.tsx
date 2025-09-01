@@ -20,11 +20,11 @@ export function VibesClerkAuth({
   onAuthSuccess,
   onClose,
   className = '',
-  fireproofPublicKey
+  fireproofPublicKey,
 }: VibesClerkAuthProps) {
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
-  
+
   // State management for Fireproof token processing
   const [isProcessingFireproof, setIsProcessingFireproof] = useState(false);
   const [authCompleted, setAuthCompleted] = useState(false);
@@ -39,7 +39,7 @@ export function VibesClerkAuth({
   const handleAuthSuccess = async () => {
     console.group('🔐 === CLERK AUTH SUCCESS HANDLER ===');
     setIsProcessingFireproof(true);
-    
+
     try {
       // Generate and store Fireproof token if integration is enabled
       if (fireproofPublicKey && user) {
@@ -103,7 +103,7 @@ export function VibesClerkAuth({
 
       // Mark auth as completed
       setAuthCompleted(true);
-      
+
       // Call the consumer's success handler
       if (onAuthSuccess && user) {
         console.log('📞 Calling consumer success handler...');
@@ -122,7 +122,7 @@ export function VibesClerkAuth({
         console.log('🔄 Calling success handler despite error...');
         onAuthSuccess(user);
       }
-      
+
       // Mark auth as completed even on error
       setAuthCompleted(true);
     } finally {
@@ -185,7 +185,7 @@ export function VibesClerkAuth({
               Setting up your secure session
             </p>
           </div>
-          
+
           {/* Orange loading bar matching vibes.diy style */}
           <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div className="h-full bg-orange-500 animate-pulse rounded-full" />

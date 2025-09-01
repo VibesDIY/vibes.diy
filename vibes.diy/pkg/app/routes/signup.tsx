@@ -55,7 +55,6 @@ function SignUpContent() {
             <div className="mt-8">
               <div className="mx-auto h-2 w-24 animate-pulse rounded-full bg-orange-500" />
             </div>
-
           </div>
         </div>
       </SimpleAppLayout>
