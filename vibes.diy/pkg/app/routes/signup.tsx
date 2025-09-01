@@ -56,14 +56,6 @@ function SignUpContent() {
               <div className="mx-auto h-2 w-24 animate-pulse rounded-full bg-orange-500" />
             </div>
 
-            {/* Hidden Clerk component to process SSO callback */}
-            <div className="sr-only">
-              <VibesClerkAuth
-                mode="signup"
-                onAuthSuccess={handleAuthSuccess}
-                fireproofPublicKey={CLOUD_SESSION_TOKEN_PUBLIC_KEY}
-              />
-            </div>
           </div>
         </div>
       </SimpleAppLayout>
