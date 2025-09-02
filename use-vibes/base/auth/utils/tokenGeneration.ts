@@ -46,6 +46,18 @@ function base58btcDecode(str: string): Uint8Array {
 }
 
 /**
+ * Decode and inspect JWT header and payload for debugging
+ */
+function inspectJWT(jwt: string): { header: any; payload: any } {
+  const [headerB64, payloadB64] = jwt.split('.');
+  
+  const header = JSON.parse(atob(headerB64));
+  const payload = JSON.parse(atob(payloadB64));
+  
+  return { header, payload };
+}
+
+/**
  * Decode a base58btc-encoded JWK string to a public key JWK
  */
 function decodePublicKeyJWK(encodedString: string): JWK {
@@ -74,6 +86,35 @@ export async function generateFireproofToken(clerkJwt: string, publicKey: string
   try {
     console.log('🔑 Input JWT length:', clerkJwt.length);
     console.log('🔑 Public key:', publicKey);
+
+    // Inspect JWT structure for debugging
+    const { header, payload } = inspectJWT(clerkJwt);
+    console.log('🔍 JWT Header:', JSON.stringify(header, null, 2));
+    console.log('🔑 Key ID (kid):', header.kid);
+    console.log('📝 Algorithm:', header.alg);
+    console.log('🏢 Issuer (iss):', payload.iss);
+    console.log('👤 Subject (sub):', payload.sub);
+    console.log('⏰ Issued at:', new Date(payload.iat * 1000).toISOString());
+    console.log('⏰ Expires at:', new Date(payload.exp * 1000).toISOString());
+
+    // Validate JWT structure
+    if (!header.kid) {
+      console.warn('⚠️ JWT missing kid (Key ID) in header');
+    }
+    if (!header.alg) {
+      console.warn('⚠️ JWT missing alg (Algorithm) in header');
+    }
+
+    // Validate JWT before sending to API
+    if (!payload.iss || !payload.sub || !payload.exp) {
+      throw new Error('Invalid JWT: missing required fields (iss, sub, exp)');
+    }
+
+    if (payload.exp * 1000 < Date.now()) {
+      throw new Error('JWT has expired');
+    }
+
+    console.log('✅ JWT validation passed, proceeding with token exchange...');
 
     // Use Fireproof's default connect API URL
     const connectApiUrl = 'https://connect.fireproof.direct/api';
