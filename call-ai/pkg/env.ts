@@ -27,8 +27,16 @@ class CallAIEnv {
     },
   };
 
+  getWindowCALLAI_IMG_URL() {
+    const w = globalThis.window as {
+      CALLAI_IMG_URL?: string;
+      callAi?: { IMG_URL?: string };
+    };
+    return w.CALLAI_IMG_URL ?? w.callAi?.IMG_URL;
+  }
+
   get CALLAI_IMG_URL() {
-    return this.env().get("CALLAI_IMG_URL");
+    return this.env().get("CALLAI_IMG_URL") ?? this.getWindowCALLAI_IMG_URL();
   }
 
   get CALLAI_CHAT_URL() {
