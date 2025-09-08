@@ -10,6 +10,7 @@ import {
 } from "./databaseManager.js";
 import { normalizeComponentExports } from "./normalizeComponentExports.js";
 import { VibeDocument } from "@vibes.diy/prompts";
+import { joinUrlParts } from "call-ai";
 
 /**
  * Publish an app to the server
@@ -125,7 +126,7 @@ export async function publishApp({
     }
 
     const response = await (fetch ? fetch : globalThis.fetch)(
-      `${VibesDiyEnv.API_BASE_URL()}/api/apps`,
+      joinUrlParts(VibesDiyEnv.API_BASE_URL(), "/api/apps"),
       {
         method: "POST",
         headers,

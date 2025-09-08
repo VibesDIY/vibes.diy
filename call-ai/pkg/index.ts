@@ -15,5 +15,5 @@ export { getMeta } from "./response-metadata.js";
 // Export image generation function
 export { imageGen } from "./image.js";
 
-export { entriesHeaders } from "./utils.js";
+export { entriesHeaders, joinUrlParts } from "./utils.js";
 export { callAiEnv } from "./env.js";
