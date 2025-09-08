@@ -32,7 +32,7 @@ class CallAIEnv {
       CALLAI_IMG_URL?: string;
       callAi?: { IMG_URL?: string };
     };
-    return w.CALLAI_IMG_URL ?? w.callAi?.IMG_URL;
+    return w?.CALLAI_IMG_URL ?? w?.callAi?.IMG_URL;
   }
 
   get CALLAI_IMG_URL() {
