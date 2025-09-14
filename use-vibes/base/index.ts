@@ -1,17 +1,116 @@
 // Re-export specific items from use-fireproof
-import { fireproof, useFireproof as originalUseFireproof, ImgFile } from 'use-fireproof';
-export { fireproof, ImgFile };
+import { useState, useEffect } from 'react';
+import type { Database } from 'use-fireproof';
+import { fireproof, ImgFile, toCloud as originalToCloud, useFireproof as originalUseFireproof } from 'use-fireproof';
+import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
+
+export { fireproof, ImgFile, ManualRedirectStrategy };
 
 // Re-export all types under a namespace
-export type * as Fireproof from 'use-fireproof';
+  export type * as Fireproof from 'use-fireproof';
 
-// Custom useFireproof hook with vibes-specific logging
-// Preserve the exact function type (including generics) of the original hook
-export const useFireproof: typeof originalUseFireproof = (
-  ...args: Parameters<typeof originalUseFireproof>
+// Helper function to create toCloud configuration with ManualRedirectStrategy
+export function toCloud(opts?: Parameters<typeof originalToCloud>[0]) {
+  const attachable = originalToCloud({
+    ...opts,
+    strategy: new ManualRedirectStrategy(),
+    dashboardURI: 'https://dev.connect.fireproof.direct/fp/cloud/api/token',
+    tokenApiURI: "https://dev.connect.fireproof.direct/api",
+    urls: { base: 'fpcloud://cloud.fireproof.direct' }
+  } as Parameters<typeof originalToCloud>[0]);
+
+  return attachable;
+}
+
+
+
+// Custom useFireproof hook that starts local-first and allows manual sync enable
+export const useFireproof = (
+  nameOrDatabase?: string | Database
 ) => {
-  console.log('Using vibes-customized useFireproof');
-  return originalUseFireproof(...args);
+  // Get database name for localStorage key
+  const dbName = typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'default';
+  const syncKey = `fireproof-sync-${dbName}`;
+
+  // Check if sync was previously enabled (persists across refreshes)
+  const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
+
+  // Create attach config only if sync was previously enabled
+  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
+
+  // Use original useFireproof with attach config only if previously enabled
+  // This preserves the createAttach lifecycle for token persistence
+  const result = originalUseFireproof(
+    nameOrDatabase as string | Database | undefined,
+    attachConfig ? { attach: attachConfig } : {}
+  );
+
+  // State to track manual attachment for first-time enable
+  const [manualAttach, setManualAttach] = useState<any>(null);
+
+  // Handle first-time sync enable without reload
+  useEffect(() => {
+    if (manualAttach === 'pending' && result.database) {
+      const cloudConfig = toCloud();
+      result.database.attach(cloudConfig).then((attached) => {
+        setManualAttach({ state: 'attached', attached });
+        // Save preference for next refresh
+        localStorage.setItem(syncKey, 'true');
+      }).catch((error) => {
+        console.error('Failed to attach:', error);
+        setManualAttach({ state: 'error', error });
+      });
+    }
+  }, [manualAttach, result.database, syncKey]);
+
+  // Function to enable sync and trigger popup directly
+  const enableSync = () => {
+    if (!wasSyncEnabled) {
+      // First time enabling - manual attach
+      setManualAttach('pending');
+    }
+
+    // After a short delay, programmatically click the sign-in link in the overlay
+    setTimeout(() => {
+      const authLink = document.querySelector('.fpOverlay a[href]') as HTMLAnchorElement;
+      if (authLink) {
+        authLink.click();
+
+        // Hide the overlay after clicking since we're opening the popup
+        const overlay = document.querySelector('.fpOverlay') as HTMLElement;
+        if (overlay) {
+          overlay.style.display = 'none';
+        }
+      }
+    }, 100); // Small delay to ensure overlay is rendered
+  };
+
+  // Function to disable sync
+  const disableSync = () => {
+    localStorage.removeItem(syncKey);
+
+    // Reset token if attached through original flow
+    if (result.attach?.ctx?.tokenAndClaims?.state === 'ready' && result.attach.ctx.tokenAndClaims.reset) {
+      result.attach.ctx.tokenAndClaims.reset();
+    }
+
+    // Clear manual attach state
+    setManualAttach(null);
+  };
+
+  // Determine sync status from either original attach or manual attach
+  const syncEnabled = result.attach?.state === 'attached' ||
+                     manualAttach?.state === 'attached' ||
+                     wasSyncEnabled;
+
+  // Return combined result, preferring original attach over manual
+  return {
+    ...result,
+    attach: result.attach || manualAttach,
+    enableSync,
+    disableSync,
+    syncEnabled
+  };
 };
 
 // Re-export specific functions and types from call-ai
@@ -19,7 +118,7 @@ import { callAI } from 'call-ai';
 export { callAI, callAI as callAi };
 
 // Re-export all types under a namespace
-export type * as CallAI from 'call-ai';
+  export type * as CallAI from 'call-ai';
 
 // Export ImgGen component - the primary export
 export { default as ImgGen } from './components/ImgGen.js';
@@ -30,28 +129,25 @@ export { ControlsBar } from './components/ControlsBar.js';
 export { PromptBar } from './components/PromptBar.js';
 
 // Export hooks
-export { useImageGen, hashInput } from './hooks/image-gen/index.js';
+export { hashInput, useImageGen } from './hooks/image-gen/index.js';
 
 // Export style utilities
-export { type ImgGenClasses, defaultClasses } from './utils/style-utils.js';
+export { defaultClasses, type ImgGenClasses } from './utils/style-utils.js';
 
 // Export utility functions
 export { base64ToFile } from './utils/base64.js';
 
 // Export ImgGen sub-components
-export { ImageOverlay } from './components/ImgGenUtils/overlays/ImageOverlay.js';
 export { ImgGenDisplay } from './components/ImgGenUtils/ImgGenDisplay.js';
-export { ImgGenModal } from './components/ImgGenUtils/ImgGenModal.js';
 export { ImgGenDisplayPlaceholder } from './components/ImgGenUtils/ImgGenDisplayPlaceholder.js';
+export { ImgGenModal } from './components/ImgGenUtils/ImgGenModal.js';
+export { ImageOverlay } from './components/ImgGenUtils/overlays/ImageOverlay.js';
 
 // Export internal utilities and constants
-export { MODULE_STATE } from './hooks/image-gen/utils.js';
-export { addNewVersion } from './hooks/image-gen/utils.js';
+export { addNewVersion, MODULE_STATE } from './hooks/image-gen/utils.js';
 
 // Export types for testing and advanced usage
-export { type ImageDocument } from './hooks/image-gen/types.js';
 export {
-  type UseImageGenOptions,
-  type UseImageGenResult,
-  type PartialImageDocument,
+  type ImageDocument, type PartialImageDocument, type UseImageGenOptions,
+  type UseImageGenResult
 } from './hooks/image-gen/types.js';

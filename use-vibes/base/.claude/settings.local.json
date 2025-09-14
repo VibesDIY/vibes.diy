@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/necrodome/projects/fireproof/ai-builder/node_modules/.pnpm/@fireproof+core-types-protocols-cloud@0.23.13_typescript@5.9.2/node_modules/@fireproof/core-types-protocols-cloud/**)",
+      "Read(//Users/necrodome/projects/fireproof/ai-builder/**)",
+      "Bash(xargs cat:*)",
+      "Bash(npx tsc:*)",
+      "Read(//Users/necrodome/projects/fireproof/core/use-fireproof/**)",
+      "Read(//Users/necrodome/projects/fireproof/core/**)",
+      "Bash(grep:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(pnpm run dev)",
+      "Bash(pwd && ls -la)",
+      "Bash(rm:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(find:*)",
+      "Bash(pnpm check:*)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm vitest run:*)"
+    ],
+    "deny": []
+  }
+}
