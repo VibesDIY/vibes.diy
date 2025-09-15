@@ -1,5 +1,5 @@
 // Re-export specific items from use-fireproof
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Database } from 'use-fireproof';
 import { fireproof, ImgFile, toCloud as originalToCloud, useFireproof as originalUseFireproof } from 'use-fireproof';
 import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
@@ -14,8 +14,8 @@ export function toCloud(opts?: Parameters<typeof originalToCloud>[0]) {
   const attachable = originalToCloud({
     ...opts,
     strategy: new ManualRedirectStrategy(),
-    dashboardURI: 'https://dev.connect.fireproof.direct/fp/cloud/api/token',
-    tokenApiURI: "https://dev.connect.fireproof.direct/api",
+    dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token',
+    tokenApiURI: "https://connect.fireproof.direct/api",
     urls: { base: 'fpcloud://cloud.fireproof.direct' }
   } as Parameters<typeof originalToCloud>[0]);
 

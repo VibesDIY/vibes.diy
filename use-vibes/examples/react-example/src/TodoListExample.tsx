@@ -22,7 +22,10 @@ function TodoListExample() {
   // Debug logging for attach state
   useEffect(() => {
     console.log('Sync enabled:', syncEnabled);
-    console.log('Attach state:', attach);
+    console.log('Attach state:', attach?.state);
+    if (attach?.ctx?.tokenAndClaims) {
+      console.log('Token state:', attach.ctx.tokenAndClaims.state);
+    }
   }, [syncEnabled, attach]);
 
   // Get all todos sorted by creation date
@@ -236,7 +239,7 @@ function TodoListExample() {
       </div>
 
       {/* Sync status indicator */}
-      {attach?.state === 'attached' && attach?.ctx?.tokenAndClaims?.state === 'ready' && (
+      {syncEnabled && attach?.state === 'attached' && attach?.ctx?.tokenAndClaims?.state === 'ready' && (
         <div style={{
           marginBottom: '1rem',
           padding: '0.5rem 1rem',
@@ -268,6 +271,35 @@ function TodoListExample() {
           >
             Sign Out
           </button>
+        </div>
+      )}
+
+      {/* Sync state indicators */}
+      {syncEnabled && attach?.state === 'attaching' && (
+        <div style={{
+          marginBottom: '1rem',
+          padding: '0.5rem 1rem',
+          backgroundColor: '#fff3cd',
+          borderRadius: '4px',
+          border: '1px solid #ffeaa7',
+          color: '#856404',
+          fontSize: '0.9rem',
+        }}>
+          <span>⏳ Connecting to sync service...</span>
+        </div>
+      )}
+
+      {syncEnabled && attach?.state === 'error' && (
+        <div style={{
+          marginBottom: '1rem',
+          padding: '0.5rem 1rem',
+          backgroundColor: '#f8d7da',
+          borderRadius: '4px',
+          border: '1px solid #f5c6cb',
+          color: '#721c24',
+          fontSize: '0.9rem',
+        }}>
+          <span>❌ Sync connection failed. Please try again.</span>
         </div>
       )}
 
