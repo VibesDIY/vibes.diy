@@ -1,13 +1,27 @@
 import { RedirectStrategy } from 'use-fireproof';
+import type { SuperThis } from '@fireproof/core-types-base';
+import type { ToCloudOpts, TokenAndClaims } from '@fireproof/core-types-protocols-cloud';
+import type { Logger } from '@adviser/cement';
+
+interface BuildURIBuilder {
+  from: (uri: string) => URLBuilder;
+}
+
+interface URLBuilder {
+  setParam: (key: string, value: string) => URLBuilder;
+  toString: () => string;
+}
 
 export class ManualRedirectStrategy extends RedirectStrategy {
   private authOpened = false;
   private pollingStarted = false;
-  private resolveToken?: (value: any) => void;
+  private resolveToken?: (value: TokenAndClaims | undefined) => void;
 
   constructor(opts: { overlayHtml?: (url: string) => string; overlayCss?: string } = {}) {
     // Create custom CSS for subtle bottom slide-up
-    const customCss = opts.overlayCss || `
+    const customCss =
+      opts.overlayCss ||
+      `
       .fpOverlay {
         display: none;
         position: fixed;
@@ -73,7 +87,9 @@ export class ManualRedirectStrategy extends RedirectStrategy {
     `;
 
     // Create custom HTML for subtle notification
-    const customHtml = opts.overlayHtml || ((url: string) => `
+    const customHtml =
+      opts.overlayHtml ||
+      ((url: string) => `
       <div class="fpOverlayContent">
         <div class="fpCloseButton">&times;</div>
         <div style="
@@ -124,7 +140,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
   }
 
   // Override the open method to not automatically open the popup
-  open(sthis: unknown, logger: unknown, deviceId: string, opts: unknown): void {
+  open(sthis: SuperThis, logger: Logger, deviceId: string, opts: ToCloudOpts): void {
     // Call parent open but we'll override the window.open behavior
     const originalWindowOpen = window.open;
 
@@ -138,7 +154,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
     window.open = originalWindowOpen;
 
     // Check for existing token asynchronously and hide overlay if found
-    super.tryToken(sthis, logger, opts as any).then((existingToken) => {
+    super.tryToken(sthis, logger, opts).then((existingToken) => {
       if (existingToken && this.overlayNode) {
         // Token exists, hide overlay immediately
         this.overlayNode.style.display = 'none';
@@ -150,9 +166,14 @@ export class ManualRedirectStrategy extends RedirectStrategy {
   }
 
   // Override waitForToken to delay polling until user clicks (unless token exists)
-  async waitForToken(sthis: unknown, logger: unknown, deviceId: string, opts: unknown): Promise<any> {
+  async waitForToken(
+    sthis: SuperThis,
+    logger: Logger,
+    deviceId: string,
+    opts: ToCloudOpts
+  ): Promise<TokenAndClaims | undefined> {
     // First check if a token already exists from a previous session
-    const existingToken = await super.tryToken(sthis, logger, opts as any);
+    const existingToken = await super.tryToken(sthis, logger, opts);
     if (existingToken) {
       // Token exists, return it immediately
       return existingToken;
@@ -170,14 +191,22 @@ export class ManualRedirectStrategy extends RedirectStrategy {
     return super.waitForToken(sthis, logger, deviceId, opts);
   }
 
-  private setupManualTrigger(sthis: unknown, logger: unknown, deviceId: string, opts: Record<string, unknown>): void {
+  private setupManualTrigger(
+    sthis: SuperThis,
+    logger: Logger,
+    deviceId: string,
+    opts: ToCloudOpts
+  ): void {
     if (!this.overlayNode) return;
 
     // Get the auth URL that was built by parent
-    const redirectCtx = (opts.context as { get?: (key: string) => { dashboardURI?: string } })?.get?.("WebCtx") || 
-      { dashboardURI: opts.dashboardURI as string };
+    const redirectCtx = (
+      opts.context as { get?: (key: string) => { dashboardURI?: string } }
+    )?.get?.('WebCtx') || {
+      dashboardURI: (opts as { dashboardURI?: string }).dashboardURI as string,
+    };
     const dashboardURI = redirectCtx.dashboardURI;
-    
+
     if (!dashboardURI) return;
 
     // Build the same URL as parent
@@ -186,35 +215,40 @@ export class ManualRedirectStrategy extends RedirectStrategy {
         const urlObj = new URL(uri);
         return {
           _url: urlObj,
-          setParam: function(key: string, value: string) { 
+          setParam: function (key: string, value: string) {
             this._url.searchParams.set(key, value);
             return this;
           },
-          asURL: function() { return this._url; },
-          toString: function() { return this._url.toString(); }
+          asURL: function () {
+            return this._url;
+          },
+          toString: function () {
+            return this._url.toString();
+          },
         };
-      }
+      },
     };
 
-    const url = (BuildURI as any).from(dashboardURI)
-      .setParam("back_url", window.location.href)
-      .setParam("result_id", this.resultId || "")
-      .setParam("local_ledger_name", deviceId);
+    const url = (BuildURI as BuildURIBuilder)
+      .from(dashboardURI)
+      .setParam('back_url', window.location.href)
+      .setParam('result_id', this.resultId || '')
+      .setParam('local_ledger_name', deviceId);
 
     if (opts.ledger) {
-      url.setParam("ledger", String(opts.ledger));
+      url.setParam('ledger', String(opts.ledger));
     }
     if (opts.tenant) {
-      url.setParam("tenant", String(opts.tenant));
+      url.setParam('tenant', String(opts.tenant));
     }
 
     // Find the link in the overlay and update its click handler
     const authLink = this.overlayNode.querySelector('a[href]') as HTMLAnchorElement;
-    console.log(authLink)
+    console.log(authLink);
     if (authLink) {
       authLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        
+
         // Only open once per session
         if (!this.authOpened) {
           const width = 800;
@@ -228,26 +262,26 @@ export class ManualRedirectStrategy extends RedirectStrategy {
 
           window.open(
             url.toString(),
-            "Fireproof Login",
+            'Fireproof Login',
             `left=${left},top=${top},width=${width},height=${height},scrollbars=yes,resizable=yes,popup=yes`
           );
-          
+
           this.authOpened = true;
-          
+
           // Now start the polling
           if (!this.pollingStarted) {
             this.pollingStarted = true;
-            
+
             // Start polling using parent's waitForToken
             const token = await super.waitForToken(sthis, logger, deviceId, opts);
-            
+
             // Resolve the promise from our overridden waitForToken
             if (this.resolveToken) {
               this.resolveToken(token);
               this.resolveToken = undefined;
             }
           }
-          
+
           // Optionally minimize the notification after clicking
           if (this.overlayNode) {
             this.overlayNode.style.opacity = '0.7';

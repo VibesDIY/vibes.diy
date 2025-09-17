@@ -29,15 +29,18 @@ function App() {
       <p style={{ marginBottom: '2rem', color: '#666', fontSize: '1.1rem' }}>
         Explore different examples showcasing the capabilities of use-vibes components.
       </p>
-      
-      <div className="examples-grid" style={{ 
-        display: 'grid', 
-        gap: '1.5rem', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        marginBottom: '2rem'
-      }}>
+
+      <div
+        className="examples-grid"
+        style={{
+          display: 'grid',
+          gap: '1.5rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          marginBottom: '2rem',
+        }}
+      >
         {examples.map((example) => (
-          <div 
+          <div
             key={example.key}
             className="example-card"
             style={{
@@ -61,44 +64,50 @@ function App() {
           >
             <h3 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>{example.title}</h3>
             <p style={{ margin: '0', color: '#666', lineHeight: '1.5' }}>{example.description}</p>
-            <div style={{ 
-              marginTop: '1rem', 
-              color: '#007acc', 
-              fontSize: '0.9rem', 
-              fontWeight: '500' 
-            }}>
+            <div
+              style={{
+                marginTop: '1rem',
+                color: '#007acc',
+                fontSize: '0.9rem',
+                fontWeight: '500',
+              }}
+            >
               View Example →
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ 
-        padding: '1.5rem', 
-        backgroundColor: '#f8f9fa', 
-        borderRadius: '8px',
-        border: '1px solid #e9ecef'
-      }}>
+      <div
+        style={{
+          padding: '1.5rem',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px',
+          border: '1px solid #e9ecef',
+        }}
+      >
         <h3 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>About Use Vibes</h3>
         <p style={{ margin: '0', color: '#666', lineHeight: '1.5' }}>
-          Use Vibes is a library that transforms any DOM element into an AI-powered micro-app. 
-          These examples demonstrate various components and patterns you can use in your applications.
+          Use Vibes is a library that transforms any DOM element into an AI-powered micro-app. These
+          examples demonstrate various components and patterns you can use in your applications.
         </p>
       </div>
     </div>
   );
 
   const renderExample = () => {
-    const example = examples.find(e => e.key === currentExample);
+    const example = examples.find((e) => e.key === currentExample);
     if (!example) return renderHome();
 
     return (
       <div>
-        <div style={{ 
-          padding: '1rem 0', 
-          borderBottom: '1px solid #eee', 
-          marginBottom: '1rem' 
-        }}>
+        <div
+          style={{
+            padding: '1rem 0',
+            borderBottom: '1px solid #eee',
+            marginBottom: '1rem',
+          }}
+        >
           <button
             onClick={() => setCurrentExample('home')}
             style={{
