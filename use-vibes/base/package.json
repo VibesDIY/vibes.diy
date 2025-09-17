@@ -17,6 +17,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.4.30",
+    "@fireproof/core-runtime": "^0.23.13",
+    "@fireproof/core-types-base": "^0.23.13",
+    "@fireproof/core-types-protocols-cloud": "^0.23.11",
     "call-ai": "workspace:*",
     "react-dom": "^19.1.1",
     "use-fireproof": "^0.23.13",

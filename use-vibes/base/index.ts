@@ -1,35 +1,38 @@
 // Re-export specific items from use-fireproof
 import { useEffect, useState } from 'react';
-import type { Database } from 'use-fireproof';
-import { fireproof, ImgFile, toCloud as originalToCloud, useFireproof as originalUseFireproof } from 'use-fireproof';
+import {
+  fireproof,
+  ImgFile,
+  toCloud as originalToCloud,
+  useFireproof as originalUseFireproof,
+  type Database,
+  type UseFpToCloudParam,
+} from 'use-fireproof';
 import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
 
 export { fireproof, ImgFile, ManualRedirectStrategy };
 
 // Re-export all types under a namespace
-  export type * as Fireproof from 'use-fireproof';
+export type * as Fireproof from 'use-fireproof';
 
 // Helper function to create toCloud configuration with ManualRedirectStrategy
-export function toCloud(opts?: Parameters<typeof originalToCloud>[0]) {
+export function toCloud(opts?: UseFpToCloudParam) {
   const attachable = originalToCloud({
     ...opts,
     strategy: new ManualRedirectStrategy(),
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token',
-    tokenApiURI: "https://connect.fireproof.direct/api",
-    urls: { base: 'fpcloud://cloud.fireproof.direct' }
-  } as Parameters<typeof originalToCloud>[0]);
+    tokenApiURI: 'https://connect.fireproof.direct/api',
+    urls: { base: 'fpcloud://cloud.fireproof.direct' },
+  });
 
   return attachable;
 }
 
-
-
 // Custom useFireproof hook that starts local-first and allows manual sync enable
-export const useFireproof = (
-  nameOrDatabase?: string | Database
-) => {
+export const useFireproof = (nameOrDatabase?: string | Database) => {
   // Get database name for localStorage key
-  const dbName = typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'default';
+  const dbName =
+    typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'default';
   const syncKey = `fireproof-sync-${dbName}`;
 
   // Check if sync was previously enabled (persists across refreshes)
@@ -46,20 +49,25 @@ export const useFireproof = (
   );
 
   // State to track manual attachment for first-time enable
-  const [manualAttach, setManualAttach] = useState<any>(null);
+  const [manualAttach, setManualAttach] = useState<
+    null | 'pending' | { state: 'attached' | 'error'; attached?: unknown; error?: unknown }
+  >(null);
 
   // Handle first-time sync enable without reload
   useEffect(() => {
     if (manualAttach === 'pending' && result.database) {
       const cloudConfig = toCloud();
-      result.database.attach(cloudConfig).then((attached) => {
-        setManualAttach({ state: 'attached', attached });
-        // Save preference for next refresh
-        localStorage.setItem(syncKey, 'true');
-      }).catch((error) => {
-        console.error('Failed to attach:', error);
-        setManualAttach({ state: 'error', error });
-      });
+      result.database
+        .attach(cloudConfig)
+        .then((attached) => {
+          setManualAttach({ state: 'attached', attached });
+          // Save preference for next refresh
+          localStorage.setItem(syncKey, 'true');
+        })
+        .catch((error) => {
+          console.error('Failed to attach:', error);
+          setManualAttach({ state: 'error', error });
+        });
     }
   }, [manualAttach, result.database, syncKey]);
 
@@ -90,7 +98,10 @@ export const useFireproof = (
     localStorage.removeItem(syncKey);
 
     // Reset token if attached through original flow
-    if (result.attach?.ctx?.tokenAndClaims?.state === 'ready' && result.attach.ctx.tokenAndClaims.reset) {
+    if (
+      result.attach?.ctx?.tokenAndClaims?.state === 'ready' &&
+      result.attach.ctx.tokenAndClaims.reset
+    ) {
       result.attach.ctx.tokenAndClaims.reset();
     }
 
@@ -99,8 +110,10 @@ export const useFireproof = (
   };
 
   // Determine sync status - check for actual attachment state
-  const syncEnabled = (wasSyncEnabled && (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
-                     manualAttach?.state === 'attached';
+  const syncEnabled =
+    (wasSyncEnabled &&
+      (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
+    (manualAttach && typeof manualAttach === 'object' && manualAttach.state === 'attached');
 
   // Return combined result, preferring original attach over manual
   return {
@@ -108,7 +121,7 @@ export const useFireproof = (
     attach: result.attach || manualAttach,
     enableSync,
     disableSync,
-    syncEnabled
+    syncEnabled,
   };
 };
 
@@ -117,7 +130,7 @@ import { callAI } from 'call-ai';
 export { callAI, callAI as callAi };
 
 // Re-export all types under a namespace
-  export type * as CallAI from 'call-ai';
+export type * as CallAI from 'call-ai';
 
 // Export ImgGen component - the primary export
 export { default as ImgGen } from './components/ImgGen.js';
@@ -139,7 +152,7 @@ export { base64ToFile } from './utils/base64.js';
 // Export ImgGen sub-components
 export { ImgGenDisplay } from './components/ImgGenUtils/ImgGenDisplay.js';
 export { ImgGenDisplayPlaceholder } from './components/ImgGenUtils/ImgGenDisplayPlaceholder.js';
-export { ImgGenModal } from './components/ImgGenUtils/ImgGenModal.js';
+export { ImgGenModal, type ImgGenModalProps } from './components/ImgGenUtils/ImgGenModal.js';
 export { ImageOverlay } from './components/ImgGenUtils/overlays/ImageOverlay.js';
 
 // Export internal utilities and constants
@@ -147,6 +160,8 @@ export { addNewVersion, MODULE_STATE } from './hooks/image-gen/utils.js';
 
 // Export types for testing and advanced usage
 export {
-  type ImageDocument, type PartialImageDocument, type UseImageGenOptions,
-  type UseImageGenResult
+  type ImageDocument,
+  type PartialImageDocument,
+  type UseImageGenOptions,
+  type UseImageGenResult,
 } from './hooks/image-gen/types.js';

@@ -41,8 +41,8 @@ function TodoListExample() {
     return true; // 'all'
   });
 
-  const activeTodoCount = allTodos.filter(todo => !todo.completed).length;
-  const completedTodoCount = allTodos.filter(todo => todo.completed).length;
+  const activeTodoCount = allTodos.filter((todo) => !todo.completed).length;
+  const completedTodoCount = allTodos.filter((todo) => todo.completed).length;
 
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +85,7 @@ function TodoListExample() {
 
   const handleEditTodo = async (todo: TodoDocument, newText: string) => {
     if (!newText.trim()) return;
-    
+
     try {
       await database.put({
         ...todo,
@@ -98,9 +98,9 @@ function TodoListExample() {
   };
 
   const handleClearCompleted = async () => {
-    const completedTodos = allTodos.filter(todo => todo.completed);
+    const completedTodos = allTodos.filter((todo) => todo.completed);
     try {
-      await Promise.all(completedTodos.map(todo => database.del(todo._id)));
+      await Promise.all(completedTodos.map((todo) => database.del(todo._id)));
     } catch (error) {
       console.error('Failed to clear completed todos:', error);
     }
@@ -115,19 +115,19 @@ function TodoListExample() {
 
       {/* Sync control button */}
       {!syncEnabled && (
-        <div style={{
-          marginBottom: '2rem',
-          padding: '1rem',
-          backgroundColor: '#f0f8ff',
-          borderRadius: '4px',
-          border: '1px solid #b0d4ff',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <span style={{ color: '#0066cc' }}>
-            Enable sync to share your todos across devices
-          </span>
+        <div
+          style={{
+            marginBottom: '2rem',
+            padding: '1rem',
+            backgroundColor: '#f0f8ff',
+            borderRadius: '4px',
+            border: '1px solid #b0d4ff',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ color: '#0066cc' }}>Enable sync to share your todos across devices</span>
           <button
             onClick={enableSync}
             style={{
@@ -137,7 +137,7 @@ function TodoListExample() {
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: '0.9rem',
             }}
           >
             Enable Sync
@@ -182,12 +182,14 @@ function TodoListExample() {
 
       {/* Filter buttons */}
       {allTodos.length > 0 && (
-        <div style={{ 
-          display: 'flex', 
-          gap: '0.5rem', 
-          marginBottom: '1rem',
-          justifyContent: 'center'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            marginBottom: '1rem',
+            justifyContent: 'center',
+          }}
+        >
           {(['all', 'active', 'completed'] as const).map((filterType) => (
             <button
               key={filterType}
@@ -212,16 +214,15 @@ function TodoListExample() {
       {/* Todo list */}
       <div style={{ marginBottom: '2rem' }}>
         {filteredTodos.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            color: '#999', 
-            padding: '2rem',
-            fontStyle: 'italic'
-          }}>
-            {allTodos.length === 0 
-              ? 'No todos yet. Add one above!' 
-              : `No ${filter} todos.`
-            }
+          <div
+            style={{
+              textAlign: 'center',
+              color: '#999',
+              padding: '2rem',
+              fontStyle: 'italic',
+            }}
+          >
+            {allTodos.length === 0 ? 'No todos yet. Add one above!' : `No ${filter} todos.`}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -239,82 +240,92 @@ function TodoListExample() {
       </div>
 
       {/* Sync status indicator */}
-      {syncEnabled && attach?.state === 'attached' && attach?.ctx?.tokenAndClaims?.state === 'ready' && (
-        <div style={{
-          marginBottom: '1rem',
-          padding: '0.5rem 1rem',
-          backgroundColor: '#d4edda',
-          borderRadius: '4px',
-          border: '1px solid #c3e6cb',
-          color: '#155724',
-          fontSize: '0.9rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <span>✓ Syncing across devices</span>
-          <button
-            onClick={() => {
-              const tokenAndClaims = attach?.ctx?.tokenAndClaims;
-              if (tokenAndClaims?.state === 'ready' && tokenAndClaims?.reset) {
-                tokenAndClaims.reset();
-              }
-            }}
+      {syncEnabled &&
+        attach?.state === 'attached' &&
+        attach?.ctx?.tokenAndClaims?.state === 'ready' && (
+          <div
             style={{
-              background: 'none',
-              border: 'none',
+              marginBottom: '1rem',
+              padding: '0.5rem 1rem',
+              backgroundColor: '#d4edda',
+              borderRadius: '4px',
+              border: '1px solid #c3e6cb',
               color: '#155724',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              fontSize: '0.85rem',
+              fontSize: '0.9rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            Sign Out
-          </button>
-        </div>
-      )}
+            <span>✓ Syncing across devices</span>
+            <button
+              onClick={() => {
+                const tokenAndClaims = attach?.ctx?.tokenAndClaims;
+                if (tokenAndClaims?.state === 'ready' && tokenAndClaims?.reset) {
+                  tokenAndClaims.reset();
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#155724',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontSize: '0.85rem',
+              }}
+            >
+              Sign Out
+            </button>
+          </div>
+        )}
 
       {/* Sync state indicators */}
       {syncEnabled && attach?.state === 'attaching' && (
-        <div style={{
-          marginBottom: '1rem',
-          padding: '0.5rem 1rem',
-          backgroundColor: '#fff3cd',
-          borderRadius: '4px',
-          border: '1px solid #ffeaa7',
-          color: '#856404',
-          fontSize: '0.9rem',
-        }}>
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.5rem 1rem',
+            backgroundColor: '#fff3cd',
+            borderRadius: '4px',
+            border: '1px solid #ffeaa7',
+            color: '#856404',
+            fontSize: '0.9rem',
+          }}
+        >
           <span>⏳ Connecting to sync service...</span>
         </div>
       )}
 
       {syncEnabled && attach?.state === 'error' && (
-        <div style={{
-          marginBottom: '1rem',
-          padding: '0.5rem 1rem',
-          backgroundColor: '#f8d7da',
-          borderRadius: '4px',
-          border: '1px solid #f5c6cb',
-          color: '#721c24',
-          fontSize: '0.9rem',
-        }}>
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.5rem 1rem',
+            backgroundColor: '#f8d7da',
+            borderRadius: '4px',
+            border: '1px solid #f5c6cb',
+            color: '#721c24',
+            fontSize: '0.9rem',
+          }}
+        >
           <span>❌ Sync connection failed. Please try again.</span>
         </div>
       )}
 
       {/* Stats and actions */}
       {allTodos.length > 0 && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          padding: '1rem',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '4px',
-          fontSize: '0.9rem',
-          color: '#666'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '1rem',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px',
+            fontSize: '0.9rem',
+            color: '#666',
+          }}
+        >
           <span>
             {activeTodoCount} {activeTodoCount === 1 ? 'item' : 'items'} left
           </span>
@@ -369,22 +380,24 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.75rem',
-      padding: '0.75rem',
-      border: '1px solid #ddd',
-      borderRadius: '4px',
-      backgroundColor: todo.completed ? '#f8f9fa' : 'white',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        padding: '0.75rem',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        backgroundColor: todo.completed ? '#f8f9fa' : 'white',
+      }}
+    >
       <input
         type="checkbox"
         checked={todo.completed}
         onChange={onToggle}
         style={{ cursor: 'pointer' }}
       />
-      
+
       {isEditing ? (
         <input
           type="text"
@@ -413,7 +426,7 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
           {todo.text}
         </span>
       )}
-      
+
       <button
         onClick={() => setIsEditing(!isEditing)}
         style={{
@@ -427,7 +440,7 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
       >
         {isEditing ? '✓' : '✏️'}
       </button>
-      
+
       <button
         onClick={onDelete}
         style={{

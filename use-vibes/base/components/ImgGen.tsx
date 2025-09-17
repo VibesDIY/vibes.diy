@@ -559,4 +559,4 @@ export function ImgGen(props: Partial<ImgGenProps>): React.ReactElement {
 }
 
 // Simple export - no memoization or complex structure
-// export default ImgGen;
+export default ImgGen;

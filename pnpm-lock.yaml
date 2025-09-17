@@ -262,6 +262,15 @@ importers:
       '@adviser/cement':
         specifier: ^0.4.30
         version: 0.4.30(typescript@5.8.3)
+      '@fireproof/core-runtime':
+        specifier: ^0.23.13
+        version: 0.23.13(typescript@5.8.3)
+      '@fireproof/core-types-base':
+        specifier: ^0.23.13
+        version: 0.23.13(typescript@5.8.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: ^0.23.11
+        version: 0.23.13(typescript@5.8.3)
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg

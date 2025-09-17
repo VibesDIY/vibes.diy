@@ -12,7 +12,7 @@ interface ImageDocument extends DocBase {
 }
 
 function ImageGeneratorExample() {
-  return
+  return;
   const [inputPrompt, setInputPrompt] = useState('');
   const [activePrompt, setActivePrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
