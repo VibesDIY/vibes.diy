@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { DocBase } from 'use-fireproof';
 import { useFireproof } from 'use-vibes';
 import './App.css';
@@ -17,7 +17,7 @@ function TodoListExample() {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   // Use Fireproof - starts local-first, then automatically shows sync overlay
-  const { useLiveQuery, database, attach, enableSync, syncEnabled } = useFireproof('TodoApp-10');
+  const { useLiveQuery, database, attach, enableSync, syncEnabled } = useFireproof('TodoApp-100');
 
   // Debug logging for attach state
   useEffect(() => {

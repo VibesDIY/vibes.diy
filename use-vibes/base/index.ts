@@ -65,7 +65,7 @@ export const useFireproof = (
 
   // Function to enable sync and trigger popup directly
   const enableSync = () => {
-    if (!wasSyncEnabled) {
+    if (!wasSyncEnabled && !manualAttach) {
       // First time enabling - manual attach
       setManualAttach('pending');
     }
@@ -98,10 +98,9 @@ export const useFireproof = (
     setManualAttach(null);
   };
 
-  // Determine sync status from either original attach or manual attach
-  const syncEnabled = result.attach?.state === 'attached' ||
-                     manualAttach?.state === 'attached' ||
-                     wasSyncEnabled;
+  // Determine sync status - check for actual attachment state
+  const syncEnabled = (wasSyncEnabled && (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
+                     manualAttach?.state === 'attached';
 
   // Return combined result, preferring original attach over manual
   return {

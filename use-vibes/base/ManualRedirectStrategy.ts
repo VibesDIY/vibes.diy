@@ -127,30 +127,45 @@ export class ManualRedirectStrategy extends RedirectStrategy {
   open(sthis: unknown, logger: unknown, deviceId: string, opts: unknown): void {
     // Call parent open but we'll override the window.open behavior
     const originalWindowOpen = window.open;
-    
+
     // Temporarily replace window.open with a no-op to prevent auto-popup
     window.open = () => null;
-    
+
     // Call parent's open method which sets up everything including the overlay
     super.open(sthis, logger, deviceId, opts);
-    
+
     // Restore original window.open
     window.open = originalWindowOpen;
-    
-    // Now modify the overlay to only open popup on click
-    this.setupManualTrigger(sthis, logger, deviceId, opts);
+
+    // Check for existing token asynchronously and hide overlay if found
+    super.tryToken(sthis, logger, opts as any).then((existingToken) => {
+      if (existingToken && this.overlayNode) {
+        // Token exists, hide overlay immediately
+        this.overlayNode.style.display = 'none';
+      } else {
+        // No token, setup manual trigger
+        this.setupManualTrigger(sthis, logger, deviceId, opts);
+      }
+    });
   }
 
-  // Override waitForToken to delay polling until user clicks
+  // Override waitForToken to delay polling until user clicks (unless token exists)
   async waitForToken(sthis: unknown, logger: unknown, deviceId: string, opts: unknown): Promise<any> {
-    // Don't start polling immediately, wait for user interaction
+    // First check if a token already exists from a previous session
+    const existingToken = await super.tryToken(sthis, logger, opts as any);
+    if (existingToken) {
+      // Token exists, return it immediately
+      return existingToken;
+    }
+
+    // No existing token, wait for user interaction
     if (!this.pollingStarted) {
       return new Promise((resolve) => {
         this.resolveToken = resolve;
         // Polling will start when user clicks the sign-in button
       });
     }
-    
+
     // If polling was already started, use parent's implementation
     return super.waitForToken(sthis, logger, deviceId, opts);
   }
