@@ -15,6 +15,14 @@ jobs:
 
       - uses: ./actions/base
 
+      - name: validate-all-packages
+        shell: bash
+        run: |
+          set -e
+          echo "Running root validation before publishing..."
+          pnpm check
+          echo "✅ All packages validated successfully"
+
       - uses: ./use-vibes/actions/publish
         with:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

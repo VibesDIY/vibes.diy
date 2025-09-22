@@ -14,6 +14,7 @@ runs:
       env:
         NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
       run: |
+        set -e
         #rm -f **/.npmrc # publish to the world
         #git fetch --tags --force
         # we need to have a safe way to store of allowedSigners
@@ -32,6 +33,7 @@ runs:
       env:
         NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
       run: |
+        set -e
         #rm -f **/.npmrc # publish to the world
         #git fetch --tags --force
         # we need to have a safe way to store of allowedSigners
@@ -50,6 +52,7 @@ runs:
       env:
         NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
       run: |
+        set -e
         #rm -f **/.npmrc # publish to the world
         #git fetch --tags --force
         # we need to have a safe way to store of allowedSigners
