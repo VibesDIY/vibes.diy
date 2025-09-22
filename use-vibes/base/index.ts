@@ -8,6 +8,7 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
+import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
 import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
 
 export { fireproof, ImgFile, ManualRedirectStrategy };
@@ -16,7 +17,7 @@ export { fireproof, ImgFile, ManualRedirectStrategy };
 export type * as Fireproof from 'use-fireproof';
 
 // Helper function to create toCloud configuration with ManualRedirectStrategy
-export function toCloud(opts?: UseFpToCloudParam) {
+export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
   const attachable = originalToCloud({
     ...opts,
     strategy: new ManualRedirectStrategy(),
