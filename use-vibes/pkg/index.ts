@@ -8,6 +8,7 @@ export {
   useFireproof,
   fireproof,
   ImgFile,
+  toCloud,
 
   // AI integration
   callAI,
