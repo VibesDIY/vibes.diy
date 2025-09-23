@@ -170,16 +170,17 @@ From commit `8509d99` (Sept 17, 2025), use-vibes provides an **enhanced version*
 
 ```typescript
 // Original use-fireproof behavior:
-const { database, useLiveQuery } = useFireproof('mydb');
+const { database, useLiveQuery } = useFireproof("mydb");
 
 // Enhanced use-vibes behavior (drop-in replacement):
-const { database, useLiveQuery, enableSync, disableSync, syncEnabled } = useFireproof('mydb');
+const { database, useLiveQuery, enableSync, disableSync, syncEnabled } =
+  useFireproof("mydb");
 ```
 
 #### Key Enhancements Added
 
 1. **Local-first behavior** - starts without sync by default
-2. **ManualRedirectStrategy** - custom auth strategy with subtle UI overlay  
+2. **ManualRedirectStrategy** - custom auth strategy with subtle UI overlay
 3. **enableSync()** function - allows users to manually trigger sync
 4. **disableSync()** function - allows users to disable sync
 5. **syncEnabled** state - tracks current sync status
@@ -226,12 +227,16 @@ For users who change their import from `use-fireproof` to `use-vibes`, the enhan
 
 ```typescript
 // Simple API - no manual sync config needed:
-const { database, useLiveQuery, enableSync, syncEnabled } = useFireproof('db-name');
+const { database, useLiveQuery, enableSync, syncEnabled } =
+  useFireproof("db-name");
 ```
 
 **Key Enhancement:**
+
 - No need to manually pass `{ attach: toCloud() }` parameter
 - Automatic `vibes-login-link` button detection and wiring
+- **Automatic ledger naming**: Generates cloud ledger names like `https-myapp-com-kanban-board`
+- **Environment isolation**: Different origins (localhost vs production) get separate ledgers
 - ManualRedirectStrategy provides better auth UX
 - **Respects user preferences**: Only enables sync when user clicks the button or has previously enabled it
 - Sync state is managed through localStorage (`wasSyncEnabled` preference)
