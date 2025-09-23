@@ -159,3 +159,72 @@ git push origin use-vibes@v0.12.6-dev2
 - Package.json versions remain at `0.0.0` as placeholders
 - CI dynamically sets version during build process
 - Dependency relationships: `use-vibes` → `@vibes.diy/use-vibes-base` → `call-ai`
+
+## Use-Vibes Module Architecture
+
+### Enhanced useFireproof Hook Strategy
+
+From commit `8509d99` (Sept 17, 2025), use-vibes provides an **enhanced version** of `useFireproof` that serves as a drop-in replacement with additional sync capabilities.
+
+#### Original vs Enhanced Behavior
+
+```typescript
+// Original use-fireproof behavior:
+const { database, useLiveQuery } = useFireproof('mydb');
+
+// Enhanced use-vibes behavior (drop-in replacement):
+const { database, useLiveQuery, enableSync, disableSync, syncEnabled } = useFireproof('mydb');
+```
+
+#### Key Enhancements Added
+
+1. **Local-first behavior** - starts without sync by default
+2. **ManualRedirectStrategy** - custom auth strategy with subtle UI overlay  
+3. **enableSync()** function - allows users to manually trigger sync
+4. **disableSync()** function - allows users to disable sync
+5. **syncEnabled** state - tracks current sync status
+6. **Persistent preferences** - remembers sync choice in localStorage
+
+### Module Integration Architecture
+
+```
+use-vibes/pkg/index.ts (public API)
+├── Re-exports from @vibes.diy/use-vibes-base
+└── Adds RuntimeError interface
+
+@vibes.diy/use-vibes-base/index.ts (core implementation)
+├── Enhanced useFireproof hook (wraps original)
+├── toCloud helper (with ManualRedirectStrategy)
+├── ManualRedirectStrategy class
+├── ImgGen components and utilities
+└── Re-exports from use-fireproof + call-ai
+```
+
+### Enhanced useFireproof Implementation Details
+
+The use-vibes `useFireproof` is a **wrapper** around the original that adds:
+
+1. **Automatic ManualRedirectStrategy injection** - uses custom auth flow instead of default redirect
+2. **Conditional sync** - only attaches cloud sync when explicitly enabled by user
+3. **State management** - tracks manual vs automatic sync states using React state
+4. **UI automation** - programmatically triggers auth popups via DOM manipulation
+5. **Persistence** - uses localStorage to remember user's sync preference across sessions
+6. **Dual attachment modes** - supports both original flow (for returning users) and manual flow (for first-time)
+
+### Drop-in Replacement Strategy
+
+For users who change their import from `use-fireproof` to `use-vibes`, the enhanced version provides:
+
+- **Same API surface** - all original useFireproof functionality preserved
+- **Enhanced defaults** - better auth UX with ManualRedirectStrategy
+- **Optional sync features** - `enableSync`/`disableSync` available but not required
+- **Backward compatibility** - existing code continues to work without changes
+- **Progressive enhancement** - users can opt-in to new sync features when ready
+
+### ManualRedirectStrategy Features
+
+- **Subtle UI overlay** - bottom-right notification instead of full-screen redirect
+- **Custom CSS animations** - slide-up animation with modern styling
+- **Programmatic auth** - JavaScript-triggered popup instead of page redirect
+- **Better UX** - non-blocking authentication flow
+- **Configurable** - custom overlay HTML and CSS can be provided
