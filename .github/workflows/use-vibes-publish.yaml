@@ -20,7 +20,7 @@ jobs:
         run: |
           set -e
           echo "Running root validation before publishing..."
-          pnpm check
+          pnpm build
           echo "✅ All packages validated successfully"
 
       - uses: ./use-vibes/actions/publish
