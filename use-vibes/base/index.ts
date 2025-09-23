@@ -1,5 +1,5 @@
 // Re-export specific items from use-fireproof
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   fireproof,
   ImgFile,
@@ -82,10 +82,10 @@ export const useFireproof = (nameOrDatabase?: string | Database) => {
           setManualAttach({ state: 'error', error });
         });
     }
-  }, [manualAttach, result.database, syncKey]);
+  }, [manualAttach, result.database, syncKey, dbName]);
 
   // Function to enable sync and trigger popup directly
-  const enableSync = () => {
+  const enableSync = useCallback(() => {
     if (!wasSyncEnabled && !manualAttach) {
       // First time enabling - manual attach
       setManualAttach('pending');
@@ -104,7 +104,7 @@ export const useFireproof = (nameOrDatabase?: string | Database) => {
         }
       }
     }, 100); // Small delay to ensure overlay is rendered
-  };
+  }, [wasSyncEnabled, manualAttach]);
 
   // Wire up vibes-login-link button if it exists
   useEffect(() => {
@@ -124,7 +124,7 @@ export const useFireproof = (nameOrDatabase?: string | Database) => {
   }, [enableSync]);
 
   // Function to disable sync
-  const disableSync = () => {
+  const disableSync = useCallback(() => {
     localStorage.removeItem(syncKey);
 
     // Reset token if attached through original flow
@@ -137,7 +137,7 @@ export const useFireproof = (nameOrDatabase?: string | Database) => {
 
     // Clear manual attach state
     setManualAttach(null);
-  };
+  }, [syncKey, result.attach]);
 
   // Determine sync status - check for actual attachment state
   const syncEnabled =
