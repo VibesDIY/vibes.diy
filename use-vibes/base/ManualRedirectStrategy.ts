@@ -1,7 +1,7 @@
-import { RedirectStrategy } from 'use-fireproof';
+import type { Logger } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import type { ToCloudOpts, TokenAndClaims } from '@fireproof/core-types-protocols-cloud';
-import type { Logger } from '@adviser/cement';
+import { RedirectStrategy } from 'use-fireproof';
 
 interface BuildURIBuilder {
   from: (uri: string) => URLBuilder;
@@ -10,6 +10,18 @@ interface BuildURIBuilder {
 interface URLBuilder {
   setParam: (key: string, value: string) => URLBuilder;
   toString: () => string;
+}
+
+// Generate ledger name combining origin and database name
+function generateLedgerName(dbName: string): string {
+  // Sanitize origin: replace non-alphanumeric with hyphens
+  const origin =
+    typeof window !== 'undefined'
+      ? window.location.origin.replace(/[^a-z0-9]/gi, '-')
+      : 'unknown-origin';
+
+  // Combine origin + database name
+  return `${origin}-${dbName}`;
 }
 
 export class ManualRedirectStrategy extends RedirectStrategy {
@@ -233,7 +245,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
       .from(dashboardURI)
       .setParam('back_url', window.location.href)
       .setParam('result_id', this.resultId || '')
-      .setParam('local_ledger_name', deviceId);
+      .setParam('local_ledger_name', generateLedgerName(deviceId));
 
     if (opts.ledger) {
       url.setParam('ledger', String(opts.ledger));
