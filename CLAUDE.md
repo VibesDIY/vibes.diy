@@ -216,10 +216,37 @@ The use-vibes `useFireproof` is a **wrapper** around the original that adds:
 For users who change their import from `use-fireproof` to `use-vibes`, the enhanced version provides:
 
 - **Same API surface** - all original useFireproof functionality preserved
+- **Implicit cloud sync** - cloud sync is always enabled (no need for `{ attach: toCloud() }`)
 - **Enhanced defaults** - better auth UX with ManualRedirectStrategy
 - **Optional sync features** - `enableSync`/`disableSync` available but not required
 - **Backward compatibility** - existing code continues to work without changes
 - **Progressive enhancement** - users can opt-in to new sync features when ready
+
+#### Enhanced Button Integration
+
+```typescript
+// Simple API - no manual sync config needed:
+const { database, useLiveQuery, enableSync, syncEnabled } = useFireproof('db-name');
+```
+
+**Key Enhancement:**
+- No need to manually pass `{ attach: toCloud() }` parameter
+- Automatic `vibes-login-link` button detection and wiring
+- ManualRedirectStrategy provides better auth UX
+- **Respects user preferences**: Only enables sync when user clicks the button or has previously enabled it
+- Sync state is managed through localStorage (`wasSyncEnabled` preference)
+
+#### Automatic Button Integration
+
+The enhanced `useFireproof` automatically detects and wires up a button with `id="vibes-login-link"`:
+
+- **Button Detection**: Searches for `#vibes-login-link` on component mount
+- **Event Handling**: Connects button clicks to the `enableSync()` function
+- **Multiple Instances**: Each `useFireproof` hook adds its own event listener
+- **Clean Cleanup**: Event listeners are properly removed on component unmount
+- **Graceful Degradation**: Works without the button (no errors if not found)
+
+This allows vibes runtime containers to provide a login button that automatically triggers sync for all active `useFireproof` instances.
 
 ### ManualRedirectStrategy Features
 

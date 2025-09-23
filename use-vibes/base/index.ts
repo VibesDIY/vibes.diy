@@ -29,7 +29,7 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
   return attachable;
 }
 
-// Custom useFireproof hook that starts local-first and allows manual sync enable
+// Custom useFireproof hook with implicit cloud sync and button integration
 export const useFireproof = (nameOrDatabase?: string | Database) => {
   // Get database name for localStorage key
   const dbName =
@@ -93,6 +93,23 @@ export const useFireproof = (nameOrDatabase?: string | Database) => {
       }
     }, 100); // Small delay to ensure overlay is rendered
   };
+
+  // Wire up vibes-login-link button if it exists
+  useEffect(() => {
+    const button = document.getElementById('vibes-login-link');
+    if (!button) return;
+
+    const handleClick = () => {
+      enableSync();
+    };
+
+    button.addEventListener('click', handleClick);
+
+    // Cleanup removes this listener on unmount
+    return () => {
+      button.removeEventListener('click', handleClick);
+    };
+  }, [enableSync]);
 
   // Function to disable sync
   const disableSync = () => {
