@@ -1,5 +1,6 @@
 // Re-export specific items from use-fireproof
-import { useEffect, useState, useCallback } from 'react';
+import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
+import { useCallback, useEffect, useState } from 'react';
 import {
   fireproof,
   ImgFile,
@@ -8,25 +9,12 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
-import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
 import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
 
 export { fireproof, ImgFile, ManualRedirectStrategy };
 
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
-
-// Generate ledger name combining origin and database name
-function generateLedgerName(dbName: string): string {
-  // Sanitize origin: replace non-alphanumeric with hyphens
-  const origin =
-    typeof window !== 'undefined'
-      ? window.location.origin.replace(/[^a-z0-9]/gi, '-')
-      : 'unknown-origin';
-
-  // Combine origin + database name
-  return `${origin}-${dbName}`;
-}
 
 // Helper function to create toCloud configuration with ManualRedirectStrategy
 export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
@@ -52,7 +40,7 @@ export const useFireproof = (nameOrDatabase?: string | Database) => {
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
 
   // Create attach config only if sync was previously enabled
-  const attachConfig = wasSyncEnabled ? toCloud({ ledger: generateLedgerName(dbName) }) : undefined;
+  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
 
   // Use original useFireproof with attach config only if previously enabled
   // This preserves the createAttach lifecycle for token persistence
@@ -69,7 +57,7 @@ export const useFireproof = (nameOrDatabase?: string | Database) => {
   // Handle first-time sync enable without reload
   useEffect(() => {
     if (manualAttach === 'pending' && result.database) {
-      const cloudConfig = toCloud({ ledger: generateLedgerName(dbName) });
+      const cloudConfig = toCloud();
       result.database
         .attach(cloudConfig)
         .then((attached) => {
