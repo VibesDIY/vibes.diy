@@ -7,3 +7,4 @@ export * from "./txt-docs.js";
 export * from "./catalog.js";
 
 export * from "./view-state.js";
+export * from "./style-prompts.js";

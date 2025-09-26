@@ -7,7 +7,7 @@ import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import modelsList from "../data/models.json" with { type: "json" };
 import { VibesDiyEnv } from "../config/env.js";
-import { UserSettings } from "@vibes.diy/prompts";
+import { UserSettings, stylePrompts } from "@vibes.diy/prompts";
 // Dependency chooser moved to per‑vibe App Settings view
 
 export function meta() {
@@ -39,28 +39,6 @@ export default function Settings() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const stylePromptSuggestions = [
-    { name: "synthwave", description: "80s digital aesthetic" },
-    { name: "brutalist web", description: "raw, grid-heavy" },
-    { name: "organic UI", description: "natural, fluid forms" },
-    { name: "maximalist", description: "dense, decorative" },
-    { name: "skeuomorphic", description: "real-world mimics" },
-    { name: "flat design", description: "clean, 2D shapes" },
-    { name: "bauhaus", description: "geometric modernism" },
-    { name: "glitchcore", description: "decentering expectations" },
-    { name: "paper cutout", description: "layered, tactile" },
-    {
-      name: "viridian",
-      description: `Create a vibrant UI theme inspired by Bruce Sterling’s Viridian Design Movement, embracing a futuristic green aesthetic with subtle animations and dynamic interactivity. Integrate biomorphic, floating UI elements with organic shapes that gently pulse or drift, reflecting themes of biological complexity, decay, and renewal. Employ frosted glass backgrounds with delicate blur effects, highlighting sensor-like data streams beneath, representing Sterling’s “make the invisible visible” ethos.
-
-Use gradients and layers of soft greens accented by energetic data-inspired colors (#70d6ff, #ff70a6, #ff9770, #ffd670, #e9ff70), alongside crisp white (#ffffff) and dark contrast (#242424), ensuring legibility and visual appeal. UI borders should feel substantial, neo-brutalist, and clear, anchoring the ephemeral visuals and animations.
-
-The background should subtly animate, evoking cellular activity, digital pulse, or ecological sensor feedback, reinforcing Viridian’s fascination with tangible cyberspace and biomorphic tech aesthetics.
-
-Secretly name this theme “Viridian Pulse”, capturing Sterling’s original playful-yet-serious blend of provocative futurism and stylish eco-consciousness.`,
-    },
-  ];
-
   const stylePromptInputRef = useRef<HTMLInputElement>(null);
   const modelInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,8 +51,8 @@ Secretly name this theme “Viridian Pulse”, capturing Sterling’s original p
   );
 
   const handleStylePromptSelection = useCallback(
-    (suggestion: { name: string; description: string }) => {
-      const fullPrompt = `${suggestion.name} (${suggestion.description})`;
+    (suggestion: { name: string; prompt: string }) => {
+      const fullPrompt = `${suggestion.name} (${suggestion.prompt})`;
       mergeSettings({ stylePrompt: fullPrompt });
       setHasUnsavedChanges(true); // Track change
 
@@ -283,7 +261,7 @@ Secretly name this theme “Viridian Pulse”, capturing Sterling’s original p
                   Suggestions (click to add):
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {stylePromptSuggestions.map((suggestion, index) => (
+                  {stylePrompts.map((suggestion, index) => (
                     <button
                       key={index}
                       type="button"
@@ -294,7 +272,7 @@ Secretly name this theme “Viridian Pulse”, capturing Sterling’s original p
                           ? "bg-blue-500 text-white"
                           : "bg-light-background-01 text-light-primary hover:bg-light-background-02 dark:bg-dark-decorative-00 dark:text-dark-secondary dark:hover:bg-dark-decorative-01"
                       }`}
-                      title={suggestion.description}
+                      title={suggestion.prompt}
                     >
                       {suggestion.name}
                     </button>
