@@ -11,7 +11,10 @@ vi.mock("~/vibes.diy/app/utils/catalogUtils.js");
 
 // Import mocked modules
 import { fireproof } from "use-fireproof";
-import { getSessionDatabaseName, updateUserVibespaceDoc } from "~/vibes.diy/app/utils/databaseManager.js";
+import {
+  getSessionDatabaseName,
+  updateUserVibespaceDoc,
+} from "~/vibes.diy/app/utils/databaseManager.js";
 import { normalizeComponentExports } from "@vibes.diy/prompts";
 import { addCatalogScreenshotStandalone } from "~/vibes.diy/app/utils/catalogUtils.js";
 
