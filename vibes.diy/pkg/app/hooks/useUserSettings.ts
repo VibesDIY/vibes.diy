@@ -1,7 +1,7 @@
 import { useFireproof, toCloud } from "use-fireproof";
-import { SETTINGS_DBNAME } from "../config/env.js";
+import { VibesDiyEnv } from "../config/env.js";
 import { useAuth } from "../contexts/AuthContext.js";
-import type { UserSettings } from "../types/settings.js";
+import type { UserSettings } from "@vibes.diy/prompts";
 import { getSyncPreference } from "../utils/syncPreference.js";
 
 /**
@@ -14,7 +14,7 @@ export function useUserSettings() {
 
   // Only sync settings when sync is enabled and user is authenticated
   const { useDocument } = useFireproof(
-    SETTINGS_DBNAME,
+    VibesDiyEnv.SETTINGS_DBNAME(),
     isEnableSyncEnabled && isAuthenticated ? { attach: toCloud() } : {},
   );
 

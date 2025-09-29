@@ -1,7 +1,7 @@
 import { useFireproof, fireproof, toCloud } from "use-fireproof";
 import { useCallback, useEffect, useMemo } from "react";
 import type { LocalVibe } from "../utils/vibeUtils.js";
-import type { VibeDocument, ScreenshotDocument } from "../types/chat.js";
+import type { VibeDocument, ScreenshotDocument } from "@vibes.diy/prompts";
 import { getCatalogDbName, createCatalogDocId } from "../utils/catalogUtils.js";
 
 // Helper function to get vibe document from session database
@@ -290,7 +290,7 @@ export function useCatalog(
       console.log(`📋 Catalog - ${vibes.length} vibes from useVibes/idb`);
 
       // Get all already cataloged vibe IDs using fireproof 0.23.0 API
-      const allDocsResult = await database.allDocs({ includeDocs: true });
+      const allDocsResult = await database.allDocs();
       if (cancelled) return;
 
       console.log(
@@ -426,7 +426,7 @@ export function useCatalog(
 
       // Get final count after processing
       if (cancelled) return;
-      const finalDocsResult = await database.allDocs({ includeDocs: true });
+      const finalDocsResult = await database.allDocs();
       console.log(
         `📋 Finished catalog - ${finalDocsResult.rows.length} total cataloged in allDocs (updated ${docsToBulkUpdate.length})`,
       );

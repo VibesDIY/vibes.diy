@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useCatalog } from "../pkg/app/hooks/useCatalog.js";
-import type { LocalVibe } from "../pkg/app/utils/vibeUtils.js";
+import { useCatalog } from "~/vibes.diy/app/hooks/useCatalog.js";
+import type { LocalVibe } from "~/vibes.diy/app/utils/vibeUtils.js";
 import { useFireproof } from "use-fireproof";
 
 // Mock use-fireproof using the simple pattern from working tests

@@ -72,14 +72,10 @@ export function useSimpleChat(sessionId: string): ChatState {
   const { isEnableSyncEnabled } = useUserSettings();
 
   // Get main database directly for settings document
-<<<<<<< HEAD
-  const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
-=======
   const { useDocument } = useFireproof(
-    SETTINGS_DBNAME,
+    VibesDiyEnv.SETTINGS_DBNAME(),
     isEnableSyncEnabled && isAuthenticated ? { attach: toCloud() } : {},
   );
->>>>>>> 787576c (feat: implement catalog system with screenshot and source code storage)
 
   // Function to save errors as system messages to the session database
   const saveErrorAsSystemMessageCb = useCallback(

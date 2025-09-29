@@ -4,7 +4,7 @@
  */
 
 import { fireproof } from "use-fireproof";
-import { CATALOG_DBNAME } from "../config/env.js";
+import { VibesDiyEnv } from "../config/env.js";
 
 /**
  * Get the standardized catalog database name for a user
@@ -13,7 +13,7 @@ import { CATALOG_DBNAME } from "../config/env.js";
  */
 export function getCatalogDbName(userId: string): string {
   const cleanUserId = userId || "local";
-  return `${CATALOG_DBNAME}-${cleanUserId}`;
+  return `${VibesDiyEnv.CATALOG_DBNAME()}-${cleanUserId}`;
 }
 
 /**
