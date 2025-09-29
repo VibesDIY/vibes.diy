@@ -4,30 +4,31 @@
 
 /**
  * Generate a simple content identifier from a data URL
- * Uses a hash of the base64 content for fast comparison
+ * Uses ArrayBuffer fetching for better performance and browser compatibility
  */
 export async function generateCid(dataUrl: string): Promise<string> {
-  // Extract base64 content from data URL
-  const base64Content = dataUrl.split(",")[1];
-  if (!base64Content) {
+  if (!dataUrl || !dataUrl.startsWith("data:")) {
     throw new Error("Invalid data URL format");
   }
 
-  // Convert to Uint8Array for hashing
-  const binaryString = atob(base64Content);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+  try {
+    // Fetch the data URL to get ArrayBuffer directly
+    const response = await fetch(dataUrl);
+    const arrayBuffer = await response.arrayBuffer();
+
+    // Generate SHA-256 hash
+    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    return `sha256-${hashHex}`;
+  } catch (error) {
+    throw new Error(
+      `Failed to generate CID: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
-
-  // Generate SHA-256 hash
-  const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  return `sha256-${hashHex}`;
 }
 
 /**
