@@ -61,7 +61,7 @@ export async function addCatalogScreenshotStandalone(
       return;
     }
 
-    const updatedFiles: any = { ...existingDoc._files };
+    const updatedFiles: any = { ...(existingDoc._files || {}) };
 
     // Add screenshot if provided
     if (screenshotData) {
