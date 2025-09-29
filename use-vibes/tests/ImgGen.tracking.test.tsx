@@ -12,8 +12,8 @@ const mockData = vi.hoisted(() => {
 });
 
 // Mock call-ai to avoid actual AI calls
-vi.mock('call-ai', async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
+vi.mock('call-ai', async () => {
+  const actual = await vi.importActual('call-ai') as Record<string, unknown>;
   return {
     ...actual,
     imageGen: vi.fn().mockResolvedValue({
@@ -24,7 +24,8 @@ vi.mock('call-ai', async (importOriginal) => {
 });
 
 // Mock use-fireproof with a simple database
-vi.mock('use-vibes', (actual) => {
+vi.mock('use-vibes', async () => {
+  const actual = await vi.importActual('use-vibes');
   const mockDb = {
     get: vi.fn().mockImplementation((id: string) => {
       if (id === 'test-document-id') {

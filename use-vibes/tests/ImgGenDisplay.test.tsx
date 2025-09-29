@@ -5,8 +5,8 @@ import { render } from '@testing-library/react';
 // Use vi.hoisted to define mocks that need to be referenced in vi.mock
 
 // Mock use-fireproof module (placed before imports that use it)
-vi.mock('use-fireproof', async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
+vi.mock('use-fireproof', async () => {
+  const actual = await vi.importActual('use-fireproof') as Record<string, unknown>;
   console.log('>>>>>>', actual.ImgFile);
   return {
     ...actual,
@@ -55,7 +55,8 @@ import { ImgGenDisplay } from '@vibes.diy/use-vibes-base';
 
 /*
 // Mock components from use-vibes-base
-vi.mock(import('@vibes.diy/use-vibes-base'), async (actual) => {
+vi.mock(import('@vibes.diy/use-vibes-base'), async () => {
+  const actual = await vi.importActual('@vibes.diy/use-vibes-base');
   return {
     ...actual,
     ImageOverlay: vi.fn(() => <div data-testid="mock-image-overlay">Mocked Image Overlay</div>),

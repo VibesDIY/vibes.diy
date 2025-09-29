@@ -25,8 +25,8 @@ const mockImgFile = vi.hoisted(() =>
 );
 
 // Mock use-fireproof module (placed before imports that use it)
-vi.mock('use-fireproof', async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
+vi.mock('use-fireproof', async () => {
+  const actual = await vi.importActual('use-fireproof') as Record<string, unknown>;
   return {
     ...actual,
     ImgFile: mockImgFile,

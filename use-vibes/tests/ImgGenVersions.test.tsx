@@ -25,12 +25,15 @@ const mockImgFile = vi.hoisted(() =>
 );
 
 // Mock use-fireproof module (placed before imports that use it)
-vi.mock('use-vibes', (actual) => ({
-  ...actual,
-  ImgFile: mockImgFile,
-  // Mock File constructor for tests
-  File: vi.fn().mockImplementation((data, name, options) => ({ name, type: options?.type })),
-}));
+vi.mock('use-vibes', async () => {
+  const actual = await vi.importActual('use-vibes');
+  return {
+    ...actual,
+    ImgFile: mockImgFile,
+    // Mock File constructor for tests
+    File: vi.fn().mockImplementation((data, name, options) => ({ name, type: options?.type })),
+  };
+});
 
 // Import the components directly to test them individually
 import { ImageOverlay } from '@vibes.diy/use-vibes-base';

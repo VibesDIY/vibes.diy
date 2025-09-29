@@ -171,13 +171,12 @@ vi.mock("~/vibes.diy/app/components/AppLayout", () => ({
 }));
 
 // Mock segmentParser functions
-vi.mock("~/vibes.diy/app/utils/segmentParser.js", async (original) => {
+vi.mock("~/vibes.diy/app/utils/segmentParser.js", async () => {
   const mockCode = Array(210)
     .fill(0)
     .map((_, i) => `console.log("Line ${i}");`)
     .join("\n");
-  const all =
-    (await original()) as typeof import("~/vibes.diy/app/utils/segmentParser.js");
+  const all = await vi.importActual("~/vibes.diy/app/utils/segmentParser.js") as typeof import("~/vibes.diy/app/utils/segmentParser.js");
   return {
     ...all,
     segments: [
@@ -190,14 +189,13 @@ vi.mock("~/vibes.diy/app/utils/segmentParser.js", async (original) => {
 // Mock useSimpleChat hook
 
 // Mock useSimpleChat hook to return a chat with completed AI message containing code
-vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async (original) => {
+vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async () => {
   const mockCode = Array(210)
     .fill(0)
     .map((_, i) => `console.log("Line ${i}");`)
     .join("\n");
   const { mockChatStateProps } = await import("./mockData.js");
-  const all =
-    (await original()) as typeof import("~/vibes.diy/app/hooks/useSimpleChat.js");
+  const all = await vi.importActual("~/vibes.diy/app/hooks/useSimpleChat.js") as typeof import("~/vibes.diy/app/hooks/useSimpleChat.js");
   return {
     ...all,
     useSimpleChat: vi.fn().mockReturnValue({

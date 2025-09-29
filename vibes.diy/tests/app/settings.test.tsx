@@ -65,9 +65,8 @@ vi.mock("react-router-dom", () => ({
 }));
 
 // Mock the auth utility functions
-vi.mock("~/vibes.diy/app/utils/auth.js", async (original) => {
-  const actual =
-    (await original()) as typeof import("~/vibes.diy/app/utils/auth.js");
+vi.mock("~/vibes.diy/app/utils/auth.js", async () => {
+  const actual = await vi.importActual("~/vibes.diy/app/utils/auth.js") as typeof import("~/vibes.diy/app/utils/auth.js");
   return {
     ...actual,
     initiateAuthFlow: vi.fn(),

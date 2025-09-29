@@ -27,11 +27,8 @@ vi.mock("~/vibes.diy/app/utils/vibeUtils.js", () => ({
 }));
 
 // Mock the AuthContext instead of the hook
-vi.mock("~/vibes.diy/app/contexts/AuthContext.js", async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import("~/vibes.diy/app/contexts/AuthContext.js")
-    >();
+vi.mock("~/vibes.diy/app/contexts/AuthContext.js", async () => {
+  const actual = await vi.importActual("~/vibes.diy/app/contexts/AuthContext.js") as typeof import("~/vibes.diy/app/contexts/AuthContext.js");
   return {
     ...actual, // Keep exports
     // No need to mock useAuth as we'll provide context value through wrapper

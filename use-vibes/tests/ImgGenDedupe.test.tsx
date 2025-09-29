@@ -172,7 +172,8 @@ const mockImgFile = vi.hoisted(() => {
 //   };
 // });
 
-vi.mock('use-vibes', (actual) => {
+vi.mock('use-vibes', async () => {
+  const actual = await vi.importActual('use-vibes');
   return {
     ...actual,
     useFireproof: () => ({

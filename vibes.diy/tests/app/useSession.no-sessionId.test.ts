@@ -8,8 +8,8 @@ VibesDiyEnv.env().sets({
   SETTINGS_DBNAME: "test-chat-history",
 });
 
-vi.mock("use-fireproof", async (original) => {
-  const originalModule = (await original()) as typeof import("use-fireproof");
+vi.mock("use-fireproof", async () => {
+  const originalModule = await vi.importActual("use-fireproof") as typeof import("use-fireproof");
   // const mockFireproof = vi.fn().mockImplementation(() => {
   //   console.log("Mock fireproof called");
   // });

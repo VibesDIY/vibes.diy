@@ -25,7 +25,8 @@ vi.mock('call-ai', () => {
 });
 
 // Mock Fireproof
-vi.mock('use-vibes', (actual) => {
+vi.mock('use-vibes', async () => {
+  const actual = await vi.importActual('use-vibes');
   const mockDb = {
     get: vi.fn().mockImplementation(async (id) => {
       // Return a basic document structure for any ID to avoid "Not found" errors

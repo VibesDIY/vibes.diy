@@ -66,8 +66,8 @@ function formatAsSSE(chunks: string[]): string[] {
 }
 
 // Mock the prompts module
-vi.mock("@vibes.diy/prompts", async (improve) => {
-  const all = (await improve()) as typeof import("@vibes.diy/prompts");
+vi.mock("@vibes.diy/prompts", async () => {
+  const all = await vi.importActual("@vibes.diy/prompts") as typeof import("@vibes.diy/prompts");
   return {
     ...all,
     makeBaseSystemPrompt: vi.fn().mockResolvedValue("Mocked system prompt"),
@@ -106,8 +106,8 @@ VibesDiyEnv.env().sets({
 });
 
 // Mock Fireproof to prevent CRDT errors
-vi.mock("use-fireproof", async (original) => {
-  const all = (await original()) as typeof import("use-fireproof");
+vi.mock("use-fireproof", async () => {
+  const all = await vi.importActual("use-fireproof") as typeof import("use-fireproof");
   return {
     ...all,
     useFireproof: () => ({
@@ -274,9 +274,8 @@ function resetSharedSessionDatabase() {
 }
 
 // Mock the useSession hook
-vi.mock("~/vibes.diy/app/hooks/useSession", async (original) => {
-  const all =
-    (await original()) as typeof import("~/vibes.diy/app/hooks/useSession.js");
+vi.mock("~/vibes.diy/app/hooks/useSession", async () => {
+  const all = await vi.importActual("~/vibes.diy/app/hooks/useSession.js") as typeof import("~/vibes.diy/app/hooks/useSession.js");
   return {
     ...all,
     // updateAiSelectedDependencies: vi.fn(),
