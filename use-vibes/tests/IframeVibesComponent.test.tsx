@@ -41,9 +41,12 @@ describe('IframeVibesComponent', () => {
     );
 
     // Wait for lazy component to load
-    await waitFor(() => {
-      expect(container.querySelector('[data-testid="placeholder"]')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(container.querySelector('[data-testid="placeholder"]')).toBeInTheDocument();
+      },
+      { timeout: 1000, interval: 10 }
+    );
 
     // This test will fail until we implement the component
     // const iframe = container.querySelector('iframe');

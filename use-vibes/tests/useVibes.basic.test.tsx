@@ -91,8 +91,8 @@ describe('useVibes - Basic Structure', () => {
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 10000,
-      interval: 100,
+      timeout: 2000,
+      interval: 20,
     });
 
     expect(result.current.App).toBeDefined();
@@ -116,8 +116,8 @@ describe('useVibes - Basic Structure', () => {
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 10000,
-      interval: 100,
+      timeout: 2000,
+      interval: 20,
     });
     expect(result.current.App).toBeDefined();
     expect(result.current.code).toContain('Form');
@@ -152,8 +152,8 @@ describe('useVibes - Basic Structure', () => {
 
     // Wait for loading to complete (error or success)
     await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 10000,
-      interval: 100,
+      timeout: 2000,
+      interval: 20,
     });
 
     // Check that error was set
@@ -180,8 +180,8 @@ describe('useVibes - Basic Structure', () => {
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 10000,
-      interval: 100,
+      timeout: 2000,
+      interval: 20,
     });
     expect(result.current.code).toContain('Initial');
 
@@ -204,9 +204,11 @@ describe('useVibes - Basic Structure', () => {
     expect(result.current.progress).toBeGreaterThanOrEqual(0);
     expect(result.current.loading).toBe(true);
 
+    // Progress simulation runs naturally with mocked AI
+
     await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 10000,
-      interval: 100,
+      timeout: 2000,
+      interval: 20,
     });
 
     // Progress should reach 100 when loading is complete
@@ -243,8 +245,8 @@ describe('useVibes - Basic Structure', () => {
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 10000,
-      interval: 100,
+      timeout: 2000,
+      interval: 20,
     });
 
     // Since we provided dependencies, dependency selection is bypassed
@@ -301,8 +303,8 @@ describe('useVibes - Basic Structure', () => {
     expect(result.current.error).toBe(null);
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 10000,
-      interval: 100,
+      timeout: 2000,
+      interval: 20,
     });
 
     expect(result.current.App).toBeDefined();
@@ -321,8 +323,8 @@ describe('useVibes - Basic Structure', () => {
     expect(result.current.loading).toBe(true);
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 10000,
-      interval: 100,
+      timeout: 2000,
+      interval: 20,
     });
 
     expect(result.current.App).toBeDefined();
