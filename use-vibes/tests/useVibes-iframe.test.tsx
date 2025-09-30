@@ -36,15 +36,15 @@ vi.mock('@vibes.diy/prompts', () => ({
       segments: [{ type: 'markdown', content: text }],
     };
   }),
-  makeBaseSystemPrompt: vi.fn().mockImplementation((model) => {
-    console.log('🧪 makeBaseSystemPrompt called:', model);
-    return Promise.resolve({
+  makeBaseSystemPrompt: vi.fn().mockImplementation(async (model, options) => {
+    // Fast mock that bypasses network calls by using dependenciesUserOverride
+    return {
       systemPrompt: 'You are a React component generator',
-      dependencies: ['useFireproof'],
+      dependencies: options?.dependencies || ['useFireproof'],
       instructionalText: true,
       demoData: false,
-      model: 'anthropic/claude-sonnet-4',
-    });
+      model: model || 'anthropic/claude-sonnet-4',
+    };
   }),
 }));
 
@@ -85,7 +85,9 @@ This creates a simple button.
     `);
     });
 
-    const { result } = renderHook(() => useVibes('create a button', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create a button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     // Initially should be loading
     expect(result.current.loading).toBe(true);
@@ -123,7 +125,9 @@ This creates a simple button.
     const expectedCode = 'function App() { return <div>Button</div> }';
     const mockCallAI = vi.fn().mockResolvedValue(`\`\`\`jsx\n${expectedCode}\n\`\`\``);
 
-    const { result } = renderHook(() => useVibes('create a button', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create a button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(
       () => {
@@ -149,9 +153,13 @@ This creates a simple button.
   it('should generate unique session IDs for each instance', async () => {
     const mockCallAI = vi.fn().mockResolvedValue('```jsx\nfunction App() {}\n```');
 
-    const { result: result1 } = renderHook(() => useVibes('button 1', {}, mockCallAI));
+    const { result: result1 } = renderHook(() =>
+      useVibes('button 1', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
-    const { result: result2 } = renderHook(() => useVibes('button 2', {}, mockCallAI));
+    const { result: result2 } = renderHook(() =>
+      useVibes('button 2', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(
       () => {
@@ -184,7 +192,9 @@ This creates a simple button.
     const rawResponse = 'export default function App() { return <div>No code block</div> }';
     const mockCallAI = vi.fn().mockResolvedValue(rawResponse);
 
-    const { result } = renderHook(() => useVibes('create component', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create component', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(
       () => {
@@ -207,7 +217,9 @@ This creates a simple button.
   it('should handle AI call errors gracefully', async () => {
     const mockCallAI = vi.fn().mockRejectedValue(new Error('AI service unavailable'));
 
-    const { result } = renderHook(() => useVibes('create something', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create something', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(
       () => {
@@ -264,7 +276,9 @@ export default TodoApp;
       );
     });
 
-    const { result } = renderHook(() => useVibes('create a component', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create a component', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     // Wait for initial generation
     await waitFor(

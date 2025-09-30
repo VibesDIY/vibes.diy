@@ -58,18 +58,15 @@ vi.mock('@vibes.diy/prompts', () => ({
     return { segments };
   }),
 
-  makeBaseSystemPrompt: vi.fn().mockImplementation((model, options) => {
-    console.log('🧪 MOCK makeBaseSystemPrompt called for model:', model, 'options:', options);
-    const result = {
-      systemPrompt: `You are a React component generator for ${model}`,
+  makeBaseSystemPrompt: vi.fn().mockImplementation(async (model, options) => {
+    // Fast mock that bypasses network calls
+    return {
+      systemPrompt: 'You are a React component generator',
       dependencies: options?.dependencies || ['useFireproof'],
       instructionalText: true,
       demoData: false,
       model: model || 'anthropic/claude-sonnet-4',
     };
-    console.log('🧪 MOCK makeBaseSystemPrompt returning:', result);
-    // Return resolved promise immediately
-    return Promise.resolve(result);
   }),
 }));
 
@@ -164,7 +161,9 @@ This creates a fully functional todo app with Fireproof for data persistence.
       `);
     });
 
-    const { result } = renderHook(() => useVibes('create a todo app', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create a todo app', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     // Initially loading
     expect(result.current.loading).toBe(true);
@@ -295,7 +294,9 @@ export default function DataDashboard() {
     // Test with malformed response
     const mockCallAI = vi.fn().mockResolvedValue('```jsx\nincomplete code block without closing');
 
-    const { result } = renderHook(() => useVibes('create something', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create something', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(
       () => {
@@ -325,7 +326,9 @@ export default App;
 \`\`\`
     `);
 
-    const { result } = renderHook(() => useVibes('create communicating component', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create communicating component', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(
       () => {
@@ -372,7 +375,9 @@ export default App${generation};
       `);
     });
 
-    const { result } = renderHook(() => useVibes('create a component', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create a component', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     // Wait for first generation
     await waitFor(
@@ -417,9 +422,13 @@ export default App${generation};
       .mockResolvedValue('```jsx\nfunction App() { return <div>Test</div> }\n```');
 
     // Create multiple instances
-    const { result: result1 } = renderHook(() => useVibes('component 1', {}, mockCallAI));
+    const { result: result1 } = renderHook(() =>
+      useVibes('component 1', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
-    const { result: result2 } = renderHook(() => useVibes('component 2', {}, mockCallAI));
+    const { result: result2 } = renderHook(() =>
+      useVibes('component 2', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(
       () => {
