@@ -249,7 +249,11 @@ export default TodoApp;
 \`\`\``);
 
     const { result } = renderHook(() =>
-      useVibes('create a todo app', { model: 'anthropic/claude-sonnet-4' }, mockCallAI)
+      useVibes(
+        'create a todo app',
+        { model: 'anthropic/claude-sonnet-4', dependencies: ['useFireproof'] },
+        mockCallAI
+      )
     );
 
     await waitFor(

@@ -71,7 +71,9 @@ describe('useVibes - Basic Structure', () => {
   });
 
   it('should accept prompt string and optional options', () => {
-    const { result } = renderHook(() => useVibes('create a button', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create a button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     expect(result.current.loading).toBe(true);
     expect(result.current.App).toBe(null);
@@ -84,7 +86,9 @@ describe('useVibes - Basic Structure', () => {
   it('should return App component after loading', async () => {
     mockCallAI.mockResolvedValue('export default function() { return <div>Test</div> }');
 
-    const { result } = renderHook(() => useVibes('create a button', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create a button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 10000,
@@ -105,6 +109,7 @@ describe('useVibes - Basic Structure', () => {
         {
           database: 'custom-db',
           model: 'gpt-4',
+          dependencies: ['useFireproof'],
         },
         mockCallAI
       )
@@ -119,7 +124,9 @@ describe('useVibes - Basic Structure', () => {
   });
 
   it('should handle empty prompt gracefully', () => {
-    const { result } = renderHook(() => useVibes('', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     expect(result.current.loading).toBe(false);
     expect(result.current.App).toBe(null);
@@ -127,7 +134,9 @@ describe('useVibes - Basic Structure', () => {
   });
 
   it('should handle undefined prompt gracefully', () => {
-    const { result } = renderHook(() => useVibes(undefined as unknown as string, {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes(undefined as unknown as string, { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     expect(result.current.loading).toBe(false);
     expect(result.current.App).toBe(null);
@@ -137,7 +146,9 @@ describe('useVibes - Basic Structure', () => {
   it('should handle errors from AI service', async () => {
     mockCallAI.mockRejectedValue(new Error('Service unavailable'));
 
-    const { result } = renderHook(() => useVibes('create button', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     // Wait for loading to complete (error or success)
     await waitFor(() => expect(result.current.loading).toBe(false), {
@@ -164,7 +175,9 @@ describe('useVibes - Basic Structure', () => {
   it('should provide regenerate function', async () => {
     mockCallAI.mockResolvedValue('export default function() { return <div>Initial</div> }');
 
-    const { result } = renderHook(() => useVibes('create button', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 10000,
@@ -184,7 +197,9 @@ describe('useVibes - Basic Structure', () => {
       Promise.resolve('export default function() { return <div>Done</div> }')
     );
 
-    const { result } = renderHook(() => useVibes('create button', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('create button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     expect(result.current.progress).toBeGreaterThanOrEqual(0);
     expect(result.current.loading).toBe(true);
@@ -201,8 +216,12 @@ describe('useVibes - Basic Structure', () => {
   it('should handle concurrent requests properly', async () => {
     mockCallAI.mockResolvedValue('export default function() { return <div>Button</div> }');
 
-    const { result: result1 } = renderHook(() => useVibes('create button', {}, mockCallAI));
-    const { result: result2 } = renderHook(() => useVibes('create button', {}, mockCallAI));
+    const { result: result1 } = renderHook(() =>
+      useVibes('create button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
+    const { result: result2 } = renderHook(() =>
+      useVibes('create button', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(
       () => {
@@ -219,20 +238,22 @@ describe('useVibes - Basic Structure', () => {
   it('should verify system prompt generation and metadata', async () => {
     mockCallAI.mockResolvedValue('function App() { return <div>Test</div>; }');
 
-    const { result } = renderHook(() => useVibes('Create a todo app', {}, mockCallAI));
+    const { result } = renderHook(() =>
+      useVibes('Create a todo app', { dependencies: ['useFireproof'] }, mockCallAI)
+    );
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 10000,
       interval: 100,
     });
 
-    // Since we're in browser environment, the real makeBaseSystemPrompt is called
-    // We verify that callAI was called (it gets called twice: once for dependency selection, once for component generation)
-    expect(mockCallAI).toHaveBeenCalledTimes(2);
+    // Since we provided dependencies, dependency selection is bypassed
+    // We verify that callAI was called once for component generation
+    expect(mockCallAI).toHaveBeenCalledTimes(1);
 
-    // The second call should be for component generation and contain the system prompt
+    // The call should be for component generation and contain the system prompt
     expect(mockCallAI).toHaveBeenNthCalledWith(
-      2,
+      1,
       expect.arrayContaining([
         expect.objectContaining({
           role: 'system',
@@ -262,7 +283,7 @@ describe('useVibes - Basic Structure', () => {
 
     // Start with empty prompt
     const { result, rerender } = renderHook(
-      ({ prompt, skip }) => useVibes(prompt, { skip }, mockCallAI),
+      ({ prompt, skip }) => useVibes(prompt, { skip, dependencies: ['useFireproof'] }, mockCallAI),
       {
         initialProps: { prompt: '', skip: false },
       }
