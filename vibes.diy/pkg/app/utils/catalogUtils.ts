@@ -5,6 +5,7 @@
 
 import { fireproof } from "use-fireproof";
 import { VibesDiyEnv } from "../config/env.js";
+import type { CatalogDocument } from "../types/catalog.js";
 
 /**
  * Get the standardized catalog database name for a user
@@ -55,13 +56,15 @@ export async function addCatalogScreenshotStandalone(
     const docId = createCatalogDocId(vibeId);
 
     // Get existing catalog document
-    const existingDoc = await database.get(docId).catch(() => null);
+    const existingDoc = await database
+      .get<CatalogDocument>(docId)
+      .catch(() => null);
     if (!existingDoc) {
       console.warn("No catalog document found for vibe:", vibeId);
       return;
     }
 
-    const updatedFiles: any = { ...(existingDoc._files || {}) };
+    const updatedFiles: Record<string, File> = {};
 
     // Add screenshot if provided
     if (screenshotData) {

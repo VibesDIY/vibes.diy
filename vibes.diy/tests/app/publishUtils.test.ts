@@ -97,6 +97,14 @@ describe("publishApp", () => {
       throw new Error("Doc not found");
     });
 
+    // Re-setup the screenshot mock after reset
+    const mockScreenshotFileMethod = vi
+      .fn()
+      .mockResolvedValue(
+        new Blob(["mockScreenshotData"], { type: "image/png" }),
+      );
+
+    mockScreenshotDoc._files.screenshot.file = mockScreenshotFileMethod;
     mockFireproofDb.query.mockResolvedValue(mockQueryResult);
 
     (fireproof as Mock).mockReturnValue(mockFireproofDb);

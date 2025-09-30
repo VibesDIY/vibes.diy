@@ -8,7 +8,11 @@ import {
   getSessionDatabaseName,
   updateUserVibespaceDoc,
 } from "./databaseManager.js";
-import { normalizeComponentExports, VibeDocument } from "@vibes.diy/prompts";
+import {
+  normalizeComponentExports,
+  VibeDocument,
+  ScreenshotDocument,
+} from "@vibes.diy/prompts";
 import { joinUrlParts } from "call-ai";
 import { addCatalogScreenshotStandalone } from "./catalogUtils.js";
 
@@ -62,7 +66,7 @@ export async function publishApp({
 
     // Query for the most recent screenshot document
     // descending: true ensures we get the newest document first
-    const result = await sessionDb.query<string, string, DocFileMeta>("type", {
+    const result = await sessionDb.query<ScreenshotDocument>("type", {
       key: "screenshot",
       includeDocs: true,
       descending: true,
@@ -195,28 +199,37 @@ export async function publishApp({
         try {
           // Get the most recent screenshot from session database
           if (result.rows.length > 0) {
-            const screenshotDoc = result.rows[0].doc as any;
-            if (screenshotDoc._files && screenshotDoc._files.screenshot) {
+            const screenshotDoc = result.rows[0].doc;
+            if (
+              screenshotDoc &&
+              screenshotDoc._files &&
+              screenshotDoc._files.screenshot
+            ) {
               try {
                 // Get the File and convert to data URL
                 const screenshotFile =
-                  await screenshotDoc._files.screenshot.file();
-                const screenshotDataUrl = await new Promise<string>(
-                  (resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(screenshotFile);
-                  },
-                );
+                  await screenshotDoc._files.screenshot?.file?.();
 
-                // Use shared catalog utility function
-                await addCatalogScreenshotStandalone(
-                  userId,
-                  sessionId,
-                  screenshotDataUrl,
-                  transformedCode,
-                );
+                if (!screenshotFile) {
+                  console.warn("Screenshot file method returned undefined");
+                } else {
+                  const screenshotDataUrl = await new Promise<string>(
+                    (resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(screenshotFile);
+                    },
+                  );
+
+                  // Use shared catalog utility function
+                  await addCatalogScreenshotStandalone(
+                    userId,
+                    sessionId,
+                    screenshotDataUrl,
+                    transformedCode,
+                  );
+                }
               } catch (err) {
                 console.error("Failed to store catalog screenshot:", err);
               }

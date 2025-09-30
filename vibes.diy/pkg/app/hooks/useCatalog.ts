@@ -1,18 +1,32 @@
-import { useFireproof, fireproof, toCloud } from "use-fireproof";
+import {
+  useFireproof,
+  fireproof,
+  toCloud,
+  type DocWithId,
+} from "use-fireproof";
 import { useCallback, useEffect, useMemo } from "react";
 import type { LocalVibe } from "../utils/vibeUtils.js";
 import type { VibeDocument, ScreenshotDocument } from "@vibes.diy/prompts";
-import { getCatalogDbName, createCatalogDocId } from "../utils/catalogUtils.js";
+import {
+  CatalogDocument,
+  CatalogDoc,
+  transformCatalogDocToLocalVibe,
+  filterValidCatalogDocs,
+  createCatalogDocId,
+  getCatalogDbName,
+} from "../types/catalog.js";
 
 // Helper function to get vibe document from session database
-async function getVibeDocument(vibeId: string): Promise<VibeDocument | null> {
+async function getVibeDocument(
+  vibeId: string,
+): Promise<DocWithId<VibeDocument> | null> {
   try {
     const dbName = `vibe-${vibeId}`;
     const sessionDb = fireproof(dbName);
     await new Promise((resolve) => setTimeout(resolve, 50));
     const vibeDoc = (await sessionDb
       .get("vibe")
-      .catch(() => null)) as VibeDocument | null;
+      .catch(() => null)) as DocWithId<VibeDocument> | null;
 
     console.log(`🐛 getVibeDocument for ${vibeId}:`, {
       dbName,
@@ -31,11 +45,11 @@ async function getVibeDocument(vibeId: string): Promise<VibeDocument | null> {
 // Helper function to get latest screenshot from session database
 async function getLatestScreenshot(
   vibeId: string,
-): Promise<ScreenshotDocument | null> {
+): Promise<DocWithId<ScreenshotDocument> | null> {
   try {
     const dbName = `vibe-${vibeId}`;
     const sessionDb = fireproof(dbName);
-    const sessionResult = await sessionDb.query("type", {
+    const sessionResult = await sessionDb.query<ScreenshotDocument>("type", {
       key: "screenshot",
       includeDocs: true,
       descending: true,
@@ -49,8 +63,8 @@ async function getLatestScreenshot(
         id: row.id,
         key: row.key,
         hasDoc: !!row.doc,
-        docType: (row.doc as ScreenshotDocument)?.type,
-        docCid: (row.doc as ScreenshotDocument)?.cid,
+        docType: row.doc?.type,
+        docCid: row.doc?.cid,
         hasFiles: !!row.doc?._files,
         filesKeys: row.doc?._files ? Object.keys(row.doc._files) : null,
         hasScreenshotFile: !!row.doc?._files?.screenshot,
@@ -58,29 +72,29 @@ async function getLatestScreenshot(
     });
 
     if (sessionResult.rows.length > 0) {
-      const screenshot = sessionResult.rows[0].doc as ScreenshotDocument;
-      console.log(`🐛 Screenshot doc structure for ${vibeId}:`, {
-        docKeys: Object.keys(screenshot),
-        hasFiles: !!screenshot._files,
-        hasCid: !!screenshot.cid,
-      });
+      const screenshot = sessionResult.rows[0].doc;
+      if (screenshot) {
+        console.log(`🐛 Screenshot doc structure for ${vibeId}:`, {
+          docKeys: Object.keys(screenshot),
+          hasFiles: !!screenshot._files,
+          hasCid: !!screenshot.cid,
+        });
 
-      // Log the full file structure to find where CID is stored
-      console.log(
-        `🐛 File structure for ${vibeId}:`,
-        screenshot._files?.screenshot,
-      );
+        // Log the full file structure to find where CID is stored
+        console.log(
+          `🐛 File structure for ${vibeId}:`,
+          screenshot._files?.screenshot,
+        );
 
-      // Extract CID from file metadata
-      const fileCid = screenshot._files?.screenshot
-        ? (screenshot._files.screenshot as any)?.cid
-        : null;
-      console.log(`🐛 File CID for ${vibeId}:`, fileCid);
+        // Extract CID from file metadata
+        const fileCid = screenshot._files?.screenshot?.cid;
+        console.log(`🐛 File CID for ${vibeId}:`, fileCid);
 
-      if (screenshot._files?.screenshot && fileCid) {
-        // Add the file CID to the screenshot document for deduplication
-        screenshot.cid = fileCid.toString();
-        return screenshot;
+        if (screenshot._files?.screenshot && fileCid) {
+          // Add the file CID to the screenshot document for deduplication
+          screenshot.cid = fileCid.toString();
+          return screenshot;
+        }
       }
     }
     return null;
@@ -93,11 +107,12 @@ async function getLatestScreenshot(
 // Helper function to create new catalog document
 function createCatalogDocument(
   vibe: LocalVibe,
-  vibeDoc: VibeDocument | null,
+  vibeDoc: DocWithId<VibeDocument> | null,
   userId: string,
-): any {
+): CatalogDoc {
   return {
     _id: createCatalogDocId(vibe.id),
+    type: "catalog",
     created: vibeDoc?.created_at || Date.now(),
     userId,
     vibeId: vibe.id,
@@ -108,10 +123,10 @@ function createCatalogDocument(
 
 // Helper function to update existing catalog document
 function updateCatalogDocument(
-  catalogDoc: any,
-  vibeDoc: VibeDocument | null,
-): any {
-  const docToUpdate = { ...catalogDoc };
+  catalogDoc: CatalogDoc,
+  vibeDoc: DocWithId<VibeDocument> | null,
+): CatalogDoc {
+  const docToUpdate: CatalogDoc = { ...catalogDoc };
 
   if (vibeDoc) {
     docToUpdate.title = vibeDoc.title || "Untitled";
@@ -123,135 +138,43 @@ function updateCatalogDocument(
   return docToUpdate;
 }
 
-// Helper function to add screenshot to catalog document using Uint8Array storage
+// Helper function to add screenshot to catalog document using _files
 async function addScreenshotToCatalogDoc(
-  docToUpdate: any,
-  sessionScreenshotDoc: ScreenshotDocument,
+  docToUpdate: CatalogDoc,
+  sessionScreenshotDoc: DocWithId<ScreenshotDocument>,
 ): Promise<void> {
   try {
-    // GET: Extract binary data from source database
-    const sourceFile = sessionScreenshotDoc._files!.screenshot;
-    const fileData = await (sourceFile as any).file();
+    if (!sessionScreenshotDoc._files?.screenshot) {
+      console.warn("No screenshot file found in session document");
+      return;
+    }
 
-    console.log("🐛 Extracting screenshot data:", {
-      size: fileData.size,
-      type: fileData.type,
-    });
-
-    // Convert File to Uint8Array for direct storage
-    const arrayBuffer = await fileData.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-
-    // Store as Uint8Array data directly in document (bypasses broken _files system)
-    docToUpdate.screenshot = {
-      data: uint8Array,
-      size: fileData.size,
-      type: fileData.type || "image/png",
+    // Copy the DocFileMeta from session to catalog
+    docToUpdate._files = {
+      ...docToUpdate._files,
+      screenshot: sessionScreenshotDoc._files.screenshot,
     };
 
     docToUpdate.screenshotCid = sessionScreenshotDoc.cid;
     docToUpdate.lastUpdated = Date.now();
 
-    console.log("🐛 Screenshot stored as Uint8Array:", {
-      dataLength: uint8Array.length,
-      size: fileData.size,
-      type: docToUpdate.screenshot.type,
+    console.log("🐛 Screenshot attached to catalog document:", {
+      cid: sessionScreenshotDoc.cid,
+      type: sessionScreenshotDoc._files.screenshot.type,
+      size: sessionScreenshotDoc._files.screenshot.size,
     });
   } catch (error) {
-    console.error("🐛 Screenshot storage failed:", error);
+    console.error("🐛 Screenshot attachment failed:", error);
     throw error;
   }
 }
 
-// Helper function to create File from stored Uint8Array data
-function createFileFromUint8Array(
-  data: Uint8Array | any,
-  size: number,
-  type: string,
-): File {
-  // Convert back to Uint8Array if it was serialized as an object
-  const uint8Array =
-    data instanceof Uint8Array ? data : new Uint8Array(Object.values(data));
-
-  console.log("🐛 createFileFromUint8Array:", {
-    originalDataType: typeof data,
-    originalDataConstructor: data.constructor.name,
-    isOriginalUint8Array: data instanceof Uint8Array,
-    convertedLength: uint8Array.length,
-    expectedSize: size,
-    lengthMatchesSize: uint8Array.length === size,
-    type,
-    first10Bytes: Array.from(uint8Array.slice(0, 10)),
-  });
-
-  const file = new File([uint8Array], "screenshot.png", {
-    type,
-    lastModified: Date.now(),
-  });
-
-  console.log("🐛 Created File:", {
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    lastModified: file.lastModified,
-    sizeMatches: file.size === size,
-  });
-
-  return file;
-}
-
-// Helper function to filter valid catalog documents
-function filterValidCatalogDocs(docs: Array<any>): Array<any> {
-  return docs.filter((doc) => {
-    return (
-      doc._id?.startsWith("catalog-") && doc.vibeId && doc.vibeId.length > 10
-    );
-  });
-}
-
-// Helper function to transform catalog document to LocalVibe format
-function transformToLocalVibe(doc: any): LocalVibe {
-  // Debug logging for screenshot transformation
-  console.log(`🐛 transformToLocalVibe[${doc.vibeId}]:`, {
-    hasScreenshotData: !!doc.screenshot?.data,
-    screenshotSize: doc.screenshot?.size,
-    screenshotType: doc.screenshot?.type,
-    docKeys: Object.keys(doc),
-  });
-
-  // Create screenshot interface from Uint8Array data
-  let screenshot: { file: () => Promise<File>; type: string } | undefined;
-
-  if (doc.screenshot?.data && doc.screenshot?.size && doc.screenshot?.type) {
-    screenshot = {
-      file: () =>
-        Promise.resolve(
-          createFileFromUint8Array(
-            doc.screenshot.data,
-            doc.screenshot.size,
-            doc.screenshot.type,
-          ),
-        ),
-      type: doc.screenshot.type,
-    };
-  }
-
-  return {
-    id: doc.vibeId,
-    title: doc.title,
-    encodedTitle: doc.title?.toLowerCase().replace(/\s+/g, "-") || "",
-    slug: doc.vibeId,
-    created: new Date(doc.created).toISOString(),
-    favorite: false,
-    publishedUrl: doc.url,
-    screenshot,
-  };
-}
+// Helper functions for filtering and transforming are now in catalog.ts
 
 export function useCatalog(
   userId: string | undefined,
-  vibes: Array<LocalVibe>,
-  sync: boolean = false,
+  vibes: LocalVibe[],
+  sync = false,
 ) {
   userId = userId || "local";
 
@@ -263,11 +186,8 @@ export function useCatalog(
   );
 
   // Get real-time count of cataloged vibes
-  const allDocsResult = useAllDocs() as {
-    docs: Array<{ _id: string }>;
-    rows?: Array<{ id: string }>;
-  };
-  const count = allDocsResult?.rows?.length || 0;
+  const allDocsResult = useAllDocs<CatalogDocument>();
+  const count = allDocsResult?.docs?.length || 0;
 
   // Create a stable key based on vibe IDs to prevent unnecessary re-cataloging
   const vibeKey = useMemo(() => {
@@ -313,7 +233,9 @@ export function useCatalog(
 
         try {
           const catalogDocId = createCatalogDocId(vibe.id);
-          const catalogDoc = await database.get(catalogDocId).catch(() => null);
+          const catalogDoc = await database
+            .get<CatalogDocument>(catalogDocId)
+            .catch(() => null);
           const isNewCatalogEntry = !catalogedVibeIds.has(vibe.id);
 
           // Get vibe document and latest screenshot using helper functions
@@ -333,21 +255,20 @@ export function useCatalog(
             sessionScreenshotFiles: sessionScreenshotDoc?._files
               ? Object.keys(sessionScreenshotDoc._files)
               : null,
-            catalogCurrentCid: (catalogDoc as any)?.screenshotCid,
+            catalogCurrentCid: catalogDoc?.screenshotCid,
           });
 
           // Check if screenshot needs updating
           let needsScreenshotUpdate = false;
           if (sessionScreenshotDoc) {
-            const catalogCurrentCid = (catalogDoc as any)?.screenshotCid;
+            const catalogCurrentCid = catalogDoc?.screenshotCid;
             needsScreenshotUpdate =
               catalogCurrentCid !== sessionScreenshotDoc.cid;
           }
 
           // Force update all entries to populate missing titles
           const needsTitleUpdate =
-            !(catalogDoc as any)?.title ||
-            (catalogDoc as any)?.title === undefined;
+            !catalogDoc?.title || catalogDoc?.title === undefined;
           if (isNewCatalogEntry || needsScreenshotUpdate || needsTitleUpdate) {
             vibesNeedingUpdates.push({
               vibe,
@@ -377,12 +298,14 @@ export function useCatalog(
         if (cancelled) break;
 
         try {
-          let docToUpdate: any;
+          let docToUpdate: CatalogDoc;
 
           if (isNewCatalogEntry) {
             docToUpdate = createCatalogDocument(vibe, vibeDoc, userId);
-          } else {
+          } else if (catalogDoc) {
             docToUpdate = updateCatalogDocument(catalogDoc, vibeDoc);
+          } else {
+            continue; // Skip if no catalog doc exists
           }
 
           // Add screenshot if needed
@@ -453,13 +376,15 @@ export function useCatalog(
         const docId = createCatalogDocId(vibeId);
 
         // Get existing catalog document
-        const existingDoc = await database.get(docId).catch(() => null);
+        const existingDoc = await database
+          .get<CatalogDocument>(docId)
+          .catch(() => null);
         if (!existingDoc) {
           console.warn("No catalog document found for vibe:", vibeId);
           return;
         }
 
-        const updatedFiles: any = { ...existingDoc._files };
+        const updatedFiles: Record<string, File> = {};
 
         // Add screenshot if provided
         if (screenshotData) {
@@ -500,14 +425,12 @@ export function useCatalog(
   );
 
   // Get catalog documents for display
-  const { docs: catalogDocs } = useAllDocs() as {
-    docs: Array<any>;
-  };
+  const { docs: catalogDocs } = useAllDocs<CatalogDocument>();
 
   // Transform catalog documents to LocalVibe format for compatibility
   const catalogVibes = useMemo(() => {
     return filterValidCatalogDocs(catalogDocs)
-      .map(transformToLocalVibe)
+      .map(transformCatalogDocToLocalVibe)
       .sort(
         (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime(),
       );

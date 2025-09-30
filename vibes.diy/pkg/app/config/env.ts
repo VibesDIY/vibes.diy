@@ -118,9 +118,9 @@ export const VibesDiyEnv = new vibesDiyEnv();
 // Set up Fireproof debugging if in browser environment
 if (typeof window !== "undefined") {
   // Method 1: Using FP_ENV Symbol (direct approach)
-  // @ts-ignore - Setting up Fireproof debug environment
+  // @ts-expect-error - Setting up Fireproof debug environment
   window[Symbol.for("FP_ENV")] = window[Symbol.for("FP_ENV")] || new Map();
-  // @ts-ignore - Enable full Fireproof debugging
+  // @ts-expect-error - Enable full Fireproof debugging
   window[Symbol.for("FP_ENV")].set("FP_DEBUG", "*");
 
   // Method 2: Using logger (alternative approach from Fireproof README)

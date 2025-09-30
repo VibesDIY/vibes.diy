@@ -1,4 +1,4 @@
-import type { DocTypes } from "@fireproof/core-types-base";
+import type { DocTypes, DocFileMeta } from "@fireproof/core-types-base";
 import type { RuntimeError } from "use-vibes";
 import { ViewType } from "./view-state.js";
 
@@ -95,21 +95,14 @@ export type ChatMessageDocument =
   | SystemChatMessageDocument;
 
 /**
- * Base document interface with common properties
- */
-export interface DocBase {
-  _id: string;
-}
-
-/**
  * Document type for screenshot entries
  */
-export interface ScreenshotDocument extends DocBase {
+export interface ScreenshotDocument extends DocTypes {
   type: "screenshot";
   session_id: string;
   cid?: string; // Content identifier for deduplication
   _files?: {
-    screenshot: File;
+    screenshot: DocFileMeta;
   };
 }
 

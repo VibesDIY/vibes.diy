@@ -11,7 +11,7 @@ function VibeCatalogImpl({
   vibes,
 }: {
   userId?: string;
-  vibes: Array<LocalVibe>;
+  vibes: LocalVibe[];
 }) {
   const { count } = useCatalog(userId, vibes);
 
@@ -31,7 +31,7 @@ export function VibeCatalog({
   vibes,
 }: {
   userId?: string;
-  vibes?: Array<LocalVibe>;
+  vibes?: LocalVibe[];
 }) {
   if (!vibes) return null;
   return <VibeCatalogImpl userId={userId} vibes={vibes} />;
