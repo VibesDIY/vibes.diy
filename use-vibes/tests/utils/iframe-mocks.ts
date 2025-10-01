@@ -33,6 +33,24 @@ export function createMockIframe(postMessage = vi.fn()): MockIframe {
     configurable: true,
   });
 
+  // Mock src setter to immediately trigger load event (no network requests)
+  Object.defineProperty(actualIframe, 'src', {
+    set: (value: string) => {
+      iframe.src = value;
+      // Immediately fire load event to avoid network delays
+      setTimeout(() => {
+        if (iframe.onload) {
+          iframe.onload();
+        }
+        // Also fire DOM event
+        const loadEvent = new Event('load');
+        actualIframe.dispatchEvent(loadEvent);
+      }, 0);
+    },
+    get: () => iframe.src,
+    configurable: true,
+  });
+
   // Override methods with mocks
   actualIframe.addEventListener = iframe.addEventListener;
   actualIframe.removeEventListener = iframe.removeEventListener;

@@ -36,6 +36,7 @@ describe('IframeVibesComponent', () => {
         <IframeVibesComponent
           code="function App() { return <div>Test</div> }"
           sessionId="test-123"
+          baseUrl="about:blank"
         />
       </React.Suspense>
     );
@@ -61,7 +62,7 @@ describe('IframeVibesComponent', () => {
 
     render(
       <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent code={code} />
+        <IframeVibesComponent code={code} baseUrl="about:blank" />
       </React.Suspense>
     );
 
@@ -100,7 +101,7 @@ describe('IframeVibesComponent', () => {
 
     render(
       <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent code={code} />
+        <IframeVibesComponent code={code} baseUrl="about:blank" />
       </React.Suspense>
     );
 
@@ -148,7 +149,7 @@ describe('IframeVibesComponent', () => {
 
       const { unmount } = render(
         <React.Suspense fallback={<div>Loading...</div>}>
-          <IframeVibesComponent code={input} />
+          <IframeVibesComponent baseUrl="about:blank" code={input} />
         </React.Suspense>
       );
 
@@ -175,7 +176,7 @@ describe('IframeVibesComponent', () => {
 
     render(
       <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent code="..." onReady={onReady} />
+        <IframeVibesComponent baseUrl="about:blank" code="..." onReady={onReady} />
       </React.Suspense>
     );
 
@@ -198,7 +199,7 @@ describe('IframeVibesComponent', () => {
 
     render(
       <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent code="..." onError={onError} />
+        <IframeVibesComponent baseUrl="about:blank" code="..." onError={onError} />
       </React.Suspense>
     );
 
@@ -229,7 +230,10 @@ describe('IframeVibesComponent', () => {
   it('should generate default session ID when not provided', async () => {
     render(
       <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent code="function App() { return <div>Test</div> }" />
+        <IframeVibesComponent
+          baseUrl="about:blank"
+          code="function App() { return <div>Test</div> }"
+        />
       </React.Suspense>
     );
 
@@ -248,7 +252,10 @@ describe('IframeVibesComponent', () => {
 
     const { unmount } = render(
       <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent code="function App() { return <div>Test</div> }" />
+        <IframeVibesComponent
+          baseUrl="about:blank"
+          code="function App() { return <div>Test</div> }"
+        />
       </React.Suspense>
     );
 

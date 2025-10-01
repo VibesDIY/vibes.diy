@@ -4,6 +4,7 @@ import { transformImports, normalizeComponentExports } from '@vibes.diy/prompts'
 interface IframeVibesComponentProps {
   code: string;
   sessionId?: string;
+  baseUrl?: string;
   onReady?: () => void;
   onError?: (error: Error) => void;
 }
@@ -11,6 +12,7 @@ interface IframeVibesComponentProps {
 const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
   code,
   sessionId,
+  baseUrl,
   onReady,
   onError,
 }) => {
@@ -26,8 +28,15 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
 
     // Set up message listener for iframe communication
     const handleMessage = (event: MessageEvent) => {
-      // Only accept messages from vibesbox domains
-      if (!event.origin.includes('vibesbox.dev')) {
+      // Get expected origin from baseUrl or default to vibesbox.dev
+      const expectedOrigin = baseUrl
+        ? baseUrl.includes('://')
+          ? new URL(baseUrl).hostname
+          : baseUrl
+        : 'vibesbox.dev';
+
+      // Only accept messages from expected domains (or allow null for about:blank)
+      if (expectedOrigin !== 'about:blank' && !event.origin.includes(expectedOrigin)) {
         return;
       }
 
@@ -45,7 +54,7 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
     window.addEventListener('message', handleMessage);
 
     // Set iframe source
-    const iframeUrl = `https://${effectiveSessionId}.vibesbox.dev/`;
+    const iframeUrl = baseUrl || `https://${effectiveSessionId}.vibesbox.dev/`;
     iframe.src = iframeUrl;
 
     // Handle iframe load
