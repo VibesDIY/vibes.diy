@@ -61,7 +61,7 @@
     "prettier-plugin-tailwindcss": "^0.6.14",
     "typescript-eslint": "^8.38.0",
     "vitest": "^3.2.4",
-    "wrangler": "^4.31.0"
+    "wrangler": "^4.40.3"
   },
   "dependencies": {
     "playwright": "^1.55.0"
