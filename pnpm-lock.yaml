@@ -496,8 +496,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       isbot:
-        specifier: ^5.1.25
-        version: 5.1.30
+        specifier: ^5.1.31
+        version: 5.1.31
       jose:
         specifier: ^6.0.10
         version: 6.1.0
@@ -650,8 +650,8 @@ importers:
         specifier: workspace:*
         version: link:../../../call-ai/pkg
       isbot:
-        specifier: ^5.1.25
-        version: 5.1.30
+        specifier: ^5.1.31
+        version: 5.1.31
       jose:
         specifier: ^6.0.10
         version: 6.1.0
@@ -741,8 +741,8 @@ importers:
         specifier: workspace:*
         version: link:../../../call-ai/pkg
       isbot:
-        specifier: ^5.1.25
-        version: 5.1.30
+        specifier: ^5.1.31
+        version: 5.1.31
       jose:
         specifier: ^6.0.10
         version: 6.1.0
@@ -6658,6 +6658,10 @@ packages:
 
   isbot@5.1.30:
     resolution: {integrity: sha512-3wVJEonAns1OETX83uWsk5IAne2S5zfDcntD2hbtU23LelSqNXzXs9zKjMPOLMzroCgIjCfjYAEHrd2D6FOkiA==}
+    engines: {node: '>=18'}
+
+  isbot@5.1.31:
+    resolution: {integrity: sha512-DPgQshehErHAqSCKDb3rNW03pa2wS/v5evvUqtxt6TTnHRqAG8FdzcSSJs9656pK6Y+NT7K9R4acEYXLHYfpUQ==}
     engines: {node: '>=18'}
 
   iserror@0.0.2:
@@ -17868,6 +17872,8 @@ snapshots:
   isarray@2.0.5: {}
 
   isbot@5.1.30: {}
+
+  isbot@5.1.31: {}
 
   iserror@0.0.2: {}
 
