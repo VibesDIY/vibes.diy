@@ -35,7 +35,7 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@jest/globals": "^30.0.5",
+    "@jest/globals": "^30.2.0",
     "@playwright/test": "^1.54.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.15",
