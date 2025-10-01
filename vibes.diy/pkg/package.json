@@ -85,7 +85,7 @@
     "storybook": "^9.1.6",
     "tailwindcss": "^4.1.2",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2",
+    "typescript": "^5.9.3",
     "vite": "^7.1.7",
     "vite-tsconfig-paths": "^5.1.4"
   }

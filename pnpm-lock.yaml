@@ -17,7 +17,7 @@ importers:
         version: 9.36.0
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.55.0
         version: 1.55.1
@@ -50,7 +50,7 @@ importers:
         version: 0.6.14(prettier@3.6.2)
       typescript-eslint:
         specifier: ^8.38.0
-        version: 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
+        version: 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.6.1)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -62,26 +62,26 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@types/node':
         specifier: ^24.0.15
         version: 24.6.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   call-ai/tests/integration:
     dependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -97,7 +97,7 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.54.1
         version: 1.55.1
@@ -108,8 +108,8 @@ importers:
         specifier: ^4.20.3
         version: 4.20.6
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.6.1)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -121,7 +121,7 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -136,7 +136,7 @@ importers:
         version: 3.0.3
       ts-jest:
         specifier: ^29.4.1
-        version: 29.4.4(@babel/core@7.28.4)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.28.4))(esbuild@0.25.10)(jest-util@30.2.0)(jest@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3)))(typescript@5.8.3)
+        version: 29.4.4(@babel/core@7.28.4)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.28.4))(esbuild@0.25.10)(jest-util@30.2.0)(jest@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3)))(typescript@5.9.3)
       vite:
         specifier: ^7.1.7
         version: 7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -152,13 +152,13 @@ importers:
         version: 24.6.1
       jest:
         specifier: ^30.0.5
-        version: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3))
+        version: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3))
       tsx:
         specifier: ^4.20.3
         version: 4.20.6
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.6.1)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -170,10 +170,10 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -186,19 +186,19 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       typescript:
-        specifier: ^5.8.2
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       typescript-eslint:
         specifier: ^8.36.0
-        version: 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
+        version: 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
 
   prompts/tests:
     dependencies:
       '@react-router/dev':
         specifier: ^7.7.1
-        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3))(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))(yaml@2.8.1)
+        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3))(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))(yaml@2.8.1)
       '@tailwindcss/vite':
         specifier: ^4.1.11
         version: 4.1.14(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -213,11 +213,11 @@ importers:
         version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.13
-        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.8.3))(react@19.1.1)(typescript@5.8.3)
+        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
     devDependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.54.1
         version: 1.55.1
@@ -249,8 +249,8 @@ importers:
         specifier: ^4.20.3
         version: 4.20.6
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vite-plugin-devtools-json:
         specifier: ^0.4.1
         version: 0.4.1(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -262,16 +262,16 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -289,14 +289,14 @@ importers:
         version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.13
-        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.8.3))(react@19.1.1)(typescript@5.8.3)
+        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@types/react':
         specifier: ^19.1.0
         version: 19.1.17
@@ -304,8 +304,8 @@ importers:
         specifier: ^19.1.2
         version: 19.1.11(@types/react@19.1.17)
       typescript:
-        specifier: ^5.8.2
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   use-vibes/examples/react-example:
     dependencies:
@@ -344,17 +344,17 @@ importers:
         specifier: ^16.0.0
         version: 16.4.0
       typescript:
-        specifier: ~5.8.3
-        version: 5.8.3
+        specifier: ~5.9.3
+        version: 5.9.3
       typescript-eslint:
         specifier: ^8.30.1
-        version: 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
+        version: 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
       vite:
         specifier: ^7.1.7
         version: 7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
 
   use-vibes/pkg:
     dependencies:
@@ -370,7 +370,7 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
 
   use-vibes/tests:
     dependencies:
@@ -379,7 +379,7 @@ importers:
         version: 0.0.3(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       '@react-router/dev':
         specifier: ^7.7.1
-        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3))(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))(yaml@2.8.1)
+        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3))(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))(yaml@2.8.1)
       '@tailwindcss/vite':
         specifier: ^4.1.11
         version: 4.1.14(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -394,7 +394,7 @@ importers:
         version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.13
-        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.8.3))(react@19.1.1)(typescript@5.8.3)
+        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -403,7 +403,7 @@ importers:
         version: 7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.6.1)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -445,8 +445,8 @@ importers:
         specifier: ^4.20.3
         version: 4.20.6
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vite-plugin-devtools-json:
         specifier: ^0.4.1
         version: 0.4.1(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -464,32 +464,32 @@ importers:
         version: 19.1.1
       use-fireproof:
         specifier: ^0.23.13
-        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.8.3))(react@19.1.1)(typescript@5.8.3)
+        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@types/react':
         specifier: ^19.1.16
         version: 19.1.17
       typescript:
-        specifier: ^5.8.2
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
 
   vibes.diy/pkg:
     dependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@cloudflare/workers-types':
         specifier: ^4.20250819.0
         version: 4.20251001.0
       '@fireproof/core':
         specifier: ^0.23.13
-        version: 0.23.13(react@19.1.1)(typescript@5.8.3)
+        version: 0.23.13(react@19.1.1)(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -498,10 +498,10 @@ importers:
         version: 1.2.3(@types/react@19.1.17)(react@19.1.1)
       '@react-router/node':
         specifier: ^7.7.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.7.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.2.1
         version: 3.13.0
@@ -570,10 +570,10 @@ importers:
         version: 3.3.1
       ts-essentials:
         specifier: ^10.1.1
-        version: 10.1.1(typescript@5.8.3)
+        version: 10.1.1(typescript@5.9.3)
       use-fireproof:
         specifier: 0.23.13
-        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.8.3))(react@19.1.1)(typescript@5.8.3)
+        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
@@ -586,10 +586,10 @@ importers:
         version: 1.13.8(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20250927.0)(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@react-router/dev':
         specifier: ^7.7.1
-        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3))(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))(yaml@2.8.1)
+        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3))(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))(yaml@2.8.1)
       '@storybook/addon-a11y':
         specifier: ^9.1.6
         version: 9.1.10(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
@@ -601,10 +601,10 @@ importers:
         version: 9.1.10(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/react':
         specifier: ^9.1.6
-        version: 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.8.3)
+        version: 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)
       '@storybook/react-vite':
         specifier: ^9.1.6
-        version: 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rollup@4.52.3)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rollup@4.52.3)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       '@tailwindcss/vite':
         specifier: ^4.1.2
         version: 4.1.14(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -642,29 +642,29 @@ importers:
         specifier: ^4.19.3
         version: 4.20.6
       typescript:
-        specifier: ^5.8.2
-        version: 5.8.3
+        specifier: ^5.9.3
+        version: 5.9.3
       vite:
         specifier: ^7.1.7
         version: 7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
 
   vibes.diy/tests/app:
     dependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@react-router/node':
         specifier: ^7.4.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.4.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.2.1
         version: 3.13.0
@@ -718,7 +718,7 @@ importers:
         version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       use-fireproof:
         specifier: 0.23.13
-        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.8.3))(react@19.1.1)(typescript@5.8.3)
+        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -728,7 +728,7 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -740,7 +740,7 @@ importers:
         version: 19.1.11(@types/react@19.1.17)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.6.1)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -749,16 +749,16 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.4.30
-        version: 0.4.41(typescript@5.8.3)
+        version: 0.4.41(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@react-router/node':
         specifier: ^7.4.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.4.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.2.1
         version: 3.13.0
@@ -806,7 +806,7 @@ importers:
         version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       use-fireproof:
         specifier: 0.23.13
-        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.8.3))(react@19.1.1)(typescript@5.8.3)
+        version: 0.23.13(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -816,7 +816,7 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
+        version: 0.23.13(typescript@5.9.3)
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -828,7 +828,7 @@ importers:
         version: 19.1.11(@types/react@19.1.17)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.6.1)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -9385,8 +9385,8 @@ packages:
       eslint: ^8.57.0 || ^9.0.0
       typescript: '>=4.8.4 <6.0.0'
 
-  typescript@5.8.3:
-    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -10002,9 +10002,9 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@adviser/cement@0.4.41(typescript@5.8.3)':
+  '@adviser/cement@0.4.41(typescript@5.9.3)':
     dependencies:
-      ts-essentials: 10.1.1(typescript@5.8.3)
+      ts-essentials: 10.1.1(typescript@5.9.3)
       yaml: 2.8.1
     transitivePeerDependencies:
       - typescript
@@ -10832,15 +10832,15 @@ snapshots:
       fastq: 1.19.1
       glob: 10.4.5
 
-  '@fireproof/core-base@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-base@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-blockstore': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-keybag': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-blockstore': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       '@ipld/dag-cbor': 9.2.5
       '@web3-storage/pail': 0.6.2
@@ -10851,19 +10851,19 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-blockstore@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-blockstore@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-gateways-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-gateways-cloud': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-gateways-file': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-gateways-indexeddb': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-gateways-memory': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-keybag': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-runtime': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-gateways-file': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-gateways-indexeddb': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-gateways-memory': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       '@ipld/car': 5.4.2
       '@ipld/dag-cbor': 9.2.5
@@ -10877,11 +10877,11 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-cli@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-cli@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       aws4fetch: 1.0.20
       cmd-ts: 0.14.2
@@ -10895,27 +10895,27 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fireproof/core-gateways-base@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-gateways-base@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       '@ipld/dag-json': 10.2.5
       '@web3-storage/pail': 0.6.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-cloud@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-gateways-cloud@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-gateways-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-protocols-cloud': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-protocols-cloud': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       jose: 6.1.0
     transitivePeerDependencies:
@@ -10923,79 +10923,79 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-gateways-file-deno@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-gateways-file-deno@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       '@types/deno': 2.3.0
       '@types/node': 24.6.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file-node@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-gateways-file-node@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-gateways-file@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-gateways-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-gateways-file-deno': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-gateways-file-node': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-gateways-file-deno': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-gateways-file-node': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-indexeddb@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-gateways-indexeddb@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-gateways-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       idb: 8.0.3
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-memory@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-gateways-memory@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-gateways-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-keybag@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-keybag@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-gateways-file': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-gateways-indexeddb': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-gateways-file': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-gateways-indexeddb': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-protocols-cloud@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-protocols-cloud@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       '@types/ws': 8.18.1
       ws: 8.18.3
@@ -11004,23 +11004,23 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-protocols-dashboard@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-protocols-dashboard@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-runtime@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-runtime@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-runtime': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       cborg: 4.2.15
       jose: 6.1.0
@@ -11028,10 +11028,10 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-base@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-types-base@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       '@web3-storage/pail': 0.6.2
       multiformats: 13.4.1
@@ -11039,41 +11039,41 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-blockstore@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-types-blockstore@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-runtime': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       '@web3-storage/pail': 0.6.2
       multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-protocols-cloud@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-types-protocols-cloud@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       jose: 6.1.0
       multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-runtime@0.23.13(typescript@5.8.3)':
+  '@fireproof/core-types-runtime@0.23.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core@0.23.13(react@19.1.1)(typescript@5.8.3)':
+  '@fireproof/core@0.23.13(react@19.1.1)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       '@types/node': 24.6.1
       react: 19.1.1
@@ -11329,7 +11329,7 @@ snapshots:
       jest-util: 30.2.0
       slash: 3.0.0
 
-  '@jest/core@30.2.0(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3))':
+  '@jest/core@30.2.0(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3))':
     dependencies:
       '@jest/console': 30.2.0
       '@jest/pattern': 30.0.1
@@ -11344,7 +11344,7 @@ snapshots:
       exit-x: 0.2.2
       graceful-fs: 4.2.11
       jest-changed-files: 30.2.0
-      jest-config: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3))
+      jest-config: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3))
       jest-haste-map: 30.2.0
       jest-message-util: 30.2.0
       jest-regex-util: 30.0.1
@@ -11507,14 +11507,14 @@ snapshots:
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
-  '@joshwooding/vite-plugin-react-docgen-typescript@0.6.1(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))':
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.6.1(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))':
     dependencies:
       glob: 10.4.5
       magic-string: 0.30.19
-      react-docgen-typescript: 2.4.0(typescript@5.8.3)
+      react-docgen-typescript: 2.4.0(typescript@5.9.3)
       vite: 7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -11701,8 +11701,8 @@ snapshots:
       strip-ansi: 7.1.2
       supports-color: 9.4.0
       terminal-link: 3.0.0
-      ts-node: 10.9.2(@types/node@24.6.1)(typescript@5.8.3)
-      typescript: 5.8.3
+      ts-node: 10.9.2(@types/node@24.6.1)(typescript@5.9.3)
+      typescript: 5.9.3
       uuid: 9.0.1
       yargs: 17.7.2
     transitivePeerDependencies:
@@ -11762,8 +11762,8 @@ snapshots:
       string-width: 7.2.0
       supports-color: 10.2.2
       terminal-link: 4.0.0
-      ts-node: 10.9.2(@types/node@24.6.1)(typescript@5.8.3)
-      typescript: 5.8.3
+      ts-node: 10.9.2(@types/node@24.6.1)(typescript@5.9.3)
+      typescript: 5.9.3
       uuid: 11.1.0
       yaml: 2.8.1
       yargs: 17.7.2
@@ -12530,7 +12530,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.1.17
 
-  '@react-router/dev@7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3))(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))(yaml@2.8.1)':
+  '@react-router/dev@7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3))(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.40.3(@cloudflare/workers-types@4.20251001.0))(yaml@2.8.1)':
     dependencies:
       '@babel/core': 7.28.4
       '@babel/generator': 7.28.3
@@ -12540,7 +12540,7 @@ snapshots:
       '@babel/traverse': 7.28.4
       '@babel/types': 7.28.4
       '@npmcli/package-json': 4.0.1
-      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       '@remix-run/node-fetch-server': 0.9.0
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.10
@@ -12558,12 +12558,12 @@ snapshots:
       react-router: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       semver: 7.7.2
       tinyglobby: 0.2.15
-      valibot: 0.41.0(typescript@5.8.3)
+      valibot: 0.41.0(typescript@5.9.3)
       vite: 7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
       vite-node: 3.2.4(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
     optionalDependencies:
-      '@react-router/serve': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
-      typescript: 5.8.3
+      '@react-router/serve': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+      typescript: 5.9.3
       wrangler: 4.40.3(@cloudflare/workers-types@4.20251001.0)
     transitivePeerDependencies:
       - '@types/node'
@@ -12581,26 +12581,26 @@ snapshots:
       - tsx
       - yaml
 
-  '@react-router/express@7.9.3(express@4.21.2)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)':
+  '@react-router/express@7.9.3(express@4.21.2)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
     dependencies:
-      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       express: 4.21.2
       react-router: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
-  '@react-router/node@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)':
+  '@react-router/node@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
       react-router: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
-  '@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)':
+  '@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      '@react-router/express': 7.9.3(express@4.21.2)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
-      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3)
+      '@react-router/express': 7.9.3(express@4.21.2)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
       compression: 1.8.1
       express: 4.21.2
       get-port: 5.1.1
@@ -12814,12 +12814,12 @@ snapshots:
       react-dom: 19.1.1(react@19.1.1)
       storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
 
-  '@storybook/react-vite@9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rollup@4.52.3)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))':
+  '@storybook/react-vite@9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rollup@4.52.3)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))':
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.1(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.1(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       '@rollup/pluginutils': 5.3.0(rollup@4.52.3)
       '@storybook/builder-vite': 9.1.10(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
-      '@storybook/react': 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.8.3)
+      '@storybook/react': 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)
       find-up: 7.0.0
       magic-string: 0.30.19
       react: 19.1.1
@@ -12834,7 +12834,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@storybook/react@9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.8.3)':
+  '@storybook/react@9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)':
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/react-dom-shim': 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
@@ -12842,7 +12842,7 @@ snapshots:
       react-dom: 19.1.1(react@19.1.1)
       storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   '@szmarczak/http-timer@5.0.1':
     dependencies:
@@ -13107,41 +13107,41 @@ snapshots:
       '@types/node': 24.6.1
     optional: true
 
-  '@typescript-eslint/eslint-plugin@8.45.0(@typescript-eslint/parser@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3))(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)':
+  '@typescript-eslint/eslint-plugin@8.45.0(@typescript-eslint/parser@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3))(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.1
-      '@typescript-eslint/parser': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
+      '@typescript-eslint/parser': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/scope-manager': 8.45.0
-      '@typescript-eslint/type-utils': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
-      '@typescript-eslint/utils': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
+      '@typescript-eslint/type-utils': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.45.0
       eslint: 9.36.0(jiti@2.6.1)
       graphemer: 1.4.0
       ignore: 7.0.5
       natural-compare: 1.4.0
-      ts-api-utils: 2.1.0(typescript@5.8.3)
-      typescript: 5.8.3
+      ts-api-utils: 2.1.0(typescript@5.9.3)
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)':
+  '@typescript-eslint/parser@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.45.0
       '@typescript-eslint/types': 8.45.0
-      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.8.3)
+      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.45.0
       debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.36.0(jiti@2.6.1)
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/project-service@8.45.0(supports-color@10.2.2)(typescript@5.8.3)':
+  '@typescript-eslint/project-service@8.45.0(supports-color@10.2.2)(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.45.0(typescript@5.8.3)
+      '@typescript-eslint/tsconfig-utils': 8.45.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.45.0
       debug: 4.4.3(supports-color@10.2.2)
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -13150,19 +13150,19 @@ snapshots:
       '@typescript-eslint/types': 8.45.0
       '@typescript-eslint/visitor-keys': 8.45.0
 
-  '@typescript-eslint/tsconfig-utils@8.45.0(typescript@5.8.3)':
+  '@typescript-eslint/tsconfig-utils@8.45.0(typescript@5.9.3)':
     dependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
-  '@typescript-eslint/type-utils@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)':
+  '@typescript-eslint/type-utils@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/types': 8.45.0
-      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.8.3)
-      '@typescript-eslint/utils': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
+      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
       debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.36.0(jiti@2.6.1)
-      ts-api-utils: 2.1.0(typescript@5.8.3)
-      typescript: 5.8.3
+      ts-api-utils: 2.1.0(typescript@5.9.3)
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -13170,7 +13170,7 @@ snapshots:
 
   '@typescript-eslint/types@8.45.0': {}
 
-  '@typescript-eslint/typescript-estree@5.62.0(supports-color@9.4.0)(typescript@5.8.3)':
+  '@typescript-eslint/typescript-estree@5.62.0(supports-color@9.4.0)(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/types': 5.62.0
       '@typescript-eslint/visitor-keys': 5.62.0
@@ -13178,16 +13178,16 @@ snapshots:
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.3
-      tsutils: 3.21.0(typescript@5.8.3)
+      tsutils: 3.21.0(typescript@5.9.3)
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/typescript-estree@8.45.0(supports-color@10.2.2)(typescript@5.8.3)':
+  '@typescript-eslint/typescript-estree@8.45.0(supports-color@10.2.2)(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/project-service': 8.45.0(supports-color@10.2.2)(typescript@5.8.3)
-      '@typescript-eslint/tsconfig-utils': 8.45.0(typescript@5.8.3)
+      '@typescript-eslint/project-service': 8.45.0(supports-color@10.2.2)(typescript@5.9.3)
+      '@typescript-eslint/tsconfig-utils': 8.45.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.45.0
       '@typescript-eslint/visitor-keys': 8.45.0
       debug: 4.4.3(supports-color@10.2.2)
@@ -13195,19 +13195,19 @@ snapshots:
       is-glob: 4.0.3
       minimatch: 9.0.5
       semver: 7.7.2
-      ts-api-utils: 2.1.0(typescript@5.8.3)
-      typescript: 5.8.3
+      ts-api-utils: 2.1.0(typescript@5.9.3)
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)':
+  '@typescript-eslint/utils@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.0(eslint@9.36.0(jiti@2.6.1))
       '@typescript-eslint/scope-manager': 8.45.0
       '@typescript-eslint/types': 8.45.0
-      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.8.3)
+      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.9.3)
       eslint: 9.36.0(jiti@2.6.1)
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -14873,23 +14873,23 @@ snapshots:
 
   detective-typescript@11.2.0(supports-color@9.4.0):
     dependencies:
-      '@typescript-eslint/typescript-estree': 5.62.0(supports-color@9.4.0)(typescript@5.8.3)
+      '@typescript-eslint/typescript-estree': 5.62.0(supports-color@9.4.0)(typescript@5.9.3)
       ast-module-types: 5.0.0
       node-source-walk: 6.0.2
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  detective-typescript@14.0.0(supports-color@10.2.2)(typescript@5.8.3):
+  detective-typescript@14.0.0(supports-color@10.2.2)(typescript@5.9.3):
     dependencies:
-      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.8.3)
+      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.9.3)
       ast-module-types: 6.0.1
       node-source-walk: 7.0.1
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  detective-vue2@2.2.0(supports-color@10.2.2)(typescript@5.8.3):
+  detective-vue2@2.2.0(supports-color@10.2.2)(typescript@5.9.3):
     dependencies:
       '@dependents/detective-less': 5.0.1
       '@vue/compiler-sfc': 3.5.22
@@ -14897,8 +14897,8 @@ snapshots:
       detective-sass: 6.0.1
       detective-scss: 5.0.1
       detective-stylus: 5.0.1
-      detective-typescript: 14.0.0(supports-color@10.2.2)(typescript@5.8.3)
-      typescript: 5.8.3
+      detective-typescript: 14.0.0(supports-color@10.2.2)(typescript@5.9.3)
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -16806,15 +16806,15 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-cli@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3)):
+  jest-cli@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3)):
     dependencies:
-      '@jest/core': 30.2.0(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3))
+      '@jest/core': 30.2.0(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3))
       '@jest/test-result': 30.2.0
       '@jest/types': 30.2.0
       chalk: 4.1.2
       exit-x: 0.2.2
       import-local: 3.2.0
-      jest-config: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3))
+      jest-config: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3))
       jest-util: 30.2.0
       jest-validate: 30.2.0
       yargs: 17.7.2
@@ -16825,7 +16825,7 @@ snapshots:
       - supports-color
       - ts-node
 
-  jest-config@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3)):
+  jest-config@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3)):
     dependencies:
       '@babel/core': 7.28.4
       '@jest/get-type': 30.1.0
@@ -16854,7 +16854,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.6.1
       esbuild-register: 3.6.0(esbuild@0.25.10)
-      ts-node: 10.9.2(@types/node@24.6.1)(typescript@5.8.3)
+      ts-node: 10.9.2(@types/node@24.6.1)(typescript@5.9.3)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -17092,12 +17092,12 @@ snapshots:
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
-  jest@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3)):
+  jest@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3)):
     dependencies:
-      '@jest/core': 30.2.0(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3))
+      '@jest/core': 30.2.0(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3))
       '@jest/types': 30.2.0
       import-local: 3.2.0
-      jest-cli: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3))
+      jest-cli: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3))
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -18829,12 +18829,12 @@ snapshots:
       detective-sass: 6.0.1
       detective-scss: 5.0.1
       detective-stylus: 5.0.1
-      detective-typescript: 14.0.0(supports-color@10.2.2)(typescript@5.8.3)
-      detective-vue2: 2.2.0(supports-color@10.2.2)(typescript@5.8.3)
+      detective-typescript: 14.0.0(supports-color@10.2.2)(typescript@5.9.3)
+      detective-vue2: 2.2.0(supports-color@10.2.2)(typescript@5.9.3)
       module-definition: 6.0.1
       node-source-walk: 7.0.1
       postcss: 8.5.6
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -18985,9 +18985,9 @@ snapshots:
       js-cookie: 2.2.1
       react: 19.1.1
 
-  react-docgen-typescript@2.4.0(typescript@5.8.3):
+  react-docgen-typescript@2.4.0(typescript@5.9.3):
     dependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   react-docgen@8.0.1:
     dependencies:
@@ -20079,28 +20079,28 @@ snapshots:
 
   trough@2.2.0: {}
 
-  ts-api-utils@2.1.0(typescript@5.8.3):
+  ts-api-utils@2.1.0(typescript@5.9.3):
     dependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   ts-dedent@2.2.0: {}
 
-  ts-essentials@10.1.1(typescript@5.8.3):
+  ts-essentials@10.1.1(typescript@5.9.3):
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
-  ts-jest@29.4.4(@babel/core@7.28.4)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.28.4))(esbuild@0.25.10)(jest-util@30.2.0)(jest@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3)))(typescript@5.8.3):
+  ts-jest@29.4.4(@babel/core@7.28.4)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.28.4))(esbuild@0.25.10)(jest-util@30.2.0)(jest@30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3)))(typescript@5.9.3):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       handlebars: 4.7.8
-      jest: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3))
+      jest: 30.2.0(@types/node@24.6.1)(esbuild-register@3.6.0(esbuild@0.25.10))(ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3))
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
       semver: 7.7.2
       type-fest: 4.41.0
-      typescript: 5.8.3
+      typescript: 5.9.3
       yargs-parser: 21.1.1
     optionalDependencies:
       '@babel/core': 7.28.4
@@ -20110,7 +20110,7 @@ snapshots:
       esbuild: 0.25.10
       jest-util: 30.2.0
 
-  ts-node@10.9.2(@types/node@24.6.1)(typescript@5.8.3):
+  ts-node@10.9.2(@types/node@24.6.1)(typescript@5.9.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.11
@@ -20124,13 +20124,13 @@ snapshots:
       create-require: 1.1.1
       diff: 4.0.2
       make-error: 1.3.6
-      typescript: 5.8.3
+      typescript: 5.9.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
-  tsconfck@3.1.6(typescript@5.8.3):
+  tsconfck@3.1.6(typescript@5.9.3):
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   tsconfig-paths@3.15.0:
     dependencies:
@@ -20149,10 +20149,10 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tsutils@3.21.0(typescript@5.8.3):
+  tsutils@3.21.0(typescript@5.9.3):
     dependencies:
       tslib: 1.14.1
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   tsx@4.20.6:
     dependencies:
@@ -20225,18 +20225,18 @@ snapshots:
     dependencies:
       is-typedarray: 1.0.0
 
-  typescript-eslint@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3):
+  typescript-eslint@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.45.0(@typescript-eslint/parser@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3))(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
-      '@typescript-eslint/parser': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
-      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.8.3)
-      '@typescript-eslint/utils': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.8.3)
+      '@typescript-eslint/eslint-plugin': 8.45.0(@typescript-eslint/parser@8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3))(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.45.0(supports-color@10.2.2)(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.45.0(eslint@9.36.0(jiti@2.6.1))(typescript@5.9.3)
       eslint: 9.36.0(jiti@2.6.1)
-      typescript: 5.8.3
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  typescript@5.8.3: {}
+  typescript@5.9.3: {}
 
   ufo@1.6.1: {}
 
@@ -20440,17 +20440,17 @@ snapshots:
 
   urlpattern-polyfill@8.0.2: {}
 
-  use-fireproof@0.23.13(@adviser/cement@0.4.41(typescript@5.8.3))(react@19.1.1)(typescript@5.8.3):
+  use-fireproof@0.23.13(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3):
     dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.8.3)
-      '@fireproof/core-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-gateways-cloud': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-keybag': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-protocols-dashboard': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.8.3)
+      '@adviser/cement': 0.4.41(typescript@5.9.3)
+      '@fireproof/core-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.13(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.23.13(typescript@5.9.3)
       '@fireproof/vendor': 0.23.13
       dompurify: 3.2.7
       jose: 6.1.0
@@ -20476,9 +20476,9 @@ snapshots:
       '@types/istanbul-lib-coverage': 2.0.6
       convert-source-map: 2.0.0
 
-  valibot@0.41.0(typescript@5.8.3):
+  valibot@0.41.0(typescript@5.9.3):
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   validate-npm-package-license@3.0.4:
     dependencies:
@@ -20531,11 +20531,11 @@ snapshots:
       uuid: 11.1.0
       vite: 7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
 
-  vite-tsconfig-paths@5.1.4(typescript@5.8.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)):
+  vite-tsconfig-paths@5.1.4(typescript@5.9.3)(vite@7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
       globrex: 0.1.2
-      tsconfck: 3.1.6(typescript@5.8.3)
+      tsconfck: 3.1.6(typescript@5.9.3)
     optionalDependencies:
       vite: 7.1.7(@types/node@24.6.1)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
     transitivePeerDependencies:
