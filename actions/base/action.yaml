@@ -18,7 +18,7 @@ runs:
     - name: lint
       shell: bash
       run: |
-        pnpm run lint 
+        pnpm run lint
 
     - name: build
       shell: bash
