@@ -44,7 +44,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "call-ai": "workspace:*",
     "playwright": "^1.54.1",
-    "playwright-chromium": "^1.54.1",
+    "playwright-chromium": "^1.55.1",
     "react": "^19.1.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
