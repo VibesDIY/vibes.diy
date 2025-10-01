@@ -11,10 +11,6 @@ runs:
       shell: bash
       run: pnpm install
 
-    - name: install playwright browsers
-      shell: bash
-      run: pnpm exec playwright install
-
     - name: format-check
       shell: bash
       run: pnpm run format --check
@@ -22,12 +18,15 @@ runs:
     - name: lint
       shell: bash
       run: |
-        echo "We NEED to work on the linting"
-        pnpm run lint || true
+        pnpm run lint 
 
     - name: build
       shell: bash
       run: pnpm run build
+
+    - name: install playwright browsers
+      shell: bash
+      run: pnpm exec playwright install chromium --with-deps
 
     - name: test
       shell: bash
