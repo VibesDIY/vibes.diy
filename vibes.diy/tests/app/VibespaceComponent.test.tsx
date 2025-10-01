@@ -8,6 +8,26 @@ import VibespaceComponent from "~/vibes.diy/app/components/VibespaceComponent.js
 vi.mock("use-fireproof", () => ({
   useFireproof: vi.fn(() => ({
     useAllDocs: vi.fn(() => ({ docs: [] })),
+    useDocument: vi.fn(() => ({
+      doc: { _id: "user_settings", stylePrompt: "", userPrompt: "", model: "" },
+      merge: vi.fn(),
+      save: vi.fn(),
+    })),
+  })),
+  toCloud: vi.fn().mockReturnValue({}),
+}));
+
+// Mock the AuthContext
+vi.mock("~/vibes.diy/app/contexts/AuthContext.js", () => ({
+  useAuth: vi.fn(() => ({
+    token: null,
+    isAuthenticated: false,
+    isLoading: false,
+    userPayload: null,
+    needsLogin: false,
+    setNeedsLogin: vi.fn(),
+    checkAuthStatus: vi.fn().mockResolvedValue(undefined),
+    processToken: vi.fn().mockResolvedValue(undefined),
   })),
 }));
 

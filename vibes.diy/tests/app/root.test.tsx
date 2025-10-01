@@ -102,6 +102,7 @@ vi.mock("use-fireproof", () => ({
     useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
     useLiveQuery: () => [[]],
   }),
+  toCloud: vi.fn().mockReturnValue({}),
 }));
 
 // Mock the useSimpleChat hook

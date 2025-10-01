@@ -165,7 +165,7 @@ export async function pollForAuthToken(
   mock: {
     fetch: typeof fetch;
     toast: { success: (s: string) => void };
-  } = { fetch: systemFetch, toast },
+  } = { fetch: globalThis.fetch || systemFetch, toast },
 ): Promise<string | null> {
   const endpoint = `${VibesDiyEnv.CONNECT_API_URL()}/token/${resultId}`;
   const start = Date.now();
@@ -267,7 +267,7 @@ export async function verifyToken(
  */
 export async function extendToken(
   currentToken: string,
-  mock = { fetch: systemFetch },
+  mock = { fetch: globalThis.fetch || systemFetch },
 ): Promise<string | null> {
   try {
     const endpoint = VibesDiyEnv.CONNECT_API_URL();

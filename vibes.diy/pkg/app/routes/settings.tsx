@@ -1,13 +1,17 @@
 import type { ChangeEvent } from "react";
 import React, { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFireproof } from "use-fireproof";
+import { toCloud, useFireproof } from "use-fireproof";
 import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import modelsList from "../data/models.json" with { type: "json" };
 import { VibesDiyEnv } from "../config/env.js";
 import { UserSettings, stylePrompts } from "@vibes.diy/prompts";
+import {
+  getSyncPreference,
+  setSyncPreference,
+} from "../utils/syncPreference.js";
 // Dependency chooser moved to per‑vibe App Settings view
 
 export function meta() {
@@ -20,8 +24,15 @@ export function meta() {
 export default function Settings() {
   const navigate = useNavigate();
   // Use the main database directly instead of through useSession
-  const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
   const { isAuthenticated, checkAuthStatus } = useAuth();
+
+  // Sync preference from localStorage
+  const [enableSync, setEnableSync] = useState(() => getSyncPreference());
+
+  const { useDocument } = useFireproof(
+    VibesDiyEnv.SETTINGS_DBNAME(),
+    enableSync && isAuthenticated ? { attach: toCloud() } : {},
+  );
 
   const {
     doc: settings,
@@ -97,6 +108,17 @@ export default function Settings() {
       setHasUnsavedChanges(true); // Track change
     },
     [mergeSettings],
+  );
+
+  const handleEnableSyncChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const isEnabled = e.target.checked;
+      setEnableSync(isEnabled);
+      setSyncPreference(isEnabled);
+      // Force a page reload to reinitialize databases with new sync setting
+      window.location.reload();
+    },
+    [],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -296,6 +318,27 @@ export default function Settings() {
                 />
               </div>
             </div>
+
+            {isAuthenticated && (
+              <div className="border-light-decorative-01 dark:border-dark-decorative-01 rounded border p-4">
+                <h3 className="mb-2 text-lg font-medium">Cloud Sync</h3>
+                <p className="text-accent-01 dark:text-accent-01 mb-3 text-sm">
+                  Enable cloud synchronization for your vibes and chat data
+                </p>
+
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={enableSync}
+                    onChange={handleEnableSyncChange}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium">
+                    Enable cloud synchronization
+                  </span>
+                </label>
+              </div>
+            )}
           </div>
         </div>
 

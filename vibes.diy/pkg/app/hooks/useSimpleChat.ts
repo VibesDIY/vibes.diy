@@ -8,12 +8,13 @@ import type {
   SystemPromptResult,
 } from "@vibes.diy/prompts";
 
-import { useFireproof } from "use-fireproof";
+import { toCloud, useFireproof } from "use-fireproof";
 import { VibesDiyEnv } from "../config/env.js";
 import { saveErrorAsSystemMessage } from "./saveErrorAsSystemMessage.js";
 import { useApiKey } from "./useApiKey.js";
 import { useImmediateErrorAutoSend } from "./useImmediateErrorAutoSend.js";
 import { useSession } from "./useSession.js";
+import { useUserSettings } from "./useUserSettings.js";
 
 import { useMessageSelection } from "./useMessageSelection.js";
 // Import our custom hooks
@@ -67,8 +68,14 @@ export function useSimpleChat(sessionId: string): ChatState {
     updateSelectedModel,
   } = useSession(sessionId);
 
+  // Get user settings including sync preference
+  const { isEnableSyncEnabled } = useUserSettings();
+
   // Get main database directly for settings document
-  const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
+  const { useDocument } = useFireproof(
+    VibesDiyEnv.SETTINGS_DBNAME(),
+    isEnableSyncEnabled && isAuthenticated ? { attach: toCloud() } : {},
+  );
 
   // Function to save errors as system messages to the session database
   const saveErrorAsSystemMessageCb = useCallback(

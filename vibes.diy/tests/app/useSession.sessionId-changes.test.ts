@@ -48,6 +48,33 @@ vi.mock("use-fireproof", async (original) => {
 
 import { useFireproof } from "use-fireproof";
 
+vi.mock("~/vibes.diy/app/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    userPayload: null,
+    isAuthenticated: false,
+    isLoading: false,
+    token: null,
+    needsLogin: false,
+    setNeedsLogin: vi.fn(),
+    checkAuthStatus: vi.fn(),
+    processToken: vi.fn(),
+  }),
+}));
+
+// Need to mock useUserSettings since useSession now uses it
+vi.mock("~/vibes.diy/app/hooks/useUserSettings", () => ({
+  useUserSettings: () => ({
+    isEnableSyncEnabled: false,
+  }),
+}));
+
+// Need to mock useLocation since useSession now uses it
+vi.mock("react-router", () => ({
+  useLocation: () => ({
+    pathname: "/test",
+  }),
+}));
+
 // Tests focused on eager database initialization behavior
 describe("useSession", () => {
   let mockUseFireproof: Mock<typeof useFireproof>;
@@ -90,6 +117,6 @@ describe("useSession", () => {
     expect(mockUseFireproof.mock.calls.length).toBeGreaterThan(
       initialCallCount,
     );
-    expect(mockUseFireproof).toHaveBeenCalledWith("vibe-new-session-id");
+    expect(mockUseFireproof).toHaveBeenCalledWith("vibe-new-session-id", {});
   });
 });

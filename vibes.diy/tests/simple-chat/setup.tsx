@@ -136,6 +136,7 @@ vi.mock("use-fireproof", async (original) => {
         delete: vi.fn().mockResolvedValue({ ok: true }),
       },
     }),
+    toCloud: vi.fn().mockReturnValue({}),
   };
 });
 
