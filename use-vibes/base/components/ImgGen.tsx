@@ -1,13 +1,8 @@
 import * as React from 'react';
-import { v4 as uuid } from 'uuid';
 import type { ImageGenOptions } from 'call-ai';
 import { useImageGen as defaultUseImageGen } from '../hooks/image-gen/use-image-gen.js';
 import { useFireproof, Database } from 'use-fireproof';
-import type {
-  ImageDocument,
-  UseImageGenOptions,
-  UseImageGenResult,
-} from '@vibes.diy/use-vibes-types';
+import { ensureSuperThis } from '@fireproof/core-runtime';
 import {
   ImgGenPromptWaiting,
   ImgGenDisplayPlaceholder,
@@ -19,7 +14,13 @@ import { ImgGenUploadWaiting } from './ImgGenUtils/ImgGenUploadWaiting.js';
 import { getImgGenMode } from './ImgGenUtils/ImgGenModeUtils.js';
 import { defaultClasses } from '../utils/style-utils.js';
 import { logDebug } from '../utils/debug.js';
-import { ImgGenClasses } from '@vibes.diy/use-vibes-types';
+import {
+  ImageDocument,
+  ImgGenClasses,
+  UseImageGenOptions,
+  UseImageGenResult,
+} from '@vibes.diy/use-vibes-types';
+import { Lazy } from '@adviser/cement';
 
 export interface ImgGenProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onError' | 'className'> {
@@ -68,6 +69,7 @@ export interface ImgGenProps
   readonly debug: boolean;
 }
 
+const sthis = Lazy(() => ensureSuperThis());
 /**
  * Core implementation of ImgGen component
  * This is the component that gets remounted when the document ID or prompt changes
@@ -327,7 +329,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
 
               // Update the edited prompt and generate a new generationId to trigger generation
               setCurrentEditedPrompt(newPrompt);
-              setGenerationId(uuid());
+              setGenerationId(sthis().nextId().str);
             }}
           />
         );
@@ -483,7 +485,7 @@ export function ImgGen(props: Partial<ImgGenProps>): React.ReactElement {
   const { _id, prompt, debug, onDocumentCreated } = props;
 
   // Generate a unique mountKey for this instance
-  const [mountKey, setMountKey] = React.useState(() => uuid());
+  const [mountKey, setMountKey] = React.useState(() => sthis().nextId().str);
 
   // Track document creation from uploads for remounting
   const [uploadedDocId, setUploadedDocId] = React.useState<string | undefined>(undefined);
@@ -533,7 +535,7 @@ export function ImgGen(props: Partial<ImgGenProps>): React.ReactElement {
           prevUploadedDocId: prevUploadedDocIdRef.current,
         });
       }
-      setMountKey(uuid()); // Force a remount of ImgGenCore
+      setMountKey(sthis().nextId().str); // Force a remount of ImgGenCore
     }
 
     // Update refs for next comparison
