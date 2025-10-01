@@ -54,6 +54,6 @@
     "call-ai": "workspace:0.0.0",
     "jest-fetch-mock": "^3.0.3",
     "ts-jest": "^29.4.1",
-    "vite": "^7.0.6"
+    "vite": "^7.1.7"
   }
 }
