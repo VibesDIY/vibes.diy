@@ -12,7 +12,7 @@
 // });
 //
 
-/// <reference types="@vitest/browser/providers/playwright" />
+// /// <reference types="@vitest/browser/providers/playwright" />
 
 import { defineConfig } from 'vitest/config';
 

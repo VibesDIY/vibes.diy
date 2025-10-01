@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import "@testing-library/jest-dom";
 
 // Vitest will automatically use mocks from __mocks__ directory
 // You don't need to manually import or setup mocks here

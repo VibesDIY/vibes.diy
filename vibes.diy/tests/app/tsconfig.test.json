@@ -1,6 +1,7 @@
 {
   "extends": "../../../tsconfig.test.json",
   "compilerOptions": {
+    "types": ["@vitest/browser/providers/playwright"],
     "paths": {
       "~/vibes.diy/*": ["../../pkg/*"]
     }

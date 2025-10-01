@@ -1,8 +1,6 @@
 {
-  "extends": "../../tsconfig.json"
-  /*
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "types": ["vitest/globals", "@testing-library/react-dom"]
+    "types": ["@vitest/browser/providers/playwright", "@testing-library/jest-dom"]
   }
-  */
 }
