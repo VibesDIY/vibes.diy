@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "@react-router/dev": "^7.7.1",
-    "@tailwindcss/vite": "^4.1.11",
+    "@tailwindcss/vite": "^4.1.14",
     "@vibes.diy/prompts": "workspace:0.0.0",
     "call-ai": "workspace:0.0.0",
     "react-dom": "^19.1.0",
