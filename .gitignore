@@ -2,6 +2,7 @@ node_modules
 **/__screenshots__/
 **/build/
 **/dist/
+.claude/
 
 .env*
 .netlify/

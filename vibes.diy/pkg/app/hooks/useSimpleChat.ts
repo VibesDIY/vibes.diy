@@ -21,7 +21,7 @@ import type { SendMessageContext } from "./sendMessage.js";
 import { sendChatMessage } from "./sendMessage.js";
 import { useSystemPromptManager } from "./useSystemPromptManager.js";
 import { useThrottledUpdates } from "./useThrottledUpdates.js";
-import { RuntimeError } from "use-vibes";
+import { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ErrorCategory, useRuntimeErrors } from "./useRuntimeErrors.js";
 
 // Constants

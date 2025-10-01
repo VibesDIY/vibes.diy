@@ -1,5 +1,5 @@
 import { ViewType } from "@vibes.diy/prompts";
-import { RuntimeError } from "use-vibes";
+import { RuntimeError } from "@vibes.diy/use-vibes-types";
 
 export interface ResultPreviewProps {
   code: string;

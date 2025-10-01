@@ -30,5 +30,17 @@ export interface ImgGenClasses {
   readonly uploadWaiting: string;
 }
 
+export interface RuntimeError {
+  type: string; // 'error' or 'unhandledrejection'
+  message: string;
+  source?: string;
+  lineno?: number;
+  colno?: number;
+  stack?: string;
+  reason?: string;
+  timestamp: string;
+  errorType?: 'SyntaxError' | 'ReferenceError' | 'TypeError' | 'DatabaseError' | 'Other';
+}
+
 export * from './vibes-gen-types.js';
 export * from './image-gen-types.js';

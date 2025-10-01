@@ -1,5 +1,5 @@
 import type { DocTypes } from "@fireproof/core-types-base";
-import type { RuntimeError } from "use-vibes";
+import type { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ViewType } from "./view-state.js";
 
 // ===== Vibe Document Type =====

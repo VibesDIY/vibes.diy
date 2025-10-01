@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { trackErrorEvent } from "../utils/analytics.js";
-import { RuntimeError } from "use-vibes";
+import { RuntimeError } from "@vibes.diy/use-vibes-types";
 
 export type ErrorCategory = "immediate" | "advisory";
 

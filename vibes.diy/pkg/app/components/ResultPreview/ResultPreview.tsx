@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from "react";
-import type { RuntimeError } from "use-vibes";
+import type { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { animationStyles } from "./ResultPreviewTemplates.js";
 import type { IframeFiles, ResultPreviewProps } from "./ResultPreviewTypes.js";
 // import { encodeTitle } from '../SessionSidebar/utils';
