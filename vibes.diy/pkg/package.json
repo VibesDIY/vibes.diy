@@ -35,7 +35,7 @@
     "@fireproof/core-runtime": "^0.23.13",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.3",
-    "@react-router/node": "^7.7.1",
+    "@react-router/node": "^7.9.3",
     "@react-router/serve": "^7.7.1",
     "@shikijs/monaco": "^3.2.1",
     "@tailwindcss/typography": "^0.5.19",
