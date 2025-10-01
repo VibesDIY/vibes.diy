@@ -6,4 +6,4 @@
  */
 
 export { useVibes } from './use-vibes.js';
-export type { UseVibesOptions, UseVibesResult, VibeDocument } from './types.js';
+export type { UseVibesOptions, UseVibesResult, VibeDocument } from '@vibes.diy/use-vibes-types';

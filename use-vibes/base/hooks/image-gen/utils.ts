@@ -1,5 +1,10 @@
 import { ImageGenOptions } from 'call-ai';
-import { ModuleState, ImageDocument, VersionInfo, PromptEntry } from './types.js';
+import type {
+  ModuleState,
+  ImageDocument,
+  VersionInfo,
+  PromptEntry,
+} from '@vibes.diy/use-vibes-types';
 
 // Module-level state for tracking and preventing duplicate calls
 export const MODULE_STATE: ModuleState = {

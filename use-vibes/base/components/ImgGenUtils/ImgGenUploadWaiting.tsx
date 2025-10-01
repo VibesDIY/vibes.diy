@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { PartialImageDocument } from '../../hooks/image-gen/types.js';
+import type { PartialImageDocument } from '@vibes.diy/use-vibes-types';
 import { useFireproof, ImgFile, Database } from 'use-fireproof';
 import { ImgGenFileDrop } from '../ImgGenUtils/ImgGenFileDrop.js';
 import { ImgGenClasses, combineClasses } from '../../utils/style-utils.js';

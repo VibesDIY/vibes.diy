@@ -1,4 +1,4 @@
-import { ImageDocument, PartialImageDocument } from '../../hooks/image-gen/types.js';
+import type { ImageDocument, PartialImageDocument } from '@vibes.diy/use-vibes-types';
 
 /**
  * Utility functions for the ImgGenDisplay component

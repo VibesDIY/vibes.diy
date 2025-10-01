@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getImgGenMode } from '../base/components/ImgGenUtils/ImgGenModeUtils.js';
-import type { PartialImageDocument } from '../base/hooks/image-gen/types.js';
+import type { PartialImageDocument } from '@vibes.diy/use-vibes-base';
 
 describe('ImgGenModeUtils', () => {
   describe('getImgGenMode', () => {

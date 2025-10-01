@@ -21,7 +21,7 @@
     "@react-router/node": "^7.4.1",
     "@react-router/serve": "^7.4.1",
     "@shikijs/monaco": "^3.2.1",
-    "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/typography": "^0.5.19",
     "@vibes.diy/prompts": "workspace:*",
     "call-ai": "workspace:*",
     "isbot": "^5.1.25",

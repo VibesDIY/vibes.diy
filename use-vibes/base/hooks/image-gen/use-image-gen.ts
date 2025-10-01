@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Database, useFireproof } from 'use-fireproof';
 import { ImageGenOptions, ImageResponse } from 'call-ai';
-import { UseImageGenOptions, UseImageGenResult, ImageDocument } from './types.js';
+import type {
+  UseImageGenOptions,
+  UseImageGenResult,
+  ImageDocument,
+} from '@vibes.diy/use-vibes-types';
 
 import {
   hashInput,

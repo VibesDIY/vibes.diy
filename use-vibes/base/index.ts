@@ -47,7 +47,7 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
 }
 
 // Custom useFireproof hook with implicit cloud sync and button integration
-export const useFireproof = (nameOrDatabase?: string | Database) => {
+export function useFireproof(nameOrDatabase?: string | Database) {
   // Generate unique instance ID for this hook instance
   const instanceId = useId();
 
@@ -197,7 +197,7 @@ export const useFireproof = (nameOrDatabase?: string | Database) => {
     disableSync,
     syncEnabled,
   };
-};
+}
 
 // Re-export specific functions and types from call-ai
 import { callAI } from 'call-ai';
@@ -218,7 +218,9 @@ export { PromptBar } from './components/PromptBar.js';
 export { hashInput, useImageGen } from './hooks/image-gen/index.js';
 
 // Export style utilities
-export { defaultClasses, type ImgGenClasses } from './utils/style-utils.js';
+export { defaultClasses } from './utils/style-utils.js';
+
+export type { ImgGenClasses } from '@vibes.diy/use-vibes-types';
 
 // Export utility functions
 export { base64ToFile } from './utils/base64.js';
@@ -233,13 +235,13 @@ export { ImageOverlay } from './components/ImgGenUtils/overlays/ImageOverlay.js'
 export { addNewVersion, MODULE_STATE } from './hooks/image-gen/utils.js';
 
 // Export types for testing and advanced usage
-export {
-  type ImageDocument,
-  type PartialImageDocument,
-  type UseImageGenOptions,
-  type UseImageGenResult,
-} from './hooks/image-gen/types.js';
+export type {
+  ImageDocument,
+  PartialImageDocument,
+  UseImageGenOptions,
+  UseImageGenResult,
+} from '@vibes.diy/use-vibes-types';
 
 // Export useVibes hook and types
 export { useVibes } from './hooks/vibes-gen/index.js';
-export type { UseVibesOptions, UseVibesResult, VibeDocument } from './hooks/vibes-gen/types.js';
+export type { UseVibesOptions, UseVibesResult, VibeDocument } from '@vibes.diy/use-vibes-types';

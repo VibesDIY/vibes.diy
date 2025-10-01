@@ -6,7 +6,7 @@ import {
 import { MODULE_STATE, getRelevantOptions } from './utils.js';
 
 // Import ImageDocument type
-import { ImageDocument } from './types.js';
+import type { ImageDocument } from '@vibes.diy/use-vibes-types';
 
 // Extend the ImageGenOptions type to include our regeneration ID and other properties
 interface ImageGenOptions extends BaseImageGenOptions {

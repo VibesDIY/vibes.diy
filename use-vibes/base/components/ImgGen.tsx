@@ -7,7 +7,7 @@ import type {
   ImageDocument,
   UseImageGenOptions,
   UseImageGenResult,
-} from '../hooks/image-gen/types.js';
+} from '@vibes.diy/use-vibes-types';
 import {
   ImgGenPromptWaiting,
   ImgGenDisplayPlaceholder,
@@ -17,8 +17,9 @@ import {
 // Import from direct file since the main index.ts might not be updated yet
 import { ImgGenUploadWaiting } from './ImgGenUtils/ImgGenUploadWaiting.js';
 import { getImgGenMode } from './ImgGenUtils/ImgGenModeUtils.js';
-import { ImgGenClasses, defaultClasses } from '../utils/style-utils.js';
+import { defaultClasses } from '../utils/style-utils.js';
 import { logDebug } from '../utils/debug.js';
+import { ImgGenClasses } from '@vibes.diy/use-vibes-types';
 
 export interface ImgGenProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onError' | 'className'> {

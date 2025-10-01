@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { callAI as defaultCallAI } from 'call-ai';
 import { makeBaseSystemPrompt, parseContent } from '@vibes.diy/prompts';
 import IframeVibesComponent from './IframeVibesComponent.js';
-import type { UseVibesOptions, UseVibesResult, UseVibesState } from './types.js';
+import type { UseVibesOptions, UseVibesResult, UseVibesState } from '@vibes.diy/use-vibes-types';
 
 /**
  * useVibes hook - Cycle 1 implementation

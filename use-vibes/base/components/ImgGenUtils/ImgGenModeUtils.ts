@@ -1,4 +1,4 @@
-import type { PartialImageDocument } from '../../hooks/image-gen/types.js';
+import type { PartialImageDocument } from '@vibes.diy/use-vibes-types';
 
 /**
  * Possible display modes for the ImgGen component
