@@ -456,21 +456,9 @@ importers:
 
   use-vibes/types:
     dependencies:
-      '@adviser/cement':
-        specifier: ^0.4.30
-        version: 0.4.30(typescript@5.8.3)
-      '@fireproof/core-runtime':
-        specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-base':
-        specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
-      '@fireproof/core-types-protocols-cloud':
-        specifier: ^0.23.13
-        version: 0.23.13(typescript@5.8.3)
       call-ai:
-        specifier: ^0.12.7
-        version: 0.12.7(typescript@5.8.3)
+        specifier: workspace:*
+        version: link:../../call-ai/pkg
       react:
         specifier: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
         version: 19.1.1
@@ -4413,10 +4401,6 @@ packages:
   cachedir@2.4.0:
     resolution: {integrity: sha512-9EtFOZR8g22CL7BWjJ9BUx1+A/djkofnyW3aOXZORNW2kxoUpx2h+uN2cOqwPmFhnpVmxg+KW2OjOSgChTEvsQ==}
     engines: {node: '>=6'}
-
-  call-ai@0.12.7:
-    resolution: {integrity: sha512-yzBH9L0EKRMQ77jXSl5/oeUhYZjFg728uEDXSFshZenMPG4kC0C4MZd3pke0gnqWF1ctRWxlRgD4FZe6GaGFcA==}
-    engines: {node: '>=20.0.0'}
 
   call-bind-apply-helpers@1.0.2:
     resolution: {integrity: sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==}
@@ -14924,13 +14908,6 @@ snapshots:
       responselike: 3.0.0
 
   cachedir@2.4.0: {}
-
-  call-ai@0.12.7(typescript@5.8.3):
-    dependencies:
-      '@adviser/cement': 0.4.30(typescript@5.8.3)
-      '@fireproof/core-runtime': 0.23.13(typescript@5.8.3)
-    transitivePeerDependencies:
-      - typescript
 
   call-bind-apply-helpers@1.0.2:
     dependencies:
