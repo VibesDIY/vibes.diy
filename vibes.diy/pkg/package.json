@@ -67,7 +67,7 @@
     "@cloudflare/vite-plugin": "^1.11.6",
     "@fireproof/core-cli": "^0.23.13",
     "@react-router/dev": "^7.7.1",
-    "@storybook/addon-a11y": "^9.1.6",
+    "@storybook/addon-a11y": "^9.1.10",
     "@storybook/addon-docs": "^9.1.6",
     "@storybook/addon-onboarding": "^9.1.6",
     "@storybook/react": "^9.1.6",
