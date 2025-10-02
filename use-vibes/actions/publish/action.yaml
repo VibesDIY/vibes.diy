@@ -8,6 +8,18 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: publish-prompts
+      shell: bash
+      working-directory: prompts/pkg
+      env:
+        NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
+      run: |
+        set -e
+        echo "GITHUB_REF->"$GITHUB_REF
+        echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > ~/.npmrc
+        mkdir -p dist
+        echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
+        pnpm run publish --registry https://registry.npmjs.org/
     - name: publish-call-ai
       shell: bash
       working-directory: call-ai/pkg
