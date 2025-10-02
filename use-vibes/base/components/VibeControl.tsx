@@ -1,33 +1,37 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { createVibeControlStyles, defaultVibeControlClasses, VibeControlClasses } from '../utils/vibe-control-styles.js';
+import {
+  createVibeControlStyles,
+  defaultVibeControlClasses,
+  VibeControlClasses,
+} from '../utils/vibe-control-styles.js';
 
 export interface VibeControlProps {
   /** Label text for the button (default: "Open Vibes") */
   readonly label?: string;
-  
+
   /** Position of the button on screen */
   readonly position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-  
+
   /** Callback when overlay opens */
   readonly onOpen?: () => void;
-  
+
   /** Callback when overlay closes */
   readonly onClose?: () => void;
-  
+
   /** Custom content for the overlay */
   readonly children?: React.ReactNode;
-  
+
   /** Custom CSS classes for styling */
   readonly classes?: VibeControlClasses;
-  
+
   /** Whether to show the component initially (default: true) */
   readonly visible?: boolean;
 }
 
 /**
  * VibeControl - A floating action button that opens a full-screen overlay
- * 
+ *
  * Features:
  * - Positioned button at corner of screen
  * - Full-screen overlay with backdrop
@@ -89,19 +93,19 @@ export function VibeControl({
   // Calculate button position based on prop
   const getButtonPositionStyles = (pos: string) => {
     const baseStyles = { ...styles.button };
-    
+
     switch (pos) {
       case 'bottom-left':
         return { ...baseStyles, left: baseStyles.bottom, right: 'auto' };
       case 'top-right':
         return { ...baseStyles, top: baseStyles.bottom, bottom: 'auto' };
       case 'top-left':
-        return { 
-          ...baseStyles, 
-          top: baseStyles.bottom, 
-          left: baseStyles.bottom, 
-          bottom: 'auto', 
-          right: 'auto' 
+        return {
+          ...baseStyles,
+          top: baseStyles.bottom,
+          left: baseStyles.bottom,
+          bottom: 'auto',
+          right: 'auto',
         };
       default: // bottom-right
         return baseStyles;
@@ -126,11 +130,7 @@ export function VibeControl({
     if (!isOpen) return null;
 
     return ReactDOM.createPortal(
-      <div
-        style={styles.backdrop}
-        onClick={handleClose}
-        className={classes.backdrop}
-      >
+      <div style={styles.backdrop} onClick={handleClose} className={classes.backdrop}>
         <div
           style={styles.overlay}
           onClick={(e) => e.stopPropagation()}
@@ -139,7 +139,7 @@ export function VibeControl({
           <h2 style={styles.overlayTitle} className={classes.overlayTitle}>
             Vibe Control
           </h2>
-          
+
           <button
             style={closeButtonStyles}
             onClick={handleClose}
@@ -155,8 +155,18 @@ export function VibeControl({
             {children || (
               <div>
                 <p>Welcome to Vibe Control!</p>
-                <p>This is the default content. You can customize this by passing children to the VibeControl component.</p>
-                <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+                <p>
+                  This is the default content. You can customize this by passing children to the
+                  VibeControl component.
+                </p>
+                <div
+                  style={{
+                    marginTop: '20px',
+                    padding: '16px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '8px',
+                  }}
+                >
                   <h3 style={{ margin: '0 0 8px 0' }}>Example Features:</h3>
                   <ul style={{ margin: 0, paddingLeft: '20px' }}>
                     <li>Theme customization</li>

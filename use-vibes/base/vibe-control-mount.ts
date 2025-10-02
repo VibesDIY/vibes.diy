@@ -4,7 +4,7 @@ import { VibeControl, VibeControlProps } from './components/VibeControl.js';
 
 /**
  * Mount function for using VibeControl in non-React environments
- * 
+ *
  * This allows embedding the VibeControl component into any web page,
  * similar to how other widget libraries work.
  */
@@ -16,23 +16,23 @@ export interface MountVibeControlOptions extends VibeControlProps {
 export interface MountVibeControlResult {
   /** Unmount the component and cleanup */
   unmount: () => void;
-  
+
   /** Update the component props */
   update: (newProps: Partial<VibeControlProps>) => void;
-  
+
   /** Get the current props */
   getProps: () => VibeControlProps;
-  
+
   /** Get the container element */
   getContainer: () => HTMLElement | null;
 }
 
 /**
  * Mounts a VibeControl component to a DOM element
- * 
+ *
  * @param options - Configuration options including container and component props
  * @returns Object with unmount function and other utilities
- * 
+ *
  * @example
  * ```typescript
  * // Mount to a specific element
@@ -42,11 +42,11 @@ export interface MountVibeControlResult {
  *   onOpen: () => console.log('Opened!'),
  *   children: React.createElement('div', {}, 'Custom content')
  * });
- * 
+ *
  * // Later, unmount
  * control.unmount();
  * ```
- * 
+ *
  * @example
  * ```typescript
  * // Mount to body (default)
@@ -57,10 +57,7 @@ export interface MountVibeControlResult {
  * ```
  */
 export function mountVibeControl(options: MountVibeControlOptions = {}): MountVibeControlResult {
-  const {
-    container: containerOption,
-    ...vibeControlProps
-  } = options;
+  const { container: containerOption, ...vibeControlProps } = options;
 
   // Resolve container element
   let containerElement: HTMLElement | null = null;
@@ -125,7 +122,7 @@ export function mountVibeControl(options: MountVibeControlOptions = {}): MountVi
 
 /**
  * Convenience function to mount VibeControl to document.body
- * 
+ *
  * @param props - VibeControl props
  * @returns Mount control object
  */
@@ -138,10 +135,10 @@ export function mountVibeControlToBody(props: VibeControlProps = {}): MountVibeC
 
 /**
  * Auto-mount function that can be called from a script tag
- * 
+ *
  * This looks for a global configuration object and auto-mounts the component.
  * Useful for embedding via CDN.
- * 
+ *
  * @example
  * ```html
  * <script>
@@ -157,7 +154,7 @@ export function mountVibeControlToBody(props: VibeControlProps = {}): MountVibeC
 export function autoMountVibeControl(): MountVibeControlResult | null {
   // Check for global configuration
   const globalConfig = (window as any).VIBE_CONTROL_CONFIG;
-  
+
   if (!globalConfig) {
     console.warn('VibeControl: No global VIBE_CONTROL_CONFIG found for auto-mount');
     return null;

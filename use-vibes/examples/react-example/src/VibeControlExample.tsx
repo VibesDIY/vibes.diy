@@ -19,20 +19,30 @@ function VibeControlExample() {
       position: 'bottom-left',
       onOpen: () => console.log('Mounted instance opened!'),
       onClose: () => console.log('Mounted instance closed!'),
-      children: React.createElement('div', {}, 
+      children: React.createElement(
+        'div',
+        {},
         React.createElement('h3', {}, 'This VibeControl was mounted using mountVibeControl()'),
-        React.createElement('p', {}, 'This demonstrates how to embed VibeControl in non-React environments.'),
-        React.createElement('div', { 
-          style: { 
-            marginTop: '16px', 
-            padding: '12px', 
-            backgroundColor: '#e3f2fd', 
-            borderRadius: '4px',
-            border: '1px solid #bbdefb' 
-          } 
-        },
+        React.createElement(
+          'p',
+          {},
+          'This demonstrates how to embed VibeControl in non-React environments.'
+        ),
+        React.createElement(
+          'div',
+          {
+            style: {
+              marginTop: '16px',
+              padding: '12px',
+              backgroundColor: '#e3f2fd',
+              borderRadius: '4px',
+              border: '1px solid #bbdefb',
+            },
+          },
           React.createElement('strong', {}, 'Mount API Features:'),
-          React.createElement('ul', { style: { marginTop: '8px', marginBottom: '0' } },
+          React.createElement(
+            'ul',
+            { style: { marginTop: '8px', marginBottom: '0' } },
             React.createElement('li', {}, 'mountVibeControl() - Mount to any DOM element'),
             React.createElement('li', {}, 'mountVibeControlToBody() - Mount to document.body'),
             React.createElement('li', {}, 'autoMountVibeControl() - Auto-mount from global config'),
@@ -40,7 +50,7 @@ function VibeControlExample() {
             React.createElement('li', {}, 'instance.unmount() - Clean removal')
           )
         )
-      )
+      ),
     });
 
     setMountInstance(newInstance);
@@ -57,7 +67,7 @@ function VibeControlExample() {
     if (mountInstance) {
       mountInstance.update({
         label: `Updated ${Date.now()}`,
-        position: 'top-right'
+        position: 'top-right',
       });
     }
   };
@@ -66,18 +76,26 @@ function VibeControlExample() {
     <div className="container">
       <h1>VibeControl Component Examples</h1>
       <p style={{ marginBottom: '2rem', color: '#666', fontSize: '1.1rem' }}>
-        The VibeControl component provides a floating action button that opens a full-screen overlay.
-        It can be used both as a React component and mounted via JavaScript in non-React environments.
+        The VibeControl component provides a floating action button that opens a full-screen
+        overlay. It can be used both as a React component and mounted via JavaScript in non-React
+        environments.
       </p>
 
       {/* React Component Example */}
       <section style={{ marginBottom: '3rem' }}>
         <h2>React Component Usage</h2>
         <p>Use VibeControl directly as a React component:</p>
-        
-        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-          <strong>Status:</strong> {reactOpen ? 'Open' : 'Closed'} | 
-          <strong> Close Count:</strong> {reactCloseCount}
+
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '1rem',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '4px',
+          }}
+        >
+          <strong>Status:</strong> {reactOpen ? 'Open' : 'Closed'} |<strong> Close Count:</strong>{' '}
+          {reactCloseCount}
         </div>
 
         <VibeControl
@@ -90,20 +108,22 @@ function VibeControlExample() {
           onClose={() => {
             console.log('React VibeControl closed!');
             setReactOpen(false);
-            setReactCloseCount(prev => prev + 1);
+            setReactCloseCount((prev) => prev + 1);
           }}
         >
           <div>
             <h3>React Component Example</h3>
             <p>This VibeControl is rendered as a standard React component with custom content.</p>
-            
-            <div style={{ 
-              marginTop: '20px', 
-              padding: '16px', 
-              backgroundColor: '#e8f5e8', 
-              borderRadius: '8px',
-              border: '1px solid #4caf50'
-            }}>
+
+            <div
+              style={{
+                marginTop: '20px',
+                padding: '16px',
+                backgroundColor: '#e8f5e8',
+                borderRadius: '8px',
+                border: '1px solid #4caf50',
+              }}
+            >
               <h4 style={{ margin: '0 0 8px 0', color: '#2e7d2e' }}>Component Features:</h4>
               <ul style={{ margin: 0, paddingLeft: '20px', color: '#2e7d2e' }}>
                 <li>Four position options: bottom-right, bottom-left, top-right, top-left</li>
@@ -116,15 +136,15 @@ function VibeControlExample() {
             </div>
 
             <div style={{ marginTop: '16px', textAlign: 'center' }}>
-              <button 
+              <button
                 onClick={() => alert('Custom action triggered!')}
-                style={{ 
-                  padding: '8px 16px', 
-                  backgroundColor: '#2196f3', 
-                  color: 'white', 
-                  border: 'none', 
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#2196f3',
+                  color: 'white',
+                  border: 'none',
                   borderRadius: '4px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }}
               >
                 Custom Action
@@ -139,12 +159,14 @@ function VibeControlExample() {
         <h2>Mount Function Usage</h2>
         <p>Use mountVibeControl() to embed in non-React environments:</p>
 
-        <div style={{ 
-          display: 'flex', 
-          gap: '1rem', 
-          marginBottom: '1rem',
-          flexWrap: 'wrap' as const
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            marginBottom: '1rem',
+            flexWrap: 'wrap' as const,
+          }}
+        >
           <button
             onClick={handleMountToDiv}
             disabled={!!mountInstance}
@@ -154,7 +176,7 @@ function VibeControlExample() {
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: mountInstance ? 'not-allowed' : 'pointer'
+              cursor: mountInstance ? 'not-allowed' : 'pointer',
             }}
           >
             Mount to Container
@@ -169,7 +191,7 @@ function VibeControlExample() {
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: mountInstance ? 'pointer' : 'not-allowed'
+              cursor: mountInstance ? 'pointer' : 'not-allowed',
             }}
           >
             Update Instance
@@ -184,16 +206,16 @@ function VibeControlExample() {
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: mountInstance ? 'pointer' : 'not-allowed'
+              cursor: mountInstance ? 'pointer' : 'not-allowed',
             }}
           >
             Unmount
           </button>
         </div>
 
-        <div 
-          id="mount-container" 
-          style={{ 
+        <div
+          id="mount-container"
+          style={{
             position: 'relative',
             height: '200px',
             border: '2px dashed #ccc',
@@ -201,12 +223,14 @@ function VibeControlExample() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: mountInstance ? '#f0f8ff' : '#fafafa'
+            backgroundColor: mountInstance ? '#f0f8ff' : '#fafafa',
           }}
         >
           {mountInstance ? (
             <div style={{ textAlign: 'center', color: '#666' }}>
-              <p><strong>VibeControl mounted!</strong></p>
+              <p>
+                <strong>VibeControl mounted!</strong>
+              </p>
               <p>Look for the "Mounted Vibes" button at bottom-left of this container.</p>
             </div>
           ) : (
@@ -220,16 +244,18 @@ function VibeControlExample() {
       {/* Code Examples */}
       <section>
         <h2>Code Examples</h2>
-        
+
         <h3>React Component</h3>
-        <pre style={{ 
-          backgroundColor: '#f5f5f5', 
-          padding: '1rem', 
-          borderRadius: '4px',
-          overflow: 'auto',
-          fontSize: '0.9em'
-        }}>
-{`import { VibeControl } from '@vibes.diy/use-vibes-base';
+        <pre
+          style={{
+            backgroundColor: '#f5f5f5',
+            padding: '1rem',
+            borderRadius: '4px',
+            overflow: 'auto',
+            fontSize: '0.9em',
+          }}
+        >
+          {`import { VibeControl } from '@vibes.diy/use-vibes-base';
 
 function App() {
   return (
@@ -245,17 +271,20 @@ function App() {
       </div>
     </VibeControl>
   );
-}`}</pre>
+}`}
+        </pre>
 
         <h3>Mount Function</h3>
-        <pre style={{ 
-          backgroundColor: '#f5f5f5', 
-          padding: '1rem', 
-          borderRadius: '4px',
-          overflow: 'auto',
-          fontSize: '0.9em'
-        }}>
-{`import { mountVibeControl } from '@vibes.diy/use-vibes-base';
+        <pre
+          style={{
+            backgroundColor: '#f5f5f5',
+            padding: '1rem',
+            borderRadius: '4px',
+            overflow: 'auto',
+            fontSize: '0.9em',
+          }}
+        >
+          {`import { mountVibeControl } from '@vibes.diy/use-vibes-base';
 
 // Mount to a specific element
 const control = mountVibeControl({
@@ -270,24 +299,28 @@ const control = mountVibeControl({
 control.update({ label: 'Updated!' });
 
 // Clean up
-control.unmount();`}</pre>
+control.unmount();`}
+        </pre>
 
         <h3>Auto-mount from CDN</h3>
-        <pre style={{ 
-          backgroundColor: '#f5f5f5', 
-          padding: '1rem', 
-          borderRadius: '4px',
-          overflow: 'auto',
-          fontSize: '0.9em'
-        }}>
-{`<script>
+        <pre
+          style={{
+            backgroundColor: '#f5f5f5',
+            padding: '1rem',
+            borderRadius: '4px',
+            overflow: 'auto',
+            fontSize: '0.9em',
+          }}
+        >
+          {`<script>
   window.VIBE_CONTROL_CONFIG = {
     label: 'My App Controls',
     position: 'bottom-right'
   };
 </script>
 <script src="https://esm.sh/@vibes.diy/use-vibes-base/vibe-control-mount.js"></script>
-<script>autoMountVibeControl();</script>`}</pre>
+<script>autoMountVibeControl();</script>`}
+        </pre>
       </section>
     </div>
   );
