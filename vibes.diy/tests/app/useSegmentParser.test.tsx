@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
+import type { AiChatMessage, ChatMessage } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
-import type { ChatMessage, AiChatMessage } from "@vibes.diy/prompts";
+import { describe, expect, it, vi } from "vitest";
 
 // Mock the prompts module - we'll unmock parseContent for these tests
 vi.mock("@vibes.diy/prompts", async (importOriginal) => {
@@ -12,7 +12,7 @@ vi.mock("@vibes.diy/prompts", async (importOriginal) => {
       dependencies: ["useFireproof"],
       instructionalText: true,
       demoData: false,
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-4.5",
     }),
     // Keep the real parseContent function for these tests
     parseContent: actual.parseContent,

@@ -1,9 +1,9 @@
-import React from "react";
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useSimpleChat } from "~/vibes.diy/app/hooks/useSimpleChat.js";
 import type { AiChatMessage, ChatMessage } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
+import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useSimpleChat } from "~/vibes.diy/app/hooks/useSimpleChat.js";
 
 // Mock the prompts module - use partial mocking to keep real parseContent
 vi.mock("@vibes.diy/prompts", async (importOriginal) => {
@@ -15,11 +15,11 @@ vi.mock("@vibes.diy/prompts", async (importOriginal) => {
       dependencies: ["useFireproof"],
       instructionalText: true,
       demoData: false,
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-4.5",
     }),
     resolveEffectiveModel: vi
       .fn()
-      .mockResolvedValue("anthropic/claude-sonnet-4"),
+      .mockResolvedValue("anthropic/claude-sonnet-4.5"),
     // Keep the real parseContent function for these tests
     parseContent: actual.parseContent,
   };

@@ -209,7 +209,7 @@ For debugging and future database storage preparation:
      instructionalText: true,
      demoData: false,
      prompt: "Create a todo app",
-     model: "anthropic/claude-sonnet-4"
+     model: "anthropic/claude-sonnet-4.5"
    }
    ```
 
@@ -220,7 +220,7 @@ For debugging and future database storage preparation:
      aiSelectedDependencies: ['useFireproof', 'LucideIcons'],
      instructionalText: true,
      demoData: false,
-     model: "anthropic/claude-sonnet-4",
+     model: "anthropic/claude-sonnet-4.5",
      timestamp: 1735234567890
    }
    ```

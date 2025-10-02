@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Use vi.hoisted to ensure mocks are available at the top level
 const { mockMakeBaseSystemPrompt, mockCallAI } = vi.hoisted(() => ({
@@ -9,7 +9,7 @@ const { mockMakeBaseSystemPrompt, mockCallAI } = vi.hoisted(() => ({
     dependencies: ['useFireproof'],
     instructionalText: true,
     demoData: false,
-    model: 'anthropic/claude-sonnet-4',
+    model: 'anthropic/claude-sonnet-4.5',
   }),
   mockCallAI: vi.fn().mockImplementation((messages) => {
     // First call is for dependency selection (has catalog in system prompt)

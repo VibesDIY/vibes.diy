@@ -13,7 +13,7 @@ import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
 
 export async function defaultCodingModel() {
-  return "anthropic/claude-sonnet-4";
+  return "anthropic/claude-sonnet-4.5";
 }
 
 function normalizeModelIdInternal(id: unknown): string | undefined {

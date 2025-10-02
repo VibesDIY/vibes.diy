@@ -7,6 +7,7 @@ declare module "../data/models.json" {
     id: string;
     name: string;
     description: string;
+    featured?: boolean;
   }
 
   const models: ModelInfo[];
