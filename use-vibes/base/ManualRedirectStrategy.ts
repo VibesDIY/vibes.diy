@@ -29,6 +29,11 @@ export class ManualRedirectStrategy extends RedirectStrategy {
   private pollingStarted = false;
   private resolveToken?: (value: TokenAndClaims | undefined) => void;
 
+  // Override the hash property to return our implementation
+  readonly hash = (): string => {
+    return 'manual-redirect-strategy';
+  };
+
   constructor(opts: { overlayHtml?: (url: string) => string; overlayCss?: string } = {}) {
     // Create custom CSS for subtle bottom slide-up
     const customCss =
