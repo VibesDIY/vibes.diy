@@ -11,16 +11,16 @@ export const vibeControlTheme = {
     buttonBgHover: 'light-dark(#0052a3, #357abd)',
     buttonText: '#ffffff',
     buttonBorder: 'light-dark(#0066cc, #4a90e2)',
-    
+
     overlayBackdrop: 'rgba(0, 0, 0, 0.5)',
     overlayBg: 'light-dark(#ffffff, #1a1a1a)',
     overlayText: 'light-dark(#333333, #e0e0e0)',
     overlayBorder: 'light-dark(#e0e0e0, #404040)',
-    
+
     closeButtonBg: 'light-dark(#f5f5f5, #2a2a2a)',
     closeButtonBgHover: 'light-dark(#e0e0e0, #404040)',
     closeButtonText: 'light-dark(#666666, #cccccc)',
-    
+
     accent: '#0066cc',
     shadow: 'rgba(0, 0, 0, 0.15)',
   },
@@ -32,12 +32,12 @@ export const vibeControlTheme = {
     buttonPadding: '8px 16px',
     buttonBorderRadius: '20px',
     buttonPosition: '20px', // Distance from edge
-    
+
     overlayPadding: '24px',
     overlayBorderRadius: '12px',
     overlayMaxWidth: '800px',
     overlayMaxHeight: '90vh',
-    
+
     closeButtonSize: '32px',
     closeButtonBorderRadius: '16px',
   },
@@ -47,11 +47,11 @@ export const vibeControlTheme = {
     buttonFontSize: '14px',
     buttonFontWeight: '600',
     buttonLineHeight: '1.2',
-    
+
     overlayTitleFontSize: '24px',
     overlayTitleFontWeight: '700',
     overlayTitleLineHeight: '1.3',
-    
+
     overlayBodyFontSize: '16px',
     overlayBodyLineHeight: '1.5',
   },

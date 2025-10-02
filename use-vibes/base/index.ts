@@ -249,18 +249,15 @@ export type { UseVibesOptions, UseVibesResult, VibeDocument } from '@vibes.diy/u
 // Export VibeControl component and utilities
 export { VibeControl } from './components/VibeControl.js';
 export type { VibeControlProps } from './components/VibeControl.js';
-export { 
-  mountVibeControl, 
-  mountVibeControlToBody, 
-  autoMountVibeControl 
+export {
+  mountVibeControl,
+  mountVibeControlToBody,
+  autoMountVibeControl,
 } from './vibe-control-mount.js';
-export type { 
-  MountVibeControlOptions, 
-  MountVibeControlResult 
-} from './vibe-control-mount.js';
-export { 
-  vibeControlTheme, 
-  createVibeControlStyles, 
-  defaultVibeControlClasses 
+export type { MountVibeControlOptions, MountVibeControlResult } from './vibe-control-mount.js';
+export {
+  vibeControlTheme,
+  createVibeControlStyles,
+  defaultVibeControlClasses,
 } from './utils/vibe-control-styles.js';
 export type { VibeControlClasses } from './utils/vibe-control-styles.js';
