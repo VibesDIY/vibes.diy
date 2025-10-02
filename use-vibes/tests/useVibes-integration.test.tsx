@@ -1,7 +1,7 @@
+import { act, render, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, renderHook, waitFor, act } from '@testing-library/react';
-import { createMockIframe, cleanupIframeMocks } from './utils/iframe-mocks.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanupIframeMocks, createMockIframe } from './utils/iframe-mocks.js';
 
 // Mock call-ai module to prevent network calls
 vi.mock('call-ai', () => ({
@@ -65,7 +65,7 @@ vi.mock('@vibes.diy/prompts', () => ({
       dependencies: options?.dependencies || ['useFireproof'],
       instructionalText: true,
       demoData: false,
-      model: model || 'anthropic/claude-sonnet-4',
+      model: model || 'anthropic/claude-sonnet-4.5',
     };
   }),
 }));

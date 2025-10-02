@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { callAI as defaultCallAI } from 'call-ai';
 import { makeBaseSystemPrompt, parseContent } from '@vibes.diy/prompts';
-import IframeVibesComponent from './IframeVibesComponent.js';
 import type { UseVibesOptions, UseVibesResult, UseVibesState } from '@vibes.diy/use-vibes-types';
+import { callAI as defaultCallAI } from 'call-ai';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import IframeVibesComponent from './IframeVibesComponent.js';
 
 /**
  * useVibes hook - Cycle 1 implementation
@@ -110,7 +110,7 @@ export function useVibes(
         // Use the full orchestrator for two-stage generation
         let result;
         try {
-          result = await makeBaseSystemPrompt(options.model || 'anthropic/claude-sonnet-4', {
+          result = await makeBaseSystemPrompt(options.model || 'anthropic/claude-sonnet-4.5', {
             userPrompt: prompt,
             history: [],
             fallBackUrl: 'https://esm.sh/@vibes.diy/prompts/llms',
@@ -127,7 +127,7 @@ Return only the JSX code with a default export. Use modern React patterns with h
             dependencies: options.dependencies || ['useFireproof'],
             instructionalText: true,
             demoData: false,
-            model: options.model || 'anthropic/claude-sonnet-4',
+            model: options.model || 'anthropic/claude-sonnet-4.5',
           };
         }
 

@@ -1,13 +1,13 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import ModelPicker from "~/vibes.diy/app/components/ModelPicker.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 const MODELS = [
   {
-    id: "anthropic/claude-sonnet-4",
-    name: "Claude Sonnet 4",
+    id: "anthropic/claude-sonnet-4.5",
+    name: "Claude Sonnet 4.5",
     description: "Best for coding",
     featured: true,
   },
@@ -51,7 +51,7 @@ describe("ModelPicker", () => {
 
     // Current option is marked selected
     const currentItem = screen.getByRole("menuitemradio", {
-      name: /Claude Sonnet 4/i,
+      name: /Claude Sonnet 4\.5/i,
     });
     expect(currentItem).toHaveAttribute("aria-checked", "true");
   });
@@ -227,7 +227,7 @@ describe("ModelPicker", () => {
 
     const items = screen.getAllByRole("menuitemradio");
     const labels = items.map((el) => el.textContent || "");
-    expect(labels[0]).toMatch(/Claude Sonnet 4/);
+    expect(labels[0]).toMatch(/Claude Sonnet 4\.5/);
     expect(labels[1]).toMatch(/Llama 3.1 8B/);
     expect(labels.some((t) => /GPT-4.1/.test(t))).toBe(true);
   });

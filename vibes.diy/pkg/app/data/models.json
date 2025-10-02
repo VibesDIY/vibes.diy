@@ -1,91 +1,164 @@
 [
   {
-    "id": "anthropic/claude-sonnet-4",
-    "name": "Claude Sonnet 4 (Default)",
-    "description": "Advanced reasoning model from Anthropic",
+    "id": "anthropic/claude-sonnet-4.5",
+    "name": "Claude Sonnet 4.5 (Default)",
+    "description": "Claude Sonnet 4.5 is Anthropic's most advanced Sonnet model to date, optimized for real-world agents and coding workflows",
     "featured": true
   },
   {
-    "id": "anthropic/claude-3.7-sonnet",
-    "name": "Claude 3.7 Sonnet",
-    "description": "Advanced reasoning model from Anthropic"
-  },
-  {
-    "id": "openai/codex-mini",
-    "name": "Codex Mini",
-    "description": "Coding assistant"
-  },
-  {
-    "id": "openai/gpt-4.1",
-    "name": "GPT-4.1",
-    "description": "OpenAI coding assistant",
+    "id": "x-ai/grok-4-fast",
+    "name": "Grok 4 Fast (free)",
+    "description": "Grok 4 Fast is xAI's latest multimodal model with SOTA cost-efficiency and a 2M token context window",
     "featured": true
-  },
-  {
-    "id": "qwen/qwen-2.5-coder-32b-instruct",
-    "name": "Qwen 2.5 Coder 32B Instruct",
-    "description": "Latest Qwen code-specific model with improved generation, reasoning, and fixing capabilities"
   },
   {
     "id": "google/gemini-2.5-pro",
     "name": "Gemini 2.5 Pro",
-    "description": "Pro model from Google",
+    "description": "Gemini 2.5 Pro is Google's state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks",
     "featured": true
-  },
-  {
-    "id": "deepseek/deepseek-chat-v3-0324:free",
-    "name": "DeepSeek V3 (Free)",
-    "description": "Free coding assistant from DeepSeek"
-  },
-  {
-    "id": "meta-llama/llama-4-maverick",
-    "name": "Llama 4 Maverick",
-    "description": "Large language model from Meta"
-  },
-  {
-    "id": "meta-llama/llama-3.2-1b-instruct",
-    "name": "Llama 3.2 1B Instruct",
-    "description": "Large language model from Meta"
-  },
-  {
-    "id": "moonshotai/kimi-k2",
-    "name": "MoonshotAI: Kimi K2",
-    "description": "Coding model"
   },
   {
     "id": "openai/gpt-5",
     "name": "GPT-5",
-    "description": "Next generation model from OpenAI"
-  },
-  {
-    "id": "openai/gpt-oss-120b",
-    "name": "GPT OSS 120B",
-    "description": "Large open-source model from OpenAI",
+    "description": "GPT-5 is OpenAI's most advanced model, offering major improvements in reasoning, code quality, and user experience",
     "featured": true
   },
   {
+    "id": "z-ai/glm-4.6",
+    "name": "GLM 4.6",
+    "description": "Compared with GLM-4.5, this generation brings several key improvements: Longer context window from 128K to 200K tokens",
+    "featured": true
+  },
+  {
+    "id": "deepseek/deepseek-v3.2-exp",
+    "name": "DeepSeek V3.2 Exp",
+    "description": "DeepSeek-V3.2-Exp is an experimental large language model released by DeepSeek as an intermediate step between V3.1 and future architectures",
+    "featured": true
+  },
+  {
+    "id": "qwen/qwen3-coder-plus",
+    "name": "Qwen3 Coder Plus",
+    "description": "Qwen3 Coder Plus is Alibaba's proprietary version of the Open Source Qwen3 Coder 480B A35B",
+    "featured": true
+  },
+  {
+    "id": "x-ai/grok-code-fast-1",
+    "name": "Grok Code Fast 1",
+    "description": "Grok Code Fast 1 is a speedy and economical reasoning model that excels at agentic coding",
+    "featured": false
+  },
+  {
+    "id": "google/gemini-2.5-flash",
+    "name": "Gemini 2.5 Flash",
+    "description": "Gemini 2.5 Flash is Google's state-of-the-art workhorse model, specifically designed for advanced reasoning, coding, mathematics, and scientific tasks",
+    "featured": false
+  },
+  {
+    "id": "deepseek/deepseek-chat-v3.1",
+    "name": "DeepSeek V3.1 (free)",
+    "description": "DeepSeek-V3.1 is a large hybrid reasoning model (671B parameters, 37B active) that supports both thinking and non-thinking modes via prompt templates",
+    "featured": false
+  },
+  {
+    "id": "google/gemini-2.0-flash-001",
+    "name": "Gemini 2.0 Flash",
+    "description": "Gemini Flash 2.0 offers a significantly faster time to first token (TTFT) compared to Gemini Flash 1.5, while maintaining quality on par with larger models like Gemini Pro 1.5",
+    "featured": false
+  },
+  {
+    "id": "openai/gpt-4.1-mini",
+    "name": "GPT-4.1 Mini",
+    "description": "GPT-4.1 Mini is a mid-sized model delivering performance competitive with GPT-4o at substantially lower latency and cost",
+    "featured": false
+  },
+  {
+    "id": "deepseek/deepseek-chat-v3-0324",
+    "name": "DeepSeek V3 0324",
+    "description": "DeepSeek V3, a 685B-parameter, mixture-of-experts model, is the latest iteration of the flagship chat model family from the DeepSeek team",
+    "featured": false
+  },
+  {
+    "id": "google/gemini-2.5-flash-lite",
+    "name": "Gemini 2.5 Flash Lite",
+    "description": "Gemini 2.5 Flash-Lite is a lightweight reasoning model in the Gemini 2.5 family, optimized for ultra-low latency and cost efficiency",
+    "featured": false
+  },
+  {
+    "id": "google/gemma-3-12b-it",
+    "name": "Gemma 3 12B",
+    "description": "Gemma 3 introduces multimodality, supporting vision-language input and text outputs",
+    "featured": false
+  },
+  {
     "id": "openai/gpt-oss-20b",
-    "name": "GPT OSS 20B",
-    "description": "Open-source model from OpenAI"
+    "name": "gpt-oss-20b",
+    "description": "gpt-oss-20b is an open-weight 21B parameter model released by OpenAI under the Apache 2.0 license",
+    "featured": false
   },
   {
-    "id": "anthropic/claude-opus-4.1",
-    "name": "Claude Opus 4.1",
-    "description": "Advanced reasoning model from Anthropic"
+    "id": "openai/gpt-4o-mini",
+    "name": "GPT-4o-mini",
+    "description": "GPT-4o mini is OpenAI's newest model after GPT-4 Omni, supporting both text and image inputs with text outputs",
+    "featured": false
   },
   {
-    "id": "openrouter/horizon-beta",
-    "name": "Horizon Beta",
-    "description": "¯\\_(ツ)_/¯"
+    "id": "openai/gpt-oss-120b",
+    "name": "gpt-oss-120b",
+    "description": "gpt-oss-120b is an open-weight, 117B-parameter Mixture-of-Experts (MoE) language model from OpenAI designed for high-reasoning, agentic, and general-purpose production use cases",
+    "featured": false
+  },
+  {
+    "id": "openai/gpt-5-mini",
+    "name": "GPT-5 Mini",
+    "description": "GPT-5 Mini is a compact version of GPT-5, designed to handle lighter-weight reasoning tasks",
+    "featured": false
+  },
+  {
+    "id": "z-ai/glm-4.5",
+    "name": "GLM 4.5",
+    "description": "GLM-4.5 is our latest flagship foundation model, purpose-built for agent-based applications",
+    "featured": false
+  },
+  {
+    "id": "mistralai/mistral-nemo",
+    "name": "Mistral Nemo",
+    "description": "A 12B parameter model with a 128k token context length built by Mistral in collaboration with NVIDIA",
+    "featured": false
+  },
+  {
+    "id": "qwen/qwen3-235b-a22b-2507",
+    "name": "Qwen3 235B A22B Instruct 2507",
+    "description": "Qwen3-235B-A22B-Instruct-2507 is a multilingual, instruction-tuned mixture-of-experts language model based on the Qwen3-235B architecture, with 22B active parameters per forward pass",
+    "featured": false
   },
   {
     "id": "qwen/qwen3-coder",
-    "name": "Qwen 3 Coder",
-    "description": "Latest Qwen code-specific model"
+    "name": "Qwen3 Coder 480B A35B",
+    "description": "Qwen3-Coder-480B-A35B-Instruct is a Mixture-of-Experts (MoE) code generation model developed by the Qwen team",
+    "featured": false
   },
   {
-    "id": "inception/mercury-coder",
-    "name": "Mercury Coder",
-    "description": "Experimental diffusion based coding assistant. It's fast but not that smart"
+    "id": "openai/gpt-5-codex",
+    "name": "GPT-5 Codex",
+    "description": "GPT-5-Codex is a specialized version of GPT-5 optimized for software engineering and coding workflows",
+    "featured": false
+  },
+  {
+    "id": "openai/gpt-4.1",
+    "name": "GPT-4.1",
+    "description": "GPT-4.1 is a flagship large language model optimized for advanced instruction following, real-world software engineering, and long-context reasoning",
+    "featured": false
+  },
+  {
+    "id": "moonshotai/kimi-k2-0905",
+    "name": "Kimi K2 0905",
+    "description": "Kimi K2 0905 is the September update of Kimi K2 0711",
+    "featured": true
+  },
+  {
+    "id": "google/gemini-2.5-flash-lite-preview-06-17",
+    "name": "Gemini 2.5 Flash Lite Preview 06-17",
+    "description": "Gemini 2.5 Flash-Lite is a lightweight reasoning model in the Gemini 2.5 family, optimized for ultra-low latency and cost efficiency",
+    "featured": false
   }
 ]

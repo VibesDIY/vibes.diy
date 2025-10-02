@@ -1,7 +1,7 @@
+import { act, render, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, renderHook, waitFor, act } from '@testing-library/react';
-import { createMockIframe, cleanupIframeMocks } from './utils/iframe-mocks.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanupIframeMocks, createMockIframe } from './utils/iframe-mocks.js';
 
 // Mock call-ai module to prevent network calls
 vi.mock('call-ai', () => ({
@@ -43,7 +43,7 @@ vi.mock('@vibes.diy/prompts', () => ({
       dependencies: options?.dependencies || ['useFireproof'],
       instructionalText: true,
       demoData: false,
-      model: model || 'anthropic/claude-sonnet-4',
+      model: model || 'anthropic/claude-sonnet-4.5',
     };
   }),
 }));
@@ -251,7 +251,7 @@ export default TodoApp;
     const { result } = renderHook(() =>
       useVibes(
         'create a todo app',
-        { model: 'anthropic/claude-sonnet-4', dependencies: ['useFireproof'] },
+        { model: 'anthropic/claude-sonnet-4.5', dependencies: ['useFireproof'] },
         mockCallAI
       )
     );
@@ -267,7 +267,7 @@ export default TodoApp;
     expect(result.current.document).toBeDefined();
     expect(result.current.document?.prompt).toBe('create a todo app');
     expect(result.current.document?.code).toContain('TodoApp');
-    expect(result.current.document?.model).toBe('anthropic/claude-sonnet-4'); // From mock
+    expect(result.current.document?.model).toBe('anthropic/claude-sonnet-4.5'); // From mock
     expect(result.current.document?.created_at).toBeTypeOf('number');
   });
 

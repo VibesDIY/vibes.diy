@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import * as mod from "@vibes.diy/prompts";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
 
 // Mock global fetch for the integration tests
@@ -42,10 +42,13 @@ const opts = {
 describe("makeBaseSystemPrompt dependency selection", () => {
   it("when override is false/absent, uses schema-driven selection (test mode => all); includes core libs", async () => {
     // await preloadLlmsText();
-    const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
-      ...opts,
-      _id: "user_settings",
-    });
+    const result = await mod.makeBaseSystemPrompt(
+      "anthropic/claude-sonnet-4.5",
+      {
+        ...opts,
+        _id: "user_settings",
+      },
+    );
     // Should include at least the core libs
     expect(result.systemPrompt).toMatch(/<useFireproof-docs>/);
     expect(result.systemPrompt).toMatch(/<callAI-docs>/);
@@ -60,12 +63,15 @@ describe("makeBaseSystemPrompt dependency selection", () => {
 
   it("honors explicit dependencies only when override=true", async () => {
     // await preloadLlmsText();
-    const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
-      _id: "user_settings",
-      dependencies: ["fireproof"],
-      dependenciesUserOverride: true,
-      ...opts,
-    });
+    const result = await mod.makeBaseSystemPrompt(
+      "anthropic/claude-sonnet-4.5",
+      {
+        _id: "user_settings",
+        dependencies: ["fireproof"],
+        dependenciesUserOverride: true,
+        ...opts,
+      },
+    );
     expect(result.systemPrompt).toMatch(/<useFireproof-docs>/);
     expect(result.systemPrompt).not.toMatch(/<callAI-docs>/);
     // Import statements reflect chosen modules only
@@ -77,12 +83,15 @@ describe("makeBaseSystemPrompt dependency selection", () => {
 
   it("ignores explicit dependencies when override=false (still schema-driven)", async () => {
     // await preloadLlmsText();
-    const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4", {
-      _id: "user_settings",
-      dependencies: ["fireproof"],
-      dependenciesUserOverride: false,
-      ...opts,
-    });
+    const result = await mod.makeBaseSystemPrompt(
+      "anthropic/claude-sonnet-4.5",
+      {
+        _id: "user_settings",
+        dependencies: ["fireproof"],
+        dependenciesUserOverride: false,
+        ...opts,
+      },
+    );
     // Should include at least both core libs
     expect(result.systemPrompt).toMatch(/<useFireproof-docs>/);
     expect(result.systemPrompt).toMatch(/<callAI-docs>/);

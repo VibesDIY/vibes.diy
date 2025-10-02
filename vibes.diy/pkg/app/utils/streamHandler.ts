@@ -8,7 +8,7 @@ import { VibesDiyEnv } from "../config/env.js";
 /**
  * Stream AI responses with accumulated content callback
  *
- * @param model - The model to use (e.g. 'anthropic/claude-sonnet-4')
+ * @param model - The model to use (e.g. "anthropic/claude-sonnet-4.5")
  * @param systemPrompt - The system prompt
  * @param messageHistory - Array of previous messages
  * @param userMessage - The current user message

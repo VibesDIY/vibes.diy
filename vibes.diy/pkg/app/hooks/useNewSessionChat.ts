@@ -1,6 +1,10 @@
-import { useRef, useState, useCallback } from "react";
+import {
+  DEFAULT_CODING_MODEL,
+  type NewSessionChatState,
+  type UserSettings,
+} from "@vibes.diy/prompts";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import type { NewSessionChatState, UserSettings } from "@vibes.diy/prompts";
 import { useFireproof } from "use-fireproof";
 import { VibesDiyEnv } from "../config/env.js";
 
@@ -80,9 +84,9 @@ export function useNewSessionChat(
     title: "", // No title for new session
     sessionId: null, // No session ID until created
     showModelPickerInChat: settingsDoc?.showModelPickerInChat || false,
-    effectiveModel: "anthropic/claude-sonnet-4", // Default model
-    globalModel: "anthropic/claude-sonnet-4",
-    selectedModel: "anthropic/claude-sonnet-4",
+    effectiveModel: DEFAULT_CODING_MODEL, // Default model
+    globalModel: DEFAULT_CODING_MODEL,
+    selectedModel: DEFAULT_CODING_MODEL,
     updateSelectedModel: undefined, // No model selection in new session for now
     saveCodeAsAiMessage,
     updateTitle,

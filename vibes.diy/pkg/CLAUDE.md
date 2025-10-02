@@ -82,7 +82,7 @@ This is a React Router v7 SPA application for building AI-powered mini apps. Key
 
 ### API Integration
 
-- Uses OpenRouter API with model routing (`anthropic/claude-sonnet-4` for coding, `meta-llama/llama-3.1-8b-instruct` for titles)
+- Uses OpenRouter API with model routing (`anthropic/claude-sonnet-4.5` for coding, `meta-llama/llama-3.1-8b-instruct` for titles)
 - Credit system for usage tracking
 - Anonymous users get limited credits via session-based API keys
 
