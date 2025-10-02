@@ -245,3 +245,22 @@ export type {
 // Export useVibes hook and types
 export { useVibes } from './hooks/vibes-gen/index.js';
 export type { UseVibesOptions, UseVibesResult, VibeDocument } from '@vibes.diy/use-vibes-types';
+
+// Export VibeControl component and utilities
+export { VibeControl } from './components/VibeControl.js';
+export type { VibeControlProps } from './components/VibeControl.js';
+export { 
+  mountVibeControl, 
+  mountVibeControlToBody, 
+  autoMountVibeControl 
+} from './vibe-control-mount.js';
+export type { 
+  MountVibeControlOptions, 
+  MountVibeControlResult 
+} from './vibe-control-mount.js';
+export { 
+  vibeControlTheme, 
+  createVibeControlStyles, 
+  defaultVibeControlClasses 
+} from './utils/vibe-control-styles.js';
+export type { VibeControlClasses } from './utils/vibe-control-styles.js';

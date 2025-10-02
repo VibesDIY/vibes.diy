@@ -2,9 +2,10 @@ import { useState } from 'react';
 import ImageGeneratorExample from './ImageGeneratorExample';
 import TodoListExample from './TodoListExample';
 import VibesGeneratorExample from './VibesGeneratorExample';
+import VibeControlExample from './VibeControlExample';
 import './App.css';
 
-type ExampleKey = 'home' | 'image-generator' | 'todo-list' | 'vibes-generator';
+type ExampleKey = 'home' | 'image-generator' | 'todo-list' | 'vibes-generator' | 'vibe-control';
 
 function App() {
   const [currentExample, setCurrentExample] = useState<ExampleKey>('home');
@@ -27,6 +28,12 @@ function App() {
       title: 'Todo List',
       description: 'A real-time todo list with Fireproof data persistence and sync',
       component: <TodoListExample />,
+    },
+    {
+      key: 'vibe-control' as const,
+      title: 'Vibe Control',
+      description: 'Floating action button with overlay - works in React and vanilla JS',
+      component: <VibeControlExample />,
     },
   ];
 
