@@ -12,8 +12,11 @@ import { getDefaultDependencies } from "./catalog.js";
 import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
 
+// Single source of truth for the default coding model used across the repo.
+export const DEFAULT_CODING_MODEL = "anthropic/claude-sonnet-4.5" as const;
+
 export async function defaultCodingModel() {
-  return "anthropic/claude-sonnet-4.5";
+  return DEFAULT_CODING_MODEL;
 }
 
 function normalizeModelIdInternal(id: unknown): string | undefined {
