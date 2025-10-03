@@ -17,12 +17,12 @@ function MountDemo({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
-  const [instance, setInstance] = useState<any>(null);
+  const [instance, setInstance] = useState<ReturnType<typeof mountVibeControl> | null>(null);
 
   useEffect(() => {
     if (!mounted) return;
 
-    let control: any = null;
+    let control: ReturnType<typeof mountVibeControl> | null = null;
 
     try {
       switch (mountType) {
@@ -111,7 +111,7 @@ function MountDemo({
 
         case 'auto':
           // Set global config for auto-mount demo
-          (window as any).VIBE_CONTROL_CONFIG = {
+          (window as Record<string, unknown>).VIBE_CONTROL_CONFIG = {
             label: 'Auto Mount',
             position: 'top-right',
             children: React.createElement(
@@ -161,7 +161,7 @@ function MountDemo({
         control.unmount();
       }
       if (mountType === 'auto') {
-        delete (window as any).VIBE_CONTROL_CONFIG;
+        delete (window as Record<string, unknown>).VIBE_CONTROL_CONFIG;
       }
     };
   }, [mounted, mountType, options]);
