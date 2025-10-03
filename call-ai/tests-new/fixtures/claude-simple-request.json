@@ -1,9 +1,0 @@
-{
-  "model": "anthropic/claude-3-sonnet",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Create a todo list for a productive day"
-    }
-  ]
-}
