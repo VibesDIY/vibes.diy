@@ -17,13 +17,13 @@
   "license": "Apache-2.0",
   "dependencies": {
     "call-ai": "workspace:*",
-    "use-fireproof": "^0.23.13"
+    "use-fireproof": "^0.23.14"
   },
   "peerDependencies": {
     "react": "~19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.13",
+    "@fireproof/core-cli": "^0.23.14",
     "@types/react": "~19.1.0",
     "typescript": "^5.9.3"
   }
