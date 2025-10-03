@@ -575,7 +575,7 @@ importers:
         specifier: ^10.1.1
         version: 10.1.1(typescript@5.9.3)
       use-fireproof:
-        specifier: 0.23.14
+        specifier: ^0.23.14
         version: 0.23.14(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
@@ -720,7 +720,7 @@ importers:
         specifier: ^7.8.2
         version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       use-fireproof:
-        specifier: 0.23.14
+        specifier: ^0.23.14
         version: 0.23.14(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
@@ -814,7 +814,7 @@ importers:
         specifier: ^7.4.1
         version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       use-fireproof:
-        specifier: 0.23.14
+        specifier: ^0.23.14
         version: 0.23.14(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
