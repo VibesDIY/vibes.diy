@@ -3,7 +3,9 @@ import { VibeControl, mountVibeControl } from 'use-vibes';
 import React from 'react';
 
 function VibeControlExample() {
-  const [mountInstance, setMountInstance] = useState<ReturnType<typeof mountVibeControl> | null>(null);
+  const [mountInstance, setMountInstance] = useState<ReturnType<typeof mountVibeControl> | null>(
+    null
+  );
   const [reactOpen, setReactOpen] = useState(false);
   const [reactCloseCount, setReactCloseCount] = useState(0);
 
