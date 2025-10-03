@@ -30,7 +30,7 @@
     "@vibes.diy/use-vibes-types": "workspace:*"
   },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0"
+    "react": "~19.1.0"
   },
   "devDependencies": {
     "@fireproof/core-cli": "^0.23.13",

@@ -181,8 +181,8 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       react:
-        specifier: ^18.0.0 || ^19.0.0
-        version: 19.2.0
+        specifier: ~19.1.0
+        version: 19.1.1
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
@@ -209,7 +209,7 @@ importers:
         specifier: workspace:0.0.0
         version: link:../../call-ai/pkg
       react-dom:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.13
@@ -246,7 +246,7 @@ importers:
         specifier: ^1.54.1
         version: 1.55.1
       react:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1
       tsx:
         specifier: ^4.20.3
@@ -286,13 +286,13 @@ importers:
         version: link:../../call-ai/pkg
       react:
         specifier: ~19.1.0
-        version: 19.2.0
+        version: 19.1.1
       react-dom:
-        specifier: ~19.1.1
-        version: 19.1.1(react@19.2.0)
+        specifier: ~19.1.0
+        version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.14
-        version: 0.23.14(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.14(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -313,10 +313,10 @@ importers:
   use-vibes/examples/react-example:
     dependencies:
       react:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1
       react-dom:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1(react@19.1.1)
       use-vibes:
         specifier: workspace:*
@@ -365,11 +365,11 @@ importers:
         specifier: workspace:*
         version: link:../base
       react:
-        specifier: ^18.0.0 || ^19.0.0
-        version: 19.2.0
+        specifier: ~19.1.0
+        version: 19.1.1
       react-dom:
-        specifier: ^19.1.1
-        version: 19.1.1(react@19.2.0)
+        specifier: ~19.1.0
+        version: 19.1.1(react@19.1.1)
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
@@ -390,7 +390,7 @@ importers:
         specifier: workspace:0.0.0
         version: link:../base
       react-dom:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.13
@@ -421,7 +421,7 @@ importers:
         specifier: ^24.0.15
         version: 24.6.2
       '@types/react':
-        specifier: ^19.1.12
+        specifier: ~19.1.0
         version: 19.1.17
       '@types/react-dom':
         specifier: ^19.1.9
@@ -442,7 +442,7 @@ importers:
         specifier: ^1.54.1
         version: 1.55.1
       react:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1
       tsx:
         specifier: ^4.20.3
@@ -463,17 +463,17 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       react:
-        specifier: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-        version: 19.2.0
+        specifier: ~19.1.0
+        version: 19.1.1
       use-fireproof:
         specifier: ^0.23.13
-        version: 0.23.14(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.14(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.13
         version: 0.23.14(typescript@5.9.3)
       '@types/react':
-        specifier: ^19.1.16
+        specifier: ~19.1.0
         version: 19.1.17
       typescript:
         specifier: ^5.9.3
@@ -542,13 +542,13 @@ importers:
         specifier: ^1.240.6
         version: 1.270.1
       react:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1
       react-cookie-consent:
         specifier: ^9.0.0
         version: 9.0.0(react@19.1.1)
       react-dom:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1(react@19.1.1)
       react-ga:
         specifier: ^3.3.1
@@ -612,10 +612,10 @@ importers:
         specifier: ^4.1.2
         version: 4.1.14(vite@7.1.9(@types/node@24.6.2)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       '@types/react':
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.17
       '@types/react-dom':
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.11(@types/react@19.1.17)
       concurrently:
         specifier: ^9.1.2
@@ -696,13 +696,13 @@ importers:
         specifier: ^1.240.6
         version: 1.270.1
       react:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1
       react-cookie-consent:
         specifier: ^9.0.0
         version: 9.0.0(react@19.1.1)
       react-dom:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1(react@19.1.1)
       react-ga4:
         specifier: ^2.1.0
@@ -739,7 +739,7 @@ importers:
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@types/react':
-        specifier: ^19.1.12
+        specifier: ~19.1.0
         version: 19.1.17
       '@types/react-dom':
         specifier: ^19.1.9
@@ -793,13 +793,13 @@ importers:
         specifier: ^1.240.6
         version: 1.270.1
       react:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1
       react-cookie-consent:
         specifier: ^9.0.0
         version: 9.0.0(react@19.1.1)
       react-dom:
-        specifier: ^19.1.1
+        specifier: ~19.1.0
         version: 19.1.1(react@19.1.1)
       react-ga4:
         specifier: ^2.1.0
@@ -830,7 +830,7 @@ importers:
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@types/react':
-        specifier: ^19.1.12
+        specifier: ~19.1.0
         version: 19.1.17
       '@types/react-dom':
         specifier: ^19.1.9
@@ -7207,10 +7207,6 @@ packages:
 
   react@19.1.1:
     resolution: {integrity: sha512-w8nqGImo45dmMIfljjMwOGtbmC/mk4CMYhWIicdSflH91J9TyCyczcPFXJzrZ/ZXcgGRFeP6BU0BEJTw6tZdfQ==}
-    engines: {node: '>=0.10.0'}
-
-  react@19.2.0:
-    resolution: {integrity: sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==}
     engines: {node: '>=0.10.0'}
 
   read-package-up@11.0.0:
@@ -16216,11 +16212,6 @@ snapshots:
       react: 19.1.1
       scheduler: 0.26.0
 
-  react-dom@19.1.1(react@19.2.0):
-    dependencies:
-      react: 19.2.0
-      scheduler: 0.26.0
-
   react-ga4@2.1.0: {}
 
   react-ga@3.3.1(prop-types@15.8.1)(react@19.1.1):
@@ -16278,8 +16269,6 @@ snapshots:
       react-dom: 19.1.1(react@19.1.1)
 
   react@19.1.1: {}
-
-  react@19.2.0: {}
 
   read-package-up@11.0.0:
     dependencies:
@@ -17469,27 +17458,6 @@ snapshots:
       dompurify: 3.2.7
       jose: 6.1.0
       react: 19.1.1
-      ts-essentials: 10.1.1(typescript@5.9.3)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-
-  use-fireproof@0.23.14(@adviser/cement@0.4.41(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3):
-    dependencies:
-      '@adviser/cement': 0.4.41(typescript@5.9.3)
-      '@fireproof/core-base': 0.23.14(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.23.14(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.23.14(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.23.14(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.23.14(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.23.14(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.23.14(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.23.14(typescript@5.9.3)
-      '@fireproof/vendor': 0.23.14(typescript@5.9.3)
-      dompurify: 3.2.7
-      jose: 6.1.0
-      react: 19.2.0
       ts-essentials: 10.1.1(typescript@5.9.3)
     transitivePeerDependencies:
       - bufferutil
