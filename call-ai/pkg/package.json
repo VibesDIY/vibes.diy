@@ -5,11 +5,11 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fireproof-storage/call-ai.git"
+    "url": "https://github.com/VibesDIY/vibes.diy.git"
   },
-  "homepage": "https://github.com/fireproof-storage/call-ai",
+  "homepage": "https://github.com/VibesDIY/vibes.diy",
   "bugs": {
-    "url": "https://github.com/fireproof-storage/call-ai/issues"
+    "url": "https://github.com/VibesDIY/vibes.diy/issues"
   },
   "scripts": {
     "build": "core-cli tsc",
