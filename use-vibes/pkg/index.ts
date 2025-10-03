@@ -20,6 +20,19 @@ export {
   type UseVibesResult,
   type VibeDocument,
 
+  // VibeControl component and utilities
+  VibeControl,
+  type VibeControlProps,
+  mountVibeControl,
+  mountVibeControlToBody,
+  autoMountVibeControl,
+  type MountVibeControlOptions,
+  type MountVibeControlResult,
+  vibeControlTheme,
+  createVibeControlStyles,
+  defaultVibeControlClasses,
+  type VibeControlClasses,
+
   // Type namespaces
   type Fireproof,
   type CallAI,
