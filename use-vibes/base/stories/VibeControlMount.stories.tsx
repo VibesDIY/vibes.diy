@@ -111,7 +111,7 @@ function MountDemo({
 
         case 'auto':
           // Set global config for auto-mount demo
-          (window as Record<string, unknown>).VIBE_CONTROL_CONFIG = {
+          (window as unknown as Record<string, unknown>).VIBE_CONTROL_CONFIG = {
             label: 'Auto Mount',
             position: 'top-right',
             children: React.createElement(
@@ -161,7 +161,7 @@ function MountDemo({
         control.unmount();
       }
       if (mountType === 'auto') {
-        delete (window as Record<string, unknown>).VIBE_CONTROL_CONFIG;
+        delete (window as unknown as Record<string, unknown>).VIBE_CONTROL_CONFIG;
       }
     };
   }, [mounted, mountType, options]);
