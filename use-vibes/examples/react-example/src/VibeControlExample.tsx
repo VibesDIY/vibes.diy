@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { VibeControl, mountVibeControl, MountVibeControlResult } from '@vibes.diy/use-vibes-base';
+import { VibeControl, mountVibeControl } from 'use-vibes';
 import React from 'react';
 
 function VibeControlExample() {
-  const [mountInstance, setMountInstance] = useState<MountVibeControlResult | null>(null);
+  const [mountInstance, setMountInstance] = useState<ReturnType<typeof mountVibeControl> | null>(null);
   const [reactOpen, setReactOpen] = useState(false);
   const [reactCloseCount, setReactCloseCount] = useState(0);
 
@@ -255,7 +255,7 @@ function VibeControlExample() {
             fontSize: '0.9em',
           }}
         >
-          {`import { VibeControl } from '@vibes.diy/use-vibes-base';
+          {`import { VibeControl } from 'use-vibes';
 
 function App() {
   return (
@@ -284,7 +284,7 @@ function App() {
             fontSize: '0.9em',
           }}
         >
-          {`import { mountVibeControl } from '@vibes.diy/use-vibes-base';
+          {`import { mountVibeControl } from 'use-vibes';
 
 // Mount to a specific element
 const control = mountVibeControl({
@@ -318,7 +318,7 @@ control.unmount();`}
     position: 'bottom-right'
   };
 </script>
-<script src="https://esm.sh/@vibes.diy/use-vibes-base/vibe-control-mount.js"></script>
+<script src="https://esm.sh/use-vibes/vibe-control-mount.js"></script>
 <script>autoMountVibeControl();</script>`}
         </pre>
       </section>
