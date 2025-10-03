@@ -153,7 +153,7 @@ export function mountVibeControlToBody(props: VibeControlProps = {}): MountVibeC
  */
 export function autoMountVibeControl(): MountVibeControlResult | null {
   // Check for global configuration
-  const globalConfig = (window as Record<string, unknown>).VIBE_CONTROL_CONFIG;
+  const globalConfig = (window as unknown as Record<string, unknown>).VIBE_CONTROL_CONFIG;
 
   if (!globalConfig) {
     console.warn('VibeControl: No global VIBE_CONTROL_CONFIG found for auto-mount');
