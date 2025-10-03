@@ -29,7 +29,8 @@
     "pack": "echo skip pack",
     "publish": "echo skip publish",
     "check": "pnpm format && pnpm build && pnpm test && pnpm lint",
-    "storybook": "cd vibes.diy/pkg && cross-env DISABLE_REACT_ROUTER=true pnpm run storybook"
+    "storybook": "cd vibes.diy/pkg && cross-env DISABLE_REACT_ROUTER=true pnpm run storybook",
+    "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook"
   },
   "keywords": [
     "ai",
