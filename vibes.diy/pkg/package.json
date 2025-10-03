@@ -31,8 +31,8 @@
   "dependencies": {
     "@adviser/cement": "^0.4.30",
     "@cloudflare/workers-types": "^4.20250819.0",
-    "@fireproof/core": "^0.23.13",
-    "@fireproof/core-runtime": "^0.23.13",
+    "@fireproof/core": "^0.23.14",
+    "@fireproof/core-runtime": "^0.23.14",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@react-router/node": "^7.7.1",
@@ -49,9 +49,9 @@
     "monaco-editor": "^0.53.0",
     "multiformats": "^13.3.7",
     "posthog-js": "^1.240.6",
-    "react": "^19.1.0",
+    "react": "~19.1.0",
     "react-cookie-consent": "^9.0.0",
-    "react-dom": "^19.1.0",
+    "react-dom": "~19.1.0",
     "react-ga": "^3.3.1",
     "react-ga4": "^2.1.0",
     "react-hot-toast": "^2.6.0",
@@ -60,13 +60,13 @@
     "react-router-dom": "^7.8.2",
     "tailwind-merge": "^3.3.1",
     "ts-essentials": "^10.1.1",
-    "use-fireproof": "0.23.13",
+    "use-fireproof": "^0.23.14",
     "use-vibes": "workspace:*"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.1",
     "@cloudflare/vite-plugin": "^1.11.6",
-    "@fireproof/core-cli": "^0.23.13",
+    "@fireproof/core-cli": "^0.23.14",
     "@react-router/dev": "^7.7.1",
     "@storybook/addon-a11y": "^9.1.6",
     "@storybook/addon-docs": "^9.1.6",
@@ -74,8 +74,8 @@
     "@storybook/react": "^9.1.6",
     "@storybook/react-vite": "^9.1.6",
     "@tailwindcss/vite": "^4.1.2",
-    "@types/react": "^19.1.1",
-    "@types/react-dom": "^19.1.1",
+    "@types/react": "~19.1.0",
+    "@types/react-dom": "~19.1.0",
     "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
     "netlify": "^23.1.4",
@@ -86,7 +86,7 @@
     "tailwindcss": "^4.1.2",
     "tsx": "^4.19.3",
     "typescript": "^5.9.3",
-    "vite": "^7.1.7",
+    "vite": "^7.1.9",
     "vite-tsconfig-paths": "^5.1.4"
   }
 }
