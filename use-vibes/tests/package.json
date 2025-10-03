@@ -46,7 +46,7 @@
     "call-ai": "workspace:*",
     "playwright": "^1.54.1",
     "playwright-chromium": "^1.54.1",
-    "react": "^19.1.0",
+    "react": "^19.1.1",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3",
     "vite-plugin-devtools-json": "^1.0.0",
@@ -60,10 +60,10 @@
     "@react-router/dev": "^7.7.1",
     "@tailwindcss/vite": "^4.1.11",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
-    "react-dom": "^19.1.0",
+    "react-dom": "^19.1.1",
     "use-fireproof": "^0.23.13",
     "use-vibes": "workspace:0.0.0",
-    "vite": "^7.1.7",
+    "vite": "^7.1.9",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   }

@@ -45,7 +45,7 @@
     "@vitest/browser": "^3.2.4",
     "playwright": "^1.54.1",
     "playwright-chromium": "^1.54.1",
-    "react": "^19.1.0",
+    "react": "^19.1.1",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3",
     "vite-plugin-devtools-json": "^1.0.0",
@@ -59,7 +59,7 @@
     "@tailwindcss/vite": "^4.1.11",
     "@vibes.diy/prompts": "workspace:0.0.0",
     "call-ai": "workspace:0.0.0",
-    "react-dom": "^19.1.0",
+    "react-dom": "^19.1.1",
     "use-fireproof": "^0.23.13"
   }
 }
