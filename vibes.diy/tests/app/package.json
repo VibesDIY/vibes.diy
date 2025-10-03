@@ -37,7 +37,7 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.4.1",
     "react-router-dom": "^7.8.2",
-    "use-fireproof": "0.23.14",
+    "use-fireproof": "^0.23.14",
     "use-vibes": "workspace:*",
     "vibes-diy": "workspace:*"
   },
