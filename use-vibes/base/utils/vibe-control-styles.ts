@@ -26,10 +26,10 @@ export type VibeControlPosition = 'bottom-right' | 'bottom-left' | 'top-right' |
 export const vibeControlTheme = {
   // Colors with dark mode support using CSS variables with fallbacks
   colors: {
-    buttonBg: 'var(--vc-button-bg, #0066cc)',
-    buttonBgHover: 'var(--vc-button-bg-hover, #0052a3)',
+    buttonBg: 'var(--vc-button-bg, #dc2626)',
+    buttonBgHover: 'var(--vc-button-bg-hover, #b91c1c)',
     buttonText: 'var(--vc-button-text, #ffffff)',
-    buttonBorder: 'var(--vc-button-border, #0066cc)',
+    buttonBorder: 'var(--vc-button-border, #dc2626)',
 
     overlayBackdrop: 'var(--vc-overlay-backdrop, rgba(0, 0, 0, 0.5))',
     overlayBg: 'var(--vc-overlay-bg, #ffffff)',
