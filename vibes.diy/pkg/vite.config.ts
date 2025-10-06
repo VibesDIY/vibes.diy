@@ -28,6 +28,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     base: process.env.VITE_APP_BASENAME || "/",
     build: {
       outDir: "build",
+      minify: false,
     },
     // Define global constants
     // define: {

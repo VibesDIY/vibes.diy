@@ -34,10 +34,10 @@ import { chromium } from 'playwright';
     });
   });
 
-  console.log('Loading http://localhost:3008...');
+  console.log('Loading http://localhost:3334...');
   
   try {
-    await page.goto('http://localhost:3008', { 
+    await page.goto('http://localhost:3334', { 
       waitUntil: 'networkidle',
       timeout: 30000 
     });
