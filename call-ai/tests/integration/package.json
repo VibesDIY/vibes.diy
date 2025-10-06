@@ -37,7 +37,7 @@
   "devDependencies": {
     "@fireproof/core-cli": "^0.23.14",
     "@playwright/test": "^1.54.1",
-    "@types/node": "^24.0.15",
+    "@types/node": "^24.7.0",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4",
