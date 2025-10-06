@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import type { ConfigEnv, UserConfig } from "vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { fixConstReassignment } from "./vite-plugin-fix-const.js";
 
 // import { cloudflare } from "@cloudflare/vite-plugin";
 
@@ -21,6 +22,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       }),
       //      cloudflare(),
       ...(!disableReactRouter ? [reactRouter()] : []),
+      // Fix @adviser/cement const reassignment issue
+      fixConstReassignment(),
     ],
     base: process.env.VITE_APP_BASENAME || "/",
     build: {

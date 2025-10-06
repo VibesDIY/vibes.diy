@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Test Production Error</title>
+    <script>
+        // Capture console errors
+        window.addEventListener('error', function(event) {
+            console.error('Global error:', event);
+            document.getElementById('errors').innerHTML += 
+                '<div style="color: red;">ERROR: ' + event.message + 
+                '<br>File: ' + event.filename + 
+                '<br>Line: ' + event.lineno + ':' + event.colno + 
+                '<br>Stack: <pre>' + (event.error ? event.error.stack : 'No stack') + '</pre></div>';
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled rejection:', event);
+            document.getElementById('errors').innerHTML += 
+                '<div style="color: orange;">REJECTION: ' + event.reason + '</div>';
+        });
+    </script>
+</head>
+<body>
+    <h1>Testing Production Build for Errors</h1>
+    <div id="errors" style="border: 1px solid red; padding: 10px; margin: 10px;">
+        <h2>Errors will appear here:</h2>
+    </div>
+    <div id="app-status">Loading app...</div>
+
+    <iframe 
+        id="app-frame" 
+        src="http://localhost:3000" 
+        style="width: 100%; height: 600px; border: 1px solid black;"
+        onload="document.getElementById('app-status').innerHTML = 'App loaded in iframe'"
+    ></iframe>
+
+    <script>
+        // Try to load the main app scripts directly
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.innerHTML = `
+            import('http://localhost:3000/assets/env-DhREqdOH.js')
+                .then(module => {
+                    console.log('env module loaded:', module);
+                    document.getElementById('app-status').innerHTML += '<br>✓ env module loaded';
+                })
+                .catch(err => {
+                    console.error('Failed to load env module:', err);
+                    document.getElementById('errors').innerHTML += '<div style="color: red;">Failed to load env module: ' + err + '</div>';
+                });
+        `;
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>
