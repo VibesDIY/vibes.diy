@@ -10,7 +10,7 @@ import { VibeControl, VibeControlProps } from './components/VibeControl.js';
  */
 export interface MountVibeControlOptions extends VibeControlProps {
   /** Container element or selector where to mount the component */
-  readonly container?: string | HTMLElement | null;
+  readonly container?: string | HTMLElement;
 }
 
 export interface MountVibeControlResult {
@@ -24,7 +24,7 @@ export interface MountVibeControlResult {
   getProps: () => VibeControlProps;
 
   /** Get the container element */
-  getContainer: () => HTMLElement | null;
+  getContainer: () => HTMLElement;
 }
 
 /**
@@ -60,15 +60,13 @@ export function mountVibeControl(options: MountVibeControlOptions = {}): MountVi
   const { container: containerOption, ...vibeControlProps } = options;
 
   // Resolve container element
-  let containerElement: HTMLElement | null = null;
-
-  if (containerOption === null) {
-    containerElement = null;
-  } else if (typeof containerOption === 'string') {
-    containerElement = document.querySelector(containerOption);
-    if (!containerElement) {
+  let containerElement: HTMLElement;
+  if (typeof containerOption === 'string') {
+    const el = document.querySelector(containerOption);
+    if (!el) {
       throw new Error(`VibeControl mount container not found: ${containerOption}`);
     }
+    containerElement = el as HTMLElement;
   } else if (containerOption instanceof HTMLElement) {
     containerElement = containerOption;
   } else {
@@ -76,14 +74,8 @@ export function mountVibeControl(options: MountVibeControlOptions = {}): MountVi
     containerElement = document.body;
   }
 
-  if (!containerElement) {
-    throw new Error('VibeControl mount container is required');
-  }
-
   // Create a div to mount the component into
   const mountDiv = document.createElement('div');
-  mountDiv.style.position = 'relative';
-  mountDiv.style.zIndex = '1000';
   containerElement.appendChild(mountDiv);
 
   // Create React root
@@ -152,20 +144,37 @@ export function mountVibeControlToBody(props: VibeControlProps = {}): MountVibeC
  * ```
  */
 export function autoMountVibeControl(): MountVibeControlResult | null {
-  // Check for global configuration
-  const globalConfig = (window as unknown as Record<string, unknown>).VIBE_CONTROL_CONFIG;
-
-  if (!globalConfig) {
-    console.warn('VibeControl: No global VIBE_CONTROL_CONFIG found for auto-mount');
+  // SSR safety check
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    console.warn('VibeControl: autoMountVibeControl called in non-browser environment');
     return null;
   }
 
-  try {
-    return mountVibeControlToBody(globalConfig);
-  } catch (error) {
-    console.error('VibeControl: Auto-mount failed:', error);
+  const tryMount = (): MountVibeControlResult | null => {
+    // Check for global configuration
+    const globalConfig = (window as unknown as Record<string, unknown>).VIBE_CONTROL_CONFIG;
+
+    if (!globalConfig) {
+      console.warn('VibeControl: No global VIBE_CONTROL_CONFIG found for auto-mount');
+      return null;
+    }
+
+    try {
+      return mountVibeControlToBody(globalConfig);
+    } catch (error) {
+      console.error('VibeControl: Auto-mount failed:', error);
+      return null;
+    }
+  };
+
+  // If document is still loading, defer until DOMContentLoaded
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', tryMount, { once: true });
     return null;
   }
+
+  // Document is ready, mount immediately
+  return tryMount();
 }
 
 // Export the main mount function as default

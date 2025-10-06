@@ -4,6 +4,7 @@ import {
   createVibeControlStyles,
   defaultVibeControlClasses,
   VibeControlClasses,
+  VibeControlPosition,
 } from '../utils/vibe-control-styles.js';
 
 export interface VibeControlProps {
@@ -87,33 +88,11 @@ export function VibeControl({
     };
   }, [isOpen, handleClose]);
 
-  // Get styles
-  const styles = createVibeControlStyles();
-
-  // Calculate button position based on prop
-  const getButtonPositionStyles = (pos: string) => {
-    const baseStyles = { ...styles.button };
-
-    switch (pos) {
-      case 'bottom-left':
-        return { ...baseStyles, left: baseStyles.bottom, right: 'auto' };
-      case 'top-right':
-        return { ...baseStyles, top: baseStyles.bottom, bottom: 'auto' };
-      case 'top-left':
-        return {
-          ...baseStyles,
-          top: baseStyles.bottom,
-          left: baseStyles.bottom,
-          bottom: 'auto',
-          right: 'auto',
-        };
-      default: // bottom-right
-        return baseStyles;
-    }
-  };
+  // Get styles with position support
+  const styles = createVibeControlStyles(position as VibeControlPosition);
 
   const buttonStyles = {
-    ...getButtonPositionStyles(position),
+    ...styles.button,
     ...(isHoveringButton ? styles.buttonHover : {}),
   };
 
