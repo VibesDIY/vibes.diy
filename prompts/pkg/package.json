@@ -24,10 +24,10 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.4.30",
+    "@adviser/cement": "^0.4.43",
     "@fireproof/core-types-base": "^0.23.14",
-    "call-ai": "workspace:*",
-    "@vibes.diy/use-vibes-types": "workspace:*"
+    "@vibes.diy/use-vibes-types": "workspace:*",
+    "call-ai": "workspace:*"
   },
   "peerDependencies": {
     "react": "~19.1.0"

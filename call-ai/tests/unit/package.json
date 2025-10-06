@@ -48,7 +48,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@adviser/cement": "^0.4.30",
+    "@adviser/cement": "^0.4.43",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/user-event": "^14.6.1",
     "call-ai": "workspace:0.0.0",
