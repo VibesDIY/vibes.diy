@@ -5,7 +5,7 @@ import VibesGeneratorExample from './VibesGeneratorExample';
 import VibeControlExample from './VibeControlExample';
 import './App.css';
 
-type ExampleKey = 'home' | 'image-generator' | 'todo-list' | 'vibes-generator' | 'vibe-control';
+export type ExampleKey = 'home' | 'image-generator' | 'todo-list' | 'vibes-generator' | 'vibe-control';
 
 function App() {
   const [currentExample, setCurrentExample] = useState<ExampleKey>('home');
@@ -33,7 +33,7 @@ function App() {
       key: 'vibe-control' as const,
       title: 'Vibe Control',
       description: 'Floating action button with overlay - works in React and vanilla JS',
-      component: <VibeControlExample />,
+      component: <VibeControlExample setCurrentExample={setCurrentExample} />,
     },
   ];
 
