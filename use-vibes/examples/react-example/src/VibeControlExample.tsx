@@ -1,6 +1,5 @@
+import { HiddenMenuWrapper, VibesButton } from 'use-vibes';
 import type { ExampleKey } from './App.tsx';
-import HiddenMenuWrapper from './hiddenMenuWrapper.tsx';
-import VibesButton from './vibesButton.tsx';
 
 type VibeControlExampleProps = {
   setCurrentExample: (example: ExampleKey) => void;

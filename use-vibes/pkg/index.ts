@@ -22,6 +22,9 @@ export {
 
   // VibeControl component and utilities
   VibeControl,
+  VibesIconPill,
+  HiddenMenuWrapper,
+  VibesButton,
   type VibeControlProps,
   mountVibeControl,
   mountVibeControlToBody,

@@ -213,6 +213,10 @@ export type { ImgGenProps } from './components/ImgGen.js';
 // Export all components for testing and advanced usage
 export { ControlsBar } from './components/ControlsBar.js';
 export { PromptBar } from './components/PromptBar.js';
+export { VibesIconPill } from './components/VibesIconPill/VibesIconPill.js';
+export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
+export { VibesButton } from './components/VibesButton/VibesButton.js';
+
 
 // Export hooks
 export { hashInput, useImageGen } from './hooks/image-gen/index.js';
