@@ -19,6 +19,11 @@
   path = "/firehose"
 
 [[redirects]]
+  from = "/ai/*"
+  to = "https://bit.ly/:splat"
+  status = 301
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
