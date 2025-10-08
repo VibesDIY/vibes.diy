@@ -397,6 +397,7 @@ export const imgGenStyles = {
   },
 } as const;
 
+
 // Helper function to merge styles with theme variants
 export function createStyledVariant(
   baseStyle: Record<string, unknown>,

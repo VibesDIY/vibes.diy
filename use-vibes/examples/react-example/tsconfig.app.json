@@ -28,5 +28,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src", "../../base/components/VibesIconPill/VibesIconPill.tsx", "../../base/components/HiddenMenuWrapper/HiddenMenuWrapper.tsx", "../../base/components/VibesButton/VibesButton.tsx"]
 }
