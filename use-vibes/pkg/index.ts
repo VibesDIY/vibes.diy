@@ -23,7 +23,6 @@ export {
   // VibeControl component and utilities
   VibeControl,
   VibesIconPill,
-  HiddenMenuWrapper,
   VibesButton,
   type VibeControlProps,
   mountVibeControl,
@@ -31,6 +30,14 @@ export {
   autoMountVibeControl,
   type MountVibeControlOptions,
   type MountVibeControlResult,
+  // HiddenMenuWrapper component and utilities
+  HiddenMenuWrapper,
+  mountHiddenMenuWrapper,
+  mountHiddenMenuWrapperToBody,
+  autoMountHiddenMenuWrapper,
+  type HiddenMenuWrapperProps,
+  type MountHiddenMenuWrapperOptions,
+  type MountHiddenMenuWrapperResult,
   vibeControlTheme,
   createVibeControlStyles,
   defaultVibeControlClasses,

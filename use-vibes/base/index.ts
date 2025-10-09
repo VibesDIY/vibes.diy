@@ -214,7 +214,6 @@ export type { ImgGenProps } from './components/ImgGen.js';
 export { ControlsBar } from './components/ControlsBar.js';
 export { PromptBar } from './components/PromptBar.js';
 export { VibesIconPill } from './components/VibesIconPill/VibesIconPill.js';
-export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 export { VibesButton } from './components/VibesButton/VibesButton.js';
 
 
@@ -259,6 +258,16 @@ export {
   autoMountVibeControl,
 } from './vibe-control-mount.js';
 export type { MountVibeControlOptions, MountVibeControlResult } from './vibe-control-mount.js';
+
+// Export HiddenMenuWrapper component and utilities
+export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
+export type { HiddenMenuWrapperProps } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
+export {
+  mountHiddenMenuWrapper,
+  mountHiddenMenuWrapperToBody,
+  autoMountHiddenMenuWrapper
+} from './vibe-hidden-menu-mount.js';
+export type { MountHiddenMenuWrapperOptions, MountHiddenMenuWrapperResult } from './vibe-hidden-menu-mount.js';
 export {
   vibeControlTheme,
   createVibeControlStyles,
