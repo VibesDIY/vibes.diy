@@ -38,6 +38,12 @@ export {
   type HiddenMenuWrapperProps,
   type MountHiddenMenuWrapperOptions,
   type MountHiddenMenuWrapperResult,
+  // AuthWall component and utilities
+  AuthWall,
+  type AuthWallProps,
+  mountAuthWall,
+  type MountAuthWallOptions,
+  type MountAuthWallResult,
   vibeControlTheme,
   createVibeControlStyles,
   defaultVibeControlClasses,

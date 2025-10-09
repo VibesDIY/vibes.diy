@@ -4,13 +4,9 @@ import TodoListExample from './TodoListExample';
 import VibesGeneratorExample from './VibesGeneratorExample';
 import VibeControlExample from './VibeControlExample';
 import './App.css';
+import VibeAuthWallExample from './VibeAuthWallExample';
 
-export type ExampleKey =
-  | 'home'
-  | 'image-generator'
-  | 'todo-list'
-  | 'vibes-generator'
-  | 'vibe-control';
+export type ExampleKey = 'home' | 'image-generator' | 'todo-list' | 'vibes-generator' | 'vibe-control' | 'vibe-auth-wall';
 
 function App() {
   const [currentExample, setCurrentExample] = useState<ExampleKey>('home');
@@ -39,6 +35,12 @@ function App() {
       title: 'Vibe Control',
       description: 'Floating action button with overlay - works in React and vanilla JS',
       component: <VibeControlExample setCurrentExample={setCurrentExample} />,
+    },
+    {
+      key: 'vibe-auth-wall' as const,
+      title: 'Vibe Auth Wall',
+      description: 'Authentication wall',
+      component: <VibeAuthWallExample />,
     },
   ];
 
