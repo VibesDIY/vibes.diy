@@ -4,6 +4,15 @@ import { HiddenMenuWrapper } from '../pkg/index.js';
 import { HiddenMenuWrapperProps } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 
 /**
+ * Extend the Window interface to include HIDDEN_MENU_WRAPPER_CONFIG
+ */
+declare global {
+  interface Window {
+    HIDDEN_MENU_WRAPPER_CONFIG?: HiddenMenuWrapperProps;
+  }
+}
+
+/**
  * Options to mount HiddenMenuWrapper
  */
 export interface MountHiddenMenuWrapperOptions extends HiddenMenuWrapperProps {
@@ -115,7 +124,7 @@ export function autoMountHiddenMenuWrapper(): MountHiddenMenuWrapperResult | nul
     return null;
   }
 
-  const config = (window as any).HIDDEN_MENU_WRAPPER_CONFIG;
+  const config = (window).HIDDEN_MENU_WRAPPER_CONFIG;
 
   if (!config) {
     console.warn('HiddenMenuWrapper: No HIDDEN_MENU_WRAPPER_CONFIG found');
