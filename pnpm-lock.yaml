@@ -13,8 +13,8 @@ importers:
         version: 1.55.1
     devDependencies:
       '@eslint/js':
-        specifier: ^9.31.0
-        version: 9.36.0
+        specifier: ^9.37.0
+        version: 9.37.0
       '@fireproof/core-cli':
         specifier: ^0.23.14
         version: 0.23.14(typescript@5.9.3)
@@ -344,8 +344,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@eslint/js':
-        specifier: ^9.25.0
-        version: 9.36.0
+        specifier: ^9.37.0
+        version: 9.37.0
       '@types/react':
         specifier: ^19.1.2
         version: 19.1.17
