@@ -8,11 +8,7 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
   children: React.ReactNode;
 }
 
-export function VibesButton({
-  variant = 'primary',
-  children,
-  ...props
-}: MenuButtonProps) {
+export function VibesButton({ variant = 'primary', children, ...props }: MenuButtonProps) {
   const [isHovered, setHovered] = useState(false);
   const [isActive, setActive] = useState(false);
 

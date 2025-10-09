@@ -216,7 +216,6 @@ export { PromptBar } from './components/PromptBar.js';
 export { VibesIconPill } from './components/VibesIconPill/VibesIconPill.js';
 export { VibesButton } from './components/VibesButton/VibesButton.js';
 
-
 // Export hooks
 export { hashInput, useImageGen } from './hooks/image-gen/index.js';
 
@@ -265,9 +264,12 @@ export type { HiddenMenuWrapperProps } from './components/HiddenMenuWrapper/Hidd
 export {
   mountHiddenMenuWrapper,
   mountHiddenMenuWrapperToBody,
-  autoMountHiddenMenuWrapper
+  autoMountHiddenMenuWrapper,
 } from './vibe-hidden-menu-mount.js';
-export type { MountHiddenMenuWrapperOptions, MountHiddenMenuWrapperResult } from './vibe-hidden-menu-mount.js';
+export type {
+  MountHiddenMenuWrapperOptions,
+  MountHiddenMenuWrapperResult,
+} from './vibe-hidden-menu-mount.js';
 export {
   vibeControlTheme,
   createVibeControlStyles,

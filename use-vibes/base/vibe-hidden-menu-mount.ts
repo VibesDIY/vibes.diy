@@ -35,8 +35,8 @@ export interface MountHiddenMenuWrapperResult {
  */
 export function mountHiddenMenuWrapper(
   options: MountHiddenMenuWrapperOptions = {
-      children: undefined,
-      menuContent: undefined
+    children: undefined,
+    menuContent: undefined,
   }
 ): MountHiddenMenuWrapperResult {
   const { container: containerOption, ...initialProps } = options;
@@ -91,8 +91,8 @@ export function mountHiddenMenuWrapper(
  */
 export function mountHiddenMenuWrapperToBody(
   props: HiddenMenuWrapperProps = {
-      children: undefined,
-      menuContent: undefined
+    children: undefined,
+    menuContent: undefined,
   }
 ): MountHiddenMenuWrapperResult {
   return mountHiddenMenuWrapper({
@@ -124,7 +124,7 @@ export function autoMountHiddenMenuWrapper(): MountHiddenMenuWrapperResult | nul
     return null;
   }
 
-  const config = (window).HIDDEN_MENU_WRAPPER_CONFIG;
+  const config = window.HIDDEN_MENU_WRAPPER_CONFIG;
 
   if (!config) {
     console.warn('HiddenMenuWrapper: No HIDDEN_MENU_WRAPPER_CONFIG found');
