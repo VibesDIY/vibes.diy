@@ -11,6 +11,9 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 20
     ignore:
+      - dependency-name: "@adviser/cement"
+        update-types:
+          ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "react"
         update-types:
           ["version-update:semver-major", "version-update:semver-minor"]
