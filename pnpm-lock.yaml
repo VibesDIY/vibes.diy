@@ -19,8 +19,8 @@ importers:
         specifier: ^0.23.14
         version: 0.23.14(typescript@5.9.3)
       '@playwright/test':
-        specifier: ^1.55.0
-        version: 1.55.1
+        specifier: ^1.56.0
+        version: 1.56.0
       '@types/deno':
         specifier: ^2.5.0
         version: 2.5.0
@@ -99,8 +99,8 @@ importers:
         specifier: ^0.23.14
         version: 0.23.14(typescript@5.9.3)
       '@playwright/test':
-        specifier: ^1.54.1
-        version: 1.55.1
+        specifier: ^1.56.0
+        version: 1.56.0
       '@types/node':
         specifier: ^24.7.0
         version: 24.7.0
@@ -142,8 +142,8 @@ importers:
         version: 7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
     devDependencies:
       '@playwright/test':
-        specifier: ^1.54.1
-        version: 1.55.1
+        specifier: ^1.56.0
+        version: 1.56.0
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
@@ -219,8 +219,8 @@ importers:
         specifier: ^0.4.43
         version: 0.4.43(typescript@5.9.3)
       '@playwright/test':
-        specifier: ^1.54.1
-        version: 1.55.1
+        specifier: ^1.56.0
+        version: 1.56.0
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -430,8 +430,8 @@ importers:
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.7.0)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
     devDependencies:
       '@playwright/test':
-        specifier: ^1.54.1
-        version: 1.55.1
+        specifier: ^1.56.0
+        version: 1.56.0
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -2480,8 +2480,8 @@ packages:
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
-  '@playwright/test@1.55.1':
-    resolution: {integrity: sha512-IVAh/nOJaw6W9g+RJVlIQJ6gSiER+ae6mKQ5CX1bERzQgbC1VSeBlwdvczT7pxb0GWiyrxH4TGKbMfDb4Sq/ig==}
+  '@playwright/test@1.56.0':
+    resolution: {integrity: sha512-Tzh95Twig7hUwwNe381/K3PggZBZblKUe2wv25oIpzWLr6Z0m4KgV1ZVIjnR6GM9ANEqjZD7XsZEa6JL/7YEgg==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -6901,18 +6901,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright-core@1.55.1:
-    resolution: {integrity: sha512-Z6Mh9mkwX+zxSlHqdr5AOcJnfp+xUWLCt9uKV18fhzA8eyxUd8NUWzAjxUh55RZKSYwDGX0cfaySdhZJGMoJ+w==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright-core@1.56.0:
     resolution: {integrity: sha512-1SXl7pMfemAMSDn5rkPeZljxOCYAmQnYLBTExuh6E8USHXGSX3dx6lYZN/xPpTz1vimXmPA9CDnILvmJaB8aSQ==}
-    engines: {node: '>=18'}
-    hasBin: true
-
-  playwright@1.55.1:
-    resolution: {integrity: sha512-cJW4Xd/G3v5ovXtJJ52MAOclqeac9S/aGGgRzLabuF8TnIb6xHvMzKIa6JmrRzUkeXJgfL1MhukP0NK6l39h3A==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -10574,9 +10564,9 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
-  '@playwright/test@1.55.1':
+  '@playwright/test@1.56.0':
     dependencies:
-      playwright: 1.55.1
+      playwright: 1.56.0
 
   '@pnpm/config.env-replace@1.1.0': {}
 
@@ -15949,15 +15939,7 @@ snapshots:
     dependencies:
       playwright-core: 1.56.0
 
-  playwright-core@1.55.1: {}
-
   playwright-core@1.56.0: {}
-
-  playwright@1.55.1:
-    dependencies:
-      playwright-core: 1.55.1
-    optionalDependencies:
-      fsevents: 2.3.2
 
   playwright@1.56.0:
     dependencies:

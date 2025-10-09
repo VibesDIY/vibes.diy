@@ -36,7 +36,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@adviser/cement": "^0.4.43",
-    "@playwright/test": "^1.54.1",
+    "@playwright/test": "^1.56.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^24.7.0",
