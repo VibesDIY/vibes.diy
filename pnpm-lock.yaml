@@ -198,7 +198,7 @@ importers:
     dependencies:
       '@react-router/dev':
         specifier: ^7.7.1
-        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3))(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.42.0(@cloudflare/workers-types@4.20251003.0))(yaml@2.8.1)
+        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.42.1(@cloudflare/workers-types@4.20251003.0))(yaml@2.8.1)
       '@tailwindcss/vite':
         specifier: ^4.1.11
         version: 4.1.14(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -210,10 +210,10 @@ importers:
         version: link:../../call-ai/pkg
       react-dom:
         specifier: ~19.1.0
-        version: 19.1.1(react@19.1.1)
+        version: 19.1.1(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.14
-        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
+        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
     devDependencies:
       '@adviser/cement':
         specifier: ^0.4.43
@@ -226,13 +226,13 @@ importers:
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       '@types/node':
         specifier: ^24.7.0
         version: 24.7.0
       '@types/react':
-        specifier: ^19.1.4
-        version: 19.1.17
+        specifier: ^19.2.2
+        version: 19.2.2
       '@vitejs/plugin-react':
         specifier: ^5.0.4
         version: 5.0.4(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -246,8 +246,8 @@ importers:
         specifier: ^1.54.1
         version: 1.55.1
       react:
-        specifier: ~19.1.0
-        version: 19.1.1
+        specifier: ~19.2.0
+        version: 19.2.0
       tsx:
         specifier: ^4.20.3
         version: 4.20.6
@@ -308,7 +308,7 @@ importers:
         version: 9.1.10(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/addon-docs':
         specifier: ^9.1.6
-        version: 9.1.10(@types/react@19.1.17)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
+        version: 9.1.10(@types/react@19.2.2)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/react':
         specifier: ^9.1.6
         version: 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)
@@ -316,11 +316,11 @@ importers:
         specifier: ^9.1.6
         version: 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rollup@4.52.4)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       '@types/react':
-        specifier: ~19.1.0
-        version: 19.1.17
+        specifier: ~19.2.2
+        version: 19.2.2
       '@types/react-dom':
         specifier: ~19.1.0
-        version: 19.1.11(@types/react@19.1.17)
+        version: 19.1.11(@types/react@19.2.2)
       storybook:
         specifier: ^9.1.6
         version: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -334,11 +334,11 @@ importers:
   use-vibes/examples/react-example:
     dependencies:
       react:
-        specifier: ~19.1.0
-        version: 19.1.1
+        specifier: ~19.2.0
+        version: 19.2.0
       react-dom:
         specifier: ~19.1.0
-        version: 19.1.1(react@19.1.1)
+        version: 19.1.1(react@19.2.0)
       use-vibes:
         specifier: workspace:*
         version: link:../../pkg
@@ -347,11 +347,11 @@ importers:
         specifier: ^9.25.0
         version: 9.36.0
       '@types/react':
-        specifier: ^19.1.2
-        version: 19.1.17
+        specifier: ^19.2.2
+        version: 19.2.2
       '@types/react-dom':
         specifier: ^19.1.2
-        version: 19.1.11(@types/react@19.1.17)
+        version: 19.1.11(@types/react@19.2.2)
       '@vitejs/plugin-react':
         specifier: ^5.0.4
         version: 5.0.4(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -403,7 +403,7 @@ importers:
         version: 0.0.3(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       '@react-router/dev':
         specifier: ^7.7.1
-        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3))(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.42.0(@cloudflare/workers-types@4.20251003.0))(yaml@2.8.1)
+        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.42.1(@cloudflare/workers-types@4.20251003.0))(yaml@2.8.1)
       '@tailwindcss/vite':
         specifier: ^4.1.11
         version: 4.1.14(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -412,10 +412,10 @@ importers:
         version: link:../base
       react-dom:
         specifier: ~19.1.0
-        version: 19.1.1(react@19.1.1)
+        version: 19.1.1(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.14
-        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
+        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -437,16 +437,16 @@ importers:
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       '@types/node':
         specifier: ^24.7.0
         version: 24.7.0
       '@types/react':
-        specifier: ~19.1.0
-        version: 19.1.17
+        specifier: ~19.2.2
+        version: 19.2.2
       '@types/react-dom':
         specifier: ^19.1.9
-        version: 19.1.11(@types/react@19.1.17)
+        version: 19.1.11(@types/react@19.2.2)
       '@vitejs/plugin-react':
         specifier: ^5.0.4
         version: 5.0.4(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -463,8 +463,8 @@ importers:
         specifier: ^1.54.1
         version: 1.55.1
       react:
-        specifier: ~19.1.0
-        version: 19.1.1
+        specifier: ~19.2.0
+        version: 19.2.0
       tsx:
         specifier: ^4.20.3
         version: 4.20.6
@@ -494,8 +494,8 @@ importers:
         specifier: ^0.23.14
         version: 0.23.14(typescript@5.9.3)
       '@types/react':
-        specifier: ~19.1.0
-        version: 19.1.17
+        specifier: ~19.2.2
+        version: 19.2.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -510,22 +510,22 @@ importers:
         version: 4.20251003.0
       '@fireproof/core':
         specifier: ^0.23.14
-        version: 0.23.14(react@19.1.1)(typescript@5.9.3)
+        version: 0.23.14(react@19.2.0)(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: ^0.23.14
         version: 0.23.14(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       '@radix-ui/react-slot':
         specifier: ^1.2.3
-        version: 1.2.3(@types/react@19.1.17)(react@19.1.1)
+        version: 1.2.3(@types/react@19.2.2)(react@19.2.0)
       '@react-router/node':
         specifier: ^7.7.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.7.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.2.1
         version: 3.13.0
@@ -563,32 +563,32 @@ importers:
         specifier: ^1.240.6
         version: 1.270.1
       react:
-        specifier: ~19.1.0
-        version: 19.1.1
+        specifier: ~19.2.0
+        version: 19.2.0
       react-cookie-consent:
         specifier: ^9.0.0
-        version: 9.0.0(react@19.1.1)
+        version: 9.0.0(react@19.2.0)
       react-dom:
         specifier: ~19.1.0
-        version: 19.1.1(react@19.1.1)
+        version: 19.1.1(react@19.2.0)
       react-ga:
         specifier: ^3.3.1
-        version: 3.3.1(prop-types@15.8.1)(react@19.1.1)
+        version: 3.3.1(prop-types@15.8.1)(react@19.2.0)
       react-ga4:
         specifier: ^2.1.0
         version: 2.1.0
       react-hot-toast:
         specifier: ^2.6.0
-        version: 2.6.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 2.6.0(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       react-markdown:
         specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.1.17)(react@19.1.1)
+        version: 10.1.0(@types/react@19.2.2)(react@19.2.0)
       react-router:
         specifier: ^7.7.1
-        version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       react-router-dom:
         specifier: ^7.8.2
-        version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -597,7 +597,7 @@ importers:
         version: 10.1.1(typescript@5.9.3)
       use-fireproof:
         specifier: ^0.23.14
-        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
+        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
@@ -607,37 +607,37 @@ importers:
         version: 4.1.1(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
       '@cloudflare/vite-plugin':
         specifier: ^1.11.6
-        version: 1.13.10(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20251001.0)(wrangler@4.42.0(@cloudflare/workers-types@4.20251003.0))
+        version: 1.13.10(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20251004.0)(wrangler@4.42.1(@cloudflare/workers-types@4.20251003.0))
       '@fireproof/core-cli':
         specifier: ^0.23.14
         version: 0.23.14(typescript@5.9.3)
       '@react-router/dev':
         specifier: ^7.7.1
-        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3))(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.42.0(@cloudflare/workers-types@4.20251003.0))(yaml@2.8.1)
+        version: 7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.42.1(@cloudflare/workers-types@4.20251003.0))(yaml@2.8.1)
       '@storybook/addon-a11y':
         specifier: ^9.1.6
         version: 9.1.10(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/addon-docs':
         specifier: ^9.1.6
-        version: 9.1.10(@types/react@19.1.17)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
+        version: 9.1.10(@types/react@19.2.2)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/addon-onboarding':
         specifier: ^9.1.6
         version: 9.1.10(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/react':
         specifier: ^9.1.6
-        version: 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)
+        version: 9.1.10(react-dom@19.1.1(react@19.2.0))(react@19.2.0)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)
       '@storybook/react-vite':
         specifier: ^9.1.6
-        version: 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rollup@4.52.4)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 9.1.10(react-dom@19.1.1(react@19.2.0))(react@19.2.0)(rollup@4.52.4)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       '@tailwindcss/vite':
         specifier: ^4.1.2
         version: 4.1.14(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       '@types/react':
-        specifier: ~19.1.0
-        version: 19.1.17
+        specifier: ~19.2.2
+        version: 19.2.2
       '@types/react-dom':
         specifier: ~19.1.0
-        version: 19.1.11(@types/react@19.1.17)
+        version: 19.1.11(@types/react@19.2.2)
       concurrently:
         specifier: ^9.1.2
         version: 9.2.1
@@ -682,13 +682,13 @@ importers:
         version: 0.4.43(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       '@react-router/node':
         specifier: ^7.4.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.4.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.2.1
         version: 3.13.0
@@ -717,32 +717,32 @@ importers:
         specifier: ^1.240.6
         version: 1.270.1
       react:
-        specifier: ~19.1.0
-        version: 19.1.1
+        specifier: ~19.2.0
+        version: 19.2.0
       react-cookie-consent:
         specifier: ^9.0.0
-        version: 9.0.0(react@19.1.1)
+        version: 9.0.0(react@19.2.0)
       react-dom:
         specifier: ~19.1.0
-        version: 19.1.1(react@19.1.1)
+        version: 19.1.1(react@19.2.0)
       react-ga4:
         specifier: ^2.1.0
         version: 2.1.0
       react-hot-toast:
         specifier: ^2.5.2
-        version: 2.6.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 2.6.0(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       react-markdown:
         specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.1.17)(react@19.1.1)
+        version: 10.1.0(@types/react@19.2.2)(react@19.2.0)
       react-router:
         specifier: ^7.4.1
-        version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       react-router-dom:
         specifier: ^7.8.2
-        version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.14
-        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
+        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -758,13 +758,13 @@ importers:
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       '@types/react':
-        specifier: ~19.1.0
-        version: 19.1.17
+        specifier: ~19.2.2
+        version: 19.2.2
       '@types/react-dom':
         specifier: ^19.1.9
-        version: 19.1.11(@types/react@19.1.17)
+        version: 19.1.11(@types/react@19.2.2)
       '@vitest/browser':
         specifier: ^3.2.4
         version: 3.2.4(playwright@1.55.1)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(vitest@3.2.4)
@@ -782,13 +782,13 @@ importers:
         version: 0.4.43(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       '@react-router/node':
         specifier: ^7.4.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.4.1
-        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+        version: 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.2.1
         version: 3.13.0
@@ -814,29 +814,29 @@ importers:
         specifier: ^1.240.6
         version: 1.270.1
       react:
-        specifier: ~19.1.0
-        version: 19.1.1
+        specifier: ~19.2.0
+        version: 19.2.0
       react-cookie-consent:
         specifier: ^9.0.0
-        version: 9.0.0(react@19.1.1)
+        version: 9.0.0(react@19.2.0)
       react-dom:
         specifier: ~19.1.0
-        version: 19.1.1(react@19.1.1)
+        version: 19.1.1(react@19.2.0)
       react-ga4:
         specifier: ^2.1.0
         version: 2.1.0
       react-hot-toast:
         specifier: ^2.5.2
-        version: 2.6.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 2.6.0(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       react-markdown:
         specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.1.17)(react@19.1.1)
+        version: 10.1.0(@types/react@19.2.2)(react@19.2.0)
       react-router:
         specifier: ^7.4.1
-        version: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.14
-        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.1.1)(typescript@5.9.3)
+        version: 0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -849,13 +849,13 @@ importers:
         version: 0.23.14(typescript@5.9.3)
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       '@types/react':
-        specifier: ~19.1.0
-        version: 19.1.17
+        specifier: ~19.2.2
+        version: 19.2.2
       '@types/react-dom':
         specifier: ^19.1.9
-        version: 19.1.11(@types/react@19.1.17)
+        version: 19.1.11(@types/react@19.2.2)
       vite-tsconfig-paths:
         specifier: ^5.1.4
         version: 5.1.4(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -1153,6 +1153,15 @@ packages:
       workerd:
         optional: true
 
+  '@cloudflare/unenv-preset@2.7.7':
+    resolution: {integrity: sha512-HtZuh166y0Olbj9bqqySckz0Rw9uHjggJeoGbDx5x+sgezBXlxO6tQSig2RZw5tgObF8mWI8zaPvQMkQZtAODw==}
+    peerDependencies:
+      unenv: 2.0.0-rc.21
+      workerd: ^1.20250927.0
+    peerDependenciesMeta:
+      workerd:
+        optional: true
+
   '@cloudflare/vite-plugin@1.13.10':
     resolution: {integrity: sha512-zQaCbzGDAMhjZqXfulpUgBL/D4qsoP1oHVk2LyseKJ47PMq2cHWnbISOi3RONvKxpGyct7ACjA4JEhbFlu5GNQ==}
     peerDependencies:
@@ -1165,8 +1174,20 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@cloudflare/workerd-darwin-64@1.20251004.0':
+    resolution: {integrity: sha512-gL6/b7NXCum95e77n+CLyDzmfV14ZAsyoWWHoWsi2Nt89ngl8xB7aW6IQQPZPjxvtSth5y/peFCIbmR55DxFCg==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
   '@cloudflare/workerd-darwin-arm64@1.20251001.0':
     resolution: {integrity: sha512-+z4QHHZ/Yix82zLFYS+ZS2UV09IENFPwDCEKUWfnrM9Km2jOOW3Ua4hJNob1EgQUYs8fFZo7k5O/tpwxMsSbbQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20251004.0':
+    resolution: {integrity: sha512-w3oE8PtYUAOyJCYLXIdmLuCmRrn1dEqB91u1sZs+MbLxzTNrvRwNaiioLJBHhpIeg3Oq2kyn3+idg0FdvgDLTA==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
@@ -1177,14 +1198,32 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-64@1.20251004.0':
+    resolution: {integrity: sha512-PZxHuL6p2bxDI1ozBguKFO71AySTy0MzXiHePiubBuX+Mqa8sCmdAbWbp3QPIoErZ9eBsvw9UCNeSyEtM9H/iw==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
   '@cloudflare/workerd-linux-arm64@1.20251001.0':
     resolution: {integrity: sha512-QYaMK+pRgt28N7CX1JlJ+ToegJF9LxzqdT7MjWqPgVj9D2WTyIhBVYl3wYjJRcgOlnn+DRt42+li4T64CPEeuA==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-arm64@1.20251004.0':
+    resolution: {integrity: sha512-ePCfH9W2ea+YhVL+FhXjWRV9vGWj/zshO3ugKm/qCO6OXAL1h0NPYCe55iZXFKwngwQH82H6Fv8UROaxDaGZ1Q==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
   '@cloudflare/workerd-windows-64@1.20251001.0':
     resolution: {integrity: sha512-ospnDR/FlyRvrv9DSHuxDAXmzEBLDUiAHQrQHda1iUH9HqxnNQ8giz9VlPfq7NIRc7bQ1ZdIYPGLJOY4Q366Ng==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workerd-windows-64@1.20251004.0':
+    resolution: {integrity: sha512-sRuSls6kH6C2MG+xWoCi7fuV0SG26dB8+Cc2b59Pc0dzJRThOeNXbwpiSIZ4BQFGUudGlbCRwCpzIuPW3JxQLg==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -3069,8 +3108,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.0.0
 
-  '@types/react@19.1.17':
-    resolution: {integrity: sha512-Qec1E3mhALmaspIrhWt9jkQMNdw6bReVu64mjvhbhq2NFPftLPVr+l1SZgmw/66WwBNpDh7ao5AT6gF5v41PFA==}
+  '@types/react@19.2.2':
+    resolution: {integrity: sha512-6mDvHUFSjyT2B2yeNx2nUgMxh9LtOWvkhIU3uePn2I2oyNymUAX1NIsdgviM4CH+JSrp2D2hsMvJOkxY+0wNRA==}
 
   '@types/resolve@1.20.6':
     resolution: {integrity: sha512-A4STmOXPhMUtHH+S6ymgE2GiBSMqf4oTvcQZMcHzokuTLVYzXTB8ttjcgxOVaAp2lGwEdzZ0J+cRbbeevQj1UQ==}
@@ -6337,6 +6376,11 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  miniflare@4.20251004.0:
+    resolution: {integrity: sha512-XxQ/vZVp5yTbnwq83fJag9DL8ww5IBfzaFZzlxMWMo2wf7bfHPYMkE4VbeibMwdLI+Pkyddg4zIxMTOvvZNigg==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
 
@@ -7205,6 +7249,10 @@ packages:
 
   react@19.1.1:
     resolution: {integrity: sha512-w8nqGImo45dmMIfljjMwOGtbmC/mk4CMYhWIicdSflH91J9TyCyczcPFXJzrZ/ZXcgGRFeP6BU0BEJTw6tZdfQ==}
+    engines: {node: '>=0.10.0'}
+
+  react@19.2.0:
+    resolution: {integrity: sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==}
     engines: {node: '>=0.10.0'}
 
   read-package-up@11.0.0:
@@ -8453,12 +8501,27 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  workerd@1.20251004.0:
+    resolution: {integrity: sha512-1YajTH54RdrQrO5FY1HuH1t87H3bWjbM4MtOTF6XdPQL8LxVWACC46aGjmhyVJKMQNLECs64d+AYFGxVrFTOAA==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   wrangler@4.42.0:
     resolution: {integrity: sha512-OZXiUSfGD66OVkncDbjZtqrsH6bWPRQMYc6RmMbkzYm/lEvJ8lvARKcqDgEyq8zDAgJAivlMQLyPtKQoVjQ/4g==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@cloudflare/workers-types': ^4.20251001.0
+    peerDependenciesMeta:
+      '@cloudflare/workers-types':
+        optional: true
+
+  wrangler@4.42.1:
+    resolution: {integrity: sha512-Oia5SmGmfUWfz/k5aklrE429VMiMMZkjc1EhF1nrANElCOwBTTBY1shsfhkg9F0vG8ZtHzx1rJvYfaQvct498g==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.20251004.0
     peerDependenciesMeta:
       '@cloudflare/workers-types':
         optional: true
@@ -8947,9 +9010,21 @@ snapshots:
     optionalDependencies:
       workerd: 1.20251001.0
 
-  '@cloudflare/vite-plugin@1.13.10(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20251001.0)(wrangler@4.42.0(@cloudflare/workers-types@4.20251003.0))':
+  '@cloudflare/unenv-preset@2.7.6(unenv@2.0.0-rc.21)(workerd@1.20251004.0)':
     dependencies:
-      '@cloudflare/unenv-preset': 2.7.6(unenv@2.0.0-rc.21)(workerd@1.20251001.0)
+      unenv: 2.0.0-rc.21
+    optionalDependencies:
+      workerd: 1.20251004.0
+
+  '@cloudflare/unenv-preset@2.7.7(unenv@2.0.0-rc.21)(workerd@1.20251004.0)':
+    dependencies:
+      unenv: 2.0.0-rc.21
+    optionalDependencies:
+      workerd: 1.20251004.0
+
+  '@cloudflare/vite-plugin@1.13.10(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20251004.0)(wrangler@4.42.1(@cloudflare/workers-types@4.20251003.0))':
+    dependencies:
+      '@cloudflare/unenv-preset': 2.7.6(unenv@2.0.0-rc.21)(workerd@1.20251004.0)
       '@remix-run/node-fetch-server': 0.8.1
       get-port: 7.1.0
       miniflare: 4.20251001.0
@@ -8957,7 +9032,7 @@ snapshots:
       tinyglobby: 0.2.15
       unenv: 2.0.0-rc.21
       vite: 7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
-      wrangler: 4.42.0(@cloudflare/workers-types@4.20251003.0)
+      wrangler: 4.42.1(@cloudflare/workers-types@4.20251003.0)
       ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
@@ -8967,16 +9042,31 @@ snapshots:
   '@cloudflare/workerd-darwin-64@1.20251001.0':
     optional: true
 
+  '@cloudflare/workerd-darwin-64@1.20251004.0':
+    optional: true
+
   '@cloudflare/workerd-darwin-arm64@1.20251001.0':
+    optional: true
+
+  '@cloudflare/workerd-darwin-arm64@1.20251004.0':
     optional: true
 
   '@cloudflare/workerd-linux-64@1.20251001.0':
     optional: true
 
+  '@cloudflare/workerd-linux-64@1.20251004.0':
+    optional: true
+
   '@cloudflare/workerd-linux-arm64@1.20251001.0':
     optional: true
 
+  '@cloudflare/workerd-linux-arm64@1.20251004.0':
+    optional: true
+
   '@cloudflare/workerd-windows-64@1.20251001.0':
+    optional: true
+
+  '@cloudflare/workerd-windows-64@1.20251004.0':
     optional: true
 
   '@cloudflare/workers-types@4.20251003.0': {}
@@ -9519,14 +9609,14 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core@0.23.14(react@19.1.1)(typescript@5.9.3)':
+  '@fireproof/core@0.23.14(react@19.2.0)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.4.43(typescript@5.9.3)
       '@fireproof/core-base': 0.23.14(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.14(typescript@5.9.3)
       '@fireproof/vendor': 0.23.14(typescript@5.9.3)
       '@types/node': 24.7.0
-      react: 19.1.1
+      react: 19.2.0
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -9998,11 +10088,11 @@ snapshots:
       - encoding
       - supports-color
 
-  '@mdx-js/react@3.1.1(@types/react@19.1.17)(react@19.1.1)':
+  '@mdx-js/react@3.1.1(@types/react@19.2.2)(react@19.2.0)':
     dependencies:
       '@types/mdx': 2.0.13
-      '@types/react': 19.1.17
-      react: 19.1.1
+      '@types/react': 19.2.2
+      react: 19.2.0
 
   '@mjackson/node-fetch-server@0.2.0': {}
 
@@ -10010,12 +10100,12 @@ snapshots:
     dependencies:
       state-local: 1.0.7
 
-  '@monaco-editor/react@4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@monaco-editor/react@4.7.0(monaco-editor@0.53.0)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@monaco-editor/loader': 1.5.0
       monaco-editor: 0.53.0
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
+      react: 19.2.0
+      react-dom: 19.1.1(react@19.2.0)
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
@@ -10571,20 +10661,20 @@ snapshots:
 
   '@posthog/core@1.2.2': {}
 
-  '@radix-ui/react-compose-refs@1.1.2(@types/react@19.1.17)(react@19.1.1)':
+  '@radix-ui/react-compose-refs@1.1.2(@types/react@19.2.2)(react@19.2.0)':
     dependencies:
-      react: 19.1.1
+      react: 19.2.0
     optionalDependencies:
-      '@types/react': 19.1.17
+      '@types/react': 19.2.2
 
-  '@radix-ui/react-slot@1.2.3(@types/react@19.1.17)(react@19.1.1)':
+  '@radix-ui/react-slot@1.2.3(@types/react@19.2.2)(react@19.2.0)':
     dependencies:
-      '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.1.17)(react@19.1.1)
-      react: 19.1.1
+      '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.2.2)(react@19.2.0)
+      react: 19.2.0
     optionalDependencies:
-      '@types/react': 19.1.17
+      '@types/react': 19.2.2
 
-  '@react-router/dev@7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3))(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.42.0(@cloudflare/workers-types@4.20251003.0))(yaml@2.8.1)':
+  '@react-router/dev@7.9.3(@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.42.1(@cloudflare/workers-types@4.20251003.0))(yaml@2.8.1)':
     dependencies:
       '@babel/core': 7.28.4
       '@babel/generator': 7.28.3
@@ -10594,7 +10684,7 @@ snapshots:
       '@babel/traverse': 7.28.4
       '@babel/types': 7.28.4
       '@npmcli/package-json': 4.0.1
-      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@remix-run/node-fetch-server': 0.9.0
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.10
@@ -10609,16 +10699,16 @@ snapshots:
       picocolors: 1.1.1
       prettier: 3.6.2
       react-refresh: 0.14.2
-      react-router: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      react-router: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       semver: 7.7.2
       tinyglobby: 0.2.15
       valibot: 0.41.0(typescript@5.9.3)
       vite: 7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
       vite-node: 3.2.4(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
     optionalDependencies:
-      '@react-router/serve': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+      '@react-router/serve': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       typescript: 5.9.3
-      wrangler: 4.42.0(@cloudflare/workers-types@4.20251003.0)
+      wrangler: 4.42.1(@cloudflare/workers-types@4.20251003.0)
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -10635,31 +10725,31 @@ snapshots:
       - tsx
       - yaml
 
-  '@react-router/express@7.9.3(express@4.21.2)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
+  '@react-router/express@7.9.3(express@4.21.2)(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)':
     dependencies:
-      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       express: 4.21.2
-      react-router: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      react-router: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/node@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
+  '@react-router/node@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      react-router: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      react-router: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)':
+  '@react-router/serve@7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      '@react-router/express': 7.9.3(express@4.21.2)(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
-      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.9.3)
+      '@react-router/express': 7.9.3(express@4.21.2)(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+      '@react-router/node': 7.9.3(react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       compression: 1.8.1
       express: 4.21.2
       get-port: 5.1.1
       morgan: 1.10.1
-      react-router: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      react-router: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
       source-map-support: 0.5.21
     transitivePeerDependencies:
       - supports-color
@@ -10826,14 +10916,14 @@ snapshots:
       axe-core: 4.10.3
       storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
 
-  '@storybook/addon-docs@9.1.10(@types/react@19.1.17)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))':
+  '@storybook/addon-docs@9.1.10(@types/react@19.2.2)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))':
     dependencies:
-      '@mdx-js/react': 3.1.1(@types/react@19.1.17)(react@19.1.1)
+      '@mdx-js/react': 3.1.1(@types/react@19.2.2)(react@19.2.0)
       '@storybook/csf-plugin': 9.1.10(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
-      '@storybook/icons': 1.6.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@storybook/react-dom-shim': 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
+      '@storybook/icons': 1.6.0(react-dom@19.1.1(react@19.1.1))(react@19.2.0)
+      '@storybook/react-dom-shim': 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.2.0)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
+      react: 19.2.0
+      react-dom: 19.1.1(react@19.2.0)
       storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       ts-dedent: 2.2.0
     transitivePeerDependencies:
@@ -10857,15 +10947,27 @@ snapshots:
 
   '@storybook/global@5.0.0': {}
 
-  '@storybook/icons@1.6.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@storybook/icons@1.6.0(react-dom@19.1.1(react@19.1.1))(react@19.2.0)':
     dependencies:
-      react: 19.1.1
+      react: 19.2.0
       react-dom: 19.1.1(react@19.1.1)
 
   '@storybook/react-dom-shim@9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))':
     dependencies:
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
+      storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+
+  '@storybook/react-dom-shim@9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.2.0)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))':
+    dependencies:
+      react: 19.2.0
+      react-dom: 19.1.1(react@19.1.1)
+      storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+
+  '@storybook/react-dom-shim@9.1.10(react-dom@19.1.1(react@19.2.0))(react@19.2.0)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))':
+    dependencies:
+      react: 19.2.0
+      react-dom: 19.1.1(react@19.2.0)
       storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
 
   '@storybook/react-vite@9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(rollup@4.52.4)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))':
@@ -10888,12 +10990,42 @@ snapshots:
       - supports-color
       - typescript
 
+  '@storybook/react-vite@9.1.10(react-dom@19.1.1(react@19.2.0))(react@19.2.0)(rollup@4.52.4)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))':
+    dependencies:
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.1(typescript@5.9.3)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+      '@rollup/pluginutils': 5.3.0(rollup@4.52.4)
+      '@storybook/builder-vite': 9.1.10(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+      '@storybook/react': 9.1.10(react-dom@19.1.1(react@19.2.0))(react@19.2.0)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)
+      find-up: 7.0.0
+      magic-string: 0.30.19
+      react: 19.2.0
+      react-docgen: 8.0.1
+      react-dom: 19.1.1(react@19.2.0)
+      resolve: 1.22.10
+      storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+      tsconfig-paths: 4.2.0
+      vite: 7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - rollup
+      - supports-color
+      - typescript
+
   '@storybook/react@9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)':
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/react-dom-shim': 9.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
+      storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
+    optionalDependencies:
+      typescript: 5.9.3
+
+  '@storybook/react@9.1.10(react-dom@19.1.1(react@19.2.0))(react@19.2.0)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)':
+    dependencies:
+      '@storybook/global': 5.0.0
+      '@storybook/react-dom-shim': 9.1.10(react-dom@19.1.1(react@19.2.0))(react@19.2.0)(storybook@9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)))
+      react: 19.2.0
+      react-dom: 19.1.1(react@19.2.0)
       storybook: 9.1.10(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
     optionalDependencies:
       typescript: 5.9.3
@@ -10998,15 +11130,15 @@ snapshots:
       picocolors: 1.1.1
       redent: 3.0.0
 
-  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.1.17))(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.1.11(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.1.1(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@babel/runtime': 7.28.4
       '@testing-library/dom': 10.4.1
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
+      react: 19.2.0
+      react-dom: 19.1.1(react@19.2.0)
     optionalDependencies:
-      '@types/react': 19.1.17
-      '@types/react-dom': 19.1.11(@types/react@19.1.17)
+      '@types/react': 19.2.2
+      '@types/react-dom': 19.1.11(@types/react@19.2.2)
 
   '@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1)':
     dependencies:
@@ -11113,11 +11245,11 @@ snapshots:
 
   '@types/normalize-package-data@2.4.4': {}
 
-  '@types/react-dom@19.1.11(@types/react@19.1.17)':
+  '@types/react-dom@19.1.11(@types/react@19.2.2)':
     dependencies:
-      '@types/react': 19.1.17
+      '@types/react': 19.2.2
 
-  '@types/react@19.1.17':
+  '@types/react@19.2.2':
     dependencies:
       csstype: 3.1.3
 
@@ -15095,6 +15227,24 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  miniflare@4.20251004.0:
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      acorn: 8.14.0
+      acorn-walk: 8.3.2
+      exit-hook: 2.2.1
+      glob-to-regexp: 0.4.1
+      sharp: 0.33.5
+      stoppable: 1.1.0
+      undici: 7.14.0
+      workerd: 1.20251004.0
+      ws: 8.18.0
+      youch: 4.1.0-beta.10
+      zod: 3.22.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   minimatch@3.1.2:
     dependencies:
       brace-expansion: 1.1.12
@@ -16070,10 +16220,10 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-cookie-consent@9.0.0(react@19.1.1):
+  react-cookie-consent@9.0.0(react@19.2.0):
     dependencies:
       js-cookie: 2.2.1
-      react: 19.1.1
+      react: 19.2.0
 
   react-docgen-typescript@2.4.0(typescript@5.9.3):
     dependencies:
@@ -16099,19 +16249,24 @@ snapshots:
       react: 19.1.1
       scheduler: 0.26.0
 
+  react-dom@19.1.1(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+      scheduler: 0.26.0
+
   react-ga4@2.1.0: {}
 
-  react-ga@3.3.1(prop-types@15.8.1)(react@19.1.1):
+  react-ga@3.3.1(prop-types@15.8.1)(react@19.2.0):
     dependencies:
       prop-types: 15.8.1
-      react: 19.1.1
+      react: 19.2.0
 
-  react-hot-toast@2.6.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  react-hot-toast@2.6.0(react-dom@19.1.1(react@19.2.0))(react@19.2.0):
     dependencies:
       csstype: 3.1.3
       goober: 2.1.18(csstype@3.1.3)
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
+      react: 19.2.0
+      react-dom: 19.1.1(react@19.2.0)
 
   react-is@16.13.1: {}
 
@@ -16119,16 +16274,16 @@ snapshots:
 
   react-is@18.3.1: {}
 
-  react-markdown@10.1.0(@types/react@19.1.17)(react@19.1.1):
+  react-markdown@10.1.0(@types/react@19.2.2)(react@19.2.0):
     dependencies:
       '@types/hast': 3.0.4
       '@types/mdast': 4.0.4
-      '@types/react': 19.1.17
+      '@types/react': 19.2.2
       devlop: 1.1.0
       hast-util-to-jsx-runtime: 2.3.6
       html-url-attributes: 3.0.1
       mdast-util-to-hast: 13.2.0
-      react: 19.1.1
+      react: 19.2.0
       remark-parse: 11.0.0
       remark-rehype: 11.1.2
       unified: 11.0.5
@@ -16141,21 +16296,23 @@ snapshots:
 
   react-refresh@0.17.0: {}
 
-  react-router-dom@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  react-router-dom@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0):
     dependencies:
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
-      react-router: 7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      react: 19.2.0
+      react-dom: 19.1.1(react@19.2.0)
+      react-router: 7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0)
 
-  react-router@7.9.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  react-router@7.9.3(react-dom@19.1.1(react@19.2.0))(react@19.2.0):
     dependencies:
       cookie: 1.0.2
-      react: 19.1.1
+      react: 19.2.0
       set-cookie-parser: 2.7.1
     optionalDependencies:
-      react-dom: 19.1.1(react@19.1.1)
+      react-dom: 19.1.1(react@19.2.0)
 
   react@19.1.1: {}
+
+  react@19.2.0: {}
 
   read-package-up@11.0.0:
     dependencies:
@@ -17342,6 +17499,27 @@ snapshots:
       - typescript
       - utf-8-validate
 
+  use-fireproof@0.23.14(@adviser/cement@0.4.43(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3):
+    dependencies:
+      '@adviser/cement': 0.4.43(typescript@5.9.3)
+      '@fireproof/core-base': 0.23.14(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.23.14(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.23.14(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.23.14(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.23.14(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.23.14(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.23.14(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.23.14(typescript@5.9.3)
+      '@fireproof/vendor': 0.23.14(typescript@5.9.3)
+      dompurify: 3.2.7
+      jose: 6.1.0
+      react: 19.2.0
+      ts-essentials: 10.1.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
   util-deprecate@1.0.2: {}
 
   utils-merge@1.0.1: {}
@@ -17602,6 +17780,14 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20251001.0
       '@cloudflare/workerd-windows-64': 1.20251001.0
 
+  workerd@1.20251004.0:
+    optionalDependencies:
+      '@cloudflare/workerd-darwin-64': 1.20251004.0
+      '@cloudflare/workerd-darwin-arm64': 1.20251004.0
+      '@cloudflare/workerd-linux-64': 1.20251004.0
+      '@cloudflare/workerd-linux-arm64': 1.20251004.0
+      '@cloudflare/workerd-windows-64': 1.20251004.0
+
   wrangler@4.42.0(@cloudflare/workers-types@4.20251003.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.0
@@ -17612,6 +17798,23 @@ snapshots:
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.21
       workerd: 1.20251001.0
+    optionalDependencies:
+      '@cloudflare/workers-types': 4.20251003.0
+      fsevents: 2.3.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  wrangler@4.42.1(@cloudflare/workers-types@4.20251003.0):
+    dependencies:
+      '@cloudflare/kv-asset-handler': 0.4.0
+      '@cloudflare/unenv-preset': 2.7.7(unenv@2.0.0-rc.21)(workerd@1.20251004.0)
+      blake3-wasm: 2.1.5
+      esbuild: 0.25.4
+      miniflare: 4.20251004.0
+      path-to-regexp: 6.3.0
+      unenv: 2.0.0-rc.21
+      workerd: 1.20251004.0
     optionalDependencies:
       '@cloudflare/workers-types': 4.20251003.0
       fsevents: 2.3.3
