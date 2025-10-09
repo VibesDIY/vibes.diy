@@ -1,5 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { getWrapperStyle, getMenuStyle, getContentWrapperStyle, getContentStyle, getToggleButtonStyle } from './HiddenMenuWrapper.styles.js';
+import {
+  getWrapperStyle,
+  getMenuStyle,
+  getContentWrapperStyle,
+  getContentStyle,
+  getToggleButtonStyle,
+} from './HiddenMenuWrapper.styles.js';
 import { VibesIconPill } from '../VibesIconPill/VibesIconPill.js';
 
 export interface HiddenMenuWrapperProps {

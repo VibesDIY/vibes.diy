@@ -5,7 +5,12 @@ import VibesGeneratorExample from './VibesGeneratorExample';
 import VibeControlExample from './VibeControlExample';
 import './App.css';
 
-export type ExampleKey = 'home' | 'image-generator' | 'todo-list' | 'vibes-generator' | 'vibe-control';
+export type ExampleKey =
+  | 'home'
+  | 'image-generator'
+  | 'todo-list'
+  | 'vibes-generator'
+  | 'vibe-control';
 
 function App() {
   const [currentExample, setCurrentExample] = useState<ExampleKey>('home');
