@@ -560,8 +560,8 @@ importers:
         specifier: ^13.3.7
         version: 13.4.1
       posthog-js:
-        specifier: ^1.273.1
-        version: 1.273.1
+        specifier: ^1.274.1
+        version: 1.274.1
       react:
         specifier: ~19.1.0
         version: 19.1.1
@@ -714,8 +714,8 @@ importers:
         specifier: ^13.3.7
         version: 13.4.1
       posthog-js:
-        specifier: ^1.273.1
-        version: 1.273.1
+        specifier: ^1.274.1
+        version: 1.274.1
       react:
         specifier: ~19.1.0
         version: 19.1.1
@@ -811,8 +811,8 @@ importers:
         specifier: ^13.3.7
         version: 13.4.1
       posthog-js:
-        specifier: ^1.273.1
-        version: 1.273.1
+        specifier: ^1.274.1
+        version: 1.274.1
       react:
         specifier: ~19.1.0
         version: 19.1.1
@@ -2497,8 +2497,8 @@ packages:
   '@poppinss/exception@1.2.2':
     resolution: {integrity: sha512-m7bpKCD4QMlFCjA/nKTs23fuvoVFoA83brRKmObCUNmi/9tVu8Ve3w4YQAnJu4q3Tjf5fr685HYIC/IA2zHRSg==}
 
-  '@posthog/core@1.2.2':
-    resolution: {integrity: sha512-f16Ozx6LIigRG+HsJdt+7kgSxZTHeX5f1JlCGKI1lXcvlZgfsCR338FuMI2QRYXGl+jg/vYFzGOTQBxl90lnBg==}
+  '@posthog/core@1.2.4':
+    resolution: {integrity: sha512-o2TkycuV98PtAkcqE8B1DJv5LBvHEDTWirK5TlkQMeF2MJg0BYliY95CeRZFILNgZJCbI3k/fhahSMRQlpXOMg==}
 
   '@radix-ui/react-compose-refs@1.1.2':
     resolution: {integrity: sha512-z4eqJvfiNnFMHIIvXP3CY57y2WJs5g2v3X0zm9mEJkrkNv4rDxu+sg9Jh8EkXyeqBkB7SOcboo9dMVqhyrACIg==}
@@ -6898,8 +6898,8 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.273.1:
-    resolution: {integrity: sha512-6w3j6nAWJj7W7/iksWLXRpdLrLZrQA8jTsEQ71bvmyw4bwCqhgPfxutrmeoAUNaxot2FB1JHc9Lagslg35h61g==}
+  posthog-js@1.274.1:
+    resolution: {integrity: sha512-edHhkoSIX0h2BApdc+D2fBElgMnLCwrf5dcsMms57IT+dFDIF7WcyuyAyh3LC50s1f/+mEHt20QW7auAcum+Kg==}
     peerDependencies:
       '@rrweb/types': 2.0.0-alpha.17
       rrweb-snapshot: 2.0.0-alpha.17
@@ -10554,7 +10554,7 @@ snapshots:
 
   '@poppinss/exception@1.2.2': {}
 
-  '@posthog/core@1.2.2': {}
+  '@posthog/core@1.2.4': {}
 
   '@radix-ui/react-compose-refs@1.1.2(@types/react@19.1.17)(react@19.1.1)':
     dependencies:
@@ -15820,9 +15820,9 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  posthog-js@1.273.1:
+  posthog-js@1.274.1:
     dependencies:
-      '@posthog/core': 1.2.2
+      '@posthog/core': 1.2.4
       core-js: 3.45.1
       fflate: 0.4.8
       preact: 10.27.2
