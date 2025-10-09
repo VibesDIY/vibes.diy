@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getButtonStyle } from './VibesButton.styles.js';
 
 type ButtonVariant = 'primary' | 'secondary' | 'tertiary';
@@ -6,6 +6,8 @@ type ButtonVariant = 'primary' | 'secondary' | 'tertiary';
 export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   children: React.ReactNode;
+  onHover?: () => void;
+  onUnhover?: () => void;
 }
 
 export function VibesButton({ variant = 'primary', children, ...props }: MenuButtonProps) {
@@ -13,6 +15,14 @@ export function VibesButton({ variant = 'primary', children, ...props }: MenuBut
   const [isActive, setActive] = useState(false);
 
   const style = getButtonStyle(variant, isHovered, isActive);
+
+  useEffect(() => {
+    if (isHovered) {
+      props.onHover && props.onHover();
+    } else {
+      props.onUnhover && props.onUnhover();
+    }
+  }, [isHovered]);
 
   return (
     <button
