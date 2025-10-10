@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ImageGeneratorExample from './ImageGeneratorExample';
 import TodoListExample from './TodoListExample';
 import VibesGeneratorExample from './VibesGeneratorExample';
@@ -17,7 +17,40 @@ export type ExampleKey =
   | 'mount-vibes-app';
 
 function App() {
-  const [currentExample, setCurrentExample] = useState<ExampleKey>('home');
+  const [currentExample, setCurrentExample] = useState<ExampleKey>(() => {
+    // Initialize from URL path
+    const path = window.location.pathname;
+    if (path === '/mount-vibes-app') {
+      return 'mount-vibes-app';
+    }
+    return 'home';
+  });
+
+  // Handle URL changes and browser back button
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/mount-vibes-app') {
+        setCurrentExample('mount-vibes-app');
+      } else {
+        setCurrentExample('home');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Update URL when example changes
+  const handleExampleChange = (example: ExampleKey) => {
+    setCurrentExample(example);
+    
+    if (example === 'mount-vibes-app') {
+      window.history.pushState({}, '', '/mount-vibes-app');
+    } else {
+      window.history.pushState({}, '', '/');
+    }
+  };
 
   const examples = [
     {
@@ -42,7 +75,7 @@ function App() {
       key: 'vibe-control' as const,
       title: 'Vibe Control',
       description: 'Floating action button with overlay - works in React and vanilla JS',
-      component: <VibeControlExample setCurrentExample={setCurrentExample} />,
+      component: <VibeControlExample setCurrentExample={handleExampleChange} />,
     },
     {
       key: 'vibe-auth-wall' as const,
@@ -54,7 +87,7 @@ function App() {
       key: 'mount-vibes-app' as const,
       title: 'Mount Vibes App',
       description: 'Test unified mountVibesApp function with DOM wrapping',
-      component: <MountVibesAppExample setCurrentExample={setCurrentExample} />,
+      component: <MountVibesAppExample setCurrentExample={handleExampleChange} />,
     },
   ];
 
@@ -87,7 +120,7 @@ function App() {
               backgroundColor: '#fff',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             }}
-            onClick={() => setCurrentExample(example.key)}
+            onClick={() => handleExampleChange(example.key)}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
@@ -144,7 +177,7 @@ function App() {
           }}
         >
           <button
-            onClick={() => setCurrentExample('home')}
+            onClick={() => handleExampleChange('home')}
             style={{
               background: 'none',
               border: 'none',
