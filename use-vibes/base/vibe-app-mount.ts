@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom/client';
 import { AuthWall } from './components/AuthWall/AuthWall.js';
 import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 import { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
-import { getMenuStyle, getContentWrapperStyle } from './components/HiddenMenuWrapper/HiddenMenuWrapper.styles.js';
+import { getMenuStyle } from './components/HiddenMenuWrapper/HiddenMenuWrapper.styles.js';
 import { useFireproof } from './index.js';
 
 /**
@@ -84,35 +84,46 @@ function VibesApp({
     }
   }, [menuOpen]);
 
-  // Effect to manage content wrapper visibility and styling (like HiddenMenuWrapper)
+  // Effect to manage target container visibility and styling
   React.useEffect(() => {
     if (!targetContainer) return;
 
     if (showAuthWall) {
       // Hide/blur the original content during auth
-      Object.assign(targetContainer.style, {
-        filter: 'blur(8px)',
-        pointerEvents: 'none',
-        transition: 'none',
-        transform: 'none'
-      });
+      targetContainer.style.filter = 'blur(8px)';
+      targetContainer.style.pointerEvents = 'none';
+      targetContainer.style.transition = 'none';
+      targetContainer.style.transform = 'none';
     } else {
-      // Apply HiddenMenuWrapper content wrapper styling
-      const contentWrapperStyle = getContentWrapperStyle(menuHeight, menuOpen);
-      Object.assign(targetContainer.style, contentWrapperStyle);
+      // Apply HiddenMenuWrapper-style transforms when authenticated
+      const duration = '0.4s';
+      const easing = 'ease';
+      targetContainer.style.transition = `transform ${duration} ${easing}, filter 0.3s ${easing}`;
+      targetContainer.style.position = 'relative';
+      targetContainer.style.zIndex = '10';
+      targetContainer.style.backgroundColor = 'var(--hm-content-bg, #1e1e1e)';
+      
+      if (menuOpen && menuHeight > 0) {
+        targetContainer.style.transform = `translateY(-${menuHeight}px)`;
+        targetContainer.style.filter = 'blur(4px)';
+        targetContainer.style.pointerEvents = 'none';
+      } else {
+        targetContainer.style.transform = 'translateY(0)';
+        targetContainer.style.filter = 'none';
+        targetContainer.style.pointerEvents = 'auto';
+      }
     }
 
     return () => {
-      // Cleanup - restore original content wrapper
+      // Cleanup - restore original content
       if (targetContainer) {
-        const stylesToReset = [
-          'filter', 'pointerEvents', 'transform', 'transition', 
-          'position', 'zIndex', 'backgroundColor', 'top', 'left', 
-          'right', 'bottom', 'overflowY'
-        ];
-        stylesToReset.forEach(prop => {
-          targetContainer.style[prop as any] = '';
-        });
+        targetContainer.style.filter = 'none';
+        targetContainer.style.pointerEvents = 'auto';
+        targetContainer.style.transform = 'none';
+        targetContainer.style.transition = 'none';
+        targetContainer.style.position = '';
+        targetContainer.style.zIndex = '';
+        targetContainer.style.backgroundColor = '';
       }
     };
   }, [showAuthWall, targetContainer, menuOpen, menuHeight]);
@@ -189,19 +200,7 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     containerElement = document.body;
   }
 
-  // Create content wrapper and move all existing body children into it
-  // This prevents our overlay from being affected by transforms
-  const contentWrapper = document.createElement('div');
-  contentWrapper.id = 'vibes-content-wrapper';
-  const existingChildren = Array.from(document.body.children);
-  
-  // Move all existing children to the wrapper
-  existingChildren.forEach(child => {
-    contentWrapper.appendChild(child);
-  });
-  document.body.appendChild(contentWrapper);
-
-  // Create overlay portal as sibling to content wrapper
+  // Create overlay portal (simple approach)
   const overlayDiv = document.createElement('div');
   overlayDiv.style.position = 'fixed';
   overlayDiv.style.inset = '0';
@@ -211,12 +210,12 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
 
   const root = ReactDOM.createRoot(overlayDiv);
 
-  // Pass the content wrapper to VibesApp for transforms
+  // Pass the container element to VibesApp (back to simple approach)
   root.render(React.createElement(VibesApp, { 
     database, 
     title, 
     imageUrl, 
-    targetContainer: contentWrapper 
+    targetContainer: containerElement 
   }));
 
   return {
@@ -227,18 +226,8 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
         if (overlayDiv.parentNode) {
           overlayDiv.parentNode.removeChild(overlayDiv);
         }
-        
-        // Restore original DOM structure by unwrapping content
-        if (contentWrapper && contentWrapper.parentNode) {
-          const children = Array.from(contentWrapper.children);
-          children.forEach(child => {
-            document.body.appendChild(child);
-          });
-          contentWrapper.parentNode.removeChild(contentWrapper);
-        }
-        
         // Restore original container styles
-        if (containerElement && containerElement !== contentWrapper) {
+        if (containerElement) {
           containerElement.style.filter = 'none';
           containerElement.style.pointerEvents = 'auto';
         }
