@@ -20,7 +20,8 @@ const MountVibesAppExample = ({ setCurrentExample }: MountVibesAppExampleProps) 
       try {
         setStatus('Mounting VibesApp...');
         
-        // Mount the app to wrap the existing content (use document.body like real usage)
+        // Mount the app to wrap document.body (like real usage)
+        // This will wrap the entire React app, demonstrating the z-index layering issue
         currentMountResult = mountVibesApp({
           title: 'Mount Test App',
           database: 'mount-test-db'
