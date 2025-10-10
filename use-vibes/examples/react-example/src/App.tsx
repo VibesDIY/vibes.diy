@@ -22,6 +22,8 @@ function App() {
     const path = window.location.pathname;
     if (path === '/mount-vibes-app') {
       return 'mount-vibes-app';
+    } else if (path === '/vibe-control') {
+      return 'vibe-control';
     }
     return 'home';
   });
@@ -32,6 +34,8 @@ function App() {
       const path = window.location.pathname;
       if (path === '/mount-vibes-app') {
         setCurrentExample('mount-vibes-app');
+      } else if (path === '/vibe-control') {
+        setCurrentExample('vibe-control');
       } else {
         setCurrentExample('home');
       }
@@ -47,6 +51,8 @@ function App() {
     
     if (example === 'mount-vibes-app') {
       window.history.pushState({}, '', '/mount-vibes-app');
+    } else if (example === 'vibe-control') {
+      window.history.pushState({}, '', '/vibe-control');
     } else {
       window.history.pushState({}, '', '/');
     }
