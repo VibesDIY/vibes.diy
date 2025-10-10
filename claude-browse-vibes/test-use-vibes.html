@@ -2,22 +2,28 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Test use-vibes import</title>
+    <title>Test use-vibes unified mount function</title>
   </head>
   <body>
-    <div id="output"></div>
+    <div id="output">Loading...</div>
     <script type="module">
       try {
-        const { mountVibeControlToBody } = await import(
-          "https://esm.sh/use-vibes@0.12.15-dev"
+        const { mountVibesApp } = await import(
+          "https://esm.sh/use-vibes@0.12.15-dev06"
         );
+        
         document.getElementById("output").textContent =
-          "Success: mountVibeControlToBody imported";
-        console.log("Success:", mountVibeControlToBody);
+          "Success: mountVibesApp imported and mounted!";
+        console.log("Success: mountVibesApp function imported:", mountVibesApp);
+        
+        // Actually mount the app to test the full functionality
+        const result = mountVibesApp();
+        console.log("Mount result:", result);
+        
       } catch (error) {
         document.getElementById("output").textContent =
           "Error: " + error.message;
-        console.error("Import error:", error);
+        console.error("Import or mount error:", error);
       }
     </script>
   </body>
