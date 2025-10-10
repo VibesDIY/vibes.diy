@@ -261,6 +261,8 @@ export type { MountVibeControlOptions, MountVibeControlResult } from './vibe-con
 // Export HiddenMenuWrapper component and utilities
 export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 export type { HiddenMenuWrapperProps } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
+export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
+export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
 export {
   mountHiddenMenuWrapper,
   mountHiddenMenuWrapperToBody,
