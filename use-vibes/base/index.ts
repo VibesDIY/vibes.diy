@@ -248,36 +248,19 @@ export type {
 export { useVibes } from './hooks/vibes-gen/index.js';
 export type { UseVibesOptions, UseVibesResult, VibeDocument } from '@vibes.diy/use-vibes-types';
 
-// Export VibeControl component and utilities
+// Export components for React users
 export { VibeControl } from './components/VibeControl.js';
 export type { VibeControlProps } from './components/VibeControl.js';
-export {
-  mountVibeControl,
-  mountVibeControlToBody,
-  autoMountVibeControl,
-} from './vibe-control-mount.js';
-export type { MountVibeControlOptions, MountVibeControlResult } from './vibe-control-mount.js';
-
-// Export HiddenMenuWrapper component and utilities
 export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 export type { HiddenMenuWrapperProps } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
-export {
-  mountHiddenMenuWrapper,
-  mountHiddenMenuWrapperToBody,
-  autoMountHiddenMenuWrapper,
-} from './vibe-hidden-menu-mount.js';
-export type {
-  MountHiddenMenuWrapperOptions,
-  MountHiddenMenuWrapperResult,
-} from './vibe-hidden-menu-mount.js';
-
-// Export AuthWall component and utilities
 export { AuthWall } from './components/AuthWall/AuthWall.js';
 export type { AuthWallProps } from './components/AuthWall/AuthWall.js';
-export { mountAuthWall } from './vibe-auth-wall.js';
-export type { MountAuthWallOptions, MountAuthWallResult } from './vibe-auth-wall.js';
+
+// Export unified mount function - the main API for non-React environments
+export { mountVibesApp, mountVibesAppToBody } from './vibe-app-mount.js';
+export type { MountVibesAppOptions, MountVibesAppResult } from './vibe-app-mount.js';
 export {
   vibeControlTheme,
   createVibeControlStyles,
