@@ -276,3 +276,4 @@ export {
   defaultVibeControlClasses,
 } from './utils/vibe-control-styles.js';
 export type { VibeControlClasses } from './utils/vibe-control-styles.js';
+export { hiddenMenuTheme } from './components/HiddenMenuWrapper/HiddenMenuWrapper.styles.js';

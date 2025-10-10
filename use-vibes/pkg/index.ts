@@ -42,6 +42,7 @@ export {
   createVibeControlStyles,
   defaultVibeControlClasses,
   type VibeControlClasses,
+  hiddenMenuTheme,
 
   // Type namespaces
   type Fireproof,

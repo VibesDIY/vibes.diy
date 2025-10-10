@@ -1,3 +1,49 @@
+/**
+ * HiddenMenuWrapper Component Styling
+ * Following the same pattern as VibeControl styles for consistency
+ *
+ * Dark mode support:
+ * Override CSS variables in your stylesheet using:
+ *
+ * @media (prefers-color-scheme: dark) {
+ *   :root {
+ *     --hm-menu-bg: #2a2a2a;
+ *     --hm-menu-text: #e0e0e0;
+ *     --hm-content-bg: #1a1a1a;
+ *     --hm-shadow: rgba(255, 255, 255, 0.1);
+ *   }
+ * }
+ */
+
+// CSS Custom Properties (Variables) as JavaScript constants with fallbacks
+export const hiddenMenuTheme = {
+  colors: {
+    menuBg: 'var(--hm-menu-bg, #d4d4d4)',
+    menuText: 'var(--hm-menu-text, white)',
+    contentBg: 'var(--hm-content-bg, #1e1e1e)',
+    shadow: 'var(--hm-shadow, rgba(0, 0, 0, 0.3))',
+    gridLineColor: 'var(--hm-grid-line, rgba(255, 255, 255, 0.5))',
+  },
+
+  zIndex: {
+    menu: 5,
+    content: 10,
+    toggle: 20,
+  },
+
+  dimensions: {
+    gridSize: '40px',
+    padding: '24px',
+    bottomOffset: '16px',
+  },
+
+  animation: {
+    duration: '0.4s',
+    easing: 'ease',
+    blurAmount: '4px',
+  },
+};
+
 export const getWrapperStyle = (): React.CSSProperties => ({
   position: 'relative',
   overflow: 'hidden',
@@ -8,16 +54,16 @@ export const getMenuStyle = (): React.CSSProperties => ({
   bottom: 0,
   left: 0,
   right: 0,
-  zIndex: 5,
-  color: 'white',
-  padding: '24px',
-  boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.3)',
-  backgroundColor: '#d4d4d4',
+  zIndex: hiddenMenuTheme.zIndex.menu,
+  color: hiddenMenuTheme.colors.menuText,
+  padding: hiddenMenuTheme.dimensions.padding,
+  boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
+  backgroundColor: hiddenMenuTheme.colors.menuBg,
   backgroundImage: `
-    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px)
+    linear-gradient(${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px),
+    linear-gradient(90deg, ${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px)
   `,
-  backgroundSize: '40px 40px',
+  backgroundSize: hiddenMenuTheme.dimensions.gridSize + ' ' + hiddenMenuTheme.dimensions.gridSize,
 });
 
 export const getContentStyle = (): React.CSSProperties => ({
@@ -35,19 +81,19 @@ export const getContentWrapperStyle = (
   left: 0,
   right: 0,
   bottom: 0,
-  zIndex: 10,
-  transition: 'transform 0.4s ease, filter 0.3s ease',
+  zIndex: hiddenMenuTheme.zIndex.content,
+  transition: `transform ${hiddenMenuTheme.animation.duration} ${hiddenMenuTheme.animation.easing}, filter 0.3s ${hiddenMenuTheme.animation.easing}`,
   transform: menuOpen ? `translateY(-${menuHeight}px)` : 'translateY(0)',
   overflowY: 'auto',
-  backgroundColor: '#1e1e1e',
-  filter: menuOpen ? 'blur(4px)' : 'none',
+  backgroundColor: hiddenMenuTheme.colors.contentBg,
+  filter: menuOpen ? `blur(${hiddenMenuTheme.animation.blurAmount})` : 'none',
 });
 
 export const getToggleButtonStyle = (): React.CSSProperties => ({
   position: 'fixed',
-  bottom: 16,
+  bottom: hiddenMenuTheme.dimensions.bottomOffset,
   right: 0,
-  zIndex: 20,
+  zIndex: hiddenMenuTheme.zIndex.toggle,
   backgroundColor: 'transparent',
   border: 'none',
   cursor: 'pointer',
