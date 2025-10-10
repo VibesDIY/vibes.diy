@@ -99,8 +99,7 @@ function VibesApp({
       const duration = '0.4s';
       const easing = 'ease';
       targetContainer.style.transition = `transform ${duration} ${easing}, filter 0.3s ${easing}`;
-      targetContainer.style.position = 'relative';
-      targetContainer.style.zIndex = '10';
+      // Don't change positioning context - keep it as-is for document.body
       targetContainer.style.backgroundColor = 'var(--hm-content-bg, #1e1e1e)';
       
       if (menuOpen && menuHeight > 0) {
@@ -121,8 +120,6 @@ function VibesApp({
         targetContainer.style.pointerEvents = 'auto';
         targetContainer.style.transform = 'none';
         targetContainer.style.transition = 'none';
-        targetContainer.style.position = '';
-        targetContainer.style.zIndex = '';
         targetContainer.style.backgroundColor = '';
       }
     };
@@ -161,23 +158,26 @@ function VibesApp({
       }
     }, React.createElement(VibesPanel)),
 
-    // VibesSwitch button with HiddenMenuWrapper styling
-    React.createElement('button', {
+    // VibesSwitch button container (fixed positioning)
+    React.createElement('div', {
+      style: {
+        position: 'fixed',
+        bottom: '16px',
+        right: '16px',
+        zIndex: 20, // Match HiddenMenuWrapper z-index
+        pointerEvents: 'auto'
+      }
+    }, React.createElement('button', {
       'aria-haspopup': 'dialog',
       'aria-expanded': menuOpen,
       'aria-controls': 'hidden-menu',
       onClick: () => setMenuOpen(!menuOpen),
       style: {
-        position: 'fixed',
-        bottom: '16px',
-        right: '0',
-        zIndex: 20, // Match HiddenMenuWrapper z-index
         backgroundColor: 'transparent',
         border: 'none',
-        cursor: 'pointer',
-        pointerEvents: 'auto'
+        cursor: 'pointer'
       }
-    }, React.createElement(VibesSwitch, { size: 80 }))
+    }, React.createElement(VibesSwitch, { size: 80 })))
   );
 }
 
