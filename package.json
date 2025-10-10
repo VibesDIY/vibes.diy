@@ -17,6 +17,7 @@
   },
   "scripts": {
     "xbuild:base": "pnpm --filter use-vibes-base build",
+    
     "build": "core-cli tsc",
     "lint": "eslint .",
     "test": "cross-env DISABLE_REACT_ROUTER=true vitest --run",
