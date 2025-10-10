@@ -31,7 +31,7 @@ function updateBodyClass() {
 export { fireproof, ImgFile, ManualRedirectStrategy };
 
 // Re-export all types under a namespace
-export type * as Fireproof from 'use-fireproof';
+  export type * as Fireproof from 'use-fireproof';
 
 // Helper function to create toCloud configuration with ManualRedirectStrategy
 export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
@@ -340,7 +340,7 @@ import { callAI } from 'call-ai';
 export { callAI, callAI as callAi };
 
 // Re-export all types under a namespace
-export type * as CallAI from 'call-ai';
+  export type * as CallAI from 'call-ai';
 
 // Export ImgGen component - the primary export
 export { default as ImgGen } from './components/ImgGen.js';
@@ -349,8 +349,8 @@ export type { ImgGenProps } from './components/ImgGen.js';
 // Export all components for testing and advanced usage
 export { ControlsBar } from './components/ControlsBar.js';
 export { PromptBar } from './components/PromptBar.js';
-export { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
 export { VibesButton } from './components/VibesButton/VibesButton.js';
+export { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
 
 // Export hooks
 export { hashInput, useImageGen } from './hooks/image-gen/index.js';
@@ -377,7 +377,7 @@ export type {
   ImageDocument,
   PartialImageDocument,
   UseImageGenOptions,
-  UseImageGenResult,
+  UseImageGenResult
 } from '@vibes.diy/use-vibes-types';
 
 // Export useVibes hook and types
@@ -388,29 +388,26 @@ export { useVibes } from './hooks/vibes-gen/index.js';
 export { VibeControl } from './components/VibeControl.js';
 export type { VibeControlProps } from './components/VibeControl.js';
 export {
-  mountVibeControl,
-  mountVibeControlToBody,
-  autoMountVibeControl,
+  autoMountVibeControl, mountVibeControl,
+  mountVibeControlToBody
 } from './vibe-control-mount.js';
 export type { MountVibeControlOptions, MountVibeControlResult } from './vibe-control-mount.js';
 
 // Export HiddenMenuWrapper component and utilities
 export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 export type { HiddenMenuWrapperProps } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
+export { hiddenMenuTheme } from './components/HiddenMenuWrapper/HiddenMenuWrapper.styles.js';
 export {
-  mountHiddenMenuWrapper,
-  mountHiddenMenuWrapperToBody,
-  autoMountHiddenMenuWrapper,
+  createVibeControlStyles,
+  defaultVibeControlClasses, vibeControlTheme
+} from './utils/vibe-control-styles.js';
+export type { VibeControlClasses } from './utils/vibe-control-styles.js';
+export {
+  autoMountHiddenMenuWrapper, mountHiddenMenuWrapper,
+  mountHiddenMenuWrapperToBody
 } from './vibe-hidden-menu-mount.js';
 export type {
   MountHiddenMenuWrapperOptions,
-  MountHiddenMenuWrapperResult,
+  MountHiddenMenuWrapperResult
 } from './vibe-hidden-menu-mount.js';
-export {
-  vibeControlTheme,
-  createVibeControlStyles,
-  defaultVibeControlClasses,
-  vibeControlTheme,
-} from './utils/vibe-control-styles.js';
-export type { VibeControlClasses } from './utils/vibe-control-styles.js';
-export { hiddenMenuTheme } from './components/HiddenMenuWrapper/HiddenMenuWrapper.styles.js';
+
