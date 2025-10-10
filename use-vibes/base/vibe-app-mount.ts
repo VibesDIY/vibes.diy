@@ -107,19 +107,19 @@ function VibesApp({
         targetContainer.style.filter = 'blur(4px)';
         targetContainer.style.pointerEvents = 'none';
       } else {
-        targetContainer.style.transform = 'translateY(0)';
-        targetContainer.style.filter = 'none';
-        targetContainer.style.pointerEvents = 'auto';
+        targetContainer.style.transform = '';  // Remove transform entirely
+        targetContainer.style.filter = '';
+        targetContainer.style.pointerEvents = '';
       }
     }
 
     return () => {
       // Cleanup - restore original content
       if (targetContainer) {
-        targetContainer.style.filter = 'none';
-        targetContainer.style.pointerEvents = 'auto';
-        targetContainer.style.transform = 'none';
-        targetContainer.style.transition = 'none';
+        targetContainer.style.filter = '';
+        targetContainer.style.pointerEvents = '';
+        targetContainer.style.transform = '';
+        targetContainer.style.transition = '';
         targetContainer.style.backgroundColor = '';
       }
     };
@@ -158,10 +158,10 @@ function VibesApp({
       }
     }, React.createElement(VibesPanel)),
 
-    // VibesSwitch button container (fixed positioning)
+    // VibesSwitch button container (absolute positioning relative to overlay)
     React.createElement('div', {
       style: {
-        position: 'fixed',
+        position: 'absolute',
         bottom: '16px',
         right: '16px',
         zIndex: 20, // Match HiddenMenuWrapper z-index
