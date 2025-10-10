@@ -34,10 +34,12 @@ function VibesApp({
   database = 'vibes-app',
   title = 'Vibes App',
   imageUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80',
+  children = null,
 }: {
   database?: string;
   title?: string;
   imageUrl?: string;
+  children?: React.ReactNode;
 }) {
   const { enableSync, syncEnabled } = useFireproof(database);
   const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled);
@@ -76,7 +78,7 @@ function VibesApp({
   }
 
   return React.createElement(HiddenMenuWrapper, {
-    children: null,
+    children: children,
     menuContent: React.createElement(VibesPanel),
   });
 }
@@ -100,12 +102,38 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     containerElement = document.body;
   }
 
+  // Capture existing content before mounting
+  const existingChildren = Array.from(containerElement.childNodes);
+  const contentWrapper = document.createElement('div');
+  
+  // Move existing content into wrapper
+  existingChildren.forEach(child => {
+    contentWrapper.appendChild(child);
+  });
+
   const mountDiv = document.createElement('div');
   containerElement.appendChild(mountDiv);
 
   const root = ReactDOM.createRoot(mountDiv);
 
-  root.render(React.createElement(VibesApp, { database, title, imageUrl }));
+  // Create React element from existing content
+  const existingContentElement = React.createElement('div', {
+    ref: (ref: HTMLDivElement | null) => {
+      if (ref && contentWrapper.childNodes.length > 0) {
+        // Move the wrapped content into the React component
+        Array.from(contentWrapper.childNodes).forEach(child => {
+          ref.appendChild(child);
+        });
+      }
+    }
+  });
+
+  root.render(React.createElement(VibesApp, { 
+    database, 
+    title, 
+    imageUrl, 
+    children: existingContentElement 
+  }));
 
   return {
     unmount: () => {
