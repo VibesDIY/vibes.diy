@@ -8,12 +8,16 @@
     <div id="output"></div>
     <script type="module">
       try {
-        const { mountVibeControlToBody } = await import('https://esm.sh/use-vibes@0.12.15-dev');
-        document.getElementById('output').textContent = 'Success: mountVibeControlToBody imported';
-        console.log('Success:', mountVibeControlToBody);
+        const { mountVibeControlToBody } = await import(
+          "https://esm.sh/use-vibes@0.12.15-dev"
+        );
+        document.getElementById("output").textContent =
+          "Success: mountVibeControlToBody imported";
+        console.log("Success:", mountVibeControlToBody);
       } catch (error) {
-        document.getElementById('output').textContent = 'Error: ' + error.message;
-        console.error('Import error:', error);
+        document.getElementById("output").textContent =
+          "Error: " + error.message;
+        console.error("Import error:", error);
       }
     </script>
   </body>
