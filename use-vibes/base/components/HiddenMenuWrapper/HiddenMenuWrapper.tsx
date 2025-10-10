@@ -77,9 +77,11 @@ export function HiddenMenuWrapper({ children, menuContent }: HiddenMenuWrapperPr
     <div style={getWrapperStyle()}>
       {/* Menu */}
       <div
+        id="hidden-menu"
         role="dialog"
         aria-modal="true"
         aria-label="Hidden menu"
+        aria-hidden={!menuOpen}
         ref={menuRef}
         style={getMenuStyle()}
       >
