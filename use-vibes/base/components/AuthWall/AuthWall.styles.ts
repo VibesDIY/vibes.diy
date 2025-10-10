@@ -1,4 +1,4 @@
-import { CSSProperties } from "react";
+import { CSSProperties } from 'react';
 
 export const getWrapperStyle = (imageUrl: string): CSSProperties => ({
   position: 'fixed',

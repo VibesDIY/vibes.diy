@@ -30,14 +30,16 @@ export interface MountAuthWallResult {
 /**
  * Mounts the AuthWall component to a DOM element
  */
-export function mountAuthWall(options: MountAuthWallOptions = {
+export function mountAuthWall(
+  options: MountAuthWallOptions = {
     onLogin: function (): void {
-        throw new Error('Function not implemented.');
+      throw new Error('Function not implemented.');
     },
     imageUrl: '',
     title: '',
-    open: false
-}): MountAuthWallResult {
+    open: false,
+  }
+): MountAuthWallResult {
   const { container: containerOption, ...authWallProps } = options;
 
   // Resolve the container
