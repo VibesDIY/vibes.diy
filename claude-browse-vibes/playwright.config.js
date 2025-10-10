@@ -52,11 +52,11 @@ export default defineConfig({
     },
   ],
 
-  // Expect a dev server already running locally; don't start one here
-  webServer: {
-    command: 'echo "Using existing server at localhost:8888"',
-    url: "http://localhost:8889",
-    reuseExistingServer: !process.env.CI,
-    timeout: 5000,
-  },
+  // Skip webServer since we're using React example server on port 5173
+  // webServer: {
+  //   command: 'echo "Using existing server at localhost:8888"',
+  //   url: "http://localhost:8889",
+  //   reuseExistingServer: !process.env.CI,
+  //   timeout: 5000,
+  // },
 });

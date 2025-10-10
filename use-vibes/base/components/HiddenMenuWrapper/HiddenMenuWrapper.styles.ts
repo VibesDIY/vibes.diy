@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 /**
  * HiddenMenuWrapper Component Styling
  * Following the same pattern as VibeControl styles for consistency
@@ -44,12 +46,12 @@ export const hiddenMenuTheme = {
   },
 };
 
-export const getWrapperStyle = (): React.CSSProperties => ({
+export const getWrapperStyle = (): CSSProperties => ({
   position: 'relative',
   overflow: 'hidden',
 });
 
-export const getMenuStyle = (): React.CSSProperties => ({
+export const getMenuStyle = (): CSSProperties => ({
   position: 'fixed',
   bottom: 0,
   left: 0,
@@ -66,16 +68,13 @@ export const getMenuStyle = (): React.CSSProperties => ({
   backgroundSize: hiddenMenuTheme.dimensions.gridSize + ' ' + hiddenMenuTheme.dimensions.gridSize,
 });
 
-export const getContentStyle = (): React.CSSProperties => ({
+export const getContentStyle = (): CSSProperties => ({
   filter: 'none',
   width: '100%',
   height: '100%',
 });
 
-export const getContentWrapperStyle = (
-  menuHeight: number,
-  menuOpen: boolean
-): React.CSSProperties => ({
+export const getContentWrapperStyle = (menuHeight: number, menuOpen: boolean): CSSProperties => ({
   position: 'fixed',
   top: 0,
   left: 0,
@@ -89,7 +88,7 @@ export const getContentWrapperStyle = (
   filter: menuOpen ? `blur(${hiddenMenuTheme.animation.blurAmount})` : 'none',
 });
 
-export const getToggleButtonStyle = (): React.CSSProperties => ({
+export const getToggleButtonStyle = (): CSSProperties => ({
   position: 'fixed',
   bottom: hiddenMenuTheme.dimensions.bottomOffset,
   right: 0,

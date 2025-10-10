@@ -9,6 +9,7 @@ runs:
   using: 'composite'
   steps:
     - name: publish-prompts
+      id: prompts
       shell: bash
       working-directory: prompts/pkg
       env:
@@ -21,6 +22,8 @@ runs:
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
         pnpm run publish --registry https://registry.npmjs.org/
     - name: publish-call-ai
+      id: callai
+      if: success()
       shell: bash
       working-directory: call-ai/pkg
       env:
@@ -40,6 +43,8 @@ runs:
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
         pnpm run publish --registry https://registry.npmjs.org/
     - name: publish-base
+      id: base
+      if: success()
       shell: bash
       working-directory: use-vibes/base
       env:
@@ -59,6 +64,8 @@ runs:
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
         pnpm run publish --registry https://registry.npmjs.org/
     - name: publish-use-vibes
+      id: use-vibes
+      if: success()
       shell: bash
       working-directory: use-vibes/pkg
       env:

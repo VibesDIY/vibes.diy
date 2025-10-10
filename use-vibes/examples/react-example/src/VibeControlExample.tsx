@@ -1,4 +1,4 @@
-import { HiddenMenuWrapper, VibesButton } from 'use-vibes';
+import { HiddenMenuWrapper, VibesPanel } from 'use-vibes';
 import type { ExampleKey } from './App.tsx';
 
 type VibeControlExampleProps = {
@@ -7,35 +7,7 @@ type VibeControlExampleProps = {
 
 const VibeControlExample = ({ setCurrentExample }: VibeControlExampleProps) => {
   return (
-    <HiddenMenuWrapper
-      menuContent={
-        <div
-          style={{
-            padding: '12px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '12px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '12px',
-              width: '250px',
-            }}
-          >
-            <VibesButton variant="primary">Login</VibesButton>
-            <VibesButton variant="secondary">Remix</VibesButton>
-            <VibesButton variant="tertiary">Invite</VibesButton>
-          </div>
-        </div>
-      }
-    >
+    <HiddenMenuWrapper menuContent={<VibesPanel />}>
       <div className="container" style={{ padding: '24px' }}>
         <div
           style={{
