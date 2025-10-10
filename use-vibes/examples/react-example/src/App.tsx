@@ -3,16 +3,18 @@ import ImageGeneratorExample from './ImageGeneratorExample';
 import TodoListExample from './TodoListExample';
 import VibesGeneratorExample from './VibesGeneratorExample';
 import VibeControlExample from './VibeControlExample';
+import { ShareExample } from './ShareExample';
 import './App.css';
 import VibeAuthWallExample from './VibeAuthWallExample';
 import MountVibesAppExample from './MountVibesAppExample';
 
-export type ExampleKey =
+type ExampleKey =
   | 'home'
   | 'image-generator'
   | 'todo-list'
   | 'vibes-generator'
   | 'vibe-control'
+  | 'share'
   | 'vibe-auth-wall'
   | 'mount-vibes-app';
 
@@ -76,6 +78,12 @@ function App() {
       title: 'Todo List',
       description: 'A real-time todo list with Fireproof data persistence and sync',
       component: <TodoListExample />,
+    },
+    {
+      key: 'share' as const,
+      title: 'Share Example',
+      description: 'Todo list with database sharing functionality using authentication tokens',
+      component: <ShareExample />,
     },
     {
       key: 'vibe-control' as const,
