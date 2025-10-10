@@ -1,4 +1,4 @@
-export const pillColors: {
+export const switchColors: {
   primary: string;
   secondary: string;
 } = {

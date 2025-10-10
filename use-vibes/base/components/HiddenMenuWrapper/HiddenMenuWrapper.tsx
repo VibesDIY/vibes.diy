@@ -6,7 +6,7 @@ import {
   getContentStyle,
   getToggleButtonStyle,
 } from './HiddenMenuWrapper.styles.js';
-import { VibesIconPill } from '../VibesIconPill/VibesIconPill.js';
+import { VibesSwitch } from '../VibesSwitch/VibesSwitch.js';
 
 export interface HiddenMenuWrapperProps {
   children: React.ReactNode;
@@ -100,7 +100,7 @@ export function HiddenMenuWrapper({ children, menuContent }: HiddenMenuWrapperPr
         onClick={() => setMenuOpen(!menuOpen)}
         style={getToggleButtonStyle()}
       >
-        <VibesIconPill size={80} />
+        <VibesSwitch size={80} />
       </button>
     </div>
   );

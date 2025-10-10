@@ -30,7 +30,7 @@
   },
   "include": [
     "src",
-    "../../base/components/VibesIconPill/VibesIconPill.tsx",
+    "../../base/components/VibesSwitch/VibesSwitch.tsx",
     "../../base/components/HiddenMenuWrapper/HiddenMenuWrapper.tsx",
     "../../base/components/VibesButton/VibesButton.tsx"
   ]
