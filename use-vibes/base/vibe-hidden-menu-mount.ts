@@ -4,6 +4,7 @@ import {
   HiddenMenuWrapper,
   HiddenMenuWrapperProps,
 } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
+import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 
 /**
  * Extend the Window interface to include HIDDEN_MENU_WRAPPER_CONFIG
@@ -97,9 +98,11 @@ export function mountHiddenMenuWrapperToBody(
     menuContent: undefined,
   }
 ): MountHiddenMenuWrapperResult {
+  const { menuContent, ...restProps } = props;
   return mountHiddenMenuWrapper({
     container: document.body,
-    ...props,
+    menuContent: menuContent || React.createElement(VibesPanel),
+    ...restProps,
   });
 }
 

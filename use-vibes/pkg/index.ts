@@ -32,6 +32,8 @@ export {
   type MountVibeControlResult,
   // HiddenMenuWrapper component and utilities
   HiddenMenuWrapper,
+  VibesPanel,
+  type VibesPanelProps,
   mountHiddenMenuWrapper,
   mountHiddenMenuWrapperToBody,
   autoMountHiddenMenuWrapper,
