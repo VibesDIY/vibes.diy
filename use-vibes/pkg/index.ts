@@ -20,32 +20,23 @@ export {
   type UseVibesResult,
   type VibeDocument,
 
-  // VibeControl component and utilities
+  // React components
   VibeControl,
   VibesSwitch,
   VibesButton,
   type VibeControlProps,
-  mountVibeControl,
-  mountVibeControlToBody,
-  autoMountVibeControl,
-  type MountVibeControlOptions,
-  type MountVibeControlResult,
-  // HiddenMenuWrapper component and utilities
   HiddenMenuWrapper,
+  type HiddenMenuWrapperProps,
   VibesPanel,
   type VibesPanelProps,
-  mountHiddenMenuWrapper,
-  mountHiddenMenuWrapperToBody,
-  autoMountHiddenMenuWrapper,
-  type HiddenMenuWrapperProps,
-  type MountHiddenMenuWrapperOptions,
-  type MountHiddenMenuWrapperResult,
-  // AuthWall component and utilities
   AuthWall,
   type AuthWallProps,
-  mountAuthWall,
-  type MountAuthWallOptions,
-  type MountAuthWallResult,
+
+  // Main mount function - unified API for non-React environments
+  mountVibesApp,
+  mountVibesAppToBody,
+  type MountVibesAppOptions,
+  type MountVibesAppResult,
   vibeControlTheme,
   createVibeControlStyles,
   defaultVibeControlClasses,

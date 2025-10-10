@@ -10,7 +10,13 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
   onUnhover?: () => void;
 }
 
-export function VibesButton({ variant = 'primary', children, onHover, onUnhover, ...props }: MenuButtonProps) {
+export function VibesButton({
+  variant = 'primary',
+  children,
+  onHover,
+  onUnhover,
+  ...props
+}: MenuButtonProps) {
   const [isHovered, setHovered] = useState(false);
   const [isActive, setActive] = useState(false);
 
