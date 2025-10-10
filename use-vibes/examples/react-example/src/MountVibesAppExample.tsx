@@ -20,9 +20,8 @@ const MountVibesAppExample = ({ setCurrentExample }: MountVibesAppExampleProps) 
       try {
         setStatus('Mounting VibesApp...');
         
-        // Mount the app to wrap the existing content
+        // Mount the app to wrap the existing content (use document.body like real usage)
         currentMountResult = mountVibesApp({
-          container: containerRef.current,
           title: 'Mount Test App',
           database: 'mount-test-db'
         });
