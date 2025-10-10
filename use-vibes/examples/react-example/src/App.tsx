@@ -48,7 +48,7 @@ function App() {
   // Update URL when example changes
   const handleExampleChange = (example: ExampleKey) => {
     setCurrentExample(example);
-    
+
     if (example === 'mount-vibes-app') {
       window.history.pushState({}, '', '/mount-vibes-app');
     } else if (example === 'vibe-control') {

@@ -43,11 +43,12 @@ function VibesApp({
   targetContainer?: HTMLElement;
 }) {
   const { enableSync, syncEnabled } = useFireproof(database);
-  
+
   // Check for debug flag to skip auth wall
-  const mockLogin = typeof window !== 'undefined' && 
+  const mockLogin =
+    typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('mock_login') === 'true';
-  
+
   const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled && !mockLogin);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [menuHeight, setMenuHeight] = React.useState(0);
@@ -101,7 +102,7 @@ function VibesApp({
       targetContainer.style.transition = `transform ${duration} ${easing}, filter 0.3s ${easing}`;
       // Don't change positioning context - keep it as-is for document.body
       targetContainer.style.backgroundColor = 'var(--hm-content-bg, #1e1e1e)';
-      
+
       if (menuOpen && menuHeight > 0) {
         targetContainer.style.transform = `translateY(-${menuHeight}px)`;
         targetContainer.style.filter = 'blur(4px)';
@@ -109,7 +110,7 @@ function VibesApp({
         // Raise z-index to overlay the menu when blurred
         targetContainer.style.zIndex = '10';
       } else {
-        targetContainer.style.transform = '';  // Remove transform entirely
+        targetContainer.style.transform = ''; // Remove transform entirely
         targetContainer.style.filter = '';
         targetContainer.style.pointerEvents = '';
         // Lower z-index when menu closed to allow button clicks
@@ -130,58 +131,77 @@ function VibesApp({
   }, [showAuthWall, targetContainer, menuOpen, menuHeight]);
 
   if (showAuthWall) {
-    return React.createElement('div', {
-      style: {
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        pointerEvents: 'auto'
-      }
-    }, React.createElement(AuthWall, {
-      onLogin: handleLogin,
-      imageUrl,
-      title,
-      open: true,
-    }));
+    return React.createElement(
+      'div',
+      {
+        style: {
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          pointerEvents: 'auto',
+        },
+      },
+      React.createElement(AuthWall, {
+        onLogin: handleLogin,
+        imageUrl,
+        title,
+        open: true,
+      })
+    );
   }
 
   // When authenticated, show just the VibesSwitch button with a menu like HiddenMenuWrapper
-  return React.createElement(React.Fragment, null,
+  return React.createElement(
+    React.Fragment,
+    null,
     // Menu panel (only when open) - full width at bottom like HiddenMenuWrapper
-    menuOpen && React.createElement('div', {
-      ref: menuRef,
-      id: 'hidden-menu',
-      role: 'dialog',
-      'aria-modal': 'true',
-      'aria-label': 'Hidden menu',
-      'aria-hidden': !menuOpen,
-      style: {
-        ...getMenuStyle(), // Full HiddenMenuWrapper styling
-        zIndex: 5, // Match HiddenMenuWrapper z-index
-        pointerEvents: 'auto'
-      }
-    }, React.createElement(VibesPanel)),
+    menuOpen &&
+      React.createElement(
+        'div',
+        {
+          ref: menuRef,
+          id: 'hidden-menu',
+          role: 'dialog',
+          'aria-modal': 'true',
+          'aria-label': 'Hidden menu',
+          'aria-hidden': !menuOpen,
+          style: {
+            ...getMenuStyle(), // Full HiddenMenuWrapper styling
+            zIndex: 5, // Match HiddenMenuWrapper z-index
+            pointerEvents: 'auto',
+          },
+        },
+        React.createElement(VibesPanel)
+      ),
 
     // VibesSwitch button container (absolute positioning relative to overlay)
-    React.createElement('div', {
-      style: {
-        position: 'absolute',
-        bottom: '16px',
-        right: '16px',
-        zIndex: 20, // Match HiddenMenuWrapper z-index
-        pointerEvents: 'auto'
-      }
-    }, React.createElement('button', {
-      'aria-haspopup': 'dialog',
-      'aria-expanded': menuOpen,
-      'aria-controls': 'hidden-menu',
-      onClick: () => setMenuOpen(!menuOpen),
-      style: {
-        backgroundColor: 'transparent',
-        border: 'none',
-        cursor: 'pointer'
-      }
-    }, React.createElement(VibesSwitch, { size: 80 })))
+    React.createElement(
+      'div',
+      {
+        style: {
+          position: 'absolute',
+          bottom: '16px',
+          right: '16px',
+          zIndex: 20, // Match HiddenMenuWrapper z-index
+          pointerEvents: 'auto',
+        },
+      },
+      React.createElement(
+        'button',
+        {
+          'aria-haspopup': 'dialog',
+          'aria-expanded': menuOpen,
+          'aria-controls': 'hidden-menu',
+          onClick: () => setMenuOpen(!menuOpen),
+          style: {
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+          },
+        },
+        React.createElement(VibesSwitch, { size: 80 })
+      )
+    )
   );
 }
 
@@ -207,7 +227,7 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
   // Create a content wrapper to isolate blur from our overlay
   let contentWrapper: HTMLElement | null = null;
   let originalChildren: ChildNode[] = [];
-  
+
   // Only wrap body content, not other containers
   if (containerElement === document.body) {
     // Check if we already have a content wrapper
@@ -215,7 +235,7 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     if (!existingWrapper) {
       // Store original children
       originalChildren = Array.from(document.body.childNodes);
-      
+
       // Create wrapper for original content
       contentWrapper = document.createElement('div');
       contentWrapper.id = 'vibes-original-content';
@@ -224,12 +244,15 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
       contentWrapper.style.position = 'relative';
       contentWrapper.style.zIndex = '1'; // Start low, will increase to 10 when menu opens
       // Note: pointer events will be managed dynamically in the useEffect
-      
+
       // Move all existing children into the wrapper
-      originalChildren.forEach(child => {
-        contentWrapper!.appendChild(child);
+      originalChildren.forEach((child) => {
+        if (!contentWrapper) {
+          throw new Error('Failed to create content wrapper for VibesApp');
+        }
+        contentWrapper.appendChild(child);
       });
-      
+
       // Add wrapper back to body
       document.body.appendChild(contentWrapper);
     } else {
@@ -249,12 +272,14 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
   const root = ReactDOM.createRoot(overlayDiv);
 
   // Pass the content wrapper (or fallback to container) to VibesApp for blur effects
-  root.render(React.createElement(VibesApp, { 
-    database, 
-    title, 
-    imageUrl, 
-    targetContainer: contentWrapper || containerElement 
-  }));
+  root.render(
+    React.createElement(VibesApp, {
+      database,
+      title,
+      imageUrl,
+      targetContainer: contentWrapper || containerElement,
+    })
+  );
 
   return {
     unmount: () => {
@@ -264,12 +289,12 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
         if (overlayDiv.parentNode) {
           overlayDiv.parentNode.removeChild(overlayDiv);
         }
-        
+
         // Restore original DOM structure if we wrapped body content
         if (contentWrapper && containerElement === document.body) {
           // Move children back from wrapper to body
           const wrapperChildren = Array.from(contentWrapper.childNodes);
-          wrapperChildren.forEach(child => {
+          wrapperChildren.forEach((child) => {
             document.body.insertBefore(child, contentWrapper);
           });
           // Remove the wrapper
@@ -277,7 +302,7 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
             contentWrapper.parentNode.removeChild(contentWrapper);
           }
         }
-        
+
         // Restore original container styles
         const targetForCleanup = contentWrapper || containerElement;
         if (targetForCleanup) {

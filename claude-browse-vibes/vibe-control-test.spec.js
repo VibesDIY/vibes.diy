@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test("VibeControl correct behavior test - mock_login + click switch", async ({ page }) => {
+test("VibeControl correct behavior test - mock_login + click switch", async ({
+  page,
+}) => {
   // Listen for console logs
   page.on("console", (msg) => {
     console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`);
@@ -17,7 +19,10 @@ test("VibeControl correct behavior test - mock_login + click switch", async ({ p
   await page.waitForTimeout(1000);
 
   console.log("📸 Taking initial screenshot...");
-  await page.screenshot({ path: "vibe-control-correct-initial.png", fullPage: true });
+  await page.screenshot({
+    path: "vibe-control-correct-initial.png",
+    fullPage: true,
+  });
 
   // Wait for VibesSwitch button
   console.log("🔍 Looking for VibesSwitch button...");
@@ -31,19 +36,22 @@ test("VibeControl correct behavior test - mock_login + click switch", async ({ p
   await page.waitForTimeout(1000);
 
   console.log("📸 Taking screenshot with menu open...");
-  await page.screenshot({ path: "vibe-control-correct-menu-open.png", fullPage: true });
+  await page.screenshot({
+    path: "vibe-control-correct-menu-open.png",
+    fullPage: true,
+  });
 
   // Capture innerHTML
   console.log("📝 Capturing innerHTML...");
   const innerHTML = await page.evaluate(() => document.body.innerHTML);
-  
+
   // Write to file
   await page.evaluate((content) => {
-    const blob = new Blob([content], { type: 'text/html' });
+    const blob = new Blob([content], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'vibe-control-correct-innerHTML.html';
+    a.download = "vibe-control-correct-innerHTML.html";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -57,14 +65,14 @@ test("VibeControl correct behavior test - mock_login + click switch", async ({ p
   console.log("   - vibe-control-correct-innerHTML.html (in downloads)");
 
   // Verify menu is visible
-  const menu = page.locator('#hidden-menu');
+  const menu = page.locator("#hidden-menu");
   await expect(menu).toBeVisible();
 
   // Verify buttons are present
-  const loginButton = page.getByRole('button', { name: 'Login' });
-  const remixButton = page.getByRole('button', { name: 'Remix' });  
-  const inviteButton = page.getByRole('button', { name: 'Invite' });
-  
+  const loginButton = page.getByRole("button", { name: "Login" });
+  const remixButton = page.getByRole("button", { name: "Remix" });
+  const inviteButton = page.getByRole("button", { name: "Invite" });
+
   await expect(loginButton).toBeVisible();
   await expect(remixButton).toBeVisible();
   await expect(inviteButton).toBeVisible();

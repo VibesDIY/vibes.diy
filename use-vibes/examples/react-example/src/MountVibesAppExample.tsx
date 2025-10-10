@@ -19,20 +19,19 @@ const MountVibesAppExample = ({ setCurrentExample }: MountVibesAppExampleProps) 
     if (containerRef.current) {
       try {
         setStatus('Mounting VibesApp...');
-        
+
         // Mount the app to wrap document.body (like real usage)
         // This will wrap the entire React app, demonstrating the z-index layering issue
         currentMountResult = mountVibesApp({
           title: 'Mount Test App',
-          database: 'mount-test-db'
+          database: 'mount-test-db',
         });
-        
+
         if (mounted) {
           setMountResult(currentMountResult);
           setStatus('Success: mountVibesApp working with local bundler!');
           console.log('Mount result:', currentMountResult);
         }
-        
       } catch (error) {
         if (mounted) {
           setStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -79,19 +78,19 @@ const MountVibesAppExample = ({ setCurrentExample }: MountVibesAppExampleProps) 
 
       <h1>mountVibesApp Test</h1>
       <p style={{ marginBottom: '2rem', color: '#666', fontSize: '1.1rem' }}>
-        Testing the unified mount function that wraps existing content with auth wall → vibes switch flow.
-        This uses the local bundler for faster iteration.
+        Testing the unified mount function that wraps existing content with auth wall → vibes switch
+        flow. This uses the local bundler for faster iteration.
       </p>
 
-      <div 
-        id="status" 
-        style={{ 
-          padding: '12px', 
-          background: '#f0f9ff', 
-          border: '1px solid #0ea5e9', 
+      <div
+        id="status"
+        style={{
+          padding: '12px',
+          background: '#f0f9ff',
+          border: '1px solid #0ea5e9',
           borderRadius: '4px',
           marginBottom: '20px',
-          fontFamily: 'monospace'
+          fontFamily: 'monospace',
         }}
       >
         {status}
@@ -100,7 +99,7 @@ const MountVibesAppExample = ({ setCurrentExample }: MountVibesAppExampleProps) 
       {/* Container that will be wrapped by mountVibesApp */}
       <div ref={containerRef}>
         {/* Content that should be wrapped - similar to test-use-vibes.html */}
-        <div 
+        <div
           style={{
             width: '512px',
             height: '512px',
@@ -114,14 +113,15 @@ const MountVibesAppExample = ({ setCurrentExample }: MountVibesAppExampleProps) 
             fontFamily: 'Arial, sans-serif',
             margin: '20px auto',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            borderRadius: '8px'
+            borderRadius: '8px',
           }}
         >
           Vibe
         </div>
-        
+
         <p style={{ textAlign: 'center', color: '#666' }}>
-          This green square should be wrapped by the auth wall initially,<br/>
+          This green square should be wrapped by the auth wall initially,
+          <br />
           then show with the vibes switch after authentication.
         </p>
       </div>
