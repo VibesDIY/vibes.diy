@@ -45,6 +45,8 @@ function VibesApp({
   const { enableSync, syncEnabled } = useFireproof(database);
   const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled);
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [menuHeight, setMenuHeight] = React.useState(0);
+  const menuRef = React.useRef<HTMLDivElement>(null);
 
   // Watch for authentication state changes
   React.useEffect(() => {
@@ -70,6 +72,13 @@ function VibesApp({
     enableSync();
   };
 
+  // Set menu height on render
+  React.useEffect(() => {
+    if (menuRef.current) {
+      setMenuHeight(menuRef.current.offsetHeight);
+    }
+  }, [menuOpen]);
+
   // Effect to manage target container visibility and styling
   React.useEffect(() => {
     if (!targetContainer) return;
@@ -78,10 +87,26 @@ function VibesApp({
       // Hide/blur the original content during auth
       targetContainer.style.filter = 'blur(8px)';
       targetContainer.style.pointerEvents = 'none';
+      targetContainer.style.transition = 'none';
+      targetContainer.style.transform = 'none';
     } else {
-      // Show original content clearly when authenticated
-      targetContainer.style.filter = 'none';
-      targetContainer.style.pointerEvents = 'auto';
+      // Apply HiddenMenuWrapper-style transforms when authenticated
+      const duration = '0.4s';
+      const easing = 'ease';
+      targetContainer.style.transition = `transform ${duration} ${easing}, filter 0.3s ${easing}`;
+      targetContainer.style.position = 'relative';
+      targetContainer.style.zIndex = '10';
+      targetContainer.style.backgroundColor = 'var(--hm-content-bg, #1e1e1e)';
+      
+      if (menuOpen && menuHeight > 0) {
+        targetContainer.style.transform = `translateY(-${menuHeight}px)`;
+        targetContainer.style.filter = 'blur(4px)';
+        targetContainer.style.pointerEvents = 'none';
+      } else {
+        targetContainer.style.transform = 'translateY(0)';
+        targetContainer.style.filter = 'none';
+        targetContainer.style.pointerEvents = 'auto';
+      }
     }
 
     return () => {
@@ -89,9 +114,14 @@ function VibesApp({
       if (targetContainer) {
         targetContainer.style.filter = 'none';
         targetContainer.style.pointerEvents = 'auto';
+        targetContainer.style.transform = 'none';
+        targetContainer.style.transition = 'none';
+        targetContainer.style.position = '';
+        targetContainer.style.zIndex = '';
+        targetContainer.style.backgroundColor = '';
       }
     };
-  }, [showAuthWall, targetContainer]);
+  }, [showAuthWall, targetContainer, menuOpen, menuHeight]);
 
   if (showAuthWall) {
     return React.createElement('div', {
@@ -109,39 +139,40 @@ function VibesApp({
     }));
   }
 
-  // When authenticated, show just the VibesSwitch button with a simple menu
+  // When authenticated, show just the VibesSwitch button with a menu like HiddenMenuWrapper
   return React.createElement(React.Fragment, null,
-    // Menu panel (only when open)
+    // Menu panel (only when open) - full width at bottom like HiddenMenuWrapper
     menuOpen && React.createElement('div', {
+      ref: menuRef,
+      id: 'hidden-menu',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': 'Hidden menu',
+      'aria-hidden': !menuOpen,
       style: {
-        ...getMenuStyle(), // Apply the proper menu styling with grey grid background
-        // Override position to appear above button instead of full bottom
-        bottom: '100px',
-        left: 'auto',
-        right: '16px',
-        width: '300px', // Constrain width instead of full screen
-        zIndex: 9997,
+        ...getMenuStyle(), // Full HiddenMenuWrapper styling
+        zIndex: 5, // Match HiddenMenuWrapper z-index
         pointerEvents: 'auto'
       }
     }, React.createElement(VibesPanel)),
 
-    // VibesSwitch button
-    React.createElement('div', {
+    // VibesSwitch button with HiddenMenuWrapper styling
+    React.createElement('button', {
+      'aria-haspopup': 'dialog',
+      'aria-expanded': menuOpen,
+      'aria-controls': 'hidden-menu',
+      onClick: () => setMenuOpen(!menuOpen),
       style: {
         position: 'fixed',
         bottom: '16px',
-        right: '16px',
-        zIndex: 9998,
-        pointerEvents: 'auto'
-      }
-    }, React.createElement('button', {
-      onClick: () => setMenuOpen(!menuOpen),
-      style: {
+        right: '0',
+        zIndex: 20, // Match HiddenMenuWrapper z-index
         backgroundColor: 'transparent',
         border: 'none',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        pointerEvents: 'auto'
       }
-    }, React.createElement(VibesSwitch, { size: 80 })))
+    }, React.createElement(VibesSwitch, { size: 80 }))
   );
 }
 
