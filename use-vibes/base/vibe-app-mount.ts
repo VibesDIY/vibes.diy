@@ -200,6 +200,30 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     containerElement = document.body;
   }
 
+  // Create a content wrapper to isolate blur from our overlay
+  let contentWrapper: HTMLElement | null = null;
+  let originalChildren: ChildNode[] = [];
+  
+  // Only wrap body content, not other containers
+  if (containerElement === document.body) {
+    // Store original children
+    originalChildren = Array.from(document.body.childNodes);
+    
+    // Create wrapper for original content
+    contentWrapper = document.createElement('div');
+    contentWrapper.id = 'vibes-original-content';
+    contentWrapper.style.height = '100%';
+    contentWrapper.style.width = '100%';
+    
+    // Move all existing children into the wrapper
+    originalChildren.forEach(child => {
+      contentWrapper!.appendChild(child);
+    });
+    
+    // Add wrapper back to body
+    document.body.appendChild(contentWrapper);
+  }
+
   // Create overlay portal (simple approach)
   const overlayDiv = document.createElement('div');
   overlayDiv.style.position = 'fixed';
@@ -210,12 +234,12 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
 
   const root = ReactDOM.createRoot(overlayDiv);
 
-  // Pass the container element to VibesApp (back to simple approach)
+  // Pass the content wrapper (or fallback to container) to VibesApp for blur effects
   root.render(React.createElement(VibesApp, { 
     database, 
     title, 
     imageUrl, 
-    targetContainer: containerElement 
+    targetContainer: contentWrapper || containerElement 
   }));
 
   return {
@@ -226,10 +250,25 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
         if (overlayDiv.parentNode) {
           overlayDiv.parentNode.removeChild(overlayDiv);
         }
+        
+        // Restore original DOM structure if we wrapped body content
+        if (contentWrapper && containerElement === document.body) {
+          // Move children back from wrapper to body
+          const wrapperChildren = Array.from(contentWrapper.childNodes);
+          wrapperChildren.forEach(child => {
+            document.body.insertBefore(child, contentWrapper);
+          });
+          // Remove the wrapper
+          if (contentWrapper.parentNode) {
+            contentWrapper.parentNode.removeChild(contentWrapper);
+          }
+        }
+        
         // Restore original container styles
-        if (containerElement) {
-          containerElement.style.filter = 'none';
-          containerElement.style.pointerEvents = 'auto';
+        const targetForCleanup = contentWrapper || containerElement;
+        if (targetForCleanup) {
+          targetForCleanup.style.filter = 'none';
+          targetForCleanup.style.pointerEvents = 'auto';
         }
       }, 0);
     },
