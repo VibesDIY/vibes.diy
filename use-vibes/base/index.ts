@@ -1,5 +1,5 @@
 import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
-import { useCallback, useEffect, useState, useId } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import {
   fireproof,
   ImgFile,
@@ -114,23 +114,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     }, 100); // Small delay to ensure overlay is rendered
   }, [wasSyncEnabled, manualAttach]);
 
-  // Wire up vibes-login-link button if it exists
-  useEffect(() => {
-    const button = document.getElementById('vibes-login-link');
-    if (!button) return;
-
-    const handleClick = () => {
-      enableSync();
-    };
-
-    button.addEventListener('click', handleClick);
-
-    // Cleanup removes this listener on unmount
-    return () => {
-      button.removeEventListener('click', handleClick);
-    };
-  }, [enableSync]);
-
   // Function to disable sync
   const disableSync = useCallback(() => {
     localStorage.removeItem(syncKey);
@@ -152,6 +135,158 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     (wasSyncEnabled &&
       (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
     (manualAttach && typeof manualAttach === 'object' && manualAttach.state === 'attached');
+
+  // Share function that immediately adds a user to the ledger by email
+  const share = useCallback(
+    async (options: { email: string; role?: 'admin' | 'member'; right?: 'read' | 'write' }) => {
+      // Get the attachment context
+      const attach = result.attach || manualAttach;
+
+      // Type guard: ensure attach is an object with ctx property
+      if (
+        !attach ||
+        typeof attach === 'string' ||
+        !('ctx' in attach) ||
+        !attach.ctx?.tokenAndClaims ||
+        attach.ctx.tokenAndClaims.state !== 'ready'
+      ) {
+        throw new Error('Authentication required. Please enable sync first.');
+      }
+
+      // Extract the token from the ready state
+      // ReadyTokenAndClaimsState has: { state: "ready", tokenAndClaims: { token: string, claims?: FPCloudClaim } }
+      const readyState = attach.ctx.tokenAndClaims;
+      const tokenData = readyState.tokenAndClaims;
+
+      // Create auth object matching AuthType interface: { type: "better", token: string }
+      const auth = {
+        type: 'clerk' as const,
+        token: tokenData.token,
+      };
+
+      // Call the dashboard API (same pattern as other Fireproof dashboard requests)
+      // Uses PUT method with auth in body, not headers
+      const apiUrl = 'https://connect.fireproof.direct/api'; // Replace with your actual API URL
+
+      const response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'reqShareWithUser',
+          auth: auth,
+          email: options.email,
+          role: options.role || 'member',
+          right: options.right || 'read',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Share failed: HTTP ${response.status} ${response.statusText}: ${errorText}`
+        );
+      }
+
+      const shareData = await response.json();
+
+      // Return share result
+      return {
+        success: shareData.success,
+        email: shareData.email,
+        role: shareData.role,
+        right: shareData.right,
+        message: shareData.message || 'User added to ledger successfully',
+      };
+    },
+    [dbName, result.attach, manualAttach]
+  );
+
+  // Listen for custom 'vibes-share-request' events on document
+  // Any element can dispatch this event to trigger share
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleShareRequest = async (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        email: string;
+        role?: 'admin' | 'member';
+        right?: 'read' | 'write';
+      }>;
+
+      const { email, role = 'member', right = 'read' } = customEvent.detail || {};
+
+      if (!email) {
+        const error = new Error('vibes-share-request requires email in event detail');
+        console.error(error.message);
+        document.dispatchEvent(
+          new CustomEvent('vibes-share-error', {
+            detail: { error, originalEvent: event },
+            bubbles: true,
+          })
+        );
+        return;
+      }
+
+      try {
+        const result = await share({ email, role, right });
+
+        // Dispatch success event
+        document.dispatchEvent(
+          new CustomEvent('vibes-share-success', {
+            detail: { ...result, originalEvent: event },
+            bubbles: true,
+          })
+        );
+      } catch (error) {
+        // Dispatch error event
+        document.dispatchEvent(
+          new CustomEvent('vibes-share-error', {
+            detail: { error, originalEvent: event },
+            bubbles: true,
+          })
+        );
+      }
+    };
+
+    document.addEventListener('vibes-share-request', handleShareRequest);
+
+    return () => {
+      document.removeEventListener('vibes-share-request', handleShareRequest);
+    };
+  }, [share]);
+
+  // Listen for custom 'vibes-sync-enable' event on document
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleSyncEnable = () => {
+      enableSync();
+    };
+
+    document.addEventListener('vibes-sync-enable', handleSyncEnable);
+
+    return () => {
+      document.removeEventListener('vibes-sync-enable', handleSyncEnable);
+    };
+  }, [enableSync]);
+
+  // Listen for custom 'vibes-sync-disable' event on document
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleSyncDisable = () => {
+      disableSync();
+    };
+
+    document.addEventListener('vibes-sync-disable', handleSyncDisable);
+
+    return () => {
+      document.removeEventListener('vibes-sync-disable', handleSyncDisable);
+    };
+  }, [disableSync]);
 
   // Manage global sync status tracking and body class
   useEffect(() => {
@@ -196,6 +331,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     enableSync,
     disableSync,
     syncEnabled,
+    share,
   };
 }
 
@@ -245,8 +381,8 @@ export type {
 } from '@vibes.diy/use-vibes-types';
 
 // Export useVibes hook and types
-export { useVibes } from './hooks/vibes-gen/index.js';
 export type { UseVibesOptions, UseVibesResult, VibeDocument } from '@vibes.diy/use-vibes-types';
+export { useVibes } from './hooks/vibes-gen/index.js';
 
 // Export components for React users
 export { VibeControl } from './components/VibeControl.js';
@@ -265,6 +401,7 @@ export {
   vibeControlTheme,
   createVibeControlStyles,
   defaultVibeControlClasses,
+  vibeControlTheme,
 } from './utils/vibe-control-styles.js';
 export type { VibeControlClasses } from './utils/vibe-control-styles.js';
 export { hiddenMenuTheme } from './components/HiddenMenuWrapper/HiddenMenuWrapper.styles.js';
