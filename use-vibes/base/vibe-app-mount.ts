@@ -43,7 +43,12 @@ function VibesApp({
   targetContainer?: HTMLElement;
 }) {
   const { enableSync, syncEnabled } = useFireproof(database);
-  const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled);
+  
+  // Check for debug flag to skip auth wall
+  const mockLogin = typeof window !== 'undefined' && 
+    new URLSearchParams(window.location.search).get('mock_login') === 'true';
+  
+  const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled && !mockLogin);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [menuHeight, setMenuHeight] = React.useState(0);
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -65,8 +70,8 @@ function VibesApp({
 
   // Initial sync state check
   React.useEffect(() => {
-    setShowAuthWall(!syncEnabled);
-  }, [syncEnabled]);
+    setShowAuthWall(!syncEnabled && !mockLogin);
+  }, [syncEnabled, mockLogin]);
 
   const handleLogin = () => {
     enableSync();
