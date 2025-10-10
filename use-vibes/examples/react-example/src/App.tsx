@@ -5,6 +5,7 @@ import VibesGeneratorExample from './VibesGeneratorExample';
 import VibeControlExample from './VibeControlExample';
 import './App.css';
 import VibeAuthWallExample from './VibeAuthWallExample';
+import MountVibesAppExample from './MountVibesAppExample';
 
 export type ExampleKey =
   | 'home'
@@ -12,7 +13,8 @@ export type ExampleKey =
   | 'todo-list'
   | 'vibes-generator'
   | 'vibe-control'
-  | 'vibe-auth-wall';
+  | 'vibe-auth-wall'
+  | 'mount-vibes-app';
 
 function App() {
   const [currentExample, setCurrentExample] = useState<ExampleKey>('home');
@@ -47,6 +49,12 @@ function App() {
       title: 'Vibe Auth Wall',
       description: 'Authentication wall',
       component: <VibeAuthWallExample />,
+    },
+    {
+      key: 'mount-vibes-app' as const,
+      title: 'Mount Vibes App',
+      description: 'Test unified mountVibesApp function with DOM wrapping',
+      component: <MountVibesAppExample setCurrentExample={setCurrentExample} />,
     },
   ];
 
