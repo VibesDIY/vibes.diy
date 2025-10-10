@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom/client';
 import { AuthWall } from './components/AuthWall/AuthWall.js';
 import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 import { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
+import { getMenuStyle } from './components/HiddenMenuWrapper/HiddenMenuWrapper.styles.js';
 import { useFireproof } from './index.js';
 
 /**
@@ -113,9 +114,12 @@ function VibesApp({
     // Menu panel (only when open)
     menuOpen && React.createElement('div', {
       style: {
-        position: 'fixed',
+        ...getMenuStyle(), // Apply the proper menu styling with grey grid background
+        // Override position to appear above button instead of full bottom
         bottom: '100px',
+        left: 'auto',
         right: '16px',
+        width: '300px', // Constrain width instead of full screen
         zIndex: 9997,
         pointerEvents: 'auto'
       }
