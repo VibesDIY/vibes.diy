@@ -37,11 +37,21 @@
 Run vibes.diy tests: `cd vibes.diy/tests && pnpm test`
 Run vibes.diy tests (quiet): `cd vibes.diy/tests && pnpm test --reporter=dot`
 
-## Call-AI Release Process
+## Release Process
 
-**IMPORTANT**: Never manually update version numbers in `call-ai/pkg/package.json`. The CI/CD system handles all versioning automatically based on git tags.
+**CRITICAL**: Always commit and push changes BEFORE creating release tags.
 
-### Production Release
+### Proper Release Order
+
+1. **Commit Changes**: `git add . && git commit -m "message"`
+2. **Push Changes**: `git push`
+3. **Create Git Tag**: `git tag use-vibes@v0.12.1 -m "Release message"`
+4. **Push Tag**: `git push origin use-vibes@v0.12.1`
+5. **Confirm GitHub Actions**: The CI will automatically extract the version from the tag and publish to npm
+
+**IMPORTANT**: Never manually update version numbers in package.json files. The CI/CD system handles all versioning automatically based on git tags.
+
+### Call-AI Release Process
 
 To release a new call-ai version:
 
