@@ -6,6 +6,24 @@
   </head>
   <body>
     <div id="output">Loading...</div>
+    
+    <!-- App content that will be wrapped -->
+    <div style="
+      width: 512px;
+      height: 512px;
+      background-color: #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: bold;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+    ">
+      Vibe
+    </div>
+    
     <script type="module">
       try {
         const { mountVibesApp } = await import(
