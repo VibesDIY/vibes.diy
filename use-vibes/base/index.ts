@@ -274,9 +274,7 @@ export type {
 // Export AuthWall component and utilities
 export { AuthWall } from './components/AuthWall/AuthWall.js';
 export type { AuthWallProps } from './components/AuthWall/AuthWall.js';
-export {
-  mountAuthWall,
-} from './vibe-auth-wall.js';
+export { mountAuthWall } from './vibe-auth-wall.js';
 export type { MountAuthWallOptions, MountAuthWallResult } from './vibe-auth-wall.js';
 export {
   vibeControlTheme,

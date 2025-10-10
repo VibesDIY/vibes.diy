@@ -72,9 +72,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
       <div style={overlayStyle} />
       <div style={formContainerStyle}>
         <h1 style={getTitleStyle()}>{title}</h1>
-        <p style={getDescriptionStyle()}>
-          Login to access this Vibe!
-        </p>
+        <p style={getDescriptionStyle()}>Login to access this Vibe!</p>
         <VibesButton
           variant="primary"
           onClick={onLogin}

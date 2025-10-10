@@ -6,7 +6,13 @@ import VibeControlExample from './VibeControlExample';
 import './App.css';
 import VibeAuthWallExample from './VibeAuthWallExample';
 
-export type ExampleKey = 'home' | 'image-generator' | 'todo-list' | 'vibes-generator' | 'vibe-control' | 'vibe-auth-wall';
+export type ExampleKey =
+  | 'home'
+  | 'image-generator'
+  | 'todo-list'
+  | 'vibes-generator'
+  | 'vibe-control'
+  | 'vibe-auth-wall';
 
 function App() {
   const [currentExample, setCurrentExample] = useState<ExampleKey>('home');
