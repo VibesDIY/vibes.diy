@@ -18,11 +18,11 @@ export function VibesButton({ variant = 'primary', children, ...props }: MenuBut
 
   useEffect(() => {
     if (isHovered) {
-      props.onHover && props.onHover();
+      props.onHover?.();
     } else {
-      props.onUnhover && props.onUnhover();
+      props.onUnhover?.();
     }
-  }, [isHovered]);
+  }, [isHovered, props]);
 
   return (
     <button

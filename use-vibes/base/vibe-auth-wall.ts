@@ -108,7 +108,8 @@ export function autoMountAuthWall(): MountAuthWallResult | null {
   }
 
   const tryMount = (): MountAuthWallResult | null => {
-    const globalConfig = (window as any).AUTH_WALL_CONFIG;
+    const globalConfig = (window as unknown as { AUTH_WALL_CONFIG?: AuthWallProps })
+      .AUTH_WALL_CONFIG;
     if (!globalConfig) {
       console.warn('AuthWall: No global AUTH_WALL_CONFIG found');
       return null;
