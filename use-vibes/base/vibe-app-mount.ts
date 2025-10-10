@@ -106,10 +106,14 @@ function VibesApp({
         targetContainer.style.transform = `translateY(-${menuHeight}px)`;
         targetContainer.style.filter = 'blur(4px)';
         targetContainer.style.pointerEvents = 'none';
+        // Raise z-index to overlay the menu when blurred
+        targetContainer.style.zIndex = '10';
       } else {
         targetContainer.style.transform = '';  // Remove transform entirely
         targetContainer.style.filter = '';
         targetContainer.style.pointerEvents = '';
+        // Lower z-index when menu closed to allow button clicks
+        targetContainer.style.zIndex = '1';
       }
     }
 
@@ -206,29 +210,39 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
   
   // Only wrap body content, not other containers
   if (containerElement === document.body) {
-    // Store original children
-    originalChildren = Array.from(document.body.childNodes);
-    
-    // Create wrapper for original content
-    contentWrapper = document.createElement('div');
-    contentWrapper.id = 'vibes-original-content';
-    contentWrapper.style.height = '100%';
-    contentWrapper.style.width = '100%';
-    
-    // Move all existing children into the wrapper
-    originalChildren.forEach(child => {
-      contentWrapper!.appendChild(child);
-    });
-    
-    // Add wrapper back to body
-    document.body.appendChild(contentWrapper);
+    // Check if we already have a content wrapper
+    const existingWrapper = document.getElementById('vibes-original-content');
+    if (!existingWrapper) {
+      // Store original children
+      originalChildren = Array.from(document.body.childNodes);
+      
+      // Create wrapper for original content
+      contentWrapper = document.createElement('div');
+      contentWrapper.id = 'vibes-original-content';
+      contentWrapper.style.height = '100%';
+      contentWrapper.style.width = '100%';
+      contentWrapper.style.position = 'relative';
+      contentWrapper.style.zIndex = '1'; // Start low, will increase to 10 when menu opens
+      // Note: pointer events will be managed dynamically in the useEffect
+      
+      // Move all existing children into the wrapper
+      originalChildren.forEach(child => {
+        contentWrapper!.appendChild(child);
+      });
+      
+      // Add wrapper back to body
+      document.body.appendChild(contentWrapper);
+    } else {
+      // Use existing wrapper
+      contentWrapper = existingWrapper as HTMLElement;
+    }
   }
 
-  // Create overlay portal (simple approach)
+  // Create overlay portal (with proper z-index layering)
   const overlayDiv = document.createElement('div');
   overlayDiv.style.position = 'fixed';
   overlayDiv.style.inset = '0';
-  overlayDiv.style.zIndex = '9999';
+  // Remove high z-index to allow proper layering
   overlayDiv.style.pointerEvents = 'none'; // Allow clicks through when not showing overlay
   document.body.appendChild(overlayDiv);
 
