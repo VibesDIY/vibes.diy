@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { AuthWall, type AuthWallProps } from './components/AuthWall/AuthWall.js';
-import { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
+import { AuthWall } from './components/AuthWall/AuthWall.js';
 import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
+import { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
 import { useFireproof } from './index.js';
 
 /**
@@ -34,15 +34,16 @@ function VibesApp({
   database = 'vibes-app',
   title = 'Vibes App',
   imageUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80',
-  children = null,
+  targetContainer,
 }: {
   database?: string;
   title?: string;
   imageUrl?: string;
-  children?: React.ReactNode;
+  targetContainer?: HTMLElement;
 }) {
   const { enableSync, syncEnabled } = useFireproof(database);
   const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled);
+  const [menuOpen, setMenuOpen] = React.useState(false);
 
   // Watch for authentication state changes
   React.useEffect(() => {
@@ -68,19 +69,76 @@ function VibesApp({
     enableSync();
   };
 
+  // Effect to manage target container visibility and styling
+  React.useEffect(() => {
+    if (!targetContainer) return;
+
+    if (showAuthWall) {
+      // Hide/blur the original content during auth
+      targetContainer.style.filter = 'blur(8px)';
+      targetContainer.style.pointerEvents = 'none';
+    } else {
+      // Show original content clearly when authenticated
+      targetContainer.style.filter = 'none';
+      targetContainer.style.pointerEvents = 'auto';
+    }
+
+    return () => {
+      // Cleanup - restore original content
+      if (targetContainer) {
+        targetContainer.style.filter = 'none';
+        targetContainer.style.pointerEvents = 'auto';
+      }
+    };
+  }, [showAuthWall, targetContainer]);
+
   if (showAuthWall) {
-    return React.createElement(AuthWall, {
+    return React.createElement('div', {
+      style: {
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        pointerEvents: 'auto'
+      }
+    }, React.createElement(AuthWall, {
       onLogin: handleLogin,
       imageUrl,
       title,
       open: true,
-    });
+    }));
   }
 
-  return React.createElement(HiddenMenuWrapper, {
-    children: children,
-    menuContent: React.createElement(VibesPanel),
-  });
+  // When authenticated, show just the VibesSwitch button with a simple menu
+  return React.createElement(React.Fragment, null,
+    // Menu panel (only when open)
+    menuOpen && React.createElement('div', {
+      style: {
+        position: 'fixed',
+        bottom: '100px',
+        right: '16px',
+        zIndex: 9997,
+        pointerEvents: 'auto'
+      }
+    }, React.createElement(VibesPanel)),
+
+    // VibesSwitch button
+    React.createElement('div', {
+      style: {
+        position: 'fixed',
+        bottom: '16px',
+        right: '16px',
+        zIndex: 9998,
+        pointerEvents: 'auto'
+      }
+    }, React.createElement('button', {
+      onClick: () => setMenuOpen(!menuOpen),
+      style: {
+        backgroundColor: 'transparent',
+        border: 'none',
+        cursor: 'pointer'
+      }
+    }, React.createElement(VibesSwitch, { size: 80 })))
+  );
 }
 
 /**
@@ -102,45 +160,38 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     containerElement = document.body;
   }
 
-  // Capture existing content before mounting
-  const existingChildren = Array.from(containerElement.childNodes);
-  const contentWrapper = document.createElement('div');
-  
-  // Move existing content into wrapper
-  existingChildren.forEach(child => {
-    contentWrapper.appendChild(child);
-  });
+  // Leave existing content in place and create overlay portal
+  const overlayDiv = document.createElement('div');
+  overlayDiv.style.position = 'fixed';
+  overlayDiv.style.inset = '0';
+  overlayDiv.style.zIndex = '9999';
+  overlayDiv.style.pointerEvents = 'none'; // Allow clicks through when not showing overlay
+  document.body.appendChild(overlayDiv);
 
-  const mountDiv = document.createElement('div');
-  containerElement.appendChild(mountDiv);
+  const root = ReactDOM.createRoot(overlayDiv);
 
-  const root = ReactDOM.createRoot(mountDiv);
-
-  // Create React element from existing content
-  const existingContentElement = React.createElement('div', {
-    ref: (ref: HTMLDivElement | null) => {
-      if (ref && contentWrapper.childNodes.length > 0) {
-        // Move the wrapped content into the React component
-        Array.from(contentWrapper.childNodes).forEach(child => {
-          ref.appendChild(child);
-        });
-      }
-    }
-  });
-
+  // Pass the original container element to VibesApp so it can wrap the existing content
   root.render(React.createElement(VibesApp, { 
     database, 
     title, 
     imageUrl, 
-    children: existingContentElement 
+    targetContainer: containerElement 
   }));
 
   return {
     unmount: () => {
-      root.unmount();
-      if (mountDiv.parentNode) {
-        mountDiv.parentNode.removeChild(mountDiv);
-      }
+      // Use setTimeout to avoid synchronous unmount during React render
+      setTimeout(() => {
+        root.unmount();
+        if (overlayDiv.parentNode) {
+          overlayDiv.parentNode.removeChild(overlayDiv);
+        }
+        // Restore original container styles
+        if (containerElement) {
+          containerElement.style.filter = 'none';
+          containerElement.style.pointerEvents = 'auto';
+        }
+      }, 0);
     },
 
     getContainer: () => containerElement,
