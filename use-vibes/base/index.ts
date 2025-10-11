@@ -387,13 +387,6 @@ export { useVibes } from './hooks/vibes-gen/index.js';
 // Export components for React users
 export { VibeControl } from './components/VibeControl.js';
 export type { VibeControlProps } from './components/VibeControl.js';
-// Export vibe control mounting functions
-export {
-  autoMountVibeControl,
-  mountVibeControl,
-  mountVibeControlToBody,
-} from './vibe-control-mount.js';
-export type { MountVibeControlOptions, MountVibeControlResult } from './vibe-control-mount.js';
 
 // Export HiddenMenuWrapper component and utilities
 export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
@@ -405,15 +398,6 @@ export {
   vibeControlTheme,
 } from './utils/vibe-control-styles.js';
 export type { VibeControlClasses } from './utils/vibe-control-styles.js';
-export {
-  autoMountHiddenMenuWrapper,
-  mountHiddenMenuWrapper,
-  mountHiddenMenuWrapperToBody,
-} from './vibe-hidden-menu-mount.js';
-export type {
-  MountHiddenMenuWrapperOptions,
-  MountHiddenMenuWrapperResult,
-} from './vibe-hidden-menu-mount.js';
 // Export additional components
 export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
