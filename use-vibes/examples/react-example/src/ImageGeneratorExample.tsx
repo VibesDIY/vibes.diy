@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { DocBase, DocFileMeta } from 'use-fireproof';
+import type { DocBase, DocFileMeta } from 'use-vibes';
 import { ImgGen, useFireproof } from 'use-vibes';
 import './App.css';
 
