@@ -67,13 +67,10 @@ function VibesApp({
     });
   }
 
-  return React.createElement(
-    HiddenMenuWrapper,
-    {
-      menuContent: React.createElement(VibesPanel),
-    },
-    children
-  );
+  return React.createElement(HiddenMenuWrapper, {
+    menuContent: React.createElement(VibesPanel),
+    children,
+  });
 }
 
 export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesAppResult {
@@ -107,7 +104,9 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
       contentWrapper.style.position = 'relative';
 
       originalChildren.forEach((child) => {
-        contentWrapper!.appendChild(child);
+        if (contentWrapper) {
+          contentWrapper.appendChild(child);
+        }
       });
 
       document.body.appendChild(contentWrapper);
