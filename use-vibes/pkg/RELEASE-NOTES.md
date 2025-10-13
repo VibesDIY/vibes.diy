@@ -8,7 +8,7 @@
 
 - **File**: `use-vibes/pkg/package.json`
 - **Change**: The `-x '^'` flag was removed from the `pack` and `publish` scripts
-- **Current**: `"publish": "core-cli build"`  
+- **Current**: `"publish": "core-cli build"`
 - **Should be**: `"publish": "core-cli build -x '^'"`
 
 **Reason**: The caret removal was needed for dev testing to fix ESM.sh dependency resolution conflicts, but production releases should maintain semver ranges for proper dependency management.
@@ -28,6 +28,6 @@
 ## Testing Status
 
 - ✅ React useId conflict resolved
-- ✅ Enhanced useFireproof hook working in dev environment  
+- ✅ Enhanced useFireproof hook working in dev environment
 - 🧪 ESM.sh dependency resolution testing in progress
 - ⏳ End-to-end sharing functionality validation pending
