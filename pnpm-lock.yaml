@@ -560,8 +560,8 @@ importers:
         specifier: ^13.3.7
         version: 13.4.1
       posthog-js:
-        specifier: ^1.274.1
-        version: 1.274.1
+        specifier: ^1.275.1
+        version: 1.275.1
       react:
         specifier: ~19.1.0
         version: 19.1.1
@@ -714,8 +714,8 @@ importers:
         specifier: ^13.3.7
         version: 13.4.1
       posthog-js:
-        specifier: ^1.274.1
-        version: 1.274.1
+        specifier: ^1.275.1
+        version: 1.275.1
       react:
         specifier: ~19.1.0
         version: 19.1.1
@@ -811,8 +811,8 @@ importers:
         specifier: ^13.3.7
         version: 13.4.1
       posthog-js:
-        specifier: ^1.274.1
-        version: 1.274.1
+        specifier: ^1.275.1
+        version: 1.275.1
       react:
         specifier: ~19.1.0
         version: 19.1.1
@@ -4142,8 +4142,8 @@ packages:
     resolution: {integrity: sha512-X8XDzyvYaA6msMyAM575CUoygY5b44QzLcGRKsK3MFmXcOvQa518dNPLsKYwkYsn72g3EiW+LE0ytd/FlqWmyw==}
     engines: {node: '>=18'}
 
-  core-js@3.45.1:
-    resolution: {integrity: sha512-L4NPsJlCfZsPeXukyzHFlg/i7IIVwHSItR0wg0FLNqYClJ4MQYTYLbC7EkjKYRLZF2iof2MUgN0EGy7MdQFChg==}
+  core-js@3.46.0:
+    resolution: {integrity: sha512-vDMm9B0xnqqZ8uSBpZ8sNtRtOdmfShrvT6h2TuQGLs0Is+cR0DYbj/KWP6ALVNbWPpqA/qPLoOuppJN07humpA==}
 
   core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
@@ -6933,8 +6933,8 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.274.1:
-    resolution: {integrity: sha512-edHhkoSIX0h2BApdc+D2fBElgMnLCwrf5dcsMms57IT+dFDIF7WcyuyAyh3LC50s1f/+mEHt20QW7auAcum+Kg==}
+  posthog-js@1.275.1:
+    resolution: {integrity: sha512-ILglAzeUQl7h7rB3axr5rn5j2wBp53XedzJoUha5IC594BsrScdOD9NjLpkDAqV/Q5IsRKXbYOkr+HKaxgb4FA==}
     peerDependencies:
       '@rrweb/types': 2.0.0-alpha.17
       rrweb-snapshot: 2.0.0-alpha.17
@@ -12358,7 +12358,7 @@ snapshots:
       graceful-fs: 4.2.11
       p-event: 6.0.1
 
-  core-js@3.45.1: {}
+  core-js@3.46.0: {}
 
   core-util-is@1.0.3: {}
 
@@ -15909,10 +15909,10 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  posthog-js@1.274.1:
+  posthog-js@1.275.1:
     dependencies:
       '@posthog/core': 1.2.4
-      core-js: 3.45.1
+      core-js: 3.46.0
       fflate: 0.4.8
       preact: 10.27.2
       web-vitals: 4.2.4

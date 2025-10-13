@@ -28,7 +28,7 @@
     "isbot": "^5.1.25",
     "jose": "^6.0.10",
     "multiformats": "^13.3.7",
-    "posthog-js": "^1.274.1",
+    "posthog-js": "^1.275.1",
     "react": "~19.1.0",
     "react-cookie-consent": "^9.0.0",
     "react-dom": "~19.1.0",
