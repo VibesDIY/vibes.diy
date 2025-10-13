@@ -1,5 +1,5 @@
 import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   fireproof,
   ImgFile,
@@ -12,6 +12,9 @@ import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
 
 // Track sync status by database name and instance ID
 const syncEnabledInstances = new Map<string, Set<string>>();
+
+// Simple counter for generating unique instance IDs (avoids React.useId conflicts)
+let instanceCounter = 0;
 
 // Helper to update body class based on global sync status
 function updateBodyClass() {
@@ -52,8 +55,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   console.log('[useFireproof] Enhanced hook called with:', nameOrDatabase);
   console.log('[useFireproof] Import source detection - enhanced version is active');
 
-  // Generate unique instance ID for this hook instance
-  const instanceId = useId();
+  // Generate unique instance ID for this hook instance (no React dependency)
+  const instanceId = `instance-${++instanceCounter}`;
 
   console.log('[useFireproof] Hook instance ID:', instanceId);
 
