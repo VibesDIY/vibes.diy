@@ -48,8 +48,14 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
 
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
+  // DIAGNOSTIC: Enhanced useFireproof hook entry
+  console.log('[useFireproof] Enhanced hook called with:', nameOrDatabase);
+  console.log('[useFireproof] Import source detection - enhanced version is active');
+
   // Generate unique instance ID for this hook instance
   const instanceId = useId();
+
+  console.log('[useFireproof] Hook instance ID:', instanceId);
 
   // Get database name for localStorage key
   const dbName =
@@ -139,8 +145,18 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
     async (options: { email: string; role?: 'admin' | 'member'; right?: 'read' | 'write' }) => {
+      console.log('[useFireproof] Share function called with:', options);
+
       // Get the attachment context
       const attach = result.attach || manualAttach;
+
+      console.log('[useFireproof] Attachment context:', {
+        'result.attach': result.attach?.state,
+        manualAttach:
+          typeof manualAttach === 'object' && manualAttach ? manualAttach.state : manualAttach,
+        'final attach':
+          attach && typeof attach === 'object' && 'state' in attach ? attach.state : 'no-state',
+      });
 
       // Type guard: ensure attach is an object with ctx property
       if (
@@ -209,7 +225,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    console.log('[useFireproof] Setting up vibes-share-request event listener');
+
     const handleShareRequest = async (event: Event) => {
+      console.log('[useFireproof] Received vibes-share-request event:', event);
       const customEvent = event as CustomEvent<{
         email: string;
         role?: 'admin' | 'member';
@@ -217,6 +236,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       }>;
 
       const { email, role = 'member', right = 'read' } = customEvent.detail || {};
+
+      console.log('[useFireproof] Share request details:', { email, role, right });
 
       if (!email) {
         const error = new Error('vibes-share-request requires email in event detail');
@@ -231,7 +252,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       }
 
       try {
+        console.log('[useFireproof] Calling share function with:', { email, role, right });
         const result = await share({ email, role, right });
+        console.log('[useFireproof] Share function completed successfully:', result);
 
         // Dispatch success event
         document.dispatchEvent(
@@ -241,6 +264,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
           })
         );
       } catch (error) {
+        console.error('[useFireproof] Share function failed:', error);
         // Dispatch error event
         document.dispatchEvent(
           new CustomEvent('vibes-share-error', {
@@ -262,7 +286,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    console.log('[useFireproof] Setting up vibes-sync-enable event listener');
+
     const handleSyncEnable = () => {
+      console.log('[useFireproof] Received vibes-sync-enable event');
       enableSync();
     };
 
@@ -277,7 +304,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    console.log('[useFireproof] Setting up vibes-sync-disable event listener');
+
     const handleSyncDisable = () => {
+      console.log('[useFireproof] Received vibes-sync-disable event');
       disableSync();
     };
 
