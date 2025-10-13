@@ -6,8 +6,8 @@
   "scripts": {
     "build": "core-cli tsc",
     "test": "vitest run",
-    "pack": "core-cli build -x '^' --doPack",
-    "publish": "core-cli build -x '^'"
+    "pack": "core-cli build -x '' --doPack",
+    "publish": "core-cli build -x ''"
   },
   "keywords": [
     "ai",
