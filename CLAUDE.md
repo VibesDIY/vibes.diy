@@ -43,11 +43,14 @@ Run vibes.diy tests (quiet): `cd vibes.diy/tests && pnpm test --reporter=dot`
 
 ### Proper Release Order
 
-1. **Commit Changes**: `git add . && git commit -m "message"`
-2. **Push Changes**: `git push`
-3. **Create Git Tag**: `git tag use-vibes@v0.12.1 -m "Release message"`
-4. **Push Tag**: `git push origin use-vibes@v0.12.1`
-5. **Confirm GitHub Actions**: The CI will automatically extract the version from the tag and publish to npm
+1. **Run Quality Checks**: `pnpm check` (or at minimum `pnpm lint`)
+2. **Commit Changes**: `git add . && git commit -m "message"`
+3. **Push Changes**: `git push`
+4. **Create Git Tag**: `git tag use-vibes@v0.12.1 -m "Release message"`
+5. **Push Tag**: `git push origin use-vibes@v0.12.1`
+6. **Confirm GitHub Actions**: The CI will automatically extract the version from the tag and publish to npm
+
+**CRITICAL MISTAKE TO AVOID**: Never create git tags before committing changes! The tag will point to the old commit without your changes.
 
 **IMPORTANT**: Never manually update version numbers in package.json files. The CI/CD system handles all versioning automatically based on git tags.
 
