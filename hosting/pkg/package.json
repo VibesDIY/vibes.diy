@@ -1,0 +1,66 @@
+{
+  "name": "@vibes.diy/hosting",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker for hosting AI-generated vibes applications",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VibesDIY/vibes.diy.git"
+  },
+  "homepage": "https://github.com/VibesDIY/vibes.diy",
+  "bugs": {
+    "url": "https://github.com/VibesDIY/vibes.diy/issues"
+  },
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "preview": "node scripts/preview-server.js",
+    "cf-typegen": "wrangler types",
+    "test": "echo 'Tests are in hosting/tests/unit package'",
+    "kv:list": "wrangler kv key list --binding=KV",
+    "kv:list:remote": "wrangler kv key list --binding=KV --remote",
+    "kv:put-svg": "wrangler kv key put --binding=KV --path=src/favicon.svg favicon.svg",
+    "kv:put-svg:remote": "wrangler kv key put --binding=KV --path=src/favicon.svg favicon.svg --remote",
+    "kv:put-ico": "wrangler kv key put --binding=KV --path=src/favicon.ico favicon.ico",
+    "kv:put-ico:remote": "wrangler kv key put --binding=KV --path=src/favicon.ico favicon.ico --remote",
+    "kv:put-babel": "curl -sL https://unpkg.com/@babel/standalone/babel.min.js > /tmp/babel.min.js && wrangler kv key put --binding=KV --path=/tmp/babel.min.js babel-standalone",
+    "kv:put-babel:remote": "curl -sL https://unpkg.com/@babel/standalone/babel.min.js > /tmp/babel.min.js && wrangler kv key put --binding=KV --path=/tmp/babel.min.js babel-standalone --remote",
+    "clean-unused-keys": "node src/utils/cleanUnusedKeys.js",
+    "queue:create": "wrangler queues create publish-events && wrangler queues create publish-events-dlq",
+    "queue:list": "wrangler queues list",
+    "queue:setup": "pnpm queue:create || echo 'Queues may already exist'",
+    "format": "prettier --write \"**/*.{js,ts,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,json,css,md}\"",
+    "lint": "tsc --noEmit --pretty --skipLibCheck",
+    "check": "pnpm format && pnpm lint",
+    "pack": "echo skip pack",
+    "publish": "echo skip publish"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "vibes",
+    "hosting",
+    "ai",
+    "web-apps"
+  ],
+  "contributors": [
+    "J Chris Anderson"
+  ],
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20251011.0",
+    "hono": "^4.6.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "wrangler": "^3.87.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
