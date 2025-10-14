@@ -6,8 +6,8 @@ export default defineConfig({
     globalSetup: [],
 
     // Include all test files (TypeScript)
-    include: ["tests/**/*.ts", "tests/**/*.test.ts"],
-    exclude: ["tests/**/*.js"],
+    include: ["**/*.test.ts"],
+    exclude: ["node_modules/**", "dist/**"],
 
     // Set environment variables for tests
     env: {
