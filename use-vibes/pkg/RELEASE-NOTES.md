@@ -1,33 +1,18 @@
 # Release Notes for use-vibes Package
 
-## Dev Branch Changes (jchris/selem-sharing)
+## Recent Changes
 
-### ⚠️ IMPORTANT: Pre-release Cleanup Required
+### DOM Preservation Fix for mountVibesApp
+- **Fixed**: `mountVibesApp` now preserves original DOM nodes instead of cloning with `innerHTML`
+- **Benefit**: Interactive elements (buttons, forms, React components) maintain their event handlers and state after mounting
+- **Test**: Enhanced `MountVibesAppExample` with interactive test elements to verify DOM preservation
 
-**Before releasing to latest npm tag, revert the following change:**
+### Enhanced Test Coverage
+- **Added**: Interactive test elements in `MountVibesAppExample.tsx`
+- **Added**: Comprehensive Playwright tests for visual behavior validation
+- **Improved**: Better verification that DOM wrapping preserves interactivity
 
-- **File**: `use-vibes/pkg/package.json`
-- **Change**: The `-x '^'` flag was removed from the `pack` and `publish` scripts
-- **Current**: `"publish": "core-cli build"`
-- **Should be**: `"publish": "core-cli build -x '^'"`
-
-**Reason**: The caret removal was needed for dev testing to fix ESM.sh dependency resolution conflicts, but production releases should maintain semver ranges for proper dependency management.
-
-### Changes Made for Dev Testing
-
-1. **React useId Conflict Fix**: Replaced `useId()` with simple counter in enhanced useFireproof hook
-2. **Caret Removal**: Temporarily removed `-x '^'` flag to publish exact versions instead of semver ranges
-3. **Import Map Updates**: Added cache-busting parameters for ai-builder-hosting project testing
-
-### Files Modified
-
-- `use-vibes/base/index.ts` - React conflict fix (keep this)
-- `use-vibes/pkg/package.json` - Build script changes (REVERT before production)
-- `ai-builder-hosting/src/config/library-import-map.json` - Testing changes (project-specific)
-
-## Testing Status
-
-- ✅ React useId conflict resolved
-- ✅ Enhanced useFireproof hook working in dev environment
-- 🧪 ESM.sh dependency resolution testing in progress
-- ⏳ End-to-end sharing functionality validation pending
+### Code Quality Improvements
+- **Fixed**: Removed unused imports and variables in `MountVibesAppExample.tsx`
+- **Fixed**: Proper `ExampleKey` type definition to avoid broken imports
+- **Enhanced**: CI/CD publishing pipeline with fail-fast behavior for atomic releases
