@@ -1,8 +1,8 @@
 import { fromHono } from "chanfana";
-import { AppCreate } from "endpoints/appCreate";
-import { ClaudeChat } from "endpoints/claude-chat";
-import { ImageEdit, ImageGenerate } from "endpoints/openai-image";
-import { OpenRouterChat } from "endpoints/openrouter-chat";
+import { AppCreate } from "./endpoints/appCreate";
+import { ClaudeChat } from "./endpoints/claude-chat";
+import { ImageEdit, ImageGenerate } from "./endpoints/openai-image";
+import { OpenRouterChat } from "./endpoints/openrouter-chat";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authMiddleware } from "./middleware/auth";
@@ -53,7 +53,7 @@ export * as keyLib from "./endpoints/keyLib";
 export { increaseKeyLimitBy, type KeyResult } from "./endpoints/keyLib";
 export { transformImports } from "./utils/codeTransform";
 export { generateVibeSlug } from "./utils/slugGenerator";
-export { parseSubdomain } from "./utils/subdomainParser";
+export { parseSubdomain, constructSubdomain } from "./utils/subdomainParser";
 export { renderAppInstance } from "./utils/appRenderer";
 export {
   isCustomDomain,

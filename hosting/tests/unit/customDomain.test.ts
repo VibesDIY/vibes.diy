@@ -68,7 +68,7 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("test-app-123", JSON.stringify(testApp));
       kvStore.set("domain:example.com", "test-app-123");
 
-      const res = await renderApp.request("https://example.com/", {}, mockEnv);
+      const res = await renderApp.fetch("https://example.com/", {}, mockEnv);
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -90,7 +90,7 @@ describe("Custom Domain E2E Tests", () => {
 
       kvStore.set("test-app-123", JSON.stringify(testApp));
 
-      const res = await renderApp.request(
+      const res = await renderApp.fetch(
         "https://test-app-123.vibesdiy.app/",
         {},
         mockEnv,
@@ -117,7 +117,7 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("test-app-instance", JSON.stringify(testApp));
 
       // Test with underscore (app instance)
-      const res = await renderApp.request(
+      const res = await renderApp.fetch(
         "https://test-app-instance_abc123.vibesdiy.app/",
         {},
         mockEnv,
@@ -134,7 +134,7 @@ describe("Custom Domain E2E Tests", () => {
     });
 
     it("should return not found for unmapped custom domain", async () => {
-      const res = await renderApp.request("https://unmapped.com/", {}, mockEnv);
+      const res = await renderApp.fetch("https://unmapped.com/", {}, mockEnv);
 
       expect(res.status).toBe(404);
     });
@@ -147,7 +147,7 @@ describe("Custom Domain E2E Tests", () => {
       ];
 
       for (const domain of apexDomains) {
-        const res = await renderApp.request(`https://${domain}/`, {}, mockEnv);
+        const res = await renderApp.fetch(`https://${domain}/`, {}, mockEnv);
 
         expect(res.status).toBe(301);
         expect(res.headers.get("location")).toBe("https://vibes.diy");
@@ -167,7 +167,7 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("domain:dual.com", "dual-access");
 
       // Test custom domain access (app instance page)
-      const customRes = await renderApp.request(
+      const customRes = await renderApp.fetch(
         "https://dual.com/",
         {},
         mockEnv,
@@ -180,7 +180,7 @@ describe("Custom Domain E2E Tests", () => {
       expect(customHtml).toContain("<title>Dual Access Test</title>");
 
       // Test subdomain access (catalog title page)
-      const subdomainRes = await renderApp.request(
+      const subdomainRes = await renderApp.fetch(
         "https://dual-access.vibesdiy.app/",
         {},
         mockEnv,
@@ -224,7 +224,7 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("domain:second.com", "app-two");
 
       // Test first domain (app instance page)
-      const res1 = await renderApp.request("https://first.com/", {}, mockEnv);
+      const res1 = await renderApp.fetch("https://first.com/", {}, mockEnv);
       expect(res1.status).toBe(200);
       const html1 = await res1.text();
       expect(html1).toContain("App One");
@@ -233,7 +233,7 @@ describe("Custom Domain E2E Tests", () => {
       expect(html1).toContain("<title>First App</title>");
 
       // Test second domain (app instance page)
-      const res2 = await renderApp.request("https://second.com/", {}, mockEnv);
+      const res2 = await renderApp.fetch("https://second.com/", {}, mockEnv);
       expect(res2.status).toBe(200);
       const html2 = await res2.text();
       expect(html2).toContain("App Two");
@@ -262,7 +262,7 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("domain:old-domain.com", "update-test");
 
       // Verify old domain works
-      let res = await renderApp.request("https://old-domain.com/", {}, mockEnv);
+      let res = await renderApp.fetch("https://old-domain.com/", {}, mockEnv);
       expect(res.status).toBe(200);
       expect(await res.text()).toContain("Update Test");
 
@@ -275,13 +275,13 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("update-test", JSON.stringify(app));
 
       // Verify new domain works
-      res = await renderApp.request("https://new-domain.com/", {}, mockEnv);
+      res = await renderApp.fetch("https://new-domain.com/", {}, mockEnv);
       expect(res.status).toBe(200);
       const html = await res.text();
       expect(html).toContain("Update Test");
 
       // Verify old domain no longer works
-      res = await renderApp.request("https://old-domain.com/", {}, mockEnv);
+      res = await renderApp.fetch("https://old-domain.com/", {}, mockEnv);
       expect(res.status).toBe(404);
     });
 
@@ -299,7 +299,7 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("domain:remove-domain.com", "remove-test");
 
       // Verify domain works
-      let res = await renderApp.request(
+      let res = await renderApp.fetch(
         "https://remove-domain.com/",
         {},
         mockEnv,
@@ -312,11 +312,11 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("remove-test", JSON.stringify(app));
 
       // Verify domain no longer works
-      res = await renderApp.request("https://remove-domain.com/", {}, mockEnv);
+      res = await renderApp.fetch("https://remove-domain.com/", {}, mockEnv);
       expect(res.status).toBe(404);
 
       // But subdomain should still work
-      res = await renderApp.request(
+      res = await renderApp.fetch(
         "https://remove-test.vibesdiy.app/",
         {},
         mockEnv,
@@ -330,13 +330,13 @@ describe("Custom Domain E2E Tests", () => {
 
   describe("Edge Cases", () => {
     it("should handle malformed hostnames gracefully", async () => {
-      const res = await renderApp.request("https://./", {}, mockEnv);
+      const res = await renderApp.fetch("https://./", {}, mockEnv);
       expect(res.status).toBe(301); // Redirects to vibes.diy for invalid subdomains
     });
 
     it("should handle very long hostnames", async () => {
       const longHostname = "a".repeat(253) + ".com"; // Max DNS hostname length
-      const res = await renderApp.request(
+      const res = await renderApp.fetch(
         `https://${longHostname}/`,
         {},
         mockEnv,
@@ -355,7 +355,7 @@ describe("Custom Domain E2E Tests", () => {
 
       kvStore.set("12345", JSON.stringify(app));
 
-      const res = await renderApp.request(
+      const res = await renderApp.fetch(
         "https://12345.vibesdiy.app/",
         {},
         mockEnv,
@@ -378,7 +378,7 @@ describe("Custom Domain E2E Tests", () => {
       kvStore.set("sub-app", JSON.stringify(app));
       kvStore.set("domain:app.subdomain.example.com", "sub-app");
 
-      const res = await renderApp.request(
+      const res = await renderApp.fetch(
         "https://app.subdomain.example.com/",
         {},
         mockEnv,
