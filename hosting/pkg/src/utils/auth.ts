@@ -66,7 +66,10 @@ function decodePublicKeyJWK(encoded: string): JWK {
  * @param {string} token - The JWT token to verify
  * @param {string} publicKey - The JWK JSON string
  */
-export async function verifyToken(token: string, publicKey: string): Promise<{ payload: TokenPayload } | null> {
+export async function verifyToken(
+  token: string,
+  publicKey: string,
+): Promise<{ payload: TokenPayload } | null> {
   try {
     // Parse the JWK JSON
     const jwk = decodePublicKeyJWK(publicKey);

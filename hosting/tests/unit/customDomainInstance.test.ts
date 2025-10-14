@@ -70,7 +70,11 @@ describe("Custom Domain Instance Behavior", () => {
 
       kvStore.set("test-app-123", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://test-app-123.vibesdiy.app/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://test-app-123.vibesdiy.app/",
+        {},
+        mockEnv,
+      );
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -91,7 +95,11 @@ describe("Custom Domain Instance Behavior", () => {
 
       kvStore.set("work-app-123", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://work-app-123.vibesdiy.work/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://work-app-123.vibesdiy.work/",
+        {},
+        mockEnv,
+      );
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -112,7 +120,11 @@ describe("Custom Domain Instance Behavior", () => {
 
       kvStore.set("garden-app-123", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://garden-app-123.vibecode.garden/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://garden-app-123.vibecode.garden/",
+        {},
+        mockEnv,
+      );
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -160,8 +172,12 @@ describe("Custom Domain Instance Behavior", () => {
       const html = await res.text();
 
       // Screenshot URLs should use custom domain
-      expect(html).toContain('og:image" content="https://example.com/screenshot.png');
-      expect(html).toContain('twitter:image" content="https://example.com/screenshot.png');
+      expect(html).toContain(
+        'og:image" content="https://example.com/screenshot.png',
+      );
+      expect(html).toContain(
+        'twitter:image" content="https://example.com/screenshot.png',
+      );
     });
   });
 
@@ -212,14 +228,20 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("custom-jsx-app", JSON.stringify(testApp));
       kvStore.set("domain:customjsx.com", "custom-jsx-app");
 
-      const res = await renderApp.request("https://customjsx.com/App.jsx", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://customjsx.com/App.jsx",
+        {},
+        mockEnv,
+      );
 
       expect(res.status).toBe(200);
       const jsCode = await res.text();
 
       expect(jsCode).toContain("export default function App()");
       expect(jsCode).toContain("Custom JSX");
-      expect(res.headers.get("Content-Type")).toContain("application/javascript");
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/javascript",
+      );
     });
   });
 
@@ -236,7 +258,11 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("domain:screenshot.com", "screenshot-app");
       kvStore.set("screenshot-app-screenshot", new ArrayBuffer(100));
 
-      const res = await renderApp.request("https://screenshot.com/screenshot.png", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://screenshot.com/screenshot.png",
+        {},
+        mockEnv,
+      );
 
       expect(res.status).toBe(200);
       expect(res.headers.get("Content-Type")).toBe("image/png");
@@ -297,7 +323,11 @@ describe("Custom Domain Instance Behavior", () => {
 
   describe("Invalid Custom Domain Mappings", () => {
     it("should return 404 for unmapped custom domain", async () => {
-      const res = await renderApp.request("https://unmapped-custom.com/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://unmapped-custom.com/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(404);
     });
 

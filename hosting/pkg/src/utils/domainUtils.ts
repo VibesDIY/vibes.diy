@@ -2,8 +2,16 @@
 // Centralizes domain classification logic to avoid drift
 
 // First-party domain constants
-export const FIRST_PARTY_DOMAINS = [".vibesdiy.app", ".vibesdiy.work", ".vibecode.garden"] as const;
-export const FIRST_PARTY_APEX_DOMAINS = ["vibesdiy.app", "vibesdiy.work", "vibecode.garden"] as const;
+export const FIRST_PARTY_DOMAINS = [
+  ".vibesdiy.app",
+  ".vibesdiy.work",
+  ".vibecode.garden",
+] as const;
+export const FIRST_PARTY_APEX_DOMAINS = [
+  "vibesdiy.app",
+  "vibesdiy.work",
+  "vibecode.garden",
+] as const;
 
 /**
  * Check if a hostname is a custom domain (not owned by us)

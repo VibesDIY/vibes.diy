@@ -28,75 +28,83 @@ describe("increaseKeyLimitBy function", () => {
 
   it("should increase key limit when available balance is less than $1", async () => {
     // Mock the fetch responses
-    (global.fetch as any).mockImplementation(async (url: string, options: RequestInit) => {
-      // Mock key metadata endpoint (needed to get the API key first)
-      if (url === "https://openrouter.ai/api/v1/keys/test-hash" && options.method === "GET") {
-        return {
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          json: async () => ({
-            data: {
-              hash: "test-hash",
-              name: "Test Key",
-              label: "test-label",
-              disabled: false,
-              limit: 2.5,
-              usage: 2.0, // Usage set to $2.00, so available balance is $0.50 (< $1)
-              created_at: "2025-04-16T20:06:11.244276+00:00",
-              updated_at: "2025-04-16T20:06:11.244276+00:00",
-            },
-            key: "test-api-key-12345", // The actual API key at this level
-          }),
-          text: async () =>
-            JSON.stringify({
+    (global.fetch as any).mockImplementation(
+      async (url: string, options: RequestInit) => {
+        // Mock key metadata endpoint (needed to get the API key first)
+        if (
+          url === "https://openrouter.ai/api/v1/keys/test-hash" &&
+          options.method === "GET"
+        ) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            json: async () => ({
               data: {
                 hash: "test-hash",
                 name: "Test Key",
-                usage: 2.0,
-                /* ... other fields omitted for brevity ... */
+                label: "test-label",
+                disabled: false,
+                limit: 2.5,
+                usage: 2.0, // Usage set to $2.00, so available balance is $0.50 (< $1)
+                created_at: "2025-04-16T20:06:11.244276+00:00",
+                updated_at: "2025-04-16T20:06:11.244276+00:00",
               },
-              key: "test-api-key-12345",
+              key: "test-api-key-12345", // The actual API key at this level
             }),
-        };
-      }
-      // Mock key update endpoint
-      else if (url === "https://openrouter.ai/api/v1/keys/test-hash" && options.method === "PATCH") {
-        const body = JSON.parse(options.body as string);
-        return {
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          json: async () => ({
-            data: {
-              hash: "test-hash",
-              name: "Test Key",
-              label: "test-label",
-              disabled: false,
-              limit: body.limit, // Updated limit from request
-              created_at: "2025-04-16T20:06:11.244276+00:00",
-              updated_at: "2025-05-31T13:30:00.000000+00:00",
-            },
-          }),
-          text: async () =>
-            JSON.stringify({
+            text: async () =>
+              JSON.stringify({
+                data: {
+                  hash: "test-hash",
+                  name: "Test Key",
+                  usage: 2.0,
+                  /* ... other fields omitted for brevity ... */
+                },
+                key: "test-api-key-12345",
+              }),
+          };
+        }
+        // Mock key update endpoint
+        else if (
+          url === "https://openrouter.ai/api/v1/keys/test-hash" &&
+          options.method === "PATCH"
+        ) {
+          const body = JSON.parse(options.body as string);
+          return {
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            json: async () => ({
               data: {
                 hash: "test-hash",
                 name: "Test Key",
-                limit: body.limit,
-                /* ... other fields omitted for brevity ... */
+                label: "test-label",
+                disabled: false,
+                limit: body.limit, // Updated limit from request
+                created_at: "2025-04-16T20:06:11.244276+00:00",
+                updated_at: "2025-05-31T13:30:00.000000+00:00",
               },
             }),
+            text: async () =>
+              JSON.stringify({
+                data: {
+                  hash: "test-hash",
+                  name: "Test Key",
+                  limit: body.limit,
+                  /* ... other fields omitted for brevity ... */
+                },
+              }),
+          };
+        }
+        return {
+          ok: false,
+          status: 400,
+          statusText: "Mock not implemented",
+          json: async () => ({ error: "Mock not implemented" }),
+          text: async () => "Mock not implemented error message",
         };
-      }
-      return {
-        ok: false,
-        status: 400,
-        statusText: "Mock not implemented",
-        json: async () => ({ error: "Mock not implemented" }),
-        text: async () => "Mock not implemented error message",
-      };
-    });
+      },
+    );
 
     // Call function with test parameters
     const result = await increaseKeyLimitBy({
@@ -117,46 +125,55 @@ describe("increaseKeyLimitBy function", () => {
     const [getKeyUrl, getKeyOptions] = (global.fetch as any).mock.calls[0];
     expect(getKeyUrl).toBe("https://openrouter.ai/api/v1/keys/test-hash");
     expect(getKeyOptions.method).toBe("GET");
-    expect(getKeyOptions.headers.Authorization).toBe("Bearer test-provisioning-key");
+    expect(getKeyOptions.headers.Authorization).toBe(
+      "Bearer test-provisioning-key",
+    );
 
     // Check second call (PATCH to update key limit)
     const [patchUrl, patchOptions] = (global.fetch as any).mock.calls[1];
     expect(patchUrl).toBe("https://openrouter.ai/api/v1/keys/test-hash");
     expect(patchOptions.method).toBe("PATCH");
-    expect(patchOptions.headers.Authorization).toBe("Bearer test-provisioning-key");
+    expect(patchOptions.headers.Authorization).toBe(
+      "Bearer test-provisioning-key",
+    );
     expect(JSON.parse(patchOptions.body)).toEqual({ limit: 5.0 });
   });
 
   it("should not increase key limit when available balance is $1 or more", async () => {
     // Mock the fetch for a key with HIGH available balance (>= $1)
-    (global.fetch as any).mockImplementation(async (url: string, options: RequestInit) => {
-      // Mock key metadata endpoint to get the API key
-      if (url === "https://openrouter.ai/api/v1/keys/test-hash-high-balance" && options.method === "GET") {
+    (global.fetch as any).mockImplementation(
+      async (url: string, options: RequestInit) => {
+        // Mock key metadata endpoint to get the API key
+        if (
+          url === "https://openrouter.ai/api/v1/keys/test-hash-high-balance" &&
+          options.method === "GET"
+        ) {
+          return {
+            ok: true,
+            json: async () => ({
+              data: {
+                hash: "test-hash-high-balance",
+                name: "High Balance Key",
+                label: "high-balance-label",
+                disabled: false,
+                limit: 2.5,
+                usage: 1.0, // Usage is $1.00, so available balance is $1.50 (>= $1)
+                created_at: "2025-04-16T20:06:11.244276+00:00",
+                updated_at: "2025-04-16T20:06:11.244276+00:00",
+              },
+              key: "test-api-key-high-balance", // The API key needs to be at this level
+            }),
+          };
+        }
         return {
-          ok: true,
-          json: async () => ({
-            data: {
-              hash: "test-hash-high-balance",
-              name: "High Balance Key",
-              label: "high-balance-label",
-              disabled: false,
-              limit: 2.5,
-              usage: 1.0, // Usage is $1.00, so available balance is $1.50 (>= $1)
-              created_at: "2025-04-16T20:06:11.244276+00:00",
-              updated_at: "2025-04-16T20:06:11.244276+00:00",
-            },
-            key: "test-api-key-high-balance", // The API key needs to be at this level
-          }),
+          ok: false,
+          status: 400,
+          statusText: "Mock not implemented",
+          json: async () => ({ error: "Mock not implemented" }),
+          text: async () => "Mock not implemented error message",
         };
-      }
-      return {
-        ok: false,
-        status: 400,
-        statusText: "Mock not implemented",
-        json: async () => ({ error: "Mock not implemented" }),
-        text: async () => "Mock not implemented error message",
-      };
-    });
+      },
+    );
 
     // Call function with test parameters
     const result = await increaseKeyLimitBy({
@@ -175,9 +192,13 @@ describe("increaseKeyLimitBy function", () => {
 
     // Check the GET call for key metadata endpoint
     const [getKeyUrl, getKeyOptions] = (global.fetch as any).mock.calls[0];
-    expect(getKeyUrl).toBe("https://openrouter.ai/api/v1/keys/test-hash-high-balance");
+    expect(getKeyUrl).toBe(
+      "https://openrouter.ai/api/v1/keys/test-hash-high-balance",
+    );
     expect(getKeyOptions.method).toBe("GET");
-    expect(getKeyOptions.headers.Authorization).toBe("Bearer test-provisioning-key");
+    expect(getKeyOptions.headers.Authorization).toBe(
+      "Bearer test-provisioning-key",
+    );
   });
 
   it("should handle missing hash parameter", async () => {

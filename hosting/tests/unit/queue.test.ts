@@ -175,7 +175,10 @@ describe("Queue functionality", () => {
     expect(mockQueue.send).toHaveBeenCalledOnce();
 
     // Verify error was logged
-    expect(consoleSpy).toHaveBeenCalledWith("Error sending to queue:", expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Error sending to queue:",
+      expect.any(Error),
+    );
 
     // Verify the API still returns success (queue failure doesn't break app creation)
     expect(result.success).toBe(true);

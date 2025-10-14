@@ -57,12 +57,16 @@ describe("Template Modularization", () => {
       expect(template).toContain("{{IMPORT_MAP}}");
 
       // Should be in a script tag with type importmap
-      expect(template).toMatch(/<script type="importmap"[\s\S]*{{IMPORT_MAP}}[\s\S]*<\/script>/);
+      expect(template).toMatch(
+        /<script type="importmap"[\s\S]*{{IMPORT_MAP}}[\s\S]*<\/script>/,
+      );
     });
 
     it("should have app code in babel script tag", () => {
       // APP_CODE should be in a babel-processed script tag
-      expect(template).toMatch(/<script[^>]*type="text\/babel"[\s\S]*{{APP_CODE}}[\s\S]*<\/script>/);
+      expect(template).toMatch(
+        /<script[^>]*type="text\/babel"[\s\S]*{{APP_CODE}}[\s\S]*<\/script>/,
+      );
     });
   });
 

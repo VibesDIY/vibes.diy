@@ -24,12 +24,15 @@ export async function listKeys(params: KeyListParams): Promise<KeyResult> {
     // Build query parameters
     const queryParams = new URLSearchParams();
     if (offset !== undefined) queryParams.append("offset", offset.toString());
-    if (includeDisabled !== undefined) queryParams.append("include_disabled", includeDisabled.toString());
+    if (includeDisabled !== undefined)
+      queryParams.append("include_disabled", includeDisabled.toString());
 
     const queryString = queryParams.toString();
     const url = `https://openrouter.ai/api/v1/keys${queryString ? `?${queryString}` : ""}`;
 
-    console.log(`🔍 Listing OpenRouter keys${offset !== undefined ? ` with offset ${offset}` : ""}`);
+    console.log(
+      `🔍 Listing OpenRouter keys${offset !== undefined ? ` with offset ${offset}` : ""}`,
+    );
 
     // Make request to OpenRouter API
     const response = await fetch(url, {

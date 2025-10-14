@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { parseSubdomain } from "../src/utils/subdomainParser";
-import { renderAppInstance, renderCatalogTitle } from "../src/utils/appRenderer";
-import { expectBasicCatalogTitle, expectAppInstance } from "../src/test-utils/catalogAssertions";
+import {
+  renderAppInstance,
+  renderCatalogTitle,
+} from "../src/utils/appRenderer";
+import {
+  expectBasicCatalogTitle,
+  expectAppInstance,
+} from "../src/test-utils/catalogAssertions";
 
 describe("Underscore-Based Routing Integration", () => {
   // Mock app data for testing
@@ -17,7 +23,8 @@ describe("Underscore-Based Routing Integration", () => {
   // Mock context for testing
   const createMockContext = (url: string) => ({
     req: { url },
-    html: (content: string, status: number = 200) => new Response(content, { status }),
+    html: (content: string, status: number = 200) =>
+      new Response(content, { status }),
   });
 
   describe("URL Parsing Integration", () => {
@@ -115,7 +122,11 @@ describe("Underscore-Based Routing Integration", () => {
       const context = createMockContext("https://no-screenshot.vibesdiy.app");
       const parsed = parseSubdomain("no-screenshot.vibesdiy.app");
 
-      const response = await renderCatalogTitle(context, parsed, appWithoutScreenshot);
+      const response = await renderCatalogTitle(
+        context,
+        parsed,
+        appWithoutScreenshot,
+      );
       const html = await response.text();
 
       expect(html).toContain("placeholder-screenshot");
@@ -136,7 +147,9 @@ describe("Underscore-Based Routing Integration", () => {
       expect(html).toContain("/screenshot.png");
       expect(html).toMatch(/<img[^>]+class="app-screenshot"/);
       // Should have placeholder content in the HTML body (but hidden by default)
-      expect(html).toMatch(/<div[^>]+class="placeholder-screenshot"[^>]*style="display: none;"/);
+      expect(html).toMatch(
+        /<div[^>]+class="placeholder-screenshot"[^>]*style="display: none;"/,
+      );
     });
 
     it("should include color-scheme and theme-color meta tags", async () => {
@@ -146,12 +159,19 @@ describe("Underscore-Based Routing Integration", () => {
       const response = await renderCatalogTitle(context, parsed, mockApp);
       const html = await response.text();
 
-      expect(html).toContain('<meta name="color-scheme" content="light dark" />');
+      expect(html).toContain(
+        '<meta name="color-scheme" content="light dark" />',
+      );
       // Two theme-color tags with light/dark media queries and expected colors
-      const themeColorTags = html.match(/<meta[^>]+name=\"theme-color\"/g) || [];
+      const themeColorTags =
+        html.match(/<meta[^>]+name=\"theme-color\"/g) || [];
       expect(themeColorTags.length).toBe(2);
-      expect(html).toContain('<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />');
-      expect(html).toContain('<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1220" />');
+      expect(html).toContain(
+        '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />',
+      );
+      expect(html).toContain(
+        '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1220" />',
+      );
     });
   });
 
@@ -224,7 +244,9 @@ describe("Underscore-Based Routing Integration", () => {
 
     it("should render remix apps with VibeControl integration", async () => {
       const remixApp = { ...mockApp, remixOf: "original-app" };
-      const context = createMockContext("https://remix-app_abc123.vibesdiy.app");
+      const context = createMockContext(
+        "https://remix-app_abc123.vibesdiy.app",
+      );
       const parsed = parseSubdomain("remix-app_abc123.vibesdiy.app");
 
       const response = await renderAppInstance(context, parsed, remixApp);
@@ -238,7 +260,9 @@ describe("Underscore-Based Routing Integration", () => {
 
   describe("Complex Subdomain Scenarios", () => {
     it("should handle multiple underscores in install ID", async () => {
-      const context = createMockContext("https://app_user_session_123.vibesdiy.app");
+      const context = createMockContext(
+        "https://app_user_session_123.vibesdiy.app",
+      );
       const parsed = parseSubdomain("app_user_session_123.vibesdiy.app");
 
       expect(parsed.appSlug).toBe("app");
@@ -251,7 +275,9 @@ describe("Underscore-Based Routing Integration", () => {
 
     it("should handle UUID-style install IDs", async () => {
       const uuid = "550e8400-e29b-41d4-a716-446655440000";
-      const context = createMockContext(`https://uuid-app_${uuid}.vibesdiy.app`);
+      const context = createMockContext(
+        `https://uuid-app_${uuid}.vibesdiy.app`,
+      );
       const parsed = parseSubdomain(`uuid-app_${uuid}.vibesdiy.app`);
 
       expect(parsed.appSlug).toBe("uuid-app");
@@ -264,7 +290,9 @@ describe("Underscore-Based Routing Integration", () => {
 
     it("should handle complex app slug names", async () => {
       const complexApp = { ...mockApp, slug: "weather-dashboard-v2-beta" };
-      const context = createMockContext("https://weather-dashboard-v2-beta.vibesdiy.app");
+      const context = createMockContext(
+        "https://weather-dashboard-v2-beta.vibesdiy.app",
+      );
       const parsed = parseSubdomain("weather-dashboard-v2-beta.vibesdiy.app");
 
       expect(parsed.appSlug).toBe("weather-dashboard-v2-beta");

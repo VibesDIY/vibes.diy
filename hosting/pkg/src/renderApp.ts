@@ -1,7 +1,11 @@
 import { Hono } from "hono";
 import { parseSubdomain, isValidSubdomain } from "./utils/subdomainParser";
 import { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer";
-import { isCustomDomain, isFirstPartyApexDomain, getFirstPartyDomain } from "./utils/domainUtils";
+import {
+  isCustomDomain,
+  isFirstPartyApexDomain,
+  getFirstPartyDomain,
+} from "./utils/domainUtils";
 import testAppData from "../test-app-data.json";
 // We'll use a different approach for serving the favicons
 
@@ -176,7 +180,10 @@ app.get("/App.jsx", async (c) => {
 });
 
 // Parse Range header to extract start and end byte positions
-function parseRangeHeader(rangeHeader: string, fileSize: number): { start: number; end: number } | null {
+function parseRangeHeader(
+  rangeHeader: string,
+  fileSize: number,
+): { start: number; end: number } | null {
   const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
   if (!match) return null;
 

@@ -30,9 +30,10 @@ export class KeyCreate extends OpenAPIRoute {
                   return data.hash ? true : data.name !== undefined;
                 },
                 {
-                  message: "The 'name' field is required when creating a new key (i.e., when 'hash' is not provided).",
+                  message:
+                    "The 'name' field is required when creating a new key (i.e., when 'hash' is not provided).",
                   path: ["name"],
-                }
+                },
               ),
           },
         },
@@ -72,7 +73,7 @@ export class KeyCreate extends OpenAPIRoute {
           success: false,
           error: "Unauthorized: Invalid or missing token",
         },
-        401
+        401,
       );
     }
 

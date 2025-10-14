@@ -52,13 +52,20 @@ export async function createKey(params: {
   provisioningKey?: string; // Added to allow passing the key from the context
 }): Promise<KeyResult> {
   // Destructure parameters with defaults
-  const { userId, name, label = `session-${Date.now()}`, provisioningKey } = params;
+  const {
+    userId,
+    name,
+    label = `session-${Date.now()}`,
+    provisioningKey,
+  } = params;
 
   try {
     // Check if we have the provisioning key
 
     if (!provisioningKey) {
-      console.error("SERVER_OPENROUTER_PROV_KEY environment variable not found");
+      console.error(
+        "SERVER_OPENROUTER_PROV_KEY environment variable not found",
+      );
       return {
         success: false,
         error: "Server configuration error: Missing API key",
@@ -71,11 +78,13 @@ export async function createKey(params: {
     // Set dollar amount based on user status
     const dollarAmount = isAuthenticated ? 2.5 : 1.25;
     console.log(
-      `💰 Setting dollar amount to $${dollarAmount} for ${isAuthenticated ? "authenticated" : "anonymous"} user`
+      `💰 Setting dollar amount to $${dollarAmount} for ${isAuthenticated ? "authenticated" : "anonymous"} user`,
     );
 
     // Add userId to the key label if available and meaningful
-    const keyLabel = isAuthenticated ? `user-${userId}-${label}` : `anonymous-${label}`;
+    const keyLabel = isAuthenticated
+      ? `user-${userId}-${label}`
+      : `anonymous-${label}`;
     console.log(`🏷️ Using label: ${keyLabel}`);
 
     // Make direct request to OpenRouter API
@@ -177,7 +186,9 @@ export async function updateKey(params: KeyUpdateParams): Promise<KeyResult> {
     }
 
     if (!provisioningKey) {
-      console.error("SERVER_OPENROUTER_PROV_KEY environment variable not found");
+      console.error(
+        "SERVER_OPENROUTER_PROV_KEY environment variable not found",
+      );
       return {
         success: false,
         error: "Server configuration error: Missing API key",
@@ -275,8 +286,13 @@ export async function getKey(params: KeyGetParams): Promise<KeyResult> {
       return { success: false, error: "Hash is required to retrieve a key" };
     }
     if (!provisioningKey) {
-      console.error("SERVER_OPENROUTER_PROV_KEY environment variable not found");
-      return { success: false, error: "Server configuration error: Missing API key" };
+      console.error(
+        "SERVER_OPENROUTER_PROV_KEY environment variable not found",
+      );
+      return {
+        success: false,
+        error: "Server configuration error: Missing API key",
+      };
     }
 
     console.log(`🔍 Retrieving key ${hash}`);
@@ -301,7 +317,10 @@ export async function getKey(params: KeyGetParams): Promise<KeyResult> {
 
     if (!response.ok) {
       console.error(`❌ Error retrieving key:`, data);
-      return { success: false, error: `Failed to retrieve key: ${response.statusText}` };
+      return {
+        success: false,
+        error: `Failed to retrieve key: ${response.statusText}`,
+      };
     }
     if (!data.data) {
       console.error(`❌ Unexpected API response format:`, data);
@@ -352,11 +371,19 @@ export async function increaseKeyLimitBy(params: {
   try {
     // Validate inputs
     if (!hash) {
-      return { success: false, error: "Hash is required to increase key limit" };
+      return {
+        success: false,
+        error: "Hash is required to increase key limit",
+      };
     }
     if (!provisioningKey) {
-      console.error("SERVER_OPENROUTER_PROV_KEY environment variable not found");
-      return { success: false, error: "Server configuration error: Missing API key" };
+      console.error(
+        "SERVER_OPENROUTER_PROV_KEY environment variable not found",
+      );
+      return {
+        success: false,
+        error: "Server configuration error: Missing API key",
+      };
     }
     if (amount <= 0) {
       return { success: false, error: "Amount must be greater than zero" };
@@ -365,8 +392,14 @@ export async function increaseKeyLimitBy(params: {
     // Retrieve current key data
     const getResult = await getKey({ hash, provisioningKey });
     if (!getResult.success || !getResult.key) {
-      console.error(`❌ Failed to retrieve key for limit increase:`, getResult.error);
-      return { success: false, error: getResult.error || "Failed to retrieve key for limit increase" };
+      console.error(
+        `❌ Failed to retrieve key for limit increase:`,
+        getResult.error,
+      );
+      return {
+        success: false,
+        error: getResult.error || "Failed to retrieve key for limit increase",
+      };
     }
 
     const currentLimit = getResult.key.limit;
@@ -376,7 +409,7 @@ export async function increaseKeyLimitBy(params: {
     if (availableBalance >= 1) {
       // Key still has sufficient balance, return the key as is.
       console.log(
-        `✅ Key ${hash} already has sufficient balance ($${availableBalance.toFixed(2)}). Returning current key data.`
+        `✅ Key ${hash} already has sufficient balance ($${availableBalance.toFixed(2)}). Returning current key data.`,
       );
       return {
         success: true,
@@ -384,7 +417,9 @@ export async function increaseKeyLimitBy(params: {
       };
     }
     const newLimit = currentLimit + amount;
-    console.log(`⬆️ Increasing key ${hash} limit from $${currentLimit} to $${newLimit}`);
+    console.log(
+      `⬆️ Increasing key ${hash} limit from $${currentLimit} to $${newLimit}`,
+    );
 
     // Apply new limit using updateKey
     return await updateKey({ hash, limit: newLimit, provisioningKey });

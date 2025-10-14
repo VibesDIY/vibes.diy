@@ -14,7 +14,12 @@ import { generateVibeSlug } from "../utils/slugGenerator";
  * @param keyIdentifier Identifier to use for the screenshot key (usually slug)
  * @returns Updated app data with screenshot information
  */
-async function processScreenshot(kv: KVNamespace, _appData: any, base64Screenshot: string, keyIdentifier: string) {
+async function processScreenshot(
+  kv: KVNamespace,
+  _appData: any,
+  base64Screenshot: string,
+  keyIdentifier: string,
+) {
   try {
     // Remove data:image prefix if present
     const base64Data = base64Screenshot.replace(/^data:image\/\w+;base64,/, "");
@@ -136,7 +141,10 @@ export class AppCreate extends OpenAPIRoute {
       // Handle custom domain update
       if (app.customDomain !== undefined) {
         // Remove old domain mapping if it exists and is different
-        if (parsedApp.customDomain && parsedApp.customDomain !== app.customDomain) {
+        if (
+          parsedApp.customDomain &&
+          parsedApp.customDomain !== app.customDomain
+        ) {
           await kv.delete(`domain:${parsedApp.customDomain}`);
         }
 
@@ -199,7 +207,9 @@ export class AppCreate extends OpenAPIRoute {
     // Send event to queue for processing
     try {
       if (!c.env.PUBLISH_QUEUE) {
-        console.warn("PUBLISH_QUEUE not configured - skipping event publishing");
+        console.warn(
+          "PUBLISH_QUEUE not configured - skipping event publishing",
+        );
         return {
           success: true,
           app: savedApp,
@@ -207,7 +217,10 @@ export class AppCreate extends OpenAPIRoute {
       }
 
       const event: z.infer<typeof PublishEvent> = {
-        type: savedApp.updateCount && savedApp.updateCount > 0 ? "app_updated" : "app_created",
+        type:
+          savedApp.updateCount && savedApp.updateCount > 0
+            ? "app_updated"
+            : "app_created",
         app: savedApp,
         metadata: {
           timestamp: Date.now(),
