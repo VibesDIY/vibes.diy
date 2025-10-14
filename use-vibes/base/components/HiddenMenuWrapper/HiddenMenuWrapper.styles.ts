@@ -84,6 +84,10 @@ export const getContentWrapperStyle = (menuHeight: number, menuOpen: boolean): C
   transition: `transform ${hiddenMenuTheme.animation.duration} ${hiddenMenuTheme.animation.easing}, filter 0.3s ${hiddenMenuTheme.animation.easing}`,
   transform: menuOpen ? `translateY(-${menuHeight}px)` : 'translateY(0)',
   overflowY: 'auto',
+  borderTopColor: hiddenMenuTheme.colors.menuBg,
+  borderTopWidth: '1px',
+  borderTopStyle: 'solid',
+  boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.contentBg,
   filter: menuOpen ? `blur(${hiddenMenuTheme.animation.blurAmount})` : 'none',
 });
