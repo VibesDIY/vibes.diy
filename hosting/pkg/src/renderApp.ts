@@ -9,10 +9,10 @@ import {
 import testAppData from "../test-app-data.json";
 // We'll use a different approach for serving the favicons
 
-type Bindings = {
+interface Bindings {
   KV: KVNamespace;
   SERVER_OPENROUTER_PROV_KEY: string;
-};
+}
 // Start a Hono app
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -199,7 +199,7 @@ function parseRangeHeader(
 }
 
 // Shared screenshot handler logic
-async function handleScreenshotRequest(c: any, includeBody: boolean = true) {
+async function handleScreenshotRequest(c: any, includeBody = true) {
   // Extract subdomain from the request URL
   const url = new URL(c.req.url);
   const hostname = url.hostname;

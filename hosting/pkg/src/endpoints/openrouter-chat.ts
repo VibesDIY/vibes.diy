@@ -150,7 +150,7 @@ export class OpenRouterChat extends OpenAPIRoute {
         } else {
           // User is providing their own OpenRouter key
           apiKey = providedKey;
-          isUserProvidedKey = true;
+          _isUserProvidedKey = true;
           console.log(
             `🔑 OpenRouter Chat: User ${userId || "anonymous"} (IP: ${clientIp}) using their own API key`,
           );
