@@ -2,7 +2,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { fromHono } from "chanfana";
-import { KeyCreate , KeyResult , authMiddleware , TokenPayload } from "@vibes.diy/hosting";
+import {
+  KeyCreate,
+  KeyResult,
+  authMiddleware,
+  TokenPayload,
+} from "@vibes.diy/hosting";
 import * as keyLib from "@vibes.diy/hosting";
 
 // Mock the keyLib and authMiddleware modules

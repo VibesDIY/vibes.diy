@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderAppInstance , parseSubdomain } from "@vibes.diy/hosting";
+import { renderAppInstance, parseSubdomain } from "@vibes.diy/hosting";
 
 describe("Vibes Version Override (v_vibes parameter)", () => {
   // Mock app data for testing
@@ -15,8 +15,7 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
   // Mock context for testing with v_vibes parameter
   const createMockContext = (url: string) => ({
     req: { url },
-    html: (content: string, status = 200) =>
-      new Response(content, { status }),
+    html: (content: string, status = 200) => new Response(content, { status }),
   });
 
   describe("Import Map Version Override", () => {

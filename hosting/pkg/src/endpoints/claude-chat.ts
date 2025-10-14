@@ -33,9 +33,7 @@ export interface ClaudeMessagesResponse {
 }
 
 // Function to convert OpenAI format messages to Claude format
-function convertToClaudeFormat(
-  messages: { role: string; content: string }[],
-): {
+function convertToClaudeFormat(messages: { role: string; content: string }[]): {
   systemPrompt: string | null;
   claudeMessages: { role: string; content: string }[];
 } {
@@ -86,7 +84,9 @@ interface OpenAIResponse {
   };
 }
 
-function convertToOpenAIFormat(claudeResponse: ClaudeMessagesResponse): OpenAIResponse {
+function convertToOpenAIFormat(
+  claudeResponse: ClaudeMessagesResponse,
+): OpenAIResponse {
   // Extract text content from Claude response
   const content = claudeResponse.content
     .filter((item) => item.type === "text")

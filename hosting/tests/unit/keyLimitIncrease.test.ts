@@ -122,7 +122,9 @@ describe("increaseKeyLimitBy function", () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
 
     // Check first call (GET for key metadata)
-    const [getKeyUrl, getKeyOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const [getKeyUrl, getKeyOptions] = (
+      global.fetch as ReturnType<typeof vi.fn>
+    ).mock.calls[0];
     expect(getKeyUrl).toBe("https://openrouter.ai/api/v1/keys/test-hash");
     expect(getKeyOptions.method).toBe("GET");
     expect(getKeyOptions.headers.Authorization).toBe(
@@ -130,7 +132,8 @@ describe("increaseKeyLimitBy function", () => {
     );
 
     // Check second call (PATCH to update key limit)
-    const [patchUrl, patchOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[1];
+    const [patchUrl, patchOptions] = (global.fetch as ReturnType<typeof vi.fn>)
+      .mock.calls[1];
     expect(patchUrl).toBe("https://openrouter.ai/api/v1/keys/test-hash");
     expect(patchOptions.method).toBe("PATCH");
     expect(patchOptions.headers.Authorization).toBe(
@@ -191,7 +194,9 @@ describe("increaseKeyLimitBy function", () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
     // Check the GET call for key metadata endpoint
-    const [getKeyUrl, getKeyOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const [getKeyUrl, getKeyOptions] = (
+      global.fetch as ReturnType<typeof vi.fn>
+    ).mock.calls[0];
     expect(getKeyUrl).toBe(
       "https://openrouter.ai/api/v1/keys/test-hash-high-balance",
     );

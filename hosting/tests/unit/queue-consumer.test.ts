@@ -15,7 +15,7 @@ describe("Queue Consumer", () => {
   };
   let mockBatch: {
     queue: string;
-    messages: typeof mockMessage[];
+    messages: (typeof mockMessage)[];
   };
 
   beforeEach(() => {
@@ -157,8 +157,9 @@ describe("Queue Consumer", () => {
     );
 
     // Verify Discord webhook body content
-    const discordCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("discord.com/api/webhooks"),
+    const discordCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) =>
+        call[0].includes("discord.com/api/webhooks"),
     );
 
     expect(discordCall).toBeDefined();
@@ -219,8 +220,9 @@ describe("Queue Consumer", () => {
     );
 
     // Verify update count in Discord message (lenient)
-    const discordCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("discord.com/api/webhooks"),
+    const discordCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) =>
+        call[0].includes("discord.com/api/webhooks"),
     );
 
     if (discordCall) {
@@ -260,8 +262,9 @@ describe("Queue Consumer", () => {
     await queueConsumer.queue(mockBatch, mockEnv);
 
     // Verify Discord webhook was called
-    const discordCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("discord.com/api/webhooks"),
+    const discordCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) =>
+        call[0].includes("discord.com/api/webhooks"),
     );
 
     if (discordCall) {
@@ -467,14 +470,14 @@ describe("Queue Consumer", () => {
     );
 
     // Verify both Discord and Bluesky endpoints were called
-    const discordCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("discord.com"),
+    const discordCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) => call[0].includes("discord.com"),
     );
-    const blueskySessionCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("createSession"),
+    const blueskySessionCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) => call[0].includes("createSession"),
     );
-    const blueskyPostCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("createRecord"),
+    const blueskyPostCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) => call[0].includes("createRecord"),
     );
 
     expect(discordCall).toBeDefined();
@@ -509,11 +512,11 @@ describe("Queue Consumer", () => {
     expect(mockMessage.ack).toHaveBeenCalledOnce();
 
     // Verify only Discord was called, not Bluesky
-    const discordCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("discord.com"),
+    const discordCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) => call[0].includes("discord.com"),
     );
-    const blueskyCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("bsky.social"),
+    const blueskyCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) => call[0].includes("bsky.social"),
     );
 
     expect(discordCall).toBeDefined();
@@ -686,8 +689,8 @@ describe("Queue Consumer", () => {
     );
 
     // Verify post creation was called with external embed
-    const postCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("createRecord"),
+    const postCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) => call[0].includes("createRecord"),
     );
     expect(postCall).toBeDefined();
 
@@ -755,14 +758,14 @@ describe("Queue Consumer", () => {
       "arrayBuffer",
     );
 
-    const blobUploadCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("uploadBlob"),
+    const blobUploadCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) => call[0].includes("uploadBlob"),
     );
     expect(blobUploadCall).toBeUndefined();
 
     // Verify post creation was called with external embed but no thumbnail
-    const postCall = mockFetch.mock.calls.find((call: Parameters<typeof fetch>) =>
-      call[0].includes("createRecord"),
+    const postCall = mockFetch.mock.calls.find(
+      (call: Parameters<typeof fetch>) => call[0].includes("createRecord"),
     );
     expect(postCall).toBeDefined();
 
