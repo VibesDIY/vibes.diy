@@ -1,29 +1,53 @@
 // Test for keyCreate endpoint functionality
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  type MockedFunction,
+} from "vitest";
 import { Hono } from "hono";
 import { fromHono } from "chanfana";
+
+// Mock the entire keyLib module first
+vi.mock("../../../pkg/src/endpoints/keyLib", () => ({
+  createKey: vi.fn(),
+  increaseKeyLimitBy: vi.fn(),
+}));
+
+import { KeyCreate } from "@vibes.diy/hosting";
 import {
-  KeyCreate,
-  KeyResult,
-  authMiddleware,
-  TokenPayload,
-} from "@vibes.diy/hosting";
-import * as hostingModule from "@vibes.diy/hosting";
+  createKey,
+  increaseKeyLimitBy,
+} from "../../../pkg/src/endpoints/keyLib";
 
-// Mock the keyLib and authMiddleware modules
-vi.mock("@vibes.diy/hosting", async () => {
-  const actual = await vi.importActual("@vibes.diy/hosting");
-  return {
-    ...actual,
-    keyLib: {
-      createKey: vi.fn(),
-      increaseKeyLimitBy: vi.fn(),
-    },
-    authMiddleware: vi.fn(),
+interface TokenPayload {
+  userId: string;
+  tenants: { id: string; role: string }[];
+  ledgers: { id: string; role: string; right: string }[];
+  iat: number;
+  iss: string;
+  aud: string;
+  exp: number;
+}
+
+interface KeyResult {
+  success: boolean;
+  key?: {
+    hash: string;
+    name: string;
+    label: string;
+    disabled: boolean;
+    limit: number;
+    usage: number;
+    created_at: string;
+    updated_at: string | null;
+    key: string;
   };
-});
+  error?: string;
+}
 
-// Define a mock token payload for authenticated users
 const mockTokenPayload: TokenPayload = {
   userId: "test-user",
   tenants: [{ id: "tenant-1", role: "admin" }],
@@ -31,7 +55,7 @@ const mockTokenPayload: TokenPayload = {
   iat: Math.floor(Date.now() / 1000),
   iss: "FP_CLOUD",
   aud: "PUBLIC",
-  exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
+  exp: Math.floor(Date.now() / 1000) + 3600,
 };
 
 describe("KeyCreate Endpoint Integration Test", () => {
@@ -41,15 +65,13 @@ describe("KeyCreate Endpoint Integration Test", () => {
   };
 
   beforeEach(() => {
-    // Reset mocks before each test
     vi.clearAllMocks();
 
-    // Create a new Hono app for each test
     app = new Hono();
     const openapi = fromHono(app);
 
-    // Mock middleware to set user context
-    (authMiddleware as any).mockImplementation(async (c, next) => {
+    // Auth middleware
+    app.use("/api/keys", async (c, next) => {
       const authHeader = c.req.header("Authorization");
       if (authHeader === "Bearer valid-token") {
         c.set("user", mockTokenPayload);
@@ -59,15 +81,11 @@ describe("KeyCreate Endpoint Integration Test", () => {
       await next();
     });
 
-    // Register middleware and endpoint
-    openapi.use("/api/keys", authMiddleware);
     openapi.post("/api/keys", KeyCreate);
   });
 
-  // Test case for successful key creation
   it("should create a key for an authenticated user", async () => {
-    // Arrange: Mock the result from keyLib.createKey
-    const mockCreateKeyResult: KeyResult = {
+    const mockResult: KeyResult = {
       success: true,
       key: {
         hash: "test-hash",
@@ -77,13 +95,15 @@ describe("KeyCreate Endpoint Integration Test", () => {
         created_at: "",
         updated_at: null,
         label: "",
+        usage: 0,
+        key: "test-api-key",
       },
     };
-    (hostingModule.keyLib.createKey as any).mockResolvedValue(
-      mockCreateKeyResult,
+
+    (createKey as MockedFunction<typeof createKey>).mockResolvedValue(
+      mockResult,
     );
 
-    // Act: Send a request to the endpoint
     const request = new Request("http://localhost/api/keys", {
       method: "POST",
       headers: {
@@ -92,20 +112,21 @@ describe("KeyCreate Endpoint Integration Test", () => {
       },
       body: JSON.stringify({ name: "Test Session" }),
     });
-    const response = await app.fetch(request, env);
 
-    // Assert: Check the response and that createKey was called correctly
+    const response = await app.fetch(request, env);
+    const body = (await response.json()) as KeyResult;
+
     expect(response.status).toBe(200);
-    const body = await response.json();
     expect(body.success).toBe(true);
-    expect(keyLib.createKey).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: "test-user" }),
-    );
+    expect(createKey).toHaveBeenCalledWith({
+      userId: "test-user",
+      name: "Test Session",
+      label: undefined,
+      provisioningKey: "test-provisioning-key",
+    });
   });
 
-  // Test case for unauthorized access
-  it("should return 401 Unauthorized if user is not authenticated", async () => {
-    // Act: Send a request with an invalid token
+  it("should return 401 for unauthenticated user", async () => {
     const request = new Request("http://localhost/api/keys", {
       method: "POST",
       headers: {
@@ -114,18 +135,17 @@ describe("KeyCreate Endpoint Integration Test", () => {
       },
       body: JSON.stringify({ name: "Test Session" }),
     });
-    const response = await app.fetch(request, env);
 
-    // Assert: Check for a 401 response
+    const response = await app.fetch(request, env);
+    const body = (await response.json()) as { success: boolean; error: string };
+
     expect(response.status).toBe(401);
-    const body = await response.json();
+    expect(body.success).toBe(false);
     expect(body.error).toBe("Unauthorized: Invalid or missing token");
   });
 
-  // Test case for increasing key limit
-  it("should increase key limit for an authenticated user", async () => {
-    // Arrange: Mock the result from keyLib.increaseKeyLimitBy
-    const mockIncreaseResult: KeyResult = {
+  it("should increase key limit for authenticated user", async () => {
+    const mockResult: KeyResult = {
       success: true,
       key: {
         hash: "test-hash-123",
@@ -135,13 +155,15 @@ describe("KeyCreate Endpoint Integration Test", () => {
         created_at: "",
         updated_at: null,
         label: "",
+        usage: 2.5,
+        key: "test-api-key",
       },
     };
-    (hostingModule.keyLib.increaseKeyLimitBy as any).mockResolvedValue(
-      mockIncreaseResult,
-    );
 
-    // Act: Send a request to the endpoint
+    (
+      increaseKeyLimitBy as MockedFunction<typeof increaseKeyLimitBy>
+    ).mockResolvedValue(mockResult);
+
     const request = new Request("http://localhost/api/keys", {
       method: "POST",
       headers: {
@@ -150,14 +172,17 @@ describe("KeyCreate Endpoint Integration Test", () => {
       },
       body: JSON.stringify({ hash: "test-hash-123" }),
     });
-    const response = await app.fetch(request, env);
 
-    // Assert: Check the response and that increaseKeyLimitBy was called correctly
+    const response = await app.fetch(request, env);
+    const body = (await response.json()) as KeyResult;
+
     expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.key.limit).toBe(5.0);
-    expect(keyLib.increaseKeyLimitBy).toHaveBeenCalledWith(
-      expect.objectContaining({ hash: "test-hash-123" }),
-    );
+    expect(body.success).toBe(true);
+    expect(body.key?.limit).toBe(5.0);
+    expect(increaseKeyLimitBy).toHaveBeenCalledWith({
+      hash: "test-hash-123",
+      amount: 2.5,
+      provisioningKey: "test-provisioning-key",
+    });
   });
 });
