@@ -27,6 +27,12 @@ describe("Custom Domain Instance Behavior", () => {
     SERVER_OPENROUTER_PROV_KEY: "test-provisioning-key",
   };
 
+  // Helper function to make requests with proper Request objects
+  const fetchApp = (url: string) => {
+    const req = new Request(url);
+    return renderApp.fetch(req, mockEnv);
+  };
+
   beforeEach(() => {
     kvStore.clear();
   });
@@ -44,7 +50,7 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("crypto-app-123", JSON.stringify(testApp));
       kvStore.set("domain:ncrypt.app", "crypto-app-123");
 
-      const res = await renderApp.fetch("https://ncrypt.app/", {}, mockEnv);
+      const res = await fetchApp("https://ncrypt.app/");
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -70,11 +76,7 @@ describe("Custom Domain Instance Behavior", () => {
 
       kvStore.set("test-app-123", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://test-app-123.vibesdiy.app/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://test-app-123.vibesdiy.app/");
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -95,11 +97,7 @@ describe("Custom Domain Instance Behavior", () => {
 
       kvStore.set("work-app-123", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://work-app-123.vibesdiy.work/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://work-app-123.vibesdiy.work/");
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -120,11 +118,7 @@ describe("Custom Domain Instance Behavior", () => {
 
       kvStore.set("garden-app-123", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://garden-app-123.vibecode.garden/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://garden-app-123.vibecode.garden/");
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -148,7 +142,7 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("crypto-app-123", JSON.stringify(testApp));
       kvStore.set("domain:ncrypt.app", "crypto-app-123");
 
-      const res = await renderApp.fetch("https://ncrypt.app/", {}, mockEnv);
+      const res = await fetchApp("https://ncrypt.app/");
       const html = await res.text();
 
       // Meta tags should use custom domain, not vibesdiy.app
@@ -168,7 +162,7 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("crypto-app-123", JSON.stringify(testApp));
       kvStore.set("domain:example.com", "crypto-app-123");
 
-      const res = await renderApp.fetch("https://example.com/", {}, mockEnv);
+      const res = await fetchApp("https://example.com/");
       const html = await res.text();
 
       // Screenshot URLs should use custom domain
@@ -195,7 +189,7 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("domain:second.io", "multi-app-123");
 
       // Test first domain
-      const res1 = await renderApp.fetch("https://first.com/", {}, mockEnv);
+      const res1 = await fetchApp("https://first.com/");
       expect(res1.status).toBe(200);
       const html1 = await res1.text();
 
@@ -205,7 +199,7 @@ describe("Custom Domain Instance Behavior", () => {
       expect(html1).not.toContain("catalog-container");
 
       // Test second domain
-      const res2 = await renderApp.fetch("https://second.io/", {}, mockEnv);
+      const res2 = await fetchApp("https://second.io/");
       expect(res2.status).toBe(200);
       const html2 = await res2.text();
 
@@ -228,11 +222,7 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("custom-jsx-app", JSON.stringify(testApp));
       kvStore.set("domain:customjsx.com", "custom-jsx-app");
 
-      const res = await renderApp.fetch(
-        "https://customjsx.com/App.jsx",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://customjsx.com/App.jsx");
 
       expect(res.status).toBe(200);
       const jsCode = await res.text();
@@ -258,11 +248,7 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("domain:screenshot.com", "screenshot-app");
       kvStore.set("screenshot-app-screenshot", new ArrayBuffer(100));
 
-      const res = await renderApp.fetch(
-        "https://screenshot.com/screenshot.png",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://screenshot.com/screenshot.png");
 
       expect(res.status).toBe(200);
       expect(res.headers.get("Content-Type")).toBe("image/png");
@@ -282,7 +268,7 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("my-app-123", JSON.stringify(testApp));
       kvStore.set("domain:specific.com", "my-app-123_abc123"); // Already has instance ID
 
-      const res = await renderApp.fetch("https://specific.com/", {}, mockEnv);
+      const res = await fetchApp("https://specific.com/");
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -307,7 +293,7 @@ describe("Custom Domain Instance Behavior", () => {
       kvStore.set("another-app-456", JSON.stringify(testApp));
       kvStore.set("domain:generic.com", "another-app-456"); // No instance ID
 
-      const res = await renderApp.fetch("https://generic.com/", {}, mockEnv);
+      const res = await fetchApp("https://generic.com/");
 
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -323,18 +309,14 @@ describe("Custom Domain Instance Behavior", () => {
 
   describe("Invalid Custom Domain Mappings", () => {
     it("should return 404 for unmapped custom domain", async () => {
-      const res = await renderApp.fetch(
-        "https://unmapped-custom.com/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://unmapped-custom.com/");
       expect(res.status).toBe(404);
     });
 
     it("should return 404 for custom domain mapped to non-existent app", async () => {
       kvStore.set("domain:broken.com", "non-existent-app");
 
-      const res = await renderApp.fetch("https://broken.com/", {}, mockEnv);
+      const res = await fetchApp("https://broken.com/");
       expect(res.status).toBe(404);
     });
   });

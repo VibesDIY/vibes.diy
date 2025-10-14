@@ -79,21 +79,20 @@ describe("KeyCreate Endpoint Integration Test", () => {
         label: "",
       },
     };
-    (hostingModule.keyLib.createKey as any).mockResolvedValue(mockCreateKeyResult);
+    (hostingModule.keyLib.createKey as any).mockResolvedValue(
+      mockCreateKeyResult,
+    );
 
     // Act: Send a request to the endpoint
-    const response = await app.fetch(
-      "/api/keys",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer valid-token",
-        },
-        body: JSON.stringify({ name: "Test Session" }),
+    const request = new Request("http://localhost/api/keys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid-token",
       },
-      env,
-    );
+      body: JSON.stringify({ name: "Test Session" }),
+    });
+    const response = await app.fetch(request, env);
 
     // Assert: Check the response and that createKey was called correctly
     expect(response.status).toBe(200);
@@ -107,18 +106,15 @@ describe("KeyCreate Endpoint Integration Test", () => {
   // Test case for unauthorized access
   it("should return 401 Unauthorized if user is not authenticated", async () => {
     // Act: Send a request with an invalid token
-    const response = await app.fetch(
-      "/api/keys",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer invalid-token",
-        },
-        body: JSON.stringify({ name: "Test Session" }),
+    const request = new Request("http://localhost/api/keys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer invalid-token",
       },
-      env,
-    );
+      body: JSON.stringify({ name: "Test Session" }),
+    });
+    const response = await app.fetch(request, env);
 
     // Assert: Check for a 401 response
     expect(response.status).toBe(401);
@@ -141,21 +137,20 @@ describe("KeyCreate Endpoint Integration Test", () => {
         label: "",
       },
     };
-    (hostingModule.keyLib.increaseKeyLimitBy as any).mockResolvedValue(mockIncreaseResult);
+    (hostingModule.keyLib.increaseKeyLimitBy as any).mockResolvedValue(
+      mockIncreaseResult,
+    );
 
     // Act: Send a request to the endpoint
-    const response = await app.fetch(
-      "/api/keys",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer valid-token",
-        },
-        body: JSON.stringify({ hash: "test-hash-123" }),
+    const request = new Request("http://localhost/api/keys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid-token",
       },
-      env,
-    );
+      body: JSON.stringify({ hash: "test-hash-123" }),
+    });
+    const response = await app.fetch(request, env);
 
     // Assert: Check the response and that increaseKeyLimitBy was called correctly
     expect(response.status).toBe(200);

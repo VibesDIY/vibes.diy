@@ -53,8 +53,13 @@ export * as keyLib from "./endpoints/keyLib";
 export { increaseKeyLimitBy, type KeyResult } from "./endpoints/keyLib";
 export { transformImports } from "./utils/codeTransform";
 export { generateVibeSlug } from "./utils/slugGenerator";
-export { parseSubdomain, constructSubdomain } from "./utils/subdomainParser";
-export { renderAppInstance } from "./utils/appRenderer";
+export {
+  parseSubdomain,
+  constructSubdomain,
+  isValidSubdomain,
+  generateInstallId,
+} from "./utils/subdomainParser";
+export { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer";
 export {
   isCustomDomain,
   isFirstPartyApexDomain,
@@ -65,11 +70,13 @@ export {
 } from "./utils/domainUtils";
 export { authMiddleware } from "./middleware/auth";
 export { type TokenPayload } from "./utils/auth";
-export type { PublishEvent } from "./types";
+export { PublishEvent } from "./types";
+export type { PublishEvent as PublishEventType } from "./types";
 export { template } from "./apptemplate";
 export { default as renderApp } from "./renderApp";
 export { default as queueConsumer } from "./queue-consumer";
 export {
   expectCatalogTitle,
+  expectBasicCatalogTitle,
   expectAppInstance,
 } from "./test-utils/catalogAssertions";

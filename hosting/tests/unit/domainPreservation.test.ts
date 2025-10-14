@@ -26,6 +26,12 @@ describe("First-Party Domain Preservation", () => {
     SERVER_OPENROUTER_PROV_KEY: "test-provisioning-key",
   };
 
+  // Helper function to make requests with proper Request objects
+  const fetchApp = (url: string) => {
+    const req = new Request(url);
+    return renderApp.fetch(req, mockEnv);
+  };
+
   beforeEach(() => {
     kvStore.clear();
   });
@@ -41,11 +47,7 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("test-app", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://test-app.vibesdiy.app/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://test-app.vibesdiy.app/");
       expect(res.status).toBe(200);
       const html = await res.text();
 
@@ -68,11 +70,7 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("test-app", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://test-app_abc123.vibesdiy.app/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://test-app_abc123.vibesdiy.app/");
       expect(res.status).toBe(200);
       const html = await res.text();
 
@@ -99,11 +97,7 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("work-app", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://work-app.vibesdiy.work/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://work-app.vibesdiy.work/");
       expect(res.status).toBe(200);
       const html = await res.text();
 
@@ -126,11 +120,7 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("work-app", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://work-app_xyz789.vibesdiy.work/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://work-app_xyz789.vibesdiy.work/");
       expect(res.status).toBe(200);
       const html = await res.text();
 
@@ -157,11 +147,7 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("garden-app", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://garden-app.vibecode.garden/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://garden-app.vibecode.garden/");
       expect(res.status).toBe(200);
       const html = await res.text();
 
@@ -186,11 +172,7 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("garden-app", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://garden-app_def456.vibecode.garden/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://garden-app_def456.vibecode.garden/");
       expect(res.status).toBe(200);
       const html = await res.text();
 
@@ -219,19 +201,11 @@ describe("First-Party Domain Preservation", () => {
       kvStore.set("domain:customwork.com", "custom-work-app");
 
       // First set up the mapping from a .work domain
-      const setupRes = await renderApp.fetch(
-        "https://custom-work-app.vibesdiy.work/",
-        {},
-        mockEnv,
-      );
+      const setupRes = await fetchApp("https://custom-work-app.vibesdiy.work/");
       expect(setupRes.status).toBe(200);
 
       // Now when accessing via custom domain, it should remember .work was the original
-      const res = await renderApp.fetch(
-        "https://customwork.com/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://customwork.com/");
       expect(res.status).toBe(200);
       const html = await res.text();
 
@@ -253,11 +227,7 @@ describe("First-Party Domain Preservation", () => {
       kvStore.set("garden-custom-app", JSON.stringify(testApp));
       kvStore.set("domain:gardencustom.io", "garden-custom-app_instance123");
 
-      const res = await renderApp.fetch(
-        "https://gardencustom.io/",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://gardencustom.io/");
       expect(res.status).toBe(200);
       const html = await res.text();
 
@@ -285,11 +255,7 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("jsx-work-app", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
-        "https://jsx-work-app.vibesdiy.work/App.jsx",
-        {},
-        mockEnv,
-      );
+      const res = await fetchApp("https://jsx-work-app.vibesdiy.work/App.jsx");
       expect(res.status).toBe(200);
       const jsCode = await res.text();
 
@@ -310,10 +276,8 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("jsx-garden-app", JSON.stringify(testApp));
 
-      const res = await renderApp.fetch(
+      const res = await fetchApp(
         "https://jsx-garden-app.vibecode.garden/App.jsx",
-        {},
-        mockEnv,
       );
       expect(res.status).toBe(200);
       const jsCode = await res.text();
