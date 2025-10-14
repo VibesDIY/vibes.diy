@@ -45,7 +45,7 @@ describe("Underscore-Based Routing Integration", () => {
         const parsed = parseSubdomain(new URL(url).hostname);
         expect(parsed.isInstance).toBe(true);
         expect(parsed.installId).toBeDefined();
-        expect(parsed.installId!.length).toBeGreaterThan(0);
+        expect(parsed.installId?.length).toBeGreaterThan(0);
       });
     });
   });
@@ -156,7 +156,7 @@ describe("Underscore-Based Routing Integration", () => {
       );
       // Two theme-color tags with light/dark media queries and expected colors
       const themeColorTags =
-        html.match(/<meta[^>]+name=\"theme-color\"/g) || [];
+        html.match(/<meta[^>]+name="theme-color"/g) || [];
       expect(themeColorTags.length).toBe(2);
       expect(html).toContain(
         '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />',
