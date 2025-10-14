@@ -1,42 +1,46 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { mountVibesApp, type MountVibesAppResult } from 'use-vibes';
-import type { ExampleKey } from './App.tsx';
+
+type ExampleKey =
+  | 'home'
+  | 'image-generator'
+  | 'todo-list'
+  | 'vibes-generator'
+  | 'vibe-control'
+  | 'share'
+  | 'vibe-auth-wall'
+  | 'mount-vibes-app';
 
 type MountVibesAppExampleProps = {
   setCurrentExample: (example: ExampleKey) => void;
 };
 
 const MountVibesAppExample = ({ setCurrentExample }: MountVibesAppExampleProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [mountResult, setMountResult] = useState<MountVibesAppResult | null>(null);
   const [status, setStatus] = useState<string>('Loading...');
 
   useEffect(() => {
     let mounted = true;
     let currentMountResult: MountVibesAppResult | null = null;
 
-    // Simulate mounting like in vanilla JS environment
-    if (containerRef.current) {
-      try {
-        setStatus('Mounting VibesApp...');
+    // Mount the app (targets document.body automatically)
+    try {
+      setStatus('Mounting VibesApp...');
 
-        // Mount the app to wrap document.body (like real usage)
-        // This will wrap the entire React app, demonstrating the z-index layering issue
-        currentMountResult = mountVibesApp({
-          title: 'Mount Test App',
-          database: 'mount-test-db',
-        });
+      // Mount the app to wrap document.body (like real usage)
+      // This will wrap the entire React app, demonstrating the z-index layering issue
+      currentMountResult = mountVibesApp({
+        title: 'Mount Test App',
+        database: 'mount-test-db',
+      });
 
-        if (mounted) {
-          setMountResult(currentMountResult);
-          setStatus('Success: mountVibesApp working with local bundler!');
-          console.log('Mount result:', currentMountResult);
-        }
-      } catch (error) {
-        if (mounted) {
-          setStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          console.error('Mount error:', error);
-        }
+      if (mounted) {
+        setStatus('Success: mountVibesApp working with local bundler!');
+        console.log('Mount result:', currentMountResult);
+      }
+    } catch (error) {
+      if (mounted) {
+        setStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error('Mount error:', error);
       }
     }
 
@@ -96,8 +100,8 @@ const MountVibesAppExample = ({ setCurrentExample }: MountVibesAppExampleProps) 
         {status}
       </div>
 
-      {/* Container that will be wrapped by mountVibesApp */}
-      <div ref={containerRef}>
+      {/* Content that will be wrapped by mountVibesApp */}
+      <div>
         {/* Content that should be wrapped - similar to test-use-vibes.html */}
         <div
           style={{
