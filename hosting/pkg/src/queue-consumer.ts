@@ -1,6 +1,17 @@
 import { z } from "zod";
 import { App, PublishEvent } from "./types";
 
+interface AtProtoBlobResponse {
+  blob: {
+    $type: string;
+    ref: {
+      $link: string;
+    };
+    mimeType: string;
+    size: number;
+  };
+}
+
 export interface QueueEnv {
   KV: KVNamespace;
   DISCORD_WEBHOOK_URL?: string;
@@ -224,7 +235,7 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
         );
 
         if (blobResponse.ok) {
-          const blobResult = (await blobResponse.json()) as { blob: any };
+          const blobResult = (await blobResponse.json()) as AtProtoBlobResponse;
           thumbnailBlob = blobResult.blob;
           console.log(`✅ Screenshot blob uploaded successfully`);
         } else {

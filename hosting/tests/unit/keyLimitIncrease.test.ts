@@ -28,7 +28,7 @@ describe("increaseKeyLimitBy function", () => {
 
   it("should increase key limit when available balance is less than $1", async () => {
     // Mock the fetch responses
-    (global.fetch as any).mockImplementation(
+    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
       async (url: string, options: RequestInit) => {
         // Mock key metadata endpoint (needed to get the API key first)
         if (
@@ -122,7 +122,7 @@ describe("increaseKeyLimitBy function", () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
 
     // Check first call (GET for key metadata)
-    const [getKeyUrl, getKeyOptions] = (global.fetch as any).mock.calls[0];
+    const [getKeyUrl, getKeyOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(getKeyUrl).toBe("https://openrouter.ai/api/v1/keys/test-hash");
     expect(getKeyOptions.method).toBe("GET");
     expect(getKeyOptions.headers.Authorization).toBe(
@@ -130,7 +130,7 @@ describe("increaseKeyLimitBy function", () => {
     );
 
     // Check second call (PATCH to update key limit)
-    const [patchUrl, patchOptions] = (global.fetch as any).mock.calls[1];
+    const [patchUrl, patchOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[1];
     expect(patchUrl).toBe("https://openrouter.ai/api/v1/keys/test-hash");
     expect(patchOptions.method).toBe("PATCH");
     expect(patchOptions.headers.Authorization).toBe(
@@ -141,7 +141,7 @@ describe("increaseKeyLimitBy function", () => {
 
   it("should not increase key limit when available balance is $1 or more", async () => {
     // Mock the fetch for a key with HIGH available balance (>= $1)
-    (global.fetch as any).mockImplementation(
+    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
       async (url: string, options: RequestInit) => {
         // Mock key metadata endpoint to get the API key
         if (
@@ -191,7 +191,7 @@ describe("increaseKeyLimitBy function", () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
     // Check the GET call for key metadata endpoint
-    const [getKeyUrl, getKeyOptions] = (global.fetch as any).mock.calls[0];
+    const [getKeyUrl, getKeyOptions] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(getKeyUrl).toBe(
       "https://openrouter.ai/api/v1/keys/test-hash-high-balance",
     );

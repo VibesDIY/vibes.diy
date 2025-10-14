@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, Context } from "hono";
 import { parseSubdomain, isValidSubdomain } from "./utils/subdomainParser";
 import { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer";
 import {
@@ -199,7 +199,7 @@ function parseRangeHeader(
 }
 
 // Shared screenshot handler logic
-async function handleScreenshotRequest(c: any, includeBody = true) {
+async function handleScreenshotRequest(c: Context, includeBody = true) {
   // Extract subdomain from the request URL
   const url = new URL(c.req.url);
   const hostname = url.hostname;

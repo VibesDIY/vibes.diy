@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { AppCreate } from "@vibes.diy/hosting";
+import { OpenAPIRoute } from "chanfana";
 
 describe("AppCreate endpoint", () => {
   let originalFetch: typeof global.fetch;
@@ -74,7 +75,7 @@ describe("AppCreate endpoint", () => {
     mockKV.get.mockResolvedValue(null);
     mockKV.put.mockResolvedValue(undefined);
 
-    const appCreate = new AppCreate({ schema: {} } as any);
+    const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
 
     // Mock the getValidatedData method
     const mockData = {
@@ -89,7 +90,7 @@ describe("AppCreate endpoint", () => {
     };
 
     // Spy on getValidatedData
-    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as any);
+    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData);
 
     // Call the handler
     const result = await appCreate.handle(mockContext);
@@ -111,7 +112,7 @@ describe("AppCreate endpoint", () => {
     mockKV.get.mockResolvedValue(null);
     mockKV.put.mockResolvedValue(undefined);
 
-    const appCreate = new AppCreate({ schema: {} } as any);
+    const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
 
     // Mock the getValidatedData method for a remix
     const mockData = {
@@ -127,7 +128,7 @@ describe("AppCreate endpoint", () => {
     };
 
     // Spy on getValidatedData
-    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as any);
+    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData);
 
     // Call the handler
     const result = await appCreate.handle(mockContext);
@@ -150,7 +151,7 @@ describe("AppCreate endpoint", () => {
     mockKV.get.mockResolvedValue(null);
     mockKV.put.mockResolvedValue(undefined);
 
-    const appCreate = new AppCreate({ schema: {} } as any);
+    const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
 
     // Mock the getValidatedData method without screenshot
     const mockData = {
@@ -163,7 +164,7 @@ describe("AppCreate endpoint", () => {
     };
 
     // Spy on getValidatedData
-    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as any);
+    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData);
 
     // Call the handler
     const result = await appCreate.handle(mockContext);
