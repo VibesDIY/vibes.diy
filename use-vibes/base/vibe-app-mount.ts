@@ -125,12 +125,18 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
         title,
         imageUrl,
       },
-      React.createElement('div', {
-        id: 'vibes-original-content-react',
-        dangerouslySetInnerHTML: {
-          __html: (contentWrapper || containerElement).innerHTML,
-        },
-      })
+      // Preserve original DOM nodes instead of cloning with innerHTML
+      contentWrapper
+        ? React.createElement('div', {
+            ref: (node: HTMLDivElement | null) => {
+              if (node && contentWrapper && node.children.length === 0) {
+                // Move original content into React-managed container
+                node.appendChild(contentWrapper);
+              }
+            },
+            style: { height: '100%', width: '100%' },
+          })
+        : null
     )
   );
 
