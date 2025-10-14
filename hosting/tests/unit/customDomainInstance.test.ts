@@ -3,7 +3,7 @@ import renderApp from "@vibes.diy/hosting";
 
 describe("Custom Domain Instance Behavior", () => {
   // Mock KV storage
-  const kvStore = new Map<string, any>();
+  const kvStore = new Map<string, string>();
 
   // Mock environment
   const mockEnv = {
@@ -17,7 +17,7 @@ describe("Custom Domain Instance Behavior", () => {
         }
         return value;
       },
-      put: async (key: string, value: any) => {
+      put: async (key: string, value: string) => {
         kvStore.set(key, value);
       },
       delete: async (key: string) => {

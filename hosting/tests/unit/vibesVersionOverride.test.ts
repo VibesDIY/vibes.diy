@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderAppInstance } from "@vibes.diy/hosting";
-import { parseSubdomain } from "@vibes.diy/hosting";
+import { renderAppInstance , parseSubdomain } from "@vibes.diy/hosting";
 
 describe("Vibes Version Override (v_vibes parameter)", () => {
   // Mock app data for testing
@@ -16,7 +15,7 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
   // Mock context for testing with v_vibes parameter
   const createMockContext = (url: string) => ({
     req: { url },
-    html: (content: string, status: number = 200) =>
+    html: (content: string, status = 200) =>
       new Response(content, { status }),
   });
 
@@ -206,7 +205,7 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       );
       expect(importMapMatch).not.toBeNull();
 
-      const importMap = JSON.parse(importMapMatch![1]);
+      const importMap = JSON.parse(importMapMatch[1]);
       expect(importMap).toHaveProperty("imports");
       expect(importMap.imports).toHaveProperty(
         "use-vibes",
@@ -237,7 +236,7 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       );
       expect(importMapMatch).not.toBeNull();
 
-      const importMap = JSON.parse(importMapMatch![1]);
+      const importMap = JSON.parse(importMapMatch[1]);
 
       // React versions should remain unchanged
       expect(importMap.imports.react).toContain("react@~19.1.1");

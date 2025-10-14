@@ -8,15 +8,15 @@ import { base58btc } from "multiformats/bases/base58";
 export interface TokenPayload {
   email?: string; // Assuming email might be added or needed later
   userId: string;
-  tenants: Array<{
+  tenants: {
     id: string;
     role: string;
-  }>;
-  ledgers: Array<{
+  }[];
+  ledgers: {
     id: string;
     role: string;
     right: string;
-  }>;
+  }[];
   iat: number;
   iss: string;
   aud: string;

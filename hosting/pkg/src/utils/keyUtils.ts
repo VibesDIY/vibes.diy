@@ -44,7 +44,7 @@ export async function listKeys(params: KeyListParams): Promise<KeyResult> {
 
     // Define the OpenRouter API response structure for listing keys
     interface OpenRouterKeyListResponse {
-      data: Array<{
+      data: {
         hash: string;
         name: string;
         label: string;
@@ -52,7 +52,7 @@ export async function listKeys(params: KeyListParams): Promise<KeyResult> {
         limit: number;
         created_at: string;
         updated_at: string;
-      }>;
+      }[];
     }
 
     const responseData = (await response.json()) as OpenRouterKeyListResponse;

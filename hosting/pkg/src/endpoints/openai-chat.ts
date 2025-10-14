@@ -1,15 +1,14 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
-import { Context as HonoContext } from "hono";
 
 // TypeScript interfaces for OpenAI Chat API requests
 export interface ChatCompletionRequest {
   model: string;
-  messages: Array<{
+  messages: {
     role: string;
     content: string;
     name?: string;
-  }>;
+  }[];
   temperature?: number;
   top_p?: number;
   n?: number;

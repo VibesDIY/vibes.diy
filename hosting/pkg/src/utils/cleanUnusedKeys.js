@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import fetch from "node-fetch";
 import { setTimeout } from "node:timers/promises";
 import "dotenv/config";
