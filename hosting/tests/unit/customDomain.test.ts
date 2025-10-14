@@ -3,7 +3,10 @@ import renderApp from "@vibes.diy/hosting";
 
 // Mock the createKey function to return a successful result
 vi.mock("@vibes.diy/hosting", async () => {
-  const actual = await vi.importActual<typeof import("@vibes.diy/hosting")>("@vibes.diy/hosting");
+  const actual =
+    await vi.importActual<typeof import("@vibes.diy/hosting")>(
+      "@vibes.diy/hosting",
+    );
   return {
     ...actual,
     keyLib: {

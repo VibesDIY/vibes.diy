@@ -20,22 +20,24 @@ describe("AppCreate endpoint", () => {
     originalFetch = global.fetch;
 
     // Mock fetch to capture Discord webhook calls
-    mockFetch = vi.fn().mockImplementation((url: string, _options: RequestInit) => {
-      if (url.includes("discord.com/api/webhooks")) {
+    mockFetch = vi
+      .fn()
+      .mockImplementation((url: string, _options: RequestInit) => {
+        if (url.includes("discord.com/api/webhooks")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ success: true }),
+          });
+        }
+
+        // For other fetch calls, return a basic response
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: () => Promise.resolve({ success: true }),
+          json: () => Promise.resolve({}),
         });
-      }
-
-      // For other fetch calls, return a basic response
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({}),
       });
-    });
 
     global.fetch = mockFetch;
 

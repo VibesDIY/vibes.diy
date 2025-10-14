@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { parseSubdomain , renderAppInstance, renderCatalogTitle , expectBasicCatalogTitle, expectAppInstance } from "@vibes.diy/hosting";
+import {
+  parseSubdomain,
+  renderAppInstance,
+  renderCatalogTitle,
+  expectBasicCatalogTitle,
+  expectAppInstance,
+} from "@vibes.diy/hosting";
 
 describe("Underscore-Based Routing Integration", () => {
   // Mock app data for testing
@@ -15,8 +21,7 @@ describe("Underscore-Based Routing Integration", () => {
   // Mock context for testing
   const createMockContext = (url: string) => ({
     req: { url },
-    html: (content: string, status = 200) =>
-      new Response(content, { status }),
+    html: (content: string, status = 200) => new Response(content, { status }),
   });
 
   describe("URL Parsing Integration", () => {
@@ -155,8 +160,7 @@ describe("Underscore-Based Routing Integration", () => {
         '<meta name="color-scheme" content="light dark" />',
       );
       // Two theme-color tags with light/dark media queries and expected colors
-      const themeColorTags =
-        html.match(/<meta[^>]+name="theme-color"/g) || [];
+      const themeColorTags = html.match(/<meta[^>]+name="theme-color"/g) || [];
       expect(themeColorTags.length).toBe(2);
       expect(html).toContain(
         '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />',

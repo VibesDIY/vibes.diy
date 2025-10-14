@@ -196,7 +196,9 @@ export async function updateKey(params: KeyUpdateParams): Promise<KeyResult> {
     }
 
     // Create request body with only the fields that are provided
-    const requestBody: Partial<Pick<KeyUpdateParams, 'name' | 'disabled' | 'limit'>> = {};
+    const requestBody: Partial<
+      Pick<KeyUpdateParams, "name" | "disabled" | "limit">
+    > = {};
     if (name !== undefined) requestBody.name = name;
     if (disabled !== undefined) requestBody.disabled = disabled;
     if (limit !== undefined) requestBody.limit = limit;

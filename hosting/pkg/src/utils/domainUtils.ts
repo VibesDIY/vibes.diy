@@ -20,7 +20,11 @@ export const FIRST_PARTY_APEX_DOMAINS = [
  */
 export function isCustomDomain(hostname: string): boolean {
   // Check for apex domains first
-  if (FIRST_PARTY_APEX_DOMAINS.includes(hostname as typeof FIRST_PARTY_APEX_DOMAINS[number])) {
+  if (
+    FIRST_PARTY_APEX_DOMAINS.includes(
+      hostname as (typeof FIRST_PARTY_APEX_DOMAINS)[number],
+    )
+  ) {
     return false;
   }
 
@@ -34,7 +38,9 @@ export function isCustomDomain(hostname: string): boolean {
  * @returns true if this is one of our apex domains
  */
 export function isFirstPartyApexDomain(hostname: string): boolean {
-  return FIRST_PARTY_APEX_DOMAINS.includes(hostname as typeof FIRST_PARTY_APEX_DOMAINS[number]);
+  return FIRST_PARTY_APEX_DOMAINS.includes(
+    hostname as (typeof FIRST_PARTY_APEX_DOMAINS)[number],
+  );
 }
 
 /**
@@ -45,7 +51,9 @@ export function isFirstPartyApexDomain(hostname: string): boolean {
 export function isFirstPartySubdomain(hostname: string): boolean {
   return (
     FIRST_PARTY_DOMAINS.some((domain) => hostname.endsWith(domain)) &&
-    !FIRST_PARTY_APEX_DOMAINS.includes(hostname as typeof FIRST_PARTY_APEX_DOMAINS[number])
+    !FIRST_PARTY_APEX_DOMAINS.includes(
+      hostname as (typeof FIRST_PARTY_APEX_DOMAINS)[number],
+    )
   );
 }
 
