@@ -123,6 +123,23 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     }, 100); // Small delay to ensure overlay is rendered
   }, [wasSyncEnabled, manualAttach]);
 
+  // Wire up vibes-login-link button if it exists
+  useEffect(() => {
+    const button = document.getElementById('vibes-login-link');
+    if (!button) return;
+
+    const handleClick = () => {
+      enableSync();
+    };
+
+    button.addEventListener('click', handleClick);
+
+    // Cleanup removes this listener on unmount
+    return () => {
+      button.removeEventListener('click', handleClick);
+    };
+  }, [enableSync]);
+
   // Function to disable sync
   const disableSync = useCallback(() => {
     localStorage.removeItem(syncKey);
