@@ -132,7 +132,7 @@ export class OpenRouterChat extends OpenAPIRoute {
       // Check for Bearer token (BYOK - bring your own key)
       const authHeader = c.req.header("Authorization");
       let apiKey: string;
-      let isUserProvidedKey = false;
+      const _isUserProvidedKey = false;
 
       if (authHeader && authHeader.startsWith("Bearer ")) {
         const providedKey = authHeader.substring(7);

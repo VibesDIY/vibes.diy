@@ -3,7 +3,7 @@ import renderApp from "@vibes.diy/hosting";
 
 describe("First-Party Domain Preservation", () => {
   // Mock KV storage
-  const kvStore = new Map<string, any>();
+  const kvStore = new Map<string, string>();
 
   // Mock environment
   const mockEnv = {
@@ -16,7 +16,7 @@ describe("First-Party Domain Preservation", () => {
         }
         return value;
       },
-      put: async (key: string, value: any) => {
+      put: async (key: string, value: string) => {
         kvStore.set(key, value);
       },
       delete: async (key: string) => {

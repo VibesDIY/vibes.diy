@@ -1,13 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import queueConsumer from "@vibes.diy/hosting";
-import { PublishEvent } from "@vibes.diy/hosting";
+import queueConsumer, { PublishEvent } from "@vibes.diy/hosting";
 
 describe("Queue Consumer", () => {
   let originalFetch: typeof global.fetch;
-  let mockFetch: any;
-  let mockEnv: any;
-  let mockMessage: any;
-  let mockBatch: any;
+  let mockFetch: typeof global.fetch;
+  let mockEnv: {
+    BLUESKY_HANDLE: string;
+    DISCORD_WEBHOOK_URL?: string;
+  };
+  let mockMessage: {
+    id: string;
+    body: PublishEvent;
+    timestamp: Date;
+  };
+  let mockBatch: {
+    queue: string;
+    messages: typeof mockMessage[];
+  };
 
   beforeEach(() => {
     // Save original fetch
@@ -284,7 +293,9 @@ describe("Queue Consumer", () => {
     };
 
     // Spy on console.error
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {
+      // Mock implementation - intentionally empty
+    });
 
     // Process the queue batch
     await queueConsumer.queue(mockBatch, mockEnv);
@@ -332,7 +343,9 @@ describe("Queue Consumer", () => {
     mockMessage.body = { invalid: "data" };
 
     // Spy on console.error
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {
+      // Mock implementation - intentionally empty
+    });
 
     // Process the queue batch
     await queueConsumer.queue(mockBatch, mockEnv);
@@ -381,7 +394,9 @@ describe("Queue Consumer", () => {
     mockMessage.body = testEvent;
 
     // Spy on console.error
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {
+      // Mock implementation - intentionally empty
+    });
 
     // Process the queue batch
     await queueConsumer.queue(mockBatch, mockEnv);
@@ -547,7 +562,9 @@ describe("Queue Consumer", () => {
     mockMessage.body = testEvent;
 
     // Spy on console.error
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {
+      // Mock implementation - intentionally empty
+    });
 
     // Process the queue batch
     await queueConsumer.queue(mockBatch, mockEnv);

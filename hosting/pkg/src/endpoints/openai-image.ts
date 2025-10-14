@@ -16,9 +16,7 @@ export interface ImageGenerateRequest {
   userId?: string;
 }
 
-export interface ImageEditRequest extends ImageGenerateRequest {
-  // No additional fields needed at this time
-}
+export type ImageEditRequest = ImageGenerateRequest;
 
 // Core function to generate images using OpenAI API
 export async function generateImage(
@@ -182,7 +180,7 @@ export async function editImage(
     const {
       prompt,
       model = "gpt-image-1",
-      n = 1,
+      _n = 1,
       quality = "auto",
       size = "auto",
       background = "auto",
