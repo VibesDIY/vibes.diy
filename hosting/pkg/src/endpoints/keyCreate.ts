@@ -86,7 +86,10 @@ export class KeyCreate extends OpenAPIRoute {
     // Get the provisioning key from environment
     const provisioningKey = c.env.SERVER_OPENROUTER_PROV_KEY;
 
-    const resolvedUserId = user!.userId;
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+    const resolvedUserId = user.userId;
 
     // Determine if we're updating or creating a key
     if (keyRequest.hash) {
