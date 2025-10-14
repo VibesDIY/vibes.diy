@@ -205,7 +205,7 @@ export async function editImage(
     // For image edits, we need to get the image data from FormData
     let imageData;
     let maskData = null;
-    let multipleImages: ArrayBuffer[] = [];
+    const multipleImages: ArrayBuffer[] = [];
 
     // Process form data to extract images
     const formData = await c.req.formData();

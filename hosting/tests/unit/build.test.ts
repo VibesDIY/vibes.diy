@@ -14,9 +14,10 @@ describe("Build Tests", () => {
       });
       console.log("Build output:", output);
       expect(true).toBe(true);
-    } catch (error: any) {
-      console.error("Build failed:", error.stdout);
-      throw new Error("Build failed: " + error.message);
+    } catch (error) {
+      const execError = error as { message: string; stdout?: string };
+      console.error("Build failed:", execError.stdout);
+      throw new Error("Build failed: " + execError.message);
     }
   });
 });

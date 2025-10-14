@@ -4,9 +4,9 @@ import { z } from "zod";
 import { Variables } from "../middleware/auth";
 import { createKey, increaseKeyLimitBy } from "./keyLib";
 
-type Env = {
+interface Env {
   SERVER_OPENROUTER_PROV_KEY: string;
-};
+}
 
 export class KeyCreate extends OpenAPIRoute {
   schema = {

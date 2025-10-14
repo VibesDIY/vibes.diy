@@ -1,14 +1,14 @@
 import { createMiddleware } from "hono/factory";
 import { TokenPayload, verifyToken } from "../utils/auth";
 
-type Env = {
+interface Env {
   CLOUD_SESSION_TOKEN_PUBLIC_KEY: string;
   CLOUD_SESSION_TOKEN_PUBLIC_KEY_DEV?: string;
-};
+}
 
-export type Variables = {
+export interface Variables {
   user: TokenPayload | null;
-};
+}
 
 /**
  * Middleware to verify and log JWT tokens from X-VIBES-Token header

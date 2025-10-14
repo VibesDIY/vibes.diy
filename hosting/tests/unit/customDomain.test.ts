@@ -1,23 +1,28 @@
-import console from "console";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import renderApp, { expectCatalogTitle, expectAppInstance } from "@vibes.diy/hosting";
+import renderApp from "@vibes.diy/hosting";
 
 // Mock the createKey function to return a successful result
-vi.mock("../src/endpoints/keyLib", () => ({
-  createKey: vi.fn().mockResolvedValue({
-    success: true,
-    key: {
-      key: "test-api-key-123",
-      id: "test-key-id",
-      name: "Test Key",
-      label: "test-label",
+vi.mock("@vibes.diy/hosting", async () => {
+  const actual = await vi.importActual<typeof import("@vibes.diy/hosting")>("@vibes.diy/hosting");
+  return {
+    ...actual,
+    keyLib: {
+      createKey: vi.fn().mockResolvedValue({
+        success: true,
+        key: {
+          key: "test-api-key-123",
+          id: "test-key-id",
+          name: "Test Key",
+          label: "test-label",
+        },
+      }),
     },
-  }),
-}));
+  };
+});
 
 describe("Custom Domain E2E Tests", () => {
   // Mock KV storage
-  const kvStore = new Map<string, any>();
+  const kvStore = new Map<string, string>();
 
   // Mock environment
   const mockEnv = {
@@ -31,7 +36,7 @@ describe("Custom Domain E2E Tests", () => {
         }
         return value;
       },
-      put: async (key: string, value: any) => {
+      put: async (key: string, value: string) => {
         kvStore.set(key, value);
       },
       delete: async (key: string) => {
@@ -278,7 +283,7 @@ describe("Custom Domain E2E Tests", () => {
     });
 
     it("should handle domain removal", async () => {
-      const app: any = {
+      const app: Record<string, unknown> = {
         name: "Remove Test",
         slug: "remove-test",
         code: "export default function App() { return <div>Remove Test</div> }",

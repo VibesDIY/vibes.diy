@@ -1,14 +1,13 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
-import { Context as HonoContext } from "hono";
 
 // TypeScript interfaces for Claude API requests
 export interface ClaudeMessagesRequest {
   model: string;
-  messages: Array<{
+  messages: {
     role: string;
     content: string;
-  }>;
+  }[];
   system?: string;
   max_tokens?: number;
   temperature?: number;
@@ -23,10 +22,10 @@ export interface ClaudeMessagesResponse {
   id: string;
   type: string;
   model: string;
-  content: Array<{
+  content: {
     type: string;
     text?: string;
-  }>;
+  }[];
   usage: {
     input_tokens: number;
     output_tokens: number;
@@ -35,13 +34,13 @@ export interface ClaudeMessagesResponse {
 
 // Function to convert OpenAI format messages to Claude format
 function convertToClaudeFormat(
-  messages: Array<{ role: string; content: string }>,
+  messages: { role: string; content: string }[],
 ): {
   systemPrompt: string | null;
-  claudeMessages: Array<{ role: string; content: string }>;
+  claudeMessages: { role: string; content: string }[];
 } {
   let systemPrompt: string | null = null;
-  const claudeMessages: Array<{ role: string; content: string }> = [];
+  const claudeMessages: { role: string; content: string }[] = [];
 
   for (const message of messages) {
     if (message.role === "system") {

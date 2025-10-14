@@ -1,11 +1,32 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { AppCreate } from "@vibes.diy/hosting";
-import { PublishEvent } from "@vibes.diy/hosting";
+import { AppCreate , PublishEvent } from "@vibes.diy/hosting";
+import type { OpenAPIRoute } from "chanfana";
+
+// Mock types
+interface MockKV {
+  get: (key: string, type?: string) => Promise<string | ArrayBuffer | null>;
+  put: (key: string, value: string) => Promise<void>;
+}
+
+interface MockQueue {
+  send: (message: unknown) => Promise<void>;
+}
+
+interface MockContext {
+  env: {
+    KV: MockKV;
+    PUBLISH_QUEUE: MockQueue;
+  };
+  get: (key: string) => { email: string };
+  req: {
+    json: () => Promise<unknown>;
+  };
+}
 
 describe("Queue functionality", () => {
-  let mockKV: any;
-  let mockQueue: any;
-  let mockContext: any;
+  let mockKV: MockKV;
+  let mockQueue: MockQueue;
+  let mockContext: MockContext;
 
   beforeEach(() => {
     // Mock KV
@@ -41,7 +62,7 @@ describe("Queue functionality", () => {
     mockKV.get.mockResolvedValue(null);
     mockKV.put.mockResolvedValue(undefined);
 
-    const appCreate = new AppCreate({ schema: {} } as any);
+    const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
 
     // Mock the getValidatedData method
     const mockData = {
@@ -54,7 +75,7 @@ describe("Queue functionality", () => {
     };
 
     // Spy on getValidatedData
-    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as any);
+    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as { body: { chatId: string; code: string; title: string; userId: string; remixOf?: string } });
 
     // Call the handler
     const result = await appCreate.handle(mockContext);
@@ -99,7 +120,7 @@ describe("Queue functionality", () => {
     mockKV.get.mockResolvedValue(JSON.stringify(existingApp));
     mockKV.put.mockResolvedValue(undefined);
 
-    const appCreate = new AppCreate({ schema: {} } as any);
+    const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
 
     // Mock the getValidatedData method
     const mockData = {
@@ -112,7 +133,7 @@ describe("Queue functionality", () => {
     };
 
     // Spy on getValidatedData
-    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as any);
+    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as { body: { chatId: string; code: string; title: string; userId: string; remixOf?: string } });
 
     // Call the handler
     const result = await appCreate.handle(mockContext);
@@ -151,9 +172,11 @@ describe("Queue functionality", () => {
     mockQueue.send.mockRejectedValue(new Error("Queue send failed"));
 
     // Spy on console.error to verify error logging
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {
+      // Mock implementation - intentionally empty
+    });
 
-    const appCreate = new AppCreate({ schema: {} } as any);
+    const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
 
     // Mock the getValidatedData method
     const mockData = {
@@ -166,7 +189,7 @@ describe("Queue functionality", () => {
     };
 
     // Spy on getValidatedData
-    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as any);
+    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as { body: { chatId: string; code: string; title: string; userId: string; remixOf?: string } });
 
     // Call the handler
     const result = await appCreate.handle(mockContext);
@@ -193,7 +216,7 @@ describe("Queue functionality", () => {
     mockKV.get.mockResolvedValue(null);
     mockKV.put.mockResolvedValue(undefined);
 
-    const appCreate = new AppCreate({ schema: {} } as any);
+    const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
 
     // Mock the getValidatedData method for a remix
     const mockData = {
@@ -207,7 +230,7 @@ describe("Queue functionality", () => {
     };
 
     // Spy on getValidatedData
-    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as any);
+    vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData as { body: { chatId: string; code: string; title: string; userId: string; remixOf?: string } });
 
     // Call the handler
     await appCreate.handle(mockContext);

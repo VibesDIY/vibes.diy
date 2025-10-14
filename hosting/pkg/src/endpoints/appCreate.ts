@@ -16,7 +16,7 @@ import { generateVibeSlug } from "../utils/slugGenerator";
  */
 async function processScreenshot(
   kv: KVNamespace,
-  _appData: any,
+  _appData: App,
   base64Screenshot: string,
   keyIdentifier: string,
 ) {
@@ -99,7 +99,7 @@ export class AppCreate extends OpenAPIRoute {
 
     if (existingApp) {
       // If app exists, parse it and update the code
-      let parsedApp = JSON.parse(existingApp);
+      const parsedApp = JSON.parse(existingApp);
       // if (parsedApp.rawCode)
       parsedApp.code = app.code;
       parsedApp.raw = app.raw;
@@ -170,7 +170,7 @@ export class AppCreate extends OpenAPIRoute {
       const slug: string = generateVibeSlug();
 
       // Generate an app using the provided chatId and code
-      let appToSave: z.infer<typeof App> = {
+      const appToSave: z.infer<typeof App> = {
         name: `app-${Date.now()}`,
         slug: slug,
         code: app.code || "",
