@@ -46,6 +46,8 @@ const opts = tseslint.config(
       "vibes.diy/**/root.*",
       "**/eslint.config.mjs",
       "**/jest.config.mjs",
+      "**/src/types.d.ts",
+      "**/worker-configuration.d.ts",
     ],
   },
   {

@@ -56,7 +56,7 @@ export async function generateImage(
     );
 
     // Prepare request body
-    const requestBody: Record<string, any> = {
+    const requestBody: Partial<ImageGenerateRequest> = {
       prompt,
       model,
       n,
