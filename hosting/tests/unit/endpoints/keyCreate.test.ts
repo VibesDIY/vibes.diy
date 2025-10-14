@@ -8,14 +8,17 @@ import {
   authMiddleware,
   TokenPayload,
 } from "@vibes.diy/hosting";
-import * as keyLib from "@vibes.diy/hosting";
+import * as hostingModule from "@vibes.diy/hosting";
 
 // Mock the keyLib and authMiddleware modules
-vi.mock("../../src/endpoints/keyLib");
-vi.mock("../../src/middleware/auth", async () => {
-  const original = await vi.importActual("../../src/middleware/auth");
+vi.mock("@vibes.diy/hosting", async () => {
+  const actual = await vi.importActual("@vibes.diy/hosting");
   return {
-    ...original,
+    ...actual,
+    keyLib: {
+      createKey: vi.fn(),
+      increaseKeyLimitBy: vi.fn(),
+    },
     authMiddleware: vi.fn(),
   };
 });
@@ -46,7 +49,7 @@ describe("KeyCreate Endpoint Integration Test", () => {
     const openapi = fromHono(app);
 
     // Mock middleware to set user context
-    vi.mocked(authMiddleware).mockImplementation(async (c, next) => {
+    (authMiddleware as any).mockImplementation(async (c, next) => {
       const authHeader = c.req.header("Authorization");
       if (authHeader === "Bearer valid-token") {
         c.set("user", mockTokenPayload);
@@ -76,10 +79,10 @@ describe("KeyCreate Endpoint Integration Test", () => {
         label: "",
       },
     };
-    vi.mocked(keyLib.createKey).mockResolvedValue(mockCreateKeyResult);
+    (hostingModule.keyLib.createKey as any).mockResolvedValue(mockCreateKeyResult);
 
     // Act: Send a request to the endpoint
-    const response = await app.request(
+    const response = await app.fetch(
       "/api/keys",
       {
         method: "POST",
@@ -104,7 +107,7 @@ describe("KeyCreate Endpoint Integration Test", () => {
   // Test case for unauthorized access
   it("should return 401 Unauthorized if user is not authenticated", async () => {
     // Act: Send a request with an invalid token
-    const response = await app.request(
+    const response = await app.fetch(
       "/api/keys",
       {
         method: "POST",
@@ -138,10 +141,10 @@ describe("KeyCreate Endpoint Integration Test", () => {
         label: "",
       },
     };
-    vi.mocked(keyLib.increaseKeyLimitBy).mockResolvedValue(mockIncreaseResult);
+    (hostingModule.keyLib.increaseKeyLimitBy as any).mockResolvedValue(mockIncreaseResult);
 
     // Act: Send a request to the endpoint
-    const response = await app.request(
+    const response = await app.fetch(
       "/api/keys",
       {
         method: "POST",
