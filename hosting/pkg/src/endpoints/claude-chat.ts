@@ -142,7 +142,9 @@ export async function claudeChat(
 
       // Create a transformer to convert Claude stream format to OpenAI format
       const transformStream = new TransformStream({
-        start(controller) {},
+        start(_controller) {
+          // Stream transformation start - intentionally empty
+        },
         async transform(chunk, controller) {
           try {
             // Parse the chunk and convert to OpenAI format

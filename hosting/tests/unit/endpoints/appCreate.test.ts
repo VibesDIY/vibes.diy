@@ -3,16 +3,23 @@ import { AppCreate } from "@vibes.diy/hosting";
 
 describe("AppCreate endpoint", () => {
   let originalFetch: typeof global.fetch;
-  let mockFetch: any;
-  let mockKV: any;
-  let mockContext: any;
+  let mockFetch: typeof global.fetch;
+  let mockKV: {
+    get: (key: string, type?: string) => Promise<string | ArrayBuffer | null>;
+    put: (key: string, value: string) => Promise<void>;
+  };
+  let mockContext: {
+    env: { KV: typeof mockKV };
+    get: (key: string) => { email: string };
+    req: { json: () => Promise<unknown> };
+  };
 
   beforeEach(() => {
     // Save original fetch
     originalFetch = global.fetch;
 
     // Mock fetch to capture Discord webhook calls
-    mockFetch = vi.fn().mockImplementation((url: string, options: any) => {
+    mockFetch = vi.fn().mockImplementation((url: string, _options: RequestInit) => {
       if (url.includes("discord.com/api/webhooks")) {
         return Promise.resolve({
           ok: true,
