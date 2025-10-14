@@ -1,0 +1,70 @@
+name = "vibes-hosting-dev"
+main = "src/index.ts"
+compatibility_date = "2025-04-07"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+# Smart Placement
+# https://developers.cloudflare.com/workers/configuration/smart-placement/
+[placement]
+mode = "smart"
+
+# Environment Variables
+[vars]
+ENVIRONMENT = "dev"
+CLOUD_SESSION_TOKEN_PUBLIC_KEY = "zeWndr5LEoaySgKSo2aZniYqWtx2vKfVz4dd5GQwAuby3fPKcNyLp6mFpf9nCRFYbUcPiN2YT1ZApJ6f3WipiVjuMvyP1JYgHwkaoxDBpJiLoz1grRYkbao9ntukNNo2TQ4uSznUmNPrr4ZxjihoavHwB1zLhLNp5Qj78fBkjgEMA"
+CLOUD_SESSION_TOKEN_PUBLIC_KEY_DEV = "zeWndr5LEoaySgKSo2aZniYqXf5WxWq3WDGYvT4K4ggqX2wWPXAc4TXhRFrQAGUgCwkAYHCTZNn8Yqz62DzFzssSEEfMjmh5yP26YY5LBLUo14GdRKyD19zRV4jsic53jxEy3NdBs2i4rwAfyYQoPGzUUhnBxTXvqB2RYoShcs2zp"
+BLUESKY_HANDLE = "therawvibes.com"
+
+# Observability
+[observability]
+enabled = true
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "KV"
+id = "342352a479b64835931b4e5f9f3277a0"
+
+# Queue Producers
+[[queues.producers]]
+queue = "publish-events"
+binding = "PUBLISH_QUEUE"
+delivery_delay = 0
+
+# Queue Consumers
+[[queues.consumers]]
+queue = "publish-events"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "publish-events-dlq"
+
+# Routes for production
+[[routes]]
+pattern = "*vibecode.garden/*"
+zone_name = "vibecode.garden"
+
+[[routes]]
+pattern = "*vibesdiy.app/*"
+zone_name = "vibesdiy.app"
+
+[[routes]]
+pattern = "*vibesdiy.work/*"
+zone_name = "vibesdiy.work"
+
+[[routes]]
+pattern = "vibes-diy-api.com/*"
+zone_name = "vibes-diy-api.com"
+
+[[routes]]
+pattern = "*/*"
+zone_name = "vibesdiy.app"
+
+# Production Environment
+[env.production]
+name = "vibes-hosting-prod"
+vars = { ENVIRONMENT = "production" }
+
+# Development Environment
+[env.dev]
+name = "vibes-hosting-dev"
+vars = { ENVIRONMENT = "dev" }

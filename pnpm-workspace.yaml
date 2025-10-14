@@ -12,6 +12,8 @@ packages:
   - "vibes.diy/tests/simple-chat"
   - "prompts/pkg"
   - "prompts/tests"
+  - "hosting/pkg"
+  - "hosting/tests/unit"
 
 # Avoid needing to interactively run 'pnpm approve-build' step during quickstart
 onlyBuiltDependencies:
