@@ -81,17 +81,22 @@ describe("KeyCreate Endpoint Integration Test", () => {
       "/api/keys",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer valid-token" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer valid-token",
+        },
         body: JSON.stringify({ name: "Test Session" }),
       },
-      env
+      env,
     );
 
     // Assert: Check the response and that createKey was called correctly
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.success).toBe(true);
-    expect(keyLib.createKey).toHaveBeenCalledWith(expect.objectContaining({ userId: "test-user" }));
+    expect(keyLib.createKey).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "test-user" }),
+    );
   });
 
   // Test case for unauthorized access
@@ -101,10 +106,13 @@ describe("KeyCreate Endpoint Integration Test", () => {
       "/api/keys",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer invalid-token" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer invalid-token",
+        },
         body: JSON.stringify({ name: "Test Session" }),
       },
-      env
+      env,
     );
 
     // Assert: Check for a 401 response
@@ -135,16 +143,21 @@ describe("KeyCreate Endpoint Integration Test", () => {
       "/api/keys",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer valid-token" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer valid-token",
+        },
         body: JSON.stringify({ hash: "test-hash-123" }),
       },
-      env
+      env,
     );
 
     // Assert: Check the response and that increaseKeyLimitBy was called correctly
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.key.limit).toBe(5.0);
-    expect(keyLib.increaseKeyLimitBy).toHaveBeenCalledWith(expect.objectContaining({ hash: "test-hash-123" }));
+    expect(keyLib.increaseKeyLimitBy).toHaveBeenCalledWith(
+      expect.objectContaining({ hash: "test-hash-123" }),
+    );
   });
 });

@@ -144,11 +144,13 @@ describe("Queue Consumer", () => {
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },
-      })
+      }),
     );
 
     // Verify Discord webhook body content
-    const discordCall = mockFetch.mock.calls.find((call: any) => call[0].includes("discord.com/api/webhooks"));
+    const discordCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("discord.com/api/webhooks"),
+    );
 
     expect(discordCall).toBeDefined();
 
@@ -156,14 +158,16 @@ describe("Queue Consumer", () => {
       const body = JSON.parse(discordCall[1].body);
       expect(body.content).toContain("Test App");
       expect(body.embeds[0].title).toContain("test-slug-123");
-      expect(body.embeds[0].image.url).toBe("https://test-slug-123.vibesdiy.work/screenshot.png");
+      expect(body.embeds[0].image.url).toBe(
+        "https://test-slug-123.vibesdiy.work/screenshot.png",
+      );
       // Check that basic fields exist (lenient)
       expect(body.embeds[0].fields).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ name: "Updates" }),
           expect.objectContaining({ name: "User" }),
           expect.objectContaining({ name: "Email" }),
-        ])
+        ]),
       );
     }
   });
@@ -202,16 +206,20 @@ describe("Queue Consumer", () => {
       expect.stringContaining("discord.com/api/webhooks"),
       expect.objectContaining({
         method: "POST",
-      })
+      }),
     );
 
     // Verify update count in Discord message (lenient)
-    const discordCall = mockFetch.mock.calls.find((call: any) => call[0].includes("discord.com/api/webhooks"));
+    const discordCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("discord.com/api/webhooks"),
+    );
 
     if (discordCall) {
       const body = JSON.parse(discordCall[1].body);
       // Just check that Updates field exists, don't care about exact value
-      expect(body.embeds[0].fields).toEqual(expect.arrayContaining([expect.objectContaining({ name: "Updates" })]));
+      expect(body.embeds[0].fields).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: "Updates" })]),
+      );
     }
   });
 
@@ -243,13 +251,19 @@ describe("Queue Consumer", () => {
     await queueConsumer.queue(mockBatch, mockEnv);
 
     // Verify Discord webhook was called
-    const discordCall = mockFetch.mock.calls.find((call: any) => call[0].includes("discord.com/api/webhooks"));
+    const discordCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("discord.com/api/webhooks"),
+    );
 
     if (discordCall) {
       const body = JSON.parse(discordCall[1].body);
       // Should have both main image and remix thumbnail (lenient URLs)
-      expect(body.embeds[0].image.url).toContain("vibesdiy.work/screenshot.png");
-      expect(body.embeds[0].thumbnail.url).toContain("vibesdiy.work/screenshot.png");
+      expect(body.embeds[0].image.url).toContain(
+        "vibesdiy.work/screenshot.png",
+      );
+      expect(body.embeds[0].thumbnail.url).toContain(
+        "vibesdiy.work/screenshot.png",
+      );
 
       // Should have remix field (lenient matching)
       expect(body.embeds[0].fields).toEqual(
@@ -257,7 +271,7 @@ describe("Queue Consumer", () => {
           expect.objectContaining({
             name: expect.stringContaining("Remix"),
           }),
-        ])
+        ]),
       );
     }
   });
@@ -280,7 +294,10 @@ describe("Queue Consumer", () => {
     expect(mockMessage.ack).not.toHaveBeenCalled();
 
     // Verify error was logged (lenient - any error message containing "Error")
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Error"), expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Error"),
+      expect.any(Error),
+    );
 
     // Clean up spy
     consoleSpy.mockRestore();
@@ -374,7 +391,10 @@ describe("Queue Consumer", () => {
     expect(mockMessage.ack).not.toHaveBeenCalled();
 
     // Verify error was logged (lenient - any error message containing "Error")
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Error"), expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Error"),
+      expect.any(Error),
+    );
 
     // Clean up spy
     consoleSpy.mockRestore();
@@ -416,7 +436,7 @@ describe("Queue Consumer", () => {
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },
-      })
+      }),
     );
 
     // Verify Bluesky post creation was called
@@ -428,13 +448,19 @@ describe("Queue Consumer", () => {
           Authorization: "Bearer test-access-token",
           "Content-Type": "application/json",
         }),
-      })
+      }),
     );
 
     // Verify both Discord and Bluesky endpoints were called
-    const discordCall = mockFetch.mock.calls.find((call: any) => call[0].includes("discord.com"));
-    const blueskySessionCall = mockFetch.mock.calls.find((call: any) => call[0].includes("createSession"));
-    const blueskyPostCall = mockFetch.mock.calls.find((call: any) => call[0].includes("createRecord"));
+    const discordCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("discord.com"),
+    );
+    const blueskySessionCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("createSession"),
+    );
+    const blueskyPostCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("createRecord"),
+    );
 
     expect(discordCall).toBeDefined();
     expect(blueskySessionCall).toBeDefined();
@@ -468,8 +494,12 @@ describe("Queue Consumer", () => {
     expect(mockMessage.ack).toHaveBeenCalledOnce();
 
     // Verify only Discord was called, not Bluesky
-    const discordCall = mockFetch.mock.calls.find((call: any) => call[0].includes("discord.com"));
-    const blueskyCall = mockFetch.mock.calls.find((call: any) => call[0].includes("bsky.social"));
+    const discordCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("discord.com"),
+    );
+    const blueskyCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("bsky.social"),
+    );
 
     expect(discordCall).toBeDefined();
     expect(blueskyCall).toBeUndefined();
@@ -527,7 +557,10 @@ describe("Queue Consumer", () => {
     expect(mockMessage.ack).not.toHaveBeenCalled();
 
     // Verify error was logged
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Error"), expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Error"),
+      expect.any(Error),
+    );
 
     // Clean up spy
     consoleSpy.mockRestore();
@@ -571,7 +604,9 @@ describe("Queue Consumer", () => {
 
     // Verify warning was logged
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("shareToFirehose enabled but Bluesky credentials missing")
+      expect.stringContaining(
+        "shareToFirehose enabled but Bluesky credentials missing",
+      ),
     );
 
     // Clean up spy
@@ -613,7 +648,10 @@ describe("Queue Consumer", () => {
     expect(mockMessage.retry).not.toHaveBeenCalled();
 
     // Verify KV was called to get screenshot
-    expect(mockEnv.KV.get).toHaveBeenCalledWith("embed-test-slug-screenshot", "arrayBuffer");
+    expect(mockEnv.KV.get).toHaveBeenCalledWith(
+      "embed-test-slug-screenshot",
+      "arrayBuffer",
+    );
 
     // Verify blob upload was called
     expect(mockFetch).toHaveBeenCalledWith(
@@ -625,11 +663,13 @@ describe("Queue Consumer", () => {
           "Content-Type": "image/png",
         }),
         body: mockScreenshotData,
-      })
+      }),
     );
 
     // Verify post creation was called with external embed
-    const postCall = mockFetch.mock.calls.find((call: any) => call[0].includes("createRecord"));
+    const postCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("createRecord"),
+    );
     expect(postCall).toBeDefined();
 
     if (postCall) {
@@ -639,9 +679,13 @@ describe("Queue Consumer", () => {
       // Check that post has external embed
       expect(record.embed).toBeDefined();
       expect(record.embed.$type).toBe("app.bsky.embed.external");
-      expect(record.embed.external.uri).toBe("https://vibes.diy/vibe/embed-test-slug");
+      expect(record.embed.external.uri).toBe(
+        "https://vibes.diy/vibe/embed-test-slug",
+      );
       expect(record.embed.external.title).toBe("Embed Test App");
-      expect(record.embed.external.description).toBe("A new vibe created on vibes.diy");
+      expect(record.embed.external.description).toBe(
+        "A new vibe created on vibes.diy",
+      );
 
       // Check that thumbnail blob is included
       expect(record.embed.external.thumb).toEqual({
@@ -687,13 +731,20 @@ describe("Queue Consumer", () => {
     expect(mockMessage.ack).toHaveBeenCalledOnce();
 
     // Verify KV was called but no blob upload occurred
-    expect(mockEnv.KV.get).toHaveBeenCalledWith("no-screenshot-slug-screenshot", "arrayBuffer");
+    expect(mockEnv.KV.get).toHaveBeenCalledWith(
+      "no-screenshot-slug-screenshot",
+      "arrayBuffer",
+    );
 
-    const blobUploadCall = mockFetch.mock.calls.find((call: any) => call[0].includes("uploadBlob"));
+    const blobUploadCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("uploadBlob"),
+    );
     expect(blobUploadCall).toBeUndefined();
 
     // Verify post creation was called with external embed but no thumbnail
-    const postCall = mockFetch.mock.calls.find((call: any) => call[0].includes("createRecord"));
+    const postCall = mockFetch.mock.calls.find((call: any) =>
+      call[0].includes("createRecord"),
+    );
     expect(postCall).toBeDefined();
 
     if (postCall) {
@@ -703,15 +754,21 @@ describe("Queue Consumer", () => {
       // Check that post has external embed
       expect(record.embed).toBeDefined();
       expect(record.embed.$type).toBe("app.bsky.embed.external");
-      expect(record.embed.external.uri).toBe("https://vibes.diy/vibe/no-screenshot-slug");
+      expect(record.embed.external.uri).toBe(
+        "https://vibes.diy/vibe/no-screenshot-slug",
+      );
       expect(record.embed.external.title).toBe("No Screenshot App");
-      expect(record.embed.external.description).toBe("A new vibe created on vibes.diy (remix of original-app)");
+      expect(record.embed.external.description).toBe(
+        "A new vibe created on vibes.diy (remix of original-app)",
+      );
 
       // Check that NO thumbnail is included
       expect(record.embed.external.thumb).toBeUndefined();
 
       // Check post text includes remix info
-      expect(record.text).toBe("💽 No Screenshot App\n\n🔀 Remix of original-app");
+      expect(record.text).toBe(
+        "💽 No Screenshot App\n\n🔀 Remix of original-app",
+      );
     }
   });
 });

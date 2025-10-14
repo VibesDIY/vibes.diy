@@ -39,7 +39,9 @@ describe("Subdomain Parser", () => {
     });
 
     it("should handle UUID install IDs", () => {
-      const result = parseSubdomain("todo-app_550e8400-e29b-41d4-a716-446655440000.vibesdiy.app");
+      const result = parseSubdomain(
+        "todo-app_550e8400-e29b-41d4-a716-446655440000.vibesdiy.app",
+      );
 
       expect(result.appSlug).toBe("todo-app");
       expect(result.installId).toBe("550e8400-e29b-41d4-a716-446655440000");
@@ -219,9 +221,14 @@ describe("Subdomain Parser", () => {
     });
 
     it("should handle complex slugs and IDs", () => {
-      const result = constructSubdomain("weather-dashboard-v2", "550e8400-e29b-41d4-a716-446655440000");
+      const result = constructSubdomain(
+        "weather-dashboard-v2",
+        "550e8400-e29b-41d4-a716-446655440000",
+      );
 
-      expect(result).toBe("weather-dashboard-v2_550e8400-e29b-41d4-a716-446655440000");
+      expect(result).toBe(
+        "weather-dashboard-v2_550e8400-e29b-41d4-a716-446655440000",
+      );
     });
 
     it("should work with install IDs containing underscores", () => {
@@ -232,7 +239,7 @@ describe("Subdomain Parser", () => {
 
     it("should throw error for empty string install ID", () => {
       expect(() => constructSubdomain("my-app", "")).toThrow(
-        "Install ID cannot be empty string - would create invalid subdomain"
+        "Install ID cannot be empty string - would create invalid subdomain",
       );
     });
   });
@@ -241,7 +248,10 @@ describe("Subdomain Parser", () => {
     it("should parse and reconstruct catalog title correctly", () => {
       const original = "my-awesome-app";
       const parsed = parseSubdomain(`${original}.vibesdiy.app`);
-      const reconstructed = constructSubdomain(parsed.appSlug, parsed.installId);
+      const reconstructed = constructSubdomain(
+        parsed.appSlug,
+        parsed.installId,
+      );
 
       expect(reconstructed).toBe(original);
     });
@@ -249,7 +259,10 @@ describe("Subdomain Parser", () => {
     it("should parse and reconstruct app instance correctly", () => {
       const original = "todo-app_abc-123";
       const parsed = parseSubdomain(`${original}.vibesdiy.app`);
-      const reconstructed = constructSubdomain(parsed.appSlug, parsed.installId);
+      const reconstructed = constructSubdomain(
+        parsed.appSlug,
+        parsed.installId,
+      );
 
       expect(reconstructed).toBe(original);
     });
@@ -265,7 +278,10 @@ describe("Subdomain Parser", () => {
 
       testCases.forEach((testCase) => {
         const parsed = parseSubdomain(`${testCase}.vibesdiy.app`);
-        const reconstructed = constructSubdomain(parsed.appSlug, parsed.installId);
+        const reconstructed = constructSubdomain(
+          parsed.appSlug,
+          parsed.installId,
+        );
         expect(reconstructed).toBe(testCase);
       });
     });

@@ -195,7 +195,10 @@ function renderTemplate() {
       .replace(/{{APP_SLUG}}/g, "sample-app")
       .replace(/{{APP_CODE}}/g, sampleAppCode)
       .replace(/{{API_KEY}}/g, "sample-api-key")
-      .replace(/{{REMIX_BUTTON}}/g, '<a href="https://vibes.diy" class="remix-link">🧬</a>')
+      .replace(
+        /{{REMIX_BUTTON}}/g,
+        '<a href="https://vibes.diy" class="remix-link">🧬</a>',
+      )
       .replace("{{IMPORT_MAP}}", importMapJson)
       // Add React to global scope before the app code
       .replace(
@@ -206,7 +209,7 @@ function renderTemplate() {
       window.React = React;
       
       // APP_CODE placeholder will be replaced with actual code
-    `
+    `,
       )
   );
 }

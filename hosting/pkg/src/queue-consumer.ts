@@ -35,11 +35,16 @@ export default {
       }
     }
 
-    console.log(`🏁 Batch processing complete: ${batch.messages.length} messages handled`);
+    console.log(
+      `🏁 Batch processing complete: ${batch.messages.length} messages handled`,
+    );
   },
 };
 
-async function processAppEvent(event: z.infer<typeof PublishEvent>, env: QueueEnv) {
+async function processAppEvent(
+  event: z.infer<typeof PublishEvent>,
+  env: QueueEnv,
+) {
   const { type, app } = event;
 
   console.log(`🎯 Processing ${type} event for app ${app.slug}`);
@@ -84,9 +89,13 @@ async function postToDiscord(app: z.infer<typeof App>, env: QueueEnv) {
     "https://discord.com/api/webhooks/1362420377506152529/he_-FXmdsR7CWFnMDMPMCyG6bJNMRaOzJ_J-IYY3aghUy-Iqt1Vifd0xuFXKKAYwIlgm";
 
   const appUrl = `https://vibes.diy/vibe/${app.slug}`;
-  const remixOfUrl = app.remixOf ? `https://vibes.diy/vibe/${app.remixOf}` : null;
+  const remixOfUrl = app.remixOf
+    ? `https://vibes.diy/vibe/${app.remixOf}`
+    : null;
   const screenshotUrl = `https://${app.slug}.vibesdiy.work/screenshot.png`;
-  const remixScreenshotUrl = app.remixOf ? `https://${app.remixOf}.vibesdiy.work/screenshot.png` : null;
+  const remixScreenshotUrl = app.remixOf
+    ? `https://${app.remixOf}.vibesdiy.work/screenshot.png`
+    : null;
 
   try {
     const promptField = app.prompt
@@ -129,7 +138,10 @@ ${app.prompt}
 
     console.log("Discord webhook body:", JSON.stringify(discordBody, null, 2));
     console.log("Screenshot URL:", screenshotUrl);
-    console.log("Screenshot markdown:", `![${app.title || app.name}](${screenshotUrl})`);
+    console.log(
+      "Screenshot markdown:",
+      `![${app.title || app.name}](${screenshotUrl})`,
+    );
 
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -138,9 +150,15 @@ ${app.prompt}
     });
 
     if (!response.ok) {
-      throw new Error(`Discord webhook failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Discord webhook failed: ${response.status} ${response.statusText}`,
+      );
     } else {
-      console.log(`✅ Discord webhook sent successfully`, response.status, response.statusText);
+      console.log(
+        `✅ Discord webhook sent successfully`,
+        response.status,
+        response.statusText,
+      );
     }
   } catch (error) {
     console.error("Error posting to Discord:", error);
@@ -157,18 +175,23 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
     console.log(`🟦 Creating Bluesky session for ${env.BLUESKY_HANDLE}`);
 
     // Step 1: Create session
-    const sessionResponse = await fetch("https://bsky.social/xrpc/com.atproto.server.createSession", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        identifier: env.BLUESKY_HANDLE,
-        password: env.BLUESKY_APP_PASSWORD,
-      }),
-    });
+    const sessionResponse = await fetch(
+      "https://bsky.social/xrpc/com.atproto.server.createSession",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: env.BLUESKY_HANDLE,
+          password: env.BLUESKY_APP_PASSWORD,
+        }),
+      },
+    );
 
     if (!sessionResponse.ok) {
       const errorText = await sessionResponse.text();
-      throw new Error(`Failed to create Bluesky session: ${sessionResponse.status} ${errorText}`);
+      throw new Error(
+        `Failed to create Bluesky session: ${sessionResponse.status} ${errorText}`,
+      );
     }
 
     const session = (await sessionResponse.json()) as {
@@ -188,21 +211,26 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
       if (screenshotData) {
         console.log(`🟦 Uploading screenshot as blob for ${app.slug}`);
 
-        const blobResponse = await fetch("https://bsky.social/xrpc/com.atproto.repo.uploadBlob", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.accessJwt}`,
-            "Content-Type": "image/png",
+        const blobResponse = await fetch(
+          "https://bsky.social/xrpc/com.atproto.repo.uploadBlob",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.accessJwt}`,
+              "Content-Type": "image/png",
+            },
+            body: screenshotData,
           },
-          body: screenshotData,
-        });
+        );
 
         if (blobResponse.ok) {
           const blobResult = (await blobResponse.json()) as { blob: any };
           thumbnailBlob = blobResult.blob;
           console.log(`✅ Screenshot blob uploaded successfully`);
         } else {
-          console.warn(`⚠️ Failed to upload screenshot blob: ${blobResponse.status}`);
+          console.warn(
+            `⚠️ Failed to upload screenshot blob: ${blobResponse.status}`,
+          );
         }
       } else {
         console.log(`📷 No screenshot found for ${app.slug}`);
@@ -244,29 +272,37 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
       hasThumb: !!thumbnailBlob,
     });
 
-    const postResponse = await fetch("https://bsky.social/xrpc/com.atproto.repo.createRecord", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${session.accessJwt}`,
-        "Content-Type": "application/json",
+    const postResponse = await fetch(
+      "https://bsky.social/xrpc/com.atproto.repo.createRecord",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.accessJwt}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          repo: session.did,
+          collection: "app.bsky.feed.post",
+          record: post,
+        }),
       },
-      body: JSON.stringify({
-        repo: session.did,
-        collection: "app.bsky.feed.post",
-        record: post,
-      }),
-    });
+    );
 
     if (!postResponse.ok) {
       const errorText = await postResponse.text();
-      throw new Error(`Failed to create Bluesky post: ${postResponse.status} ${errorText}`);
+      throw new Error(
+        `Failed to create Bluesky post: ${postResponse.status} ${errorText}`,
+      );
     }
 
     const postResult = (await postResponse.json()) as {
       uri: string;
       cid: string;
     };
-    console.log(`✅ Bluesky post created successfully:`, { uri: postResult.uri, cid: postResult.cid });
+    console.log(`✅ Bluesky post created successfully:`, {
+      uri: postResult.uri,
+      cid: postResult.cid,
+    });
   } catch (error) {
     console.error("Error posting to Bluesky:", error);
     throw error;

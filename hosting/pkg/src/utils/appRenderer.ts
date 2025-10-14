@@ -2,7 +2,11 @@
 // Handles the different rendering paths based on subdomain parsing
 
 import { template } from "../apptemplate";
-import { catalogTitleTemplate, catalogTitleStyles, catalogTitleScript } from "../template/catalogTitle";
+import {
+  catalogTitleTemplate,
+  catalogTitleStyles,
+  catalogTitleScript,
+} from "../template/catalogTitle";
 import { libraryImportMap, transformImports } from "./codeTransform";
 import type { ParsedSubdomain } from "./subdomainParser";
 
@@ -42,7 +46,7 @@ export async function renderAppInstance(
   parsed: ParsedSubdomain,
   app: AppData,
   customDomain?: string,
-  originalDomain?: string
+  originalDomain?: string,
 ): Promise<Response> {
   // Prepare the remix button if this app is a remix of another app
   let remixButton = "";
@@ -63,14 +67,16 @@ export async function renderAppInstance(
   // Extract version parameter from URL for use-vibes override
   const url = new URL(c.req.url);
   const versionParam = (url.searchParams.get("v_vibes") || "").trim();
-  const semverPattern = /^[0-9]+(?:\.[0-9]+(?:\.[0-9]+)?)?(?:-[A-Za-z0-9.-]+)?(?:\+[A-Za-z0-9.-]+)?$/;
+  const semverPattern =
+    /^[0-9]+(?:\.[0-9]+(?:\.[0-9]+)?)?(?:-[A-Za-z0-9.-]+)?(?:\+[A-Za-z0-9.-]+)?$/;
   const vibesVersion = semverPattern.test(versionParam) ? versionParam : "";
 
   // Clone the library import map and update use-vibes version if specified
   const dynamicImportMap = { ...libraryImportMap };
   if (vibesVersion) {
     dynamicImportMap["use-vibes"] = `https://esm.sh/use-vibes@${vibesVersion}`;
-    dynamicImportMap["use-fireproof"] = `https://esm.sh/use-vibes@${vibesVersion}`;
+    dynamicImportMap["use-fireproof"] =
+      `https://esm.sh/use-vibes@${vibesVersion}`;
   }
 
   // Transform the app code to handle imports
@@ -89,7 +95,9 @@ export async function renderAppInstance(
 
   // Set the title and meta tags
   // Title for display
-  const displayTitle = app.title ? `${app.title}` : "Make your app on Vibes DIY";
+  const displayTitle = app.title
+    ? `${app.title}`
+    : "Make your app on Vibes DIY";
 
   // Title for meta tags
   const metaTitle = app.title || "Make your app on Vibes DIY";
@@ -103,13 +111,18 @@ export async function renderAppInstance(
   const actualDomain = originalDomain || "vibesdiy.app";
 
   // Base URL and image URL - use custom domain if provided, otherwise use actual domain
-  const baseUrl = customDomain ? `https://${customDomain}` : `https://${parsed.fullSubdomain}.${actualDomain}`;
+  const baseUrl = customDomain
+    ? `https://${customDomain}`
+    : `https://${parsed.fullSubdomain}.${actualDomain}`;
   const imageUrl = customDomain
     ? `https://${customDomain}/screenshot.png`
     : `https://${parsed.appSlug}.${actualDomain}/screenshot.png`;
 
   // Replace title
-  templatedCode = templatedCode.replace("<title>User Generated App</title>", `<title>${displayTitle}</title>`);
+  templatedCode = templatedCode.replace(
+    "<title>User Generated App</title>",
+    `<title>${displayTitle}</title>`,
+  );
 
   // Construct meta tags
   const metaTags = `
@@ -128,7 +141,7 @@ export async function renderAppInstance(
   // Insert meta tags after the viewport meta tag
   templatedCode = templatedCode.replace(
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
-    `<meta name="viewport" content="width=device-width, initial-scale=1" />${metaTags}`
+    `<meta name="viewport" content="width=device-width, initial-scale=1" />${metaTags}`,
   );
 
   // Return the templated app code
@@ -148,7 +161,7 @@ export async function renderCatalogTitle(
   c: RenderContext,
   parsed: ParsedSubdomain,
   app: AppData,
-  originalDomain?: string
+  originalDomain?: string,
 ): Promise<Response> {
   // Prepare app title and metadata
   const appTitle = app.title || app.name || parsed.appSlug;
@@ -184,7 +197,10 @@ export async function renderCatalogTitle(
 
   // Replace the entire conditional block with the error-handling content
   const conditionalRegex = /\{\{#if HAS_SCREENSHOT\}\}[\s\S]*?\{\{\/if\}\}/;
-  renderedTemplate = renderedTemplate.replace(conditionalRegex, screenshotContent);
+  renderedTemplate = renderedTemplate.replace(
+    conditionalRegex,
+    screenshotContent,
+  );
 
   // Add meta tags for social sharing
   const description = `${appTitle} - An interactive web app created with Vibes DIY`;
@@ -206,7 +222,7 @@ export async function renderCatalogTitle(
   // Insert meta tags after viewport
   renderedTemplate = renderedTemplate.replace(
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
-    `<meta name="viewport" content="width=device-width, initial-scale=1" />${metaTags}`
+    `<meta name="viewport" content="width=device-width, initial-scale=1" />${metaTags}`,
   );
 
   return c.html(renderedTemplate, 200);

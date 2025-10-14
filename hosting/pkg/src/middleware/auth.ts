@@ -28,13 +28,21 @@ export const authMiddleware = createMiddleware<{
     const vibesToken = c.req.header("X-VIBES-Token");
     if (vibesToken) {
       try {
-        let verified = await verifyToken(vibesToken, c.env.CLOUD_SESSION_TOKEN_PUBLIC_KEY);
+        let verified = await verifyToken(
+          vibesToken,
+          c.env.CLOUD_SESSION_TOKEN_PUBLIC_KEY,
+        );
         if (!verified && c.env.CLOUD_SESSION_TOKEN_PUBLIC_KEY_DEV) {
-          verified = await verifyToken(vibesToken, c.env.CLOUD_SESSION_TOKEN_PUBLIC_KEY_DEV);
+          verified = await verifyToken(
+            vibesToken,
+            c.env.CLOUD_SESSION_TOKEN_PUBLIC_KEY_DEV,
+          );
         }
         if (verified) {
           c.set("user", verified.payload);
-          console.log(`🔐 Auth: User authenticated via X-VIBES-Token - userId: ${verified.payload.userId}`);
+          console.log(
+            `🔐 Auth: User authenticated via X-VIBES-Token - userId: ${verified.payload.userId}`,
+          );
         }
       } catch (error) {
         // Token verification failed

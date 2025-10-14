@@ -168,7 +168,11 @@ export function generateVibeSlug(): string {
   });
 
   return uniqueNamesGenerator({
-    dictionaries: [[...musicians, ...cities, ...adjectives], [...nouns, ...tech, ...legends], numberDictionary],
+    dictionaries: [
+      [...musicians, ...cities, ...adjectives],
+      [...nouns, ...tech, ...legends],
+      numberDictionary,
+    ],
     length: 3,
     separator: "-",
   });

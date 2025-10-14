@@ -34,7 +34,9 @@ export interface ClaudeMessagesResponse {
 }
 
 // Function to convert OpenAI format messages to Claude format
-function convertToClaudeFormat(messages: Array<{ role: string; content: string }>): {
+function convertToClaudeFormat(
+  messages: Array<{ role: string; content: string }>,
+): {
   systemPrompt: string | null;
   claudeMessages: Array<{ role: string; content: string }>;
 } {
@@ -92,11 +94,16 @@ function convertToOpenAIFormat(claudeResponse: ClaudeMessagesResponse): any {
 }
 
 // Core function to handle chat completions via Claude API
-export async function claudeChat(params: ClaudeMessagesRequest, apiKey: string): Promise<Response> {
+export async function claudeChat(
+  params: ClaudeMessagesRequest,
+  apiKey: string,
+): Promise<Response> {
   console.log(`🤖 Claude API: Processing request, model: ${params.model}`);
 
   try {
-    const { systemPrompt, claudeMessages } = convertToClaudeFormat(params.messages);
+    const { systemPrompt, claudeMessages } = convertToClaudeFormat(
+      params.messages,
+    );
 
     // Prepare Claude API request body
     const requestBody: any = {
@@ -151,7 +158,9 @@ export async function claudeChat(params: ClaudeMessagesRequest, apiKey: string):
                 if (line.startsWith("data:")) {
                   const data = line.slice(5).trim();
                   if (data === "[DONE]") {
-                    controller.enqueue(new TextEncoder().encode(`data: [DONE]\n\n`));
+                    controller.enqueue(
+                      new TextEncoder().encode(`data: [DONE]\n\n`),
+                    );
                     return;
                   }
 
@@ -167,7 +176,10 @@ export async function claudeChat(params: ClaudeMessagesRequest, apiKey: string):
                       choices: [],
                     };
 
-                    if (claudeEvent.type === "content_block_delta" && claudeEvent.delta.type === "text") {
+                    if (
+                      claudeEvent.type === "content_block_delta" &&
+                      claudeEvent.delta.type === "text"
+                    ) {
                       openaiEvent.choices.push({
                         index: 0,
                         delta: { content: claudeEvent.delta.text },
@@ -181,7 +193,11 @@ export async function claudeChat(params: ClaudeMessagesRequest, apiKey: string):
                       });
                     }
 
-                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(openaiEvent)}\n\n`));
+                    controller.enqueue(
+                      new TextEncoder().encode(
+                        `data: ${JSON.stringify(openaiEvent)}\n\n`,
+                      ),
+                    );
                   } catch (e) {
                     console.error("Error parsing Claude event:", e);
                   }
@@ -258,7 +274,7 @@ export async function claudeChat(params: ClaudeMessagesRequest, apiKey: string):
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -291,7 +307,7 @@ export async function claudeChat(params: ClaudeMessagesRequest, apiKey: string):
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      }
+      },
     );
   }
 }
@@ -306,21 +322,55 @@ export class ClaudeChat extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: z.object({
-              model: z.string().describe("ID of the Claude model to use (e.g., 'claude-3-opus-20240229')"),
+              model: z
+                .string()
+                .describe(
+                  "ID of the Claude model to use (e.g., 'claude-3-opus-20240229')",
+                ),
               messages: z
                 .array(
                   z.object({
-                    role: z.string().describe("The role of the message author (system, user, assistant)"),
+                    role: z
+                      .string()
+                      .describe(
+                        "The role of the message author (system, user, assistant)",
+                      ),
                     content: z.string().describe("The content of the message"),
-                    name: z.string().optional().describe("Optional name for the message author"),
-                  })
+                    name: z
+                      .string()
+                      .optional()
+                      .describe("Optional name for the message author"),
+                  }),
                 )
-                .describe("A list of messages comprising the conversation so far"),
-              temperature: z.number().optional().default(1).describe("Sampling temperature (0-1)"),
-              top_p: z.number().optional().default(1).describe("Nucleus sampling parameter"),
-              top_k: z.number().optional().describe("Only sample from the top K options for each subsequent token"),
-              max_tokens: z.number().optional().default(1024).describe("Maximum number of tokens to generate"),
-              stream: z.boolean().optional().default(false).describe("Stream partial progress"),
+                .describe(
+                  "A list of messages comprising the conversation so far",
+                ),
+              temperature: z
+                .number()
+                .optional()
+                .default(1)
+                .describe("Sampling temperature (0-1)"),
+              top_p: z
+                .number()
+                .optional()
+                .default(1)
+                .describe("Nucleus sampling parameter"),
+              top_k: z
+                .number()
+                .optional()
+                .describe(
+                  "Only sample from the top K options for each subsequent token",
+                ),
+              max_tokens: z
+                .number()
+                .optional()
+                .default(1024)
+                .describe("Maximum number of tokens to generate"),
+              stream: z
+                .boolean()
+                .optional()
+                .default(false)
+                .describe("Stream partial progress"),
               user: z.string().optional().describe("User ID for tracking"),
             }),
           },
@@ -345,7 +395,7 @@ export class ClaudeChat extends OpenAPIRoute {
                     content: z.string(),
                   }),
                   finish_reason: z.string(),
-                })
+                }),
               ),
               usage: z.object({
                 prompt_tokens: z.number(),
@@ -388,7 +438,7 @@ export class ClaudeChat extends OpenAPIRoute {
               code: null,
             },
           },
-          500
+          500,
         );
       }
 
@@ -402,13 +452,14 @@ export class ClaudeChat extends OpenAPIRoute {
       return c.json(
         {
           error: {
-            message: error.message || "An error occurred processing your request",
+            message:
+              error.message || "An error occurred processing your request",
             type: "server_error",
             param: null,
             code: null,
           },
         },
-        500
+        500,
       );
     }
   }

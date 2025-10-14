@@ -21,14 +21,19 @@ export function transformImports(code: string): string {
       }
       // Replace the import path with ESM.sh URL, preserving the quote style
       return match.replace(
-        new RegExp(`['"]${importPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}['"]`),
-        `"https://esm.sh/${importPath}"`
+        new RegExp(
+          `['"]${importPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}['"]`,
+        ),
+        `"https://esm.sh/${importPath}"`,
       );
-    }
+    },
   );
 
   // Normalize the default export function name to "App"
-  transformedCode = transformedCode.replace(/export\s+default\s+function\s+\w+\s*\(/g, "export default function App(");
+  transformedCode = transformedCode.replace(
+    /export\s+default\s+function\s+\w+\s*\(/g,
+    "export default function App(",
+  );
 
   return transformedCode;
 }

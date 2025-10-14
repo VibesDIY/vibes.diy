@@ -41,13 +41,19 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("test-app", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://test-app.vibesdiy.app/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://test-app.vibesdiy.app/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const html = await res.text();
 
       // Should use vibesdiy.app, not hardcoded to another domain
       expect(html).toContain('og:url" content="https://test-app.vibesdiy.app');
-      expect(html).toContain('og:image" content="https://test-app.vibesdiy.app/screenshot.png');
+      expect(html).toContain(
+        'og:image" content="https://test-app.vibesdiy.app/screenshot.png',
+      );
       expect(html).not.toContain("vibesdiy.work");
       expect(html).not.toContain("vibecode.garden");
     });
@@ -62,13 +68,21 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("test-app", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://test-app_abc123.vibesdiy.app/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://test-app_abc123.vibesdiy.app/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const html = await res.text();
 
       // Should use vibesdiy.app in meta tags
-      expect(html).toContain('og:url" content="https://test-app_abc123.vibesdiy.app');
-      expect(html).toContain('og:image" content="https://test-app.vibesdiy.app/screenshot.png');
+      expect(html).toContain(
+        'og:url" content="https://test-app_abc123.vibesdiy.app',
+      );
+      expect(html).toContain(
+        'og:image" content="https://test-app.vibesdiy.app/screenshot.png',
+      );
       expect(html).not.toContain("vibesdiy.work");
       expect(html).not.toContain("vibecode.garden");
     });
@@ -85,13 +99,19 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("work-app", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://work-app.vibesdiy.work/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://work-app.vibesdiy.work/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const html = await res.text();
 
       // Should use vibesdiy.work, not vibesdiy.app
       expect(html).toContain('og:url" content="https://work-app.vibesdiy.work');
-      expect(html).toContain('og:image" content="https://work-app.vibesdiy.work/screenshot.png');
+      expect(html).toContain(
+        'og:image" content="https://work-app.vibesdiy.work/screenshot.png',
+      );
       expect(html).not.toContain("vibesdiy.app");
       expect(html).not.toContain("vibecode.garden");
     });
@@ -106,13 +126,21 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("work-app", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://work-app_xyz789.vibesdiy.work/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://work-app_xyz789.vibesdiy.work/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const html = await res.text();
 
       // Should use vibesdiy.work in meta tags
-      expect(html).toContain('og:url" content="https://work-app_xyz789.vibesdiy.work');
-      expect(html).toContain('og:image" content="https://work-app.vibesdiy.work/screenshot.png');
+      expect(html).toContain(
+        'og:url" content="https://work-app_xyz789.vibesdiy.work',
+      );
+      expect(html).toContain(
+        'og:image" content="https://work-app.vibesdiy.work/screenshot.png',
+      );
       expect(html).not.toContain("vibesdiy.app");
       expect(html).not.toContain("vibecode.garden");
     });
@@ -129,13 +157,21 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("garden-app", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://garden-app.vibecode.garden/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://garden-app.vibecode.garden/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const html = await res.text();
 
       // Should use vibecode.garden, not vibesdiy.app
-      expect(html).toContain('og:url" content="https://garden-app.vibecode.garden');
-      expect(html).toContain('og:image" content="https://garden-app.vibecode.garden/screenshot.png');
+      expect(html).toContain(
+        'og:url" content="https://garden-app.vibecode.garden',
+      );
+      expect(html).toContain(
+        'og:image" content="https://garden-app.vibecode.garden/screenshot.png',
+      );
       expect(html).not.toContain("vibesdiy.app");
       expect(html).not.toContain("vibesdiy.work");
     });
@@ -150,13 +186,21 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("garden-app", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://garden-app_def456.vibecode.garden/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://garden-app_def456.vibecode.garden/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const html = await res.text();
 
       // Should use vibecode.garden in meta tags
-      expect(html).toContain('og:url" content="https://garden-app_def456.vibecode.garden');
-      expect(html).toContain('og:image" content="https://garden-app.vibecode.garden/screenshot.png');
+      expect(html).toContain(
+        'og:url" content="https://garden-app_def456.vibecode.garden',
+      );
+      expect(html).toContain(
+        'og:image" content="https://garden-app.vibecode.garden/screenshot.png',
+      );
       expect(html).not.toContain("vibesdiy.app");
       expect(html).not.toContain("vibesdiy.work");
     });
@@ -175,17 +219,27 @@ describe("First-Party Domain Preservation", () => {
       kvStore.set("domain:customwork.com", "custom-work-app");
 
       // First set up the mapping from a .work domain
-      const setupRes = await renderApp.request("https://custom-work-app.vibesdiy.work/", {}, mockEnv);
+      const setupRes = await renderApp.request(
+        "https://custom-work-app.vibesdiy.work/",
+        {},
+        mockEnv,
+      );
       expect(setupRes.status).toBe(200);
 
       // Now when accessing via custom domain, it should remember .work was the original
-      const res = await renderApp.request("https://customwork.com/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://customwork.com/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const html = await res.text();
 
       // Custom domain should be preserved in URLs
       expect(html).toContain('og:url" content="https://customwork.com');
-      expect(html).toContain('og:image" content="https://customwork.com/screenshot.png');
+      expect(html).toContain(
+        'og:image" content="https://customwork.com/screenshot.png',
+      );
     });
 
     it("should handle custom domain mapping with instance ID from vibecode.garden", async () => {
@@ -199,13 +253,19 @@ describe("First-Party Domain Preservation", () => {
       kvStore.set("garden-custom-app", JSON.stringify(testApp));
       kvStore.set("domain:gardencustom.io", "garden-custom-app_instance123");
 
-      const res = await renderApp.request("https://gardencustom.io/", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://gardencustom.io/",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const html = await res.text();
 
       // Custom domain should be preserved
       expect(html).toContain('og:url" content="https://gardencustom.io');
-      expect(html).toContain('og:image" content="https://gardencustom.io/screenshot.png');
+      expect(html).toContain(
+        'og:image" content="https://gardencustom.io/screenshot.png',
+      );
 
       // Should serve instance directly (not catalog)
       expect(html).toContain("Garden Custom");
@@ -225,13 +285,19 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("jsx-work-app", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://jsx-work-app.vibesdiy.work/App.jsx", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://jsx-work-app.vibesdiy.work/App.jsx",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const jsCode = await res.text();
 
       expect(jsCode).toContain("export default function WorkApp()");
       expect(jsCode).toContain("Work JSX");
-      expect(res.headers.get("Content-Type")).toContain("application/javascript");
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/javascript",
+      );
     });
 
     it("should serve App.jsx from vibecode.garden domain", async () => {
@@ -244,13 +310,19 @@ describe("First-Party Domain Preservation", () => {
 
       kvStore.set("jsx-garden-app", JSON.stringify(testApp));
 
-      const res = await renderApp.request("https://jsx-garden-app.vibecode.garden/App.jsx", {}, mockEnv);
+      const res = await renderApp.request(
+        "https://jsx-garden-app.vibecode.garden/App.jsx",
+        {},
+        mockEnv,
+      );
       expect(res.status).toBe(200);
       const jsCode = await res.text();
 
       expect(jsCode).toContain("export default function GardenApp()");
       expect(jsCode).toContain("Garden JSX");
-      expect(res.headers.get("Content-Type")).toContain("application/javascript");
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/javascript",
+      );
     });
   });
 });

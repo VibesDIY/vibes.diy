@@ -26,7 +26,10 @@ export interface ChatCompletionRequest {
 }
 
 // Core function to handle chat completions via OpenAI API
-export async function chatCompletion(params: ChatCompletionRequest, apiKey: string): Promise<Response> {
+export async function chatCompletion(
+  params: ChatCompletionRequest,
+  apiKey: string,
+): Promise<Response> {
   // Normalize model ID - remove 'openai/' prefix if present
   if (params.model && params.model.startsWith("openai/")) {
     params.model = params.model.replace("openai/", "");
@@ -85,7 +88,7 @@ export async function chatCompletion(params: ChatCompletionRequest, apiKey: stri
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -126,28 +129,75 @@ export class ChatComplete extends OpenAPIRoute {
               messages: z
                 .array(
                   z.object({
-                    role: z.string().describe("The role of the message author (system, user, assistant)"),
+                    role: z
+                      .string()
+                      .describe(
+                        "The role of the message author (system, user, assistant)",
+                      ),
                     content: z.string().describe("The content of the message"),
-                    name: z.string().optional().describe("Optional name for the message author"),
-                  })
+                    name: z
+                      .string()
+                      .optional()
+                      .describe("Optional name for the message author"),
+                  }),
                 )
-                .describe("A list of messages comprising the conversation so far"),
-              temperature: z.number().optional().default(1).describe("Sampling temperature (0-2)"),
-              top_p: z.number().optional().default(1).describe("Nucleus sampling parameter"),
-              n: z.number().optional().default(1).describe("Number of chat completion choices to generate"),
-              stream: z.boolean().optional().default(false).describe("Stream partial progress"),
-              max_tokens: z.number().optional().describe("Maximum number of tokens to generate"),
-              presence_penalty: z.number().optional().default(0).describe("Presence penalty for token selection"),
-              frequency_penalty: z.number().optional().default(0).describe("Frequency penalty for token selection"),
-              logit_bias: z.record(z.number()).optional().describe("Modify likelihood of specific tokens"),
-              user: z.string().optional().describe("User ID for billing and tracking"),
+                .describe(
+                  "A list of messages comprising the conversation so far",
+                ),
+              temperature: z
+                .number()
+                .optional()
+                .default(1)
+                .describe("Sampling temperature (0-2)"),
+              top_p: z
+                .number()
+                .optional()
+                .default(1)
+                .describe("Nucleus sampling parameter"),
+              n: z
+                .number()
+                .optional()
+                .default(1)
+                .describe("Number of chat completion choices to generate"),
+              stream: z
+                .boolean()
+                .optional()
+                .default(false)
+                .describe("Stream partial progress"),
+              max_tokens: z
+                .number()
+                .optional()
+                .describe("Maximum number of tokens to generate"),
+              presence_penalty: z
+                .number()
+                .optional()
+                .default(0)
+                .describe("Presence penalty for token selection"),
+              frequency_penalty: z
+                .number()
+                .optional()
+                .default(0)
+                .describe("Frequency penalty for token selection"),
+              logit_bias: z
+                .record(z.number())
+                .optional()
+                .describe("Modify likelihood of specific tokens"),
+              user: z
+                .string()
+                .optional()
+                .describe("User ID for billing and tracking"),
               response_format: z
                 .object({
-                  type: z.string().describe("Format of the response (json or text)"),
+                  type: z
+                    .string()
+                    .describe("Format of the response (json or text)"),
                 })
                 .optional()
                 .describe("Format of the response"),
-              seed: z.number().optional().describe("Seed for deterministic sampling"),
+              seed: z
+                .number()
+                .optional()
+                .describe("Seed for deterministic sampling"),
             }),
           },
         },
@@ -171,7 +221,7 @@ export class ChatComplete extends OpenAPIRoute {
                     content: z.string(),
                   }),
                   finish_reason: z.string(),
-                })
+                }),
               ),
               usage: z.object({
                 prompt_tokens: z.number(),
@@ -194,7 +244,11 @@ export class ChatComplete extends OpenAPIRoute {
       let modelId = data.model;
 
       // Normalize model ID - remove 'openai/' prefix if present (handle at both layers)
-      if (modelId && typeof modelId === "string" && modelId.startsWith("openai/")) {
+      if (
+        modelId &&
+        typeof modelId === "string" &&
+        modelId.startsWith("openai/")
+      ) {
         modelId = modelId.replace("openai/", "");
       }
 
@@ -227,7 +281,10 @@ export class ChatComplete extends OpenAPIRoute {
       return response;
     } catch (error) {
       console.error("Error in ChatComplete handler:", error);
-      return c.json({ error: error.message || "An error occurred processing your request" }, 500);
+      return c.json(
+        { error: error.message || "An error occurred processing your request" },
+        500,
+      );
     }
   }
 }
