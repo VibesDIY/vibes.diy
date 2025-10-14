@@ -55,8 +55,8 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.7.2)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
       wrangler:
-        specifier: ^4.42.1
-        version: 4.42.1(@cloudflare/workers-types@4.20251011.0)
+        specifier: ^4.42.2
+        version: 4.42.2(@cloudflare/workers-types@4.20251011.0)
 
   call-ai/pkg:
     dependencies:
@@ -8487,16 +8487,6 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  wrangler@4.42.1:
-    resolution: {integrity: sha512-Oia5SmGmfUWfz/k5aklrE429VMiMMZkjc1EhF1nrANElCOwBTTBY1shsfhkg9F0vG8ZtHzx1rJvYfaQvct498g==}
-    engines: {node: '>=18.0.0'}
-    hasBin: true
-    peerDependencies:
-      '@cloudflare/workers-types': ^4.20251004.0
-    peerDependenciesMeta:
-      '@cloudflare/workers-types':
-        optional: true
-
   wrangler@4.42.2:
     resolution: {integrity: sha512-1iTnbjB4F12KSP1zbfxQL495xarS+vdrZnulQP2SEcAxDTUGn7N9zk1O2WtFOc+Fhcgl+9/sdz/4AL9pF34Pwg==}
     engines: {node: '>=18.0.0'}
@@ -8993,12 +8983,6 @@ snapshots:
   '@cloudflare/kv-asset-handler@0.4.0':
     dependencies:
       mime: 3.0.0
-
-  '@cloudflare/unenv-preset@2.7.7(unenv@2.0.0-rc.21)(workerd@1.20251004.0)':
-    dependencies:
-      unenv: 2.0.0-rc.21
-    optionalDependencies:
-      workerd: 1.20251004.0
 
   '@cloudflare/unenv-preset@2.7.7(unenv@2.0.0-rc.21)(workerd@1.20251008.0)':
     dependencies:
@@ -17598,23 +17582,6 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20251008.0
       '@cloudflare/workerd-linux-arm64': 1.20251008.0
       '@cloudflare/workerd-windows-64': 1.20251008.0
-
-  wrangler@4.42.1(@cloudflare/workers-types@4.20251011.0):
-    dependencies:
-      '@cloudflare/kv-asset-handler': 0.4.0
-      '@cloudflare/unenv-preset': 2.7.7(unenv@2.0.0-rc.21)(workerd@1.20251004.0)
-      blake3-wasm: 2.1.5
-      esbuild: 0.25.4
-      miniflare: 4.20251004.0
-      path-to-regexp: 6.3.0
-      unenv: 2.0.0-rc.21
-      workerd: 1.20251004.0
-    optionalDependencies:
-      '@cloudflare/workers-types': 4.20251011.0
-      fsevents: 2.3.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   wrangler@4.42.2(@cloudflare/workers-types@4.20251011.0):
     dependencies:
