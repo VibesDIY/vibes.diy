@@ -3,7 +3,7 @@ import {
   isCustomDomain,
   isFirstPartyApexDomain,
   isFirstPartySubdomain,
-} from "../src/utils/domainUtils";
+} from "@vibes.diy/hosting";
 
 describe("Domain Utils", () => {
   describe("isCustomDomain", () => {

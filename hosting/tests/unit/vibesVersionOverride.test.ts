@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { renderAppInstance } from "../src/utils/appRenderer";
-import { parseSubdomain } from "../src/utils/subdomainParser";
+import { renderAppInstance } from "@vibes.diy/hosting";
+import { parseSubdomain } from "@vibes.diy/hosting";
 
 describe("Vibes Version Override (v_vibes parameter)", () => {
   // Mock app data for testing

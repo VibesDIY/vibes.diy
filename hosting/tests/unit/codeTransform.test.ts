@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { transformImports } from "../src/utils/codeTransform";
+import { transformImports } from "@vibes.diy/hosting";
 
 describe("transformImports function", () => {
   it("should normalize function names to App", () => {

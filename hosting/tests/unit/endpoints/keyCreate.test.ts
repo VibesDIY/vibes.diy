@@ -2,11 +2,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { fromHono } from "chanfana";
-import { KeyCreate } from "../../src/endpoints/keyCreate";
-import * as keyLib from "../../src/endpoints/keyLib";
-import { KeyResult } from "../../src/endpoints/keyLib";
-import { authMiddleware } from "../../src/middleware/auth";
-import { TokenPayload } from "../../src/utils/auth";
+import { KeyCreate } from "@vibes.diy/hosting";
+import * as keyLib from "@vibes.diy/hosting";
+import { KeyResult } from "@vibes.diy/hosting";
+import { authMiddleware } from "@vibes.diy/hosting";
+import { TokenPayload } from "@vibes.diy/hosting";
 
 // Mock the keyLib and authMiddleware modules
 vi.mock("../../src/endpoints/keyLib");

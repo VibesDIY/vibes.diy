@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { AppCreate } from "../src/endpoints/appCreate";
-import { PublishEvent } from "../src/types";
+import { AppCreate } from "@vibes.diy/hosting";
+import { PublishEvent } from "@vibes.diy/hosting";
 
 describe("Queue functionality", () => {
   let mockKV: any;

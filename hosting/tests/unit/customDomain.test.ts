@@ -1,10 +1,7 @@
 import console from "console";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import renderApp from "../src/renderApp";
-import {
-  expectCatalogTitle,
-  expectAppInstance,
-} from "../src/test-utils/catalogAssertions";
+import renderApp from "@vibes.diy/hosting";
+import { expectCatalogTitle, expectAppInstance } from "@vibes.diy/hosting";
 
 // Mock the createKey function to return a successful result
 vi.mock("../src/endpoints/keyLib", () => ({

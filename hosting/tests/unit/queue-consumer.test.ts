@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import queueConsumer from "../src/queue-consumer";
-import { PublishEvent } from "../src/types";
+import queueConsumer from "@vibes.diy/hosting";
+import { PublishEvent } from "@vibes.diy/hosting";
 
 describe("Queue Consumer", () => {
   let originalFetch: typeof global.fetch;

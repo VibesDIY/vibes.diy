@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateVibeSlug } from "../src/utils/slugGenerator";
+import { generateVibeSlug } from "@vibes.diy/hosting";
 
 describe("Vibe Slug Generator", () => {
   it("should generate 30 unique slugs with no repeats", () => {

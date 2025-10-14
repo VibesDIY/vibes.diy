@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { AppCreate } from "../../src/endpoints/appCreate";
+import { AppCreate } from "@vibes.diy/hosting";
 
 describe("AppCreate endpoint", () => {
   let originalFetch: typeof global.fetch;
