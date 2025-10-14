@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { template } from "../src/apptemplate";
+import { template } from "@vibes.diy/hosting";
 
 // These imports will fail initially - that's expected in TDD
-// import { styles } from "../src/template/styles";
-// import { scripts } from "../src/template/scripts";
+// import { styles } from "@vibes.diy/hosting";
+// import { scripts } from "@vibes.diy/hosting";
 
 describe("Template Modularization", () => {
   describe("Template Structure", () => {

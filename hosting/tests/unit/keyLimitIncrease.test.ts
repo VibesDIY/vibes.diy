@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { increaseKeyLimitBy } from "../src/endpoints/keyLib";
+import { increaseKeyLimitBy } from "@vibes.diy/hosting";
 
 describe("increaseKeyLimitBy function", () => {
   let originalFetch: typeof global.fetch;

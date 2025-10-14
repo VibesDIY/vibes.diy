@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import renderApp from "../src/renderApp";
+import renderApp from "@vibes.diy/hosting";
 
 describe("First-Party Domain Preservation", () => {
   // Mock KV storage

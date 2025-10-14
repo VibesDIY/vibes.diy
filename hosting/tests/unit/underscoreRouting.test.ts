@@ -1,13 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { parseSubdomain } from "../src/utils/subdomainParser";
-import {
-  renderAppInstance,
-  renderCatalogTitle,
-} from "../src/utils/appRenderer";
-import {
-  expectBasicCatalogTitle,
-  expectAppInstance,
-} from "../src/test-utils/catalogAssertions";
+import { parseSubdomain } from "@vibes.diy/hosting";
+import { renderAppInstance, renderCatalogTitle } from "@vibes.diy/hosting";
+import { expectBasicCatalogTitle, expectAppInstance } from "@vibes.diy/hosting";
 
 describe("Underscore-Based Routing Integration", () => {
   // Mock app data for testing

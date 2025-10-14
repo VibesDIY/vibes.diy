@@ -5,7 +5,7 @@ import {
   generateInstallId,
   constructSubdomain,
   type ParsedSubdomain,
-} from "../src/utils/subdomainParser";
+} from "@vibes.diy/hosting";
 
 describe("Subdomain Parser", () => {
   describe("parseSubdomain", () => {

@@ -45,3 +45,31 @@ export default {
   fetch: app.fetch,
   queue: queueConsumer.queue,
 };
+
+// Test exports - expose internal modules for testing
+export { AppCreate } from "./endpoints/appCreate";
+export { KeyCreate } from "./endpoints/keyCreate";
+export * as keyLib from "./endpoints/keyLib";
+export { increaseKeyLimitBy, type KeyResult } from "./endpoints/keyLib";
+export { transformImports } from "./utils/codeTransform";
+export { generateVibeSlug } from "./utils/slugGenerator";
+export { parseSubdomain } from "./utils/subdomainParser";
+export { renderAppInstance } from "./utils/appRenderer";
+export {
+  isCustomDomain,
+  isFirstPartyApexDomain,
+  isFirstPartySubdomain,
+  getFirstPartyDomain,
+  FIRST_PARTY_DOMAINS,
+  FIRST_PARTY_APEX_DOMAINS,
+} from "./utils/domainUtils";
+export { authMiddleware } from "./middleware/auth";
+export { type TokenPayload } from "./utils/auth";
+export type { PublishEvent } from "./types";
+export { template } from "./apptemplate";
+export { default as renderApp } from "./renderApp";
+export { default as queueConsumer } from "./queue-consumer";
+export {
+  expectCatalogTitle,
+  expectAppInstance,
+} from "./test-utils/catalogAssertions";

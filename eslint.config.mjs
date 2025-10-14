@@ -46,7 +46,6 @@ const opts = tseslint.config(
       "vibes.diy/**/root.*",
       "**/eslint.config.mjs",
       "**/jest.config.mjs",
-      "hosting/tests/unit/**",
     ],
   },
   {
