@@ -66,7 +66,27 @@ function convertToClaudeFormat(
 }
 
 // Function to convert Claude API response to OpenAI format
-function convertToOpenAIFormat(claudeResponse: ClaudeMessagesResponse): any {
+interface OpenAIResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    index: number;
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }[];
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+function convertToOpenAIFormat(claudeResponse: ClaudeMessagesResponse): OpenAIResponse {
   // Extract text content from Claude response
   const content = claudeResponse.content
     .filter((item) => item.type === "text")
@@ -105,7 +125,16 @@ export async function claudeChat(
     );
 
     // Prepare Claude API request body
-    const requestBody: any = {
+    const requestBody: {
+      model: string;
+      messages: ClaudeMessage[];
+      max_tokens?: number;
+      temperature?: number;
+      top_p?: number;
+      top_k?: number;
+      stream?: boolean;
+      system?: string;
+    } = {
       model: params.model,
       messages: claudeMessages,
       max_tokens: params.max_tokens || 1024,
