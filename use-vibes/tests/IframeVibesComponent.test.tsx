@@ -7,16 +7,9 @@ import {
   cleanupIframeMocks,
 } from './utils/iframe-mocks.js';
 
-// We'll import this once it's implemented
-// For now, create a placeholder that will fail until implementation exists
-const IframeVibesComponent = React.lazy(() =>
-  import('../base/hooks/vibes-gen/IframeVibesComponent.js').catch(() => {
-    // Return a placeholder component that shows we need to implement it
-    return Promise.resolve({
-      default: () => <div data-testid="placeholder">IframeVibesComponent not implemented yet</div>,
-    });
-  })
-);
+// Direct import of the component
+import IframeVibesComponentActual from '../base/hooks/vibes-gen/IframeVibesComponent.js';
+const IframeVibesComponent = IframeVibesComponentActual;
 
 describe('IframeVibesComponent', () => {
   let mockIframe: ReturnType<typeof createMockIframe>;
@@ -32,19 +25,17 @@ describe('IframeVibesComponent', () => {
 
   it('should render iframe with session-based vibesbox URL', async () => {
     const { container } = render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent
-          code="function App() { return <div>Test</div> }"
-          sessionId="test-123"
-          baseUrl="about:blank"
-        />
-      </React.Suspense>
+      <IframeVibesComponent
+        code="function App() { return <div>Test</div> }"
+        sessionId="test-123"
+        baseUrl="about:blank"
+      />
     );
 
-    // Wait for lazy component to load
+    // Wait for component to render
     await waitFor(
       () => {
-        expect(container.querySelector('[data-testid="placeholder"]')).toBeInTheDocument();
+        expect(container.querySelector('[data-testid="placeholder"]')).toBeTruthy();
       },
       { timeout: 1000, interval: 10 }
     );
@@ -60,11 +51,7 @@ describe('IframeVibesComponent', () => {
     const mockPostMessage = vi.fn();
     mockIframe.contentWindow.postMessage = mockPostMessage;
 
-    render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent code={code} baseUrl="about:blank" />
-      </React.Suspense>
-    );
+    render(<IframeVibesComponent code={code} baseUrl="about:blank" />);
 
     // Trigger load event to simulate iframe loading
     act(() => {
@@ -99,11 +86,7 @@ describe('IframeVibesComponent', () => {
     const mockPostMessage = vi.fn();
     mockIframe.contentWindow.postMessage = mockPostMessage;
 
-    render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent code={code} baseUrl="about:blank" />
-      </React.Suspense>
-    );
+    render(<IframeVibesComponent code={code} baseUrl="about:blank" />);
 
     // Wait for component to load and process
     await waitFor(() => {
@@ -147,11 +130,7 @@ describe('IframeVibesComponent', () => {
       const mockPostMessage = vi.fn();
       const _localMockIframe = createMockIframe(mockPostMessage);
 
-      const { unmount } = render(
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <IframeVibesComponent baseUrl="about:blank" code={input} />
-        </React.Suspense>
-      );
+      const { unmount } = render(<IframeVibesComponent baseUrl="about:blank" code={input} />);
 
       // Wait for component to process
       await waitFor(() => {
@@ -174,11 +153,7 @@ describe('IframeVibesComponent', () => {
   it('should update ready state when preview-ready message received', async () => {
     const onReady = vi.fn();
 
-    render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent baseUrl="about:blank" code="..." onReady={onReady} />
-      </React.Suspense>
-    );
+    render(<IframeVibesComponent baseUrl="about:blank" code="..." onReady={onReady} />);
 
     // Wait for component to mount
     await waitFor(() => {
@@ -197,11 +172,7 @@ describe('IframeVibesComponent', () => {
   it('should call onError when error message received', async () => {
     const onError = vi.fn();
 
-    render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent baseUrl="about:blank" code="..." onError={onError} />
-      </React.Suspense>
-    );
+    render(<IframeVibesComponent baseUrl="about:blank" code="..." onError={onError} />);
 
     // Wait for component to mount
     await waitFor(() => {
@@ -229,12 +200,10 @@ describe('IframeVibesComponent', () => {
 
   it('should generate default session ID when not provided', async () => {
     render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent
-          baseUrl="about:blank"
-          code="function App() { return <div>Test</div> }"
-        />
-      </React.Suspense>
+      <IframeVibesComponent
+        baseUrl="about:blank"
+        code="function App() { return <div>Test</div> }"
+      />
     );
 
     // Wait for component to mount
@@ -251,12 +220,10 @@ describe('IframeVibesComponent', () => {
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
     const { unmount } = render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <IframeVibesComponent
-          baseUrl="about:blank"
-          code="function App() { return <div>Test</div> }"
-        />
-      </React.Suspense>
+      <IframeVibesComponent
+        baseUrl="about:blank"
+        code="function App() { return <div>Test</div> }"
+      />
     );
 
     // Wait for component to mount
