@@ -52,7 +52,13 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cloudflare/workers-types": "^4.20251011.0",
-    "hono": "^4.6.6"
+    "chanfana": "^2.8.2",
+    "dotenv": "^16.6.1",
+    "hono": "^4.9.2",
+    "jose": "^6.0.12",
+    "multiformats": "^13.4.0",
+    "unique-names-generator": "^4.7.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",

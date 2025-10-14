@@ -1,0 +1,53 @@
+{
+  "name": "@vibes.diy/hosting-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tests for @vibes.diy/hosting Cloudflare Worker",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VibesDIY/vibes.diy.git"
+  },
+  "homepage": "https://github.com/VibesDIY/vibes.diy",
+  "bugs": {
+    "url": "https://github.com/VibesDIY/vibes.diy/issues"
+  },
+  "scripts": {
+    "test": "vitest --config vite.config.ts run",
+    "test:watch": "vitest --config vite.config.ts",
+    "test:coverage": "vitest --config vite.config.ts run --coverage",
+    "format": "prettier --write \"**/*.{js,ts,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,json,css,md}\"",
+    "lint": "tsc --noEmit --pretty --skipLibCheck",
+    "pack": "echo skip pack",
+    "publish": "echo skip publish"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "tests",
+    "vibes",
+    "hosting"
+  ],
+  "contributors": [
+    "J Chris Anderson"
+  ],
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.5.26",
+    "@cloudflare/workers-types": "^4.20251011.0",
+    "@types/node": "^24.7.2",
+    "hono": "^4.6.6",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9",
+    "vitest": "^3.2.4",
+    "wrangler": "^3.87.0"
+  },
+  "dependencies": {
+    "@vibes.diy/hosting": "workspace:*"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
