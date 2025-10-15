@@ -306,5 +306,5 @@ export default function App() {
   );
 }`,
   hasScreenshot: true,
-  userId: "test-user"
+  userId: "test-user",
 };
