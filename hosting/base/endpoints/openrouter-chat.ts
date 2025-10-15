@@ -206,7 +206,7 @@ export class OpenRouterChat extends OpenAPIRoute {
         const clonedResponse = response.clone();
 
         // Pipe the response body to our writable stream without awaiting
-        clonedResponse.body.pipeTo(writable).catch((err) => {
+        clonedResponse.body?.pipeTo(writable).catch((err) => {
           console.error(`❌ OpenRouter Chat: Pipe error:`, err);
         });
 
@@ -240,10 +240,10 @@ export class OpenRouterChat extends OpenAPIRoute {
       const responseData = await response.json();
 
       return c.json(responseData);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error in OpenRouterChat handler:", error);
       return c.json(
-        { error: error.message || "An error occurred processing your request" },
+        { error: error instanceof Error ? error.message : "An error occurred processing your request" },
         500,
       );
     }

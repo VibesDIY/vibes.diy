@@ -105,14 +105,14 @@ export async function generateImage(
           // Not valid JSON, use the text directly
           errorData = { message: errorText };
         }
-      } catch (parseError) {
+      } catch (parseError: unknown) {
         // If even text() fails, provide a fallback
         console.error(
           `❌ OpenAI Image: Error parsing error response:`,
           parseError,
         );
         errorData = {
-          message: `Failed to parse error response: ${parseError.message}`,
+          message: `Failed to parse error response: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
         };
       }
 
@@ -144,7 +144,7 @@ export async function generateImage(
     const clonedResponse = openaiResponse.clone();
 
     // Pipe the response body to our writable stream without awaiting
-    clonedResponse.body.pipeTo(writable).catch((err) => {
+    clonedResponse.body?.pipeTo(writable).catch((err) => {
       console.error(`❌ OpenAI Image: Pipe error:`, err);
     });
 
@@ -371,7 +371,7 @@ export async function editImage(
       const clonedResponse = openaiResponse.clone();
 
       // Process the response without awaiting
-      clonedResponse.body.pipeTo(writable).catch((err) => {
+      clonedResponse.body?.pipeTo(writable).catch((err) => {
         console.error(`❌ OpenAI Image: Pipe error:`, err);
       });
 
@@ -382,12 +382,12 @@ export async function editImage(
           "Access-Control-Allow-Origin": "*",
         },
       });
-    } catch (streamError) {
+    } catch (streamError: unknown) {
       console.error(
         `❌ OpenAI Image: Error in streaming edited image:`,
         streamError,
       );
-      return new Response(JSON.stringify({ error: streamError.message }), {
+      return new Response(JSON.stringify({ error: streamError instanceof Error ? streamError.message : String(streamError) }), {
         status: 500,
         headers: {
           "Content-Type": "application/json",

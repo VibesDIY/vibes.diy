@@ -60,7 +60,7 @@ export async function chatCompletion(
       const clonedResponse = response.clone();
 
       // Pipe the response body to our writable stream without awaiting
-      clonedResponse.body.pipeTo(writable).catch((err) => {
+      clonedResponse.body?.pipeTo(writable).catch((err) => {
         console.error(`❌ OpenAI Chat: Pipe error:`, err);
       });
 
@@ -103,9 +103,9 @@ export async function chatCompletion(
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`❌ OpenAI Chat: Error in chatCompletion:`, error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
       status: 500,
       headers: {
         "Content-Type": "application/json",
@@ -279,10 +279,10 @@ export class ChatComplete extends OpenAPIRoute {
 
       // Return the response (may be streaming or regular JSON)
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error in ChatComplete handler:", error);
       return c.json(
-        { error: error.message || "An error occurred processing your request" },
+        { error: error instanceof Error ? error.message : "An error occurred processing your request" },
         500,
       );
     }
