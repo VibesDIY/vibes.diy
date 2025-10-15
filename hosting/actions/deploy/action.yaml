@@ -3,9 +3,13 @@ description: Deploy the vibes.diy hosting worker to Cloudflare
 
 inputs:
   environment:
-    description: "Environment to deploy to (dev, production)"
+    description: "Environment to deploy to (dev, production, preview)"
     required: true
     default: "production"
+  worker_name:
+    description: "Name of the worker to deploy to"
+    required: false
+    default: ""
   CLOUDFLARE_API_TOKEN:
     description: "Cloudflare API token for deployment"
     required: true
@@ -60,8 +64,31 @@ runs:
       run: |
         cd hosting/pkg
         echo "🚀 Deploying to ${{ inputs.environment }} environment..."
-        npx wrangler deploy --env ${{ inputs.environment }}
+
+        if [ -n "${{ inputs.worker_name }}" ]; then
+          # Override worker name in wrangler.toml for preview deployments
+          if [ "${{ inputs.environment }}" == "preview" ]; then
+            echo "📝 Creating temporary wrangler config for preview deployment..."
+            cp wrangler.toml wrangler.toml.backup
+            sed "s/name = \"vibes-hosting-v2\"/name = \"${{ inputs.worker_name }}\"/g" wrangler.toml > wrangler.temp.toml
+            mv wrangler.temp.toml wrangler.toml
+            npx wrangler deploy --env production --name "${{ inputs.worker_name }}"
+            mv wrangler.toml.backup wrangler.toml
+          else
+            npx wrangler deploy --env ${{ inputs.environment }} --name "${{ inputs.worker_name }}"
+          fi
+        else
+          npx wrangler deploy --env ${{ inputs.environment }}
+        fi
+
         echo "✅ Worker deployed successfully"
+
+        # Set output for worker URL
+        if [ -n "${{ inputs.worker_name }}" ]; then
+          echo "worker_url=https://${{ inputs.worker_name }}.workers.dev" >> $GITHUB_OUTPUT
+        else
+          echo "worker_url=https://vibes-hosting-v2.workers.dev" >> $GITHUB_OUTPUT
+        fi
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
@@ -123,16 +150,36 @@ runs:
         echo ""
         echo "🎉 Deployment Summary"
         echo "===================="
-        echo "✅ Worker: vibes-hosting-v2 (or vibes-hosting-dev)"
+
+        if [ -n "${{ inputs.worker_name }}" ]; then
+          echo "✅ Worker: ${{ inputs.worker_name }}"
+          echo "🌐 Worker URL: https://${{ inputs.worker_name }}.workers.dev"
+        else
+          echo "✅ Worker: vibes-hosting-v2"
+          echo "🌐 Worker URL: https://vibes-hosting-v2.workers.dev"
+        fi
+
         echo "🔧 Environment: ${{ inputs.environment }}"
-        echo "🌐 Worker URL: https://vibes-hosting-v2.workers.dev"
         echo ""
-        echo "🔄 Next Steps:"
-        echo "1. Test the worker URL above"
-        echo "2. Update domain routes in Cloudflare Dashboard:"
-        echo "   - vibesdiy.work (test first)"
-        echo "   - vibecode.garden"
-        echo "   - vibes-diy-api.com" 
-        echo "   - vibesdiy.app (production last)"
-        echo "3. Monitor error rates and performance"
-        echo "4. Keep old worker as backup for 30 days"
+
+        if [ "${{ inputs.environment }}" == "preview" ]; then
+          echo "🔍 Preview Deployment:"
+          echo "- This is a temporary preview environment"
+          echo "- No custom domains attached"
+          echo "- Will be automatically cleaned up when PR is closed"
+          echo "- Test all functionality at the worker URL above"
+        elif [ "${{ inputs.environment }}" == "production" ]; then
+          echo "🔄 Production Deployment - Next Steps:"
+          echo "1. Test the worker URL above"
+          echo "2. Update domain routes in Cloudflare Dashboard:"
+          echo "   - vibesdiy.work (test first)"
+          echo "   - vibecode.garden"
+          echo "   - vibes-diy-api.com" 
+          echo "   - vibesdiy.app (production last)"
+          echo "3. Monitor error rates and performance"
+          echo "4. Keep old worker as backup for 30 days"
+        else
+          echo "🧪 Development/Manual Deployment:"
+          echo "- Test at the worker URL above"
+          echo "- This deployment is for testing purposes"
+        fi
