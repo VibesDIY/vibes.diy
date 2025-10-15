@@ -63,7 +63,7 @@ describe("AI Endpoints Authentication", () => {
       });
 
       const endpoint = new OpenRouterChat();
-      const response = await endpoint.handle(mockContext as any);
+      await endpoint.handle(mockContext as unknown);
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -106,7 +106,7 @@ describe("AI Endpoints Authentication", () => {
       });
 
       const endpoint = new OpenRouterChat();
-      await endpoint.handle(mockContext as any);
+      await endpoint.handle(mockContext as unknown);
 
       // Should not call json with error response
       expect(mockContext.json).not.toHaveBeenCalledWith(
@@ -147,7 +147,7 @@ describe("AI Endpoints Authentication", () => {
       });
 
       const endpoint = new OpenRouterChat();
-      await endpoint.handle(mockContext as any);
+      await endpoint.handle(mockContext as unknown);
 
       // Should not call json with error response
       expect(mockContext.json).not.toHaveBeenCalledWith(
@@ -171,7 +171,7 @@ describe("AI Endpoints Authentication", () => {
       });
 
       const endpoint = new ClaudeChat();
-      const response = await endpoint.handle(mockContext as any);
+      const _response = await endpoint.handle(mockContext as unknown);
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -206,7 +206,7 @@ describe("AI Endpoints Authentication", () => {
       });
 
       const endpoint = new ClaudeChat();
-      await endpoint.handle(mockContext as any);
+      await endpoint.handle(mockContext as unknown);
 
       // Should not call json with error response
       expect(mockContext.json).not.toHaveBeenCalledWith(
@@ -229,7 +229,7 @@ describe("AI Endpoints Authentication", () => {
       });
 
       const endpoint = new ImageGenerate();
-      const response = await endpoint.handle(mockContext as any);
+      const _response = await endpoint.handle(mockContext as unknown);
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -262,7 +262,7 @@ describe("AI Endpoints Authentication", () => {
       });
 
       const endpoint = new ImageGenerate();
-      await endpoint.handle(mockContext as any);
+      await endpoint.handle(mockContext as unknown);
 
       // Should not call json with error response
       expect(mockContext.json).not.toHaveBeenCalledWith(
@@ -286,7 +286,7 @@ describe("AI Endpoints Authentication", () => {
       vi.mocked(mockContext.req.formData).mockResolvedValue(mockFormData);
 
       const endpoint = new ImageEdit();
-      const response = await endpoint.handle(mockContext as any);
+      const _response = await endpoint.handle(mockContext as unknown);
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -320,7 +320,7 @@ describe("AI Endpoints Authentication", () => {
       });
 
       const endpoint = new ImageEdit();
-      await endpoint.handle(mockContext as any);
+      await endpoint.handle(mockContext as unknown);
 
       // Should not call json with error response
       expect(mockContext.json).not.toHaveBeenCalledWith(
