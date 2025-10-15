@@ -45,6 +45,20 @@ runs:
         echo "🏗️ Running comprehensive hosting CI pipeline..."
         pnpm hosting:check
 
+    - name: Create queue if needed
+      shell: bash
+      run: |
+        cd hosting/pkg
+        echo "📋 Ensuring queue exists..."
+
+        # Create the queue if it doesn't exist (ignore error if it already exists)
+        npx wrangler queues create publish-events-v2 || echo "ℹ️ Queue may already exist"
+
+        echo "✅ Queue setup complete"
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
+
     - name: Deploy to Cloudflare Workers
       shell: bash
       run: |
