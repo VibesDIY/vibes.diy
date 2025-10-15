@@ -59,26 +59,29 @@ export {
   ImageGenerate,
   OpenRouterChat,
 } from "@vibes.diy/hosting-base";
-export { transformImports } from "./utils/codeTransform.js";
-export { generateVibeSlug } from "./utils/slugGenerator.js";
 export {
+  transformImports,
+  generateVibeSlug,
   parseSubdomain,
   constructSubdomain,
   isValidSubdomain,
   generateInstallId,
   type ParsedSubdomain,
-} from "./utils/subdomainParser.js";
-export { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer.js";
-export {
+  renderAppInstance,
+  renderCatalogTitle,
   isCustomDomain,
   isFirstPartyApexDomain,
   isFirstPartySubdomain,
   getFirstPartyDomain,
   FIRST_PARTY_DOMAINS,
   FIRST_PARTY_APEX_DOMAINS,
-} from "./utils/domainUtils.js";
+  type TokenPayload,
+  createKey,
+  increaseKeyLimitBy,
+  updateKey,
+  getKey,
+} from "@vibes.diy/hosting-base";
 export { authMiddleware } from "./middleware/auth.js";
-export { type TokenPayload } from "./utils/auth.js";
 export { PublishEvent } from "./types.js";
 export type { PublishEvent as PublishEventType } from "./types.js";
 export { template } from "./apptemplate.js";
