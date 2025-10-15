@@ -1,12 +1,12 @@
 /**
  * Authentication utilities for handling token-based auth
  */
+import { z } from "zod";
 import {
   verifyToken as baseVerifyToken,
   extendToken as baseExtendToken,
   isTokenAboutToExpire,
   type TokenPayload,
-  type TokenResponse,
 } from "@vibes.diy/utils";
 import { toast } from "react-hot-toast";
 import { systemFetch } from "./systemFetch.js";
@@ -57,6 +57,11 @@ export function initiateAuthFlow({
   return { connectUrl, resultId };
 }
 
+// Zod schema for runtime validation of API responses
+const TokenResponseSchema = z.object({
+  token: z.string().min(1).optional(),
+});
+
 /**
  * Polls the Fireproof Connect API for a token using the resultId.
  * Resolves with the token string when found, or null if timed out.
@@ -85,12 +90,17 @@ export async function pollForAuthToken(
         body: JSON.stringify({ resultId, type: "reqTokenByResultId" }),
       });
       if (!res.ok) throw new Error("Network error");
-      const data = (await res.json()) as TokenResponse;
-      if (data && typeof data.token === "string" && data.token.length > 0) {
+
+      // Parse and validate the response using zod
+      const rawData = await res.json();
+      const parseResult = TokenResponseSchema.safeParse(rawData);
+
+      if (parseResult.success && parseResult.data.token) {
+        const { token } = parseResult.data;
         // Store the token in localStorage for future use
-        localStorage.setItem("auth_token", data.token);
-        toast.success("Logged in successfully!");
-        return data.token;
+        localStorage.setItem("auth_token", token);
+        mock.toast.success("Logged in successfully!");
+        return token;
       }
     } catch (err) {
       console.error("Polling error:", err);
