@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { App, PublishEvent } from "./types";
+import { App, PublishEvent } from "./types.js";
 
 interface AtProtoBlobResponse {
   blob: {

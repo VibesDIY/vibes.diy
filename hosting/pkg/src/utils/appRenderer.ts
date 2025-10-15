@@ -1,14 +1,14 @@
 // App rendering utilities for catalog titles and app instances
 // Handles the different rendering paths based on subdomain parsing
 
-import { template } from "../apptemplate";
+import { template } from "../apptemplate.js";
 import {
   catalogTitleTemplate,
   catalogTitleStyles,
   catalogTitleScript,
-} from "../template/catalogTitle";
-import { libraryImportMap, transformImports } from "./codeTransform";
-import type { ParsedSubdomain } from "./subdomainParser";
+} from "../template/catalogTitle.js";
+import { libraryImportMap, transformImports } from "./codeTransform.js";
+import type { ParsedSubdomain } from "./subdomainParser.js";
 
 // Types for app data structure
 interface AppData {

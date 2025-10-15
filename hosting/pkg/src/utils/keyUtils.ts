@@ -1,5 +1,5 @@
 // TypeScript interfaces for OpenRouter key management utilities
-import { KeyData, KeyResult } from "../endpoints/keyLib";
+import { KeyData, KeyResult } from "../endpoints/keyLib.js";
 
 // Parameters for listing keys
 export interface KeyListParams {

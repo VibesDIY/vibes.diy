@@ -1,4 +1,4 @@
-import importMapData from "../config/library-import-map.json";
+import importMapData from "../config/library-import-map.json" with { type: "json" };
 
 export const libraryImportMap = importMapData.imports;
 

@@ -30,4 +30,8 @@ const PublishEvent = z.object({
   }),
 });
 
+// Type aliases for Zod schemas
+export type AppType = z.infer<typeof App>;
+export type PublishEventType = z.infer<typeof PublishEvent>;
+
 export { App, PublishEvent };

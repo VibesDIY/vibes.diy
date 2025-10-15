@@ -1,13 +1,13 @@
 import { fromHono } from "chanfana";
-import { AppCreate } from "./endpoints/appCreate";
-import { ClaudeChat } from "./endpoints/claude-chat";
-import { ImageEdit, ImageGenerate } from "./endpoints/openai-image";
-import { OpenRouterChat } from "./endpoints/openrouter-chat";
+import { AppCreate } from "./endpoints/appCreate.js";
+import { ClaudeChat } from "./endpoints/claude-chat.js";
+import { ImageEdit, ImageGenerate } from "./endpoints/openai-image.js";
+import { OpenRouterChat } from "./endpoints/openrouter-chat.js";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { authMiddleware } from "./middleware/auth";
-import queueConsumer from "./queue-consumer";
-import renderApp from "./renderApp";
+import { authMiddleware } from "./middleware/auth.js";
+import queueConsumer from "./queue-consumer.js";
+import renderApp from "./renderApp.js";
 
 // Start a Hono app
 const app = new Hono();
@@ -47,19 +47,20 @@ export default {
 };
 
 // Test exports - expose internal modules for testing
-export { AppCreate } from "./endpoints/appCreate";
-export { KeyCreate } from "./endpoints/keyCreate";
-export * as keyLib from "./endpoints/keyLib";
-export { increaseKeyLimitBy, type KeyResult } from "./endpoints/keyLib";
-export { transformImports } from "./utils/codeTransform";
-export { generateVibeSlug } from "./utils/slugGenerator";
+export { AppCreate } from "./endpoints/appCreate.js";
+export { KeyCreate } from "./endpoints/keyCreate.js";
+export * as keyLib from "./endpoints/keyLib.js";
+export { increaseKeyLimitBy, type KeyResult } from "./endpoints/keyLib.js";
+export { transformImports } from "./utils/codeTransform.js";
+export { generateVibeSlug } from "./utils/slugGenerator.js";
 export {
   parseSubdomain,
   constructSubdomain,
   isValidSubdomain,
   generateInstallId,
-} from "./utils/subdomainParser";
-export { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer";
+  type ParsedSubdomain,
+} from "./utils/subdomainParser.js";
+export { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer.js";
 export {
   isCustomDomain,
   isFirstPartyApexDomain,
@@ -67,16 +68,16 @@ export {
   getFirstPartyDomain,
   FIRST_PARTY_DOMAINS,
   FIRST_PARTY_APEX_DOMAINS,
-} from "./utils/domainUtils";
-export { authMiddleware } from "./middleware/auth";
-export { type TokenPayload } from "./utils/auth";
-export { PublishEvent } from "./types";
-export type { PublishEvent as PublishEventType } from "./types";
-export { template } from "./apptemplate";
-export { default as renderApp } from "./renderApp";
-export { default as queueConsumer } from "./queue-consumer";
+} from "./utils/domainUtils.js";
+export { authMiddleware } from "./middleware/auth.js";
+export { type TokenPayload } from "./utils/auth.js";
+export { PublishEvent } from "./types.js";
+export type { PublishEvent as PublishEventType } from "./types.js";
+export { template } from "./apptemplate.js";
+export { default as renderApp } from "./renderApp.js";
+export { default as queueConsumer } from "./queue-consumer.js";
 export {
   expectCatalogTitle,
   expectBasicCatalogTitle,
   expectAppInstance,
-} from "./test-utils/catalogAssertions";
+} from "./test-utils/catalogAssertions.js";

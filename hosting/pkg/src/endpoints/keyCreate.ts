@@ -1,8 +1,8 @@
 import { Bool, OpenAPIRoute } from "chanfana";
 import { Context } from "hono";
 import { z } from "zod";
-import { Variables } from "../middleware/auth";
-import { createKey, increaseKeyLimitBy } from "./keyLib";
+import { Variables } from "../middleware/auth.js";
+import { createKey, increaseKeyLimitBy } from "./keyLib.js";
 
 interface Env {
   SERVER_OPENROUTER_PROV_KEY: string;
