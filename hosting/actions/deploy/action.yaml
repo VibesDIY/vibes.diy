@@ -61,7 +61,7 @@ runs:
             npx wrangler deploy --env production --name "${{ inputs.worker_name }}"
             mv wrangler.toml.backup wrangler.toml
           else
-            npx wrangler deploy --env ${{ inputs.environment }} --name "${{ inputs.worker_name }}"
+            npx wrangler deploy --env ${{ inputs.environment }}
           fi
         else
           npx wrangler deploy --env ${{ inputs.environment }}
