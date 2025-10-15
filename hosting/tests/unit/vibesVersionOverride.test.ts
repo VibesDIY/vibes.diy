@@ -204,7 +204,7 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       );
       expect(importMapMatch).not.toBeNull();
 
-      const importMap = JSON.parse(importMapMatch[1]);
+      const importMap = JSON.parse(importMapMatch![1]);
       expect(importMap).toHaveProperty("imports");
       expect(importMap.imports).toHaveProperty(
         "use-vibes",
@@ -235,7 +235,7 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       );
       expect(importMapMatch).not.toBeNull();
 
-      const importMap = JSON.parse(importMapMatch[1]);
+      const importMap = JSON.parse(importMapMatch![1]);
 
       // React versions should remain unchanged
       expect(importMap.imports.react).toContain("react@~19.1.1");

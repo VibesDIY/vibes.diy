@@ -11,7 +11,7 @@ import { Hono } from "hono";
 import { fromHono } from "chanfana";
 
 // Mock the entire keyLib module first
-vi.mock("../../../pkg/src/endpoints/keyLib", () => ({
+vi.mock("../../../pkg/src/endpoints/keyLib.js", () => ({
   createKey: vi.fn(),
   increaseKeyLimitBy: vi.fn(),
 }));
@@ -20,7 +20,7 @@ import { KeyCreate } from "@vibes.diy/hosting";
 import {
   createKey,
   increaseKeyLimitBy,
-} from "../../../pkg/src/endpoints/keyLib";
+} from "../../../pkg/src/endpoints/keyLib.js";
 
 interface TokenPayload {
   userId: string;
