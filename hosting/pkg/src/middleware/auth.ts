@@ -1,5 +1,5 @@
 import { createMiddleware } from "hono/factory";
-import { TokenPayload, verifyToken } from "../utils/auth";
+import { TokenPayload, verifyToken } from "@vibes.diy/utils";
 
 interface Env {
   CLOUD_SESSION_TOKEN_PUBLIC_KEY: string;

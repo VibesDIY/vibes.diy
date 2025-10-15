@@ -171,6 +171,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20251011.0
         version: 4.20251011.0
+      '@vibes.diy/utils':
+        specifier: workspace:*
+        version: link:../../utils/pkg
       chanfana:
         specifier: ^2.8.2
         version: 2.8.3
