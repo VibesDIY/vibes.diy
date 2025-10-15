@@ -23,8 +23,8 @@ inputs:
     description: "OpenAI API key for image generation and chat"
     required: true
   ANTHROPIC_API_KEY:
-    description: "Anthropic API key for Claude chat"
-    required: true
+    description: "Anthropic API key for Claude chat (optional)"
+    required: false
   DISCORD_WEBHOOK_URL:
     description: "Discord webhook URL for notifications (optional)"
     required: false
@@ -89,9 +89,16 @@ runs:
         # Required AI API keys
         echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY --env ${{ inputs.environment }}
         echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY --env ${{ inputs.environment }}
-        echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY --env ${{ inputs.environment }}
 
         echo "✅ Required secrets configured"
+
+        # Optional Anthropic key
+        if [ -n "${{ inputs.ANTHROPIC_API_KEY }}" ]; then
+          echo "🔐 Setting Anthropic API key..."
+          echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY --env ${{ inputs.environment }}
+        else
+          echo "ℹ️  Anthropic API key not provided (optional - Claude endpoints will be disabled)"
+        fi
 
         # Optional secrets
         if [ -n "${{ inputs.DISCORD_WEBHOOK_URL }}" ]; then
