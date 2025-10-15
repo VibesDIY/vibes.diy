@@ -6,6 +6,7 @@ import {
   extendToken as baseExtendToken,
   isTokenAboutToExpire,
   type TokenPayload,
+  type TokenResponse,
 } from "@vibes.diy/utils";
 import { toast } from "react-hot-toast";
 import { systemFetch } from "./systemFetch.js";
@@ -84,7 +85,7 @@ export async function pollForAuthToken(
         body: JSON.stringify({ resultId, type: "reqTokenByResultId" }),
       });
       if (!res.ok) throw new Error("Network error");
-      const data = (await res.json()) as { token?: string };
+      const data = (await res.json()) as TokenResponse;
       if (data && typeof data.token === "string" && data.token.length > 0) {
         // Store the token in localStorage for future use
         localStorage.setItem("auth_token", data.token);

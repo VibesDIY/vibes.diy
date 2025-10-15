@@ -7,4 +7,5 @@ export {
   hasTenantRole,
   hasLedgerAccess,
   type TokenPayload,
+  type TokenResponse,
 } from "./auth.js";
