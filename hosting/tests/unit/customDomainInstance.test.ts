@@ -3,7 +3,7 @@ import renderApp from "@vibes.diy/hosting";
 
 describe("Custom Domain Instance Behavior", () => {
   // Mock KV storage
-  const kvStore = new Map<string, string>();
+  const kvStore = new Map<string, string | ArrayBuffer>();
 
   // Mock environment
   const mockEnv = {
@@ -11,13 +11,12 @@ describe("Custom Domain Instance Behavior", () => {
       get: async (key: string, type?: string) => {
         const value = kvStore.get(key);
         if (!value) return null;
-        if (type === "arrayBuffer") {
-          // Return a simple buffer for screenshot tests
-          return new ArrayBuffer(100);
+        if (type === "arrayBuffer" && value instanceof ArrayBuffer) {
+          return value;
         }
-        return value;
+        return typeof value === "string" ? value : null;
       },
-      put: async (key: string, value: string) => {
+      put: async (key: string, value: string | ArrayBuffer) => {
         kvStore.set(key, value);
       },
       delete: async (key: string) => {
