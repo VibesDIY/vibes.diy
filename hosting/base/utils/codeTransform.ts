@@ -1,4 +1,12 @@
-import importMapData from "../config/library-import-map.json" with { type: "json" };
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const importMapData = JSON.parse(
+  readFileSync(join(__dirname, "../config/library-import-map.json"), "utf8"),
+);
 
 export const libraryImportMap = importMapData.imports;
 

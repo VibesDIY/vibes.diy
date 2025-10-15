@@ -5,8 +5,8 @@
   "description": "Core endpoints and utilities for hosting (internal workspace package)",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "import": "./index.js"
+      "types": "./index.ts",
+      "import": "./index.ts"
     }
   },
   "scripts": {
