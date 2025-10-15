@@ -1,0 +1,55 @@
+name: Cleanup Preview Workers
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "hosting/**/*"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event.pull_request.state == 'closed'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup base environment
+        uses: ./actions/base
+
+      - name: Delete preview worker
+        run: |
+          cd hosting/pkg
+
+          WORKER_NAME="vibes-hosting-pr-${{ github.event.pull_request.number }}"
+          echo "🧹 Cleaning up preview worker: $WORKER_NAME"
+
+          # Attempt to delete the worker
+          if npx wrangler delete --name "$WORKER_NAME" --force; then
+            echo "✅ Preview worker $WORKER_NAME deleted successfully"
+          else
+            echo "⚠️  Preview worker $WORKER_NAME may not exist or already deleted"
+          fi
+
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Comment on PR about cleanup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workerName = `vibes-hosting-pr-${{ github.event.pull_request.number }}`;
+            const body = `## 🧹 Preview Environment Cleaned Up
+
+            The preview worker \`${workerName}\` has been automatically deleted since this PR is now closed.
+
+            ${github.event.pull_request.merged ? '🎉 Thank you for your contribution!' : '📝 Feel free to reopen if needed.'}`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
