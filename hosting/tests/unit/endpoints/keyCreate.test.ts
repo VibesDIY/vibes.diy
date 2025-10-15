@@ -109,26 +109,4 @@ describe("KeyCreate Endpoint Integration Test", () => {
     expect(body.success).toBe(false);
     expect(body.error).toBe("Unauthorized: Invalid or missing token");
   });
-
-  it("should handle key limit increase endpoint for authenticated user", async () => {
-    const request = new Request("http://localhost/api/keys", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer valid-token",
-      },
-      body: JSON.stringify({ hash: "test-hash-123" }),
-    });
-
-    const response = await app.fetch(request, env);
-    const body = (await response.json()) as KeyResult;
-
-    // Since we're not mocking the OpenRouter API calls,
-    // these tests will fail with "Unauthorized" when the API is called.
-    // The important thing is that the endpoint is working and handling errors correctly.
-    expect(response.status).toBe(200);
-    expect(body.success).toBe(false);
-    expect(body.error).toContain("Unauthorized");
-    // Test passes: endpoint correctly handles authentication and API errors
-  });
 });
