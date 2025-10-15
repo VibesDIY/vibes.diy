@@ -22,33 +22,6 @@
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
    */
   "placement": { "mode": "smart" },
-  /**
-   * Routes
-   * Define routes to match incoming requests to your Worker
-   * https://developers.cloudflare.com/workers/wrangler/configuration/#routes
-   */
-  "routes": [
-    {
-      "pattern": "*vibecode.garden/*",
-      "zone_name": "vibecode.garden",
-    },
-    {
-      "pattern": "*vibesdiy.app/*",
-      "zone_name": "vibesdiy.app",
-    },
-    {
-      "pattern": "*vibesdiy.work/*",
-      "zone_name": "vibesdiy.work",
-    },
-    {
-      "pattern": "vibes-diy-api.com/*",
-      "zone_name": "vibes-diy-api.com",
-    },
-    {
-      "pattern": "*/*",
-      "zone_name": "vibesdiy.app",
-    },
-  ],
 
   /**
    * Queue Configuration
