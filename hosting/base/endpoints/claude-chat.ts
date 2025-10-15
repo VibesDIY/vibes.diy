@@ -1,4 +1,5 @@
 import { OpenAPIRoute } from "chanfana";
+import { Context } from "hono";
 import { z } from "zod";
 
 // TypeScript interfaces for Claude API requests
@@ -453,7 +454,7 @@ export class ClaudeChat extends OpenAPIRoute {
     },
   };
 
-  async handle(c: { req: { json: () => Promise<any> } }) {
+  async handle(c: Context) {
     try {
       // Get request data from JSON body
       const data = await c.req.json();

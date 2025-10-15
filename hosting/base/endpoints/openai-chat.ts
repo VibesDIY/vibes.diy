@@ -1,4 +1,5 @@
 import { OpenAPIRoute } from "chanfana";
+import { Context } from "hono";
 import { z } from "zod";
 
 // TypeScript interfaces for OpenAI Chat API requests
@@ -234,7 +235,7 @@ export class ChatComplete extends OpenAPIRoute {
     },
   };
 
-  async handle(c) {
+  async handle(c: Context) {
     try {
       // Get validated request data from JSON body
       const data = await c.req.json();
