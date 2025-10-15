@@ -1,0 +1,31 @@
+{
+  "name": "@vibes.diy/hosting-base",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Core endpoints and utilities for hosting (internal workspace package)",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "scripts": {
+    "build": "core-cli tsc",
+    "pack": "core-cli build -x '^' --doPack",
+    "publish": "core-cli build -x '^'"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@vibes.diy/prompts": "workspace:*",
+    "@vibes.diy/utils": "workspace:*",
+    "call-ai": "workspace:*",
+    "hono": "^4.6.6",
+    "chanfana": "^2.1.4",
+    "zod": "^4.1.12",
+    "unique-names-generator": "^4.7.1"
+  },
+  "devDependencies": {
+    "@fireproof/core-cli": "^0.23.14",
+    "typescript": "^5.9.3"
+  }
+}

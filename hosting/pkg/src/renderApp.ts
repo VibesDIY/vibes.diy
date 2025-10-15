@@ -1,11 +1,13 @@
 import { Hono, Context } from "hono";
-import { parseSubdomain, isValidSubdomain } from "./utils/subdomainParser.js";
-import { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer.js";
-import {
+import { 
+  parseSubdomain, 
+  isValidSubdomain,
+  renderAppInstance, 
+  renderCatalogTitle,
   isCustomDomain,
   isFirstPartyApexDomain,
   getFirstPartyDomain,
-} from "./utils/domainUtils.js";
+} from "@vibes.diy/hosting-base";
 import testAppData from "../test-app-data.json" with { type: "json" };
 // We'll use a different approach for serving the favicons
 

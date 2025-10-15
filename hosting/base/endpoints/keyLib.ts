@@ -163,7 +163,7 @@ export async function createKey(params: {
       success: true,
       key: keyData,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error in createKey:`, error);
     return {
       success: false,
@@ -270,7 +270,7 @@ export async function updateKey(params: KeyUpdateParams): Promise<KeyResult> {
       success: true,
       key: keyData,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error in updateKey:`, error);
     return {
       success: false,
@@ -344,7 +344,7 @@ export async function getKey(params: KeyGetParams): Promise<KeyResult> {
     });
 
     return { success: true, key: keyData };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error in getKey:`, error);
     return { success: false, error: error.message };
   }
@@ -425,7 +425,7 @@ export async function increaseKeyLimitBy(params: {
 
     // Apply new limit using updateKey
     return await updateKey({ hash, limit: newLimit, provisioningKey });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error in increaseKeyLimitBy:`, error);
     return { success: false, error: error.message };
   }

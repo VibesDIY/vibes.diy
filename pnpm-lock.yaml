@@ -166,11 +166,45 @@ importers:
         specifier: ^8.8.4
         version: 8.8.4
 
+  hosting/base:
+    dependencies:
+      '@vibes.diy/prompts':
+        specifier: workspace:*
+        version: link:../../prompts/pkg
+      '@vibes.diy/utils':
+        specifier: workspace:*
+        version: link:../../utils/pkg
+      call-ai:
+        specifier: workspace:*
+        version: link:../../call-ai/pkg
+      chanfana:
+        specifier: ^2.1.4
+        version: 2.8.3
+      hono:
+        specifier: ^4.6.6
+        version: 4.9.12
+      unique-names-generator:
+        specifier: ^4.7.1
+        version: 4.7.1
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
+    devDependencies:
+      '@fireproof/core-cli':
+        specifier: ^0.23.14
+        version: 0.23.14(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   hosting/pkg:
     dependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20251011.0
         version: 4.20251011.0
+      '@vibes.diy/hosting-base':
+        specifier: workspace:*
+        version: link:../base
       '@vibes.diy/utils':
         specifier: workspace:*
         version: link:../../utils/pkg
@@ -13983,8 +14017,8 @@ snapshots:
       '@babel/parser': 7.28.4
       eslint: 9.37.0(jiti@2.6.1)
       hermes-parser: 0.25.1
-      zod: 3.25.76
-      zod-validation-error: 4.0.2(zod@3.25.76)
+      zod: 4.1.12
+      zod-validation-error: 4.0.2(zod@4.1.12)
     transitivePeerDependencies:
       - supports-color
 
@@ -18951,9 +18985,9 @@ snapshots:
       compress-commons: 6.0.2
       readable-stream: 4.7.0
 
-  zod-validation-error@4.0.2(zod@3.25.76):
+  zod-validation-error@4.0.2(zod@4.1.12):
     dependencies:
-      zod: 3.25.76
+      zod: 4.1.12
 
   zod@3.22.3: {}
 
