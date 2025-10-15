@@ -10,6 +10,15 @@ import {
 } from 'use-fireproof';
 import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
 
+// Interface for share API response
+interface ShareApiResponse {
+  success: boolean;
+  email: string;
+  role: string;
+  right: string;
+  message?: string;
+}
+
 // Track sync status by database name and instance ID
 const syncEnabledInstances = new Map<string, Set<string>>();
 
@@ -226,7 +235,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         );
       }
 
-      const shareData = await response.json();
+      const shareData = (await response.json()) as ShareApiResponse;
 
       // Return share result
       return {

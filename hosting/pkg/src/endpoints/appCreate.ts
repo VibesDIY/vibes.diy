@@ -2,9 +2,14 @@ import { Bool, OpenAPIRoute } from "chanfana";
 
 import { Context } from "hono";
 import { z } from "zod";
-import { Variables } from "../middleware/auth";
-import { App, PublishEvent } from "../types";
-import { generateVibeSlug } from "../utils/slugGenerator";
+import { Variables } from "../middleware/auth.js";
+import {
+  App,
+  PublishEvent,
+  type AppType,
+  type PublishEventType,
+} from "../types.js";
+import { generateVibeSlug } from "../utils/slugGenerator.js";
 
 /**
  * Process and save a screenshot from base64 data
@@ -16,7 +21,7 @@ import { generateVibeSlug } from "../utils/slugGenerator";
  */
 async function processScreenshot(
   kv: KVNamespace,
-  _appData: App,
+  _appData: AppType,
   base64Screenshot: string,
   keyIdentifier: string,
 ) {

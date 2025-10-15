@@ -2,9 +2,9 @@
 // This template contains placeholders that get replaced during app generation:
 // {{API_KEY}}, {{APP_CODE}}, {{APP_SLUG}}, {{REMIX_BUTTON}}, {{IMPORT_MAP}}
 
-import { styles } from "./template/styles";
-import { scripts } from "./template/scripts";
-import { htmlBody, vibeControlScript } from "./template/html";
+import { styles } from "./template/styles.js";
+import { scripts } from "./template/scripts.js";
+import { htmlBody, vibeControlScript } from "./template/html.js";
 
 export const template = `<!DOCTYPE html>
 <html>

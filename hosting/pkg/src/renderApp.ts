@@ -1,12 +1,12 @@
 import { Hono, Context } from "hono";
-import { parseSubdomain, isValidSubdomain } from "./utils/subdomainParser";
-import { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer";
+import { parseSubdomain, isValidSubdomain } from "./utils/subdomainParser.js";
+import { renderAppInstance, renderCatalogTitle } from "./utils/appRenderer.js";
 import {
   isCustomDomain,
   isFirstPartyApexDomain,
   getFirstPartyDomain,
-} from "./utils/domainUtils";
-import testAppData from "../test-app-data.json";
+} from "./utils/domainUtils.js";
+import testAppData from "../test-app-data.json" with { type: "json" };
 // We'll use a different approach for serving the favicons
 
 interface Bindings {
