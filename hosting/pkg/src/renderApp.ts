@@ -8,15 +8,7 @@ import {
   isFirstPartyApexDomain,
   getFirstPartyDomain,
 } from "@vibes.diy/hosting-base";
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const testAppData = JSON.parse(
-  readFileSync(join(__dirname, "../test-app-data.json"), "utf8"),
-);
+import { testAppData } from "../test-app-data.js";
 // We'll use a different approach for serving the favicons
 
 // Helper function to adapt Hono context to RenderContext interface
