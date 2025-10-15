@@ -3,29 +3,29 @@ description: Deploy the vibes.diy hosting worker to Cloudflare
 
 inputs:
   environment:
-    description: 'Environment to deploy to (dev, production)'
+    description: "Environment to deploy to (dev, production)"
     required: true
-    default: 'production'
+    default: "production"
   CLOUDFLARE_API_TOKEN:
-    description: 'Cloudflare API token for deployment'
+    description: "Cloudflare API token for deployment"
     required: true
   CLOUDFLARE_ACCOUNT_ID:
-    description: 'Cloudflare account ID'
+    description: "Cloudflare account ID"
     required: true
   SERVER_OPENROUTER_PROV_KEY:
-    description: 'OpenRouter API key for AI services'
+    description: "OpenRouter API key for AI services"
     required: true
   OPENAI_API_KEY:
-    description: 'OpenAI API key for image generation and chat'
+    description: "OpenAI API key for image generation and chat"
     required: true
   ANTHROPIC_API_KEY:
-    description: 'Anthropic API key for Claude chat'
+    description: "Anthropic API key for Claude chat"
     required: true
   DISCORD_WEBHOOK_URL:
-    description: 'Discord webhook URL for notifications (optional)'
+    description: "Discord webhook URL for notifications (optional)"
     required: false
   BLUESKY_APP_PASSWORD:
-    description: 'Bluesky app password for social posting (optional)'
+    description: "Bluesky app password for social posting (optional)"
     required: false
 
 runs:
@@ -49,10 +49,10 @@ runs:
         cd hosting/pkg
         echo "🔍 Running format check..."
         pnpm format:check
-        
+
         echo "🔍 Running TypeScript lint..."
         pnpm lint
-        
+
         echo "✅ Quality checks passed"
 
     - name: Deploy to Cloudflare Workers
@@ -70,16 +70,16 @@ runs:
       shell: bash
       run: |
         cd hosting/pkg
-        
+
         echo "🔐 Setting required API secrets..."
-        
+
         # Required AI API keys
         echo "${{ inputs.SERVER_OPENROUTER_PROV_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_PROV_KEY --env ${{ inputs.environment }}
         echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY --env ${{ inputs.environment }}
         echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY --env ${{ inputs.environment }}
-        
+
         echo "✅ Required secrets configured"
-        
+
         # Optional secrets
         if [ -n "${{ inputs.DISCORD_WEBHOOK_URL }}" ]; then
           echo "🔐 Setting Discord webhook..."
@@ -87,14 +87,14 @@ runs:
         else
           echo "ℹ️  Discord webhook not provided (optional)"
         fi
-        
+
         if [ -n "${{ inputs.BLUESKY_APP_PASSWORD }}" ]; then
           echo "🔐 Setting Bluesky credentials..."
           echo "${{ inputs.BLUESKY_APP_PASSWORD }}" | npx wrangler secret put BLUESKY_APP_PASSWORD --env ${{ inputs.environment }}
         else
           echo "ℹ️  Bluesky password not provided (optional)"
         fi
-        
+
         echo "✅ All secrets configured"
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
@@ -104,14 +104,14 @@ runs:
       shell: bash
       run: |
         cd hosting/pkg
-        
+
         echo "📦 Uploading static assets to KV store..."
-        
+
         # Upload favicon and babel assets
         pnpm kv:put-svg:remote || echo "⚠️  SVG upload failed, continuing..."
         pnpm kv:put-ico:remote || echo "⚠️  ICO upload failed, continuing..."
         pnpm kv:put-babel:remote || echo "⚠️  Babel upload failed, continuing..."
-        
+
         echo "✅ Asset upload completed"
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
