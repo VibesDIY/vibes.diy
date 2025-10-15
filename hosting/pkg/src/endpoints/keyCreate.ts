@@ -2,7 +2,7 @@ import { Bool, OpenAPIRoute } from "chanfana";
 import { Context } from "hono";
 import { z } from "zod";
 import { Variables } from "../middleware/auth.js";
-import { createKey, increaseKeyLimitBy } from "./keyLib.js";
+import { createKey, increaseKeyLimitBy } from "@vibes.diy/hosting-base";
 
 interface Env {
   SERVER_OPENROUTER_PROV_KEY: string;
