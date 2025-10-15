@@ -3,9 +3,11 @@ import {
   parseSubdomain,
   renderAppInstance,
   renderCatalogTitle,
+} from "@vibes.diy/hosting";
+import {
   expectBasicCatalogTitle,
   expectAppInstance,
-} from "@vibes.diy/hosting";
+} from "@vibes.diy/hosting/test-utils";
 
 describe("Underscore-Based Routing Integration", () => {
   // Mock app data for testing
