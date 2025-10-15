@@ -1,0 +1,138 @@
+name: Deploy Hosting Worker
+description: Deploy the vibes.diy hosting worker to Cloudflare
+
+inputs:
+  environment:
+    description: 'Environment to deploy to (dev, production)'
+    required: true
+    default: 'production'
+  CLOUDFLARE_API_TOKEN:
+    description: 'Cloudflare API token for deployment'
+    required: true
+  CLOUDFLARE_ACCOUNT_ID:
+    description: 'Cloudflare account ID'
+    required: true
+  SERVER_OPENROUTER_PROV_KEY:
+    description: 'OpenRouter API key for AI services'
+    required: true
+  OPENAI_API_KEY:
+    description: 'OpenAI API key for image generation and chat'
+    required: true
+  ANTHROPIC_API_KEY:
+    description: 'Anthropic API key for Claude chat'
+    required: true
+  DISCORD_WEBHOOK_URL:
+    description: 'Discord webhook URL for notifications (optional)'
+    required: false
+  BLUESKY_APP_PASSWORD:
+    description: 'Bluesky app password for social posting (optional)'
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Install hosting dependencies
+      shell: bash
+      run: |
+        cd hosting/pkg
+        pnpm install
+
+    - name: Build hosting-base dependency
+      shell: bash
+      run: |
+        echo "🏗️ Building hosting-base dependency..."
+        pnpm --filter @vibes.diy/hosting-base build
+
+    - name: Run quality checks
+      shell: bash
+      run: |
+        cd hosting/pkg
+        echo "🔍 Running format check..."
+        pnpm format:check
+        
+        echo "🔍 Running TypeScript lint..."
+        pnpm lint
+        
+        echo "✅ Quality checks passed"
+
+    - name: Deploy to Cloudflare Workers
+      shell: bash
+      run: |
+        cd hosting/pkg
+        echo "🚀 Deploying to ${{ inputs.environment }} environment..."
+        npx wrangler deploy --env ${{ inputs.environment }}
+        echo "✅ Worker deployed successfully"
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
+
+    - name: Configure worker secrets
+      shell: bash
+      run: |
+        cd hosting/pkg
+        
+        echo "🔐 Setting required API secrets..."
+        
+        # Required AI API keys
+        echo "${{ inputs.SERVER_OPENROUTER_PROV_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_PROV_KEY --env ${{ inputs.environment }}
+        echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY --env ${{ inputs.environment }}
+        echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY --env ${{ inputs.environment }}
+        
+        echo "✅ Required secrets configured"
+        
+        # Optional secrets
+        if [ -n "${{ inputs.DISCORD_WEBHOOK_URL }}" ]; then
+          echo "🔐 Setting Discord webhook..."
+          echo "${{ inputs.DISCORD_WEBHOOK_URL }}" | npx wrangler secret put DISCORD_WEBHOOK_URL --env ${{ inputs.environment }}
+        else
+          echo "ℹ️  Discord webhook not provided (optional)"
+        fi
+        
+        if [ -n "${{ inputs.BLUESKY_APP_PASSWORD }}" ]; then
+          echo "🔐 Setting Bluesky credentials..."
+          echo "${{ inputs.BLUESKY_APP_PASSWORD }}" | npx wrangler secret put BLUESKY_APP_PASSWORD --env ${{ inputs.environment }}
+        else
+          echo "ℹ️  Bluesky password not provided (optional)"
+        fi
+        
+        echo "✅ All secrets configured"
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
+
+    - name: Upload KV assets
+      shell: bash
+      run: |
+        cd hosting/pkg
+        
+        echo "📦 Uploading static assets to KV store..."
+        
+        # Upload favicon and babel assets
+        pnpm kv:put-svg:remote || echo "⚠️  SVG upload failed, continuing..."
+        pnpm kv:put-ico:remote || echo "⚠️  ICO upload failed, continuing..."
+        pnpm kv:put-babel:remote || echo "⚠️  Babel upload failed, continuing..."
+        
+        echo "✅ Asset upload completed"
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
+
+    - name: Deployment summary
+      shell: bash
+      run: |
+        echo ""
+        echo "🎉 Deployment Summary"
+        echo "===================="
+        echo "✅ Worker: vibes-hosting-v2 (or vibes-hosting-dev)"
+        echo "🔧 Environment: ${{ inputs.environment }}"
+        echo "🌐 Worker URL: https://vibes-hosting-v2.workers.dev"
+        echo ""
+        echo "🔄 Next Steps:"
+        echo "1. Test the worker URL above"
+        echo "2. Update domain routes in Cloudflare Dashboard:"
+        echo "   - vibesdiy.work (test first)"
+        echo "   - vibecode.garden"
+        echo "   - vibes-diy-api.com" 
+        echo "   - vibesdiy.app (production last)"
+        echo "3. Monitor error rates and performance"
+        echo "4. Keep old worker as backup for 30 days"
