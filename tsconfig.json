@@ -39,6 +39,7 @@
     "**/examples/**",
     "**/.react-router/**",
     "**/.netlify/**",
-    "**/tests-new/**"
+    "**/tests-new/**",
+    "hosting/tests/unit/**"
   ]
 }
