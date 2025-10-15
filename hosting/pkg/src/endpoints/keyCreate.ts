@@ -107,9 +107,10 @@ export class KeyCreate extends OpenAPIRoute {
       );
 
       // Call the core function to create a key
+      // name is guaranteed to be present when creating a new key (validated by schema)
       const result = await createKey({
         userId: resolvedUserId,
-        name: keyRequest.name,
+        name: keyRequest.name || "Default Key",
         label: keyRequest.label,
         provisioningKey, // Pass the key from context
       });

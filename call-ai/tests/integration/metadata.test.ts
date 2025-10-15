@@ -15,12 +15,19 @@ const mockResponse = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: vi.fn<() => Promise<any>>(),
   text: vi.fn(),
+  arrayBuffer: vi.fn(),
+  blob: vi.fn(),
+  bytes: vi.fn(),
+  formData: vi.fn(),
   body: {
     getReader: vi.fn().mockReturnValue(mockReader),
   },
   ok: true,
   status: 200,
   statusText: "OK",
+  redirected: false,
+  type: "basic" as ResponseType,
+  url: "https://test.example.com",
   headers: {
     get: vi.fn((name) => {
       if (name === "content-type") return "application/json";
@@ -29,7 +36,7 @@ const mockResponse = {
     forEach: vi.fn(),
   },
   clone: vi.fn(function (this: typeof mockResponse): Response {
-    return { ...this };
+    return { ...this } as unknown as Response;
   }),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as unknown as Response & { json: Mock<() => Promise<any>> };

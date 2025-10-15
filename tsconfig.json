@@ -29,7 +29,7 @@
     "vibes.diy/**/*",
     "prompts/**/*",
     "utils/**/*",
-    "hosting/base/**/*"
+    "hosting/**/*"
   ],
   "exclude": [
     "vibes.diy/**/root.*",

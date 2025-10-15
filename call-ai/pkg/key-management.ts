@@ -2,7 +2,7 @@
  * Key management functionality for call-ai
  */
 
-import { CallAIErrorParams, Falsy, Mocks } from "./types.js";
+import { CallAIErrorParams, Falsy, Mocks, KeyRefreshResponse } from "./types.js";
 import { callAiFetch, entriesHeaders } from "./utils.js";
 import { callAiEnv, type CallAIEnv } from "./env.js";
 
@@ -250,7 +250,7 @@ async function refreshApiKey(
     }
 
     // Parse the response
-    const data = await response.json();
+    const data = (await response.json()) as KeyRefreshResponse;
 
     // Log the complete response structure for debugging
     if (debug) {
@@ -279,8 +279,10 @@ async function refreshApiKey(
 
     // Store metadata for potential future use (like top-up)
     if (data.metadata || (data.key && typeof data.key === "object" && data.key.metadata)) {
-      const metadata = data.metadata || data.key.metadata;
-      storeKeyMetadata(metadata);
+      const metadata = data.metadata || (typeof data.key === "object" ? data.key.metadata : undefined);
+      if (metadata) {
+        storeKeyMetadata(metadata as KeyMetadata);
+      }
     }
 
     // Update the key store with the string value
@@ -289,7 +291,7 @@ async function refreshApiKey(
     // Determine if this was a top-up (using existing key) or new key
     // For the new API response format, hash is in data.key.hash
     const hashValue = data.hash || (data.key && typeof data.key === "object" && data.key.hash);
-    const isTopup = currentKey && hashValue && hashValue === getHashFromKey(currentKey);
+    const isTopup = Boolean(currentKey && hashValue && hashValue === getHashFromKey(currentKey));
 
     // Reset refreshing flag
     keyStore().isRefreshing = false;

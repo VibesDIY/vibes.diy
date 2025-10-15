@@ -1,7 +1,17 @@
 /**
  * Core API implementation for call-ai
  */
-import { CallAIError, CallAIOptions, Message, ResponseMeta, SchemaStrategy, StreamResponse } from "./types.js";
+import {
+  CallAIError,
+  CallAIOptions,
+  Message,
+  ResponseMeta,
+  SchemaStrategy,
+  StreamResponse,
+  APIResponse,
+  ModelId,
+  AIResult,
+} from "./types.js";
 import { chooseSchemaStrategy } from "./strategies/index.js";
 import { responseMetadata, boxString, getMeta } from "./response-metadata.js";
 import { keyStore, globalDebug } from "./key-management.js";
@@ -514,17 +524,18 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
       throw error;
     }
 
-    let result;
+    let result: APIResponse;
 
     // For Claude, use text() instead of json() to avoid potential hanging
     if (/claude/i.test(model)) {
       try {
-        result = await extractClaudeResponse(response);
+        result = (await extractClaudeResponse(response)) as APIResponse;
       } catch (error) {
         handleApiError(error, "Claude API response processing failed", options.debug);
+        throw error;
       }
     } else {
-      result = await response.json();
+      result = (await response.json()) as APIResponse;
     }
 
     // Debug logging for raw API response
@@ -538,12 +549,8 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
         console.error("API returned an error:", result.error);
       }
       // If it's a model error and not already a retry, try with fallback
-      if (
-        !isRetry &&
-        !options.skipRetry &&
-        result.error.message &&
-        result.error.message.toLowerCase().includes("not a valid model")
-      ) {
+      const errorMessage = typeof result.error === "string" ? result.error : result.error.message;
+      if (!isRetry && !options.skipRetry && errorMessage && errorMessage.toLowerCase().includes("not a valid model")) {
         if (options.debug) {
           console.warn(`Model ${model} error, retrying with ${FALLBACK_MODEL}`);
         }
@@ -551,17 +558,17 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
       }
       return JSON.stringify({
         error: result.error,
-        message: result.error.message || "API returned an error",
+        message: errorMessage || "API returned an error",
       });
     }
 
     // Extract content from the response
-    const content = extractContent(result, schemaStrategy);
+    const content = extractContent(result as AIResult, schemaStrategy);
 
     // Store the raw response data for user access
     if (result) {
       // Store the parsed JSON result from the API call
-      meta.rawResponse = result;
+      meta.rawResponse = result as string | ModelId;
     }
 
     // Update model info
