@@ -11,7 +11,7 @@ export default defineConfig({
 
     // Set environment variables for tests
     env: {
-      SERVER_OPENROUTER_PROV_KEY: "test-provisioning-key",
+      SERVER_OPENROUTER_API_KEY: "test-provisioning-key",
     },
 
     // Configure test environment

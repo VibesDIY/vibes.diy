@@ -148,7 +148,7 @@ export class OpenRouterChat extends OpenAPIRoute {
           }
 
           // Use server's OpenRouter key
-          apiKey = c.env.SERVER_OPENROUTER_PROV_KEY;
+          apiKey = c.env.SERVER_OPENROUTER_API_KEY;
           if (!apiKey) {
             return c.json({ error: "OpenRouter API key not configured" }, 500);
           }

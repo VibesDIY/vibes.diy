@@ -60,7 +60,7 @@ We use the `/api/v1/auth/key` endpoint which returns:
 
 1. **Direct API Key Use**: If CALLAI_API_KEY is set (development), use it directly
 2. **Edge Function**: In production, provision keys through the `/api/callai/create-key` endpoint
-3. **Secure Storage**: The edge function uses SERVER_OPENROUTER_PROV_KEY which is never exposed client-side
+3. **Secure Storage**: The edge function uses SERVER_OPENROUTER_API_KEY which is never exposed client-side
 
 ## Benefits of This Approach
 

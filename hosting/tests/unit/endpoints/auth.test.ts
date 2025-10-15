@@ -9,7 +9,7 @@ import {
 describe("AI Endpoints Authentication", () => {
   let mockContext: {
     env: {
-      SERVER_OPENROUTER_PROV_KEY?: string;
+      SERVER_OPENROUTER_API_KEY?: string;
       ANTHROPIC_API_KEY?: string;
       OPENAI_API_KEY?: string;
     };

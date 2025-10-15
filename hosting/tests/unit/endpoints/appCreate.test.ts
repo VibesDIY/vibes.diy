@@ -57,7 +57,7 @@ describe("AppCreate endpoint", () => {
       env: {
         KV: mockKV,
         PUBLISH_QUEUE: mockQueue,
-        SERVER_OPENROUTER_PROV_KEY: "test-prov-key",
+        SERVER_OPENROUTER_API_KEY: "test-prov-key",
       },
       get: vi.fn().mockReturnValue({
         email: "test@example.com",

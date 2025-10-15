@@ -30,7 +30,7 @@ describe("Custom Domain E2E Tests", () => {
         kvStore.delete(key);
       },
     },
-    SERVER_OPENROUTER_PROV_KEY: "test-provisioning-key",
+    SERVER_OPENROUTER_API_KEY: "test-provisioning-key",
   };
 
   beforeEach(() => {

@@ -23,7 +23,7 @@ describe("Custom Domain Instance Behavior", () => {
         kvStore.delete(key);
       },
     },
-    SERVER_OPENROUTER_PROV_KEY: "test-provisioning-key",
+    SERVER_OPENROUTER_API_KEY: "test-provisioning-key",
   };
 
   // Helper function to make requests with proper Request objects

@@ -13,7 +13,7 @@ const envContent = fs.readFileSync(envPath, "utf8");
 // Extract the provisioning key from .env
 const OPENROUTER_PROV_KEY = envContent
   .split("\n")
-  .find((line) => line.startsWith("SERVER_OPENROUTER_PROV_KEY="))
+  .find((line) => line.startsWith("SERVER_OPENROUTER_API_KEY="))
   ?.split("=")?.[1]
   ?.trim();
 

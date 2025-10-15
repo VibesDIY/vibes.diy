@@ -24,7 +24,7 @@ function createRenderContext(c: Context<{ Bindings: Bindings }>) {
 
 interface Bindings {
   KV: KVNamespace;
-  SERVER_OPENROUTER_PROV_KEY: string;
+  SERVER_OPENROUTER_API_KEY: string;
 }
 // Start a Hono app
 const app = new Hono<{ Bindings: Bindings }>();
