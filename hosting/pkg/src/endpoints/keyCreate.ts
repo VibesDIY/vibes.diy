@@ -2,7 +2,7 @@ import { Bool, OpenAPIRoute } from "chanfana";
 import { Context } from "hono";
 import { z } from "zod";
 import { Variables } from "../middleware/auth.js";
-import { createKey, increaseKeyLimitBy } from "@vibes.diy/hosting-base";
+import { createKey, increaseKeyLimitBy } from "@vibes.diy/hosting";
 
 interface Env {
   SERVER_OPENROUTER_PROV_KEY: string;
@@ -86,9 +86,6 @@ export class KeyCreate extends OpenAPIRoute {
     // Get the provisioning key from environment
     const provisioningKey = c.env.SERVER_OPENROUTER_PROV_KEY;
 
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
     const resolvedUserId = user.userId;
 
     // Determine if we're updating or creating a key
@@ -96,21 +93,27 @@ export class KeyCreate extends OpenAPIRoute {
       console.log(`🔑 Increasing key limit for: ${keyRequest.hash}`);
 
       // Increase the key's limit by $2.50
-      return await increaseKeyLimitBy({
+      const result = await increaseKeyLimitBy({
         hash: keyRequest.hash,
         amount: 2.5,
         provisioningKey,
       });
+      return c.json(result);
     } else {
       console.log(`🔑 Creating new key`);
+      console.log(`💰 Setting dollar amount to $2.5 for authenticated user`);
+      console.log(
+        `🏷️ Using label: user-${resolvedUserId}-session-${Date.now()}`,
+      );
 
       // Call the core function to create a key
-      return await createKey({
+      const result = await createKey({
         userId: resolvedUserId,
         name: keyRequest.name,
         label: keyRequest.label,
         provisioningKey, // Pass the key from context
       });
+      return c.json(result);
     }
   }
 }
