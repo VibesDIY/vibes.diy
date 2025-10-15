@@ -41,6 +41,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
+    "@vibes.diy/utils": "workspace:*",
     "call-ai": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

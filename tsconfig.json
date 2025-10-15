@@ -27,7 +27,9 @@
     "call-ai/**/*",
     "use-vibes/**/*",
     "vibes.diy/**/*",
-    "prompts/**/*"
+    "prompts/**/*",
+    "utils/**/*",
+    "hosting/**/*"
   ],
   "exclude": [
     "vibes.diy/**/root.*",

@@ -1,0 +1,50 @@
+{
+  "name": "@vibes.diy/utils-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tests for @vibes.diy/utils - Shared authentication utilities for vibes.diy monorepo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VibesDIY/vibes.diy.git"
+  },
+  "homepage": "https://github.com/VibesDIY/vibes.diy",
+  "bugs": {
+    "url": "https://github.com/VibesDIY/vibes.diy/issues"
+  },
+  "scripts": {
+    "build": "core-cli tsc",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "pack": "echo 'nothing to pack'",
+    "publish": "echo 'nothing to publish'"
+  },
+  "keywords": [
+    "auth",
+    "jwt",
+    "token",
+    "verification",
+    "fireproof",
+    "vibes.diy",
+    "tests"
+  ],
+  "contributors": [
+    "J Chris Anderson"
+  ],
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@fireproof/core-cli": "^0.23.14",
+    "@types/node": "^24.7.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@vibes.diy/utils": "workspace:0.0.0",
+    "jose": "^5.9.6",
+    "multiformats": "^13.4.0"
+  }
+}

@@ -48,6 +48,10 @@ const opts = tseslint.config(
       "**/jest.config.mjs",
       "**/src/types.d.ts",
       "**/worker-configuration.d.ts",
+      "**/*.d.ts",
+      "**/*.js.map",
+      "**/*.d.ts.map",
+      "**/pkg/*.js",
     ],
   },
   {
