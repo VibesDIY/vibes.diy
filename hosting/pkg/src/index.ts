@@ -1,11 +1,10 @@
 import { fromHono } from "chanfana";
 import { AppCreate } from "./endpoints/appCreate.js";
-import { 
+import {
   ClaudeChat,
-  OpenAIChat,
-  ImageEdit, 
+  ImageEdit,
   ImageGenerate,
-  OpenRouterChat
+  OpenRouterChat,
 } from "@vibes.diy/hosting-base";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -54,7 +53,12 @@ export default {
 export { AppCreate } from "./endpoints/appCreate.js";
 export { KeyCreate } from "./endpoints/keyCreate.js";
 // Re-export from hosting-base
-export { ClaudeChat, OpenAIChat, ImageEdit, ImageGenerate, OpenRouterChat } from "@vibes.diy/hosting-base";
+export {
+  ClaudeChat,
+  ImageEdit,
+  ImageGenerate,
+  OpenRouterChat,
+} from "@vibes.diy/hosting-base";
 export { transformImports } from "./utils/codeTransform.js";
 export { generateVibeSlug } from "./utils/slugGenerator.js";
 export {

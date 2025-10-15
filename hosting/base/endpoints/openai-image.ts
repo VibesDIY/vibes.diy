@@ -1,4 +1,4 @@
-import { OpenAPIRoute } from "chanfana";
+import { OpenAPIRoute, contentJson } from "chanfana";
 import { z } from "zod";
 import { Context as HonoContext } from "hono";
 
@@ -63,7 +63,7 @@ export async function generateImage(
       quality,
       size,
       background,
-      user: userId,
+      userId: userId,
     };
 
     // Optional parameters
@@ -155,15 +155,20 @@ export async function generateImage(
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`❌ OpenAI Image: Error in generateImage:`, error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
       },
-    });
+    );
   }
 }
 
@@ -180,7 +185,7 @@ export async function editImage(
     const {
       prompt,
       model = "gpt-image-1",
-      _n = 1,
+      n = 1,
       quality = "auto",
       size = "auto",
       background = "auto",
@@ -387,23 +392,36 @@ export async function editImage(
         `❌ OpenAI Image: Error in streaming edited image:`,
         streamError,
       );
-      return new Response(JSON.stringify({ error: streamError instanceof Error ? streamError.message : String(streamError) }), {
+      return new Response(
+        JSON.stringify({
+          error:
+            streamError instanceof Error
+              ? streamError.message
+              : String(streamError),
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
+  } catch (error: unknown) {
+    console.error(`❌ OpenAI Image: Error in editImage:`, error);
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+      }),
+      {
         status: 500,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      });
-    }
-  } catch (error) {
-    console.error(`❌ OpenAI Image: Error in editImage:`, error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
       },
-    });
+    );
   }
 }
 
@@ -413,77 +431,71 @@ export class ImageGenerate extends OpenAPIRoute {
     tags: ["OpenAI"],
     summary: "Generate images using OpenAI",
     request: {
-      body: {
-        content: {
-          "application/json": {
-            schema: z.object({
-              prompt: z.string().describe("The image generation prompt"),
-              model: z
-                .string()
-                .optional()
-                .default("gpt-image-1")
-                .describe("The model to use"),
-              n: z
-                .number()
-                .optional()
-                .default(1)
-                .describe("Number of images to generate"),
-              quality: z
-                .string()
-                .optional()
-                .default("auto")
-                .describe("Image quality: auto, low, medium, high"),
-              size: z
-                .string()
-                .optional()
-                .default("auto")
-                .describe("Image size: auto, 1024x1024, etc."),
-              background: z
-                .string()
-                .optional()
-                .default("auto")
-                .describe("Background style: auto, transparent, opaque"),
-              output_format: z
-                .string()
-                .optional()
-                .default("png")
-                .describe("Output format: png, jpeg, webp"),
-              output_compression: z
-                .number()
-                .nullable()
-                .optional()
-                .describe("Compression level for jpeg/webp (0-100)"),
-              moderation: z
-                .string()
-                .optional()
-                .default("auto")
-                .describe("Moderation level: auto, low"),
-              userId: z
-                .string()
-                .optional()
-                .describe("User ID for API billing and tracking"),
-            }),
-          },
-        },
-      },
+      body: contentJson(
+        z.object({
+          prompt: z.string().describe("The image generation prompt"),
+          model: z
+            .string()
+            .optional()
+            .default("gpt-image-1")
+            .describe("The model to use"),
+          n: z
+            .number()
+            .optional()
+            .default(1)
+            .describe("Number of images to generate"),
+          quality: z
+            .string()
+            .optional()
+            .default("auto")
+            .describe("Image quality: auto, low, medium, high"),
+          size: z
+            .string()
+            .optional()
+            .default("auto")
+            .describe("Image size: auto, 1024x1024, etc."),
+          background: z
+            .string()
+            .optional()
+            .default("auto")
+            .describe("Background style: auto, transparent, opaque"),
+          output_format: z
+            .string()
+            .optional()
+            .default("png")
+            .describe("Output format: png, jpeg, webp"),
+          output_compression: z
+            .number()
+            .nullable()
+            .optional()
+            .describe("Compression level for jpeg/webp (0-100)"),
+          moderation: z
+            .string()
+            .optional()
+            .default("auto")
+            .describe("Moderation level: auto, low"),
+          userId: z
+            .string()
+            .optional()
+            .describe("User ID for API billing and tracking"),
+        }),
+      ),
     },
     responses: {
       200: {
         description: "Returns the generated image data",
-        content: {
-          "application/json": {
-            schema: z.object({
-              created: z.number(),
-              data: z.array(
-                z.object({
-                  url: z.string().optional(),
-                  b64_json: z.string().optional(),
-                  revised_prompt: z.string().optional(),
-                }),
-              ),
-            }),
-          },
-        },
+        ...contentJson(
+          z.object({
+            created: z.number(),
+            data: z.array(
+              z.object({
+                url: z.string().optional(),
+                b64_json: z.string().optional(),
+                revised_prompt: z.string().optional(),
+              }),
+            ),
+          }),
+        ),
       },
     },
   };
@@ -521,10 +533,15 @@ export class ImageGenerate extends OpenAPIRoute {
 
       // Return the streaming response
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error in ImageGenerate handler:", error);
       return c.json(
-        { error: error.message || "An error occurred processing your request" },
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "An error occurred processing your request",
+        },
         500,
       );
     }
@@ -535,84 +552,25 @@ export class ImageGenerate extends OpenAPIRoute {
 export class ImageEdit extends OpenAPIRoute {
   schema = {
     tags: ["OpenAI"],
-    summary: "Edit images using OpenAI",
-    request: {
-      body: {
-        content: {
-          "multipart/form-data": {
-            schema: z.object({
-              prompt: z.string().describe("The image editing prompt"),
-              image: z.any().describe("The image to edit"),
-              mask: z
-                .any()
-                .optional()
-                .describe("Optional mask for editing specific areas"),
-              model: z
-                .string()
-                .optional()
-                .default("gpt-image-1")
-                .describe("The model to use"),
-              n: z
-                .number()
-                .optional()
-                .default(1)
-                .describe("Number of images to generate"),
-              quality: z
-                .string()
-                .optional()
-                .default("auto")
-                .describe("Image quality: auto, low, medium, high"),
-              size: z
-                .string()
-                .optional()
-                .default("auto")
-                .describe("Image size: auto, 1024x1024, etc."),
-              background: z
-                .string()
-                .optional()
-                .default("auto")
-                .describe("Background style: auto, transparent, opaque"),
-              output_format: z
-                .string()
-                .optional()
-                .default("png")
-                .describe("Output format: png, jpeg, webp"),
-              output_compression: z
-                .number()
-                .nullable()
-                .optional()
-                .describe("Compression level for jpeg/webp (0-100)"),
-              moderation: z
-                .string()
-                .optional()
-                .default("auto")
-                .describe("Moderation level: auto, low"),
-              userId: z
-                .string()
-                .optional()
-                .describe("User ID for API billing and tracking"),
-            }),
-          },
-        },
-      },
-    },
+    summary:
+      "Edit images using OpenAI - accepts multipart/form-data with image files and text parameters",
+    description:
+      "Upload image file(s) along with editing parameters. Accepts 'image' and optional 'mask' files, plus text fields: prompt, model, n, quality, size, background, output_format, output_compression, moderation, userId",
     responses: {
       200: {
         description: "Returns the edited image data",
-        content: {
-          "application/json": {
-            schema: z.object({
-              created: z.number(),
-              data: z.array(
-                z.object({
-                  url: z.string().optional(),
-                  b64_json: z.string().optional(),
-                  revised_prompt: z.string().optional(),
-                }),
-              ),
-            }),
-          },
-        },
+        ...contentJson(
+          z.object({
+            created: z.number(),
+            data: z.array(
+              z.object({
+                url: z.string().optional(),
+                b64_json: z.string().optional(),
+                revised_prompt: z.string().optional(),
+              }),
+            ),
+          }),
+        ),
       },
     },
   };
@@ -661,10 +619,15 @@ export class ImageEdit extends OpenAPIRoute {
 
       // Return the streaming response
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error in ImageEdit handler:", error);
       return c.json(
-        { error: error.message || "An error occurred processing your request" },
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "An error occurred processing your request",
+        },
         500,
       );
     }
