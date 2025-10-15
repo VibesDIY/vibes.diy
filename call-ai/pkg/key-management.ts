@@ -2,8 +2,7 @@
  * Key management functionality for call-ai
  */
 
-import { CallAIErrorParams, Falsy, Mocks, KeyRefreshResponse } from "./types.js";
-import { callAiFetch, entriesHeaders } from "./utils.js";
+import { CallAIErrorParams, Falsy } from "./types.js";
 import { callAiEnv, type CallAIEnv } from "./env.js";
 
 // Type for objects that have the environment properties we need
@@ -135,179 +134,6 @@ function isNewKeyError(ierror: unknown, debug = false): boolean {
 }
 
 /**
- * Refreshes the API key by calling the specified endpoint
- * @param currentKey The current API key (may be null for initial key request)
- * @param endpoint The endpoint to call for key refresh
- * @param refreshToken Authentication token for the refresh endpoint
- * @returns Object containing the API key and topup flag
- */
-async function refreshApiKey(
-  options: { mock?: Mocks },
-  currentKey: string | Falsy,
-  endpoint: string | Falsy,
-  refreshToken: string | Falsy,
-  debug: boolean = globalDebug,
-): Promise<{ apiKey: string; topup: boolean }> {
-  // Ensure we have an endpoint and refreshToken
-  if (!endpoint) {
-    throw new Error("No API key refresh endpoint specified");
-  }
-
-  if (!refreshToken) {
-    throw new Error("No API key refresh token specified");
-  }
-
-  // Check if we're already in the process of refreshing (to prevent parallel refreshes)
-  if (keyStore().isRefreshing) {
-    if (debug) {
-      console.log("API key refresh already in progress, waiting...");
-    }
-    // Wait for refresh to complete (simple polling)
-    return new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
-        if (!keyStore().isRefreshing && keyStore().current) {
-          clearInterval(checkInterval);
-          const ck = keyStore().current;
-          if (!ck) {
-            throw new Error("API key refresh failed");
-          }
-          resolve({ apiKey: ck, topup: false });
-        }
-      }, 100);
-    });
-  }
-
-  // Rate limit key refresh to prevent overloading the service
-  const now = Date.now();
-  const timeSinceLastRefresh = now - keyStore().lastRefreshAttempt;
-  const minRefreshInterval = 2000; // 2 seconds minimum interval between refreshes
-
-  if (timeSinceLastRefresh < minRefreshInterval) {
-    if (debug) {
-      console.log(`Rate limiting key refresh, last attempt was ${timeSinceLastRefresh}ms ago`);
-    }
-    // If we've refreshed too recently, wait a bit
-    await new Promise((resolve) => setTimeout(resolve, minRefreshInterval - timeSinceLastRefresh));
-  }
-
-  // Set refreshing flag and update last attempt timestamp
-  keyStore().isRefreshing = true;
-  keyStore().lastRefreshAttempt = Date.now();
-
-  // Process API paths
-  const apiPath = "/api/keys";
-
-  // Normalize endpoint URL to remove any trailing slashes
-  const baseUrl = endpoint.endsWith("/") ? endpoint.slice(0, -1) : endpoint;
-
-  // Construct the full URL
-  const url = `${baseUrl}${apiPath}`;
-
-  if (debug) {
-    console.log(`Refreshing API key from: ${url}`);
-  }
-
-  try {
-    // Request payload
-    const requestPayload = {
-      key: currentKey,
-      hash: currentKey ? getHashFromKey(currentKey) : null,
-      name: "call-ai-client", // Add the required name field
-    };
-
-    if (debug) {
-      console.log(`[callAi:key-refresh] Request URL: ${url}`);
-      console.log(`[callAi:key-refresh] Request headers:`, {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${refreshToken}`,
-      });
-      console.log(`[callAi:key-refresh] Request payload:`, requestPayload);
-    }
-
-    // Make the request
-    const response = await callAiFetch(options)(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${refreshToken}`,
-      },
-      body: JSON.stringify(requestPayload),
-    });
-
-    if (debug) {
-      console.log(`[callAi:key-refresh] Response status: ${response.status} ${response.statusText}`);
-
-      console.log(`[callAi:key-refresh] Response headers:`, Object.fromEntries([...entriesHeaders(response.headers)]));
-    }
-
-    if (!response.ok) {
-      // Try to get the response body for more details
-      const errorText = await response.text();
-      if (debug) {
-        console.log(`[callAi:key-refresh] Error response body: ${errorText}`);
-      }
-      throw new Error(`API key refresh failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`);
-    }
-
-    // Parse the response
-    const data = (await response.json()) as KeyRefreshResponse;
-
-    // Log the complete response structure for debugging
-    if (debug) {
-      console.log(`[callAi:key-refresh] Full response structure:`, JSON.stringify(data, null, 2));
-    }
-
-    // Handle different API response formats
-    let newKey: string;
-
-    // Check if response has the new nested format with data.key.key
-    if (data.key && typeof data.key === "object" && data.key.key) {
-      newKey = data.key.key;
-    }
-    // Check for old format where data.key is the string key directly
-    else if (data.key && typeof data.key === "string") {
-      newKey = data.key;
-    }
-    // Handle error case
-    else {
-      throw new Error("Invalid response from key refresh endpoint: missing or malformed key");
-    }
-
-    if (debug) {
-      console.log(`API key refreshed successfully: ${newKey.substring(0, 10)}...`);
-    }
-
-    // Store metadata for potential future use (like top-up)
-    if (data.metadata || (data.key && typeof data.key === "object" && data.key.metadata)) {
-      const metadata = data.metadata || (typeof data.key === "object" ? data.key.metadata : undefined);
-      if (metadata) {
-        storeKeyMetadata(metadata as KeyMetadata);
-      }
-    }
-
-    // Update the key store with the string value
-    keyStore().current = newKey;
-
-    // Determine if this was a top-up (using existing key) or new key
-    // For the new API response format, hash is in data.key.hash
-    const hashValue = data.hash || (data.key && typeof data.key === "object" && data.key.hash);
-    const isTopup = Boolean(currentKey && hashValue && hashValue === getHashFromKey(currentKey));
-
-    // Reset refreshing flag
-    keyStore().isRefreshing = false;
-
-    return {
-      apiKey: newKey, // Return the string key, not the object
-      topup: isTopup,
-    };
-  } catch (error) {
-    // Reset refreshing flag
-    keyStore().isRefreshing = false;
-    throw error;
-  }
-}
-
-/**
  * Helper function to extract hash from key (implementation depends on how you store metadata)
  */
 function getHashFromKey(key: string): string | null {
@@ -333,4 +159,4 @@ function storeKeyMetadata(data: KeyMetadata): void {
   };
 }
 
-export { globalDebug, initKeyStore, isNewKeyError, refreshApiKey, getHashFromKey, storeKeyMetadata };
+export { globalDebug, initKeyStore, isNewKeyError, getHashFromKey, storeKeyMetadata };

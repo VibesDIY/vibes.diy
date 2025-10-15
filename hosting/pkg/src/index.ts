@@ -51,7 +51,6 @@ export default {
 
 // Test exports - expose internal modules for testing
 export { AppCreate } from "./endpoints/appCreate.js";
-export { KeyCreate } from "./endpoints/keyCreate.js";
 // Re-export from hosting-base
 export {
   ClaudeChat,
@@ -76,9 +75,6 @@ export {
   FIRST_PARTY_DOMAINS,
   FIRST_PARTY_APEX_DOMAINS,
   type TokenPayload,
-  createKey,
-  updateKey,
-  getKey,
 } from "@vibes.diy/hosting-base";
 export { authMiddleware } from "./middleware/auth.js";
 export { PublishEvent } from "./types.js";
