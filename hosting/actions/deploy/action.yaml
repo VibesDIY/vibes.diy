@@ -115,7 +115,7 @@ runs:
           echo "ℹ️  Bluesky password not provided (optional)"
         fi
 
-        echo "✅ All secrets configured"
+        echo "✅ All secrets configured successfully"
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
