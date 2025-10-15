@@ -152,6 +152,7 @@ async function sleepReject<T>(ms: number) {
 }
 
 export async function selectLlmsAndOptions(
+  _model: string,
   userPrompt: string,
   history: HistoryMessage[],
   iopts: LlmSelectionOptions,
@@ -316,6 +317,7 @@ export async function makeBaseSystemPrompt(
       .filter((name) => llmsCatalogNames.has(name));
   } else {
     const decisions = await selectLlmsAndOptions(
+      model,
       userPrompt,
       history,
       sessionDoc,
