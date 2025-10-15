@@ -127,7 +127,8 @@ describe("Iframe Template", () => {
       // Track all message event handlers added to window
       vi.spyOn(window, "addEventListener").mockImplementation(
         (event, handler) => {
-          if ((event as string) === "message") {
+          // Check for message events with proper type handling
+          if (String(event) === "message") {
             messageEventHandlers.push(handler);
           }
           return undefined as ReturnType<typeof window.addEventListener>;

@@ -759,6 +759,9 @@ importers:
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
     devDependencies:
       '@chromatic-com/storybook':
         specifier: ^4.1.1

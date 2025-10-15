@@ -13,7 +13,6 @@
     "url": "https://github.com/VibesDIY/vibes.diy/issues"
   },
   "scripts": {
-    "build": "core-cli tsc",
     "test": "vitest --run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -34,8 +33,9 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.14",
     "@types/node": "^24.7.2",
+    "jose": "^5.9.6",
+    "multiformats": "^13.4.0",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },
@@ -43,8 +43,6 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@vibes.diy/utils": "workspace:0.0.0",
-    "jose": "^5.9.6",
-    "multiformats": "^13.4.0"
+    "@vibes.diy/utils": "workspace:0.0.0"
   }
 }
