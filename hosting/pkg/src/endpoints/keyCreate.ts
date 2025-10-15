@@ -2,7 +2,7 @@ import { Bool, OpenAPIRoute } from "chanfana";
 import { Context } from "hono";
 import { z } from "zod";
 import { Variables } from "../middleware/auth.js";
-import { createKey, increaseKeyLimitBy } from "@vibes.diy/hosting";
+import { createKey } from "@vibes.diy/hosting";
 
 interface Env {
   SERVER_OPENROUTER_PROV_KEY: string;
@@ -16,25 +16,11 @@ export class KeyCreate extends OpenAPIRoute {
       body: {
         content: {
           "application/json": {
-            schema: z
-              .object({
-                userId: z.string().optional(),
-                name: z.string().optional(),
-                label: z.string().optional(),
-                hash: z.string().optional(), // If provided, updates existing key instead of creating new one
-              })
-              .refine(
-                (data) => {
-                  // If hash is provided, name is not required.
-                  // If hash is not provided, name is required.
-                  return data.hash ? true : data.name !== undefined;
-                },
-                {
-                  message:
-                    "The 'name' field is required when creating a new key (i.e., when 'hash' is not provided).",
-                  path: ["name"],
-                },
-              ),
+            schema: z.object({
+              userId: z.string().optional(),
+              name: z.string(),
+              label: z.string().optional(),
+            }),
           },
         },
       },
@@ -88,33 +74,17 @@ export class KeyCreate extends OpenAPIRoute {
 
     const resolvedUserId = user.userId;
 
-    // Determine if we're updating or creating a key
-    if (keyRequest.hash) {
-      console.log(`🔑 Increasing key limit for: ${keyRequest.hash}`);
+    console.log(`🔑 Creating new key`);
+    console.log(`💰 Setting dollar amount to $2.5 for authenticated user`);
+    console.log(`🏷️ Using label: user-${resolvedUserId}-session-${Date.now()}`);
 
-      // Increase the key's limit by $2.50
-      const result = await increaseKeyLimitBy({
-        hash: keyRequest.hash,
-        amount: 2.5,
-        provisioningKey,
-      });
-      return c.json(result);
-    } else {
-      console.log(`🔑 Creating new key`);
-      console.log(`💰 Setting dollar amount to $2.5 for authenticated user`);
-      console.log(
-        `🏷️ Using label: user-${resolvedUserId}-session-${Date.now()}`,
-      );
-
-      // Call the core function to create a key
-      // name is guaranteed to be present when creating a new key (validated by schema)
-      const result = await createKey({
-        userId: resolvedUserId,
-        name: keyRequest.name || "Default Key",
-        label: keyRequest.label,
-        provisioningKey, // Pass the key from context
-      });
-      return c.json(result);
-    }
+    // Call the core function to create a key
+    const result = await createKey({
+      userId: resolvedUserId,
+      name: keyRequest.name,
+      label: keyRequest.label,
+      provisioningKey, // Pass the key from context
+    });
+    return c.json(result);
   }
 }

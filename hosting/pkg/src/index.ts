@@ -77,7 +77,6 @@ export {
   FIRST_PARTY_APEX_DOMAINS,
   type TokenPayload,
   createKey,
-  increaseKeyLimitBy,
   updateKey,
   getKey,
 } from "@vibes.diy/hosting-base";
