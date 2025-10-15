@@ -2,6 +2,11 @@ import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 
 // TypeScript interfaces for Claude API requests
+export interface ClaudeMessage {
+  role: string;
+  content: string;
+}
+
 export interface ClaudeMessagesRequest {
   model: string;
   messages: {
@@ -108,7 +113,11 @@ function convertToOpenAIFormat(
         finish_reason: "stop",
       },
     ],
-    usage: claudeResponse.usage,
+    usage: {
+      prompt_tokens: claudeResponse.usage.input_tokens,
+      completion_tokens: claudeResponse.usage.output_tokens,
+      total_tokens: claudeResponse.usage.input_tokens + claudeResponse.usage.output_tokens,
+    },
   };
 }
 
@@ -134,6 +143,7 @@ export async function claudeChat(
       top_k?: number;
       stream?: boolean;
       system?: string;
+      user?: string;
     } = {
       model: params.model,
       messages: claudeMessages,
@@ -203,7 +213,11 @@ export async function claudeChat(
                       object: "chat.completion.chunk",
                       created: Math.floor(Date.now() / 1000),
                       model: claudeEvent.model,
-                      choices: [],
+                      choices: [] as Array<{
+                        index: number;
+                        delta: { content?: string };
+                        finish_reason: string | null;
+                      }>,
                     };
 
                     if (
@@ -320,12 +334,12 @@ export async function claudeChat(
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`❌ Claude API: Error in claudeChat:`, error);
     return new Response(
       JSON.stringify({
         error: {
-          message: error.message,
+          message: error instanceof Error ? error.message : String(error),
           type: "server_error",
           param: null,
           code: null,
@@ -439,7 +453,7 @@ export class ClaudeChat extends OpenAPIRoute {
     },
   };
 
-  async handle(c) {
+  async handle(c: { req: { json: () => Promise<any> } }) {
     try {
       // Get request data from JSON body
       const data = await c.req.json();
@@ -477,13 +491,12 @@ export class ClaudeChat extends OpenAPIRoute {
 
       // Return the response (may be streaming or regular JSON)
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error in ClaudeChat handler:", error);
       return c.json(
         {
           error: {
-            message:
-              error.message || "An error occurred processing your request",
+            message: error instanceof Error ? error.message : "An error occurred processing your request",
             type: "server_error",
             param: null,
             code: null,

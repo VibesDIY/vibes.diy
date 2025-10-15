@@ -28,8 +28,7 @@
     "use-vibes/**/*",
     "vibes.diy/**/*",
     "prompts/**/*",
-    "utils/**/*",
-    "hosting/**/*"
+    "utils/**/*"
   ],
   "exclude": [
     "vibes.diy/**/root.*",

@@ -12,6 +12,7 @@ packages:
   - "vibes.diy/tests/simple-chat"
   - "prompts/pkg"
   - "prompts/tests"
+  - "hosting/base"
   - "hosting/pkg"
   - "hosting/tests/unit"
   - "utils/pkg"
