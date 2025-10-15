@@ -1,13 +1,7 @@
 name: Deploy Hosting Worker
 
 on:
-  # PR preview deployments
-  pull_request:
-    paths:
-      - "hosting/**/*"
-    types: [opened, synchronize, reopened]
-
-  # Production deployment on main
+  # Production deployment on main only
   push:
     paths:
       - "hosting/**/*"
@@ -30,7 +24,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'pull_request' && 'preview' || github.event_name == 'push' && 'production' || github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event_name == 'push' && 'production' || github.event.inputs.environment || 'dev' }}
 
     steps:
       - name: Checkout code
@@ -42,11 +36,7 @@ jobs:
       - name: Determine deployment type
         id: deployment
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "type=preview" >> $GITHUB_OUTPUT
-            echo "worker_name=vibes-hosting-pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "environment=preview" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
+          if [[ "${{ github.event_name }}" == "push" ]]; then
             echo "type=production" >> $GITHUB_OUTPUT  
             echo "worker_name=vibes-hosting-v2" >> $GITHUB_OUTPUT
             echo "environment=production" >> $GITHUB_OUTPUT
@@ -70,55 +60,3 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
 
-      - name: Comment on PR with preview URL
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const workerUrl = `https://${{ steps.deployment.outputs.worker_name }}.workers.dev`;
-            const body = `## 🚀 Preview Deployment Ready
-
-            Your hosting changes have been deployed to a preview environment:
-
-            **🔗 Preview URL**: ${workerUrl}
-
-            ### Test the changes:
-            - API endpoints are accessible at the preview URL  
-            - Authentication system is active
-            - AI services are connected with production keys
-            - All security fixes are applied
-
-            ### What's deployed:
-            - Worker: \`${{ steps.deployment.outputs.worker_name }}\`
-            - Environment: \`${{ steps.deployment.outputs.environment }}\`
-            - Commit: \`${{ github.event.pull_request.head.sha }}\`
-
-            The preview will automatically update when you push new commits to this PR.`;
-
-            // Check if comment already exists
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const existingComment = comments.data.find(comment => 
-              comment.body.includes('Preview Deployment Ready'));
-
-            if (existingComment) {
-              // Update existing comment
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existingComment.id,
-                body: body
-              });
-            } else {
-              // Create new comment
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: body
-              });
-            }
