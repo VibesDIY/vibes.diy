@@ -15,6 +15,9 @@ import { defaultStylePrompt } from "./style-prompts.js";
 // Single source of truth for the default coding model used across the repo.
 export const DEFAULT_CODING_MODEL = "anthropic/claude-sonnet-4.5" as const;
 
+// Model used for RAG decisions (module selection)
+export const RAG_DECISION_MODEL = "openai/gpt-4o" as const;
+
 export async function defaultCodingModel() {
   return DEFAULT_CODING_MODEL;
 }
@@ -149,7 +152,6 @@ async function sleepReject<T>(ms: number) {
 }
 
 export async function selectLlmsAndOptions(
-  model: string,
   userPrompt: string,
   history: HistoryMessage[],
   iopts: LlmSelectionOptions,
@@ -188,7 +190,7 @@ export async function selectLlmsAndOptions(
       ? opts.callAiEndpoint.toString().replace(/\/+$/, "")
       : undefined,
     apiKey: "sk-vibes-proxy-managed",
-    model,
+    model: RAG_DECISION_MODEL,
     schema: {
       name: "module_and_options_selection",
       properties: {
@@ -314,7 +316,6 @@ export async function makeBaseSystemPrompt(
       .filter((name) => llmsCatalogNames.has(name));
   } else {
     const decisions = await selectLlmsAndOptions(
-      model,
       userPrompt,
       history,
       sessionDoc,
