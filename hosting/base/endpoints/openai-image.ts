@@ -185,7 +185,6 @@ export async function editImage(
     const {
       prompt,
       model = "gpt-image-1",
-      n = 1,
       quality = "auto",
       size = "auto",
       background = "auto",
