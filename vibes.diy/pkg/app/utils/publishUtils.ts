@@ -11,6 +11,20 @@ import {
 import { normalizeComponentExports, VibeDocument } from "@vibes.diy/prompts";
 import { joinUrlParts } from "call-ai";
 
+// Interface for publish API response
+interface PublishResponse {
+  success?: boolean;
+  appUrl?: string;
+  app?: {
+    slug?: string;
+    title?: string;
+    config?: {
+      title?: string;
+    };
+    remixOf?: string;
+  };
+}
+
 /**
  * Publish an app to the server
  * @param params Parameters for publishing the app
@@ -147,7 +161,7 @@ export async function publishApp({
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as PublishResponse;
     if (data.success && data.app?.slug) {
       // Construct the app URL from the response data
       const appUrl =

@@ -5,6 +5,11 @@
 import { importJWK, jwtVerify } from "jose";
 import { base58btc } from "multiformats/bases/base58";
 
+// API Response interfaces
+export interface TokenResponse {
+  token?: string;
+}
+
 // Token payload interface - standardized across frontend and backend
 export interface TokenPayload {
   email?: string;
@@ -125,7 +130,7 @@ export async function extendToken(
 
     if (!res.ok) throw new Error("Network error during token extension");
 
-    const data = (await res.json()) as { token?: string };
+    const data = (await res.json()) as TokenResponse;
     if (data && typeof data.token === "string" && data.token.length > 0) {
       return data.token;
     }
