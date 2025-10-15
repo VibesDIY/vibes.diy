@@ -11,8 +11,8 @@ import { Hono } from "hono";
 import { fromHono } from "chanfana";
 
 // Mock the entire keyLib module first
-vi.mock("@vibes.diy/hosting-base", async () => {
-  const actual = await vi.importActual<any>("@vibes.diy/hosting-base");
+vi.mock("@vibes.diy/hosting", async () => {
+  const actual = await vi.importActual("@vibes.diy/hosting");
   return {
     ...actual,
     createKey: vi.fn(),
@@ -20,8 +20,7 @@ vi.mock("@vibes.diy/hosting-base", async () => {
   };
 });
 
-import { KeyCreate } from "@vibes.diy/hosting";
-import { createKey, increaseKeyLimitBy } from "@vibes.diy/hosting-base";
+import { KeyCreate, createKey, increaseKeyLimitBy } from "@vibes.diy/hosting";
 
 interface TokenPayload {
   userId: string;
@@ -60,7 +59,7 @@ const mockTokenPayload: TokenPayload = {
 };
 
 describe("KeyCreate Endpoint Integration Test", () => {
-  let app: Hono;
+  let app: Hono<{ Variables: { user: TokenPayload | null } }>;
   const env = {
     SERVER_OPENROUTER_PROV_KEY: "test-provisioning-key",
   };
@@ -68,7 +67,7 @@ describe("KeyCreate Endpoint Integration Test", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    app = new Hono();
+    app = new Hono<{ Variables: { user: TokenPayload | null } }>();
     const openapi = fromHono(app);
 
     // Auth middleware
