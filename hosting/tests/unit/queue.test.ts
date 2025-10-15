@@ -17,10 +17,14 @@ interface MockContext {
     KV: MockKV;
     PUBLISH_QUEUE: MockQueue;
   };
-  get: (key: string) => { email: string };
+  get: (key: string) => { email: string; userId: string };
   req: {
     json: () => Promise<unknown>;
   };
+  json: (
+    data: unknown,
+    status?: number,
+  ) => { body: string; init: { status: number } };
 }
 
 describe("Queue functionality", () => {
@@ -46,10 +50,19 @@ describe("Queue functionality", () => {
         KV: mockKV,
         PUBLISH_QUEUE: mockQueue,
       },
-      get: vi.fn().mockReturnValue({ email: "test@example.com" }),
+      get: vi
+        .fn()
+        .mockReturnValue({
+          email: "test@example.com",
+          userId: "test-user-123",
+        }),
       req: {
         json: vi.fn(),
       },
+      json: vi.fn().mockImplementation((data, status) => ({
+        body: JSON.stringify(data),
+        init: { status: status || 200 },
+      })),
     };
   });
 
@@ -122,7 +135,7 @@ describe("Queue functionality", () => {
       slug: "test-slug",
       code: "old code",
       chatId: "test-chat-456",
-      userId: "user-456",
+      userId: "test-user-123", // Same user as in mock context to pass ownership check
       updateCount: 2,
       title: "Existing App",
     };
@@ -138,7 +151,7 @@ describe("Queue functionality", () => {
         chatId: "test-chat-456",
         code: "console.log('updated code');",
         title: "Updated App",
-        userId: "user-456",
+        userId: "test-user-123", // Same user as in mock context to pass ownership check
       },
     };
 

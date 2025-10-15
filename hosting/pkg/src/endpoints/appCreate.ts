@@ -81,6 +81,18 @@ export class AppCreate extends OpenAPIRoute {
 
   async handle(c: Context<{ Variables: Variables; Bindings: Env }>) {
     const user = c.get("user");
+
+    // Require authentication for app creation and modification
+    if (!user || !user.userId) {
+      return c.json(
+        {
+          error:
+            "Authentication required. Please log in to create or modify apps.",
+        },
+        401,
+      );
+    }
+
     // Get validated data
     const data = await this.getValidatedData<typeof this.schema>();
 
@@ -100,9 +112,25 @@ export class AppCreate extends OpenAPIRoute {
     if (existingApp) {
       // If app exists, parse it and update the code
       const parsedApp = JSON.parse(existingApp);
+
+      // Verify ownership - user must own the app to modify it
+      if (parsedApp.userId && parsedApp.userId !== user.userId) {
+        return c.json(
+          {
+            error: "Forbidden: You don't have permission to modify this app.",
+          },
+          403,
+        );
+      }
+
       // if (parsedApp.rawCode)
-      parsedApp.code = app.code;
-      parsedApp.raw = app.raw;
+      // Only update code fields if they are provided in the request
+      if (app.code !== undefined) {
+        parsedApp.code = app.code;
+      }
+      if (app.raw !== undefined) {
+        parsedApp.raw = app.raw;
+      }
       parsedApp.templatedCode = null;
 
       // Update prompt if provided
