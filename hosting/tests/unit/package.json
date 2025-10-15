@@ -13,9 +13,9 @@
     "url": "https://github.com/VibesDIY/vibes.diy/issues"
   },
   "scripts": {
-    "test": "vitest --config vite.config.ts run",
-    "test:watch": "vitest --config vite.config.ts",
-    "test:coverage": "vitest --config vite.config.ts run --coverage",
+    "test": "vitest --config vitest.config.ts run",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:coverage": "vitest --config vitest.config.ts run --coverage",
     "format": "prettier --write \"**/*.{js,ts,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{js,ts,json,css,md}\"",
     "lint": "tsc --noEmit --pretty --skipLibCheck",

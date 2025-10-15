@@ -161,7 +161,22 @@ export async function publishApp({
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const data = (await response.json()) as PublishResponse;
+    const rawData = await response.json();
+
+    // Type guard for PublishResponse
+    const isValidPublishResponse = (data: unknown): data is PublishResponse => {
+      return (
+        typeof data === "object" &&
+        data !== null &&
+        typeof (data as PublishResponse).success === "boolean"
+      );
+    };
+
+    if (!isValidPublishResponse(rawData)) {
+      throw new Error("Invalid response format from publish API");
+    }
+
+    const data = rawData;
     if (data.success && data.app?.slug) {
       // Construct the app URL from the response data
       const appUrl =
