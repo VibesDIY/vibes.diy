@@ -488,7 +488,7 @@ export class ImageGenerate extends OpenAPIRoute {
     },
   };
 
-  async handle(c) {
+  async handle(c: HonoContext) {
     try {
       // Get validated request data from JSON body
       const data = await c.req.json();
@@ -617,7 +617,7 @@ export class ImageEdit extends OpenAPIRoute {
     },
   };
 
-  async handle(c) {
+  async handle(c: HonoContext) {
     try {
       // For the edit route, we'll create an empty request object first
       const requestBody: ImageEditRequest = {

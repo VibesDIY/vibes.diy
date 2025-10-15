@@ -91,11 +91,11 @@ export async function listKeys(params: KeyListParams): Promise<KeyResult> {
       success: true,
       keys: keys,
     } as KeyResult & { keys: KeyData[] };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error in listKeys:`, error);
     return {
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }

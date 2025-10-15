@@ -167,7 +167,7 @@ export async function createKey(params: {
     console.error(`Error in createKey:`, error);
     return {
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -274,7 +274,7 @@ export async function updateKey(params: KeyUpdateParams): Promise<KeyResult> {
     console.error(`Error in updateKey:`, error);
     return {
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -346,7 +346,7 @@ export async function getKey(params: KeyGetParams): Promise<KeyResult> {
     return { success: true, key: keyData };
   } catch (error: unknown) {
     console.error(`Error in getKey:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -427,6 +427,6 @@ export async function increaseKeyLimitBy(params: {
     return await updateKey({ hash, limit: newLimit, provisioningKey });
   } catch (error: unknown) {
     console.error(`Error in increaseKeyLimitBy:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }

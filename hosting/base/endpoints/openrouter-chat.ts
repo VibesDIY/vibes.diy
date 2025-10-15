@@ -1,4 +1,5 @@
 import { OpenAPIRoute } from "chanfana";
+import { Context } from "hono";
 import { z } from "zod";
 
 // OpenRouter chat completion endpoint
@@ -117,7 +118,7 @@ export class OpenRouterChat extends OpenAPIRoute {
     },
   };
 
-  async handle(c) {
+  async handle(c: Context) {
     try {
       // Get validated request data from JSON body
       const data = await c.req.json();
