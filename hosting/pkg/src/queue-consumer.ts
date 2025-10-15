@@ -95,9 +95,14 @@ async function processAppEvent(
 }
 
 async function postToDiscord(app: z.infer<typeof App>, env: QueueEnv) {
-  const webhookUrl =
-    env.DISCORD_WEBHOOK_URL ||
-    "https://discord.com/api/webhooks/1362420377506152529/he_-FXmdsR7CWFnMDMPMCyG6bJNMRaOzJ_J-IYY3aghUy-Iqt1Vifd0xuFXKKAYwIlgm";
+  const webhookUrl = env.DISCORD_WEBHOOK_URL;
+
+  if (!webhookUrl) {
+    console.error(
+      "Discord webhook URL not configured - skipping Discord notification",
+    );
+    return;
+  }
 
   const appUrl = `https://vibes.diy/vibe/${app.slug}`;
   const remixOfUrl = app.remixOf

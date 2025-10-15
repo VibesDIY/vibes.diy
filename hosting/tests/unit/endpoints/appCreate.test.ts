@@ -59,10 +59,17 @@ describe("AppCreate endpoint", () => {
         PUBLISH_QUEUE: mockQueue,
         SERVER_OPENROUTER_PROV_KEY: "test-prov-key",
       },
-      get: vi.fn().mockReturnValue({ email: "test@example.com" }),
+      get: vi.fn().mockReturnValue({
+        email: "test@example.com",
+        userId: "test-user-123",
+      }),
       req: {
         json: vi.fn(),
       },
+      json: vi.fn().mockImplementation((data, status) => ({
+        body: JSON.stringify(data),
+        init: { status: status || 200 },
+      })),
     };
   });
 
@@ -181,5 +188,214 @@ describe("AppCreate endpoint", () => {
     // Verify the result
     expect(result.success).toBe(true);
     expect(result.app.title).toBe("No Screenshot App");
+  });
+
+  describe("Authentication and Security", () => {
+    it("should require authentication for app creation", async () => {
+      // Mock context with no user
+      const unauthenticatedContext = {
+        ...mockContext,
+        get: vi.fn().mockReturnValue(null), // No user
+      };
+
+      const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
+
+      const mockData = {
+        body: {
+          chatId: "test-chat-no-auth",
+          code: "console.log('hello');",
+          title: "Unauthorized App",
+        },
+      };
+
+      vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData);
+
+      // Call the handler
+      const result = await appCreate.handle(unauthenticatedContext);
+
+      // Verify 401 response
+      expect(result.init.status).toBe(401);
+      expect(result.body).toContain("Authentication required");
+    });
+
+    it("should require authentication when user has no userId", async () => {
+      // Mock context with user but no userId
+      const partialUserContext = {
+        ...mockContext,
+        get: vi.fn().mockReturnValue({ email: "test@example.com" }), // User but no userId
+      };
+
+      const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
+
+      const mockData = {
+        body: {
+          chatId: "test-chat-partial-user",
+          code: "console.log('hello');",
+          title: "Partial User App",
+        },
+      };
+
+      vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData);
+
+      // Call the handler
+      const result = await appCreate.handle(partialUserContext);
+
+      // Verify 401 response
+      expect(result.init.status).toBe(401);
+      expect(result.body).toContain("Authentication required");
+    });
+
+    it("should prevent unauthorized app updates", async () => {
+      // Mock an existing app owned by a different user
+      const existingApp = {
+        chatId: "existing-chat-123",
+        userId: "original-owner-456",
+        slug: "existing-app",
+        code: "original code",
+        raw: "original raw",
+        title: "Original App",
+      };
+
+      mockKV.get.mockResolvedValue(JSON.stringify(existingApp));
+
+      // Mock authenticated context with different user
+      const differentUserContext = {
+        ...mockContext,
+        get: vi.fn().mockReturnValue({
+          email: "different@example.com",
+          userId: "different-user-789",
+        }),
+      };
+
+      const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
+
+      const mockData = {
+        body: {
+          chatId: "existing-chat-123", // Trying to update existing app
+          code: "malicious code",
+          title: "Hijacked App",
+        },
+      };
+
+      vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData);
+
+      // Call the handler
+      const result = await appCreate.handle(differentUserContext);
+
+      // Verify 403 response
+      expect(result.init.status).toBe(403);
+      expect(result.body).toContain("Forbidden");
+
+      // Verify KV was not updated
+      expect(mockKV.put).not.toHaveBeenCalled();
+    });
+
+    it("should allow app owner to update their own app", async () => {
+      // Mock an existing app
+      const existingApp = {
+        chatId: "owner-chat-123",
+        userId: "owner-user-456",
+        slug: "owner-app",
+        code: "original code",
+        raw: "original raw",
+        title: "Owner App",
+      };
+
+      mockKV.get.mockResolvedValue(JSON.stringify(existingApp));
+      mockKV.put.mockResolvedValue(undefined);
+
+      // Mock authenticated context with same user
+      const ownerContext = {
+        ...mockContext,
+        get: vi.fn().mockReturnValue({
+          email: "owner@example.com",
+          userId: "owner-user-456",
+        }),
+      };
+
+      const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
+
+      const mockData = {
+        body: {
+          chatId: "owner-chat-123",
+          code: "updated code",
+          title: "Updated App",
+        },
+      };
+
+      vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData);
+
+      // Call the handler
+      const result = await appCreate.handle(ownerContext);
+
+      // Verify successful update
+      expect(result.success).toBe(true);
+      expect(result.app.title).toBe("Updated App");
+
+      // Verify KV was updated
+      expect(mockKV.put).toHaveBeenCalled();
+    });
+
+    it("should preserve code when only updating metadata", async () => {
+      // Mock an existing app
+      const existingApp = {
+        chatId: "preserve-code-123",
+        userId: "user-789",
+        slug: "preserve-app",
+        code: "important code that should be preserved",
+        raw: "important raw code",
+        title: "Original Title",
+        customDomain: null,
+      };
+
+      mockKV.get.mockResolvedValue(JSON.stringify(existingApp));
+      mockKV.put.mockResolvedValue(undefined);
+
+      // Mock authenticated context
+      const authenticatedContext = {
+        ...mockContext,
+        get: vi.fn().mockReturnValue({
+          email: "user@example.com",
+          userId: "user-789",
+        }),
+      };
+
+      const appCreate = new AppCreate({ schema: {} } as OpenAPIRoute);
+
+      // Mock data that only updates metadata (no code/raw provided)
+      const mockData = {
+        body: {
+          chatId: "preserve-code-123",
+          title: "Updated Title",
+          customDomain: "example.com",
+          // Note: No code or raw fields provided
+        },
+      };
+
+      vi.spyOn(appCreate, "getValidatedData").mockResolvedValue(mockData);
+
+      // Call the handler
+      const result = await appCreate.handle(authenticatedContext);
+
+      // Verify successful update
+      expect(result.success).toBe(true);
+      expect(result.app.title).toBe("Updated Title");
+
+      // Get the stored app data
+      const storedAppCall = mockKV.put.mock.calls.find(
+        (call) => call[0] === "preserve-code-123",
+      );
+      expect(storedAppCall).toBeDefined();
+
+      const storedApp = JSON.parse(storedAppCall[1]);
+
+      // Verify code was preserved
+      expect(storedApp.code).toBe("important code that should be preserved");
+      expect(storedApp.raw).toBe("important raw code");
+
+      // Verify metadata was updated
+      expect(storedApp.title).toBe("Updated Title");
+      expect(storedApp.customDomain).toBe("example.com");
+    });
   });
 });
