@@ -20,7 +20,7 @@ on:
       environment:
         description: "Environment to deploy to"
         required: true
-        default: "production"
+        default: "dev"
         type: choice
         options:
           - production
@@ -30,7 +30,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'pull_request' && 'preview' || github.event_name == 'push' && 'production' || github.event.inputs.environment || 'production' }}
+    environment: ${{ github.event_name == 'pull_request' && 'preview' || github.event_name == 'push' && 'production' || github.event.inputs.environment || 'dev' }}
 
     steps:
       - name: Checkout code
