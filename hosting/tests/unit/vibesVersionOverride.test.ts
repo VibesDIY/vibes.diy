@@ -203,6 +203,7 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
         /<script type="importmap">\s*({[\s\S]*?})\s*<\/script>/,
       );
       expect(importMapMatch).not.toBeNull();
+      if (!importMapMatch) throw new Error("importMapMatch should not be null");
 
       const importMap = JSON.parse(importMapMatch[1]);
       expect(importMap).toHaveProperty("imports");
@@ -234,6 +235,7 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
         /<script type="importmap">\s*({[\s\S]*?})\s*<\/script>/,
       );
       expect(importMapMatch).not.toBeNull();
+      if (!importMapMatch) throw new Error("importMapMatch should not be null");
 
       const importMap = JSON.parse(importMapMatch[1]);
 

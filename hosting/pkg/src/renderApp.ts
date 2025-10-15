@@ -15,7 +15,10 @@ import testAppData from "../test-app-data.json" with { type: "json" };
 function createRenderContext(c: Context<{ Bindings: Bindings }>) {
   return {
     req: { url: c.req.url },
-    html: (content: string, status?: number) => c.html(content, status),
+    html: (content: string, status?: number) => {
+      // Hono expects specific status codes, default to 200 if none provided
+      return c.html(content, (status as 200 | 404 | 500) || 200);
+    },
   };
 }
 
