@@ -152,7 +152,7 @@ async function sleepReject<T>(ms: number) {
 }
 
 export async function selectLlmsAndOptions(
-  _model: string,
+  model: string,
   userPrompt: string,
   history: HistoryMessage[],
   iopts: LlmSelectionOptions,
@@ -191,7 +191,7 @@ export async function selectLlmsAndOptions(
       ? opts.callAiEndpoint.toString().replace(/\/+$/, "")
       : undefined,
     apiKey: "sk-vibes-proxy-managed",
-    model: RAG_DECISION_MODEL,
+    model,
     schema: {
       name: "module_and_options_selection",
       properties: {
@@ -317,7 +317,7 @@ export async function makeBaseSystemPrompt(
       .filter((name) => llmsCatalogNames.has(name));
   } else {
     const decisions = await selectLlmsAndOptions(
-      model,
+      RAG_DECISION_MODEL,
       userPrompt,
       history,
       sessionDoc,
