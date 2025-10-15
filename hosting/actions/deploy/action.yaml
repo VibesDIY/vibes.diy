@@ -49,30 +49,15 @@ runs:
       shell: bash
       run: |
         cd hosting/pkg
-        echo "🚀 Deploying to ${{ inputs.environment }} environment..."
+        echo "🚀 Deploying vibes-hosting-v2 worker..."
 
-        if [ -n "${{ inputs.worker_name }}" ]; then
-          # Custom worker name for preview deployments
-          if [ "${{ inputs.environment }}" == "preview" ]; then
-            echo "📝 Deploying preview with custom worker name..."
-            npx wrangler deploy --name "${{ inputs.worker_name }}"
-          else
-            npx wrangler deploy --env ${{ inputs.environment }}
-          fi
-        else
-          npx wrangler deploy --env ${{ inputs.environment }}
-        fi
+        # Deploy the worker with simplified command
+        npx wrangler deploy
 
         echo "✅ Worker deployed successfully"
 
-        # Set output for worker URL based on environment and custom name
-        if [ -n "${{ inputs.worker_name }}" ]; then
-          echo "worker_url=https://${{ inputs.worker_name }}.workers.dev" >> $GITHUB_OUTPUT
-        elif [ "${{ inputs.environment }}" == "production" ]; then
-          echo "worker_url=https://vibes-hosting-v2.workers.dev" >> $GITHUB_OUTPUT
-        else
-          echo "worker_url=https://vibes-hosting-dev.workers.dev" >> $GITHUB_OUTPUT
-        fi
+        # Set output for worker URL
+        echo "worker_url=https://vibes-hosting-v2.workers.dev" >> $GITHUB_OUTPUT
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
@@ -84,23 +69,16 @@ runs:
 
         echo "🔐 Setting required API secrets..."
 
-        # Determine secret deployment target
-        if [ -n "${{ inputs.worker_name }}" ]; then
-          SECRET_TARGET="--name ${{ inputs.worker_name }}"
-        else
-          SECRET_TARGET="--env ${{ inputs.environment }}"
-        fi
-
         # Required AI API keys
-        echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY $SECRET_TARGET
-        echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY $SECRET_TARGET
+        echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY
+        echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY
 
         echo "✅ Required secrets configured"
 
         # Optional Anthropic key
         if [ -n "${{ inputs.ANTHROPIC_API_KEY }}" ]; then
           echo "🔐 Setting Anthropic API key..."
-          echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY $SECRET_TARGET
+          echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY
         else
           echo "ℹ️  Anthropic API key not provided (optional - Claude endpoints will be disabled)"
         fi
@@ -108,14 +86,14 @@ runs:
         # Optional secrets
         if [ -n "${{ inputs.DISCORD_WEBHOOK_URL }}" ]; then
           echo "🔐 Setting Discord webhook..."
-          echo "${{ inputs.DISCORD_WEBHOOK_URL }}" | npx wrangler secret put DISCORD_WEBHOOK_URL $SECRET_TARGET
+          echo "${{ inputs.DISCORD_WEBHOOK_URL }}" | npx wrangler secret put DISCORD_WEBHOOK_URL
         else
           echo "ℹ️  Discord webhook not provided (optional)"
         fi
 
         if [ -n "${{ inputs.BLUESKY_APP_PASSWORD }}" ]; then
           echo "🔐 Setting Bluesky credentials..."
-          echo "${{ inputs.BLUESKY_APP_PASSWORD }}" | npx wrangler secret put BLUESKY_APP_PASSWORD $SECRET_TARGET
+          echo "${{ inputs.BLUESKY_APP_PASSWORD }}" | npx wrangler secret put BLUESKY_APP_PASSWORD
         else
           echo "ℹ️  Bluesky password not provided (optional)"
         fi
@@ -148,36 +126,15 @@ runs:
         echo ""
         echo "🎉 Deployment Summary"
         echo "===================="
-
-        if [ -n "${{ inputs.worker_name }}" ]; then
-          echo "✅ Worker: ${{ inputs.worker_name }}"
-          echo "🌐 Worker URL: https://${{ inputs.worker_name }}.workers.dev"
-        else
-          echo "✅ Worker: vibes-hosting-v2"
-          echo "🌐 Worker URL: https://vibes-hosting-v2.workers.dev"
-        fi
-
-        echo "🔧 Environment: ${{ inputs.environment }}"
+        echo "✅ Worker: vibes-hosting-v2"
+        echo "🌐 Worker URL: https://vibes-hosting-v2.workers.dev"
         echo ""
-
-        if [ "${{ inputs.environment }}" == "preview" ]; then
-          echo "🔍 Preview Deployment:"
-          echo "- This is a temporary preview environment"
-          echo "- No custom domains attached"
-          echo "- Will be automatically cleaned up when PR is closed"
-          echo "- Test all functionality at the worker URL above"
-        elif [ "${{ inputs.environment }}" == "production" ]; then
-          echo "🔄 Production Deployment - Next Steps:"
-          echo "1. Test the worker URL above"
-          echo "2. Update domain routes in Cloudflare Dashboard:"
-          echo "   - vibesdiy.work (test first)"
-          echo "   - vibecode.garden"
-          echo "   - vibes-diy-api.com" 
-          echo "   - vibesdiy.app (production last)"
-          echo "3. Monitor error rates and performance"
-          echo "4. Keep old worker as backup for 30 days"
-        else
-          echo "🧪 Development/Manual Deployment:"
-          echo "- Test at the worker URL above"
-          echo "- This deployment is for testing purposes"
-        fi
+        echo "🔄 Production Deployment - Next Steps:"
+        echo "1. Test the worker URL above"
+        echo "2. Update domain routes in Cloudflare Dashboard:"
+        echo "   - vibesdiy.work (test first)"
+        echo "   - vibecode.garden"
+        echo "   - vibes-diy-api.com" 
+        echo "   - vibesdiy.app (production last)"
+        echo "3. Monitor error rates and performance"
+        echo "4. Keep old worker as backup for 30 days"

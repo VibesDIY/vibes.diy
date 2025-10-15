@@ -82,8 +82,3 @@ export type { PublishEvent as PublishEventType } from "./types.js";
 export { template } from "./apptemplate.js";
 export { default as renderApp } from "./renderApp.js";
 export { default as queueConsumer } from "./queue-consumer.js";
-export {
-  expectCatalogTitle,
-  expectBasicCatalogTitle,
-  expectAppInstance,
-} from "./test-utils/catalogAssertions.js";
