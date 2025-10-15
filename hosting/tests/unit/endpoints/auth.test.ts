@@ -26,7 +26,7 @@ describe("AI Endpoints Authentication", () => {
     // Mock context with authentication
     mockContext = {
       env: {
-        SERVER_OPENROUTER_PROV_KEY: "test-openrouter-key",
+        SERVER_OPENROUTER_API_KEY: "test-openrouter-key",
         ANTHROPIC_API_KEY: "test-claude-key",
         OPENAI_API_KEY: "test-openai-key",
       },

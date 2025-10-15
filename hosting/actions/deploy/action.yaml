@@ -16,8 +16,8 @@ inputs:
   CLOUDFLARE_ACCOUNT_ID:
     description: "Cloudflare account ID"
     required: true
-  SERVER_OPENROUTER_PROV_KEY:
-    description: "OpenRouter API key for AI services"
+  SERVER_OPENROUTER_API_KEY:
+    description: "OpenRouter API key for AI chat completions"
     required: true
   OPENAI_API_KEY:
     description: "OpenAI API key for image generation and chat"
@@ -87,7 +87,7 @@ runs:
         echo "🔐 Setting required API secrets..."
 
         # Required AI API keys
-        echo "${{ inputs.SERVER_OPENROUTER_PROV_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_PROV_KEY --env ${{ inputs.environment }}
+        echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY --env ${{ inputs.environment }}
         echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY --env ${{ inputs.environment }}
         echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY --env ${{ inputs.environment }}
 
