@@ -1,5 +1,5 @@
-{
-  "imports": {
+export const libraryImportMap = {
+  imports: {
     "react": "https://esm.sh/react@~19.1.1",
     "react-dom": "https://esm.sh/react-dom@~19.1.1",
     "react-dom/client": "https://esm.sh/react-dom@~19.1.1/client",
@@ -10,4 +10,4 @@
     "eruda": "https://esm.sh/eruda",
     "three": "https://esm.sh/three"
   }
-}
+};
