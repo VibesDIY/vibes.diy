@@ -1,0 +1,91 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vibes-hosting-v2",
+  "main": "src/index.ts",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_date": "2025-04-07",
+  "observability": {
+    "enabled": true,
+  },
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "342352a479b64835931b4e5f9f3277a0",
+    },
+  ],
+  /**
+   * Smart Placement
+   * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+   */
+  "placement": { "mode": "smart" },
+  /**
+   * Routes
+   * Define routes to match incoming requests to your Worker
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#routes
+   */
+  "routes": [
+    {
+      "pattern": "*vibecode.garden/*",
+      "zone_name": "vibecode.garden",
+    },
+    {
+      "pattern": "*vibesdiy.app/*",
+      "zone_name": "vibesdiy.app",
+    },
+    {
+      "pattern": "*vibesdiy.work/*",
+      "zone_name": "vibesdiy.work",
+    },
+    {
+      "pattern": "vibes-diy-api.com/*",
+      "zone_name": "vibes-diy-api.com",
+    },
+    {
+      "pattern": "*/*",
+      "zone_name": "vibesdiy.app",
+    },
+  ],
+
+  /**
+   * Queue Configuration
+   * https://developers.cloudflare.com/queues/configuration/javascript-apis/
+   */
+  "queues": {
+    "producers": [
+      {
+        "queue": "publish-events",
+        "binding": "PUBLISH_QUEUE",
+        "delivery_delay": 0,
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "publish-events",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30,
+        "max_retries": 3,
+        "dead_letter_queue": "publish-events-dlq",
+      },
+    ],
+  },
+
+  /**
+   * Environment Variables
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+   */
+  "vars": {
+    "ENVIRONMENT": "production",
+    "CLOUD_SESSION_TOKEN_PUBLIC_KEY": "zeWndr5LEoaySgKSo2aZniYqWtx2vKfVz4dd5GQwAuby3fPKcNyLp6mFpf9nCRFYbUcPiN2YT1ZApJ6f3WipiVjuMvyP1JYgHwkaoxDBpJiLoz1grRYkbao9ntukNNo2TQ4uSznUmNPrr4ZxjihoavHwB1zLhLNp5Qj78fBkjgEMA",
+    "CLOUD_SESSION_TOKEN_PUBLIC_KEY_DEV": "zeWndr5LEoaySgKSo2aZniYqXf5WxWq3WDGYvT4K4ggqX2wWPXAc4TXhRFrQAGUgCwkAYHCTZNn8Yqz62DzFzssSEEfMjmh5yP26YY5LBLUo14GdRKyD19zRV4jsic53jxEy3NdBs2i4rwAfyYQoPGzUUhnBxTXvqB2RYoShcs2zp",
+    "BLUESKY_HANDLE": "therawvibes.com",
+  },
+
+  /**
+   * Note: Use secrets to store sensitive data.
+   * https://developers.cloudflare.com/workers/configuration/secrets/
+   */
+}
