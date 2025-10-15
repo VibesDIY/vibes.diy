@@ -35,29 +35,15 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install hosting dependencies
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install
+
+    - name: Run hosting CI checks
       shell: bash
       run: |
-        cd hosting/pkg
-        pnpm install
-
-    - name: Build hosting-base dependency
-      shell: bash
-      run: |
-        echo "🏗️ Building hosting-base dependency..."
-        pnpm --filter @vibes.diy/hosting-base build
-
-    - name: Run quality checks
-      shell: bash
-      run: |
-        cd hosting/pkg
-        echo "🔍 Running format check..."
-        pnpm format:check
-
-        echo "🔍 Running TypeScript lint..."
-        pnpm lint
-
-        echo "✅ Quality checks passed"
+        echo "🏗️ Running comprehensive hosting CI pipeline..."
+        pnpm hosting:check
 
     - name: Deploy to Cloudflare Workers
       shell: bash
