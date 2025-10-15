@@ -50,12 +50,10 @@ describe("Queue functionality", () => {
         KV: mockKV,
         PUBLISH_QUEUE: mockQueue,
       },
-      get: vi
-        .fn()
-        .mockReturnValue({
-          email: "test@example.com",
-          userId: "test-user-123",
-        }),
+      get: vi.fn().mockReturnValue({
+        email: "test@example.com",
+        userId: "test-user-123",
+      }),
       req: {
         json: vi.fn(),
       },

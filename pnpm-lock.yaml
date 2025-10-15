@@ -635,19 +635,16 @@ importers:
       '@vibes.diy/utils':
         specifier: workspace:0.0.0
         version: link:../pkg
+    devDependencies:
+      '@types/node':
+        specifier: ^24.7.2
+        version: 24.7.2
       jose:
         specifier: ^5.9.6
         version: 5.10.0
       multiformats:
         specifier: ^13.4.0
         version: 13.4.1
-    devDependencies:
-      '@fireproof/core-cli':
-        specifier: ^0.23.14
-        version: 0.23.14(typescript@5.9.3)
-      '@types/node':
-        specifier: ^24.7.2
-        version: 24.7.2
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
