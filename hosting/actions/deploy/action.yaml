@@ -51,30 +51,13 @@ runs:
         cd hosting/pkg
         echo "🚀 Deploying to ${{ inputs.environment }} environment..."
 
-        if [ -n "${{ inputs.worker_name }}" ]; then
-          # Override worker name in wrangler.toml for preview deployments
-          if [ "${{ inputs.environment }}" == "preview" ]; then
-            echo "📝 Creating temporary wrangler config for preview deployment..."
-            cp wrangler.toml wrangler.toml.backup
-            sed "s/name = \"vibes-hosting-v2\"/name = \"${{ inputs.worker_name }}\"/g" wrangler.toml > wrangler.temp.toml
-            mv wrangler.temp.toml wrangler.toml
-            npx wrangler deploy --env production --name "${{ inputs.worker_name }}"
-            mv wrangler.toml.backup wrangler.toml
-          else
-            npx wrangler deploy --env ${{ inputs.environment }}
-          fi
-        else
-          npx wrangler deploy --env ${{ inputs.environment }}
-        fi
+        # Deploy with the fixed worker name from wrangler.jsonc
+        npx wrangler deploy
 
         echo "✅ Worker deployed successfully"
 
         # Set output for worker URL
-        if [ -n "${{ inputs.worker_name }}" ]; then
-          echo "worker_url=https://${{ inputs.worker_name }}.workers.dev" >> $GITHUB_OUTPUT
-        else
-          echo "worker_url=https://vibes-hosting-v2.workers.dev" >> $GITHUB_OUTPUT
-        fi
+        echo "worker_url=https://vibes-hosting-v2.workers.dev" >> $GITHUB_OUTPUT
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
@@ -87,15 +70,15 @@ runs:
         echo "🔐 Setting required API secrets..."
 
         # Required AI API keys
-        echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY --env ${{ inputs.environment }}
-        echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY --env ${{ inputs.environment }}
+        echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY
+        echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY
 
         echo "✅ Required secrets configured"
 
         # Optional Anthropic key
         if [ -n "${{ inputs.ANTHROPIC_API_KEY }}" ]; then
           echo "🔐 Setting Anthropic API key..."
-          echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY --env ${{ inputs.environment }}
+          echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY
         else
           echo "ℹ️  Anthropic API key not provided (optional - Claude endpoints will be disabled)"
         fi
@@ -103,14 +86,14 @@ runs:
         # Optional secrets
         if [ -n "${{ inputs.DISCORD_WEBHOOK_URL }}" ]; then
           echo "🔐 Setting Discord webhook..."
-          echo "${{ inputs.DISCORD_WEBHOOK_URL }}" | npx wrangler secret put DISCORD_WEBHOOK_URL --env ${{ inputs.environment }}
+          echo "${{ inputs.DISCORD_WEBHOOK_URL }}" | npx wrangler secret put DISCORD_WEBHOOK_URL
         else
           echo "ℹ️  Discord webhook not provided (optional)"
         fi
 
         if [ -n "${{ inputs.BLUESKY_APP_PASSWORD }}" ]; then
           echo "🔐 Setting Bluesky credentials..."
-          echo "${{ inputs.BLUESKY_APP_PASSWORD }}" | npx wrangler secret put BLUESKY_APP_PASSWORD --env ${{ inputs.environment }}
+          echo "${{ inputs.BLUESKY_APP_PASSWORD }}" | npx wrangler secret put BLUESKY_APP_PASSWORD
         else
           echo "ℹ️  Bluesky password not provided (optional)"
         fi

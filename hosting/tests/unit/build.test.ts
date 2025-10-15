@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 describe("Build Tests", () => {
   it("has required configuration files", () => {
-    const wranglerConfig = resolve(__dirname, "../../pkg/wrangler.toml");
+    const wranglerConfig = resolve(__dirname, "../../pkg/wrangler.jsonc");
     const packageJson = resolve(__dirname, "../../pkg/package.json");
 
     expect(existsSync(wranglerConfig)).toBe(true);
