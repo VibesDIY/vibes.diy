@@ -1,7 +1,7 @@
 /**
  * Error handling utilities for call-ai
  */
-import { keyStore, globalDebug, isNewKeyError, refreshApiKey } from "./key-management.js";
+import { globalDebug, isNewKeyError } from "./key-management.js";
 import { CallAIError, CallAIErrorParams, Mocks, APIErrorResponse } from "./types.js";
 
 // Standardized API error handler
@@ -50,109 +50,11 @@ async function handleApiError(
     throw error;
   }
 
-  // Determine if this error suggests we need a new API key
-  // Either it's a specific key error OR we have no key at all
-  const needsNewKey = isNewKeyError(error, debug) || isMissingKeyError;
+  // Check if this is an authentication error that suggests using proper auth
+  const needsAuth = isNewKeyError(error, debug) || isMissingKeyError;
 
-  // If the error suggests an API key issue, try to refresh the key
-  if (needsNewKey) {
-    if (debug) {
-      console.log(`[callAi:key-refresh] Error suggests API key issue, attempting refresh...`);
-    }
-
-    try {
-      // Use provided key/endpoint/refreshToken or fallback to global configuration
-      const currentKey = options.apiKey || keyStore().current;
-      const endpoint = options.endpoint || keyStore().refreshEndpoint;
-      const refreshToken = options.refreshToken || keyStore().refreshToken;
-
-      // First attempt to refresh the API key
-      try {
-        const { apiKey, topup } = await refreshApiKey(options, currentKey, endpoint, refreshToken, debug);
-
-        // Update the key in the store (if not already set by refreshApiKey)
-        if (keyStore().current !== apiKey) {
-          keyStore().current = apiKey;
-        }
-
-        if (debug) {
-          console.log(`[callAi:key-refresh] ${topup ? "Topped up" : "Refreshed"} API key successfully`);
-        }
-
-        // Return without throwing since we've successfully recovered
-        return;
-      } catch (initialRefreshError) {
-        // If there's an updateRefreshToken callback and the error was due to token issue
-        if (options.updateRefreshToken && refreshToken) {
-          if (debug) {
-            console.log(`[callAi:key-refresh] Initial refresh failed, attempting to update refresh token`);
-          }
-
-          try {
-            // Get a new refresh token using the callback
-            const newRefreshToken = await options.updateRefreshToken(refreshToken);
-
-            if (newRefreshToken && newRefreshToken !== refreshToken) {
-              if (debug) {
-                console.log(`[callAi:key-refresh] Got new refresh token, retrying key refresh`);
-              }
-
-              // Update the stored refresh token
-              keyStore().refreshToken = newRefreshToken;
-
-              // Try again with the new token
-              const { apiKey, topup } = await refreshApiKey(options, currentKey, endpoint, newRefreshToken, debug);
-
-              // Update the key in the store
-              if (keyStore().current !== apiKey) {
-                keyStore().current = apiKey;
-              }
-
-              if (debug) {
-                console.log(
-                  `[callAi:key-refresh] ${topup ? "Topped up" : "Refreshed"} API key successfully with new refresh token`,
-                );
-              }
-
-              // Return without throwing since we've successfully recovered
-              return;
-            } else {
-              if (debug) {
-                console.log(`[callAi:key-refresh] No new refresh token provided or same token returned, cannot retry`);
-              }
-              // Continue to error handling
-              throw initialRefreshError;
-            }
-          } catch (tokenUpdateError) {
-            if (debug) {
-              console.error(`[callAi:key-refresh] Failed to update refresh token:`, tokenUpdateError);
-            }
-            // Continue to error handling with the original refresh error
-            throw initialRefreshError;
-          }
-        } else {
-          // No updateRefreshToken callback or no token, rethrow the initial error
-          throw initialRefreshError;
-        }
-      }
-    } catch (refreshError) {
-      // Log refresh failure but throw the original error
-      if (debug) {
-        console.error(`[callAi:key-refresh] API key refresh failed:`, refreshError);
-      }
-      // Create a more detailed error from the original one
-      const detailedError = new CallAIError({
-        message: `${errorMessage} (Key refresh failed: ${
-          refreshError instanceof Error ? refreshError.message : String(refreshError)
-        })`,
-        originalError: error,
-        refreshError,
-        status: status || 401,
-        contentType: "text/plain",
-      });
-
-      throw detailedError;
-    }
+  if (needsAuth && debug) {
+    console.log(`[callAi:auth] Authentication error detected. Ensure proper authentication tokens are provided.`);
   }
 
   // For non-key errors, create a detailed error object

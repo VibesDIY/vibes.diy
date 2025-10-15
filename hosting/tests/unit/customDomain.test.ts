@@ -1,27 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import renderApp from "@vibes.diy/hosting";
-
-// Mock the createKey function to return a successful result
-vi.mock("@vibes.diy/hosting", async () => {
-  const actual =
-    await vi.importActual<typeof import("@vibes.diy/hosting")>(
-      "@vibes.diy/hosting",
-    );
-  return {
-    ...actual,
-    keyLib: {
-      createKey: vi.fn().mockResolvedValue({
-        success: true,
-        key: {
-          key: "test-api-key-123",
-          id: "test-key-id",
-          name: "Test Key",
-          label: "test-label",
-        },
-      }),
-    },
-  };
-});
 
 describe("Custom Domain E2E Tests", () => {
   // Helper function to make requests with proper Request objects
