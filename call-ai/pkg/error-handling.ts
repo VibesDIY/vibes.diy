@@ -2,7 +2,7 @@
  * Error handling utilities for call-ai
  */
 import { keyStore, globalDebug, isNewKeyError, refreshApiKey } from "./key-management.js";
-import { CallAIError, CallAIErrorParams, Mocks } from "./types.js";
+import { CallAIError, CallAIErrorParams, Mocks, APIErrorResponse } from "./types.js";
 
 // Standardized API error handler
 // @param error The error object
@@ -170,7 +170,7 @@ async function checkForInvalidModelError(
   response: Response,
   model: string,
   debug: boolean = globalDebug,
-): Promise<{ isInvalidModel: boolean; errorData?: unknown }> {
+): Promise<{ isInvalidModel: boolean; errorData?: APIErrorResponse }> {
   // Only check 4xx errors (which could indicate invalid model)
   if (response.status < 400 || response.status >= 500) {
     return { isInvalidModel: false };
@@ -180,9 +180,9 @@ async function checkForInvalidModelError(
   const responseClone = response.clone();
 
   // Try to parse the response as JSON
-  let errorData;
+  let errorData: APIErrorResponse;
   try {
-    errorData = await responseClone.json();
+    errorData = (await responseClone.json()) as APIErrorResponse;
   } catch (e) {
     // If it's not JSON, get the text
     try {
@@ -200,13 +200,15 @@ async function checkForInvalidModelError(
     response.status === 400 ||
     // Response content checks
     (errorData &&
+      errorData.error &&
       ((typeof errorData.error === "string" &&
         (errorData.error.toLowerCase().includes("model") ||
           errorData.error.toLowerCase().includes("engine") ||
           errorData.error.toLowerCase().includes("not found") ||
           errorData.error.toLowerCase().includes("invalid") ||
           errorData.error.toLowerCase().includes("unavailable"))) ||
-        (errorData.error?.message &&
+        (typeof errorData.error === "object" &&
+          errorData.error.message &&
           typeof errorData.error.message === "string" &&
           (errorData.error.message.toLowerCase().includes("model") ||
             errorData.error.message.toLowerCase().includes("engine") ||
@@ -218,7 +220,7 @@ async function checkForInvalidModelError(
     console.log(`[callAi:model-fallback] Detected invalid model error for "${model}":`, errorData);
   }
 
-  return { isInvalidModel: isInvalidModelError, errorData };
+  return { isInvalidModel: Boolean(isInvalidModelError), errorData };
 }
 
 export { handleApiError, checkForInvalidModelError };

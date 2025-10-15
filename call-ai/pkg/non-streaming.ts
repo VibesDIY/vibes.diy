@@ -1,7 +1,15 @@
 /**
  * Non-streaming API call implementation for call-ai
  */
-import { AIResult, CallAIErrorParams, CallAIOptions, Message, SchemaAIMessageRequest, SchemaStrategy } from "./types.js";
+import {
+  AIResult,
+  CallAIErrorParams,
+  CallAIOptions,
+  Message,
+  SchemaAIMessageRequest,
+  SchemaStrategy,
+  APIResponse,
+} from "./types.js";
 import { globalDebug, keyStore, initKeyStore } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
@@ -159,7 +167,7 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
       if (/claude/.test(model)) {
         result = await extractClaudeResponse(response);
       } else {
-        const json = await response.json();
+        const json = (await response.json()) as AIResult;
         result = extractContent(json, schemaStrategy);
       }
     } catch (parseError) {
@@ -297,7 +305,7 @@ async function extractClaudeResponse(response: Response): Promise<NonNullable<un
     const responsePromise = response.json();
 
     // Race between timeout and response
-    const json = await Promise.race([responsePromise, timeoutPromise]);
+    const json = (await Promise.race([responsePromise, timeoutPromise])) as APIResponse;
 
     if (json.choices && json.choices.length > 0 && json.choices[0].message && json.choices[0].message.content) {
       return json.choices[0].message.content;

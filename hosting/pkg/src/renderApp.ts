@@ -11,6 +11,14 @@ import {
 import testAppData from "../test-app-data.json" with { type: "json" };
 // We'll use a different approach for serving the favicons
 
+// Helper function to adapt Hono context to RenderContext interface
+function createRenderContext(c: Context<{ Bindings: Bindings }>) {
+  return {
+    req: { url: c.req.url },
+    html: (content: string, status?: number) => c.html(content, status),
+  };
+}
+
 interface Bindings {
   KV: KVNamespace;
   SERVER_OPENROUTER_PROV_KEY: string;
@@ -48,16 +56,24 @@ app.get("/", async (c) => {
     // Route based on whether this is an instance (has underscore) or catalog title (no underscore)
     if (debugParsed.isInstance) {
       // Render app instance using existing logic
-      return renderAppInstance(c, debugParsed, testAppData);
+      return renderAppInstance(
+        createRenderContext(c),
+        debugParsed,
+        testAppData,
+      );
     } else {
       // Render catalog title page
-      return renderCatalogTitle(c, debugParsed, testAppData);
+      return renderCatalogTitle(
+        createRenderContext(c),
+        debugParsed,
+        testAppData,
+      );
     }
   }
 
   // First, check if this is a custom domain
   let effectiveHostname = hostname;
-  let customDomain = null;
+  let customDomain: string | undefined = undefined;
   const customDomainMapping = await kv.get(`domain:${hostname}`);
 
   if (customDomainMapping) {
@@ -103,10 +119,21 @@ app.get("/", async (c) => {
   // Route based on whether this is an instance (has underscore) or catalog title (no underscore)
   if (parsed.isInstance) {
     // Render app instance - pass custom domain and original domain
-    return renderAppInstance(c, parsed, app, customDomain, originalDomain);
+    return renderAppInstance(
+      createRenderContext(c),
+      parsed,
+      app,
+      customDomain,
+      originalDomain,
+    );
   } else {
     // Render catalog title page with original domain
-    return renderCatalogTitle(c, parsed, app, originalDomain);
+    return renderCatalogTitle(
+      createRenderContext(c),
+      parsed,
+      app,
+      originalDomain,
+    );
   }
 });
 

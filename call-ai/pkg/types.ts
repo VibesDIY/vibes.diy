@@ -120,6 +120,29 @@ export interface AIResult {
   }[];
 }
 
+export interface APIErrorResponse {
+  error?:
+    | {
+        message?: string;
+        type?: string;
+      }
+    | string;
+}
+
+export interface APIResponse extends Partial<AIResult>, APIErrorResponse {}
+
+export interface KeyRefreshResponse {
+  key?:
+    | string
+    | {
+        key?: string;
+        hash?: string;
+        metadata?: unknown;
+      };
+  hash?: string;
+  metadata?: unknown;
+}
+
 export interface OpenAIFunctionCall {
   readonly type: "function";
   readonly function: {
