@@ -1,4 +1,4 @@
-import { OpenAPIRoute } from "chanfana";
+import { OpenAPIRoute, contentJson } from "chanfana";
 import { Context } from "hono";
 import { z } from "zod";
 
@@ -105,13 +105,18 @@ export async function chatCompletion(
     });
   } catch (error: unknown) {
     console.error(`❌ OpenAI Chat: Error in chatCompletion:`, error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
       },
-    });
+    );
   }
 }
 
@@ -121,116 +126,108 @@ export class ChatComplete extends OpenAPIRoute {
     tags: ["OpenAI"],
     summary: "Chat completions via OpenAI API",
     request: {
-      body: {
-        content: {
-          "application/json": {
-            schema: z.object({
-              model: z.string().describe("ID of the model to use"),
-              messages: z
-                .array(
-                  z.object({
-                    role: z
-                      .string()
-                      .describe(
-                        "The role of the message author (system, user, assistant)",
-                      ),
-                    content: z.string().describe("The content of the message"),
-                    name: z
-                      .string()
-                      .optional()
-                      .describe("Optional name for the message author"),
-                  }),
-                )
-                .describe(
-                  "A list of messages comprising the conversation so far",
-                ),
-              temperature: z
-                .number()
-                .optional()
-                .default(1)
-                .describe("Sampling temperature (0-2)"),
-              top_p: z
-                .number()
-                .optional()
-                .default(1)
-                .describe("Nucleus sampling parameter"),
-              n: z
-                .number()
-                .optional()
-                .default(1)
-                .describe("Number of chat completion choices to generate"),
-              stream: z
-                .boolean()
-                .optional()
-                .default(false)
-                .describe("Stream partial progress"),
-              max_tokens: z
-                .number()
-                .optional()
-                .describe("Maximum number of tokens to generate"),
-              presence_penalty: z
-                .number()
-                .optional()
-                .default(0)
-                .describe("Presence penalty for token selection"),
-              frequency_penalty: z
-                .number()
-                .optional()
-                .default(0)
-                .describe("Frequency penalty for token selection"),
-              logit_bias: z
-                .record(z.number())
-                .optional()
-                .describe("Modify likelihood of specific tokens"),
-              user: z
+      body: contentJson(
+        z.object({
+          model: z.string().describe("ID of the model to use"),
+          messages: z
+            .array(
+              z.object({
+                role: z
+                  .string()
+                  .describe(
+                    "The role of the message author (system, user, assistant)",
+                  ),
+                content: z.string().describe("The content of the message"),
+                name: z
+                  .string()
+                  .optional()
+                  .describe("Optional name for the message author"),
+              }),
+            )
+            .describe("A list of messages comprising the conversation so far"),
+          temperature: z
+            .number()
+            .optional()
+            .default(1)
+            .describe("Sampling temperature (0-2)"),
+          top_p: z
+            .number()
+            .optional()
+            .default(1)
+            .describe("Nucleus sampling parameter"),
+          n: z
+            .number()
+            .optional()
+            .default(1)
+            .describe("Number of chat completion choices to generate"),
+          stream: z
+            .boolean()
+            .optional()
+            .default(false)
+            .describe("Stream partial progress"),
+          max_tokens: z
+            .number()
+            .optional()
+            .describe("Maximum number of tokens to generate"),
+          presence_penalty: z
+            .number()
+            .optional()
+            .default(0)
+            .describe("Presence penalty for token selection"),
+          frequency_penalty: z
+            .number()
+            .optional()
+            .default(0)
+            .describe("Frequency penalty for token selection"),
+          logit_bias: z
+            .record(z.string(), z.number())
+            .optional()
+            .describe("Modify likelihood of specific tokens"),
+          user: z
+            .string()
+            .optional()
+            .describe("User ID for billing and tracking"),
+          response_format: z
+            .object({
+              type: z
                 .string()
-                .optional()
-                .describe("User ID for billing and tracking"),
-              response_format: z
-                .object({
-                  type: z
-                    .string()
-                    .describe("Format of the response (json or text)"),
-                })
-                .optional()
-                .describe("Format of the response"),
-              seed: z
-                .number()
-                .optional()
-                .describe("Seed for deterministic sampling"),
-            }),
-          },
-        },
-      },
+                .describe("Format of the response (json or text)"),
+            })
+            .optional()
+            .describe("Format of the response"),
+          seed: z
+            .number()
+            .optional()
+            .describe("Seed for deterministic sampling"),
+        }),
+      ),
     },
     responses: {
       200: {
         description: "Successful chat completion",
-        content: {
-          "application/json": {
-            schema: z.object({
-              id: z.string(),
-              object: z.string(),
-              created: z.number(),
-              model: z.string(),
-              choices: z.array(
-                z.object({
-                  index: z.number(),
-                  message: z.object({
-                    role: z.string(),
-                    content: z.string(),
-                  }),
-                  finish_reason: z.string(),
+        ...contentJson(
+          z.object({
+            id: z.string(),
+            object: z.string(),
+            created: z.number(),
+            model: z.string(),
+            choices: z.array(
+              z.object({
+                index: z.number(),
+                message: z.object({
+                  role: z.string(),
+                  content: z.string(),
                 }),
-              ),
-              usage: z.object({
-                prompt_tokens: z.number(),
-                completion_tokens: z.number(),
-                total_tokens: z.number(),
+                finish_reason: z.string(),
               }),
+            ),
+            usage: z.object({
+              prompt_tokens: z.number(),
+              completion_tokens: z.number(),
+              total_tokens: z.number(),
             }),
-          },
-        },
+          }),
+        ),
       },
     },
   };
@@ -282,7 +279,12 @@ export class ChatComplete extends OpenAPIRoute {
     } catch (error: unknown) {
       console.error("Error in ChatComplete handler:", error);
       return c.json(
-        { error: error instanceof Error ? error.message : "An error occurred processing your request" },
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "An error occurred processing your request",
+        },
         500,
       );
     }

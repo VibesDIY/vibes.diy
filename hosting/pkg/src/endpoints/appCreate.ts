@@ -3,12 +3,7 @@ import { Bool, OpenAPIRoute } from "chanfana";
 import { Context } from "hono";
 import { z } from "zod";
 import { Variables } from "../middleware/auth.js";
-import {
-  App,
-  PublishEvent,
-  type AppType,
-  type PublishEventType,
-} from "../types.js";
+import { App, PublishEvent, type AppType } from "../types.js";
 import { generateVibeSlug } from "../utils/slugGenerator.js";
 
 /**

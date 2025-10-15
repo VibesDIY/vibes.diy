@@ -1,8 +1,8 @@
 import { Hono, Context } from "hono";
-import { 
-  parseSubdomain, 
+import {
+  parseSubdomain,
   isValidSubdomain,
-  renderAppInstance, 
+  renderAppInstance,
   renderCatalogTitle,
   isCustomDomain,
   isFirstPartyApexDomain,

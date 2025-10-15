@@ -1,4 +1,4 @@
-import { OpenAPIRoute } from "chanfana";
+import { OpenAPIRoute, contentJson } from "chanfana";
 import { Context } from "hono";
 import { z } from "zod";
 
@@ -117,7 +117,8 @@ function convertToOpenAIFormat(
     usage: {
       prompt_tokens: claudeResponse.usage.input_tokens,
       completion_tokens: claudeResponse.usage.output_tokens,
-      total_tokens: claudeResponse.usage.input_tokens + claudeResponse.usage.output_tokens,
+      total_tokens:
+        claudeResponse.usage.input_tokens + claudeResponse.usage.output_tokens,
     },
   };
 }
@@ -214,11 +215,11 @@ export async function claudeChat(
                       object: "chat.completion.chunk",
                       created: Math.floor(Date.now() / 1000),
                       model: claudeEvent.model,
-                      choices: [] as Array<{
+                      choices: [] as {
                         index: number;
                         delta: { content?: string };
                         finish_reason: string | null;
-                      }>,
+                      }[],
                     };
 
                     if (
@@ -363,93 +364,85 @@ export class ClaudeChat extends OpenAPIRoute {
     tags: ["Claude"],
     summary: "Chat completions via Claude API with OpenAI-compatible interface",
     request: {
-      body: {
-        content: {
-          "application/json": {
-            schema: z.object({
-              model: z
-                .string()
-                .describe(
-                  "ID of the Claude model to use (e.g., 'claude-3-opus-20240229')",
-                ),
-              messages: z
-                .array(
-                  z.object({
-                    role: z
-                      .string()
-                      .describe(
-                        "The role of the message author (system, user, assistant)",
-                      ),
-                    content: z.string().describe("The content of the message"),
-                    name: z
-                      .string()
-                      .optional()
-                      .describe("Optional name for the message author"),
-                  }),
-                )
-                .describe(
-                  "A list of messages comprising the conversation so far",
-                ),
-              temperature: z
-                .number()
-                .optional()
-                .default(1)
-                .describe("Sampling temperature (0-1)"),
-              top_p: z
-                .number()
-                .optional()
-                .default(1)
-                .describe("Nucleus sampling parameter"),
-              top_k: z
-                .number()
-                .optional()
-                .describe(
-                  "Only sample from the top K options for each subsequent token",
-                ),
-              max_tokens: z
-                .number()
-                .optional()
-                .default(1024)
-                .describe("Maximum number of tokens to generate"),
-              stream: z
-                .boolean()
-                .optional()
-                .default(false)
-                .describe("Stream partial progress"),
-              user: z.string().optional().describe("User ID for tracking"),
-            }),
-          },
-        },
-      },
+      body: contentJson(
+        z.object({
+          model: z
+            .string()
+            .describe(
+              "ID of the Claude model to use (e.g., 'claude-3-opus-20240229')",
+            ),
+          messages: z
+            .array(
+              z.object({
+                role: z
+                  .string()
+                  .describe(
+                    "The role of the message author (system, user, assistant)",
+                  ),
+                content: z.string().describe("The content of the message"),
+                name: z
+                  .string()
+                  .optional()
+                  .describe("Optional name for the message author"),
+              }),
+            )
+            .describe("A list of messages comprising the conversation so far"),
+          temperature: z
+            .number()
+            .optional()
+            .default(1)
+            .describe("Sampling temperature (0-1)"),
+          top_p: z
+            .number()
+            .optional()
+            .default(1)
+            .describe("Nucleus sampling parameter"),
+          top_k: z
+            .number()
+            .optional()
+            .describe(
+              "Only sample from the top K options for each subsequent token",
+            ),
+          max_tokens: z
+            .number()
+            .optional()
+            .default(1024)
+            .describe("Maximum number of tokens to generate"),
+          stream: z
+            .boolean()
+            .optional()
+            .default(false)
+            .describe("Stream partial progress"),
+          user: z.string().optional().describe("User ID for tracking"),
+        }),
+      ),
     },
     responses: {
       200: {
         description: "Successful chat completion",
-        content: {
-          "application/json": {
-            schema: z.object({
-              id: z.string(),
-              object: z.string(),
-              created: z.number(),
-              model: z.string(),
-              choices: z.array(
-                z.object({
-                  index: z.number(),
-                  message: z.object({
-                    role: z.string(),
-                    content: z.string(),
-                  }),
-                  finish_reason: z.string(),
+        ...contentJson(
+          z.object({
+            id: z.string(),
+            object: z.string(),
+            created: z.number(),
+            model: z.string(),
+            choices: z.array(
+              z.object({
+                index: z.number(),
+                message: z.object({
+                  role: z.string(),
+                  content: z.string(),
                 }),
-              ),
-              usage: z.object({
-                prompt_tokens: z.number(),
-                completion_tokens: z.number(),
-                total_tokens: z.number(),
+                finish_reason: z.string(),
               }),
+            ),
+            usage: z.object({
+              prompt_tokens: z.number(),
+              completion_tokens: z.number(),
+              total_tokens: z.number(),
             }),
-          },
-        },
+          }),
+        ),
       },
     },
   };
@@ -497,7 +490,10 @@ export class ClaudeChat extends OpenAPIRoute {
       return c.json(
         {
           error: {
-            message: error instanceof Error ? error.message : "An error occurred processing your request",
+            message:
+              error instanceof Error
+                ? error.message
+                : "An error occurred processing your request",
             type: "server_error",
             param: null,
             code: null,
