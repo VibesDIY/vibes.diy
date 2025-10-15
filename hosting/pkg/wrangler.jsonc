@@ -6,6 +6,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vibes-hosting-v2",
   "main": "src/index.ts",
+  "workers_dev": true,
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "compatibility_date": "2025-04-07",
   "observability": {
@@ -30,18 +31,18 @@
   "queues": {
     "producers": [
       {
-        "queue": "publish-events",
+        "queue": "publish-events-v2",
         "binding": "PUBLISH_QUEUE",
         "delivery_delay": 0,
       },
     ],
     "consumers": [
       {
-        "queue": "publish-events",
+        "queue": "publish-events-v2",
         "max_batch_size": 10,
         "max_batch_timeout": 30,
         "max_retries": 3,
-        "dead_letter_queue": "publish-events-dlq",
+        "dead_letter_queue": "publish-events-v2-dlq",
       },
     ],
   },
