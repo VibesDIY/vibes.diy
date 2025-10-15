@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import queueConsumer, { PublishEvent } from "@vibes.diy/hosting";
+import queueConsumer, { type PublishEventType } from "@vibes.diy/hosting";
 
 describe("Queue Consumer", () => {
   let originalFetch: typeof global.fetch;
@@ -10,7 +10,7 @@ describe("Queue Consumer", () => {
   };
   let mockMessage: {
     id: string;
-    body: PublishEvent;
+    body: PublishEventType;
     timestamp: Date;
   };
   let mockBatch: {
