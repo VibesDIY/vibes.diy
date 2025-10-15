@@ -120,8 +120,8 @@ export async function verifyToken(
   if (isTokenAboutToExpire(result.payload)) {
     const extendedToken = await extendToken(token);
     if (extendedToken) {
-      // Verify the extended token to get its payload
-      const extendedResult = await verifyToken(extendedToken);
+      // Verify the extended token but don't trigger another extension
+      const extendedResult = await baseVerifyToken(extendedToken, publicKey);
       if (extendedResult) {
         return extendedResult;
       }
