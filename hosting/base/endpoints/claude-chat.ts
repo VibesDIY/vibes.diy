@@ -452,6 +452,22 @@ export class ClaudeChat extends OpenAPIRoute {
       // Get request data from JSON body
       const data = await c.req.json();
 
+      // Require authentication for Claude API usage
+      const user = c.get("user");
+      if (!user) {
+        return c.json(
+          {
+            error: {
+              message:
+                "Authentication required. Please log in to use AI features.",
+              type: "authentication_error",
+              code: 401,
+            },
+          },
+          401,
+        );
+      }
+
       // Convert the data to our type
       const requestBody: ClaudeMessagesRequest = {
         model: data.model,

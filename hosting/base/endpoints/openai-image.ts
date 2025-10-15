@@ -504,6 +504,22 @@ export class ImageGenerate extends OpenAPIRoute {
       // Get validated request data from JSON body
       const data = await c.req.json();
 
+      // Require authentication for OpenAI Image API usage
+      const user = c.get("user");
+      if (!user) {
+        return c.json(
+          {
+            error: {
+              message:
+                "Authentication required. Please log in to use AI features.",
+              type: "authentication_error",
+              code: 401,
+            },
+          },
+          401,
+        );
+      }
+
       // Convert the data to our type
       const requestBody: ImageGenerateRequest = {
         prompt: data.prompt,
@@ -576,6 +592,22 @@ export class ImageEdit extends OpenAPIRoute {
 
   async handle(c: HonoContext) {
     try {
+      // Require authentication for OpenAI Image Edit API usage
+      const user = c.get("user");
+      if (!user) {
+        return c.json(
+          {
+            error: {
+              message:
+                "Authentication required. Please log in to use AI features.",
+              type: "authentication_error",
+              code: 401,
+            },
+          },
+          401,
+        );
+      }
+
       // For the edit route, we'll create an empty request object first
       const requestBody: ImageEditRequest = {
         prompt: "",

@@ -132,6 +132,21 @@ export class OpenRouterChat extends OpenAPIRoute {
 
         // Check if it's the dummy key indicating proxy-managed authentication
         if (providedKey === "sk-vibes-proxy-managed") {
+          // Require authentication for proxy-managed API key usage
+          if (!user) {
+            return c.json(
+              {
+                error: {
+                  message:
+                    "Authentication required. Please log in to use AI features.",
+                  type: "authentication_error",
+                  code: 401,
+                },
+              },
+              401,
+            );
+          }
+
           // Use server's OpenRouter key
           apiKey = c.env.SERVER_OPENROUTER_PROV_KEY;
           if (!apiKey) {
