@@ -30,7 +30,7 @@
     "call-ai": "workspace:*"
   },
   "peerDependencies": {
-    "react": "~19.1.0"
+    "react": ">=19.1.0"
   },
   "devDependencies": {
     "@fireproof/core-cli": "^0.23.14",
