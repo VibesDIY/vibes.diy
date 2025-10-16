@@ -79,6 +79,5 @@ export {
 export { authMiddleware } from "./middleware/auth.js";
 export { PublishEvent } from "./types.js";
 export type { PublishEvent as PublishEventType } from "./types.js";
-export { template } from "./apptemplate.js";
 export { default as renderApp } from "./renderApp.js";
 export { default as queueConsumer } from "./queue-consumer.js";
