@@ -4,7 +4,9 @@ export interface StylePrompt {
 }
 
 export const stylePrompts: StylePrompt[] = [
-  // Make "brutalist web" the default and expand its guidance for clearer, prescriptive UX
+  // "brutalist web" remains the intended default. The default is now selected by name
+  // (see DEFAULT_STYLE_NAME below), not by array order. Order here only affects UI
+  // suggestion ordering in Settings.
   {
     name: "brutalist web",
     prompt:
@@ -54,5 +56,14 @@ export const stylePrompts: StylePrompt[] = [
   },
 ];
 
-// Export the first style prompt as the default
-export const defaultStylePrompt = stylePrompts[0].prompt;
+// Explicit default selection (stable regardless of array order)
+export const DEFAULT_STYLE_NAME = "brutalist web" as const;
+const defaultStyleEntry = stylePrompts.find(
+  (s) => s.name === DEFAULT_STYLE_NAME,
+);
+if (!defaultStyleEntry) {
+  throw new Error(
+    `DEFAULT_STYLE_NAME "${DEFAULT_STYLE_NAME}" not found in stylePrompts. Update DEFAULT_STYLE_NAME or the style list.`,
+  );
+}
+export const defaultStylePrompt = defaultStyleEntry.prompt;

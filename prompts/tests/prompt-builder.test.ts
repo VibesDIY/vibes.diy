@@ -4,7 +4,7 @@ import {
   JsonDocs,
   LlmCatalogEntry,
   makeBaseSystemPrompt,
-  stylePrompts,
+  defaultStylePrompt,
 } from "@vibes.diy/prompts";
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
@@ -233,8 +233,8 @@ describe("prompt builder (real implementation)", () => {
     //   .join("");
     // expect(prompt).toContain(expectedDocs);
 
-    // Default style prompt appears when undefined; assert against source-of-truth export
-    expect(result.systemPrompt).toContain(stylePrompts[0].prompt);
+    // Default style prompt appears when undefined; assert against explicit export
+    expect(result.systemPrompt).toContain(defaultStylePrompt);
   });
 
   it("makeBaseSystemPrompt: supports custom stylePrompt and userPrompt", async () => {
