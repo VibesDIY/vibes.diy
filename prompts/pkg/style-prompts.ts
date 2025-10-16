@@ -58,12 +58,25 @@ export const stylePrompts: StylePrompt[] = [
 
 // Explicit default selection (stable regardless of array order)
 export const DEFAULT_STYLE_NAME = "brutalist web" as const;
-const defaultStyleEntry = stylePrompts.find(
-  (s) => s.name === DEFAULT_STYLE_NAME,
-);
-if (!defaultStyleEntry) {
-  throw new Error(
-    `DEFAULT_STYLE_NAME "${DEFAULT_STYLE_NAME}" not found in stylePrompts. Update DEFAULT_STYLE_NAME or the style list.`,
-  );
+
+// Build a name → style map once and enforce uniqueness to avoid subtle bugs
+const nameToStyle = new Map<string, StylePrompt>();
+for (const s of stylePrompts) {
+  if (nameToStyle.has(s.name)) {
+    throw new Error(
+      `Duplicate style name detected: "${s.name}". Style names must be unique.`,
+    );
+  }
+  nameToStyle.set(s.name, s);
 }
-export const defaultStylePrompt = defaultStyleEntry.prompt;
+
+// Derive the default prompt via map lookup (order-independent)
+export const defaultStylePrompt = (() => {
+  const entry = nameToStyle.get(DEFAULT_STYLE_NAME);
+  if (!entry) {
+    throw new Error(
+      `DEFAULT_STYLE_NAME "${DEFAULT_STYLE_NAME}" not found in stylePrompts. Update DEFAULT_STYLE_NAME or the style list.`,
+    );
+  }
+  return entry.prompt;
+})();
