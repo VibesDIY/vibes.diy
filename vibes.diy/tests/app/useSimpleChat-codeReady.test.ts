@@ -201,6 +201,8 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
             const id = existingDoc?._id || `ai-message-${Date.now()}`;
             return Promise.resolve({ id });
           }),
+        effectiveModel: ["anthropic/claude-sonnet-4.5"],
+        updateSelectedModel: vi.fn().mockResolvedValue(undefined),
       };
     },
   };

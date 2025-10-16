@@ -7,6 +7,7 @@ import type {
   UserSettings,
   SystemPromptResult,
 } from "@vibes.diy/prompts";
+import { DEFAULT_CODING_MODEL } from "@vibes.diy/prompts";
 
 import { useFireproof } from "use-fireproof";
 import { VibesDiyEnv } from "../config/env.js";
@@ -348,7 +349,8 @@ ${code}
     sessionId: session._id,
     vibeDoc,
     selectedModel: vibeDoc?.selectedModel,
-    // effectiveModel,
+    effectiveModel:
+      effectiveModel[0] || settingsDoc?.model || DEFAULT_CODING_MODEL,
     globalModel: settingsDoc?.model,
     showModelPickerInChat: settingsDoc?.showModelPickerInChat || false,
     addScreenshot,
