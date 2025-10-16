@@ -32,8 +32,8 @@
   "routes": [
     {
       "pattern": "*vibesdiy.net/*",
-      "zone_name": "vibesdiy.net"
-    }
+      "zone_name": "vibesdiy.net",
+    },
   ],
 
   /**
