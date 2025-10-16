@@ -221,7 +221,7 @@ export default function ModelPicker({
                       type="button"
                       role="menuitemradio"
                       aria-checked={selected}
-                      className={`flex w-full items-start gap-2 rounded px-2 py-2 text-left text-sm hover:bg-white dark:hover:bg-gray-700 ${
+                      className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-white dark:hover:bg-gray-700 ${
                         selected ? "bg-white dark:bg-gray-700" : ""
                       }`}
                       onClick={() => handleSelect(m.id)}
@@ -229,12 +229,7 @@ export default function ModelPicker({
                       <span aria-hidden="true" className="w-4 text-center">
                         {selected ? "✓" : ""}
                       </span>
-                      <span className="flex-1">
-                        <span className="block font-medium">{m.name}</span>
-                        <span className="text-light-secondary dark:text-dark-secondary block text-xs">
-                          {m.description}
-                        </span>
-                      </span>
+                      <span className="flex-1 font-medium">{m.name}</span>
                     </button>
                   );
                 })}

@@ -332,6 +332,8 @@ vi.mock("~/vibes.diy/app/hooks/useSession", async (original) => {
           mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
+        effectiveModel: ["anthropic/claude-sonnet-4.5"],
+        updateSelectedModel: vi.fn().mockResolvedValue(undefined),
         // Mock message handling
         addUserMessage: vi.fn().mockImplementation(async (text) => {
           const created_at = Date.now();

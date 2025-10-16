@@ -13,6 +13,9 @@ export function useNewSessionChat(
 ): NewSessionChatState {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string | undefined>(
+    undefined,
+  );
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const navigate = useNavigate();
 
@@ -72,6 +75,17 @@ export function useNewSessionChat(
     // No-op for new session
   }, []);
 
+  const updateSelectedModel = useCallback(
+    async (modelId: string): Promise<void> => {
+      setSelectedModel(modelId);
+    },
+    [],
+  );
+
+  // Determine effective model: user selection > global setting > default
+  const effectiveModel =
+    selectedModel || settingsDoc?.model || DEFAULT_CODING_MODEL;
+
   return {
     input,
     setInput,
@@ -84,10 +98,10 @@ export function useNewSessionChat(
     title: "", // No title for new session
     sessionId: null, // No session ID until created
     showModelPickerInChat: settingsDoc?.showModelPickerInChat || false,
-    effectiveModel: DEFAULT_CODING_MODEL, // Default model
-    globalModel: DEFAULT_CODING_MODEL,
-    selectedModel: DEFAULT_CODING_MODEL,
-    updateSelectedModel: undefined, // No model selection in new session for now
+    effectiveModel,
+    globalModel: settingsDoc?.model || DEFAULT_CODING_MODEL,
+    selectedModel,
+    updateSelectedModel,
     saveCodeAsAiMessage,
     updateTitle,
     addScreenshot,
