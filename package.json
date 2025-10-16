@@ -59,13 +59,11 @@
     "cross-env": "^10.0.0",
     "eslint": "^9.37.0",
     "eslint-plugin-import": "^2.32.0",
+    "playwright": "^1.56.0",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "typescript-eslint": "^8.46.1",
     "vitest": "^3.2.4",
     "wrangler": "^4.42.2"
-  },
-  "dependencies": {
-    "playwright": "^1.56.0"
   }
 }
