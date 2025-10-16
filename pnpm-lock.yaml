@@ -294,7 +294,7 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
     devDependencies:
       '@fireproof/core-cli':
@@ -322,7 +322,7 @@ importers:
         specifier: workspace:0.0.0
         version: link:../../call-ai/pkg
       react-dom:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.14
@@ -359,7 +359,7 @@ importers:
         specifier: ^1.56.0
         version: 1.56.0
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       tsx:
         specifier: ^4.20.3
@@ -398,10 +398,10 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       react-dom:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.14
@@ -447,10 +447,10 @@ importers:
   use-vibes/examples/react-example:
     dependencies:
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       react-dom:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1(react@19.1.1)
       use-vibes:
         specifier: workspace:*
@@ -499,10 +499,10 @@ importers:
         specifier: workspace:*
         version: link:../base
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       react-dom:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1(react@19.1.1)
     devDependencies:
       '@fireproof/core-cli':
@@ -524,7 +524,7 @@ importers:
         specifier: workspace:0.0.0
         version: link:../base
       react-dom:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1(react@19.1.1)
       use-fireproof:
         specifier: ^0.23.14
@@ -576,7 +576,7 @@ importers:
         specifier: ^1.56.0
         version: 1.56.0
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       tsx:
         specifier: ^4.20.3
@@ -597,7 +597,7 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       use-fireproof:
         specifier: ^0.23.14
@@ -717,13 +717,13 @@ importers:
         specifier: ^1.275.1
         version: 1.275.1
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       react-cookie-consent:
         specifier: ^9.0.0
         version: 9.0.0(react@19.1.1)
       react-dom:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1(react@19.1.1)
       react-ga:
         specifier: ^3.3.1
@@ -874,13 +874,13 @@ importers:
         specifier: ^1.275.1
         version: 1.275.1
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       react-cookie-consent:
         specifier: ^9.0.0
         version: 9.0.0(react@19.1.1)
       react-dom:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1(react@19.1.1)
       react-ga4:
         specifier: ^2.1.0
@@ -971,13 +971,13 @@ importers:
         specifier: ^1.275.1
         version: 1.275.1
       react:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1
       react-cookie-consent:
         specifier: ^9.0.0
         version: 9.0.0(react@19.1.1)
       react-dom:
-        specifier: ~19.1.0
+        specifier: '>=19.1.0'
         version: 19.1.1(react@19.1.1)
       react-ga4:
         specifier: ^2.1.0
