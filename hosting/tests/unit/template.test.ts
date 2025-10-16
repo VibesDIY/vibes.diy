@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { template } from "@vibes.diy/hosting";
+import { template } from "../../base/apptemplate.js";
 
 // These imports will fail initially - that's expected in TDD
 // import { styles } from "@vibes.diy/hosting";

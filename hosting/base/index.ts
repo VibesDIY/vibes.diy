@@ -14,3 +14,6 @@ export * from "./utils/subdomainParser.js";
 
 // Types
 export * from "./types.js";
+
+// Template
+export { template } from "./apptemplate.js";
