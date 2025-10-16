@@ -27,10 +27,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const html = await response.text();
 
       expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@0.12.15-dev06"',
+        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
       );
       expect(html).toContain(
-        '"use-fireproof": "https://esm.sh/use-vibes@0.12.15-dev06"',
+        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
       );
     });
 
@@ -147,10 +147,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
         const html = await response.text();
 
         expect(html).toContain(
-          '"use-vibes": "https://esm.sh/use-vibes@0.12.15-dev06"',
+          '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
         );
         expect(html).toContain(
-          '"use-fireproof": "https://esm.sh/use-vibes@0.12.15-dev06"',
+          '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
         );
       }
     });
@@ -180,10 +180,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const html = await response.text();
 
       expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@0.12.15-dev06"',
+        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
       );
       expect(html).toContain(
-        '"use-fireproof": "https://esm.sh/use-vibes@0.12.15-dev06"',
+        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
       );
     });
   });
@@ -240,8 +240,8 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const importMap = JSON.parse(importMapMatch[1]);
 
       // React versions should remain unchanged
-      expect(importMap.imports.react).toContain("react@~19.1.1");
-      expect(importMap.imports["react-dom"]).toContain("react-dom@~19.1.1");
+      expect(importMap.imports.react).toContain("react@>=19.1.0");
+      expect(importMap.imports["react-dom"]).toContain("react-dom@>=19.1.0");
 
       // Only use-vibes related imports should be affected
       expect(importMap.imports["use-vibes"]).toBe(
