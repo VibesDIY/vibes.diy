@@ -4,6 +4,14 @@ export interface StylePrompt {
 }
 
 export const stylePrompts: StylePrompt[] = [
+  // "brutalist web" remains the intended default. The default is now selected by name
+  // (see DEFAULT_STYLE_NAME below), not by array order. Order here only affects UI
+  // suggestion ordering in Settings.
+  {
+    name: "brutalist web",
+    prompt:
+      'Create a UI theme in a neo-brutalist style: blocky geometry, oversized controls, thick 4-12px outlines, and big bold offsets (hard shadow plates offset 6-12px bottom-right; active press reduces offset by 2-4px). Use grid/blueprint cues—graph lines, micro-dots, hatch/stipple textures—on flat matte surfaces; reserve subtle gloss only for CTAs. Background (only skeuomorphic element): grey-blue graph paper via CSS—base #f1f5f9, grid from repeating-linear-gradients in #cbd5e1/#94a3b8 at 16-24px; add a fullscreen grain layer (SVG turbulence or 1px noise PNG) at 3-6% opacity with filter: blur(0.4-0.8px) contrast(102%) brightness(101%); lock to viewport. Corner rule: components are either square (0px radius) or very rounded (50% of component height)—no in-between. Mobile-first layout: single-column flow on phones, 4/8/16/24 spacing scale, tap targets >= 48x48, sticky header + bottom nav; expand to 2-4 columns at sm >= 640 / md >= 768 / lg >= 1024 with asymmetric stacks. Maintain high contrast on light backgrounds. Secret name "Neobrute Blueprint." Use these colors: #f1f5f9 #cbd5e1 #94a3b8 #64748b #0f172a #242424 #ffffff. Never use white text; #ffffff is for surfaces only.',
+  },
   {
     name: "memphis",
     prompt:
@@ -12,11 +20,6 @@ export const stylePrompts: StylePrompt[] = [
   {
     name: "synthwave",
     prompt: "80s digital aesthetic",
-  },
-  {
-    name: "brutalist web",
-    prompt:
-      'Create a UI theme in a neo-brutalist style: blocky geometry, oversized controls, thick 4-12px outlines, and big bold offsets (hard shadow plates offset 6-12px bottom-right; active press reduces offset by 2-4px). Use grid/blueprint cues—graph lines, micro-dots, hatch/stipple textures—on flat matte surfaces; reserve subtle gloss only for CTAs. Background (only skeuomorphic element): grey-blue graph paper via CSS—base #f1f5f9, grid from repeating-linear-gradients in #cbd5e1/#94a3b8 at 16-24px; add a fullscreen grain layer (SVG turbulence or 1px noise PNG) at 3-6% opacity with filter: blur(0.4-0.8px) contrast(102%) brightness(101%); lock to viewport. Corner rule: components are either square (0px radius) or very rounded (50% of component height)—no in-between. Mobile-first layout: single-column flow on phones, 4/8/16/24 spacing scale, tap targets >= 48x48, sticky header + bottom nav; expand to 2-4 columns at sm >= 640 / md >= 768 / lg >= 1024 with asymmetric stacks. Maintain high contrast on light backgrounds. Secret name "Neobrute Blueprint." Use these colors: #f1f5f9 #cbd5e1 #94a3b8 #64748b #0f172a #242424 #ffffff. Never use white text; #ffffff is for surfaces only.',
   },
   {
     name: "organic UI",
@@ -53,5 +56,28 @@ export const stylePrompts: StylePrompt[] = [
   },
 ];
 
-// Export the first style prompt (Memphis) as the default
-export const defaultStylePrompt = stylePrompts[0].prompt;
+// Explicit default selection (stable regardless of array order)
+export const DEFAULT_STYLE_NAME = "brutalist web" as const;
+
+// Build a name → style map once and enforce uniqueness to avoid subtle bugs
+const nameToStyle = new Map<string, StylePrompt>();
+for (const s of stylePrompts) {
+  if (nameToStyle.has(s.name)) {
+    throw new Error(
+      `Duplicate style name detected: "${s.name}". Style names must be unique.`,
+    );
+  }
+  nameToStyle.set(s.name, s);
+}
+
+// Derive the default prompt via map lookup (order-independent)
+export const defaultStylePrompt = (() => {
+  const entry = nameToStyle.get(DEFAULT_STYLE_NAME);
+  if (!entry) {
+    const available = Array.from(nameToStyle.keys()).join(", ");
+    throw new Error(
+      `DEFAULT_STYLE_NAME "${DEFAULT_STYLE_NAME}" not found in stylePrompts. Available names: ${available}. Update DEFAULT_STYLE_NAME or the style list.`,
+    );
+  }
+  return entry.prompt;
+})();
