@@ -25,6 +25,18 @@
   "placement": { "mode": "smart" },
 
   /**
+   * Routes
+   * Define routes to match incoming requests to your Worker
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#routes
+   */
+  "routes": [
+    {
+      "pattern": "*vibesdiy.net/*",
+      "zone_name": "vibesdiy.net"
+    }
+  ],
+
+  /**
    * Queue Configuration
    * https://developers.cloudflare.com/queues/configuration/javascript-apis/
    */
