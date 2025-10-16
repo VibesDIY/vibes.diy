@@ -4,7 +4,7 @@ export interface StylePrompt {
 }
 
 export const stylePrompts: StylePrompt[] = [
-  // Make "brutalist web" the default and simplify its wording for clearer UX
+  // Make "brutalist web" the default and expand its guidance for clearer, prescriptive UX
   {
     name: "brutalist web",
     prompt:
