@@ -8,18 +8,6 @@ jobs:
   compile_test:
     runs-on: ubuntu-latest
 
-    services:
-      docker:
-        image: docker:dind
-        options: --privileged
-    container:
-      image: mcr.microsoft.com/playwright:v1.56.0-noble
-      options: --privileged --add-host=host.docker.internal:host-gateway
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-
-    #environment:
-    #  name: external-pr
     if: ${{ !contains(github.event.pull_request.title, '[skip ci]') }}
     steps:
       - uses: actions/checkout@v4
