@@ -74,8 +74,9 @@ for (const s of stylePrompts) {
 export const defaultStylePrompt = (() => {
   const entry = nameToStyle.get(DEFAULT_STYLE_NAME);
   if (!entry) {
+    const available = Array.from(nameToStyle.keys()).join(", ");
     throw new Error(
-      `DEFAULT_STYLE_NAME "${DEFAULT_STYLE_NAME}" not found in stylePrompts. Update DEFAULT_STYLE_NAME or the style list.`,
+      `DEFAULT_STYLE_NAME "${DEFAULT_STYLE_NAME}" not found in stylePrompts. Available names: ${available}. Update DEFAULT_STYLE_NAME or the style list.`,
     );
   }
   return entry.prompt;
