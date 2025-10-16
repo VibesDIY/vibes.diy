@@ -22,7 +22,8 @@ export const template = `<!DOCTYPE html>
   <body>${htmlBody}
     <script>
       window.CALLAI_API_KEY = '{{API_KEY}}';
-      window.CALLAI_CHAT_URL = 'https://vibes-diy-api.com';
+      window.CALLAI_CHAT_URL = 'https://vibesdiy.net';
+      window.CALLAI_IMG_URL = 'https://vibesdiy.net';
     </script>
     <script type="importmap">
       {{IMPORT_MAP}}
