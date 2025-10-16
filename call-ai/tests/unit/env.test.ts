@@ -81,6 +81,9 @@ describe("CallAIEnv window variable fallback", () => {
 
       expect(env.CALLAI_CHAT_URL).toBe("https://env.api.com");
       expect(env.def.CALLAI_CHAT_URL).toBe("https://env.api.com");
+
+      // Clean up the mock
+      mockEnv.mockRestore();
     });
   });
 
@@ -119,6 +122,9 @@ describe("CallAIEnv window variable fallback", () => {
       globalThis.window.CALLAI_IMG_URL = "https://window.img.com";
 
       expect(env.CALLAI_IMG_URL).toBe("https://env.img.com");
+
+      // Clean up the mock
+      mockEnv.mockRestore();
     });
   });
 
