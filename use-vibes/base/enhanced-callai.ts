@@ -56,8 +56,10 @@ export function callAI(
     ...options,
     headers: {
       ...(options.headers || {}),
-      // Add X-VIBES-Token header if auth token is available
-      ...(authToken ? { 'X-VIBES-Token': authToken } : {}),
+      // Only add X-VIBES-Token header if not already provided and auth token is available
+      ...(!options.headers?.['X-VIBES-Token'] && authToken 
+        ? { 'X-VIBES-Token': authToken } 
+        : {}),
     },
   };
 

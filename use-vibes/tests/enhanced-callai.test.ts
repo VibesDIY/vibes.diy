@@ -102,6 +102,53 @@ describe('Enhanced callAI', () => {
       });
     });
 
+    it('should not override caller-provided X-VIBES-Token header', async () => {
+      // Set auth token in localStorage 
+      localStorage.setItem('auth_token', 'localStorage-token');
+
+      // Call with caller-provided X-VIBES-Token
+      await callAI('test prompt', {
+        apiKey: 'test-key',
+        headers: {
+          'X-VIBES-Token': 'caller-provided-token',
+          'Other-Header': 'other-value',
+        },
+      });
+
+      // Verify caller's token is preserved, not overwritten by localStorage token
+      expect(mockCallAIFn).toHaveBeenCalledWith('test prompt', {
+        apiKey: 'test-key',
+        headers: {
+          'X-VIBES-Token': 'caller-provided-token',
+          'Other-Header': 'other-value',
+        },
+      });
+    });
+
+    it('should still use localStorage token when no caller token provided', async () => {
+      // Set auth token in localStorage 
+      localStorage.setItem('auth_token', 'localStorage-token');
+
+      // Call with headers but no X-VIBES-Token
+      await callAI('test prompt', {
+        apiKey: 'test-key',
+        headers: {
+          'Content-Type': 'application/json',
+          'Other-Header': 'other-value',
+        },
+      });
+
+      // Verify localStorage token is used
+      expect(mockCallAIFn).toHaveBeenCalledWith('test prompt', {
+        apiKey: 'test-key',
+        headers: {
+          'Content-Type': 'application/json',
+          'Other-Header': 'other-value',
+          'X-VIBES-Token': 'localStorage-token',
+        },
+      });
+    });
+
     it('should handle localStorage access errors gracefully', async () => {
       // Mock localStorage to throw an error
       const originalGetItem = localStorage.getItem;
