@@ -73,18 +73,13 @@ describe("callAi", () => {
     await callAi(prompt, options);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect((global.fetch as Mock).mock.calls[0][1]).toEqual(
-      // "https://vibes-diy-api.com/api/v1/chat/completions",
-      expect.objectContaining({
-        method: "POST",
-        headers: {
-          Authorization: "Bearer test-api-key",
-          "HTTP-Referer": "https://vibes.diy",
-          "X-Title": "Vibes",
-          "Content-Type": "application/json",
-        },
-      }),
-    );
+    const init = (global.fetch as Mock).mock.calls[0][1] as RequestInit;
+    expect(init?.method).toBe("POST");
+    const headers = new Headers(init?.headers);
+    expect(headers.get("Authorization")).toBe("Bearer test-api-key");
+    expect(headers.get("HTTP-Referer")).toBe("https://vibes.diy");
+    expect(headers.get("X-Title")).toBe("Vibes");
+    expect(headers.get("Content-Type")).toBe("application/json");
 
     const body = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
     expect(body.model).toBe("test-model");
