@@ -25,8 +25,13 @@ import { callAiEnv } from "./env.js";
 // Centralized header name for Vibes auth
 const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
 
+// Storage keys for authentication tokens
+const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const;
+const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const;
+
 /**
  * Get the Vibes authentication token from localStorage (browser only)
+ * Checks both the new use-vibes key and legacy vibes.diy key for compatibility
  * @returns The auth token if available, undefined otherwise
  */
 function getVibesAuthToken(): string | undefined {
@@ -34,7 +39,8 @@ function getVibesAuthToken(): string | undefined {
     return undefined;
   }
   try {
-    return localStorage.getItem("auth_token") || undefined;
+    // Check new use-vibes key first, fall back to legacy vibes.diy key
+    return localStorage.getItem(VIBES_AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY) || undefined;
   } catch {
     return undefined;
   }

@@ -25,6 +25,9 @@ const syncEnabledInstances = new Map<string, Set<string>>();
 // Simple counter for generating unique instance IDs (avoids React.useId conflicts)
 let instanceCounter = 0;
 
+// Storage key for authentication token sync
+const VIBES_AUTH_TOKEN_KEY = 'vibes-diy-auth-token' as const;
+
 // Helper to update body class based on global sync status
 function updateBodyClass() {
   if (typeof window === 'undefined' || !document?.body) return;
@@ -153,6 +156,13 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const disableSync = useCallback(() => {
     localStorage.removeItem(syncKey);
 
+    // Clear the authentication token for call-ai integration
+    try {
+      localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
+    } catch {
+      // Ignore localStorage errors (privacy mode, SSR, etc.)
+    }
+
     // Reset token if attached through original flow
     if (
       result.attach?.ctx?.tokenAndClaims?.state === 'ready' &&
@@ -170,6 +180,53 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     (wasSyncEnabled &&
       (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
     (manualAttach && typeof manualAttach === 'object' && manualAttach.state === 'attached');
+
+  // Bridge Fireproof authentication to call-ai by syncing tokens to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Get the attach context (prefer result.attach over manualAttach)
+    const attach = result.attach || manualAttach;
+
+    // Check if we have a ready token state
+    const hasReadyToken =
+      attach &&
+      typeof attach === 'object' &&
+      'ctx' in attach &&
+      attach.ctx?.tokenAndClaims?.state === 'ready';
+
+    if (hasReadyToken && attach.ctx?.tokenAndClaims) {
+      // Extract the token from the ready state
+      const readyState = attach.ctx.tokenAndClaims;
+      const tokenData = readyState.tokenAndClaims;
+
+      if (tokenData?.token) {
+        try {
+          // Store the token for call-ai integration
+          localStorage.setItem(VIBES_AUTH_TOKEN_KEY, tokenData.token);
+          console.log(
+            '[useFireproof] Synced Fireproof token to localStorage for call-ai integration'
+          );
+        } catch {
+          // Ignore localStorage errors (privacy mode, SSR, etc.)
+          console.warn(
+            '[useFireproof] Failed to sync auth token to localStorage - storage may be restricted'
+          );
+        }
+      }
+    } else if (!syncEnabled) {
+      // If sync is not enabled, ensure token is cleared
+      try {
+        const existingToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
+        if (existingToken) {
+          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
+          console.log('[useFireproof] Cleared vibes-diy-auth-token - sync disabled');
+        }
+      } catch {
+        // Ignore localStorage errors (privacy mode, SSR, etc.)
+      }
+    }
+  }, [result.attach, manualAttach, syncEnabled]);
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
