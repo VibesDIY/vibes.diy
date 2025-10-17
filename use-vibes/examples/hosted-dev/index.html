@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <title>Hosted Dev Environment</title>
+    <!-- Tailwind CSS like hosted apps -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      /* Base styles matching hosted environment */
+      body {
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #fff;
+      }
+
+      #container {
+        min-height: 100vh;
+        position: relative;
+      }
+
+      #vibe-control {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Main app container (like hosted apps) -->
+    <div id="container"></div>
+
+    <!-- Vibes control overlay (like hosted apps) -->
+    <div id="vibe-control"></div>
+
+    <!-- Entry point -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
