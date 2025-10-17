@@ -66,6 +66,7 @@ vi.mock("react-router", async () => {
     useNavigate: () => vi.fn(),
     useParams: () => mockParams,
     useLocation: () => ({ search: "", pathname: "/" }),
+    useLoaderData: () => ({ urlPrompt: null, urlModel: null }),
   };
 });
 
@@ -138,11 +139,19 @@ vi.mock("~/vibes.diy/app/components/NewSessionView", () => {
 vi.mock("~/vibes.diy/app/components/SessionView", () => {
   return {
     __esModule: true,
-    default: () => {
+    default: ({
+      urlPrompt,
+      urlModel,
+    }: {
+      urlPrompt?: string | null;
+      urlModel?: string | null;
+    }) => {
       return (
         <div data-testid="session-view">
           <div data-testid="chat-interface">Chat Interface</div>
           <div data-testid="result-preview">Result Preview</div>
+          {urlPrompt && <div data-testid="url-prompt">{urlPrompt}</div>}
+          {urlModel && <div data-testid="url-model">{urlModel}</div>}
         </div>
       );
     },

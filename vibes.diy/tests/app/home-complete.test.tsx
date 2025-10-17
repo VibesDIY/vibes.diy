@@ -48,6 +48,7 @@ vi.mock("react-router", async () => {
     useNavigate: () => navigateMock,
     useLocation: () => locationMock,
     useParams: () => mockParams,
+    useLoaderData: () => ({ urlPrompt: null, urlModel: null }),
   };
 });
 
@@ -137,11 +138,19 @@ vi.mock("~/vibes.diy/app/components/NewSessionView", () => ({
 }));
 
 vi.mock("~/vibes.diy/app/components/SessionView", () => ({
-  default: () => (
+  default: ({
+    urlPrompt,
+    urlModel,
+  }: {
+    urlPrompt?: string | null;
+    urlModel?: string | null;
+  }) => (
     <div data-testid="session-view">
       <div data-testid="mock-chat-interface">Chat Interface</div>
       <div data-testid="mock-result-preview">
         <div data-testid="code-line-count">210 lines of code</div>
+        {urlPrompt && <div data-testid="url-prompt">{urlPrompt}</div>}
+        {urlModel && <div data-testid="url-model">{urlModel}</div>}
         <div data-testid="code-content">console.log("Line 0");...</div>
         <button
           type="button"
