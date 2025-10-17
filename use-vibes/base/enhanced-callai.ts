@@ -67,8 +67,8 @@ export function callAI(
   return originalCallAI(prompt, enhancedOptions);
 }
 
-// Re-export everything else from the original call-ai package
-export * from 'call-ai';
+// Re-export only the types we need from call-ai
+export type { CallAIOptions, Message, StreamResponse } from 'call-ai';
 
-// Override the default export with our enhanced version
+// Set enhanced callAI as the default export
 export default callAI;
