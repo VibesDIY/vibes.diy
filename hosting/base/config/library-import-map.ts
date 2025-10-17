@@ -7,6 +7,7 @@ export const libraryImportMap = {
     "call-ai": "https://esm.sh/use-vibes@>=0.13.0",
     "use-vibes": "https://esm.sh/use-vibes@>=0.13.0",
     "https://esm.sh/use-fireproof": "https://esm.sh/use-vibes@>=0.13.0",
+    "https://esm.sh/call-ai": "https://esm.sh/use-vibes@>=0.13.0",
     eruda: "https://esm.sh/eruda",
     three: "https://esm.sh/three",
   },
