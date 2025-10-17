@@ -153,6 +153,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const disableSync = useCallback(() => {
     localStorage.removeItem(syncKey);
 
+    // Clear the authentication token for call-ai integration
+    localStorage.removeItem('vibes-diy-auth-token');
+
     // Reset token if attached through original flow
     if (
       result.attach?.ctx?.tokenAndClaims?.state === 'ready' &&
@@ -170,6 +173,42 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     (wasSyncEnabled &&
       (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
     (manualAttach && typeof manualAttach === 'object' && manualAttach.state === 'attached');
+
+  // Bridge Fireproof authentication to call-ai by syncing tokens to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Get the attach context (prefer result.attach over manualAttach)
+    const attach = result.attach || manualAttach;
+
+    // Check if we have a ready token state
+    const hasReadyToken =
+      attach &&
+      typeof attach === 'object' &&
+      'ctx' in attach &&
+      attach.ctx?.tokenAndClaims?.state === 'ready';
+
+    if (hasReadyToken && attach.ctx?.tokenAndClaims) {
+      // Extract the token from the ready state
+      const readyState = attach.ctx.tokenAndClaims;
+      const tokenData = readyState.tokenAndClaims;
+
+      if (tokenData?.token) {
+        // Store the token for call-ai integration
+        localStorage.setItem('vibes-diy-auth-token', tokenData.token);
+        console.log(
+          '[useFireproof] Synced Fireproof token to localStorage for call-ai integration'
+        );
+      }
+    } else if (!syncEnabled) {
+      // If sync is not enabled, ensure token is cleared
+      const existingToken = localStorage.getItem('vibes-diy-auth-token');
+      if (existingToken) {
+        localStorage.removeItem('vibes-diy-auth-token');
+        console.log('[useFireproof] Cleared vibes-diy-auth-token - sync disabled');
+      }
+    }
+  }, [result.attach, manualAttach, syncEnabled]);
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(

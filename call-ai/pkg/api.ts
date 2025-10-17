@@ -27,6 +27,7 @@ const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
 
 /**
  * Get the Vibes authentication token from localStorage (browser only)
+ * Checks both the new use-vibes key and legacy vibes.diy key for compatibility
  * @returns The auth token if available, undefined otherwise
  */
 function getVibesAuthToken(): string | undefined {
@@ -34,7 +35,8 @@ function getVibesAuthToken(): string | undefined {
     return undefined;
   }
   try {
-    return localStorage.getItem("auth_token") || undefined;
+    // Check new use-vibes key first, fall back to legacy vibes.diy key
+    return localStorage.getItem("vibes-diy-auth-token") || localStorage.getItem("auth_token") || undefined;
   } catch {
     return undefined;
   }

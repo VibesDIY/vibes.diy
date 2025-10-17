@@ -43,14 +43,38 @@ describe("callAi Vibes Auth Enhancement", () => {
     });
   });
 
-  it("should add X-VIBES-Token header when auth token is available", async () => {
-    mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
+  it("should add X-VIBES-Token header when vibes-diy-auth-token is available", async () => {
+    mockLocalStorage.getItem.mockImplementation((key) => (key === "vibes-diy-auth-token" ? "test-vibes-token" : null));
     await callAi("Hello", { apiKey: "test-key" });
 
     // Check that fetch was called with the enhanced headers
     const init = globalFetch.mock.calls[0][1] as RequestInit;
     const headers = new Headers(init?.headers);
     expect(headers.get("X-VIBES-Token")).toBe("test-vibes-token");
+  });
+
+  it("should add X-VIBES-Token header when legacy auth_token is available", async () => {
+    mockLocalStorage.getItem.mockImplementation((key) => (key === "auth_token" ? "legacy-vibes-token" : null));
+    await callAi("Hello", { apiKey: "test-key" });
+
+    // Check that fetch was called with the enhanced headers
+    const init = globalFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("X-VIBES-Token")).toBe("legacy-vibes-token");
+  });
+
+  it("should prefer vibes-diy-auth-token over legacy auth_token", async () => {
+    mockLocalStorage.getItem.mockImplementation((key) => {
+      if (key === "vibes-diy-auth-token") return "new-token";
+      if (key === "auth_token") return "legacy-token";
+      return null;
+    });
+    await callAi("Hello", { apiKey: "test-key" });
+
+    // Check that the new token is used, not the legacy one
+    const init = globalFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("X-VIBES-Token")).toBe("new-token");
   });
 
   it("should not add X-VIBES-Token header when no auth token is available", async () => {
@@ -65,7 +89,7 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should preserve existing X-VIBES-Token header if provided by caller", async () => {
-    mockLocalStorage.getItem.mockReturnValue("storage-token");
+    mockLocalStorage.getItem.mockImplementation((key) => (key === "vibes-diy-auth-token" ? "storage-token" : null));
 
     const options: CallAIOptions = {
       apiKey: "test-key",
@@ -81,7 +105,7 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should preserve existing headers when adding auth token", async () => {
-    mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
+    mockLocalStorage.getItem.mockImplementation((key) => (key === "vibes-diy-auth-token" ? "test-vibes-token" : null));
 
     const options: CallAIOptions = {
       apiKey: "test-key",
@@ -144,7 +168,7 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should work with streaming requests", async () => {
-    mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
+    mockLocalStorage.getItem.mockImplementation((key) => (key === "vibes-diy-auth-token" ? "test-vibes-token" : null));
 
     const streamingResponse = {
       ...mockResponse,
@@ -175,7 +199,7 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should enhance options in bufferStreamingResults path", async () => {
-    mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
+    mockLocalStorage.getItem.mockImplementation((key) => (key === "vibes-diy-auth-token" ? "test-vibes-token" : null));
 
     // Use a model that forces streaming (Claude with schema)
     // Ensure the streaming reader completes cleanly
@@ -191,5 +215,40 @@ describe("callAi Vibes Auth Enhancement", () => {
     const init = globalFetch.mock.calls[0][1] as RequestInit;
     const headers = new Headers(init?.headers);
     expect(headers.get("X-VIBES-Token")).toBe("test-vibes-token");
+  });
+
+  it("should include X-VIBES-Token in actual HTTP request headers", async () => {
+    // This integration test verifies the header is actually sent
+    const testToken = "integration-test-vibes-token-12345";
+    mockLocalStorage.getItem.mockImplementation((key) => (key === "vibes-diy-auth-token" ? testToken : null));
+
+    // Clear previous mocks
+    vi.clearAllMocks();
+    globalFetch.mockResolvedValue(mockResponse);
+
+    await callAi("Test integration call", { apiKey: "test-key" });
+
+    // Verify fetch was called exactly once
+    expect(globalFetch).toHaveBeenCalledTimes(1);
+
+    // Extract and verify the actual request headers that would be sent
+    const [url, requestInit] = globalFetch.mock.calls[0];
+    expect(url).toBeDefined();
+    expect(requestInit).toBeDefined();
+
+    // Verify the X-VIBES-Token header is present in the request
+    const actualHeaders = new Headers(requestInit?.headers);
+    expect(actualHeaders.has("X-VIBES-Token")).toBe(true);
+    expect(actualHeaders.get("X-VIBES-Token")).toBe(testToken);
+
+    // Verify other essential headers are also present
+    expect(actualHeaders.has("Authorization")).toBe(true);
+    expect(actualHeaders.has("Content-Type")).toBe(true);
+
+    // Log headers for debugging (useful when running tests manually)
+    console.log("Integration test - Request headers:");
+    for (const [key, value] of actualHeaders.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
   });
 });
