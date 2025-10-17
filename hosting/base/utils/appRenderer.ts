@@ -79,6 +79,7 @@ export async function renderAppInstance(
       `https://esm.sh/use-vibes@${vibesVersion}`;
     dynamicImportMap["https://esm.sh/use-fireproof"] =
       `https://esm.sh/use-vibes@${vibesVersion}`;
+    dynamicImportMap["call-ai"] = `https://esm.sh/use-vibes@${vibesVersion}`;
   }
 
   // Transform the app code to handle imports

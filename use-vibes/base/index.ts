@@ -394,9 +394,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   };
 }
 
-// Re-export specific functions and types from call-ai
-import { callAI } from 'call-ai';
-export { callAI, callAI as callAi };
+// callAI is now exported from enhanced-callai.js below
 
 // Re-export all types under a namespace
 export type * as CallAI from 'call-ai';
@@ -466,3 +464,8 @@ export type { AuthWallProps } from './components/AuthWall/AuthWall.js';
 // Export unified mount function - the main API for non-React environments
 export { mountVibesApp, mountVibesAppToBody } from './vibe-app-mount.js';
 export type { MountVibesAppOptions, MountVibesAppResult } from './vibe-app-mount.js';
+
+// Export enhanced callAI with automatic Vibes authentication
+export { callAI, callAI as callAi, default as callAIDefault } from './enhanced-callai.js';
+// Re-export types from call-ai for convenience
+export type { CallAIOptions, Message, StreamResponse } from 'call-ai';

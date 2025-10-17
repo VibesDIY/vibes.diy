@@ -10,9 +10,10 @@ export {
   ImgFile,
   toCloud,
 
-  // AI integration
+  // AI integration (enhanced with Vibes auth)
   callAI,
   callAi,
+  callAIDefault,
 
   // Vibes generation hook
   useVibes,
@@ -42,6 +43,11 @@ export {
   defaultVibeControlClasses,
   type VibeControlClasses,
   hiddenMenuTheme,
+
+  // Types
+  type CallAIOptions,
+  type Message,
+  type StreamResponse,
 
   // Type namespaces
   type Fireproof,
