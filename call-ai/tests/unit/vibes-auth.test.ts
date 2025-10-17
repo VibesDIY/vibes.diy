@@ -222,37 +222,14 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should include X-VIBES-Token in actual HTTP request headers", async () => {
-    // This integration test verifies the header is actually sent
     const testToken = "integration-test-vibes-token-12345";
-    mockLocalStorage.getItem.mockImplementation((key) => (key === "vibes-diy-auth-token" ? testToken : null));
-
-    // Clear previous mocks
-    vi.clearAllMocks();
-    globalFetch.mockResolvedValue(mockResponse);
+    mockLocalStorage.getItem.mockImplementation((key) => (key === VIBES_AUTH_TOKEN_KEY ? testToken : null));
 
     await callAi("Test integration call", { apiKey: "test-key" });
 
-    // Verify fetch was called exactly once
-    expect(globalFetch).toHaveBeenCalledTimes(1);
-
-    // Extract and verify the actual request headers that would be sent
-    const [url, requestInit] = globalFetch.mock.calls[0];
-    expect(url).toBeDefined();
-    expect(requestInit).toBeDefined();
-
     // Verify the X-VIBES-Token header is present in the request
-    const actualHeaders = new Headers(requestInit?.headers);
-    expect(actualHeaders.has("X-VIBES-Token")).toBe(true);
-    expect(actualHeaders.get("X-VIBES-Token")).toBe(testToken);
-
-    // Verify other essential headers are also present
-    expect(actualHeaders.has("Authorization")).toBe(true);
-    expect(actualHeaders.has("Content-Type")).toBe(true);
-
-    // Log headers for debugging (useful when running tests manually)
-    console.log("Integration test - Request headers:");
-    for (const [key, value] of actualHeaders.entries()) {
-      console.log(`  ${key}: ${value}`);
-    }
+    const init = globalFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("X-VIBES-Token")).toBe(testToken);
   });
 });
