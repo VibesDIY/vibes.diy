@@ -7,7 +7,8 @@ import {
   catalogTitleStyles,
   catalogTitleScript,
 } from "../template/catalogTitle.js";
-import { libraryImportMap, transformImports } from "./codeTransform.js";
+import { transformImports } from "./codeTransform.js";
+import { libraryImportMap as libraryImportMapData } from "../config/library-import-map.js";
 import type { ParsedSubdomain } from "./subdomainParser.js";
 
 // Types for app data structure
@@ -71,24 +72,30 @@ export async function renderAppInstance(
     /^[0-9]+(?:\.[0-9]+(?:\.[0-9]+)?)?(?:-[A-Za-z0-9.-]+)?(?:\+[A-Za-z0-9.-]+)?$/;
   const vibesVersion = semverPattern.test(versionParam) ? versionParam : "";
 
-  // Clone the library import map and update use-vibes version if specified
-  const dynamicImportMap = { ...libraryImportMap };
+  // Clone the full library import map object (including nested `imports`) and update
+  // version-specific overrides when a `v_vibes` query param is provided.
+  const dynamicImportMap = {
+    ...libraryImportMapData,
+    imports: { ...(libraryImportMapData.imports ?? {}) },
+  };
   if (vibesVersion) {
-    dynamicImportMap["use-vibes"] = `https://esm.sh/use-vibes@${vibesVersion}`;
-    dynamicImportMap["use-fireproof"] =
+    dynamicImportMap.imports["use-vibes"] =
       `https://esm.sh/use-vibes@${vibesVersion}`;
-    dynamicImportMap["https://esm.sh/use-fireproof"] =
+    dynamicImportMap.imports["use-fireproof"] =
       `https://esm.sh/use-vibes@${vibesVersion}`;
-    dynamicImportMap["call-ai"] = `https://esm.sh/use-vibes@${vibesVersion}`;
-    dynamicImportMap["https://esm.sh/call-ai"] =
+    dynamicImportMap.imports["https://esm.sh/use-fireproof"] =
+      `https://esm.sh/use-vibes@${vibesVersion}`;
+    dynamicImportMap.imports["call-ai"] =
+      `https://esm.sh/use-vibes@${vibesVersion}`;
+    dynamicImportMap.imports["https://esm.sh/call-ai"] =
       `https://esm.sh/use-vibes@${vibesVersion}`;
   }
 
   // Transform the app code to handle imports
   const transformedCode = transformImports(app.code);
 
-  // Generate the import map JSON
-  const importMapJson = JSON.stringify({ imports: dynamicImportMap }, null, 2);
+  // Generate the import map JSON (serialize the complete import map object)
+  const importMapJson = JSON.stringify(dynamicImportMap, null, 2);
 
   // Replace the placeholders and generate templated code on each request
   let templatedCode = template
