@@ -22,6 +22,9 @@ import { createStreamingGenerator } from "./streaming.js";
 import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 
+// Centralized header name for Vibes auth
+const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
+
 /**
  * Get the Vibes authentication token from localStorage (browser only)
  * @returns The auth token if available, undefined otherwise
@@ -45,28 +48,16 @@ function getVibesAuthToken(): string | undefined {
  */
 function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
   const authToken = getVibesAuthToken();
+  if (!authToken) return options;
 
-  // If no auth token available, return original options unchanged
-  if (!authToken) {
-    return options;
-  }
+  // Normalize to Headers for robust, case-insensitive behavior across all HeadersInit shapes
+  const headers = new Headers(options.headers as HeadersInit | undefined);
 
-  // Check if caller has already provided an X-VIBES-Token header
-  const hasCallerToken = options.headers && typeof options.headers === "object" && "X-VIBES-Token" in options.headers;
+  // Respect any caller-provided token, regardless of header casing
+  if (headers.has(VIBES_AUTH_HEADER)) return options;
 
-  // If caller provided their own token, respect it
-  if (hasCallerToken) {
-    return options;
-  }
-
-  // Add the auth token to headers
-  return {
-    ...options,
-    headers: {
-      ...(options.headers || {}),
-      "X-VIBES-Token": authToken,
-    },
-  };
+  headers.set(VIBES_AUTH_HEADER, authToken);
+  return { ...options, headers };
 }
 
 // Key management is now imported from ./key-management
@@ -492,26 +483,23 @@ function prepareRequestParams(
     Object.assign(requestParams, schemaStrategy.prepareRequest(schema, messages));
   }
 
-  // HTTP headers for the request
-  const headers: Record<string, string> = {
+  // HTTP headers for the request (normalize to `Headers` and merge caller headers)
+  const headers = new Headers({
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
     "HTTP-Referer": options.referer || "https://vibes.diy",
     "X-Title": options.title || "Vibes",
-  };
+  });
 
-  // Add any additional headers
   if (options.headers) {
-    Object.assign(headers, options.headers);
+    const extra = new Headers(options.headers as HeadersInit);
+    extra.forEach((value, key) => headers.set(key, value));
   }
 
   // Build the requestOptions object for fetch
   const requestOptions: RequestInit = {
     method: "POST",
-    headers: {
-      ...headers,
-      "Content-Type": "application/json",
-    },
+    headers, // pass a real Headers instance
     body: JSON.stringify(requestParams),
   };
 

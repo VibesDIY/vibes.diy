@@ -11,6 +11,7 @@ const mockLocalStorage = {
 Object.defineProperty(globalThis, "localStorage", {
   value: mockLocalStorage,
   writable: true,
+  configurable: true,
 });
 
 // Mock global fetch
@@ -49,14 +50,9 @@ describe("callAi Vibes Auth Enhancement", () => {
     await callAi("Hello", { apiKey: "test-key" });
 
     // Check that fetch was called with the enhanced headers
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          "X-VIBES-Token": "test-vibes-token",
-        }),
-      }),
-    );
+    const init = globalFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("X-VIBES-Token")).toBe("test-vibes-token");
   });
 
   it("should not add X-VIBES-Token header when no auth token is available", async () => {
@@ -68,9 +64,8 @@ describe("callAi Vibes Auth Enhancement", () => {
     // Check that fetch was called without the Vibes token
     const fetchCall = globalFetch.mock.calls[0];
     const requestOptions = fetchCall?.[1] as RequestInit;
-    const headers = requestOptions?.headers as Record<string, string>;
-
-    expect(headers).not.toHaveProperty("X-VIBES-Token");
+    const headers = new Headers(requestOptions?.headers);
+    expect(headers.has("X-VIBES-Token")).toBe(false);
   });
 
   it("should preserve existing X-VIBES-Token header if provided by caller", async () => {
@@ -87,14 +82,9 @@ describe("callAi Vibes Auth Enhancement", () => {
     await callAi("Hello", options);
 
     // Check that the caller's token is preserved, not the storage token
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          "X-VIBES-Token": "caller-provided-token",
-        }),
-      }),
-    );
+    const init = globalFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("X-VIBES-Token")).toBe("caller-provided-token");
   });
 
   it("should preserve existing headers when adding auth token", async () => {
@@ -112,16 +102,11 @@ describe("callAi Vibes Auth Enhancement", () => {
     await callAi("Hello", options);
 
     // Check that both custom headers and auth token are present
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          "Custom-Header": "custom-value",
-          "Another-Header": "another-value",
-          "X-VIBES-Token": "test-vibes-token",
-        }),
-      }),
-    );
+    const init = globalFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("Custom-Header")).toBe("custom-value");
+    expect(headers.get("Another-Header")).toBe("another-value");
+    expect(headers.get("X-VIBES-Token")).toBe("test-vibes-token");
   });
 
   it("should work when localStorage access throws an error", async () => {
@@ -136,9 +121,8 @@ describe("callAi Vibes Auth Enhancement", () => {
     // Check that fetch was called without the Vibes token
     const fetchCall = globalFetch.mock.calls[0];
     const requestOptions = fetchCall?.[1] as RequestInit;
-    const headers = requestOptions?.headers as Record<string, string>;
-
-    expect(headers).not.toHaveProperty("X-VIBES-Token");
+    const headers = new Headers(requestOptions?.headers);
+    expect(headers.has("X-VIBES-Token")).toBe(false);
   });
 
   it("should work in non-browser environments without localStorage", async () => {
@@ -152,9 +136,8 @@ describe("callAi Vibes Auth Enhancement", () => {
     // Check that fetch was called without the Vibes token
     const fetchCall = globalFetch.mock.calls[0];
     const requestOptions = fetchCall?.[1] as RequestInit;
-    const headers = requestOptions?.headers as Record<string, string>;
-
-    expect(headers).not.toHaveProperty("X-VIBES-Token");
+    const headers = new Headers(requestOptions?.headers);
+    expect(headers.has("X-VIBES-Token")).toBe(false);
 
     // Restore localStorage
     globalThis.localStorage = originalLocalStorage;
@@ -169,9 +152,8 @@ describe("callAi Vibes Auth Enhancement", () => {
     // Check that fetch was called without the Vibes token (empty string is falsy)
     const fetchCall = globalFetch.mock.calls[0];
     const requestOptions = fetchCall?.[1] as RequestInit;
-    const headers = requestOptions?.headers as Record<string, string>;
-
-    expect(headers).not.toHaveProperty("X-VIBES-Token");
+    const headers = new Headers(requestOptions?.headers);
+    expect(headers.has("X-VIBES-Token")).toBe(false);
   });
 
   it("should work with streaming requests", async () => {
@@ -205,14 +187,9 @@ describe("callAi Vibes Auth Enhancement", () => {
     expect(result.value).toBeDefined();
 
     // Check that fetch was called with the enhanced headers
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          "X-VIBES-Token": "test-vibes-token",
-        }),
-      }),
-    );
+    const init = globalFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("X-VIBES-Token")).toBe("test-vibes-token");
   });
 
   it("should enhance options in bufferStreamingResults path", async () => {
@@ -220,6 +197,8 @@ describe("callAi Vibes Auth Enhancement", () => {
     mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
 
     // Use a model that forces streaming (Claude with schema)
+    // Ensure the streaming reader completes cleanly
+    mockReader.read.mockResolvedValueOnce({ done: true });
     await callAi("Hello", {
       apiKey: "test-key",
       model: "anthropic/claude-3.5-sonnet",
@@ -228,13 +207,8 @@ describe("callAi Vibes Auth Enhancement", () => {
     });
 
     // Check that fetch was called with the enhanced headers
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          "X-VIBES-Token": "test-vibes-token",
-        }),
-      }),
-    );
+    const init = globalFetch.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("X-VIBES-Token")).toBe("test-vibes-token");
   });
 });
