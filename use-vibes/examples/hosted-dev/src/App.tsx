@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFireproof } from 'use-vibes';
-import { callAi } from 'call-ai';
+import { callAI } from 'call-ai';
 
 // Sample app that demonstrates hosted app patterns
 export default function App() {
@@ -9,8 +9,11 @@ export default function App() {
   const [aiResponse, setAiResponse] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Sample data query (like hosted apps would do)
-  const messages = useLiveQuery(database, (doc) => doc.type === 'message', []);
+  // Sample data query (like hosted apps would do)  
+  const { docs: messages } = useLiveQuery('type', {
+    key: 'message',
+    descending: true,
+  });
 
   const handleAddMessage = async () => {
     if (!message.trim()) return;
@@ -31,7 +34,7 @@ export default function App() {
 
     try {
       // Test AI integration (like hosted apps would do)
-      const response = await callAi('Say hello and explain what this app demonstrates', {
+      const response = await callAI('Say hello and explain what this app demonstrates', {
         model: 'openai/gpt-3.5-turbo',
       });
 
@@ -99,7 +102,7 @@ export default function App() {
           </div>
 
           <div className="space-y-2">
-            {messages.docs.map((msg) => (
+            {messages.map((msg) => (
               <div key={msg._id} className="p-3 bg-gray-50 rounded border">
                 <p className="text-gray-900">{msg.text}</p>
                 <p className="text-xs text-gray-500 mt-1">
@@ -107,7 +110,7 @@ export default function App() {
                 </p>
               </div>
             ))}
-            {messages.docs.length === 0 && (
+            {messages.length === 0 && (
               <p className="text-gray-500 italic">No messages yet. Add one above!</p>
             )}
           </div>
