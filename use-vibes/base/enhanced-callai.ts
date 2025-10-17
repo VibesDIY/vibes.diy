@@ -51,15 +51,17 @@ export function callAI(
   // Get the auth token
   const authToken = getVibesAuthToken();
 
+  // Check if caller already provided X-VIBES-Token
+  const hasCallerToken =
+    options.headers && typeof options.headers === 'object' && 'X-VIBES-Token' in options.headers;
+
   // Prepare enhanced options with auth headers
   const enhancedOptions: CallAIOptions = {
     ...options,
     headers: {
       ...(options.headers || {}),
       // Only add X-VIBES-Token header if not already provided and auth token is available
-      ...(!options.headers?.['X-VIBES-Token'] && authToken 
-        ? { 'X-VIBES-Token': authToken } 
-        : {}),
+      ...(!hasCallerToken && authToken ? { 'X-VIBES-Token': authToken } : {}),
     },
   };
 

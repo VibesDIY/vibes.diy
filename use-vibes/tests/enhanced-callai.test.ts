@@ -103,7 +103,7 @@ describe('Enhanced callAI', () => {
     });
 
     it('should not override caller-provided X-VIBES-Token header', async () => {
-      // Set auth token in localStorage 
+      // Set auth token in localStorage
       localStorage.setItem('auth_token', 'localStorage-token');
 
       // Call with caller-provided X-VIBES-Token
@@ -126,7 +126,7 @@ describe('Enhanced callAI', () => {
     });
 
     it('should still use localStorage token when no caller token provided', async () => {
-      // Set auth token in localStorage 
+      // Set auth token in localStorage
       localStorage.setItem('auth_token', 'localStorage-token');
 
       // Call with headers but no X-VIBES-Token
