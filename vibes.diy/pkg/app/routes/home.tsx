@@ -1,5 +1,10 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { useParams, useLocation, useNavigate } from "react-router";
+import {
+  useParams,
+  useLocation,
+  useNavigate,
+  useLoaderData,
+} from "react-router";
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
@@ -11,7 +16,20 @@ export function meta() {
   ];
 }
 
+// Client loader to extract URL parameters as source of truth
+export async function clientLoader({ request }: { request: Request }) {
+  const url = new URL(request.url);
+  const promptParam = url.searchParams.get("prompt");
+  const modelParam = url.searchParams.get("model");
+
+  return {
+    urlPrompt: promptParam || null,
+    urlModel: modelParam || null,
+  };
+}
+
 export default function SessionWrapper() {
+  const loaderData = useLoaderData<typeof clientLoader>();
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();
   const originalNavigate = useNavigate();
@@ -58,8 +76,16 @@ export default function SessionWrapper() {
         const promptTitle = promptParam.trim().slice(0, 50);
         const encodedPromptTitle = encodeTitle(promptTitle);
 
-        // Forward to the new chat session URL with the prompt parameter
-        const targetUrl = `/chat/${newSessionId}/${encodedPromptTitle}?prompt=${encodeURIComponent(promptParam.trim())}`;
+        // Build query string preserving both prompt and model parameters
+        const forwardParams = new URLSearchParams();
+        forwardParams.set("prompt", promptParam.trim());
+        const modelParam = searchParams.get("model");
+        if (modelParam && modelParam.trim()) {
+          forwardParams.set("model", modelParam.trim());
+        }
+
+        // Forward to the new chat session URL with all parameters
+        const targetUrl = `/chat/${newSessionId}/${encodedPromptTitle}?${forwardParams.toString()}`;
 
         // Use window.location to trigger a real page load instead of React Router navigation
         window.location.href = targetUrl;
@@ -79,6 +105,8 @@ export default function SessionWrapper() {
       search={search}
       locationState={locationState}
       navigate={navigate}
+      urlPrompt={loaderData.urlPrompt}
+      urlModel={loaderData.urlModel}
     />
   );
 }
