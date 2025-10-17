@@ -44,9 +44,7 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should add X-VIBES-Token header when auth token is available", async () => {
-    // Setup localStorage to return a token
     mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
-
     await callAi("Hello", { apiKey: "test-key" });
 
     // Check that fetch was called with the enhanced headers
@@ -56,9 +54,7 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should not add X-VIBES-Token header when no auth token is available", async () => {
-    // Setup localStorage to return null
     mockLocalStorage.getItem.mockReturnValue(null);
-
     await callAi("Hello", { apiKey: "test-key" });
 
     // Check that fetch was called without the Vibes token
@@ -69,14 +65,11 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should preserve existing X-VIBES-Token header if provided by caller", async () => {
-    // Setup localStorage to return a token
     mockLocalStorage.getItem.mockReturnValue("storage-token");
 
     const options: CallAIOptions = {
       apiKey: "test-key",
-      headers: {
-        "X-VIBES-Token": "caller-provided-token",
-      },
+      headers: { "X-VIBES-Token": "caller-provided-token" },
     };
 
     await callAi("Hello", options);
@@ -88,7 +81,6 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should preserve existing headers when adding auth token", async () => {
-    // Setup localStorage to return a token
     mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
 
     const options: CallAIOptions = {
@@ -110,12 +102,10 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should work when localStorage access throws an error", async () => {
-    // Setup localStorage to throw an error
     mockLocalStorage.getItem.mockImplementation(() => {
       throw new Error("localStorage not available");
     });
 
-    // Should not throw an error and should work without the token
     await expect(callAi("Hello", { apiKey: "test-key" })).resolves.toBeDefined();
 
     // Check that fetch was called without the Vibes token
@@ -126,11 +116,10 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should work in non-browser environments without localStorage", async () => {
-    // Temporarily remove localStorage
-    const originalLocalStorage = globalThis.localStorage;
-    delete (globalThis as { localStorage?: typeof localStorage }).localStorage;
+    const originalLocalStorage = (globalThis as { localStorage?: Storage }).localStorage;
+    // Simulate absence by setting to undefined (property is writable in this test harness)
+    (globalThis as { localStorage?: Storage }).localStorage = undefined as unknown as Storage;
 
-    // Should not throw an error and should work without the token
     await expect(callAi("Hello", { apiKey: "test-key" })).resolves.toBeDefined();
 
     // Check that fetch was called without the Vibes token
@@ -144,9 +133,7 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should handle empty string token correctly", async () => {
-    // Setup localStorage to return empty string
     mockLocalStorage.getItem.mockReturnValue("");
-
     await callAi("Hello", { apiKey: "test-key" });
 
     // Check that fetch was called without the Vibes token (empty string is falsy)
@@ -157,10 +144,8 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should work with streaming requests", async () => {
-    // Setup localStorage to return a token
     mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
 
-    // Mock streaming response
     const streamingResponse = {
       ...mockResponse,
       body: {
@@ -171,9 +156,7 @@ describe("callAi Vibes Auth Enhancement", () => {
               done: false,
               value: new TextEncoder().encode('data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n'),
             })
-            .mockResolvedValueOnce({
-              done: true,
-            }),
+            .mockResolvedValueOnce({ done: true }),
         }),
       },
     };
@@ -181,7 +164,6 @@ describe("callAi Vibes Auth Enhancement", () => {
 
     const stream = await callAi("Hello", { apiKey: "test-key", stream: true });
 
-    // Consume the stream to trigger the fetch
     const generator = stream as AsyncGenerator<string>;
     const result = await generator.next();
     expect(result.value).toBeDefined();
@@ -193,7 +175,6 @@ describe("callAi Vibes Auth Enhancement", () => {
   });
 
   it("should enhance options in bufferStreamingResults path", async () => {
-    // Setup localStorage to return a token
     mockLocalStorage.getItem.mockReturnValue("test-vibes-token");
 
     // Use a model that forces streaming (Claude with schema)
@@ -203,7 +184,7 @@ describe("callAi Vibes Auth Enhancement", () => {
       apiKey: "test-key",
       model: "anthropic/claude-3.5-sonnet",
       schema: { type: "object", properties: {} },
-      stream: false, // This will be forced to streaming by the strategy
+      stream: false,
     });
 
     // Check that fetch was called with the enhanced headers
