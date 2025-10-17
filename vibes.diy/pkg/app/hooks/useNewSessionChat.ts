@@ -42,8 +42,16 @@ export function useNewSessionChat(
         // Store the message text for later processing
         const userMessage = messageText.trim();
 
-        // Navigate to the new session URL with prompt parameter - this will trigger a page load
-        const targetUrl = `/chat/${newSessionId}?prompt=${encodeURIComponent(userMessage)}`;
+        // Build URL with prompt and optional model parameter
+        const urlParams = new URLSearchParams();
+        urlParams.set("prompt", userMessage);
+
+        // If user selected a specific model, pass it to the new session
+        if (selectedModel) {
+          urlParams.set("model", selectedModel);
+        }
+
+        const targetUrl = `/chat/${newSessionId}?${urlParams.toString()}`;
 
         // Use window.location to trigger a real page load instead of React Router navigation
         window.location.href = targetUrl;
@@ -51,7 +59,7 @@ export function useNewSessionChat(
         setIsStreaming(false);
       }
     },
-    [input, onSessionCreate, navigate],
+    [input, selectedModel, onSessionCreate, navigate],
   );
 
   // Stub functions that are not needed for new session creation

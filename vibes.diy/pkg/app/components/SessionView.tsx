@@ -19,14 +19,18 @@ interface SessionViewProps {
   search: string;
   locationState: unknown;
   navigate: (to: string, options?: { replace?: boolean }) => void;
+  urlPrompt: string | null;
+  urlModel: string | null;
 }
 
 export default function SessionView({
   sessionId,
   pathname,
-  search,
+  search: _search,
   locationState,
   navigate,
+  urlPrompt,
+  urlModel,
 }: SessionViewProps) {
   const chatState = useSimpleChat(sessionId);
   const hasAutoSentMessage = useRef(false);
@@ -34,15 +38,22 @@ export default function SessionView({
 
   const { setMessageHasBeenSent } = useCookieConsent();
 
-  // Capture URL prompt on first render
+  // URL is source of truth - use urlModel directly to override chatState.effectiveModel
+  const effectiveModel = urlModel || chatState.effectiveModel;
+
+  // Update vibeDoc with URL model on mount (for persistence after URL is cleared)
+  useEffect(() => {
+    if (urlModel && chatState.updateSelectedModel) {
+      chatState.updateSelectedModel(urlModel);
+    }
+  }, [urlModel, chatState.updateSelectedModel]);
+
+  // Handle URL prompt for auto-send
   const [capturedPrompt, setCapturedPrompt] = useState<string | null>(null);
 
-  // Capture URL prompt parameter once on mount
   useEffect(() => {
-    const searchParams = new URLSearchParams(search);
-    const promptParam = searchParams.get("prompt");
-    if (promptParam && promptParam.trim()) {
-      setCapturedPrompt(promptParam);
+    if (urlPrompt && urlPrompt.trim()) {
+      setCapturedPrompt(urlPrompt);
     }
 
     // Check for pending message from new session creation
@@ -55,11 +66,14 @@ export default function SessionView({
     ) {
       setCapturedPrompt(navigationState.pendingMessage);
     }
-  }, []); // Empty dependency array - runs only on mount
+  }, [urlPrompt, locationState]);
 
   // Handle captured prompt by setting input and focusing
   useEffect(() => {
-    if (capturedPrompt && !hasAutoSentMessage.current) {
+    // Don't auto-send until model has propagated if we have a urlModel
+    const modelReady = !urlModel || chatState.effectiveModel === urlModel;
+
+    if (capturedPrompt && !hasAutoSentMessage.current && modelReady) {
       chatState.setInput(capturedPrompt);
 
       // Focus the input element and place cursor at the end after a short delay
@@ -87,7 +101,7 @@ export default function SessionView({
         }
       }, 1000);
     }
-  }, [capturedPrompt, chatState.setInput]);
+  }, [capturedPrompt, chatState.setInput, urlModel, chatState.effectiveModel]);
 
   const [previewReady, setPreviewReady] = useState(false);
   const [mobilePreviewShown, setMobilePreviewShown] = useState(false);
@@ -199,6 +213,13 @@ export default function SessionView({
   // URL update effect
   useEffect(() => {
     if (chatState.title) {
+      // Don't update URL while we still have urlModel that needs processing
+      // This prevents stripping the model parameter before initialization completes
+      if (urlModel && capturedPrompt) {
+        // Initialization is still in progress, wait
+        return;
+      }
+
       // Check if the current path has a tab suffix
       // Add null check for location to prevent errors in tests
       const currentPath = location?.pathname || "";
@@ -227,7 +248,14 @@ export default function SessionView({
         navigate(newUrl, { replace: true });
       }
     }
-  }, [chatState.title, location.pathname, chatState.sessionId, navigate]);
+  }, [
+    chatState.title,
+    location.pathname,
+    chatState.sessionId,
+    navigate,
+    capturedPrompt,
+    urlModel,
+  ]);
 
   // We're now passing chatState directly to ChatInput
 
@@ -364,7 +392,7 @@ export default function SessionView({
             ref={chatInputRef}
             chatState={chatState}
             showModelPickerInChat={chatState.showModelPickerInChat}
-            currentModel={chatState.effectiveModel}
+            currentModel={effectiveModel}
             onModelChange={async (modelId: string) => {
               if (chatState.updateSelectedModel) {
                 await chatState.updateSelectedModel(modelId);
