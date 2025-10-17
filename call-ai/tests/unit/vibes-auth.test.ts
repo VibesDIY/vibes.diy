@@ -129,7 +129,7 @@ describe("callAi Vibes Auth Enhancement", () => {
     expect(headers.has("X-VIBES-Token")).toBe(false);
 
     // Restore localStorage
-    globalThis.localStorage = originalLocalStorage;
+    (globalThis as { localStorage?: Storage }).localStorage = originalLocalStorage;
   });
 
   it("should handle empty string token correctly", async () => {
