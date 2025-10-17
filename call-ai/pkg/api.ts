@@ -22,6 +22,53 @@ import { createStreamingGenerator } from "./streaming.js";
 import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 
+/**
+ * Get the Vibes authentication token from localStorage (browser only)
+ * @returns The auth token if available, undefined otherwise
+ */
+function getVibesAuthToken(): string | undefined {
+  if (typeof localStorage === "undefined") {
+    return undefined;
+  }
+  try {
+    return localStorage.getItem("auth_token") || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Enhance CallAI options with Vibes authentication headers when available
+ * This provides transparent authentication for apps running on vibesdiy.net
+ * @param options Original CallAI options
+ * @returns Enhanced options with auth headers if available
+ */
+function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
+  const authToken = getVibesAuthToken();
+
+  // If no auth token available, return original options unchanged
+  if (!authToken) {
+    return options;
+  }
+
+  // Check if caller has already provided an X-VIBES-Token header
+  const hasCallerToken = options.headers && typeof options.headers === "object" && "X-VIBES-Token" in options.headers;
+
+  // If caller provided their own token, respect it
+  if (hasCallerToken) {
+    return options;
+  }
+
+  // Add the auth token to headers
+  return {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      "X-VIBES-Token": authToken,
+    },
+  };
+}
+
 // Key management is now imported from ./key-management
 
 // initKeyStore is imported from key-management.ts
@@ -55,31 +102,34 @@ const FALLBACK_MODEL = "openrouter/auto";
  *          The AsyncGenerator yields partial responses as they arrive.
  */
 export function callAi(prompt: string | Message[], options: CallAIOptions = {}): Promise<string | StreamResponse> {
+  // Enhance options with Vibes authentication if available (browser environments only)
+  const enhancedOptions = enhanceWithVibesAuth(options);
+
   // Check if we need to force streaming based on model strategy
-  const schemaStrategy = chooseSchemaStrategy(options.model, options.schema || null);
+  const schemaStrategy = chooseSchemaStrategy(enhancedOptions.model, enhancedOptions.schema || null);
 
   // We no longer set a default maxTokens
   // Will only include max_tokens in the request if explicitly set by the user
 
   // Handle special case: Claude with tools requires streaming
-  if (!options.stream && schemaStrategy.shouldForceStream) {
+  if (!enhancedOptions.stream && schemaStrategy.shouldForceStream) {
     // Buffer streaming results into a single response
-    return bufferStreamingResults(prompt, options);
+    return bufferStreamingResults(prompt, enhancedOptions);
   }
 
   // Handle normal non-streaming mode
-  if (options.stream !== true) {
-    return callAINonStreaming(prompt, options);
+  if (enhancedOptions.stream !== true) {
+    return callAINonStreaming(prompt, enhancedOptions);
   }
 
   // Handle streaming mode - return a Promise that resolves to an AsyncGenerator
   // but also supports legacy non-awaited usage for backward compatibility
   const streamPromise = (async () => {
     // Do setup and validation before returning the generator
-    const { endpoint, requestOptions, model, schemaStrategy } = prepareRequestParams(prompt, { ...options, stream: true });
+    const { endpoint, requestOptions, model, schemaStrategy } = prepareRequestParams(prompt, { ...enhancedOptions, stream: true });
 
     // Use either explicit debug option or global debug flag
-    const debug = options.debug || globalDebug;
+    const debug = enhancedOptions.debug || globalDebug;
     if (debug) {
       console.log(`[callAi:${PACKAGE_VERSION}] Making fetch request to: ${endpoint}`);
       console.log(`[callAi:${PACKAGE_VERSION}] With model: ${model}`);
@@ -88,8 +138,8 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
 
     let response;
     try {
-      response = await callAiFetch(options)(endpoint, requestOptions);
-      if (options.debug) {
+      response = await callAiFetch(enhancedOptions)(endpoint, requestOptions);
+      if (enhancedOptions.debug) {
         console.log(`[callAi:${PACKAGE_VERSION}] Fetch completed with status:`, response.status, response.statusText);
 
         // Log all headers
