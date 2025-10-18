@@ -93,7 +93,8 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
   let contentWrapper: HTMLElement | null = null;
   let originalChildren: ChildNode[] = [];
 
-  if (containerElement === document.body) {
+  // Only preserve existing DOM content when appComponent is not provided
+  if (containerElement === document.body && !appComponent) {
     const existingWrapper = document.getElementById('vibes-original-content');
     if (!existingWrapper) {
       originalChildren = Array.from(document.body.childNodes);
@@ -122,9 +123,9 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     React.createElement(
       VibesApp,
       {
-        ...(database && { database }),
-        ...(title && { title }),
-        ...(imageUrl && { imageUrl }),
+        ...(database !== undefined && { database }),
+        ...(title !== undefined && { title }),
+        ...(imageUrl !== undefined && { imageUrl }),
       },
       // If appComponent is provided, render it instead of preserving DOM
       appComponent

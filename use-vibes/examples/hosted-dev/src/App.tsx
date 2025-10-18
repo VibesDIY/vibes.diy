@@ -158,7 +158,7 @@ export default function App() {
           <li>• Authentication wall will appear when sync is enabled</li>
           <li>• Use URL params: ?api_key=custom&chat_url=custom</li>
           <li>• Check console for detailed initialization logs</li>
-          <li>• Vibes control overlay is mounted at #vibe-control</li>
+          <li>• Vibes app is mounted to document.body via a portal approach</li>
         </ul>
       </div>
     </div>
