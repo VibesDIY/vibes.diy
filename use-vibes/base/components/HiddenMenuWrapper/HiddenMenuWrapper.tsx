@@ -46,7 +46,7 @@ export function HiddenMenuWrapper({
   // Inject keyframes for bounce animation
   useEffect(() => {
     const styleId = 'vibes-drop-to-close-keyframes';
-    let existingStyle = document.getElementById(styleId);
+    const existingStyle = document.getElementById(styleId);
 
     if (!existingStyle) {
       const style = document.createElement('style');
