@@ -22,9 +22,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   const [overlayVisible, setOverlayVisible] = useState(open);
   const [isHovering, setIsHovering] = useState(false);
   const [actualImageUrl, setActualImageUrl] = useState(
-    imageUrl === '/screenshot.png' 
-      ? '/screenshot.png'
-      : imageUrl
+    imageUrl === '/screenshot.png' ? '/screenshot.png' : imageUrl
   );
 
   useEffect(() => {
@@ -82,12 +80,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
 
   return (
     <div style={getWrapperStyle(actualImageUrl)}>
-      <img
-        src={actualImageUrl}
-        onError={handleImageError}
-        style={{ display: 'none' }}
-        alt=""
-      />
+      <img src={actualImageUrl} onError={handleImageError} style={{ display: 'none' }} alt="" />
       <div style={overlayStyle} />
       <div style={formContainerStyle}>
         <h1 style={getTitleStyle()}>{title}</h1>
