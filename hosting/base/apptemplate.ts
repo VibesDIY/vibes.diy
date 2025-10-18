@@ -4,7 +4,7 @@
 
 import { styles } from "./template/styles.js";
 import { scripts } from "./template/scripts.js";
-import { htmlBody, vibeControlScript } from "./template/html.js";
+import { htmlBody } from "./template/html.js";
 
 export const template = `<!DOCTYPE html>
 <html>
