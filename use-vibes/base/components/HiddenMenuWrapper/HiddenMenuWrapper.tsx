@@ -29,9 +29,9 @@ export function HiddenMenuWrapper({
   const [isBouncing, setIsBouncing] = useState(false);
   const [hasBouncedOnMount, setHasBouncedOnMount] = useState(false);
 
-  // Trigger bounce animation on first mount (respects reduced motion)
+  // Trigger bounce animation on first mount (respects reduced motion and menu state)
   useEffect(() => {
-    if (!hasBouncedOnMount) {
+    if (!hasBouncedOnMount && !menuOpen) {
       // Check for reduced motion preference
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (!prefersReducedMotion) {
@@ -40,44 +40,59 @@ export function HiddenMenuWrapper({
       }
       setHasBouncedOnMount(true);
     }
-  }, [hasBouncedOnMount]);
+  }, [hasBouncedOnMount, menuOpen]);
 
-  // Inject keyframes for bounce animation (deduplicated)
+  // Inject keyframes for bounce animation (deduplicated with reference counting)
   useEffect(() => {
     const styleId = 'vibes-drop-to-close-keyframes';
+    const countKey = 'vibes-keyframe-refs';
 
-    // Check if keyframes already exist
-    if (document.getElementById(styleId)) {
-      return;
+    // Initialize or increment reference count
+    const currentCount = parseInt(
+      (window as unknown as Record<string, string>)[countKey] || '0',
+      10
+    );
+    (window as unknown as Record<string, string>)[countKey] = (currentCount + 1).toString();
+
+    // Only create keyframes if this is the first instance
+    if (currentCount === 0) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+      @keyframes dropToClose {
+        0%   { transform: translateY(-400px); }  /* Start pushed up */
+        10%  { transform: translateY(0); }       /* First big drop */
+        25%  { transform: translateY(-175px); }   /* First bounce back up */
+        35%  { transform: translateY(0); }       /* Second drop */
+        48%  { transform: translateY(-75px); }   /* Second bounce back up */
+        62%  { transform: translateY(0); }       /* Third drop */
+        72%  { transform: translateY(-25px); }   /* Third bounce back up */
+        80%  { transform: translateY(0); }       /* Fourth drop - faster */
+        82%  { transform: translateY(-10px); }   /* Fourth bounce back up - much faster */
+        88%  { transform: translateY(0); }       /* Fifth drop */
+        91%  { transform: translateY(-5px); }    /* Final tiny bounce back up */
+        95%  { transform: translateY(0); }       /* Final settle */
+        100% { transform: translateY(0); }
+      }
+    `;
+      document.head.appendChild(style);
     }
 
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
-    @keyframes dropToClose {
-      0%   { transform: translateY(-400px); }  /* Start pushed up */
-      10%  { transform: translateY(0); }       /* First big drop */
-      25%  { transform: translateY(-175px); }   /* First bounce back up */
-      35%  { transform: translateY(0); }       /* Second drop */
-      48%  { transform: translateY(-75px); }   /* Second bounce back up */
-      62%  { transform: translateY(0); }       /* Third drop */
-      72%  { transform: translateY(-25px); }   /* Third bounce back up */
-      80%  { transform: translateY(0); }       /* Fourth drop - faster */
-      82%  { transform: translateY(-10px); }   /* Fourth bounce back up - much faster */
-      88%  { transform: translateY(0); }       /* Fifth drop */
-      91%  { transform: translateY(-5px); }    /* Final tiny bounce back up */
-      95%  { transform: translateY(0); }       /* Final settle */
-      100% { transform: translateY(0); }
-    }
-  `;
-    document.head.appendChild(style);
-
-    // Cleanup function now only removes if this was the last component
+    // Cleanup function with reference counting
     return () => {
-      // Only remove if this component was the one that added it
-      const existingStyle = document.getElementById(styleId);
-      if (existingStyle) {
-        document.head.removeChild(existingStyle);
+      const windowRefs = window as unknown as Record<string, string>;
+      const refCount = parseInt(windowRefs[countKey] || '1', 10);
+      const newCount = refCount - 1;
+      windowRefs[countKey] = newCount.toString();
+
+      // Only remove keyframes when the last instance unmounts
+      if (newCount <= 0) {
+        const existingStyle = document.getElementById(styleId);
+        if (existingStyle) {
+          document.head.removeChild(existingStyle);
+        }
+        // Use bracket notation to avoid dynamic delete warning
+        windowRefs[countKey] = undefined as unknown as string;
       }
     };
   }, []);

@@ -55,21 +55,22 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   useEffect(() => {
     let canceled = false;
     const img = new Image();
-    
+
     img.onload = () => {
       if (!canceled) setActualImageUrl(imageUrl);
     };
-    
+
     img.onerror = () => {
       if (!canceled) {
         // Fallback for any failed image URL
-        const fallbackUrl = 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+        const fallbackUrl =
+          'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
         setActualImageUrl(fallbackUrl);
       }
     };
-    
+
     img.src = imageUrl;
-    
+
     return () => {
       canceled = true;
     };

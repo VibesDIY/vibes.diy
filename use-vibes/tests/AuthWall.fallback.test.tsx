@@ -5,7 +5,7 @@ import { AuthWall } from '@vibes.diy/use-vibes-base';
 
 // Mock the Image constructor to control load/error behavior
 class MockImage {
-  src: string = '';
+  src = '';
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;
 
@@ -23,11 +23,11 @@ class MockImage {
 
 describe('AuthWall Image Fallback', () => {
   const mockOnLogin = vi.fn();
-  
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Replace global Image with our mock
-    globalThis.Image = MockImage as any;
+    globalThis.Image = MockImage as unknown as typeof Image;
   });
 
   afterEach(() => {
@@ -61,18 +61,21 @@ describe('AuthWall Image Fallback', () => {
       />
     );
 
-    await waitFor(() => {
-      const wrapper = container.firstChild as HTMLElement;
-      const backgroundImage = getComputedStyle(wrapper).backgroundImage;
-      expect(backgroundImage).toContain('images.unsplash.com');
-      expect(backgroundImage).toContain('photo-1518837695005-2083093ee35b');
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        const wrapper = container.firstChild as HTMLElement;
+        const backgroundImage = getComputedStyle(wrapper).backgroundImage;
+        expect(backgroundImage).toContain('images.unsplash.com');
+        expect(backgroundImage).toContain('photo-1518837695005-2083093ee35b');
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should fallback for screenshot.png URL when it fails', async () => {
     // Override the Image mock specifically for this test
     globalThis.Image = class {
-      src: string = '';
+      src = '';
       onload: (() => void) | null = null;
       onerror: (() => void) | null = null;
 
@@ -85,22 +88,20 @@ describe('AuthWall Image Fallback', () => {
           }
         }, 0);
       }
-    } as any;
+    } as unknown as typeof Image;
 
     const { container } = render(
-      <AuthWall
-        onLogin={mockOnLogin}
-        imageUrl="/screenshot.png"
-        title="Test Auth"
-        open={true}
-      />
+      <AuthWall onLogin={mockOnLogin} imageUrl="/screenshot.png" title="Test Auth" open={true} />
     );
 
-    await waitFor(() => {
-      const wrapper = container.firstChild as HTMLElement;
-      const backgroundImage = getComputedStyle(wrapper).backgroundImage;
-      expect(backgroundImage).toContain('images.unsplash.com');
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        const wrapper = container.firstChild as HTMLElement;
+        const backgroundImage = getComputedStyle(wrapper).backgroundImage;
+        expect(backgroundImage).toContain('images.unsplash.com');
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should handle imageUrl prop changes', async () => {
@@ -131,11 +132,14 @@ describe('AuthWall Image Fallback', () => {
     );
 
     // Should fallback to Unsplash
-    await waitFor(() => {
-      const wrapper = container.firstChild as HTMLElement;
-      const backgroundImage = getComputedStyle(wrapper).backgroundImage;
-      expect(backgroundImage).toContain('images.unsplash.com');
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        const wrapper = container.firstChild as HTMLElement;
+        const backgroundImage = getComputedStyle(wrapper).backgroundImage;
+        expect(backgroundImage).toContain('images.unsplash.com');
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should not cause double-loading with hidden img element', () => {
