@@ -9,6 +9,8 @@ import {
 } from './AuthWall.styles.js';
 import { VibesButton } from '../VibesButton/VibesButton.js';
 
+const FALLBACK_IMAGE_URL = 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+
 export interface AuthWallProps {
   onLogin: () => void;
   imageUrl: string;
@@ -55,9 +57,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   useEffect(() => {
     // Guard against falsy imageUrl to avoid spurious requests
     if (!imageUrl) {
-      const fallbackUrl =
-        'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
-      setActualImageUrl(fallbackUrl);
+      setActualImageUrl(FALLBACK_IMAGE_URL);
       return;
     }
 
@@ -71,9 +71,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
     img.onerror = () => {
       if (!canceled) {
         // Fallback for any failed image URL
-        const fallbackUrl =
-          'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
-        setActualImageUrl(fallbackUrl);
+        setActualImageUrl(FALLBACK_IMAGE_URL);
       }
     };
 
