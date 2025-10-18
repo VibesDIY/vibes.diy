@@ -39,7 +39,7 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
         }}
       >
         <VibesButton variant="primary">Login</VibesButton>
-        <VibesButton variant="secondary">Remix</VibesButton>
+        <VibesButton variant="secondary">🧟 Mutate</VibesButton>
         <VibesButton variant="tertiary">Invite</VibesButton>
       </div>
     </div>
