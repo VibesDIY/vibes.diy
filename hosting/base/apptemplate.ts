@@ -4,7 +4,6 @@
 
 import { styles } from "./template/styles.js";
 import { scripts } from "./template/scripts.js";
-import { htmlBody } from "./template/html.js";
 
 export const template = `<!DOCTYPE html>
 <html>
@@ -19,7 +18,8 @@ export const template = `<!DOCTYPE html>
     <style>${styles}</style>
     <script>${scripts}</script>
   </head>
-  <body>${htmlBody}
+  <body>
+    <div id="container"></div>
     <script>
       window.CALLAI_API_KEY = '{{API_KEY}}';
       window.CALLAI_CHAT_URL = 'https://vibesdiy.net';
