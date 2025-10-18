@@ -166,12 +166,16 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
           }
         }
 
-        const cleanupTarget = contentWrapper || containerElement;
-        cleanupTarget.style.filter = '';
-        cleanupTarget.style.pointerEvents = '';
-        cleanupTarget.style.transform = '';
-        cleanupTarget.style.transition = '';
-        cleanupTarget.style.backgroundColor = '';
+        const targets: HTMLElement[] = [];
+        if (containerElement instanceof HTMLElement) targets.push(containerElement);
+        if (contentWrapper instanceof HTMLElement) targets.push(contentWrapper);
+        for (const el of targets) {
+          el.style.filter = '';
+          el.style.pointerEvents = '';
+          el.style.transform = '';
+          el.style.transition = '';
+          el.style.backgroundColor = '';
+        }
       }, 0);
     },
 

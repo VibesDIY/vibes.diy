@@ -53,21 +53,24 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
 
   // Keep background image in sync with prop; test screenshot API when using default
   useEffect(() => {
+    let canceled = false;
     if (imageUrl === '/screenshot.png') {
       const img = new Image();
       img.onload = () => {
-        setActualImageUrl(imageUrl);
+        if (!canceled) setActualImageUrl(imageUrl);
       };
       img.onerror = () => {
         const fallbackUrl =
           'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
-        setActualImageUrl(fallbackUrl);
+        if (!canceled) setActualImageUrl(fallbackUrl);
       };
       img.src = imageUrl;
     } else {
-      // For non-screenshot URLs, mirror prop changes directly
-      setActualImageUrl(imageUrl);
+      if (!canceled) setActualImageUrl(imageUrl);
     }
+    return () => {
+      canceled = true;
+    };
   }, [imageUrl]);
 
   if (!isVisible) return null;

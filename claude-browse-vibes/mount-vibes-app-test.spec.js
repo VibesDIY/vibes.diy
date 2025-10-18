@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { promises as fs } from "node:fs";
 
 test("MountVibesApp behavior test - mock_login + click switch", async ({
   page,
@@ -28,7 +29,8 @@ test("MountVibesApp behavior test - mock_login + click switch", async ({
   console.log("🔍 Checking page state...");
 
   // Look for auth wall title first
-  const authTitle = page.locator("h1");
+  const authTitle = page.locator("h1").first();
+  await authTitle.waitFor({ state: "visible", timeout: 2000 }).catch(() => {});
   const onAuthWall = await authTitle.isVisible();
   if (onAuthWall) {
     const titleText = await authTitle.textContent();
@@ -62,22 +64,14 @@ test("MountVibesApp behavior test - mock_login + click switch", async ({
     });
   }
 
-  // Capture innerHTML
-  console.log("📝 Capturing innerHTML...");
-  const innerHTML = await page.evaluate(() => document.body.innerHTML);
-
-  // Write to file
-  await page.evaluate((content) => {
-    const blob = new Blob([content], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "mount-vibes-app-innerHTML.html";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, innerHTML);
+  // Save full HTML for inspection in test output dir
+  console.log("📝 Capturing page HTML...");
+  const html = await page.content();
+  await fs.writeFile(
+    test.info().outputPath("mount-vibes-app-innerHTML.html"),
+    html,
+    "utf8",
+  );
 
   console.log("✅ Test completed successfully!");
   console.log("📁 Files saved:");
@@ -91,10 +85,11 @@ test("MountVibesApp behavior test - mock_login + click switch", async ({
     await expect(menu).toBeVisible();
   }
 
-  console.log("🎯 All assertions passed - MountVibesApp behavior verified!");
-  console.log("📋 Behavior check:");
-  console.log("   ✅ VibesSwitch button visible and clickable");
-  console.log("   ✅ Menu opens with grey grid background");
-  console.log("   ✅ Three buttons (Login/Remix/Invite) present");
-  console.log("   ✅ Green 'Vibe' square visible (mount-vibes-app specific)");
+  if (onAuthWall) {
+    console.log(
+      "ℹ️ On auth wall – verified background present; skipped menu assertions.",
+    );
+  } else {
+    console.log("🎯 Assertions passed: VibesSwitch visible and menu visible.");
+  }
 });
