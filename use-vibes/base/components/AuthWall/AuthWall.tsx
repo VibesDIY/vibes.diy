@@ -21,7 +21,11 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   const [formVisible, setFormVisible] = useState(open);
   const [overlayVisible, setOverlayVisible] = useState(open);
   const [isHovering, setIsHovering] = useState(false);
-  const [actualImageUrl, setActualImageUrl] = useState(imageUrl);
+  const [actualImageUrl, setActualImageUrl] = useState(
+    imageUrl === '/screenshot.png' 
+      ? '/screenshot.png'
+      : imageUrl
+  );
 
   useEffect(() => {
     if (open) {
@@ -51,27 +55,13 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
     }
   }, [open]);
 
-  // Keep background image in sync with prop; test screenshot API when using default
-  useEffect(() => {
-    let canceled = false;
-    if (imageUrl === '/screenshot.png') {
-      const img = new Image();
-      img.onload = () => {
-        if (!canceled) setActualImageUrl(imageUrl);
-      };
-      img.onerror = () => {
-        const fallbackUrl =
-          'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
-        if (!canceled) setActualImageUrl(fallbackUrl);
-      };
-      img.src = imageUrl;
-    } else {
-      if (!canceled) setActualImageUrl(imageUrl);
+  const handleImageError = () => {
+    if (actualImageUrl === '/screenshot.png') {
+      setActualImageUrl(
+        'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'
+      );
     }
-    return () => {
-      canceled = true;
-    };
-  }, [imageUrl]);
+  };
 
   if (!isVisible) return null;
 
@@ -92,6 +82,12 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
 
   return (
     <div style={getWrapperStyle(actualImageUrl)}>
+      <img
+        src={actualImageUrl}
+        onError={handleImageError}
+        style={{ display: 'none' }}
+        alt=""
+      />
       <div style={overlayStyle} />
       <div style={formContainerStyle}>
         <h1 style={getTitleStyle()}>{title}</h1>
