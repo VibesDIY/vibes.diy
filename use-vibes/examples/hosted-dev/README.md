@@ -1,140 +1,154 @@
 # Hosted Dev Environment
 
-A Vite-based development environment that mimics the hosted app experience on vibesdiy.net with fast HMR for use-vibes development.
+This example app mimics the hosted environment on vibesdiy.net but uses workspace dependencies for live Hot Module Replacement (HMR) during development.
 
-## 🎯 Purpose
+## Purpose
 
-This example provides developers with a local environment that closely matches what runs on vibesdiy.net, allowing you to:
+- **Live Development**: Edit use-vibes source files and see changes instantly without rebuilding
+- **Production Replica**: Matches the exact initialization flow used on hosted apps
+- **Authentication Testing**: Test the auth wall and vibes control overlay functionality
+- **AI Integration**: Verify call-ai works with proper authentication headers
 
-- **Test authentication flows** - Experience the AuthWall and Fireproof sync
-- **Debug AI integration** - Test call-ai with the same APIs as hosted apps
-- **Develop with live HMR** - Edit use-vibes source files and see changes instantly
-- **Test different configurations** - Use URL parameters to override settings
-
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# From the repo root
-pnpm install
-
 # Start the dev server
-cd use-vibes/examples/hosted-dev
 pnpm dev
+
+# In another terminal, run quality checks
+pnpm check
 ```
 
-The app will open at `http://localhost:3456`
+The app will be available at http://localhost:5173
 
-## 🏗️ Architecture
+## Architecture
 
-This app closely mirrors the hosted environment:
+### Hosted Environment Simulation
 
-### HTML Structure
+This app replicates how hosted apps initialize on vibesdiy.net:
 
-- `#container` - Main React app mount point (like hosted apps)
-- `#vibe-control` - Vibes overlay mount point (like hosted apps)
-- Tailwind CSS from CDN (like hosted apps)
+1. **Main React App**: Mounts to `#container` element (like hosted apps)
+2. **Vibes Control Overlay**: Mounts to `#vibe-control` element using `mountVibesApp()`
+3. **Environment Globals**: Sets up `window.CALLAI_API_KEY` and other hosted environment variables
+4. **Authentication Flow**: Uses the same auth strategy as production hosted apps
 
-### Global Variables
+### Live HMR with Workspace Dependencies
 
-- `window.CALLAI_API_KEY` - API key for AI calls
-- `window.CALLAI_CHAT_URL` - Chat API endpoint
-- `window.CALLAI_IMG_URL` - Image API endpoint
-
-### Initialization Pattern
+The Vite configuration enables live reload for workspace packages:
 
 ```typescript
-// Same as hosted apps:
-1. Set up globals
-2. Mount React app to #container
-3. Mount vibes overlay to #vibe-control
+// vite.config.ts
+server: {
+  fs: {
+    allow: ['..', '../..', '../../..'], // Allow workspace files
+  },
+},
+optimizeDeps: {
+  exclude: ['use-vibes', '@vibes.diy/use-vibes-base', 'call-ai'], // Enable HMR
+}
 ```
 
-## 🎛️ URL Parameters
+This means editing files in:
 
-Override environment settings via URL parameters (like hosted apps):
+- `use-vibes/base/` - Vibes control panel components
+- `use-vibes/pkg/` - Main use-vibes package
+- `call-ai/pkg/` - AI integration library
 
+...will trigger instant hot reloads in the dev server.
+
+## Features Demonstrated
+
+### Database Integration
+
+- Fireproof database with live queries
+- Message storage and retrieval
+- Sync enable/disable functionality
+
+### AI Integration
+
+- call-ai integration with authentication headers
+- OpenAI API calls with proper error handling
+- Environment variable configuration
+
+### Vibes Control Panel
+
+- Login/logout functionality
+- Authentication wall when sync is disabled
+- Control buttons when authenticated
+
+## Development Workflow
+
+### Making Changes to use-vibes
+
+1. Edit files in `use-vibes/base/components/` or `use-vibes/pkg/`
+2. Changes appear instantly in the running dev server
+3. Test authentication, sync, and AI integration flows
+4. Use browser DevTools to inspect console logs and component mounting
+
+### Debugging with Claude Browse Scripts
+
+The `/claude-browse-vibes/` directory contains debug scripts for automated browser testing:
+
+```bash
+# Run browser automation tests
+cd /Users/jchris/code/vibes.diy/claude-browse-vibes
+node test-hosted-dev.js
 ```
-http://localhost:3456/?api_key=custom&chat_url=https://custom-api.com
+
+These scripts help verify:
+
+- Vibes control panel mounting
+- DOM content changes after HMR
+- Console log output during initialization
+- Authentication flow testing
+
+## CLI Tools
+
+```bash
+# Development
+pnpm dev          # Start dev server
+pnpm build        # Build for production
+pnpm preview      # Preview built app
+
+# Quality Assurance
+pnpm check        # Format + typecheck + lint + build
+pnpm lint         # ESLint only
+pnpm typecheck    # TypeScript only
+pnpm format       # Prettier auto-format
+pnpm format:check # Check formatting
+
+# Testing
+pnpm test         # Run tests
+pnpm test:watch   # Watch mode
+
+# Production
+pnpm serve        # Serve built dist files
 ```
 
-Available parameters:
+## Environment Configuration
 
-- `api_key` - Override CALLAI_API_KEY
-- `chat_url` - Override CALLAI_CHAT_URL
-- `img_url` - Override CALLAI_IMG_URL
+The app reads from URL parameters and environment variables:
 
-## 🔧 Development Features
+- `?api_key=custom` - Override API key
+- `?chat_url=custom` - Override chat endpoint
+- `window.CALLAI_API_KEY` - Set in setup.js
+- `window.CALLAI_CHAT_URL` - Set in setup.js
 
-### Live HMR
+## TypeScript Configuration
 
-Edit files in `use-vibes/pkg` and see changes instantly without rebuilding.
+Uses strict TypeScript settings matching the workspace:
 
-### Workspace Dependencies
+- `exactOptionalPropertyTypes: true`
+- Proper interface definitions for all document types
+- Global window type extensions for hosted environment
+- No `any` types allowed
 
-Uses `"use-vibes": "workspace:*"` for direct development on the local package.
+## Testing Strategy
 
-### Debug Info
+This app serves as a testing ground for:
 
-Check the browser console for detailed initialization logs and helpful development tips.
-
-## 📝 Sample App Features
-
-The included sample app demonstrates:
-
-1. **Environment Status** - Shows current configuration
-2. **Database Integration** - Add/view messages with Fireproof
-3. **Sync Controls** - Enable/disable database sync
-4. **AI Integration** - Test call-ai with real API calls
-5. **Authentication** - Triggers AuthWall when sync is enabled
-
-## 🔍 Testing Scenarios
-
-### Authentication Flow
-
-1. Click "Enable Sync" to trigger the AuthWall
-2. Experience the login flow (same as hosted apps)
-3. Test that AI calls work with authentication
-
-### API Integration
-
-1. Click "Test AI Call" to verify call-ai integration
-2. Check that the correct API key and URL are used
-3. Test different models and parameters
-
-### Database Sync
-
-1. Add messages to test Fireproof database
-2. Enable sync to test cloud persistence
-3. Verify data syncs across browser tabs
-
-## 🆚 vs Production
-
-| Feature          | Hosted Dev   | Production           |
-| ---------------- | ------------ | -------------------- |
-| Module Loading   | Vite ESM     | Import Maps + ESM.sh |
-| JSX Transform    | Compile-time | Runtime Babel        |
-| HMR              | ✅ Fast      | ❌ None              |
-| use-vibes Source | Workspace    | npm Package          |
-| Environment      | Mock         | Real                 |
-
-## 🛠️ Customization
-
-### Add New Features
-
-Edit `src/App.tsx` to test new use-vibes features or patterns.
-
-### Change Configuration
-
-Edit `src/setup.ts` to modify global variables or add new ones.
-
-### Test Different Versions
-
-In production, use URL params like `?v_vibes=0.13.4` to test different versions. In dev, edit package.json dependencies.
-
-## 📚 Related
-
-- **Production Replica**: `use-vibes/examples/react-example` (MountVibesAppExample)
-- **Hosted Template**: `hosting/base/apptemplate.ts`
-- **Live Apps**: https://vibesdiy.net
-
-This dev environment bridges the gap between local development speed and production environment fidelity.
+- **HMR Verification**: Prove workspace dependencies reload correctly
+- **Authentication Flow**: Test login/logout and sync enabling
+- **AI Integration**: Verify call-ai works with proper headers
+- **Component Mounting**: Ensure vibes control panel mounts correctly
+- **Browser Automation**: Use Playwright scripts for automated verification
