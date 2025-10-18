@@ -93,8 +93,7 @@ export const getContentWrapperStyle = (
   borderTopStyle: 'solid',
   boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.contentBg,
-  animation: isBouncing ? 'dropToClose 0.8s ease-out forwards' : undefined,
-  animationTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+  animation: isBouncing ? 'dropToClose 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards' : undefined,
 });
 
 export const getInnerContentWrapperStyle = (menuOpen: boolean): CSSProperties => ({

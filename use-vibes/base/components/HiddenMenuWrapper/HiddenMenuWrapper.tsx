@@ -43,16 +43,18 @@ export function HiddenMenuWrapper({
     const style = document.createElement('style');
     style.textContent = `
     @keyframes dropToClose {
-      0%   { transform: translateY(-200px); }  /* Start pushed up */
-      12%  { transform: translateY(0); }       /* First big drop */
-      25%  { transform: translateY(-75px); }   /* First bounce back up */
+      0%   { transform: translateY(-400px); }  /* Start pushed up */
+      10%  { transform: translateY(0); }       /* First big drop */
+      25%  { transform: translateY(-175px); }   /* First bounce back up */
       35%  { transform: translateY(0); }       /* Second drop */
-      48%  { transform: translateY(-25px); }   /* Second bounce back up */
+      48%  { transform: translateY(-75px); }   /* Second bounce back up */
       62%  { transform: translateY(0); }       /* Third drop */
-      72%  { transform: translateY(-10px); }   /* Third bounce back up */
+      72%  { transform: translateY(-25px); }   /* Third bounce back up */
       80%  { transform: translateY(0); }       /* Fourth drop - faster */
-      82%  { transform: translateY(-5px); }    /* Final tiny bounce back up - much faster */
-      88%  { transform: translateY(0); }       /* Final settle */
+      82%  { transform: translateY(-10px); }   /* Fourth bounce back up - much faster */
+      88%  { transform: translateY(0); }       /* Fifth drop */
+      91%  { transform: translateY(-5px); }    /* Final tiny bounce back up */
+      95%  { transform: translateY(0); }       /* Final settle */
       100% { transform: translateY(0); }
     }
   `;
