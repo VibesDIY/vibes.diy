@@ -65,11 +65,11 @@ function VibesApp({
   // Defer app rendering until after auth completes
   React.useEffect(() => {
     if (!showAuthWall && !appReady) {
-      // Small delay for smooth transition from auth wall to app
-      const timeout = setTimeout(() => {
+      // Use requestAnimationFrame for smoother transition timing
+      const rafId = requestAnimationFrame(() => {
         setAppReady(true);
-      }, 100);
-      return () => clearTimeout(timeout);
+      });
+      return () => cancelAnimationFrame(rafId);
     }
   }, [showAuthWall, appReady]);
 
