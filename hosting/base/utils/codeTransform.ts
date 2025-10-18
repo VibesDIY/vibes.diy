@@ -38,18 +38,18 @@ export function transformImports(code: string): string {
     (match) => {
       replacedInlineFunction = true;
       return "function App(";
-    }
+    },
   );
 
   // Handle export default ComponentName -> export default App (for any PascalCase component name)
   transformedCode = transformedCode.replace(
     /export\s+default\s+[A-Z][a-zA-Z0-9]*\s*;?/g,
-    "export default App;"
+    "export default App;",
   );
 
   // Only add the export statement if we replaced an inline function OR if there's no existing export default
   const hasExistingExport = /export\s+default\s+/.test(transformedCode);
-  
+
   if (replacedInlineFunction || !hasExistingExport) {
     transformedCode += "\nexport default App;";
   }
