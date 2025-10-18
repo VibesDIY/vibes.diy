@@ -42,15 +42,15 @@ export function HiddenMenuWrapper({
     style.textContent = `
     @keyframes bounce {
       0%   { transform: translateY(0); }
-      15%  { transform: translateY(-200px); }  /* First big bounce */
-      30%  { transform: translateY(0); }
-      45%  { transform: translateY(-75px); }  /* Second bounce */
-      60%  { transform: translateY(0); }
-      72%  { transform: translateY(-25px); }   /* Third bounce */
+      12%  { transform: translateY(-200px); }  /* First big bounce */
+      25%  { transform: translateY(0); }
+      35%  { transform: translateY(-75px); }   /* Second bounce */
+      48%  { transform: translateY(0); }
+      58%  { transform: translateY(-25px); }   /* Third bounce */
+      68%  { transform: translateY(0); }
+      75%  { transform: translateY(-10px); }   /* Fourth bounce - faster */
       82%  { transform: translateY(0); }
-      89%  { transform: translateY(-10px); }   /* Fourth */
-      94%  { transform: translateY(0); }
-      97%  { transform: translateY(-5px); }    /* Final small bounce */
+      88%  { transform: translateY(-5px); }    /* Final tiny bounce - much faster */
       100% { transform: translateY(0); }
     }
   `;
