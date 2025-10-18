@@ -25,7 +25,7 @@ try {
   // Log when everything is rendered
   setTimeout(() => {
     const container = mountResult.getContainer();
-    
+
     // Check for vibes control elements
     const loginButtons = container.querySelectorAll('[role="button"], button');
     console.log('🎛️ Found buttons after mount:', loginButtons.length);
@@ -38,7 +38,10 @@ try {
     console.log('🎛️ All text in container:', allText.slice(0, 200) + '...');
     console.log('🎛️ Contains "Login":', allText.includes('Login'));
     console.log('🎛️ Contains "Invite":', allText.includes('Invite'));
-    console.log('🎛️ Contains "Hosted Dev Environment":', allText.includes('Hosted Dev Environment'));
+    console.log(
+      '🎛️ Contains "Hosted Dev Environment":',
+      allText.includes('Hosted Dev Environment')
+    );
   }, 1000);
 } catch (error) {
   console.error('❌ Failed to mount Portal-based Vibes app:', error);

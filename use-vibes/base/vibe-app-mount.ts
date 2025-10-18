@@ -130,16 +130,16 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
       appComponent
         ? React.createElement(appComponent)
         : contentWrapper
-        ? React.createElement('div', {
-            ref: (node: HTMLDivElement | null) => {
-              if (node && contentWrapper && node.children.length === 0) {
-                // Move original content into React-managed container
-                node.appendChild(contentWrapper);
-              }
-            },
-            style: { height: '100%', width: '100%' },
-          })
-        : null
+          ? React.createElement('div', {
+              ref: (node: HTMLDivElement | null) => {
+                if (node && contentWrapper && node.children.length === 0) {
+                  // Move original content into React-managed container
+                  node.appendChild(contentWrapper);
+                }
+              },
+              style: { height: '100%', width: '100%' },
+            })
+          : null
     )
   );
 
