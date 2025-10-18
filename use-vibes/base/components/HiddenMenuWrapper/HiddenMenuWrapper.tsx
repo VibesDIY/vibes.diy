@@ -8,7 +8,6 @@ import {
   getInnerContentWrapperStyle,
 } from './HiddenMenuWrapper.styles.js';
 import { VibesSwitch } from '../VibesSwitch/VibesSwitch.js';
-import './HiddenMenuWrapper.css';
 
 export interface HiddenMenuWrapperProps {
   children: React.ReactNode;
@@ -43,6 +42,35 @@ export function HiddenMenuWrapper({
       setHasBouncedOnMount(true);
     }
   }, [hasBouncedOnMount, menuOpen]);
+
+  // Inject keyframes for bounce animation
+  useEffect(() => {
+    const styleId = 'vibes-drop-to-close-keyframes';
+    let existingStyle = document.getElementById(styleId);
+
+    if (!existingStyle) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes vibes-drop-to-close {
+          0%   { transform: translateY(-400px); }  /* Start pushed up */
+          10%  { transform: translateY(0); }       /* First big drop */
+          25%  { transform: translateY(-175px); }   /* First bounce back up */
+          35%  { transform: translateY(0); }       /* Second drop */
+          48%  { transform: translateY(-75px); }   /* Second bounce back up */
+          62%  { transform: translateY(0); }       /* Third drop */
+          72%  { transform: translateY(-25px); }   /* Third bounce back up */
+          80%  { transform: translateY(0); }       /* Fourth drop - faster */
+          82%  { transform: translateY(-10px); }   /* Fourth bounce back up - much faster */
+          88%  { transform: translateY(0); }       /* Fifth drop */
+          91%  { transform: translateY(-5px); }    /* Final tiny bounce back up */
+          95%  { transform: translateY(0); }       /* Final settle */
+          100% { transform: translateY(0); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   // Manage bounce animation when triggerBounce changes
   useEffect(() => {
