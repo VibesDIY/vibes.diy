@@ -10,6 +10,7 @@ export interface MountVibesAppOptions {
   readonly database?: string;
   readonly title?: string;
   readonly imageUrl?: string;
+  readonly appComponent?: React.ComponentType;
 }
 
 export interface MountVibesAppResult {
@@ -74,7 +75,7 @@ function VibesApp({
 }
 
 export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesAppResult {
-  const { container: containerOption, database, title, imageUrl } = options;
+  const { container: containerOption, database, title, imageUrl, appComponent } = options;
 
   let containerElement: HTMLElement;
   if (typeof containerOption === 'string') {
@@ -121,12 +122,14 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     React.createElement(
       VibesApp,
       {
-        database,
-        title,
-        imageUrl,
+        database: database || undefined,
+        title: title || undefined,
+        imageUrl: imageUrl || undefined,
       },
-      // Preserve original DOM nodes instead of cloning with innerHTML
-      contentWrapper
+      // If appComponent is provided, render it instead of preserving DOM
+      appComponent
+        ? React.createElement(appComponent)
+        : contentWrapper
         ? React.createElement('div', {
             ref: (node: HTMLDivElement | null) => {
               if (node && contentWrapper && node.children.length === 0) {

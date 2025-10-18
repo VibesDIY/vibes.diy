@@ -3,49 +3,30 @@
 
 /// <reference types="vite/client" />
 import './setup'; // Set up hosted environment globals first
-import React from 'react';
-import ReactDOM from 'react-dom/client';
 import { mountVibesApp } from 'use-vibes';
 import Container from './Container';
 
 console.log('🚀 Initializing Hosted Dev Environment...');
 
-// Mount the main React app to the container (like hosted apps)
-const container = document.getElementById('container');
-if (!container) {
-  throw new Error('Container element not found - this should match hosted environment');
-}
-
-console.log('📦 Mounting main React app...');
-const root = ReactDOM.createRoot(container);
-root.render(
-  <React.StrictMode>
-    <Container />
-  </React.StrictMode>
-);
-
-// Mount Vibes control overlay (like hosted apps do)
-console.log('🎛️ Mounting Vibes control overlay...');
-console.log('🎛️ Looking for container:', '#vibe-control');
-
-const vibeControlContainer = document.querySelector('#vibe-control');
-console.log('🎛️ Container found:', !!vibeControlContainer);
-console.log('🎛️ Container element:', vibeControlContainer);
+// Single mount point with portal support - like the new production template will do
+console.log('🎛️ Using portal approach - mounting app inside vibes overlay...');
 
 try {
   const mountResult = mountVibesApp({
-    container: '#vibe-control',
+    container: document.body, // Mount to body to match production approach
+    appComponent: Container, // Pass the Container component directly
     title: 'Hosted Dev App',
     database: 'hosted-dev-db',
   });
-  console.log('✅ Vibes control mounted successfully');
+  console.log('✅ Portal-based vibes app mounted successfully');
   console.log('🎛️ Mount result:', mountResult);
   console.log('🎛️ Container after mount:', mountResult.getContainer());
-  console.log('🎛️ Container innerHTML length:', mountResult.getContainer().innerHTML.length);
 
-  // Log when buttons are rendered
+  // Log when everything is rendered
   setTimeout(() => {
     const container = mountResult.getContainer();
+    
+    // Check for vibes control elements
     const loginButtons = container.querySelectorAll('[role="button"], button');
     console.log('🎛️ Found buttons after mount:', loginButtons.length);
     loginButtons.forEach((btn, i) => {
@@ -54,13 +35,13 @@ try {
     });
 
     const allText = container.textContent || '';
-    console.log('🎛️ All text in vibes control:', allText);
+    console.log('🎛️ All text in container:', allText.slice(0, 200) + '...');
     console.log('🎛️ Contains "Login":', allText.includes('Login'));
     console.log('🎛️ Contains "Invite":', allText.includes('Invite'));
-    console.log('🎛️ Contains "Rem":', allText.includes('Rem'));
+    console.log('🎛️ Contains "Hosted Dev Environment":', allText.includes('Hosted Dev Environment'));
   }, 1000);
 } catch (error) {
-  console.error('❌ Failed to mount Vibes control:', error);
+  console.error('❌ Failed to mount Portal-based Vibes app:', error);
   if (error instanceof Error) {
     console.error('❌ Error stack:', error.stack);
   }
