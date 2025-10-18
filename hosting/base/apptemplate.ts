@@ -34,15 +34,20 @@ export const template = `<!DOCTYPE html>
       }
     </script>
     <script type="text/babel" data-type="module">
-      import ReactDOMClient from 'react-dom/client';
+      import { mountVibesApp } from 'use-vibes';
 
       // APP_CODE placeholder will be replaced with actual code
       // prettier-ignore
       {{APP_CODE}}
       // prettier-ignore-end
 
-      const rootElement = document.getElementById('container');
-      ReactDOMClient.createRoot(rootElement).render(<App />);
+      // Mount the app using vibes app system for proper overlay integration
+      mountVibesApp({
+        container: document.getElementById('container'),
+        appComponent: App,
+        title: document.title,
+        database: 'app-{{APP_SLUG}}'
+      });
     </script>
     <script type="module">
 ${vibeControlScript}
