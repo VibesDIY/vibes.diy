@@ -85,9 +85,9 @@ describe("Template Modularization", () => {
     });
 
     it("should set up React properly", () => {
-      // React setup logic
-      expect(template).toContain("ReactDOMClient");
-      expect(template).toContain("createRoot");
+      // Vibes app mounting setup
+      expect(template).toContain("mountVibesApp");
+      expect(template).toContain("appComponent: App");
       expect(template).toContain("getElementById('container')");
     });
   });

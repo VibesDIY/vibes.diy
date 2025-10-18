@@ -222,7 +222,7 @@ describe("Underscore-Based Routing Integration", () => {
       const html = await response.text();
 
       expect(html).toContain("function App()");
-      expect(html).toContain("ReactDOMClient");
+      expect(html).toContain("mountVibesApp");
       expect(html).toContain('type="text/babel"');
       expect(html).toContain("Hello World");
     });

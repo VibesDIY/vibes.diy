@@ -239,7 +239,7 @@ describe("First-Party Domain Preservation", () => {
 
       // Should serve instance directly (not catalog)
       expect(html).toContain("Garden Custom");
-      expect(html).toContain("ReactDOMClient");
+      expect(html).toContain("mountVibesApp");
       expect(html).not.toContain("catalog-container");
     });
   });

@@ -58,7 +58,7 @@ describe("Custom Domain E2E Tests", () => {
       const html = await res.text();
       // Custom domain serves app instance directly
       expect(html).toContain("Hello Custom Domain");
-      expect(html).toContain("ReactDOMClient");
+      expect(html).toContain("mountVibesApp");
       expect(html).toContain("container");
       expect(html).toContain("<title>Custom Domain Test App</title>");
     });
@@ -105,7 +105,7 @@ describe("Custom Domain E2E Tests", () => {
       const html = await res.text();
       // Subdomain with underscore shows actual app instance
       expect(html).toContain("Hello App Instance");
-      expect(html).toContain("ReactDOMClient");
+      expect(html).toContain("mountVibesApp");
       expect(html).toContain("container");
       expect(html).not.toContain("catalog-container");
       expect(html).not.toContain("Install");
@@ -149,7 +149,7 @@ describe("Custom Domain E2E Tests", () => {
       expect(customRes.status).toBe(200);
       const customHtml = await customRes.text();
       expect(customHtml).toContain("Dual Access App");
-      expect(customHtml).toContain("ReactDOMClient");
+      expect(customHtml).toContain("mountVibesApp");
       expect(customHtml).not.toContain("catalog-container");
       expect(customHtml).toContain("<title>Dual Access Test</title>");
 
@@ -164,7 +164,7 @@ describe("Custom Domain E2E Tests", () => {
       );
 
       // Custom domain shows app instance, subdomain shows catalog
-      expect(customHtml).toContain("ReactDOMClient"); // App instance marker
+      expect(customHtml).toContain("mountVibesApp"); // App instance marker
       expect(subdomainHtml).toContain("Install");
     });
 
@@ -198,7 +198,7 @@ describe("Custom Domain E2E Tests", () => {
       expect(res1.status).toBe(200);
       const html1 = await res1.text();
       expect(html1).toContain("App One");
-      expect(html1).toContain("ReactDOMClient");
+      expect(html1).toContain("mountVibesApp");
       expect(html1).not.toContain("catalog-container");
       expect(html1).toContain("<title>First App</title>");
 
@@ -207,7 +207,7 @@ describe("Custom Domain E2E Tests", () => {
       expect(res2.status).toBe(200);
       const html2 = await res2.text();
       expect(html2).toContain("App Two");
-      expect(html2).toContain("ReactDOMClient");
+      expect(html2).toContain("mountVibesApp");
       expect(html2).not.toContain("catalog-container");
       expect(html2).toContain("<title>Second App</title>");
 
@@ -336,7 +336,7 @@ describe("Custom Domain E2E Tests", () => {
       expect(res.status).toBe(200);
       const html = await res.text();
       expect(html).toContain("Sub");
-      expect(html).toContain("ReactDOMClient");
+      expect(html).toContain("mountVibesApp");
       expect(html).not.toContain("catalog-container");
     });
   });

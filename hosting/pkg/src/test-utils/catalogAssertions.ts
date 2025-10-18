@@ -31,7 +31,7 @@ export function expectBasicCatalogTitle(html: string, title: string): void {
  */
 export function expectAppInstance(html: string, appCode: string): void {
   expect(html).toContain(appCode);
-  expect(html).toContain("ReactDOMClient");
+  expect(html).toContain("mountVibesApp");
   expect(html).toContain("container");
   expect(html).not.toContain("catalog-container");
   expect(html).not.toContain("Install");
