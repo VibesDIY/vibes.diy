@@ -21,9 +21,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   const [formVisible, setFormVisible] = useState(open);
   const [overlayVisible, setOverlayVisible] = useState(open);
   const [isHovering, setIsHovering] = useState(false);
-  const [actualImageUrl, setActualImageUrl] = useState(
-    imageUrl === '/screenshot.png' ? '/screenshot.png' : imageUrl
-  );
+  const [actualImageUrl, setActualImageUrl] = useState(imageUrl);
 
   useEffect(() => {
     if (open) {
@@ -52,6 +50,11 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
       };
     }
   }, [open]);
+
+  // Sync actualImageUrl with imageUrl prop changes
+  useEffect(() => {
+    setActualImageUrl(imageUrl);
+  }, [imageUrl]);
 
   const handleImageError = () => {
     if (actualImageUrl === '/screenshot.png') {
