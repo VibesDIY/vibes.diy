@@ -18,16 +18,19 @@ window.CALLAI_IMG_URL = 'https://vibesdiy.net';
 // Support URL parameter overrides like the hosted environment
 const params = new URLSearchParams(window.location.search);
 
-if (params.get('api_key')) {
-  window.CALLAI_API_KEY = params.get('api_key')!;
+const apiKey = params.get('api_key');
+if (apiKey) {
+  window.CALLAI_API_KEY = apiKey;
 }
 
-if (params.get('chat_url')) {
-  window.CALLAI_CHAT_URL = params.get('chat_url')!;
+const chatUrl = params.get('chat_url');
+if (chatUrl) {
+  window.CALLAI_CHAT_URL = chatUrl;
 }
 
-if (params.get('img_url')) {
-  window.CALLAI_IMG_URL = params.get('img_url')!;
+const imgUrl = params.get('img_url');
+if (imgUrl) {
+  window.CALLAI_IMG_URL = imgUrl;
 }
 
 // Log setup for debugging

@@ -1,6 +1,7 @@
 // Hosted Dev Environment Entry Point
 // This mimics how hosted apps initialize on vibesdiy.net
 
+/// <reference types="vite/client" />
 import './setup'; // Set up hosted environment globals first
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -48,7 +49,8 @@ try {
     const loginButtons = container.querySelectorAll('[role="button"], button');
     console.log('🎛️ Found buttons after mount:', loginButtons.length);
     loginButtons.forEach((btn, i) => {
-      console.log(`🎛️ Button ${i + 1}:`, btn.textContent, 'visible:', btn.offsetWidth > 0);
+      const element = btn as HTMLElement;
+      console.log(`🎛️ Button ${i + 1}:`, btn.textContent, 'visible:', element.offsetWidth > 0);
     });
 
     const allText = container.textContent || '';
@@ -59,13 +61,15 @@ try {
   }, 1000);
 } catch (error) {
   console.error('❌ Failed to mount Vibes control:', error);
-  console.error('❌ Error stack:', error.stack);
+  if (error instanceof Error) {
+    console.error('❌ Error stack:', error.stack);
+  }
 }
 
 console.log('🎉 Hosted Dev Environment ready!');
 
 // Add some helpful dev info
-if (import.meta.env.DEV) {
+if (import.meta.env?.DEV) {
   console.log('💡 Development Tips:');
   console.log('  • Edit use-vibes source files for live HMR');
   console.log('  • Use ?api_key=custom to override API key');

@@ -39,7 +39,7 @@ const opts = tseslint.config(
       "**/claude-browse-vibes/**",
       "playwright.config.js",
       "**/tests-new/**",
-      "**/examples/**",
+      "**/examples/react-example/**",
       "vitest.config.ts",
       "**/.storybook/**",
       "**/tailwind.config.js",
