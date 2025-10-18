@@ -7,14 +7,18 @@ export default defineConfig({
     port: 3456,
     open: true,
     host: true, // Allow external connections for testing
+    fs: {
+      // Allow serving files from workspace packages
+      allow: ['..', '../..', '../../..'],
+    },
   },
   define: {
     // Expose environment info for debugging
     __DEV_MODE__: true,
   },
   optimizeDeps: {
-    // Ensure workspace dependencies are properly handled
-    include: ['use-vibes', 'call-ai'],
+    // Exclude workspace dependencies from pre-bundling to enable HMR
+    exclude: ['use-vibes', '@vibes.diy/use-vibes-base', 'call-ai'],
   },
   build: {
     sourcemap: true,
