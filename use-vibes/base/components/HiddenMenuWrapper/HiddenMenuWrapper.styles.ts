@@ -85,7 +85,9 @@ export const getContentWrapperStyle = (
   right: 0,
   bottom: 0,
   zIndex: hiddenMenuTheme.zIndex.content,
-  transition: `filter 0.3s ${hiddenMenuTheme.animation.easing}`,
+  transition: isBouncing
+    ? `filter 0.3s ${hiddenMenuTheme.animation.easing}`
+    : `transform ${hiddenMenuTheme.animation.duration} ${hiddenMenuTheme.animation.easing}, filter 0.3s ${hiddenMenuTheme.animation.easing}`,
   transform: menuOpen ? `translateY(-${menuHeight}px)` : 'translateY(0)',
   overflowY: 'auto',
   borderTopColor: hiddenMenuTheme.colors.menuBg,
