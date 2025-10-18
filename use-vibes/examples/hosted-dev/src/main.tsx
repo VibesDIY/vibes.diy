@@ -3,8 +3,15 @@
 
 /// <reference types="vite/client" />
 import './setup'; // Set up hosted environment globals first
+import React from 'react';
 import { mountVibesApp } from 'use-vibes';
 import Container from './Container';
+
+const StrictContainer = () => (
+  <React.StrictMode>
+    <Container />
+  </React.StrictMode>
+);
 
 console.log('🚀 Initializing Hosted Dev Environment...');
 
@@ -14,7 +21,7 @@ console.log('🎛️ Using portal approach - mounting app inside vibes overlay..
 try {
   const mountResult = mountVibesApp({
     container: document.body, // Mount to body to match production approach
-    appComponent: Container, // Pass the Container component directly
+    appComponent: StrictContainer, // Keep React.StrictMode in development
     title: 'Hosted Dev App',
     database: 'hosted-dev-db',
   });

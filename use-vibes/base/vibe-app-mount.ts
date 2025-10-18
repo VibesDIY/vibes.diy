@@ -151,10 +151,19 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
 
         if (contentWrapper && containerElement === document.body) {
           const children = Array.from(contentWrapper.childNodes);
-          children.forEach((child) => {
-            document.body.insertBefore(child, contentWrapper);
-          });
-          contentWrapper.remove();
+          const wrapperInDom = document.body.contains(contentWrapper);
+          for (const child of children) {
+            if (wrapperInDom) {
+              // Restore original order relative to the wrapper if it still exists
+              document.body.insertBefore(child, contentWrapper);
+            } else {
+              // Wrapper was already detached by React; append children back to body
+              document.body.appendChild(child);
+            }
+          }
+          if (wrapperInDom) {
+            contentWrapper.remove();
+          }
         }
 
         const cleanupTarget = contentWrapper || containerElement;

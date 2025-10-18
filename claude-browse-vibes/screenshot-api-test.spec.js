@@ -21,50 +21,28 @@ test("Screenshot API integration test", async ({ page }) => {
   const authWallTitle = await page.locator("h1").textContent();
   console.log(`📋 Auth wall title: "${authWallTitle}"`);
 
-  // Check the background image URL in the wrapper element
-  const wrapperElement = page.locator("div").first();
-
-  // Wait a bit for styles to load
-  await page.waitForTimeout(1000);
-
-  // Get computed styles
-  const backgroundImage = await wrapperElement.evaluate((el) => {
-    return window.getComputedStyle(el).backgroundImage;
-  });
-
+  // Read the computed background on the body (less brittle than selecting a div)
+  await page.waitForTimeout(500);
+  const backgroundImage = await page.evaluate(
+    () => getComputedStyle(document.body).backgroundImage,
+  );
   console.log(`🖼️  Background image: ${backgroundImage}`);
-
-  // Check if it uses screenshot API
-  if (backgroundImage.includes("/screenshot.png")) {
-    console.log("✅ Using screenshot API as expected");
-  } else if (backgroundImage.includes("unsplash")) {
-    console.log(
-      "❌ Still using old Unsplash image - screenshot API not working",
-    );
-  } else {
-    console.log("⚠️  Different background image detected");
-  }
+  expect(backgroundImage).not.toBe("none");
+  // Expect either screenshot.png (preferred) or a known fallback
+  expect(backgroundImage).toMatch(/screenshot\.png|unsplash/);
 
   // Test if screenshot endpoint exists
   console.log("🔍 Testing screenshot endpoint...");
-  try {
-    const response = await page.request.get(
-      "http://localhost:3456/vibe/cute-frog-9259_jchris/screenshot.png",
-    );
-    console.log(`📊 Screenshot endpoint status: ${response.status()}`);
-    if (response.status() === 200) {
-      console.log("✅ Screenshot API working");
-    } else {
-      console.log("⚠️  Screenshot API returned non-200");
-    }
-  } catch (error) {
-    console.log("⚠️  Screenshot endpoint error:", error.message);
-  }
+  const resp = await page.request.get(
+    "http://localhost:3456/vibe/cute-frog-9259_jchris/screenshot.png",
+  );
+  console.log(`📊 Screenshot endpoint status: ${resp.status()}`);
+  expect([200, 404]).toContain(resp.status());
 
   // Take a screenshot for visual verification
   console.log("📸 Taking screenshot for visual verification...");
   await page.screenshot({
-    path: "/Users/jchris/code/vibes.diy/claude-browse-vibes/screenshot-api-test.png",
+    path: test.info().outputPath("screenshot-api-test.png"),
     fullPage: true,
   });
 

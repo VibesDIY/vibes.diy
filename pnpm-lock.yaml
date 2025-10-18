@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      puppeteer:
-        specifier: ^24.25.0
-        version: 24.25.0(typescript@5.9.3)
     devDependencies:
       '@eslint/js':
         specifier: ^9.37.0
@@ -51,6 +47,9 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.6.14
         version: 0.6.14(prettier@3.6.2)
+      puppeteer:
+        specifier: ^24.25.0
+        version: 24.25.0(typescript@5.9.3)
       typescript-eslint:
         specifier: ^8.46.1
         version: 8.46.1(eslint@9.37.0(jiti@2.6.1))(typescript@5.9.3)
@@ -16084,7 +16083,7 @@ snapshots:
 
   lightningcss@1.30.1:
     dependencies:
-      detect-libc: 2.1.1
+      detect-libc: 2.1.2
     optionalDependencies:
       lightningcss-darwin-arm64: 1.30.1
       lightningcss-darwin-x64: 1.30.1
