@@ -23,6 +23,7 @@
     "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage --watch",
     "test:all": "cd vibes.diy/tests/app && pnpm run test && cd ../simple-chat && pnpm run test && cd ../../../prompts/tests && pnpm run test && cd ../../use-vibes/tests && pnpm run test && cd ../../call-ai/tests && pnpm run test",
     "playwright:claude": "playwright test -c claude-browse-vibes/playwright.config.js",
+    "test:screenshot:local": "node claude-browse-vibes/test-screenshot-api.js",
     "format": "prettier --write  --log-level silent .",
     "hosting:check": "echo '🔍 Running hosting CI checks...' && pnpm --filter @vibes.diy/hosting-base build && echo '✅ Hosting base built' && cd hosting/pkg && pnpm check && echo '✅ Hosting format and lint passed' && cd ../.. && pnpm --filter @vibes.diy/hosting-tests test && echo '🎉 All hosting CI checks passed!'",
     "dev": "cd vibes.diy/pkg && pnpm run dev",
@@ -62,11 +63,9 @@
     "playwright": "^1.56.0",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
+    "puppeteer": "^24.25.0",
     "typescript-eslint": "^8.46.1",
     "vitest": "^3.2.4",
     "wrangler": "^4.42.2"
-  },
-  "dependencies": {
-    "puppeteer": "^24.25.0"
   }
 }
