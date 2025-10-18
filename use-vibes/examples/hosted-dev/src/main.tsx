@@ -6,7 +6,7 @@ import './setup'; // Set up hosted environment globals first
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { mountVibesApp } from 'use-vibes';
-import App from './App';
+import Container from './Container';
 
 console.log('🚀 Initializing Hosted Dev Environment...');
 
@@ -20,7 +20,7 @@ console.log('📦 Mounting main React app...');
 const root = ReactDOM.createRoot(container);
 root.render(
   <React.StrictMode>
-    <App />
+    <Container />
   </React.StrictMode>
 );
 
