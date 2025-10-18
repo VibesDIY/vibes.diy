@@ -51,9 +51,7 @@ export default function App() {
 
     try {
       // Test AI integration (like hosted apps would do)
-      const response = await callAi('Say hello and explain what this app demonstrates', {
-        model: 'openai/gpt-3.5-turbo',
-      });
+      const response = await callAi('Say hello and explain what this app demonstrates');
 
       setAiResponse(typeof response === 'string' ? response : JSON.stringify(response));
     } catch (error) {
