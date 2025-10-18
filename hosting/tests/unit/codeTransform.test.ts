@@ -170,8 +170,9 @@ import { callAI } from "call-ai"
 import { ImgGen } from "use-vibes"`;
 
     const result = transformImports(testCode);
+    const expected = testCode + "\nexport default App;";
 
-    // Should remain unchanged since all imports are in libraryImportMap
-    expect(result).toBe(testCode);
+    // Should only add export statement since all imports are in libraryImportMap
+    expect(result).toBe(expected);
   });
 });
