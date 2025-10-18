@@ -21,7 +21,7 @@ export interface MountVibesAppResult {
 function VibesApp({
   database = 'vibes-app',
   title = 'Vibes App',
-  imageUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80',
+  imageUrl = '/screenshot.png',
   children,
 }: {
   database?: string;
