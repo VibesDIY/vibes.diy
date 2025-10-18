@@ -41,7 +41,7 @@ try {
   console.log('🎛️ Mount result:', mountResult);
   console.log('🎛️ Container after mount:', mountResult.getContainer());
   console.log('🎛️ Container innerHTML length:', mountResult.getContainer().innerHTML.length);
-  
+
   // Log when buttons are rendered
   setTimeout(() => {
     const container = mountResult.getContainer();
@@ -50,14 +50,13 @@ try {
     loginButtons.forEach((btn, i) => {
       console.log(`🎛️ Button ${i + 1}:`, btn.textContent, 'visible:', btn.offsetWidth > 0);
     });
-    
+
     const allText = container.textContent || '';
     console.log('🎛️ All text in vibes control:', allText);
     console.log('🎛️ Contains "Login":', allText.includes('Login'));
     console.log('🎛️ Contains "Invite":', allText.includes('Invite'));
     console.log('🎛️ Contains "Rem":', allText.includes('Rem'));
   }, 1000);
-  
 } catch (error) {
   console.error('❌ Failed to mount Vibes control:', error);
   console.error('❌ Error stack:', error.stack);
