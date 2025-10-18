@@ -207,7 +207,7 @@ const MyComponent = () => {
 export default MyComponent;`;
 
     const result = transformImports(testCode);
-    
+
     const expected = `import React from 'react';
 
 const MyComponent = () => {
@@ -231,7 +231,7 @@ const Component = () => {
 export default Component;`;
 
     const result = transformImports(testCode);
-    
+
     const expected = `import React from 'react';
 
 const Component = () => {
@@ -255,7 +255,7 @@ const Amazing = () => {
 export default Amazing;`;
 
     const result = transformImports(testCode);
-    
+
     const expected = `import React from 'react';
 
 const Amazing = () => {
