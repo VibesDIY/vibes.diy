@@ -53,6 +53,14 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
 
   // Preload and handle fallback for any imageUrl
   useEffect(() => {
+    // Guard against falsy imageUrl to avoid spurious requests
+    if (!imageUrl) {
+      const fallbackUrl =
+        'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+      setActualImageUrl(fallbackUrl);
+      return;
+    }
+
     let canceled = false;
     const img = new Image();
 
