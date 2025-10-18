@@ -20,7 +20,8 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   const [isVisible, setIsVisible] = useState(open);
   const [formVisible, setFormVisible] = useState(open);
   const [overlayVisible, setOverlayVisible] = useState(open);
-  const [isHovering, setIsHovering] = useState(false); // <-- new state for hover
+  const [isHovering, setIsHovering] = useState(false);
+  const [actualImageUrl, setActualImageUrl] = useState(imageUrl);
 
   useEffect(() => {
     if (open) {
@@ -50,6 +51,24 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
     }
   }, [open]);
 
+  // Test if screenshot API is working
+  useEffect(() => {
+    if (imageUrl === '/screenshot.png') {
+      const img = new Image();
+      img.onload = () => {
+        // Image loaded successfully
+        setActualImageUrl(imageUrl);
+      };
+      img.onerror = () => {
+        // Fallback to a nice gradient background
+        const fallbackUrl =
+          'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+        setActualImageUrl(fallbackUrl);
+      };
+      img.src = imageUrl;
+    }
+  }, [imageUrl]);
+
   if (!isVisible) return null;
 
   // Overlay style with dynamic blur based on hover
@@ -68,7 +87,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   };
 
   return (
-    <div style={getWrapperStyle(imageUrl)}>
+    <div style={getWrapperStyle(actualImageUrl)}>
       <div style={overlayStyle} />
       <div style={formContainerStyle}>
         <h1 style={getTitleStyle()}>{title}</h1>

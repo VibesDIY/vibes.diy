@@ -65,5 +65,8 @@
     "typescript-eslint": "^8.46.1",
     "vitest": "^3.2.4",
     "wrangler": "^4.42.2"
+  },
+  "dependencies": {
+    "puppeteer": "^24.25.0"
   }
 }
