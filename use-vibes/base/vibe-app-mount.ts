@@ -36,6 +36,7 @@ function VibesApp({
     new URLSearchParams(window.location.search).get('mock_login') === 'true';
 
   const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled && !mockLogin);
+  const [appReady, setAppReady] = React.useState(syncEnabled || mockLogin);
 
   React.useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -55,6 +56,17 @@ function VibesApp({
     setShowAuthWall(!syncEnabled && !mockLogin);
   }, [syncEnabled, mockLogin]);
 
+  // Defer app rendering until after auth completes
+  React.useEffect(() => {
+    if (!showAuthWall && !appReady) {
+      // Small delay for smooth transition from auth wall to app
+      const timeout = setTimeout(() => {
+        setAppReady(true);
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [showAuthWall, appReady]);
+
   const handleLogin = () => {
     enableSync();
   };
@@ -70,7 +82,7 @@ function VibesApp({
 
   return React.createElement(HiddenMenuWrapper, {
     menuContent: React.createElement(VibesPanel),
-    children,
+    children: appReady ? children : null,
   });
 }
 
