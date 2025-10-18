@@ -27,30 +27,32 @@ export function HiddenMenuWrapper({
   const menuContainerRef = useRef<HTMLDivElement>(null);
 
   const [isBouncing, setIsBouncing] = useState(false);
+  const [hasBouncedOnMount, setHasBouncedOnMount] = useState(false);
 
-  // Handle hover-triggered bounce
-  const handleSwitchHover = () => {
-    if (!isBouncing) {
+  // Trigger bounce animation on first mount
+  useEffect(() => {
+    if (!hasBouncedOnMount) {
       setIsBouncing(true);
+      setHasBouncedOnMount(true);
       setTimeout(() => setIsBouncing(false), 800);
     }
-  };
+  }, [hasBouncedOnMount]);
 
   // Inject keyframes for bounce animation
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
-    @keyframes bounce {
-      0%   { transform: translateY(0); }
-      12%  { transform: translateY(-200px); }  /* First big bounce */
-      25%  { transform: translateY(0); }
-      35%  { transform: translateY(-75px); }   /* Second bounce */
-      48%  { transform: translateY(0); }
-      58%  { transform: translateY(-25px); }   /* Third bounce */
-      68%  { transform: translateY(0); }
-      75%  { transform: translateY(-10px); }   /* Fourth bounce - faster */
-      82%  { transform: translateY(0); }
-      88%  { transform: translateY(-5px); }    /* Final tiny bounce - much faster */
+    @keyframes dropToClose {
+      0%   { transform: translateY(-200px); }  /* Start pushed up */
+      12%  { transform: translateY(0); }       /* First big drop */
+      25%  { transform: translateY(-75px); }   /* First bounce back up */
+      35%  { transform: translateY(0); }       /* Second drop */
+      48%  { transform: translateY(-25px); }   /* Second bounce back up */
+      62%  { transform: translateY(0); }       /* Third drop */
+      72%  { transform: translateY(-10px); }   /* Third bounce back up */
+      80%  { transform: translateY(0); }       /* Fourth drop - faster */
+      82%  { transform: translateY(-5px); }    /* Final tiny bounce back up - much faster */
+      88%  { transform: translateY(0); }       /* Final settle */
       100% { transform: translateY(0); }
     }
   `;
@@ -151,7 +153,6 @@ export function HiddenMenuWrapper({
         aria-controls="hidden-menu"
         ref={buttonRef}
         onClick={() => setMenuOpen(!menuOpen)}
-        onMouseEnter={handleSwitchHover}
         style={getToggleButtonStyle()}
       >
         <VibesSwitch size={80} />
