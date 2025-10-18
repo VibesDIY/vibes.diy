@@ -8,6 +8,7 @@ import {
   getInnerContentWrapperStyle,
 } from './HiddenMenuWrapper.styles.js';
 import { VibesSwitch } from '../VibesSwitch/VibesSwitch.js';
+import './HiddenMenuWrapper.css';
 
 export interface HiddenMenuWrapperProps {
   children: React.ReactNode;
@@ -43,60 +44,6 @@ export function HiddenMenuWrapper({
     }
   }, [hasBouncedOnMount, menuOpen]);
 
-  // Inject keyframes for bounce animation (deduplicated with reference counting)
-  useEffect(() => {
-    const styleId = 'vibes-drop-to-close-keyframes';
-    const countKey = 'vibes-keyframe-refs';
-
-    // Initialize or increment reference count
-    const currentCount = parseInt(
-      (window as unknown as Record<string, string>)[countKey] || '0',
-      10
-    );
-    (window as unknown as Record<string, string>)[countKey] = (currentCount + 1).toString();
-
-    // Only create keyframes if this is the first instance
-    if (currentCount === 0) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = `
-      @keyframes dropToClose {
-        0%   { transform: translateY(-400px); }  /* Start pushed up */
-        10%  { transform: translateY(0); }       /* First big drop */
-        25%  { transform: translateY(-175px); }   /* First bounce back up */
-        35%  { transform: translateY(0); }       /* Second drop */
-        48%  { transform: translateY(-75px); }   /* Second bounce back up */
-        62%  { transform: translateY(0); }       /* Third drop */
-        72%  { transform: translateY(-25px); }   /* Third bounce back up */
-        80%  { transform: translateY(0); }       /* Fourth drop - faster */
-        82%  { transform: translateY(-10px); }   /* Fourth bounce back up - much faster */
-        88%  { transform: translateY(0); }       /* Fifth drop */
-        91%  { transform: translateY(-5px); }    /* Final tiny bounce back up */
-        95%  { transform: translateY(0); }       /* Final settle */
-        100% { transform: translateY(0); }
-      }
-    `;
-      document.head.appendChild(style);
-    }
-
-    // Cleanup function with reference counting
-    return () => {
-      const windowRefs = window as unknown as Record<string, string>;
-      const refCount = parseInt(windowRefs[countKey] || '1', 10);
-      const newCount = refCount - 1;
-      windowRefs[countKey] = newCount.toString();
-
-      // Only remove keyframes when the last instance unmounts
-      if (newCount <= 0) {
-        const existingStyle = document.getElementById(styleId);
-        if (existingStyle) {
-          document.head.removeChild(existingStyle);
-        }
-        // Use bracket notation to avoid dynamic delete warning
-        windowRefs[countKey] = undefined as unknown as string;
-      }
-    };
-  }, []);
 
   // Manage bounce animation when triggerBounce changes
   useEffect(() => {

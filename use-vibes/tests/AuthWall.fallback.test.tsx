@@ -76,10 +76,7 @@ describe('AuthWall Image Fallback', () => {
   });
 
   it('should fallback for screenshot.png URL when it fails', async () => {
-    // Store current mock before overriding
-    const currentMock = globalThis.Image;
-
-    // Override the Image mock specifically for this test
+    // Override the default mock for this specific test case
     globalThis.Image = class {
       src = '';
       onload: (() => void) | null = null;
@@ -108,9 +105,6 @@ describe('AuthWall Image Fallback', () => {
       },
       { timeout: 1000 }
     );
-
-    // Restore the previous mock
-    globalThis.Image = currentMock;
   });
 
   it('should handle imageUrl prop changes', async () => {

@@ -95,7 +95,8 @@ export const getContentWrapperStyle = (
   borderTopStyle: 'solid',
   boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.contentBg,
-  animation: isBouncing ? 'dropToClose 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : undefined,
+  animation: isBouncing ? 'vibes-drop-to-close 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : undefined,
+  willChange: isBouncing ? 'transform' : undefined,
 });
 
 export const getInnerContentWrapperStyle = (menuOpen: boolean): CSSProperties => ({
