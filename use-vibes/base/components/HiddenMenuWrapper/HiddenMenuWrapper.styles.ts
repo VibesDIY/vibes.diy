@@ -74,7 +74,11 @@ export const getContentStyle = (): CSSProperties => ({
   height: '100%',
 });
 
-export const getContentWrapperStyle = (menuHeight: number, menuOpen: boolean): CSSProperties => ({
+export const getContentWrapperStyle = (
+  menuHeight: number,
+  menuOpen: boolean,
+  isBouncing: boolean
+): CSSProperties => ({
   position: 'fixed',
   top: 0,
   left: 0,
@@ -89,7 +93,16 @@ export const getContentWrapperStyle = (menuHeight: number, menuOpen: boolean): C
   borderTopStyle: 'solid',
   boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.contentBg,
+  animation: isBouncing ? 'bounce 0.8s ease-out forwards' : undefined,
+  animationTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+});
+
+export const getInnerContentWrapperStyle = (menuOpen: boolean): CSSProperties => ({
+  boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
+  backgroundColor: hiddenMenuTheme.colors.contentBg,
   filter: menuOpen ? `blur(${hiddenMenuTheme.animation.blurAmount})` : 'none',
+  width: '100%',
+  height: '100%',
 });
 
 export const getToggleButtonStyle = (): CSSProperties => ({
