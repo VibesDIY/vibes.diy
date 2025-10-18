@@ -62,8 +62,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">🏠 Hosted Dev Environment</h1>
@@ -163,6 +162,5 @@ export default function App() {
           </ul>
         </div>
       </div>
-    </div>
   );
 }
