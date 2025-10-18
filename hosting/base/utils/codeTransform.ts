@@ -41,9 +41,9 @@ export function transformImports(code: string): string {
     }
   );
 
-  // Also handle export default Component -> export default App
+  // Handle export default ComponentName -> export default App (for any PascalCase component name)
   transformedCode = transformedCode.replace(
-    /export\s+default\s+Component\s*;?/g,
+    /export\s+default\s+[A-Z][a-zA-Z0-9]*\s*;?/g,
     "export default App;"
   );
 
