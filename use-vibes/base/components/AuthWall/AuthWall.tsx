@@ -51,18 +51,29 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
     }
   }, [open]);
 
-  // Sync actualImageUrl with imageUrl prop changes
+  // Preload and handle fallback for any imageUrl
   useEffect(() => {
-    setActualImageUrl(imageUrl);
+    let canceled = false;
+    const img = new Image();
+    
+    img.onload = () => {
+      if (!canceled) setActualImageUrl(imageUrl);
+    };
+    
+    img.onerror = () => {
+      if (!canceled) {
+        // Fallback for any failed image URL
+        const fallbackUrl = 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+        setActualImageUrl(fallbackUrl);
+      }
+    };
+    
+    img.src = imageUrl;
+    
+    return () => {
+      canceled = true;
+    };
   }, [imageUrl]);
-
-  const handleImageError = () => {
-    if (actualImageUrl === '/screenshot.png') {
-      setActualImageUrl(
-        'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'
-      );
-    }
-  };
 
   if (!isVisible) return null;
 
@@ -83,7 +94,6 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
 
   return (
     <div style={getWrapperStyle(actualImageUrl)}>
-      <img src={actualImageUrl} onError={handleImageError} style={{ display: 'none' }} alt="" />
       <div style={overlayStyle} />
       <div style={formContainerStyle}>
         <h1 style={getTitleStyle()}>{title}</h1>
