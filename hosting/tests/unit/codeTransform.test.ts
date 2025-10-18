@@ -35,8 +35,8 @@ import * as Three from 'three';`;
 
     const result = transformImports(testCode);
 
-    // Should remain unchanged since all imports are in libraryImportMap
-    expect(result).toBe(testCode);
+    // Should keep imports unchanged but add export default App;
+    expect(result).toBe(testCode + "\nexport default App;");
   });
 
   it("should transform imports that are not in the libraryImportMap", () => {
@@ -48,7 +48,8 @@ import async from 'async';`;
 
     const expected = `import axios from "https://esm.sh/axios";
 import { debounce } from "https://esm.sh/lodash";
-import async from "https://esm.sh/async";`;
+import async from "https://esm.sh/async";
+export default App;`;
 
     expect(result).toBe(expected);
   });
@@ -60,8 +61,8 @@ import { something } from 'http://example.com/module';`;
 
     const result = transformImports(testCode);
 
-    // Should remain unchanged since these are already URLs
-    expect(result).toBe(testCode);
+    // Should remain unchanged since these are already URLs, but add export
+    expect(result).toBe(testCode + "\nexport default App;");
   });
 
   it("should handle mixed imports correctly", () => {
@@ -77,7 +78,8 @@ import something from 'https://esm.sh/something';`;
 import axios from "https://esm.sh/axios";
 import { useFireproof } from 'use-fireproof';
 import { debounce } from "https://esm.sh/lodash";
-import something from 'https://esm.sh/something';`;
+import something from 'https://esm.sh/something';
+export default App;`;
 
     expect(result).toBe(expected);
   });
@@ -93,7 +95,8 @@ import defaultExport, { named } from 'date-fns';`;
     const expected = `import defaultExport from "https://esm.sh/moment";
 import * as everything from "https://esm.sh/rxjs";
 import { named1, named2 } from "https://esm.sh/ramda";
-import defaultExport, { named } from "https://esm.sh/date-fns";`;
+import defaultExport, { named } from "https://esm.sh/date-fns";
+export default App;`;
 
     expect(result).toBe(expected);
   });
@@ -105,7 +108,8 @@ import lodash from 'lodash';`;
     const result = transformImports(testCode);
 
     const expected = `import axios from "https://esm.sh/axios"
-import lodash from "https://esm.sh/lodash";`;
+import lodash from "https://esm.sh/lodash";
+export default App;`;
 
     expect(result).toBe(expected);
   });
@@ -117,8 +121,8 @@ import Component from './components/Button';`;
 
     const result = transformImports(testCode);
 
-    // Should remain unchanged since these are relative paths
-    expect(result).toBe(testCode);
+    // Should remain unchanged since these are relative paths, but add export
+    expect(result).toBe(testCode + "\nexport default App;");
   });
 
   it("should handle edge cases with library imports", () => {
@@ -130,20 +134,20 @@ import { createRoot } from 'react-dom/client';`;
 
     const result = transformImports(testCode);
 
-    // All should remain unchanged as they're in libraryImportMap
-    expect(result).toBe(testCode);
+    // All should remain unchanged as they're in libraryImportMap, but add export
+    expect(result).toBe(testCode + "\nexport default App;");
   });
 
   it("should handle empty strings and malformed imports gracefully", () => {
     const testCode = ``;
     const result = transformImports(testCode);
-    expect(result).toBe("");
+    expect(result).toBe("\nexport default App;");
 
     const malformedCode = `not an import statement
 some other code
 import incomplete`;
     const malformedResult = transformImports(malformedCode);
-    expect(malformedResult).toBe(malformedCode);
+    expect(malformedResult).toBe(malformedCode + "\nexport default App;");
   });
 
   it("should preserve original quote style when not transforming", () => {
@@ -152,14 +156,15 @@ import { useFireproof } from 'use-fireproof';`;
 
     const result = transformImports(testCode);
 
-    // Should preserve original quotes
-    expect(result).toBe(testCode);
+    // Should preserve original quotes but add export
+    expect(result).toBe(testCode + "\nexport default App;");
   });
 
   it("should transform 'async' package correctly", () => {
     const testCode = `import async from 'async';`;
     const result = transformImports(testCode);
-    const expected = `import async from "https://esm.sh/async";`;
+    const expected = `import async from "https://esm.sh/async";
+export default App;`;
     expect(result).toBe(expected);
   });
 
