@@ -38,7 +38,7 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
           width: '250px',
         }}
       >
-        <VibesButton variant="primary">Login</VibesButton>
+        <VibesButton variant="primary">Logout</VibesButton>
         <VibesButton variant="secondary">🧟 Mutate</VibesButton>
         <VibesButton variant="tertiary">Invite</VibesButton>
       </div>
