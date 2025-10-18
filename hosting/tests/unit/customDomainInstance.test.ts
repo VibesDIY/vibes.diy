@@ -56,7 +56,7 @@ describe("Custom Domain Instance Behavior", () => {
 
       // Should serve app instance directly (not catalog page)
       expect(html).toContain("Hello Crypto");
-      expect(html).toContain("ReactDOMClient");
+      expect(html).toContain("mountVibesApp");
       expect(html).toContain("container");
 
       // Should NOT contain catalog elements
@@ -83,7 +83,7 @@ describe("Custom Domain Instance Behavior", () => {
       // Should serve catalog page (normal behavior)
       expect(html).toContain("catalog-container");
       expect(html).toContain("Install");
-      expect(html).not.toContain("ReactDOMClient");
+      expect(html).not.toContain("mountVibesApp");
     });
 
     it("should NOT treat vibesdiy.work domains as custom", async () => {
@@ -104,7 +104,7 @@ describe("Custom Domain Instance Behavior", () => {
       // Should serve catalog page (normal behavior)
       expect(html).toContain("catalog-container");
       expect(html).toContain("Install");
-      expect(html).not.toContain("ReactDOMClient");
+      expect(html).not.toContain("mountVibesApp");
     });
 
     it("should NOT treat vibecode.garden domains as custom", async () => {
@@ -125,7 +125,7 @@ describe("Custom Domain Instance Behavior", () => {
       // Should serve catalog page (normal behavior)
       expect(html).toContain("catalog-container");
       expect(html).toContain("Install");
-      expect(html).not.toContain("ReactDOMClient");
+      expect(html).not.toContain("mountVibesApp");
     });
   });
 
@@ -193,7 +193,7 @@ describe("Custom Domain Instance Behavior", () => {
       const html1 = await res1.text();
 
       expect(html1).toContain("Multi Domain App");
-      expect(html1).toContain("ReactDOMClient");
+      expect(html1).toContain("mountVibesApp");
       expect(html1).toContain('og:url" content="https://first.com');
       expect(html1).not.toContain("catalog-container");
 
@@ -203,7 +203,7 @@ describe("Custom Domain Instance Behavior", () => {
       const html2 = await res2.text();
 
       expect(html2).toContain("Multi Domain App");
-      expect(html2).toContain("ReactDOMClient");
+      expect(html2).toContain("mountVibesApp");
       expect(html2).toContain('og:url" content="https://second.io');
       expect(html2).not.toContain("catalog-container");
     });
@@ -274,7 +274,7 @@ describe("Custom Domain Instance Behavior", () => {
 
       // Should serve app instance directly
       expect(html).toContain("Specific Instance");
-      expect(html).toContain("ReactDOMClient");
+      expect(html).toContain("mountVibesApp");
 
       // Should preserve custom domain in URLs
       expect(html).toContain('og:url" content="https://specific.com');
@@ -299,7 +299,7 @@ describe("Custom Domain Instance Behavior", () => {
 
       // Should serve app instance directly
       expect(html).toContain("Origin Instance");
-      expect(html).toContain("ReactDOMClient");
+      expect(html).toContain("mountVibesApp");
 
       // Should preserve custom domain in URLs
       expect(html).toContain('og:url" content="https://generic.com');
