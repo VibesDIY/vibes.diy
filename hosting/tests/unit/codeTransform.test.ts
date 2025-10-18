@@ -10,7 +10,8 @@ export default function MyCustomComponent() {
 
     const result = transformImports(testCode);
 
-    expect(result).toContain("export default function App(");
+    expect(result).toContain("function App(");
+    expect(result).toContain("export default App;");
     expect(result).not.toContain("export default function MyCustomComponent(");
   });
 
@@ -21,7 +22,8 @@ export default function MyCustomComponent() {
 
     const result = transformImports(testCode);
 
-    expect(result).toContain("export default function App(");
+    expect(result).toContain("function App(");
+    expect(result).toContain("export default App;");
     expect(result).not.toContain("AsyncDataLab");
   });
 
