@@ -4,6 +4,7 @@ import { readFileSync, watchFile } from "fs";
 import { createServer } from "http";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { get } from "https";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -185,15 +186,42 @@ function App() {
 import importMapData from "../src/config/library-import-map.json" with { type: "json" };
 const libraryImportMap = importMapData.imports;
 
-// Replace template placeholders with sample data
-function renderTemplate() {
+// Function to fetch app data from production
+async function fetchAppFromProduction(slug) {
+  return new Promise((resolve, reject) => {
+    const url = `https://${slug}.vibesdiy.app/App.jsx`;
+    
+    console.log(`🔍 Fetching app from: ${url}`);
+    
+    get(url, (res) => {
+      if (res.statusCode !== 200) {
+        console.error(`❌ Failed to fetch app: ${res.statusCode} ${res.statusMessage}`);
+        reject(new Error(`Failed to fetch app: ${res.statusCode}`));
+        return;
+      }
+      
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        console.log(`✅ Successfully fetched app code (${data.length} chars)`);
+        resolve(data);
+      });
+    }).on('error', (err) => {
+      console.error(`❌ Network error fetching app:`, err.message);
+      reject(err);
+    });
+  });
+}
+
+// Replace template placeholders with app data
+function renderTemplate(appCode = sampleAppCode, appSlug = "sample-app") {
   // Generate the import map JSON
   const importMapJson = JSON.stringify({ imports: libraryImportMap }, null, 2);
 
   return (
     template
-      .replace(/{{APP_SLUG}}/g, "sample-app")
-      .replace(/{{APP_CODE}}/g, sampleAppCode)
+      .replace(/{{APP_SLUG}}/g, appSlug)
+      .replace(/{{APP_CODE}}/g, appCode)
       .replace(/{{API_KEY}}/g, "sample-api-key")
       .replace(
         /{{REMIX_BUTTON}}/g,
@@ -214,15 +242,61 @@ function renderTemplate() {
   );
 }
 
-const server = createServer((req, res) => {
+const server = createServer(async (req, res) => {
+  const url = new URL(req.url, `http://localhost:3000`);
+  const pathname = url.pathname;
+  
   // Handle favicon requests
-  if (req.url === "/favicon.ico" || req.url === "/favicon.svg") {
+  if (pathname === "/favicon.ico" || pathname === "/favicon.svg") {
     res.writeHead(404);
     res.end();
     return;
   }
 
-  // Serve the template for all other requests
+  // Handle /vibe/ routes
+  if (pathname.startsWith('/vibe/') || pathname === '/vibe') {
+    let slug = pathname.slice(6); // Remove '/vibe/' prefix
+    
+    // Default to lunar-filter-7721 if only /vibe or /vibe/
+    if (!slug) {
+      slug = 'lunar-filter-7721';
+      console.log(`🎯 Using default vibe: ${slug}`);
+    }
+    
+    try {
+      console.log(`🚀 Loading vibe: ${slug}`);
+      const appCode = await fetchAppFromProduction(slug);
+      
+      res.writeHead(200, {
+        "Content-Type": "text/html",
+        "Cache-Control": "no-cache",
+      });
+      
+      const html = renderTemplate(appCode, slug);
+      res.end(html);
+    } catch (error) {
+      console.error(`💥 Failed to load vibe "${slug}":`, error.message);
+      
+      res.writeHead(200, {
+        "Content-Type": "text/html",
+        "Cache-Control": "no-cache",
+      });
+      
+      const errorMessage = `
+        <div style="padding: 20px; text-align: center; color: red; font-family: monospace;">
+          <h2>❌ Failed to load vibe "${slug}"</h2>
+          <p>Error: ${error.message}</p>
+          <p><a href="/">← Back to sample app</a></p>
+        </div>
+      `;
+      
+      const html = renderTemplate(errorMessage, slug);
+      res.end(html);
+    }
+    return;
+  }
+
+  // Serve the default sample app for all other requests
   res.writeHead(200, {
     "Content-Type": "text/html",
     "Cache-Control": "no-cache",
@@ -237,4 +311,9 @@ server.listen(PORT, () => {
   console.log(`🌟 Preview server running at http://localhost:${PORT}`);
   console.log("📱 This shows the updated Vibes button styling");
   console.log("🔄 Refresh the page to see changes after editing the template");
+  console.log("");
+  console.log("✨ New vibe loading features:");
+  console.log(`   • http://localhost:${PORT}/ - Sample app`);
+  console.log(`   • http://localhost:${PORT}/vibe/ - Default vibe (lunar-filter-7721)`);
+  console.log(`   • http://localhost:${PORT}/vibe/[slug] - Load specific vibe from production`);
 });
