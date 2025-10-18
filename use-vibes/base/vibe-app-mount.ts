@@ -53,7 +53,13 @@ function VibesApp({
   }, []);
 
   React.useEffect(() => {
-    setShowAuthWall(!syncEnabled && !mockLogin);
+    const shouldShowAuthWall = !syncEnabled && !mockLogin;
+    setShowAuthWall(shouldShowAuthWall);
+
+    // Reset appReady when re-entering auth wall for consistency
+    if (shouldShowAuthWall) {
+      setAppReady(false);
+    }
   }, [syncEnabled, mockLogin]);
 
   // Defer app rendering until after auth completes

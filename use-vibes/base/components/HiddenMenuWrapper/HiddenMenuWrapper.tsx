@@ -29,18 +29,30 @@ export function HiddenMenuWrapper({
   const [isBouncing, setIsBouncing] = useState(false);
   const [hasBouncedOnMount, setHasBouncedOnMount] = useState(false);
 
-  // Trigger bounce animation on first mount
+  // Trigger bounce animation on first mount (respects reduced motion)
   useEffect(() => {
     if (!hasBouncedOnMount) {
-      setIsBouncing(true);
+      // Check for reduced motion preference
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!prefersReducedMotion) {
+        setIsBouncing(true);
+        setTimeout(() => setIsBouncing(false), 800);
+      }
       setHasBouncedOnMount(true);
-      setTimeout(() => setIsBouncing(false), 800);
     }
   }, [hasBouncedOnMount]);
 
-  // Inject keyframes for bounce animation
+  // Inject keyframes for bounce animation (deduplicated)
   useEffect(() => {
+    const styleId = 'vibes-drop-to-close-keyframes';
+
+    // Check if keyframes already exist
+    if (document.getElementById(styleId)) {
+      return;
+    }
+
     const style = document.createElement('style');
+    style.id = styleId;
     style.textContent = `
     @keyframes dropToClose {
       0%   { transform: translateY(-400px); }  /* Start pushed up */
@@ -59,8 +71,14 @@ export function HiddenMenuWrapper({
     }
   `;
     document.head.appendChild(style);
+
+    // Cleanup function now only removes if this was the last component
     return () => {
-      document.head.removeChild(style);
+      // Only remove if this component was the one that added it
+      const existingStyle = document.getElementById(styleId);
+      if (existingStyle) {
+        document.head.removeChild(existingStyle);
+      }
     };
   }, []);
 

@@ -85,7 +85,7 @@ export const getContentWrapperStyle = (
   right: 0,
   bottom: 0,
   zIndex: hiddenMenuTheme.zIndex.content,
-  transition: `transform ${hiddenMenuTheme.animation.duration} ${hiddenMenuTheme.animation.easing}, filter 0.3s ${hiddenMenuTheme.animation.easing}`,
+  transition: `filter 0.3s ${hiddenMenuTheme.animation.easing}`,
   transform: menuOpen ? `translateY(-${menuHeight}px)` : 'translateY(0)',
   overflowY: 'auto',
   borderTopColor: hiddenMenuTheme.colors.menuBg,
@@ -93,14 +93,10 @@ export const getContentWrapperStyle = (
   borderTopStyle: 'solid',
   boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.contentBg,
-  animation: isBouncing
-    ? 'dropToClose 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards'
-    : undefined,
+  animation: isBouncing ? 'dropToClose 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : undefined,
 });
 
 export const getInnerContentWrapperStyle = (menuOpen: boolean): CSSProperties => ({
-  boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
-  backgroundColor: hiddenMenuTheme.colors.contentBg,
   filter: menuOpen ? `blur(${hiddenMenuTheme.animation.blurAmount})` : 'none',
   width: '100%',
   height: '100%',
