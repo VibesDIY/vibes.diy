@@ -212,4 +212,28 @@ export default MyComponent;`;
     expect(result).toBe(testCode);
     expect(result.match(/export default/g)?.length).toBe(1);
   });
+
+  it("should rename export default Component to export default App", () => {
+    const testCode = `import React from 'react';
+
+const Component = () => {
+  return <div>Hello World</div>;
+};
+
+export default Component;`;
+
+    const result = transformImports(testCode);
+    
+    const expected = `import React from 'react';
+
+const Component = () => {
+  return <div>Hello World</div>;
+};
+
+export default App;`;
+
+    // Should rename Component to App in the export
+    expect(result).toBe(expected);
+    expect(result.match(/export default/g)?.length).toBe(1);
+  });
 });

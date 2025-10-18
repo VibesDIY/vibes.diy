@@ -41,6 +41,12 @@ export function transformImports(code: string): string {
     }
   );
 
+  // Also handle export default Component -> export default App
+  transformedCode = transformedCode.replace(
+    /export\s+default\s+Component\s*;?/g,
+    "export default App;"
+  );
+
   // Only add the export statement if we replaced an inline function OR if there's no existing export default
   const hasExistingExport = /export\s+default\s+/.test(transformedCode);
   
