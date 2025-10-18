@@ -29,14 +29,24 @@ export function transformImports(code: string): string {
     },
   );
 
+  // Track if we replaced an inline function export
+  let replacedInlineFunction = false;
+
   // Normalize the default export function name to "App" and create a named variable
   transformedCode = transformedCode.replace(
     /export\s+default\s+function\s+\w*\s*\(/g,
-    "function App(",
+    (match) => {
+      replacedInlineFunction = true;
+      return "function App(";
+    }
   );
 
-  // Add the export statement at the end
-  transformedCode += "\nexport default App;";
+  // Only add the export statement if we replaced an inline function OR if there's no existing export default
+  const hasExistingExport = /export\s+default\s+/.test(transformedCode);
+  
+  if (replacedInlineFunction || !hasExistingExport) {
+    transformedCode += "\nexport default App;";
+  }
 
   return transformedCode;
 }
