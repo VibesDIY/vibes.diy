@@ -1,12 +1,9 @@
 // Template HTML body structure with HTML syntax highlighting via comment directive
 export const htmlBody = /* html */ `
     <div id="container"></div>
-    <div id="vibe-control"></div>
 `;
 
-// VibeControl integration script
+// VibeControl integration script (empty - main app handles all vibes functionality)
 export const vibeControlScript = /* javascript */ `
-  import { mountVibesApp } from 'use-vibes';
-
-  mountVibesApp({ container: '#vibe-control' });
+  // All vibes functionality is handled by the main app mount
 `;

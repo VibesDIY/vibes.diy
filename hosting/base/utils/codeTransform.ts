@@ -29,11 +29,14 @@ export function transformImports(code: string): string {
     },
   );
 
-  // Normalize the default export function name to "App"
+  // Normalize the default export function name to "App" and create a named variable
   transformedCode = transformedCode.replace(
-    /export\s+default\s+function\s+\w+\s*\(/g,
-    "export default function App(",
+    /export\s+default\s+function\s+\w*\s*\(/g,
+    "function App(",
   );
+
+  // Add the export statement at the end
+  transformedCode += '\nexport default App;';
 
   return transformedCode;
 }
