@@ -36,7 +36,7 @@ export function transformImports(code: string): string {
   );
 
   // Add the export statement at the end
-  transformedCode += '\nexport default App;';
+  transformedCode += "\nexport default App;";
 
   return transformedCode;
 }

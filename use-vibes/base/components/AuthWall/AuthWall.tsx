@@ -9,7 +9,8 @@ import {
 } from './AuthWall.styles.js';
 import { VibesButton } from '../VibesButton/VibesButton.js';
 
-const FALLBACK_IMAGE_URL = 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+const FALLBACK_IMAGE_URL =
+  'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
 
 export interface AuthWallProps {
   onLogin: () => void;

@@ -49,8 +49,5 @@ export const template = `<!DOCTYPE html>
         database: 'app-{{APP_SLUG}}'
       });
     </script>
-    <script type="module">
-${vibeControlScript}
-    </script>
   </body>
 </html>`;

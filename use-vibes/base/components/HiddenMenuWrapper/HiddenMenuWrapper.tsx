@@ -44,7 +44,6 @@ export function HiddenMenuWrapper({
     }
   }, [hasBouncedOnMount, menuOpen]);
 
-
   // Manage bounce animation when triggerBounce changes
   useEffect(() => {
     if (triggerBounce) {
