@@ -32,8 +32,9 @@ export function HiddenMenuWrapper({
   // Trigger bounce animation on first mount (respects reduced motion and menu state)
   useEffect(() => {
     if (!hasBouncedOnMount && !menuOpen) {
-      // Check for reduced motion preference
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Check for reduced motion preference (with fallback for test environments)
+      const prefersReducedMotion =
+        window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false;
       if (!prefersReducedMotion) {
         setIsBouncing(true);
         setTimeout(() => setIsBouncing(false), 800);
