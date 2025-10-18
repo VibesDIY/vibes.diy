@@ -122,9 +122,9 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     React.createElement(
       VibesApp,
       {
-        database: database || undefined,
-        title: title || undefined,
-        imageUrl: imageUrl || undefined,
+        ...(database && { database }),
+        ...(title && { title }),
+        ...(imageUrl && { imageUrl }),
       },
       // If appComponent is provided, render it instead of preserving DOM
       appComponent
