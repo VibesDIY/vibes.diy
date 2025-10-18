@@ -180,4 +180,36 @@ import { ImgGen } from "use-vibes"`;
     // Should only add export statement since all imports are in libraryImportMap
     expect(result).toBe(expected);
   });
+
+  it("should not add export default App when there's already an export default", () => {
+    const testCode = `import React from 'react';
+
+const App = () => {
+  return <div>Hello World</div>;
+};
+
+export default App;`;
+
+    const result = transformImports(testCode);
+
+    // Should NOT add another export default App
+    expect(result).toBe(testCode);
+    expect(result.match(/export default/g)?.length).toBe(1);
+  });
+
+  it("should not add export default App when there's already an export default with different name", () => {
+    const testCode = `import React from 'react';
+
+const MyComponent = () => {
+  return <div>Hello World</div>;
+};
+
+export default MyComponent;`;
+
+    const result = transformImports(testCode);
+
+    // Should NOT add another export default App
+    expect(result).toBe(testCode);
+    expect(result.match(/export default/g)?.length).toBe(1);
+  });
 });
