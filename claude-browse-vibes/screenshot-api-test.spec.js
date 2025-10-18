@@ -37,7 +37,11 @@ test("Screenshot API integration test", async ({ page }) => {
     "http://localhost:3456/vibe/cute-frog-9259_jchris/screenshot.png",
   );
   console.log(`📊 Screenshot endpoint status: ${resp.status()}`);
-  expect([200, 404]).toContain(resp.status());
+  if (process.env.ALLOW_SCREENSHOT_404 === "1") {
+    expect([200, 404]).toContain(resp.status());
+  } else {
+    expect(resp.status()).toBe(200);
+  }
 
   // Take a screenshot for visual verification
   console.log("📸 Taking screenshot for visual verification...");
