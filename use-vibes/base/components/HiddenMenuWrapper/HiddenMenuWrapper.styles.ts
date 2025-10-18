@@ -93,7 +93,7 @@ export const getContentWrapperStyle = (
   borderTopStyle: 'solid',
   boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.contentBg,
-  animation: isBouncing ? 'bounce 0.8s ease-out forwards' : undefined,
+  animation: isBouncing ? 'dropToClose 0.8s ease-out forwards' : undefined,
   animationTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
 });
 
