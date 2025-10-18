@@ -23,6 +23,7 @@ class MockImage {
 
 describe('AuthWall Image Fallback', () => {
   const mockOnLogin = vi.fn();
+  const originalImage = globalThis.Image;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,6 +33,8 @@ describe('AuthWall Image Fallback', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    // Restore original Image constructor
+    globalThis.Image = originalImage;
   });
 
   it('should use the provided imageUrl when image loads successfully', async () => {
@@ -73,6 +76,9 @@ describe('AuthWall Image Fallback', () => {
   });
 
   it('should fallback for screenshot.png URL when it fails', async () => {
+    // Store current mock before overriding
+    const currentMock = globalThis.Image;
+
     // Override the Image mock specifically for this test
     globalThis.Image = class {
       src = '';
@@ -102,6 +108,9 @@ describe('AuthWall Image Fallback', () => {
       },
       { timeout: 1000 }
     );
+
+    // Restore the previous mock
+    globalThis.Image = currentMock;
   });
 
   it('should handle imageUrl prop changes', async () => {
