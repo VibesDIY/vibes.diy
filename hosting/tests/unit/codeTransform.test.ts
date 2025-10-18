@@ -197,7 +197,7 @@ export default App;`;
     expect(result.match(/export default/g)?.length).toBe(1);
   });
 
-  it("should not add export default App when there's already an export default with different name", () => {
+  it("should rename export default MyComponent to export default App", () => {
     const testCode = `import React from 'react';
 
 const MyComponent = () => {
@@ -207,9 +207,17 @@ const MyComponent = () => {
 export default MyComponent;`;
 
     const result = transformImports(testCode);
+    
+    const expected = `import React from 'react';
 
-    // Should NOT add another export default App
-    expect(result).toBe(testCode);
+const MyComponent = () => {
+  return <div>Hello World</div>;
+};
+
+export default App;`;
+
+    // Should rename MyComponent to App in the export
+    expect(result).toBe(expected);
     expect(result.match(/export default/g)?.length).toBe(1);
   });
 
@@ -234,6 +242,42 @@ export default App;`;
 
     // Should rename Component to App in the export
     expect(result).toBe(expected);
+    expect(result.match(/export default/g)?.length).toBe(1);
+  });
+
+  it("should rename export default Amazing to export default App", () => {
+    const testCode = `import React from 'react';
+
+const Amazing = () => {
+  return <div>Amazing Component</div>;
+};
+
+export default Amazing;`;
+
+    const result = transformImports(testCode);
+    
+    const expected = `import React from 'react';
+
+const Amazing = () => {
+  return <div>Amazing Component</div>;
+};
+
+export default App;`;
+
+    // Should rename Amazing to App in the export
+    expect(result).toBe(expected);
+    expect(result.match(/export default/g)?.length).toBe(1);
+  });
+
+  it("should NOT rename lowercase export defaults", () => {
+    const testCode = `const myHelper = () => { return 'help'; };
+
+export default myHelper;`;
+
+    const result = transformImports(testCode);
+
+    // Should NOT transform lowercase exports - they stay as is
+    expect(result).toBe(testCode);
     expect(result.match(/export default/g)?.length).toBe(1);
   });
 });
