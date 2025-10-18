@@ -5,20 +5,69 @@ import {
   getContentWrapperStyle,
   getContentStyle,
   getToggleButtonStyle,
+  getInnerContentWrapperStyle,
 } from './HiddenMenuWrapper.styles.js';
 import { VibesSwitch } from '../VibesSwitch/VibesSwitch.js';
 
 export interface HiddenMenuWrapperProps {
   children: React.ReactNode;
   menuContent: React.ReactNode;
+  triggerBounce?: boolean;
 }
 
-export function HiddenMenuWrapper({ children, menuContent }: HiddenMenuWrapperProps) {
+export function HiddenMenuWrapper({
+  children,
+  menuContent,
+  triggerBounce,
+}: HiddenMenuWrapperProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuHeight, setMenuHeight] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuContainerRef = useRef<HTMLDivElement>(null);
+
+  const [isBouncing, setIsBouncing] = useState(false);
+
+  // Handle hover-triggered bounce
+  const handleSwitchHover = () => {
+    if (!isBouncing) {
+      setIsBouncing(true);
+      setTimeout(() => setIsBouncing(false), 800);
+    }
+  };
+
+  // Inject keyframes for bounce animation
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes bounce {
+      0%   { transform: translateY(0); }
+      15%  { transform: translateY(-200px); }  /* First big bounce */
+      30%  { transform: translateY(0); }
+      45%  { transform: translateY(-75px); }  /* Second bounce */
+      60%  { transform: translateY(0); }
+      72%  { transform: translateY(-25px); }   /* Third bounce */
+      82%  { transform: translateY(0); }
+      89%  { transform: translateY(-10px); }   /* Fourth */
+      94%  { transform: translateY(0); }
+      97%  { transform: translateY(-5px); }    /* Final small bounce */
+      100% { transform: translateY(0); }
+    }
+  `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // Manage bounce animation when triggerBounce changes
+  useEffect(() => {
+    if (triggerBounce) {
+      setIsBouncing(true);
+      const timeout = setTimeout(() => setIsBouncing(false), 800); // Animation duration
+      return () => clearTimeout(timeout);
+    }
+  }, [triggerBounce]);
 
   // Set menu height on render
   useEffect(() => {
@@ -89,8 +138,10 @@ export function HiddenMenuWrapper({ children, menuContent }: HiddenMenuWrapperPr
       </div>
 
       {/* Content */}
-      <div style={getContentWrapperStyle(menuHeight, menuOpen)} ref={menuContainerRef}>
-        <div style={getContentStyle()}>{children}</div>
+      <div style={getContentWrapperStyle(menuHeight, menuOpen, isBouncing)} ref={menuContainerRef}>
+        <div style={getInnerContentWrapperStyle(menuOpen)}>
+          <div style={getContentStyle()}>{children}</div>
+        </div>
       </div>
 
       {/* Button */}
@@ -100,6 +151,7 @@ export function HiddenMenuWrapper({ children, menuContent }: HiddenMenuWrapperPr
         aria-controls="hidden-menu"
         ref={buttonRef}
         onClick={() => setMenuOpen(!menuOpen)}
+        onMouseEnter={handleSwitchHover}
         style={getToggleButtonStyle()}
       >
         <VibesSwitch size={80} />
