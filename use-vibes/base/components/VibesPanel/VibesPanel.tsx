@@ -34,6 +34,10 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
 
   const handleLogoutClick = () => {
     document.dispatchEvent(new CustomEvent('vibes-sync-disable'));
+    // Reload the page after logout
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const containerStyle: React.CSSProperties = {
