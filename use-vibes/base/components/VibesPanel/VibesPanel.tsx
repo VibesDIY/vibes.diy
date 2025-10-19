@@ -32,6 +32,10 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     window.open(generateRemixUrl(), '_top');
   };
 
+  const handleLogoutClick = () => {
+    document.dispatchEvent(new CustomEvent('vibes-sync-disable'));
+  };
+
   const containerStyle: React.CSSProperties = {
     padding: '12px',
     display: 'flex',
@@ -70,7 +74,9 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
         ) : (
           // Normal buttons
           <>
-            <VibesButton variant="primary">Logout</VibesButton>
+            <VibesButton variant="primary" onClick={handleLogoutClick}>
+              Logout
+            </VibesButton>
             <VibesButton variant="secondary" onClick={handleMutateClick}>
               🧟 Mutate
             </VibesButton>
