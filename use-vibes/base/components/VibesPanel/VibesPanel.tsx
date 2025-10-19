@@ -179,6 +179,9 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
             ) : (
               // Show status when sending/complete
               <div
+                id="invite-status"
+                role="status"
+                aria-live="polite"
                 style={{
                   padding: '0.75rem 1rem',
                   background: '#fff',
