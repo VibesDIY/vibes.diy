@@ -782,7 +782,7 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
     
     <script type="module">
       // Initialize headless install tracking with use-vibes
-      const { initVibesInstalls } = await import('https://esm.sh/use-vibes');
+      const { initVibesInstalls, constructSubdomain } = await import('https://esm.sh/use-vibes');
       
       let tracker = null;
       
@@ -884,16 +884,21 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
                 <button class="clear-history-btn" onclick="clearHistory()">Clear History</button>
               </div>
               <div class="instance-list">
-                \${sortedInstances.map(instance => \`
+                \${sortedInstances.map(instance => {
+                  // Use constructSubdomain helper for consistent URL formatting
+                  const instanceSubdomain = constructSubdomain(appSlug, instance.installId, domain);
+                  
+                  return \`
                   <div class="instance-item">
-                    <a href="https://v-\${appSlug}--\${instance.installId}.\${domain}" class="instance-link">
+                    <a href="https://\${instanceSubdomain}.\${domain}" class="instance-link">
                       <div class="instance-info">
                         <span class="instance-id">💾 \${instance.installId}</span>
                         <span class="instance-time">\${formatTime(instance.lastVisited || instance.createdAt)}</span>
                       </div>
                     </a>
                   </div>
-                \`).join('')}
+                  \`;
+                }).join('')}
               </div>
             </div>
           \`;
@@ -943,7 +948,10 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
             for (let i = 0; i < 12; i++) {
               installId += chars[Math.floor(Math.random() * chars.length)];
             }
-            window.location.href = \`https://v-\${appSlug}--\${installId}.\${domain}\`;
+            
+            // Use constructSubdomain helper for consistent URL formatting
+            const newSubdomain = constructSubdomain(appSlug, installId, domain);
+            window.location.href = \`https://\${newSubdomain}.\${domain}\`;
           }
         }, 2000);
       }
