@@ -136,39 +136,41 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
         ) : mode === 'invite' ? (
           // Invite mode form
           <>
-            <form onSubmit={handleInviteSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input
-                type="email"
-                placeholder="friend@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={inviteStatus === 'sending'}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  background: '#fff',
-                  color: '#1a1a1a',
-                  border: '3px solid #1a1a1a',
-                  borderRadius: '12px',
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  letterSpacing: '0.02em',
-                  boxShadow: '4px 5px 0px 0px #666',
-                  transition: 'all 0.15s ease',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-                required
-              />
-              <VibesButton 
-                variant="primary" 
-                type="submit" 
-                disabled={!email.trim() || inviteStatus === 'sending'}
-              >
-                {inviteStatus === 'sending' ? 'Sending...' : 'Send Invite'}
-              </VibesButton>
-            </form>
-            {inviteMessage && (
+            {inviteStatus === 'idle' ? (
+              // Show form when idle
+              <form onSubmit={handleInviteSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input
+                  type="email"
+                  placeholder="friend@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    background: '#fff',
+                    color: '#1a1a1a',
+                    border: '3px solid #1a1a1a',
+                    borderRadius: '12px',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    letterSpacing: '0.02em',
+                    boxShadow: '4px 5px 0px 0px #666',
+                    transition: 'all 0.15s ease',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  required
+                />
+                <VibesButton 
+                  variant="primary" 
+                  type="submit" 
+                  disabled={!email.trim()}
+                >
+                  Send Invite
+                </VibesButton>
+              </form>
+            ) : (
+              // Show status when sending/complete
               <div style={{ 
                 padding: '0.75rem 1rem',
                 background: '#fff',
@@ -179,12 +181,14 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
                 fontWeight: 500,
                 textAlign: 'center',
                 letterSpacing: '0.02em',
-                boxShadow: inviteStatus === 'error' 
-                  ? '4px 5px 0px 0px #DA291C' 
-                  : '4px 5px 0px 0px #51cf66',
+                boxShadow: inviteStatus === 'sending' 
+                  ? '4px 5px 0px 0px #666'
+                  : inviteStatus === 'error' 
+                    ? '4px 5px 0px 0px #DA291C' 
+                    : '4px 5px 0px 0px #51cf66',
                 transition: 'all 0.15s ease',
               }}>
-                {inviteMessage}
+                {inviteStatus === 'sending' ? 'Inviting...' : inviteMessage}
               </div>
             )}
             <VibesButton variant="tertiary" onClick={handleBackClick}>
