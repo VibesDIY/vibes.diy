@@ -709,27 +709,8 @@ export const catalogTitleScript = /* javascript */ `
 
   // Generate a new install ID and launch the app instance
   async function launchApp() {
-    // Generate a 12-character alphanumeric install ID
-    function generateInstallId() {
-      const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
-      let result = '';
-      
-      // Use crypto.getRandomValues if available for better randomness
-      if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-        const array = new Uint8Array(12);
-        crypto.getRandomValues(array);
-        for (let i = 0; i < 12; i++) {
-          result += chars[array[i] % chars.length];
-        }
-      } else {
-        // Fallback to Math.random()
-        for (let i = 0; i < 12; i++) {
-          result += chars[Math.floor(Math.random() * chars.length)];
-        }
-      }
-      
-      return result;
-    }
+    // Import generateInstallId from the shared utility module
+    const { generateInstallId } = await import('@vibes.diy/use-vibes-base');
     
     const installId = generateInstallId();
     
@@ -743,8 +724,12 @@ export const catalogTitleScript = /* javascript */ `
     // Save to Fireproof before redirecting
     await saveInstanceToFireproof(appSlug, installId, appTitle);
     
+    // Import constructSubdomain to build the new v-slug--installId format
+    const { constructSubdomain } = await import('@vibes.diy/use-vibes-base');
+    const newSubdomain = constructSubdomain(appSlug, installId);
+    
     const instanceUrl = new URL(currentUrl);
-    instanceUrl.hostname = instanceUrl.hostname.replace(appSlug, appSlug + '_' + installId);
+    instanceUrl.hostname = instanceUrl.hostname.replace(appSlug, newSubdomain);
     window.location.href = instanceUrl.toString();
   }
 

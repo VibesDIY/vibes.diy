@@ -533,4 +533,9 @@ export {
   generateRandomInstanceId,
   generateFreshDataUrl,
   generateRemixUrl,
+  parseSubdomain,
+  constructSubdomain,
+  isValidSubdomain,
+  generateInstallId,
 } from './utils/appSlug.js';
+export type { ParsedSubdomain } from './utils/appSlug.js';

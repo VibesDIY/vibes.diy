@@ -182,7 +182,8 @@ describe("Underscore-Based Routing Integration", () => {
       const html = await response.text();
 
       expect(html).toContain("function launchApp()");
-      expect(html).toContain("function generateInstallId()");
+      expect(html).toContain("import('@vibes.diy/use-vibes-base')");
+      expect(html).toContain("generateInstallId");
       expect(html).toContain("launch-app-btn");
       expect(html).toContain("addEventListener");
     });

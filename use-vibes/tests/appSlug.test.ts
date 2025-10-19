@@ -57,13 +57,13 @@ describe('App Slug Utilities', () => {
       // Should generate different IDs
       expect(id1).not.toBe(id2);
 
-      // Should be 6 characters long
-      expect(id1.length).toBe(6);
-      expect(id2.length).toBe(6);
+      // Should be 12 characters long
+      expect(id1.length).toBe(12);
+      expect(id2.length).toBe(12);
 
       // Should only contain lowercase letters and numbers
-      expect(id1).toMatch(/^[a-z0-9]{6}$/);
-      expect(id2).toMatch(/^[a-z0-9]{6}$/);
+      expect(id1).toMatch(/^[a-z0-9]{12}$/);
+      expect(id2).toMatch(/^[a-z0-9]{12}$/);
     });
 
     it('should generate fresh data URLs with new v-slug--installID format', () => {

@@ -18,6 +18,7 @@
   "dependencies": {
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/utils": "workspace:*",
+    "@vibes.diy/use-vibes-base": "workspace:*",
     "call-ai": "workspace:*",
     "hono": "^4.6.6",
     "chanfana": "^2.1.4",
