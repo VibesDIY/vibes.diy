@@ -124,3 +124,39 @@ export function isProductionEnvironment(): boolean {
   const { hostname } = window.location;
   return hostname.includes('.') && hostname !== 'localhost' && !hostname.startsWith('127.0.0.1');
 }
+
+/**
+ * Generate a random instance ID for creating new app instances
+ *
+ * @returns A random instance ID (e.g., "abc123", "xyz789")
+ */
+export function generateRandomInstanceId(): string {
+  // Generate a random string similar to pattern used in the platform
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+/**
+ * Generate a URL for a fresh data install (new instance with same app slug)
+ *
+ * @returns URL for fresh install with new random instance ID
+ */
+export function generateFreshDataUrl(): string {
+  const appSlug = getAppSlug();
+  const newInstanceId = generateRandomInstanceId();
+  return `https://vibes.diy/vibe/${appSlug}_${newInstanceId}`;
+}
+
+/**
+ * Generate a URL for the remix/change code endpoint
+ *
+ * @returns URL for remix endpoint
+ */
+export function generateRemixUrl(): string {
+  const appSlug = getAppSlug();
+  return `https://vibes.diy/remix/${appSlug}`;
+}

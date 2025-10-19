@@ -530,4 +530,7 @@ export {
   getFullAppIdentifier,
   isDevelopmentEnvironment,
   isProductionEnvironment,
+  generateRandomInstanceId,
+  generateFreshDataUrl,
+  generateRemixUrl,
 } from './utils/appSlug.js';

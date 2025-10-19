@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { VibesButton } from '../VibesButton/VibesButton.js';
-import { getAppSlug } from '../../utils/appSlug.js';
+import { generateFreshDataUrl, generateRemixUrl } from '../../utils/appSlug.js';
 
 export interface VibesPanelProps {
   /** Optional custom styling for the panel container */
@@ -24,9 +24,12 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     }
   };
 
-  const getFormAction = () => {
-    const appSlug = getAppSlug();
-    return `https://vibes.diy/remix/${appSlug}`;
+  const handleFreshDataClick = () => {
+    window.open(generateFreshDataUrl(), '_top');
+  };
+
+  const handleChangeCodeClick = () => {
+    window.open(generateRemixUrl(), '_top');
   };
 
   const containerStyle: React.CSSProperties = {
@@ -59,70 +62,81 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     <div style={containerStyle} className={className}>
       {isExpanded && (
         <div style={{ width: '100%', marginBottom: '12px' }}>
-          <form
-            id="mutate-form"
-            action={getFormAction()}
-            target="_top"
-            method="GET"
-            style={{ width: '100%' }}
+          {/* Mutate heading */}
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <h2 style={{
+              margin: 0,
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: '#333',
+            }}>
+              Mutate
+            </h2>
+          </div>
+          
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={() => setIsExpanded(false)}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              background: 'none',
+              border: 'none',
+              fontSize: '20px',
+              cursor: 'pointer',
+              color: '#666',
+            }}
           >
-            <div style={{ marginBottom: '12px' }}>
-              <input
-                type="text"
-                name="prompt"
-                placeholder="Make it pink..."
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '16px',
-                  border: '1px solid rgba(0, 0, 0, 0.2)',
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  outline: 'none',
-                }}
-                autoFocus
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsExpanded(false)}
-              style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                background: 'none',
-                border: 'none',
-                fontSize: '20px',
-                cursor: 'pointer',
-                color: '#666',
-              }}
+            ×
+          </button>
+          
+          {/* Two action buttons */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            width: '100%',
+          }}>
+            <VibesButton 
+              variant="primary" 
+              onClick={handleFreshDataClick}
+              style={{ width: '100%' }}
             >
-              ×
-            </button>
-          </form>
+              Fresh Data
+            </VibesButton>
+            <VibesButton 
+              variant="secondary" 
+              onClick={handleChangeCodeClick}
+              style={{ width: '100%' }}
+            >
+              Change the Code
+            </VibesButton>
+          </div>
         </div>
       )}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '12px',
-          width: isExpanded ? '100%' : '250px',
-        }}
-      >
-        <VibesButton variant="primary">Logout</VibesButton>
-        <VibesButton
-          variant="secondary"
-          onClick={handleMutateClick}
-          type={isExpanded ? 'submit' : 'button'}
-          form={isExpanded ? 'mutate-form' : undefined}
+      {!isExpanded && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '12px',
+            width: '250px',
+          }}
         >
-          {isExpanded ? '🚀 Submit' : '🧟 Mutate'}
-        </VibesButton>
-        <VibesButton variant="tertiary">Invite</VibesButton>
-      </div>
+          <VibesButton variant="primary">Logout</VibesButton>
+          <VibesButton
+            variant="secondary"
+            onClick={handleMutateClick}
+          >
+            🧟 Mutate
+          </VibesButton>
+          <VibesButton variant="tertiary">Invite</VibesButton>
+        </div>
+      )}
     </div>
   );
 }
