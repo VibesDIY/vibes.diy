@@ -15,6 +15,14 @@ export interface VibesPanelProps {
  * throughout the Vibes DIY platform for authentication and actions.
  */
 export function VibesPanel({ style, className }: VibesPanelProps = {}) {
+  const handleMutateClick = () => {
+    // Extract app slug from current URL (part before underscore)
+    const hostname = window.location.hostname;
+    const appSlug = hostname.split('.')[0].split('_')[0];
+    const mutateUrl = `https://vibes.diy/mutate/${appSlug}`;
+    window.open(mutateUrl, '_blank');
+  };
+
   return (
     <div
       style={{
@@ -39,7 +47,7 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
         }}
       >
         <VibesButton variant="primary">Logout</VibesButton>
-        <VibesButton variant="secondary">🧟 Mutate</VibesButton>
+        <VibesButton variant="secondary" onClick={handleMutateClick}>🧟 Mutate</VibesButton>
         <VibesButton variant="tertiary">Invite</VibesButton>
       </div>
     </div>
