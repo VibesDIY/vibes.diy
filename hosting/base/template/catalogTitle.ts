@@ -682,109 +682,27 @@ export const catalogTitleStyles = /* css */ `
   }
 `;
 
-// Catalog Title JavaScript functionality
+// Simplified Catalog Title JavaScript using headless install tracking
 export const catalogTitleScript = /* javascript */ `
-  // Save instance to Fireproof
-  async function saveInstanceToFireproof(appSlug, installId, appTitle) {
-    try {
-      // Dynamic import of use-vibes to get fireproof function
-      const { fireproof } = await import('https://esm.sh/use-vibes');
-      const database = fireproof(\`\${appSlug}-instances\`);
-      
-      const instanceDoc = {
-        _id: \`instance-\${installId}\`,
-        type: 'instance',
-        installId: installId,
-        appSlug: appSlug,
-        appTitle: appTitle,
-        createdAt: new Date().toISOString(),
-        lastVisited: new Date().toISOString()
-      };
-      
-      await database.put(instanceDoc);
-    } catch (error) {
-      console.error('Failed to save instance:', error);
-    }
-  }
-
-  // Generate a new install ID and launch the app instance
-  async function launchApp() {
-    // Import generateInstallId from the shared utility module
-    const { generateInstallId } = await import('@vibes.diy/use-vibes-base');
-    
-    const installId = generateInstallId();
-    
-    // Get current location info
-    const currentUrl = new URL(window.location.href);
-    
-    // Modify the hostname subdomain to include install ID
-    const appSlug = currentUrl.hostname.split('.')[0];
-    const appTitle = document.querySelector('.catalog-title h1')?.textContent || 'Unknown App';
-    
-    // Save to Fireproof before redirecting
-    await saveInstanceToFireproof(appSlug, installId, appTitle);
-    
-    // Import constructSubdomain to build the new v-slug--installId format
-    const { constructSubdomain } = await import('@vibes.diy/use-vibes-base');
-    const newSubdomain = constructSubdomain(appSlug, installId);
-    
-    const instanceUrl = new URL(currentUrl);
-    instanceUrl.hostname = instanceUrl.hostname.replace(appSlug, newSubdomain);
-    window.location.href = instanceUrl.toString();
-  }
-
-  // Track visit to existing instance
-  async function trackInstanceVisit() {
-    try {
-      const hostname = window.location.hostname;
-      const parts = hostname.split('.');
-      const subdomain = parts[0];
-      
-      // Check if this is an instance (has underscore)
-      if (subdomain.includes('_')) {
-        const [appSlug, installId] = subdomain.split('_', 2);
-        
-        // Dynamic import of use-vibes to get fireproof function
-        const { fireproof } = await import('https://esm.sh/use-vibes');
-        const database = fireproof(\`\${appSlug}-instances\`);
-        
-        try {
-          // Try to get existing instance document
-          const existingInstance = await database.get(\`instance-\${installId}\`);
-          
-          // Update last visited time
-          await database.put({
-            ...existingInstance,
-            lastVisited: new Date().toISOString()
-          });
-        } catch (getError) {
-          // Document doesn't exist, create it
-          await database.put({
-            _id: \`instance-\${installId}\`,
-            type: 'instance',
-            installId,
-            appSlug: appSlug,
-            appTitle: document.querySelector('.catalog-title h1')?.textContent || 'Unknown App',
-            createdAt: new Date().toISOString(),
-            lastVisited: new Date().toISOString()
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to track instance visit:', error);
-    }
-  }
+  // Simple fallback functions for when use-vibes isn't loaded yet
+  window.createNewInstall = window.createNewInstall || function() {
+    console.log('Creating new install...');
+  };
+  
+  window.goToFreshestInstall = window.goToFreshestInstall || function() {
+    console.log('Going to latest install...');
+  };
+  
+  window.defaultLaunchAction = window.defaultLaunchAction || function() {
+    console.log('Default launch action...');
+  };
 
   // Set up event listeners when DOM is loaded
   document.addEventListener('DOMContentLoaded', function() {
     const launchButton = document.getElementById('launch-app-btn');
     if (launchButton) {
-      launchButton.addEventListener('click', launchApp);
+      launchButton.addEventListener('click', window.defaultLaunchAction);
     }
-
-    
-    // Track visit if this is an instance page
-    setTimeout(trackInstanceVisit, 1000);
   });
 `;
 
@@ -863,176 +781,86 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
     <script>${catalogTitleScript}</script>
     
     <script type="module">
-      // Import use-vibes/Fireproof for database operations
-      const { fireproof } = await import('https://esm.sh/use-vibes');
+      // Initialize headless install tracking with use-vibes
+      const { initVibesInstalls } = await import('https://esm.sh/use-vibes');
       
-      let database = null;
-      let unsubscribe = null;
+      let tracker = null;
       
-      // Initialize the database and set up subscription
-      async function initializeInstallHistory() {
-        try {
-          const appSlug = window.location.hostname.split('.')[0];
-          database = fireproof(\`\${appSlug}-instances\`);
-          
-          // Subscribe to database changes and redraw on any change
-          unsubscribe = database.subscribe(() => {
-            renderInstallHistory();
-          });
-          
-          // Initial render
-          await renderInstallHistory();
-        } catch (error) {
-          console.error('Failed to initialize install history:', error);
-        }
-      }
-      
-      // Update launch buttons based on installs
-      function updateLaunchButtons(installs) {
-        const container = document.getElementById('launch-buttons-container');
-        if (!container) return;
-        
-        const appSlug = window.location.hostname.split('.')[0];
-        const domain = window.location.hostname.split('.').slice(1).join('.');
-        
-        if (installs.length === 0) {
-          // First install - single "Install" button
-          container.innerHTML = \`
-            <button id="launch-app-btn" class="launch-button" onclick="createNewInstall()">
-              <span class="launch-icon">🚀</span>
-              <span>Install</span>
-            </button>
-          \`;
-        } else {
-          // Multiple installs - show "Freshest Install" and "New Install" buttons
-          const mostRecent = installs.sort((a, b) => 
-            new Date(b.lastVisited || b.createdAt) - new Date(a.lastVisited || a.createdAt)
-          )[0];
-          
-          container.innerHTML = \`
-            <button id="freshest-install-btn" class="launch-button" onclick="goToFreshestInstall()">
-              <span class="launch-icon">💽</span>
-              <span>My Latest Install</span>
-            </button>
-            <button id="new-install-btn" class="launch-button secondary" onclick="createNewInstall()">
-              <span class="launch-icon">💾</span>
-              <span>Fresh Install</span>
-            </button>
-          \`;
-        }
-      }
-      
-      // Create a new install
-      window.createNewInstall = async function() {
-        await launchApp();
-      };
-      
-      // Smart default action: go to freshest install if exists, otherwise create new
-      window.defaultLaunchAction = async function() {
-        try {
-          const result = await database.allDocs();
-          let installs = [];
-          if (result && result.docs && Array.isArray(result.docs)) {
-            installs = result.docs.filter(doc => doc && doc.type === 'instance');
-          } else if (result && result.rows && Array.isArray(result.rows)) {
-            installs = result.rows
-              .map(row => row.doc || row.value)
-              .filter(doc => doc && doc.type === 'instance');
+      try {
+        // Initialize the install tracker with auto-redirect disabled initially
+        // so we can show loading UI and handle the redirect manually
+        tracker = await initVibesInstalls({
+          autoRedirect: false, // We'll handle redirect after UI is ready
+          onReady: (installs) => {
+            console.log('Install tracker ready with', installs.length, 'installs');
+            updateUI(installs);
           }
+        });
+        
+        // Update the UI based on current installs
+        function updateUI(installs) {
+          updateLaunchButtons(installs);
+          renderInstallHistory(installs);
           
-          if (installs.length > 0) {
-            // Go to freshest install if any exist
-            await goToFreshestInstall();
+          // Auto-redirect after UI is ready if this is a catalog page
+          const hostname = window.location.hostname;
+          const parsed = hostname.split('.');
+          const subdomain = parsed[0];
+          
+          // Check if we're NOT on an instance page (no underscore or double dash)
+          if (!subdomain.includes('_') && !subdomain.includes('--')) {
+            // We're on a catalog page, do smart redirect
+            setTimeout(() => tracker.goToLatestOrCreate(), 100);
+          }
+        }
+        
+        // Update launch buttons based on install count
+        function updateLaunchButtons(installs) {
+          const container = document.getElementById('launch-buttons-container');
+          if (!container) return;
+          
+          if (installs.length === 0) {
+            // First install - single "Install" button
+            container.innerHTML = \`
+              <button id="launch-app-btn" class="launch-button" onclick="createNewInstall()">
+                <span class="launch-icon">🚀</span>
+                <span>Install</span>
+              </button>
+            \`;
           } else {
-            // Create new install if none exist
-            await createNewInstall();
+            // Multiple installs - show "My Latest Install" and "Fresh Install" buttons
+            container.innerHTML = \`
+              <button id="freshest-install-btn" class="launch-button" onclick="goToFreshestInstall()">
+                <span class="launch-icon">💽</span>
+                <span>My Latest Install</span>
+              </button>
+              <button id="new-install-btn" class="launch-button secondary" onclick="createNewInstall()">
+                <span class="launch-icon">💾</span>
+                <span>Fresh Install</span>
+              </button>
+            \`;
           }
-        } catch (error) {
-          console.error('Failed default launch action:', error);
-          // Fallback to creating new install
-          await createNewInstall();
         }
-      };
-
-      // Go to the most recent install
-      window.goToFreshestInstall = async function() {
-        const appSlug = window.location.hostname.split('.')[0];
-        const domain = window.location.hostname.split('.').slice(1).join('.');
         
-        try {
-          const result = await database.allDocs();
-          let installs = [];
-          if (result && result.docs && Array.isArray(result.docs)) {
-            installs = result.docs.filter(doc => doc && doc.type === 'instance');
-          } else if (result && result.rows && Array.isArray(result.rows)) {
-            installs = result.rows
-              .map(row => row.doc || row.value)
-              .filter(doc => doc && doc.type === 'instance');
-          }
-          
-          if (installs.length > 0) {
-            const mostRecent = installs.sort((a, b) => 
-              new Date(b.lastVisited || b.createdAt) - new Date(a.lastVisited || a.createdAt)
-            )[0];
-            
-            // Update last visited time
-            await database.put({
-              ...mostRecent,
-              lastVisited: new Date().toISOString()
-            });
-            
-            // Navigate to the freshest install
-            window.location.href = \`https://\${appSlug}_\${mostRecent.installId}.\${domain}\`;
-          }
-        } catch (error) {
-          console.error('Failed to go to freshest install:', error);
-          // Fallback to creating new install
-          await createNewInstall();
-        }
-      };
-
-      // Render the install history UI
-      async function renderInstallHistory() {
-        if (!database) return;
-        
-        try {
-          // Try different approaches to query Fireproof
-          
-          // Query all documents from Fireproof
-          const result = await database.allDocs();
-          
-          // Extract the docs array and filter for instances
-          let filteredInstances = [];
-          if (result && result.docs && Array.isArray(result.docs)) {
-            filteredInstances = result.docs.filter(doc => doc && doc.type === 'instance');
-          } else if (result && result.rows && Array.isArray(result.rows)) {
-            // Alternative structure: get docs from rows
-            filteredInstances = result.rows
-              .map(row => row.doc || row.value)
-              .filter(doc => doc && doc.type === 'instance');
-          }
-          
-          
-          // Update launch buttons based on install count
-          updateLaunchButtons(filteredInstances);
-          
+        // Render install history UI
+        function renderInstallHistory(installs) {
           const container = document.getElementById('install-history-root');
           if (!container) return;
           
-          if (filteredInstances.length === 0) {
+          if (installs.length === 0) {
             container.innerHTML = '';
             return;
           }
           
-          
-          const sortedInstances = filteredInstances.sort((a, b) => 
-            new Date(b.lastVisited || b.createdAt) - new Date(a.lastVisited || a.createdAt)
+          // Sort by most recent first
+          const sortedInstances = [...installs].sort((a, b) => 
+            new Date(b.lastVisited || b.createdAt).getTime() - new Date(a.lastVisited || a.createdAt).getTime()
           );
           
-          const appSlug = window.location.hostname.split('.')[0];
+          const appSlug = tracker.appSlug;
           const domain = window.location.hostname.split('.').slice(1).join('.');
           
-          // Helper function to format time with "minutes ago" for recent times
+          // Helper function to format time
           function formatTime(dateString) {
             const date = new Date(dateString);
             const now = new Date();
@@ -1045,7 +873,6 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
               const hours = Math.floor(diffMinutes / 60);
               return \`\${hours}h ago\`;
             } else {
-              // Show date and time for older entries
               return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
           }
@@ -1059,7 +886,7 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
               <div class="instance-list">
                 \${sortedInstances.map(instance => \`
                   <div class="instance-item">
-                    <a href="https://\${appSlug}_\${instance.installId}.\${domain}" class="instance-link">
+                    <a href="https://v-\${appSlug}--\${instance.installId}.\${domain}" class="instance-link">
                       <div class="instance-info">
                         <span class="instance-id">💾 \${instance.installId}</span>
                         <span class="instance-time">\${formatTime(instance.lastVisited || instance.createdAt)}</span>
@@ -1070,47 +897,56 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
               </div>
             </div>
           \`;
-        } catch (error) {
-          console.error('Failed to render install history:', error);
         }
-      }
-      
-      // Clear all instance history
-      window.clearHistory = async function() {
-        if (!database) return;
         
-        if (confirm('Clear all instance history?')) {
-          try {
-            const result = await database.allDocs();
-            let instanceDocs = [];
-            if (result && result.docs && Array.isArray(result.docs)) {
-              instanceDocs = result.docs.filter(doc => doc && doc.type === 'instance');
-            } else if (result && result.rows && Array.isArray(result.rows)) {
-              instanceDocs = result.rows
-                .map(row => row.doc || row.value)
-                .filter(doc => doc && doc.type === 'instance');
-            }
-            
-            for (const instance of instanceDocs) {
-              await database.del(instance._id, instance._rev);
-            }
-            
-            // renderInstallHistory will be called automatically via subscription
-          } catch (error) {
-            console.error('Failed to clear history:', error);
+        // Wire up global functions using the tracker
+        window.createNewInstall = async function() {
+          if (tracker) await tracker.createNewInstall();
+        };
+        
+        window.goToFreshestInstall = async function() {
+          if (tracker) await tracker.goToLatestInstall();
+        };
+        
+        window.defaultLaunchAction = async function() {
+          if (tracker) await tracker.goToLatestOrCreate();
+        };
+        
+        window.clearHistory = async function() {
+          if (!tracker) return;
+          if (confirm('Clear all instance history?')) {
+            await tracker.clearHistory();
+            // Refresh the UI
+            const installs = await tracker.getInstalls();
+            updateUI(installs);
           }
-        }
-      };
-      
-      // Clean up subscription on page unload
-      window.addEventListener('beforeunload', () => {
-        if (unsubscribe) {
-          unsubscribe();
-        }
-      });
-      
-      // Initialize when the page loads
-      initializeInstallHistory();
+        };
+        
+        // Get initial installs and update UI
+        const installs = await tracker.getInstalls();
+        updateUI(installs);
+        
+      } catch (error) {
+        console.error('Failed to initialize install tracker:', error);
+        
+        // Fallback: simple redirect after delay
+        setTimeout(() => {
+          const appSlug = window.location.hostname.split('.')[0];
+          const domain = window.location.hostname.split('.').slice(1).join('.');
+          const subdomain = window.location.hostname.split('.')[0];
+          
+          // If we're on catalog page, create a simple install
+          if (!subdomain.includes('_') && !subdomain.includes('--')) {
+            // Generate simple random ID and redirect
+            const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+            let installId = '';
+            for (let i = 0; i < 12; i++) {
+              installId += chars[Math.floor(Math.random() * chars.length)];
+            }
+            window.location.href = \`https://v-\${appSlug}--\${installId}.\${domain}\`;
+          }
+        }, 2000);
+      }
       
       // Allow clicking on the screenshot to do the default launch action
       const screenshotContainer = document.querySelector('.screenshot-container');
