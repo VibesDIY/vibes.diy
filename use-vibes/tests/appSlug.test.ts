@@ -53,14 +53,14 @@ describe('App Slug Utilities', () => {
     it('should generate random instance IDs', () => {
       const id1 = appSlugModule.generateRandomInstanceId();
       const id2 = appSlugModule.generateRandomInstanceId();
-      
+
       // Should generate different IDs
       expect(id1).not.toBe(id2);
-      
+
       // Should be 6 characters long
       expect(id1.length).toBe(6);
       expect(id2.length).toBe(6);
-      
+
       // Should only contain lowercase letters and numbers
       expect(id1).toMatch(/^[a-z0-9]{6}$/);
       expect(id2).toMatch(/^[a-z0-9]{6}$/);
