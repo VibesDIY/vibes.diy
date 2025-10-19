@@ -20,7 +20,9 @@ type PanelMode = 'default' | 'mutate' | 'invite';
 export function VibesPanel({ style, className }: VibesPanelProps = {}) {
   const [mode, setMode] = useState<PanelMode>('default');
   const [email, setEmail] = useState('');
-  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'success' | 'error'>(
+    'idle'
+  );
   const [inviteMessage, setInviteMessage] = useState('');
 
   const handleMutateClick = () => {
@@ -61,18 +63,20 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
   const handleInviteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    
+
     setInviteStatus('sending');
     setInviteMessage('');
-    
+
     // Dispatch share request event
-    document.dispatchEvent(new CustomEvent('vibes-share-request', {
-      detail: {
-        email: email.trim(),
-        role: 'member',
-        right: 'read'
-      }
-    }));
+    document.dispatchEvent(
+      new CustomEvent('vibes-share-request', {
+        detail: {
+          email: email.trim(),
+          role: 'member',
+          right: 'read',
+        },
+      })
+    );
   };
 
   // Listen for share response events
@@ -80,13 +84,17 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     const handleShareSuccess = (event: Event) => {
       const customEvent = event as CustomEvent<{ email: string; message?: string }>;
       setInviteStatus('success');
-      setInviteMessage(customEvent.detail?.message || `Invitation sent to ${customEvent.detail?.email}!`);
+      setInviteMessage(
+        customEvent.detail?.message || `Invitation sent to ${customEvent.detail?.email}!`
+      );
     };
 
     const handleShareError = (event: Event) => {
       const customEvent = event as CustomEvent<{ error: { message: string } }>;
       setInviteStatus('error');
-      setInviteMessage(customEvent.detail?.error?.message || 'Failed to send invitation. Please try again.');
+      setInviteMessage(
+        customEvent.detail?.error?.message || 'Failed to send invitation. Please try again.'
+      );
     };
 
     document.addEventListener('vibes-share-success', handleShareSuccess);
@@ -138,7 +146,10 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
           <>
             {inviteStatus === 'idle' ? (
               // Show form when idle
-              <form onSubmit={handleInviteSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <form
+                onSubmit={handleInviteSubmit}
+                style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}
+              >
                 <input
                   type="email"
                   placeholder="friend@example.com"
@@ -161,33 +172,32 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
                   }}
                   required
                 />
-                <VibesButton 
-                  variant="primary" 
-                  type="submit" 
-                  disabled={!email.trim()}
-                >
+                <VibesButton variant="primary" type="submit" disabled={!email.trim()}>
                   Send Invite
                 </VibesButton>
               </form>
             ) : (
               // Show status when sending/complete
-              <div style={{ 
-                padding: '0.75rem 1rem',
-                background: '#fff',
-                color: '#1a1a1a',
-                border: '3px solid #1a1a1a',
-                borderRadius: '12px',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                textAlign: 'center',
-                letterSpacing: '0.02em',
-                boxShadow: inviteStatus === 'sending' 
-                  ? '4px 5px 0px 0px #666'
-                  : inviteStatus === 'error' 
-                    ? '4px 5px 0px 0px #DA291C' 
-                    : '4px 5px 0px 0px #51cf66',
-                transition: 'all 0.15s ease',
-              }}>
+              <div
+                style={{
+                  padding: '0.75rem 1rem',
+                  background: '#fff',
+                  color: '#1a1a1a',
+                  border: '3px solid #1a1a1a',
+                  borderRadius: '12px',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  textAlign: 'center',
+                  letterSpacing: '0.02em',
+                  boxShadow:
+                    inviteStatus === 'sending'
+                      ? '4px 5px 0px 0px #666'
+                      : inviteStatus === 'error'
+                        ? '4px 5px 0px 0px #DA291C'
+                        : '4px 5px 0px 0px #51cf66',
+                  transition: 'all 0.15s ease',
+                }}
+              >
                 {inviteStatus === 'sending' ? 'Inviting...' : inviteMessage}
               </div>
             )}
