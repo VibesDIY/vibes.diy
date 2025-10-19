@@ -80,6 +80,42 @@ describe("Subdomain Parser", () => {
       expect(result.installId).toBe("");
       expect(result.isInstance).toBe(true);
     });
+
+    it("should parse new v-slug--installId format", () => {
+      const result = parseSubdomain("v-my-app--abc123.vibesdiy.net");
+
+      expect(result.appSlug).toBe("my-app");
+      expect(result.installId).toBe("abc123");
+      expect(result.isInstance).toBe(true);
+      expect(result.fullSubdomain).toBe("v-my-app--abc123");
+    });
+
+    it("should parse new format with complex install ID", () => {
+      const result = parseSubdomain(
+        "v-weather-dashboard--550e8400-e29b-41d4-a716-446655440000.vibesdiy.net",
+      );
+
+      expect(result.appSlug).toBe("weather-dashboard");
+      expect(result.installId).toBe("550e8400-e29b-41d4-a716-446655440000");
+      expect(result.isInstance).toBe(true);
+    });
+
+    it("should handle new format with multiple double dashes", () => {
+      const result = parseSubdomain("v-my-app--test--more.vibesdiy.net");
+
+      expect(result.appSlug).toBe("my-app");
+      expect(result.installId).toBe("test--more");
+      expect(result.isInstance).toBe(true);
+    });
+
+    it("should handle catalog title with v- prefix", () => {
+      const result = parseSubdomain("v-my-app.vibesdiy.net");
+
+      expect(result.appSlug).toBe("my-app");
+      expect(result.installId).toBe(undefined);
+      expect(result.isInstance).toBe(false);
+      expect(result.fullSubdomain).toBe("v-my-app");
+    });
   });
 
   describe("isValidSubdomain", () => {
@@ -217,7 +253,7 @@ describe("Subdomain Parser", () => {
     it("should construct app instance subdomain (with install ID)", () => {
       const result = constructSubdomain("my-app", "abc123");
 
-      expect(result).toBe("my-app_abc123");
+      expect(result).toBe("v-my-app--abc123");
     });
 
     it("should handle complex slugs and IDs", () => {
@@ -227,14 +263,14 @@ describe("Subdomain Parser", () => {
       );
 
       expect(result).toBe(
-        "weather-dashboard-v2_550e8400-e29b-41d4-a716-446655440000",
+        "v-weather-dashboard-v2--550e8400-e29b-41d4-a716-446655440000",
       );
     });
 
     it("should work with install IDs containing underscores", () => {
       const result = constructSubdomain("my-app", "user_special-id");
 
-      expect(result).toBe("my-app_user_special-id");
+      expect(result).toBe("v-my-app--user_special-id");
     });
 
     it("should throw error for empty string install ID", () => {
@@ -256,7 +292,7 @@ describe("Subdomain Parser", () => {
       expect(reconstructed).toBe(original);
     });
 
-    it("should parse and reconstruct app instance correctly", () => {
+    it("should parse legacy format and generate new format", () => {
       const original = "todo-app_abc-123";
       const parsed = parseSubdomain(`${original}.vibesdiy.app`);
       const reconstructed = constructSubdomain(
@@ -264,25 +300,63 @@ describe("Subdomain Parser", () => {
         parsed.installId,
       );
 
-      expect(reconstructed).toBe(original);
+      // Should parse correctly from old format
+      expect(parsed.appSlug).toBe("todo-app");
+      expect(parsed.installId).toBe("abc-123");
+      expect(parsed.isInstance).toBe(true);
+
+      // Should generate new format
+      expect(reconstructed).toBe("v-todo-app--abc-123");
     });
 
-    it("should handle complex round-trip scenarios", () => {
+    it("should handle complex parsing scenarios", () => {
       const testCases = [
-        "simple-app",
-        "complex-app-name-v2",
-        "app_simple-id",
-        "app_550e8400-e29b-41d4-a716-446655440000",
-        "app_user_nested_id",
+        {
+          input: "simple-app",
+          expected: "simple-app",
+          isInstance: false,
+        },
+        {
+          input: "complex-app-name-v2",
+          expected: "complex-app-name-v2",
+          isInstance: false,
+        },
+        {
+          input: "app_simple-id",
+          expected: "v-app--simple-id",
+          isInstance: true,
+          appSlug: "app",
+          installId: "simple-id",
+        },
+        {
+          input: "app_550e8400-e29b-41d4-a716-446655440000",
+          expected: "v-app--550e8400-e29b-41d4-a716-446655440000",
+          isInstance: true,
+          appSlug: "app",
+          installId: "550e8400-e29b-41d4-a716-446655440000",
+        },
+        {
+          input: "app_user_nested_id",
+          expected: "v-app--user_nested_id",
+          isInstance: true,
+          appSlug: "app",
+          installId: "user_nested_id",
+        },
       ];
 
       testCases.forEach((testCase) => {
-        const parsed = parseSubdomain(`${testCase}.vibesdiy.app`);
+        const parsed = parseSubdomain(`${testCase.input}.vibesdiy.app`);
         const reconstructed = constructSubdomain(
           parsed.appSlug,
           parsed.installId,
         );
-        expect(reconstructed).toBe(testCase);
+
+        expect(parsed.isInstance).toBe(testCase.isInstance);
+        if (testCase.isInstance) {
+          expect(parsed.appSlug).toBe(testCase.appSlug);
+          expect(parsed.installId).toBe(testCase.installId);
+        }
+        expect(reconstructed).toBe(testCase.expected);
       });
     });
   });
