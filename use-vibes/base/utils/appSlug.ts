@@ -2,7 +2,8 @@
  * Universal app slug extraction utility
  *
  * Handles both production subdomain-based URLs and development path-based URLs:
- * - Production: vienna-tiger-7779_frog.vibesdiy.net → vienna-tiger-7779
+ * - Production (new): v-vienna-tiger-7779--frog.vibesdiy.net → vienna-tiger-7779
+ * - Production (legacy): vienna-tiger-7779_frog.vibesdiy.net → vienna-tiger-7779
  * - Development: localhost:3456/vibe/vienna-tiger-7779_jchris → vienna-tiger-7779
  */
 
@@ -18,7 +19,12 @@ const DEFAULT_APP_SLUG = 'atmospheric-tiger-9377';
  * @returns The app slug (part before underscore if present)
  *
  * @example
- * // Production subdomain-based
+ * // Production subdomain-based (new format)
+ * // URL: https://v-vienna-tiger-7779--frog.vibesdiy.net
+ * getAppSlug() // → "vienna-tiger-7779"
+ *
+ * @example
+ * // Production subdomain-based (legacy format)
  * // URL: https://vienna-tiger-7779_frog.vibesdiy.net
  * getAppSlug() // → "vienna-tiger-7779"
  *
@@ -45,11 +51,18 @@ export function getAppSlug(): string {
   }
 
   // Check for subdomain-based routing (production environments)
-  // Matches patterns like app-slug.domain.com or app-slug_instance.domain.com
+  // Matches both new (v-app-slug--instance) and legacy (app-slug_instance) patterns
   if (hostname.includes('.')) {
     const subdomain = hostname.split('.')[0];
     if (subdomain && subdomain !== 'www' && subdomain !== 'localhost') {
-      return subdomain.split('_')[0]; // Extract part before underscore
+      if (subdomain.startsWith('v-')) {
+        // New format: v-app-slug--instance
+        const withoutPrefix = subdomain.slice(2); // Remove "v-"
+        return withoutPrefix.split('--')[0]; // Extract part before double dash
+      } else {
+        // Legacy format: app-slug_instance
+        return subdomain.split('_')[0]; // Extract part before underscore
+      }
     }
   }
 
@@ -63,7 +76,11 @@ export function getAppSlug(): string {
  * @returns The full app identifier (including underscore and instance ID)
  *
  * @example
- * // URL: https://vienna-tiger-7779_frog.vibesdiy.net
+ * // URL: https://v-vienna-tiger-7779--frog.vibesdiy.net
+ * getFullAppIdentifier() // → "vienna-tiger-7779--frog"
+ *
+ * @example
+ * // Legacy URL: https://vienna-tiger-7779_frog.vibesdiy.net
  * getFullAppIdentifier() // → "vienna-tiger-7779_frog"
  */
 export function getFullAppIdentifier(): string {
@@ -85,7 +102,14 @@ export function getFullAppIdentifier(): string {
   if (hostname.includes('.')) {
     const subdomain = hostname.split('.')[0];
     if (subdomain && subdomain !== 'www' && subdomain !== 'localhost') {
-      return subdomain;
+      if (subdomain.startsWith('v-')) {
+        // New format: v-app-slug--instance → app-slug--instance
+        const withoutPrefix = subdomain.slice(2); // Remove "v-"
+        return withoutPrefix; // Return app-slug--instance
+      } else {
+        // Legacy format: app-slug_instance
+        return subdomain; // Return as-is
+      }
     }
   }
 
@@ -139,12 +163,12 @@ export function generateRandomInstanceId(): string {
 /**
  * Generate a URL for a fresh data install (new instance with same app slug)
  *
- * @returns URL for fresh install with new random instance ID
+ * @returns URL for fresh install with new random instance ID using new v-slug--installID format
  */
 export function generateFreshDataUrl(): string {
   const appSlug = getAppSlug();
   const newInstanceId = generateRandomInstanceId();
-  return `https://vibes.diy/vibe/${appSlug}_${newInstanceId}`;
+  return `https://v-${appSlug}--${newInstanceId}.vibesdiy.net`;
 }
 
 /**
