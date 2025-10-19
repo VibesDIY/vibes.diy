@@ -6,6 +6,9 @@
  * - Development: localhost:3456/vibe/vienna-tiger-7779_jchris → vienna-tiger-7779
  */
 
+// Default fallback app slug when detection fails
+const DEFAULT_APP_SLUG = 'atmospheric-tiger-9377';
+
 /**
  * Extract the app slug from the current URL
  *
@@ -26,7 +29,7 @@
  */
 export function getAppSlug(): string {
   if (typeof window === 'undefined') {
-    return 'unknown-app';
+    return DEFAULT_APP_SLUG;
   }
 
   const { hostname, pathname } = window.location;
@@ -50,15 +53,8 @@ export function getAppSlug(): string {
     }
   }
 
-  // Fallback for localhost or other edge cases
-  // This handles cases like localhost:3000 without /vibe/ path
-  const fallbackSlug = hostname.split('_')[0];
-  if (fallbackSlug !== 'localhost') {
-    return fallbackSlug;
-  }
-
-  // Final fallback
-  return 'unknown-app';
+  // Safe fallback - always return a valid app slug
+  return DEFAULT_APP_SLUG;
 }
 
 /**
@@ -72,7 +68,7 @@ export function getAppSlug(): string {
  */
 export function getFullAppIdentifier(): string {
   if (typeof window === 'undefined') {
-    return 'unknown-app';
+    return DEFAULT_APP_SLUG;
   }
 
   const { hostname, pathname } = window.location;
@@ -93,8 +89,8 @@ export function getFullAppIdentifier(): string {
     }
   }
 
-  // Fallback
-  return hostname !== 'localhost' ? hostname : 'unknown-app';
+  // Safe fallback - always return a valid app identifier
+  return DEFAULT_APP_SLUG;
 }
 
 /**
