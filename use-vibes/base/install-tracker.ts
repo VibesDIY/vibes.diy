@@ -109,15 +109,26 @@ export async function initVibesInstalls(
     if (destroyed) return [];
 
     try {
-      const result = await database.allDocs();
+      // Use query instead of allDocs to get proper document access
+      // Query by type field to get all instance documents
+      const result = await database.query('type', { key: 'instance' });
       let docs: unknown[] = [];
 
-      // Handle Fireproof response format - use rows with value property
-      if (result && result.rows && Array.isArray(result.rows)) {
-        docs = result.rows.map((row) => row.value).filter(Boolean);
+      // Extract documents from query result
+      if (result && Array.isArray(result)) {
+        // Direct array result
+        docs = result;
+      } else if (result && result.rows && Array.isArray(result.rows)) {
+        // Rows format - try both doc and value properties
+        docs = result.rows
+          .map((row: unknown) => {
+            const r = row as { doc?: unknown; value?: unknown };
+            return r.doc || r.value;
+          })
+          .filter(Boolean);
       }
 
-      // Filter for instance documents and ensure type safety
+      // Filter and validate instance documents
       const filteredInstalls = docs
         .filter((doc): doc is Install => {
           return (

@@ -689,21 +689,10 @@ export const catalogTitleScript = /* javascript */ `
     console.log('Creating new install...');
   };
   
-  window.goToFreshestInstall = window.goToFreshestInstall || function() {
-    console.log('Going to latest install...');
-  };
-  
-  window.defaultLaunchAction = window.defaultLaunchAction || function() {
-    console.log('Default launch action...');
-  };
-
-  // Set up event listeners when DOM is loaded
-  document.addEventListener('DOMContentLoaded', function() {
-    const launchButton = document.getElementById('launch-app-btn');
-    if (launchButton) {
-      launchButton.addEventListener('click', window.defaultLaunchAction);
-    }
-  });
+  // These functions will be replaced by the tracker API once it loads
+  // We don't attach event listeners here to avoid binding to stubs
+  window.goToFreshestInstall = null;
+  window.defaultLaunchAction = null;
 `;
 
 export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
@@ -934,7 +923,7 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
       } catch (error) {
         console.error('Failed to initialize install tracker:', error);
         
-        // Fallback: simple redirect after delay
+        // Fallback: simple redirect after delay (without imported functions)
         setTimeout(() => {
           const appSlug = window.location.hostname.split('.')[0];
           const domain = window.location.hostname.split('.').slice(1).join('.');
@@ -949,8 +938,8 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
               installId += chars[Math.floor(Math.random() * chars.length)];
             }
             
-            // Use constructSubdomain helper for consistent URL formatting
-            const newSubdomain = constructSubdomain(appSlug, installId, domain);
+            // Fallback URL formatting (legacy format for safety)
+            const newSubdomain = \`\${appSlug}_\${installId}\`;
             window.location.href = \`https://\${newSubdomain}.\${domain}\`;
           }
         }, 2000);
