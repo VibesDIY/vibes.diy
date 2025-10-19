@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { VibesButton } from '../VibesButton/VibesButton.js';
 import { generateFreshDataUrl, generateRemixUrl } from '../../utils/appSlug.js';
 
@@ -18,6 +18,7 @@ export interface VibesPanelProps {
 type PanelMode = 'default' | 'mutate' | 'invite';
 
 export function VibesPanel({ style, className }: VibesPanelProps = {}) {
+  const emailId = useId();
   const [mode, setMode] = useState<PanelMode>('default');
   const [email, setEmail] = useState('');
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'success' | 'error'>(
@@ -150,7 +151,11 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
                 onSubmit={handleInviteSubmit}
                 style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}
               >
+                <label htmlFor={emailId} style={{ alignSelf: 'flex-start', fontWeight: 600 }}>
+                  Invite by email
+                </label>
                 <input
+                  id={emailId}
                   type="email"
                   placeholder="friend@example.com"
                   value={email}
@@ -170,6 +175,7 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
                     outline: 'none',
                     boxSizing: 'border-box',
                   }}
+                  autoComplete="email"
                   required
                 />
                 <VibesButton variant="primary" type="submit" disabled={!email.trim()}>
