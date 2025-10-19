@@ -251,15 +251,24 @@ describe("Subdomain Parser", () => {
     });
 
     it("should construct app instance subdomain (with install ID)", () => {
-      const result = constructSubdomain("my-app", "abc123");
+      // Test new format (.net domain)
+      const newFormat = constructSubdomain("my-app", "abc123", "vibesdiy.net");
+      expect(newFormat).toBe("v-my-app--abc123");
 
-      expect(result).toBe("v-my-app--abc123");
+      // Test legacy format (.app domain)
+      const legacyFormat = constructSubdomain(
+        "my-app",
+        "abc123",
+        "vibesdiy.app",
+      );
+      expect(legacyFormat).toBe("my-app_abc123");
     });
 
     it("should handle complex slugs and IDs", () => {
       const result = constructSubdomain(
         "weather-dashboard-v2",
         "550e8400-e29b-41d4-a716-446655440000",
+        "vibesdiy.net",
       );
 
       expect(result).toBe(
@@ -268,7 +277,11 @@ describe("Subdomain Parser", () => {
     });
 
     it("should work with install IDs containing underscores", () => {
-      const result = constructSubdomain("my-app", "user_special-id");
+      const result = constructSubdomain(
+        "my-app",
+        "user_special-id",
+        "vibesdiy.net",
+      );
 
       expect(result).toBe("v-my-app--user_special-id");
     });
@@ -298,6 +311,7 @@ describe("Subdomain Parser", () => {
       const reconstructed = constructSubdomain(
         parsed.appSlug,
         parsed.installId,
+        "vibesdiy.net",
       );
 
       // Should parse correctly from old format
@@ -349,6 +363,7 @@ describe("Subdomain Parser", () => {
         const reconstructed = constructSubdomain(
           parsed.appSlug,
           parsed.installId,
+          "vibesdiy.net",
         );
 
         expect(parsed.isInstance).toBe(testCase.isInstance);
