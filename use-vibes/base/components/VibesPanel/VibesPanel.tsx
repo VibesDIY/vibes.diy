@@ -144,10 +144,19 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={inviteStatus === 'sending'}
                 style={{
-                  padding: '8px 12px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
-                  fontSize: '14px',
+                  width: '100%',
+                  padding: '1rem',
+                  background: '#fff',
+                  color: '#1a1a1a',
+                  border: '3px solid #1a1a1a',
+                  borderRadius: '12px',
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  letterSpacing: '0.02em',
+                  boxShadow: '4px 5px 0px 0px #666',
+                  transition: 'all 0.15s ease',
+                  outline: 'none',
+                  boxSizing: 'border-box',
                 }}
                 required
               />
@@ -161,10 +170,19 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
             </form>
             {inviteMessage && (
               <div style={{ 
-                fontSize: '12px', 
-                textAlign: 'center', 
-                color: inviteStatus === 'error' ? '#ff6b6b' : '#51cf66',
-                marginTop: '8px'
+                padding: '0.75rem 1rem',
+                background: '#fff',
+                color: '#1a1a1a',
+                border: '3px solid #1a1a1a',
+                borderRadius: '12px',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                textAlign: 'center',
+                letterSpacing: '0.02em',
+                boxShadow: inviteStatus === 'error' 
+                  ? '4px 5px 0px 0px #DA291C' 
+                  : '4px 5px 0px 0px #51cf66',
+                transition: 'all 0.15s ease',
               }}>
                 {inviteMessage}
               </div>
