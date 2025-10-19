@@ -112,11 +112,9 @@ export async function initVibesInstalls(
       const result = await database.allDocs();
       let docs: any[] = [];
 
-      // Handle different Fireproof response formats
-      if (result && result.docs && Array.isArray(result.docs)) {
-        docs = result.docs;
-      } else if (result && result.rows && Array.isArray(result.rows)) {
-        docs = result.rows.map((row) => row.doc || row.value).filter(Boolean);
+      // Handle Fireproof response format - use rows with value property
+      if (result && result.rows && Array.isArray(result.rows)) {
+        docs = result.rows.map((row) => row.value).filter(Boolean);
       }
 
       // Filter for instance documents and ensure type safety
@@ -259,7 +257,7 @@ export async function initVibesInstalls(
       try {
         // Try to get existing install
         const existingInstall = await database.get(installDocId);
-        await updateLastVisited(existingInstall);
+        await updateLastVisited(existingInstall as Install);
       } catch (getError) {
         // Document doesn't exist, create it
         const appTitle = getAppTitle();
@@ -278,7 +276,11 @@ export async function initVibesInstalls(
       const allInstalls = await loadInstalls();
 
       for (const install of allInstalls) {
-        await database.del(install._id, (install as any)._rev);
+        try {
+          await database.del(install._id);
+        } catch (delError) {
+          console.warn('Failed to delete install:', install._id, delError);
+        }
       }
 
       installs = [];
