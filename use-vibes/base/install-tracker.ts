@@ -110,7 +110,7 @@ export async function initVibesInstalls(
 
     try {
       const result = await database.allDocs();
-      let docs: any[] = [];
+      let docs: unknown[] = [];
 
       // Handle Fireproof response format - use rows with value property
       if (result && result.rows && Array.isArray(result.rows)) {
@@ -119,16 +119,26 @@ export async function initVibesInstalls(
 
       // Filter for instance documents and ensure type safety
       const filteredInstalls = docs
-        .filter((doc) => doc && doc.type === 'instance')
-        .map((doc) => ({
-          _id: doc._id,
-          type: 'instance' as const,
-          installId: doc.installId,
-          appSlug: doc.appSlug,
-          appTitle: doc.appTitle,
-          createdAt: doc.createdAt,
-          lastVisited: doc.lastVisited,
-        }));
+        .filter((doc): doc is Install => {
+          return (
+            doc !== null &&
+            typeof doc === 'object' &&
+            'type' in doc &&
+            (doc as { type: string }).type === 'instance'
+          );
+        })
+        .map((doc) => {
+          const installDoc = doc as Install;
+          return {
+            _id: installDoc._id,
+            type: 'instance' as const,
+            installId: installDoc.installId,
+            appSlug: installDoc.appSlug,
+            appTitle: installDoc.appTitle,
+            createdAt: installDoc.createdAt,
+            lastVisited: installDoc.lastVisited,
+          };
+        });
 
       installs = filteredInstalls;
       return filteredInstalls;
