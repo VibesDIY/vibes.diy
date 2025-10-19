@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { VibesButton } from '../VibesButton/VibesButton.js';
+import { getAppSlug } from '../../utils/appSlug.js';
 
 export interface VibesPanelProps {
   /** Optional custom styling for the panel container */
@@ -16,7 +17,6 @@ export interface VibesPanelProps {
  */
 export function VibesPanel({ style, className }: VibesPanelProps = {}) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [mutatePrompt, setMutatePrompt] = useState('');
 
   const handleMutateClick = () => {
     if (!isExpanded) {
@@ -25,8 +25,7 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
   };
 
   const getFormAction = () => {
-    const hostname = window.location.hostname;
-    const appSlug = hostname.split('.')[0].split('_')[0];
+    const appSlug = getAppSlug();
     return `https://vibes.diy/remix/${appSlug}`;
   };
 
@@ -60,10 +59,10 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     <div style={containerStyle} className={className}>
       {isExpanded && (
         <div style={{ width: '100%', marginBottom: '12px' }}>
-          <form 
+          <form
             id="mutate-form"
-            action={getFormAction()} 
-            target="_top" 
+            action={getFormAction()}
+            target="_top"
             method="GET"
             style={{ width: '100%' }}
           >
@@ -114,8 +113,8 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
         }}
       >
         <VibesButton variant="primary">Logout</VibesButton>
-        <VibesButton 
-          variant="secondary" 
+        <VibesButton
+          variant="secondary"
           onClick={handleMutateClick}
           type={isExpanded ? 'submit' : 'button'}
           form={isExpanded ? 'mutate-form' : undefined}
