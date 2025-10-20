@@ -127,7 +127,7 @@ export async function sendChatMessage(
     (content) => throttledMergeAiMessage(content),
     currentApiKey,
     userId,
-    // setNeedsLogin,
+    setNeedsLogin,
   )
     .then(async (finalContent) => {
       isProcessingRef.current = true;
@@ -202,6 +202,18 @@ export async function sendChatMessage(
     })
     .catch((error) => {
       console.warn("Error in sendMessage:", error);
+
+      // If authentication error, don't save error message to chat
+      // The login modal will already be showing
+      if (error.message === "Authentication required") {
+        // Just clean up state
+        isProcessingRef.current = false;
+        setPendingAiMessage(null);
+        setSelectedResponseId("");
+        return; // Exit early without saving error to chat
+      }
+
+      // For other errors, clean up as usual
       isProcessingRef.current = false;
       setPendingAiMessage(null);
       setSelectedResponseId("");
