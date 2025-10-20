@@ -209,7 +209,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
           // Handle new structured prompts with versioning
           const promptKey = `p${Date.now()}`;
           updatedDoc.prompts = {
-            ...updatedDoc.prompts,
+            ...(updatedDoc.prompts as Record<string, unknown>),
             [promptKey]: { text: newPrompt },
           };
           updatedDoc.currentPromptKey = promptKey;
