@@ -23,7 +23,7 @@ describe("Vibesbox Routing", () => {
 
       const html = await response.text();
       expect(html).toContain("<!doctype html>");
-      expect(html).toContain("vibesbox");
+      expect(html).toContain("Vibesbox");
       expect(html).toContain("container");
     });
 

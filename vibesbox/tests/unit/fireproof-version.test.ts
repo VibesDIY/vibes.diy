@@ -26,7 +26,7 @@ describe("Fireproof Version Parameter", () => {
 
       // Extract version from URL like https://esm.sh/use-fireproof@0.23.14
       const versionMatch = fireproofUrl.match(
-        /@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)/,
+        /@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)/,
       );
       return versionMatch ? versionMatch[1] : null;
     } catch {
@@ -131,7 +131,7 @@ describe("Fireproof Version Parameter", () => {
       const html = await response.text();
 
       // When using default, iframe src should be just "/"
-      const iframeSrcMatch = html.match(/iframeSrc\s*=\s*['"]([^'"]+)['"]/);
+      const iframeSrcMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/);
       expect(iframeSrcMatch).toBeTruthy();
       expect(iframeSrcMatch![1]).toBe("/");
     });
