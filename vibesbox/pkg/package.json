@@ -1,0 +1,56 @@
+{
+  "name": "@vibes.diy/vibesbox",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./src/*": "./src/*"
+  },
+  "description": "Cloudflare Worker for secure, isolated iframe hosting",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VibesDIY/vibes.diy.git"
+  },
+  "homepage": "https://github.com/VibesDIY/vibes.diy",
+  "bugs": {
+    "url": "https://github.com/VibesDIY/vibes.diy/issues"
+  },
+  "scripts": {
+    "dev": "wrangler dev --port 8989",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "cf-typegen": "wrangler types",
+    "format": "prettier --write \"**/*.{js,ts,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,json,css,md}\"",
+    "lint": "tsc --noEmit --pretty --skipLibCheck",
+    "check": "pnpm format && pnpm lint && wrangler deploy --dry-run",
+    "pack": "echo skip pack",
+    "publish": "echo skip publish"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "vibesbox",
+    "iframe",
+    "isolated",
+    "hosting"
+  ],
+  "contributors": [
+    "J Chris Anderson"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20240925.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "wrangler": "^3.87.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
