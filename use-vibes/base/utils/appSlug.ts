@@ -55,7 +55,7 @@ export function getAppSlug(): string {
   if (hostname.includes('.')) {
     const sub = hostname.split('.')[0];
     if (sub && sub !== 'www' && sub !== 'localhost') {
-      const parsed = parseSubdomain(hostname);
+      const parsed = parseSubdomain(sub);
       return parsed.appSlug || DEFAULT_APP_SLUG;
     }
   }
@@ -96,15 +96,15 @@ export function getFullAppIdentifier(): string {
   if (hostname.includes('.')) {
     const sub = hostname.split('.')[0];
     if (sub && sub !== 'www' && sub !== 'localhost') {
-      const parsed = parseSubdomain(hostname);
+      const parsed = parseSubdomain(sub);
       if (parsed.isInstance && parsed.installId) {
-        // Preserve original separator style based on the original subdomain
-        if (parsed.fullSubdomain.startsWith('v-')) {
+        // Preserve original separator style based on the observed subdomain label
+        if (sub.startsWith('v-')) {
           return `${parsed.appSlug}--${parsed.installId}`;
         }
         return `${parsed.appSlug}_${parsed.installId}`;
       }
-      return parsed.appSlug;
+      return parsed.appSlug || DEFAULT_APP_SLUG;
     }
   }
 
