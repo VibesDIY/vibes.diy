@@ -17,10 +17,10 @@ describe("Vibesbox Routing", () => {
     it("should return iframe.html for root path", async () => {
       const request = createRequest("/");
       const response = await worker.fetch(request);
-      
+
       expect(response.status).toBe(200);
       expect(response.headers.get("Content-Type")).toBe("text/html");
-      
+
       const html = await response.text();
       expect(html).toContain("<!doctype html>");
       expect(html).toContain("vibesbox");
@@ -30,7 +30,7 @@ describe("Vibesbox Routing", () => {
     it("should have correct CORS headers", async () => {
       const request = createRequest("/");
       const response = await worker.fetch(request);
-      
+
       expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
       expect(response.headers.get("X-Frame-Options")).toBe("ALLOWALL");
       expect(response.headers.get("Cache-Control")).toContain("public");
@@ -41,10 +41,10 @@ describe("Vibesbox Routing", () => {
     it("should return wrapper.html with slug replacement", async () => {
       const request = createRequest("/vibe/test-slug-123");
       const response = await worker.fetch(request);
-      
+
       expect(response.status).toBe(200);
       expect(response.headers.get("Content-Type")).toBe("text/html");
-      
+
       const html = await response.text();
       expect(html).toContain("test-slug-123");
       expect(html).toContain("vibeFrame");
@@ -54,7 +54,7 @@ describe("Vibesbox Routing", () => {
     it("should use default slug when none provided", async () => {
       const request = createRequest("/vibe");
       const response = await worker.fetch(request);
-      
+
       expect(response.status).toBe(200);
       const html = await response.text();
       expect(html).toContain("quick-cello-8104"); // Default slug
@@ -63,7 +63,7 @@ describe("Vibesbox Routing", () => {
     it("should have shorter cache for dynamic content", async () => {
       const request = createRequest("/vibe/my-app");
       const response = await worker.fetch(request);
-      
+
       expect(response.headers.get("Cache-Control")).toContain("max-age=300");
     });
   });
@@ -72,10 +72,10 @@ describe("Vibesbox Routing", () => {
     it("should return lab.html with slug replacement", async () => {
       const request = createRequest("/lab/lab-test-456");
       const response = await worker.fetch(request);
-      
+
       expect(response.status).toBe(200);
       expect(response.headers.get("Content-Type")).toBe("text/html");
-      
+
       const html = await response.text();
       expect(html).toContain("lab-test-456");
       expect(html).toContain("Lab");
@@ -85,7 +85,7 @@ describe("Vibesbox Routing", () => {
     it("should use default slug when none provided", async () => {
       const request = createRequest("/lab");
       const response = await worker.fetch(request);
-      
+
       expect(response.status).toBe(200);
       const html = await response.text();
       expect(html).toContain("quick-cello-8104"); // Default slug
@@ -96,7 +96,7 @@ describe("Vibesbox Routing", () => {
     it("should handle trailing slashes", async () => {
       const request = createRequest("/vibe/my-slug/");
       const response = await worker.fetch(request);
-      
+
       expect(response.status).toBe(200);
       const html = await response.text();
       expect(html).toContain("my-slug");
@@ -105,7 +105,7 @@ describe("Vibesbox Routing", () => {
     it("should handle subdomain requests", async () => {
       const request = new Request("https://app.vibesbox.dev/");
       const response = await worker.fetch(request);
-      
+
       expect(response.status).toBe(200);
       expect(response.headers.get("Content-Type")).toBe("text/html");
     });

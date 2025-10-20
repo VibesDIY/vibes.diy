@@ -14,16 +14,20 @@ describe("Fireproof Version Parameter", () => {
   // Helper to extract Fireproof version from HTML
   const extractFireproofVersion = (html: string): string | null => {
     // Look for the use-fireproof import in the import map
-    const importMapMatch = html.match(/<script type="importmap">([\s\S]*?)<\/script>/);
+    const importMapMatch = html.match(
+      /<script type="importmap">([\s\S]*?)<\/script>/,
+    );
     if (!importMapMatch) return null;
-    
+
     try {
       const importMap = JSON.parse(importMapMatch[1]);
       const fireproofUrl = importMap?.imports?.["use-fireproof"];
       if (!fireproofUrl) return null;
-      
+
       // Extract version from URL like https://esm.sh/use-fireproof@0.23.14
-      const versionMatch = fireproofUrl.match(/@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)/);
+      const versionMatch = fireproofUrl.match(
+        /@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)/,
+      );
       return versionMatch ? versionMatch[1] : null;
     } catch {
       return null;
@@ -35,10 +39,10 @@ describe("Fireproof Version Parameter", () => {
       const request = createRequestWithVersion();
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       // Should contain Fireproof import
       expect(html).toContain("use-fireproof");
-      
+
       // Extract and verify version
       const version = extractFireproofVersion(html);
       expect(version).toBeTruthy();
@@ -51,7 +55,7 @@ describe("Fireproof Version Parameter", () => {
       const request = createRequestWithVersion("0.22.0");
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       const version = extractFireproofVersion(html);
       expect(version).toBe("0.22.0");
     });
@@ -60,7 +64,7 @@ describe("Fireproof Version Parameter", () => {
       const request = createRequestWithVersion("0.24.0-beta");
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       const version = extractFireproofVersion(html);
       expect(version).toBe("0.24.0-beta");
     });
@@ -69,7 +73,7 @@ describe("Fireproof Version Parameter", () => {
       const request = createRequestWithVersion("1.0.0+build123");
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       const version = extractFireproofVersion(html);
       expect(version).toBe("1.0.0+build123");
     });
@@ -80,7 +84,7 @@ describe("Fireproof Version Parameter", () => {
       const request = createRequestWithVersion("invalid");
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       const version = extractFireproofVersion(html);
       expect(version).toBeTruthy();
       expect(version).not.toBe("invalid");
@@ -91,7 +95,7 @@ describe("Fireproof Version Parameter", () => {
       const request = createRequestWithVersion("1.2");
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       const version = extractFireproofVersion(html);
       expect(version).toBeTruthy();
       expect(version).not.toBe("1.2");
@@ -101,7 +105,7 @@ describe("Fireproof Version Parameter", () => {
       const request = createRequestWithVersion("");
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       const version = extractFireproofVersion(html);
       expect(version).toBeTruthy();
       expect(version).toMatch(/^[0-9]+\.[0-9]+\.[0-9]+/);
@@ -113,10 +117,10 @@ describe("Fireproof Version Parameter", () => {
       const url = new URL("https://vibesbox.dev/vibe/test-slug");
       url.searchParams.set("v_fp", "0.21.0");
       const request = new Request(url.toString());
-      
+
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       // Check that iframe src includes the version parameter
       expect(html).toContain("v_fp=0.21.0");
     });
@@ -125,7 +129,7 @@ describe("Fireproof Version Parameter", () => {
       const request = new Request("https://vibesbox.dev/vibe/test-slug");
       const response = await worker.fetch(request);
       const html = await response.text();
-      
+
       // When using default, iframe src should be just "/"
       const iframeSrcMatch = html.match(/iframeSrc\s*=\s*['"]([^'"]+)['"]/);
       expect(iframeSrcMatch).toBeTruthy();
@@ -143,15 +147,15 @@ describe("Fireproof Version Parameter", () => {
       "1.0.0-0.3.7",
       "1.0.0-x.7.z.92",
       "1.0.0+20130313144700",
-      "1.0.0-beta+exp.sha.5114f85"
+      "1.0.0-beta+exp.sha.5114f85",
     ];
 
-    validVersions.forEach(version => {
+    validVersions.forEach((version) => {
       it(`should accept valid semver: ${version}`, async () => {
         const request = createRequestWithVersion(version);
         const response = await worker.fetch(request);
         const html = await response.text();
-        
+
         const extractedVersion = extractFireproofVersion(html);
         expect(extractedVersion).toBe(version);
       });
@@ -165,15 +169,15 @@ describe("Fireproof Version Parameter", () => {
       "1.02.3",
       "1.2.03",
       "1.2-alpha",
-      "v1.2.3"
+      "v1.2.3",
     ];
 
-    invalidVersions.forEach(version => {
+    invalidVersions.forEach((version) => {
       it(`should reject invalid semver: ${version}`, async () => {
         const request = createRequestWithVersion(version);
         const response = await worker.fetch(request);
         const html = await response.text();
-        
+
         const extractedVersion = extractFireproofVersion(html);
         expect(extractedVersion).not.toBe(version);
         expect(extractedVersion).toMatch(/^[0-9]+\.[0-9]+\.[0-9]+/); // Falls back to valid default
