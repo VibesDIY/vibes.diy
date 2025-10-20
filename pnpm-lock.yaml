@@ -1066,6 +1066,24 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.7.2)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
 
+  vibesbox/tests/unit:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20240925.0
+        version: 4.20251011.0
+      '@types/node':
+        specifier: ^24.7.2
+        version: 24.7.2
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.7.2)(@vitest/browser@3.2.4)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
+
 packages:
 
   '@adobe/css-tools@4.4.4':
