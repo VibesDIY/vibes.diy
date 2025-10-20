@@ -4,49 +4,56 @@
  * Also handles /vibe/{slug} pattern with postMessage communication
  */
 
-import iframeHtml from "./iframe.html";
-import wrapperHtml from "./wrapper.html";
-import labHtml from "./lab.html";
+import iframeHtml from "./iframe-template";
+import wrapperHtml from "./wrapper-template";
+import labHtml from "./lab-template";
+import {
+  DEFAULT_VIBE_SLUG,
+  DEFAULT_FIREPROOF_VERSION,
+  FIREPROOF_VERSION_PARAM,
+  FIREPROOF_VERSION_PLACEHOLDER,
+  isValidSemver,
+  getFireproofVersion,
+  replacePlaceholders,
+} from "./utilities";
 
 export interface Env {
   // Add any environment variables here
 }
 
-const DEFAULT_VIBE_SLUG = "quick-cello-8104";
-const DEFAULT_FIREPROOF_VERSION = "0.23.14";
-const FIREPROOF_VERSION_PARAM = "v_fp";
-const FIREPROOF_VERSION_PLACEHOLDER = "{{FIREPROOF_VERSION}}";
-
-/**
- * Validate semver format
- */
-function isValidSemver(version: string | null): boolean {
-  if (!version) return false;
-  const semverPattern =
-    /^\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/;
-  return semverPattern.test(version);
-}
-
-/**
- * Get fireproof version from URL parameter with validation
- */
-function getFireproofVersion(url: URL): string {
-  const versionParam = url.searchParams.get(FIREPROOF_VERSION_PARAM);
-  return isValidSemver(versionParam)
-    ? versionParam!
-    : DEFAULT_FIREPROOF_VERSION;
-}
+// Re-export utilities for testing
+export {
+  DEFAULT_VIBE_SLUG,
+  DEFAULT_FIREPROOF_VERSION,
+  FIREPROOF_VERSION_PARAM,
+  FIREPROOF_VERSION_PLACEHOLDER,
+  isValidSemver,
+  getFireproofVersion,
+  replacePlaceholders,
+  iframeHtml,
+  wrapperHtml,
+  labHtml,
+};
 
 export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+    const isHead = request.method === "HEAD";
 
     // Handle /lab/{slug} pattern
     if (url.pathname.startsWith("/lab/") || url.pathname === "/lab") {
       const pathSegments = url.pathname.split("/");
       const slug = pathSegments[2] || DEFAULT_VIBE_SLUG;
 
-      return handleLabPage(slug, url.origin, url);
+      const response = await handleLabPage(slug, url.origin, url);
+      if (isHead) {
+        return new Response("", {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        });
+      }
+      return response;
     }
 
     // Handle /vibe/{slug} pattern
@@ -54,17 +61,26 @@ export default {
       const pathSegments = url.pathname.split("/");
       const slug = pathSegments[2] || DEFAULT_VIBE_SLUG;
 
-      return handleVibeWrapper(slug, url.origin, url);
+      const response = await handleVibeWrapper(slug, url.origin, url);
+      if (isHead) {
+        return new Response("", {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        });
+      }
+      return response;
     }
 
     // Default: Return the static iframe HTML content with dynamic fireproof version
     const fireproofVersion = getFireproofVersion(url);
-    const html = iframeHtml.replaceAll(
-      FIREPROOF_VERSION_PLACEHOLDER,
-      fireproofVersion,
-    );
+    const html = replacePlaceholders(iframeHtml, {
+      [FIREPROOF_VERSION_PLACEHOLDER]: fireproofVersion,
+    });
 
-    return new Response(html, {
+    return new Response(isHead ? "" : html, {
+      status: 200,
+      statusText: "OK",
       headers: {
         "Content-Type": "text/html",
         "Access-Control-Allow-Origin": "*",
@@ -79,7 +95,7 @@ export default {
 /**
  * Handle /vibe/{slug} requests with wrapper that uses postMessage
  */
-async function handleVibeWrapper(
+export async function handleVibeWrapper(
   slug: string,
   origin: string,
   url: URL,
@@ -92,12 +108,15 @@ async function handleVibeWrapper(
       : "/";
 
   // Replace template placeholders
-  const html = wrapperHtml
-    .replaceAll("{{slug}}", slug)
-    .replaceAll("{{origin}}", origin)
-    .replaceAll("{{iframeSrc}}", iframeSrc);
+  const html = replacePlaceholders(wrapperHtml, {
+    "{{slug}}": slug,
+    "{{origin}}": origin,
+    "{{iframeSrc}}": iframeSrc,
+  });
 
   return new Response(html, {
+    status: 200,
+    statusText: "OK",
     headers: {
       "Content-Type": "text/html",
       "Cache-Control": "public, max-age=300", // Shorter cache for dynamic content
@@ -108,17 +127,20 @@ async function handleVibeWrapper(
 /**
  * Handle /lab/{slug} requests with multi-iframe test environment
  */
-async function handleLabPage(
+export async function handleLabPage(
   slug: string,
   origin: string,
   _url: URL,
 ): Promise<Response> {
   // Replace template placeholders
-  const html = labHtml
-    .replaceAll("{{slug}}", slug)
-    .replaceAll("{{origin}}", origin);
+  const html = replacePlaceholders(labHtml, {
+    "{{slug}}": slug,
+    "{{origin}}": origin,
+  });
 
   return new Response(html, {
+    status: 200,
+    statusText: "OK",
     headers: {
       "Content-Type": "text/html",
       "Cache-Control": "public, max-age=300", // Shorter cache for dynamic content

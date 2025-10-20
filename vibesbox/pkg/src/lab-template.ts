@@ -1,4 +1,4 @@
-<!doctype html>
+export const labHtml = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -346,7 +346,7 @@
         const hours = now.getHours().toString().padStart(2, "0");
         const minutes = now.getMinutes().toString().padStart(2, "0");
         const seconds = now.getSeconds().toString().padStart(2, "0");
-        return `${year}${month}${day}${hours}${minutes}${seconds}`;
+        return \`\${year}\${month}\${day}\${hours}\${minutes}\${seconds}\`;
       }
 
       function getStoredSessions() {
@@ -511,11 +511,11 @@
           setAllStatus("loading", "Fetching vibe code...");
 
           const response = await fetch(
-            `https://${vibeSlug}.vibesdiy.app/App.jsx`,
+            \`https://\${vibeSlug}.vibesdiy.app/App.jsx\`,
           );
           if (!response.ok) {
             throw new Error(
-              `Failed to fetch vibe code: HTTP ${response.status}`,
+              \`Failed to fetch vibe code: HTTP \${response.status}\`,
             );
           }
           const vibeCode = await response.text();
@@ -531,7 +531,7 @@
           await Promise.allSettled(promises);
         } catch (error) {
           console.error("Lab loading failed:", error);
-          setAllStatus("error", `Failed: ${error.message}`);
+          setAllStatus("error", \`Failed: \${error.message}\`);
         } finally {
           loadButton.disabled = false;
           loadButton.textContent = "Load Lab";
@@ -545,9 +545,9 @@
         fireproofVersion,
         vibeSlug,
       ) {
-        const frameId = `frame${frameNum}`;
-        const statusId = `status${frameNum}`;
-        const overlayId = `overlay${frameNum}`;
+        const frameId = \`frame\${frameNum}\`;
+        const statusId = \`status\${frameNum}\`;
+        const overlayId = \`overlay\${frameNum}\`;
 
         const frame = document.getElementById(frameId);
         const status = document.getElementById(statusId);
@@ -565,14 +565,14 @@
             iframeUrl = "http://localhost:8989/";
           } else {
             // Use subdomain isolation
-            const subdomain = `${sessionId}-${frameNum}`;
-            iframeUrl = `https://${subdomain}.vibesbox.dev/`;
+            const subdomain = \`\${sessionId}-\${frameNum}\`;
+            iframeUrl = \`https://\${subdomain}.vibesbox.dev/\`;
           }
 
           // Add fireproof version parameter if specified
           if (fireproofVersion) {
             const separator = iframeUrl.includes("?") ? "&" : "?";
-            iframeUrl += `${separator}v_fp=${encodeURIComponent(fireproofVersion)}`;
+            iframeUrl += \`\${separator}v_fp=\${encodeURIComponent(fireproofVersion)}\`;
           }
 
           setFrameStatus(frameNum, "loading", "Loading iframe...");
@@ -617,7 +617,7 @@
             type: "execute-code",
             code: vibeCode,
             apiKey: "sk-vibes-proxy-managed",
-            sessionId: `lab-${sessionId}-${frameNum}`,
+            sessionId: \`lab-\${sessionId}-\${frameNum}\`,
           };
 
           if (debugConfig) {
@@ -631,25 +631,25 @@
           overlay.style.display = "none";
           setFrameStatus(frameNum, "ready", "Running");
         } catch (error) {
-          console.error(`Frame ${frameNum} failed:`, error);
+          console.error(\`Frame \${frameNum} failed:\`, error);
           setFrameStatus(frameNum, "error", error.message);
           overlay.style.display = "flex";
-          overlay.textContent = `Error: ${error.message}`;
+          overlay.textContent = \`Error: \${error.message}\`;
         }
       }
 
       function setFrameStatus(frameNum, type, message) {
-        const status = document.getElementById(`status${frameNum}`);
-        status.className = `status ${type}`;
+        const status = document.getElementById(\`status\${frameNum}\`);
+        status.className = \`status \${type}\`;
         status.textContent = message;
       }
 
       function setAllStatus(type, message) {
         for (let i = 1; i <= 4; i++) {
           setFrameStatus(i, type, message);
-          document.getElementById(`overlay${i}`).style.display = "flex";
-          document.getElementById(`overlay${i}`).textContent = message;
-          document.getElementById(`frame${i}`).style.display = "none";
+          document.getElementById(\`overlay\${i}\`).style.display = "flex";
+          document.getElementById(\`overlay\${i}\`).textContent = message;
+          document.getElementById(\`frame\${i}\`).style.display = "none";
         }
       }
 
@@ -696,11 +696,11 @@
             setFrameStatus(frameNum, "loading", "Fetching vibe code...");
 
             const response = await fetch(
-              `https://${vibeSlug}.vibesdiy.app/App.jsx`,
+              \`https://\${vibeSlug}.vibesdiy.app/App.jsx\`,
             );
             if (!response.ok) {
               throw new Error(
-                `Failed to fetch vibe code: HTTP ${response.status}`,
+                \`Failed to fetch vibe code: HTTP \${response.status}\`,
               );
             }
             const vibeCode = await response.text();
@@ -713,7 +713,7 @@
               vibeSlug,
             );
           } catch (error) {
-            console.error(`Frame ${frameNum} reload failed:`, error);
+            console.error(\`Frame \${frameNum} reload failed:\`, error);
             setFrameStatus(frameNum, "error", error.message);
           }
         })();
@@ -728,7 +728,7 @@
       // Individual reload button listeners
       for (let i = 1; i <= 4; i++) {
         document
-          .getElementById(`reload${i}`)
+          .getElementById(\`reload\${i}\`)
           .addEventListener("click", () => reloadSingleFrame(i));
       }
 
@@ -748,4 +748,6 @@
       }
     </script>
   </body>
-</html>
+</html>`;
+
+export default labHtml;

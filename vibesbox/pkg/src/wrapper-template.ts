@@ -1,4 +1,4 @@
-<!doctype html>
+export const wrapperHtml = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -102,7 +102,7 @@
           const response = await fetch("https://{{slug}}.vibesdiy.app/App.jsx");
 
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(\`HTTP \${response.status}\`);
           }
           const code = await response.text();
 
@@ -134,4 +134,6 @@
       loadVibe();
     </script>
   </body>
-</html>
+</html>`;
+
+export default wrapperHtml;
