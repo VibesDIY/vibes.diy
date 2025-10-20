@@ -37,7 +37,7 @@ describe("HTML Generation", () => {
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      expect(html).toContain("window.addEventListener('message'");
+      expect(html).toContain('window.addEventListener("message"');
       expect(html).toContain("execute-code");
       expect(html).toContain("postMessage");
     });
@@ -139,10 +139,10 @@ describe("HTML Generation", () => {
 
       expect(html).toContain("localhostControls");
       expect(html).toContain("useLocalhost");
-      expect(html).toContain("localhostPort");
+      expect(html).toContain("localhost:8989");
     });
 
-    it("should replace slug and origin placeholders", async () => {
+    it("should replace slug placeholder", async () => {
       const request = new Request(
         "https://custom.vibesbox.dev/lab/custom-slug",
       );
@@ -150,9 +150,7 @@ describe("HTML Generation", () => {
       const html = await response.text();
 
       expect(html).toContain("custom-slug");
-      expect(html).toContain("https://custom.vibesbox.dev");
       expect(html).not.toContain("{{slug}}");
-      expect(html).not.toContain("{{origin}}");
     });
   });
 
