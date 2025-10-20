@@ -29,21 +29,6 @@ export function cleanupRequestKey(key: string) {
   MODULE_STATE.requestTimestamps.delete(key);
 }
 
-// Periodically clean up stale requests (every minute)
-export const cleanupInterval = setInterval(() => {
-  const now = Date.now();
-  for (const [key, timestamp] of MODULE_STATE.requestTimestamps.entries()) {
-    if (now - timestamp > 5 * 60 * 1000) {
-      // For stale requests that are over 5 minutes old,
-      // also remove them from createdDocuments tracking
-      MODULE_STATE.createdDocuments.delete(key);
-
-      // Clean up all other state
-      cleanupRequestKey(key);
-    }
-  }
-}, 60000); // Check every minute
-
 /**
  * Synchronous hash function to create a key from the prompt string and options
  * @param prompt The prompt string to hash
