@@ -26,6 +26,7 @@
     "test:screenshot:local": "node claude-browse-vibes/test-screenshot-api.js",
     "format": "prettier --write  --log-level silent .",
     "hosting:check": "echo '🔍 Running hosting CI checks...' && pnpm --filter @vibes.diy/hosting-base build && echo '✅ Hosting base built' && cd hosting/pkg && pnpm check && echo '✅ Hosting format and lint passed' && cd ../.. && pnpm --filter @vibes.diy/hosting-tests test && echo '🎉 All hosting CI checks passed!'",
+    "vibesbox:check": "echo '🔍 Running vibesbox CI checks...' && cd vibesbox/pkg && pnpm check && echo '✅ Vibesbox format and lint passed' && cd .. && pnpm --filter @vibes.diy/vibesbox-tests test && echo '🎉 All vibesbox CI checks passed!'",
     "dev": "cd vibes.diy/pkg && pnpm run dev",
     "dev:router": "cd vibes.diy/pkg && pnpm run dev:router",
     "pack": "echo skip pack",
