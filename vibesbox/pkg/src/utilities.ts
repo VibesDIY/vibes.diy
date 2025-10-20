@@ -32,13 +32,13 @@ export function getFireproofVersion(url: URL): string {
  */
 export function replacePlaceholders(
   html: string,
-  replacements: Record<string, string>
+  replacements: Record<string, string>,
 ): string {
   let result = html;
   for (const [placeholder, value] of Object.entries(replacements)) {
     const regex = new RegExp(
       placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-      "g"
+      "g",
     );
     result = result.replace(regex, value);
   }
