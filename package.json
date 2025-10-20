@@ -18,7 +18,7 @@
   "scripts": {
     "xbuild:base": "pnpm --filter use-vibes-base build",
     "build": "core-cli tsc",
-    "lint": "eslint . && cd hosting/pkg && pnpm lint && cd ../../vibesbox/tests/unit && pnpm lint",
+    "lint": "eslint . && cd hosting/pkg && pnpm lint && cd ../../vibesbox/pkg && pnpm lint && cd ../tests/unit && pnpm lint",
     "test": "cross-env DISABLE_REACT_ROUTER=true vitest --run",
     "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage --watch",
     "test:all": "cd vibes.diy/tests/app && pnpm run test && cd ../simple-chat && pnpm run test && cd ../../../prompts/tests && pnpm run test && cd ../../use-vibes/tests && pnpm run test && cd ../../call-ai/tests && pnpm run test",
