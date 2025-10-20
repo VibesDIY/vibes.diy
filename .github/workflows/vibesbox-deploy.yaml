@@ -1,0 +1,55 @@
+name: Deploy Vibesbox Worker
+
+on:
+  # Production deployment on main only
+  push:
+    paths:
+      - "vibesbox/**/*"
+    branches:
+      - main
+
+  # Manual trigger for controlled deployments
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'production' || github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup runtime environment
+        uses: ./actions/runtime
+
+      - name: Determine deployment type
+        id: deployment
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "type=production" >> $GITHUB_OUTPUT  
+            echo "worker_name=vibesbox" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "type=manual" >> $GITHUB_OUTPUT
+            echo "worker_name=vibesbox" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy vibesbox worker
+        id: deploy
+        uses: ./vibesbox/actions/deploy
+        with:
+          environment: ${{ steps.deployment.outputs.environment }}
+          worker_name: ${{ steps.deployment.outputs.worker_name }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
