@@ -43,6 +43,11 @@ export {
   type VibeControlClasses,
   hiddenMenuTheme,
 
+  // Install tracking for catalog pages
+  initVibesInstalls,
+  constructSubdomain,
+  generateInstallId,
+
   // Type namespaces
   type Fireproof,
   type CallAI,
