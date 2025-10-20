@@ -1,12 +1,22 @@
 import { useParams } from "react-router-dom";
 import React, { useEffect } from "react";
+import { VibesDiyEnv } from "../config/env.js";
+
+function getHostnameFromUrl(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "vibesdiy.app";
+  }
+}
 
 export function VibeIframeContainerComponent({
   vibeSlug,
 }: {
   vibeSlug: string;
 }) {
-  const iframeUrl = `https://${vibeSlug}.vibesdiy.app/${location.search}`;
+  const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
+  const iframeUrl = `https://${vibeSlug}.${hostname}/${location.search}`;
   return (
     <iframe
       src={iframeUrl}
@@ -34,7 +44,8 @@ export default function VibeIframeContainer({
 
   useEffect(() => {
     if (vibeSlug) {
-      const redirectUrl = `https://${vibeSlug}.vibesdiy.app/${location.search}`;
+      const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
+      const redirectUrl = `https://${vibeSlug}.${hostname}/${location.search}`;
       callReplace(replace)(redirectUrl);
     }
   }, [vibeSlug]);
