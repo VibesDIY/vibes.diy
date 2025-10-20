@@ -35,7 +35,7 @@ runs:
       run: |
         cd vibesbox/pkg
         echo "🚀 Deploying ${{ inputs.worker_name }} worker..."
-        
+
         if [[ "${{ inputs.environment }}" == "staging" ]]; then
           echo "📦 Deploying to staging environment..."
           npx wrangler deploy --env staging
@@ -43,7 +43,7 @@ runs:
           echo "🚀 Deploying to production..."
           npx wrangler deploy
         fi
-        
+
         echo "✅ Worker deployed successfully"
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
