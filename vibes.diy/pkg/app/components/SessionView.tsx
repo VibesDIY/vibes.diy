@@ -13,7 +13,7 @@ import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { useAuth } from "../contexts/AuthContext.js";
-import { useAuthPopup } from "../hooks/useAuthPopup.js";
+import { NeedsLoginModal } from "./NeedsLoginModal.js";
 
 interface SessionViewProps {
   sessionId: string;
@@ -23,28 +23,6 @@ interface SessionViewProps {
   navigate: (to: string, options?: { replace?: boolean }) => void;
   urlPrompt: string | null;
   urlModel: string | null;
-}
-
-// Login gate component
-function LoginGate({ initiateLogin }: { initiateLogin: () => void }) {
-  return (
-    <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
-      <div className="text-center max-w-md px-4">
-        <h1 className="text-light-primary dark:text-dark-primary mb-4 text-3xl font-bold">
-          Login Required
-        </h1>
-        <p className="text-light-secondary dark:text-dark-secondary mb-6 text-lg">
-          Please log in to use Vibes DIY
-        </p>
-        <button
-          onClick={initiateLogin}
-          className="rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-        >
-          Login with Fireproof
-        </button>
-      </div>
-    </div>
-  );
 }
 
 export default function SessionView({
@@ -57,17 +35,14 @@ export default function SessionView({
   urlModel,
 }: SessionViewProps) {
   // Check authentication before allowing access to the chat interface
-  const { isAuthenticated, isLoading } = useAuth();
-  const { initiateLogin } = useAuthPopup();
-  const hasTriggeredLogin = useRef(false);
+  const { isAuthenticated, isLoading, setNeedsLogin } = useAuth();
 
-  // Trigger login once on mount if not authenticated
+  // Set needsLogin flag when not authenticated (triggers NeedsLoginModal)
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !hasTriggeredLogin.current) {
-      hasTriggeredLogin.current = true;
-      initiateLogin();
+    if (!isLoading && !isAuthenticated) {
+      setNeedsLogin(true);
     }
-  }, [isLoading, isAuthenticated, initiateLogin]);
+  }, [isLoading, isAuthenticated, setNeedsLogin]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -82,9 +57,24 @@ export default function SessionView({
     );
   }
 
-  // Show login gate if not authenticated
+  // Show login modal if not authenticated
+  // The NeedsLoginModal component is rendered at app level and listens to needsLogin state
   if (!isAuthenticated) {
-    return <LoginGate initiateLogin={initiateLogin} />;
+    return (
+      <>
+        <NeedsLoginModal />
+        <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
+          <div className="text-center max-w-md px-4">
+            <h1 className="text-light-primary dark:text-dark-primary mb-4 text-3xl font-bold">
+              Welcome to Vibes DIY
+            </h1>
+            <p className="text-light-secondary dark:text-dark-secondary mb-6 text-lg">
+              Please log in to start building AI-powered apps
+            </p>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return <AuthenticatedSessionView
