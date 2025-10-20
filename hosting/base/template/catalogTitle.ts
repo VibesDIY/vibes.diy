@@ -932,10 +932,10 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
         
         // Fallback: simple redirect after delay (without imported functions)
         setTimeout(() => {
-          const appSlug = window.location.hostname.split('.')[0];
+          const appSlug = window.location.hostname.split('.')[0].replace(/^v-/, ''); // Remove v- prefix if present
           const domain = window.location.hostname.split('.').slice(1).join('.');
           const subdomain = window.location.hostname.split('.')[0];
-          
+
           // If we're on catalog page, create a simple install
           if (!subdomain.includes('_') && !subdomain.includes('--')) {
             // Generate simple random ID and redirect
@@ -944,9 +944,11 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
             for (let i = 0; i < 12; i++) {
               installId += chars[Math.floor(Math.random() * chars.length)];
             }
-            
-            // Fallback URL formatting (legacy format for safety)
-            const newSubdomain = \`\${appSlug}_\${installId}\`;
+
+            // Domain-aware URL formatting (matching constructSubdomain behavior)
+            const newSubdomain = domain.endsWith('.net')
+              ? \`v-\${appSlug}--\${installId}\`  // New format for .net
+              : \`\${appSlug}_\${installId}\`;      // Legacy format for .app
             window.location.href = \`https://\${newSubdomain}.\${domain}\`;
           }
         }, 2000);
