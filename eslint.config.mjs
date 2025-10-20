@@ -32,6 +32,8 @@ const opts = tseslint.config(
       "smoke/react/",
       "src/missingTypes/lib.deno.d.ts",
       "**/notes/**",
+      "vibesbox/**",
+      "hosting/**",
       "**/.cache/**",
       "**/.esm-cache/**",
       "**/build/**",
