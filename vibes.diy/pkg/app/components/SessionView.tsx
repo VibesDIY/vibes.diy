@@ -25,6 +25,28 @@ interface SessionViewProps {
   urlModel: string | null;
 }
 
+// Login gate component
+function LoginGate({ initiateLogin }: { initiateLogin: () => void }) {
+  return (
+    <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
+      <div className="text-center max-w-md px-4">
+        <h1 className="text-light-primary dark:text-dark-primary mb-4 text-3xl font-bold">
+          Login Required
+        </h1>
+        <p className="text-light-secondary dark:text-dark-secondary mb-6 text-lg">
+          Please log in to use Vibes DIY
+        </p>
+        <button
+          onClick={initiateLogin}
+          className="rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+        >
+          Login with Fireproof
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function SessionView({
   sessionId,
   pathname,
@@ -60,26 +82,30 @@ export default function SessionView({
 
   // Show login gate if not authenticated
   if (!isAuthenticated) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
-        <div className="text-center max-w-md px-4">
-          <h1 className="text-light-primary dark:text-dark-primary mb-4 text-3xl font-bold">
-            Login Required
-          </h1>
-          <p className="text-light-secondary dark:text-dark-secondary mb-6 text-lg">
-            Please log in to use Vibes DIY
-          </p>
-          <button
-            onClick={initiateLogin}
-            className="rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-          >
-            Login with Fireproof
-          </button>
-        </div>
-      </div>
-    );
+    return <LoginGate initiateLogin={initiateLogin} />;
   }
 
+  return <AuthenticatedSessionView
+    sessionId={sessionId}
+    pathname={pathname}
+    search={_search}
+    locationState={locationState}
+    navigate={navigate}
+    urlPrompt={urlPrompt}
+    urlModel={urlModel}
+  />;
+}
+
+// Separate component for authenticated session to avoid hook ordering issues
+function AuthenticatedSessionView({
+  sessionId,
+  pathname,
+  search: _search,
+  locationState,
+  navigate,
+  urlPrompt,
+  urlModel,
+}: SessionViewProps) {
   const chatState = useSimpleChat(sessionId);
   const hasAutoSentMessage = useRef(false);
   const chatInputRef = useRef<ChatInputRef>(null);
