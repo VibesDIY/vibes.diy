@@ -13,7 +13,9 @@ import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { useAuth } from "../contexts/AuthContext.js";
-import { NeedsLoginModal } from "./NeedsLoginModal.js";
+import { useAuthPopup } from "../hooks/useAuthPopup.js";
+import { trackAuthClick } from "../utils/analytics.js";
+import { Button } from "./ui/button.js";
 
 interface SessionViewProps {
   sessionId: string;
@@ -35,14 +37,8 @@ export default function SessionView({
   urlModel,
 }: SessionViewProps) {
   // Check authentication before allowing access to the chat interface
-  const { isAuthenticated, isLoading, setNeedsLogin } = useAuth();
-
-  // Set needsLogin flag when not authenticated (triggers NeedsLoginModal)
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setNeedsLogin(true);
-    }
-  }, [isLoading, isAuthenticated, setNeedsLogin]);
+  const { isAuthenticated, isLoading } = useAuth();
+  const { initiateLogin } = useAuthPopup();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -57,35 +53,49 @@ export default function SessionView({
     );
   }
 
-  // Show login modal if not authenticated
-  // The NeedsLoginModal component is rendered at app level and listens to needsLogin state
+  // Show login screen if not authenticated
   if (!isAuthenticated) {
+    const handleLogin = async () => {
+      trackAuthClick({
+        label: "Session View Login",
+        isUserAuthenticated: false,
+      });
+      await initiateLogin();
+    };
+
     return (
-      <>
-        <NeedsLoginModal />
-        <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
-          <div className="text-center max-w-md px-4">
-            <h1 className="text-light-primary dark:text-dark-primary mb-4 text-3xl font-bold">
-              Welcome to Vibes DIY
-            </h1>
-            <p className="text-light-secondary dark:text-dark-secondary mb-6 text-lg">
-              Please log in to start building AI-powered apps
-            </p>
-          </div>
+      <div className="grid-background flex h-screen w-screen items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <h1 className="text-light-primary dark:text-dark-primary mb-4 text-3xl font-bold">
+            Welcome to Vibes DIY
+          </h1>
+          <p className="text-light-secondary dark:text-dark-secondary mb-6 text-lg">
+            Please log in to start building AI-powered apps
+          </p>
+          <Button
+            onClick={handleLogin}
+            variant="blue"
+            size="default"
+            className="text-lg px-8 py-6 h-auto w-auto"
+          >
+            <span>Log In</span>
+          </Button>
         </div>
-      </>
+      </div>
     );
   }
 
-  return <AuthenticatedSessionView
-    sessionId={sessionId}
-    pathname={pathname}
-    search={_search}
-    locationState={locationState}
-    navigate={navigate}
-    urlPrompt={urlPrompt}
-    urlModel={urlModel}
-  />;
+  return (
+    <AuthenticatedSessionView
+      sessionId={sessionId}
+      pathname={pathname}
+      search={_search}
+      locationState={locationState}
+      navigate={navigate}
+      urlPrompt={urlPrompt}
+      urlModel={urlModel}
+    />
+  );
 }
 
 // Separate component for authenticated session to avoid hook ordering issues
