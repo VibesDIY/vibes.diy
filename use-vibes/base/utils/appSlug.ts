@@ -53,16 +53,10 @@ export function getAppSlug(): string {
   // Check for subdomain-based routing (production environments)
   // Matches both new (v-app-slug--instance) and legacy (app-slug_instance) patterns
   if (hostname.includes('.')) {
-    const subdomain = hostname.split('.')[0];
-    if (subdomain && subdomain !== 'www' && subdomain !== 'localhost') {
-      if (subdomain.startsWith('v-')) {
-        // New format: v-app-slug--instance
-        const withoutPrefix = subdomain.slice(2); // Remove "v-"
-        return withoutPrefix.split('--')[0]; // Extract part before double dash
-      } else {
-        // Legacy format: app-slug_instance
-        return subdomain.split('_')[0]; // Extract part before underscore
-      }
+    const sub = hostname.split('.')[0];
+    if (sub && sub !== 'www' && sub !== 'localhost') {
+      const parsed = parseSubdomain(hostname);
+      return parsed.appSlug || DEFAULT_APP_SLUG;
     }
   }
 
@@ -100,16 +94,17 @@ export function getFullAppIdentifier(): string {
 
   // Check for subdomain-based routing (production environments)
   if (hostname.includes('.')) {
-    const subdomain = hostname.split('.')[0];
-    if (subdomain && subdomain !== 'www' && subdomain !== 'localhost') {
-      if (subdomain.startsWith('v-')) {
-        // New format: v-app-slug--instance → app-slug--instance
-        const withoutPrefix = subdomain.slice(2); // Remove "v-"
-        return withoutPrefix; // Return app-slug--instance
-      } else {
-        // Legacy format: app-slug_instance
-        return subdomain; // Return as-is
+    const sub = hostname.split('.')[0];
+    if (sub && sub !== 'www' && sub !== 'localhost') {
+      const parsed = parseSubdomain(hostname);
+      if (parsed.isInstance && parsed.installId) {
+        // Preserve original separator style based on the original subdomain
+        if (parsed.fullSubdomain.startsWith('v-')) {
+          return `${parsed.appSlug}--${parsed.installId}`;
+        }
+        return `${parsed.appSlug}_${parsed.installId}`;
       }
+      return parsed.appSlug;
     }
   }
 
