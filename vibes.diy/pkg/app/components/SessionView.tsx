@@ -12,6 +12,8 @@ import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
+import { useAuth } from "../contexts/AuthContext.js";
+import { useAuthPopup } from "../hooks/useAuthPopup.js";
 
 interface SessionViewProps {
   sessionId: string;
@@ -32,6 +34,52 @@ export default function SessionView({
   urlPrompt,
   urlModel,
 }: SessionViewProps) {
+  // Check authentication before allowing access to the chat interface
+  const { isAuthenticated, isLoading } = useAuth();
+  const { initiateLogin } = useAuthPopup();
+
+  // Trigger login on mount if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      initiateLogin();
+    }
+  }, [isLoading, isAuthenticated, initiateLogin]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
+        <div className="text-center">
+          <div className="text-light-primary dark:text-dark-primary mb-4 text-xl">
+            Loading...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login gate if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
+        <div className="text-center max-w-md px-4">
+          <h1 className="text-light-primary dark:text-dark-primary mb-4 text-3xl font-bold">
+            Login Required
+          </h1>
+          <p className="text-light-secondary dark:text-dark-secondary mb-6 text-lg">
+            Please log in to use Vibes DIY
+          </p>
+          <button
+            onClick={initiateLogin}
+            className="rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          >
+            Login with Fireproof
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const chatState = useSimpleChat(sessionId);
   const hasAutoSentMessage = useRef(false);
   const chatInputRef = useRef<ChatInputRef>(null);
