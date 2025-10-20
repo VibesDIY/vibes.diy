@@ -201,11 +201,9 @@ export const iframeHtml = `<!doctype html>
 
       // Declare executeCode function before event listener
       var executeCode; // Will be defined later
-      console.log("[VIBESBOX] executeCode variable declared");
 
       // Event listeners
       window.addEventListener("message", function (event) {
-        console.log("[VIBESBOX] Message received:", event.data);
         if (event.data) {
           if (event.data.type === "command") {
             if (event.data.command === "capture-screenshot") {
@@ -437,7 +435,6 @@ export const iframeHtml = `<!doctype html>
 
       // Code execution function
       executeCode = function(data) {
-        console.log("[VIBESBOX] executeCode function called with data:", data);
         try {
           // Reset error state
           window.babelTransformError = null;
@@ -585,7 +582,6 @@ export const iframeHtml = `<!doctype html>
           \`;
         }
       };
-      console.log("[VIBESBOX] executeCode function assigned, type:", typeof executeCode);
     </script>
   </body>
 </html>`;
