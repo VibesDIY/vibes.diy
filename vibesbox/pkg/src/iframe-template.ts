@@ -1,4 +1,4 @@
-<!doctype html>
+export const iframeHtml = `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -322,7 +322,7 @@
             errorMsg.match(/(\d+):(\d+)/) ||
             errorMsg.match(/line (\d+).+column (\d+)/);
           if (lineMatch) {
-            lineInfo = ` at line ${lineMatch[1]}, column ${lineMatch[2]}`;
+            lineInfo = \` at line \${lineMatch[1]}, column \${lineMatch[2]}\`;
           }
 
           // Extract meaningful error message
@@ -332,18 +332,18 @@
               /Unexpected token[,:]?\s*([^,\n\)]+)/,
             );
             if (tokenMatch) {
-              message = `JSX Syntax Error: Unexpected token ${tokenMatch[1].trim()}`;
+              message = \`JSX Syntax Error: Unexpected token \${tokenMatch[1].trim()}\`;
             }
           } else if (errorMsg.includes("expected")) {
             const expectedMatch = errorMsg.match(/expected\s+([^,\n\)]+)/);
             if (expectedMatch) {
-              message = `JSX Syntax Error: Expected ${expectedMatch[1].trim()}`;
+              message = \`JSX Syntax Error: Expected \${expectedMatch[1].trim()}\`;
             }
           }
 
           const errorDetails = {
             type: "error",
-            message: `${message}${lineInfo}`,
+            message: \`\${message}\${lineInfo}\`,
             source: "jsx-parser",
             stack: errorMsg,
             timestamp: new Date().toISOString(),
@@ -374,7 +374,7 @@
             // Capture and format Babel error
             const errorDetails = {
               type: "error",
-              message: `Babel Syntax Error: ${err.message || "Invalid syntax"}`,
+              message: \`Babel Syntax Error: \${err.message || "Invalid syntax"}\`,
               source: "babel-transform",
               stack: err.stack || "",
               timestamp: new Date().toISOString(),
@@ -492,9 +492,9 @@
                 // Replace with ESM.sh URL
                 return match.replace(
                   new RegExp(
-                    `['"]${importPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}['"]`,
+                    \`['"]\${importPath.replace(/[.*+?^$\\{\\}()|[\\]\\\\]/g, "\\\\$&")}['"]\`,
                   ),
-                  `"https://esm.sh/${importPath}"`,
+                  \`"https://esm.sh/\${importPath}"\`,
                 );
               },
             );
@@ -534,7 +534,7 @@
               /export\s+default\s+function\s+(\w+)/g,
               "function $1",
             ) +
-            `
+            \`
           
           // Import React DOM for rendering
           import { createRoot } from 'react-dom/client';
@@ -542,11 +542,11 @@
           // Render the component directly
           const container = document.getElementById('container');
           const root = createRoot(container);
-          root.render(React.createElement(${functionName}));
+          root.render(React.createElement(\${functionName}));
           
           // Notify parent that execution was successful
           window.parent.postMessage({ type: 'execution-success' }, '*');
-          `;
+          \`;
 
           scriptElement.textContent = modifiedCode;
           document.head.appendChild(scriptElement);
@@ -557,7 +557,7 @@
 
           const errorDetails = {
             type: "error",
-            message: `Code execution failed: ${error.message}`,
+            message: \`Code execution failed: \${error.message}\`,
             source: "code-execution",
             stack: error.stack || "",
             timestamp: new Date().toISOString(),
@@ -570,15 +570,17 @@
 
           // Show error in container
           const container = document.getElementById("container");
-          container.innerHTML = `
+          container.innerHTML = \`
             <div style="padding: 20px; color: red; font-family: monospace; white-space: pre-wrap;">
               <h2>Execution Error</h2>
-              <p>${error.message}</p>
-              <pre>${error.stack}</pre>
+              <p>\\\${error.message}</p>
+              <pre>\\\${error.stack}</pre>
             </div>
-          `;
+          \`;
         }
       }
     </script>
   </body>
-</html>
+</html>`;
+
+export default iframeHtml;
