@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vibesbox Test - Console Logger</title>
+    <style>
+      body {
+        font-family: monospace;
+        margin: 20px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+      }
+      iframe {
+        width: 100%;
+        height: 600px;
+        border: 2px solid #444;
+        margin-bottom: 20px;
+      }
+      #console {
+        background: #000;
+        color: #0f0;
+        padding: 10px;
+        border: 1px solid #444;
+        height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        font-size: 12px;
+      }
+      .controls {
+        margin: 20px 0;
+      }
+      button {
+        padding: 10px 20px;
+        margin-right: 10px;
+        background: #007acc;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #005a9e;
+      }
+      .log-entry {
+        margin: 2px 0;
+        padding: 2px;
+      }
+      .log-error {
+        color: #ff6b6b;
+      }
+      .log-warn {
+        color: #ffd43b;
+      }
+      .log-info {
+        color: #74c0fc;
+      }
+      .log-success {
+        color: #51cf66;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Vibesbox Test Console</h1>
+    <p>Testing: <code>http://localhost:8989/vibe/quick-cello-8104</code></p>
+
+    <div class="controls">
+      <button onclick="clearConsole()">Clear Console</button>
+      <button onclick="reloadFrame()">Reload Frame</button>
+      <button onclick="testExecuteCode()">Test Execute Code</button>
+      <button onclick="captureScreenshot()">Capture Screenshot</button>
+    </div>
+
+    <iframe
+      id="vibesFrame"
+      src="http://localhost:8989/vibe/quick-cello-8104"
+    ></iframe>
+
+    <h2>Console Output:</h2>
+    <div id="console"></div>
+
+    <script>
+      const consoleDiv = document.getElementById("console");
+      const iframe = document.getElementById("vibesFrame");
+
+      function log(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        const entry = document.createElement("div");
+        entry.className = `log-entry log-${type}`;
+        entry.textContent = `[${timestamp}] ${message}`;
+        consoleDiv.appendChild(entry);
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+      }
+
+      function clearConsole() {
+        consoleDiv.innerHTML = "";
+        log("Console cleared", "info");
+      }
+
+      function reloadFrame() {
+        log("Reloading iframe...", "info");
+        iframe.src = iframe.src;
+      }
+
+      // Listen to iframe load events
+      iframe.addEventListener("load", () => {
+        log("Iframe loaded", "success");
+
+        // Try to access iframe console (may be blocked by CORS)
+        try {
+          const iframeWindow = iframe.contentWindow;
+          if (iframeWindow) {
+            log("Iframe window accessible", "success");
+
+            // Override console methods in iframe
+            const originalConsole = {
+              log: iframeWindow.console.log,
+              error: iframeWindow.console.error,
+              warn: iframeWindow.console.warn,
+            };
+
+            iframeWindow.console.log = function (...args) {
+              log("IFRAME LOG: " + args.join(" "), "info");
+              originalConsole.log.apply(iframeWindow.console, args);
+            };
+
+            iframeWindow.console.error = function (...args) {
+              log("IFRAME ERROR: " + args.join(" "), "error");
+              originalConsole.error.apply(iframeWindow.console, args);
+            };
+
+            iframeWindow.console.warn = function (...args) {
+              log("IFRAME WARN: " + args.join(" "), "warn");
+              originalConsole.warn.apply(iframeWindow.console, args);
+            };
+          }
+        } catch (e) {
+          log("Cannot access iframe console (CORS restriction)", "warn");
+        }
+      });
+
+      // Listen for messages from iframe
+      window.addEventListener("message", (event) => {
+        // Log all messages
+        log(
+          `Message from ${event.origin}: ${JSON.stringify(event.data)}`,
+          "info",
+        );
+
+        // Handle specific message types
+        if (event.data) {
+          if (event.data.type === "iframe-error") {
+            log(
+              `IFRAME ERROR: ${event.data.error?.message || "Unknown error"}`,
+              "error",
+            );
+          } else if (event.data.type === "execution-success") {
+            log("Code execution successful", "success");
+          } else if (event.data.type === "screenshot-captured") {
+            log("Screenshot captured", "success");
+          }
+        }
+      });
+
+      // Test functions
+      function testExecuteCode() {
+        log("Sending execute-code message to iframe...", "info");
+
+        const testCode = `
+                import React from 'react';
+                
+                function TestComponent() {
+                    console.log('Test component rendered');
+                    return <div>Hello from Test Component!</div>;
+                }
+                
+                export default TestComponent;
+            `;
+
+        iframe.contentWindow.postMessage(
+          {
+            type: "execute-code",
+            code: testCode,
+            sessionId: "test-session",
+            debug: "*",
+          },
+          "*",
+        );
+      }
+
+      function captureScreenshot() {
+        log("Requesting screenshot from iframe...", "info");
+        iframe.contentWindow.postMessage(
+          {
+            type: "command",
+            command: "capture-screenshot",
+          },
+          "*",
+        );
+      }
+
+      // Monitor iframe errors
+      iframe.addEventListener("error", (e) => {
+        log(`Iframe error: ${e.message}`, "error");
+      });
+
+      // Global error handler
+      window.addEventListener("error", (e) => {
+        log(
+          `Window error: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`,
+          "error",
+        );
+      });
+
+      // Log initial state
+      log("Vibesbox test console initialized", "success");
+      log("Waiting for iframe to load...", "info");
+
+      // Check iframe connectivity periodically
+      setInterval(() => {
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type: "ping" }, "*");
+          }
+        } catch (e) {
+          // Ignore CORS errors
+        }
+      }, 5000);
+    </script>
+  </body>
+</html>

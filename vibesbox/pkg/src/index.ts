@@ -22,18 +22,7 @@ export interface Env {
 }
 
 // Re-export utilities for testing
-export {
-  DEFAULT_VIBE_SLUG,
-  DEFAULT_FIREPROOF_VERSION,
-  FIREPROOF_VERSION_PARAM,
-  FIREPROOF_VERSION_PLACEHOLDER,
-  isValidSemver,
-  getFireproofVersion,
-  replacePlaceholders,
-  iframeHtml,
-  wrapperHtml,
-  labHtml,
-};
+// Named exports removed - Cloudflare Workers require only default export with fetch handler
 
 export default {
   async fetch(request: Request): Promise<Response> {

@@ -201,9 +201,11 @@ export const iframeHtml = `<!doctype html>
 
       // Declare executeCode function before event listener
       var executeCode; // Will be defined later
+      console.log("[VIBESBOX] executeCode variable declared");
 
       // Event listeners
       window.addEventListener("message", function (event) {
+        console.log("[VIBESBOX] Message received:", event.data);
         if (event.data) {
           if (event.data.type === "command") {
             if (event.data.command === "capture-screenshot") {
@@ -332,13 +334,13 @@ export const iframeHtml = `<!doctype html>
           let message = "JSX Syntax Error";
           if (errorMsg.includes("Unexpected token")) {
             const tokenMatch = errorMsg.match(
-              /Unexpected token[,:]?\s*([^,\n)]+)/,
+              /Unexpected token[,:]?\\s*([^,\\n)]+)/,
             );
             if (tokenMatch) {
               message = \`JSX Syntax Error: Unexpected token \${tokenMatch[1].trim()}\`;
             }
           } else if (errorMsg.includes("expected")) {
-            const expectedMatch = errorMsg.match(/expected\s+([^,\n)]+)/);
+            const expectedMatch = errorMsg.match(/expected\\s+([^,\\n)]+)/);
             if (expectedMatch) {
               message = \`JSX Syntax Error: Expected \${expectedMatch[1].trim()}\`;
             }
@@ -435,6 +437,7 @@ export const iframeHtml = `<!doctype html>
 
       // Code execution function
       executeCode = function(data) {
+        console.log("[VIBESBOX] executeCode function called with data:", data);
         try {
           // Reset error state
           window.babelTransformError = null;
@@ -472,7 +475,7 @@ export const iframeHtml = `<!doctype html>
           function transformImports(code) {
             const importKeys = Object.keys(libraryImportMap);
             return code.replace(
-              /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+(?:\s*,\s*\{[^}]*\})?)\s+from\s+)?['"]([^'"]+)['"];?/g,
+              /import\\s+(?:(?:\\{[^}]*\\}|\\*\\s+as\\s+\\w+|\\w+(?:\\s*,\\s*\\{[^}]*\\})?)\\s+from\\s+)?['"]([^'"]+)['"];?/g,
               (match, importPath) => {
                 // Don't transform if it's in our library map
                 if (importKeys.includes(importPath)) {
@@ -526,7 +529,7 @@ export const iframeHtml = `<!doctype html>
           // Extract function name and modify the transformed code
           let functionName = "App"; // default fallback
           const exportMatch = codeWithTransformedImports.match(
-            /export\s+default\s+function\s+(\w+)/,
+            /export\\s+default\\s+function\\s+(\\w+)/,
           );
           if (exportMatch) {
             functionName = exportMatch[1];
@@ -534,7 +537,7 @@ export const iframeHtml = `<!doctype html>
 
           const modifiedCode =
             transformedCode.code.replace(
-              /export\s+default\s+function\s+(\w+)/g,
+              /export\\s+default\\s+function\\s+(\\w+)/g,
               "function $1",
             ) +
             \`
@@ -582,6 +585,7 @@ export const iframeHtml = `<!doctype html>
           \`;
         }
       };
+      console.log("[VIBESBOX] executeCode function assigned, type:", typeof executeCode);
     </script>
   </body>
 </html>`;
