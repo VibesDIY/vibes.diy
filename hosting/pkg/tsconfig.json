@@ -8,7 +8,7 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "inlineSourceMap": false,
-    "lib": ["esnext"],
+    "lib": ["esnext", "DOM", "DOM.Iterable"],
     "listEmittedFiles": false,
     "listFiles": false,
     "moduleResolution": "node",
@@ -22,9 +22,7 @@
     "outDir": "",
     "target": "esnext",
     "module": "esnext",
-    "types": ["@types/node", "./worker-configuration.d.ts"],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "types": ["@types/node", "./worker-configuration.d.ts"]
   },
   "exclude": ["node_modules", "dist", "tests"],
   "include": ["src", "scripts", "vite.config.ts"]

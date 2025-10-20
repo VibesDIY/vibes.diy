@@ -152,7 +152,7 @@ function storeKeyMetadata(data: KeyMetadata): void {
   // Store metadata with the key as the dictionary key
   keyStore().metadata[data.key] = {
     hash: data.hash,
-    created: data.created || Date.now(),
+    created: data.created || new Date(),
     expires: data.expires,
     remaining: data.remaining,
     limit: data.limit,
