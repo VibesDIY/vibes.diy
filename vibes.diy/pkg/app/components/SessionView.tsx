@@ -59,10 +59,12 @@ export default function SessionView({
   // Check authentication before allowing access to the chat interface
   const { isAuthenticated, isLoading } = useAuth();
   const { initiateLogin } = useAuthPopup();
+  const hasTriggeredLogin = useRef(false);
 
-  // Trigger login on mount if not authenticated
+  // Trigger login once on mount if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !hasTriggeredLogin.current) {
+      hasTriggeredLogin.current = true;
       initiateLogin();
     }
   }, [isLoading, isAuthenticated, initiateLogin]);
