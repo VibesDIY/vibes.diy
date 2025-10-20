@@ -15,7 +15,62 @@ import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { trackAuthClick } from "../utils/analytics.js";
-import { Button } from "./ui/button.js";
+
+// Vibe switch button colors
+const BUTTON_COLOR = "#009ACE";
+
+// Vibe switch button component with animation
+function VibesLoginButton({ onClick }: { onClick: () => void }) {
+  const [isHovered, setHovered] = useState(false);
+  const [isActive, setActive] = useState(false);
+
+  let transform = "translate(0px, 0px)";
+  let boxShadow = `4px 5px 0px 0px ${BUTTON_COLOR}`;
+
+  if (isHovered && !isActive) {
+    transform = "translate(2px, 2px)";
+    boxShadow = `2px 3px 0px 0px ${BUTTON_COLOR}`;
+  }
+
+  if (isActive) {
+    transform = "translate(4px, 5px)";
+    boxShadow = "none";
+  }
+
+  const buttonStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "1rem 2rem",
+    background: "#fff",
+    color: "#1a1a1a",
+    border: "3px solid #1a1a1a",
+    borderRadius: "12px",
+    fontSize: "1rem",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+    position: "relative",
+    transform,
+    boxShadow,
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => {
+        setHovered(false);
+        setActive(false);
+      }}
+      onMouseDown={() => setActive(true)}
+      onMouseUp={() => setActive(false)}
+      style={buttonStyle}
+    >
+      Login
+    </button>
+  );
+}
 
 interface SessionViewProps {
   sessionId: string;
@@ -65,21 +120,14 @@ export default function SessionView({
 
     return (
       <div className="grid-background flex h-screen w-screen items-center justify-center">
-        <div className="text-center max-w-md px-4">
+        <div className="text-center max-w-md px-4 w-full">
           <h1 className="text-light-primary dark:text-dark-primary mb-4 text-3xl font-bold">
             Welcome to Vibes DIY
           </h1>
           <p className="text-light-secondary dark:text-dark-secondary mb-6 text-lg">
             Please log in to start building AI-powered apps
           </p>
-          <Button
-            onClick={handleLogin}
-            variant="blue"
-            size="default"
-            className="text-lg px-8 py-6 h-auto w-auto"
-          >
-            <span>Log In</span>
-          </Button>
+          <VibesLoginButton onClick={handleLogin} />
         </div>
       </div>
     );
