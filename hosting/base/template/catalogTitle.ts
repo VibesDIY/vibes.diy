@@ -683,16 +683,12 @@ export const catalogTitleStyles = /* css */ `
 `;
 
 // Simplified Catalog Title JavaScript using headless install tracking
+// Avoid binding to stubs: these globals are set only after tracker init.
 export const catalogTitleScript = /* javascript */ `
-  // Simple fallback functions for when use-vibes isn't loaded yet
-  window.createNewInstall = window.createNewInstall || function() {
-    console.log('Creating new install...');
-  };
-  
-  // These functions will be replaced by the tracker API once it loads
-  // We don't attach event listeners here to avoid binding to stubs
-  window.goToFreshestInstall = null;
-  window.defaultLaunchAction = null;
+  // Ensure no pre-bound stubs exist; real functions will be assigned after init
+  try { delete window.createNewInstall; } catch {}
+  try { delete window.goToFreshestInstall; } catch {}
+  try { delete window.defaultLaunchAction; } catch {}
 `;
 
 export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
@@ -790,6 +786,7 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
         function updateUI(installs) {
           updateLaunchButtons(installs);
           renderInstallHistory(installs);
+          bindLaunchHandlers();
           
           // Auto-redirect after UI is ready if this is a catalog page
           const hostname = window.location.hostname;
@@ -811,7 +808,7 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
           if (installs.length === 0) {
             // First install - single "Install" button
             container.innerHTML = \`
-              <button id="launch-app-btn" class="launch-button" onclick="createNewInstall()">
+              <button id="launch-app-btn" class="launch-button">
                 <span class="launch-icon">🚀</span>
                 <span>Install</span>
               </button>
@@ -819,16 +816,26 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
           } else {
             // Multiple installs - show "My Latest Install" and "Fresh Install" buttons
             container.innerHTML = \`
-              <button id="freshest-install-btn" class="launch-button" onclick="goToFreshestInstall()">
+              <button id="freshest-install-btn" class="launch-button">
                 <span class="launch-icon">💽</span>
                 <span>My Latest Install</span>
               </button>
-              <button id="new-install-btn" class="launch-button secondary" onclick="createNewInstall()">
+              <button id="new-install-btn" class="launch-button secondary">
                 <span class="launch-icon">💾</span>
                 <span>Fresh Install</span>
               </button>
             \`;
           }
+        }
+        
+        // Attach button click handlers after DOM updates
+        function bindLaunchHandlers() {
+          const launchBtn = document.getElementById('launch-app-btn');
+          if (launchBtn) launchBtn.addEventListener('click', () => tracker.createNewInstall());
+          const latestBtn = document.getElementById('freshest-install-btn');
+          if (latestBtn) latestBtn.addEventListener('click', () => tracker.goToLatestOrCreate());
+          const newBtn = document.getElementById('new-install-btn');
+          if (newBtn) newBtn.addEventListener('click', () => tracker.createNewInstall());
         }
         
         // Render install history UI

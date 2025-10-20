@@ -50,8 +50,7 @@ export function getAppSlug(): string {
     }
   }
 
-  // Check for subdomain-based routing (production environments)
-  // Matches both new (v-app-slug--instance) and legacy (app-slug_instance) patterns
+  // Production: delegate to centralized subdomain parser
   if (hostname.includes('.')) {
     const sub = hostname.split('.')[0];
     if (sub && sub !== 'www' && sub !== 'localhost') {
@@ -92,7 +91,7 @@ export function getFullAppIdentifier(): string {
     }
   }
 
-  // Check for subdomain-based routing (production environments)
+  // Production: delegate to centralized subdomain parser
   if (hostname.includes('.')) {
     const sub = hostname.split('.')[0];
     if (sub && sub !== 'www' && sub !== 'localhost') {
