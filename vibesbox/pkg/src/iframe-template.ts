@@ -199,6 +199,9 @@ export const iframeHtml = `<!doctype html>
         }
       }
 
+      // Declare executeCode function before event listener
+      var executeCode; // Will be defined later
+
       // Event listeners
       window.addEventListener("message", function (event) {
         if (event.data) {
@@ -329,13 +332,13 @@ export const iframeHtml = `<!doctype html>
           let message = "JSX Syntax Error";
           if (errorMsg.includes("Unexpected token")) {
             const tokenMatch = errorMsg.match(
-              /Unexpected token[,:]?\s*([^,\n\)]+)/,
+              /Unexpected token[,:]?\s*([^,\n)]+)/,
             );
             if (tokenMatch) {
               message = \`JSX Syntax Error: Unexpected token \${tokenMatch[1].trim()}\`;
             }
           } else if (errorMsg.includes("expected")) {
-            const expectedMatch = errorMsg.match(/expected\s+([^,\n\)]+)/);
+            const expectedMatch = errorMsg.match(/expected\s+([^,\n)]+)/);
             if (expectedMatch) {
               message = \`JSX Syntax Error: Expected \${expectedMatch[1].trim()}\`;
             }
@@ -431,7 +434,7 @@ export const iframeHtml = `<!doctype html>
       );
 
       // Code execution function
-      function executeCode(data) {
+      executeCode = function(data) {
         try {
           // Reset error state
           window.babelTransformError = null;
@@ -578,7 +581,7 @@ export const iframeHtml = `<!doctype html>
             </div>
           \`;
         }
-      }
+      };
     </script>
   </body>
 </html>`;
