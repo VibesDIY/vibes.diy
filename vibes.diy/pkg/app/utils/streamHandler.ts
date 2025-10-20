@@ -29,7 +29,7 @@ export async function streamAI(
   onContent: (content: string) => void,
   apiKey: string, // API key (can be dummy key for proxy)
   userId?: string,
-  // setNeedsLogin?: (value: boolean, reason: string) => void,
+  setNeedsLogin?: (value: boolean) => void,
 ): Promise<string> {
   // Stream process starts
 
@@ -81,19 +81,30 @@ export async function streamAI(
         return finalResponse;
       } catch (streamError) {
         // Failed to even start streaming
-
-        // Format a user-friendly error message for toast
-        // const errorMsg = streamError instanceof Error ? streamError.message : String(streamError);
-        // const toastMsg = `Error during AI response: ${errorMsg}`;
-        // console.log('[TOAST MESSAGE]', toastMsg);
-
-        // Authentication errors no longer need special handling - proxy manages auth
         console.error("Streaming error:", streamError);
         const errorMsg =
           streamError instanceof Error
             ? streamError.message
             : String(streamError);
-        // Return error message for debugging
+
+        // Check if this is an authentication error
+        const isAuthError =
+          errorMsg.toLowerCase().includes("authentication") ||
+          errorMsg.toLowerCase().includes("401") ||
+          errorMsg.toLowerCase().includes("unauthorized") ||
+          errorMsg.toLowerCase().includes("authentication_error");
+
+        if (isAuthError) {
+          console.warn(
+            "Auth error detected during streaming, triggering login modal",
+          );
+          if (setNeedsLogin) {
+            setNeedsLogin(true);
+          }
+          throw new Error("Authentication required");
+        }
+
+        // Return error message for non-auth errors
         return `Error: ${errorMsg}. If using proxy, ensure it's running at ${VibesDiyEnv.CALLAI_ENDPOINT()}`;
       }
     } else {
@@ -101,32 +112,30 @@ export async function streamAI(
     }
   } catch (initialError) {
     // Failed to even start streaming
-
-    // Format a user-friendly error message for toast
-    // const errorMsg = initialError instanceof Error ? initialError.message : String(initialError);
-    // const toastMsg = `Error starting AI response: ${errorMsg}`;
-    // console.warn('[TOAST MESSAGE]', toastMsg);
-
-    // Check if this is an authentication error
-    // if (
-    //   errorMsg.includes('authentication') ||
-    //   errorMsg.includes('key') ||
-    //   errorMsg.includes('token') ||
-    //   errorMsg.includes('credits')
-    // ) {
-    //   console.warn('Setting needs login due to auth/credit error');
-    //   if (setNeedsLogin) {
-    //     setNeedsLogin(true, 'streamAI authentication error');
-    //   }
-    // }
-
-    // Log the error for debugging
     console.error("Initial callAI error:", initialError);
     const errorMsg =
       initialError instanceof Error
         ? initialError.message
         : String(initialError);
-    // Return error message for debugging
+
+    // Check if this is an authentication error
+    const isAuthError =
+      errorMsg.toLowerCase().includes("authentication") ||
+      errorMsg.toLowerCase().includes("401") ||
+      errorMsg.toLowerCase().includes("unauthorized") ||
+      errorMsg.toLowerCase().includes("authentication_error");
+
+    if (isAuthError) {
+      console.warn(
+        "Auth error detected in initial callAI, triggering login modal",
+      );
+      if (setNeedsLogin) {
+        setNeedsLogin(true);
+      }
+      throw new Error("Authentication required");
+    }
+
+    // Return error message for non-auth errors
     return `Error: ${errorMsg}. If using proxy, ensure it's running at ${VibesDiyEnv.CALLAI_ENDPOINT()}`;
   }
 }
