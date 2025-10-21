@@ -8,10 +8,6 @@ export const iframeHtml = `<!doctype html>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html2canvas-pro@1.5.8/dist/html2canvas-pro.js"></script>
     <!-- html2canvas-pro handles modern CSS color formats like OKLCH natively -->
-    <link
-      rel="stylesheet"
-      href="https://esm.sh/use-vibes@0.5.7/dist/components/ImgGen.css"
-    />
     <style>
       body {
         margin: 0;
@@ -204,6 +200,11 @@ export const iframeHtml = `<!doctype html>
 
       // Event listeners
       window.addEventListener("message", function (event) {
+        // Log ALL messages received
+        console.log('📨 [VIBESBOX] Message received from:', event.origin);
+        console.log('📨 [VIBESBOX] Message type:', event.data?.type);
+        console.log('📨 [VIBESBOX] Message has authToken:', event.data?.authToken ? 'YES' : 'NO');
+        
         if (event.data) {
           if (event.data.type === "command") {
             if (event.data.command === "capture-screenshot") {
@@ -430,6 +431,24 @@ export const iframeHtml = `<!doctype html>
         console.log('🚀 [VIBESBOX] Endpoint:', data.endpoint);
         console.log('🚀 [VIBESBOX] Auth Token:', data.authToken ? data.authToken.substring(0, 20) + '...' : 'NOT PROVIDED');
 
+        // Store auth token FIRST before any other processing
+        if (data.authToken) {
+          try {
+            localStorage.setItem('vibes-diy-auth-token', data.authToken);
+            console.log('🚀 [VIBESBOX] Auth token stored in localStorage EARLY');
+            console.log('🚀 [VIBESBOX] Token value:', data.authToken.substring(0, 20) + '...');
+            
+            // Verify it was stored correctly
+            const verifyToken = localStorage.getItem('vibes-diy-auth-token');
+            console.log('🚀 [VIBESBOX] Verified token in localStorage:', verifyToken ? verifyToken.substring(0, 20) + '...' : 'NOT FOUND');
+          } catch (e) {
+            console.warn('🚀 [VIBESBOX] Failed to store auth token in localStorage:', e);
+          }
+        } else {
+          console.log('🚀 [VIBESBOX] No auth token provided in message');
+          console.log('🚀 [VIBESBOX] Message data keys:', Object.keys(data));
+        }
+
         try {
           // Reset error state
           window.babelTransformError = null;
@@ -463,11 +482,17 @@ export const iframeHtml = `<!doctype html>
             try {
               localStorage.setItem('vibes-diy-auth-token', data.authToken);
               console.log('🚀 [VIBESBOX] Auth token stored in localStorage');
+              console.log('🚀 [VIBESBOX] Token value:', data.authToken.substring(0, 20) + '...');
+              
+              // Verify it was stored correctly
+              const verifyToken = localStorage.getItem('vibes-diy-auth-token');
+              console.log('🚀 [VIBESBOX] Verified token in localStorage:', verifyToken ? verifyToken.substring(0, 20) + '...' : 'NOT FOUND');
             } catch (e) {
-              console.warn('Failed to store auth token in localStorage:', e);
+              console.warn('🚀 [VIBESBOX] Failed to store auth token in localStorage:', e);
             }
           } else {
-            console.log('🚀 [VIBESBOX] No auth token provided');
+            console.log('🚀 [VIBESBOX] No auth token provided in message');
+            console.log('🚀 [VIBESBOX] Message data keys:', Object.keys(data));
           }
 
           // Clear the container
