@@ -88,9 +88,7 @@ describe("Vibes Version Parameter (v_vibes)", () => {
 
       // Should accept 1.2 as valid (hosting pattern allows this)
       expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes@1.2"');
-      expect(html).toContain(
-        '"use-fireproof": "https://esm.sh/use-vibes@1.2"',
-      );
+      expect(html).toContain('"use-fireproof": "https://esm.sh/use-vibes@1.2"');
     });
 
     it("should handle empty version parameter", async () => {

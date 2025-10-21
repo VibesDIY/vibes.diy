@@ -440,6 +440,16 @@ export const iframeHtml = `<!doctype html>
           window.CALLAI_CHAT_URL = data.endpoint || "";
           window.CALLAI_IMG_URL = data.endpoint || "";
 
+          // Store auth token in localStorage if provided
+          // This allows call-ai library to automatically use it for API requests
+          if (data.authToken) {
+            try {
+              localStorage.setItem('vibes-diy-auth-token', data.authToken);
+            } catch (e) {
+              console.warn('Failed to store auth token in localStorage:', e);
+            }
+          }
+
           // Clear the container
           const container = document.getElementById("container");
           container.innerHTML = "";

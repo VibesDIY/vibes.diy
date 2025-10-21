@@ -65,6 +65,14 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
       const normalizedCode = normalizeComponentExports(code);
       const transformedCode = transformImports(normalizedCode);
 
+      // Get auth token from localStorage for API authentication
+      let authToken: string | undefined;
+      try {
+        authToken = localStorage.getItem('vibes-diy-auth-token') || undefined;
+      } catch {
+        // Ignore localStorage errors (privacy mode, SSR, etc.)
+      }
+
       // Send code to iframe
       const messageData = {
         type: 'execute-code',
@@ -72,6 +80,7 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
         apiKey: 'sk-vibes-proxy-managed',
         sessionId: effectiveSessionId,
         endpoint: 'https://api.openrouter.ai/api/v1/chat/completions',
+        authToken, // Pass auth token to iframe
       };
 
       iframe.contentWindow.postMessage(messageData, '*');
