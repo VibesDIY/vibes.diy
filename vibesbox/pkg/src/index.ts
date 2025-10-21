@@ -71,7 +71,8 @@ export default {
     // Clone the library import map and update use-vibes version if specified
     const dynamicImportMap = { ...libraryImportMap.imports };
     if (vibesVersion) {
-      dynamicImportMap["use-vibes"] = `https://esm.sh/use-vibes@${vibesVersion}`;
+      dynamicImportMap["use-vibes"] =
+        `https://esm.sh/use-vibes@${vibesVersion}`;
       dynamicImportMap["use-fireproof"] =
         `https://esm.sh/use-vibes@${vibesVersion}`;
       dynamicImportMap["https://esm.sh/use-fireproof"] =
