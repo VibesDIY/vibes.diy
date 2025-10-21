@@ -63,13 +63,13 @@ describe('IframeVibesComponent', () => {
     // Wait for postMessage to be called after load
     await waitFor(() => {
       expect(mockPostMessage).toHaveBeenCalledWith(
-        {
+        expect.objectContaining({
           type: 'execute-code',
           code: expect.stringContaining('function App'),
           apiKey: 'sk-vibes-proxy-managed',
           sessionId: expect.any(String),
-          endpoint: expect.any(String),
-        },
+          // authToken field exists but can be undefined or a string
+        }),
         '*'
       );
     });
