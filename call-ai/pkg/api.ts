@@ -36,12 +36,19 @@ const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const;
  */
 function getVibesAuthToken(): string | undefined {
   if (typeof localStorage === "undefined") {
+    console.log("🔍 [call-ai] localStorage is undefined");
     return undefined;
   }
   try {
     // Check new use-vibes key first, fall back to legacy vibes.diy key
-    return localStorage.getItem(VIBES_AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY) || undefined;
-  } catch {
+    const newToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
+    const legacyToken = localStorage.getItem(LEGACY_AUTH_TOKEN_KEY);
+    console.log(`🔍 [call-ai] Checking localStorage keys:`);
+    console.log(`🔍 [call-ai]   '${VIBES_AUTH_TOKEN_KEY}':`, newToken ? newToken.substring(0, 20) + '...' : 'NOT FOUND');
+    console.log(`🔍 [call-ai]   '${LEGACY_AUTH_TOKEN_KEY}':`, legacyToken ? legacyToken.substring(0, 20) + '...' : 'NOT FOUND');
+    return newToken || legacyToken || undefined;
+  } catch (e) {
+    console.log("🔍 [call-ai] Error reading localStorage:", e);
     return undefined;
   }
 }
@@ -57,6 +64,19 @@ function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
 
   console.log("🔍 [call-ai] enhanceWithVibesAuth - Reading auth token from localStorage");
   console.log("🔍 [call-ai] Token found:", authToken ? `${authToken.substring(0, 20)}...` : "NOT FOUND");
+  
+  // List all localStorage keys to debug
+  if (typeof localStorage !== "undefined") {
+    try {
+      const keys = Object.keys(localStorage);
+      console.log("🔍 [call-ai] All localStorage keys:", keys);
+      if (keys.length === 0) {
+        console.log("🔍 [call-ai] localStorage is empty!");
+      }
+    } catch (e) {
+      console.log("🔍 [call-ai] Could not list localStorage keys:", e);
+    }
+  }
 
   if (!authToken) {
     console.log("🔍 [call-ai] No auth token found, returning options unchanged");

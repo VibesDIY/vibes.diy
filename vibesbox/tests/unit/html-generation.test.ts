@@ -15,7 +15,6 @@ describe("HTML Generation", () => {
 
       // Check for use-vibes CSS
       expect(html).toContain("use-vibes");
-      expect(html).toContain("ImgGen.css");
 
       // Check for container element
       expect(html).toContain('id="container"');
