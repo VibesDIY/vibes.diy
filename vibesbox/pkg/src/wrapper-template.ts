@@ -98,37 +98,22 @@ export const wrapperHtml = `<!doctype html>
 
       async function loadVibe() {
         try {
-          // Fetch import map and JSX code in parallel
-          const importMapUrl = new URL("/import-map.json", window.location.origin);
-          // Pass through v_vibes parameter if present
-          const vVibesParam = new URLSearchParams(window.location.search).get("v_vibes");
-          if (vVibesParam) {
-            importMapUrl.searchParams.set("v_vibes", vVibesParam);
+          // Fetch the JSX code
+          const response = await fetch("https://{{slug}}.vibesdiy.app/App.jsx");
+
+          if (!response.ok) {
+            throw new Error(\`HTTP \${response.status}\`);
           }
 
-          const [importMapResponse, codeResponse] = await Promise.all([
-            fetch(importMapUrl.toString()),
-            fetch("https://{{slug}}.vibesdiy.app/App.jsx"),
-          ]);
-
-          if (!codeResponse.ok) {
-            throw new Error(\`HTTP \${codeResponse.status}\`);
-          }
-          if (!importMapResponse.ok) {
-            throw new Error(\`Failed to load import map: HTTP \${importMapResponse.status}\`);
-          }
-
-          const code = await codeResponse.text();
-          const importMapData = await importMapResponse.json();
+          const code = await response.text();
 
           // Give iframe a moment to load, then send postMessage
           setTimeout(() => {
-            // Send code and import map to iframe via postMessage
+            // Send code to iframe via postMessage
             iframe.contentWindow.postMessage(
               {
                 type: "execute-code",
                 code: code,
-                importMap: importMapData.imports,
                 apiKey: "sk-vibes-proxy-managed",
                 sessionId: "vibe-session-{{slug}}",
               },

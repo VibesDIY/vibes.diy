@@ -288,19 +288,7 @@ export const iframeHtml = `<!doctype html>
       </div>
     </div>
     <script type="importmap">
-      {
-        "imports": {
-          "react": "https://esm.sh/react@~19.1.1",
-          "react-dom": "https://esm.sh/react-dom@~19.1.1",
-          "react-dom/client": "https://esm.sh/react-dom@~19.1.1/client",
-          "use-fireproof": "https://esm.sh/use-fireproof@{{FIREPROOF_VERSION}}",
-          "call-ai": "https://esm.sh/call-ai",
-          "use-vibes": "https://esm.sh/use-vibes",
-          "https://esm.sh/use-fireproof": "https://esm.sh/use-fireproof@{{FIREPROOF_VERSION}}",
-          "eruda": "https://esm.sh/eruda",
-          "three": "https://esm.sh/three"
-        }
-      }
+      {{IMPORT_MAP}}
     </script>
 
     <!-- Enhanced Babel and JSX error handling script -->
@@ -456,14 +444,11 @@ export const iframeHtml = `<!doctype html>
           const container = document.getElementById("container");
           container.innerHTML = "";
 
-          // Get import map from postMessage data or fallback to DOM importmap
-          const libraryImportMap = data.importMap || (() => {
-            const importMapScript = document.querySelector('script[type="importmap"]');
-            if (importMapScript) {
-              return JSON.parse(importMapScript.textContent).imports;
-            }
-            return {};
-          })();
+          // Get import map from DOM importmap
+          const importMapScript = document.querySelector('script[type="importmap"]');
+          const libraryImportMap = importMapScript
+            ? JSON.parse(importMapScript.textContent).imports
+            : {};
 
           // Transform imports to handle packages not in import map
           // SYNC: @vibes.diy/hosting-base/utils/codeTransform.ts
