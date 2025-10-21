@@ -79,7 +79,6 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
         code: transformedCode,
         apiKey: 'sk-vibes-proxy-managed',
         sessionId: effectiveSessionId,
-        endpoint: 'https://api.openrouter.ai/api/v1/chat/completions',
         authToken, // Pass auth token to iframe
       };
 
