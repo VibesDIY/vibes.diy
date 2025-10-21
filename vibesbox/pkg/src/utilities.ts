@@ -6,6 +6,8 @@ export const DEFAULT_VIBE_SLUG = "quick-cello-8104";
 export const DEFAULT_FIREPROOF_VERSION = "0.23.14";
 export const FIREPROOF_VERSION_PARAM = "v_fp";
 export const FIREPROOF_VERSION_PLACEHOLDER = "{{FIREPROOF_VERSION}}";
+export const VIBES_VERSION_PARAM = "v_vibes";
+export const IMPORT_MAP_PLACEHOLDER = "{{IMPORT_MAP}}";
 
 /**
  * Validate semver format

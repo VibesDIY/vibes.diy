@@ -12,6 +12,8 @@ import {
   DEFAULT_FIREPROOF_VERSION,
   FIREPROOF_VERSION_PARAM,
   FIREPROOF_VERSION_PLACEHOLDER,
+  VIBES_VERSION_PARAM,
+  IMPORT_MAP_PLACEHOLDER,
   isValidSemver,
   getFireproofVersion,
   replacePlaceholders,
@@ -29,19 +31,6 @@ export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const isHead = request.method === "HEAD";
-
-    // Handle /import-map.json endpoint
-    if (url.pathname === "/import-map.json") {
-      const response = await handleImportMapRequest(url);
-      if (isHead) {
-        return new Response("", {
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers,
-        });
-      }
-      return response;
-    }
 
     // Handle /lab/{slug} pattern
     if (url.pathname.startsWith("/lab/") || url.pathname === "/lab") {
@@ -75,10 +64,43 @@ export default {
       return response;
     }
 
-    // Default: Return the static iframe HTML content with dynamic fireproof version
+    // Default: Return the static iframe HTML content with dynamic versions
     const fireproofVersion = getFireproofVersion(url);
+
+    // Generate dynamic import map with optional v_vibes override
+    const versionParam = (
+      url.searchParams.get(VIBES_VERSION_PARAM) || ""
+    ).trim();
+    const vibesVersion = isValidSemver(versionParam) ? versionParam : "";
+
+    const dynamicImportMap = { ...libraryImportMap.imports };
+
+    // If vibesVersion is set, it overrides everything (use-vibes, use-fireproof, call-ai)
+    if (vibesVersion) {
+      dynamicImportMap["use-vibes"] =
+        `https://esm.sh/use-vibes@${vibesVersion}`;
+      dynamicImportMap["use-fireproof"] =
+        `https://esm.sh/use-vibes@${vibesVersion}`;
+      dynamicImportMap["call-ai"] = `https://esm.sh/call-ai@${vibesVersion}`;
+    } else {
+      // Otherwise, ensure use-fireproof has a specific version (not a range)
+      // This uses the fireproofVersion which comes from v_fp param or DEFAULT_FIREPROOF_VERSION
+      // Note: use-fireproof is aliased to use-vibes in our architecture
+      dynamicImportMap["use-fireproof"] =
+        `https://esm.sh/use-vibes@${fireproofVersion}`;
+      dynamicImportMap["https://esm.sh/use-fireproof"] =
+        `https://esm.sh/use-vibes@${fireproofVersion}`;
+    }
+
+    const importMapJson = JSON.stringify(
+      { imports: dynamicImportMap },
+      null,
+      2,
+    );
+
     const html = replacePlaceholders(iframeHtml, {
       [FIREPROOF_VERSION_PLACEHOLDER]: fireproofVersion,
+      [IMPORT_MAP_PLACEHOLDER]: importMapJson,
     });
 
     return new Response(isHead ? "" : html, {
@@ -147,38 +169,6 @@ export async function handleLabPage(
     headers: {
       "Content-Type": "text/html",
       "Cache-Control": "public, max-age=300", // Shorter cache for dynamic content
-    },
-  });
-}
-
-/**
- * Handle /import-map.json requests with optional v_vibes version override
- */
-export async function handleImportMapRequest(url: URL): Promise<Response> {
-  // Parse v_vibes parameter for version override
-  const versionParam = (url.searchParams.get("v_vibes") || "").trim();
-  const semverPattern =
-    /^[0-9]+(?:\.[0-9]+(?:\.[0-9]+)?)?(?:-[A-Za-z0-9.-]+)?(?:\+[A-Za-z0-9.-]+)?$/;
-  const vibesVersion = semverPattern.test(versionParam) ? versionParam : "";
-
-  // Create dynamic import map with optional version override
-  const dynamicImportMap = { ...libraryImportMap.imports };
-  if (vibesVersion) {
-    dynamicImportMap["use-vibes"] = `https://esm.sh/use-vibes@${vibesVersion}`;
-    dynamicImportMap["use-fireproof"] =
-      `https://esm.sh/use-vibes@${vibesVersion}`;
-    dynamicImportMap["call-ai"] = `https://esm.sh/call-ai@${vibesVersion}`;
-  }
-
-  const importMapJson = JSON.stringify({ imports: dynamicImportMap }, null, 2);
-
-  return new Response(importMapJson, {
-    status: 200,
-    statusText: "OK",
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "public, max-age=3600",
     },
   });
 }
