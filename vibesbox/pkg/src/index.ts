@@ -16,6 +16,7 @@ import {
   getFireproofVersion,
   replacePlaceholders,
 } from "./utilities";
+import { libraryImportMap } from "@vibes.diy/hosting-base/config/library-import-map";
 
 export interface Env {
   // Add any environment variables here
@@ -28,6 +29,19 @@ export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const isHead = request.method === "HEAD";
+
+    // Handle /import-map.json endpoint
+    if (url.pathname === "/import-map.json") {
+      const response = await handleImportMapRequest(url);
+      if (isHead) {
+        return new Response("", {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        });
+      }
+      return response;
+    }
 
     // Handle /lab/{slug} pattern
     if (url.pathname.startsWith("/lab/") || url.pathname === "/lab") {
@@ -133,6 +147,38 @@ export async function handleLabPage(
     headers: {
       "Content-Type": "text/html",
       "Cache-Control": "public, max-age=300", // Shorter cache for dynamic content
+    },
+  });
+}
+
+/**
+ * Handle /import-map.json requests with optional v_vibes version override
+ */
+export async function handleImportMapRequest(url: URL): Promise<Response> {
+  // Parse v_vibes parameter for version override
+  const versionParam = (url.searchParams.get("v_vibes") || "").trim();
+  const semverPattern =
+    /^[0-9]+(?:\.[0-9]+(?:\.[0-9]+)?)?(?:-[A-Za-z0-9.-]+)?(?:\+[A-Za-z0-9.-]+)?$/;
+  const vibesVersion = semverPattern.test(versionParam) ? versionParam : "";
+
+  // Create dynamic import map with optional version override
+  const dynamicImportMap = { ...libraryImportMap.imports };
+  if (vibesVersion) {
+    dynamicImportMap["use-vibes"] = `https://esm.sh/use-vibes@${vibesVersion}`;
+    dynamicImportMap["use-fireproof"] =
+      `https://esm.sh/use-vibes@${vibesVersion}`;
+    dynamicImportMap["call-ai"] = `https://esm.sh/call-ai@${vibesVersion}`;
+  }
+
+  const importMapJson = JSON.stringify({ imports: dynamicImportMap }, null, 2);
+
+  return new Response(importMapJson, {
+    status: 200,
+    statusText: "OK",
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "public, max-age=3600",
     },
   });
 }

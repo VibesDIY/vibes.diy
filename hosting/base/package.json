@@ -7,6 +7,10 @@
     ".": {
       "types": "./index.ts",
       "import": "./index.ts"
+    },
+    "./config/library-import-map": {
+      "types": "./config/library-import-map.ts",
+      "import": "./config/library-import-map.ts"
     }
   },
   "scripts": {

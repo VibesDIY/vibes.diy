@@ -456,55 +456,40 @@ export const iframeHtml = `<!doctype html>
           const container = document.getElementById("container");
           container.innerHTML = "";
 
-          // Extract import map from HTML importmap element
-          function getImportMap() {
-            const importMapScript = document.querySelector(
-              'script[type="importmap"]',
-            );
+          // Get import map from postMessage data or fallback to DOM importmap
+          const libraryImportMap = data.importMap || (() => {
+            const importMapScript = document.querySelector('script[type="importmap"]');
             if (importMapScript) {
               return JSON.parse(importMapScript.textContent).imports;
             }
             return {};
-          }
-          const libraryImportMap = getImportMap();
+          })();
 
           // Transform imports to handle packages not in import map
-          function transformImports(code) {
-            const importKeys = Object.keys(libraryImportMap);
-            return code.replace(
-              /import\\s+(?:(?:\\{[^}]*\\}|\\*\\s+as\\s+\\w+|\\w+(?:\\s*,\\s*\\{[^}]*\\})?)\\s+from\\s+)?['"]([^'"]+)['"];?/g,
-              (match, importPath) => {
-                // Don't transform if it's in our library map
-                if (importKeys.includes(importPath)) {
-                  return match;
-                }
-                // Don't transform if it's already a URL
-                if (
-                  importPath.includes("://") ||
-                  importPath.startsWith("http")
-                ) {
-                  return match;
-                }
-                // Don't transform relative imports
-                if (
-                  importPath.startsWith("./") ||
-                  importPath.startsWith("../")
-                ) {
-                  return match;
-                }
-                // Replace with ESM.sh URL
-                return match.replace(
-                  new RegExp(
-                    \`['"]\${importPath.replace(/[.*+?^$\\{\\}()|[\\]\\\\]/g, "\\\\$&")}['"]\`,
-                  ),
-                  \`"https://esm.sh/\${importPath}"\`,
-                );
-              },
-            );
-          }
-
-          // Transform imports first
-          const codeWithTransformedImports = transformImports(data.code);
+          // SYNC: @vibes.diy/hosting-base/utils/codeTransform.ts
+          const importKeys = Object.keys(libraryImportMap);
+          const codeWithTransformedImports = data.code.replace(
+            /import\\s+(?:(?:\\{[^}]*\\}|\\*\\s+as\\s+\\w+|\\w+(?:\\s*,\\s*\\{[^}]*\\})?)\\s+from\\s+)?['"]([^'"]+)['"];?/g,
+            (match, importPath) => {
+              // Don't transform if it's in our library map
+              if (importKeys.includes(importPath)) {
+                return match;
+              }
+              // Don't transform if it's already a URL
+              if (importPath.includes("://") || importPath.startsWith("http")) {
+                return match;
+              }
+              // Don't transform relative imports
+              if (importPath.startsWith("./") || importPath.startsWith("../")) {
+                return match;
+              }
+              // Replace with ESM.sh URL
+              return match.replace(
+                new RegExp(\`['"]\${importPath.replace(/[.*+?^$\\{\\}()|[\\]\\\\]/g, "\\\\$&")}['"]\`),
+                \`"https://esm.sh/\${importPath}"\`,
+              );
+            },
+          );
 
           // Transform JSX but keep imports as ES6
           let transformedCode;
