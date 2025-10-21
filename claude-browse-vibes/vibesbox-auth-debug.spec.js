@@ -21,7 +21,9 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
       console.log(`🔑 CREDENTIALS:`);
       console.log(`   Authorization: ${headers["authorization"] || "NOT SET"}`);
       console.log(`   X-VIBES-Token: ${headers["x-vibes-token"] || "NOT SET"}`);
-      console.log(`   API Key (if in header): ${headers["api-key"] || headers["x-api-key"] || "NOT SET"}`);
+      console.log(
+        `   API Key (if in header): ${headers["api-key"] || headers["x-api-key"] || "NOT SET"}`,
+      );
       console.log(`   All Headers:`, JSON.stringify(headers, null, 2));
 
       apiRequests.push({
@@ -59,12 +61,13 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
   page.on("console", (msg) => {
     const text = msg.text();
     // Log all console messages for debugging
-    const prefix = {
-      error: "❌ ERROR",
-      warning: "⚠️  WARN",
-      log: "📝 LOG",
-      info: "ℹ️  INFO",
-    }[msg.type()] || `[${msg.type()}]`;
+    const prefix =
+      {
+        error: "❌ ERROR",
+        warning: "⚠️  WARN",
+        log: "📝 LOG",
+        info: "ℹ️  INFO",
+      }[msg.type()] || `[${msg.type()}]`;
 
     console.log(`${prefix}: ${text}`);
   });
@@ -118,13 +121,15 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
       'button[type="submit"]',
       'button:has-text("Submit")',
       'button:has-text("Send")',
-      'button',
+      "button",
     ];
 
     for (const selector of selectors) {
       const count = await frame.locator(selector).count();
       if (count > 0) {
-        console.log(`✅ Found ${count} button(s) matching "${selector}" in iframe`);
+        console.log(
+          `✅ Found ${count} button(s) matching "${selector}" in iframe`,
+        );
         submitButton = frame.locator(selector).first();
         break;
       }
@@ -187,7 +192,9 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
 
   // For now, just report what we found
   if (usesOpenRouter) {
-    console.log("⚠️  WARNING: Request went to OpenRouter instead of vibes-diy-api");
+    console.log(
+      "⚠️  WARNING: Request went to OpenRouter instead of vibes-diy-api",
+    );
   }
   if (!usesVibesApi && !usesOpenRouter) {
     console.log("⚠️  WARNING: No recognized API endpoint found");
