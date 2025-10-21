@@ -11,7 +11,7 @@ export default defineConfig({
       "prompts/tests/vitest.node.config.ts",
       "prompts/tests/vitest.browser.config.ts",
       "hosting/tests/unit/vitest.config.ts",
-      "vibesbox/tests/vitest.config.ts",
+      "vibesbox/tests/unit/vitest.config.ts",
     ],
   },
 });
