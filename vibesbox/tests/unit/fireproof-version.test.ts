@@ -1,52 +1,29 @@
 import { describe, expect, it } from "vitest";
 import worker from "./__mocks__/worker";
 
-describe("Fireproof Version Parameter", () => {
+describe("Vibes Version Parameter (v_vibes)", () => {
   // Helper to create request with version parameter
   const createRequestWithVersion = (version?: string) => {
     const url = new URL("https://vibesbox.dev/");
     if (version) {
-      url.searchParams.set("v_fp", version);
+      url.searchParams.set("v_vibes", version);
     }
     return new Request(url.toString());
   };
 
-  // Helper to extract Fireproof version from HTML
-  const extractFireproofVersion = (html: string): string | null => {
-    // Look for the use-fireproof import in the import map
-    const importMapMatch = html.match(
-      /<script type="importmap">([\s\S]*?)<\/script>/,
-    );
-    if (!importMapMatch) return null;
-
-    try {
-      const importMap = JSON.parse(importMapMatch[1]);
-      const fireproofUrl = importMap?.imports?.["use-fireproof"];
-      if (!fireproofUrl) return null;
-
-      // Extract version from URL like https://esm.sh/use-fireproof@0.23.14
-      const versionMatch = fireproofUrl.match(
-        /@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)/,
-      );
-      return versionMatch ? versionMatch[1] : null;
-    } catch {
-      return null;
-    }
-  };
-
   describe("Default version", () => {
-    it("should use default version when no parameter provided", async () => {
+    it("should use default library import map when no parameter provided", async () => {
       const request = createRequestWithVersion();
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      // Should contain Fireproof import
-      expect(html).toContain("use-fireproof");
-
-      // Extract and verify version
-      const version = extractFireproofVersion(html);
-      expect(version).toBeTruthy();
-      expect(version).toMatch(/^[0-9]+\.[0-9]+\.[0-9]+/); // Valid semver
+      // Should use default version range from library import map
+      expect(html).toContain(
+        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+      );
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+      );
     });
   });
 
@@ -56,8 +33,10 @@ describe("Fireproof Version Parameter", () => {
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      const version = extractFireproofVersion(html);
-      expect(version).toBe("0.22.0");
+      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes@0.22.0"');
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@0.22.0"',
+      );
     });
 
     it("should handle prerelease versions", async () => {
@@ -65,8 +44,12 @@ describe("Fireproof Version Parameter", () => {
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      const version = extractFireproofVersion(html);
-      expect(version).toBe("0.24.0-beta");
+      expect(html).toContain(
+        '"use-vibes": "https://esm.sh/use-vibes@0.24.0-beta"',
+      );
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@0.24.0-beta"',
+      );
     });
 
     it("should handle versions with build metadata", async () => {
@@ -74,8 +57,12 @@ describe("Fireproof Version Parameter", () => {
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      const version = extractFireproofVersion(html);
-      expect(version).toBe("1.0.0+build123");
+      expect(html).toContain(
+        '"use-vibes": "https://esm.sh/use-vibes@1.0.0+build123"',
+      );
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@1.0.0+build123"',
+      );
     });
   });
 
@@ -85,20 +72,25 @@ describe("Fireproof Version Parameter", () => {
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      const version = extractFireproofVersion(html);
-      expect(version).toBeTruthy();
-      expect(version).not.toBe("invalid");
-      expect(version).toMatch(/^[0-9]+\.[0-9]+\.[0-9]+/); // Valid semver
+      // Falls back to default library import map
+      expect(html).toContain(
+        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+      );
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+      );
     });
 
-    it("should fall back to default for malformed version", async () => {
+    it("should accept major.minor versions", async () => {
       const request = createRequestWithVersion("1.2");
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      const version = extractFireproofVersion(html);
-      expect(version).toBeTruthy();
-      expect(version).not.toBe("1.2");
+      // Should accept 1.2 as valid (hosting pattern allows this)
+      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes@1.2"');
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@1.2"',
+      );
     });
 
     it("should handle empty version parameter", async () => {
@@ -106,23 +98,27 @@ describe("Fireproof Version Parameter", () => {
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      const version = extractFireproofVersion(html);
-      expect(version).toBeTruthy();
-      expect(version).toMatch(/^[0-9]+\.[0-9]+\.[0-9]+/);
+      // Falls back to default library import map
+      expect(html).toContain(
+        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+      );
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+      );
     });
   });
 
   describe("Version forwarding in wrapper", () => {
     it("should forward version parameter to iframe src", async () => {
       const url = new URL("https://vibesbox.dev/vibe/test-slug");
-      url.searchParams.set("v_fp", "0.21.0");
+      url.searchParams.set("v_vibes", "0.21.0");
       const request = new Request(url.toString());
 
       const response = await worker.fetch(request);
       const html = await response.text();
 
       // Check that iframe src includes the version parameter
-      expect(html).toContain("v_fp=0.21.0");
+      expect(html).toContain("v_vibes=0.21.0");
     });
 
     it("should not include version param in iframe src when using default", async () => {
@@ -139,6 +135,8 @@ describe("Fireproof Version Parameter", () => {
 
   describe("Semver validation", () => {
     const validVersions = [
+      "1", // Major only (hosting pattern allows this)
+      "1.2", // Major.minor (hosting pattern allows this)
       "0.0.0",
       "1.2.3",
       "10.20.30",
@@ -156,20 +154,19 @@ describe("Fireproof Version Parameter", () => {
         const response = await worker.fetch(request);
         const html = await response.text();
 
-        const extractedVersion = extractFireproofVersion(html);
-        expect(extractedVersion).toBe(version);
+        expect(html).toContain(
+          `"use-vibes": "https://esm.sh/use-vibes@${version}"`,
+        );
+        expect(html).toContain(
+          `"use-fireproof": "https://esm.sh/use-vibes@${version}"`,
+        );
       });
     });
 
     const invalidVersions = [
-      "1",
-      "1.2",
-      "1.2.3.4",
-      "01.2.3",
-      "1.02.3",
-      "1.2.03",
-      "1.2-alpha",
-      "v1.2.3",
+      "1.2.3.4", // Too many parts
+      "v1.2.3", // Version prefix not allowed
+      "invalid", // Not a version at all
     ];
 
     invalidVersions.forEach((version) => {
@@ -178,9 +175,13 @@ describe("Fireproof Version Parameter", () => {
         const response = await worker.fetch(request);
         const html = await response.text();
 
-        const extractedVersion = extractFireproofVersion(html);
-        expect(extractedVersion).not.toBe(version);
-        expect(extractedVersion).toMatch(/^[0-9]+\.[0-9]+\.[0-9]+/); // Falls back to valid default
+        // Falls back to default library import map
+        expect(html).toContain(
+          '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+        );
+        expect(html).toContain(
+          '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+        );
       });
     });
   });
