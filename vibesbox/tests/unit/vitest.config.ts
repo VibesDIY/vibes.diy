@@ -3,9 +3,14 @@ import { resolve } from "path";
 
 export default defineConfig({
   test: {
-    // Include all test files (TypeScript)
-    include: ["**/*.test.ts"],
-    exclude: ["node_modules/**", "dist/**"],
+    // Include all test files (TypeScript) - exclude node_modules explicitly
+    include: ["*.test.ts", "**/*.test.ts"],
+    exclude: [
+      "node_modules/**",
+      "**/node_modules/**",
+      "dist/**",
+      "**/dist/**",
+    ],
 
     // Configure test environment
     environment: "node",
