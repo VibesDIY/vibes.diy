@@ -444,11 +444,18 @@ export const iframeHtml = `<!doctype html>
           // Set up environment variables from message
           window.CALLAI_API_KEY = data.apiKey || "sk-vibes-proxy-managed";
           window.SESSION_ID = data.sessionId || "default-session";
-          window.CALLAI_CHAT_URL = data.endpoint || "";
-          window.CALLAI_IMG_URL = data.endpoint || "";
+
+          // Only set CALLAI_CHAT_URL if endpoint is provided (not undefined/empty)
+          // Otherwise let call-ai use its default (vibes-diy-api.com)
+          if (data.endpoint) {
+            window.CALLAI_CHAT_URL = data.endpoint;
+            window.CALLAI_IMG_URL = data.endpoint;
+            console.log('🚀 [VIBESBOX] Set window.CALLAI_CHAT_URL:', window.CALLAI_CHAT_URL);
+          } else {
+            console.log('🚀 [VIBESBOX] No endpoint provided - call-ai will use default (vibes-diy-api.com)');
+          }
 
           console.log('🚀 [VIBESBOX] Set window.CALLAI_API_KEY:', window.CALLAI_API_KEY);
-          console.log('🚀 [VIBESBOX] Set window.CALLAI_CHAT_URL:', window.CALLAI_CHAT_URL);
 
           // Store auth token in localStorage if provided
           // This allows call-ai library to automatically use it for API requests

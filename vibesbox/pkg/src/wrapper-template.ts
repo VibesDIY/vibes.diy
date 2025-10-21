@@ -109,6 +109,16 @@ export const wrapperHtml = `<!doctype html>
 
           // Give iframe a moment to load, then send postMessage
           setTimeout(() => {
+            // Read auth token from localStorage
+            let authToken;
+            try {
+              authToken = localStorage.getItem('vibes-diy-auth-token') || undefined;
+            } catch (e) {
+              console.warn('Could not read auth token from localStorage:', e);
+            }
+
+            console.log('🔐 [WRAPPER] Sending auth token to iframe:', authToken ? authToken.substring(0, 20) + '...' : 'NOT FOUND');
+
             // Send code to iframe via postMessage
             iframe.contentWindow.postMessage(
               {
@@ -116,6 +126,7 @@ export const wrapperHtml = `<!doctype html>
                 code: code,
                 apiKey: "sk-vibes-proxy-managed",
                 sessionId: "vibe-session-{{slug}}",
+                authToken: authToken,
               },
               "*",
             );
