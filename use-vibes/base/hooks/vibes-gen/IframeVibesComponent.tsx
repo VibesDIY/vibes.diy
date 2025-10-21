@@ -53,8 +53,12 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
 
     window.addEventListener('message', handleMessage);
 
-    // Set iframe source
-    const iframeUrl = baseUrl || `https://${effectiveSessionId}.vibesbox.dev/`;
+    // Set iframe source with v_vibes parameter
+    const baseIframeUrl = baseUrl || `https://${effectiveSessionId}.vibesbox.dev/`;
+    // Add v_vibes parameter to use specific version
+    const iframeUrl = baseIframeUrl.includes('?') 
+      ? `${baseIframeUrl}&v_vibes=0.14.6`
+      : `${baseIframeUrl}?v_vibes=0.14.6`;
     iframe.src = iframeUrl;
 
     // Handle iframe load
