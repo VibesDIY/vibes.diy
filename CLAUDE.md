@@ -41,25 +41,42 @@ Run vibes.diy tests (quiet): `cd vibes.diy/tests && pnpm test --reporter=dot`
 
 **CRITICAL**: Always commit and push changes BEFORE creating release tags.
 
+**CRITICAL**: Claude should ONLY create `use-vibes@*` tags. Do NOT create `call-ai@*` tags - those are managed separately.
+
 ### Proper Release Order
 
 1. **Run Quality Checks**: `pnpm check` (or at minimum `pnpm lint`)
 2. **Commit Changes**: `git add . && git commit -m "message"`
 3. **Push Changes**: `git push`
-4. **Create Git Tag**: `git tag use-vibes@v0.12.1 -m "Release message"`
-5. **Push Tag**: `git push origin use-vibes@v0.12.1`
+4. **Create Git Tag**: `git tag use-vibes@v0.14.6 -m "Release message"` (ONLY use-vibes tags!)
+5. **Push Tag**: `git push origin use-vibes@v0.14.6`
 6. **Confirm GitHub Actions**: The CI will automatically extract the version from the tag and publish to npm
 
-**CRITICAL MISTAKE TO AVOID**: Never create git tags before committing changes! The tag will point to the old commit without your changes.
+**CRITICAL MISTAKES TO AVOID**:
+- Never create git tags before committing changes! The tag will point to the old commit without your changes.
+- Never create `call-ai@*` tags - only create `use-vibes@*` tags
 
 **IMPORTANT**: Never manually update version numbers in package.json files. The CI/CD system handles all versioning automatically based on git tags.
 
-### Call-AI Release Process
+### Use-Vibes Release Process
 
-To release a new call-ai version:
+To release use-vibes (this is the ONLY package Claude should release):
 
-1. **Create Git Tag**: `git tag call-ai@v0.12.1 -m "Release message"` (use semantic version)
-2. **Push Tag**: `git push origin call-ai@v0.12.1`
+1. **Create Git Tag**: `git tag use-vibes@v0.14.6 -m "Release message"` (use semantic version)
+2. **Push Tag**: `git push origin use-vibes@v0.14.6`
+3. **Confirm GitHub Actions**: The CI will automatically extract the version from the tag and publish to npm
+
+**Note**: use-vibes releases automatically publish all three packages:
+- `call-ai` (browser-loaded AI API client)
+- `@vibes.diy/use-vibes-base` (core components and hooks)
+- `use-vibes` (main package)
+
+### Call-AI Release Process (MANUAL ONLY - Not for Claude)
+
+Call-AI releases are managed manually by humans, not by Claude:
+
+1. **Create Git Tag**: `git tag call-ai@v0.14.5 -m "Release message"` (use semantic version)
+2. **Push Tag**: `git push origin call-ai@v0.14.5`
 3. **Confirm GitHub Actions**: The CI will automatically extract the version from the tag and publish to npm
 
 ### Dev Release Process
