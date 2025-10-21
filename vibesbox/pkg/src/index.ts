@@ -9,13 +9,8 @@ import wrapperHtml from "./wrapper-template";
 import labHtml from "./lab-template";
 import {
   DEFAULT_VIBE_SLUG,
-  DEFAULT_FIREPROOF_VERSION,
-  FIREPROOF_VERSION_PARAM,
-  FIREPROOF_VERSION_PLACEHOLDER,
   VIBES_VERSION_PARAM,
   IMPORT_MAP_PLACEHOLDER,
-  isValidSemver,
-  getFireproofVersion,
   replacePlaceholders,
 } from "./utilities";
 import { libraryImportMap } from "@vibes.diy/hosting-base/config/library-import-map";
@@ -65,31 +60,23 @@ export default {
     }
 
     // Default: Return the static iframe HTML content with dynamic versions
-    const fireproofVersion = getFireproofVersion(url);
-
-    // Generate dynamic import map with optional v_vibes override
+    // Extract version parameter from URL for use-vibes override (same as hosting)
     const versionParam = (
       url.searchParams.get(VIBES_VERSION_PARAM) || ""
     ).trim();
-    const vibesVersion = isValidSemver(versionParam) ? versionParam : "";
+    const semverPattern =
+      /^[0-9]+(?:\.[0-9]+(?:\.[0-9]+)?)?(?:-[A-Za-z0-9.-]+)?(?:\+[A-Za-z0-9.-]+)?$/;
+    const vibesVersion = semverPattern.test(versionParam) ? versionParam : "";
 
+    // Clone the library import map and update use-vibes version if specified
     const dynamicImportMap = { ...libraryImportMap.imports };
-
-    // If vibesVersion is set, it overrides everything (use-vibes, use-fireproof, call-ai)
     if (vibesVersion) {
-      dynamicImportMap["use-vibes"] =
-        `https://esm.sh/use-vibes@${vibesVersion}`;
+      dynamicImportMap["use-vibes"] = `https://esm.sh/use-vibes@${vibesVersion}`;
       dynamicImportMap["use-fireproof"] =
+        `https://esm.sh/use-vibes@${vibesVersion}`;
+      dynamicImportMap["https://esm.sh/use-fireproof"] =
         `https://esm.sh/use-vibes@${vibesVersion}`;
       dynamicImportMap["call-ai"] = `https://esm.sh/call-ai@${vibesVersion}`;
-    } else {
-      // Otherwise, ensure use-fireproof has a specific version (not a range)
-      // This uses the fireproofVersion which comes from v_fp param or DEFAULT_FIREPROOF_VERSION
-      // Note: use-fireproof is aliased to use-vibes in our architecture
-      dynamicImportMap["use-fireproof"] =
-        `https://esm.sh/use-vibes@${fireproofVersion}`;
-      dynamicImportMap["https://esm.sh/use-fireproof"] =
-        `https://esm.sh/use-vibes@${fireproofVersion}`;
     }
 
     const importMapJson = JSON.stringify(
@@ -99,7 +86,6 @@ export default {
     );
 
     const html = replacePlaceholders(iframeHtml, {
-      [FIREPROOF_VERSION_PLACEHOLDER]: fireproofVersion,
       [IMPORT_MAP_PLACEHOLDER]: importMapJson,
     });
 
@@ -125,12 +111,11 @@ export async function handleVibeWrapper(
   origin: string,
   url: URL,
 ): Promise<Response> {
-  // Get fireproof version and pass to iframe via URL parameter
-  const fireproofVersion = getFireproofVersion(url);
-  const iframeSrc =
-    fireproofVersion !== DEFAULT_FIREPROOF_VERSION
-      ? `/?${FIREPROOF_VERSION_PARAM}=${encodeURIComponent(fireproofVersion)}`
-      : "/";
+  // Forward v_vibes parameter to iframe if present
+  const versionParam = url.searchParams.get(VIBES_VERSION_PARAM);
+  const iframeSrc = versionParam
+    ? `/?${VIBES_VERSION_PARAM}=${encodeURIComponent(versionParam)}`
+    : "/";
 
   // Replace template placeholders
   const html = replacePlaceholders(wrapperHtml, {
