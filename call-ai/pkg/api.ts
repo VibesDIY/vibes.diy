@@ -55,11 +55,11 @@ function getVibesAuthToken(): string | undefined {
 function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
   const authToken = getVibesAuthToken();
 
-  console.log('🔍 [call-ai] enhanceWithVibesAuth - Reading auth token from localStorage');
-  console.log('🔍 [call-ai] Token found:', authToken ? `${authToken.substring(0, 20)}...` : 'NOT FOUND');
+  console.log("🔍 [call-ai] enhanceWithVibesAuth - Reading auth token from localStorage");
+  console.log("🔍 [call-ai] Token found:", authToken ? `${authToken.substring(0, 20)}...` : "NOT FOUND");
 
   if (!authToken) {
-    console.log('🔍 [call-ai] No auth token found, returning options unchanged');
+    console.log("🔍 [call-ai] No auth token found, returning options unchanged");
     return options;
   }
 
@@ -68,11 +68,11 @@ function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
 
   // Respect any caller-provided token, regardless of header casing
   if (headers.has(VIBES_AUTH_HEADER)) {
-    console.log('🔍 [call-ai] X-VIBES-Token already set by caller, skipping');
+    console.log("🔍 [call-ai] X-VIBES-Token already set by caller, skipping");
     return options;
   }
 
-  console.log('🔍 [call-ai] Setting X-VIBES-Token header');
+  console.log("🔍 [call-ai] Setting X-VIBES-Token header");
   headers.set(VIBES_AUTH_HEADER, authToken);
   return { ...options, headers };
 }
@@ -451,11 +451,11 @@ function prepareRequestParams(
   //   ? process.env.CALLAI_CHAT_URL
   //   : null);
 
-  console.log('🔍 [call-ai] Determining endpoint:');
-  console.log('🔍 [call-ai]   options.endpoint:', options.endpoint || 'NOT SET');
-  console.log('🔍 [call-ai]   options.chatUrl:', options.chatUrl || 'NOT SET');
-  console.log('🔍 [call-ai]   callAiEnv.def.CALLAI_CHAT_URL:', callAiEnv.def.CALLAI_CHAT_URL || 'NOT SET');
-  console.log('🔍 [call-ai]   customChatOrigin:', customChatOrigin || 'NOT SET');
+  console.log("🔍 [call-ai] Determining endpoint:");
+  console.log("🔍 [call-ai]   options.endpoint:", options.endpoint || "NOT SET");
+  console.log("🔍 [call-ai]   options.chatUrl:", options.chatUrl || "NOT SET");
+  console.log("🔍 [call-ai]   callAiEnv.def.CALLAI_CHAT_URL:", callAiEnv.def.CALLAI_CHAT_URL || "NOT SET");
+  console.log("🔍 [call-ai]   customChatOrigin:", customChatOrigin || "NOT SET");
 
   // Use custom origin or default OpenRouter URL
   const endpoint =
@@ -464,7 +464,7 @@ function prepareRequestParams(
       ? joinUrlParts(customChatOrigin, "/api/v1/chat/completions")
       : "https://openrouter.ai/api/v1/chat/completions");
 
-  console.log('🔍 [call-ai] Final endpoint:', endpoint);
+  console.log("🔍 [call-ai] Final endpoint:", endpoint);
 
   // Handle both string prompts and message arrays for backward compatibility
   const messages: Message[] = Array.isArray(prompt) ? prompt : [{ role: "user", content: prompt }];
