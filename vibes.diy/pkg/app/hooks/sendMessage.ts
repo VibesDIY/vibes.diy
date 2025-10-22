@@ -10,6 +10,7 @@ import { trackChatInputClick } from "../utils/analytics.js";
 import { parseContent } from "@vibes.diy/prompts";
 import { streamAI } from "../utils/streamHandler.js";
 import { generateTitle } from "../utils/titleGenerator.js";
+import { AUTH_REQUIRED_ERROR } from "../utils/authErrors.js";
 
 export interface SendMessageContext {
   userMessage: ChatMessageDocument;
@@ -205,7 +206,7 @@ export async function sendChatMessage(
 
       // If authentication error, don't save error message to chat
       // The login modal will already be showing
-      if (error.message === "Authentication required") {
+      if (error.message === AUTH_REQUIRED_ERROR) {
         // Just clean up state
         isProcessingRef.current = false;
         setPendingAiMessage(null);

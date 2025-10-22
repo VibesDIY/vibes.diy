@@ -4,6 +4,7 @@
 
 import { type CallAIOptions, type Message, callAI } from "call-ai";
 import { VibesDiyEnv } from "../config/env.js";
+import { AUTH_REQUIRED_ERROR, isAuthErrorMessage } from "./authErrors.js";
 
 /**
  * Stream AI responses with accumulated content callback
@@ -88,20 +89,14 @@ export async function streamAI(
             : String(streamError);
 
         // Check if this is an authentication error
-        const isAuthError =
-          errorMsg.toLowerCase().includes("authentication") ||
-          errorMsg.toLowerCase().includes("401") ||
-          errorMsg.toLowerCase().includes("unauthorized") ||
-          errorMsg.toLowerCase().includes("authentication_error");
-
-        if (isAuthError) {
+        if (isAuthErrorMessage(errorMsg)) {
           console.warn(
             "Auth error detected during streaming, triggering login modal",
           );
           if (setNeedsLogin) {
             setNeedsLogin(true);
           }
-          throw new Error("Authentication required");
+          throw new Error(AUTH_REQUIRED_ERROR);
         }
 
         // Return error message for non-auth errors
@@ -119,20 +114,14 @@ export async function streamAI(
         : String(initialError);
 
     // Check if this is an authentication error
-    const isAuthError =
-      errorMsg.toLowerCase().includes("authentication") ||
-      errorMsg.toLowerCase().includes("401") ||
-      errorMsg.toLowerCase().includes("unauthorized") ||
-      errorMsg.toLowerCase().includes("authentication_error");
-
-    if (isAuthError) {
+    if (isAuthErrorMessage(errorMsg)) {
       console.warn(
         "Auth error detected in initial callAI, triggering login modal",
       );
       if (setNeedsLogin) {
         setNeedsLogin(true);
       }
-      throw new Error("Authentication required");
+      throw new Error(AUTH_REQUIRED_ERROR);
     }
 
     // Return error message for non-auth errors
