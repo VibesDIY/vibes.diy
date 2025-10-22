@@ -112,7 +112,7 @@ export const wrapperHtml = `<!doctype html>
             // Read auth token from localStorage
             let authToken;
             try {
-              authToken = localStorage.getItem('vibes-diy-auth-token') || undefined;
+              authToken = localStorage.getItem('vibes-api-auth-token') || undefined;
             } catch (e) {
               console.warn('Could not read auth token from localStorage:', e);
             }

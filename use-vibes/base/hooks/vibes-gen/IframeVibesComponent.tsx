@@ -56,9 +56,9 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
     // Set iframe source with v_vibes parameter
     const baseIframeUrl = baseUrl || `https://${effectiveSessionId}.vibesbox.dev/`;
     // Add v_vibes parameter to use specific version
-    const iframeUrl = baseIframeUrl.includes('?') 
-      ? `${baseIframeUrl}&v_vibes=0.14.6`
-      : `${baseIframeUrl}?v_vibes=0.14.6`;
+    const iframeUrl = baseIframeUrl.includes('?')
+      ? `${baseIframeUrl}&v_vibes=0.14.8-dev-auth`
+      : `${baseIframeUrl}?v_vibes=0.14.8-dev-auth`;
     iframe.src = iframeUrl;
 
     // Handle iframe load
@@ -70,9 +70,13 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
       const transformedCode = transformImports(normalizedCode);
 
       // Get auth token from localStorage for API authentication
+      // Check both new and legacy token keys for compatibility
       let authToken: string | undefined;
       try {
-        authToken = localStorage.getItem('vibes-diy-auth-token') || undefined;
+        authToken =
+          localStorage.getItem('vibes-diy-auth-token') ||
+          localStorage.getItem('auth_token') ||
+          undefined;
       } catch {
         // Ignore localStorage errors (privacy mode, SSR, etc.)
       }

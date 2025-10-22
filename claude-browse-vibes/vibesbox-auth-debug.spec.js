@@ -178,16 +178,21 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
   if (apiRequests.length > 0) {
     console.log(`✅ Captured ${apiRequests.length} API request(s)`);
   } else {
-    console.log(`ℹ️  No API requests captured (vibe may not trigger AI calls in this test)`);
+    console.log(
+      `ℹ️  No API requests captured (vibe may not trigger AI calls in this test)`,
+    );
   }
 
   // Check that request goes to vibes-diy-api.com (NOT OpenRouter) if any requests were made
   if (apiRequests.length > 0) {
     const requestUrls = apiRequests.map((req) => req.url);
     const usesVibesApi = requestUrls.some(
-      (url) => url.includes("vibes-diy-api.com") || url.includes("vibesdiy.net"),
+      (url) =>
+        url.includes("vibes-diy-api.com") || url.includes("vibesdiy.net"),
     );
-    const usesOpenRouter = requestUrls.some((url) => url.includes("openrouter"));
+    const usesOpenRouter = requestUrls.some((url) =>
+      url.includes("openrouter"),
+    );
 
     console.log(`vibes-diy-api.com used: ${usesVibesApi}`);
     console.log(`openrouter.ai used: ${usesOpenRouter}`);
@@ -195,7 +200,9 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
     // Verify requests go to correct endpoint
     expect(usesVibesApi).toBe(true);
     expect(usesOpenRouter).toBe(false);
-    console.log("✅ Requests go to correct endpoint (vibes-diy-api.com, not OpenRouter)");
+    console.log(
+      "✅ Requests go to correct endpoint (vibes-diy-api.com, not OpenRouter)",
+    );
   }
 
   // Check for 401 errors
