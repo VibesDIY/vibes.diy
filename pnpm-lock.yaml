@@ -223,7 +223,7 @@ importers:
         specifier: ^4.9.2
         version: 4.9.12
       jose:
-        specifier: ^6.0.12
+        specifier: ^6.1.0
         version: 6.1.0
       multiformats:
         specifier: ^13.4.0
@@ -662,8 +662,8 @@ importers:
   utils/pkg:
     dependencies:
       jose:
-        specifier: ^5.9.6
-        version: 5.10.0
+        specifier: ^6.1.0
+        version: 6.1.0
       multiformats:
         specifier: ^13.4.0
         version: 13.4.1
@@ -685,8 +685,8 @@ importers:
         specifier: ^24.7.2
         version: 24.7.2
       jose:
-        specifier: ^5.9.6
-        version: 5.10.0
+        specifier: ^6.1.0
+        version: 6.1.0
       multiformats:
         specifier: ^13.4.0
         version: 13.4.1
@@ -751,7 +751,7 @@ importers:
         specifier: ^5.1.25
         version: 5.1.31
       jose:
-        specifier: ^6.0.10
+        specifier: ^6.1.0
         version: 6.1.0
       monaco-editor:
         specifier: ^0.54.0
@@ -911,7 +911,7 @@ importers:
         specifier: ^5.1.25
         version: 5.1.31
       jose:
-        specifier: ^6.0.10
+        specifier: ^6.1.0
         version: 6.1.0
       multiformats:
         specifier: ^13.3.7
@@ -1008,7 +1008,7 @@ importers:
         specifier: ^5.1.25
         version: 5.1.31
       jose:
-        specifier: ^6.0.10
+        specifier: ^6.1.0
         version: 6.1.0
       multiformats:
         specifier: ^13.3.7
@@ -6761,9 +6761,6 @@ packages:
   jiti@2.6.1:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
-
-  jose@5.10.0:
-    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   jose@6.1.0:
     resolution: {integrity: sha512-TTQJyoEoKcC1lscpVDCSsVgYzUDg/0Bt3WE//WiTPK6uOCQC2KZS4MpugbMWt/zyjkopgZoXhZuCi00gLudfUA==}
@@ -16499,8 +16496,6 @@ snapshots:
       - ts-node
 
   jiti@2.6.1: {}
-
-  jose@5.10.0: {}
 
   jose@6.1.0: {}
 

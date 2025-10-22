@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "jose": "^5.9.6",
+    "jose": "^6.1.0",
     "multiformats": "^13.4.0"
   },
   "devDependencies": {
