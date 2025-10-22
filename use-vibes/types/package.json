@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "call-ai": "workspace:*",
-    "use-fireproof": "^0.23.14"
+    "use-fireproof": "^0.23.15"
   },
   "peerDependencies": {
     "react": ">=19.1.0"
