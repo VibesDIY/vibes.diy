@@ -176,19 +176,26 @@ const IframeContent: React.FC<IframeContentProps> = ({
       const transformedCode = transformImports(normalizedCode);
 
       // Use vibesbox.dev subdomain for origin isolation with v_vibes parameter
-      const iframeUrl = `https://${sessionIdValue}.vibesbox.dev/?v_vibes=0.14.6`;
+      const iframeUrl = `https://${sessionIdValue}.vibesbox.dev/?v_vibes=0.14.8-dev-auth`;
       iframeRef.current.src = iframeUrl;
 
       // Send code via postMessage after iframe loads
       const handleIframeLoad = () => {
         if (iframeRef.current?.contentWindow) {
           // Get auth token from localStorage for API authentication
+          // Check both new and legacy token keys for compatibility
           let authToken: string | undefined;
           try {
-            authToken = localStorage.getItem('vibes-diy-auth-token') || undefined;
-            console.log('🔐 [VIBES.DIY] Reading auth token from localStorage:', authToken ? authToken.substring(0, 20) + '...' : 'NOT FOUND');
+            authToken =
+              localStorage.getItem("vibes-diy-auth-token") ||
+              localStorage.getItem("auth_token") ||
+              undefined;
+            console.log(
+              "🔐 [VIBES.DIY] Reading auth token from localStorage:",
+              authToken ? authToken.substring(0, 20) + "..." : "NOT FOUND",
+            );
           } catch (e) {
-            console.warn('🔐 [VIBES.DIY] Failed to read auth token:', e);
+            console.warn("🔐 [VIBES.DIY] Failed to read auth token:", e);
             // Ignore localStorage errors (privacy mode, SSR, etc.)
           }
 
@@ -200,9 +207,15 @@ const IframeContent: React.FC<IframeContentProps> = ({
             endpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
             authToken, // Pass auth token to iframe
           };
-          
-          console.log('🔐 [VIBES.DIY] Sending message to iframe with authToken:', authToken ? 'YES' : 'NO');
-          console.log('🔐 [VIBES.DIY] Message data keys:', Object.keys(messageData));
+
+          console.log(
+            "🔐 [VIBES.DIY] Sending message to iframe with authToken:",
+            authToken ? "YES" : "NO",
+          );
+          console.log(
+            "🔐 [VIBES.DIY] Message data keys:",
+            Object.keys(messageData),
+          );
           iframeRef.current.contentWindow.postMessage(messageData, "*");
         }
       };

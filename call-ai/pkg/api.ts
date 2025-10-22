@@ -26,12 +26,13 @@ import { callAiEnv } from "./env.js";
 const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
 
 // Storage keys for authentication tokens
-const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const;
-const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const;
+const VIBES_API_AUTH_TOKEN_KEY = "vibes-api-auth-token" as const; // For API auth from parent window
+const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const; // For Fireproof sync token
+const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const; // Legacy vibes.diy key
 
 /**
  * Get the Vibes authentication token from localStorage (browser only)
- * Checks both the new use-vibes key and legacy vibes.diy key for compatibility
+ * Checks API token key first, then Fireproof sync key, then legacy key
  * @returns The auth token if available, undefined otherwise
  */
 function getVibesAuthToken(): string | undefined {
@@ -40,13 +41,15 @@ function getVibesAuthToken(): string | undefined {
     return undefined;
   }
   try {
-    // Check new use-vibes key first, fall back to legacy vibes.diy key
+    // Check API auth key first (from parent window), then sync key, then legacy key
+    const apiToken = localStorage.getItem(VIBES_API_AUTH_TOKEN_KEY);
     const newToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
     const legacyToken = localStorage.getItem(LEGACY_AUTH_TOKEN_KEY);
     console.log(`🔍 [call-ai] Checking localStorage keys:`);
-    console.log(`🔍 [call-ai]   '${VIBES_AUTH_TOKEN_KEY}':`, newToken ? newToken.substring(0, 20) + '...' : 'NOT FOUND');
-    console.log(`🔍 [call-ai]   '${LEGACY_AUTH_TOKEN_KEY}':`, legacyToken ? legacyToken.substring(0, 20) + '...' : 'NOT FOUND');
-    return newToken || legacyToken || undefined;
+    console.log(`🔍 [call-ai]   '${VIBES_API_AUTH_TOKEN_KEY}':`, apiToken ? apiToken.substring(0, 20) + "..." : "NOT FOUND");
+    console.log(`🔍 [call-ai]   '${VIBES_AUTH_TOKEN_KEY}':`, newToken ? newToken.substring(0, 20) + "..." : "NOT FOUND");
+    console.log(`🔍 [call-ai]   '${LEGACY_AUTH_TOKEN_KEY}':`, legacyToken ? legacyToken.substring(0, 20) + "..." : "NOT FOUND");
+    return apiToken || newToken || legacyToken || undefined;
   } catch (e) {
     console.log("🔍 [call-ai] Error reading localStorage:", e);
     return undefined;
@@ -64,7 +67,7 @@ function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
 
   console.log("🔍 [call-ai] enhanceWithVibesAuth - Reading auth token from localStorage");
   console.log("🔍 [call-ai] Token found:", authToken ? `${authToken.substring(0, 20)}...` : "NOT FOUND");
-  
+
   // List all localStorage keys to debug
   if (typeof localStorage !== "undefined") {
     try {
