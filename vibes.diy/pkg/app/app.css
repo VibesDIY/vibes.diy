@@ -624,7 +624,13 @@ button:hover .bg-glimmer,
     20px 20px,
     20px 20px,
     100% 100%;
-  background-attachment: fixed;
+  background-attachment: scroll;
+}
+
+@media (min-width: 768px) {
+  .grid-background {
+    background-attachment: fixed;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -655,6 +661,54 @@ button:hover .bg-glimmer,
       20px 20px,
       20px 20px,
       100% 100%;
+    background-attachment: scroll;
+  }
+}
+
+@media (prefers-color-scheme: dark) and (min-width: 768px) {
+  .grid-background {
     background-attachment: fixed;
+  }
+}
+
+/* Vibes Login Button - themed button with interactive states */
+.vibes-login-button {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: var(--color-light-background-00);
+  color: var(--color-light-primary);
+  border: 3px solid var(--color-light-primary);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  transform: translate(0px, 0px);
+  box-shadow: 4px 5px 0px 0px #009ace;
+}
+
+.vibes-login-button:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 3px 0px 0px #009ace;
+}
+
+.vibes-login-button:active {
+  transform: translate(4px, 5px);
+  box-shadow: none;
+}
+
+.vibes-login-button:focus-visible {
+  outline: 3px solid #009ace;
+  outline-offset: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibes-login-button {
+    background: var(--color-dark-background-00);
+    color: var(--color-dark-primary);
+    border-color: var(--color-dark-primary);
   }
 }
