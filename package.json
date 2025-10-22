@@ -51,7 +51,7 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@eslint/js": "^9.37.0",
+    "@eslint/js": "^9.38.0",
     "@fireproof/core-cli": "^0.23.15",
     "@playwright/test": "^1.56.0",
     "@types/deno": "^2.5.0",
