@@ -73,17 +73,7 @@ export default function SessionView({
     };
 
     return (
-      <div
-        className="flex h-screen w-screen items-center justify-center relative"
-        style={{
-          backgroundColor: "#d4d4d4",
-          backgroundImage: `
-            linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px)
-          `,
-          backgroundSize: "40px 40px",
-        }}
-      >
+      <div className="grid-background flex h-screen w-screen items-center justify-center relative">
         {/* Center content */}
         <div className="text-center max-w-md px-4 w-full">
           <h1 className="mb-4 text-3xl font-bold" style={{ color: "#1a1a1a" }}>
