@@ -57,8 +57,8 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
     const baseIframeUrl = baseUrl || `https://${effectiveSessionId}.vibesbox.dev/`;
     // Add v_vibes parameter to use specific version
     const iframeUrl = baseIframeUrl.includes('?')
-      ? `${baseIframeUrl}&v_vibes=0.14.8-dev-auth`
-      : `${baseIframeUrl}?v_vibes=0.14.8-dev-auth`;
+      ? `${baseIframeUrl}&v_vibes=0.14.9-dev-api-token`
+      : `${baseIframeUrl}?v_vibes=0.14.9-dev-api-token`;
     iframe.src = iframeUrl;
 
     // Handle iframe load
