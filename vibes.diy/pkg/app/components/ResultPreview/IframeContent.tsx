@@ -176,7 +176,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
       const transformedCode = transformImports(normalizedCode);
 
       // Use vibesbox.dev subdomain for origin isolation with v_vibes parameter
-      const iframeUrl = `https://${sessionIdValue}.vibesbox.dev/?v_vibes=0.14.8-dev-auth`;
+      const iframeUrl = `https://${sessionIdValue}.vibesbox.dev/?v_vibes=0.14.9-dev-api-token`;
       iframeRef.current.src = iframeUrl;
 
       // Send code via postMessage after iframe loads
