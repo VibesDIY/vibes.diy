@@ -434,12 +434,12 @@ export const iframeHtml = `<!doctype html>
         // Store auth token FIRST before any other processing
         if (data.authToken) {
           try {
-            localStorage.setItem('vibes-diy-auth-token', data.authToken);
+            localStorage.setItem('vibes-api-auth-token', data.authToken);
             console.log('🚀 [VIBESBOX] Auth token stored in localStorage EARLY');
             console.log('🚀 [VIBESBOX] Token value:', data.authToken.substring(0, 20) + '...');
             
             // Verify it was stored correctly
-            const verifyToken = localStorage.getItem('vibes-diy-auth-token');
+            const verifyToken = localStorage.getItem('vibes-api-auth-token');
             console.log('🚀 [VIBESBOX] Verified token in localStorage:', verifyToken ? verifyToken.substring(0, 20) + '...' : 'NOT FOUND');
           } catch (e) {
             console.warn('🚀 [VIBESBOX] Failed to store auth token in localStorage:', e);
@@ -480,12 +480,12 @@ export const iframeHtml = `<!doctype html>
           // This allows call-ai library to automatically use it for API requests
           if (data.authToken) {
             try {
-              localStorage.setItem('vibes-diy-auth-token', data.authToken);
+              localStorage.setItem('vibes-api-auth-token', data.authToken);
               console.log('🚀 [VIBESBOX] Auth token stored in localStorage');
               console.log('🚀 [VIBESBOX] Token value:', data.authToken.substring(0, 20) + '...');
               
               // Verify it was stored correctly
-              const verifyToken = localStorage.getItem('vibes-diy-auth-token');
+              const verifyToken = localStorage.getItem('vibes-api-auth-token');
               console.log('🚀 [VIBESBOX] Verified token in localStorage:', verifyToken ? verifyToken.substring(0, 20) + '...' : 'NOT FOUND');
             } catch (e) {
               console.warn('🚀 [VIBESBOX] Failed to store auth token in localStorage:', e);
