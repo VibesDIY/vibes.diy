@@ -34,7 +34,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/node": "^24.7.2",
-    "jose": "^5.9.6",
+    "jose": "^6.1.0",
     "multiformats": "^13.4.0",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

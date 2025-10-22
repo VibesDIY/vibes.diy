@@ -25,7 +25,7 @@
     "@vibes.diy/prompts": "workspace:*",
     "call-ai": "workspace:*",
     "isbot": "^5.1.25",
-    "jose": "^6.0.10",
+    "jose": "^6.1.0",
     "multiformats": "^13.3.7",
     "posthog-js": "^1.275.1",
     "react": ">=19.1.0",
