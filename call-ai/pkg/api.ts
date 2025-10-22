@@ -37,7 +37,6 @@ const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const; // Legacy vibes.diy key
  */
 function getVibesAuthToken(): string | undefined {
   if (typeof localStorage === "undefined") {
-    console.log("🔍 [call-ai] localStorage is undefined");
     return undefined;
   }
   try {
@@ -45,13 +44,8 @@ function getVibesAuthToken(): string | undefined {
     const apiToken = localStorage.getItem(VIBES_API_AUTH_TOKEN_KEY);
     const newToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
     const legacyToken = localStorage.getItem(LEGACY_AUTH_TOKEN_KEY);
-    console.log(`🔍 [call-ai] Checking localStorage keys:`);
-    console.log(`🔍 [call-ai]   '${VIBES_API_AUTH_TOKEN_KEY}':`, apiToken ? apiToken.substring(0, 20) + "..." : "NOT FOUND");
-    console.log(`🔍 [call-ai]   '${VIBES_AUTH_TOKEN_KEY}':`, newToken ? newToken.substring(0, 20) + "..." : "NOT FOUND");
-    console.log(`🔍 [call-ai]   '${LEGACY_AUTH_TOKEN_KEY}':`, legacyToken ? legacyToken.substring(0, 20) + "..." : "NOT FOUND");
     return apiToken || newToken || legacyToken || undefined;
   } catch (e) {
-    console.log("🔍 [call-ai] Error reading localStorage:", e);
     return undefined;
   }
 }
@@ -65,24 +59,7 @@ function getVibesAuthToken(): string | undefined {
 function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
   const authToken = getVibesAuthToken();
 
-  console.log("🔍 [call-ai] enhanceWithVibesAuth - Reading auth token from localStorage");
-  console.log("🔍 [call-ai] Token found:", authToken ? `${authToken.substring(0, 20)}...` : "NOT FOUND");
-
-  // List all localStorage keys to debug
-  if (typeof localStorage !== "undefined") {
-    try {
-      const keys = Object.keys(localStorage);
-      console.log("🔍 [call-ai] All localStorage keys:", keys);
-      if (keys.length === 0) {
-        console.log("🔍 [call-ai] localStorage is empty!");
-      }
-    } catch (e) {
-      console.log("🔍 [call-ai] Could not list localStorage keys:", e);
-    }
-  }
-
   if (!authToken) {
-    console.log("🔍 [call-ai] No auth token found, returning options unchanged");
     return options;
   }
 
@@ -91,11 +68,9 @@ function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
 
   // Respect any caller-provided token, regardless of header casing
   if (headers.has(VIBES_AUTH_HEADER)) {
-    console.log("🔍 [call-ai] X-VIBES-Token already set by caller, skipping");
     return options;
   }
 
-  console.log("🔍 [call-ai] Setting X-VIBES-Token header");
   headers.set(VIBES_AUTH_HEADER, authToken);
   return { ...options, headers };
 }
@@ -474,20 +449,12 @@ function prepareRequestParams(
   //   ? process.env.CALLAI_CHAT_URL
   //   : null);
 
-  console.log("🔍 [call-ai] Determining endpoint:");
-  console.log("🔍 [call-ai]   options.endpoint:", options.endpoint || "NOT SET");
-  console.log("🔍 [call-ai]   options.chatUrl:", options.chatUrl || "NOT SET");
-  console.log("🔍 [call-ai]   callAiEnv.def.CALLAI_CHAT_URL:", callAiEnv.def.CALLAI_CHAT_URL || "NOT SET");
-  console.log("🔍 [call-ai]   customChatOrigin:", customChatOrigin || "NOT SET");
-
   // Use custom origin or default OpenRouter URL
   const endpoint =
     options.endpoint ||
     (customChatOrigin
       ? joinUrlParts(customChatOrigin, "/api/v1/chat/completions")
       : "https://openrouter.ai/api/v1/chat/completions");
-
-  console.log("🔍 [call-ai] Final endpoint:", endpoint);
 
   // Handle both string prompts and message arrays for backward compatibility
   const messages: Message[] = Array.isArray(prompt) ? prompt : [{ role: "user", content: prompt }];

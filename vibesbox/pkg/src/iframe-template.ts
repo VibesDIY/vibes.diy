@@ -201,9 +201,6 @@ export const iframeHtml = `<!doctype html>
       // Event listeners
       window.addEventListener("message", function (event) {
         // Log ALL messages received
-        console.log('📨 [VIBESBOX] Message received from:', event.origin);
-        console.log('📨 [VIBESBOX] Message type:', event.data?.type);
-        console.log('📨 [VIBESBOX] Message has authToken:', event.data?.authToken ? 'YES' : 'NO');
         
         if (event.data) {
           if (event.data.type === "command") {
@@ -424,29 +421,17 @@ export const iframeHtml = `<!doctype html>
 
       // Code execution function
       executeCode = function(data) {
-        console.log('🚀 [VIBESBOX] executeCode called!');
-        console.log('🚀 [VIBESBOX] Code length:', data.code?.length || 0);
-        console.log('🚀 [VIBESBOX] API Key:', data.apiKey);
-        console.log('🚀 [VIBESBOX] Session ID:', data.sessionId);
-        console.log('🚀 [VIBESBOX] Endpoint:', data.endpoint);
-        console.log('🚀 [VIBESBOX] Auth Token:', data.authToken ? data.authToken.substring(0, 20) + '...' : 'NOT PROVIDED');
 
         // Store auth token FIRST before any other processing
         if (data.authToken) {
           try {
             localStorage.setItem('vibes-api-auth-token', data.authToken);
-            console.log('🚀 [VIBESBOX] Auth token stored in localStorage EARLY');
-            console.log('🚀 [VIBESBOX] Token value:', data.authToken.substring(0, 20) + '...');
             
             // Verify it was stored correctly
             const verifyToken = localStorage.getItem('vibes-api-auth-token');
-            console.log('🚀 [VIBESBOX] Verified token in localStorage:', verifyToken ? verifyToken.substring(0, 20) + '...' : 'NOT FOUND');
           } catch (e) {
-            console.warn('🚀 [VIBESBOX] Failed to store auth token in localStorage:', e);
           }
         } else {
-          console.log('🚀 [VIBESBOX] No auth token provided in message');
-          console.log('🚀 [VIBESBOX] Message data keys:', Object.keys(data));
         }
 
         try {
@@ -469,30 +454,21 @@ export const iframeHtml = `<!doctype html>
           if (data.endpoint) {
             window.CALLAI_CHAT_URL = data.endpoint;
             window.CALLAI_IMG_URL = data.endpoint;
-            console.log('🚀 [VIBESBOX] Set window.CALLAI_CHAT_URL:', window.CALLAI_CHAT_URL);
           } else {
-            console.log('🚀 [VIBESBOX] No endpoint provided - call-ai will use default (vibes-diy-api.com)');
           }
 
-          console.log('🚀 [VIBESBOX] Set window.CALLAI_API_KEY:', window.CALLAI_API_KEY);
 
           // Store auth token in localStorage if provided
           // This allows call-ai library to automatically use it for API requests
           if (data.authToken) {
             try {
               localStorage.setItem('vibes-api-auth-token', data.authToken);
-              console.log('🚀 [VIBESBOX] Auth token stored in localStorage');
-              console.log('🚀 [VIBESBOX] Token value:', data.authToken.substring(0, 20) + '...');
               
               // Verify it was stored correctly
               const verifyToken = localStorage.getItem('vibes-api-auth-token');
-              console.log('🚀 [VIBESBOX] Verified token in localStorage:', verifyToken ? verifyToken.substring(0, 20) + '...' : 'NOT FOUND');
             } catch (e) {
-              console.warn('🚀 [VIBESBOX] Failed to store auth token in localStorage:', e);
             }
           } else {
-            console.log('🚀 [VIBESBOX] No auth token provided in message');
-            console.log('🚀 [VIBESBOX] Message data keys:', Object.keys(data));
           }
 
           // Clear the container
@@ -577,11 +553,7 @@ export const iframeHtml = `<!doctype html>
           \`;
 
           scriptElement.textContent = modifiedCode;
-          console.log('🚀 [VIBESBOX] About to execute transformed code');
-          console.log('🚀 [VIBESBOX] Component function name:', functionName);
-          console.log('🚀 [VIBESBOX] Code first 200 chars:', modifiedCode.substring(0, 200));
           document.head.appendChild(scriptElement);
-          console.log('🚀 [VIBESBOX] Script appended to document.head - code should be running now!');
         } catch (error) {
           console.error("Code execution failed:", error);
           console.error("Error stack:", error.stack);
