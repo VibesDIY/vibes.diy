@@ -291,8 +291,8 @@ importers:
         specifier: ^0.4.43
         version: 0.4.43(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: ^0.23.14
-        version: 0.23.14(typescript@5.9.3)
+        specifier: ^0.23.15
+        version: 0.23.15(typescript@5.9.3)
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -4700,6 +4700,10 @@ packages:
 
   cborg@4.2.15:
     resolution: {integrity: sha512-T+YVPemWyXcBVQdp0k61lQp2hJniRNmul0lAwTj2DTS/6dI4eCq/MRMucGqqvFqMBfmnD8tJ9aFtPu5dEGAbgw==}
+    hasBin: true
+
+  cborg@4.2.18:
+    resolution: {integrity: sha512-uzhkd5HOaLccokqeZa5B0Qz7/aa9C12pmUq5yU3vcy6I6OhTKdPHSzOuBPZfcoQHdcx8Emz/dWZbPNNfF/puvg==}
     hasBin: true
 
   ccount@2.0.1:
@@ -11340,18 +11344,18 @@ snapshots:
   '@ipld/car@5.4.2':
     dependencies:
       '@ipld/dag-cbor': 9.2.5
-      cborg: 4.2.15
+      cborg: 4.2.18
       multiformats: 13.4.1
       varint: 6.0.0
 
   '@ipld/dag-cbor@9.2.5':
     dependencies:
-      cborg: 4.2.15
+      cborg: 4.2.18
       multiformats: 13.4.1
 
   '@ipld/dag-json@10.2.5':
     dependencies:
-      cborg: 4.2.15
+      cborg: 4.2.18
       multiformats: 13.4.1
 
   '@isaacs/cliui@8.0.2':
@@ -13988,6 +13992,8 @@ snapshots:
       uint8arraylist: 2.4.8
 
   cborg@4.2.15: {}
+
+  cborg@4.2.18: {}
 
   ccount@2.0.1: {}
 
