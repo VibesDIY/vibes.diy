@@ -598,32 +598,10 @@ button:hover .bg-glimmer,
 
 /* Grid background pattern inspired by catalog title page */
 .grid-background {
-  background:
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(15, 23, 42, 0.06) 1px,
-      transparent 1px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 19px,
-      #cbd5e1 20px,
-      #cbd5e1 21px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 19px,
-      #cbd5e1 20px,
-      #cbd5e1 21px
-    ),
-    #f1f5f9;
-  background-size:
-    2px 2px,
-    20px 20px,
-    20px 20px,
-    100% 100%;
+  background-color: #d4d4d4;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 40px 40px;
   background-attachment: scroll;
 }
 
@@ -635,39 +613,9 @@ button:hover .bg-glimmer,
 
 @media (prefers-color-scheme: dark) {
   .grid-background {
-    background:
-      radial-gradient(
-        circle at 50% 50%,
-        rgba(226, 232, 240, 0.06) 1px,
-        transparent 1px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 19px,
-        #334155 20px,
-        #334155 21px
-      ),
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 19px,
-        #334155 20px,
-        #334155 21px
-      ),
-      #0b1220;
-    background-size:
-      2px 2px,
-      20px 20px,
-      20px 20px,
-      100% 100%;
-    background-attachment: scroll;
-  }
-}
-
-@media (prefers-color-scheme: dark) and (min-width: 768px) {
-  .grid-background {
-    background-attachment: fixed;
+    background-color: #2a2a2a;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
   }
 }
 
