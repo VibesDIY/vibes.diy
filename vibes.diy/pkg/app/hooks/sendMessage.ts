@@ -204,13 +204,18 @@ export async function sendChatMessage(
     .catch((error) => {
       console.warn("Error in sendMessage:", error);
 
-      // If authentication error, don't save error message to chat
-      // The login modal will already be showing
+      // If authentication error, trigger login flow
       if (error.message === AUTH_REQUIRED_ERROR) {
-        // Just clean up state
+        // Force login modal to show (this will work even if local state thinks we're authenticated)
+        setNeedsLogin(true);
+
+        // Clean up state
         isProcessingRef.current = false;
         setPendingAiMessage(null);
         setSelectedResponseId("");
+
+        // Restore the user's input so they can retry after login
+        setInput(promptText);
         return; // Exit early without saving error to chat
       }
 
