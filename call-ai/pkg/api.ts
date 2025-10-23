@@ -436,6 +436,9 @@ function prepareRequestParams(
     model,
     messages,
     stream: options.stream !== undefined ? options.stream : false,
+    provider: {
+      sort: "latency",
+    },
   };
 
   // Only include temperature if explicitly set
