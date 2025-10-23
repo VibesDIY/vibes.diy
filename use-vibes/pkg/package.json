@@ -25,12 +25,13 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@vibes.diy/use-vibes-base": "workspace:*",
-    "react-dom": ">=19.1.0"
+    "react-dom": "^19.2.0"
   },
   "peerDependencies": {
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.15"
+    "@fireproof/core-cli": "^0.23.15",
+    "@vitest/browser-playwright": "^4.0.2"
   }
 }
