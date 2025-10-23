@@ -50,31 +50,6 @@ function getVibesAuthToken(): string | undefined {
   }
 }
 
-/**
- * Enhance CallAI options with Vibes authentication headers when available
- * This provides transparent authentication for apps running on vibesdiy.net
- * @param options Original CallAI options
- * @returns Enhanced options with auth headers if available
- */
-function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
-  const authToken = getVibesAuthToken();
-
-  if (!authToken) {
-    return options;
-  }
-
-  // Normalize to Headers for robust, case-insensitive behavior across all HeadersInit shapes
-  const headers = new Headers(options.headers as HeadersInit | undefined);
-
-  // Respect any caller-provided token, regardless of header casing
-  if (headers.has(VIBES_AUTH_HEADER)) {
-    return options;
-  }
-
-  headers.set(VIBES_AUTH_HEADER, authToken);
-  return { ...options, headers };
-}
-
 // Key management is now imported from ./key-management
 
 // initKeyStore is imported from key-management.ts
@@ -108,34 +83,31 @@ const FALLBACK_MODEL = "openrouter/auto";
  *          The AsyncGenerator yields partial responses as they arrive.
  */
 export function callAi(prompt: string | Message[], options: CallAIOptions = {}): Promise<string | StreamResponse> {
-  // Enhance options with Vibes authentication if available (browser environments only)
-  const enhancedOptions = enhanceWithVibesAuth(options);
-
   // Check if we need to force streaming based on model strategy
-  const schemaStrategy = chooseSchemaStrategy(enhancedOptions.model, enhancedOptions.schema || null);
+  const schemaStrategy = chooseSchemaStrategy(options.model, options.schema || null);
 
   // We no longer set a default maxTokens
   // Will only include max_tokens in the request if explicitly set by the user
 
   // Handle special case: Claude with tools requires streaming
-  if (!enhancedOptions.stream && schemaStrategy.shouldForceStream) {
+  if (!options.stream && schemaStrategy.shouldForceStream) {
     // Buffer streaming results into a single response
-    return bufferStreamingResults(prompt, enhancedOptions);
+    return bufferStreamingResults(prompt, options);
   }
 
   // Handle normal non-streaming mode
-  if (enhancedOptions.stream !== true) {
-    return callAINonStreaming(prompt, enhancedOptions);
+  if (options.stream !== true) {
+    return callAINonStreaming(prompt, options);
   }
 
   // Handle streaming mode - return a Promise that resolves to an AsyncGenerator
   // but also supports legacy non-awaited usage for backward compatibility
   const streamPromise = (async () => {
     // Do setup and validation before returning the generator
-    const { endpoint, requestOptions, model, schemaStrategy } = prepareRequestParams(prompt, { ...enhancedOptions, stream: true });
+    const { endpoint, requestOptions, model, schemaStrategy } = prepareRequestParams(prompt, { ...options, stream: true });
 
     // Use either explicit debug option or global debug flag
-    const debug = enhancedOptions.debug || globalDebug;
+    const debug = options.debug || globalDebug;
     if (debug) {
       console.log(`[callAi:${PACKAGE_VERSION}] Making fetch request to: ${endpoint}`);
       console.log(`[callAi:${PACKAGE_VERSION}] With model: ${model}`);
@@ -144,8 +116,8 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
 
     let response;
     try {
-      response = await callAiFetch(enhancedOptions)(endpoint, requestOptions);
-      if (enhancedOptions.debug) {
+      response = await callAiFetch(options)(endpoint, requestOptions);
+      if (options.debug) {
         console.log(`[callAi:${PACKAGE_VERSION}] Fetch completed with status:`, response.status, response.statusText);
 
         // Log all headers
@@ -505,6 +477,12 @@ function prepareRequestParams(
     "HTTP-Referer": options.referer || "https://vibes.diy",
     "X-Title": options.title || "Vibes",
   });
+
+  // Add Vibes authentication token if available (late binding for vibesdiy.net apps)
+  const authToken = getVibesAuthToken();
+  if (authToken && !headers.has(VIBES_AUTH_HEADER)) {
+    headers.set(VIBES_AUTH_HEADER, authToken);
+  }
 
   if (options.headers) {
     const extra = new Headers(options.headers as HeadersInit);
