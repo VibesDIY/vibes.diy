@@ -34,6 +34,16 @@ let instanceCounter = 0;
 // Storage key for authentication token sync
 const VIBES_AUTH_TOKEN_KEY = 'vibes-diy-auth-token' as const;
 
+// Interface for the attach result structure from database.attach()
+interface AttachResult {
+  ctx?: {
+    tokenAndClaims?: {
+      state?: string;
+      tokenAndClaims?: { token?: string };
+    };
+  };
+}
+
 // Helper to update body class based on global sync status
 function updateBodyClass() {
   if (typeof window === 'undefined' || !document?.body) return;
@@ -152,6 +162,23 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       result.database
         .attach(cloudConfig)
         .then((attached) => {
+          // Extract and store token BEFORE updating state
+          // This ensures token is available synchronously for any dependent effects
+          // Access ctx as a property (it's typed as a function but works as both)
+          const ctx = (attached as unknown as AttachResult).ctx;
+          const tokenState = ctx?.tokenAndClaims;
+          const token =
+            tokenState?.state === 'ready' ? tokenState.tokenAndClaims?.token : undefined;
+
+          if (token) {
+            try {
+              localStorage.setItem(VIBES_AUTH_TOKEN_KEY, token);
+            } catch (error) {
+              console.warn('[useFireproof] Failed to write token to localStorage', error);
+            }
+          }
+
+          // Now update state - dependent effects will see the token
           setManualAttach({ state: 'attached', attached });
           // Save preference for next refresh
           localStorage.setItem(syncKey, 'true');
