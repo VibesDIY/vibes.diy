@@ -110,8 +110,13 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         });
 
       // Wait for overlay ready event, then programmatically click the auth link
-      let timeoutId: ReturnType<typeof setTimeout>;
       let eventReceived = false;
+      const timeoutId = setTimeout(() => {
+        if (!eventReceived) {
+          console.warn('[useFireproof] Timeout waiting for auth overlay ready event');
+          document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
+        }
+      }, 5000);
 
       const handleOverlayReady = () => {
         eventReceived = true;
@@ -136,14 +141,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
       // Set up event listener
       document.addEventListener('vibes-auth-overlay-ready', handleOverlayReady, { once: true });
-
-      // Safety timeout in case event never fires (5 seconds)
-      timeoutId = setTimeout(() => {
-        if (!eventReceived) {
-          console.warn('[useFireproof] Timeout waiting for auth overlay ready event');
-          document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
-        }
-      }, 5000);
 
       // Cleanup
       return () => {
