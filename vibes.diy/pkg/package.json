@@ -29,7 +29,7 @@
     "format:write": "prettier --write ."
   },
   "dependencies": {
-    "@adviser/cement": "^0.4.43",
+    "@adviser/cement": "^0.4.53",
     "@cloudflare/workers-types": "^4.20251011.0",
     "@fireproof/core": "^0.23.15",
     "@fireproof/core-runtime": "^0.23.14",
