@@ -34,16 +34,6 @@ let instanceCounter = 0;
 // Storage key for authentication token sync
 const VIBES_AUTH_TOKEN_KEY = 'vibes-diy-auth-token' as const;
 
-// Interface for the attach result structure from database.attach()
-interface AttachResult {
-  ctx?: {
-    tokenAndClaims?: {
-      state?: string;
-      tokenAndClaims?: { token?: string };
-    };
-  };
-}
-
 // Helper to update body class based on global sync status
 function updateBodyClass() {
   if (typeof window === 'undefined' || !document?.body) return;
