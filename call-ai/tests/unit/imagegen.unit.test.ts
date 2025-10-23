@@ -42,10 +42,13 @@ beforeAll(() => {
 
   // Mock constructors
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  global.Blob = vi.fn().mockImplementation(() => mockBlobInstance) as any;
-  global.File = vi.fn().mockImplementation((_, name, options?: FilePropertyBag) => {
+  global.Blob = vi.fn(function (blobParts?: BlobPart[], options?: BlobPropertyBag) {
+    return { ...mockBlobInstance, type: options?.type || "image/png" };
+  }) as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  global.File = vi.fn(function (_, name, options?: FilePropertyBag) {
     return { ...mockFileInstance, name, type: options?.type || "image/png" };
-  });
+  }) as any;
 
   // For FormData, create a new instance each time
   global.FormData = MockFormData as unknown as typeof FormData;

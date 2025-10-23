@@ -1,18 +1,3 @@
-/// <reference types="@vitest/browser/providers/playwright" />
-// import { defineConfig } from 'vitest/config';
-// import react from '@vitejs/plugin-react';
-//
-// export default defineConfig({
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   plugins: [react() as any],
-//   test: {
-//     environment: 'jsdom',
-//     globals: true,
-//     setupFiles: ['./setup.ts'],
-//   },
-// });
-//
-
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 
