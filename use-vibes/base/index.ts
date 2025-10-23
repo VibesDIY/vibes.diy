@@ -9,6 +9,12 @@ import {
   type UseFpToCloudParam,
 } from 'use-fireproof';
 import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
+import {
+  AUTH_OVERLAY_READY_EVENT,
+  AUTH_OVERLAY_HIDDEN_CLASS,
+  AUTH_OVERLAY_TIMEOUT_MS,
+  type AuthOverlayReadyDetail,
+} from './events.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -96,7 +102,53 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     if (manualAttach === 'pending' && result.database) {
       const cloudConfig = toCloud();
 
-      // Start the attach process
+      // Wait for overlay ready event, then programmatically click the auth link
+      let eventReceived = false;
+      const handleOverlayReady = (evt: Event) => {
+        eventReceived = true;
+        clearTimeout(timeoutId);
+
+        const { overlay, authLink } = (evt as CustomEvent<AuthOverlayReadyDetail>).detail || {};
+
+        // Next frame to ensure DOM is interactive and clickable
+        requestAnimationFrame(() => {
+          const link = authLink || (overlay?.querySelector('a[href]') as HTMLAnchorElement | null);
+          if (link) {
+            link.click();
+            if (overlay) overlay.classList.add(AUTH_OVERLAY_HIDDEN_CLASS);
+          } else {
+            console.warn('[useFireproof] Auth overlay ready but link not found');
+          }
+        });
+      };
+
+      // Set up event listener BEFORE starting attach to avoid race
+      document.addEventListener(AUTH_OVERLAY_READY_EVENT, handleOverlayReady as EventListener, {
+        once: true,
+      });
+
+      // Safety timeout in case event never fires
+      const timeoutId = setTimeout(() => {
+        if (!eventReceived) {
+          console.warn(
+            '[useFireproof] Timeout waiting for auth overlay ready event — attempting fallback click'
+          );
+          document.removeEventListener(
+            AUTH_OVERLAY_READY_EVENT,
+            handleOverlayReady as EventListener
+          );
+          // Best-effort fallback under non-gesture context
+          const overlay = document.querySelector('.fpOverlay') as HTMLElement | null;
+          const link = (overlay?.querySelector('a[href]') ||
+            document.querySelector('.fpOverlay a[href]')) as HTMLAnchorElement | null;
+          if (link) {
+            link.click();
+            if (overlay) overlay.classList.add(AUTH_OVERLAY_HIDDEN_CLASS);
+          }
+        }
+      }, AUTH_OVERLAY_TIMEOUT_MS);
+
+      // Start the attach process after listener is registered
       result.database
         .attach(cloudConfig)
         .then((attached) => {
@@ -109,43 +161,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
           setManualAttach({ state: 'error', error });
         });
 
-      // Wait for overlay ready event, then programmatically click the auth link
-      let eventReceived = false;
-      const timeoutId = setTimeout(() => {
-        if (!eventReceived) {
-          console.warn('[useFireproof] Timeout waiting for auth overlay ready event');
-          document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
-        }
-      }, 5000);
-
-      const handleOverlayReady = () => {
-        eventReceived = true;
-        clearTimeout(timeoutId);
-
-        // Wait a tiny bit for DOM to be fully interactive
-        setTimeout(() => {
-          const authLink = document.querySelector('.fpOverlay a[href]') as HTMLAnchorElement;
-          if (authLink) {
-            authLink.click();
-
-            // Hide the overlay after clicking since we're opening the popup
-            const overlay = document.querySelector('.fpOverlay') as HTMLElement;
-            if (overlay) {
-              overlay.style.display = 'none';
-            }
-          } else {
-            console.warn('[useFireproof] Auth overlay ready but link not found');
-          }
-        }, 50);
-      };
-
-      // Set up event listener
-      document.addEventListener('vibes-auth-overlay-ready', handleOverlayReady, { once: true });
-
       // Cleanup
       return () => {
         clearTimeout(timeoutId);
-        document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
+        document.removeEventListener(AUTH_OVERLAY_READY_EVENT, handleOverlayReady as EventListener);
       };
     }
   }, [manualAttach, result.database, syncKey, dbName]);
@@ -153,8 +172,17 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Function to enable sync and trigger popup directly
   const enableSync = useCallback(() => {
     if (!wasSyncEnabled && !manualAttach) {
-      // First time enabling - manual attach
-      // The programmatic click will happen in the useEffect after overlay is ready
+      // Opportunistic synchronous click under the user gesture if link already exists
+      const overlay = document.querySelector('.fpOverlay') as HTMLElement | null;
+      const immediateLink = (overlay?.querySelector('a[href]') ||
+        document.querySelector('.fpOverlay a[href]')) as HTMLAnchorElement | null;
+      if (immediateLink) {
+        immediateLink.click();
+        if (overlay) overlay.classList.add(AUTH_OVERLAY_HIDDEN_CLASS);
+        return; // Done
+      }
+
+      // Otherwise proceed with event-driven flow set up in the effect
       setManualAttach('pending');
     }
   }, [wasSyncEnabled, manualAttach]);
@@ -228,9 +256,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         try {
           // Store the token for call-ai integration
           localStorage.setItem(VIBES_AUTH_TOKEN_KEY, tokenData.token);
-          console.log(
-            '[useFireproof] Synced Fireproof token to localStorage for call-ai integration'
-          );
         } catch {
           // Ignore localStorage errors (privacy mode, SSR, etc.)
           console.warn(

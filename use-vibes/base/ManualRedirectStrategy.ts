@@ -2,6 +2,8 @@ import type { Logger } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import type { ToCloudOpts, TokenAndClaims } from '@fireproof/core-types-protocols-cloud';
 import { RedirectStrategy } from 'use-fireproof';
+import { AUTH_OVERLAY_READY_EVENT, AUTH_OVERLAY_HIDDEN_CLASS } from './events.js';
+import type { AuthOverlayReadyDetail } from './events.js';
 
 interface BuildURIBuilder {
   from: (uri: string) => URLBuilder;
@@ -50,6 +52,11 @@ export class ManualRedirectStrategy extends RedirectStrategy {
         z-index: 9999;
         animation: slideUp 0.3s ease-out;
         pointer-events: none; /* Allow clicking through the overlay container */
+      }
+      
+      /* Hidden/minimized state toggled from outside */
+      .fpOverlay.${AUTH_OVERLAY_HIDDEN_CLASS} {
+        display: none !important;
       }
       
       .fpOverlay[style*="block"] {
@@ -261,7 +268,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
 
     // Find the link in the overlay and update its click handler
     const authLink = this.overlayNode.querySelector('a[href]') as HTMLAnchorElement;
-    console.log(authLink);
+    // Remove debug logs in production
     if (authLink) {
       authLink.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -307,8 +314,19 @@ export class ManualRedirectStrategy extends RedirectStrategy {
       });
     }
 
-    // Signal that the overlay and click handler are ready
-    document.dispatchEvent(new CustomEvent('vibes-auth-overlay-ready'));
+    // Signal that the overlay and click handler are ready (guarded + next frame)
+    if (this.overlayNode) {
+      const overlayEl = this.overlayNode as HTMLElement;
+      const linkEl = overlayEl.querySelector('a[href]') as HTMLAnchorElement | null;
+      // Ensure the node is in the DOM and painted before consumers act
+      requestAnimationFrame(() => {
+        document.dispatchEvent(
+          new CustomEvent<AuthOverlayReadyDetail>(AUTH_OVERLAY_READY_EVENT, {
+            detail: { overlay: overlayEl, authLink: linkEl },
+          })
+        );
+      });
+    }
   }
 
   // Reset the flags when stop is called
