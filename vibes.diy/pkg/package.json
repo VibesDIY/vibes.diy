@@ -32,7 +32,7 @@
     "@adviser/cement": "^0.4.53",
     "@cloudflare/workers-types": "^4.20251011.0",
     "@fireproof/core": "^0.23.15",
-    "@fireproof/core-runtime": "^0.23.14",
+    "@fireproof/core-runtime": "^0.23.15",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@react-router/node": "^7.9.4",
@@ -68,7 +68,7 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.1",
     "@cloudflare/vite-plugin": "^1.13.12",
-    "@fireproof/core-cli": "^0.23.14",
+    "@fireproof/core-cli": "^0.23.15",
     "@react-router/dev": "^7.9.4",
     "@storybook/addon-a11y": "^9.1.13",
     "@storybook/addon-docs": "^9.1.13",
