@@ -1,6 +1,7 @@
 /// <reference types="@vitest/browser/providers/playwright" />
 
 import { defineConfig } from "vitest/config";
+import { playwright } from "@vitest/browser/providers";
 
 export default defineConfig({
   test: {
@@ -12,7 +13,7 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: "playwright" as const,
+      provider: playwright,
       instances: [
         {
           browser: "chromium",
