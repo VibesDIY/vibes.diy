@@ -70,7 +70,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^24.7.2",
+    "@types/node": "^24.9.1",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "wrangler": "^4.43.0"

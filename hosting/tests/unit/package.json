@@ -36,7 +36,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.5.26",
     "@cloudflare/workers-types": "^4.20251011.0",
-    "@types/node": "^24.7.2",
+    "@types/node": "^24.9.1",
     "chanfana": "^2.8.2",
     "hono": "^4.6.6",
     "prettier": "^3.6.2",
