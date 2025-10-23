@@ -1,3 +1,4 @@
+/// <reference types="@vitest/browser/providers/playwright" />
 // import { defineConfig } from 'vitest/config';
 // import react from '@vitejs/plugin-react';
 //
@@ -26,7 +27,7 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: 'playwright',
+      provider: 'playwright' as const,
       instances: [
         {
           browser: 'chromium',

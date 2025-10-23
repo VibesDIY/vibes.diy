@@ -1,4 +1,4 @@
-import { Bool, OpenAPIRoute } from "chanfana";
+import { Bool, OpenAPIRoute, contentJson } from "chanfana";
 
 import { Context } from "hono";
 import { z } from "zod";
@@ -45,24 +45,20 @@ export class AppCreate extends OpenAPIRoute {
     tags: ["Apps"],
     summary: "Create a new App",
     request: {
-      body: {
-        content: {
-          "application/json": {
-            schema: z.object({
-              chatId: z.string(),
-              userId: z.string().optional(),
-              code: z.string().optional(),
-              raw: z.string().optional(),
-              prompt: z.string().optional(),
-              title: z.string().optional(),
-              screenshot: z.string().nullable().optional(), // base64 encoded image
-              remixOf: z.string().nullable().optional(), // slug of the original app if this is a remix
-              shareToFirehose: z.boolean().optional(), // whether to post to Bluesky
-              customDomain: z.string().nullable().optional(), // custom domain for the app
-            }),
-          },
-        },
-      },
+      body: contentJson(
+        z.object({
+          chatId: z.string(),
+          userId: z.string().optional(),
+          code: z.string().optional(),
+          raw: z.string().optional(),
+          prompt: z.string().optional(),
+          title: z.string().optional(),
+          screenshot: z.string().nullable().optional(), // base64 encoded image
+          remixOf: z.string().nullable().optional(), // slug of the original app if this is a remix
+          shareToFirehose: z.boolean().optional(), // whether to post to Bluesky
+          customDomain: z.string().nullable().optional(), // custom domain for the app
+        }),
+      ),
     },
     responses: {
       "200": {
@@ -98,6 +94,10 @@ export class AppCreate extends OpenAPIRoute {
 
     // Retrieve the validated request body
     const app = data.body;
+
+    if (!app) {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
 
     // const codeToSave = app.code || normalizeRawCode(app.raw);
 
