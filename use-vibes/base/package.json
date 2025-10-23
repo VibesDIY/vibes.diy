@@ -25,7 +25,7 @@
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*",
-    "react-dom": ">=19.1.0",
+    "react-dom": "^19.2.0",
     "use-fireproof": "^0.23.15",
     "uuid": "^11.1.0"
   },
@@ -41,6 +41,7 @@
     "@storybook/react-vite": "^9.1.6",
     "@types/react": "~19.1.0",
     "@types/react-dom": "~19.1.0",
+    "@vitest/browser-playwright": "^4.0.2",
     "storybook": "^9.1.6",
     "typescript": "^5.9.3",
     "vite": "^7.1.12"
