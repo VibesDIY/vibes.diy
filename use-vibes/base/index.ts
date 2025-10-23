@@ -8,7 +8,7 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
-import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
+import { ManualRedirectStrategy, isJWTExpired } from './ManualRedirectStrategy.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -43,7 +43,7 @@ function updateBodyClass() {
   }
 }
 
-export { fireproof, ImgFile, ManualRedirectStrategy };
+export { fireproof, ImgFile, ManualRedirectStrategy, isJWTExpired };
 
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
@@ -57,7 +57,14 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
     try {
       const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
       if (externalToken) {
-        strategy.setToken(externalToken);
+        // Validate token is not expired before using it
+        if (isJWTExpired(externalToken)) {
+          // Token is expired, remove it from localStorage
+          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
+        } else {
+          // Token is still valid, use it
+          strategy.setToken(externalToken);
+        }
       }
     } catch {
       // Ignore localStorage errors (privacy mode, SSR, etc.)
