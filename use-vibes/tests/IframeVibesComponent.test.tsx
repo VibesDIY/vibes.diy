@@ -127,9 +127,6 @@ describe('IframeVibesComponent', () => {
     ];
 
     for (const { input } of testCases) {
-      const mockPostMessage = vi.fn();
-      const _localMockIframe = createMockIframe(mockPostMessage);
-
       const { unmount } = render(<IframeVibesComponent baseUrl="about:blank" code={input} />);
 
       // Wait for component to process
