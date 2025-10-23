@@ -306,6 +306,9 @@ export class ManualRedirectStrategy extends RedirectStrategy {
         }
       });
     }
+
+    // Signal that the overlay and click handler are ready
+    document.dispatchEvent(new CustomEvent('vibes-auth-overlay-ready'));
   }
 
   // Reset the flags when stop is called

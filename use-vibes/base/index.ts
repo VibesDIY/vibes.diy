@@ -95,6 +95,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   useEffect(() => {
     if (manualAttach === 'pending' && result.database) {
       const cloudConfig = toCloud();
+
+      // Start the attach process
       result.database
         .attach(cloudConfig)
         .then((attached) => {
@@ -106,6 +108,48 @@ export function useFireproof(nameOrDatabase?: string | Database) {
           console.error('Failed to attach:', error);
           setManualAttach({ state: 'error', error });
         });
+
+      // Wait for overlay ready event, then programmatically click the auth link
+      let timeoutId: ReturnType<typeof setTimeout>;
+      let eventReceived = false;
+
+      const handleOverlayReady = () => {
+        eventReceived = true;
+        clearTimeout(timeoutId);
+
+        // Wait a tiny bit for DOM to be fully interactive
+        setTimeout(() => {
+          const authLink = document.querySelector('.fpOverlay a[href]') as HTMLAnchorElement;
+          if (authLink) {
+            authLink.click();
+
+            // Hide the overlay after clicking since we're opening the popup
+            const overlay = document.querySelector('.fpOverlay') as HTMLElement;
+            if (overlay) {
+              overlay.style.display = 'none';
+            }
+          } else {
+            console.warn('[useFireproof] Auth overlay ready but link not found');
+          }
+        }, 50);
+      };
+
+      // Set up event listener
+      document.addEventListener('vibes-auth-overlay-ready', handleOverlayReady, { once: true });
+
+      // Safety timeout in case event never fires (5 seconds)
+      timeoutId = setTimeout(() => {
+        if (!eventReceived) {
+          console.warn('[useFireproof] Timeout waiting for auth overlay ready event');
+          document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
+        }
+      }, 5000);
+
+      // Cleanup
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
+      };
     }
   }, [manualAttach, result.database, syncKey, dbName]);
 
@@ -113,22 +157,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const enableSync = useCallback(() => {
     if (!wasSyncEnabled && !manualAttach) {
       // First time enabling - manual attach
+      // The programmatic click will happen in the useEffect after overlay is ready
       setManualAttach('pending');
     }
-
-    // After a short delay, programmatically click the sign-in link in the overlay
-    setTimeout(() => {
-      const authLink = document.querySelector('.fpOverlay a[href]') as HTMLAnchorElement;
-      if (authLink) {
-        authLink.click();
-
-        // Hide the overlay after clicking since we're opening the popup
-        const overlay = document.querySelector('.fpOverlay') as HTMLElement;
-        if (overlay) {
-          overlay.style.display = 'none';
-        }
-      }
-    }, 100); // Small delay to ensure overlay is rendered
   }, [wasSyncEnabled, manualAttach]);
 
   // Wire up vibes-login-link button if it exists
