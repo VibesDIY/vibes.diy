@@ -1,5 +1,3 @@
-// /// <reference types="@vitest/browser/providers/playwright" />
-
 import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -23,7 +21,7 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: "playwright",
+      provider: "playwright" as const,
       instances: [
         {
           browser: "chromium",
