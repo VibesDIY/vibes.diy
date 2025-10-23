@@ -50,6 +50,27 @@ function parseJWT(token: string): unknown {
   }
 }
 
+// Check if JWT token is expired
+export function isJWTExpired(token: string): boolean {
+  try {
+    const claims = parseJWT(token) as { exp?: number };
+    if (!claims || typeof claims.exp !== 'number') {
+      // No expiration claim, assume expired for safety
+      return true;
+    }
+
+    // exp is in seconds, Date.now() is in milliseconds
+    const expirationTime = claims.exp * 1000;
+    const currentTime = Date.now();
+
+    // Add a 60-second buffer to avoid edge cases
+    return currentTime >= expirationTime - 60000;
+  } catch {
+    // Parse error, assume expired
+    return true;
+  }
+}
+
 export class ManualRedirectStrategy extends RedirectStrategy {
   private authOpened = false;
   private pollingStarted = false;
