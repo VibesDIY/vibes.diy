@@ -217,8 +217,8 @@ importers:
         specifier: ^2.8.2
         version: 2.8.3
       dotenv:
-        specifier: ^16.6.1
-        version: 16.6.1
+        specifier: ^17.2.3
+        version: 17.2.3
       hono:
         specifier: ^4.9.2
         version: 4.9.12
