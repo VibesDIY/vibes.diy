@@ -50,9 +50,23 @@ export type * as Fireproof from 'use-fireproof';
 
 // Helper function to create toCloud configuration with ManualRedirectStrategy
 export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+  const strategy = new ManualRedirectStrategy();
+
+  // Check if an external token exists in localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
+      if (externalToken) {
+        strategy.setToken(externalToken);
+      }
+    } catch {
+      // Ignore localStorage errors (privacy mode, SSR, etc.)
+    }
+  }
+
   const attachable = originalToCloud({
     ...opts,
-    strategy: new ManualRedirectStrategy(),
+    strategy,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },

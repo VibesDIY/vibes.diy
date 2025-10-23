@@ -27,6 +27,29 @@ function generateLedgerName(dbName: string): string {
   return `${origin}-${dbName}`;
 }
 
+// Parse JWT token to extract claims
+function parseJWT(token: string): unknown {
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return undefined;
+    }
+
+    // Decode the payload (second part)
+    const payload = parts[1];
+    // Replace URL-safe characters and add padding if needed
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedBase64 = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+
+    // Decode base64
+    const jsonString = atob(paddedBase64);
+    return JSON.parse(jsonString);
+  } catch {
+    return undefined;
+  }
+}
+
 export class ManualRedirectStrategy extends RedirectStrategy {
   private authOpened = false;
   private pollingStarted = false;
@@ -36,6 +59,19 @@ export class ManualRedirectStrategy extends RedirectStrategy {
   readonly hash = (): string => {
     return 'manual-redirect-strategy';
   };
+
+  // Public method to set an external token (e.g., from localStorage)
+  setToken(token: string): void {
+    // Parse JWT to extract claims
+    const claims = parseJWT(token) as TokenAndClaims['claims'];
+
+    // Set the parent class's currentToken property
+    // Using type assertion to access private property
+    (this as unknown as { currentToken?: TokenAndClaims }).currentToken = {
+      token,
+      claims,
+    };
+  }
 
   constructor(opts: { overlayHtml?: (url: string) => string; overlayCss?: string } = {}) {
     // Create custom CSS for subtle bottom slide-up
@@ -197,7 +233,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
     deviceId: string,
     opts: ToCloudOpts
   ): Promise<TokenAndClaims | undefined> {
-    // First check if a token already exists from a previous session
+    // Check if a token already exists (either set via setToken() or from previous session)
     const existingToken = await super.tryToken(sthis, logger, opts);
     if (existingToken) {
       // Token exists, return it immediately
