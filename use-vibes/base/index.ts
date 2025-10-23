@@ -281,25 +281,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       } else {
         console.log('[vibes-auth] ✗ Token data missing or no token string');
       }
-    } else if (!syncEnabled) {
-      console.log('[vibes-auth] Sync not enabled, clearing any existing token');
-      // If sync is not enabled, ensure token is cleared
-      try {
-        const existingToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
-        if (existingToken) {
-          console.log('[vibes-auth] - Removing existing token from localStorage');
-          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-        } else {
-          console.log('[vibes-auth] - No existing token to remove');
-        }
-      } catch (error) {
-        // Ignore localStorage errors (privacy mode, SSR, etc.)
-        console.error('[vibes-auth] ✗ Failed to clear token:', error);
-      }
     } else {
-      console.log(
-        '[vibes-auth] ✗ No ready token found and sync is enabled - waiting for token to become ready'
-      );
+      console.log('[vibes-auth] ✗ No ready token found yet - will write when token becomes ready');
+      console.log('[vibes-auth] Note: Token is only cleared via explicit disableSync() or logout');
     }
   }, [result.attach, manualAttach, syncEnabled]);
 
