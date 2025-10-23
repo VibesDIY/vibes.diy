@@ -1,0 +1,8 @@
+{
+  "name": "vibes",
+  "description": "Generate Fireproof-powered codebases with single or multi-version parallel generation",
+  "version": "1.0.0",
+  "author": {
+    "name": "Marcus Estes"
+  }
+}

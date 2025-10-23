@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mystic Mind Reader</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script type="module">
+    import { useFireproof } from "https://esm.sh/use-fireproof";
+    window.useFireproof = useFireproof;
+    window.fireproofLoaded = true;
+  </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const waitForFireproof = () => new Promise((resolve) => {
+      if (window.fireproofLoaded) resolve();
+      else {
+        const interval = setInterval(() => {
+          if (window.fireproofLoaded) { clearInterval(interval); resolve(); }
+        }, 50);
+      }
+    });
+    const { useFireproof } = window;
+
+    function App() {
+      const { database, useLiveQuery, useDocument } = useFireproof("mystic-mind-reader");
+
+      // Game state
+      const [gameState, setGameState] = useState('intro'); // intro, playing, reveal, history
+      const [currentQuestion, setCurrentQuestion] = useState(0);
+      const [minRange, setMinRange] = useState(1);
+      const [maxRange, setMaxRange] = useState(100);
+      const [guess, setGuess] = useState(50);
+      const [questionCount, setQuestionCount] = useState(0);
+      const [startTime, setStartTime] = useState(null);
+
+      // Get recent sessions from Fireproof
+      const { docs: sessions } = useLiveQuery("_id", { descending: true, limit: 10 });
+
+      // Document for current session
+      const { doc: currentSession, merge: mergeSession, save: saveSession } = useDocument({
+        type: "mind-reading-session",
+        questions: [],
+        finalGuess: null,
+        questionCount: 0,
+        duration: 0,
+        timestamp: Date.now()
+      });
+
+      const startNewGame = () => {
+        setGameState('playing');
+        setCurrentQuestion(0);
+        setMinRange(1);
+        setMaxRange(100);
+        setGuess(50);
+        setQuestionCount(0);
+        setStartTime(Date.now());
+        mergeSession({
+          type: "mind-reading-session",
+          questions: [],
+          finalGuess: null,
+          questionCount: 0,
+          duration: 0,
+          timestamp: Date.now()
+        });
+      };
+
+      const handleAnswer = (answer) => {
+        let newMin = minRange;
+        let newMax = maxRange;
+
+        if (answer === 'higher') {
+          newMin = guess + 1;
+        } else if (answer === 'lower') {
+          newMax = guess - 1;
+        } else if (answer === 'correct') {
+          // Save the session
+          const duration = Math.round((Date.now() - startTime) / 1000);
+          mergeSession({
+            questions: [...currentSession.questions, { question: `Is it ${guess}?`, answer: 'Yes!' }],
+            finalGuess: guess,
+            questionCount: questionCount + 1,
+            duration: duration
+          });
+          saveSession();
+          setGameState('reveal');
+          return;
+        }
+
+        const newGuess = Math.floor((newMin + newMax) / 2);
+        const newQuestionCount = questionCount + 1;
+
+        setMinRange(newMin);
+        setMaxRange(newMax);
+        setGuess(newGuess);
+        setQuestionCount(newQuestionCount);
+
+        // Record this question
+        mergeSession({
+          questions: [...currentSession.questions, {
+            question: `Is your number ${answer === 'higher' ? 'higher' : 'lower'} than ${guess}?`,
+            answer: answer,
+            range: `${minRange}-${maxRange}`
+          }]
+        });
+      };
+
+      const getMysticPhrase = () => {
+        const phrases = [
+          "The spirits whisper to me...",
+          "I sense the cosmic energies aligning...",
+          "The crystal ball reveals...",
+          "The ancient wisdom flows through me...",
+          "I peer into the astral plane...",
+          "The universe speaks its truth...",
+          "My third eye perceives...",
+          "The mystical forces converge..."
+        ];
+        return phrases[Math.floor(Math.random() * phrases.length)];
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-6">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-purple-300 to-yellow-300 mb-2">
+                ✨ Mystic Mind Reader ✨
+              </h1>
+              <p className="text-purple-200 text-lg">I shall divine the number in your mind...</p>
+            </div>
+
+            {/* Main Content */}
+            <div className="bg-purple-950 bg-opacity-50 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border-4 border-purple-700 border-opacity-50">
+
+              {/* Intro State */}
+              {gameState === 'intro' && (
+                <div className="text-center space-y-6">
+                  <div className="text-8xl mb-6 animate-pulse">🔮</div>
+                  <h2 className="text-3xl font-bold text-yellow-300 mb-4">Welcome, Seeker</h2>
+                  <div className="text-purple-100 text-lg space-y-4 max-w-2xl mx-auto">
+                    <p className="leading-relaxed">
+                      I am <span className="text-yellow-300 font-semibold">Madame Fireproof</span>,
+                      keeper of ancient secrets and reader of minds.
+                    </p>
+                    <p className="leading-relaxed">
+                      Think of a number between <span className="text-yellow-300 font-bold">1 and 100</span>,
+                      and hold it firmly in your thoughts. Do not speak it aloud!
+                    </p>
+                    <p className="leading-relaxed">
+                      Through mystical questions and cosmic divination,
+                      I shall reveal the number you harbor in your mind.
+                    </p>
+                  </div>
+                  <button
+                    onClick={startNewGame}
+                    className="mt-8 px-8 py-4 bg-gradient-to-r from-yellow-500 to-purple-600 text-white text-xl font-bold rounded-full shadow-lg hover:shadow-yellow-500/50 hover:scale-105 transition-all duration-300 border-2 border-yellow-400"
+                  >
+                    🌟 Begin the Reading 🌟
+                  </button>
+
+                  {/* Navigation */}
+                  <div className="mt-8">
+                    <button
+                      onClick={() => setGameState('history')}
+                      className="text-purple-300 hover:text-yellow-300 transition-colors underline"
+                    >
+                      View Past Readings
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Playing State */}
+              {gameState === 'playing' && (
+                <div className="space-y-8">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4 animate-bounce">🔮</div>
+                    <p className="text-purple-300 text-sm mb-2">{getMysticPhrase()}</p>
+                    <p className="text-purple-400 text-xs">Question {questionCount + 1}</p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-2xl p-8 border-2 border-purple-500">
+                    <h3 className="text-2xl font-bold text-yellow-300 text-center mb-6">
+                      Is your number {guess}?
+                    </h3>
+
+                    <div className="flex flex-col gap-4 max-w-md mx-auto">
+                      <button
+                        onClick={() => handleAnswer('correct')}
+                        className="px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-green-500/50 hover:scale-105 transition-all duration-200"
+                      >
+                        ✨ Yes, that's my number!
+                      </button>
+
+                      <button
+                        onClick={() => handleAnswer('higher')}
+                        className="px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-purple-500/50 hover:scale-105 transition-all duration-200"
+                      >
+                        ⬆️ Higher than {guess}
+                      </button>
+
+                      <button
+                        onClick={() => handleAnswer('lower')}
+                        className="px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-blue-500/50 hover:scale-105 transition-all duration-200"
+                      >
+                        ⬇️ Lower than {guess}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Question History */}
+                  {currentSession.questions.length > 0 && (
+                    <div className="bg-purple-900 bg-opacity-30 rounded-xl p-4 max-h-40 overflow-y-auto">
+                      <h4 className="text-sm font-semibold text-purple-300 mb-2">Previous Questions:</h4>
+                      <div className="space-y-1 text-xs text-purple-200">
+                        {currentSession.questions.map((q, idx) => (
+                          <div key={idx} className="flex justify-between">
+                            <span>{q.question}</span>
+                            <span className="text-purple-400">{q.answer}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Reveal State */}
+              {gameState === 'reveal' && (
+                <div className="text-center space-y-6">
+                  <div className="text-8xl mb-6 animate-pulse">💫</div>
+                  <h2 className="text-4xl font-bold text-yellow-300 mb-4">
+                    The Veil Has Lifted!
+                  </h2>
+                  <div className="bg-gradient-to-br from-yellow-500 to-purple-600 rounded-2xl p-8 border-4 border-yellow-400">
+                    <p className="text-white text-lg mb-4">Your number was...</p>
+                    <p className="text-7xl font-bold text-white mb-4">{currentSession.finalGuess}</p>
+                    <p className="text-yellow-100 text-sm">
+                      Revealed in {currentSession.questionCount} mystical questions
+                    </p>
+                    <p className="text-yellow-100 text-xs mt-2">
+                      Duration: {currentSession.duration} seconds
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-purple-200 italic">
+                      "The cosmos never lies, seeker. Your thoughts are an open book to those who know how to read them."
+                    </p>
+                    <p className="text-purple-300 text-sm">
+                      - Madame Fireproof
+                    </p>
+                  </div>
+
+                  <div className="flex gap-4 justify-center flex-wrap">
+                    <button
+                      onClick={startNewGame}
+                      className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-purple-600 text-white font-bold rounded-full shadow-lg hover:shadow-yellow-500/50 hover:scale-105 transition-all duration-300"
+                    >
+                      🌟 Read Another Mind
+                    </button>
+                    <button
+                      onClick={() => setGameState('history')}
+                      className="px-6 py-3 bg-purple-700 text-white font-bold rounded-full shadow-lg hover:shadow-purple-500/50 hover:scale-105 transition-all duration-300"
+                    >
+                      📜 View All Readings
+                    </button>
+                    <button
+                      onClick={() => setGameState('intro')}
+                      className="px-6 py-3 bg-purple-800 text-purple-200 font-bold rounded-full shadow-lg hover:bg-purple-700 transition-all duration-300"
+                    >
+                      🏠 Return Home
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* History State */}
+              {gameState === 'history' && (
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+                    <div className="text-6xl mb-4">📜</div>
+                    <h2 className="text-3xl font-bold text-yellow-300 mb-2">
+                      The Ancient Records
+                    </h2>
+                    <p className="text-purple-200">
+                      Past minds I have read...
+                    </p>
+                  </div>
+
+                  {sessions.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-purple-300 text-lg mb-4">
+                        The scroll is empty. No readings have been performed yet.
+                      </p>
+                      <button
+                        onClick={() => setGameState('intro')}
+                        className="text-yellow-300 hover:text-yellow-400 underline"
+                      >
+                        Return to begin
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      {sessions.map((session, idx) => (
+                        <div
+                          key={session._id}
+                          className="bg-purple-900 bg-opacity-40 rounded-xl p-6 border-2 border-purple-600 hover:border-yellow-500 transition-colors"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <p className="text-yellow-300 font-bold text-2xl">
+                                {session.finalGuess}
+                              </p>
+                              <p className="text-purple-300 text-xs">
+                                {new Date(session.timestamp).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-purple-200 text-sm">
+                                {session.questionCount} questions
+                              </p>
+                              <p className="text-purple-300 text-xs">
+                                {session.duration}s
+                              </p>
+                            </div>
+                          </div>
+
+                          {session.questions && session.questions.length > 0 && (
+                            <details className="mt-3">
+                              <summary className="text-purple-300 text-sm cursor-pointer hover:text-yellow-300 transition-colors">
+                                View questions...
+                              </summary>
+                              <div className="mt-2 space-y-1 text-xs text-purple-200 pl-4">
+                                {session.questions.map((q, qIdx) => (
+                                  <div key={qIdx} className="border-l-2 border-purple-700 pl-2">
+                                    <p>{q.question}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="text-center pt-4">
+                    <button
+                      onClick={() => setGameState('intro')}
+                      className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-purple-600 text-white font-bold rounded-full shadow-lg hover:shadow-yellow-500/50 hover:scale-105 transition-all duration-300"
+                    >
+                      🏠 Return Home
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="text-center mt-8 text-purple-300 text-sm">
+              <p>✨ Powered by Mystic Mathematics & Fireproof Database ✨</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    waitForFireproof().then(() => {
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    });
+  </script>
+</body>
+</html>

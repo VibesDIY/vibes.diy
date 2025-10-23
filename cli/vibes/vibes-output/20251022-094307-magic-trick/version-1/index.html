@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Card Trick</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script type="module">
+    import { useFireproof } from "https://esm.sh/use-fireproof";
+    window.useFireproof = useFireproof;
+    window.fireproofLoaded = true;
+  </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 min-h-screen">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const waitForFireproof = () => new Promise((resolve) => {
+      if (window.fireproofLoaded) resolve();
+      else {
+        const interval = setInterval(() => {
+          if (window.fireproofLoaded) { clearInterval(interval); resolve(); }
+        }, 50);
+      }
+    });
+    const { useFireproof } = window;
+
+    // Card data
+    const suits = ['♥', '♦', '♠', '♣'];
+    const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    const suitColors = {
+      '♥': 'text-red-500',
+      '♦': 'text-red-500',
+      '♠': 'text-gray-800',
+      '♣': 'text-gray-800'
+    };
+
+    // Create full deck
+    const createDeck = () => {
+      const deck = [];
+      suits.forEach(suit => {
+        values.forEach(value => {
+          deck.push({ suit, value, id: `${value}${suit}` });
+        });
+      });
+      return deck;
+    };
+
+    // Shuffle array
+    const shuffleArray = (array) => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+
+    // Card Component
+    const Card = ({ card, onClick, isRevealed, isSelected, isFlipping }) => {
+      return (
+        <div
+          onClick={onClick}
+          className={`relative w-20 h-28 cursor-pointer transition-all duration-300 transform ${
+            isSelected ? 'scale-110 -translate-y-4' : 'hover:scale-105'
+          } ${isFlipping ? 'animate-bounce' : ''}`}
+        >
+          <div className={`w-full h-full rounded-lg shadow-lg transition-all duration-500 ${
+            isRevealed ? 'bg-white border-4 border-yellow-400' : 'bg-gradient-to-br from-blue-600 to-purple-700'
+          } flex items-center justify-center`}>
+            {isRevealed ? (
+              <div className="flex flex-col items-center justify-center">
+                <div className={`text-3xl font-bold ${suitColors[card.suit]}`}>
+                  {card.value}
+                </div>
+                <div className={`text-4xl ${suitColors[card.suit]}`}>
+                  {card.suit}
+                </div>
+              </div>
+            ) : (
+              <div className="text-white text-4xl opacity-50">✨</div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    function App() {
+      const { database, useLiveQuery, useDocument } = useFireproof("magic-tricks");
+
+      const [gameState, setGameState] = useState('intro'); // intro, selecting, revealing, revealed
+      const [displayedCards, setDisplayedCards] = useState([]);
+      const [selectedCard, setSelectedCard] = useState(null);
+      const [magicCard, setMagicCard] = useState(null);
+      const [isFlipping, setIsFlipping] = useState(false);
+
+      // Get recent tricks from database
+      const { docs: recentTricks } = useLiveQuery("_id", {
+        descending: true,
+        limit: 10
+      });
+
+      const startTrick = () => {
+        const deck = createDeck();
+        const shuffled = shuffleArray(deck);
+        const selected = shuffled.slice(0, 5);
+
+        // Pre-select the "magic" card (user will unknowingly pick this)
+        const magicIndex = Math.floor(Math.random() * 5);
+        const magic = selected[magicIndex];
+
+        setDisplayedCards(selected);
+        setMagicCard(magic);
+        setSelectedCard(null);
+        setGameState('selecting');
+      };
+
+      const handleCardClick = (card) => {
+        if (gameState !== 'selecting') return;
+
+        setSelectedCard(card);
+        setGameState('revealing');
+
+        // Wait a moment then start the reveal
+        setTimeout(() => {
+          performMagic();
+        }, 1000);
+      };
+
+      const performMagic = async () => {
+        setIsFlipping(true);
+
+        // Animate for a moment
+        setTimeout(async () => {
+          setIsFlipping(false);
+          setGameState('revealed');
+
+          // Save trick to database
+          await database.put({
+            type: 'trick',
+            selectedCard: selectedCard.id,
+            magicCard: magicCard.id,
+            timestamp: Date.now(),
+            success: selectedCard.id === magicCard.id
+          });
+        }, 1500);
+      };
+
+      const reset = () => {
+        setGameState('intro');
+        setDisplayedCards([]);
+        setSelectedCard(null);
+        setMagicCard(null);
+        setIsFlipping(false);
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-8">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full">
+            <h1 className="text-5xl font-bold text-center mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              ✨ The Amazing Card Trick ✨
+            </h1>
+
+            {gameState === 'intro' && (
+              <div className="text-center space-y-6 py-8">
+                <p className="text-2xl text-gray-700 mb-8">
+                  Welcome to the most mystifying card trick on the internet!
+                </p>
+                <p className="text-lg text-gray-600 mb-8">
+                  I will read your mind and predict which card you'll choose... 🔮
+                </p>
+                <button
+                  onClick={startTrick}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xl font-bold py-4 px-8 rounded-full hover:scale-105 transform transition-all shadow-lg"
+                >
+                  Start the Magic! 🎩
+                </button>
+              </div>
+            )}
+
+            {gameState === 'selecting' && (
+              <div className="space-y-6">
+                <p className="text-xl text-gray-700 text-center mb-8">
+                  Think of a card, concentrate on it, and click to select...
+                </p>
+                <div className="flex justify-center gap-4 flex-wrap">
+                  {displayedCards.map((card, index) => (
+                    <Card
+                      key={index}
+                      card={card}
+                      onClick={() => handleCardClick(card)}
+                      isRevealed={false}
+                      isSelected={false}
+                      isFlipping={false}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {gameState === 'revealing' && (
+              <div className="space-y-6">
+                <p className="text-2xl text-gray-700 text-center mb-8 animate-pulse">
+                  Reading your mind... 🔮✨
+                </p>
+                <div className="flex justify-center gap-4 flex-wrap">
+                  {displayedCards.map((card, index) => (
+                    <Card
+                      key={index}
+                      card={card}
+                      onClick={() => {}}
+                      isRevealed={false}
+                      isSelected={card.id === selectedCard.id}
+                      isFlipping={isFlipping}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {gameState === 'revealed' && (
+              <div className="space-y-6">
+                <div className="text-center mb-8">
+                  {selectedCard.id === magicCard.id ? (
+                    <div className="space-y-4">
+                      <p className="text-3xl font-bold text-green-600 animate-bounce">
+                        🎉 I KNEW IT! 🎉
+                      </p>
+                      <p className="text-xl text-gray-700">
+                        You picked the {selectedCard.value}{selectedCard.suit}!
+                      </p>
+                      <p className="text-lg text-gray-600">
+                        The magic is real! ✨
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-3xl font-bold text-purple-600">
+                        The Real Magic! 🎩
+                      </p>
+                      <p className="text-xl text-gray-700">
+                        You thought you picked the {selectedCard.value}{selectedCard.suit}...
+                      </p>
+                      <p className="text-xl text-gray-700">
+                        But I predicted you'd pick the {magicCard.value}{magicCard.suit}!
+                      </p>
+                      <p className="text-lg text-gray-600 italic">
+                        (Actually, the trick works every time because I subtly guide your choice! 😉)
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-center gap-4">
+                  <div className="transform scale-125">
+                    <Card
+                      card={selectedCard}
+                      onClick={() => {}}
+                      isRevealed={true}
+                      isSelected={false}
+                      isFlipping={false}
+                    />
+                  </div>
+                </div>
+
+                <div className="text-center mt-8">
+                  <button
+                    onClick={reset}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xl font-bold py-3 px-6 rounded-full hover:scale-105 transform transition-all shadow-lg"
+                  >
+                    Try Again! 🔄
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* History Section */}
+            {recentTricks.length > 0 && (
+              <div className="mt-12 pt-8 border-t-2 border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                  🎴 Recent Tricks
+                </h2>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {recentTricks.map((trick) => {
+                    const date = new Date(trick.timestamp);
+                    return (
+                      <div key={trick._id} className="bg-gray-50 rounded-lg p-3 flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold text-gray-700">
+                            Selected: {trick.selectedCard}
+                          </span>
+                          <span className="text-gray-500 mx-2">→</span>
+                          <span className="font-semibold text-purple-600">
+                            Predicted: {trick.magicCard}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {date.toLocaleTimeString()}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="mt-8 text-center text-white text-sm opacity-75">
+            <p>Powered by Fireproof - Every trick is saved forever! ✨</p>
+          </div>
+        </div>
+      );
+    }
+
+    waitForFireproof().then(() => {
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    });
+  </script>
+</body>
+</html>
