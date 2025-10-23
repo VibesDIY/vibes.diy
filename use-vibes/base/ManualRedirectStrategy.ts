@@ -1,3 +1,4 @@
+// Manual redirect strategy for Fireproof authentication
 import type { Logger } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import type { ToCloudOpts, TokenAndClaims } from '@fireproof/core-types-protocols-cloud';
