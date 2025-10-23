@@ -9,12 +9,6 @@ import {
   type UseFpToCloudParam,
 } from 'use-fireproof';
 import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
-import {
-  AUTH_OVERLAY_READY_EVENT,
-  AUTH_OVERLAY_HIDDEN_CLASS,
-  AUTH_OVERLAY_TIMEOUT_MS,
-  type AuthOverlayReadyDetail,
-} from './events.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -33,16 +27,6 @@ let instanceCounter = 0;
 
 // Storage key for authentication token sync
 const VIBES_AUTH_TOKEN_KEY = 'vibes-diy-auth-token' as const;
-
-// Interface for the attach result structure from database.attach()
-interface AttachResult {
-  ctx?: {
-    tokenAndClaims?: {
-      state?: string;
-      tokenAndClaims?: { token?: string };
-    };
-  };
-}
 
 // Helper to update body class based on global sync status
 function updateBodyClass() {
@@ -111,107 +95,79 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   useEffect(() => {
     if (manualAttach === 'pending' && result.database) {
       const cloudConfig = toCloud();
-
-      // Wait for overlay ready event, then programmatically click the auth link
-      let eventReceived = false;
-      const handleOverlayReady = (evt: Event) => {
-        eventReceived = true;
-        clearTimeout(timeoutId);
-
-        const { overlay, authLink } = (evt as CustomEvent<AuthOverlayReadyDetail>).detail || {};
-
-        // Next frame to ensure DOM is interactive and clickable
-        requestAnimationFrame(() => {
-          const link = authLink || (overlay?.querySelector('a[href]') as HTMLAnchorElement | null);
-          if (link) {
-            link.click();
-            if (overlay) overlay.classList.add(AUTH_OVERLAY_HIDDEN_CLASS);
-          } else {
-            console.warn('[useFireproof] Auth overlay ready but link not found');
-          }
-        });
-      };
-
-      // Set up event listener BEFORE starting attach to avoid race
-      document.addEventListener(AUTH_OVERLAY_READY_EVENT, handleOverlayReady as EventListener, {
-        once: true,
-      });
-
-      // Safety timeout in case event never fires
-      const timeoutId = setTimeout(() => {
-        if (!eventReceived) {
-          console.warn(
-            '[useFireproof] Timeout waiting for auth overlay ready event — attempting fallback click'
-          );
-          document.removeEventListener(
-            AUTH_OVERLAY_READY_EVENT,
-            handleOverlayReady as EventListener
-          );
-          // Best-effort fallback under non-gesture context
-          const overlay = document.querySelector('.fpOverlay') as HTMLElement | null;
-          const link = (overlay?.querySelector('a[href]') ||
-            document.querySelector('.fpOverlay a[href]')) as HTMLAnchorElement | null;
-          if (link) {
-            link.click();
-            if (overlay) overlay.classList.add(AUTH_OVERLAY_HIDDEN_CLASS);
-          }
-        }
-      }, AUTH_OVERLAY_TIMEOUT_MS);
-
-      // Start the attach process after listener is registered
       result.database
         .attach(cloudConfig)
         .then((attached) => {
-          // Extract and store token BEFORE updating state
-          // This ensures token is available synchronously for any dependent effects
-          // Access ctx as a property (it's typed as a function but works as both)
-          const ctx = (attached as unknown as AttachResult).ctx;
-          const tokenState = ctx?.tokenAndClaims;
-          const token =
-            tokenState?.state === 'ready' ? tokenState.tokenAndClaims?.token : undefined;
+          console.log('[vibes-auth] Attach resolved, inspecting token state...');
+          console.log('[vibes-auth] Attached object keys:', Object.keys(attached || {}));
 
-          if (token) {
-            try {
-              localStorage.setItem(VIBES_AUTH_TOKEN_KEY, token);
-            } catch (error) {
-              console.warn('[useFireproof] Failed to write token to localStorage', error);
+          // Try to access token state (ctx might be a function or object)
+          const ctx = typeof attached?.ctx === 'function' ? attached.ctx() : attached?.ctx;
+          console.log('[vibes-auth] Context exists:', !!ctx);
+
+          // Type assertion for token state access
+          const ctxWithToken = ctx as
+            | { tokenAndClaims?: { state: string; tokenAndClaims?: { token: string } } }
+            | undefined;
+
+          if (ctxWithToken?.tokenAndClaims) {
+            console.log('[vibes-auth] Token state:', ctxWithToken.tokenAndClaims.state);
+            console.log(
+              '[vibes-auth] Has token data:',
+              !!ctxWithToken.tokenAndClaims.tokenAndClaims?.token
+            );
+
+            if (
+              ctxWithToken.tokenAndClaims.state === 'ready' &&
+              ctxWithToken.tokenAndClaims.tokenAndClaims?.token
+            ) {
+              console.log('[vibes-auth] ✓ Token is ready, writing to localStorage');
+              localStorage.setItem(
+                VIBES_AUTH_TOKEN_KEY,
+                ctxWithToken.tokenAndClaims.tokenAndClaims.token
+              );
+            } else {
+              console.log(
+                '[vibes-auth] ✗ Token not ready yet (state:',
+                ctxWithToken.tokenAndClaims.state,
+                ')'
+              );
             }
+          } else {
+            console.log('[vibes-auth] ✗ No tokenAndClaims in context');
           }
 
-          // Now update state - dependent effects will see the token
           setManualAttach({ state: 'attached', attached });
           // Save preference for next refresh
           localStorage.setItem(syncKey, 'true');
         })
         .catch((error) => {
-          console.error('Failed to attach:', error);
+          console.error('[vibes-auth] Failed to attach:', error);
           setManualAttach({ state: 'error', error });
         });
-
-      // Cleanup
-      return () => {
-        clearTimeout(timeoutId);
-        document.removeEventListener(AUTH_OVERLAY_READY_EVENT, handleOverlayReady as EventListener);
-      };
     }
   }, [manualAttach, result.database, syncKey, dbName]);
 
   // Function to enable sync and trigger popup directly
   const enableSync = useCallback(() => {
     if (!wasSyncEnabled && !manualAttach) {
-      // Opportunistic synchronous click under the user gesture if link already exists
-      const overlay = document.querySelector('.fpOverlay') as HTMLElement | null;
-      const immediateLink = (overlay?.querySelector('a[href]') ||
-        document.querySelector('.fpOverlay a[href]')) as HTMLAnchorElement | null;
-      if (immediateLink) {
-        immediateLink.click();
-        if (overlay) overlay.classList.add(AUTH_OVERLAY_HIDDEN_CLASS);
-        return; // Done
-      }
-
-      // Otherwise proceed with event-driven flow set up in the effect
+      // First time enabling - manual attach
       setManualAttach('pending');
     }
+
+    // After a short delay, programmatically click the sign-in link in the overlay
+    setTimeout(() => {
+      const authLink = document.querySelector('.fpOverlay a[href]') as HTMLAnchorElement;
+      if (authLink) {
+        authLink.click();
+
+        // Hide the overlay after clicking since we're opening the popup
+        const overlay = document.querySelector('.fpOverlay') as HTMLElement;
+        if (overlay) {
+          overlay.style.display = 'none';
+        }
+      }
+    }, 100); // Small delay to ensure overlay is rendered
   }, [wasSyncEnabled, manualAttach]);
 
   // Wire up vibes-login-link button if it exists
@@ -262,10 +218,22 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // Bridge Fireproof authentication to call-ai by syncing tokens to localStorage
   useEffect(() => {
+    console.log('[vibes-auth] Token bridge useEffect triggered');
+    console.log('[vibes-auth] - syncEnabled:', syncEnabled);
+    console.log('[vibes-auth] - result.attach state:', result.attach?.state);
+    console.log(
+      '[vibes-auth] - manualAttach state:',
+      typeof manualAttach === 'object' && manualAttach !== null ? manualAttach.state : 'none'
+    );
+
     if (typeof window === 'undefined') return;
 
     // Get the attach context (prefer result.attach over manualAttach)
     const attach = result.attach || manualAttach;
+    console.log(
+      '[vibes-auth] - Using attach from:',
+      result.attach ? 'result.attach' : manualAttach ? 'manualAttach' : 'none'
+    );
 
     // Check if we have a ready token state
     const hasReadyToken =
@@ -274,32 +242,64 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       'ctx' in attach &&
       attach.ctx?.tokenAndClaims?.state === 'ready';
 
+    console.log('[vibes-auth] - Has attach object:', !!attach);
+    console.log(
+      '[vibes-auth] - Attach has ctx:',
+      !!(attach && typeof attach === 'object' && 'ctx' in attach)
+    );
+    console.log(
+      '[vibes-auth] - Token state:',
+      attach && typeof attach === 'object' && 'ctx' in attach
+        ? attach.ctx?.tokenAndClaims?.state
+        : 'no ctx'
+    );
+    console.log('[vibes-auth] - Has ready token:', hasReadyToken);
+
     if (hasReadyToken && attach.ctx?.tokenAndClaims) {
       // Extract the token from the ready state
       const readyState = attach.ctx.tokenAndClaims;
       const tokenData = readyState.tokenAndClaims;
 
+      console.log('[vibes-auth] - Token data exists:', !!tokenData);
+      console.log('[vibes-auth] - Token string exists:', !!tokenData?.token);
+
       if (tokenData?.token) {
         try {
           // Store the token for call-ai integration
           localStorage.setItem(VIBES_AUTH_TOKEN_KEY, tokenData.token);
-        } catch {
+          console.log('[vibes-auth] ✓ Token written to localStorage successfully');
+          console.log(
+            '[useFireproof] Synced Fireproof token to localStorage for call-ai integration'
+          );
+        } catch (error) {
           // Ignore localStorage errors (privacy mode, SSR, etc.)
           console.warn(
             '[useFireproof] Failed to sync auth token to localStorage - storage may be restricted'
           );
+          console.error('[vibes-auth] ✗ Failed to write token:', error);
         }
+      } else {
+        console.log('[vibes-auth] ✗ Token data missing or no token string');
       }
     } else if (!syncEnabled) {
+      console.log('[vibes-auth] Sync not enabled, clearing any existing token');
       // If sync is not enabled, ensure token is cleared
       try {
         const existingToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
         if (existingToken) {
+          console.log('[vibes-auth] - Removing existing token from localStorage');
           localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
+        } else {
+          console.log('[vibes-auth] - No existing token to remove');
         }
-      } catch {
+      } catch (error) {
         // Ignore localStorage errors (privacy mode, SSR, etc.)
+        console.error('[vibes-auth] ✗ Failed to clear token:', error);
       }
+    } else {
+      console.log(
+        '[vibes-auth] ✗ No ready token found and sync is enabled - waiting for token to become ready'
+      );
     }
   }, [result.attach, manualAttach, syncEnabled]);
 
