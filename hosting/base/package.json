@@ -24,7 +24,7 @@
     "@vibes.diy/utils": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
     "call-ai": "workspace:*",
-    "hono": "^4.6.6",
+    "hono": "^4.10.2",
     "chanfana": "^2.1.4",
     "zod": "^4.1.12",
     "unique-names-generator": "^4.7.1"
