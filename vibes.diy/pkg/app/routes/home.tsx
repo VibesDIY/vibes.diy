@@ -8,6 +8,7 @@ import {
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
+import { HomeScreen } from "../pages/index.ts";
 
 export function meta() {
   return [
@@ -95,7 +96,8 @@ export default function SessionWrapper() {
 
   // Conditional rendering - true deferred session creation
   if (!sessionId) {
-    return <NewSessionView onSessionCreate={handleSessionCreate} />;
+    return <HomeScreen />;
+    // return <NewSessionView onSessionCreate={handleSessionCreate} />;
   }
 
   return (
