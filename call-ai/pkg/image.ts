@@ -36,15 +36,15 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       const generateEndpoint = joinUrlParts(origin, "/api/openai-image/generate");
 
       // Create headers and add Vibes auth token
-      const headers = new Headers({
+      const headers: Record<string, string> = {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-      });
+      };
 
       // Add Vibes authentication token if available
       const authToken = getVibesAuthToken();
-      if (authToken && !headers.has(VIBES_AUTH_HEADER)) {
-        headers.set(VIBES_AUTH_HEADER, authToken);
+      if (authToken) {
+        headers[VIBES_AUTH_HEADER] = authToken;
       }
 
       const response = await callAiFetch(options)(generateEndpoint, {
@@ -101,14 +101,14 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       const editEndpoint = joinUrlParts(origin, "/api/openai-image/edit");
 
       // Create headers and add Vibes auth token
-      const headers = new Headers({
+      const headers: Record<string, string> = {
         Authorization: `Bearer ${apiKey}`,
-      });
+      };
 
       // Add Vibes authentication token if available
       const authToken = getVibesAuthToken();
-      if (authToken && !headers.has(VIBES_AUTH_HEADER)) {
-        headers.set(VIBES_AUTH_HEADER, authToken);
+      if (authToken) {
+        headers[VIBES_AUTH_HEADER] = authToken;
       }
 
       const response = await callAiFetch(options)(editEndpoint, {
