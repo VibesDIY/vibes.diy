@@ -22,52 +22,56 @@ export const HomeScreenTheme = {
     },
 };
 
-// Fixed background (below grid)
+// Fixed background layer (stays in place while content scrolls)
 export const getBackgroundStyle = (): CSSProperties => ({
     position: 'fixed',
-    top: '64px', // Height of navbar
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 10,
+    left: 10,
+    right: 10,
+    bottom: 10,
+    borderRadius: '10px',
     backgroundColor: HomeScreenTheme.colors.menuBg,
     zIndex: 0, // Below everything
     fontFamily: HomeScreenTheme.fonts.primary,
 });
 
-// Noise texture overlay on background
+// Fixed noise texture overlay (stays in place while content scrolls)
 export const getNoiseTextureStyle = (): CSSProperties => ({
     position: 'fixed',
-    top: '64px', // Height of navbar
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 10,
+    left: 10,
+    right: 10,
+    bottom: 10,
+    borderRadius: '10px',
     backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
     filter: 'contrast(200%) brightness(100%)',
     mixBlendMode: 'overlay',
     opacity: 0.9, // Reduced opacity so it shows through color gradients
     pointerEvents: 'none',
-    zIndex: 10, // Above color gradients but below grid
+    zIndex: 2, // Above color gradients but below grid
     fontFamily: HomeScreenTheme.fonts.primary,
 });
 
-// Scrolling color backgrounds container (scrolls with content, below grid)
+// Scrolling color backgrounds container (scrolls with content, below fixed grid)
 export const getScrollingBackgroundsStyle = (): CSSProperties => ({
     position: 'absolute',
-    top: '64px',
+    top: 0,
     left: 0,
     right: 0,
     width: '100%',
+    minHeight: '100%',
     zIndex: 1, // Above base background, below grid
     pointerEvents: 'none',
 });
 
-// Fixed grid overlay (stays on top of background, below content)
+// Fixed grid overlay (stays in place while content scrolls over it)
 export const getWrapperStyle = (): CSSProperties => ({
     position: 'fixed',
-    top: '64px', // Height of navbar
-    left: 0,
-    right: 0,
-    bottom: 0,
+        top: 10,
+    left: 10,
+    right: 10,
+    bottom: 10,
+    borderRadius: '10px',
     pointerEvents: 'none', // Allow clicks to pass through to content below
     zIndex: 2, // On top of background, below content
     backgroundSize: `${HomeScreenTheme.dimensions.gridSize} ${HomeScreenTheme.dimensions.gridSize}`,
@@ -78,21 +82,23 @@ export const getWrapperStyle = (): CSSProperties => ({
     fontFamily: HomeScreenTheme.fonts.primary,
 });
 
-// Fixed menu line (always on top, visible when scrolling)
+// Sticky menu line (stays at top within the inner wrapper)
 export const getMenuStyle = (): CSSProperties => ({
-    position: 'fixed',
+    position: 'sticky',
     top: 0,
     left: 0,
     right: 0,
     height: '64px',
-    backgroundColor: 'white',
-    color: HomeScreenTheme.colors.menuText,
+    backgroundColor: '#fefff2',
     display: 'flex',
     alignItems: 'center',
     padding: '0 20px',
     zIndex: 1000, // Very high z-index to stay on top of everything
     borderBottom: '1px solid black',
     fontFamily: HomeScreenTheme.fonts.primary,
+    borderTopLeftRadius: '10px',
+    borderTopRightRadius: '10px',
+    boxShadow: '0px 1px 0px 0px #fefff2',
 });
 
 // Scrollable container for content (needs high z-index so children can be above grid)
@@ -100,11 +106,8 @@ export const getContainerStyle = (): CSSProperties => ({
     width: '100%',
     minHeight: '100vh',
     color: HomeScreenTheme.colors.menuText,
-    position: 'absolute',
-    top: '64px', // Below navbar
-    left: 0,
-    right: 0,
-    overflow: 'hidden', // Make content scrollable
+    position: 'relative',
+    overflow: 'visible',
     fontFamily: HomeScreenTheme.fonts.primary,
     backgroundColor: 'transparent', // Transparent so grid shows through
     zIndex: 3, // Above the grid (grid is z-index: 2) so children can be above grid too
@@ -151,7 +154,7 @@ export const getSectionWrapperStyle = (isMobile: boolean): CSSProperties => ({
 // First section color background (in scrolling backgrounds container)
 export const getFirstSectionColorBackgroundStyle = (isMobile: boolean): CSSProperties => ({
     position: 'absolute',
-    top: isMobile ? 'calc(200vh)' : 'calc(110vh - 85px)', // Start at first section
+    top: isMobile ? 'calc(200vh + 64px)' : 'calc(110vh + 64px - 85px)', // Start at first section (accounting for menu)
     left: 0,
     right: 0,
     height: isMobile ? 'calc(180vh)' : 'calc(100vh + 460px)', // Cover first section and transition
@@ -170,7 +173,7 @@ export const getFirstSectionColorBackgroundStyle = (isMobile: boolean): CSSPrope
 // Second section color background (in scrolling backgrounds container)
 export const getSecondSectionColorBackgroundStyle = (isMobile: boolean): CSSProperties => ({
     position: 'absolute',
-    top: isMobile ? 'calc(380vh)' : 'calc(210vh + 370px)', // Start where first section gradient ends
+    top: isMobile ? 'calc(380vh + 64px)' : 'calc(210vh + 64px + 370px)', // Start where first section gradient ends (accounting for menu)
     left: 0,
     right: 0,
     height: '110vh', // Large enough to cover second section and beyond
@@ -195,4 +198,26 @@ export const getSectionContentStyle = (): CSSProperties => ({
     backgroundColor: '#ffffff',
     color: '#000000',
     zIndex: 10, // Above grid and colored backgrounds
+});
+
+export const getBlackBorderInnerWrapper = (): CSSProperties => ({
+    height: 'calc(100% - 20px)',
+    width: 'calc(100% - 20px)',
+    margin: '10px',
+    borderRadius: '10px',
+    position: 'relative',
+    overflow: 'auto',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
+});
+
+export const getBlackBorderWrapper = (): CSSProperties => ({
+    width: '100%',
+    height: '100%',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'black',
 });

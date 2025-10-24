@@ -12,7 +12,9 @@ import {
   getSectionWrapperStyle,
   getFirstSectionColorBackgroundStyle,
   getSecondSectionColorBackgroundStyle,
-  getSectionContentStyle
+  getSectionContentStyle,
+  getBlackBorderWrapper,
+  getBlackBorderInnerWrapper
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
@@ -82,13 +84,14 @@ export const HomeScreen = ({}: HomeScreenProps) => {
   );
 
   return (
-    <>
+    <div style={getBlackBorderWrapper()}>
+      <div style={getBackgroundStyle()} />
+      <div style={getNoiseTextureStyle()} />
+    <div style={getBlackBorderInnerWrapper()}>
       <div style={getMenuStyle()}>
         <VibesSwitch size={64} />
       </div>
 
-      <div style={getBackgroundStyle()} />
-      <div style={getNoiseTextureStyle()} />
 
       <div style={getScrollingBackgroundsStyle()}>
         <div style={getFirstSectionColorBackgroundStyle(isMobile)} />
@@ -208,6 +211,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
             </section>
           </div>
         </div>
-    </>
+    </div>
+    </div>
   );
 }
