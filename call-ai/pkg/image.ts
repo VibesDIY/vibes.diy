@@ -35,16 +35,16 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       const origin = customOrigin || callAiEnv.def.CALLAI_CHAT_URL;
       const generateEndpoint = joinUrlParts(origin, "/api/openai-image/generate");
 
-      // Create headers and add Vibes auth token
-      const headers: Record<string, string> = {
+      // HTTP headers for the request (normalize to `Headers` and add Vibes auth)
+      const headers = new Headers({
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-      };
+      });
 
-      // Add Vibes authentication token if available
+      // Add Vibes authentication token if available (late binding for vibesdiy.net apps)
       const authToken = getVibesAuthToken();
-      if (authToken) {
-        headers[VIBES_AUTH_HEADER] = authToken;
+      if (authToken && !headers.has(VIBES_AUTH_HEADER)) {
+        headers.set(VIBES_AUTH_HEADER, authToken);
       }
 
       const response = await callAiFetch(options)(generateEndpoint, {
@@ -100,15 +100,15 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       const origin = customOrigin || callAiEnv.def.CALLAI_CHAT_URL;
       const editEndpoint = joinUrlParts(origin, "/api/openai-image/edit");
 
-      // Create headers and add Vibes auth token
-      const headers: Record<string, string> = {
+      // HTTP headers for the request (normalize to `Headers` and add Vibes auth)
+      const headers = new Headers({
         Authorization: `Bearer ${apiKey}`,
-      };
+      });
 
-      // Add Vibes authentication token if available
+      // Add Vibes authentication token if available (late binding for vibesdiy.net apps)
       const authToken = getVibesAuthToken();
-      if (authToken) {
-        headers[VIBES_AUTH_HEADER] = authToken;
+      if (authToken && !headers.has(VIBES_AUTH_HEADER)) {
+        headers.set(VIBES_AUTH_HEADER, authToken);
       }
 
       const response = await callAiFetch(options)(editEndpoint, {
