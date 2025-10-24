@@ -94,6 +94,8 @@ describe("imageGen", () => {
     expect(fetchCall[1]?.headers).toBeInstanceOf(Headers);
     expect((fetchCall[1]?.headers as Headers).get("Authorization")).toBe("Bearer VIBES_DIY");
     expect((fetchCall[1]?.headers as Headers).get("Content-Type")).toBe("application/json");
+    // No token header by default
+    expect((fetchCall[1]?.headers as Headers).has("X-VIBES-Token")).toBe(false);
 
     // Check request body
     const requestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
@@ -135,11 +137,34 @@ describe("imageGen", () => {
     expect(fetchCall[1]?.method).toBe("POST");
     expect(fetchCall[1]?.headers).toBeInstanceOf(Headers);
     expect((fetchCall[1]?.headers as Headers).get("Authorization")).toBe("Bearer VIBES_DIY");
+    // No token header by default
+    expect((fetchCall[1]?.headers as Headers).has("X-VIBES-Token")).toBe(false);
     expect(fetchCall[1]?.body).toBeInstanceOf(FormData);
 
     // Check response structure
     expect(result).toEqual(mockImageResponse);
     expect(result.data[0].b64_json).toBeDefined();
+  });
+
+  it("should add X-VIBES-Token header when localStorage token is set (edit)", async () => {
+    const token = "token-edit-123";
+    const mockLocalStorage = {
+      getItem: vi.fn((key: string) => (key === "vibes-diy-auth-token" ? token : null)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    } as unknown as Storage;
+    Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
+
+    const mockImageBlob = new Blob(["fake image data"], { type: "image/png" });
+    const mockFiles = [new File([mockImageBlob], "image1.png", { type: "image/png" })];
+
+    await imageGen("Edit me", { apiKey: "VIBES_DIY", images: mockFiles });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const fetchCall = globalFetch.mock.calls[0];
+    const headers = fetchCall[1]?.headers as Headers;
+    expect(headers).toBeInstanceOf(Headers);
+    expect(headers.get("X-VIBES-Token")).toBe(token);
   });
 
   it("should handle errors from the image generation API", async () => {

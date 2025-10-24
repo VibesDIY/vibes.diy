@@ -64,6 +64,8 @@ describe("imageGen function", () => {
       expect(fetchCall[1].headers).toBeInstanceOf(Headers);
       expect(fetchCall[1].headers.get("Authorization")).toBe("Bearer VIBES_DIY");
       expect(fetchCall[1].headers.get("Content-Type")).toBe("application/json");
+      // Ensure no token header by default
+      expect(fetchCall[1].headers.has("X-VIBES-Token")).toBe(false);
 
       // Verify the result structure
       expect(result).toBeDefined();
@@ -102,6 +104,8 @@ describe("imageGen function", () => {
       expect(fetchCall[1].method).toBe("POST");
       expect(fetchCall[1].headers).toBeInstanceOf(Headers);
       expect(fetchCall[1].headers.get("Authorization")).toBe("Bearer VIBES_DIY");
+      // Ensure no token header by default
+      expect(fetchCall[1].headers.has("X-VIBES-Token")).toBe(false);
 
       // Verify the result structure
       expect(result).toBeDefined();
@@ -112,5 +116,22 @@ describe("imageGen function", () => {
       console.error("Test failed:", error);
       throw error;
     }
+  });
+
+  test("should include X-VIBES-Token when localStorage token is set (generate)", async () => {
+    const mockToken = "token-xyz";
+    const mockLocalStorage = {
+      getItem: vi.fn((key: string) => (key === "vibes-diy-auth-token" ? mockToken : null)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    } as unknown as Storage;
+    Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
+
+    await imageGen("A prompt", { apiKey: "VIBES_DIY", model: "gpt-image-1" });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const headers = fetchCall[1].headers as Headers;
+    expect(headers.get("X-VIBES-Token")).toBe(mockToken);
   });
 });
