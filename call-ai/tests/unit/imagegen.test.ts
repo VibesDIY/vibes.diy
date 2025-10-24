@@ -125,13 +125,18 @@ describe("imageGen function", () => {
       setItem: vi.fn(),
       removeItem: vi.fn(),
     } as unknown as Storage;
-    Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
+    const originalLocalStorage = (globalThis as { localStorage?: Storage }).localStorage;
+    try {
+      Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
 
-    await imageGen("A prompt", { apiKey: "VIBES_DIY", model: "gpt-image-1" });
+      await imageGen("A prompt", { apiKey: "VIBES_DIY", model: "gpt-image-1" });
 
-    expect(fetch).toHaveBeenCalledTimes(1);
-    const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    const headers = fetchCall[1].headers as Headers;
-    expect(headers.get("X-VIBES-Token")).toBe(mockToken);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      const headers = fetchCall[1].headers as Headers;
+      expect(headers.get("X-VIBES-Token")).toBe(mockToken);
+    } finally {
+      Object.defineProperty(globalThis, "localStorage", { value: originalLocalStorage, writable: true, configurable: true });
+    }
   });
 });
