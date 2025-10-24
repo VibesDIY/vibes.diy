@@ -44,9 +44,21 @@ export const getCardBasicStyle = (color: CardColor): React.CSSProperties => ({
 export const getCardStyle = (
   color: CardColor,
   isMobile: boolean,
-  isDragging: boolean
+  isDragging: boolean,
+  isStatic: boolean = false
 ): React.CSSProperties => {
   const base = getCardBasicStyle(color);
+
+  if (isStatic) {
+    // Static mode: behaves like a normal div, 80% width on desktop
+    return {
+      ...base,
+      marginBottom: '16px',
+      minWidth: 'unset',
+      width: isMobile ? '100%' : '80%',
+      margin: isMobile ? '0' : '0 auto 16px auto', // Center on desktop
+    };
+  }
 
   if (isMobile) {
     return {

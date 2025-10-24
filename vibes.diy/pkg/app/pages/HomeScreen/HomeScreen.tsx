@@ -2,16 +2,22 @@ import React, { useMemo } from "react";
 import {
   getContainerStyle,
   getWrapperStyle,
+  getBackgroundStyle,
+  getNoiseTextureStyle,
+  getScrollingBackgroundsStyle,
   getMenuStyle,
   getInnerContainerStyle,
   getSectionsContainerStyle,
-  getSecondCardStyle
+  getSecondCardStyle,
+  getSectionWrapperStyle,
+  getFirstSectionColorBackgroundStyle,
+  getSecondSectionColorBackgroundStyle,
+  getSectionContentStyle
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
   DraggableCard,
   DraggableSection,
-  HomeSection,
   VibesSwitch
 } from "../../components/index.ts";
 import { HomeScreenProps } from "./HomeScreen.types.ts";
@@ -81,10 +87,19 @@ export const HomeScreen = ({}: HomeScreenProps) => {
         <VibesSwitch size={64} />
       </div>
 
-      <div style={getWrapperStyle()}>
-        <div style={getContainerStyle()}>
-          <div style={getInnerContainerStyle(isMobile)}>
-            <DraggableSection color="grey" x={20} y={20}>
+      <div style={getBackgroundStyle()} />
+      <div style={getNoiseTextureStyle()} />
+
+      <div style={getScrollingBackgroundsStyle()}>
+        <div style={getFirstSectionColorBackgroundStyle(isMobile)} />
+        <div style={getSecondSectionColorBackgroundStyle(isMobile)} />
+      </div>
+
+      <div style={getWrapperStyle()} />
+
+      <div style={getContainerStyle()}>
+        <div style={getInnerContainerStyle(isMobile)}>
+          <DraggableSection color="grey" x={20} y={20}>
               <h2 style={{ fontWeight: "bold", fontSize: "40px" }}>
                 Impress the Group Chat
               </h2>
@@ -128,67 +143,71 @@ export const HomeScreen = ({}: HomeScreenProps) => {
           </div>
 
           <div style={getSectionsContainerStyle(isMobile)}>
-            <HomeSection color={"yellow"}>
-              <h3 style={{ fontWeight: 'bold', fontSize: '24px' }}>Community Code</h3>
-              <p><strong>For people who care about people</strong><br />
-                Your group chat isn’t a start-up. It’s a community, and every community has its own
-                unique needs. So why should you rely on one-sized-fits-all apps made by people who
-                care more about shareholders than stakeholders? Infinitely remixable, small-scale
-                software made for the people you love: that’s the vibe.
-              </p>
+            <section style={getSectionWrapperStyle(isMobile)}>
+              <DraggableSection color="blue" static>
+                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>Community Code</h3>
+                <p><strong>For people who care about people</strong><br />
+                  Your group chat isn't a start-up. It's a community, and every community has its own
+                  unique needs. So why should you rely on one-sized-fits-all apps made by people who
+                  care more about shareholders than stakeholders? Infinitely remixable, small-scale
+                  software made for the people you love: that's the vibe.
+                </p>
 
-              <h3 style={{ fontWeight: 'bold', fontSize: '24px' }}>The App to End all Apps</h3>
-              <p><strong>What you need and nothing else</strong><br />
-                Vibes is every app you could ever need in one place — with no app store, no
-                downloads, and no software updates. It’s a tool for building what you need, only when
-                you need it. Share your creations instantly with the group chat and mix them up
-                together. Best of all, everyone’s data stays local, portable, and safe.
-              </p>
+                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>The App to End all Apps</h3>
+                <p><strong>What you need and nothing else</strong><br />
+                  Vibes is every app you could ever need in one place — with no app store, no
+                  downloads, and no software updates. It's a tool for building what you need, only when
+                  you need it. Share your creations instantly with the group chat and mix them up
+                  together. Best of all, everyone's data stays local, portable, and safe.
+                </p>
 
-              <h3 style={{ fontWeight: 'bold', fontSize: '24px' }}>Get off the Cloud</h3>
-              <p><strong>With un-hackable architecture</strong><br />
-                Vibes gives you complete visibility and control over your data. Your community apps
-                are stored locally, right on your phone — so you don’t have to worry about trusting
-                everyone’s personal information to some impersonal cloud.
-              </p>
+                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>Get off the Cloud</h3>
+                <p><strong>With un-hackable architecture</strong><br />
+                  Vibes gives you complete visibility and control over your data. Your community apps
+                  are stored locally, right on your phone — so you don't have to worry about trusting
+                  everyone's personal information to some impersonal cloud.
+                </p>
 
-              <h3 style={{ fontWeight: 'bold', fontSize: '24px' }}>Single-Serving Software</h3>
-              <p><strong>Don’t overthink it — make it.</strong><br />
-                No need to be precious. Whip up a one-time scoring app for your annual pumpkin
-                carving contest. Generate questions for trivia night. Troll your friends with a custom
-                meme template. Solve small problems or big ones. Make new things and put them into
-                motion right away. As long as you can describe it, you can build it — fast.
-              </p>
+                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>Single-Serving Software</h3>
+                <p><strong>Don't overthink it — make it.</strong><br />
+                  No need to be precious. Whip up a one-time scoring app for your annual pumpkin
+                  carving contest. Generate questions for trivia night. Troll your friends with a custom
+                  meme template. Solve small problems or big ones. Make new things and put them into
+                  motion right away. As long as you can describe it, you can build it — fast.
+                </p>
 
-              <h3 style={{ fontWeight: 'bold', fontSize: '24px' }}>Quick Apps for Lasting Community</h3>
-              <p><strong>Because good software makes good neighbors</strong><br />
-                Your relationships are always evolving. Your tools should too. With Vibes, build exactly
-                what your community needs right now. When those tools don’t serve you anymore,
-                make some new ones. Because it’s not about the apps. It’s about what you do with
-                them together.
-              </p>
-            </HomeSection>
-            <HomeSection color="red">
-              <div style={getSecondCardStyle()}>
-              <p>You love your group chat. Meet your group app. </p><p>
-                Remember that camping trip when nobody packed coffee? The Friendsgiving with six
-                mac n’ cheeses and no turkey? You love your friends, but organizing them can be a
-                headache. Make planning painless with custom community apps, made by and for
-                your friends, for everything you do together.</p><p>
-                Like volunteer sign-ups and school drop-offs. Project checklists and vacation planners.
-                Pick-up basketball schedules and fantasy football rankings. A cooperative chore wheel
-                for the roomies and the ultimate Oscars bracket for movie club. Whatever the vibe, you
-                can build it with Vibes.</p><p>
-                Share and use your new apps instantly, and remix them on the fly. Everyone’s ideas are
-                welcome and everyone’s data is protected. This is software that communities build
-                together in real time — to make life easier, fairer, and more fun for everyone.</p><p>
-                You and your friends aren’t users anymore. You’re makers.
-              </p>
-              </div>
-            </HomeSection>
+                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>Quick Apps for Lasting Community</h3>
+                <p><strong>Because good software makes good neighbors</strong><br />
+                  Your relationships are always evolving. Your tools should too. With Vibes, build exactly
+                  what your community needs right now. When those tools don't serve you anymore,
+                  make some new ones. Because it's not about the apps. It's about what you do with
+                  them together.
+                </p>
+              </DraggableSection>
+            </section>
+
+            <section style={getSectionWrapperStyle(isMobile)}>
+              <DraggableSection color="red" static>
+                <div style={getSecondCardStyle()}>
+                  <p>You love your group chat. Meet your group app. </p><p>
+                    Remember that camping trip when nobody packed coffee? The Friendsgiving with six
+                    mac n' cheeses and no turkey? You love your friends, but organizing them can be a
+                    headache. Make planning painless with custom community apps, made by and for
+                    your friends, for everything you do together.</p><p>
+                    Like volunteer sign-ups and school drop-offs. Project checklists and vacation planners.
+                    Pick-up basketball schedules and fantasy football rankings. A cooperative chore wheel
+                    for the roomies and the ultimate Oscars bracket for movie club. Whatever the vibe, you
+                    can build it with Vibes.</p><p>
+                    Share and use your new apps instantly, and remix them on the fly. Everyone's ideas are
+                    welcome and everyone's data is protected. This is software that communities build
+                    together in real time — to make life easier, fairer, and more fun for everyone.</p><p>
+                    You and your friends aren't users anymore. You're makers.
+                  </p>
+                </div>
+              </DraggableSection>
+            </section>
           </div>
         </div>
-      </div>
     </>
   );
 }

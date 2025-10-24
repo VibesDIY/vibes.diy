@@ -22,20 +22,65 @@ export const HomeScreenTheme = {
     },
 };
 
-// Wrapper with padding (full screen height)
-export const getWrapperStyle = (): CSSProperties => ({
+// Fixed background (below grid)
+export const getBackgroundStyle = (): CSSProperties => ({
+    position: 'fixed',
+    top: '64px', // Height of navbar
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: HomeScreenTheme.colors.menuBg,
-    width: '100%',
-    minHeight: '100vh',
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
+    zIndex: 0, // Below everything
     fontFamily: HomeScreenTheme.fonts.primary,
 });
 
-// Sticky menu line
+// Noise texture overlay on background
+export const getNoiseTextureStyle = (): CSSProperties => ({
+    position: 'fixed',
+    top: '64px', // Height of navbar
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+    filter: 'contrast(200%) brightness(100%)',
+    mixBlendMode: 'overlay',
+    opacity: 0.9, // Reduced opacity so it shows through color gradients
+    pointerEvents: 'none',
+    zIndex: 10, // Above color gradients but below grid
+    fontFamily: HomeScreenTheme.fonts.primary,
+});
+
+// Scrolling color backgrounds container (scrolls with content, below grid)
+export const getScrollingBackgroundsStyle = (): CSSProperties => ({
+    position: 'absolute',
+    top: '64px',
+    left: 0,
+    right: 0,
+    width: '100%',
+    zIndex: 1, // Above base background, below grid
+    pointerEvents: 'none',
+});
+
+// Fixed grid overlay (stays on top of background, below content)
+export const getWrapperStyle = (): CSSProperties => ({
+    position: 'fixed',
+    top: '64px', // Height of navbar
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none', // Allow clicks to pass through to content below
+    zIndex: 2, // On top of background, below content
+    backgroundSize: `${HomeScreenTheme.dimensions.gridSize} ${HomeScreenTheme.dimensions.gridSize}`,
+    backgroundImage: `
+      linear-gradient(${HomeScreenTheme.colors.gridLineColor} 1px, transparent 1px),
+      linear-gradient(90deg, ${HomeScreenTheme.colors.gridLineColor} 1px, transparent 1px)
+    `,
+    fontFamily: HomeScreenTheme.fonts.primary,
+});
+
+// Fixed menu line (always on top, visible when scrolling)
 export const getMenuStyle = (): CSSProperties => ({
-    position: 'sticky',
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
@@ -45,33 +90,30 @@ export const getMenuStyle = (): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
     padding: '0 20px',
-    zIndex: 100,
+    zIndex: 1000, // Very high z-index to stay on top of everything
     borderBottom: '1px solid black',
     fontFamily: HomeScreenTheme.fonts.primary,
 });
 
-// Container with background grid (overlaid by menu, full screen height)
+// Scrollable container for content (needs high z-index so children can be above grid)
 export const getContainerStyle = (): CSSProperties => ({
-    flex: 1,
     width: '100%',
-    minHeight: 'calc(100vh - 90px)', // viewport - padding - menu
-    border: '1px solid white',
+    minHeight: '100vh',
     color: HomeScreenTheme.colors.menuText,
-    backgroundColor: HomeScreenTheme.colors.menuBg,
-    backgroundSize: `${HomeScreenTheme.dimensions.gridSize} ${HomeScreenTheme.dimensions.gridSize}`,
-    backgroundImage: `
-      linear-gradient(${HomeScreenTheme.colors.gridLineColor} 1px, transparent 1px),
-      linear-gradient(90deg, ${HomeScreenTheme.colors.gridLineColor} 1px, transparent 1px)
-    `,
-    position: 'relative',
-    overflow: 'hidden',
+    position: 'absolute',
+    top: '64px', // Below navbar
+    left: 0,
+    right: 0,
+    overflow: 'hidden', // Make content scrollable
     fontFamily: HomeScreenTheme.fonts.primary,
+    backgroundColor: 'transparent', // Transparent so grid shows through
+    zIndex: 3, // Above the grid (grid is z-index: 2) so children can be above grid too
 });
 
 // Inner container for cards and content
 export const getInnerContainerStyle = (isMobile: boolean): CSSProperties => ({
     width: '100%',
-    height: '100%',
+    minHeight: '100vh',
     position: 'relative',
     padding: isMobile ? '20px' : '0px',
     fontFamily: HomeScreenTheme.fonts.primary,
@@ -79,13 +121,78 @@ export const getInnerContainerStyle = (isMobile: boolean): CSSProperties => ({
 
 export const getSectionsContainerStyle = (isMobile: boolean): CSSProperties => ({
     width: '100%',
-    height: '100%',
+    minHeight: '100vh',
     fontFamily: HomeScreenTheme.fonts.primary,
-    paddingTop: isMobile ? '0px' : 'calc(100vh + 100px)',
+    paddingTop: '0px' ,
+    position: 'relative',
+    gap: isMobile ? '300px' : '30px',
+    display: 'flex',
+    flexDirection: 'column',
+    marginTop: isMobile ? '400px' : '0px',
 });
 
 export const getSecondCardStyle = (): CSSProperties => ({
     display: 'flex',
     flexDirection: 'column',
     gap: '20px'
+});
+
+// Section wrapper with colored background
+export const getSectionWrapperStyle = (isMobile: boolean): CSSProperties => ({
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    padding: isMobile ? '0px 20px' : '200px 0px',
+    overflow: 'hidden',
+});
+
+// First section color background (in scrolling backgrounds container)
+export const getFirstSectionColorBackgroundStyle = (isMobile: boolean): CSSProperties => ({
+    position: 'absolute',
+    top: isMobile ? 'calc(200vh)' : 'calc(110vh - 85px)', // Start at first section
+    left: 0,
+    right: 0,
+    height: isMobile ? 'calc(180vh)' : 'calc(100vh + 460px)', // Cover first section and transition
+    pointerEvents: 'none',
+    background: `
+        linear-gradient(
+            180deg,
+            transparent 0%,
+            #009ace 30%,
+            #009ace 60%,
+            #b55f4d 100%
+        )
+    `,
+});
+
+// Second section color background (in scrolling backgrounds container)
+export const getSecondSectionColorBackgroundStyle = (isMobile: boolean): CSSProperties => ({
+    position: 'absolute',
+    top: isMobile ? 'calc(380vh)' : 'calc(210vh + 370px)', // Start where first section gradient ends
+    left: 0,
+    right: 0,
+    height: '110vh', // Large enough to cover second section and beyond
+    pointerEvents: 'none',
+    background: `
+        linear-gradient(
+            180deg,
+            #b55f4d 0%,
+            #da291cd5 20%,
+            #da291cd5 100%
+        )
+    `,
+});
+
+// Content card (white background)
+export const getSectionContentStyle = (): CSSProperties => ({
+    position: 'relative',
+    width: '80%',
+    padding: '40px',
+    borderRadius: '15px',
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
+    color: '#000000',
+    zIndex: 10, // Above grid and colored backgrounds
 });

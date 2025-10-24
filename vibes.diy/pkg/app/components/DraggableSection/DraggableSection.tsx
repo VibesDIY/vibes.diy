@@ -3,7 +3,7 @@ import { DraggableSectionProps } from "./DraggableSection.types.ts";
 import { getCardChildrenStyle, getCardStyle, getTitleBarStyle } from "./DraggableSection.styles.ts";
 import { useIsMobile } from "../../hooks/index.ts";
 
-export const DraggableSection = ({ color, children, x = 0, y = 0 }: DraggableSectionProps) => {
+export const DraggableSection = ({ color, children, x = 0, y = 0, static: isStatic = false }: DraggableSectionProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -11,15 +11,16 @@ export const DraggableSection = ({ color, children, x = 0, y = 0 }: DraggableSec
   const isMobile = useIsMobile();
 
   useEffect(() => {
+    if (isStatic) return; // Skip transform for static sections
     if (!isMobile && cardRef.current) {
       cardRef.current.style.transform = `translate(${x}px, ${y}px)`;
     } else if (isMobile && cardRef.current) {
       cardRef.current.style.transform = '';
     }
-  }, [x, y, isMobile]);
+  }, [x, y, isMobile, isStatic]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isMobile) return;
+    if (isMobile || isStatic) return; // Disable dragging for static sections
     e.preventDefault();
     setIsDragging(true);
     const rect = cardRef.current?.getBoundingClientRect();
@@ -32,7 +33,7 @@ export const DraggableSection = ({ color, children, x = 0, y = 0 }: DraggableSec
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (isMobile || !isDragging) return;
+    if (isMobile || !isDragging || isStatic) return;
     const container = cardRef.current?.parentElement;
     if (!container) return;
     const containerRect = container.getBoundingClientRect();
@@ -45,12 +46,12 @@ export const DraggableSection = ({ color, children, x = 0, y = 0 }: DraggableSec
   };
 
   const handleMouseUp = () => {
-    if (isMobile) return;
+    if (isMobile || isStatic) return;
     setIsDragging(false);
   };
 
   useEffect(() => {
-    if (!isMobile && isDragging) {
+    if (!isMobile && isDragging && !isStatic) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       return () => {
@@ -58,13 +59,13 @@ export const DraggableSection = ({ color, children, x = 0, y = 0 }: DraggableSec
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isMobile]);
+  }, [isDragging, isMobile, isStatic]);
 
   return (
     <div
       ref={cardRef}
-      style={getCardStyle(color, isMobile, isDragging)}
-      onMouseDown={isMobile ? undefined : handleMouseDown}
+      style={getCardStyle(color, isMobile, isDragging, isStatic)}
+      onMouseDown={isMobile || isStatic ? undefined : handleMouseDown}
     >
       <div style={getTitleBarStyle(color)} />
       <div style={getCardChildrenStyle(color)}>{children}</div>
