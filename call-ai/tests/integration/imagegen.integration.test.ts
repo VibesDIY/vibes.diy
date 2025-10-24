@@ -148,15 +148,20 @@ describe("Image Generation Integration Tests", () => {
       setItem: vi.fn(),
       removeItem: vi.fn(),
     } as unknown as Storage;
-    Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
+    const originalLocalStorage = (globalThis as { localStorage?: Storage }).localStorage;
+    try {
+      Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
 
-    const result = await imageGen("prompt", { apiKey: "VIBES_DIY" });
-    expect(result).toBeDefined();
+      const result = await imageGen("prompt", { apiKey: "VIBES_DIY" });
+      expect(result).toBeDefined();
 
-    const fetchCall = globalFetch.mock.calls[0];
-    const headers = fetchCall[1]?.headers as Headers;
-    expect(headers).toBeInstanceOf(Headers);
-    expect(headers.get("X-VIBES-Token")).toBe(token);
+      const fetchCall = globalFetch.mock.calls[0];
+      const headers = fetchCall[1]?.headers as Headers;
+      expect(headers).toBeInstanceOf(Headers);
+      expect(headers.get("X-VIBES-Token")).toBe(token);
+    } finally {
+      Object.defineProperty(globalThis, "localStorage", { value: originalLocalStorage, writable: true, configurable: true });
+    }
   });
 
   it("adds X-VIBES-Token when localStorage token is set (edit)", async () => {
@@ -175,16 +180,21 @@ describe("Image Generation Integration Tests", () => {
       setItem: vi.fn(),
       removeItem: vi.fn(),
     } as unknown as Storage;
-    Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
+    const originalLocalStorage = (globalThis as { localStorage?: Storage }).localStorage;
+    try {
+      Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
 
-    const mockImageBlob = new Blob(["fake"], { type: "image/png" });
-    const files = [new File([mockImageBlob], "a.png", { type: "image/png" })];
-    const result = await imageGen("prompt", { apiKey: "VIBES_DIY", images: files });
-    expect(result).toBeDefined();
+      const mockImageBlob = new Blob(["fake"], { type: "image/png" });
+      const files = [new File([mockImageBlob], "a.png", { type: "image/png" })];
+      const result = await imageGen("prompt", { apiKey: "VIBES_DIY", images: files });
+      expect(result).toBeDefined();
 
-    const fetchCall = globalFetch.mock.calls[0];
-    const headers = fetchCall[1]?.headers as Headers;
-    expect(headers).toBeInstanceOf(Headers);
-    expect(headers.get("X-VIBES-Token")).toBe(token);
+      const fetchCall = globalFetch.mock.calls[0];
+      const headers = fetchCall[1]?.headers as Headers;
+      expect(headers).toBeInstanceOf(Headers);
+      expect(headers.get("X-VIBES-Token")).toBe(token);
+    } finally {
+      Object.defineProperty(globalThis, "localStorage", { value: originalLocalStorage, writable: true, configurable: true });
+    }
   });
 });
