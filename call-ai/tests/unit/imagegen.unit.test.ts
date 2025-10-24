@@ -88,16 +88,12 @@ describe("imageGen", () => {
 
     // Check that fetch was called with the correct parameters
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith(
-      "https://vibes-diy-api.com/api/openai-image/generate",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer VIBES_DIY",
-          "Content-Type": "application/json",
-        }),
-      }),
-    );
+    const fetchCall = globalFetch.mock.calls[0];
+    expect(fetchCall[0]).toBe("https://vibes-diy-api.com/api/openai-image/generate");
+    expect(fetchCall[1]?.method).toBe("POST");
+    expect(fetchCall[1]?.headers).toBeInstanceOf(Headers);
+    expect((fetchCall[1]?.headers as Headers).get("Authorization")).toBe("Bearer VIBES_DIY");
+    expect((fetchCall[1]?.headers as Headers).get("Content-Type")).toBe("application/json");
 
     // Check request body
     const requestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
@@ -134,16 +130,12 @@ describe("imageGen", () => {
 
     // Check that fetch was called with the correct parameters
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith(
-      "https://vibes-diy-api.com/api/openai-image/edit",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer VIBES_DIY",
-        }),
-        body: expect.any(FormData),
-      }),
-    );
+    const fetchCall = globalFetch.mock.calls[0];
+    expect(fetchCall[0]).toBe("https://vibes-diy-api.com/api/openai-image/edit");
+    expect(fetchCall[1]?.method).toBe("POST");
+    expect(fetchCall[1]?.headers).toBeInstanceOf(Headers);
+    expect((fetchCall[1]?.headers as Headers).get("Authorization")).toBe("Bearer VIBES_DIY");
+    expect(fetchCall[1]?.body).toBeInstanceOf(FormData);
 
     // Check response structure
     expect(result).toEqual(mockImageResponse);

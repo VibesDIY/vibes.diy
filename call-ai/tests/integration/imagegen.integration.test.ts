@@ -65,17 +65,13 @@ describe("Image Generation Integration Tests", () => {
 
     // Verify the request was made correctly
     expect(globalFetch).toHaveBeenCalledTimes(1);
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.stringMatching(/.*\/api\/openai-image\/generate$/),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer VIBES_DIY",
-          "Content-Type": "application/json",
-        }),
-        body: expect.any(String),
-      }),
-    );
+    const fetchCall = globalFetch.mock.calls[0];
+    expect(fetchCall[0]).toMatch(/.*\/api\/openai-image\/generate$/);
+    expect(fetchCall[1]?.method).toBe("POST");
+    expect(fetchCall[1]?.headers).toBeInstanceOf(Headers);
+    expect((fetchCall[1]?.headers as Headers).get("Authorization")).toBe("Bearer VIBES_DIY");
+    expect((fetchCall[1]?.headers as Headers).get("Content-Type")).toBe("application/json");
+    expect(typeof fetchCall[1]?.body).toBe("string");
 
     // Verify request body content
     const mockCall = globalFetch.mock.calls[0];
@@ -122,16 +118,12 @@ describe("Image Generation Integration Tests", () => {
 
     // Verify the request was made correctly
     expect(globalFetch).toHaveBeenCalledTimes(1);
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.stringMatching(/.*\/api\/openai-image\/edit$/),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer VIBES_DIY",
-        }),
-        body: expect.any(FormData),
-      }),
-    );
+    const fetchCall = globalFetch.mock.calls[0];
+    expect(fetchCall[0]).toMatch(/.*\/api\/openai-image\/edit$/);
+    expect(fetchCall[1]?.method).toBe("POST");
+    expect(fetchCall[1]?.headers).toBeInstanceOf(Headers);
+    expect((fetchCall[1]?.headers as Headers).get("Authorization")).toBe("Bearer VIBES_DIY");
+    expect(fetchCall[1]?.body).toBeInstanceOf(FormData);
 
     console.log("Image editing test completed successfully");
   });

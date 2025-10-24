@@ -58,16 +58,12 @@ describe("imageGen function", () => {
 
       // Verify the fetch call was made correctly
       expect(fetch).toHaveBeenCalledTimes(1);
-      expect(fetch).toHaveBeenCalledWith(
-        "https://vibes-diy-api.com/api/openai-image/generate",
-        expect.objectContaining({
-          method: "POST",
-          headers: expect.objectContaining({
-            Authorization: "Bearer VIBES_DIY",
-            "Content-Type": "application/json",
-          }),
-        }),
-      );
+      const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(fetchCall[0]).toBe("https://vibes-diy-api.com/api/openai-image/generate");
+      expect(fetchCall[1].method).toBe("POST");
+      expect(fetchCall[1].headers).toBeInstanceOf(Headers);
+      expect(fetchCall[1].headers.get("Authorization")).toBe("Bearer VIBES_DIY");
+      expect(fetchCall[1].headers.get("Content-Type")).toBe("application/json");
 
       // Verify the result structure
       expect(result).toBeDefined();
@@ -101,15 +97,11 @@ describe("imageGen function", () => {
 
       // Verify the fetch call was made correctly
       expect(fetch).toHaveBeenCalledTimes(1);
-      expect(fetch).toHaveBeenCalledWith(
-        "https://vibes-diy-api.com/api/openai-image/edit",
-        expect.objectContaining({
-          method: "POST",
-          headers: expect.objectContaining({
-            Authorization: "Bearer VIBES_DIY",
-          }),
-        }),
-      );
+      const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(fetchCall[0]).toBe("https://vibes-diy-api.com/api/openai-image/edit");
+      expect(fetchCall[1].method).toBe("POST");
+      expect(fetchCall[1].headers).toBeInstanceOf(Headers);
+      expect(fetchCall[1].headers.get("Authorization")).toBe("Bearer VIBES_DIY");
 
       // Verify the result structure
       expect(result).toBeDefined();
