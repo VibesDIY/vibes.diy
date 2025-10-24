@@ -23,7 +23,7 @@ import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 
 // Centralized header name for Vibes auth
-const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
+export const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
 
 // Storage keys for authentication tokens
 const VIBES_API_AUTH_TOKEN_KEY = "vibes-api-auth-token" as const; // For API auth from parent window
@@ -35,7 +35,7 @@ const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const; // Legacy vibes.diy key
  * Checks API token key first, then Fireproof sync key, then legacy key
  * @returns The auth token if available, undefined otherwise
  */
-function getVibesAuthToken(): string | undefined {
+export function getVibesAuthToken(): string | undefined {
   if (typeof localStorage === "undefined") {
     return undefined;
   }
