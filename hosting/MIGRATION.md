@@ -2,7 +2,7 @@
 
 ## Staged Rollout Progress
 
-### Phase 1: vibecode.garden and vibesdiy.work
+### Phase 1: vibecode.garden and vibesdiy.work (in progress)
 - Migrating from ai-builder-hosting worker to vibes-hosting-v2 worker
 - Routes removed from old worker configuration
 - Routes added to new worker configuration
