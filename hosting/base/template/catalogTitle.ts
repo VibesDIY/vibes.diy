@@ -1,6 +1,15 @@
 // Catalog Title template for app landing pages (no underscore in subdomain)
 // Shows app preview, screenshot, and "Launch App" functionality
 
+import { libraryImportMap as importMapData } from "../config/library-import-map.js";
+
+// Generate import map JSON for consistent module caching with app instances
+export const catalogImportMap = JSON.stringify(
+  { imports: importMapData.imports },
+  null,
+  2,
+);
+
 // Neobrute Blueprint - Neo-brutalist catalog styles
 export const catalogTitleStyles = /* css */ `
   * {
@@ -702,6 +711,9 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
     <title>{{APP_TITLE}} - Vibes DIY</title>
+    <script type="importmap">
+      ${catalogImportMap}
+    </script>
     <style>${catalogTitleStyles}</style>
   </head>
   <body>
@@ -767,7 +779,7 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
     
     <script type="module">
       // Initialize headless install tracking with use-vibes
-      const { initVibesInstalls, constructSubdomain } = await import('https://esm.sh/use-vibes');
+      const { initVibesInstalls, constructSubdomain } = await import('use-vibes');
       
       let tracker = null;
       
@@ -792,11 +804,11 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
           const hostname = window.location.hostname;
           const parsed = hostname.split('.');
           const subdomain = parsed[0];
-          
+
           // Check if we're NOT on an instance page (no underscore or double dash)
           if (!subdomain.includes('_') && !subdomain.includes('--')) {
             // We're on a catalog page, do smart redirect
-            setTimeout(() => tracker.goToLatestOrCreate(), 100);
+            tracker.goToLatestOrCreate();
           }
         }
         
@@ -929,7 +941,7 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
         
       } catch (error) {
         console.error('Failed to initialize install tracker:', error);
-        
+
         // Fallback: simple redirect after delay (without imported functions)
         setTimeout(() => {
           const appSlug = window.location.hostname.split('.')[0].replace(/^v-/, ''); // Remove v- prefix if present
@@ -949,7 +961,7 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
             const newSubdomain = \`v-\${appSlug}--\${installId}\`;
             window.location.href = \`https://\${newSubdomain}.\${domain}\`;
           }
-        }, 2000);
+        }, 500);
       }
       
       // Allow clicking on the screenshot to do the default launch action
