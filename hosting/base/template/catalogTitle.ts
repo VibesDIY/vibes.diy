@@ -779,172 +779,19 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
     
     <script type="module">
       // Initialize headless install tracking with use-vibes
-      const { initVibesInstalls, constructSubdomain } = await import('use-vibes');
-      
-      let tracker = null;
-      
-      try {
-        // Initialize the install tracker with auto-redirect disabled initially
-        // so we can show loading UI and handle the redirect manually
-        tracker = await initVibesInstalls({
-          autoRedirect: false, // We'll handle redirect after UI is ready
-          onReady: (installs) => {
-            console.log('Install tracker ready with', installs.length, 'installs');
-            updateUI(installs);
-          }
-        });
-        
-        // Update the UI based on current installs
-        function updateUI(installs) {
-          updateLaunchButtons(installs);
-          renderInstallHistory(installs);
-          bindLaunchHandlers();
-          
-          // Auto-redirect after UI is ready if this is a catalog page
-          const hostname = window.location.hostname;
-          const parsed = hostname.split('.');
-          const subdomain = parsed[0];
+      // The tracker auto-detects catalog pages and redirects to latest install or creates new
+      const { initVibesInstalls } = await import('use-vibes');
 
-          // Check if we're NOT on an instance page (no underscore or double dash)
-          if (!subdomain.includes('_') && !subdomain.includes('--')) {
-            // We're on a catalog page, do smart redirect
-            tracker.goToLatestOrCreate();
-          }
-        }
-        
-        // Update launch buttons based on install count
-        function updateLaunchButtons(installs) {
-          const container = document.getElementById('launch-buttons-container');
-          if (!container) return;
-          
-          if (installs.length === 0) {
-            // First install - single "Install" button
-            container.innerHTML = \`
-              <button id="launch-app-btn" class="launch-button">
-                <span class="launch-icon">🚀</span>
-                <span>Install</span>
-              </button>
-            \`;
-          } else {
-            // Multiple installs - show "My Latest Install" and "Fresh Install" buttons
-            container.innerHTML = \`
-              <button id="freshest-install-btn" class="launch-button">
-                <span class="launch-icon">💽</span>
-                <span>My Latest Install</span>
-              </button>
-              <button id="new-install-btn" class="launch-button secondary">
-                <span class="launch-icon">💾</span>
-                <span>Fresh Install</span>
-              </button>
-            \`;
-          }
-        }
-        
-        // Attach button click handlers after DOM updates
-        function bindLaunchHandlers() {
-          const launchBtn = document.getElementById('launch-app-btn');
-          if (launchBtn) launchBtn.addEventListener('click', () => tracker.createNewInstall());
-          const latestBtn = document.getElementById('freshest-install-btn');
-          if (latestBtn) latestBtn.addEventListener('click', () => tracker.goToLatestOrCreate());
-          const newBtn = document.getElementById('new-install-btn');
-          if (newBtn) newBtn.addEventListener('click', () => tracker.createNewInstall());
-        }
-        
-        // Render install history UI
-        function renderInstallHistory(installs) {
-          const container = document.getElementById('install-history-root');
-          if (!container) return;
-          
-          if (installs.length === 0) {
-            container.innerHTML = '';
-            return;
-          }
-          
-          // Sort by most recent first
-          const sortedInstances = [...installs].sort((a, b) => 
-            new Date(b.lastVisited || b.createdAt).getTime() - new Date(a.lastVisited || a.createdAt).getTime()
-          );
-          
-          const appSlug = tracker.appSlug;
-          const domain = window.location.hostname.split('.').slice(1).join('.');
-          
-          // Helper function to format time
-          function formatTime(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffMinutes = Math.floor((now - date) / (1000 * 60));
-            
-            if (diffMinutes < 60) {
-              if (diffMinutes <= 1) return 'just now';
-              return \`\${diffMinutes} min ago\`;
-            } else if (diffMinutes < 1440) { // Less than 24 hours
-              const hours = Math.floor(diffMinutes / 60);
-              return \`\${hours}h ago\`;
-            } else {
-              return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
-          }
-          
-          container.innerHTML = \`
-            <div class="install-history">
-              <div class="history-header">
-                <h3><span class="launch-icon">💽</span> Installs</h3>
-                <button class="clear-history-btn" onclick="clearHistory()">Clear History</button>
-              </div>
-              <div class="instance-list">
-                \${sortedInstances.map(instance => {
-                  // Use constructSubdomain helper for consistent URL formatting
-                  const instanceSubdomain = constructSubdomain(appSlug, instance.installId, domain);
-                  
-                  return \`
-                  <div class="instance-item">
-                    <a href="https://\${instanceSubdomain}.\${domain}" class="instance-link">
-                      <div class="instance-info">
-                        <span class="instance-id">💾 \${instance.installId}</span>
-                        <span class="instance-time">\${formatTime(instance.lastVisited || instance.createdAt)}</span>
-                      </div>
-                    </a>
-                  </div>
-                  \`;
-                }).join('')}
-              </div>
-            </div>
-          \`;
-        }
-        
-        // Wire up global functions using the tracker
-        window.createNewInstall = async function() {
-          if (tracker) await tracker.createNewInstall();
-        };
-        
-        window.goToFreshestInstall = async function() {
-          if (tracker) await tracker.goToLatestInstall();
-        };
-        
-        window.defaultLaunchAction = async function() {
-          if (tracker) await tracker.goToLatestOrCreate();
-        };
-        
-        window.clearHistory = async function() {
-          if (!tracker) return;
-          if (confirm('Clear all instance history?')) {
-            await tracker.clearHistory();
-            // Refresh the UI
-            const installs = await tracker.getInstalls();
-            updateUI(installs);
-          }
-        };
-        
-        // Get initial installs and update UI
-        const installs = await tracker.getInstalls();
-        updateUI(installs);
-        
+      try {
+        // Use default autoRedirect: true behavior
+        // Tracker will automatically redirect to latest install or create new
+        await initVibesInstalls();
       } catch (error) {
         console.error('Failed to initialize install tracker:', error);
 
-        // Fallback: simple redirect after delay (without imported functions)
+        // Fallback: simple redirect after delay
         setTimeout(() => {
-          const appSlug = window.location.hostname.split('.')[0].replace(/^v-/, ''); // Remove v- prefix if present
+          const appSlug = window.location.hostname.split('.')[0].replace(/^v-/, '');
           const domain = window.location.hostname.split('.').slice(1).join('.');
           const subdomain = window.location.hostname.split('.')[0];
 
@@ -962,17 +809,6 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
             window.location.href = \`https://\${newSubdomain}.\${domain}\`;
           }
         }, 500);
-      }
-      
-      // Allow clicking on the screenshot to do the default launch action
-      const screenshotContainer = document.querySelector('.screenshot-container');
-      if (screenshotContainer) {
-        screenshotContainer.addEventListener('click', function() {
-          if (window.defaultLaunchAction) {
-            window.defaultLaunchAction();
-          }
-        });
-        screenshotContainer.style.cursor = 'pointer';
       }
     </script>
   </body>
