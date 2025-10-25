@@ -362,20 +362,12 @@ async function handleCreateKey(request, provisioningKey, userId) {
 }
 ```
 
-### 3. Add Required Environment Variables for Clerk
-
-Add the following environment variables to your Netlify site:
-
-- `CLERK_SECRET_KEY`: Your Clerk secret key
-- `CLERK_PUBLISHABLE_KEY`: Your Clerk publishable key
-
 ## Benefits of This Approach
 
 1. **Security**: The OpenRouter provisioning key is never exposed to the client
 2. **Centralized Control**: All API key management happens through a secure edge function
-3. **Authentication**: (Future) Integration with Clerk enables robust user authentication
-4. **Business Logic**: Implement credit allocation and limits based on user status
-5. **Performance**: Edge functions run globally close to your users for minimal latency
+3. **Business Logic**: Implement credit allocation and limits based on user status
+4. **Performance**: Edge functions run globally close to your users for minimal latency
 
 ## Considerations and Limitations
 
