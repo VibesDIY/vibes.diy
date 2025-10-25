@@ -39,16 +39,8 @@
       "zone_name": "vibecode.garden",
     },
     {
-      "pattern": "*vibesdiy.app/*",
-      "zone_name": "vibesdiy.app",
-    },
-    {
       "pattern": "*vibesdiy.work/*",
       "zone_name": "vibesdiy.work",
-    },
-    {
-      "pattern": "vibes-diy-api.com/*",
-      "zone_name": "vibes-diy-api.com",
     },
   ],
 
