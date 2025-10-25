@@ -7,12 +7,6 @@ inputs:
   CLOUDFLARE_ACCOUNT_ID:
     description: "Cloudflare account ID"
     required: true
-  CLERK_PUBLISHABLE_KEY:
-    description: "Clerk publishable key"
-    required: true
-  CLERK_PUB_JWT_URL:
-    description: "Clerk public JWT URL"
-    required: true
   CLOUDFLARE_ENV:
     description: "Cloudflare environment (e.g., production, staging)"
     required: true
@@ -32,9 +26,6 @@ runs:
     - name: Build vibes.diy
       working-directory: vibes.diy/pkg
       shell: bash
-      env:
-        CLERK_PUBLISHABLE_KEY: ${{ inputs.CLERK_PUBLISHABLE_KEY }}
-        VITE_CLERK_PUBLISHABLE_KEY: ${{ inputs.CLERK_PUBLISHABLE_KEY }}
       run: |
         pnpm run build
 
@@ -46,14 +37,8 @@ runs:
     #     CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
     #     CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
     #     CLOUDFLARE_ENV: ${{ inputs.CLOUDFLARE_ENV }}
-    #     CLERK_PUBLISHABLE_KEY: ${{ inputs.CLERK_PUBLISHABLE_KEY }}
-    #     CLERK_PUB_JWT_URL: ${{ inputs.CLERK_PUB_JWT_URL }}
-    #     # need during build
-    #     VITE_CLERK_PUBLISHABLE_KEY: ${{ inputs.CLERK_PUBLISHABLE_KEY }}
     #   run: |
-    #     pnpm exec core-cli writeEnv --env ${{inputs.CLOUDFLARE_ENV}} --out /dev/stdout --json \
-    #       --fromEnv CLERK_PUBLISHABLE_KEY \
-    #       --fromEnv CLERK_PUB_JWT_URL > sec.json
+    #     pnpm exec core-cli writeEnv --env ${{inputs.CLOUDFLARE_ENV}} --out /dev/stdout --json > sec.json
     #     cat sec.json
     #     pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk < sec.json
     #     pnpm run deploy --env ${{inputs.CLOUDFLARE_ENV}}
