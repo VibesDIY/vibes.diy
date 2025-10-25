@@ -945,10 +945,8 @@ export const catalogTitleTemplate = /* html */ `<!DOCTYPE html>
               installId += chars[Math.floor(Math.random() * chars.length)];
             }
 
-            // Domain-aware URL formatting (matching constructSubdomain behavior)
-            const newSubdomain = domain.endsWith('.net')
-              ? \`v-\${appSlug}--\${installId}\`  // New format for .net
-              : \`\${appSlug}_\${installId}\`;      // Legacy format for .app
+            // All domains now use the new format with v- prefix and -- separator
+            const newSubdomain = \`v-\${appSlug}--\${installId}\`;
             window.location.href = \`https://\${newSubdomain}.\${domain}\`;
           }
         }, 2000);
