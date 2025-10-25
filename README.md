@@ -27,3 +27,17 @@ Every app you create is automatically saved, so you can:
 - Return to previous work anytime
 - Keep track of your building history
 - Save screenshots of your apps
+
+## For Developers
+
+### Claude Code Plugin
+
+Generate complete Fireproof and Vibes.diy codebases directly from Claude Code using the `/vibes` command.
+
+The plugin creates production-ready Vite projects with:
+- React 19 + Fireproof for local-first data
+- callAI for LLM integration
+- Tailwind CSS styling
+- Complete development setup
+
+**Install**: See [cli/vibes/README.md](cli/vibes/README.md) for installation and usage instructions.
