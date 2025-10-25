@@ -229,7 +229,7 @@ export async function initVibesInstalls(
 
     // Navigate to install
     const { domain } = getDomainInfo();
-    const subdomain = constructSubdomain(appSlug, latest.installId, domain);
+    const subdomain = constructSubdomain(appSlug, latest.installId);
     const url = `https://${subdomain}.${domain}`;
 
     navigate(url);
@@ -245,7 +245,7 @@ export async function initVibesInstalls(
 
     // Navigate to new install
     const { domain } = getDomainInfo();
-    const subdomain = constructSubdomain(appSlug, installId, domain);
+    const subdomain = constructSubdomain(appSlug, installId);
     const url = `https://${subdomain}.${domain}`;
 
     navigate(url);

@@ -282,11 +282,10 @@ export function parseSubdomain(hostname: string): ParsedSubdomain {
  *
  * @param appSlug - The app slug
  * @param installId - Optional install ID for instances
- * @param domain - Optional domain parameter (kept for API compatibility, not used)
  * @returns The constructed subdomain string
  * @throws Error if installId is empty string (would create invalid subdomain)
  */
-export function constructSubdomain(appSlug: string, installId?: string, domain?: string): string {
+export function constructSubdomain(appSlug: string, installId?: string): string {
   if (installId !== undefined) {
     if (installId.trim().length === 0) {
       throw new Error('Install ID cannot be empty string - would create invalid subdomain');
