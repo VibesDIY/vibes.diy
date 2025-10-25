@@ -181,12 +181,11 @@ describe("Underscore-Based Routing Integration", () => {
       const response = await renderCatalogTitle(context, parsed, mockApp);
       const html = await response.text();
 
-      // New implementation uses headless install tracker from use-vibes
+      // Simplified implementation uses headless install tracker from use-vibes
+      // with default autoRedirect behavior (no manual UI or button handlers)
       expect(html).toContain("initVibesInstalls");
-      expect(html).toContain("https://esm.sh/use-vibes");
-      expect(html).toContain("constructSubdomain");
-      expect(html).toContain("launch-app-btn");
-      expect(html).toContain("addEventListener");
+      expect(html).toContain("use-vibes");
+      expect(html).toContain("await initVibesInstalls()");
     });
 
     it("should not include launch button functionality in app instance", async () => {

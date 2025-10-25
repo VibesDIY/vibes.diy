@@ -252,16 +252,12 @@ describe("Subdomain Parser", () => {
 
     it("should construct app instance subdomain (with install ID)", () => {
       // Test new format (.net domain)
-      const newFormat = constructSubdomain("my-app", "abc123", "vibesdiy.net");
-      expect(newFormat).toBe("v-my-app--abc123");
+      // All domains now use the new format with v- prefix and -- separator
+      const netFormat = constructSubdomain("my-app", "abc123");
+      expect(netFormat).toBe("v-my-app--abc123");
 
-      // Test legacy format (.app domain)
-      const legacyFormat = constructSubdomain(
-        "my-app",
-        "abc123",
-        "vibesdiy.app",
-      );
-      expect(legacyFormat).toBe("my-app_abc123");
+      const appFormat = constructSubdomain("my-app", "abc123");
+      expect(appFormat).toBe("v-my-app--abc123");
     });
 
     it("should handle complex slugs and IDs", () => {
