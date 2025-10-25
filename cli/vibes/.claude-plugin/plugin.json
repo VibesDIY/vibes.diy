@@ -1,0 +1,20 @@
+{
+  "name": "vibes",
+  "description": "Generate Fireproof and Vibes.diy codebases with AI-powered component generation. Creates complete Vite projects with React components that use Fireproof for data persistence and callAI for LLM integration.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Vibes.diy Team",
+    "email": "hello@vibes.diy"
+  },
+  "homepage": "https://vibes.diy",
+  "repository": "https://github.com/fireproof-storage/vibes.diy",
+  "license": "MIT",
+  "keywords": [
+    "fireproof",
+    "vibes",
+    "react",
+    "code-generation",
+    "ai",
+    "vite"
+  ]
+}

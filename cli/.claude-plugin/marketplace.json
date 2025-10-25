@@ -1,0 +1,25 @@
+{
+  "name": "vibes-marketplace",
+  "owner": {
+    "name": "Vibes.diy Team",
+    "email": "hello@vibes.diy"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for Fireproof and Vibes.diy development",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "vibes",
+      "source": "./vibes",
+      "description": "Generate Fireproof and Vibes.diy codebases with AI-powered component generation",
+      "version": "1.0.0",
+      "author": {
+        "name": "Vibes.diy Team",
+        "email": "hello@vibes.diy"
+      },
+      "keywords": ["fireproof", "vibes", "react", "code-generation", "ai"],
+      "category": "development"
+    }
+  ]
+}
