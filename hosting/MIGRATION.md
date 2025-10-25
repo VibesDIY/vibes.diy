@@ -3,7 +3,7 @@
 ## Staged Rollout Progress
 
 ### Phase 1: vibecode.garden and vibesdiy.work ✅ COMPLETE
-
+- next is .app
 - ✅ Migrated from ai-builder-hosting worker to vibes-hosting-v2 worker
 - ✅ Routes successfully deployed to new worker
 - ✅ Using shared KV namespace: 342352a479b64835931b4e5f9f3277a0
