@@ -42,6 +42,14 @@
       "pattern": "*vibesdiy.work/*",
       "zone_name": "vibesdiy.work",
     },
+    {
+      "pattern": "*vibesdiy.app/*",
+      "zone_name": "vibesdiy.app",
+    },
+    {
+      "pattern": "vibes-diy-api.com/*",
+      "zone_name": "vibes-diy-api.com",
+    },
   ],
 
   /**
