@@ -1,0 +1,130 @@
+VIBES PLUGIN - FILES CREATED
+=============================
+Date: 2025-10-24
+
+MARKETPLACE
+-----------
+cli/.claude-plugin/marketplace.json
+  → Defines "vibes-marketplace" with vibes plugin
+
+PLUGIN MANIFEST
+---------------
+cli/vibes/.claude-plugin/plugin.json
+  → Plugin metadata (name, version, description)
+
+COMMAND
+-------
+cli/vibes/commands/vibes.md
+  → /vibes slash command
+  → Prompts user for app description and output path
+  → Invokes vibes-generator Skill
+
+SKILL (CORE LOGIC)
+------------------
+cli/vibes/skills/vibes-generator/SKILL.md
+  → 300+ lines of generation instructions
+  → Reads vibes.diy codebase patterns
+  → Generates system prompt + React component
+  → Creates complete Vite project
+
+TEMPLATES
+---------
+cli/vibes/skills/vibes-generator/templates/package.json.template
+  → Dependencies: React 19, use-vibes 0.14.6, Vite 7.1.9
+
+cli/vibes/skills/vibes-generator/templates/vite.config.js.template
+  → Vite config with React plugin
+
+cli/vibes/skills/vibes-generator/templates/index.html.template
+  → HTML entry point with {{APP_TITLE}} placeholder
+
+cli/vibes/skills/vibes-generator/templates/main.jsx.template
+  → React root mounting logic
+
+cli/vibes/skills/vibes-generator/templates/gitignore.template
+  → Standard Node.js .gitignore
+
+DOCUMENTATION
+-------------
+cli/vibes/README.md
+  → User-facing documentation
+  → Installation, usage, examples
+  → Troubleshooting guide
+
+cli/vibes/DEVELOPMENT.md
+  → Complete development documentation
+  → Architecture, design decisions
+  → Integration with vibes.diy codebase
+  → Testing checklist, known issues
+
+cli/QUICK_START.md
+  → Quick reference for getting started
+  → Installation commands
+  → File structure overview
+
+cli/FILES_CREATED.txt
+  → This file - inventory of created files
+
+INSTALLATION
+------------
+/plugin marketplace add ./cli
+/plugin install vibes@vibes-marketplace
+[Restart Claude Code]
+
+USAGE
+-----
+/vibes
+[Enter app description]
+[Enter output directory]
+cd <output-directory>
+npm install && npm run dev
+
+KEY CONCEPTS
+------------
+1. Plugin uses Agent Skills system for progressive disclosure
+2. Skill reads vibes.diy codebase to understand patterns
+3. Generates Vite projects (not single-file HTML)
+4. Uses use-vibes package (includes useFireproof + callAI)
+5. Applies "brutalist web" design aesthetic by default
+
+MOST IMPORTANT FILE
+-------------------
+cli/vibes/skills/vibes-generator/SKILL.md
+  → This contains ALL the generation logic
+  → Claude reads this when /vibes is invoked
+  → Implements the complete workflow
+
+WHAT GETS GENERATED
+-------------------
+When you run /vibes, you get:
+
+output-dir/
+├── package.json        (React 19, use-vibes, Vite)
+├── vite.config.js
+├── index.html
+├── .gitignore
+└── src/
+    ├── main.jsx       (React root)
+    └── App.jsx        (Your generated component)
+
+The App.jsx uses:
+- useFireproof hook from use-vibes
+- callAI for LLM features
+- Tailwind CSS classes
+- Brutalist web styling
+- Real-time Fireproof queries
+
+NEXT STEPS
+----------
+1. Test the plugin installation
+2. Generate a sample app
+3. Verify it builds and runs
+4. Refine based on results
+5. Add more examples
+
+DOCUMENTATION LOCATIONS
+-----------------------
+Quick start:    cli/QUICK_START.md
+Full dev docs:  cli/vibes/DEVELOPMENT.md
+User guide:     cli/vibes/README.md
+This inventory: cli/FILES_CREATED.txt
