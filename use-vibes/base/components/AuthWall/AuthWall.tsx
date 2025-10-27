@@ -132,7 +132,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   // Image content wrapper style - slides up to reveal menu (like HiddenMenuWrapper content)
   const imageContentWrapperStyle = {
     ...getImageContentWrapperStyle(),
-    transition: 'transform 0.4s ease, opacity 0.5s ease',
+    transition: 'transform 0.9s ease, opacity 0.5s ease',
     transform: menuOpen ? `translateY(-${menuHeight}px)` : 'translateY(0)',
     opacity: isFadingOut ? 0 : 1,
   };
