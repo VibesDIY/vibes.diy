@@ -42,7 +42,7 @@
     "@types/react": "~19.1.0",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/browser": "^4.0.2",
+    "@vitest/browser": "^4.0.4",
     "@vitest/browser-playwright": "^4.0.2",
     "call-ai": "workspace:*",
     "playwright": "^1.56.1",
