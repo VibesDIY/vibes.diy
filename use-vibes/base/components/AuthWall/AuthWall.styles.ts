@@ -1,17 +1,73 @@
 import { CSSProperties } from 'react';
 
-export const getWrapperStyle = (imageUrl: string): CSSProperties => ({
+// Theme matching HiddenMenuWrapper
+export const authWallTheme = {
+  colors: {
+    menuBg: 'var(--aw-menu-bg, #d4d4d4)',
+    shadow: 'var(--aw-shadow, rgba(0, 0, 0, 0.3))',
+    gridLineColor: 'var(--aw-grid-line, rgba(255, 255, 255, 0.5))',
+  },
+
+  dimensions: {
+    gridSize: '40px',
+    padding: '24px',
+  },
+
+  animation: {
+    duration: '0.4s',
+    easing: 'ease',
+    blurAmount: '4px',
+  },
+};
+
+// Main wrapper
+export const getWrapperStyle = (): CSSProperties => ({
+  position: 'relative',
+  overflow: 'hidden',
+});
+
+// Menu section at bottom (like HiddenMenuWrapper menu) - always there
+export const getMenuStyle = (): CSSProperties => ({
+  position: 'fixed',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  zIndex: 5,
+  backgroundColor: authWallTheme.colors.menuBg,
+  backgroundImage: `
+    linear-gradient(${authWallTheme.colors.gridLineColor} 1px, transparent 1px),
+    linear-gradient(90deg, ${authWallTheme.colors.gridLineColor} 1px, transparent 1px)
+  `,
+  backgroundSize: authWallTheme.dimensions.gridSize + ' ' + authWallTheme.dimensions.gridSize,
+  boxShadow: `0 -2px 10px ${authWallTheme.colors.shadow}`,
+  padding: authWallTheme.dimensions.padding,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '80vh',
+});
+
+// Image content wrapper (like HiddenMenuWrapper content wrapper) - slides up to reveal menu
+export const getImageContentWrapperStyle = (): CSSProperties => ({
   position: 'fixed',
   top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  zIndex: 10,
+  overflowY: 'auto',
+});
+
+// Image section - full screen inside content wrapper
+export const getImageSectionStyle = (imageUrl: string): CSSProperties => ({
   width: '100%',
-  height: '100vh',
+  height: '100%',
   backgroundImage: `url(${imageUrl})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  overflow: 'hidden',
 });
 
 export const getOverlayStyle = (): CSSProperties => ({
@@ -22,12 +78,10 @@ export const getOverlayStyle = (): CSSProperties => ({
   bottom: 0,
   backdropFilter: 'blur(12px)',
   backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  zIndex: 1,
 });
 
 export const getFormContainerStyle = (): CSSProperties => ({
   position: 'relative',
-  zIndex: 2,
   background: '#ffffff',
   border: '3px solid #1a1a1a',
   borderRadius: '12px',

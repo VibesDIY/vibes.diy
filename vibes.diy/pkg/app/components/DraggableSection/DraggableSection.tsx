@@ -68,7 +68,7 @@ export const DraggableSection = ({ color, children, x = 0, y = 0, static: isStat
       onMouseDown={isMobile || isStatic ? undefined : handleMouseDown}
     >
       <div style={getTitleBarStyle(color)} />
-      <div style={getCardChildrenStyle(color)}>{children}</div>
+      <div style={getCardChildrenStyle()}>{children}</div>
     </div>
   );
 };
