@@ -39,7 +39,7 @@
     "@types/node": "^24.9.1",
     "@vitest/browser-playwright": "^4.0.2",
     "chanfana": "^2.8.2",
-    "hono": "^4.10.2",
+    "hono": "^4.10.3",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
