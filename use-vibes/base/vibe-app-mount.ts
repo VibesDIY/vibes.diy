@@ -27,8 +27,7 @@ function VibesApp({
 }) {
   // Check if sync is already enabled globally by checking body class
   const syncEnabled =
-    typeof window !== 'undefined' &&
-    document.body.classList.contains('vibes-connect-true');
+    typeof window !== 'undefined' && document.body.classList.contains('vibes-connect-true');
 
   const mockLogin =
     typeof window !== 'undefined' &&
@@ -54,8 +53,7 @@ function VibesApp({
   React.useEffect(() => {
     // Re-check sync status from body class
     const currentlySyncEnabled =
-      typeof window !== 'undefined' &&
-      document.body.classList.contains('vibes-connect-true');
+      typeof window !== 'undefined' && document.body.classList.contains('vibes-connect-true');
     const shouldShowAuthWall = !currentlySyncEnabled && !mockLogin;
     setShowAuthWall(shouldShowAuthWall);
 
