@@ -6,7 +6,6 @@ import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 
 export interface MountVibesAppOptions {
   readonly container?: string | HTMLElement;
-  readonly database?: string;
   readonly title?: string;
   readonly imageUrl?: string;
   readonly appComponent?: React.ComponentType;
@@ -18,12 +17,10 @@ export interface MountVibesAppResult {
 }
 
 function VibesApp({
-  database = 'vibes-app',
   title = 'Vibes App',
   imageUrl = '/screenshot.png',
   children,
 }: {
-  database?: string;
   title?: string;
   imageUrl?: string;
   children?: React.ReactNode;
@@ -100,7 +97,7 @@ function VibesApp({
 }
 
 export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesAppResult {
-  const { container: containerOption, database, title, imageUrl, appComponent } = options;
+  const { container: containerOption, title, imageUrl, appComponent } = options;
 
   let containerElement: HTMLElement;
   if (typeof containerOption === 'string') {
@@ -148,7 +145,6 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
     React.createElement(
       VibesApp,
       {
-        ...(database !== undefined && { database }),
         ...(title !== undefined && { title }),
         ...(imageUrl !== undefined && { imageUrl }),
       },
