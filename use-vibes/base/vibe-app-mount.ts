@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { AuthWall } from './components/AuthWall/AuthWall.js';
-import { useFireproof } from './index.js';
 import { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 
@@ -29,7 +28,10 @@ function VibesApp({
   imageUrl?: string;
   children?: React.ReactNode;
 }) {
-  const { enableSync, syncEnabled } = useFireproof(database);
+  // Check if sync is already enabled globally by checking body class
+  const syncEnabled =
+    typeof window !== 'undefined' &&
+    document.body.classList.contains('vibes-connect-true');
 
   const mockLogin =
     typeof window !== 'undefined' &&
@@ -53,14 +55,18 @@ function VibesApp({
   }, []);
 
   React.useEffect(() => {
-    const shouldShowAuthWall = !syncEnabled && !mockLogin;
+    // Re-check sync status from body class
+    const currentlySyncEnabled =
+      typeof window !== 'undefined' &&
+      document.body.classList.contains('vibes-connect-true');
+    const shouldShowAuthWall = !currentlySyncEnabled && !mockLogin;
     setShowAuthWall(shouldShowAuthWall);
 
     // Reset appReady when re-entering auth wall for consistency
     if (shouldShowAuthWall) {
       setAppReady(false);
     }
-  }, [syncEnabled, mockLogin]);
+  }, [mockLogin]);
 
   // Defer app rendering until after auth completes
   React.useEffect(() => {
@@ -74,7 +80,8 @@ function VibesApp({
   }, [showAuthWall, appReady]);
 
   const handleLogin = () => {
-    enableSync();
+    // Dispatch global sync enable event - app's useFireproof will handle it
+    document.dispatchEvent(new CustomEvent('vibes-sync-enable'));
   };
 
   if (showAuthWall) {
