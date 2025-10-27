@@ -15,28 +15,23 @@ const titleBorderColorLiteral: Record<CardColor, string> = {
   grey: '#000000',
 };
 
-const borderColorLiteral: Record<CardColor, string> = {
-  yellow: '#d6a038',
-  red: '#c23d2b',
-  blue: '#254581',
-  grey: '#000000',
-};
-
 export const getTitleBarStyle = (color: CardColor): React.CSSProperties => ({
   height: '20px',
   width: '100%',
   backgroundColor: titleColorLiteral[color],
-  borderBottom: `1px solid ${titleBorderColorLiteral[color]}`,
+  border: '1px solid black',
+  marginBottom: '1px',
 });
 
-export const getCardChildrenStyle = (color: CardColor): React.CSSProperties => ({
+export const getCardChildrenStyle = (): React.CSSProperties => ({
   padding: '16px',
   backgroundColor: '#FFFFF0',
   color: '#221f20',
+  border: `1px solid black`,
+  boxShadow: '0 0 0 1px white', 
 });
 
-export const getCardBasicStyle = (color: CardColor): React.CSSProperties => ({
-  border: `1px solid ${borderColorLiteral[color]}`,
+export const getCardBasicStyle = (): React.CSSProperties => ({
   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   minWidth: '500px',
 });
@@ -47,7 +42,7 @@ export const getCardStyle = (
   isDragging: boolean,
   isStatic: boolean = false
 ): React.CSSProperties => {
-  const base = getCardBasicStyle(color);
+  const base = getCardBasicStyle();
 
   if (isStatic) {
     // Static mode: behaves like a normal div, 80% width on desktop

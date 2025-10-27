@@ -163,9 +163,9 @@ export const getFirstSectionColorBackgroundStyle = (isMobile: boolean): CSSPrope
         linear-gradient(
             180deg,
             transparent 0%,
-            #009ace 30%,
-            #009ace 60%,
-            #b55f4d 100%
+            oklch(65% 0.17 220) 30%,
+            oklch(65% 0.17 220) 60%,
+            oklch(60% 0.15 35) 100%
         )
     `,
 });
@@ -181,9 +181,9 @@ export const getSecondSectionColorBackgroundStyle = (isMobile: boolean): CSSProp
     background: `
         linear-gradient(
             180deg,
-            #b55f4d 0%,
-            #da291cd5 20%,
-            #da291cd5 100%
+            oklch(60% 0.15 35) 0%,
+            oklch(62% 0.23 25 / 0.84) 20%,
+            oklch(62% 0.23 25 / 0.84) 100%
         )
     `,
 });

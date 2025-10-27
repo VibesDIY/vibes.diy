@@ -148,7 +148,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
           <div style={getSectionsContainerStyle(isMobile)}>
             <section style={getSectionWrapperStyle(isMobile)}>
               <DraggableSection color="blue" static>
-                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>Community Code</h3>
+                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>Community Code</h3>
                 <p><strong>For people who care about people</strong><br />
                   Your group chat isn't a start-up. It's a community, and every community has its own
                   unique needs. So why should you rely on one-sized-fits-all apps made by people who
@@ -156,7 +156,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
                   software made for the people you love: that's the vibe.
                 </p>
 
-                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>The App to End all Apps</h3>
+                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>The App to End all Apps</h3>
                 <p><strong>What you need and nothing else</strong><br />
                   Vibes is every app you could ever need in one place — with no app store, no
                   downloads, and no software updates. It's a tool for building what you need, only when
@@ -164,14 +164,14 @@ export const HomeScreen = ({}: HomeScreenProps) => {
                   together. Best of all, everyone's data stays local, portable, and safe.
                 </p>
 
-                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>Get off the Cloud</h3>
+                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>Get off the Cloud</h3>
                 <p><strong>With un-hackable architecture</strong><br />
                   Vibes gives you complete visibility and control over your data. Your community apps
                   are stored locally, right on your phone — so you don't have to worry about trusting
                   everyone's personal information to some impersonal cloud.
                 </p>
 
-                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>Single-Serving Software</h3>
+                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>Single-Serving Software</h3>
                 <p><strong>Don't overthink it — make it.</strong><br />
                   No need to be precious. Whip up a one-time scoring app for your annual pumpkin
                   carving contest. Generate questions for trivia night. Troll your friends with a custom
@@ -179,7 +179,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
                   motion right away. As long as you can describe it, you can build it — fast.
                 </p>
 
-                <h3 style={{ fontWeight: 'bold', fontSize: '24px', color: '#5398c9' }}>Quick Apps for Lasting Community</h3>
+                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>Quick Apps for Lasting Community</h3>
                 <p><strong>Because good software makes good neighbors</strong><br />
                   Your relationships are always evolving. Your tools should too. With Vibes, build exactly
                   what your community needs right now. When those tools don't serve you anymore,
