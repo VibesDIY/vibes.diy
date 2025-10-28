@@ -38,7 +38,7 @@
     "@playwright/test": "^1.56.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.2",
+    "@vitest/browser-playwright": "^4.0.4",
     "jest": "^30.0.5",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3",

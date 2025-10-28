@@ -37,7 +37,7 @@
     "@cloudflare/vitest-pool-workers": "^0.5.26",
     "@cloudflare/workers-types": "^4.20251011.0",
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.2",
+    "@vitest/browser-playwright": "^4.0.4",
     "chanfana": "^2.8.2",
     "hono": "^4.10.2",
     "prettier": "^3.6.2",
