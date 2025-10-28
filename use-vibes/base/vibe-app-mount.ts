@@ -79,19 +79,41 @@ function VibesApp({
     document.dispatchEvent(new CustomEvent('vibes-sync-enable'));
   };
 
-  if (showAuthWall) {
-    return React.createElement(AuthWall, {
-      onLogin: handleLogin,
-      imageUrl,
-      title,
-      open: true,
-    });
-  }
-
-  return React.createElement(HiddenMenuWrapper, {
-    menuContent: React.createElement(VibesPanel),
-    children: appReady ? children : null,
-  });
+  // Render both app component (to register event listener) and AuthWall (as overlay)
+  // App component must mount first so its useFireproof listener exists when login is clicked
+  return React.createElement(
+    React.Fragment,
+    null,
+    // App component in a wrapper div so we can hide it visually while keeping it mounted
+    React.createElement(
+      'div',
+      {
+        style: showAuthWall
+          ? {
+              visibility: 'hidden',
+              position: 'absolute',
+              zIndex: -1,
+              width: '100%',
+              height: '100%',
+            }
+          : { width: '100%', height: '100%' },
+      },
+      // App component always renders to ensure event listener is registered
+      React.createElement(HiddenMenuWrapper, {
+        menuContent: React.createElement(VibesPanel),
+        children: appReady ? children : null,
+      })
+    ),
+    // AuthWall overlays the app when authentication is needed
+    showAuthWall
+      ? React.createElement(AuthWall, {
+          onLogin: handleLogin,
+          imageUrl,
+          title,
+          open: true,
+        })
+      : null
+  );
 }
 
 export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesAppResult {
