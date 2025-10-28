@@ -9,7 +9,7 @@ runs:
       name: Install pnpm
       with:
         run_install: false
-        version: 10
+        version: 8
 
     #    - uses: useblacksmith/setup-node@v5
     - uses: actions/setup-node@v4
