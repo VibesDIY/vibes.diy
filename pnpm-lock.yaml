@@ -450,8 +450,8 @@ importers:
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
       '@storybook/addon-a11y':
-        specifier: ^9.1.13
-        version: 9.1.15(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))
+        specifier: ^10.0.0
+        version: 10.0.0(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/addon-docs':
         specifier: ^10.0.0
         version: 10.0.0(@types/react@19.2.2)(esbuild@0.25.11)(rollup@4.52.5)(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
@@ -869,8 +869,8 @@ importers:
         specifier: ^7.9.4
         version: 7.9.4(@react-router/serve@7.9.4(react-router@7.9.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.45.1(@cloudflare/workers-types@4.20251014.0))(yaml@2.8.1)
       '@storybook/addon-a11y':
-        specifier: ^9.1.13
-        version: 9.1.15(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))
+        specifier: ^10.0.0
+        version: 10.0.0(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/addon-docs':
         specifier: ^10.0.0
         version: 10.0.0(@types/react@19.2.2)(esbuild@0.25.11)(rollup@4.52.5)(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
@@ -3247,10 +3247,10 @@ packages:
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
 
-  '@storybook/addon-a11y@9.1.15':
-    resolution: {integrity: sha512-UIr9F/XCECoE9nxZ4v7SmBl50soy+7N7RtcruMNeiDjv0nlBsSO5xUc9Lr4ZwcTkN8FOrAvddHpoF4UtGrAmsQ==}
+  '@storybook/addon-a11y@10.0.0':
+    resolution: {integrity: sha512-3Ny2zG16D7MvG/7mYTz5JqK6rD0/FZwROcMPE4JEAYZvYwriOKPGTkrDIPvhSOeJCxeJhl51y4fYio7PhgwqgA==}
     peerDependencies:
-      storybook: ^9.1.15
+      storybook: ^10.0.0
 
   '@storybook/addon-docs@10.0.0':
     resolution: {integrity: sha512-mwEI/os48ncIQMrLFAI3rJf88Ge/2/7Pj+g6+MRYjWAz5x9zCLrOgRUJFRvuzVY4SJKsKuSPYplrbmj4L+YlRQ==}
@@ -11759,7 +11759,7 @@ snapshots:
 
   '@standard-schema/spec@1.0.0': {}
 
-  '@storybook/addon-a11y@9.1.15(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))':
+  '@storybook/addon-a11y@10.0.0(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))':
     dependencies:
       '@storybook/global': 5.0.0
       axe-core: 4.11.0
