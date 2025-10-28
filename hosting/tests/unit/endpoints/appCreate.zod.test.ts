@@ -53,6 +53,14 @@ describe("AppCreate Zod v4 Compatibility", () => {
 
     // Should not throw "_parse is not a function"
     expect(response).toBeDefined();
+
+    // Log error details if not 200
+    if (response.status !== 200) {
+      const errorText = await response.text();
+      console.error('Response status:', response.status);
+      console.error('Response body:', errorText);
+    }
+
     expect(response.status).toBe(200);
 
     const result = await response.json();
