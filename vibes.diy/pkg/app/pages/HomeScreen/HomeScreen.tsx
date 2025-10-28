@@ -128,7 +128,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
 
             <DraggableCard color="grey" x={870} y={100}>
               <img
-                src="https://www.pngfind.com/pngs/m/2-24642_imagenes-random-png-cosas-random-png-transparent-png.png"
+                src="https://media.discordapp.net/attachments/1423771251461324800/1432508556044931102/computer-anim.gif?ex=6901f7ce&is=6900a64e&hm=cac9afd72fe2d562031bf9b0c951539d0210e725255cffa3e5762e5df1358f6c&=&width=1472&height=1112"
                 style={{ width: "150px" }}
               />
             </DraggableCard>
