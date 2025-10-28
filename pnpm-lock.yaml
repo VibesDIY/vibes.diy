@@ -875,8 +875,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0(@types/react@19.2.2)(esbuild@0.25.11)(rollup@4.52.5)(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       '@storybook/addon-onboarding':
-        specifier: ^9.1.6
-        version: 9.1.15(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))
+        specifier: ^10.0.0
+        version: 10.0.0(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))
       '@storybook/react':
         specifier: ^9.1.13
         version: 9.1.15(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)
@@ -3257,10 +3257,10 @@ packages:
     peerDependencies:
       storybook: ^10.0.0
 
-  '@storybook/addon-onboarding@9.1.15':
-    resolution: {integrity: sha512-iOC7VIm1gjyMsie2wZDNRzn6tj5jNI/9yOAXd7MvnFeCKhQE+p+N15DIHfgctYYbHri+8fUeKIC5d9jtxBq8Zg==}
+  '@storybook/addon-onboarding@10.0.0':
+    resolution: {integrity: sha512-6Y4B+HEDjg/wo9waZ0t84A//zBpiqckJzCqbCot5IE5CUEL8qYN7Mafg9m0vBvXx+T18AwM6hEKdvO15gIyvTg==}
     peerDependencies:
-      storybook: ^9.1.15
+      storybook: ^10.0.0
 
   '@storybook/builder-vite@10.0.0':
     resolution: {integrity: sha512-D8rcLAJSKeAol/xFA+uB9YGKOzg/SZiSMw12DkrJGgJD7GGM9xPR7VwQVxPtMUewmQrPtYB7LZ3Eaa+7PlMQ4Q==}
@@ -11782,7 +11782,7 @@ snapshots:
       - vite
       - webpack
 
-  '@storybook/addon-onboarding@9.1.15(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))':
+  '@storybook/addon-onboarding@10.0.0(storybook@9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))':
     dependencies:
       storybook: 9.1.15(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
 
