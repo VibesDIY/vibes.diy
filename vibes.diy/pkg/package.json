@@ -63,7 +63,7 @@
     "ts-essentials": "^10.1.1",
     "use-fireproof": "^0.23.15",
     "use-vibes": "workspace:*",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.1",
