@@ -89,10 +89,11 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
 
-  // Get database name for localStorage key
+  // Get database name for tracking purposes
   const dbName =
     typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'default';
-  const syncKey = `fireproof-sync-${dbName}`;
+  // Use global sync key - all databases share the same auth token and sync state
+  const syncKey = 'fireproof-sync-enabled';
 
   // Check if sync was previously enabled (persists across refreshes)
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
@@ -119,12 +120,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       result.database
         .attach(cloudConfig)
         .then((attached) => {
-          console.log('[vibes-auth] Attach resolved, inspecting token state...');
-          console.log('[vibes-auth] Attached object keys:', Object.keys(attached || {}));
-
           // Try to access token state (ctx might be a function or object)
           const ctx = typeof attached?.ctx === 'function' ? attached.ctx() : attached?.ctx;
-          console.log('[vibes-auth] Context exists:', !!ctx);
 
           // Type assertion for token state access
           const ctxWithToken = ctx as
@@ -132,30 +129,15 @@ export function useFireproof(nameOrDatabase?: string | Database) {
             | undefined;
 
           if (ctxWithToken?.tokenAndClaims) {
-            console.log('[vibes-auth] Token state:', ctxWithToken.tokenAndClaims.state);
-            console.log(
-              '[vibes-auth] Has token data:',
-              !!ctxWithToken.tokenAndClaims.tokenAndClaims?.token
-            );
-
             if (
               ctxWithToken.tokenAndClaims.state === 'ready' &&
               ctxWithToken.tokenAndClaims.tokenAndClaims?.token
             ) {
-              console.log('[vibes-auth] ✓ Token is ready, writing to localStorage');
               localStorage.setItem(
                 VIBES_AUTH_TOKEN_KEY,
                 ctxWithToken.tokenAndClaims.tokenAndClaims.token
               );
-            } else {
-              console.log(
-                '[vibes-auth] ✗ Token not ready yet (state:',
-                ctxWithToken.tokenAndClaims.state,
-                ')'
-              );
             }
-          } else {
-            console.log('[vibes-auth] ✗ No tokenAndClaims in context');
           }
 
           setManualAttach({ state: 'attached', attached });
@@ -163,7 +145,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
           localStorage.setItem(syncKey, 'true');
         })
         .catch((error) => {
-          console.error('[vibes-auth] Failed to attach:', error);
           setManualAttach({ state: 'error', error });
         });
 
@@ -185,8 +166,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
             if (overlay) {
               overlay.style.display = 'none';
             }
-          } else {
-            console.warn('[useFireproof] Auth link not found after overlay ready event');
           }
         }, 100);
       };
@@ -197,7 +176,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       // Safety timeout in case event never fires (5 seconds)
       const timeoutId = setTimeout(() => {
         if (!eventReceived) {
-          console.warn('[useFireproof] Timeout waiting for auth overlay ready event');
           document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
         }
       }, 5000);
@@ -280,22 +258,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // Bridge Fireproof authentication to call-ai by syncing tokens to localStorage
   useEffect(() => {
-    console.log('[vibes-auth] Token bridge useEffect triggered');
-    console.log('[vibes-auth] - syncEnabled:', syncEnabled);
-    console.log('[vibes-auth] - result.attach state:', result.attach?.state);
-    console.log(
-      '[vibes-auth] - manualAttach state:',
-      typeof manualAttach === 'object' && manualAttach !== null ? manualAttach.state : 'none'
-    );
-
     if (typeof window === 'undefined') return;
 
     // Get the attach context (prefer result.attach over manualAttach)
     const attach = result.attach || manualAttach;
-    console.log(
-      '[vibes-auth] - Using attach from:',
-      result.attach ? 'result.attach' : manualAttach ? 'manualAttach' : 'none'
-    );
 
     // Check if we have a ready token state
     const hasReadyToken =
@@ -304,48 +270,19 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       'ctx' in attach &&
       attach.ctx?.tokenAndClaims?.state === 'ready';
 
-    console.log('[vibes-auth] - Has attach object:', !!attach);
-    console.log(
-      '[vibes-auth] - Attach has ctx:',
-      !!(attach && typeof attach === 'object' && 'ctx' in attach)
-    );
-    console.log(
-      '[vibes-auth] - Token state:',
-      attach && typeof attach === 'object' && 'ctx' in attach
-        ? attach.ctx?.tokenAndClaims?.state
-        : 'no ctx'
-    );
-    console.log('[vibes-auth] - Has ready token:', hasReadyToken);
-
     if (hasReadyToken && attach.ctx?.tokenAndClaims) {
       // Extract the token from the ready state
       const readyState = attach.ctx.tokenAndClaims;
       const tokenData = readyState.tokenAndClaims;
 
-      console.log('[vibes-auth] - Token data exists:', !!tokenData);
-      console.log('[vibes-auth] - Token string exists:', !!tokenData?.token);
-
       if (tokenData?.token) {
         try {
           // Store the token for call-ai integration
           localStorage.setItem(VIBES_AUTH_TOKEN_KEY, tokenData.token);
-          console.log('[vibes-auth] ✓ Token written to localStorage successfully');
-          console.log(
-            '[useFireproof] Synced Fireproof token to localStorage for call-ai integration'
-          );
-        } catch (error) {
+        } catch {
           // Ignore localStorage errors (privacy mode, SSR, etc.)
-          console.warn(
-            '[useFireproof] Failed to sync auth token to localStorage - storage may be restricted'
-          );
-          console.error('[vibes-auth] ✗ Failed to write token:', error);
         }
-      } else {
-        console.log('[vibes-auth] ✗ Token data missing or no token string');
       }
-    } else {
-      console.log('[vibes-auth] ✗ No ready token found yet - will write when token becomes ready');
-      console.log('[vibes-auth] Note: Token is only cleared via explicit disableSync() or logout');
     }
   }, [result.attach, manualAttach, syncEnabled]);
 
@@ -433,7 +370,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
       if (!email) {
         const error = new Error('vibes-share-request requires email in event detail');
-        console.error(error.message);
         document.dispatchEvent(
           new CustomEvent('vibes-share-error', {
             detail: { error, originalEvent: event },
