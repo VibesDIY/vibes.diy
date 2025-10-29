@@ -34,7 +34,6 @@ function VibesApp({
     new URLSearchParams(window.location.search).get('mock_login') === 'true';
 
   const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled && !mockLogin);
-  const [appReady, setAppReady] = React.useState(syncEnabled || mockLogin);
 
   React.useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -49,24 +48,6 @@ function VibesApp({
 
     return () => observer.disconnect();
   }, []);
-
-  // Reset appReady when auth wall appears (MutationObserver handles showAuthWall updates)
-  React.useEffect(() => {
-    if (showAuthWall) {
-      setAppReady(false);
-    }
-  }, [showAuthWall]);
-
-  // Defer app rendering until after auth completes
-  React.useEffect(() => {
-    if (!showAuthWall && !appReady) {
-      // Use requestAnimationFrame for smoother transition timing
-      const rafId = requestAnimationFrame(() => {
-        setAppReady(true);
-      });
-      return () => cancelAnimationFrame(rafId);
-    }
-  }, [showAuthWall, appReady]);
 
   const handleLogin = () => {
     // Dispatch global sync enable event - app's useFireproof will handle it
@@ -95,7 +76,7 @@ function VibesApp({
       // App component always renders to ensure event listener is registered
       React.createElement(HiddenMenuWrapper, {
         menuContent: React.createElement(VibesPanel),
-        children: appReady ? children : null,
+        children: children,
       })
     ),
     // AuthWall overlays the app when authentication is needed
