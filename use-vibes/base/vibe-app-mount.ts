@@ -50,18 +50,12 @@ function VibesApp({
     return () => observer.disconnect();
   }, []);
 
+  // Reset appReady when auth wall appears (MutationObserver handles showAuthWall updates)
   React.useEffect(() => {
-    // Re-check sync status from body class
-    const currentlySyncEnabled =
-      typeof window !== 'undefined' && document.body.classList.contains('vibes-connect-true');
-    const shouldShowAuthWall = !currentlySyncEnabled && !mockLogin;
-    setShowAuthWall(shouldShowAuthWall);
-
-    // Reset appReady when re-entering auth wall for consistency
-    if (shouldShowAuthWall) {
+    if (showAuthWall) {
       setAppReady(false);
     }
-  }, [mockLogin]);
+  }, [showAuthWall]);
 
   // Defer app rendering until after auth completes
   React.useEffect(() => {
