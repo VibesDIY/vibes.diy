@@ -48,8 +48,8 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    // Set localStorage to indicate sync was previously enabled
-    localStorage.setItem('fireproof-sync-test-db', 'true');
+    // Set localStorage to indicate sync was previously enabled (global key)
+    localStorage.setItem('fireproof-sync-enabled', 'true');
 
     render(<TestComponent />);
 
@@ -65,8 +65,8 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    // Ensure localStorage doesn't indicate sync was enabled
-    localStorage.removeItem('fireproof-sync-test-db');
+    // Ensure localStorage doesn't indicate sync was enabled (global key)
+    localStorage.removeItem('fireproof-sync-enabled');
 
     render(<TestComponent />);
 
@@ -83,7 +83,8 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    localStorage.setItem('fireproof-sync-test-db', 'true');
+    // Set global sync preference
+    localStorage.setItem('fireproof-sync-enabled', 'true');
 
     const { unmount } = render(<TestComponent />);
 
@@ -106,8 +107,8 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    localStorage.setItem('fireproof-sync-db1', 'true');
-    localStorage.setItem('fireproof-sync-db2', 'true');
+    // Set global sync preference (shared across all databases)
+    localStorage.setItem('fireproof-sync-enabled', 'true');
 
     const { unmount: unmount1 } = render(<TestComponent dbName="db1" />);
     const { unmount: unmount2 } = render(<TestComponent dbName="db2" />);
@@ -133,7 +134,8 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    localStorage.setItem('fireproof-sync-same-db', 'true');
+    // Set global sync preference
+    localStorage.setItem('fireproof-sync-enabled', 'true');
 
     // Multiple components using the same database name
     const { unmount: unmount1 } = render(<TestComponent dbName="same-db" />);
