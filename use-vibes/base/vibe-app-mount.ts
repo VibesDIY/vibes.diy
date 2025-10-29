@@ -39,7 +39,7 @@ function VibesApp({
   React.useEffect(() => {
     const observer = new MutationObserver(() => {
       const isConnected = document.body.classList.contains(VIBES_SYNC_ENABLED_CLASS);
-      setShowAuthWall(!isConnected);
+      setShowAuthWall(!isConnected && !mockLogin);
     });
 
     observer.observe(document.body, {
@@ -48,7 +48,7 @@ function VibesApp({
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [mockLogin]);
 
   const handleLogin = () => {
     // Dispatch global sync enable event - app's useFireproof will handle it
