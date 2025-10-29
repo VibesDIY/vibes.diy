@@ -9,6 +9,12 @@ import {
   type UseFpToCloudParam,
 } from 'use-fireproof';
 import { ManualRedirectStrategy, isJWTExpired } from './ManualRedirectStrategy.js';
+import {
+  VIBES_SYNC_ENABLE_EVENT,
+  VIBES_SYNC_DISABLE_EVENT,
+  VIBES_SYNC_ENABLED_CLASS,
+  VIBES_SYNC_ERROR_EVENT,
+} from './constants.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -37,9 +43,9 @@ function updateBodyClass() {
   );
 
   if (hasAnySyncEnabled) {
-    document.body.classList.add('vibes-connect-true');
+    document.body.classList.add(VIBES_SYNC_ENABLED_CLASS);
   } else {
-    document.body.classList.remove('vibes-connect-true');
+    document.body.classList.remove(VIBES_SYNC_ENABLED_CLASS);
   }
 }
 
@@ -146,6 +152,14 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         })
         .catch((error) => {
           setManualAttach({ state: 'error', error });
+          // Emit a low-noise diagnostic event for observers
+          try {
+            document.dispatchEvent(
+              new CustomEvent(VIBES_SYNC_ERROR_EVENT, { detail: { error, phase: 'attach' } })
+            );
+          } catch {
+            // Ignore when not in a DOM environment
+          }
         });
 
       // Wait for overlay ready event, then programmatically click the auth link
@@ -279,8 +293,17 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         try {
           // Store the token for call-ai integration
           localStorage.setItem(VIBES_AUTH_TOKEN_KEY, tokenData.token);
-        } catch {
-          // Ignore localStorage errors (privacy mode, SSR, etc.)
+        } catch (error) {
+          // Emit a diagnostic event instead of noisy console logs
+          try {
+            document.dispatchEvent(
+              new CustomEvent(VIBES_SYNC_ERROR_EVENT, {
+                detail: { error, phase: 'token-sync' },
+              })
+            );
+          } catch {
+            // Ignore when not in a DOM environment
+          }
         }
       }
     }
@@ -415,10 +438,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       enableSync();
     };
 
-    document.addEventListener('vibes-sync-enable', handleSyncEnable);
+    document.addEventListener(VIBES_SYNC_ENABLE_EVENT, handleSyncEnable);
 
     return () => {
-      document.removeEventListener('vibes-sync-enable', handleSyncEnable);
+      document.removeEventListener(VIBES_SYNC_ENABLE_EVENT, handleSyncEnable);
     };
   }, [enableSync]);
 
@@ -430,10 +453,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       disableSync();
     };
 
-    document.addEventListener('vibes-sync-disable', handleSyncDisable);
+    document.addEventListener(VIBES_SYNC_DISABLE_EVENT, handleSyncDisable);
 
     return () => {
-      document.removeEventListener('vibes-sync-disable', handleSyncDisable);
+      document.removeEventListener(VIBES_SYNC_DISABLE_EVENT, handleSyncDisable);
     };
   }, [disableSync]);
 
