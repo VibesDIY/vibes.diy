@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { AuthWall } from './components/AuthWall/AuthWall.js';
+import { VIBES_SYNC_ENABLE_EVENT, VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 
@@ -27,7 +28,7 @@ function VibesApp({
 }) {
   // Check if sync is already enabled globally by checking body class
   const syncEnabled =
-    typeof window !== 'undefined' && document.body.classList.contains('vibes-connect-true');
+    typeof window !== 'undefined' && document.body.classList.contains(VIBES_SYNC_ENABLED_CLASS);
 
   const mockLogin =
     typeof window !== 'undefined' &&
@@ -37,7 +38,7 @@ function VibesApp({
 
   React.useEffect(() => {
     const observer = new MutationObserver(() => {
-      const isConnected = document.body.classList.contains('vibes-connect-true');
+      const isConnected = document.body.classList.contains(VIBES_SYNC_ENABLED_CLASS);
       setShowAuthWall(!isConnected);
     });
 
@@ -51,7 +52,7 @@ function VibesApp({
 
   const handleLogin = () => {
     // Dispatch global sync enable event - app's useFireproof will handle it
-    document.dispatchEvent(new CustomEvent('vibes-sync-enable'));
+    document.dispatchEvent(new CustomEvent(VIBES_SYNC_ENABLE_EVENT));
   };
 
   // Render both app component (to register event listener) and AuthWall (as overlay)
@@ -63,15 +64,10 @@ function VibesApp({
     React.createElement(
       'div',
       {
-        style: showAuthWall
-          ? {
-              visibility: 'hidden',
-              position: 'absolute',
-              zIndex: -1,
-              width: '100%',
-              height: '100%',
-            }
-          : { width: '100%', height: '100%' },
+        // Keep the app mounted to register listeners, but hide it pre-auth
+        style: showAuthWall ? { display: 'none' } : { width: '100%', height: '100%' },
+        'aria-hidden': showAuthWall ? 'true' : undefined,
+        inert: showAuthWall ? true : undefined,
       },
       // App component always renders to ensure event listener is registered
       React.createElement(HiddenMenuWrapper, {
