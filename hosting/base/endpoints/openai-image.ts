@@ -56,14 +56,14 @@ export async function generateImage(
     );
 
     // Prepare request body
-    const requestBody: Partial<ImageGenerateRequest> = {
+    const requestBody: Record<string, unknown> = {
       prompt,
       model,
       n,
       quality,
       size,
       background,
-      userId: userId,
+      user: userId,
     };
 
     // Optional parameters
@@ -534,7 +534,7 @@ export class ImageGenerate extends OpenAPIRoute {
             ? data.output_compression
             : null,
         moderation: data.moderation || "auto",
-        userId: data.userId || "anonymous",
+        userId: user?.userId || "anonymous",
       };
 
       // Get the OpenAI API key from env
@@ -636,7 +636,7 @@ export class ImageEdit extends OpenAPIRoute {
         : null;
 
       requestBody.moderation = formData.get("moderation")?.toString() || "auto";
-      requestBody.userId = formData.get("userId")?.toString() || "anonymous";
+      requestBody.userId = user?.userId || "anonymous";
 
       // Get the OpenAI API key from env
       const apiKey = c.env.OPENAI_API_KEY;
