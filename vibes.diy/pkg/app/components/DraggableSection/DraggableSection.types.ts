@@ -1,4 +1,4 @@
-export type CardColor = 'yellow' | 'red' | 'blue' | 'grey';
+export type CardColor = "yellow" | "red" | "blue" | "grey";
 
 export interface DraggableSectionProps {
   children: React.ReactNode;

@@ -1,9 +1,18 @@
 import React, { useRef, useState, useEffect } from "react";
 import { DraggableCardProps } from "./DraggableCard.types.ts";
-import { getCardChildrenStyle, getCardStyle, getTitleBarStyle } from "./DraggableCard.styles.ts";
+import {
+  getCardChildrenStyle,
+  getCardStyle,
+  getTitleBarStyle,
+} from "./DraggableCard.styles.ts";
 import { useIsMobile } from "../../hooks/index.ts";
 
-export const DraggableCard = ({ color, children, x = 0, y = 0 }: DraggableCardProps) => {
+export const DraggableCard = ({
+  color,
+  children,
+  x = 0,
+  y = 0,
+}: DraggableCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -14,7 +23,7 @@ export const DraggableCard = ({ color, children, x = 0, y = 0 }: DraggableCardPr
     if (!isMobile && cardRef.current) {
       cardRef.current.style.transform = `translate(${x}px, ${y}px)`;
     } else if (isMobile && cardRef.current) {
-      cardRef.current.style.transform = '';
+      cardRef.current.style.transform = "";
     }
   }, [x, y, isMobile]);
 
@@ -26,7 +35,7 @@ export const DraggableCard = ({ color, children, x = 0, y = 0 }: DraggableCardPr
     if (rect) {
       dragStart.current = {
         x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        y: e.clientY - rect.top,
       };
     }
   };
@@ -52,17 +61,17 @@ export const DraggableCard = ({ color, children, x = 0, y = 0 }: DraggableCardPr
 
   useEffect(() => {
     if (!isMobile && isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [isDragging, isMobile]);
 
   return (
-   <div
+    <div
       ref={cardRef}
       style={getCardStyle(color, isMobile, isDragging)}
       onMouseDown={isMobile ? undefined : handleMouseDown}
@@ -71,4 +80,4 @@ export const DraggableCard = ({ color, children, x = 0, y = 0 }: DraggableCardPr
       <div style={getCardChildrenStyle(color)}>{children}</div>
     </div>
   );
-}
+};

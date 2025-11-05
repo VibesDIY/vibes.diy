@@ -87,6 +87,7 @@ vibes-app/
 There's an existing `/vibes:vibes` plugin that creates single-file HTML apps.
 
 **Existing vibes:vibes**:
+
 - Single HTML file
 - CDN imports
 - Browser-based Babel
@@ -94,6 +95,7 @@ There's an existing `/vibes:vibes` plugin that creates single-file HTML apps.
 - Output: `vibes-output/<timestamp>/index.html`
 
 **Our new /vibes**:
+
 - Full Vite project
 - npm packages
 - Proper build pipeline

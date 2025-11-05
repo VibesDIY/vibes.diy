@@ -45,25 +45,30 @@ cli/
 ### Component Roles
 
 #### 1. Marketplace (`cli/.claude-plugin/marketplace.json`)
+
 - Defines the "vibes-marketplace" with local plugin source
 - Points to `./vibes` as the plugin directory
 - Enables local development and testing
 
 #### 2. Plugin Manifest (`cli/vibes/.claude-plugin/plugin.json`)
+
 - Name: `vibes`
 - Describes the plugin functionality
 - Metadata for marketplace listing
 
 #### 3. Command (`cli/vibes/commands/vibes.md`)
+
 - User-facing `/vibes` command
 - Prompts for app description and output directory
 - Invokes the `vibes-generator` Skill
 - Provides post-generation instructions
 
 #### 4. Skill (`cli/vibes/skills/vibes-generator/SKILL.md`)
+
 **This is the core of the plugin** - 300+ lines of instructions for Claude
 
 **Key responsibilities:**
+
 1. Load cached prompt data from `plugin-data.json`
 2. Parse JSON to extract:
    - Core guidelines (react, fireproof, callAI, ui, imports, tailwind)
@@ -79,6 +84,7 @@ cli/
 6. Output installation instructions
 
 **Important patterns it implements:**
+
 - Uses `useFireproof` hook from use-vibes package
 - Integrates callAI for LLM features with streaming + schemas
 - Applies "brutalist web" design aesthetic by default
@@ -86,7 +92,9 @@ cli/
 - Real-time data updates with Fireproof live queries
 
 #### 5. Templates (`cli/vibes/skills/vibes-generator/templates/`)
+
 Pre-configured files with `{{PLACEHOLDER}}` syntax:
+
 - `package.json.template` - Dependencies (React 19, use-vibes, Vite)
 - `vite.config.js.template` - Vite + React plugin config
 - `index.html.template` - HTML entry point with {{APP_TITLE}}
@@ -148,6 +156,7 @@ User gets complete, runnable Vite project
 ## Differences from Existing vibes:vibes Plugin
 
 There's another plugin providing `/vibes:vibes` command that:
+
 - Creates **single-file HTML** applications
 - Uses CDN imports (React, Fireproof via ESM)
 - Uses `@babel/standalone` for JSX transformation
@@ -155,6 +164,7 @@ There's another plugin providing `/vibes:vibes` command that:
 - Immediately runnable in browser (no build step)
 
 **Our new plugin:**
+
 - Creates **Vite projects** with build pipeline
 - Uses npm packages (modern development workflow)
 - Outputs to user-specified directory (e.g., `./vibes-app`)
@@ -162,6 +172,7 @@ There's another plugin providing `/vibes:vibes` command that:
 - Proper development experience with HMR
 
 Both are valid approaches for different use cases:
+
 - **Single-file HTML**: Quick prototypes, no build tools needed
 - **Vite project** (ours): Production apps, proper dev workflow
 
@@ -183,6 +194,7 @@ Both are valid approaches for different use cases:
 ```
 
 Then:
+
 1. Enter app description (e.g., "todo list with AI suggestions")
 2. Enter output path (or use default `./vibes-app`)
 3. Verify files created
@@ -196,6 +208,7 @@ Then:
 ### Verify generated code
 
 Check that `src/App.jsx`:
+
 - Imports from `use-vibes` (not `use-fireproof`)
 - Uses `useFireproof` hook correctly
 - Implements user's requested features
@@ -207,6 +220,7 @@ Check that `src/App.jsx`:
 The Skill reads these files to understand patterns:
 
 ### System Prompt Generation (`prompts/pkg/prompts.ts`)
+
 - `makeBaseSystemPrompt()` function (line ~297)
 - Shows how to combine:
   - User prompt
@@ -215,12 +229,14 @@ The Skill reads these files to understand patterns:
   - Documentation snippets
 
 ### Library Catalog (`prompts/pkg/llms/`)
+
 - `index.ts` - Exports all library configs
 - `fireproof.ts` - Fireproof API documentation
 - `callai.ts` - callAI integration patterns
 - `image-gen.ts`, `d3.ts`, `three-js.ts`, `web-audio.ts` - Optional libraries
 
 Each config has:
+
 ```typescript
 {
   name: "fireproof",
@@ -234,6 +250,7 @@ Each config has:
 ```
 
 ### Style Prompts (`prompts/pkg/style-prompts.ts`)
+
 - Array of style options
 - Default: "brutalist web" (DEFAULT_STYLE_NAME)
 - Detailed CSS/design guidance
@@ -265,16 +282,16 @@ Note: We use `use-fireproof` and `call-ai` packages directly instead of `use-vib
 ## Example Generated App Structure
 
 ```javascript
-import React, { useState } from "react"
-import { useFireproof } from "use-fireproof"
-import { callAI } from "call-ai"
+import React, { useState } from "react";
+import { useFireproof } from "use-fireproof";
+import { callAI } from "call-ai";
 
 export default function App() {
-  const { database, useLiveQuery } = useFireproof("my-app-db")
+  const { database, useLiveQuery } = useFireproof("my-app-db");
 
   // Real-time query
-  const result = useLiveQuery(doc => doc.type === "item", [])
-  const items = result.docs || []
+  const result = useLiveQuery((doc) => doc.type === "item", []);
+  const items = result.docs || [];
 
   // AI-powered function
   const handleAI = async (prompt) => {
@@ -283,29 +300,30 @@ export default function App() {
       schema: {
         properties: {
           title: { type: "string" },
-          description: { type: "string" }
-        }
-      }
-    })
+          description: { type: "string" },
+        },
+      },
+    });
 
     await database.put({
       type: "item",
       ...JSON.parse(response),
-      createdAt: Date.now()
-    })
-  }
+      createdAt: Date.now(),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] p-4">
       {/* Brutalist web styled UI */}
     </div>
-  )
+  );
 }
 ```
 
 ## Known Issues & Todos
 
 ### Testing Needed
+
 - [ ] Test plugin installation flow
 - [ ] Verify Skill can read vibes.diy files correctly
 - [ ] Test generated apps actually work
@@ -313,12 +331,14 @@ export default function App() {
 - [ ] Check HMR works in development
 
 ### Potential Issues
+
 1. **Path resolution**: Skill needs to read from vibes.diy codebase root
 2. **Template placeholders**: Ensure all `{{PLACEHOLDERS}}` are replaced
 3. **Generated code syntax**: JSX must be valid
 4. **Database naming**: Should be derived from app name
 
 ### Future Enhancements
+
 - [ ] Support for additional libraries (D3, Three.js, Web Audio)
 - [ ] Custom style selection (not just brutalist web)
 - [ ] TypeScript option
@@ -337,12 +357,14 @@ The plugin uses a standalone architecture with cached prompt data in `plugin-dat
 **Purpose**: Extracts data from the vibes.diy monorepo and compiles it into a single JSON file.
 
 **Source Files**:
+
 - `prompts/pkg/style-prompts.ts` - Style themes (brutalist web, memphis, etc.)
 - `prompts/pkg/llms/*.txt|md` - Library documentation (fireproof, callai, d3, three-js, web-audio, image-gen)
 
 **Output**: `plugin-data.json` (127KB)
 
 **Structure**:
+
 ```json
 {
   "version": "1.0.0",
@@ -382,6 +404,7 @@ npm run build-plugin-data
 ```
 
 Output:
+
 ```
 Building plugin data from vibes.diy repository...
 
@@ -403,6 +426,7 @@ Building plugin data from vibes.diy repository...
 ### When to Rebuild
 
 Rebuild `plugin-data.json` when:
+
 - Style prompts change in `prompts/pkg/style-prompts.ts`
 - Library documentation updates in `prompts/pkg/llms/*.txt|md`
 - Core guidelines need to be updated in the build script
@@ -412,6 +436,7 @@ Rebuild `plugin-data.json` when:
 **For maintainers**:
 
 After rebuilding plugin-data.json:
+
 1. Increment the version number in the build script or manually in the JSON
 2. Commit the new `plugin-data.json` to the repository
 3. Push to GitHub main branch
@@ -422,11 +447,13 @@ After rebuilding plugin-data.json:
 Users have two options for updating their cached prompt data:
 
 **Option 1: `/vibes-update` command (Recommended)**
+
 ```shell
 /vibes-update
 ```
 
 This command will:
+
 - Check current vs. latest version
 - Show what's changed
 - Ask for confirmation
@@ -434,6 +461,7 @@ This command will:
 - Download and apply the update
 
 **Option 2: Manual curl (Alternative)**
+
 ```bash
 curl -o ~/.claude/plugins/vibes@vibes-marketplace/plugin-data.json \
   https://raw.githubusercontent.com/fireproof-storage/vibes.diy/main/cli/vibes/plugin-data.json
@@ -442,12 +470,14 @@ curl -o ~/.claude/plugins/vibes@vibes-marketplace/plugin-data.json \
 ### Distribution
 
 The `plugin-data.json` file is:
+
 1. **Committed** to the repository
 2. **Distributed** with the plugin
 3. **Loaded** by SKILL.md at runtime via `cat ${CLAUDE_PLUGIN_ROOT}/../plugin-data.json`
 4. **Updated** when the plugin is updated, or manually refreshed by users
 
 This architecture enables:
+
 - **Offline-first** plugin operation
 - **No monorepo dependency** for end users
 - **Easy updates** via GitHub raw URLs
@@ -511,21 +541,25 @@ The plugin now generates fully working Vite projects with no manual configuratio
 ## Troubleshooting
 
 ### Plugin not found
+
 - Check marketplace was added: `/plugin marketplace list`
 - Verify plugin installed: `/plugin` (browse installed)
 - Try reinstalling after restart
 
 ### Skill can't read files
+
 - Ensure running from vibes.diy repo root
 - Check file paths in SKILL.md are correct
 - Verify `prompts/pkg/` exists
 
 ### Generated code errors
+
 - Check template syntax in `templates/`
 - Verify placeholder replacement works
 - Ensure imports use `use-fireproof` and `call-ai` (not `use-vibes`)
 
 ### npm install fails
+
 - Check package.json syntax
 - Verify use-fireproof and call-ai versions are correct
 - Ensure Tailwind CSS v3 is specified (not v4)
@@ -565,5 +599,6 @@ The plugin now generates fully working Vite projects with no manual configuratio
 ## Contact
 
 For questions or issues:
+
 - **GitHub**: https://github.com/fireproof-storage/vibes.diy
 - **Email**: hello@vibes.diy

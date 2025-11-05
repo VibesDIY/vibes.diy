@@ -1,1 +1,1 @@
-export * from './ChatAnimation.tsx';
+export * from "./ChatAnimation.tsx";

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import type { ChatAnimationProps } from './ChatAnimation.types.js';
+import React, { useEffect, useRef, useState } from "react";
+import type { ChatAnimationProps } from "./ChatAnimation.types.js";
 import {
   getChatContainerStyle,
   getMessageWrapperStyle,
@@ -10,12 +10,12 @@ import {
   getArrowStyle,
   getArrowInnerStyle,
   getTitleStyle,
-} from './ChatAnimation.styles.js';
+} from "./ChatAnimation.styles.js";
 
 export const ChatAnimation: React.FC<ChatAnimationProps> = ({
   arrayOfMessages,
   user,
-  title
+  title,
 }) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
@@ -28,23 +28,25 @@ export const ChatAnimation: React.FC<ChatAnimationProps> = ({
 
     const handleScroll = () => {
       const isAtBottom =
-        Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 5;
+        Math.abs(
+          container.scrollHeight - container.scrollTop - container.clientHeight,
+        ) < 5;
 
       setShowScrollIndicator(!isAtBottom);
     };
 
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener("scroll", handleScroll);
     // Trigger on mount in case we're already at bottom
     handleScroll();
 
     return () => {
-      container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
   // Inject animations into document
   useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.innerHTML = `
       @keyframes slide-in-left {
         from {
@@ -120,8 +122,8 @@ export const ChatAnimation: React.FC<ChatAnimationProps> = ({
         const isCurrentUser = msg.user === user;
         const isLastMessage = index === arrayOfMessages.length - 1;
         const className = isCurrentUser
-          ? 'message-current-user'
-          : 'message-other-user';
+          ? "message-current-user"
+          : "message-other-user";
         const wrapperClass = isLastMessage
           ? `${className} last-message-wrapper`
           : className;
@@ -132,10 +134,8 @@ export const ChatAnimation: React.FC<ChatAnimationProps> = ({
             className={wrapperClass}
             style={getMessageWrapperStyle(isCurrentUser)}
           >
-            <div style={{ width: '100%' }}>
-              <div style={getUsernameStyle(isCurrentUser)}>
-                {msg.user}
-              </div>
+            <div style={{ width: "100%" }}>
+              <div style={getUsernameStyle(isCurrentUser)}>{msg.user}</div>
               <div style={getMessageBubbleStyle(isCurrentUser)}>
                 {msg.message}
               </div>

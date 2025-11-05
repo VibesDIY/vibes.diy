@@ -1,1 +1,1 @@
-export * from './VibesSwitch.tsx'
+export * from "./VibesSwitch.tsx";

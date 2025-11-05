@@ -11,6 +11,7 @@ You will help the user update their locally cached plugin data (`plugin-data.jso
 1. **Check Current Version**: Read the current `plugin-data.json` file to determine the installed version.
 
 2. **Fetch Latest Version**: Retrieve the latest `plugin-data.json` from GitHub:
+
    ```
    https://raw.githubusercontent.com/fireproof-storage/vibes.diy/main/cli/vibes/plugin-data.json
    ```

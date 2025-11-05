@@ -10,6 +10,7 @@ This Skill generates complete, production-ready React applications using Firepro
 ## Overview
 
 You will:
+
 1. Read and understand the system prompt patterns from the vibes.diy codebase
 2. Generate an augmented system prompt based on the user's request
 3. Create a React component using that augmented prompt
@@ -25,6 +26,7 @@ cat ${CLAUDE_PLUGIN_ROOT}/../plugin-data.json
 ```
 
 This JSON file contains:
+
 - `coreGuidelines`: React best practices, Fireproof patterns, callAI usage, UI patterns, imports, and Tailwind guidelines
 - `stylePrompts`: Array of available style themes (name and prompt for each)
 - `defaultStyle`: The default style name ("brutalist web")
@@ -39,6 +41,7 @@ Based on the plugin data JSON, the system prompt should include:
 ### Core Guidelines (from `coreGuidelines` in JSON)
 
 Use the guidelines from the `coreGuidelines` object in plugin-data.json:
+
 - **React**: Modern practices, hooks, JavaScript only, Tailwind CSS, no unnecessary dependencies
 - **Fireproof**: useFireproof hook, document storage, useLiveQuery for real-time
 - **callAI**: Streaming responses, JSON schemas, saving to Fireproof
@@ -49,6 +52,7 @@ Use the guidelines from the `coreGuidelines` object in plugin-data.json:
 ### Style Guidance (from `stylePrompts` and `defaultStyle` in JSON)
 
 Get the default style prompt:
+
 1. Find the style in `stylePrompts` array where `name` matches `defaultStyle`
 2. Use that style's `prompt` field for styling guidance
 3. The default is "brutalist web" with detailed neo-brutalist specifications
@@ -95,6 +99,7 @@ demonstrate proper Fireproof integration with real-time updates and proper data 
 Using the augmented system prompt you created, generate the React component code for `App.jsx`.
 
 The component should:
+
 - Be a complete, working React component
 - Use the `useFireproof` hook for data persistence
 - Include proper state management
@@ -117,6 +122,7 @@ Create the complete Vite project structure by:
    - Write processed files (remove `.template` extension)
 
 3. **Create directory structure**:
+
 ```
 [output-dir]/
 ├── package.json
@@ -156,6 +162,7 @@ npm run dev
 ```
 
 Explain that:
+
 - The app will open at http://localhost:5173
 - It uses Fireproof for local-first data persistence
 - Data persists across page reloads
@@ -175,54 +182,52 @@ Explain that:
 ## Example App.jsx Structure
 
 ```javascript
-import React, { useState, useEffect } from "react"
-import { useFireproof } from "use-fireproof"
-import { callAI } from "call-ai"
+import React, { useState, useEffect } from "react";
+import { useFireproof } from "use-fireproof";
+import { callAI } from "call-ai";
 
 export default function App() {
-  const { database, useLiveQuery } = useFireproof("app-name-db")
-  const [input, setInput] = useState("")
-  const [loading, setLoading] = useState(false)
+  const { database, useLiveQuery } = useFireproof("app-name-db");
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Live query for real-time data
-  const result = useLiveQuery(query => query.type === "item", [])
-  const items = result.docs || []
+  const result = useLiveQuery((query) => query.type === "item", []);
+  const items = result.docs || [];
 
   // Function to add item with AI
   const handleAdd = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       const response = await callAI(input, {
         schema: {
           properties: {
             title: { type: "string" },
-            description: { type: "string" }
-          }
-        }
-      })
+            description: { type: "string" },
+          },
+        },
+      });
 
-      const parsed = JSON.parse(response)
+      const parsed = JSON.parse(response);
       await database.put({
         type: "item",
         ...parsed,
-        createdAt: Date.now()
-      })
+        createdAt: Date.now(),
+      });
 
-      setInput("")
+      setInput("");
     } catch (error) {
-      console.error("Error:", error)
+      console.error("Error:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] p-4">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-4xl font-bold mb-4">App Title</h1>
-        <p className="italic mb-8">
-          App description and usage instructions...
-        </p>
+        <p className="italic mb-8">App description and usage instructions...</p>
 
         {/* Input UI */}
         <div className="mb-8">
@@ -244,8 +249,11 @@ export default function App() {
 
         {/* List items */}
         <div>
-          {items.map(item => (
-            <div key={item._id} className="mb-4 p-4 bg-white border-4 border-[#242424]">
+          {items.map((item) => (
+            <div
+              key={item._id}
+              className="mb-4 p-4 bg-white border-4 border-[#242424]"
+            >
               <h3 className="font-bold">{item.title}</h3>
               <p>{item.description}</p>
             </div>
@@ -253,13 +261,14 @@ export default function App() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 ```
 
 ## Troubleshooting
 
 If you encounter errors:
+
 - Ensure all template files are read successfully
 - Check that the output directory path is valid
 - Verify all placeholders are replaced

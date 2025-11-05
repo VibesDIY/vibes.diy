@@ -19,6 +19,7 @@ You will help the user create a complete Fireproof and Vibes.diy application.
    - Write all necessary files
 
 4. **Next Steps**: After generation, provide clear instructions:
+
    ```bash
    cd [output-directory]
    npm install

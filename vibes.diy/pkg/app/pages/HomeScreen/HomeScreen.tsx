@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   getContainerStyle,
   getWrapperStyle,
@@ -12,21 +12,30 @@ import {
   getSectionWrapperStyle,
   getFirstSectionColorBackgroundStyle,
   getSecondSectionColorBackgroundStyle,
-  getSectionContentStyle,
   getBlackBorderWrapper,
-  getBlackBorderInnerWrapper
+  getBlackBorderInnerWrapper,
+  getUsernameStyle,
+  getMessageBubbleStyle,
+  getTitleStyle,
+  getMessageWrapperStyle,
+  getChatContainerStyle,
+  getChatContainerStyleOut,
+  getChatContainerTopBar,
+  getChatContainerBottomCard,
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
   DraggableCard,
   DraggableSection,
-  VibesSwitch
+  VibesSwitch,
 } from "../../components/index.ts";
 import { HomeScreenProps } from "./HomeScreen.types.ts";
 import { useIsMobile } from "../../hooks/index.ts";
 
 export const HomeScreen = ({}: HomeScreenProps) => {
   const isMobile = useIsMobile();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const innerContainerRef = useRef<HTMLDivElement>(null);
 
   // 🧩 Define your 3 chat scenarios
   const scenarios = [
@@ -35,7 +44,10 @@ export const HomeScreen = ({}: HomeScreenProps) => {
       arrayOfMessages: [
         { user: "JChris", message: "Who’s coming to Friendsgiving this year?" },
         { user: "Megan", message: "yes please rescue me from my family 🥲" },
-        { user: "JChris", message: "can we not repeat last year’s mac n cheese disaster tho" },
+        {
+          user: "JChris",
+          message: "can we not repeat last year’s mac n cheese disaster tho",
+        },
         { user: "Megan", message: "I’m still recovering!" },
         { user: "Mike", message: "Should I make a spreadsheet?" },
         { user: "Megan", message: "Zzzzzzzzz" },
@@ -43,36 +55,60 @@ export const HomeScreen = ({}: HomeScreenProps) => {
         { user: "You", message: "lemme just make us a festive lil app:" },
         { user: "You", message: "https://bright-shango-4087.vibesdiy.app/" },
         { user: "JChris", message: "nice! dibs on the mac" },
-        { user: "Marcus", message: "I’m a *coder* now\n*tries Vibes DIY once* 🤓" }
+        {
+          user: "Marcus",
+          message: "I’m a *coder* now\n*tries Vibes DIY once* 🤓",
+        },
       ],
     },
     {
       title: `Roomies`,
       arrayOfMessages: [
-        { user: "James", message: "sorry roomies, I didn’t have time to tackle Dish Mountain last night" },
+        {
+          user: "James",
+          message:
+            "sorry roomies, I didn’t have time to tackle Dish Mountain last night",
+        },
         { user: "James", message: "will absolutely get to it after work" },
         { user: "Lola", message: "Pretty sure it’s my turn, no?" },
         { user: "Jordan", message: "Huge if true!!" },
-        { user: "James", message: "@Lola if you do the dishes I’ll take out the trash tomorrow AM!" },
+        {
+          user: "James",
+          message:
+            "@Lola if you do the dishes I’ll take out the trash tomorrow AM!",
+        },
         { user: "You", message: "ok hear me out:" },
         { user: "You", message: "chore chart, but make it fun?" },
         { user: "You", message: "https://coltrane-oshun-9477.vibesdiy.app/" },
         { user: "Jordan", message: "Did we just…solve dishes?" },
-        { user: "James", message: "Chore quest!!!" }
+        { user: "James", message: "Chore quest!!!" },
       ],
     },
     {
       title: `Trivia Night`,
       arrayOfMessages: [
         { user: "Bobby", message: "never felt dumber than last night 🥲" },
-        { user: "Bobby", message: "they should make trivia night for people with brainrot" },
-        { user: "You", message: "“I’ll take Real Housewives of SLC for $500, Alex!”" },
+        {
+          user: "Bobby",
+          message: "they should make trivia night for people with brainrot",
+        },
+        {
+          user: "You",
+          message: "“I’ll take Real Housewives of SLC for $500, Alex!”",
+        },
         { user: "Lindsay", message: "Bravo Brainteasters lol" },
-        { user: "Nikki", message: "to be fair, the reality TV lore is deeeeeep" },
+        {
+          user: "Nikki",
+          message: "to be fair, the reality TV lore is deeeeeep",
+        },
         { user: "Lindsay", message: "actually I’d probably watch that" },
         { user: "Bobby", message: "imagine Andy Cohen as a host" },
-        { user: "You", message: "I kinda think you might have something with this:\nhttps://chromatic-fader-4248.vibesdiy.app/" },
-        { user: "Bobby", message: "oh it’s so over for all of you!!!!" }
+        {
+          user: "You",
+          message:
+            "I kinda think you might have something with this:\nhttps://chromatic-fader-4248.vibesdiy.app/",
+        },
+        { user: "Bobby", message: "oh it’s so over for all of you!!!!" },
       ],
     },
   ];
@@ -80,29 +116,143 @@ export const HomeScreen = ({}: HomeScreenProps) => {
   // 🎲 Pick one scenario at random on each render
   const selectedScenario = useMemo(
     () => scenarios[Math.floor(Math.random() * scenarios.length)],
-    [] // empty deps = pick once per mount
+    [], // empty deps = pick once per mount
   );
+
+  // Inject animations into document
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+        @keyframes slide-in-left {
+          from {
+            opacity: 0;
+            transform: translateX(-100px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes slide-in-right {
+          from {
+            opacity: 0;
+            transform: translateX(100px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-15px);
+          }
+        }
+
+        .message-current-user, .message-other-user {
+          animation: linear both;
+          animation-timeline: view();
+          animation-range: entry 0% cover 30%;
+        }
+
+        .message-current-user {
+          animation-name: slide-in-right;
+        }
+
+        .message-other-user {
+          animation-name: slide-in-left;
+        }
+
+        .scroll-indicator {
+          animation: bounce 1.5s ease-in-out infinite;
+        }
+
+        .chat-container-wrapper::-webkit-scrollbar {
+          display: none;
+        }
+
+        .last-message-wrapper {
+          scroll-margin-bottom: 0;
+        }
+
+        .chat-inner::-webkit-scrollbar {
+          display: none;
+        }
+      `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) return; // No ejecutar en móvil
+
+    const innerContainer = innerContainerRef.current;
+    const chatContainer = chatContainerRef.current;
+    if (!innerContainer || !chatContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Evita interferencias si faltan refs
+      if (!chatContainer) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+      const isScrollable = scrollHeight > clientHeight;
+      const isAtTop = scrollTop <= 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+      // Si el chat tiene espacio para desplazarse, absorbemos el scroll
+      if (isScrollable) {
+        // Scroll hacia abajo
+        if (e.deltaY > 0 && !isAtBottom) {
+          e.preventDefault();
+          chatContainer.scrollTop += e.deltaY;
+          return;
+        }
+
+        // Scroll hacia arriba
+        if (e.deltaY < 0 && !isAtTop) {
+          e.preventDefault();
+          chatContainer.scrollTop += e.deltaY;
+          return;
+        }
+      }
+
+      // Si el chat ya llegó al final o principio, dejamos que el scroll continúe naturalmente
+    };
+
+    // Escuchar el evento de rueda desde *cualquier parte del innerContainer*
+    innerContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      innerContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [isMobile]);
+
 
   return (
     <div style={getBlackBorderWrapper()}>
       <div style={getBackgroundStyle()} />
       <div style={getNoiseTextureStyle()} />
-    <div style={getBlackBorderInnerWrapper()}>
-      <div style={getMenuStyle()}>
-        <VibesSwitch size={64} />
-      </div>
+      <div style={getBlackBorderInnerWrapper()}>
+        <div style={getMenuStyle()}>
+          <VibesSwitch size={64} />
+        </div>
 
+        <div style={getScrollingBackgroundsStyle()}>
+          <div style={getFirstSectionColorBackgroundStyle(isMobile)} />
+          <div style={getSecondSectionColorBackgroundStyle(isMobile)} />
+        </div>
 
-      <div style={getScrollingBackgroundsStyle()}>
-        <div style={getFirstSectionColorBackgroundStyle(isMobile)} />
-        <div style={getSecondSectionColorBackgroundStyle(isMobile)} />
-      </div>
+        <div style={getWrapperStyle()} />
 
-      <div style={getWrapperStyle()} />
-
-      <div style={getContainerStyle()}>
-        <div style={getInnerContainerStyle(isMobile)}>
-          <DraggableSection color="grey" x={20} y={20}>
+        <div style={getContainerStyle()}>
+          <div style={getInnerContainerStyle(isMobile)} ref={innerContainerRef}>
+            <DraggableSection color="grey" x={20} y={20}>
               <h2 style={{ fontWeight: "bold", fontSize: "40px" }}>
                 Impress the Group Chat
               </h2>
@@ -111,13 +261,13 @@ export const HomeScreen = ({}: HomeScreenProps) => {
               </p>
             </DraggableSection>
 
-            <DraggableSection color="blue" x={20} y={170}>
+            {isMobile && <DraggableSection color="blue" x={20} y={170}>
               <ChatAnimation
                 title={selectedScenario.title}
                 arrayOfMessages={selectedScenario.arrayOfMessages}
                 user={"You"}
               />
-            </DraggableSection>
+            </DraggableSection>}
 
             <DraggableCard color="blue" x={550} y={100}>
               <p style={{ maxWidth: "250px", fontWeight: "bold" }}>
@@ -128,7 +278,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
 
             <DraggableCard color="grey" x={870} y={100}>
               <img
-                src="https://media.discordapp.net/attachments/1423771251461324800/1432508556044931102/computer-anim.gif?ex=6901f7ce&is=6900a64e&hm=cac9afd72fe2d562031bf9b0c951539d0210e725255cffa3e5762e5df1358f6c&=&width=1472&height=1112"
+                src="https://media.discordapp.net/attachments/1423771251461324800/1432508556044931102/computer-anim.gif?ex=690b324e&is=6909e0ce&hm=7d59f9a19b55fae0b9e829cef4a6f2df006e38a056061ed1b3d6b89f0265ee0c&=&width=1472&height=1112"
                 style={{ width: "150px" }}
               />
             </DraggableCard>
@@ -143,47 +293,152 @@ export const HomeScreen = ({}: HomeScreenProps) => {
                 everything you do together.
               </p>
             </DraggableCard>
+            {!isMobile && <div
+              className="chat-container-wrapper"
+              style={getChatContainerStyleOut()}
+            >
+              <div
+                className="chat-inner"
+                style={getChatContainerStyle()}
+              >
+                <div>
+                  <div style={getChatContainerTopBar()} />
+                  <div style={getChatContainerBottomCard()} 
+                ref={chatContainerRef}>
+                    {selectedScenario.title && (
+                      <div style={getTitleStyle()}>{selectedScenario.title}</div>
+                    )}
+                    {selectedScenario.arrayOfMessages.map((msg, index) => {
+                      const isCurrentUser = msg.user === "You";
+                      const isLastMessage =
+                        index === selectedScenario.arrayOfMessages.length - 1;
+                      const className = isCurrentUser
+                        ? "message-current-user"
+                        : "message-other-user";
+                      const wrapperClass = isLastMessage
+                        ? `${className} last-message-wrapper`
+                        : className;
+
+                      return (
+                        <div
+                          key={index}
+                          className={wrapperClass}
+                          style={getMessageWrapperStyle(isCurrentUser)}
+                        >
+                          <div style={{ width: "100%" }}>
+                            <div style={getUsernameStyle(isCurrentUser)}>
+                              {msg.user}
+                            </div>
+                            <div style={getMessageBubbleStyle(isCurrentUser)}>
+                              {msg.message}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>}
           </div>
 
           <div style={getSectionsContainerStyle(isMobile)}>
             <section style={getSectionWrapperStyle(isMobile)}>
               <DraggableSection color="blue" static>
-                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>Community Code</h3>
-                <p><strong>For people who care about people</strong><br />
-                  Your group chat isn't a start-up. It's a community, and every community has its own
-                  unique needs. So why should you rely on one-sized-fits-all apps made by people who
-                  care more about shareholders than stakeholders? Infinitely remixable, small-scale
-                  software made for the people you love: that's the vibe.
+                <h3
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "40px",
+                    color: "#5398c9",
+                  }}
+                >
+                  Community Code
+                </h3>
+                <p>
+                  <strong>For people who care about people</strong>
+                  <br />
+                  Your group chat isn't a start-up. It's a community, and every
+                  community has its own unique needs. So why should you rely on
+                  one-sized-fits-all apps made by people who care more about
+                  shareholders than stakeholders? Infinitely remixable,
+                  small-scale software made for the people you love: that's the
+                  vibe.
                 </p>
 
-                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>The App to End all Apps</h3>
-                <p><strong>What you need and nothing else</strong><br />
-                  Vibes is every app you could ever need in one place — with no app store, no
-                  downloads, and no software updates. It's a tool for building what you need, only when
-                  you need it. Share your creations instantly with the group chat and mix them up
-                  together. Best of all, everyone's data stays local, portable, and safe.
+                <h3
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "40px",
+                    color: "#5398c9",
+                  }}
+                >
+                  The App to End all Apps
+                </h3>
+                <p>
+                  <strong>What you need and nothing else</strong>
+                  <br />
+                  Vibes is every app you could ever need in one place — with no
+                  app store, no downloads, and no software updates. It's a tool
+                  for building what you need, only when you need it. Share your
+                  creations instantly with the group chat and mix them up
+                  together. Best of all, everyone's data stays local, portable,
+                  and safe.
                 </p>
 
-                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>Get off the Cloud</h3>
-                <p><strong>With un-hackable architecture</strong><br />
-                  Vibes gives you complete visibility and control over your data. Your community apps
-                  are stored locally, right on your phone — so you don't have to worry about trusting
-                  everyone's personal information to some impersonal cloud.
+                <h3
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "40px",
+                    color: "#5398c9",
+                  }}
+                >
+                  Get off the Cloud
+                </h3>
+                <p>
+                  <strong>With un-hackable architecture</strong>
+                  <br />
+                  Vibes gives you complete visibility and control over your
+                  data. Your community apps are stored locally, right on your
+                  phone — so you don't have to worry about trusting everyone's
+                  personal information to some impersonal cloud.
                 </p>
 
-                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>Single-Serving Software</h3>
-                <p><strong>Don't overthink it — make it.</strong><br />
-                  No need to be precious. Whip up a one-time scoring app for your annual pumpkin
-                  carving contest. Generate questions for trivia night. Troll your friends with a custom
-                  meme template. Solve small problems or big ones. Make new things and put them into
-                  motion right away. As long as you can describe it, you can build it — fast.
+                <h3
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "40px",
+                    color: "#5398c9",
+                  }}
+                >
+                  Single-Serving Software
+                </h3>
+                <p>
+                  <strong>Don't overthink it — make it.</strong>
+                  <br />
+                  No need to be precious. Whip up a one-time scoring app for
+                  your annual pumpkin carving contest. Generate questions for
+                  trivia night. Troll your friends with a custom meme template.
+                  Solve small problems or big ones. Make new things and put them
+                  into motion right away. As long as you can describe it, you
+                  can build it — fast.
                 </p>
 
-                <h3 style={{ fontWeight: 'bold', fontSize: '40px', color: '#5398c9' }}>Quick Apps for Lasting Community</h3>
-                <p><strong>Because good software makes good neighbors</strong><br />
-                  Your relationships are always evolving. Your tools should too. With Vibes, build exactly
-                  what your community needs right now. When those tools don't serve you anymore,
-                  make some new ones. Because it's not about the apps. It's about what you do with
+                <h3
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "40px",
+                    color: "#5398c9",
+                  }}
+                >
+                  Quick Apps for Lasting Community
+                </h3>
+                <p>
+                  <strong>Because good software makes good neighbors</strong>
+                  <br />
+                  Your relationships are always evolving. Your tools should too.
+                  With Vibes, build exactly what your community needs right now.
+                  When those tools don't serve you anymore, make some new ones.
+                  Because it's not about the apps. It's about what you do with
                   them together.
                 </p>
               </DraggableSection>
@@ -192,18 +447,29 @@ export const HomeScreen = ({}: HomeScreenProps) => {
             <section style={getSectionWrapperStyle(isMobile)}>
               <DraggableSection color="red" static>
                 <div style={getSecondCardStyle()}>
-                  <p>You love your group chat. Meet your group app. </p><p>
-                    Remember that camping trip when nobody packed coffee? The Friendsgiving with six
-                    mac n' cheeses and no turkey? You love your friends, but organizing them can be a
-                    headache. Make planning painless with custom community apps, made by and for
-                    your friends, for everything you do together.</p><p>
-                    Like volunteer sign-ups and school drop-offs. Project checklists and vacation planners.
-                    Pick-up basketball schedules and fantasy football rankings. A cooperative chore wheel
-                    for the roomies and the ultimate Oscars bracket for movie club. Whatever the vibe, you
-                    can build it with Vibes.</p><p>
-                    Share and use your new apps instantly, and remix them on the fly. Everyone's ideas are
-                    welcome and everyone's data is protected. This is software that communities build
-                    together in real time — to make life easier, fairer, and more fun for everyone.</p><p>
+                  <p>You love your group chat. Meet your group app. </p>
+                  <p>
+                    Remember that camping trip when nobody packed coffee? The
+                    Friendsgiving with six mac n' cheeses and no turkey? You
+                    love your friends, but organizing them can be a headache.
+                    Make planning painless with custom community apps, made by
+                    and for your friends, for everything you do together.
+                  </p>
+                  <p>
+                    Like volunteer sign-ups and school drop-offs. Project
+                    checklists and vacation planners. Pick-up basketball
+                    schedules and fantasy football rankings. A cooperative chore
+                    wheel for the roomies and the ultimate Oscars bracket for
+                    movie club. Whatever the vibe, you can build it with Vibes.
+                  </p>
+                  <p>
+                    Share and use your new apps instantly, and remix them on the
+                    fly. Everyone's ideas are welcome and everyone's data is
+                    protected. This is software that communities build together
+                    in real time — to make life easier, fairer, and more fun for
+                    everyone.
+                  </p>
+                  <p>
                     You and your friends aren't users anymore. You're makers.
                   </p>
                 </div>
@@ -211,7 +477,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
             </section>
           </div>
         </div>
-    </div>
+      </div>
     </div>
   );
-}
+};

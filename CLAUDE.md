@@ -53,6 +53,7 @@ Run vibes.diy tests (quiet): `cd vibes.diy/tests && pnpm test --reporter=dot`
 6. **Confirm GitHub Actions**: The CI will automatically extract the version from the tag and publish to npm
 
 **CRITICAL MISTAKES TO AVOID**:
+
 - Never create git tags before committing changes! The tag will point to the old commit without your changes.
 - Never create `call-ai@*` tags - only create `use-vibes@*` tags
 
@@ -67,6 +68,7 @@ To release use-vibes (this is the ONLY package Claude should release):
 3. **Confirm GitHub Actions**: The CI will automatically extract the version from the tag and publish to npm
 
 **Note**: use-vibes releases automatically publish all three packages:
+
 - `call-ai` (browser-loaded AI API client)
 - `@vibes.diy/use-vibes-base` (core components and hooks)
 - `use-vibes` (main package)

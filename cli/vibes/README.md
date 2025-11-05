@@ -21,6 +21,7 @@ This plugin provides a `/vibes` command that:
 ### From This Repository (Local Development)
 
 1. Add the marketplace:
+
 ```bash
 claude
 ```
@@ -30,6 +31,7 @@ claude
 ```
 
 2. Install the plugin:
+
 ```shell
 /plugin install vibes@vibes-marketplace
 ```
@@ -48,16 +50,19 @@ claude
 ### Generating Apps
 
 1. Run the command:
+
 ```shell
 /vibes
 ```
 
 2. Describe your app when prompted:
+
 ```
 I want to build a todo list app with AI-powered task suggestions
 ```
 
 3. Specify output directory (or use default `./vibes-app`):
+
 ```
 ./my-awesome-app
 ```
@@ -65,6 +70,7 @@ I want to build a todo list app with AI-powered task suggestions
 4. The plugin generates the complete project structure
 
 5. Follow the next steps:
+
 ```bash
 cd my-awesome-app
 npm install
@@ -80,6 +86,7 @@ The plugin uses cached prompt data that includes coding guidelines, style prompt
 ```
 
 This command will:
+
 1. Check your current plugin data version
 2. Fetch the latest version from GitHub
 3. Show you what's changed
@@ -87,17 +94,20 @@ This command will:
 5. Create a backup and apply the update
 
 **When to update:**
+
 - Monthly updates are typically available
 - Check for updates when you want the latest styles or library docs
 - Update before generating important projects to get newest best practices
 
 **What gets updated:**
+
 - Style prompts (brutalist web, memphis, etc.)
 - Library documentation (Fireproof, callAI, D3, Three.js, etc.)
 - Core coding guidelines
 - UI patterns and best practices
 
 **What stays the same:**
+
 - The plugin code itself
 - Your generated apps
 - Project templates
@@ -152,32 +162,30 @@ The `plugin-data.json` file is compiled from the vibes.diy monorepo and cached l
 The generated components follow this pattern:
 
 ```javascript
-import React, { useState } from "react"
-import { useFireproof } from "use-fireproof"
-import { callAI } from "call-ai"
+import React, { useState } from "react";
+import { useFireproof } from "use-fireproof";
+import { callAI } from "call-ai";
 
 export default function App() {
-  const { database, useLiveQuery } = useFireproof("app-db")
+  const { database, useLiveQuery } = useFireproof("app-db");
 
   // Live queries for real-time data
-  const result = useLiveQuery(query => query.type === "item", [])
-  const items = result.docs || []
+  const result = useLiveQuery((query) => query.type === "item", []);
+  const items = result.docs || [];
 
   // AI-powered features with callAI
   const handleAIAction = async (prompt) => {
     const response = await callAI(prompt, {
       stream: true,
-      schema: { /* your schema */ }
-    })
+      schema: {
+        /* your schema */
+      },
+    });
     // Save to Fireproof
-    await database.put({ type: "item", data: JSON.parse(response) })
-  }
+    await database.put({ type: "item", data: JSON.parse(response) });
+  };
 
-  return (
-    <div className="min-h-screen bg-[#f1f5f9] p-4">
-      {/* Your UI */}
-    </div>
-  )
+  return <div className="min-h-screen bg-[#f1f5f9] p-4">{/* Your UI */}</div>;
 }
 ```
 
@@ -232,6 +240,7 @@ The plugin uses these defaults:
 - **Vite version**: 7.1.9
 
 These can be customized by modifying:
+
 - `skills/vibes-generator/SKILL.md` - Generation logic
 - `skills/vibes-generator/templates/` - Project templates
 
@@ -240,6 +249,7 @@ These can be customized by modifying:
 ### Plugin not found after installation
 
 Make sure you restarted Claude Code after installation:
+
 ```shell
 exit
 claude
@@ -250,6 +260,7 @@ claude
 1. Make sure you ran `npm install` in the output directory
 2. Check that Node.js version is ≥18
 3. Try removing `node_modules` and reinstalling:
+
 ```bash
 rm -rf node_modules package-lock.json
 npm install
@@ -258,6 +269,7 @@ npm install
 ### Import errors in generated code
 
 The generated code uses these packages:
+
 - `react` - React library
 - `use-vibes` - Includes useFireproof hook
 - `call-ai` - AI integration (imported via use-vibes)
@@ -267,6 +279,7 @@ These are automatically included in package.json.
 ### Styling looks broken
 
 Make sure Tailwind classes are working:
+
 1. Check that browser dev tools show classes applied
 2. Vite should process Tailwind automatically
 3. Custom colors use bracket notation: `bg-[#242424]`
@@ -308,12 +321,14 @@ cli/vibes/
 To customize how apps are generated, edit:
 
 **skills/vibes-generator/SKILL.md**
+
 - Change system prompt patterns
 - Modify component structure
 - Add new libraries
 - Adjust style guidelines
 
 **skills/vibes-generator/templates/**
+
 - Update project configuration
 - Change default dependencies
 - Modify base HTML structure
@@ -323,11 +338,13 @@ To customize how apps are generated, edit:
 After modifying the plugin:
 
 1. Uninstall current version:
+
 ```shell
 /plugin uninstall vibes@vibes-marketplace
 ```
 
 2. Reinstall:
+
 ```shell
 /plugin install vibes@vibes-marketplace
 ```
@@ -383,6 +400,7 @@ Output next steps
 The plugin uses a standalone architecture that doesn't require the vibes.diy monorepo:
 
 **Build Process** (for maintainers):
+
 ```
 vibes.diy/prompts/pkg/*.ts
         ↓
@@ -396,6 +414,7 @@ Distributed with plugin
 ```
 
 **Runtime Process** (for users):
+
 ```
 Plugin loads plugin-data.json
         ↓
@@ -407,11 +426,13 @@ Optional: Manual refresh from GitHub raw URL
 **Updating Plugin Data**:
 
 Use the `/vibes-update` command for easy updates:
+
 ```shell
 /vibes-update
 ```
 
 Alternatively, users can manually download the latest version:
+
 ```bash
 curl -o ~/.claude/plugins/vibes@vibes-marketplace/plugin-data.json \
   https://raw.githubusercontent.com/fireproof-storage/vibes.diy/main/cli/vibes/plugin-data.json

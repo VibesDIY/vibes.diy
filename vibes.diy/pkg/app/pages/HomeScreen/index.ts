@@ -1,1 +1,1 @@
-export * from './HomeScreen.tsx'
+export * from "./HomeScreen.tsx";

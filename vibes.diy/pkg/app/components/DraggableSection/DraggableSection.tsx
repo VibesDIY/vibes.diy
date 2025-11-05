@@ -1,9 +1,19 @@
 import React, { useRef, useState, useEffect } from "react";
 import { DraggableSectionProps } from "./DraggableSection.types.ts";
-import { getCardChildrenStyle, getCardStyle, getTitleBarStyle } from "./DraggableSection.styles.ts";
+import {
+  getCardChildrenStyle,
+  getCardStyle,
+  getTitleBarStyle,
+} from "./DraggableSection.styles.ts";
 import { useIsMobile } from "../../hooks/index.ts";
 
-export const DraggableSection = ({ color, children, x = 0, y = 0, static: isStatic = false }: DraggableSectionProps) => {
+export const DraggableSection = ({
+  color,
+  children,
+  x = 0,
+  y = 0,
+  static: isStatic = false,
+}: DraggableSectionProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -15,7 +25,7 @@ export const DraggableSection = ({ color, children, x = 0, y = 0, static: isStat
     if (!isMobile && cardRef.current) {
       cardRef.current.style.transform = `translate(${x}px, ${y}px)`;
     } else if (isMobile && cardRef.current) {
-      cardRef.current.style.transform = '';
+      cardRef.current.style.transform = "";
     }
   }, [x, y, isMobile, isStatic]);
 
@@ -27,7 +37,7 @@ export const DraggableSection = ({ color, children, x = 0, y = 0, static: isStat
     if (rect) {
       dragStart.current = {
         x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        y: e.clientY - rect.top,
       };
     }
   };
@@ -52,11 +62,11 @@ export const DraggableSection = ({ color, children, x = 0, y = 0, static: isStat
 
   useEffect(() => {
     if (!isMobile && isDragging && !isStatic) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [isDragging, isMobile, isStatic]);

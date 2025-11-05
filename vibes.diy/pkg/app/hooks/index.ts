@@ -1,1 +1,1 @@
-export * from './useIsMobile.ts'
+export * from "./useIsMobile.ts";

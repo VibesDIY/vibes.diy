@@ -9,12 +9,5 @@
   "homepage": "https://vibes.diy",
   "repository": "https://github.com/fireproof-storage/vibes.diy",
   "license": "MIT",
-  "keywords": [
-    "fireproof",
-    "vibes",
-    "react",
-    "code-generation",
-    "ai",
-    "vite"
-  ]
+  "keywords": ["fireproof", "vibes", "react", "code-generation", "ai", "vite"]
 }
