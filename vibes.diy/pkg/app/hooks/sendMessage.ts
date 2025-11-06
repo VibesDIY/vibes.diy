@@ -6,7 +6,7 @@ import {
   type VibeDocument,
   type SystemPromptResult,
 } from "@vibes.diy/prompts";
-import { trackChatInputClick } from "../utils/analytics.js";
+import { trackChatInputClick, trackEvent } from "../utils/analytics.js";
 import { parseContent } from "@vibes.diy/prompts";
 import { streamAI } from "../utils/streamHandler.js";
 import { generateTitle } from "../utils/titleGenerator.js";
@@ -176,6 +176,27 @@ export async function sendChatMessage(
         const { id } = (await sessionDatabase.put(aiMessage)) as { id: string };
         setPendingAiMessage({ ...aiMessage, _id: id });
         setSelectedResponseId(id);
+
+        // Emit app_created once per session (guard on first AI message id)
+        try {
+          const already = sessionStorage.getItem(
+            `app_created_${aiMessage.session_id}`,
+          );
+          if (!already) {
+            trackEvent("app_created", {
+              session_id: aiMessage.session_id,
+              model: modelToUse,
+              title: vibeDoc?.title || undefined,
+              user_id: userId,
+            });
+            sessionStorage.setItem(
+              `app_created_${aiMessage.session_id}`,
+              "1",
+            );
+          }
+        } catch {
+          // ignore storage errors
+        }
 
         // Skip title generation if the response is an error or title was set manually
         const isErrorResponse =
