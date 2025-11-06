@@ -2,13 +2,8 @@ import React from "react";
 import { VibesDiyEnv } from "../config/env.js";
 
 export default function GtmNoScript() {
-  if (typeof document === "undefined") return null;
   const id = VibesDiyEnv.GTM_CONTAINER_ID();
   if (!id) return null;
-  const hasConsent =
-    typeof document !== "undefined" &&
-    document.cookie.includes("cookieConsent=true");
-  if (!hasConsent) return null;
   return (
     <noscript>
       {

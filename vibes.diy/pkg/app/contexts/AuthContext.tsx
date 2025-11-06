@@ -60,11 +60,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (userId && typeof window !== "undefined") {
           try {
             const prev = localStorage.getItem("fp_user_id");
+            const isReturning = prev === userId;
             // Push identity + auth event to dataLayer directly to avoid tight coupling
             const w = window as unknown as Window & { dataLayer?: unknown[] };
             w.dataLayer = w.dataLayer || [];
             w.dataLayer.push({ event: "identify", user_id: userId });
-            w.dataLayer.push({ event: prev ? "login" : "sign_up", user_id: userId });
+            w.dataLayer.push({ event: isReturning ? "login" : "sign_up", user_id: userId });
             localStorage.setItem("fp_user_id", userId);
           } catch {
             // ignore storage errors

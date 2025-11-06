@@ -4,25 +4,21 @@
 */
 
 export function initGTM(containerId: string) {
-  if (typeof window === "undefined" || typeof document === "undefined") return;
-  if (!containerId) return;
+  if (typeof window === "undefined" || typeof document === "undefined" || !containerId) return;
 
   // Avoid duplicate injection
-  if (document.getElementById("gtm-bootstrap")) return;
+  if (document.getElementById("gtm-src")) return;
 
-  // Create the bootstrap inline script equivalent to the standard snippet
-  const inline = document.createElement("script");
-  inline.id = "gtm-bootstrap";
-  inline.innerHTML = `
-    (function(w,d,s,l,i){
-      w[l]=w[l]||[];
-      w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
-      var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
-      j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-      f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','${containerId}');
-  `;
-  document.head.appendChild(inline);
+  // Initialize dataLayer and signal gtm.js without inline code
+  const w = window as unknown as Window & { dataLayer?: unknown[] };
+  w.dataLayer = w.dataLayer || [];
+  w.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+
+  const s = document.createElement("script");
+  s.id = "gtm-src";
+  s.async = true;
+  s.src = `https://www.googletagmanager.com/gtm.js?id=${containerId}`;
+  document.head.appendChild(s);
 }
 
 export function gtmPush(obj: Record<string, unknown>) {

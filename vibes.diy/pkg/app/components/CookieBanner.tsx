@@ -81,16 +81,18 @@ export default function CookieBanner() {
 
       if (window.history && window.history.replaceState) {
         const url = new URL(window.location.href);
-        url.searchParams.delete("utm_source");
-        url.searchParams.delete("utm_medium");
-        url.searchParams.delete("utm_campaign");
-        url.searchParams.delete("utm_term");
-        url.searchParams.delete("utm_content");
-        window.history.replaceState(
-          {},
-          document.title,
-          url.pathname + url.hash,
-        );
+        [
+          "utm_source",
+          "utm_medium",
+          "utm_campaign",
+          "utm_term",
+          "utm_content",
+        ].forEach((k) => url.searchParams.delete(k));
+        const search = url.search.toString();
+        const newUrl = `${url.pathname}${search ? `?${search}` : ""}${
+          url.hash
+        }`;
+        window.history.replaceState({}, document.title, newUrl);
       }
     }
   }, [hasConsent, VibesDiyEnv.GTM_CONTAINER_ID()]);
