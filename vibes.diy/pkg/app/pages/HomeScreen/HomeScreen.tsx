@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   getContainerStyle,
   getWrapperStyle,
@@ -31,11 +31,14 @@ import {
 } from "../../components/index.ts";
 import { HomeScreenProps } from "./HomeScreen.types.ts";
 import { useIsMobile } from "../../hooks/index.ts";
+import { AnimatedScene } from "./AnimatedScene.tsx";
 
 export const HomeScreen = ({}: HomeScreenProps) => {
   const isMobile = useIsMobile();
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
+  const animatedSceneContainerRef = useRef<HTMLDivElement>(null);
+  const [animationProgress, setAnimationProgress] = useState(0);
 
   // 🧩 Define your 3 chat scenarios
   const scenarios = [
@@ -183,6 +186,10 @@ export const HomeScreen = ({}: HomeScreenProps) => {
         .chat-inner::-webkit-scrollbar {
           display: none;
         }
+
+        .animated-scene-wrapper::-webkit-scrollbar {
+          display: none;
+        }
       `;
     document.head.appendChild(style);
     return () => {
@@ -195,31 +202,66 @@ export const HomeScreen = ({}: HomeScreenProps) => {
 
     const innerContainer = innerContainerRef.current;
     const chatContainer = chatContainerRef.current;
+    const animatedContainer = animatedSceneContainerRef.current;
     if (!innerContainer || !chatContainer) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // Evita interferencias si faltan refs
-      if (!chatContainer) return;
+      // Check if the scroll event is happening inside the animated scene container
+      const isInsideAnimatedScene = animatedContainer && animatedContainer.contains(e.target as Node);
 
-      const { scrollTop, scrollHeight, clientHeight } = chatContainer;
-      const isScrollable = scrollHeight > clientHeight;
-      const isAtTop = scrollTop <= 0;
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+      if (isInsideAnimatedScene && animatedContainer) {
+        // Handle animated scene scrolling
+        const { scrollTop, scrollHeight, clientHeight } = animatedContainer;
+        const isScrollable = scrollHeight > clientHeight;
+        const isAtTop = scrollTop <= 0;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
 
-      // Si el chat tiene espacio para desplazarse, absorbemos el scroll
-      if (isScrollable) {
-        // Scroll hacia abajo
-        if (e.deltaY > 0 && !isAtBottom) {
-          e.preventDefault();
-          chatContainer.scrollTop += e.deltaY;
-          return;
+        if (isScrollable) {
+          if (e.deltaY > 0 && !isAtBottom) {
+            e.preventDefault();
+            animatedContainer.scrollTop += e.deltaY;
+
+            // Update progress immediately
+            const newScrollTop = animatedContainer.scrollTop;
+            const scrollProgress = scrollHeight > clientHeight
+              ? (newScrollTop / (scrollHeight - clientHeight)) * 100
+              : 0;
+            setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
+            return;
+          }
+
+          if (e.deltaY < 0 && !isAtTop) {
+            e.preventDefault();
+            animatedContainer.scrollTop += e.deltaY;
+
+            // Update progress immediately
+            const newScrollTop = animatedContainer.scrollTop;
+            const scrollProgress = scrollHeight > clientHeight
+              ? (newScrollTop / (scrollHeight - clientHeight)) * 100
+              : 0;
+            setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
+            return;
+          }
         }
+      } else if (chatContainer) {
+        // Handle chat scrolling
+        const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+        const isScrollable = scrollHeight > clientHeight;
+        const isAtTop = scrollTop <= 0;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
 
-        // Scroll hacia arriba
-        if (e.deltaY < 0 && !isAtTop) {
-          e.preventDefault();
-          chatContainer.scrollTop += e.deltaY;
-          return;
+        if (isScrollable) {
+          if (e.deltaY > 0 && !isAtBottom) {
+            e.preventDefault();
+            chatContainer.scrollTop += e.deltaY;
+            return;
+          }
+
+          if (e.deltaY < 0 && !isAtTop) {
+            e.preventDefault();
+            chatContainer.scrollTop += e.deltaY;
+            return;
+          }
         }
       }
 
@@ -232,6 +274,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
       innerContainer.removeEventListener("wheel", handleWheel);
     };
   }, [isMobile]);
+
 
 
   return (
@@ -303,7 +346,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
               >
                 <div>
                   <div style={getChatContainerTopBar()} />
-                  <div style={getChatContainerBottomCard()} 
+                  <div style={getChatContainerBottomCard()}
                 ref={chatContainerRef}>
                     {selectedScenario.title && (
                       <div style={getTitleStyle()}>{selectedScenario.title}</div>
@@ -337,6 +380,34 @@ export const HomeScreen = ({}: HomeScreenProps) => {
                       );
                     })}
                   </div>
+                </div>
+              </div>
+            </div>}
+
+            {!isMobile && <div
+              className="animated-scene-wrapper"
+              style={{
+                position: "absolute",
+                left: 0,
+                top: "250vh",
+                width: "100%",
+                height: "100vh",
+                overflowY: "auto",
+                overflowX: "hidden",
+                background: "transparent",
+                zIndex: 10,
+                marginBottom: "100vh",
+              }}
+              ref={animatedSceneContainerRef}
+            >
+              <div style={{ height: "200vh" }}>
+                <div style={{
+                  position: "sticky",
+                  top: 0,
+                  width: "100%",
+                  height: "100vh"
+                }}>
+                  <AnimatedScene progress={animationProgress} />
                 </div>
               </div>
             </div>}
