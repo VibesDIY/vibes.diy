@@ -15,6 +15,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
+import GtmNoScript from "./components/GtmNoScript.js";
 import { AuthProvider } from "./contexts/AuthContext.js";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 
@@ -101,6 +102,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <GtmNoScript />
         <AuthProvider>
           <PostHogProvider
             apiKey={VibesDiyEnv.POSTHOG_KEY()}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext.js";
-import { trackPublishClick } from "../../utils/analytics.js";
+import { trackEvent, trackPublishClick } from "../../utils/analytics.js";
 import { publishApp } from "../../utils/publishUtils.js";
 import { ChatMessageDocument } from "@vibes.diy/prompts";
 
@@ -86,6 +86,13 @@ export const usePublish = ({
 
         // Trigger analytics
         trackPublishClick({ publishedAppUrl: appUrl });
+        trackEvent("app_shared", {
+          published_url: appUrl,
+          session_id: sessionId,
+          title,
+          user_id: userPayload?.userId,
+          firehose_shared: shareToFirehose,
+        });
 
         // Reset the copied state after 3 seconds
         setTimeout(() => {
