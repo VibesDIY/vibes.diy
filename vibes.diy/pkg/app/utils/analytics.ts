@@ -7,7 +7,7 @@ import { gtmPush } from "./gtm.js";
 
 type DataLayerEvent = Record<string, unknown> & { event?: string };
 
-function hasConsent(): boolean {
+export function hasConsent(): boolean {
   if (typeof document === "undefined") return false;
   try {
     const m = document.cookie.match(
@@ -117,6 +117,7 @@ export const trackChatInputClick = (
   messageLength: number,
   additionalParams?: Record<string, unknown>,
 ): void => {
+  if (!hasConsent()) return;
   trackEvent("chat_input", {
     message_length: messageLength,
     ...additionalParams,
@@ -147,5 +148,6 @@ export const trackErrorEvent = (
  */
 export function identifyUser(userId: string) {
   if (!userId) return;
+  if (!hasConsent()) return;
   gtmPush({ event: "identify", user_id: userId });
 }
