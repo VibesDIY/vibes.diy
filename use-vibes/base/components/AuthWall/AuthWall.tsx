@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import {
   getWrapperStyle,
+  getImageContentWrapperStyle,
+  getImageSectionStyle,
   getOverlayStyle,
+  getMenuStyle,
   getFormContainerStyle,
   getTitleStyle,
   getDescriptionStyle,
@@ -21,38 +24,101 @@ export interface AuthWallProps {
 
 export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   const [isVisible, setIsVisible] = useState(open);
-  const [formVisible, setFormVisible] = useState(open);
-  const [overlayVisible, setOverlayVisible] = useState(open);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [menuHeight, setMenuHeight] = useState(0);
   const [actualImageUrl, setActualImageUrl] = useState(imageUrl);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const prevOpenRef = useRef<boolean | undefined>(undefined);
+  const prevMenuHeightRef = useRef(0);
 
+  // Set menu height whenever component becomes visible
   useEffect(() => {
-    if (open) {
-      setIsVisible(true);
-      setFormVisible(true);
+    if (!isVisible) return;
 
-      const showOverlayTimeout = setTimeout(() => {
-        setOverlayVisible(true);
-      }, 500);
-
-      return () => clearTimeout(showOverlayTimeout);
-    } else {
-      setOverlayVisible(false);
-
-      const hideFormTimeout = setTimeout(() => {
-        setFormVisible(false);
-      }, 500);
-
-      const hideAllTimeout = setTimeout(() => {
-        setIsVisible(false);
-      }, 1000);
-
-      return () => {
-        clearTimeout(hideFormTimeout);
-        clearTimeout(hideAllTimeout);
-      };
+    if (menuRef.current) {
+      setMenuHeight(menuRef.current.offsetHeight);
     }
-  }, [open]);
+  }, [isVisible]);
+
+  // Recalculate height when content changes
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const menuEl = menuRef.current;
+    if (!menuEl) return;
+
+    const updateHeight = () => setMenuHeight(menuEl.offsetHeight);
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    resizeObserver.observe(menuEl);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [isVisible]);
+
+  // Handle opening animation with timer
+  useEffect(() => {
+    const openChanged = prevOpenRef.current !== open;
+    const menuHeightBecameAvailable = prevMenuHeightRef.current === 0 && menuHeight > 0;
+
+    prevOpenRef.current = open;
+    prevMenuHeightRef.current = menuHeight;
+
+    // Only run if open changed or menuHeight just became available (for initial load)
+    if (!openChanged && !menuHeightBecameAvailable) return;
+
+    // Clear all pending timeouts from previous state changes
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+
+    if (open) {
+      // Opening animation
+      setIsVisible(true);
+      setIsFadingOut(false);
+      setMenuOpen(false);
+
+      // Only start animation if menuHeight is calculated
+      if (menuHeight > 0) {
+        // Open menu after half a second
+        const openTimeout = setTimeout(() => {
+          setMenuOpen(true);
+        }, 500);
+        timeoutsRef.current.push(openTimeout);
+      }
+    } else {
+      // Closing animation
+      setMenuOpen(false);
+
+      // After menu closes (400ms), start fade out
+      const fadeTimeout = setTimeout(() => {
+        setIsFadingOut(true);
+      }, 1200);
+      timeoutsRef.current.push(fadeTimeout);
+
+      // After fade out (500ms), hide completely
+      const hideTimeout = setTimeout(() => {
+        setIsVisible(false);
+        setIsFadingOut(false);
+      }, 1800);
+      timeoutsRef.current.push(hideTimeout);
+    }
+  }, [open, menuHeight]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+    };
+  }, []);
 
   // Preload and handle fallback for any imageUrl
   useEffect(() => {
@@ -88,32 +154,48 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   // Overlay style with dynamic blur based on hover
   const overlayStyle = {
     ...getOverlayStyle(),
-    transition: 'opacity 0.5s ease, backdrop-filter 0.4s ease',
-    opacity: overlayVisible ? 1 : 0,
+    transition: 'backdrop-filter 0.4s ease',
     backdropFilter: isHovering ? 'blur(4px)' : 'blur(12px)',
   };
 
-  const formContainerStyle = {
-    ...getFormContainerStyle(),
-    transition: 'transform 0.5s ease-out, opacity 1.5s ease-out',
-    transform: formVisible ? 'translateY(0)' : 'translateY(-300%)',
-    opacity: formVisible ? 1 : 0,
+  // Image content wrapper style - slides up to reveal menu (like HiddenMenuWrapper content)
+  const imageContentWrapperStyle = {
+    ...getImageContentWrapperStyle(),
+    transition: 'transform 0.9s ease, opacity 0.5s ease',
+    transform: menuOpen ? `translateY(-${menuHeight}px)` : 'translateY(0)',
+    opacity: isFadingOut ? 0 : 1,
+  };
+
+  // Menu style - always at bottom, with fade
+  const menuStyle = {
+    ...getMenuStyle(),
+    transition: 'opacity 0.5s ease',
+    opacity: isFadingOut ? 0 : 1,
   };
 
   return (
-    <div style={getWrapperStyle(actualImageUrl)}>
-      <div style={overlayStyle} />
-      <div style={formContainerStyle}>
-        <h1 style={getTitleStyle()}>{title}</h1>
-        <p style={getDescriptionStyle()}>Login to access this Vibe!</p>
-        <VibesButton
-          variant="primary"
-          onClick={onLogin}
-          onHover={() => setIsHovering(true)}
-          onUnhover={() => setIsHovering(false)}
-        >
-          Login
-        </VibesButton>
+    <div style={getWrapperStyle()}>
+      {/* Menu at bottom (like HiddenMenuWrapper menu) - always there */}
+      <div ref={menuRef} style={menuStyle}>
+        <div style={getFormContainerStyle()}>
+          <h1 style={getTitleStyle()}>{title}</h1>
+          <p style={getDescriptionStyle()}>Login to access this Vibe!</p>
+          <VibesButton
+            variant="primary"
+            onClick={onLogin}
+            onHover={() => setIsHovering(true)}
+            onUnhover={() => setIsHovering(false)}
+          >
+            Login
+          </VibesButton>
+        </div>
+      </div>
+
+      {/* Image content wrapper (like HiddenMenuWrapper content) - slides up to reveal menu */}
+      <div style={imageContentWrapperStyle}>
+        <div style={getImageSectionStyle(actualImageUrl)}>
+          <div style={overlayStyle} />
+        </div>
       </div>
     </div>
   );

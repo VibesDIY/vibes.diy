@@ -30,11 +30,18 @@ function VibesApp({
   const syncEnabled =
     typeof window !== 'undefined' && document.body.classList.contains(VIBES_SYNC_ENABLED_CLASS);
 
+  // Check if sync was previously enabled in localStorage
+  const wasSyncEnabled =
+    typeof window !== 'undefined' && localStorage.getItem('fireproof-sync-enabled') === 'true';
+
   const mockLogin =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('mock_login') === 'true';
 
-  const [showAuthWall, setShowAuthWall] = React.useState(!syncEnabled && !mockLogin);
+  // Don't show AuthWall if sync was previously enabled, is currently enabled, or mockLogin is active
+  const [showAuthWall, setShowAuthWall] = React.useState(
+    !syncEnabled && !mockLogin && !wasSyncEnabled
+  );
 
   React.useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -57,33 +64,13 @@ function VibesApp({
 
   // Render both app component (to register event listener) and AuthWall (as overlay)
   // App component must mount first so its useFireproof listener exists when login is clicked
-  return React.createElement(
-    React.Fragment,
-    null,
-    // App component in a wrapper div so we can hide it visually while keeping it mounted
-    React.createElement(
-      'div',
-      {
-        // Keep the app mounted to register listeners, but hide it pre-auth
-        style: showAuthWall ? { display: 'none' } : { width: '100%', height: '100%' },
-        'aria-hidden': showAuthWall ? 'true' : undefined,
-        inert: showAuthWall ? true : undefined,
-      },
-      // App component always renders to ensure event listener is registered
-      React.createElement(HiddenMenuWrapper, {
-        menuContent: React.createElement(VibesPanel),
-        children: children,
-      })
-    ),
-    // AuthWall overlays the app when authentication is needed
-    showAuthWall
-      ? React.createElement(AuthWall, {
-          onLogin: handleLogin,
-          imageUrl,
-          title,
-          open: true,
-        })
-      : null
+  return (
+    <>
+      <div style={showAuthWall ? { display: 'none' } : undefined}>
+        <HiddenMenuWrapper menuContent={<VibesPanel />}>{children}</HiddenMenuWrapper>
+      </div>
+      <AuthWall onLogin={handleLogin} imageUrl={imageUrl} title={title} open={showAuthWall} />
+    </>
   );
 }
 
@@ -132,28 +119,25 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
 
   const root = ReactDOM.createRoot(containerElement);
 
+  const AppComponent = appComponent;
+
   root.render(
-    React.createElement(
-      VibesApp,
-      {
-        ...(title !== undefined && { title }),
-        ...(imageUrl !== undefined && { imageUrl }),
-      },
-      // If appComponent is provided, render it instead of preserving DOM
-      appComponent
-        ? React.createElement(appComponent)
-        : contentWrapper
-          ? React.createElement('div', {
-              ref: (node: HTMLDivElement | null) => {
-                if (node && contentWrapper && node.children.length === 0) {
-                  // Move original content into React-managed container
-                  node.appendChild(contentWrapper);
-                }
-              },
-              style: { height: '100%', width: '100%' },
-            })
-          : null
-    )
+    <VibesApp {...(title !== undefined && { title })} {...(imageUrl !== undefined && { imageUrl })}>
+      {/* If appComponent is provided, render it instead of preserving DOM */}
+      {AppComponent ? (
+        <AppComponent />
+      ) : contentWrapper ? (
+        <div
+          ref={(node: HTMLDivElement | null) => {
+            if (node && contentWrapper && node.children.length === 0) {
+              // Move original content into React-managed container
+              node.appendChild(contentWrapper);
+            }
+          }}
+          style={{ height: '100%', width: '100%' }}
+        />
+      ) : null}
+    </VibesApp>
   );
 
   return {
