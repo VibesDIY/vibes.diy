@@ -1,4 +1,3 @@
-import { VibesDiyEnv } from "../config/env.js";
 import { gtmPush } from "./gtm.js";
 
 // Lightweight GTM/dataLayer helpers. We push analytics events to
