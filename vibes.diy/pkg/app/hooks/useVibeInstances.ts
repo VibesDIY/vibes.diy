@@ -47,21 +47,6 @@ export function useVibeInstances(titleId: string) {
 
         const result = await database.put(doc);
 
-        // Sync to KV for discovery
-        try {
-          await fetch(`/api/vibes/${titleId}/instances`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...doc,
-              _id: result.id, // Include the auto-generated ID
-            }),
-          });
-        } catch (kvError) {
-          console.warn("Failed to sync instance to KV:", kvError);
-          // Don't fail the operation if KV sync fails
-        }
-
         return result.id; // Return the auto-generated UUID
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -101,17 +86,6 @@ export function useVibeInstances(titleId: string) {
         };
 
         await database.put(updated);
-
-        // Sync to KV
-        try {
-          await fetch(`/api/vibes/${titleId}/instances/${uuid}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updated),
-          });
-        } catch (kvError) {
-          console.warn("Failed to sync instance update to KV:", kvError);
-        }
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
@@ -138,15 +112,6 @@ export function useVibeInstances(titleId: string) {
 
         // Delete from Fireproof
         await database.del(uuid);
-
-        // Delete from KV
-        try {
-          await fetch(`/api/vibes/${titleId}/instances/${uuid}`, {
-            method: "DELETE",
-          });
-        } catch (kvError) {
-          console.warn("Failed to delete instance from KV:", kvError);
-        }
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
@@ -189,17 +154,6 @@ export function useVibeInstances(titleId: string) {
 
         // Also call Fireproof share API (TODO: implement)
         // This would use the share() function from useFireproof
-
-        // Sync to KV
-        try {
-          await fetch(`/api/vibes/${titleId}/instances/${uuid}/share`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
-          });
-        } catch (kvError) {
-          console.warn("Failed to sync share to KV:", kvError);
-        }
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
