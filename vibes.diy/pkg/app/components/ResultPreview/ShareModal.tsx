@@ -58,10 +58,11 @@ export function ShareModal({
 
   const handlePublish = async () => {
     try {
+      // Track the user's intent immediately (consent-gated in helper)
+      trackPublishClick({ firehose_shared: shareToFirehose });
       await onPublish(shareToFirehose);
       if (publishedAppUrl) {
         setShowUpdateSuccess(true);
-        trackPublishClick({ publishedAppUrl });
         setTimeout(() => setShowUpdateSuccess(false), 2000);
       }
     } catch (error) {
