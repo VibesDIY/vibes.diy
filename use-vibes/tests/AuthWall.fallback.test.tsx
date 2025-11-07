@@ -48,8 +48,10 @@ describe('AuthWall Image Fallback', () => {
     );
 
     await waitFor(() => {
-      // Get the image section div (nested inside wrapper > imageContentWrapper)
-      const imageSection = container.querySelector('div > div:last-child > div') as HTMLElement;
+      // Get the image section div (nested inside wrapper > imageContentWrapper > imageSection)
+      const imageSection = container.querySelector(
+        'div > div:nth-child(2) > div:first-child'
+      ) as HTMLElement;
       const backgroundImage = getComputedStyle(imageSection).backgroundImage;
       expect(backgroundImage).toContain('https://example.com/valid-image.jpg');
     });
@@ -67,8 +69,10 @@ describe('AuthWall Image Fallback', () => {
 
     await waitFor(
       () => {
-        // Get the image section div (nested inside wrapper > imageContentWrapper)
-        const imageSection = container.querySelector('div > div:last-child > div') as HTMLElement;
+        // Get the image section div (nested inside wrapper > imageContentWrapper > imageSection)
+        const imageSection = container.querySelector(
+          'div > div:nth-child(2) > div:first-child'
+        ) as HTMLElement;
         const backgroundImage = getComputedStyle(imageSection).backgroundImage;
         expect(backgroundImage).toContain('images.unsplash.com');
         expect(backgroundImage).toContain('photo-1518837695005-2083093ee35b');
@@ -101,8 +105,10 @@ describe('AuthWall Image Fallback', () => {
 
     await waitFor(
       () => {
-        // Get the image section div (nested inside wrapper > imageContentWrapper)
-        const imageSection = container.querySelector('div > div:last-child > div') as HTMLElement;
+        // Get the image section div (nested inside wrapper > imageContentWrapper > imageSection)
+        const imageSection = container.querySelector(
+          'div > div:nth-child(2) > div:first-child'
+        ) as HTMLElement;
         const backgroundImage = getComputedStyle(imageSection).backgroundImage;
         expect(backgroundImage).toContain('images.unsplash.com');
       },
@@ -122,8 +128,11 @@ describe('AuthWall Image Fallback', () => {
 
     // Wait for initial image to load
     await waitFor(() => {
-      // Get the image section div (nested inside wrapper > imageContentWrapper)
-      const imageSection = container.querySelector('div > div:last-child > div') as HTMLElement;
+      // Get the image section div (nested inside wrapper > imageContentWrapper > imageSection)
+      // Structure: wrapper > menu (first), imageContentWrapper (second) > imageSection
+      const imageSection = container.querySelector(
+        'div > div:nth-child(2) > div:first-child'
+      ) as HTMLElement;
       const backgroundImage = getComputedStyle(imageSection).backgroundImage;
       expect(backgroundImage).toContain('image1.jpg');
     });
@@ -141,8 +150,10 @@ describe('AuthWall Image Fallback', () => {
     // Should fallback to Unsplash
     await waitFor(
       () => {
-        // Get the image section div (nested inside wrapper > imageContentWrapper)
-        const imageSection = container.querySelector('div > div:last-child > div') as HTMLElement;
+        // Get the image section div (nested inside wrapper > imageContentWrapper > imageSection)
+        const imageSection = container.querySelector(
+          'div > div:nth-child(2) > div:first-child'
+        ) as HTMLElement;
         const backgroundImage = getComputedStyle(imageSection).backgroundImage;
         expect(backgroundImage).toContain('images.unsplash.com');
       },
