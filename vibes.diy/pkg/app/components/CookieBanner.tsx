@@ -97,9 +97,14 @@ export default function CookieBanner() {
   // 2. No message has been sent yet
   if (!XCookieConsent || !messageHasBeenSent) return null;
 
-  // Track cookie banner shown (only once when component is about to render)
+  // Track cookie banner shown (only once per session to avoid double-counting on remounts)
   useEffect(() => {
-    trackEvent("cookie_banner_shown");
+    if (typeof sessionStorage !== "undefined") {
+      if (!sessionStorage.getItem("cookie_banner_shown")) {
+        trackEvent("cookie_banner_shown");
+        sessionStorage.setItem("cookie_banner_shown", "true");
+      }
+    }
   }, []);
 
   return (
