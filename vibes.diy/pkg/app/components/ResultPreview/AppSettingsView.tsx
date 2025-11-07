@@ -12,6 +12,7 @@ import React, {
   useState,
 } from "react";
 import { VibesDiyEnv } from "../../config/env.js";
+import { trackEvent } from "../../utils/analytics.js";
 
 interface AppSettingsViewProps {
   title: string;
@@ -139,6 +140,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   const handleNameSave = useCallback(async () => {
     const trimmedName = editedName.trim();
     if (trimmedName && trimmedName !== title) {
+      trackEvent("app_name_edit", { new_name: trimmedName });
       await onUpdateTitle(trimmedName, true); // Mark as manually set
     }
     setIsEditingName(false);
@@ -162,6 +164,10 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
 
   // Libraries handlers
   const toggleDependency = useCallback((name: string, checked: boolean) => {
+    trackEvent("dependency_toggle", {
+      dependency_name: name,
+      enabled: checked,
+    });
     setDeps((prev) => {
       const set = new Set(prev);
       if (checked) set.add(name);
@@ -191,6 +197,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   // Instructional text and demo data handlers
   const handleInstructionalTextChange = useCallback(
     (value: "llm" | "on" | "off") => {
+      trackEvent("instructional_text_override", { value });
       const override = value === "llm" ? undefined : value === "on";
       onUpdateInstructionalTextOverride?.(override);
     },
@@ -199,6 +206,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
 
   const handleDemoDataChange = useCallback(
     (value: "llm" | "on" | "off") => {
+      trackEvent("demo_data_override", { value });
       const override = value === "llm" ? undefined : value === "on";
       onUpdateDemoDataOverride?.(override);
     },
@@ -317,7 +325,10 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
             </h3>
             <div
               className="bg-light-background-00 dark:bg-dark-background-00 border-light-decorative-01 dark:border-dark-decorative-01 hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 flex cursor-pointer items-center rounded-lg border p-4 transition-colors"
-              onClick={onDownloadHtml}
+              onClick={() => {
+                trackEvent("html_download");
+                onDownloadHtml();
+              }}
             >
               <div className="flex-1">
                 <div className="text-light-primary dark:text-dark-primary font-medium">

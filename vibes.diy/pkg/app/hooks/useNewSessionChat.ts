@@ -7,6 +7,7 @@ import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useFireproof } from "use-fireproof";
 import { VibesDiyEnv } from "../config/env.js";
+import { trackEvent } from "../utils/analytics.js";
 
 export function useNewSessionChat(
   onSessionCreate: (sessionId: string) => void,
@@ -53,13 +54,18 @@ export function useNewSessionChat(
 
         const targetUrl = `/chat/${newSessionId}?${urlParams.toString()}`;
 
+        // Track session creation before navigation
+        trackEvent("new_session_created", {
+          model: selectedModel || effectiveModel,
+        });
+
         // Use window.location to trigger a real page load instead of React Router navigation
         window.location.href = targetUrl;
       } catch (error) {
         setIsStreaming(false);
       }
     },
-    [input, selectedModel, onSessionCreate, navigate],
+    [input, selectedModel, effectiveModel, onSessionCreate, navigate],
   );
 
   // Stub functions that are not needed for new session creation

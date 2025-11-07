@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
-import { pageview } from "../utils/analytics.js";
+import { pageview, trackEvent } from "../utils/analytics.js";
 import { initGTM, persistUtmParams } from "../utils/gtm.js";
 import { CookieConsent, getCookieConsentValue } from "react-cookie-consent";
 
@@ -97,6 +97,11 @@ export default function CookieBanner() {
   // 2. No message has been sent yet
   if (!XCookieConsent || !messageHasBeenSent) return null;
 
+  // Track cookie banner shown (only once when component is about to render)
+  useEffect(() => {
+    trackEvent("cookie_banner_shown");
+  }, []);
+
   return (
     <XCookieConsent
       location="bottom"
@@ -128,7 +133,11 @@ export default function CookieBanner() {
       expires={365}
       enableDeclineButton
       onAccept={() => {
+        trackEvent("cookie_accept");
         setHasConsent(true);
+      }}
+      onDecline={() => {
+        trackEvent("cookie_decline");
       }}
     >
       This website uses cookies to enhance the user experience and analyze site
