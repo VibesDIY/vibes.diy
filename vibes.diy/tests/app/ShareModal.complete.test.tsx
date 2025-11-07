@@ -11,6 +11,7 @@ vi.mock("react-dom", () => ({
 // Mock the analytics tracking function (not used in current tests)
 vi.mock("~/vibes.diy/app/utils/analytics", () => ({
   trackPublishClick: vi.fn(),
+  trackEvent: vi.fn(),
 }));
 
 describe("ShareModal", () => {
