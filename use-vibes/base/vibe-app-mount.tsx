@@ -17,6 +17,15 @@ export interface MountVibesAppResult {
   getContainer: () => HTMLElement;
 }
 
+// Safe localStorage access
+const safeGetLocalStorage = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
 function VibesApp({
   title = 'Vibes App',
   imageUrl = '/screenshot.png',
@@ -30,9 +39,9 @@ function VibesApp({
   const syncEnabled =
     typeof window !== 'undefined' && document.body.classList.contains(VIBES_SYNC_ENABLED_CLASS);
 
-  // Check if sync was previously enabled in localStorage
+  // Check if sync was previously enabled in localStorage (with safe access)
   const wasSyncEnabled =
-    typeof window !== 'undefined' && localStorage.getItem('fireproof-sync-enabled') === 'true';
+    typeof window !== 'undefined' && safeGetLocalStorage('fireproof-sync-enabled') === 'true';
 
   const mockLogin =
     typeof window !== 'undefined' &&
@@ -46,7 +55,8 @@ function VibesApp({
   React.useEffect(() => {
     const observer = new MutationObserver(() => {
       const isConnected = document.body.classList.contains(VIBES_SYNC_ENABLED_CLASS);
-      setShowAuthWall(!isConnected && !mockLogin);
+      // Respect wasSyncEnabled - don't show AuthWall if it was previously enabled
+      setShowAuthWall(!isConnected && !mockLogin && !wasSyncEnabled);
     });
 
     observer.observe(document.body, {
@@ -55,7 +65,7 @@ function VibesApp({
     });
 
     return () => observer.disconnect();
-  }, [mockLogin]);
+  }, [mockLogin, wasSyncEnabled]);
 
   const handleLogin = () => {
     // Dispatch global sync enable event - app's useFireproof will handle it
