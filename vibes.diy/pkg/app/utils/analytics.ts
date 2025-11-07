@@ -73,6 +73,7 @@ export const trackEvent = (
   eventName: string,
   eventParams?: Record<string, unknown>,
 ): void => {
+  if (!hasConsent()) return;
   // Emit a first-class GTM event
   gtmPush({ event: eventName, ...(eventParams || {}) });
 };

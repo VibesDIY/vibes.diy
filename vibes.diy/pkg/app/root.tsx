@@ -102,7 +102,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <GtmNoScript />
+        {/* TODO: Re-enable GtmNoScript when consent can be checked server-side */}
+        {/* <GtmNoScript /> */}
         <AuthProvider>
           <PostHogProvider
             apiKey={VibesDiyEnv.POSTHOG_KEY()}

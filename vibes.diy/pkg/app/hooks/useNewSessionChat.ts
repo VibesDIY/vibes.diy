@@ -59,13 +59,15 @@ export function useNewSessionChat(
           model: selectedModel || effectiveModel,
         });
 
-        // Use window.location to trigger a real page load instead of React Router navigation
-        window.location.href = targetUrl;
+        // Delay navigation slightly to allow analytics event to flush
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 20);
       } catch (error) {
         setIsStreaming(false);
       }
     },
-    [input, selectedModel, effectiveModel, onSessionCreate, navigate],
+    [input, selectedModel, settingsDoc, onSessionCreate, navigate],
   );
 
   // Stub functions that are not needed for new session creation
