@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext.js";
-import { trackEvent, trackPublishClick } from "../../utils/analytics.js";
+import { trackPublishShared } from "../../utils/analytics.js";
 import { publishApp } from "../../utils/publishUtils.js";
 import { ChatMessageDocument } from "@vibes.diy/prompts";
 
@@ -84,9 +84,8 @@ export const usePublish = ({
         await navigator.clipboard.writeText(appUrl);
         setUrlCopied(true);
 
-        // Trigger analytics
-        trackPublishClick({ publishedAppUrl: appUrl });
-        trackEvent("app_shared", {
+        // Trigger analytics on successful publish (consent-gated)
+        trackPublishShared({
           published_url: appUrl,
           session_id: sessionId,
           title,

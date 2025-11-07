@@ -17,6 +17,16 @@ function pushToDataLayer(obj: DataLayerEvent) {
   w.dataLayer.push(obj);
 }
 
+function hasConsent(): boolean {
+  if (typeof document === "undefined") return false;
+  try {
+    const m = document.cookie.match(/(?:^|; )cookieConsent=(true|false)(?:;|$)/);
+    return m?.[1] === "true";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Initialize Google Analytics
  */
@@ -93,7 +103,19 @@ export const trackAuthClick = (
 export const trackPublishClick = (
   additionalParams?: Record<string, unknown>,
 ): void => {
+  if (!hasConsent()) return;
   trackEvent("publish_click", additionalParams);
+};
+
+/**
+* Track a successful publish (app_shared)
+* @param params - metadata to include with the event (e.g., published_url, session_id, title, user_id, firehose_shared)
+*/
+export const trackPublishShared = (
+  params?: Record<string, unknown>,
+): void => {
+  if (!hasConsent()) return;
+  trackEvent("app_shared", params);
 };
 
 /**
