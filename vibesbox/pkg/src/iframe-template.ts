@@ -426,12 +426,23 @@ export const iframeHtml = `<!doctype html>
         if (data.authToken) {
           try {
             localStorage.setItem('vibes-api-auth-token', data.authToken);
-            
+
             // Verify it was stored correctly
             const verifyToken = localStorage.getItem('vibes-api-auth-token');
           } catch (e) {
           }
         } else {
+        }
+
+        // Store UUID globally for Fireproof ledger naming
+        if (data.vibeUUID) {
+          globalThis.VIBE_UUID = data.vibeUUID;
+          console.log('🔐 [IFRAME] Stored vibe UUID:', data.vibeUUID);
+        }
+
+        // Store titleId globally (optional, for reference)
+        if (data.titleId) {
+          globalThis.VIBE_TITLE_ID = data.titleId;
         }
 
         try {

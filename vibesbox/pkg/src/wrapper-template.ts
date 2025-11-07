@@ -98,8 +98,9 @@ export const wrapperHtml = `<!doctype html>
 
       async function loadVibe() {
         try {
-          // Fetch the JSX code
-          const response = await fetch("https://{{slug}}.vibesdiy.app/App.jsx");
+          // Fetch the JSX code using titleId
+          const titleId = "{{titleId}}" || "{{slug}}"; // Fallback to slug for compatibility
+          const response = await fetch(\`https://\${titleId}.vibesdiy.app/App.jsx\`);
 
           if (!response.ok) {
             throw new Error(\`HTTP \${response.status}\`);
@@ -127,6 +128,8 @@ export const wrapperHtml = `<!doctype html>
                 apiKey: "sk-vibes-proxy-managed",
                 sessionId: "vibe-session-{{slug}}",
                 authToken: authToken,
+                titleId: titleId,
+                vibeUUID: "{{uuid}}" || undefined, // Pass UUID for Fireproof ledger ID
               },
               "*",
             );

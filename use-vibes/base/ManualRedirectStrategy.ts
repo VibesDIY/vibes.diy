@@ -15,9 +15,25 @@ interface URLBuilder {
   toString: () => string;
 }
 
+// Extend globalThis to include our custom properties
+declare global {
+  // eslint-disable-next-line no-var
+  var VIBE_UUID: string | undefined;
+  // eslint-disable-next-line no-var
+  var VIBE_TITLE_ID: string | undefined;
+}
+
 // Generate ledger name combining origin and database name
 function generateLedgerName(dbName: string): string {
-  // Sanitize origin: replace non-alphanumeric with hyphens
+  // Check if running in Vibesbox iframe with UUID override
+  if (typeof globalThis !== 'undefined' && globalThis.VIBE_UUID) {
+    // Use the UUID directly as the ledger name
+    // This ensures all iframes with the same UUID share the same Fireproof ledger
+    console.log('🔐 [LEDGER] Using vibe UUID as ledger name:', globalThis.VIBE_UUID);
+    return globalThis.VIBE_UUID;
+  }
+
+  // Fallback to origin-based naming for direct hosting
   const origin =
     typeof window !== 'undefined'
       ? window.location.origin.replace(/[^a-z0-9]/gi, '-')
