@@ -179,20 +179,18 @@ export async function sendChatMessage(
 
         // Emit app_created once per session (guard on first AI message id)
         try {
-          const already = sessionStorage.getItem(
-            `app_created_${aiMessage.session_id}`,
-          );
-          if (!already) {
-            trackEvent("app_created", {
-              session_id: aiMessage.session_id,
-              model: modelToUse,
-              title: vibeDoc?.title || undefined,
-              user_id: userId,
-            });
-            sessionStorage.setItem(
-              `app_created_${aiMessage.session_id}`,
-              "1",
-            );
+          if (aiMessage?.session_id) {
+            const key = `app_created_${aiMessage.session_id}`;
+            const already = sessionStorage.getItem(key);
+            if (!already) {
+              trackEvent("app_created", {
+                session_id: aiMessage.session_id,
+                model: modelToUse,
+                title: vibeDoc?.title || undefined,
+                user_id: userId,
+              });
+              sessionStorage.setItem(key, "1");
+            }
           }
         } catch {
           // ignore storage errors

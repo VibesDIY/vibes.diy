@@ -1,10 +1,15 @@
 /**
-* Minimal GTM helper: injects the GTM bootstrap and exposes a push helper.
-* Consent is handled by the caller; do not call initGTM until user has accepted cookies.
-*/
+ * Minimal GTM helper: injects the GTM bootstrap and exposes a push helper.
+ * Consent is handled by the caller; do not call initGTM until user has accepted cookies.
+ */
 
 export function initGTM(containerId: string) {
-  if (typeof window === "undefined" || typeof document === "undefined" || !containerId) return;
+  if (
+    typeof window === "undefined" ||
+    typeof document === "undefined" ||
+    !containerId
+  )
+    return;
 
   // Avoid duplicate injection
   if (document.getElementById("gtm-src")) return;
@@ -29,9 +34,9 @@ export function gtmPush(obj: Record<string, unknown>) {
 }
 
 /**
-* Persist UTM parameters to localStorage for GTM/HubSpot usage.
-* Call as early as possible (can be before consent) — storage only.
-*/
+ * Persist UTM parameters to localStorage for GTM/HubSpot usage.
+ * Call as early as possible (can be before consent) — storage only.
+ */
 export function persistUtmParams() {
   if (typeof window === "undefined") return;
   try {

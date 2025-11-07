@@ -52,9 +52,6 @@ export default function CookieBanner() {
       const consentValue = getXCookieConsentValue("cookieConsent");
       if (consentValue === "true") {
         setHasConsent(true);
-        if (VibesDiyEnv.GTM_CONTAINER_ID()) {
-          initGTM(VibesDiyEnv.GTM_CONTAINER_ID());
-        }
       }
     }
   }, [getXCookieConsentValue]);
@@ -76,7 +73,7 @@ export default function CookieBanner() {
       // Opt in to PostHog
       posthog?.opt_in_capturing();
 
-      // Inject GTM
+      // Inject GTM (centralized here only)
       initGTM(VibesDiyEnv.GTM_CONTAINER_ID());
 
       if (window.history && window.history.replaceState) {
@@ -101,8 +98,7 @@ export default function CookieBanner() {
   // 1. CookieConsent is not loaded
   // 2. No message has been sent yet
   // 3. Google Analytics ID is not set (making analytics optional)
-  if (!XCookieConsent || !messageHasBeenSent)
-    return null;
+  if (!XCookieConsent || !messageHasBeenSent) return null;
 
   return (
     <XCookieConsent
@@ -136,10 +132,6 @@ export default function CookieBanner() {
       enableDeclineButton
       onAccept={() => {
         setHasConsent(true);
-        if (VibesDiyEnv.GTM_CONTAINER_ID()) {
-          initGTM(VibesDiyEnv.GTM_CONTAINER_ID());
-        }
-        pageview(location.pathname + location.search);
       }}
     >
       This website uses cookies to enhance the user experience and analyze site

@@ -61,11 +61,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           try {
             const prev = localStorage.getItem("fp_user_id");
             const isReturning = prev === userId;
-            // Push identity + auth event to dataLayer directly to avoid tight coupling
-            const w = window as unknown as Window & { dataLayer?: unknown[] };
-            w.dataLayer = w.dataLayer || [];
-            w.dataLayer.push({ event: "identify", user_id: userId });
-            w.dataLayer.push({ event: isReturning ? "login" : "sign_up", user_id: userId });
+            // Only push if user has granted cookie consent
+            const hasConsent =
+              typeof document !== "undefined" &&
+              /(?:^|; )cookieConsent=(true|false)(?:;|$)/.test(
+                document.cookie,
+              ) &&
+              document.cookie.includes("cookieConsent=true");
+            if (hasConsent) {
+              // Push identity + auth event to dataLayer directly to avoid tight coupling
+              const w = window as unknown as Window & { dataLayer?: unknown[] };
+              w.dataLayer = w.dataLayer || [];
+              w.dataLayer.push({ event: "identify", user_id: userId });
+              w.dataLayer.push({
+                event: isReturning ? "login" : "sign_up",
+                user_id: userId,
+              });
+            }
             localStorage.setItem("fp_user_id", userId);
           } catch {
             // ignore storage errors
