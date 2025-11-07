@@ -1,4 +1,5 @@
 import { VibesDiyEnv } from "../config/env.js";
+import { gtmPush } from "./gtm.js";
 
 // Lightweight GTM/dataLayer helpers. We push analytics events to
 // window.dataLayer so GTM can fan them out to GA4, Mixpanel, HubSpot, etc.
@@ -6,21 +7,12 @@ import { VibesDiyEnv } from "../config/env.js";
 
 type DataLayerEvent = Record<string, unknown> & { event?: string };
 
-function getWindowWithDataLayer(): Window & { dataLayer?: DataLayerEvent[] } {
-  return window as unknown as Window & { dataLayer?: DataLayerEvent[] };
-}
-
-function pushToDataLayer(obj: DataLayerEvent) {
-  if (typeof window === "undefined") return;
-  const w = getWindowWithDataLayer();
-  w.dataLayer = w.dataLayer || [];
-  w.dataLayer.push(obj);
-}
-
 function hasConsent(): boolean {
   if (typeof document === "undefined") return false;
   try {
-    const m = document.cookie.match(/(?:^|; )cookieConsent=(true|false)(?:;|$)/);
+    const m = document.cookie.match(
+      /(?:^|; )cookieConsent=(true|false)(?:;|$)/,
+    );
     return m?.[1] === "true";
   } catch {
     return false;
@@ -41,7 +33,7 @@ export function initGA() {
  */
 export function pageview(path: string): void {
   // Push a GA4-compatible page_view event for SPA route changes
-  pushToDataLayer({
+  gtmPush({
     event: "page_view",
     page_path: path,
     page_location: typeof window !== "undefined" ? window.location.href : path,
@@ -70,7 +62,7 @@ export const event = (
   };
   if (label) payload.event_label = label;
   if (typeof value === "number") payload.value = value;
-  pushToDataLayer(payload);
+  gtmPush(payload);
 };
 
 /**
@@ -83,7 +75,7 @@ export const trackEvent = (
   eventParams?: Record<string, unknown>,
 ): void => {
   // Emit a first-class GTM event
-  pushToDataLayer({ event: eventName, ...(eventParams || {}) });
+  gtmPush({ event: eventName, ...(eventParams || {}) });
 };
 
 /**
@@ -108,12 +100,10 @@ export const trackPublishClick = (
 };
 
 /**
-* Track a successful publish (app_shared)
-* @param params - metadata to include with the event (e.g., published_url, session_id, title, user_id, firehose_shared)
-*/
-export const trackPublishShared = (
-  params?: Record<string, unknown>,
-): void => {
+ * Track a successful publish (app_shared)
+ * @param params - metadata to include with the event (e.g., published_url, session_id, title, user_id, firehose_shared)
+ */
+export const trackPublishShared = (params?: Record<string, unknown>): void => {
   if (!hasConsent()) return;
   trackEvent("app_shared", params);
 };
@@ -127,7 +117,10 @@ export const trackChatInputClick = (
   messageLength: number,
   additionalParams?: Record<string, unknown>,
 ): void => {
-  trackEvent("chat_input", { message_length: messageLength, ...additionalParams });
+  trackEvent("chat_input", {
+    message_length: messageLength,
+    ...additionalParams,
+  });
 };
 
 /**
@@ -141,15 +134,18 @@ export const trackErrorEvent = (
   message: string,
   details?: Record<string, unknown>,
 ): void => {
-  trackEvent("error", { error_type: errorType, error_message: message, ...details });
+  trackEvent("error", {
+    error_type: errorType,
+    error_message: message,
+    ...details,
+  });
 };
 
 /**
-* Identify the current user for downstream tools.
-* We never pass PII – just the stable Fireproof userId.
-*/
+ * Identify the current user for downstream tools.
+ * We never pass PII – just the stable Fireproof userId.
+ */
 export function identifyUser(userId: string) {
   if (!userId) return;
-  pushToDataLayer({ event: "identify", user_id: userId });
+  gtmPush({ event: "identify", user_id: userId });
 }
-
