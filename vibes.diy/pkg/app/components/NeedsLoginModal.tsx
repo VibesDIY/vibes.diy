@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../contexts/AuthContext.js";
-import { trackAuthClick } from "../utils/analytics.js";
+import { trackAuthClick, trackEvent } from "../utils/analytics.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 
 /**
@@ -16,11 +16,13 @@ export function NeedsLoginModal() {
   // Show the modal when needsLogin becomes true or is already true
   useEffect(() => {
     if (needsLogin) {
+      trackEvent("needs_login_modal_shown");
       setIsOpen(true);
     }
   }, [needsLogin]);
 
   const handleClose = () => {
+    trackEvent("needs_login_modal_dismissed");
     setIsOpen(false);
   };
 

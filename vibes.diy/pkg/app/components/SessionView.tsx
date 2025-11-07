@@ -14,7 +14,7 @@ import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
-import { trackAuthClick } from "../utils/analytics.js";
+import { trackAuthClick, trackEvent } from "../utils/analytics.js";
 import { VibesSwitch } from "use-vibes";
 
 // Vibe switch button component with animation
@@ -48,6 +48,13 @@ export default function SessionView({
   // Check authentication before allowing access to the chat interface
   const { isAuthenticated, isLoading } = useAuth();
   const { initiateLogin } = useAuthPopup();
+
+  // Track unauthenticated view render once
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      trackEvent("unauthenticated_session_view");
+    }
+  }, [isAuthenticated, isLoading]);
 
   // Show loading state while checking authentication
   if (isLoading) {
