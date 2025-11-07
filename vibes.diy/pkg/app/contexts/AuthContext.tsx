@@ -62,13 +62,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const prev = localStorage.getItem("fp_user_id");
             const isReturning = prev === userId;
             // Only push if user has granted cookie consent
-            const hasConsent =
+            const hasConsentCookie =
               typeof document !== "undefined" &&
               /(?:^|; )cookieConsent=(true|false)(?:;|$)/.test(
                 document.cookie,
               ) &&
               document.cookie.includes("cookieConsent=true");
-            if (hasConsent) {
+            if (hasConsentCookie) {
               // Push identity + auth event to dataLayer directly to avoid tight coupling
               const w = window as unknown as Window & { dataLayer?: unknown[] };
               w.dataLayer = w.dataLayer || [];

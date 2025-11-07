@@ -64,17 +64,14 @@ export default function CookieBanner() {
   }, [location, hasConsent]);
 
   // Initialize GTM and clean UTM params if consent is given
+  const gtmId = VibesDiyEnv.GTM_CONTAINER_ID();
   useEffect(() => {
-    if (
-      VibesDiyEnv.GTM_CONTAINER_ID() &&
-      hasConsent &&
-      typeof document !== "undefined"
-    ) {
+    if (gtmId && hasConsent && typeof document !== "undefined") {
       // Opt in to PostHog
       posthog?.opt_in_capturing();
 
       // Inject GTM (centralized here only)
-      initGTM(VibesDiyEnv.GTM_CONTAINER_ID());
+      initGTM(gtmId);
 
       if (window.history && window.history.replaceState) {
         const url = new URL(window.location.href);
@@ -84,20 +81,20 @@ export default function CookieBanner() {
           "utm_campaign",
           "utm_term",
           "utm_content",
+          "fpref",
         ].forEach((k) => url.searchParams.delete(k));
-        const search = url.search.toString();
-        const newUrl = `${url.pathname}${search ? `?${search}` : ""}${
-          url.hash
+        const searchStr = url.searchParams.toString();
+        const newUrl = `${url.pathname}${searchStr ? `?${searchStr}` : ""}${
+          url.hash || ""
         }`;
         window.history.replaceState({}, document.title, newUrl);
       }
     }
-  }, [hasConsent, VibesDiyEnv.GTM_CONTAINER_ID()]);
+  }, [hasConsent, gtmId]);
 
   // Don't render anything if any of these conditions are met:
   // 1. CookieConsent is not loaded
   // 2. No message has been sent yet
-  // 3. Google Analytics ID is not set (making analytics optional)
   if (!XCookieConsent || !messageHasBeenSent) return null;
 
   return (
