@@ -64,7 +64,7 @@ function getBoxShadow(size: BrutalistCardSize, variant: BrutalistCardVariant): s
     case 'md':
       return `4px 5px 0px 0px ${color}`;
     case 'lg':
-      return `6px 6px 0px ${color === '#666' ? '#1a1a1a' : color}`; // lg uses black for default
+      return `6px 6px 0px 0px ${color === '#666' ? '#1a1a1a' : color}`; // lg uses black for default
     default:
       return `4px 5px 0px 0px ${color}`;
   }
@@ -87,7 +87,7 @@ export function getBrutalistCardStyle(
     fontWeight: 500,
     letterSpacing: '0.02em',
     boxShadow: getBoxShadow(size, variant),
-    transition: 'all 0.15s ease',
+    transition: 'box-shadow 0.15s ease, transform 0.15s ease',
     boxSizing: 'border-box' as const,
   };
 }

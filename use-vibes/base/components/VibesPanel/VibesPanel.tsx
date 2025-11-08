@@ -165,7 +165,6 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
                     style={{
                       width: '100%',
                       border: 'none',
-                      outline: 'none',
                       background: 'transparent',
                       color: 'inherit',
                       fontSize: 'inherit',

@@ -575,7 +575,7 @@ export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
 export { AuthWall } from './components/AuthWall/AuthWall.js';
 export type { AuthWallProps } from './components/AuthWall/AuthWall.js';
-export { BrutalistCard } from './components/BrutalistCard/BrutalistCard.js';
+export { BrutalistCard } from './components/BrutalistCard/index.js';
 export type {
   BrutalistCardProps,
   BrutalistCardVariant,

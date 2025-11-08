@@ -1,23 +1,14 @@
 import React from 'react';
-import {
-  getBrutalistCardStyle,
-  BrutalistCardVariant,
-  BrutalistCardSize,
-} from './BrutalistCard.styles.js';
+import { getBrutalistCardStyle } from './BrutalistCard.styles.js';
+import type { BrutalistCardVariant, BrutalistCardSize } from './BrutalistCard.styles.js';
 
-export interface BrutalistCardProps {
+export interface BrutalistCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Content to render inside the card */
   children: React.ReactNode;
   /** Visual variant affecting shadow color */
   variant?: BrutalistCardVariant;
   /** Size affecting padding, font size, and shadow size */
   size?: BrutalistCardSize;
-  /** Additional custom styles */
-  style?: React.CSSProperties;
-  /** Optional className for the card */
-  className?: string;
-  /** Optional HTML attributes for the div */
-  [key: string]: unknown;
 }
 
 /**
@@ -37,22 +28,29 @@ export interface BrutalistCardProps {
  * </BrutalistCard>
  * ```
  */
-export function BrutalistCard({
-  children,
-  variant = 'default',
-  size = 'md',
-  style,
-  className,
-  ...rest
-}: BrutalistCardProps) {
-  const cardStyle = {
-    ...getBrutalistCardStyle(variant, size),
-    ...style,
-  };
+export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps>(
+  (
+    {
+      children,
+      variant = 'default',
+      size = 'md',
+      style,
+      className,
+      ...divProps
+    }: BrutalistCardProps,
+    ref
+  ) => {
+    const cardStyle = {
+      ...getBrutalistCardStyle(variant, size),
+      ...style,
+    } as React.CSSProperties;
 
-  return (
-    <div style={cardStyle} className={className} {...rest}>
-      {children}
-    </div>
-  );
-}
+    return (
+      <div ref={ref} style={cardStyle} className={className} {...divProps}>
+        {children}
+      </div>
+    );
+  }
+);
+
+BrutalistCard.displayName = 'BrutalistCard';
