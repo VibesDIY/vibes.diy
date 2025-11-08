@@ -4,6 +4,15 @@ import { useAuth } from "../contexts/AuthContext.js";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
 
 /**
+ * Generate a short random install ID (8 hex characters)
+ */
+function generateInstallId(): string {
+  return Array.from({ length: 8 }, () =>
+    Math.floor(Math.random() * 16).toString(16),
+  ).join("");
+}
+
+/**
  * Custom hook for managing vibe instances
  * Handles CRUD operations for vibe instances using Fireproof + KV
  */
@@ -26,7 +35,7 @@ export function useVibeInstances(titleId: string) {
 
   /**
    * Create a new instance
-   * Fireproof auto-generates the _id which becomes the UUID
+   * Generates a custom _id in format: ${titleId}-${installId}
    */
   const createInstance = useCallback(
     async (description: string, options?: Record<string, unknown>) => {
@@ -34,8 +43,13 @@ export function useVibeInstances(titleId: string) {
         setIsCreating(true);
         setError(null);
 
-        // Create document - Fireproof will auto-generate _id
+        // Generate custom _id: titleId-installId
+        const installId = generateInstallId();
+        const customId = `${titleId}-${installId}`;
+
+        // Create document with custom _id
         const doc: VibeInstanceDocument = {
+          _id: customId,
           titleId,
           description,
           userId,
@@ -47,7 +61,7 @@ export function useVibeInstances(titleId: string) {
 
         const result = await database.put(doc);
 
-        return result.id; // Return the auto-generated UUID
+        return result.id; // Return the custom ID
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
