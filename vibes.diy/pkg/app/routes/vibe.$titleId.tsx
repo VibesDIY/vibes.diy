@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
+import { VibesDiyEnv } from "../config/env.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
   return [
@@ -88,13 +89,37 @@ export default function VibeInstancesList() {
     setEditDescription(currentDescription);
   };
 
+  // Get hosting domain for screenshot URL
+  const getHostname = (url: string): string => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return "vibesdiy.app";
+    }
+  };
+  const hostname = getHostname(VibesDiyEnv.APP_HOST_BASE_URL());
+  const screenshotUrl = `https://${titleId}.${hostname}/screenshot.png`;
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{titleId}</h1>
-          <p className="text-gray-600">Manage your instances of this vibe</p>
+        {/* Header with Screenshot */}
+        <div className="mb-8 flex gap-6 items-start">
+          <div className="flex-shrink-0 w-64">
+            <img
+              src={screenshotUrl}
+              alt={`${titleId} screenshot`}
+              className="w-full rounded-lg shadow-md border border-gray-200"
+              onError={(e) => {
+                // Hide image on error
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{titleId}</h1>
+            <p className="text-gray-600">Manage your instances of this vibe</p>
+          </div>
         </div>
 
         {/* Error Display */}
