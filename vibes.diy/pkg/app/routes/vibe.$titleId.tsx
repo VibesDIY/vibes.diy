@@ -235,9 +235,7 @@ export default function VibeInstancesList() {
                         </button>
                         <button
                           onClick={() =>
-                            navigate(
-                              `/vibe/${titleId}/${instance._id}`,
-                            )
+                            navigate(`/vibe/${titleId}/${instance._id}`)
                           }
                           className="px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
                         >
