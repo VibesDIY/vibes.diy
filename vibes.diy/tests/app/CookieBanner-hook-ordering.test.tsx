@@ -72,10 +72,10 @@ vi.mock("react-cookie-consent", () => ({
 }));
 
 // Import component after mocks
-import CookieBanner from "~/vibes.diy/app/components/CookieBanner";
+import CookieBanner from "../../pkg/app/components/CookieBanner.js";
 
 describe("CookieBanner Hook Ordering", () => {
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let consoleErrorSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     // Spy on console.error to catch React hook violations
@@ -266,7 +266,7 @@ describe("CookieBanner Hook Ordering", () => {
   });
 
   it("should track cookie banner shown event only once per session", async () => {
-    const { trackEvent } = await import("~/vibes.diy/app/utils/analytics");
+    const { trackEvent } = await import("../../pkg/app/utils/analytics.js");
 
     // First render
     render(
