@@ -80,6 +80,7 @@ export default function VibeInstanceViewer() {
             authToken,
             titleId,
             vibeUUID: vibeUUID,
+            hostingDomain: hostname, // Pass the hosting domain for screenshot URLs
           };
 
           // Use a specific target origin for safety
