@@ -283,5 +283,6 @@ describe("SessionWrapper Hook Ordering", () => {
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     const navArgs = mockNavigate.mock.calls[0];
     expect(navArgs[0]).toMatch(/^\/chat\/session-\d+\/Test\?prompt=Test$/);
+    expect(navArgs[1]).toBeUndefined();
   });
 });

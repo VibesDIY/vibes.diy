@@ -59,10 +59,10 @@ export default function SessionWrapper() {
 
   // Keep local state in sync with the URL when params change after navigation
   useEffect(() => {
-    if (urlSessionId && urlSessionId !== sessionId) {
-      setSessionId(urlSessionId);
+    if (urlSessionId !== sessionId) {
+      setSessionId(urlSessionId ?? null);
     }
-  }, [urlSessionId]);
+  }, [urlSessionId, sessionId]);
 
   const handleSessionCreate = (newSessionId: string) => {
     setSessionId(newSessionId);
@@ -106,7 +106,7 @@ export default function SessionWrapper() {
 
   // Conditional rendering - true deferred session creation
   // Use either the URL param or local state during the initial transition
-  const effectiveSessionId = urlSessionId || sessionId;
+  const effectiveSessionId = urlSessionId ?? sessionId;
 
   if (!effectiveSessionId) {
     return <NewSessionView onSessionCreate={handleSessionCreate} />;
