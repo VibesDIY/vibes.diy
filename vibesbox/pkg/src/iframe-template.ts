@@ -27,8 +27,9 @@ export const iframeHtml = `<!doctype html>
         try { return new URL(document.referrer).origin; } catch { return null; }
       })();
       function postToParent(data) {
-        if (!__PARENT_ORIGIN) return; // Do not leak to '*'
-        window.parent.postMessage(data, __PARENT_ORIGIN);
+        const target = __PARENT_ORIGIN || "*"; // Fallback to wildcard if origin unknown
+        console.log('[IFRAME] postToParent:', data.type, 'to', target);
+        window.parent.postMessage(data, target);
       }
       const activeRequests = new Set();
       let lastState = null;
@@ -160,6 +161,7 @@ export const iframeHtml = `<!doctype html>
       }
 
       function pageIsLoaded() {
+        console.log('[IFRAME] pageIsLoaded called');
         postToParent({ type: "preview-ready" });
         setTimeout(captureScreenshot, 2000);
       }
@@ -203,12 +205,14 @@ export const iframeHtml = `<!doctype html>
             window.CALLAI_API_KEY = event.data.key;
           } else if (event.data.type === "execute-code") {
             // New postMessage handler for code execution
+            console.log('[IFRAME] Received execute-code message');
             executeCode(event.data);
           }
         }
       });
 
       window.addEventListener("DOMContentLoaded", function () {
+        console.log('[IFRAME] DOMContentLoaded fired');
         pageIsLoaded();
       });
 
@@ -555,7 +559,7 @@ export const iframeHtml = `<!doctype html>
           const baseDomain = isLocalhost
             ? parentHostname
             : parentHostname.split('.').slice(-2).join('.');
-          const imageUrl = \`https://\${globalThis.VIBE_TITLE_ID}.\${baseDomain}/screenshot.png\`;
+          const imageUrl = \\\`https://\\\${globalThis.VIBE_TITLE_ID}.\\\${baseDomain}/screenshot.png\\\`;
 
           // Mount with AuthWall and VibesPanel
           const container = document.getElementById('container');
