@@ -69,6 +69,8 @@ export default function VibeInstanceViewer() {
             sessionId: uuid,
             endpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
             authToken,
+            titleId,
+            vibeUUID: uuid,
           };
 
           iframeRef.current.contentWindow.postMessage(messageData, "*");

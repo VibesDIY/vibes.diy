@@ -550,15 +550,31 @@ export const iframeHtml = `<!doctype html>
               "function $1",
             ) +
             \`
-          
-          // Import React DOM for rendering
-          import { createRoot } from 'react-dom/client';
-          
-          // Render the component directly
+
+          // Import mountVibesApp for full auth UI integration
+          import { mountVibesApp } from 'use-vibes';
+
+          // Get title and construct screenshot URL from globals
+          const title = globalThis.VIBE_TITLE_ID || 'Vibe';
+          // Extract base domain from parent referrer (e.g., localhost:8888 or vibesdiy.app)
+          const parentUrl = document.referrer || window.location.href;
+          const parentHostname = new URL(parentUrl).hostname;
+          // Get base domain (last 2 parts for .app/.net, or full for localhost)
+          const isLocalhost = parentHostname.includes('localhost') || parentHostname.includes('127.0.0.1');
+          const baseDomain = isLocalhost
+            ? parentHostname
+            : parentHostname.split('.').slice(-2).join('.');
+          const imageUrl = \`https://\${globalThis.VIBE_TITLE_ID}.\${baseDomain}/screenshot.png\`;
+
+          // Mount with AuthWall and VibesPanel
           const container = document.getElementById('container');
-          const root = createRoot(container);
-          root.render(React.createElement(\${functionName}));
-          
+          mountVibesApp({
+            container,
+            appComponent: \${functionName},
+            title,
+            imageUrl
+          });
+
           // Notify parent that execution was successful
           window.parent.postMessage({ type: 'execution-success' }, '*');
           \`;
