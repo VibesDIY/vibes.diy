@@ -440,6 +440,11 @@ export const iframeHtml = `<!doctype html>
           globalThis.VIBE_TITLE_ID = data.titleId;
         }
 
+        // Store hosting domain globally for screenshot URLs
+        if (data.hostingDomain) {
+          globalThis.VIBE_HOSTING_DOMAIN = data.hostingDomain;
+        }
+
         try {
           // Reset error state
           window.babelTransformError = null;
@@ -551,8 +556,8 @@ export const iframeHtml = `<!doctype html>
 
           // Get title and construct screenshot URL from globals
           const title = globalThis.VIBE_TITLE_ID || 'Vibe';
-          // Use hosting domain from execute-code message, fallback to vibesdiy.app
-          const hostingDomain = data.hostingDomain || 'vibesdiy.app';
+          // Use hosting domain from global, fallback to vibesdiy.app
+          const hostingDomain = globalThis.VIBE_HOSTING_DOMAIN || 'vibesdiy.app';
           const imageUrl = \\\`https://\\\${globalThis.VIBE_TITLE_ID}.\\\${hostingDomain}/screenshot.png\\\`;
 
           // Mount with AuthWall and VibesPanel
