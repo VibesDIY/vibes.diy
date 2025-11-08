@@ -6,11 +6,11 @@ import {
   getImageSectionStyle,
   getOverlayStyle,
   getMenuStyle,
-  getFormContainerStyle,
   getTitleStyle,
   getDescriptionStyle,
 } from './AuthWall.styles.js';
 import { VibesButton } from '../VibesButton/VibesButton.js';
+import { BrutalistCard } from '../BrutalistCard/BrutalistCard.js';
 
 const FALLBACK_IMAGE_URL =
   'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
@@ -211,7 +211,15 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
     <div style={getWrapperStyle()}>
       {/* Menu at bottom (like HiddenMenuWrapper menu) - always there */}
       <div ref={menuRef} style={menuStyle}>
-        <div style={getFormContainerStyle()}>
+        <BrutalistCard
+          size="lg"
+          style={{
+            position: 'relative',
+            textAlign: 'left',
+            maxWidth: '400px',
+            width: '90%',
+          }}
+        >
           <h1 style={getTitleStyle()}>{title}</h1>
           <p style={getDescriptionStyle()}>Login to access this Vibe!</p>
           <VibesButton
@@ -222,7 +230,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
           >
             Login
           </VibesButton>
-        </div>
+        </BrutalistCard>
       </div>
 
       {/* Image content wrapper (like HiddenMenuWrapper content) - slides up to reveal menu */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useId } from 'react';
 import { VibesButton } from '../VibesButton/VibesButton.js';
+import { BrutalistCard } from '../BrutalistCard/BrutalistCard.js';
 import { generateFreshDataUrl, generateRemixUrl } from '../../utils/appSlug.js';
 
 export interface VibesPanelProps {
@@ -154,61 +155,49 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
                 <label htmlFor={emailId} style={{ alignSelf: 'flex-start', fontWeight: 600 }}>
                   Invite by email
                 </label>
-                <input
-                  id={emailId}
-                  type="email"
-                  placeholder="friend@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '1rem',
-                    background: '#fff',
-                    color: '#1a1a1a',
-                    border: '3px solid #1a1a1a',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    letterSpacing: '0.02em',
-                    boxShadow: '4px 5px 0px 0px #666',
-                    transition: 'all 0.15s ease',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                  autoComplete="email"
-                  required
-                />
+                <BrutalistCard size="md" style={{ width: '100%' }}>
+                  <input
+                    id={emailId}
+                    type="email"
+                    placeholder="friend@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={{
+                      width: '100%',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'inherit',
+                      fontSize: 'inherit',
+                      fontWeight: 'inherit',
+                      letterSpacing: 'inherit',
+                      padding: 0,
+                    }}
+                    autoComplete="email"
+                    required
+                  />
+                </BrutalistCard>
                 <VibesButton variant="primary" type="submit" disabled={!email.trim()}>
                   Send Invite
                 </VibesButton>
               </form>
             ) : (
               // Show status when sending/complete
-              <div
+              <BrutalistCard
                 id="invite-status"
                 role="status"
                 aria-live="polite"
-                style={{
-                  padding: '0.75rem 1rem',
-                  background: '#fff',
-                  color: '#1a1a1a',
-                  border: '3px solid #1a1a1a',
-                  borderRadius: '12px',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  textAlign: 'center',
-                  letterSpacing: '0.02em',
-                  boxShadow:
-                    inviteStatus === 'sending'
-                      ? '4px 5px 0px 0px #666'
-                      : inviteStatus === 'error'
-                        ? '4px 5px 0px 0px #DA291C'
-                        : '4px 5px 0px 0px #51cf66',
-                  transition: 'all 0.15s ease',
-                }}
+                size="sm"
+                variant={
+                  inviteStatus === 'sending'
+                    ? 'default'
+                    : inviteStatus === 'error'
+                      ? 'error'
+                      : 'success'
+                }
+                style={{ textAlign: 'center' }}
               >
                 {inviteStatus === 'sending' ? 'Inviting...' : inviteMessage}
-              </div>
+              </BrutalistCard>
             )}
             <VibesButton variant="tertiary" onClick={handleBackClick}>
               ← Back

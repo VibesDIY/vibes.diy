@@ -80,18 +80,6 @@ export const getOverlayStyle = (): CSSProperties => ({
   backgroundColor: 'rgba(255, 255, 255, 0.4)',
 });
 
-export const getFormContainerStyle = (): CSSProperties => ({
-  position: 'relative',
-  background: '#ffffff',
-  border: '3px solid #1a1a1a',
-  borderRadius: '12px',
-  padding: '2rem 3rem',
-  textAlign: 'left',
-  maxWidth: '400px',
-  width: '90%',
-  boxShadow: '6px 6px 0px #1a1a1a',
-});
-
 export const getTitleStyle = (): CSSProperties => ({
   fontSize: '1.3rem',
   fontWeight: 800,

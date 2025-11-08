@@ -575,6 +575,12 @@ export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
 export { AuthWall } from './components/AuthWall/AuthWall.js';
 export type { AuthWallProps } from './components/AuthWall/AuthWall.js';
+export { BrutalistCard } from './components/BrutalistCard/index.js';
+export type {
+  BrutalistCardProps,
+  BrutalistCardVariant,
+  BrutalistCardSize,
+} from './components/BrutalistCard/index.js';
 
 // Export unified mount function - the main API for non-React environments
 export { mountVibesApp, mountVibesAppToBody } from './vibe-app-mount.js';
