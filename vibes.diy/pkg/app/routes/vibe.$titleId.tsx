@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
@@ -9,9 +9,20 @@ export function meta({ params }: { params: { titleId: string } }) {
   ];
 }
 
+/**
+ * Extract the short installId from the full _id (titleId-installId format)
+ */
+function extractInstallId(fullId: string, titleId: string): string {
+  // _id format: ${titleId}-${installId}
+  // Remove the titleId prefix and the hyphen
+  const prefix = `${titleId}-`;
+  return fullId.startsWith(prefix) ? fullId.slice(prefix.length) : fullId;
+}
+
 export default function VibeInstancesList() {
   const { titleId } = useParams<{ titleId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newDescription, setNewDescription] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -41,8 +52,10 @@ export default function VibeInstancesList() {
       const uuid = await createInstance(newDescription.trim());
       setNewDescription("");
       setShowCreateDialog(false);
-      // Navigate to the new instance
-      navigate(`/vibe/${titleId}/${uuid}`);
+      // Navigate to the new instance (extract short ID and preserve query params)
+      const installId = extractInstallId(uuid, titleId);
+      const search = searchParams.toString();
+      navigate(`/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`);
     } catch (err) {
       console.error("Failed to create instance:", err);
     }
@@ -195,9 +208,16 @@ export default function VibeInstancesList() {
                     <div className="flex items-center justify-between">
                       <div
                         className="flex-1 cursor-pointer"
-                        onClick={() =>
-                          navigate(`/vibe/${titleId}/${instance._id}`)
-                        }
+                        onClick={() => {
+                          const installId = extractInstallId(
+                            instance._id || "",
+                            titleId,
+                          );
+                          const search = searchParams.toString();
+                          navigate(
+                            `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`,
+                          );
+                        }}
                       >
                         <h3 className="font-semibold text-gray-900 mb-1">
                           {instance.description}
@@ -234,9 +254,16 @@ export default function VibeInstancesList() {
                           Edit
                         </button>
                         <button
-                          onClick={() =>
-                            navigate(`/vibe/${titleId}/${instance._id}`)
-                          }
+                          onClick={() => {
+                            const installId = extractInstallId(
+                              instance._id || "",
+                              titleId,
+                            );
+                            const search = searchParams.toString();
+                            navigate(
+                              `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`,
+                            );
+                          }}
                           className="px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
                         >
                           Open

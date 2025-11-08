@@ -31,6 +31,13 @@ export default function VibeInstanceViewer() {
   useEffect(() => {
     if (!titleId || !uuid || !iframeRef.current) return;
 
+    // Reconstruct full vibeUUID: if uuid doesn't include titleId, prepend it
+    const vibeUUID = uuid.includes("-")
+      ? uuid.startsWith(`${titleId}-`)
+        ? uuid // Already full format
+        : `${titleId}-${uuid}` // Short format, reconstruct
+      : `${titleId}-${uuid}`; // Legacy or short format
+
     // Fetch the published vibe code from hosting
     const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
     const vibeUrl = `https://${titleId}.${hostname}/App.jsx`;
@@ -68,11 +75,11 @@ export default function VibeInstanceViewer() {
             type: "execute-code",
             code: vibeCode,
             apiKey: "sk-vibes-proxy-managed",
-            sessionId: uuid,
+            sessionId: vibeUUID,
             endpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
             authToken,
             titleId,
-            vibeUUID: uuid,
+            vibeUUID: vibeUUID,
           };
 
           // Use a specific target origin for safety
