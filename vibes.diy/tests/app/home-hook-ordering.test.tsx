@@ -80,10 +80,10 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
 }));
 
 // Import the component under test after mocks
-import SessionWrapper from "~/vibes.diy/app/routes/home";
+import SessionWrapper from "../../pkg/app/routes/home.js";
 
 describe("SessionWrapper Hook Ordering", () => {
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let consoleErrorSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     // Spy on console.error to catch React hook violations
