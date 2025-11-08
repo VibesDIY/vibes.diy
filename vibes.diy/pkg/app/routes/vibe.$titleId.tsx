@@ -42,7 +42,7 @@ export default function VibeInstancesList() {
       setNewDescription("");
       setShowCreateDialog(false);
       // Navigate to the new instance
-      navigate(`/vibe/${titleId}/instances/${uuid}`);
+      navigate(`/vibe/${titleId}/${uuid}`);
     } catch (err) {
       console.error("Failed to create instance:", err);
     }
@@ -196,7 +196,7 @@ export default function VibeInstancesList() {
                       <div
                         className="flex-1 cursor-pointer"
                         onClick={() =>
-                          navigate(`/vibe/${titleId}/instances/${instance._id}`)
+                          navigate(`/vibe/${titleId}/${instance._id}`)
                         }
                       >
                         <h3 className="font-semibold text-gray-900 mb-1">
@@ -236,7 +236,7 @@ export default function VibeInstancesList() {
                         <button
                           onClick={() =>
                             navigate(
-                              `/vibe/${titleId}/instances/${instance._id}`,
+                              `/vibe/${titleId}/${instance._id}`,
                             )
                           }
                           className="px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
