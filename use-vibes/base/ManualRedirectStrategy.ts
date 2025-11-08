@@ -36,8 +36,8 @@ function generateLedgerName(dbName: string): string {
     typeof window !== 'undefined'
       ? window.location.origin.replace(/[^a-z0-9]/gi, '-')
       : 'unknown-origin';
-
-  return `${origin}-${dbName}`;
+  const safeDb = String(dbName).replace(/[^a-z0-9-]/gi, '-');
+  return `${origin}-${safeDb}`;
 }
 
 // Parse JWT token to extract claims

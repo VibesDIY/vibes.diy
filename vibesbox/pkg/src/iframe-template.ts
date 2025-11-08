@@ -23,7 +23,7 @@ export const iframeHtml = `<!doctype html>
     </style>
     <script>
       // Compute parent origin once for safe postMessage targeting
-      const __PARENT_ORIGIN = (() => {
+      let __PARENT_ORIGIN = (() => {
         try { return new URL(document.referrer).origin; } catch { return null; }
       })();
       function postToParent(data) {
@@ -188,6 +188,10 @@ export const iframeHtml = `<!doctype html>
 
       // Event listeners
       window.addEventListener("message", function (event) {
+        // Establish parent origin from the first execute-code message if not known
+        if (event.source === window.parent && event.data?.type === 'execute-code' && !__PARENT_ORIGIN) {
+          __PARENT_ORIGIN = event.origin;
+        }
         // Log ALL messages received
         
         if (event.data) {
