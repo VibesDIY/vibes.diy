@@ -71,7 +71,8 @@ export default function SessionWrapper() {
   // Handle prompt query parameter forwarding for root page
   useEffect(() => {
     // Only handle forwarding when on root page (no sessionId) and there's a prompt query
-    if (!urlSessionId && search) {
+    // Guard against duplicate navigations by checking local sessionId state
+    if (!urlSessionId && !sessionId && search) {
       const searchParams = new URLSearchParams(search);
       const promptParam = searchParams.get("prompt");
 

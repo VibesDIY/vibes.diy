@@ -92,15 +92,20 @@ export default function CookieBanner() {
     }
   }, [hasConsent, gtmId]);
 
-  // Track cookie banner shown (only once per session to avoid double-counting on remounts)
+  // Track cookie banner shown (only once per session when actually rendered)
   useEffect(() => {
+    // Only track if banner will actually render
+    if (!XCookieConsent || !messageHasBeenSent) {
+      return;
+    }
+
     if (typeof sessionStorage !== "undefined") {
       if (!sessionStorage.getItem("cookie_banner_shown")) {
         trackEvent("cookie_banner_shown");
         sessionStorage.setItem("cookie_banner_shown", "true");
       }
     }
-  }, []);
+  }, [XCookieConsent, messageHasBeenSent]);
 
   // Don't render anything if any of these conditions are met:
   // 1. CookieConsent is not loaded
