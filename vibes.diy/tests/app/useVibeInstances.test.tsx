@@ -74,7 +74,7 @@ describe("useVibeInstances", () => {
   const titleId = "kanban-board";
   const mockInstances: VibeInstanceDocument[] = [
     {
-      _id: "instance-1",
+      _id: "kanban-board-a3f9c2e1",
       titleId: "kanban-board",
       description: "My Work Board",
       userId: "user-123",
@@ -84,7 +84,7 @@ describe("useVibeInstances", () => {
       options: {},
     },
     {
-      _id: "instance-2",
+      _id: "kanban-board-7b4d3a9f",
       titleId: "kanban-board",
       description: "Personal Projects",
       userId: "user-123",
@@ -156,7 +156,7 @@ describe("useVibeInstances", () => {
 
   describe("createInstance", () => {
     it("should create a new instance successfully", async () => {
-      const newInstanceId = "new-instance-uuid";
+      const newInstanceId = "kanban-board-5c8e2f91";
       mockPut.mockResolvedValue({ id: newInstanceId });
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
@@ -190,8 +190,9 @@ describe("useVibeInstances", () => {
       const updatedTime = new Date(putCall.updatedAt).getTime();
       expect(Math.abs(createdTime - updatedTime)).toBeLessThan(10);
 
-      // Verify no _id is set (Fireproof auto-generates)
-      expect(putCall._id).toBeUndefined();
+      // Verify custom _id is set in format: titleId-installId
+      expect(putCall._id).toBeDefined();
+      expect(putCall._id).toMatch(/^kanban-board-[0-9a-f]{8}$/);
     });
 
     it("should create instance with empty options when not provided", async () => {
@@ -306,7 +307,7 @@ describe("useVibeInstances", () => {
   describe("updateInstance", () => {
     it("should update instance description successfully", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Old Description",
         userId: "user-123",
@@ -317,22 +318,22 @@ describe("useVibeInstances", () => {
       };
 
       mockGet.mockResolvedValue(existingInstance);
-      mockPut.mockResolvedValue({ id: "instance-1" });
+      mockPut.mockResolvedValue({ id: "kanban-board-a3f9c2e1" });
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
       });
 
       await act(async () => {
-        await result.current.updateInstance("instance-1", {
+        await result.current.updateInstance("kanban-board-a3f9c2e1", {
           description: "New Description",
         });
       });
 
-      expect(mockGet).toHaveBeenCalledWith("instance-1");
+      expect(mockGet).toHaveBeenCalledWith("kanban-board-a3f9c2e1");
       expect(mockPut).toHaveBeenCalledWith(
         expect.objectContaining({
-          _id: "instance-1",
+          _id: "kanban-board-a3f9c2e1",
           description: "New Description",
           titleId,
           userId: "user-123",
@@ -350,7 +351,7 @@ describe("useVibeInstances", () => {
 
     it("should update instance options successfully", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Test",
         userId: "user-123",
@@ -361,14 +362,14 @@ describe("useVibeInstances", () => {
       };
 
       mockGet.mockResolvedValue(existingInstance);
-      mockPut.mockResolvedValue({ id: "instance-1" });
+      mockPut.mockResolvedValue({ id: "kanban-board-a3f9c2e1" });
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
       });
 
       await act(async () => {
-        await result.current.updateInstance("instance-1", {
+        await result.current.updateInstance("kanban-board-a3f9c2e1", {
           options: { theme: "dark", fontSize: 14 },
         });
       });
@@ -382,7 +383,7 @@ describe("useVibeInstances", () => {
 
     it("should update both description and options together", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Old",
         userId: "user-123",
@@ -393,14 +394,14 @@ describe("useVibeInstances", () => {
       };
 
       mockGet.mockResolvedValue(existingInstance);
-      mockPut.mockResolvedValue({ id: "instance-1" });
+      mockPut.mockResolvedValue({ id: "kanban-board-a3f9c2e1" });
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
       });
 
       await act(async () => {
-        await result.current.updateInstance("instance-1", {
+        await result.current.updateInstance("kanban-board-a3f9c2e1", {
           description: "New",
           options: { key: "value" },
         });
@@ -416,7 +417,7 @@ describe("useVibeInstances", () => {
 
     it("should reject update if user is not the owner", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Test",
         userId: "other-user",
@@ -434,7 +435,7 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.updateInstance("instance-1", {
+          result.current.updateInstance("kanban-board-a3f9c2e1", {
             description: "Hacked",
           }),
         ).rejects.toThrow("You do not have permission to edit this instance");
@@ -446,7 +447,7 @@ describe("useVibeInstances", () => {
 
     it("should handle update errors and set error state", async () => {
       mockGet.mockResolvedValue({
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
         titleId: titleId,
       });
@@ -458,7 +459,7 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.updateInstance("instance-1", {
+          result.current.updateInstance("kanban-board-a3f9c2e1", {
             description: "Test",
           }),
         ).rejects.toThrow("Update failed");
@@ -477,7 +478,7 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.updateInstance("instance-1", {
+          result.current.updateInstance("kanban-board-a3f9c2e1", {
             description: "Test",
           }),
         ).rejects.toThrow();
@@ -487,7 +488,7 @@ describe("useVibeInstances", () => {
 
       // Now succeed
       mockGet.mockResolvedValueOnce({
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
         titleId,
         description: "Old",
@@ -495,10 +496,10 @@ describe("useVibeInstances", () => {
         updatedAt: "2025-11-01T10:00:00Z",
         sharedWith: [],
       });
-      mockPut.mockResolvedValueOnce({ id: "instance-1" });
+      mockPut.mockResolvedValueOnce({ id: "kanban-board-a3f9c2e1" });
 
       await act(async () => {
-        await result.current.updateInstance("instance-1", {
+        await result.current.updateInstance("kanban-board-a3f9c2e1", {
           description: "New",
         });
       });
@@ -510,7 +511,7 @@ describe("useVibeInstances", () => {
   describe("deleteInstance", () => {
     it("should delete instance successfully", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Test",
         userId: "user-123",
@@ -521,23 +522,23 @@ describe("useVibeInstances", () => {
       };
 
       mockGet.mockResolvedValue(existingInstance);
-      mockDel.mockResolvedValue({ id: "instance-1" });
+      mockDel.mockResolvedValue({ id: "kanban-board-a3f9c2e1" });
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
       });
 
       await act(async () => {
-        await result.current.deleteInstance("instance-1");
+        await result.current.deleteInstance("kanban-board-a3f9c2e1");
       });
 
-      expect(mockGet).toHaveBeenCalledWith("instance-1");
-      expect(mockDel).toHaveBeenCalledWith("instance-1");
+      expect(mockGet).toHaveBeenCalledWith("kanban-board-a3f9c2e1");
+      expect(mockDel).toHaveBeenCalledWith("kanban-board-a3f9c2e1");
     });
 
     it("should reject delete if user is not the owner", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Test",
         userId: "other-user",
@@ -555,7 +556,7 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.deleteInstance("instance-1"),
+          result.current.deleteInstance("kanban-board-a3f9c2e1"),
         ).rejects.toThrow("You do not have permission to delete this instance");
       });
 
@@ -565,7 +566,7 @@ describe("useVibeInstances", () => {
 
     it("should handle delete errors and set error state", async () => {
       mockGet.mockResolvedValue({
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
         titleId: titleId,
       });
@@ -577,7 +578,7 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.deleteInstance("instance-1"),
+          result.current.deleteInstance("kanban-board-a3f9c2e1"),
         ).rejects.toThrow("Delete failed");
       });
 
@@ -594,7 +595,7 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.deleteInstance("instance-1"),
+          result.current.deleteInstance("kanban-board-a3f9c2e1"),
         ).rejects.toThrow();
       });
 
@@ -602,14 +603,14 @@ describe("useVibeInstances", () => {
 
       // Now succeed
       mockGet.mockResolvedValueOnce({
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
         titleId: titleId,
       });
-      mockDel.mockResolvedValueOnce({ id: "instance-1" });
+      mockDel.mockResolvedValueOnce({ id: "kanban-board-a3f9c2e1" });
 
       await act(async () => {
-        await result.current.deleteInstance("instance-1");
+        await result.current.deleteInstance("kanban-board-a3f9c2e1");
       });
 
       expect(result.current.error).toBe(null);
@@ -619,7 +620,7 @@ describe("useVibeInstances", () => {
   describe("shareInstance", () => {
     it("should share instance with another user successfully", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Test",
         userId: "user-123",
@@ -630,20 +631,20 @@ describe("useVibeInstances", () => {
       };
 
       mockGet.mockResolvedValue(existingInstance);
-      mockPut.mockResolvedValue({ id: "instance-1" });
+      mockPut.mockResolvedValue({ id: "kanban-board-a3f9c2e1" });
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
       });
 
       await act(async () => {
-        await result.current.shareInstance("instance-1", "friend@example.com");
+        await result.current.shareInstance("kanban-board-a3f9c2e1", "friend@example.com");
       });
 
-      expect(mockGet).toHaveBeenCalledWith("instance-1");
+      expect(mockGet).toHaveBeenCalledWith("kanban-board-a3f9c2e1");
       expect(mockPut).toHaveBeenCalledWith(
         expect.objectContaining({
-          _id: "instance-1",
+          _id: "kanban-board-a3f9c2e1",
           sharedWith: ["friend@example.com"],
         }),
       );
@@ -655,7 +656,7 @@ describe("useVibeInstances", () => {
 
     it("should not duplicate emails in sharedWith array", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Test",
         userId: "user-123",
@@ -666,14 +667,14 @@ describe("useVibeInstances", () => {
       };
 
       mockGet.mockResolvedValue(existingInstance);
-      mockPut.mockResolvedValue({ id: "instance-1" });
+      mockPut.mockResolvedValue({ id: "kanban-board-a3f9c2e1" });
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
       });
 
       await act(async () => {
-        await result.current.shareInstance("instance-1", "friend@example.com");
+        await result.current.shareInstance("kanban-board-a3f9c2e1", "friend@example.com");
       });
 
       expect(mockPut).toHaveBeenCalledWith(
@@ -685,7 +686,7 @@ describe("useVibeInstances", () => {
 
     it("should add new email to existing sharedWith array", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Test",
         userId: "user-123",
@@ -696,14 +697,14 @@ describe("useVibeInstances", () => {
       };
 
       mockGet.mockResolvedValue(existingInstance);
-      mockPut.mockResolvedValue({ id: "instance-1" });
+      mockPut.mockResolvedValue({ id: "kanban-board-a3f9c2e1" });
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
       });
 
       await act(async () => {
-        await result.current.shareInstance("instance-1", "user2@example.com");
+        await result.current.shareInstance("kanban-board-a3f9c2e1", "user2@example.com");
       });
 
       expect(mockPut).toHaveBeenCalledWith(
@@ -715,7 +716,7 @@ describe("useVibeInstances", () => {
 
     it("should reject share if user is not the owner", async () => {
       const existingInstance: VibeInstanceDocument = {
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         titleId,
         description: "Test",
         userId: "other-user",
@@ -733,7 +734,7 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.shareInstance("instance-1", "friend@example.com"),
+          result.current.shareInstance("kanban-board-a3f9c2e1", "friend@example.com"),
         ).rejects.toThrow("You do not have permission to share this instance");
       });
 
@@ -743,7 +744,7 @@ describe("useVibeInstances", () => {
 
     it("should handle share errors and set error state", async () => {
       mockGet.mockResolvedValue({
-        _id: "instance-1",
+        _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
         titleId: titleId,
         sharedWith: [],
@@ -756,7 +757,7 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.shareInstance("instance-1", "friend@example.com"),
+          result.current.shareInstance("kanban-board-a3f9c2e1", "friend@example.com"),
         ).rejects.toThrow("Share failed");
       });
 
