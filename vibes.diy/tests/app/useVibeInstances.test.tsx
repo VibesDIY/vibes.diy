@@ -448,6 +448,7 @@ describe("useVibeInstances", () => {
       mockGet.mockResolvedValue({
         _id: "instance-1",
         userId: "user-123",
+        titleId: titleId,
       });
       mockPut.mockRejectedValue(new Error("Update failed"));
 
@@ -566,6 +567,7 @@ describe("useVibeInstances", () => {
       mockGet.mockResolvedValue({
         _id: "instance-1",
         userId: "user-123",
+        titleId: titleId,
       });
       mockDel.mockRejectedValue(new Error("Delete failed"));
 
@@ -602,6 +604,7 @@ describe("useVibeInstances", () => {
       mockGet.mockResolvedValueOnce({
         _id: "instance-1",
         userId: "user-123",
+        titleId: titleId,
       });
       mockDel.mockResolvedValueOnce({ id: "instance-1" });
 
@@ -742,6 +745,7 @@ describe("useVibeInstances", () => {
       mockGet.mockResolvedValue({
         _id: "instance-1",
         userId: "user-123",
+        titleId: titleId,
         sharedWith: [],
       });
       mockPut.mockRejectedValue(new Error("Share failed"));
