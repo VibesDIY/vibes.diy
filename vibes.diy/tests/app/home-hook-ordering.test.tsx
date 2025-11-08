@@ -285,4 +285,57 @@ describe("SessionWrapper Hook Ordering", () => {
     expect(navArgs[0]).toMatch(/^\/chat\/session-\d+\/Test\?prompt=Test$/);
     expect(navArgs[1]).toBeUndefined();
   });
+
+  it("should not call navigate() multiple times during prompt forwarding", async () => {
+    // Set up mocks for this test
+    mockParams = { sessionId: undefined };
+    mockLocation = {
+      pathname: "/",
+      search: "?prompt=DuplicateTest",
+      state: null,
+    };
+    mockLoaderData = {
+      urlPrompt: "DuplicateTest",
+      urlModel: null,
+    };
+
+    const { rerender } = render(
+      <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
+        <SessionWrapper />
+      </MemoryRouter>,
+    );
+
+    // Wait for navigation to be called
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalled();
+    });
+
+    // Force multiple re-renders (simulating what might happen during state transitions)
+    rerender(
+      <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
+        <SessionWrapper />
+      </MemoryRouter>,
+    );
+    rerender(
+      <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
+        <SessionWrapper />
+      </MemoryRouter>,
+    );
+
+    // Should still only be called once (guard prevents duplicates)
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+
+    // Verify no hook ordering errors
+    const hookErrors = consoleErrorSpy.mock.calls.filter((call) =>
+      call.some(
+        (arg) =>
+          typeof arg === "string" &&
+          (arg.includes("hook") ||
+            arg.includes("Rendered more hooks") ||
+            arg.includes("Rendered fewer hooks")),
+      ),
+    );
+
+    expect(hookErrors).toEqual([]);
+  });
 });

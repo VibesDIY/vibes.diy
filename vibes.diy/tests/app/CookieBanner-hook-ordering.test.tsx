@@ -265,8 +265,11 @@ describe("CookieBanner Hook Ordering", () => {
     expect(hookErrors).toEqual([]);
   });
 
-  it("should track cookie banner shown event only once per session", async () => {
+  it("should track cookie banner shown event only when banner actually renders", async () => {
     const { trackEvent } = await import("../../pkg/app/utils/analytics.js");
+
+    // Clear any previous calls
+    vi.clearAllMocks();
 
     // First render
     render(
@@ -275,14 +278,20 @@ describe("CookieBanner Hook Ordering", () => {
       </MemoryRouter>,
     );
 
+    // Wait for banner to render (XCookieConsent loads asynchronously)
     await waitFor(() => {
       expect(
         document.querySelector('[data-testid="cookie-banner"]'),
       ).toBeInTheDocument();
     });
 
-    // Should have called trackEvent once
-    expect(trackEvent).toHaveBeenCalledWith("cookie_banner_shown");
+    // Wait for tracking effect to fire (depends on XCookieConsent and messageHasBeenSent)
+    await waitFor(() => {
+      expect(trackEvent).toHaveBeenCalledWith("cookie_banner_shown");
+    });
+
+    // Should have called trackEvent exactly once
+    expect(trackEvent).toHaveBeenCalledTimes(1);
   });
 
   it("should maintain hook consistency across consent state changes", async () => {
@@ -332,19 +341,5 @@ describe("CookieBanner Hook Ordering", () => {
     );
 
     expect(hookErrors).toEqual([]);
-  });
-
-  it("should verify the fix: useEffect called before early return", () => {
-    // This test documents the specific bug fix:
-    // The useEffect for tracking "cookie_banner_shown" must be called
-    // BEFORE the early return `if (!XCookieConsent || !messageHasBeenSent) return null;`
-
-    // Read the component source to verify the fix
-    const componentSource = CookieBanner.toString();
-
-    // The fix ensures all useEffect calls happen before any conditional returns
-    // This is verified by the component rendering without errors in all the above tests
-
-    expect(componentSource).toBeDefined();
   });
 });
