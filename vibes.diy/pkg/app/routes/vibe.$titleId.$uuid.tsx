@@ -24,9 +24,7 @@ function getHostnameFromUrl(url: string): string {
 export default function VibeInstanceViewer() {
   const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expectedOrigin, setExpectedOrigin] = useState<string | null>(null);
 
   useEffect(() => {
     if (!titleId || !uuid || !iframeRef.current) return;
@@ -85,7 +83,6 @@ export default function VibeInstanceViewer() {
 
           // Use a specific target origin for safety
           const targetOrigin = new URL(iframeUrl).origin;
-          setExpectedOrigin(targetOrigin);
           iframeRef.current.contentWindow.postMessage(
             messageData,
             targetOrigin,
@@ -94,7 +91,6 @@ export default function VibeInstanceViewer() {
       } catch (err) {
         console.error("Error loading vibe:", err);
         setError(err instanceof Error ? err.message : String(err));
-        setIsLoading(false);
       }
     };
 
@@ -106,25 +102,6 @@ export default function VibeInstanceViewer() {
       }
     };
   }, [titleId, uuid]);
-
-  // Wait for preview-ready from the iframe before hiding the loading overlay
-  useEffect(() => {
-    if (!iframeRef.current) return;
-    const safety = window.setTimeout(() => setIsLoading(false), 10000);
-    const onMessage = (ev: MessageEvent) => {
-      if (expectedOrigin && ev.origin !== expectedOrigin) return;
-      if (ev.source !== iframeRef.current?.contentWindow) return;
-      if (ev.data?.type === "preview-ready") {
-        window.clearTimeout(safety);
-        setIsLoading(false);
-      }
-    };
-    window.addEventListener("message", onMessage);
-    return () => {
-      window.clearTimeout(safety);
-      window.removeEventListener("message", onMessage);
-    };
-  }, [expectedOrigin]);
 
   if (!titleId || !uuid) {
     return (
@@ -138,16 +115,6 @@ export default function VibeInstanceViewer() {
 
   return (
     <div className="relative w-full h-screen bg-gray-900">
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-            <p className="text-white text-lg">Loading {titleId}...</p>
-          </div>
-        </div>
-      )}
-
       {/* Error Overlay */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">

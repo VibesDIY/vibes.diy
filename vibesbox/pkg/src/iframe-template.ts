@@ -211,10 +211,7 @@ export const iframeHtml = `<!doctype html>
         }
       });
 
-      window.addEventListener("DOMContentLoaded", function () {
-        console.log('[IFRAME] DOMContentLoaded fired');
-        pageIsLoaded();
-      });
+      // Removed DOMContentLoaded listener - preview-ready now sent after React renders
 
       // Global error handlers to catch and log all errors
       window.onerror = function (message, source, lineno, colno, error) {
@@ -571,6 +568,11 @@ export const iframeHtml = `<!doctype html>
 
           // Notify parent that execution was successful
           postToParent({ type: 'execution-success' });
+
+          // Wait for React to render, then notify parent that preview is ready
+          setTimeout(() => {
+            postToParent({ type: 'preview-ready' });
+          }, 100);
           \`;
 
           scriptElement.textContent = modifiedCode;
