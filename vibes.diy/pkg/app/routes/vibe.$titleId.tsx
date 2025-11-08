@@ -101,87 +101,95 @@ export default function VibeInstancesList() {
   const screenshotUrl = `https://${titleId}.${hostname}/screenshot.png`;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header with Screenshot */}
-        <div className="mb-8 flex gap-6 items-start">
-          <div className="flex-shrink-0 w-64">
-            <img
-              src={screenshotUrl}
-              alt={`${titleId} screenshot`}
-              className="w-full rounded-lg shadow-md border border-gray-200"
-              onError={(e) => {
-                // Hide image on error
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{titleId}</h1>
-            <p className="text-gray-600">Manage your instances of this vibe</p>
+    <div className="min-h-screen bg-yellow-50 p-8">
+      <div className="max-w-6xl mx-auto bg-white border-8 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+        {/* Header with Screenshot - BRUTALIST */}
+        <div className="mb-6 border-8 border-black p-6 bg-white">
+          <div className="flex gap-8 items-start">
+            <div className="flex-shrink-0 w-64 border-4 border-black">
+              <img
+                src={screenshotUrl}
+                alt={`${titleId} screenshot`}
+                className="w-full block"
+                onError={(e) => {
+                  // Hide image on error
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-5xl font-black uppercase mb-4 tracking-tight">
+                {titleId}
+              </h1>
+              <p className="text-xl font-bold uppercase tracking-wide">
+                MANAGE YOUR INSTANCES
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Error Display */}
+        {/* Error Display - BRUTALIST */}
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700">{error.message}</p>
+          <div className="mb-6 border-4 border-black bg-white p-6">
+            <p className="text-xl font-black uppercase">{error.message}</p>
           </div>
         )}
 
-        {/* Create Button */}
+        {/* Create Button - BRUTALIST */}
         <div className="mb-6">
           <button
             onClick={() => setShowCreateDialog(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-8 py-4 bg-black text-white font-black uppercase text-lg border-4 border-black hover:bg-white hover:text-black transition-colors"
           >
-            Create New Instance
+            + CREATE NEW INSTANCE
           </button>
         </div>
 
-        {/* Create Dialog */}
+        {/* Create Dialog - BRUTALIST */}
         {showCreateDialog && (
-          <div className="mb-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-            <h3 className="text-lg font-semibold mb-3">New Instance</h3>
+          <div className="mb-6 p-6 bg-white border-8 border-black">
+            <h3 className="text-2xl font-black uppercase mb-4 tracking-tight">
+              NEW INSTANCE
+            </h3>
             <input
               type="text"
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
-              placeholder="Enter a description (e.g., 'My work board')"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="ENTER DESCRIPTION"
+              className="w-full px-4 py-3 border-4 border-black mb-4 font-bold uppercase focus:outline-none focus:ring-0 focus:border-black"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
                 if (e.key === "Escape") setShowCreateDialog(false);
               }}
               autoFocus
             />
-            <div className="flex gap-2">
+            <div className="flex gap-4">
               <button
                 onClick={handleCreate}
                 disabled={isCreating || !newDescription.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-3 bg-black text-white font-black uppercase border-4 border-black hover:bg-white hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isCreating ? "Creating..." : "Create"}
+                {isCreating ? "CREATING..." : "CREATE"}
               </button>
               <button
                 onClick={() => {
                   setShowCreateDialog(false);
                   setNewDescription("");
                 }}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-6 py-3 bg-white text-black font-black uppercase border-4 border-black hover:bg-black hover:text-white transition-colors"
               >
-                Cancel
+                CANCEL
               </button>
             </div>
           </div>
         )}
 
-        {/* Instances List */}
-        <div className="space-y-3">
+        {/* Instances List - BRUTALIST */}
+        <div className="space-y-4">
           {instances.length === 0 ? (
-            <div className="p-8 bg-white border border-gray-200 rounded-lg text-center">
-              <p className="text-gray-500">
-                No instances yet. Create one to get started!
+            <div className="p-8 bg-white border-4 border-black text-center">
+              <p className="text-xl font-black uppercase">
+                NO INSTANCES YET. CREATE ONE TO GET STARTED!
               </p>
             </div>
           ) : (
@@ -196,7 +204,7 @@ export default function VibeInstancesList() {
               .map((instance) => (
                 <div
                   key={instance._id}
-                  className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                  className="p-6 bg-white border-4 border-black hover:border-8 transition-all"
                 >
                   {editingId === instance._id ? (
                     <div>
@@ -204,7 +212,7 @@ export default function VibeInstancesList() {
                         type="text"
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border-4 border-black mb-4 font-bold uppercase focus:outline-none focus:ring-0"
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && instance._id)
                             handleUpdate(instance._id);
@@ -212,20 +220,20 @@ export default function VibeInstancesList() {
                         }}
                         autoFocus
                       />
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <button
                           onClick={() =>
                             instance._id && handleUpdate(instance._id)
                           }
-                          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                          className="px-6 py-2 bg-black text-white font-black uppercase border-4 border-black hover:bg-white hover:text-black transition-colors"
                         >
-                          Save
+                          SAVE
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                          className="px-6 py-2 bg-white text-black font-black uppercase border-4 border-black hover:bg-black hover:text-white transition-colors"
                         >
-                          Cancel
+                          CANCEL
                         </button>
                       </div>
                     </div>
@@ -244,11 +252,11 @@ export default function VibeInstancesList() {
                           );
                         }}
                       >
-                        <h3 className="font-semibold text-gray-900 mb-1">
+                        <h3 className="text-2xl font-black uppercase mb-2 tracking-tight">
                           {instance.description}
                         </h3>
-                        <p className="text-sm text-gray-500">
-                          Created{" "}
+                        <p className="text-sm font-bold uppercase tracking-wider">
+                          CREATED{" "}
                           {instance.createdAt
                             ? new Date(instance.createdAt).toLocaleDateString()
                             : instance.updatedAt
@@ -261,8 +269,8 @@ export default function VibeInstancesList() {
                               .length;
                             return shareCount > 0 ? (
                               <span className="ml-2">
-                                · Shared with {shareCount}{" "}
-                                {shareCount === 1 ? "person" : "people"}
+                                · SHARED WITH {shareCount}{" "}
+                                {shareCount === 1 ? "PERSON" : "PEOPLE"}
                               </span>
                             ) : null;
                           })()}
