@@ -92,11 +92,6 @@ export default function CookieBanner() {
     }
   }, [hasConsent, gtmId]);
 
-  // Don't render anything if any of these conditions are met:
-  // 1. CookieConsent is not loaded
-  // 2. No message has been sent yet
-  if (!XCookieConsent || !messageHasBeenSent) return null;
-
   // Track cookie banner shown (only once per session to avoid double-counting on remounts)
   useEffect(() => {
     if (typeof sessionStorage !== "undefined") {
@@ -106,6 +101,11 @@ export default function CookieBanner() {
       }
     }
   }, []);
+
+  // Don't render anything if any of these conditions are met:
+  // 1. CookieConsent is not loaded
+  // 2. No message has been sent yet
+  if (!XCookieConsent || !messageHasBeenSent) return null;
 
   return (
     <XCookieConsent
