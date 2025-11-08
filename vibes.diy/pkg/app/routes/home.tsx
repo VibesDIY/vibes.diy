@@ -87,8 +87,8 @@ export default function SessionWrapper() {
         // Forward to the new chat session URL with all parameters
         const targetUrl = `/chat/${newSessionId}/${encodedPromptTitle}?${forwardParams.toString()}`;
 
-        // Use window.location to trigger a real page load instead of React Router navigation
-        window.location.href = targetUrl;
+        // Use React Router navigation to avoid hook count mismatch errors
+        navigate(targetUrl, { replace: true });
       }
     }
   }, [urlSessionId, search, navigate]);
