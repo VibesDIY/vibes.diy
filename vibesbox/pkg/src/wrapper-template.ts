@@ -120,18 +120,21 @@ export const wrapperHtml = `<!doctype html>
 
             console.log('🔐 [WRAPPER] Sending auth token to iframe:', authToken ? authToken.substring(0, 20) + '...' : 'NOT FOUND');
 
-            // Send code to iframe via postMessage
+            // Send code to iframe via postMessage (target the exact origin)
+            const targetOrigin = (() => {
+              try { return new URL(iframe.src).origin; } catch { return "*"; }
+            })();
             iframe.contentWindow.postMessage(
               {
                 type: "execute-code",
                 code: code,
                 apiKey: "sk-vibes-proxy-managed",
-                sessionId: "vibe-session-{{slug}}",
+                sessionId: "vibe-session-{{uuid}}",
                 authToken: authToken,
                 titleId: titleId,
-                vibeUUID: "{{uuid}}" || undefined, // Pass UUID for Fireproof ledger ID
+                vibeUUID: "{{uuid}}", // Pass UUID for Fireproof ledger ID
               },
-              "*",
+              targetOrigin,
             );
 
             // Hide loading, show iframe

@@ -78,6 +78,11 @@ export function useVibeInstances(titleId: string) {
           throw new Error("You do not have permission to edit this instance");
         }
 
+        // Ensure this instance belongs to the current vibe
+        if (existing.titleId !== titleId) {
+          throw new Error("This instance does not belong to the current vibe");
+        }
+
         // Update document
         const updated: VibeInstanceDocument = {
           ...existing,

@@ -42,7 +42,7 @@ export default function VibeInstancesList() {
       setNewDescription("");
       setShowCreateDialog(false);
       // Navigate to the new instance
-      navigate(`/vibe/${titleId}/${uuid}`);
+      navigate(`/vibe/${titleId}/instances/${uuid}`);
     } catch (err) {
       console.error("Failed to create instance:", err);
     }
@@ -147,97 +147,115 @@ export default function VibeInstancesList() {
               </p>
             </div>
           ) : (
-            instances.map((instance) => (
-              <div
-                key={instance._id}
-                className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-              >
-                {editingId === instance._id ? (
-                  <div>
-                    <input
-                      type="text"
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && instance._id)
-                          handleUpdate(instance._id);
-                        if (e.key === "Escape") setEditingId(null);
-                      }}
-                      autoFocus
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          instance._id && handleUpdate(instance._id)
-                        }
-                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                      >
-                        Cancel
-                      </button>
+            // Newest first by createdAt; fallback to _id lexical when createdAt missing
+            [...instances]
+              .sort((a, b) => {
+                const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
+                const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
+                if (tb !== ta) return tb - ta;
+                return String(b._id).localeCompare(String(a._id));
+              })
+              .map((instance) => (
+                <div
+                  key={instance._id}
+                  className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                >
+                  {editingId === instance._id ? (
+                    <div>
+                      <input
+                        type="text"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && instance._id)
+                            handleUpdate(instance._id);
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            instance._id && handleUpdate(instance._id)
+                          }
+                          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div
-                      className="flex-1 cursor-pointer"
-                      onClick={() =>
-                        navigate(`/vibe/${titleId}/${instance._id}`)
-                      }
-                    >
-                      <h3 className="font-semibold text-gray-900 mb-1">
-                        {instance.description}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        Created{" "}
-                        {new Date(instance.createdAt).toLocaleDateString()}
-                        {instance.sharedWith.length > 0 && (
-                          <span className="ml-2">
-                            · Shared with {instance.sharedWith.length}{" "}
-                            {instance.sharedWith.length === 1
-                              ? "person"
-                              : "people"}
-                          </span>
-                        )}
-                      </p>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div
+                        className="flex-1 cursor-pointer"
+                        onClick={() =>
+                          navigate(`/vibe/${titleId}/instances/${instance._id}`)
+                        }
+                      >
+                        <h3 className="font-semibold text-gray-900 mb-1">
+                          {instance.description}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Created{" "}
+                          {instance.createdAt
+                            ? new Date(instance.createdAt).toLocaleDateString()
+                            : instance.updatedAt
+                              ? new Date(
+                                  instance.updatedAt,
+                                ).toLocaleDateString()
+                              : "—"}
+                          {(() => {
+                            const shareCount = (instance.sharedWith ?? [])
+                              .length;
+                            return shareCount > 0 ? (
+                              <span className="ml-2">
+                                · Shared with {shareCount}{" "}
+                                {shareCount === 1 ? "person" : "people"}
+                              </span>
+                            ) : null;
+                          })()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={() =>
+                            instance._id &&
+                            startEditing(instance._id, instance.description)
+                          }
+                          className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate(
+                              `/vibe/${titleId}/instances/${instance._id}`,
+                            )
+                          }
+                          className="px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
+                        >
+                          Open
+                        </button>
+                        <button
+                          onClick={() =>
+                            instance._id && handleDelete(instance._id)
+                          }
+                          className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() =>
-                          instance._id &&
-                          startEditing(instance._id, instance.description)
-                        }
-                        className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() =>
-                          navigate(`/vibe/${titleId}/${instance._id}`)
-                        }
-                        className="px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
-                      >
-                        Open
-                      </button>
-                      <button
-                        onClick={() =>
-                          instance._id && handleDelete(instance._id)
-                        }
-                        className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))
+                  )}
+                </div>
+              ))
           )}
         </div>
       </div>

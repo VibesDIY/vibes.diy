@@ -437,7 +437,6 @@ export const iframeHtml = `<!doctype html>
         // Store UUID globally for Fireproof ledger naming
         if (data.vibeUUID) {
           globalThis.VIBE_UUID = data.vibeUUID;
-          console.log('🔐 [IFRAME] Stored vibe UUID:', data.vibeUUID);
         }
 
         // Store titleId globally (optional, for reference)

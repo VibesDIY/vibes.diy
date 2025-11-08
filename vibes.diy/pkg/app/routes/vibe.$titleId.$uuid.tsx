@@ -26,6 +26,7 @@ export default function VibeInstanceViewer() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expectedOrigin, setExpectedOrigin] = useState<string | null>(null);
 
   useEffect(() => {
     if (!titleId || !uuid || !iframeRef.current) return;
@@ -34,8 +35,9 @@ export default function VibeInstanceViewer() {
     const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
     const vibeUrl = `https://${titleId}.${hostname}/App.jsx`;
 
-    // Set up iframe with UUID subdomain for storage isolation
-    const iframeUrl = `https://${uuid}.vibesbox.dev/`;
+    // Set up iframe using configured Vibesbox worker wrapper route
+    const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
+    const iframeUrl = `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}`;
     iframeRef.current.src = iframeUrl;
 
     const handleIframeLoad = async () => {
@@ -73,8 +75,18 @@ export default function VibeInstanceViewer() {
             vibeUUID: uuid,
           };
 
-          iframeRef.current.contentWindow.postMessage(messageData, "*");
-          setIsLoading(false);
+          // Use a specific target origin for safety
+          try {
+            const targetOrigin = new URL(iframeUrl).origin;
+            setExpectedOrigin(targetOrigin);
+            iframeRef.current.contentWindow.postMessage(
+              messageData,
+              targetOrigin,
+            );
+          } catch {
+            // Fallback (shouldn't happen with valid URL)
+            iframeRef.current.contentWindow.postMessage(messageData, "*");
+          }
         }
       } catch (err) {
         console.error("Error loading vibe:", err);
@@ -91,6 +103,25 @@ export default function VibeInstanceViewer() {
       }
     };
   }, [titleId, uuid]);
+
+  // Wait for preview-ready from the iframe before hiding the loading overlay
+  useEffect(() => {
+    if (!iframeRef.current) return;
+    const safety = window.setTimeout(() => setIsLoading(false), 10000);
+    const onMessage = (ev: MessageEvent) => {
+      if (expectedOrigin && ev.origin !== expectedOrigin) return;
+      if (ev.source !== iframeRef.current?.contentWindow) return;
+      if (ev.data?.type === "preview-ready") {
+        window.clearTimeout(safety);
+        setIsLoading(false);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.clearTimeout(safety);
+      window.removeEventListener("message", onMessage);
+    };
+  }, [expectedOrigin]);
 
   if (!titleId || !uuid) {
     return (
@@ -136,7 +167,7 @@ export default function VibeInstanceViewer() {
         title={`${titleId} - ${uuid}`}
         className="w-full h-full border-none"
         allow="accelerometer; autoplay; camera; clipboard-read; clipboard-write; encrypted-media; fullscreen; gamepad; geolocation; gyroscope; hid; microphone; midi; payment; picture-in-picture; publickey-credentials-get; screen-wake-lock; serial; usb; web-share; xr-spatial-tracking"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-orientation-lock allow-pointer-lock allow-downloads allow-top-navigation"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-orientation-lock allow-pointer-lock allow-downloads"
         allowFullScreen
       />
     </div>

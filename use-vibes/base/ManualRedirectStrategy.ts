@@ -23,12 +23,11 @@ declare global {
 
 // Generate ledger name combining origin and database name
 function generateLedgerName(dbName: string): string {
-  // Check if running in Vibesbox iframe with UUID override
+  // Prefer explicit instance UUID when available (iframe runner sets this)
   if (typeof globalThis !== 'undefined' && globalThis.VIBE_UUID) {
-    // Use the UUID directly as the ledger name
-    // This ensures all iframes with the same UUID share the same Fireproof ledger
-    console.log('🔐 [LEDGER] Using vibe UUID as ledger name:', globalThis.VIBE_UUID);
-    return globalThis.VIBE_UUID;
+    // Preserve legacy per-instance ledger semantics (one ledger per UUID)
+    const safeUuid = String(globalThis.VIBE_UUID).replace(/[^a-z0-9-]/gi, '-');
+    return safeUuid;
   }
 
   // Fallback to origin-based naming for direct hosting
@@ -37,7 +36,6 @@ function generateLedgerName(dbName: string): string {
       ? window.location.origin.replace(/[^a-z0-9]/gi, '-')
       : 'unknown-origin';
 
-  // Combine origin + database name
   return `${origin}-${dbName}`;
 }
 
