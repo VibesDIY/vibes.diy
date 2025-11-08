@@ -32,7 +32,7 @@ export default function VibeInstanceViewer() {
 
     // Fetch the published vibe code from hosting
     const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
-    const vibeUrl = `https://${titleId}.${hostname}/`;
+    const vibeUrl = `https://${titleId}.${hostname}/App.jsx`;
 
     // Set up iframe with UUID subdomain for storage isolation
     const iframeUrl = `https://${uuid}.vibesbox.dev/`;
@@ -40,25 +40,14 @@ export default function VibeInstanceViewer() {
 
     const handleIframeLoad = async () => {
       try {
-        // Fetch the vibe code from the published subdomain
+        // Fetch the vibe code from the /App.jsx endpoint
         const response = await fetch(vibeUrl);
         if (!response.ok) {
-          throw new Error(`Failed to fetch vibe: ${response.statusText}`);
+          throw new Error(`Failed to fetch vibe code: ${response.statusText}`);
         }
 
-        const html = await response.text();
-
-        // Extract the app code from the published HTML
-        // Look for the script tag with the app code
-        const codeMatch = html.match(
-          /\/\/ prettier-ignore\s*\n([\s\S]*?)\n\s*\/\/ prettier-ignore-end/,
-        );
-
-        if (!codeMatch) {
-          throw new Error("Could not extract vibe code from published app");
-        }
-
-        const vibeCode = codeMatch[1].trim();
+        // /App.jsx endpoint returns raw JavaScript directly
+        const vibeCode = await response.text();
 
         // Get auth token from localStorage
         let authToken: string | undefined;
