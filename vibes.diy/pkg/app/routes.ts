@@ -26,6 +26,12 @@ export default [
   route("about", "./routes/about.tsx", { id: "about" }),
   route("auth/callback", "./routes/auth-callback.tsx", { id: "auth-callback" }),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
+  route("vibe/:titleId/:uuid", "./routes/vibe.$titleId.$uuid.tsx", {
+    id: "vibe-instance-viewer",
+  }),
+  route("vibe/:titleId", "./routes/vibe.$titleId.tsx", {
+    id: "vibe-instances-list",
+  }),
   route("vibe/:vibeSlug", "./routes/vibe.tsx", { id: "vibe-iframe" }),
   route("firehose", "./routes/firehose.tsx", { id: "firehose" }),
   route("legal/privacy", "./routes/legal/privacy.tsx", {
