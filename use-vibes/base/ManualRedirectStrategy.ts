@@ -17,9 +17,7 @@ interface URLBuilder {
 
 // Extend globalThis to include our custom properties
 declare global {
-  // eslint-disable-next-line no-var
   var VIBE_UUID: string | undefined;
-  // eslint-disable-next-line no-var
   var VIBE_TITLE_ID: string | undefined;
 }
 
