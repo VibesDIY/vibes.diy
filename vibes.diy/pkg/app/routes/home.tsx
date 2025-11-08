@@ -57,6 +57,13 @@ export default function SessionWrapper() {
     () => urlSessionId || null,
   );
 
+  // Keep local state in sync with the URL when params change after navigation
+  useEffect(() => {
+    if (urlSessionId && urlSessionId !== sessionId) {
+      setSessionId(urlSessionId);
+    }
+  }, [urlSessionId]);
+
   const handleSessionCreate = (newSessionId: string) => {
     setSessionId(newSessionId);
   };
@@ -87,20 +94,27 @@ export default function SessionWrapper() {
         // Forward to the new chat session URL with all parameters
         const targetUrl = `/chat/${newSessionId}/${encodedPromptTitle}?${forwardParams.toString()}`;
 
+        // Set local state so render is consistent until the router updates params
+        setSessionId(newSessionId);
+
         // Use React Router navigation to avoid hook count mismatch errors
-        navigate(targetUrl, { replace: true });
+        // Preserve browser history (no replace) to maintain back-button behavior
+        navigate(targetUrl);
       }
     }
   }, [urlSessionId, search, navigate]);
 
   // Conditional rendering - true deferred session creation
-  if (!sessionId) {
+  // Use either the URL param or local state during the initial transition
+  const effectiveSessionId = urlSessionId || sessionId;
+
+  if (!effectiveSessionId) {
     return <NewSessionView onSessionCreate={handleSessionCreate} />;
   }
 
   return (
     <SessionView
-      sessionId={sessionId}
+      sessionId={effectiveSessionId}
       pathname={pathname}
       search={search}
       locationState={locationState}
