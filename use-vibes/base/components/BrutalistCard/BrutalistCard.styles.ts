@@ -88,6 +88,6 @@ export function getBrutalistCardStyle(
     letterSpacing: '0.02em',
     boxShadow: getBoxShadow(size, variant),
     transition: 'box-shadow 0.15s ease, transform 0.15s ease',
-    boxSizing: 'border-box' as const,
+    boxSizing: 'border-box',
   };
 }

@@ -40,10 +40,10 @@ export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps
     }: BrutalistCardProps,
     ref
   ) => {
-    const cardStyle = {
+    const cardStyle: React.CSSProperties = {
       ...getBrutalistCardStyle(variant, size),
       ...style,
-    } as React.CSSProperties;
+    };
 
     return (
       <div ref={ref} style={cardStyle} className={className} {...divProps}>
