@@ -76,17 +76,12 @@ export default function VibeInstanceViewer() {
           };
 
           // Use a specific target origin for safety
-          try {
-            const targetOrigin = new URL(iframeUrl).origin;
-            setExpectedOrigin(targetOrigin);
-            iframeRef.current.contentWindow.postMessage(
-              messageData,
-              targetOrigin,
-            );
-          } catch {
-            // Fallback (shouldn't happen with valid URL)
-            iframeRef.current.contentWindow.postMessage(messageData, "*");
-          }
+          const targetOrigin = new URL(iframeUrl).origin;
+          setExpectedOrigin(targetOrigin);
+          iframeRef.current.contentWindow.postMessage(
+            messageData,
+            targetOrigin,
+          );
         }
       } catch (err) {
         console.error("Error loading vibe:", err);
@@ -166,8 +161,8 @@ export default function VibeInstanceViewer() {
         ref={iframeRef}
         title={`${titleId} - ${uuid}`}
         className="w-full h-full border-none"
-        allow="accelerometer; autoplay; camera; clipboard-read; clipboard-write; encrypted-media; fullscreen; gamepad; geolocation; gyroscope; hid; microphone; midi; payment; picture-in-picture; publickey-credentials-get; screen-wake-lock; serial; usb; web-share; xr-spatial-tracking"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-orientation-lock allow-pointer-lock allow-downloads"
+        allow="clipboard-read; clipboard-write; fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         allowFullScreen
       />
     </div>

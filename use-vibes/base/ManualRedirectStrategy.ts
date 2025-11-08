@@ -25,9 +25,10 @@ declare global {
 function generateLedgerName(dbName: string): string {
   // Prefer explicit instance UUID when available (iframe runner sets this)
   if (typeof globalThis !== 'undefined' && globalThis.VIBE_UUID) {
-    // Preserve legacy per-instance ledger semantics (one ledger per UUID)
+    // Use instance UUID plus dbName to avoid cross-database collisions
     const safeUuid = String(globalThis.VIBE_UUID).replace(/[^a-z0-9-]/gi, '-');
-    return safeUuid;
+    const safeDb = String(dbName).replace(/[^a-z0-9-]/gi, '-');
+    return `${safeUuid}-${safeDb}`;
   }
 
   // Fallback to origin-based naming for direct hosting

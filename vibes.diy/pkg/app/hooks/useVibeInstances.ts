@@ -111,6 +111,11 @@ export function useVibeInstances(titleId: string) {
         // Get existing document to verify ownership
         const existing = await database.get<VibeInstanceDocument>(uuid);
 
+        // Ensure this instance belongs to the current vibe
+        if (existing.titleId !== titleId) {
+          throw new Error("This instance does not belong to the current vibe");
+        }
+
         if (existing.userId !== userId) {
           throw new Error("You do not have permission to delete this instance");
         }
@@ -136,6 +141,11 @@ export function useVibeInstances(titleId: string) {
 
         // Get existing document
         const existing = await database.get<VibeInstanceDocument>(uuid);
+
+        // Ensure this instance belongs to the current vibe
+        if (existing.titleId !== titleId) {
+          throw new Error("This instance does not belong to the current vibe");
+        }
 
         // Verify ownership
         if (existing.userId !== userId) {

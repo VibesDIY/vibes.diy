@@ -22,6 +22,14 @@ export const iframeHtml = `<!doctype html>
       }
     </style>
     <script>
+      // Compute parent origin once for safe postMessage targeting
+      const __PARENT_ORIGIN = (() => {
+        try { return new URL(document.referrer).origin; } catch { return null; }
+      })();
+      function postToParent(data) {
+        if (!__PARENT_ORIGIN) return; // Do not leak to '*'
+        window.parent.postMessage(data, __PARENT_ORIGIN);
+      }
       const activeRequests = new Set();
       let lastState = null;
 
@@ -29,10 +37,7 @@ export const iframeHtml = `<!doctype html>
         const currentState = activeRequests.size > 0;
         if (currentState !== lastState) {
           lastState = currentState;
-          window.parent.postMessage(
-            { type: "streaming", state: currentState },
-            "*",
-          );
+          postToParent({ type: "streaming", state: currentState });
         }
       }
 
@@ -119,10 +124,7 @@ export const iframeHtml = `<!doctype html>
             captureScreenshotWithFallback();
           };
           script.onerror = (e) => {
-            window.parent.postMessage(
-              { type: "screenshot-error", error: "Failed to load html2canvas" },
-              "*",
-            );
+            postToParent({ type: "screenshot-error", error: "Failed to load html2canvas" });
           };
           document.head.appendChild(script);
           return;
@@ -144,35 +146,21 @@ export const iframeHtml = `<!doctype html>
               // Crop to max 3:1 aspect ratio (3 times taller than wide)
               const croppedCanvas = cropToMaxAspectRatio(canvas, 3);
               const dataURI = croppedCanvas.toDataURL();
-              window.parent.postMessage(
-                { type: "screenshot", data: dataURI },
-                "*",
-              );
+              postToParent({ type: "screenshot", data: dataURI });
             })
             .catch((err) => {
-              window.parent.postMessage(
-                {
-                  type: "screenshot-error",
-                  error:
-                    "Screenshot capture failed: " +
-                    (err.message || "Unknown error"),
-                },
-                "*",
-              );
+              postToParent({
+                type: "screenshot-error",
+                error: "Screenshot capture failed: " + (err.message || "Unknown error"),
+              });
             });
         } catch (err) {
-          window.parent.postMessage(
-            {
-              type: "screenshot-error",
-              error: "Unexpected error during screenshot capture",
-            },
-            "*",
-          );
+          postToParent({ type: "screenshot-error", error: "Unexpected error during screenshot capture" });
         }
       }
 
       function pageIsLoaded() {
-        window.parent.postMessage({ type: "preview-ready" }, "*");
+        postToParent({ type: "preview-ready" });
         setTimeout(captureScreenshot, 2000);
       }
 
@@ -575,7 +563,7 @@ export const iframeHtml = `<!doctype html>
           });
 
           // Notify parent that execution was successful
-          window.parent.postMessage({ type: 'execution-success' }, '*');
+          postToParent({ type: 'execution-success' });
           \`;
 
           scriptElement.textContent = modifiedCode;
@@ -593,10 +581,7 @@ export const iframeHtml = `<!doctype html>
             timestamp: new Date().toISOString(),
             errorType: "ExecutionError",
           };
-          window.parent.postMessage(
-            { type: "iframe-error", error: errorDetails },
-            "*",
-          );
+          postToParent({ type: "iframe-error", error: errorDetails });
 
           // Show error in container
           const container = document.getElementById("container");

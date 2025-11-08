@@ -118,12 +118,14 @@ export const wrapperHtml = `<!doctype html>
               console.warn('Could not read auth token from localStorage:', e);
             }
 
-            console.log('🔐 [WRAPPER] Sending auth token to iframe:', authToken ? authToken.substring(0, 20) + '...' : 'NOT FOUND');
-
             // Send code to iframe via postMessage (target the exact origin)
             const targetOrigin = (() => {
-              try { return new URL(iframe.src).origin; } catch { return "*"; }
+              try { return new URL(iframe.src).origin; } catch { return null; }
             })();
+            if (!targetOrigin) {
+              console.error('Failed to compute iframe origin; aborting postMessage for safety');
+              return;
+            }
             iframe.contentWindow.postMessage(
               {
                 type: "execute-code",
