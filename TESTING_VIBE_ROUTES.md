@@ -18,6 +18,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 **Route**: `/vibe/kanban-board` (or any other vibe slug)
 
 #### Steps:
+
 1. Navigate to `/vibe/kanban-board`
 2. Verify page loads without errors
 3. Check for UI elements:
@@ -27,6 +28,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
    - [ ] Instance list if instances exist
 
 #### Expected Results:
+
 - Page renders correctly
 - No console errors
 - UI is responsive
@@ -36,6 +38,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 2. Create New Instance
 
 #### Steps:
+
 1. On instance list page, click "Create New Instance" button
 2. Verify dialog/modal opens
 3. Enter instance description: `"My Test Board"`
@@ -44,6 +47,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 6. Verify automatic navigation to instance viewer
 
 #### Expected Results:
+
 - [ ] Dialog opens with input field
 - [ ] Input accepts text
 - [ ] Create button disabled when empty
@@ -52,6 +56,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 - [ ] UUID is valid format (e.g., `fireproof:abc123def456`)
 
 #### Test Variations:
+
 - Cancel creation (Escape key or Cancel button)
 - Create with empty description (should be prevented)
 - Create with very long description (100+ characters)
@@ -62,11 +67,13 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 3. View Instance List
 
 #### Steps:
+
 1. Navigate back to `/vibe/kanban-board`
 2. Verify newly created instance appears in list
 3. Check instance card/row display
 
 #### Expected Results:
+
 - [ ] Instance shows description: "My Test Board"
 - [ ] Creation date/time displayed
 - [ ] Sharing information shown (e.g., "Shared with 0 people")
@@ -78,6 +85,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 4. Edit Instance Description
 
 #### Steps:
+
 1. Click Edit button on an instance
 2. Verify edit mode activates
 3. Change description to: `"Updated Test Board"`
@@ -85,6 +93,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 5. Verify description updates in place
 
 #### Expected Results:
+
 - [ ] Edit mode shows input with current description
 - [ ] Input is focused and ready for editing
 - [ ] Save on Enter key works
@@ -93,6 +102,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 - [ ] Updated timestamp changes
 
 #### Test Variations:
+
 - Cancel edit without saving
 - Edit to empty description (should be prevented)
 - Edit multiple instances in sequence
@@ -102,11 +112,13 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 5. Open Instance in Viewer
 
 #### Steps:
+
 1. Click "Open" button or click on instance row
 2. Verify navigation to viewer page
 3. Check URL format: `/vibe/kanban-board/{uuid}`
 
 #### Expected Results:
+
 - [ ] Navigates to instance viewer
 - [ ] URL contains correct titleId and UUID
 - [ ] No errors during navigation
@@ -118,11 +130,13 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 **Route**: `/vibe/kanban-board/{uuid}`
 
 #### Steps:
+
 1. On instance viewer page, observe loading process
 2. Wait for iframe to load
 3. Interact with Vibe inside iframe
 
 #### Expected Results:
+
 - [ ] Loading overlay appears initially
 - [ ] Loading spinner or progress indicator visible
 - [ ] Loading message shows vibe name
@@ -133,6 +147,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 - [ ] Full-screen iframe (no unnecessary borders/padding)
 
 #### Check Developer Console:
+
 - [ ] No CORS errors
 - [ ] PostMessage communication working
 - [ ] `preview-ready` message received
@@ -143,6 +158,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 7. Delete Instance
 
 #### Steps:
+
 1. Return to instance list page
 2. Click Delete button on an instance
 3. Verify confirmation dialog appears
@@ -150,6 +166,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 5. Verify instance removed from list
 
 #### Expected Results:
+
 - [ ] Confirmation dialog shows before deletion
 - [ ] Dialog explains what will be deleted
 - [ ] Cancel button aborts deletion
@@ -159,6 +176,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 - [ ] Deletion is permanent (refresh page to verify)
 
 #### Test Variations:
+
 - Cancel deletion
 - Delete last instance (verify empty state)
 - Delete multiple instances
@@ -168,6 +186,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 8. Browser Navigation
 
 #### Steps:
+
 1. Create instance → opens viewer
 2. Click browser back button
 3. Verify returns to instance list
@@ -177,6 +196,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 7. Navigate forward through history
 
 #### Expected Results:
+
 - [ ] Back button returns to instance list
 - [ ] Forward button returns to instance viewer
 - [ ] Browser history works correctly
@@ -189,17 +209,20 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 9. Direct URL Access
 
 #### Steps:
+
 1. Copy UUID from viewer URL
 2. Close tab or navigate away
 3. Directly navigate to `/vibe/kanban-board/{uuid}`
 4. Verify instance loads correctly
 
 #### Expected Results:
+
 - [ ] Direct URL access works
 - [ ] Instance loads without error
 - [ ] All functionality available
 
 #### Test Invalid URLs:
+
 - [ ] `/vibe/invalid-vibe-slug` → appropriate error/empty state
 - [ ] `/vibe/kanban-board/invalid-uuid` → error handling
 - [ ] `/vibe/kanban-board/uuid-from-different-vibe` → error or no data
@@ -209,6 +232,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 10. Multiple Instances Management
 
 #### Steps:
+
 1. Create 5-10 instances with different descriptions
 2. Verify all instances appear in list
 3. Edit different instances
@@ -217,6 +241,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 6. Verify list updates correctly
 
 #### Expected Results:
+
 - [ ] All instances display correctly
 - [ ] Can manage multiple instances simultaneously
 - [ ] List stays synchronized
@@ -227,12 +252,14 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 11. Sharing Information Display
 
 #### Steps:
+
 1. Check sharing section on instance cards
 2. Verify shows correct number of shared users
 3. (If sharing implemented) Share with another user
 4. Verify shared status updates
 
 #### Expected Results:
+
 - [ ] Sharing count displays correctly
 - [ ] "Shared with X people" text accurate
 - [ ] Empty state: "Not shared" or "Shared with 0 people"
@@ -246,21 +273,25 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 #### Test Error Scenarios:
 
 ##### Database Errors:
+
 1. Simulate database failure (disconnect internet briefly)
 2. Try to create/update/delete instance
 3. Verify error message shown to user
 
 ##### Iframe Loading Errors:
+
 1. Navigate to instance with invalid data
 2. Verify error overlay appears
 3. Check retry button works
 4. Verify error message is helpful
 
 ##### Permission Errors:
+
 1. (If multi-user) Try to edit/delete another user's instance
 2. Verify permission denied message
 
 #### Expected Results:
+
 - [ ] Errors don't crash the app
 - [ ] Error messages are clear and actionable
 - [ ] Retry mechanisms work
@@ -271,6 +302,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 13. Performance & UX
 
 #### Check Performance:
+
 - [ ] Page loads quickly (<1s)
 - [ ] Instance creation is fast (<500ms)
 - [ ] List updates are smooth (no flicker)
@@ -278,6 +310,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 - [ ] No memory leaks (create/delete 20+ instances)
 
 #### Check UX:
+
 - [ ] Loading states provide feedback
 - [ ] Buttons have hover states
 - [ ] Form validation is clear
@@ -292,18 +325,21 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 #### Check Developer Tools:
 
 ##### Console Tab:
+
 - [ ] No errors in production code
 - [ ] No debug console.log statements
 - [ ] No unhandled promise rejections
 - [ ] No React warnings
 
 ##### Network Tab:
+
 - [ ] Database operations complete successfully
 - [ ] Iframe URL is correct Vibesbox domain
 - [ ] No failed requests
 - [ ] PostMessage events visible (if logging enabled)
 
 ##### Application Tab:
+
 - [ ] Fireproof database: `vibes-diy-instances`
 - [ ] Documents have correct structure
 - [ ] localStorage has sync preferences (if applicable)
@@ -313,6 +349,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 15. Multi-User Scenarios (If Auth Available)
 
 #### Steps:
+
 1. Log in as User A
 2. Create instance
 3. Log out and log in as User B
@@ -322,6 +359,7 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 7. Verify User B can now access shared instance
 
 #### Expected Results:
+
 - [ ] Instance ownership respected
 - [ ] Permissions enforced
 - [ ] Sharing works as expected
@@ -331,21 +369,26 @@ This checklist covers manual testing for the UUID-based Vibe instance management
 ### 16. Integration with Existing Vibe Route
 
 #### Potential Conflict Check:
+
 The new routes may conflict with the existing `/vibe/:vibeSlug` route.
 
 #### Steps:
+
 1. Navigate to `/vibe/some-catalog-vibe`
 2. Verify correct behavior (which route matches?)
 3. Test both catalog viewing and instance management
 4. Document any routing conflicts
 
 #### Expected Behavior (TBD):
+
 This needs clarification from the developer:
+
 - Does `/vibe/kanban-board` show instances OR catalog?
 - How does the router distinguish between catalog and instances?
 - Should there be a different URL pattern?
 
 **Note**: Lines 29-35 in routes.ts show potential conflict between:
+
 - `route("vibe/:titleId/:uuid", ...)` - instance viewer
 - `route("vibe/:titleId", ...)` - instance list
 - `route("vibe/:vibeSlug", ...)` - existing catalog route
@@ -357,6 +400,7 @@ The first matching route will be used. Needs testing and possible refactoring.
 ## Test Data
 
 ### Sample Instance Descriptions:
+
 - "My Work Board"
 - "Personal Projects"
 - "Team Collaboration Space"
@@ -365,6 +409,7 @@ The first matching route will be used. Needs testing and possible refactoring.
 - "Very long description with many characters that might overflow the UI or cause layout issues in the component display"
 
 ### Sample Vibe Slugs to Test:
+
 - kanban-board
 - todo-list
 - chat-app
@@ -376,12 +421,14 @@ The first matching route will be used. Needs testing and possible refactoring.
 ## Automated Test Status
 
 ### Unit Tests (useVibeInstances hook):
+
 - **File**: `vibes.diy/tests/app/useVibeInstances.test.tsx`
 - **Status**: 5/29 tests passing
 - **Passing**: Initialization tests
 - **Failing**: State updates and async operations (needs debugging)
 
 ### Component Tests:
+
 - **Status**: Not yet created
 - **Planned**: Instance list route, instance viewer route
 

@@ -72,7 +72,6 @@ const createAnonymousWrapper = () => {
 
 describe("useVibeInstances", () => {
   const titleId = "kanban-board";
-  const userId = "user-123";
   const mockInstances: VibeInstanceDocument[] = [
     {
       _id: "instance-1",
@@ -166,10 +165,9 @@ describe("useVibeInstances", () => {
 
       let returnedId: string | undefined;
       await act(async () => {
-        returnedId = await result.current.createInstance(
-          "Test Instance",
-          { theme: "dark" },
-        );
+        returnedId = await result.current.createInstance("Test Instance", {
+          theme: "dark",
+        });
       });
 
       expect(returnedId).toBe(newInstanceId);
@@ -250,9 +248,9 @@ describe("useVibeInstances", () => {
       });
 
       await act(async () => {
-        await expect(
-          result.current.createInstance("Test"),
-        ).rejects.toThrow("Database error");
+        await expect(result.current.createInstance("Test")).rejects.toThrow(
+          "Database error",
+        );
       });
 
       expect(result.current.error).toEqual(error);
@@ -267,9 +265,9 @@ describe("useVibeInstances", () => {
       });
 
       await act(async () => {
-        await expect(
-          result.current.createInstance("Test"),
-        ).rejects.toThrow("String error");
+        await expect(result.current.createInstance("Test")).rejects.toThrow(
+          "String error",
+        );
       });
 
       expect(result.current.error).toBeInstanceOf(Error);
@@ -285,9 +283,7 @@ describe("useVibeInstances", () => {
       });
 
       await act(async () => {
-        await expect(
-          result.current.createInstance("Test"),
-        ).rejects.toThrow();
+        await expect(result.current.createInstance("Test")).rejects.toThrow();
       });
 
       expect(result.current.error).not.toBe(null);
