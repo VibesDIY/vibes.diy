@@ -16,7 +16,7 @@ export interface VibesPanelProps {
  * This component provides the standard three-button layout used
  * throughout the Vibes DIY platform for authentication and actions.
  */
-type PanelMode = 'default' | 'mutate' | 'invite';
+type PanelMode = 'default' | 'remix' | 'invite';
 
 export function VibesPanel({ style, className }: VibesPanelProps = {}) {
   const emailId = useId();
@@ -27,9 +27,9 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
   );
   const [inviteMessage, setInviteMessage] = useState('');
 
-  const handleMutateClick = () => {
+  const handleRemixClick = () => {
     if (mode === 'default') {
-      setMode('mutate');
+      setMode('remix');
     }
   };
 
@@ -130,8 +130,8 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
           width: '250px',
         }}
       >
-        {mode === 'mutate' ? (
-          // Mutate mode buttons
+        {mode === 'remix' ? (
+          // Remix mode buttons
           <>
             <VibesButton variant="primary" onClick={handleFreshDataClick}>
               Fresh Data
@@ -209,8 +209,8 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
             <VibesButton variant="primary" onClick={handleLogoutClick}>
               Logout
             </VibesButton>
-            <VibesButton variant="secondary" onClick={handleMutateClick}>
-              🧟 Mutate
+            <VibesButton variant="secondary" onClick={handleRemixClick}>
+              Remix
             </VibesButton>
             <VibesButton variant="tertiary" onClick={handleInviteClick}>
               Invite
