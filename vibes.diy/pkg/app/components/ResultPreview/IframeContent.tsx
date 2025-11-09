@@ -179,18 +179,27 @@ const IframeContent: React.FC<IframeContentProps> = ({
       // In production with apex domain: https://${sessionId}.vibesbox.dev/
       // In production with workers.dev: https://vibesbox.workers.dev/ (no subdomain injection)
       // In local dev: http://localhost:8989/
-      const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
+      const baseUrl = new URL(VibesDiyEnv.VIBESBOX_BASE_URL());
+
+      // Check if this is a local development URL
+      const isLocalDev =
+        baseUrl.hostname === "localhost" ||
+        baseUrl.hostname === "127.0.0.1" ||
+        baseUrl.hostname === "[::1]" ||
+        baseUrl.hostname === "::1";
+
       let iframeUrl: string;
 
-      if (base.includes("localhost")) {
-        // Local dev: use as-is
-        iframeUrl = `${base}/`;
-      } else if (base.endsWith(".vibesbox.dev")) {
-        // Production apex domain: inject sessionId as subdomain
-        iframeUrl = `${base.replace("https://", `https://${sessionIdValue}.`)}/`;
+      if (isLocalDev) {
+        // Local dev: use as-is (preserves protocol, port, path)
+        iframeUrl = baseUrl.href;
+      } else if (baseUrl.hostname === "vibesbox.dev") {
+        // Apex domain: inject sessionId as subdomain
+        baseUrl.hostname = `${sessionIdValue}.vibesbox.dev`;
+        iframeUrl = baseUrl.href;
       } else {
-        // Workers.dev or other deployment: use as-is (no subdomain support)
-        iframeUrl = `${base}/`;
+        // Already has subdomain (workers.dev, etc.) or other: use as-is
+        iframeUrl = baseUrl.href;
       }
 
       iframeRef.current.src = iframeUrl;
