@@ -422,14 +422,6 @@ export const iframeHtml = `<!doctype html>
             // Add body class for current session state
             document.body.classList.add('vibes-connect-true');
 
-            // Dispatch storage event to notify mountVibesApp that auth state changed
-            window.dispatchEvent(new StorageEvent('storage', {
-              key: 'fireproof-sync-enabled',
-              newValue: 'true',
-              url: window.location.href,
-              storageArea: localStorage
-            }));
-
             console.log('[IFRAME] Auth state configured from parent');
           } catch (e) {
             console.error('[IFRAME] Failed to set auth state:', e);
@@ -441,14 +433,6 @@ export const iframeHtml = `<!doctype html>
             localStorage.removeItem('vibes-diy-auth-token');
             localStorage.removeItem('fireproof-sync-enabled');
             document.body.classList.remove('vibes-connect-true');
-
-            // Dispatch storage event to notify mountVibesApp of cleared state
-            window.dispatchEvent(new StorageEvent('storage', {
-              key: 'fireproof-sync-enabled',
-              newValue: null,
-              url: window.location.href,
-              storageArea: localStorage
-            }));
 
             console.log('[IFRAME] Auth state cleared (no authToken provided)');
           } catch (e) {
