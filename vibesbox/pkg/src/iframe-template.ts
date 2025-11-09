@@ -415,13 +415,42 @@ export const iframeHtml = `<!doctype html>
       // Read auth token from URL params and store in localStorage IMMEDIATELY
       (function initAuthFromUrl() {
         try {
+          // Log auth state BEFORE URL processing
+          const beforeToken = localStorage.getItem('vibes-api-auth-token');
+          const beforeSyncEnabled = localStorage.getItem('fireproof-sync-enabled');
+          console.log('[IFRAME] Auth state BEFORE URL processing:', {
+            hasToken: !!beforeToken,
+            tokenLength: beforeToken?.length,
+            tokenPreview: beforeToken ? beforeToken.substring(0, 20) + '...' : 'none',
+            syncEnabled: beforeSyncEnabled,
+          });
+
           const urlParams = new URLSearchParams(window.location.search);
           const urlAuthToken = urlParams.get('authToken');
+
+          console.log('[IFRAME] URL auth token:', {
+            hasUrlToken: !!urlAuthToken,
+            urlTokenLength: urlAuthToken?.length,
+            urlTokenPreview: urlAuthToken ? urlAuthToken.substring(0, 20) + '...' : 'none',
+          });
+
           if (urlAuthToken) {
             localStorage.setItem('vibes-api-auth-token', urlAuthToken);
             localStorage.setItem('fireproof-sync-enabled', 'true');
-            console.log('[IFRAME] Auth token loaded from URL');
+            console.log('[IFRAME] Auth token loaded from URL and stored in localStorage');
+          } else {
+            console.log('[IFRAME] No auth token in URL params');
           }
+
+          // Log auth state AFTER URL processing
+          const afterToken = localStorage.getItem('vibes-api-auth-token');
+          const afterSyncEnabled = localStorage.getItem('fireproof-sync-enabled');
+          console.log('[IFRAME] Auth state AFTER URL processing (before React render):', {
+            hasToken: !!afterToken,
+            tokenLength: afterToken?.length,
+            tokenPreview: afterToken ? afterToken.substring(0, 20) + '...' : 'none',
+            syncEnabled: afterSyncEnabled,
+          });
         } catch (e) {
           console.error('[IFRAME] Failed to read auth token from URL:', e);
         }
