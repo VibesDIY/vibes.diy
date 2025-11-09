@@ -52,6 +52,10 @@ export default function Create() {
         <VibesButton variant="primary" style={{ width: '200px' }}>
           Let's Go
         </VibesButton>
+
+        <a href="#" style={{  textAlign: 'right', textDecoration: 'underline' }}>
+          Learn
+        </a>
         </div>
       </div>
     </div>
