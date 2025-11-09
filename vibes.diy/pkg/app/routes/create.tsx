@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
+import {
+  partyPlannerPrompt,
+  progressTrackerPrompt,
+  jamSessionPrompt,
+} from "../data/quick-suggestions-data.js";
 
 export function meta() {
   return [
@@ -38,13 +43,25 @@ export default function Create() {
           </BrutalistCard>
 
           <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <VibesButton variant="primary" style={{ flex: "1" }}>
+            <VibesButton
+              variant="primary"
+              style={{ flex: "1" }}
+              onClick={() => setPromptText(partyPlannerPrompt)}
+            >
               Party Planner
             </VibesButton>
-            <VibesButton variant="secondary" style={{ flex: "1" }}>
+            <VibesButton
+              variant="secondary"
+              style={{ flex: "1" }}
+              onClick={() => setPromptText(progressTrackerPrompt)}
+            >
               Progress Tracker
             </VibesButton>
-            <VibesButton variant="tertiary" style={{ flex: "1" }}>
+            <VibesButton
+              variant="tertiary"
+              style={{ flex: "1" }}
+              onClick={() => setPromptText(jamSessionPrompt)}
+            >
               Jam Session
             </VibesButton>
           </div>
