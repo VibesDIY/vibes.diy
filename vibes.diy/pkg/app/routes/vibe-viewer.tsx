@@ -40,35 +40,9 @@ export default function VibeInstanceViewer() {
     const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
     const vibeUrl = `https://${titleId}.${hostname}/App.jsx`;
 
-    // Get auth token BEFORE setting iframe src
-    let authToken: string | undefined;
-    try {
-      authToken =
-        localStorage.getItem("vibes-diy-auth-token") ||
-        localStorage.getItem("auth_token") ||
-        undefined;
-    } catch (e) {
-      console.warn("Failed to read auth token:", e);
-    }
-
-    // Log auth token status before rendering iframe
-    console.log("[PARENT] Auth token status before iframe render:", {
-      hasToken: !!authToken,
-      tokenLength: authToken?.length,
-      tokenPreview: authToken ? `${authToken.substring(0, 20)}...` : "none",
-      vibesDiyToken: !!localStorage.getItem("vibes-diy-auth-token"),
-      authTokenFallback: !!localStorage.getItem("auth_token"),
-    });
-
     // Set up iframe using configured Vibesbox worker wrapper route
     const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
-    const iframeUrl = `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}${
-      authToken ? `?authToken=${encodeURIComponent(authToken)}` : ""
-    }`;
-    console.log(
-      "[PARENT] Setting iframe src with auth token:",
-      authToken ? "YES" : "NO",
-    );
+    const iframeUrl = `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}`;
     iframeRef.current.src = iframeUrl;
 
     const handleIframeLoad = async () => {
@@ -82,15 +56,15 @@ export default function VibeInstanceViewer() {
         // /App.jsx endpoint returns raw JavaScript directly
         const vibeCode = await response.text();
 
-        // Get auth token from localStorage
+        // Get auth token from localStorage (do not place in URL)
         let authToken: string | undefined;
         try {
           authToken =
             localStorage.getItem("vibes-diy-auth-token") ||
             localStorage.getItem("auth_token") ||
             undefined;
-        } catch (e) {
-          console.warn("Failed to read auth token:", e);
+        } catch {
+          // ignore storage errors
         }
 
         // Send code via postMessage like the editor does

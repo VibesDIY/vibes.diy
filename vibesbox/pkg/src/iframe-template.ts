@@ -226,10 +226,7 @@ export const iframeHtml = `<!doctype html>
         };
         console.error("Uncaught error:", errorDetails);
         // Send error to parent window
-        window.parent.postMessage(
-          { type: "iframe-error", error: errorDetails },
-          "*",
-        );
+        postToParent({ type: "iframe-error", error: errorDetails });
         return false; // Let the default error handler run
       };
 
@@ -242,10 +239,7 @@ export const iframeHtml = `<!doctype html>
           timestamp: new Date().toISOString(),
         };
         // Send rejection to parent window
-        window.parent.postMessage(
-          { type: "iframe-error", error: errorDetails },
-          "*",
-        );
+        postToParent({ type: "iframe-error", error: errorDetails });
       });
     </script>
   </head>
@@ -334,10 +328,7 @@ export const iframeHtml = `<!doctype html>
 
           // Only send if we haven't already reported an error
           if (!window.babelTransformError) {
-            window.parent.postMessage(
-              { type: "iframe-error", error: errorDetails },
-              "*",
-            );
+            postToParent({ type: "iframe-error", error: errorDetails });
             window.babelTransformError = errorDetails;
           }
         }
@@ -363,10 +354,7 @@ export const iframeHtml = `<!doctype html>
               errorType: "SyntaxError",
             };
             // Report error to parent
-            window.parent.postMessage(
-              { type: "iframe-error", error: errorDetails },
-              "*",
-            );
+            postToParent({ type: "iframe-error", error: errorDetails });
             window.babelTransformError = errorDetails;
             throw err;
           }
@@ -402,59 +390,14 @@ export const iframeHtml = `<!doctype html>
               errorType: "SyntaxError",
             };
 
-            window.parent.postMessage(
-              { type: "iframe-error", error: errorDetails },
-              "*",
-            );
+            postToParent({ type: "iframe-error", error: errorDetails });
             window.babelTransformError = errorDetails;
           }
         },
         true,
       );
 
-      // Read auth token from URL params and store in localStorage IMMEDIATELY
-      (function initAuthFromUrl() {
-        try {
-          // Log auth state BEFORE URL processing
-          const beforeToken = localStorage.getItem('vibes-api-auth-token');
-          const beforeSyncEnabled = localStorage.getItem('fireproof-sync-enabled');
-          console.log('[IFRAME] Auth state BEFORE URL processing:', {
-            hasToken: !!beforeToken,
-            tokenLength: beforeToken?.length,
-            tokenPreview: beforeToken ? beforeToken.substring(0, 20) + '...' : 'none',
-            syncEnabled: beforeSyncEnabled,
-          });
-
-          const urlParams = new URLSearchParams(window.location.search);
-          const urlAuthToken = urlParams.get('authToken');
-
-          console.log('[IFRAME] URL auth token:', {
-            hasUrlToken: !!urlAuthToken,
-            urlTokenLength: urlAuthToken?.length,
-            urlTokenPreview: urlAuthToken ? urlAuthToken.substring(0, 20) + '...' : 'none',
-          });
-
-          if (urlAuthToken) {
-            localStorage.setItem('vibes-api-auth-token', urlAuthToken);
-            localStorage.setItem('fireproof-sync-enabled', 'true');
-            console.log('[IFRAME] Auth token loaded from URL and stored in localStorage');
-          } else {
-            console.log('[IFRAME] No auth token in URL params');
-          }
-
-          // Log auth state AFTER URL processing
-          const afterToken = localStorage.getItem('vibes-api-auth-token');
-          const afterSyncEnabled = localStorage.getItem('fireproof-sync-enabled');
-          console.log('[IFRAME] Auth state AFTER URL processing (before React render):', {
-            hasToken: !!afterToken,
-            tokenLength: afterToken?.length,
-            tokenPreview: afterToken ? afterToken.substring(0, 20) + '...' : 'none',
-            syncEnabled: afterSyncEnabled,
-          });
-        } catch (e) {
-          console.error('[IFRAME] Failed to read auth token from URL:', e);
-        }
-      })();
+      // Do not read auth tokens from URL parameters (avoid leakage via referrers/history).
 
       // Code execution function
       executeCode = function(data) {
