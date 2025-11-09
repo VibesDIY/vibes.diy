@@ -61,7 +61,13 @@ export default function VibeInstanceViewer() {
 
     // Set up iframe using configured Vibesbox worker wrapper route
     const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
-    const iframeUrl = `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}`;
+
+    // Forward v_vibes parameter if present in current URL
+    const currentUrl = new URL(window.location.href);
+    const vVibes = currentUrl.searchParams.get('v_vibes');
+    const iframeUrl = vVibes
+      ? `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}?v_vibes=${encodeURIComponent(vVibes)}`
+      : `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}`;
     const handleIframeLoad = async () => {
       try {
         // Fetch the vibe code from the /App.jsx endpoint
