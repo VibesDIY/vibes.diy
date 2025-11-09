@@ -90,7 +90,11 @@ export default function Create() {
             />
           </BrutalistCard>
 
-          <VibesButton variant="primary" style={{ width: "200px" }} onClick={handleLetsGo}>
+          <VibesButton
+            variant="primary"
+            style={{ width: "200px" }}
+            onClick={handleLetsGo}
+          >
             Let's Go
           </VibesButton>
 
