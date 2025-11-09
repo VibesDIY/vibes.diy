@@ -27,7 +27,7 @@ export default function Create() {
   };
 
   return (
-    <div className="grid-background fixed inset-0">
+    <div className="grid-background inset-0">
       <div className="flex h-screen w-screen items-start justify-center p-4 overflow-y-auto">
         <div
           style={{
