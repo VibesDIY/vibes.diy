@@ -99,4 +99,21 @@ export const quickSuggestions: Suggestion[] = [
     label: "Wildcard",
     text: "Generate a wildcard app, something I wouldn't expect.",
   },
+  {
+    label: "Party Planner",
+    text: "Create a party planning app with guest list, RSVP tracking, and budget calculator.",
+  },
+  {
+    label: "Progress Tracker",
+    text: "Build a goal tracker with progress bars, streak counters, and milestone celebrations.",
+  },
+  {
+    label: "Jam Session",
+    text: "Create a music collaboration tool with chord progressions and shared lyrics editor.",
+  },
 ];
+
+// Named exports for specific prompts used in the create page
+export const partyPlannerPrompt = "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
+export const progressTrackerPrompt = "Build a goal tracker with progress bars, streak counters, and milestone celebrations.";
+export const jamSessionPrompt = "Create a music collaboration tool with chord progressions and shared lyrics editor.";
