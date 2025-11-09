@@ -15,12 +15,14 @@ export function VibesButton({
   children,
   onHover,
   onUnhover,
+  style: customStyle,
   ...props
 }: MenuButtonProps) {
   const [isHovered, setHovered] = useState(false);
   const [isActive, setActive] = useState(false);
 
-  const style = getButtonStyle(variant, isHovered, isActive);
+  const baseStyle = getButtonStyle(variant, isHovered, isActive);
+  const mergedStyle = { ...baseStyle, ...customStyle };
 
   useEffect(() => {
     if (isHovered) {
@@ -40,7 +42,7 @@ export function VibesButton({
       }}
       onMouseDown={() => setActive(true)}
       onMouseUp={() => setActive(false)}
-      style={style}
+      style={mergedStyle}
     >
       {children}
     </button>
