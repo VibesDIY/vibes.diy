@@ -638,7 +638,10 @@ describe("useVibeInstances", () => {
       });
 
       await act(async () => {
-        await result.current.shareInstance("kanban-board-a3f9c2e1", "friend@example.com");
+        await result.current.shareInstance(
+          "kanban-board-a3f9c2e1",
+          "friend@example.com",
+        );
       });
 
       expect(mockGet).toHaveBeenCalledWith("kanban-board-a3f9c2e1");
@@ -674,7 +677,10 @@ describe("useVibeInstances", () => {
       });
 
       await act(async () => {
-        await result.current.shareInstance("kanban-board-a3f9c2e1", "friend@example.com");
+        await result.current.shareInstance(
+          "kanban-board-a3f9c2e1",
+          "friend@example.com",
+        );
       });
 
       expect(mockPut).toHaveBeenCalledWith(
@@ -704,7 +710,10 @@ describe("useVibeInstances", () => {
       });
 
       await act(async () => {
-        await result.current.shareInstance("kanban-board-a3f9c2e1", "user2@example.com");
+        await result.current.shareInstance(
+          "kanban-board-a3f9c2e1",
+          "user2@example.com",
+        );
       });
 
       expect(mockPut).toHaveBeenCalledWith(
@@ -734,7 +743,10 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.shareInstance("kanban-board-a3f9c2e1", "friend@example.com"),
+          result.current.shareInstance(
+            "kanban-board-a3f9c2e1",
+            "friend@example.com",
+          ),
         ).rejects.toThrow("You do not have permission to share this instance");
       });
 
@@ -757,7 +769,10 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.shareInstance("kanban-board-a3f9c2e1", "friend@example.com"),
+          result.current.shareInstance(
+            "kanban-board-a3f9c2e1",
+            "friend@example.com",
+          ),
         ).rejects.toThrow("Share failed");
       });
 
