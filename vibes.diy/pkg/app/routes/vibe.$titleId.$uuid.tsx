@@ -40,9 +40,22 @@ export default function VibeInstanceViewer() {
     const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
     const vibeUrl = `https://${titleId}.${hostname}/App.jsx`;
 
+    // Get auth token BEFORE setting iframe src
+    let authToken: string | undefined;
+    try {
+      authToken =
+        localStorage.getItem("vibes-diy-auth-token") ||
+        localStorage.getItem("auth_token") ||
+        undefined;
+    } catch (e) {
+      console.warn("Failed to read auth token:", e);
+    }
+
     // Set up iframe using configured Vibesbox worker wrapper route
     const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
-    const iframeUrl = `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}`;
+    const iframeUrl = `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}${
+      authToken ? `?authToken=${encodeURIComponent(authToken)}` : ""
+    }`;
     iframeRef.current.src = iframeUrl;
 
     const handleIframeLoad = async () => {

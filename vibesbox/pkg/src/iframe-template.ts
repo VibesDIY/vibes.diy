@@ -412,6 +412,21 @@ export const iframeHtml = `<!doctype html>
         true,
       );
 
+      // Read auth token from URL params and store in localStorage IMMEDIATELY
+      (function initAuthFromUrl() {
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlAuthToken = urlParams.get('authToken');
+          if (urlAuthToken) {
+            localStorage.setItem('vibes-api-auth-token', urlAuthToken);
+            localStorage.setItem('fireproof-sync-enabled', 'true');
+            console.log('[IFRAME] Auth token loaded from URL');
+          }
+        } catch (e) {
+          console.error('[IFRAME] Failed to read auth token from URL:', e);
+        }
+      })();
+
       // Code execution function
       executeCode = function(data) {
 
