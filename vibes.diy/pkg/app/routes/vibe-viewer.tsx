@@ -64,7 +64,7 @@ export default function VibeInstanceViewer() {
 
     // Forward v_vibes parameter if present in current URL
     const currentUrl = new URL(window.location.href);
-    const vVibes = currentUrl.searchParams.get('v_vibes');
+    const vVibes = currentUrl.searchParams.get("v_vibes");
     const iframeUrl = vVibes
       ? `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}?v_vibes=${encodeURIComponent(vVibes)}`
       : `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}`;
