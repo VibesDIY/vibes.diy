@@ -783,6 +783,9 @@ importers:
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
+      '@vibes.diy/use-vibes-base':
+        specifier: workspace:*
+        version: link:../../use-vibes/base
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
