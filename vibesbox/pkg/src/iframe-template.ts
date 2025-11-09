@@ -435,7 +435,25 @@ export const iframeHtml = `<!doctype html>
             console.error('[IFRAME] Failed to set auth state:', e);
           }
         } else {
-          console.log('[IFRAME] No authToken provided in execute-code message');
+          // No authToken provided - clear any stale auth state to avoid logged-in UI persisting
+          try {
+            localStorage.removeItem('vibes-api-auth-token');
+            localStorage.removeItem('vibes-diy-auth-token');
+            localStorage.removeItem('fireproof-sync-enabled');
+            document.body.classList.remove('vibes-connect-true');
+
+            // Dispatch storage event to notify mountVibesApp of cleared state
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: 'fireproof-sync-enabled',
+              newValue: null,
+              url: window.location.href,
+              storageArea: localStorage
+            }));
+
+            console.log('[IFRAME] Auth state cleared (no authToken provided)');
+          } catch (e) {
+            console.error('[IFRAME] Failed to clear auth state:', e);
+          }
         }
 
         // Store UUID globally for Fireproof ledger naming
