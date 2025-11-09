@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
+import { useVibeInstances } from "../hooks/useVibeInstances.js";
 
 export function meta({
   params,
@@ -25,6 +26,24 @@ export default function VibeInstanceViewer() {
   const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Lazy instance creation: ensure instance exists in database
+  const { instances, createInstance } = useVibeInstances(titleId || "");
+
+  useEffect(() => {
+    if (!titleId || !uuid) return;
+
+    // Check if instance exists
+    const fullId = `${titleId}-${uuid}`;
+    const instanceExists = instances.some((inst) => inst._id === fullId);
+
+    // Create instance if it doesn't exist (lazy creation for Fresh Data)
+    if (!instanceExists && instances.length >= 0) {
+      createInstance("Fresh Data").catch((err) => {
+        console.error("Failed to lazy-create instance:", err);
+      });
+    }
+  }, [titleId, uuid, instances, createInstance]);
 
   useEffect(() => {
     if (!titleId || !uuid || !iframeRef.current) return;

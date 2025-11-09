@@ -169,12 +169,12 @@ export function generateRandomInstanceId(): string {
 /**
  * Generate a URL for a fresh data install (new instance with same app slug)
  *
- * @returns URL for fresh install with new random instance ID using new v-slug--installID format
+ * @returns URL path for fresh install with new random instance ID in /vibe/{titleId}/{installId} format
  */
 export function generateFreshDataUrl(): string {
-  const appSlug = getAppSlug();
-  const newInstanceId = generateRandomInstanceId();
-  return `https://v-${appSlug}--${newInstanceId}.vibesdiy.net`;
+  const titleId = getAppSlug();
+  const installId = generateRandomInstanceId();
+  return `/vibe/${titleId}/${installId}`;
 }
 
 /**
