@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { VibesDiyEnv } from "../config/env.js";
@@ -45,6 +45,40 @@ export default function VibeInstancesList() {
     updateInstance,
     deleteInstance,
   } = useVibeInstances(titleId);
+
+  // Auto-navigate based on instance count
+  const hasAutoNavigated = useRef(false);
+  const lastTitleId = useRef(titleId);
+
+  // Reset auto-navigation flag when titleId changes
+  if (lastTitleId.current !== titleId) {
+    hasAutoNavigated.current = false;
+    lastTitleId.current = titleId;
+  }
+
+  useEffect(() => {
+    // Only auto-navigate once, and only after instances have loaded
+    if (hasAutoNavigated.current || isCreating) return;
+
+    const search = searchParams.toString();
+    const searchSuffix = search ? `?${search}` : "";
+
+    if (instances.length === 0) {
+      // No instances: create one called "Begin" and navigate to it
+      hasAutoNavigated.current = true;
+      createInstance("Begin").then((uuid) => {
+        const installId = extractInstallId(uuid, titleId);
+        navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
+      });
+    } else if (instances.length === 1) {
+      // Exactly 1 instance: navigate directly to it
+      hasAutoNavigated.current = true;
+      const instance = instances[0];
+      const installId = extractInstallId(instance._id || "", titleId);
+      navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
+    }
+    // If 2+ instances: do nothing, show the list
+  }, [instances, isCreating, titleId, navigate, searchParams, createInstance]);
 
   const handleCreate = async () => {
     if (!newDescription.trim()) return;
