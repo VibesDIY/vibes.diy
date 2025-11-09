@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
 
 export function meta() {
@@ -9,6 +10,17 @@ export function meta() {
 }
 
 export default function Create() {
+  const [promptText, setPromptText] = useState("");
+  const navigate = useNavigate();
+
+  const handleLetsGo = () => {
+    if (promptText.trim()) {
+      const params = new URLSearchParams();
+      params.set("prompt", promptText.trim());
+      navigate(`/?${params.toString()}`);
+    }
+  };
+
   return (
     <div className="grid-background fixed inset-0">
       <div className="flex h-screen w-screen items-start justify-center p-4 overflow-y-auto">
@@ -42,6 +54,8 @@ export default function Create() {
               Describe your vibe
             </div>
             <textarea
+              value={promptText}
+              onChange={(e) => setPromptText(e.target.value)}
               placeholder="What do you want to build..."
               rows={6}
               style={{
@@ -59,7 +73,7 @@ export default function Create() {
             />
           </BrutalistCard>
 
-          <VibesButton variant="primary" style={{ width: "200px" }}>
+          <VibesButton variant="primary" style={{ width: "200px" }} onClick={handleLetsGo}>
             Let's Go
           </VibesButton>
 
