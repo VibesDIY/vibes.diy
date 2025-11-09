@@ -93,7 +93,9 @@ export default function VibeInstanceViewer() {
     };
 
     // Register load handler BEFORE setting src to avoid race conditions
-    iframeRef.current.addEventListener("load", handleIframeLoad, { once: true } as AddEventListenerOptions);
+    iframeRef.current.addEventListener("load", handleIframeLoad, {
+      once: true,
+    } as AddEventListenerOptions);
     iframeRef.current.src = iframeUrl;
 
     return () => {
