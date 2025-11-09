@@ -113,10 +113,11 @@ class vibesDiyEnv {
   );
 
   // Vibesbox Worker URL
+  // Default to apex domain for subdomain-based isolation
   readonly VIBESBOX_BASE_URL = Lazy(
     () =>
       this.env().get("VITE_VIBESBOX_BASE_URL") ??
-      "https://vibesbox.workers.dev",
+      "https://vibesbox.dev",
   );
 }
 
