@@ -36,16 +36,23 @@ export function useVibeInstances(titleId: string) {
   /**
    * Create a new instance
    * Generates a custom _id in format: ${titleId}-${installId}
+   * @param description - Human-readable description of the instance
+   * @param options - Optional configuration object
+   * @param installId - Optional specific install ID (for lazy creation from URLs)
    */
   const createInstance = useCallback(
-    async (description: string, options?: Record<string, unknown>) => {
+    async (
+      description: string,
+      options?: Record<string, unknown>,
+      installId?: string,
+    ) => {
       try {
         setIsCreating(true);
         setError(null);
 
-        // Generate custom _id: titleId-installId
-        const installId = generateInstallId();
-        const customId = `${titleId}-${installId}`;
+        // Use provided installId or generate a new one
+        const finalInstallId = installId || generateInstallId();
+        const customId = `${titleId}-${finalInstallId}`;
 
         // Create document with custom _id
         const doc: VibeInstanceDocument = {

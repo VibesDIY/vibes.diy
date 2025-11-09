@@ -29,21 +29,25 @@ export default function VibeInstanceViewer() {
 
   // Lazy instance creation: ensure instance exists in database
   const { instances, createInstance } = useVibeInstances(titleId || "");
+  const [creationAttempted, setCreationAttempted] = useState(false);
 
   useEffect(() => {
-    if (!titleId || !uuid) return;
+    if (!titleId || !uuid || creationAttempted) return;
 
     // Check if instance exists
     const fullId = `${titleId}-${uuid}`;
     const instanceExists = instances.some((inst) => inst._id === fullId);
 
     // Create instance if it doesn't exist (lazy creation for Fresh Data)
+    // Pass the UUID explicitly to ensure correct _id is created
     if (!instanceExists && instances.length >= 0) {
-      createInstance("Fresh Data").catch((err) => {
+      setCreationAttempted(true);
+      createInstance("Fresh Data", {}, uuid).catch((err) => {
         console.error("Failed to lazy-create instance:", err);
+        setCreationAttempted(false); // Allow retry on error
       });
     }
-  }, [titleId, uuid, instances, createInstance]);
+  }, [titleId, uuid, instances, createInstance, creationAttempted]);
 
   useEffect(() => {
     if (!titleId || !uuid || !iframeRef.current) return;
