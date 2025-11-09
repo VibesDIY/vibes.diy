@@ -27,7 +27,7 @@ export default function Create() {
   };
 
   return (
-    <div className="grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
+    <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
       <div className="flex items-start justify-center p-4">
         <div
           style={{
@@ -39,7 +39,7 @@ export default function Create() {
           }}
         >
           <BrutalistCard size="lg">
-            <h1 className="text-4xl font-bold">Let's code something up</h1>
+            <h1 className="text-4xl font-bold">Vibes are for sharing</h1>
           </BrutalistCard>
 
           <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
