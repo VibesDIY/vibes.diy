@@ -22,6 +22,9 @@ export const iframeHtml = `<!doctype html>
       }
     </style>
     <script>
+      // Version marker for cache busting verification
+      console.log('🔵 VIBESBOX IFRAME TEMPLATE v2024-11-09-auth-inheritance');
+
       // Compute parent origin once for safe postMessage targeting
       let __PARENT_ORIGIN = (() => {
         try { return new URL(document.referrer).origin; } catch { return null; }
@@ -401,17 +404,38 @@ export const iframeHtml = `<!doctype html>
 
       // Code execution function
       executeCode = function(data) {
+        console.log('[IFRAME] executeCode called, authToken present:', !!data.authToken);
 
         // Store auth token FIRST before any other processing
+        // Set up complete logged-in state for mountVibesApp
         if (data.authToken) {
           try {
+            // Store for call-ai library (existing behavior)
             localStorage.setItem('vibes-api-auth-token', data.authToken);
 
-            // Verify it was stored correctly
-            const verifyToken = localStorage.getItem('vibes-api-auth-token');
+            // ALSO store with the key mountVibesApp/use-vibes expects
+            localStorage.setItem('vibes-diy-auth-token', data.authToken);
+
+            // Set the sync-enabled flag so mountVibesApp skips AuthWall
+            localStorage.setItem('fireproof-sync-enabled', 'true');
+
+            // Add body class for current session state
+            document.body.classList.add('vibes-connect-true');
+
+            // Dispatch storage event to notify mountVibesApp that auth state changed
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: 'fireproof-sync-enabled',
+              newValue: 'true',
+              url: window.location.href,
+              storageArea: localStorage
+            }));
+
+            console.log('[IFRAME] Auth state configured from parent');
           } catch (e) {
+            console.error('[IFRAME] Failed to set auth state:', e);
           }
         } else {
+          console.log('[IFRAME] No authToken provided in execute-code message');
         }
 
         // Store UUID globally for Fireproof ledger naming
@@ -452,19 +476,6 @@ export const iframeHtml = `<!doctype html>
           } else {
           }
 
-
-          // Store auth token in localStorage if provided
-          // This allows call-ai library to automatically use it for API requests
-          if (data.authToken) {
-            try {
-              localStorage.setItem('vibes-api-auth-token', data.authToken);
-              
-              // Verify it was stored correctly
-              const verifyToken = localStorage.getItem('vibes-api-auth-token');
-            } catch (e) {
-            }
-          } else {
-          }
 
           // Clear the container
           const container = document.getElementById("container");
