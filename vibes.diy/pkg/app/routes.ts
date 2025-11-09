@@ -24,6 +24,7 @@ export default [
 
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
+  route("create", "./routes/create.tsx", { id: "create" }),
   route("auth/callback", "./routes/auth-callback.tsx", { id: "auth-callback" }),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
   route("vibe/:titleId/:uuid", "./routes/vibe.$titleId.$uuid.tsx", {

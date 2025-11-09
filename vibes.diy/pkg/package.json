@@ -40,6 +40,7 @@
     "@shikijs/monaco": "^3.2.1",
     "@tailwindcss/typography": "^0.5.19",
     "@vibes.diy/prompts": "workspace:*",
+    "@vibes.diy/use-vibes-base": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "@vibes.diy/utils": "workspace:*",
     "call-ai": "workspace:*",
