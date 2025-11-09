@@ -43,8 +43,6 @@ export default function VibeInstanceViewer() {
     // Set up iframe using configured Vibesbox worker wrapper route
     const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
     const iframeUrl = `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}`;
-    iframeRef.current.src = iframeUrl;
-
     const handleIframeLoad = async () => {
       try {
         // Fetch the vibe code from the /App.jsx endpoint
@@ -94,12 +92,12 @@ export default function VibeInstanceViewer() {
       }
     };
 
-    iframeRef.current.addEventListener("load", handleIframeLoad);
+    // Register load handler BEFORE setting src to avoid race conditions
+    iframeRef.current.addEventListener("load", handleIframeLoad, { once: true } as AddEventListenerOptions);
+    iframeRef.current.src = iframeUrl;
 
     return () => {
-      if (iframeRef.current) {
-        iframeRef.current.removeEventListener("load", handleIframeLoad);
-      }
+      iframeRef.current?.removeEventListener("load", handleIframeLoad);
     };
   }, [titleId, uuid]);
 
