@@ -27,8 +27,8 @@ export default function Create() {
   };
 
   return (
-    <div className="grid-background min-h-screen w-full">
-      <div className="flex min-h-screen w-full items-start justify-center p-4">
+    <div className="grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
+      <div className="flex items-start justify-center p-4">
         <div
           style={{
             maxWidth: "800px",
