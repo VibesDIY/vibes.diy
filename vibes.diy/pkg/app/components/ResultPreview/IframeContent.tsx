@@ -176,12 +176,23 @@ const IframeContent: React.FC<IframeContentProps> = ({
       const transformedCode = transformImports(normalizedCode);
 
       // Use vibesbox subdomain for origin isolation
-      // In production: https://${sessionId}.vibesbox.dev/
+      // In production with apex domain: https://${sessionId}.vibesbox.dev/
+      // In production with workers.dev: https://vibesbox.workers.dev/ (no subdomain injection)
       // In local dev: http://localhost:8989/
       const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
-      const iframeUrl = base.includes("localhost")
-        ? `${base}/`
-        : `${base.replace("https://", `https://${sessionIdValue}.`)}/`;
+      let iframeUrl: string;
+
+      if (base.includes("localhost")) {
+        // Local dev: use as-is
+        iframeUrl = `${base}/`;
+      } else if (base.endsWith(".vibesbox.dev")) {
+        // Production apex domain: inject sessionId as subdomain
+        iframeUrl = `${base.replace("https://", `https://${sessionIdValue}.`)}/`;
+      } else {
+        // Workers.dev or other deployment: use as-is (no subdomain support)
+        iframeUrl = `${base}/`;
+      }
+
       iframeRef.current.src = iframeUrl;
       console.log(
         "🔧 [VIBES.DIY] IframeContent using vibesbox URL:",
