@@ -175,9 +175,18 @@ const IframeContent: React.FC<IframeContentProps> = ({
 
       const transformedCode = transformImports(normalizedCode);
 
-      // Use vibesbox.dev subdomain for origin isolation
-      const iframeUrl = `https://${sessionIdValue}.vibesbox.dev/`;
+      // Use vibesbox subdomain for origin isolation
+      // In production: https://${sessionId}.vibesbox.dev/
+      // In local dev: http://localhost:8989/
+      const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
+      const iframeUrl = base.includes("localhost")
+        ? `${base}/`
+        : `${base.replace("https://", `https://${sessionIdValue}.`)}/`;
       iframeRef.current.src = iframeUrl;
+      console.log(
+        "🔧 [VIBES.DIY] IframeContent using vibesbox URL:",
+        iframeUrl,
+      );
 
       // Send code via postMessage after iframe loads
       const handleIframeLoad = () => {
