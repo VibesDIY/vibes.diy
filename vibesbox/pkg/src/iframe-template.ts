@@ -422,6 +422,9 @@ export const iframeHtml = `<!doctype html>
             // Add body class for current session state
             document.body.classList.add('vibes-connect-true');
 
+            // Dispatch custom event to trigger useFireproof's enableSync()
+            document.dispatchEvent(new CustomEvent('vibes-sync-enable'));
+
             console.log('[IFRAME] Auth state configured from parent');
           } catch (e) {
             console.error('[IFRAME] Failed to set auth state:', e);
@@ -433,6 +436,9 @@ export const iframeHtml = `<!doctype html>
             localStorage.removeItem('vibes-diy-auth-token');
             localStorage.removeItem('fireproof-sync-enabled');
             document.body.classList.remove('vibes-connect-true');
+
+            // Dispatch custom event to trigger useFireproof's disableSync()
+            document.dispatchEvent(new CustomEvent('vibes-sync-disable'));
 
             console.log('[IFRAME] Auth state cleared (no authToken provided)');
           } catch (e) {
