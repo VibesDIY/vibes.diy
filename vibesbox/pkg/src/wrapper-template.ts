@@ -88,62 +88,54 @@ export const wrapperHtml = `<!doctype html>
       src="{{iframeSrc}}"
       title="{{slug}}"
       style="display: none"
-    >
-    </iframe>
+    ></iframe>
 
     <script>
       const iframe = document.getElementById("vibeFrame");
       const loading = document.getElementById("loading");
       const error = document.getElementById("error");
 
-      async function loadVibe() {
-        try {
-          // Fetch the JSX code
-          const response = await fetch("https://{{slug}}.vibesdiy.app/App.jsx");
+      // Forward execute-code from parent to inner iframe, ensuring token arrives before render
+      (function setupForwarding() {
+        let iframeLoaded = false;
+        const titleId = "{{titleId}}" || "{{slug}}"; // For completeness in forwarded payloads
 
-          if (!response.ok) {
-            throw new Error(\`HTTP \${response.status}\`);
-          }
-
-          const code = await response.text();
-
-          // Give iframe a moment to load, then send postMessage
-          setTimeout(() => {
-            // Read auth token from localStorage
-            let authToken;
-            try {
-              authToken = localStorage.getItem('vibes-api-auth-token') || undefined;
-            } catch (e) {
-              console.warn('Could not read auth token from localStorage:', e);
-            }
-
-            console.log('🔐 [WRAPPER] Sending auth token to iframe:', authToken ? authToken.substring(0, 20) + '...' : 'NOT FOUND');
-
-            // Send code to iframe via postMessage
-            iframe.contentWindow.postMessage(
-              {
-                type: "execute-code",
-                code: code,
-                apiKey: "sk-vibes-proxy-managed",
-                sessionId: "vibe-session-{{slug}}",
-                authToken: authToken,
-              },
-              "*",
-            );
-
-            // Hide loading, show iframe
+        function forward(data) {
+          try {
+            const targetOrigin = new URL(iframe.src).origin;
+            // Ensure required fields exist; enrich if missing
+            const payload = {
+              titleId,
+              ...data,
+            };
+            iframe.contentWindow.postMessage(payload, targetOrigin);
+            // Reveal the iframe after we have forwarded the first payload
             loading.style.display = "none";
             iframe.style.display = "block";
-          }, 500); // Half second delay to ensure iframe is ready
-        } catch (err) {
-          console.error("Failed to load vibe:", err);
-          loading.style.display = "none";
-          error.style.display = "block";
+          } catch (e) {
+            console.error('Wrapper failed to forward message to inner iframe:', e);
+          }
         }
-      }
 
-      // Start loading when page loads
-      loadVibe();
+        // If inner iframe isn't loaded yet, delay forwarding until load
+        const pending = [];
+        iframe.addEventListener('load', () => {
+          iframeLoaded = true;
+          // Flush any pending messages
+          for (const msg of pending.splice(0)) forward(msg);
+        });
+
+        window.addEventListener('message', (ev) => {
+          // Only accept messages from our parent
+          if (ev.source !== window.parent) return;
+          const data = ev.data || {};
+          if (data.type === 'execute-code') {
+            // Ensure the inner iframe gets the message (and thus the authToken) before it renders
+            if (iframeLoaded) forward(data);
+            else pending.push(data);
+          }
+        });
+      })();
     </script>
   </body>
 </html>`;

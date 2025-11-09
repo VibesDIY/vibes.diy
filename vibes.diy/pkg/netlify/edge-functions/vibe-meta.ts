@@ -105,23 +105,8 @@ export default async (request: Request) => {
   const url = new URL(request.url);
   let vibeSlug: string;
 
-  // Check if this is a /vibe/* route
-  const vibeMatch = url.pathname.match(/^\/vibe\/([^/]+)$/);
-  if (vibeMatch) {
-    vibeSlug = vibeMatch[1];
-
-    // Redirect /vibe/* routes to the vibe subdomain
-    const searchParams = url.search;
-    const redirectUrl = `https://${vibeSlug}.vibesdiy.app/${searchParams}`;
-
-    return new Response(null, {
-      status: 302,
-      headers: {
-        Location: redirectUrl,
-        "Cache-Control": "no-cache",
-      },
-    });
-  } else if (url.pathname === "/firehose") {
+  // Only handle /firehose route - let React Router handle /vibe/* routes
+  if (url.pathname === "/firehose") {
     vibeSlug = FIREHOSE_SLUG;
   } else {
     return; // Let other handlers deal with it

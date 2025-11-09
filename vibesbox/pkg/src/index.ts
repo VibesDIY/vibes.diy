@@ -43,12 +43,13 @@ export default {
       return response;
     }
 
-    // Handle /vibe/{slug} pattern
+    // Handle /vibe/{titleId}/{uuid} pattern
     if (url.pathname.startsWith("/vibe/") || url.pathname === "/vibe") {
-      const pathSegments = url.pathname.split("/");
-      const slug = pathSegments[2] || DEFAULT_VIBE_SLUG;
+      const pathSegments = url.pathname.split("/").filter((s) => s);
+      const titleId = pathSegments[1] || DEFAULT_VIBE_SLUG;
+      const uuid = pathSegments[2]; // Optional UUID
 
-      const response = await handleVibeWrapper(slug, url.origin, url);
+      const response = await handleVibeWrapper(titleId, uuid, url.origin, url);
       if (isHead) {
         return new Response("", {
           status: response.status,
@@ -105,10 +106,11 @@ export default {
 };
 
 /**
- * Handle /vibe/{slug} requests with wrapper that uses postMessage
+ * Handle /vibe/{titleId}/{uuid} requests with wrapper that uses postMessage
  */
 export async function handleVibeWrapper(
-  slug: string,
+  titleId: string,
+  uuid: string | undefined,
   origin: string,
   url: URL,
 ): Promise<Response> {
@@ -120,7 +122,9 @@ export async function handleVibeWrapper(
 
   // Replace template placeholders
   const html = replacePlaceholders(wrapperHtml, {
-    "{{slug}}": slug,
+    "{{slug}}": titleId, // Keep for backward compatibility
+    "{{titleId}}": titleId,
+    "{{uuid}}": uuid || "",
     "{{origin}}": origin,
     "{{iframeSrc}}": iframeSrc,
   });

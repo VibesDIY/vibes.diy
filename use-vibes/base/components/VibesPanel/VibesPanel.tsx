@@ -134,10 +134,10 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
           // Mutate mode buttons
           <>
             <VibesButton variant="primary" onClick={handleFreshDataClick}>
-              Fresh Data
+              Fresh Start
             </VibesButton>
             <VibesButton variant="secondary" onClick={handleChangeCodeClick}>
-              Change the Code
+              Remix Code
             </VibesButton>
             <VibesButton variant="tertiary" onClick={handleBackClick}>
               ← Back
@@ -210,7 +210,7 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
               Logout
             </VibesButton>
             <VibesButton variant="secondary" onClick={handleMutateClick}>
-              🧟 Mutate
+              Mutate
             </VibesButton>
             <VibesButton variant="tertiary" onClick={handleInviteClick}>
               Invite

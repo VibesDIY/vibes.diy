@@ -22,6 +22,15 @@ export const iframeHtml = `<!doctype html>
       }
     </style>
     <script>
+      // Compute parent origin once for safe postMessage targeting
+      let __PARENT_ORIGIN = (() => {
+        try { return new URL(document.referrer).origin; } catch { return null; }
+      })();
+      function postToParent(data) {
+        const target = __PARENT_ORIGIN || "*"; // Fallback to wildcard if origin unknown
+        console.log('[IFRAME] postToParent:', data.type, 'to', target);
+        window.parent.postMessage(data, target);
+      }
       const activeRequests = new Set();
       let lastState = null;
 
@@ -29,10 +38,7 @@ export const iframeHtml = `<!doctype html>
         const currentState = activeRequests.size > 0;
         if (currentState !== lastState) {
           lastState = currentState;
-          window.parent.postMessage(
-            { type: "streaming", state: currentState },
-            "*",
-          );
+          postToParent({ type: "streaming", state: currentState });
         }
       }
 
@@ -119,10 +125,7 @@ export const iframeHtml = `<!doctype html>
             captureScreenshotWithFallback();
           };
           script.onerror = (e) => {
-            window.parent.postMessage(
-              { type: "screenshot-error", error: "Failed to load html2canvas" },
-              "*",
-            );
+            postToParent({ type: "screenshot-error", error: "Failed to load html2canvas" });
           };
           document.head.appendChild(script);
           return;
@@ -144,35 +147,22 @@ export const iframeHtml = `<!doctype html>
               // Crop to max 3:1 aspect ratio (3 times taller than wide)
               const croppedCanvas = cropToMaxAspectRatio(canvas, 3);
               const dataURI = croppedCanvas.toDataURL();
-              window.parent.postMessage(
-                { type: "screenshot", data: dataURI },
-                "*",
-              );
+              postToParent({ type: "screenshot", data: dataURI });
             })
             .catch((err) => {
-              window.parent.postMessage(
-                {
-                  type: "screenshot-error",
-                  error:
-                    "Screenshot capture failed: " +
-                    (err.message || "Unknown error"),
-                },
-                "*",
-              );
+              postToParent({
+                type: "screenshot-error",
+                error: "Screenshot capture failed: " + (err.message || "Unknown error"),
+              });
             });
         } catch (err) {
-          window.parent.postMessage(
-            {
-              type: "screenshot-error",
-              error: "Unexpected error during screenshot capture",
-            },
-            "*",
-          );
+          postToParent({ type: "screenshot-error", error: "Unexpected error during screenshot capture" });
         }
       }
 
       function pageIsLoaded() {
-        window.parent.postMessage({ type: "preview-ready" }, "*");
+        console.log('[IFRAME] pageIsLoaded called');
+        postToParent({ type: "preview-ready" });
         setTimeout(captureScreenshot, 2000);
       }
 
@@ -200,6 +190,10 @@ export const iframeHtml = `<!doctype html>
 
       // Event listeners
       window.addEventListener("message", function (event) {
+        // Establish parent origin from the first execute-code message if not known
+        if (event.source === window.parent && event.data?.type === 'execute-code' && !__PARENT_ORIGIN) {
+          __PARENT_ORIGIN = event.origin;
+        }
         // Log ALL messages received
         
         if (event.data) {
@@ -211,14 +205,13 @@ export const iframeHtml = `<!doctype html>
             window.CALLAI_API_KEY = event.data.key;
           } else if (event.data.type === "execute-code") {
             // New postMessage handler for code execution
+            console.log('[IFRAME] Received execute-code message');
             executeCode(event.data);
           }
         }
       });
 
-      window.addEventListener("DOMContentLoaded", function () {
-        pageIsLoaded();
-      });
+      // Removed DOMContentLoaded listener - preview-ready now sent after React renders
 
       // Global error handlers to catch and log all errors
       window.onerror = function (message, source, lineno, colno, error) {
@@ -233,10 +226,7 @@ export const iframeHtml = `<!doctype html>
         };
         console.error("Uncaught error:", errorDetails);
         // Send error to parent window
-        window.parent.postMessage(
-          { type: "iframe-error", error: errorDetails },
-          "*",
-        );
+        postToParent({ type: "iframe-error", error: errorDetails });
         return false; // Let the default error handler run
       };
 
@@ -249,10 +239,7 @@ export const iframeHtml = `<!doctype html>
           timestamp: new Date().toISOString(),
         };
         // Send rejection to parent window
-        window.parent.postMessage(
-          { type: "iframe-error", error: errorDetails },
-          "*",
-        );
+        postToParent({ type: "iframe-error", error: errorDetails });
       });
     </script>
   </head>
@@ -341,10 +328,7 @@ export const iframeHtml = `<!doctype html>
 
           // Only send if we haven't already reported an error
           if (!window.babelTransformError) {
-            window.parent.postMessage(
-              { type: "iframe-error", error: errorDetails },
-              "*",
-            );
+            postToParent({ type: "iframe-error", error: errorDetails });
             window.babelTransformError = errorDetails;
           }
         }
@@ -370,10 +354,7 @@ export const iframeHtml = `<!doctype html>
               errorType: "SyntaxError",
             };
             // Report error to parent
-            window.parent.postMessage(
-              { type: "iframe-error", error: errorDetails },
-              "*",
-            );
+            postToParent({ type: "iframe-error", error: errorDetails });
             window.babelTransformError = errorDetails;
             throw err;
           }
@@ -409,15 +390,14 @@ export const iframeHtml = `<!doctype html>
               errorType: "SyntaxError",
             };
 
-            window.parent.postMessage(
-              { type: "iframe-error", error: errorDetails },
-              "*",
-            );
+            postToParent({ type: "iframe-error", error: errorDetails });
             window.babelTransformError = errorDetails;
           }
         },
         true,
       );
+
+      // Do not read auth tokens from URL parameters (avoid leakage via referrers/history).
 
       // Code execution function
       executeCode = function(data) {
@@ -426,12 +406,27 @@ export const iframeHtml = `<!doctype html>
         if (data.authToken) {
           try {
             localStorage.setItem('vibes-api-auth-token', data.authToken);
-            
+
             // Verify it was stored correctly
             const verifyToken = localStorage.getItem('vibes-api-auth-token');
           } catch (e) {
           }
         } else {
+        }
+
+        // Store UUID globally for Fireproof ledger naming
+        if (data.vibeUUID) {
+          globalThis.VIBE_UUID = data.vibeUUID;
+        }
+
+        // Store titleId globally (optional, for reference)
+        if (data.titleId) {
+          globalThis.VIBE_TITLE_ID = data.titleId;
+        }
+
+        // Store hosting domain globally for screenshot URLs
+        if (data.hostingDomain) {
+          globalThis.VIBE_HOSTING_DOMAIN = data.hostingDomain;
         }
 
         try {
@@ -539,17 +534,32 @@ export const iframeHtml = `<!doctype html>
               "function $1",
             ) +
             \`
-          
-          // Import React DOM for rendering
-          import { createRoot } from 'react-dom/client';
-          
-          // Render the component directly
+
+          // Import mountVibesApp for full auth UI integration
+          import { mountVibesApp } from 'use-vibes';
+
+          // Get title and construct screenshot URL from globals
+          const title = globalThis.VIBE_TITLE_ID || 'Vibe';
+          // Use hosting domain from global, fallback to vibesdiy.app
+          const hostingDomain = globalThis.VIBE_HOSTING_DOMAIN || 'vibesdiy.app';
+          const imageUrl = \\\`https://\\\${globalThis.VIBE_TITLE_ID}.\\\${hostingDomain}/screenshot.png\\\`;
+
+          // Mount with AuthWall and VibesPanel
           const container = document.getElementById('container');
-          const root = createRoot(container);
-          root.render(React.createElement(\${functionName}));
-          
+          mountVibesApp({
+            container,
+            appComponent: \${functionName},
+            title,
+            imageUrl
+          });
+
           // Notify parent that execution was successful
-          window.parent.postMessage({ type: 'execution-success' }, '*');
+          postToParent({ type: 'execution-success' });
+
+          // Wait for React to render, then notify parent that preview is ready
+          setTimeout(() => {
+            postToParent({ type: 'preview-ready' });
+          }, 100);
           \`;
 
           scriptElement.textContent = modifiedCode;
@@ -567,10 +577,7 @@ export const iframeHtml = `<!doctype html>
             timestamp: new Date().toISOString(),
             errorType: "ExecutionError",
           };
-          window.parent.postMessage(
-            { type: "iframe-error", error: errorDetails },
-            "*",
-          );
+          postToParent({ type: "iframe-error", error: errorDetails });
 
           // Show error in container
           const container = document.getElementById("container");

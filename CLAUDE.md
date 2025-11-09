@@ -323,3 +323,4 @@ This allows vibes runtime containers to provide a login button that automaticall
 - **Configurable** - custom overlay HTML and CSS can be provided
 - dont write releases to code until they are shipped. we cant derefernce that url until its on npm, otherwise esm.sh gets bad cache
 - never push to main
+- dont squash next time rebase

@@ -66,10 +66,12 @@ describe('App Slug Utilities', () => {
       expect(id2).toMatch(/^[a-z0-9]{12}$/);
     });
 
-    it('should generate fresh data URLs with new v-slug--installID format', () => {
+    it('should generate fresh data URLs with full https://vibes.diy URL', () => {
       const url = appSlugModule.generateFreshDataUrl();
       expect(typeof url).toBe('string');
-      expect(url).toMatch(/^https:\/\/v-.+--.+\.vibesdiy\.net$/);
+      expect(url).toMatch(/^https:\/\/vibes\.diy\/vibe\/.+\/.+$/);
+      expect(url).toContain('/vibe/');
+      expect(url).toContain('https://vibes.diy');
     });
 
     it('should generate remix URLs', () => {

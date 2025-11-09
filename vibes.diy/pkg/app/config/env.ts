@@ -111,6 +111,13 @@ class vibesDiyEnv {
       (this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats") +
       getVersionSuffix(),
   );
+
+  // Vibesbox Worker URL
+  readonly VIBESBOX_BASE_URL = Lazy(
+    () =>
+      this.env().get("VITE_VIBESBOX_BASE_URL") ??
+      "https://vibesbox.workers.dev",
+  );
 }
 
 export const VibesDiyEnv = new vibesDiyEnv();
