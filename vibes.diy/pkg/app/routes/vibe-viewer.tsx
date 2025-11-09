@@ -135,7 +135,7 @@ export default function VibeInstanceViewer() {
         title={`${titleId} - ${uuid}`}
         className="w-full h-full border-none"
         allow="clipboard-read; clipboard-write; fullscreen"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"
         allowFullScreen
       />
     </div>
