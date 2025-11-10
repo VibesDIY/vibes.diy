@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import React, { useState, useEffect, useRef } from "react";
 import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
 import {
   partyPlannerPrompt,
@@ -9,6 +8,7 @@ import {
 import { parseContent } from "@vibes.diy/prompts";
 import { useFireproof } from "use-fireproof";
 import ReactMarkdown from "react-markdown";
+import { useSimpleChat } from "../hooks/useSimpleChat.js";
 
 export function meta() {
   return [
@@ -23,17 +23,128 @@ interface CreateSessionDoc {
   created_at: number;
 }
 
+// Separate component for the streaming view to avoid conditional hooks
+function CreateWithStreaming({
+  sessionId,
+  promptText,
+}: {
+  sessionId: string;
+  promptText: string;
+}) {
+  const chatState = useSimpleChat(sessionId);
+  const hasSentMessage = useRef(false);
+
+  // Send the message once chatState is ready
+  useEffect(() => {
+    if (chatState && promptText && !hasSentMessage.current) {
+      hasSentMessage.current = true;
+      // Set the input and send the message
+      chatState.setInput(promptText);
+      chatState.sendMessage(promptText);
+    }
+  }, [chatState, promptText]);
+
+  return (
+    <>
+      {/* Streaming Display Section */}
+      {(() => {
+        // Get the latest AI message
+        const latestAiMessage = chatState.docs
+          .filter((doc) => doc.type === "ai")
+          .sort((a, b) => b.created_at - a.created_at)[0];
+
+        if (!latestAiMessage?.text) return null;
+
+        const parsed = parseContent(latestAiMessage.text);
+        const segments = parsed.segments;
+        const codeSegments = segments.filter((seg) => seg.type === "code");
+        const codeLines = codeSegments.reduce(
+          (acc, seg) => acc + (seg.content?.split("\n").length || 0),
+          0,
+        );
+
+        return (
+          <>
+            {segments.map((segment, index) => {
+              if (segment.type === "markdown" && segment.content) {
+                return (
+                  <BrutalistCard key={`markdown-${index}`} size="md">
+                    <div className="ai-markdown prose">
+                      <ReactMarkdown>{segment.content}</ReactMarkdown>
+                    </div>
+                  </BrutalistCard>
+                );
+              } else if (segment.type === "code" && segment.content) {
+                return (
+                  <BrutalistCard key={`code-${index}`} size="md">
+                    <div className="flex items-center justify-between p-2">
+                      <span className="font-mono text-sm text-accent-01 dark:text-accent-01">
+                        {`${codeLines} line${codeLines !== 1 ? "s" : ""}`}
+                      </span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(segment.content || "");
+                        }}
+                        className="rounded-sm bg-light-background-02 px-2 py-1 text-sm text-accent-01 transition-colors hover:text-accent-02 active:bg-orange-400 active:text-orange-800 dark:bg-dark-background-01 dark:text-accent-01 dark:hover:bg-dark-decorative-00 dark:hover:text-dark-secondary dark:active:bg-orange-600 dark:active:text-orange-200"
+                      >
+                        <code className="font-mono">
+                          <span className="mr-3">App.jsx</span>
+                          <svg
+                            aria-hidden="true"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            version="1.1"
+                            width="16"
+                            className="inline-block"
+                          >
+                            <path
+                              fill="currentColor"
+                              d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"
+                            ></path>
+                            <path
+                              fill="currentColor"
+                              d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"
+                            ></path>
+                          </svg>
+                        </code>
+                      </button>
+                    </div>
+                    <pre className="m-0 overflow-x-auto rounded-sm bg-light-background-02 p-4 font-mono text-sm dark:bg-dark-background-01">
+                      <code>
+                        {segment.content.split("\n").slice(-3).join("\n")}
+                      </code>
+                    </pre>
+                  </BrutalistCard>
+                );
+              }
+              return null;
+            })}
+
+            {/* Show streaming indicator when actively streaming */}
+            {chatState.isStreaming && (
+              <BrutalistCard size="sm">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="bg-light-primary dark:bg-dark-primary inline-block h-4 w-2 animate-pulse" />
+                  <span>Generating...</span>
+                </div>
+              </BrutalistCard>
+            )}
+          </>
+        );
+      })()}
+    </>
+  );
+}
+
 export default function Create() {
   const [promptText, setPromptText] = useState("");
-  const [streamingContent, setStreamingContent] = useState("");
   const [createSessionId, setCreateSessionId] = useState<string | null>(null);
-  const navigate = useNavigate();
 
-  // Initialize Fireproof for create sessions
+  // Initialize Fireproof for create sessions - we'll use this to generate IDs
   const { database } = useFireproof("create-sessions");
 
   const handleLetsGo = async () => {
-    if (promptText.trim()) {
+    if (promptText.trim() && !createSessionId) {
       // Create a Fireproof document and use its _id as the session ID
       const sessionDoc: CreateSessionDoc = {
         type: "create-session",
@@ -44,17 +155,6 @@ export default function Create() {
       const result = await database.put(sessionDoc);
       const newSessionId = result.id;
       setCreateSessionId(newSessionId);
-
-      // For now, simulate streaming with a simple delay
-      // TODO: Wire up actual streamAI call
-      setStreamingContent("Generating your app...\n\n```jsx\nfunction App() {\n  return <div>Hello World</div>;\n}\n```\n\nYour app is ready!");
-
-      // After "streaming" completes, navigate to the session
-      setTimeout(() => {
-        const params = new URLSearchParams();
-        params.set("prompt", promptText.trim());
-        navigate(`/?${params.toString()}`);
-      }, 3000);
     }
   };
 
@@ -123,79 +223,20 @@ export default function Create() {
           </BrutalistCard>
 
           {/* Streaming Display Section */}
-          {streamingContent && (() => {
-            const parsed = parseContent(streamingContent);
-            const segments = parsed.segments;
-            const codeSegments = segments.filter((seg) => seg.type === "code");
-            const codeLines = codeSegments.reduce(
-              (acc, seg) => acc + (seg.content?.split("\n").length || 0),
-              0
-            );
-
-            return (
-              <>
-                {segments.map((segment, index) => {
-                  if (segment.type === "markdown" && segment.content) {
-                    return (
-                      <BrutalistCard key={`markdown-${index}`} size="md">
-                        <div className="ai-markdown prose">
-                          <ReactMarkdown>{segment.content}</ReactMarkdown>
-                        </div>
-                      </BrutalistCard>
-                    );
-                  } else if (segment.type === "code" && segment.content) {
-                    return (
-                      <BrutalistCard key={`code-${index}`} size="md">
-                        <div className="flex items-center justify-between p-2">
-                          <span className="font-mono text-sm text-accent-01 dark:text-accent-01">
-                            {`${codeLines} line${codeLines !== 1 ? "s" : ""}`}
-                          </span>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(segment.content || "");
-                            }}
-                            className="rounded-sm bg-light-background-02 px-2 py-1 text-sm text-accent-01 transition-colors hover:text-accent-02 active:bg-orange-400 active:text-orange-800 dark:bg-dark-background-01 dark:text-accent-01 dark:hover:bg-dark-decorative-00 dark:hover:text-dark-secondary dark:active:bg-orange-600 dark:active:text-orange-200"
-                          >
-                            <code className="font-mono">
-                              <span className="mr-3">App.jsx</span>
-                              <svg
-                                aria-hidden="true"
-                                height="16"
-                                viewBox="0 0 16 16"
-                                version="1.1"
-                                width="16"
-                                className="inline-block"
-                              >
-                                <path
-                                  fill="currentColor"
-                                  d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"
-                                ></path>
-                                <path
-                                  fill="currentColor"
-                                  d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"
-                                ></path>
-                              </svg>
-                            </code>
-                          </button>
-                        </div>
-                        <pre className="m-0 overflow-x-auto rounded-sm bg-light-background-02 p-4 font-mono text-sm dark:bg-dark-background-01">
-                          <code>{segment.content}</code>
-                        </pre>
-                      </BrutalistCard>
-                    );
-                  }
-                  return null;
-                })}
-              </>
-            );
-          })()}
+          {createSessionId && (
+            <CreateWithStreaming
+              sessionId={createSessionId}
+              promptText={promptText}
+            />
+          )}
 
           <VibesButton
             variant="primary"
             style={{ width: "200px" }}
             onClick={handleLetsGo}
+            disabled={!!createSessionId}
           >
-            Let's Go
+            {createSessionId ? "Generating..." : "Let's Go"}
           </VibesButton>
 
           <a
