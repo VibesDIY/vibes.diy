@@ -109,7 +109,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Jam Session",
-    text: "Create a music collaboration tool with chord progressions and shared lyrics editor.",
+    text: "Create a music collaboration tool with chord progressions and shared bpm and drum machine.",
   },
 ];
 
@@ -119,4 +119,4 @@ export const partyPlannerPrompt =
 export const progressTrackerPrompt =
   "Build a goal tracker with progress bars, streak counters, and milestone celebrations.";
 export const jamSessionPrompt =
-  "Create a music collaboration tool with chord progressions and shared lyrics editor.";
+  "Create a music collaboration tool with chord progressions and shared bpm and drum machine.";
