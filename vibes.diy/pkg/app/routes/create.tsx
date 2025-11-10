@@ -81,6 +81,21 @@ function CreateWithStreaming({
     }
   }, [chatState.docs, onNavigateToPreview]);
 
+  // Auto-scroll to bottom when segments change
+  useEffect(() => {
+    const latestAiMessage = chatState.docs
+      .filter((doc) => doc.type === "ai")
+      .sort((a, b) => b.created_at - a.created_at)[0];
+
+    if (!latestAiMessage?.text) return;
+
+    // Scroll to bottom smoothly whenever content updates
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [chatState.docs]);
+
   return (
     <>
       {/* Streaming Display Section */}
