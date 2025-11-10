@@ -134,7 +134,7 @@ export function HiddenMenuWrapper({
     }
   }, [menuOpen]);
 
-    // recalculate when childrens change
+  // recalculate when childrens change
   useEffect(() => {
     const menuEl = menuRef.current;
     if (!menuEl) return;
