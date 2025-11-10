@@ -1,14 +1,22 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  cleanup,
+} from "@testing-library/react";
 import Create from "~/vibes.diy/app/routes/create.js";
 
 // Mock react-router
 const mockNavigate = vi.fn();
 const mockLocation = { pathname: "/create" };
+const mockParams = {};
 vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
   useLocation: () => mockLocation,
+  useParams: () => mockParams,
   Outlet: () => <div data-testid="outlet">Outlet</div>,
 }));
 
@@ -114,10 +122,13 @@ vi.mock("~/vibes.diy/app/data/quick-suggestions-data.js", () => ({
 
 describe("Create Route", () => {
   beforeEach(() => {
+    cleanup(); // Force cleanup before each test
     vi.clearAllMocks();
     mockPut.mockResolvedValue({ id: "test-session-id-123" });
     mockNavigate.mockClear();
     mockLocation.pathname = "/create";
+    // Ensure no sessionId in params for base tests
+    delete (mockParams as { sessionId?: string }).sessionId;
   });
 
   it("renders the create page with title and form", () => {
@@ -169,7 +180,7 @@ describe("Create Route", () => {
     expect(button).not.toBeDisabled();
   });
 
-  it("creates a Fireproof document when Let's Go is clicked", async () => {
+  it("creates a Fireproof document and navigates when Let's Go is clicked", async () => {
     render(<Create />);
 
     const textarea = screen.getAllByPlaceholderText(
@@ -186,31 +197,25 @@ describe("Create Route", () => {
         prompt: "Build a todo app",
         created_at: expect.any(Number),
       });
+      expect(mockNavigate).toHaveBeenCalledWith("/create/test-session-id-123");
     });
   });
 
-  it("disables button after Let's Go is clicked", async () => {
+  it("disables button when sessionId is in params", () => {
+    // Set sessionId in params to simulate being on /create/:sessionId route
+    (mockParams as { sessionId?: string }).sessionId = "test-session-id-123";
+
     render(<Create />);
 
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
+    const button = screen.getAllByText("Generating...")[0];
+    expect(button).toBeInTheDocument();
+    expect(button).toBeDisabled();
 
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    // Wait for the button text to change, indicating the session was created
-    await waitFor(() => {
-      expect(screen.getAllByText("Generating...")[0]).toBeInTheDocument();
-    });
-
-    // Now verify the button is disabled by querying it fresh
-    const disabledButton = screen.getAllByText("Generating...")[0];
-    expect(disabledButton).toBeDisabled();
+    // Clean up
+    delete (mockParams as { sessionId?: string }).sessionId;
   });
 
-  it("changes button text to 'Generating...' after session is created", async () => {
+  it("navigates to session route after Let's Go is clicked", async () => {
     render(<Create />);
 
     const textarea = screen.getAllByPlaceholderText(
@@ -222,18 +227,36 @@ describe("Create Route", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getAllByText("Generating...")[0]).toBeInTheDocument();
+      expect(mockNavigate).toHaveBeenCalledWith("/create/test-session-id-123");
     });
   });
 
-  it("does not create session if textarea is empty", () => {
-    render(<Create />);
+  it("does not create session if textarea is empty", async () => {
+    // Explicitly clear mock before this test since it's sensitive to call count
+    mockPut.mockClear();
+    mockNavigate.mockClear();
+
+    const { unmount } = render(<Create />);
+
+    // Verify textarea is empty
+    const textarea = screen.getAllByPlaceholderText(
+      "What do you want to build...",
+    )[0] as HTMLTextAreaElement;
+    expect(textarea.value).toBe("");
 
     const button = screen.getAllByText("Let's Go")[0];
     fireEvent.click(button);
 
-    // Should not call put with empty prompt
-    expect(mockPut).not.toHaveBeenCalled();
+    // Wait a tick to ensure any async operations would have completed
+    await waitFor(
+      () => {
+        // Should not call put with empty prompt
+        expect(mockPut).not.toHaveBeenCalled();
+      },
+      { timeout: 100 },
+    );
+
+    unmount();
   });
 
   it("renders Learn link", () => {
@@ -244,29 +267,18 @@ describe("Create Route", () => {
     expect(learnLink).toHaveAttribute("href", "/");
   });
 
-  it("uses Fireproof-generated ID as session ID", async () => {
+  it("renders CreateWithStreaming when sessionId is in params", () => {
+    // Set sessionId in params to simulate being on /create/:sessionId route
+    (mockParams as { sessionId?: string }).sessionId = "test-session-id-123";
+
     render(<Create />);
-
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    // Wait for the session to be created (indicated by button text change)
-    await waitFor(() => {
-      expect(screen.getAllByText("Generating...")[0]).toBeInTheDocument();
-    });
 
     // Verify CreateWithStreaming component is rendered (which uses the session ID)
     // by checking that streaming content appears
-    await waitFor(() => {
-      expect(
-        screen.getAllByText("Generating your app...")[0],
-      ).toBeInTheDocument();
-    });
+    expect(screen.getAllByText("Generating your app...")[0]).toBeInTheDocument();
+
+    // Clean up
+    delete (mockParams as { sessionId?: string }).sessionId;
   });
 });
 
@@ -275,140 +287,60 @@ describe("CreateWithStreaming Component", () => {
     vi.clearAllMocks();
     mockPut.mockResolvedValue({ id: "test-session-id-456" });
     mockNavigate.mockClear();
-    mockLocation.pathname = "/create";
+    mockLocation.pathname = "/create/test-session-id-456";
+    // Set sessionId in params for all CreateWithStreaming tests
+    (mockParams as { sessionId?: string }).sessionId = "test-session-id-456";
   });
 
-  it("renders streaming content when session is created", async () => {
-    render(<Create />);
-
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    // Wait for streaming component to render
-    await waitFor(() => {
-      expect(screen.getByText("Generating your app...")).toBeInTheDocument();
-    });
+  afterEach(() => {
+    // Clean up params after each test
+    delete (mockParams as { sessionId?: string }).sessionId;
   });
 
-  it("displays code segment with line count", async () => {
+  it("renders streaming content when session is created", () => {
     render(<Create />);
 
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    await waitFor(() => {
-      expect(screen.getByText(/3 lines/)).toBeInTheDocument();
-    });
+    expect(screen.getAllByText("Generating your app...")[0]).toBeInTheDocument();
   });
 
-  it("displays copy button with App.jsx label", async () => {
+  it("displays code segment with line count", () => {
     render(<Create />);
-
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    await waitFor(() => {
-      expect(screen.getAllByText("App.jsx")[0]).toBeInTheDocument();
-    });
+    expect(screen.getAllByText(/3 lines/)[0]).toBeInTheDocument();
   });
 
-  it("displays last 3 lines of code as preview", async () => {
+  it("displays copy button with App.jsx label", () => {
     render(<Create />);
-
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    await waitFor(() => {
-      // The code should show last 3 lines
-      const codeElement = screen.getByText(/return <div>Hello<\/div>/);
-      expect(codeElement).toBeInTheDocument();
-    });
+    expect(screen.getAllByText("App.jsx")[0]).toBeInTheDocument();
   });
 
-  it("initializes streaming when session is created", async () => {
+  it("displays last 3 lines of code as preview", () => {
     render(<Create />);
+    // The code should show last 3 lines
+    const codeElement = screen.getAllByText(/return <div>Hello<\/div>/)[0];
+    expect(codeElement).toBeInTheDocument();
+  });
 
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    const promptText = "Build a todo app";
-    fireEvent.change(textarea, { target: { value: promptText } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
+  it("initializes streaming when session is created", () => {
+    render(<Create />);
 
     // Verify that CreateWithStreaming renders and displays content
-    // This indirectly confirms that useSimpleChat was called with the session ID
-    // and the component initialized properly
-    await waitFor(() => {
-      expect(
-        screen.getAllByText("Generating your app...")[0],
-      ).toBeInTheDocument();
-    });
-
-    // Verify that streaming content from the mock chat state is displayed
-    await waitFor(() => {
-      expect(screen.getAllByText("Your app is ready!")[0]).toBeInTheDocument();
-    });
+    expect(screen.getAllByText("Generating your app...")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Your app is ready!")[0]).toBeInTheDocument();
   });
 
-  it("displays final markdown segment", async () => {
+  it("displays final markdown segment", () => {
+    render(<Create />);
+    expect(screen.getAllByText("Your app is ready!")[0]).toBeInTheDocument();
+  });
+
+  it("shows button as Generating when sessionId exists", () => {
     render(<Create />);
 
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    await waitFor(() => {
-      expect(screen.getByText("Your app is ready!")).toBeInTheDocument();
-    });
+    // The button should show "Generating..." when sessionId is in params
+    expect(screen.getAllByText("Generating...")[0]).toBeInTheDocument();
   });
 
-  it("shows streaming indicator when isStreaming is true", async () => {
-    // Note: The streaming indicator test relies on the mock chat state
-    // Since mockChatState has isStreaming: false by default, we test the
-    // button text change instead which uses the same state
-    render(<Create />);
-
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    // The button should change to "Generating..." after being clicked
-    await waitFor(() => {
-      expect(screen.getAllByText("Generating...")[0]).toBeInTheDocument();
-    });
-  });
-
-  it("copies code to clipboard when copy button is clicked", async () => {
+  it("copies code to clipboard when copy button is clicked", () => {
     const writeTextMock = vi.fn().mockResolvedValue(undefined);
 
     // Mock navigator.clipboard using Object.defineProperty
@@ -422,20 +354,7 @@ describe("CreateWithStreaming Component", () => {
 
     render(<Create />);
 
-    const textarea = screen.getAllByPlaceholderText(
-      "What do you want to build...",
-    )[0] as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: "Build a todo app" } });
-
-    const button = screen.getAllByText("Let's Go")[0];
-    fireEvent.click(button);
-
-    // Wait for copy button to appear
-    await waitFor(() => {
-      expect(screen.getAllByText("App.jsx")[0]).toBeInTheDocument();
-    });
-
-    // Click the copy button (find it by the App.jsx text in the button)
+    // App.jsx button should already be visible since sessionId is set
     const copyButton = screen.getAllByText("App.jsx")[0].closest("button");
     if (copyButton) {
       fireEvent.click(copyButton);
