@@ -134,6 +134,26 @@ export function HiddenMenuWrapper({
     }
   }, [menuOpen]);
 
+    // recalculate when childrens change
+  useEffect(() => {
+    const menuEl = menuRef.current;
+    if (!menuEl) return;
+
+    const updateHeight = () => setMenuHeight(menuEl.offsetHeight);
+
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    resizeObserver.observe(menuEl);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
     <div style={getWrapperStyle()}>
       {/* Menu */}
