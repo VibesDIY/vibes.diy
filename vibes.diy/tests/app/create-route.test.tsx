@@ -275,7 +275,9 @@ describe("Create Route", () => {
 
     // Verify CreateWithStreaming component is rendered (which uses the session ID)
     // by checking that streaming content appears
-    expect(screen.getAllByText("Generating your app...")[0]).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Generating your app...")[0],
+    ).toBeInTheDocument();
 
     // Clean up
     delete (mockParams as { sessionId?: string }).sessionId;
@@ -300,7 +302,9 @@ describe("CreateWithStreaming Component", () => {
   it("renders streaming content when session is created", () => {
     render(<Create />);
 
-    expect(screen.getAllByText("Generating your app...")[0]).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Generating your app...")[0],
+    ).toBeInTheDocument();
   });
 
   it("displays code segment with line count", () => {
@@ -324,7 +328,9 @@ describe("CreateWithStreaming Component", () => {
     render(<Create />);
 
     // Verify that CreateWithStreaming renders and displays content
-    expect(screen.getAllByText("Generating your app...")[0]).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Generating your app...")[0],
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Your app is ready!")[0]).toBeInTheDocument();
   });
 

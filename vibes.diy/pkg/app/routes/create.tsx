@@ -36,6 +36,7 @@ function CreateWithStreaming({
 }) {
   const chatState = useSimpleChat(sessionId);
   const hasSentMessage = useRef(false);
+  const hasNavigated = useRef(false);
 
   // Send the message once chatState is ready
   useEffect(() => {
@@ -46,6 +47,39 @@ function CreateWithStreaming({
       chatState.sendMessage(promptText);
     }
   }, [chatState, promptText]);
+
+  // Auto-navigate to preview when we detect content after code segment
+  useEffect(() => {
+    if (hasNavigated.current) return;
+
+    const latestAiMessage = chatState.docs
+      .filter((doc) => doc.type === "ai")
+      .sort((a, b) => b.created_at - a.created_at)[0];
+
+    if (!latestAiMessage?.text) return;
+
+    const parsed = parseContent(latestAiMessage.text);
+    const segments = parsed.segments;
+    const codeSegments = segments.filter((seg) => seg.type === "code");
+
+    // Check if we have code and content after the last code segment
+    if (codeSegments.length > 0) {
+      const lastCodeIndex = segments.findLastIndex(
+        (seg) => seg.type === "code",
+      );
+      const hasContentAfterCode =
+        segments.length > lastCodeIndex + 1 &&
+        segments
+          .slice(lastCodeIndex + 1)
+          .some((seg) => seg.content && seg.content.trim().length > 0);
+
+      if (hasContentAfterCode) {
+        hasNavigated.current = true;
+        const code = codeSegments[0]?.content || "";
+        onNavigateToPreview(code);
+      }
+    }
+  }, [chatState.docs, onNavigateToPreview]);
 
   return (
     <>
@@ -131,21 +165,6 @@ function CreateWithStreaming({
                   <span>Generating...</span>
                 </div>
               </BrutalistCard>
-            )}
-
-            {/* Show Preview button when code is ready */}
-            {!chatState.isStreaming && codeSegments.length > 0 && (
-              <VibesButton
-                variant="primary"
-                style={{ width: "200px" }}
-                onClick={() => {
-                  // Get the first code segment
-                  const code = codeSegments[0]?.content || "";
-                  onNavigateToPreview(code);
-                }}
-              >
-                Preview App
-              </VibesButton>
             )}
           </>
         );
