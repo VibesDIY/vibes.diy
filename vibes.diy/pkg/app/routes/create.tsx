@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation, Outlet } from "react-router";
 import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
 import {
   partyPlannerPrompt,
@@ -27,9 +28,11 @@ interface CreateSessionDoc {
 function CreateWithStreaming({
   sessionId,
   promptText,
+  onNavigateToPreview,
 }: {
   sessionId: string;
   promptText: string;
+  onNavigateToPreview: (code: string) => void;
 }) {
   const chatState = useSimpleChat(sessionId);
   const hasSentMessage = useRef(false);
@@ -129,6 +132,21 @@ function CreateWithStreaming({
                 </div>
               </BrutalistCard>
             )}
+
+            {/* Show Preview button when code is ready */}
+            {!chatState.isStreaming && codeSegments.length > 0 && (
+              <VibesButton
+                variant="primary"
+                style={{ width: "200px" }}
+                onClick={() => {
+                  // Get the first code segment
+                  const code = codeSegments[0]?.content || "";
+                  onNavigateToPreview(code);
+                }}
+              >
+                Preview App
+              </VibesButton>
+            )}
           </>
         );
       })()}
@@ -139,9 +157,14 @@ function CreateWithStreaming({
 export default function Create() {
   const [promptText, setPromptText] = useState("");
   const [createSessionId, setCreateSessionId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Initialize Fireproof for create sessions - we'll use this to generate IDs
   const { database } = useFireproof("create-sessions");
+
+  // Check if we're on the preview route
+  const isPreviewRoute = location.pathname.endsWith("/preview");
 
   const handleLetsGo = async () => {
     if (promptText.trim() && !createSessionId) {
@@ -157,6 +180,20 @@ export default function Create() {
       setCreateSessionId(newSessionId);
     }
   };
+
+  const handleNavigateToPreview = (code: string) => {
+    navigate("/create/preview", {
+      state: {
+        code,
+        sessionId: createSessionId,
+      },
+    });
+  };
+
+  // If on preview route, only render the Outlet
+  if (isPreviewRoute) {
+    return <Outlet />;
+  }
 
   return (
     <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
@@ -227,6 +264,7 @@ export default function Create() {
             <CreateWithStreaming
               sessionId={createSessionId}
               promptText={promptText}
+              onNavigateToPreview={handleNavigateToPreview}
             />
           )}
 
