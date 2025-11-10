@@ -3,6 +3,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import Create from "~/vibes.diy/app/routes/create.js";
 
+// Mock react-router
+const mockNavigate = vi.fn();
+const mockLocation = { pathname: "/create" };
+vi.mock("react-router", () => ({
+  useNavigate: () => mockNavigate,
+  useLocation: () => mockLocation,
+  Outlet: () => <div data-testid="outlet">Outlet</div>,
+}));
+
 // Mock use-fireproof - preserve all other exports
 const mockPut = vi.fn();
 const mockDatabase = { put: mockPut };
@@ -107,6 +116,8 @@ describe("Create Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPut.mockResolvedValue({ id: "test-session-id-123" });
+    mockNavigate.mockClear();
+    mockLocation.pathname = "/create";
   });
 
   it("renders the create page with title and form", () => {
@@ -263,6 +274,8 @@ describe("CreateWithStreaming Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPut.mockResolvedValue({ id: "test-session-id-456" });
+    mockNavigate.mockClear();
+    mockLocation.pathname = "/create";
   });
 
   it("renders streaming content when session is created", async () => {
