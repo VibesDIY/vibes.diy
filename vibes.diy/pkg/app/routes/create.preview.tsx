@@ -1,7 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
+import type { ViewType } from "@vibes.diy/prompts";
 import IframeContent from "../components/ResultPreview/IframeContent.js";
 import type { IframeFiles } from "../components/ResultPreview/ResultPreviewTypes.js";
+import ResultPreviewHeaderContent from "../components/ResultPreview/ResultPreviewHeaderContent.js";
 
 export function meta() {
   return [
@@ -24,6 +26,9 @@ export default function CreatePreview() {
   const code = state.code || "// No code available";
   const sessionId = state.sessionId || "preview-session";
 
+  // View switching state
+  const [currentView, setCurrentView] = useState<ViewType>("preview");
+
   // Detect dark mode from system preferences
   const isDarkMode = useMemo(() => {
     if (typeof window !== "undefined") {
@@ -43,36 +48,56 @@ export default function CreatePreview() {
     [code],
   );
 
+  // View controls configuration
+  const viewControls = {
+    preview: {
+      enabled: true,
+      icon: "preview",
+      label: "App",
+      loading: false,
+    },
+    code: {
+      enabled: true,
+      icon: "code",
+      label: "Code",
+      loading: false,
+    },
+    data: {
+      enabled: true,
+      icon: "data",
+      label: "Data",
+      loading: false,
+    },
+    settings: {
+      enabled: false,
+      icon: "settings",
+      label: "Settings",
+      loading: false,
+    },
+  };
+
   return (
     <div className="flex h-screen w-screen flex-col">
-      {/* Header with back button */}
-      <div className="flex items-center gap-4 border-b border-light-decorative-01 bg-light-background-01 p-4 dark:border-dark-decorative-01 dark:bg-dark-background-01">
-        <button
-          onClick={() => navigate("/create")}
-          className="flex items-center gap-2 rounded-sm bg-light-background-02 px-4 py-2 font-medium text-light-primary transition-colors hover:bg-light-decorative-00 dark:bg-dark-background-02 dark:text-dark-primary dark:hover:bg-dark-decorative-00"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Back
-        </button>
-        <h1 className="text-lg font-bold">App Preview</h1>
+      {/* Header with back button, view controls, and share button */}
+      <div className="border-b border-light-decorative-01 bg-light-background-01 dark:border-dark-decorative-01 dark:bg-dark-background-01">
+        <ResultPreviewHeaderContent
+          displayView={currentView}
+          navigateToView={setCurrentView}
+          viewControls={viewControls}
+          showViewControls={true}
+          previewReady={true}
+          setMobilePreviewShown={() => navigate("/create")}
+          code={code}
+          isStreaming={false}
+          sessionId={sessionId}
+          title={undefined}
+        />
       </div>
 
       {/* Preview content */}
       <div className="flex-1 overflow-hidden">
         <IframeContent
-          activeView="preview"
+          activeView={currentView}
           filesContent={filesContent}
           isStreaming={false}
           codeReady={true}
