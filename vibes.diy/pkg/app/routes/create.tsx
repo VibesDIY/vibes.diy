@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation, Outlet } from "react-router";
+import { useNavigate, useLocation, useParams, Outlet } from "react-router";
 import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
 import {
   partyPlannerPrompt,
@@ -156,18 +156,21 @@ function CreateWithStreaming({
 
 export default function Create() {
   const [promptText, setPromptText] = useState("");
-  const [createSessionId, setCreateSessionId] = useState<string | null>(null);
+  const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Initialize Fireproof for create sessions - we'll use this to generate IDs
   const { database } = useFireproof("create-sessions");
 
+  // Get sessionId from URL params
+  const sessionId = params.sessionId || null;
+
   // Check if we're on the preview route
   const isPreviewRoute = location.pathname.endsWith("/preview");
 
   const handleLetsGo = async () => {
-    if (promptText.trim() && !createSessionId) {
+    if (promptText.trim() && !sessionId) {
       // Create a Fireproof document and use its _id as the session ID
       const sessionDoc: CreateSessionDoc = {
         type: "create-session",
@@ -177,15 +180,17 @@ export default function Create() {
 
       const result = await database.put(sessionDoc);
       const newSessionId = result.id;
-      setCreateSessionId(newSessionId);
+
+      // Navigate to the new session route
+      navigate(`/create/${newSessionId}`);
     }
   };
 
   const handleNavigateToPreview = (code: string) => {
-    navigate("/create/preview", {
+    navigate(`/create/${sessionId}/preview`, {
       state: {
         code,
-        sessionId: createSessionId,
+        sessionId,
       },
     });
   };
@@ -260,9 +265,9 @@ export default function Create() {
           </BrutalistCard>
 
           {/* Streaming Display Section */}
-          {createSessionId && (
+          {sessionId && (
             <CreateWithStreaming
-              sessionId={createSessionId}
+              sessionId={sessionId}
               promptText={promptText}
               onNavigateToPreview={handleNavigateToPreview}
             />
@@ -272,9 +277,9 @@ export default function Create() {
             variant="primary"
             style={{ width: "200px" }}
             onClick={handleLetsGo}
-            disabled={!!createSessionId}
+            disabled={!!sessionId}
           >
-            {createSessionId ? "Generating..." : "Let's Go"}
+            {sessionId ? "Generating..." : "Let's Go"}
           </VibesButton>
 
           <a
