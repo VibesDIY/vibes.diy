@@ -68,7 +68,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.1",
-    "@cloudflare/vite-plugin": "^1.13.12",
+    "@cloudflare/vite-plugin": "^1.14.0",
     "@fireproof/core-cli": "^0.23.15",
     "@react-router/dev": "^7.9.4",
     "@storybook/addon-a11y": "^9.1.13",
