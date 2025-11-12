@@ -29,6 +29,14 @@ vi.mock("~/vibes.diy/app/contexts/AuthContext.js", () => ({
   }),
 }));
 
+// Mock useAuthPopup
+const mockInitiateLogin = vi.fn();
+vi.mock("~/vibes.diy/app/hooks/useAuthPopup.js", () => ({
+  useAuthPopup: () => ({
+    initiateLogin: mockInitiateLogin,
+  }),
+}));
+
 // Mock use-fireproof - preserve all other exports
 const mockPut = vi.fn();
 const mockDatabase = { put: mockPut };
