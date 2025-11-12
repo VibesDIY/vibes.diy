@@ -1,99 +1,106 @@
-import { useEffect, useRef } from 'react'
-import { animate } from 'animejs'
-import { useSceneSetup } from '../../hooks/index.ts'
-import { COUNTERBOY_POSITIONS, ANIMATION_DURATIONS, CAMERA_VIEW_POSITIONS } from '../../constants/scene.ts'
-import { generateBlockPreset } from '../../factories/sceneObjects.ts'
-import React from 'react'
+import { useEffect, useRef } from "react";
+import { animate } from "animejs";
+import { useSceneSetup } from "../../hooks/index.ts";
+import {
+  COUNTERBOY_POSITIONS,
+  ANIMATION_DURATIONS,
+  CAMERA_VIEW_POSITIONS,
+} from "../../constants/scene.ts";
+import { generateBlockPreset } from "../../factories/sceneObjects.ts";
+import React from "react";
 
 interface TimelineSegment {
-  at: number        // start percentage (0-100)
-  until: number     // end percentage (0-100)
-  animation: any    // paused anime.js animation
+  at: number; // start percentage (0-100)
+  until: number; // end percentage (0-100)
+  animation: any; // paused anime.js animation
 }
 
 interface TimelinePoint {
-  at: number        // trigger percentage (0-100)
-  trigger: () => void  // callback to fire
+  at: number; // trigger percentage (0-100)
+  trigger: () => void; // callback to fire
 }
 
-type TimelineEntry = TimelineSegment | TimelinePoint
+type TimelineEntry = TimelineSegment | TimelinePoint;
 
 interface AnimatedSceneProps {
-  progress: number  // 0-100
-  style?: React.CSSProperties
+  progress: number; // 0-100
+  style?: React.CSSProperties;
 }
 
 export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
-  const mountRef = useRef<HTMLDivElement>(null)
-  const sceneSetup = useSceneSetup(mountRef)
+  const mountRef = useRef<HTMLDivElement>(null);
+  const sceneSetup = useSceneSetup(mountRef);
 
   // Timeline refs
-  const masterTimelineSegmentsRef = useRef<TimelineEntry[]>([])
-  const lastPositionRef = useRef(0)
-  const blockIndexRef = useRef<number>(0)
-  const showRightCounterBoyRef = useRef(false)
+  const masterTimelineSegmentsRef = useRef<TimelineEntry[]>([]);
+  const lastPositionRef = useRef(0);
+  const blockIndexRef = useRef<number>(0);
+  const showRightCounterBoyRef = useRef(false);
 
   // Boom handlers - simplified version without context
   const handleLeftBoom = () => {
-    const counterBoy = sceneSetup.counterBoyLeftRef.current
-    if (!counterBoy) return
+    const counterBoy = sceneSetup.counterBoyLeftRef.current;
+    if (!counterBoy) return;
 
     // Press button
-    counterBoy.pressButton()
+    counterBoy.pressButton();
 
     // Release button and trigger block animation after short delay
     setTimeout(() => {
-      counterBoy.releaseButton()
+      counterBoy.releaseButton();
 
       // Trigger block animation
-      const preset = generateBlockPreset(blockIndexRef.current)
-      blockIndexRef.current++
+      const preset = generateBlockPreset(blockIndexRef.current);
+      blockIndexRef.current++;
 
       if (!counterBoy.getIsBlockAnimating()) {
         counterBoy.animateBlockEncryption(preset, () => {
           // Animation complete
-        })
+        });
       }
-    }, 100)
-  }
+    }, 100);
+  };
 
   const handleRightBoom = () => {
-    const counterBoy = sceneSetup.counterBoyRightRef.current
-    if (!counterBoy) return
+    const counterBoy = sceneSetup.counterBoyRightRef.current;
+    if (!counterBoy) return;
 
     // Press button
-    counterBoy.pressButton()
+    counterBoy.pressButton();
 
     // Release button and trigger block animation after short delay
     setTimeout(() => {
-      counterBoy.releaseButton()
+      counterBoy.releaseButton();
 
       // Trigger block animation
-      const preset = generateBlockPreset(blockIndexRef.current)
-      blockIndexRef.current++
+      const preset = generateBlockPreset(blockIndexRef.current);
+      blockIndexRef.current++;
 
       if (!counterBoy.getIsBlockAnimating()) {
         counterBoy.animateBlockEncryption(preset, () => {
           // Animation complete
-        })
+        });
       }
-    }, 100)
-  }
+    }, 100);
+  };
 
   // Create master timeline score
   const makeScore = (): TimelineEntry[] => {
-    const counterBoyLeft = sceneSetup.counterBoyLeftRef.current
-    const counterBoyRight = sceneSetup.counterBoyRightRef.current
-    const camera = sceneSetup.cameraRef.current
-    const screenshotBoys = sceneSetup.screenshotBoysRef.current
+    const counterBoyLeft = sceneSetup.counterBoyLeftRef.current;
+    const counterBoyRight = sceneSetup.counterBoyRightRef.current;
+    const camera = sceneSetup.cameraRef.current;
+    const screenshotBoys = sceneSetup.screenshotBoysRef.current;
 
     if (!counterBoyLeft || !counterBoyRight || !camera || !screenshotBoys) {
-      return []
+      return [];
     }
 
-    const rotationTargets = [counterBoyLeft.group.rotation, counterBoyRight.group.rotation]
-    const counterBoys = [counterBoyLeft, counterBoyRight]
-    const iso1View = CAMERA_VIEW_POSITIONS.isometric1
+    const rotationTargets = [
+      counterBoyLeft.group.rotation,
+      counterBoyRight.group.rotation,
+    ];
+    const counterBoys = [counterBoyLeft, counterBoyRight];
+    const iso1View = CAMERA_VIEW_POSITIONS.isometric1;
 
     // Create unified camera animation state
     const cameraAnimationState = {
@@ -102,51 +109,51 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
       posZ: camera.position.z,
       rotX: camera.rotation.x,
       rotY: camera.rotation.y,
-      camera: camera
-    }
+      camera: camera,
+    };
 
     // Camera pan states for 2-up animation
-    const targetOffsetX = COUNTERBOY_POSITIONS.RIGHT[0] / 2
+    const targetOffsetX = COUNTERBOY_POSITIONS.RIGHT[0] / 2;
     const cameraPanState = {
       offsetX: 0,
       baseX: iso1View.x,
-      camera: camera
-    }
+      camera: camera,
+    };
 
     // Separate state for pan-back animation
     const cameraPanBackState = {
       offsetX: targetOffsetX,
       baseX: iso1View.x,
-      camera: camera
-    }
+      camera: camera,
+    };
 
     // Explosion animation state
     const explosionState = {
       progress: 0,
-      counterBoys: counterBoys
-    }
+      counterBoys: counterBoys,
+    };
 
     // Collapse animation state (starts at 1.0 and goes to 0)
     const collapseState = {
       progress: 1.0,
-      counterBoys: counterBoys
-    }
+      counterBoys: counterBoys,
+    };
 
     // ScreenshotBoys animation state
     const screenshotBoysState = {
       progress: 0,
-      boys: screenshotBoys
-    }
+      boys: screenshotBoys,
+    };
 
     return [
       // Counterboy button presses
       {
         at: 2,
-        trigger: handleLeftBoom
+        trigger: handleLeftBoom,
       },
       {
         at: 4,
-        trigger: handleLeftBoom
+        trigger: handleLeftBoom,
       },
       // CounterBoy recline
       {
@@ -155,9 +162,9 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
         animation: animate(rotationTargets, {
           x: -Math.PI / 2,
           duration: ANIMATION_DURATIONS.RECLINE,
-          ease: 'inOutQuad',
-          autoplay: false
-        })
+          ease: "inOutQuad",
+          autoplay: false,
+        }),
       },
       // Camera position and rotation combined
       {
@@ -170,15 +177,19 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
           rotX: iso1View.rotationX,
           rotY: iso1View.rotationY,
           duration: ANIMATION_DURATIONS.CAMERA,
-          ease: 'inOutQuad',
+          ease: "inOutQuad",
           autoplay: false,
           onRender: () => {
-            camera.position.set(cameraAnimationState.posX, cameraAnimationState.posY, cameraAnimationState.posZ)
-            camera.rotation.x = cameraAnimationState.rotX
-            camera.rotation.y = cameraAnimationState.rotY
-            camera.lookAt(0, 0, 0)
-          }
-        })
+            camera.position.set(
+              cameraAnimationState.posX,
+              cameraAnimationState.posY,
+              cameraAnimationState.posZ,
+            );
+            camera.rotation.x = cameraAnimationState.rotX;
+            camera.rotation.y = cameraAnimationState.rotY;
+            camera.lookAt(0, 0, 0);
+          },
+        }),
       },
       // Explosion
       {
@@ -187,20 +198,20 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
         animation: animate(explosionState, {
           progress: 1.0,
           duration: ANIMATION_DURATIONS.EXPLOSION,
-          ease: 'inOutQuad',
+          ease: "inOutQuad",
           autoplay: false,
           onRender: () => {
             // Update all CounterBoy instances with current explosion progress
             explosionState.counterBoys.forEach((counterBoy: any) => {
-              counterBoy.setExplosionProgress(explosionState.progress)
-            })
-          }
-        })
+              counterBoy.setExplosionProgress(explosionState.progress);
+            });
+          },
+        }),
       },
       // Press button on exploded counterboy
       {
         at: 25,
-        trigger: handleLeftBoom
+        trigger: handleLeftBoom,
       },
       // Show second Counterboy
       {
@@ -209,22 +220,22 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
         animation: animate(cameraPanState, {
           offsetX: targetOffsetX,
           duration: ANIMATION_DURATIONS.CAMERA,
-          ease: 'inOutQuad',
+          ease: "inOutQuad",
           autoplay: false,
           onRender: () => {
-            camera.position.x = cameraPanState.baseX + cameraPanState.offsetX
-          }
-        })
+            camera.position.x = cameraPanState.baseX + cameraPanState.offsetX;
+          },
+        }),
       },
       // right boom
       {
         at: 38,
-        trigger: handleRightBoom
+        trigger: handleRightBoom,
       },
       // left boom
       {
         at: 43,
-        trigger: handleLeftBoom
+        trigger: handleLeftBoom,
       },
       // hide second Counterboy, pan back
       {
@@ -233,12 +244,13 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
         animation: animate(cameraPanBackState, {
           offsetX: 0,
           duration: ANIMATION_DURATIONS.CAMERA,
-          ease: 'inOutQuad',
+          ease: "inOutQuad",
           autoplay: false,
           onRender: () => {
-            camera.position.x = cameraPanBackState.baseX + cameraPanBackState.offsetX
-          }
-        })
+            camera.position.x =
+              cameraPanBackState.baseX + cameraPanBackState.offsetX;
+          },
+        }),
       },
       // Collapse (un-explode)
       {
@@ -247,19 +259,19 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
         animation: animate(collapseState, {
           progress: 0,
           duration: ANIMATION_DURATIONS.EXPLOSION,
-          ease: 'inOutQuad',
+          ease: "inOutQuad",
           autoplay: false,
           onRender: () => {
             // Update all CounterBoy instances with current collapse progress
             collapseState.counterBoys.forEach((counterBoy: any) => {
-              counterBoy.setExplosionProgress(collapseState.progress)
-            })
-          }
-        })
+              counterBoy.setExplosionProgress(collapseState.progress);
+            });
+          },
+        }),
       },
       {
         at: 78,
-        trigger: handleLeftBoom
+        trigger: handleLeftBoom,
       },
       // Show ScreenshotBoys
       {
@@ -268,7 +280,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
         animation: animate(screenshotBoysState, {
           progress: 1.0,
           duration: ANIMATION_DURATIONS.SCREENSHOT_RISE,
-          ease: 'inOutQuad',
+          ease: "inOutQuad",
           autoplay: false,
           onRender: () => {
             // Update all ScreenshotBoy instances with current progress
@@ -276,129 +288,129 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
               // Enable transparency on all materials
               boy.group.traverse((child: any) => {
                 if (child.material) {
-                  child.material.transparent = true
+                  child.material.transparent = true;
                 }
-              })
+              });
 
               // Hide when fully transparent, show otherwise
-              boy.group.visible = screenshotBoysState.progress > 0.125
+              boy.group.visible = screenshotBoysState.progress > 0.125;
 
               // Interpolate position and opacity based on progress
-              boy.group.position.y = -20 + (20 * screenshotBoysState.progress)
+              boy.group.position.y = -20 + 20 * screenshotBoysState.progress;
               boy.group.traverse((child: any) => {
                 if (child.material) {
-                  child.material.opacity = screenshotBoysState.progress
+                  child.material.opacity = screenshotBoysState.progress;
                 }
-              })
-            })
-          }
-        })
+              });
+            });
+          },
+        }),
       },
-    ]
-  }
+    ];
+  };
 
   // Seek timeline to specific position
   const seekTimeline = (position: number) => {
     // Build segments if they don't exist
     if (masterTimelineSegmentsRef.current.length === 0) {
-      masterTimelineSegmentsRef.current = makeScore()
+      masterTimelineSegmentsRef.current = makeScore();
     }
 
-    const lastPosition = lastPositionRef.current
+    const lastPosition = lastPositionRef.current;
 
     // Seek each segment based on its timing
-    masterTimelineSegmentsRef.current.forEach(entry => {
+    masterTimelineSegmentsRef.current.forEach((entry) => {
       // Handle trigger points
-      if ('trigger' in entry) {
+      if ("trigger" in entry) {
         // Fire trigger if we're crossing the 'at' point forward
         if (lastPosition < entry.at && position >= entry.at) {
-          entry.trigger()
+          entry.trigger();
         }
-        return
+        return;
       }
 
       // Handle animation segments
-      const { at, until, animation } = entry
+      const { at, until, animation } = entry;
 
-      let segmentProgress: number
+      let segmentProgress: number;
 
       if (position < at) {
-        segmentProgress = 0
+        segmentProgress = 0;
       } else if (position > until) {
-        segmentProgress = 1
+        segmentProgress = 1;
       } else {
-        segmentProgress = (position - at) / (until - at)
+        segmentProgress = (position - at) / (until - at);
       }
 
       // Seek animation to the calculated progress
-      const time = segmentProgress * animation.duration
-      animation.seek(time)
-    })
+      const time = segmentProgress * animation.duration;
+      animation.seek(time);
+    });
 
-    lastPositionRef.current = position
+    lastPositionRef.current = position;
 
     // Show/hide right counterboy based on position
-    const shouldShowRight = position >= 33 && position < 58
+    const shouldShowRight = position >= 33 && position < 58;
     if (shouldShowRight !== showRightCounterBoyRef.current) {
-      showRightCounterBoyRef.current = shouldShowRight
+      showRightCounterBoyRef.current = shouldShowRight;
       if (sceneSetup.counterBoyRightRef.current) {
         // @ts-ignore - visible exists on Group
-        sceneSetup.counterBoyRightRef.current.group.visible = shouldShowRight
+        sceneSetup.counterBoyRightRef.current.group.visible = shouldShowRight;
       }
     }
-  }
+  };
 
   // Initialize scene on mount
   useEffect(() => {
-    const result = sceneSetup.initializeScene()
-    if (!result) return
+    const result = sceneSetup.initializeScene();
+    if (!result) return;
 
-    const { scene, camera, renderer } = result
+    const { scene, camera, renderer } = result;
 
     // Set initial camera view (front view)
-    camera.rotation.order = 'YXZ'
-    camera.position.set(0, 0, 15)
-    camera.rotation.y = 0
-    camera.rotation.x = 0
-    camera.lookAt(0, 0, 0)
+    camera.rotation.order = "YXZ";
+    camera.position.set(0, 0, 15);
+    camera.rotation.y = 0;
+    camera.rotation.x = 0;
+    camera.lookAt(0, 0, 0);
 
     // Hide right counterboy initially
     if (sceneSetup.counterBoyRightRef.current) {
       // @ts-ignore - visible exists on Group
-      sceneSetup.counterBoyRightRef.current.group.visible = false
+      sceneSetup.counterBoyRightRef.current.group.visible = false;
     }
 
     // Setup resize handler
-    const removeResizeHandler = sceneSetup.setupResizeHandler(renderer, camera)
+    const removeResizeHandler = sceneSetup.setupResizeHandler(renderer, camera);
 
     // Start render loop
-    sceneSetup.startRenderLoop(renderer, scene, camera)
+    sceneSetup.startRenderLoop(renderer, scene, camera);
 
     return () => {
-      removeResizeHandler()
-      sceneSetup.cleanup()
+      removeResizeHandler();
+      sceneSetup.cleanup();
 
       // Cancel all animations
-      masterTimelineSegmentsRef.current.forEach(entry => {
-        if ('animation' in entry && entry.animation) {
+      masterTimelineSegmentsRef.current.forEach((entry) => {
+        if ("animation" in entry && entry.animation) {
           try {
-            entry.animation.pause()
+            entry.animation.pause();
           } catch (e) {
             // Ignore errors
           }
         }
-      })
-      masterTimelineSegmentsRef.current = []
-    }
-  }, [])
+      });
+      masterTimelineSegmentsRef.current = [];
+    };
+  }, []);
 
   // Update timeline when progress changes
   useEffect(() => {
     // Only seek if scene is initialized
     if (sceneSetup.cameraRef.current) {
-      seekTimeline(progress)
+      seekTimeline(progress);
     }
-  }, [progress])
+  }, [progress]);
 
   return (
     <div
@@ -406,8 +418,8 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
       style={{
         width: "100%",
         height: "100%",
-        ...style
+        ...style,
       }}
     />
-  )
+  );
 }

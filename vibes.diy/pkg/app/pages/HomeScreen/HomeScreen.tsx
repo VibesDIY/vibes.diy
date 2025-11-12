@@ -10,8 +10,6 @@ import {
   getSectionsContainerStyle,
   getSecondCardStyle,
   getSectionWrapperStyle,
-  getFirstSectionColorBackgroundStyle,
-  getSecondSectionColorBackgroundStyle,
   getBlackBorderWrapper,
   getBlackBorderInnerWrapper,
   getUsernameStyle,
@@ -22,6 +20,14 @@ import {
   getChatContainerStyleOut,
   getChatContainerTopBar,
   getChatContainerBottomCard,
+  getSection1BackgroundStyle,
+  getSection2BackgroundStyle,
+  getSection3BackgroundStyle,
+  getSection4BackgroundStyle,
+  getSection5BackgroundStyle,
+  getSection6BackgroundStyle,
+  getSection7BackgroundStyle,
+  getSection8BackgroundStyle,
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
@@ -32,13 +38,60 @@ import {
 import { HomeScreenProps } from "./HomeScreen.types.ts";
 import { useIsMobile } from "../../hooks/index.ts";
 import { AnimatedScene } from "./AnimatedScene.tsx";
+import computerAnimGif from "../../assets/computer-anim.gif";
+
+// Helper function to convert URLs in text to clickable links
+const renderMessageWithLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: "inherit",
+            textDecoration: "underline",
+            cursor: "pointer",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
 
 export const HomeScreen = ({}: HomeScreenProps) => {
   const isMobile = useIsMobile();
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
   const animatedSceneContainerRef = useRef<HTMLDivElement>(null);
+  const animatedSceneSection4Ref = useRef<HTMLDivElement>(null);
+  const animatedSceneSection6Ref = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
+
+  // References for the 8 sections to calculate dynamic backgrounds
+  const section1Ref = useRef<HTMLDivElement>(null);
+  const section2Ref = useRef<HTMLDivElement>(null);
+  const section3Ref = useRef<HTMLDivElement>(null);
+  const section4Ref = useRef<HTMLDivElement>(null);
+  const section5Ref = useRef<HTMLDivElement>(null);
+  const section6Ref = useRef<HTMLDivElement>(null);
+  const section7Ref = useRef<HTMLDivElement>(null);
+  const section8Ref = useRef<HTMLDivElement>(null);
+  const sectionsContainerRef = useRef<HTMLDivElement>(null);
+
+  // State to trigger re-render after refs are mounted
+  const [refsReady, setRefsReady] = useState(false);
+  const [recalcCounter, setRecalcCounter] = useState(0);
 
   // 🧩 Define your 3 chat scenarios
   const scenarios = [
@@ -197,19 +250,74 @@ export const HomeScreen = ({}: HomeScreenProps) => {
     };
   }, []);
 
+  // Force re-render after refs are mounted to calculate background positions
+  useEffect(() => {
+    if (
+      section1Ref.current &&
+      section2Ref.current &&
+      section3Ref.current &&
+      section4Ref.current &&
+      section5Ref.current &&
+      section6Ref.current &&
+      section7Ref.current &&
+      section8Ref.current &&
+      sectionsContainerRef.current
+    ) {
+      setRefsReady(true);
+    }
+  }, []);
+
+  // Recalculate background positions only on window resize
+  useEffect(() => {
+    let resizeTimeout: number;
+
+    const handleRecalculate = () => {
+      // Debounce resize events to avoid recalculations during active resize
+      clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(() => {
+        // Increment counter to force recalculation only once after resize stops
+        setRecalcCounter((prev) => prev + 1);
+      }, 300); // Wait 300ms after resize stops to ensure user finished resizing
+    };
+
+    window.addEventListener("resize", handleRecalculate);
+
+    return () => {
+      window.removeEventListener("resize", handleRecalculate);
+      clearTimeout(resizeTimeout);
+    };
+  }, []);
+
   useEffect(() => {
     if (isMobile) return; // No ejecutar en móvil
 
     const innerContainer = innerContainerRef.current;
     const chatContainer = chatContainerRef.current;
     const animatedContainer = animatedSceneContainerRef.current;
+    const animatedSection4Container = animatedSceneSection4Ref.current;
+    const animatedSection6Container = animatedSceneSection6Ref.current;
     if (!innerContainer || !chatContainer) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // Check if the scroll event is happening inside the animated scene container
-      const isInsideAnimatedScene = animatedContainer && animatedContainer.contains(e.target as Node);
+      // Check if the scroll event is happening inside the Section 2 animated scene container
+      const isInsideSection2AnimatedScene =
+        animatedSection4Container &&
+        animatedSection4Container.contains(e.target as Node);
 
-      if (isInsideAnimatedScene && animatedContainer) {
+      // Check if the scroll event is happening inside the Section 4 animated scene container
+      const isInsideSection4AnimatedScene =
+        animatedSection6Container &&
+        animatedSection6Container.contains(e.target as Node);
+
+      // Check if the scroll event is happening inside the animated scene container
+      const isInsideAnimatedScene =
+        animatedContainer && animatedContainer.contains(e.target as Node);
+
+      // For Section 2 and 4, let them scroll naturally - the scroll event listener will handle progress updates
+      if (isInsideSection2AnimatedScene || isInsideSection4AnimatedScene) {
+        // Don't prevent default, let the native scroll happen
+        return;
+      } else if (isInsideAnimatedScene && animatedContainer) {
         // Handle animated scene scrolling
         const { scrollTop, scrollHeight, clientHeight } = animatedContainer;
         const isScrollable = scrollHeight > clientHeight;
@@ -223,9 +331,10 @@ export const HomeScreen = ({}: HomeScreenProps) => {
 
             // Update progress immediately
             const newScrollTop = animatedContainer.scrollTop;
-            const scrollProgress = scrollHeight > clientHeight
-              ? (newScrollTop / (scrollHeight - clientHeight)) * 100
-              : 0;
+            const scrollProgress =
+              scrollHeight > clientHeight
+                ? (newScrollTop / (scrollHeight - clientHeight)) * 100
+                : 0;
             setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
             return;
           }
@@ -236,9 +345,10 @@ export const HomeScreen = ({}: HomeScreenProps) => {
 
             // Update progress immediately
             const newScrollTop = animatedContainer.scrollTop;
-            const scrollProgress = scrollHeight > clientHeight
-              ? (newScrollTop / (scrollHeight - clientHeight)) * 100
-              : 0;
+            const scrollProgress =
+              scrollHeight > clientHeight
+                ? (newScrollTop / (scrollHeight - clientHeight)) * 100
+                : 0;
             setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
             return;
           }
@@ -275,20 +385,170 @@ export const HomeScreen = ({}: HomeScreenProps) => {
     };
   }, [isMobile]);
 
+  // Direct scroll listener for Section 2 AnimatedScene (0-50)
+  useEffect(() => {
+    const animatedSection4Container = animatedSceneSection4Ref.current;
+    const section4Element = section4Ref.current;
+    if (!animatedSection4Container || !section4Element) {
+      return;
+    }
 
+    let isScrolling = false;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } =
+        animatedSection4Container;
+      const scrollProgress =
+        scrollHeight > clientHeight
+          ? (scrollTop / (scrollHeight - clientHeight)) * 50
+          : 0;
+      setAnimationProgress(Math.max(0, Math.min(50, scrollProgress)));
+
+      // Center the section when scrolling starts
+      if (!isScrolling) {
+        isScrolling = true;
+        section4Element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        });
+
+        // Reset flag after scroll animation completes
+        setTimeout(() => {
+          isScrolling = false;
+        }, 1000);
+      }
+    };
+
+    animatedSection4Container.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
+    return () => {
+      animatedSection4Container.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  // Direct scroll listener for Section 4 AnimatedScene (50-100)
+  useEffect(() => {
+    const animatedSection6Container = animatedSceneSection6Ref.current;
+    const section6Element = section6Ref.current;
+    if (!animatedSection6Container || !section6Element) {
+      return;
+    }
+
+    let isScrolling = false;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } =
+        animatedSection6Container;
+      const scrollProgress =
+        scrollHeight > clientHeight
+          ? 50 + (scrollTop / (scrollHeight - clientHeight)) * 50
+          : 50;
+      setAnimationProgress(Math.max(50, Math.min(100, scrollProgress)));
+
+      // Center the section when scrolling starts
+      if (!isScrolling) {
+        isScrolling = true;
+        section6Element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        });
+
+        // Reset flag after scroll animation completes
+        setTimeout(() => {
+          isScrolling = false;
+        }, 1000);
+      }
+    };
+
+    animatedSection6Container.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
+    return () => {
+      animatedSection6Container.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   return (
     <div style={getBlackBorderWrapper()}>
       <div style={getBackgroundStyle()} />
       <div style={getNoiseTextureStyle()} />
-      <div style={getBlackBorderInnerWrapper()}>
+      <div style={getBlackBorderInnerWrapper()} ref={scrollContainerRef}>
         <div style={getMenuStyle()}>
           <VibesSwitch size={64} />
         </div>
 
         <div style={getScrollingBackgroundsStyle()}>
-          <div style={getFirstSectionColorBackgroundStyle(isMobile)} />
-          <div style={getSecondSectionColorBackgroundStyle(isMobile)} />
+          {refsReady && (
+            <>
+              <div
+                key={`bg1-${recalcCounter}`}
+                style={getSection1BackgroundStyle(
+                  section1Ref,
+                  sectionsContainerRef,
+                  isMobile,
+                )}
+              />
+              <div
+                key={`bg2-${recalcCounter}`}
+                style={getSection2BackgroundStyle(
+                  section2Ref,
+                  sectionsContainerRef,
+                  isMobile,
+                )}
+              />
+              <div
+                key={`bg3-${recalcCounter}`}
+                style={getSection3BackgroundStyle(
+                  section3Ref,
+                  sectionsContainerRef,
+                  isMobile,
+                )}
+              />
+              <div
+                key={`bg4-${recalcCounter}`}
+                style={getSection4BackgroundStyle(
+                  section4Ref,
+                  sectionsContainerRef,
+                  isMobile,
+                )}
+              />
+              <div
+                key={`bg5-${recalcCounter}`}
+                style={getSection5BackgroundStyle(
+                  section5Ref,
+                  sectionsContainerRef,
+                  isMobile,
+                )}
+              />
+              <div
+                key={`bg6-${recalcCounter}`}
+                style={getSection6BackgroundStyle(
+                  section6Ref,
+                  sectionsContainerRef,
+                  isMobile,
+                )}
+              />
+              <div
+                key={`bg7-${recalcCounter}`}
+                style={getSection7BackgroundStyle(
+                  section7Ref,
+                  sectionsContainerRef,
+                  isMobile,
+                )}
+              />
+              <div
+                key={`bg8-${recalcCounter}`}
+                style={getSection8BackgroundStyle(
+                  section8Ref,
+                  sectionsContainerRef,
+                  isMobile,
+                )}
+              />
+            </>
+          )}
         </div>
 
         <div style={getWrapperStyle()} />
@@ -304,13 +564,15 @@ export const HomeScreen = ({}: HomeScreenProps) => {
               </p>
             </DraggableSection>
 
-            {isMobile && <DraggableSection color="blue" x={20} y={170}>
-              <ChatAnimation
-                title={selectedScenario.title}
-                arrayOfMessages={selectedScenario.arrayOfMessages}
-                user={"You"}
-              />
-            </DraggableSection>}
+            {isMobile && (
+              <DraggableSection color="blue" x={20} y={170}>
+                <ChatAnimation
+                  title={selectedScenario.title}
+                  arrayOfMessages={selectedScenario.arrayOfMessages}
+                  user={"You"}
+                />
+              </DraggableSection>
+            )}
 
             <DraggableCard color="blue" x={550} y={100}>
               <p style={{ maxWidth: "250px", fontWeight: "bold" }}>
@@ -320,10 +582,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
             </DraggableCard>
 
             <DraggableCard color="grey" x={870} y={100}>
-              <img
-                src="https://media.discordapp.net/attachments/1423771251461324800/1432508556044931102/computer-anim.gif?ex=690b324e&is=6909e0ce&hm=7d59f9a19b55fae0b9e829cef4a6f2df006e38a056061ed1b3d6b89f0265ee0c&=&width=1472&height=1112"
-                style={{ width: "150px" }}
-              />
+              <img src={computerAnimGif} style={{ width: "150px" }} />
             </DraggableCard>
 
             <DraggableCard color="yellow" x={800} y={20}>
@@ -336,85 +595,70 @@ export const HomeScreen = ({}: HomeScreenProps) => {
                 everything you do together.
               </p>
             </DraggableCard>
-            {!isMobile && <div
-              className="chat-container-wrapper"
-              style={getChatContainerStyleOut()}
-            >
+            {!isMobile && (
               <div
-                className="chat-inner"
-                style={getChatContainerStyle()}
+                className="chat-container-wrapper"
+                style={getChatContainerStyleOut()}
               >
-                <div>
-                  <div style={getChatContainerTopBar()} />
-                  <div style={getChatContainerBottomCard()}
-                ref={chatContainerRef}>
-                    {selectedScenario.title && (
-                      <div style={getTitleStyle()}>{selectedScenario.title}</div>
-                    )}
-                    {selectedScenario.arrayOfMessages.map((msg, index) => {
-                      const isCurrentUser = msg.user === "You";
-                      const isLastMessage =
-                        index === selectedScenario.arrayOfMessages.length - 1;
-                      const className = isCurrentUser
-                        ? "message-current-user"
-                        : "message-other-user";
-                      const wrapperClass = isLastMessage
-                        ? `${className} last-message-wrapper`
-                        : className;
+                <div className="chat-inner" style={getChatContainerStyle()}>
+                  <div>
+                    <div style={getChatContainerTopBar()} />
+                    <div
+                      style={getChatContainerBottomCard()}
+                      ref={chatContainerRef}
+                    >
+                      {selectedScenario.title && (
+                        <div style={getTitleStyle()}>
+                          {selectedScenario.title}
+                        </div>
+                      )}
+                      {selectedScenario.arrayOfMessages.map((msg, index) => {
+                        const isCurrentUser = msg.user === "You";
+                        const isLastMessage =
+                          index === selectedScenario.arrayOfMessages.length - 1;
+                        const className = isCurrentUser
+                          ? "message-current-user"
+                          : "message-other-user";
+                        const wrapperClass = isLastMessage
+                          ? `${className} last-message-wrapper`
+                          : className;
 
-                      return (
-                        <div
-                          key={index}
-                          className={wrapperClass}
-                          style={getMessageWrapperStyle(isCurrentUser)}
-                        >
-                          <div style={{ width: "100%" }}>
-                            <div style={getUsernameStyle(isCurrentUser)}>
-                              {msg.user}
-                            </div>
-                            <div style={getMessageBubbleStyle(isCurrentUser)}>
-                              {msg.message}
+                        return (
+                          <div
+                            key={index}
+                            className={wrapperClass}
+                            style={getMessageWrapperStyle(isCurrentUser)}
+                          >
+                            <div style={{ width: "100%" }}>
+                              <div style={getUsernameStyle(isCurrentUser)}>
+                                {msg.user}
+                              </div>
+                              <div style={getMessageBubbleStyle(isCurrentUser)}>
+                                {renderMessageWithLinks(msg.message)}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>}
-
-            {!isMobile && <div
-              className="animated-scene-wrapper"
-              style={{
-                position: "absolute",
-                left: 0,
-                top: "250vh",
-                width: "100%",
-                height: "100vh",
-                overflowY: "auto",
-                overflowX: "hidden",
-                background: "transparent",
-                zIndex: 10,
-                marginBottom: "100vh",
-              }}
-              ref={animatedSceneContainerRef}
-            >
-              <div style={{ height: "200vh" }}>
-                <div style={{
-                  position: "sticky",
-                  top: 0,
-                  width: "100%",
-                  height: "100vh"
-                }}>
-                  <AnimatedScene progress={animationProgress} />
-                </div>
-              </div>
-            </div>}
+            )}
           </div>
 
-          <div style={getSectionsContainerStyle(isMobile)}>
-            <section style={getSectionWrapperStyle(isMobile)}>
+          <div
+            style={getSectionsContainerStyle(isMobile)}
+            ref={sectionsContainerRef}
+          >
+            {/* Section 1: First part of content */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                paddingTop: isMobile ? "0px" : "500px",
+              }}
+              ref={section1Ref}
+            >
               <DraggableSection color="blue" static>
                 <h3
                   style={{
@@ -455,7 +699,42 @@ export const HomeScreen = ({}: HomeScreenProps) => {
                   together. Best of all, everyone's data stays local, portable,
                   and safe.
                 </p>
+              </DraggableSection>
+            </section>
 
+            {/* Section 2: AnimatedScene 0-50 */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              ref={section2Ref}
+            >
+              <DraggableSection color="red" static>
+                <div
+                  style={{
+                    width: "100%",
+                    height: "60vh",
+                    position: "relative",
+                  }}
+                >
+                  <AnimatedScene progress={0} />
+                </div>
+              </DraggableSection>
+            </section>
+
+            {/* Section 3: Second part of content */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                paddingTop: isMobile ? "0px" : "500px",
+              }}
+              ref={section3Ref}
+            >
+              <DraggableSection color="blue" static>
                 <h3
                   style={{
                     fontWeight: "bold",
@@ -515,7 +794,69 @@ export const HomeScreen = ({}: HomeScreenProps) => {
               </DraggableSection>
             </section>
 
-            <section style={getSectionWrapperStyle(isMobile)}>
+            {/* Section 4: AnimatedScene 50-100 */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              ref={section4Ref}
+            >
+              {/* DraggableSection card for visual reference */}
+              <DraggableSection color="blue" static>
+                <div
+                  style={{
+                    width: "100%",
+                    height: "60vh",
+                    position: "relative",
+                  }}
+                ></div>
+              </DraggableSection>
+
+              {/* Scrollable AnimatedScene overlay covering full screen */}
+              <div
+                className="animated-scene-wrapper"
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "100vw",
+                  height: "100vh",
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  background: "transparent",
+                  zIndex: 10,
+                  pointerEvents: "auto",
+                }}
+                ref={animatedSceneSection4Ref}
+              >
+                <div style={{ height: "200vh" }}>
+                  <div
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      width: "100vw",
+                      height: "100vh",
+                    }}
+                  >
+                    <AnimatedScene progress={animationProgress} />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 5: Final content */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                paddingTop: isMobile ? "0px" : "500px",
+              }}
+              ref={section5Ref}
+            >
               <DraggableSection color="red" static>
                 <div style={getSecondCardStyle()}>
                   <p>You love your group chat. Meet your group app. </p>
@@ -544,6 +885,113 @@ export const HomeScreen = ({}: HomeScreenProps) => {
                     You and your friends aren't users anymore. You're makers.
                   </p>
                 </div>
+              </DraggableSection>
+            </section>
+
+            {/* Section 6: AnimatedScene at 0 (no movement) - Red */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              ref={section6Ref}
+            >
+              {/* DraggableSection card for visual reference */}
+              <DraggableSection color="blue" static>
+                <div
+                  style={{
+                    width: "100%",
+                    height: "60vh",
+                    position: "relative",
+                  }}
+                ></div>
+              </DraggableSection>
+
+              {/* Scrollable AnimatedScene overlay covering full screen */}
+              <div
+                className="animated-scene-wrapper"
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "100vw",
+                  height: "100vh",
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  background: "transparent",
+                  zIndex: 10,
+                  pointerEvents: "auto",
+                }}
+                ref={animatedSceneSection6Ref}
+              >
+                <div style={{ height: "200vh" }}>
+                  <div
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      width: "100vw",
+                      height: "100vh",
+                    }}
+                  >
+                    <AnimatedScene progress={animationProgress} />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 7: Dark section */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                paddingTop: isMobile ? "0px" : "500px",
+              }}
+              ref={section7Ref}
+            >
+              <DraggableSection color="grey" static>
+                <h3
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "40px",
+                    color: "#ffffff",
+                  }}
+                >
+                  Section 7
+                </h3>
+                <p style={{ color: "#ffffff" }}>
+                  <strong>Content for dark section</strong>
+                  <br />
+                  This is the dark section with color oklch(23.4% 0.013 20).
+                </p>
+              </DraggableSection>
+            </section>
+
+            {/* Section 8: Light section */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                paddingTop: isMobile ? "0px" : "500px",
+              }}
+              ref={section8Ref}
+            >
+              <DraggableSection color="blue" static>
+                <h3
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "40px",
+                    color: "#000000",
+                  }}
+                >
+                  Section 8
+                </h3>
+                <p>
+                  <strong>Content for light section</strong>
+                  <br />
+                  This is the light section with color oklch(84.6% 0.026 111).
+                </p>
               </DraggableSection>
             </section>
           </div>

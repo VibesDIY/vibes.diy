@@ -291,29 +291,273 @@ export const getChatContainerStyleOut = (): CSSProperties => ({
   flexDirection: "column",
   boxSizing: "border-box",
   position: "relative",
-  alignItems: 'baseline',
+  alignItems: "baseline",
 });
 
 export const getChatContainerTopBar = (): CSSProperties => ({
-  height: '20px',
-  width: '100%',
-  backgroundColor: '#40799d',
-  border: '1px solid black',
-  marginBottom: '1px',
+  height: "20px",
+  width: "100%",
+  backgroundColor: "#40799d",
+  border: "1px solid black",
+  marginBottom: "1px",
 });
 
 export const getChatContainerBottomCard = (): CSSProperties => ({
-  padding: '16px',
-  backgroundColor: '#FFFFF0',
-  color: '#221f20',
-  border: '1px solid black',
-  boxShadow: '0 0 0 1px white',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '24px',
-  maxHeight: '600px',
-  overflowY: 'auto',
-  scrollbarWidth: 'none',
-  msOverflowStyle: 'none',
-  paddingBottom: '200px',
+  padding: "16px",
+  backgroundColor: "#FFFFF0",
+  color: "#221f20",
+  border: "1px solid black",
+  boxShadow: "0 0 0 1px white",
+  display: "flex",
+  flexDirection: "column",
+  gap: "24px",
+  maxHeight: "600px",
+  overflowY: "auto",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
+  paddingBottom: "200px",
 });
+
+// Helper function to calculate absolute position from offsetTop
+const getAbsoluteTop = (element: HTMLElement): number => {
+  let top = 0;
+  let current: HTMLElement | null = element;
+  while (current) {
+    top += current.offsetTop;
+    current = current.offsetParent as HTMLElement | null;
+  }
+  return top;
+};
+
+// Dynamic section background styles based on refs
+export const getSection1BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  // Use offsetTop for static position calculation (doesn't change with scroll)
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 350 : 30),
+    pointerEvents: "none",
+    zIndex: -1, // Ensure background is behind content
+    background: `
+      linear-gradient(
+        180deg,
+        transparent 0%,
+        oklch(65% 0.17 220) 30%,
+        oklch(65% 0.17 220) 100%
+      )
+    `,
+  };
+};
+
+export const getSection2BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 300 : 30),
+    pointerEvents: "none",
+    zIndex: -1,
+    background: `
+      linear-gradient(
+        180deg,
+        oklch(65% 0.17 220) 0%,
+        oklch(65% 0.17 220) 70%,
+        oklch(77.75% 0.195 157.5) 100%
+      )
+    `,
+  };
+};
+
+export const getSection3BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 300 : 30),
+    pointerEvents: "none",
+    zIndex: -1,
+    background: `
+      linear-gradient(
+        180deg,
+        oklch(77.75% 0.195 157.5) 0%,
+        oklch(90.5% 0.22 95) 30%,
+        oklch(90.5% 0.22 95) 100%
+      )
+    `,
+  };
+};
+
+export const getSection4BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 300 : 30),
+    pointerEvents: "none",
+    zIndex: -1,
+    background: `
+      linear-gradient(
+        180deg,
+        oklch(90.5% 0.22 95) 0%,
+        oklch(90.5% 0.22 95) 70%,
+        oklch(73.2% 0.24 61.2) 100%
+      )
+    `,
+  };
+};
+
+export const getSection5BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 300 : 30),
+    pointerEvents: "none",
+    zIndex: -1,
+    background: `
+      linear-gradient(
+        180deg,
+        oklch(73.2% 0.24 61.2) 0%,
+        oklch(55.9% 0.26 27.3) 30%,
+        oklch(55.9% 0.26 27.3) 100%
+      )
+    `,
+  };
+};
+
+export const getSection6BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 300 : 30),
+    pointerEvents: "none",
+    zIndex: -1,
+    background: `
+      linear-gradient(
+        180deg,
+        oklch(55.9% 0.26 27.3) 0%,
+        oklch(55.9% 0.26 27.3) 100%
+      )
+    `,
+  };
+};
+
+export const getSection7BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 300 : 30),
+    pointerEvents: "none",
+    zIndex: -1,
+    background: `
+      linear-gradient(
+        180deg,
+        oklch(55.9% 0.26 27.3) 0%,
+        oklch(23.4% 0.013 20) 30%,
+        oklch(23.4% 0.013 20) 100%
+      )
+    `,
+  };
+};
+
+export const getSection8BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 300 : 30),
+    pointerEvents: "none",
+    zIndex: -1,
+    background: `
+      linear-gradient(
+        180deg,
+        oklch(23.4% 0.013 20) 0%,
+        oklch(84.6% 0.026 111) 30%,
+        oklch(84.6% 0.026 111) 100%
+      )
+    `,
+  };
+};
