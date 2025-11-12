@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation, useParams, Outlet } from "react-router";
 import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
 import {
@@ -211,37 +211,46 @@ export default function Create() {
   // Check if we're on the preview route
   const isPreviewRoute = location.pathname.endsWith("/preview");
 
+  // Ref to guard against double-invocation in StrictMode
+  const autoSubmitExecuted = useRef(false);
+
+  // Shared helper to create session and navigate
+  const createAndNavigateToSession = async (prompt: string) => {
+    try {
+      const sessionDoc: CreateSessionDoc = {
+        type: "create-session",
+        prompt: prompt.trim(),
+        created_at: Date.now(),
+      };
+
+      const result = await database.put(sessionDoc);
+      const newSessionId = result.id;
+      console.log("Created session with ID:", newSessionId);
+
+      navigate(`/create/${newSessionId}`);
+    } catch (error) {
+      console.error("Failed to create session:", error);
+      // Reset pending state so user can retry
+      setPendingSubmit(false);
+      throw error;
+    }
+  };
+
   // Auto-submit after successful login
   useEffect(() => {
-    if (pendingSubmit && isAuthenticated) {
+    if (pendingSubmit && isAuthenticated && !autoSubmitExecuted.current) {
+      autoSubmitExecuted.current = true;
       console.log("User authenticated, auto-submitting pending request");
       setPendingSubmit(false);
 
       if (promptText.trim() && !sessionId) {
-        const createSession = async () => {
-          const sessionDoc: CreateSessionDoc = {
-            type: "create-session",
-            prompt: promptText.trim(),
-            created_at: Date.now(),
-          };
-
-          const result = await database.put(sessionDoc);
-          const newSessionId = result.id;
-          console.log("Auto-created session with ID:", newSessionId);
-
-          navigate(`/create/${newSessionId}`);
-        };
-        createSession();
+        createAndNavigateToSession(promptText.trim()).catch((error) => {
+          console.error("Auto-submit failed:", error);
+          autoSubmitExecuted.current = false; // Allow retry
+        });
       }
     }
-  }, [
-    pendingSubmit,
-    isAuthenticated,
-    promptText,
-    sessionId,
-    database,
-    navigate,
-  ]);
+  }, [pendingSubmit, isAuthenticated, promptText, sessionId]);
 
   const handleLetsGo = async () => {
     console.log("=== handleLetsGo called ===");
@@ -263,20 +272,7 @@ export default function Create() {
 
     if (promptText.trim() && !sessionId) {
       console.log("Creating session with prompt:", promptText.trim());
-      // Create a Fireproof document and use its _id as the session ID
-      const sessionDoc: CreateSessionDoc = {
-        type: "create-session",
-        prompt: promptText.trim(),
-        created_at: Date.now(),
-      };
-
-      const result = await database.put(sessionDoc);
-      const newSessionId = result.id;
-      console.log("Created session with ID:", newSessionId);
-
-      // Navigate to the new session route
-      console.log("Navigating to:", `/create/${newSessionId}`);
-      navigate(`/create/${newSessionId}`);
+      await createAndNavigateToSession(promptText.trim());
     } else {
       console.log(
         "Skipping session creation - promptText:",
