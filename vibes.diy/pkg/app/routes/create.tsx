@@ -11,6 +11,7 @@ import { useFireproof } from "use-fireproof";
 import ReactMarkdown from "react-markdown";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { useAuth } from "../contexts/AuthContext.js";
+import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { NeedsLoginModal } from "../components/NeedsLoginModal.js";
 
 export function meta() {
@@ -201,7 +202,8 @@ export default function Create() {
   const { database } = useFireproof("create-sessions");
 
   // Get auth state
-  const { isAuthenticated, setNeedsLogin } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { initiateLogin } = useAuthPopup();
 
   // Get sessionId from URL params
   const sessionId = params.sessionId || null;
@@ -250,10 +252,10 @@ export default function Create() {
     // Check authentication before proceeding
     if (!isAuthenticated) {
       console.log(
-        "Not authenticated, triggering login modal and marking as pending submit",
+        "Not authenticated, triggering login popup and marking as pending submit",
       );
       setPendingSubmit(true); // Mark that we want to submit after login
-      setNeedsLogin(true); // Triggers NeedsLoginModal
+      await initiateLogin(); // Directly open auth popup
       return;
     }
 
