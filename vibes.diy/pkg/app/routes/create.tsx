@@ -215,26 +215,29 @@ export default function Create() {
   const autoSubmitExecuted = useRef(false);
 
   // Shared helper to create session and navigate
-  const createAndNavigateToSession = async (prompt: string) => {
-    try {
-      const sessionDoc: CreateSessionDoc = {
-        type: "create-session",
-        prompt: prompt.trim(),
-        created_at: Date.now(),
-      };
+  const createAndNavigateToSession = useCallback(
+    async (prompt: string) => {
+      try {
+        const sessionDoc: CreateSessionDoc = {
+          type: "create-session",
+          prompt: prompt.trim(),
+          created_at: Date.now(),
+        };
 
-      const result = await database.put(sessionDoc);
-      const newSessionId = result.id;
-      console.log("Created session with ID:", newSessionId);
+        const result = await database.put(sessionDoc);
+        const newSessionId = result.id;
+        console.log("Created session with ID:", newSessionId);
 
-      navigate(`/create/${newSessionId}`);
-    } catch (error) {
-      console.error("Failed to create session:", error);
-      // Reset pending state so user can retry
-      setPendingSubmit(false);
-      throw error;
-    }
-  };
+        navigate(`/create/${newSessionId}`);
+      } catch (error) {
+        console.error("Failed to create session:", error);
+        // Reset pending state so user can retry
+        setPendingSubmit(false);
+        throw error;
+      }
+    },
+    [database, navigate],
+  );
 
   // Auto-submit after successful login
   useEffect(() => {
@@ -250,7 +253,13 @@ export default function Create() {
         });
       }
     }
-  }, [pendingSubmit, isAuthenticated, promptText, sessionId]);
+  }, [
+    pendingSubmit,
+    isAuthenticated,
+    promptText,
+    sessionId,
+    createAndNavigateToSession,
+  ]);
 
   const handleLetsGo = async () => {
     console.log("=== handleLetsGo called ===");
