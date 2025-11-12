@@ -10,6 +10,7 @@ import { parseContent } from "@vibes.diy/prompts";
 import { useFireproof } from "use-fireproof";
 import ReactMarkdown from "react-markdown";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
+import { useAuth } from "../contexts/AuthContext.js";
 
 export function meta() {
   return [
@@ -197,6 +198,9 @@ export default function Create() {
   // Initialize Fireproof for create sessions - we'll use this to generate IDs
   const { database } = useFireproof("create-sessions");
 
+  // Get auth state
+  const { isAuthenticated, setNeedsLogin } = useAuth();
+
   // Get sessionId from URL params
   const sessionId = params.sessionId || null;
 
@@ -204,6 +208,12 @@ export default function Create() {
   const isPreviewRoute = location.pathname.endsWith("/preview");
 
   const handleLetsGo = async () => {
+    // Check authentication before proceeding
+    if (!isAuthenticated) {
+      setNeedsLogin(true); // Triggers NeedsLoginModal
+      return;
+    }
+
     if (promptText.trim() && !sessionId) {
       // Create a Fireproof document and use its _id as the session ID
       const sessionDoc: CreateSessionDoc = {
