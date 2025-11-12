@@ -857,7 +857,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
               }}
               ref={section5Ref}
             >
-              <DraggableSection color="red" static>
+              <DraggableSection color="yellow" static>
                 <div style={getSecondCardStyle()}>
                   <p>You love your group chat. Meet your group app. </p>
                   <p>
@@ -900,7 +900,7 @@ export const HomeScreen = ({}: HomeScreenProps) => {
               ref={section6Ref}
             >
               {/* DraggableSection card for visual reference */}
-              <DraggableSection color="blue" static>
+              <DraggableSection color="yellow" static>
                 <div
                   style={{
                     width: "100%",
@@ -951,17 +951,17 @@ export const HomeScreen = ({}: HomeScreenProps) => {
               }}
               ref={section7Ref}
             >
-              <DraggableSection color="grey" static>
+              <DraggableSection color="red" static>
                 <h3
                   style={{
                     fontWeight: "bold",
                     fontSize: "40px",
-                    color: "#ffffff",
+                    color: "#000000",
                   }}
                 >
                   Section 7
                 </h3>
-                <p style={{ color: "#ffffff" }}>
+                <p style={{ color: "#000000" }}>
                   <strong>Content for dark section</strong>
                   <br />
                   This is the dark section with color oklch(23.4% 0.013 20).

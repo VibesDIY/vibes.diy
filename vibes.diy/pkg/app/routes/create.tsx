@@ -13,6 +13,7 @@ import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { NeedsLoginModal } from "../components/NeedsLoginModal.js";
+import { HomeScreen } from "../pages/index.js";
 
 export function meta() {
   return [
@@ -306,99 +307,102 @@ export default function Create() {
     return <Outlet />;
   }
 
-  return (
-    <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
-      <div className="flex items-start justify-center p-4">
-        <div
-          style={{
-            maxWidth: "800px",
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-          }}
-        >
-          <BrutalistCard size="lg">
-            <h1 className="text-4xl font-bold">Vibes are for sharing</h1>
-          </BrutalistCard>
+  // Temporarily return HomeScreen
+  return <HomeScreen />;
 
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <VibesButton
-              variant="primary"
-              style={{ flex: "1" }}
-              onClick={() => setPromptText(partyPlannerPrompt)}
-            >
-              Party Planner
-            </VibesButton>
-            <VibesButton
-              variant="secondary"
-              style={{ flex: "1" }}
-              onClick={() => setPromptText(progressTrackerPrompt)}
-            >
-              Progress Tracker
-            </VibesButton>
-            <VibesButton
-              variant="tertiary"
-              style={{ flex: "1" }}
-              onClick={() => setPromptText(jamSessionPrompt)}
-            >
-              Jam Session
-            </VibesButton>
-          </div>
+  // return (
+  //   <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
+  //     <div className="flex items-start justify-center p-4">
+  //       <div
+  //         style={{
+  //           maxWidth: "800px",
+  //           width: "100%",
+  //           display: "flex",
+  //           flexDirection: "column",
+  //           gap: "24px",
+  //         }}
+  //       >
+  //         <BrutalistCard size="lg">
+  //           <h1 className="text-4xl font-bold">Vibes are for sharing</h1>
+  //         </BrutalistCard>
 
-          <BrutalistCard size="md" style={{ width: "100%" }}>
-            <div style={{ marginBottom: "12px", fontWeight: 600 }}>
-              Describe your vibe
-            </div>
-            <textarea
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              placeholder="What do you want to build..."
-              rows={6}
-              style={{
-                width: "100%",
-                border: "none",
-                background: "transparent",
-                color: "inherit",
-                fontSize: "inherit",
-                fontWeight: "inherit",
-                letterSpacing: "inherit",
-                padding: "4px",
-                resize: "vertical",
-                fontFamily: "inherit",
-              }}
-            />
-          </BrutalistCard>
+  //         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+  //           <VibesButton
+  //             variant="primary"
+  //             style={{ flex: "1" }}
+  //             onClick={() => setPromptText(partyPlannerPrompt)}
+  //           >
+  //             Party Planner
+  //           </VibesButton>
+  //           <VibesButton
+  //             variant="secondary"
+  //             style={{ flex: "1" }}
+  //             onClick={() => setPromptText(progressTrackerPrompt)}
+  //           >
+  //             Progress Tracker
+  //           </VibesButton>
+  //           <VibesButton
+  //             variant="tertiary"
+  //             style={{ flex: "1" }}
+  //             onClick={() => setPromptText(jamSessionPrompt)}
+  //           >
+  //             Jam Session
+  //           </VibesButton>
+  //         </div>
 
-          {/* Streaming Display Section */}
-          {sessionId && (
-            <CreateWithStreaming
-              sessionId={sessionId}
-              promptText={promptText}
-              onNavigateToPreview={handleNavigateToPreview}
-            />
-          )}
+  //         <BrutalistCard size="md" style={{ width: "100%" }}>
+  //           <div style={{ marginBottom: "12px", fontWeight: 600 }}>
+  //             Describe your vibe
+  //           </div>
+  //           <textarea
+  //             value={promptText}
+  //             onChange={(e) => setPromptText(e.target.value)}
+  //             placeholder="What do you want to build..."
+  //             rows={6}
+  //             style={{
+  //               width: "100%",
+  //               border: "none",
+  //               background: "transparent",
+  //               color: "inherit",
+  //               fontSize: "inherit",
+  //               fontWeight: "inherit",
+  //               letterSpacing: "inherit",
+  //               padding: "4px",
+  //               resize: "vertical",
+  //               fontFamily: "inherit",
+  //             }}
+  //           />
+  //         </BrutalistCard>
 
-          <VibesButton
-            variant="primary"
-            style={{ width: "200px" }}
-            onClick={handleLetsGo}
-            disabled={!!sessionId}
-          >
-            {sessionId ? "Generating..." : "Let's Go"}
-          </VibesButton>
+  //         {/* Streaming Display Section */}
+  //         {sessionId && (
+  //           <CreateWithStreaming
+  //             sessionId={sessionId}
+  //             promptText={promptText}
+  //             onNavigateToPreview={handleNavigateToPreview}
+  //           />
+  //         )}
 
-          <a
-            href="/"
-            style={{ textAlign: "right", textDecoration: "underline" }}
-          >
-            Learn
-          </a>
-        </div>
-      </div>
+  //         <VibesButton
+  //           variant="primary"
+  //           style={{ width: "200px" }}
+  //           onClick={handleLetsGo}
+  //           disabled={!!sessionId}
+  //         >
+  //           {sessionId ? "Generating..." : "Let's Go"}
+  //         </VibesButton>
 
-      {/* Login modal - appears when needsLogin is true */}
-      <NeedsLoginModal />
-    </div>
-  );
+  //         <a
+  //           href="/"
+  //           style={{ textAlign: "right", textDecoration: "underline" }}
+  //         >
+  //           Learn
+  //         </a>
+  //       </div>
+  //     </div>
+
+  //     {/* Login modal - appears when needsLogin is true */}
+  //     <NeedsLoginModal />
+  //   </div>
+  // );
 }

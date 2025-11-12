@@ -8,7 +8,6 @@ import {
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
-import { HomeScreen } from "../pages/index.ts";
 
 export function meta() {
   return [
