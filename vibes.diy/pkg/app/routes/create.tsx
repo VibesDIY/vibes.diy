@@ -192,6 +192,7 @@ function CreateWithStreaming({
 
 export default function Create() {
   const [promptText, setPromptText] = useState("");
+  const [pendingSubmit, setPendingSubmit] = useState(false);
   const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -208,6 +209,38 @@ export default function Create() {
   // Check if we're on the preview route
   const isPreviewRoute = location.pathname.endsWith("/preview");
 
+  // Auto-submit after successful login
+  useEffect(() => {
+    if (pendingSubmit && isAuthenticated) {
+      console.log("User authenticated, auto-submitting pending request");
+      setPendingSubmit(false);
+
+      if (promptText.trim() && !sessionId) {
+        const createSession = async () => {
+          const sessionDoc: CreateSessionDoc = {
+            type: "create-session",
+            prompt: promptText.trim(),
+            created_at: Date.now(),
+          };
+
+          const result = await database.put(sessionDoc);
+          const newSessionId = result.id;
+          console.log("Auto-created session with ID:", newSessionId);
+
+          navigate(`/create/${newSessionId}`);
+        };
+        createSession();
+      }
+    }
+  }, [
+    pendingSubmit,
+    isAuthenticated,
+    promptText,
+    sessionId,
+    database,
+    navigate,
+  ]);
+
   const handleLetsGo = async () => {
     console.log("=== handleLetsGo called ===");
     console.log("isAuthenticated:", isAuthenticated);
@@ -216,7 +249,10 @@ export default function Create() {
 
     // Check authentication before proceeding
     if (!isAuthenticated) {
-      console.log("Not authenticated, triggering login modal");
+      console.log(
+        "Not authenticated, triggering login modal and marking as pending submit",
+      );
+      setPendingSubmit(true); // Mark that we want to submit after login
       setNeedsLogin(true); // Triggers NeedsLoginModal
       return;
     }
@@ -240,7 +276,12 @@ export default function Create() {
       console.log("Navigating to:", `/create/${newSessionId}`);
       navigate(`/create/${newSessionId}`);
     } else {
-      console.log("Skipping session creation - promptText:", promptText, "sessionId:", sessionId);
+      console.log(
+        "Skipping session creation - promptText:",
+        promptText,
+        "sessionId:",
+        sessionId,
+      );
     }
   };
 
