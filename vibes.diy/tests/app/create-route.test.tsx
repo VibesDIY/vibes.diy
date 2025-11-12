@@ -20,6 +20,15 @@ vi.mock("react-router", () => ({
   Outlet: () => <div data-testid="outlet">Outlet</div>,
 }));
 
+// Mock useAuth
+const mockSetNeedsLogin = vi.fn();
+vi.mock("~/vibes.diy/app/contexts/AuthContext.js", () => ({
+  useAuth: () => ({
+    isAuthenticated: true, // Default to authenticated for tests
+    setNeedsLogin: mockSetNeedsLogin,
+  }),
+}));
+
 // Mock use-fireproof - preserve all other exports
 const mockPut = vi.fn();
 const mockDatabase = { put: mockPut };
