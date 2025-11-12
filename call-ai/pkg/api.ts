@@ -23,58 +23,31 @@ import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 
 // Centralized header name for Vibes auth
-const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
+export const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
 
 // Storage keys for authentication tokens
-const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const;
-const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const;
+const VIBES_API_AUTH_TOKEN_KEY = "vibes-api-auth-token" as const; // For API auth from parent window
+const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const; // For Fireproof sync token
+const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const; // Legacy vibes.diy key
 
 /**
  * Get the Vibes authentication token from localStorage (browser only)
- * Checks both the new use-vibes key and legacy vibes.diy key for compatibility
+ * Checks API token key first, then Fireproof sync key, then legacy key
  * @returns The auth token if available, undefined otherwise
  */
-function getVibesAuthToken(): string | undefined {
+export function getVibesAuthToken(): string | undefined {
   if (typeof localStorage === "undefined") {
     return undefined;
   }
   try {
-    // Check new use-vibes key first, fall back to legacy vibes.diy key
-    return localStorage.getItem(VIBES_AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_AUTH_TOKEN_KEY) || undefined;
-  } catch {
+    // Check API auth key first (from parent window), then sync key, then legacy key
+    const apiToken = localStorage.getItem(VIBES_API_AUTH_TOKEN_KEY);
+    const newToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
+    const legacyToken = localStorage.getItem(LEGACY_AUTH_TOKEN_KEY);
+    return apiToken || newToken || legacyToken || undefined;
+  } catch (e) {
     return undefined;
   }
-}
-
-/**
- * Enhance CallAI options with Vibes authentication headers when available
- * This provides transparent authentication for apps running on vibesdiy.net
- * @param options Original CallAI options
- * @returns Enhanced options with auth headers if available
- */
-function enhanceWithVibesAuth(options: CallAIOptions): CallAIOptions {
-  const authToken = getVibesAuthToken();
-
-  console.log("🔍 [call-ai] enhanceWithVibesAuth - Reading auth token from localStorage");
-  console.log("🔍 [call-ai] Token found:", authToken ? `${authToken.substring(0, 20)}...` : "NOT FOUND");
-
-  if (!authToken) {
-    console.log("🔍 [call-ai] No auth token found, returning options unchanged");
-    return options;
-  }
-
-  // Normalize to Headers for robust, case-insensitive behavior across all HeadersInit shapes
-  const headers = new Headers(options.headers as HeadersInit | undefined);
-
-  // Respect any caller-provided token, regardless of header casing
-  if (headers.has(VIBES_AUTH_HEADER)) {
-    console.log("🔍 [call-ai] X-VIBES-Token already set by caller, skipping");
-    return options;
-  }
-
-  console.log("🔍 [call-ai] Setting X-VIBES-Token header");
-  headers.set(VIBES_AUTH_HEADER, authToken);
-  return { ...options, headers };
 }
 
 // Key management is now imported from ./key-management
@@ -110,34 +83,31 @@ const FALLBACK_MODEL = "openrouter/auto";
  *          The AsyncGenerator yields partial responses as they arrive.
  */
 export function callAi(prompt: string | Message[], options: CallAIOptions = {}): Promise<string | StreamResponse> {
-  // Enhance options with Vibes authentication if available (browser environments only)
-  const enhancedOptions = enhanceWithVibesAuth(options);
-
   // Check if we need to force streaming based on model strategy
-  const schemaStrategy = chooseSchemaStrategy(enhancedOptions.model, enhancedOptions.schema || null);
+  const schemaStrategy = chooseSchemaStrategy(options.model, options.schema || null);
 
   // We no longer set a default maxTokens
   // Will only include max_tokens in the request if explicitly set by the user
 
   // Handle special case: Claude with tools requires streaming
-  if (!enhancedOptions.stream && schemaStrategy.shouldForceStream) {
+  if (!options.stream && schemaStrategy.shouldForceStream) {
     // Buffer streaming results into a single response
-    return bufferStreamingResults(prompt, enhancedOptions);
+    return bufferStreamingResults(prompt, options);
   }
 
   // Handle normal non-streaming mode
-  if (enhancedOptions.stream !== true) {
-    return callAINonStreaming(prompt, enhancedOptions);
+  if (options.stream !== true) {
+    return callAINonStreaming(prompt, options);
   }
 
   // Handle streaming mode - return a Promise that resolves to an AsyncGenerator
   // but also supports legacy non-awaited usage for backward compatibility
   const streamPromise = (async () => {
     // Do setup and validation before returning the generator
-    const { endpoint, requestOptions, model, schemaStrategy } = prepareRequestParams(prompt, { ...enhancedOptions, stream: true });
+    const { endpoint, requestOptions, model, schemaStrategy } = prepareRequestParams(prompt, { ...options, stream: true });
 
     // Use either explicit debug option or global debug flag
-    const debug = enhancedOptions.debug || globalDebug;
+    const debug = options.debug || globalDebug;
     if (debug) {
       console.log(`[callAi:${PACKAGE_VERSION}] Making fetch request to: ${endpoint}`);
       console.log(`[callAi:${PACKAGE_VERSION}] With model: ${model}`);
@@ -146,8 +116,8 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
 
     let response;
     try {
-      response = await callAiFetch(enhancedOptions)(endpoint, requestOptions);
-      if (enhancedOptions.debug) {
+      response = await callAiFetch(options)(endpoint, requestOptions);
+      if (options.debug) {
         console.log(`[callAi:${PACKAGE_VERSION}] Fetch completed with status:`, response.status, response.statusText);
 
         // Log all headers
@@ -451,20 +421,12 @@ function prepareRequestParams(
   //   ? process.env.CALLAI_CHAT_URL
   //   : null);
 
-  console.log("🔍 [call-ai] Determining endpoint:");
-  console.log("🔍 [call-ai]   options.endpoint:", options.endpoint || "NOT SET");
-  console.log("🔍 [call-ai]   options.chatUrl:", options.chatUrl || "NOT SET");
-  console.log("🔍 [call-ai]   callAiEnv.def.CALLAI_CHAT_URL:", callAiEnv.def.CALLAI_CHAT_URL || "NOT SET");
-  console.log("🔍 [call-ai]   customChatOrigin:", customChatOrigin || "NOT SET");
-
   // Use custom origin or default OpenRouter URL
   const endpoint =
     options.endpoint ||
     (customChatOrigin
       ? joinUrlParts(customChatOrigin, "/api/v1/chat/completions")
       : "https://openrouter.ai/api/v1/chat/completions");
-
-  console.log("🔍 [call-ai] Final endpoint:", endpoint);
 
   // Handle both string prompts and message arrays for backward compatibility
   const messages: Message[] = Array.isArray(prompt) ? prompt : [{ role: "user", content: prompt }];
@@ -474,6 +436,9 @@ function prepareRequestParams(
     model,
     messages,
     stream: options.stream !== undefined ? options.stream : false,
+    provider: {
+      sort: "latency",
+    },
   };
 
   // Only include temperature if explicitly set
@@ -515,6 +480,12 @@ function prepareRequestParams(
     "HTTP-Referer": options.referer || "https://vibes.diy",
     "X-Title": options.title || "Vibes",
   });
+
+  // Add Vibes authentication token if available (late binding for vibesdiy.net apps)
+  const authToken = getVibesAuthToken();
+  if (authToken && !headers.has(VIBES_AUTH_HEADER)) {
+    headers.set(VIBES_AUTH_HEADER, authToken);
+  }
 
   if (options.headers) {
     const extra = new Headers(options.headers as HeadersInit);

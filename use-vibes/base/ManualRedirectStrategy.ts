@@ -1,7 +1,10 @@
+// Manual redirect strategy for Fireproof authentication
 import type { Logger } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import type { ToCloudOpts, TokenAndClaims } from '@fireproof/core-types-protocols-cloud';
 import { RedirectStrategy } from 'use-fireproof';
+import { AUTH_OVERLAY_READY_EVENT, AUTH_OVERLAY_HIDDEN_CLASS } from './events.js';
+import type { AuthOverlayReadyDetail } from './events.js';
 
 interface BuildURIBuilder {
   from: (uri: string) => URLBuilder;
@@ -12,16 +15,74 @@ interface URLBuilder {
   toString: () => string;
 }
 
-// Generate ledger name combining origin and database name
+// Extend globalThis to include our custom properties
+declare global {
+  var VIBE_UUID: string | undefined;
+  var VIBE_TITLE_ID: string | undefined;
+}
+
+// Generate ledger name combining titleId, installId, and database name
 function generateLedgerName(dbName: string): string {
-  // Sanitize origin: replace non-alphanumeric with hyphens
+  // Prefer explicit instance UUID when available (iframe runner sets this)
+  // VIBE_UUID now contains the full _id in format: ${titleId}-${installId}
+  if (typeof globalThis !== 'undefined' && globalThis.VIBE_UUID) {
+    // Use the full UUID (titleId-installId) plus dbName
+    const safeUuid = String(globalThis.VIBE_UUID).replace(/[^a-z0-9-]/gi, '-');
+    const safeDb = String(dbName).replace(/[^a-z0-9-]/gi, '-');
+    return `${safeUuid}-${safeDb}`;
+  }
+
+  // Fallback to origin-based naming for direct hosting (when not in iframe)
   const origin =
     typeof window !== 'undefined'
       ? window.location.origin.replace(/[^a-z0-9]/gi, '-')
       : 'unknown-origin';
+  const safeDb = String(dbName).replace(/[^a-z0-9-]/gi, '-');
+  return `${origin}-${safeDb}`;
+}
 
-  // Combine origin + database name
-  return `${origin}-${dbName}`;
+// Parse JWT token to extract claims
+function parseJWT(token: string): unknown {
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return undefined;
+    }
+
+    // Decode the payload (second part)
+    const payload = parts[1];
+    // Replace URL-safe characters and add padding if needed
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedBase64 = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+
+    // Decode base64
+    const jsonString = atob(paddedBase64);
+    return JSON.parse(jsonString);
+  } catch {
+    return undefined;
+  }
+}
+
+// Check if JWT token is expired
+export function isJWTExpired(token: string): boolean {
+  try {
+    const claims = parseJWT(token) as { exp?: number };
+    if (!claims || typeof claims.exp !== 'number') {
+      // No expiration claim, assume expired for safety
+      return true;
+    }
+
+    // exp is in seconds, Date.now() is in milliseconds
+    const expirationTime = claims.exp * 1000;
+    const currentTime = Date.now();
+
+    // Add a 60-second buffer to avoid edge cases
+    return currentTime >= expirationTime - 60000;
+  } catch {
+    // Parse error, assume expired
+    return true;
+  }
 }
 
 export class ManualRedirectStrategy extends RedirectStrategy {
@@ -33,6 +94,19 @@ export class ManualRedirectStrategy extends RedirectStrategy {
   readonly hash = (): string => {
     return 'manual-redirect-strategy';
   };
+
+  // Public method to set an external token (e.g., from localStorage)
+  setToken(token: string): void {
+    // Parse JWT to extract claims
+    const claims = parseJWT(token) as TokenAndClaims['claims'];
+
+    // Set the parent class's currentToken property
+    // Using type assertion to access private property
+    (this as unknown as { currentToken?: TokenAndClaims }).currentToken = {
+      token,
+      claims,
+    };
+  }
 
   constructor(opts: { overlayHtml?: (url: string) => string; overlayCss?: string } = {}) {
     // Create custom CSS for subtle bottom slide-up
@@ -50,6 +124,11 @@ export class ManualRedirectStrategy extends RedirectStrategy {
         z-index: 9999;
         animation: slideUp 0.3s ease-out;
         pointer-events: none; /* Allow clicking through the overlay container */
+      }
+      
+      /* Hidden/minimized state toggled from outside */
+      .fpOverlay.${AUTH_OVERLAY_HIDDEN_CLASS} {
+        display: none !important;
       }
       
       .fpOverlay[style*="block"] {
@@ -189,7 +268,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
     deviceId: string,
     opts: ToCloudOpts
   ): Promise<TokenAndClaims | undefined> {
-    // First check if a token already exists from a previous session
+    // Check if a token already exists (either set via setToken() or from previous session)
     const existingToken = await super.tryToken(sthis, logger, opts);
     if (existingToken) {
       // Token exists, return it immediately
@@ -261,7 +340,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
 
     // Find the link in the overlay and update its click handler
     const authLink = this.overlayNode.querySelector('a[href]') as HTMLAnchorElement;
-    console.log(authLink);
+    // Remove debug logs in production
     if (authLink) {
       authLink.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -304,6 +383,20 @@ export class ManualRedirectStrategy extends RedirectStrategy {
             this.overlayNode.style.opacity = '0.7';
           }
         }
+      });
+    }
+
+    // Signal that the overlay and click handler are ready (guarded + next frame)
+    if (this.overlayNode) {
+      const overlayEl = this.overlayNode as HTMLElement;
+      const linkEl = overlayEl.querySelector('a[href]') as HTMLAnchorElement | null;
+      // Ensure the node is in the DOM and painted before consumers act
+      requestAnimationFrame(() => {
+        document.dispatchEvent(
+          new CustomEvent<AuthOverlayReadyDetail>(AUTH_OVERLAY_READY_EVENT, {
+            detail: { overlay: overlayEl, authLink: linkEl },
+          })
+        );
       });
     }
   }

@@ -10,7 +10,7 @@ import type {
   ChatMessageDocument,
   UserChatMessage,
 } from "@vibes.diy/prompts";
-import { trackPublishClick } from "~/vibes.diy/app/utils/analytics.js";
+import { trackPublishShared } from "~/vibes.diy/app/utils/analytics.js";
 import type { TokenPayload } from "~/vibes.diy/app/utils/auth.js";
 import { publishApp } from "~/vibes.diy/app/utils/publishUtils.js";
 
@@ -20,7 +20,7 @@ vi.mock("~/vibes.diy/app/utils/publishUtils", () => ({
 }));
 
 vi.mock("~/vibes.diy/app/utils/analytics", () => ({
-  trackPublishClick: vi.fn(),
+  trackPublishShared: vi.fn(),
 }));
 
 // Mock navigation clipboard API
@@ -199,9 +199,9 @@ describe("usePublish Hook", () => {
     // Verify state updates
     expect(result.current.publishedAppUrl).toBe(mockAppUrl);
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(mockAppUrl);
-    expect(trackPublishClick).toHaveBeenCalledWith({
-      publishedAppUrl: mockAppUrl,
-    });
+    expect(trackPublishShared).toHaveBeenCalledWith(
+      expect.objectContaining({ published_url: mockAppUrl }),
+    );
 
     // Verify urlCopied state is set to true initially (the core functionality)
     expect(result.current.urlCopied).toBe(true);

@@ -54,8 +54,7 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
     window.addEventListener('message', handleMessage);
 
     // Set iframe source
-    const iframeUrl = baseUrl || `https://${effectiveSessionId}.vibesbox.dev/`;
-    iframe.src = iframeUrl;
+    iframe.src = baseUrl || `https://${effectiveSessionId}.vibesbox.dev/`;
 
     // Handle iframe load
     const handleIframeLoad = () => {
@@ -66,9 +65,13 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
       const transformedCode = transformImports(normalizedCode);
 
       // Get auth token from localStorage for API authentication
+      // Check both new and legacy token keys for compatibility
       let authToken: string | undefined;
       try {
-        authToken = localStorage.getItem('vibes-diy-auth-token') || undefined;
+        authToken =
+          localStorage.getItem('vibes-diy-auth-token') ||
+          localStorage.getItem('auth_token') ||
+          undefined;
       } catch {
         // Ignore localStorage errors (privacy mode, SSR, etc.)
       }

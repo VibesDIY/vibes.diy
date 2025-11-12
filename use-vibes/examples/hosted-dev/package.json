@@ -17,19 +17,20 @@
     "serve": "serve -s dist"
   },
   "dependencies": {
-    "react": ">=19.1.0",
-    "react-dom": ">=19.1.0",
-    "use-vibes": "workspace:*",
-    "call-ai": "workspace:*"
+    "call-ai": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "use-vibes": "workspace:*"
   },
   "devDependencies": {
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/browser-playwright": "^4.0.2",
     "prettier": "^3.6.2",
     "serve": "^14.2.5",
     "typescript": "~5.9.3",
-    "vite": "^7.1.9",
-    "vitest": "^3.2.4"
+    "vite": "^7.1.12",
+    "vitest": "^4.0.2"
   }
 }

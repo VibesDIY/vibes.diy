@@ -1,4 +1,4 @@
-import { Bool, OpenAPIRoute } from "chanfana";
+import { Bool, OpenAPIRoute, contentJson } from "chanfana";
 
 import { Context } from "hono";
 import { z } from "zod";
@@ -40,41 +40,38 @@ async function processScreenshot(
   }
 }
 
+// Request body schema for app creation
+const AppCreateRequestSchema = z.object({
+  chatId: z.string(),
+  userId: z.string().optional(),
+  code: z.string().optional(),
+  raw: z.string().optional(),
+  prompt: z.string().optional(),
+  title: z.string().optional(),
+  screenshot: z.string().nullable().optional(), // base64 encoded image
+  remixOf: z.string().nullable().optional(), // slug of the original app if this is a remix
+  shareToFirehose: z.boolean().optional(), // whether to post to Bluesky
+  customDomain: z.string().nullable().optional(), // custom domain for the app
+});
+
+type AppCreateRequest = z.infer<typeof AppCreateRequestSchema>;
+
 export class AppCreate extends OpenAPIRoute {
   schema = {
     tags: ["Apps"],
     summary: "Create a new App",
     request: {
-      body: {
-        content: {
-          "application/json": {
-            schema: z.object({
-              chatId: z.string(),
-              userId: z.string().optional(),
-              code: z.string().optional(),
-              raw: z.string().optional(),
-              prompt: z.string().optional(),
-              title: z.string().optional(),
-              screenshot: z.string().nullable().optional(), // base64 encoded image
-              remixOf: z.string().nullable().optional(), // slug of the original app if this is a remix
-              shareToFirehose: z.boolean().optional(), // whether to post to Bluesky
-              customDomain: z.string().nullable().optional(), // custom domain for the app
-            }),
-          },
-        },
-      },
+      body: contentJson(AppCreateRequestSchema),
     },
     responses: {
       "200": {
         description: "Returns the created app",
-        content: {
-          "application/json": {
-            schema: z.object({
-              success: Bool(),
-              app: App,
-            }),
-          },
-        },
+        ...contentJson(
+          z.object({
+            success: Bool(),
+            app: App,
+          }),
+        ),
       },
     },
   };
@@ -96,8 +93,8 @@ export class AppCreate extends OpenAPIRoute {
     // Get validated data
     const data = await this.getValidatedData<typeof this.schema>();
 
-    // Retrieve the validated request body
-    const app = data.body;
+    // Retrieve the validated request body with proper type
+    const app = data.body as unknown as AppCreateRequest;
 
     // const codeToSave = app.code || normalizeRawCode(app.raw);
 

@@ -65,17 +65,15 @@ describe("Image Generation Integration Tests", () => {
 
     // Verify the request was made correctly
     expect(globalFetch).toHaveBeenCalledTimes(1);
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.stringMatching(/.*\/api\/openai-image\/generate$/),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer VIBES_DIY",
-          "Content-Type": "application/json",
-        }),
-        body: expect.any(String),
-      }),
-    );
+    const fetchCall = globalFetch.mock.calls[0];
+    expect(fetchCall[0]).toMatch(/.*\/api\/openai-image\/generate$/);
+    expect(fetchCall[1]?.method).toBe("POST");
+    expect(fetchCall[1]?.headers).toBeInstanceOf(Headers);
+    expect((fetchCall[1]?.headers as Headers).get("Authorization")).toBe("Bearer VIBES_DIY");
+    expect((fetchCall[1]?.headers as Headers).get("Content-Type")).toBe("application/json");
+    // Ensure token header is absent by default
+    expect((fetchCall[1]?.headers as Headers).has("X-VIBES-Token")).toBe(false);
+    expect(typeof fetchCall[1]?.body).toBe("string");
 
     // Verify request body content
     const mockCall = globalFetch.mock.calls[0];
@@ -122,17 +120,81 @@ describe("Image Generation Integration Tests", () => {
 
     // Verify the request was made correctly
     expect(globalFetch).toHaveBeenCalledTimes(1);
-    expect(globalFetch).toHaveBeenCalledWith(
-      expect.stringMatching(/.*\/api\/openai-image\/edit$/),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer VIBES_DIY",
-        }),
-        body: expect.any(FormData),
-      }),
-    );
+    const fetchCall = globalFetch.mock.calls[0];
+    expect(fetchCall[0]).toMatch(/.*\/api\/openai-image\/edit$/);
+    expect(fetchCall[1]?.method).toBe("POST");
+    expect(fetchCall[1]?.headers).toBeInstanceOf(Headers);
+    expect((fetchCall[1]?.headers as Headers).get("Authorization")).toBe("Bearer VIBES_DIY");
+    // Ensure token header is absent by default
+    expect((fetchCall[1]?.headers as Headers).has("X-VIBES-Token")).toBe(false);
+    expect(fetchCall[1]?.body).toBeInstanceOf(FormData);
 
     console.log("Image editing test completed successfully");
+  });
+
+  it("adds X-VIBES-Token when localStorage token is set (generate)", async () => {
+    globalFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: vi.fn().mockResolvedValue(mockImageResponse),
+      text: vi.fn().mockResolvedValue(JSON.stringify(mockImageResponse)),
+      headers: HttpHeader.from({ "Content-Type": "application/json" }).AsHeaders(),
+    } as unknown as Response);
+
+    const token = "token-abc";
+    const mockLocalStorage = {
+      getItem: vi.fn((key: string) => (key === "vibes-diy-auth-token" ? token : null)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    } as unknown as Storage;
+    const originalLocalStorage = (globalThis as { localStorage?: Storage }).localStorage;
+    try {
+      Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
+
+      const result = await imageGen("prompt", { apiKey: "VIBES_DIY" });
+      expect(result).toBeDefined();
+
+      const fetchCall = globalFetch.mock.calls[0];
+      const headers = fetchCall[1]?.headers as Headers;
+      expect(headers).toBeInstanceOf(Headers);
+      expect(headers.get("X-VIBES-Token")).toBe(token);
+    } finally {
+      Object.defineProperty(globalThis, "localStorage", { value: originalLocalStorage, writable: true, configurable: true });
+    }
+  });
+
+  it("adds X-VIBES-Token when localStorage token is set (edit)", async () => {
+    globalFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: vi.fn().mockResolvedValue(mockImageResponse),
+      text: vi.fn().mockResolvedValue(JSON.stringify(mockImageResponse)),
+      headers: HttpHeader.from({ "Content-Type": "application/json" }).AsHeaders(),
+    } as unknown as Response);
+
+    const token = "token-def";
+    const mockLocalStorage = {
+      getItem: vi.fn((key: string) => (key === "vibes-diy-auth-token" ? token : null)),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    } as unknown as Storage;
+    const originalLocalStorage = (globalThis as { localStorage?: Storage }).localStorage;
+    try {
+      Object.defineProperty(globalThis, "localStorage", { value: mockLocalStorage, writable: true, configurable: true });
+
+      const mockImageBlob = new Blob(["fake"], { type: "image/png" });
+      const files = [new File([mockImageBlob], "a.png", { type: "image/png" })];
+      const result = await imageGen("prompt", { apiKey: "VIBES_DIY", images: files });
+      expect(result).toBeDefined();
+
+      const fetchCall = globalFetch.mock.calls[0];
+      const headers = fetchCall[1]?.headers as Headers;
+      expect(headers).toBeInstanceOf(Headers);
+      expect(headers.get("X-VIBES-Token")).toBe(token);
+    } finally {
+      Object.defineProperty(globalThis, "localStorage", { value: originalLocalStorage, writable: true, configurable: true });
+    }
   });
 });

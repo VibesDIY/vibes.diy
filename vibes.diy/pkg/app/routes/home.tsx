@@ -58,6 +58,13 @@ export default function SessionWrapper() {
     () => urlSessionId || null,
   );
 
+  // Keep local state in sync with the URL when params change after navigation
+  useEffect(() => {
+    if (urlSessionId !== sessionId) {
+      setSessionId(urlSessionId ?? null);
+    }
+  }, [urlSessionId, sessionId]);
+
   const handleSessionCreate = (newSessionId: string) => {
     setSessionId(newSessionId);
   };
@@ -65,7 +72,8 @@ export default function SessionWrapper() {
   // Handle prompt query parameter forwarding for root page
   useEffect(() => {
     // Only handle forwarding when on root page (no sessionId) and there's a prompt query
-    if (!urlSessionId && search) {
+    // Guard against duplicate navigations by checking local sessionId state
+    if (!urlSessionId && !sessionId && search) {
       const searchParams = new URLSearchParams(search);
       const promptParam = searchParams.get("prompt");
 
@@ -88,21 +96,27 @@ export default function SessionWrapper() {
         // Forward to the new chat session URL with all parameters
         const targetUrl = `/chat/${newSessionId}/${encodedPromptTitle}?${forwardParams.toString()}`;
 
-        // Use window.location to trigger a real page load instead of React Router navigation
-        window.location.href = targetUrl;
+        // Set local state so render is consistent until the router updates params
+        setSessionId(newSessionId);
+
+        // Use React Router navigation to avoid hook count mismatch errors
+        // Preserve browser history (no replace) to maintain back-button behavior
+        navigate(targetUrl);
       }
     }
   }, [urlSessionId, search, navigate]);
 
   // Conditional rendering - true deferred session creation
-  if (!sessionId) {
-    return <HomeScreen />;
-    // return <NewSessionView onSessionCreate={handleSessionCreate} />;
+  // Use either the URL param or local state during the initial transition
+  const effectiveSessionId = urlSessionId ?? sessionId;
+
+  if (!effectiveSessionId) {
+    return <NewSessionView onSessionCreate={handleSessionCreate} />;
   }
 
   return (
     <SessionView
-      sessionId={sessionId}
+      sessionId={effectiveSessionId}
       pathname={pathname}
       search={search}
       locationState={locationState}

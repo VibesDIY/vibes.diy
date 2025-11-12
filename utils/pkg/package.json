@@ -22,11 +22,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "jose": "^5.9.6",
+    "jose": "^6.1.0",
     "multiformats": "^13.4.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.14",
+    "@fireproof/core-cli": "^0.23.15",
+    "@vitest/browser-playwright": "^4.0.2",
     "typescript": "^5.7.2"
   }
 }

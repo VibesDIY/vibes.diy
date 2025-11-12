@@ -21,16 +21,17 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@vibes.diy/prompts": "workspace:*",
-    "@vibes.diy/utils": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
+    "@vibes.diy/utils": "workspace:*",
     "call-ai": "workspace:*",
-    "hono": "^4.6.6",
     "chanfana": "^2.1.4",
-    "zod": "^4.1.12",
-    "unique-names-generator": "^4.7.1"
+    "hono": "^4.10.2",
+    "unique-names-generator": "^4.7.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.14",
+    "@fireproof/core-cli": "^0.23.15",
+    "@vitest/browser-playwright": "^4.0.2",
     "typescript": "^5.9.3"
   }
 }

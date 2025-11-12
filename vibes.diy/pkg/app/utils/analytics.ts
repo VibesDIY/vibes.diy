@@ -1,13 +1,29 @@
-import ReactGA from "react-ga";
-import { VibesDiyEnv } from "../config/env.js";
+import { gtmPush } from "./gtm.js";
+
+// Lightweight GTM/dataLayer helpers. We push analytics events to
+// window.dataLayer so GTM can fan them out to GA4, Mixpanel, HubSpot, etc.
+// No client-side secrets are used here.
+
+type DataLayerEvent = Record<string, unknown> & { event?: string };
+
+export function hasConsent(): boolean {
+  if (typeof document === "undefined") return false;
+  try {
+    const m = document.cookie.match(
+      /(?:^|; )cookieConsent=(true|false)(?:;|$)/,
+    );
+    return m?.[1] === "true";
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Initialize Google Analytics
  */
 export function initGA() {
-  if (VibesDiyEnv.GA_TRACKING_ID()) {
-    ReactGA.initialize(VibesDiyEnv.GA_TRACKING_ID());
-  }
+  // GA is managed via GTM. Nothing to do here, but keep function
+  // to avoid changing call sites.
 }
 
 /**
@@ -15,9 +31,13 @@ export function initGA() {
  * @param path - The page path
  */
 export function pageview(path: string): void {
-  if (VibesDiyEnv.GA_TRACKING_ID()) {
-    ReactGA.send({ hitType: "pageview", page: path });
-  }
+  // Push a GA4-compatible page_view event for SPA route changes
+  gtmPush({
+    event: "page_view",
+    page_path: path,
+    page_location: typeof window !== "undefined" ? window.location.href : path,
+    page_title: typeof document !== "undefined" ? document.title : undefined,
+  });
 }
 
 /**
@@ -33,14 +53,15 @@ export const event = (
   label?: string,
   value?: number,
 ): void => {
-  if (VibesDiyEnv.GA_TRACKING_ID()) {
-    ReactGA.event({
-      category,
-      action,
-      label,
-      value,
-    });
-  }
+  // Backward-compatible wrapper that emits a generic event for GTM
+  const payload: DataLayerEvent = {
+    event: action || category,
+    event_category: category,
+    event_action: action,
+  };
+  if (label) payload.event_label = label;
+  if (typeof value === "number") payload.value = value;
+  gtmPush(payload);
 };
 
 /**
@@ -52,22 +73,9 @@ export const trackEvent = (
   eventName: string,
   eventParams?: Record<string, unknown>,
 ): void => {
-  // Check if gtag is available (script exists and function is defined)
-  if (typeof window === "undefined") return;
-
-  // Check if the script tag exists in the document
-  const hasGTagScript = !!document.querySelector(
-    'script[src*="googletagmanager.com/gtag/js"]',
-  );
-
-  const gtag = (window as { gtag?: (...args: unknown[]) => void }).gtag;
-  // Check if the gtag function is defined
-  const hasGTagFunction = typeof gtag === "function";
-
-  // Only fire the event if both conditions are met (which implies consent was given)
-  if (hasGTagScript && hasGTagFunction) {
-    gtag("event", eventName, eventParams);
-  }
+  if (!hasConsent()) return;
+  // Emit a first-class GTM event
+  gtmPush({ event: eventName, ...(eventParams || {}) });
 };
 
 /**
@@ -77,10 +85,7 @@ export const trackEvent = (
 export const trackAuthClick = (
   additionalParams?: Record<string, unknown>,
 ): void => {
-  trackEvent("auth", {
-    send_to: VibesDiyEnv.GA_TRACKING_ID(),
-    ...additionalParams,
-  });
+  trackEvent("auth_click", additionalParams);
 };
 
 /**
@@ -90,10 +95,17 @@ export const trackAuthClick = (
 export const trackPublishClick = (
   additionalParams?: Record<string, unknown>,
 ): void => {
-  trackEvent("publish", {
-    send_to: VibesDiyEnv.GA_TRACKING_ID(),
-    ...additionalParams,
-  });
+  if (!hasConsent()) return;
+  trackEvent("publish_click", additionalParams);
+};
+
+/**
+ * Track a successful publish (app_shared)
+ * @param params - metadata to include with the event (e.g., published_url, session_id, title, user_id, firehose_shared)
+ */
+export const trackPublishShared = (params?: Record<string, unknown>): void => {
+  if (!hasConsent()) return;
+  trackEvent("app_shared", params);
 };
 
 /**
@@ -105,8 +117,8 @@ export const trackChatInputClick = (
   messageLength: number,
   additionalParams?: Record<string, unknown>,
 ): void => {
-  trackEvent("chat", {
-    send_to: VibesDiyEnv.GA_TRACKING_ID(),
+  if (!hasConsent()) return;
+  trackEvent("chat_input", {
     message_length: messageLength,
     ...additionalParams,
   });
@@ -124,9 +136,18 @@ export const trackErrorEvent = (
   details?: Record<string, unknown>,
 ): void => {
   trackEvent("error", {
-    send_to: VibesDiyEnv.GA_TRACKING_ID(),
     error_type: errorType,
     error_message: message,
     ...details,
   });
 };
+
+/**
+ * Identify the current user for downstream tools.
+ * We never pass PII – just the stable Fireproof userId.
+ */
+export function identifyUser(userId: string) {
+  if (!userId) return;
+  if (!hasConsent()) return;
+  gtmPush({ event: "identify", user_id: userId });
+}

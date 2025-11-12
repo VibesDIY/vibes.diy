@@ -32,7 +32,7 @@ export const getMenuStyle = (): CSSProperties => ({
   bottom: 0,
   left: 0,
   right: 0,
-  zIndex: 5,
+  zIndex: 1000,
   backgroundColor: authWallTheme.colors.menuBg,
   backgroundImage: `
     linear-gradient(${authWallTheme.colors.gridLineColor} 1px, transparent 1px),
@@ -54,7 +54,7 @@ export const getImageContentWrapperStyle = (): CSSProperties => ({
   left: 0,
   right: 0,
   bottom: 0,
-  zIndex: 10,
+  zIndex: 1100,
   overflowY: 'auto',
 });
 
@@ -78,18 +78,6 @@ export const getOverlayStyle = (): CSSProperties => ({
   bottom: 0,
   backdropFilter: 'blur(12px)',
   backgroundColor: 'rgba(255, 255, 255, 0.4)',
-});
-
-export const getFormContainerStyle = (): CSSProperties => ({
-  position: 'relative',
-  background: '#ffffff',
-  border: '3px solid #1a1a1a',
-  borderRadius: '12px',
-  padding: '2rem 3rem',
-  textAlign: 'left',
-  maxWidth: '400px',
-  width: '90%',
-  boxShadow: '6px 6px 0px #1a1a1a',
 });
 
 export const getTitleStyle = (): CSSProperties => ({

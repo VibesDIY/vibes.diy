@@ -60,7 +60,11 @@
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-html,
+html {
+  margin: 0;
+  padding: 0;
+}
+
 body {
   @apply bg-light-background-00 dark:bg-dark-background-00 text-light-primary dark:text-dark-primary;
   margin: 0;
@@ -610,5 +614,101 @@ button:hover .bg-glimmer,
       transparent 12px,
       transparent 24px
     );
+  }
+}
+
+/* Grid background pattern inspired by catalog title page */
+.grid-background {
+  background-color: #d4d4d4;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: scroll;
+}
+
+@media (min-width: 768px) {
+  .grid-background {
+    background-attachment: fixed;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .grid-background {
+    background-color: #2a2a2a;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+  }
+}
+
+/* Page-specific body background for create page */
+.page-grid-background {
+  /* This class on a page root will apply grid to body for over-scroll areas */
+}
+
+body:has(.page-grid-background) {
+  background-color: #d4d4d4;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: scroll;
+}
+
+@media (min-width: 768px) {
+  body:has(.page-grid-background) {
+    background-attachment: fixed;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body:has(.page-grid-background) {
+    background-color: #2a2a2a;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+  }
+}
+
+/* Vibes Login Button - themed button with interactive states */
+.vibes-login-button {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: var(--color-light-background-00);
+  color: var(--color-light-primary);
+  border: 3px solid var(--color-light-primary);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  transform: translate(0px, 0px);
+  box-shadow: 4px 5px 0px 0px #009ace;
+}
+
+.vibes-login-button:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 3px 0px 0px #009ace;
+}
+
+.vibes-login-button:active {
+  transform: translate(4px, 5px);
+  box-shadow: none;
+}
+
+.vibes-login-button:focus-visible {
+  outline: 3px solid #009ace;
+  outline-offset: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibes-login-button {
+    background: var(--color-dark-background-00);
+    color: var(--color-dark-primary);
+    border-color: var(--color-dark-primary);
   }
 }

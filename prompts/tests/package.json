@@ -35,17 +35,18 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@adviser/cement": "^0.4.43",
+    "@adviser/cement": "^0.4.53",
     "@playwright/test": "^1.56.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
-    "@types/node": "^24.7.2",
-    "@types/react": "^19.1.4",
+    "@types/node": "^24.9.1",
+    "@types/react": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/browser": "^3.2.4",
-    "playwright": "^1.56.0",
-    "playwright-chromium": "^1.56.0",
-    "react": ">=19.1.0",
+    "@vitest/browser": "^4.0.2",
+    "@vitest/browser-playwright": "^4.0.2",
+    "playwright": "^1.56.1",
+    "playwright-chromium": "^1.56.1",
+    "react": "^19.2.0",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3",
     "vite-plugin-devtools-json": "^1.0.0",
@@ -59,7 +60,7 @@
     "@tailwindcss/vite": "^4.1.11",
     "@vibes.diy/prompts": "workspace:0.0.0",
     "call-ai": "workspace:0.0.0",
-    "react-dom": ">=19.1.0",
-    "use-fireproof": "^0.23.14"
+    "react-dom": "^19.2.0",
+    "use-fireproof": "^0.23.15"
   }
 }

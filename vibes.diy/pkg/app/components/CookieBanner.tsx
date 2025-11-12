@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
-import { initGA, pageview } from "../utils/analytics.js";
+import { pageview, trackEvent } from "../utils/analytics.js";
+import { initGTM, persistUtmParams } from "../utils/gtm.js";
 import { CookieConsent, getCookieConsentValue } from "react-cookie-consent";
 
 // We'll use any type for dynamic imports to avoid TypeScript errors with the cookie consent component
@@ -40,13 +41,17 @@ export default function CookieBanner() {
     });
   }, []);
 
+  // Persist UTM params as early as possible (storage only)
+  useEffect(() => {
+    persistUtmParams();
+  }, []);
+
   // Check for existing cookie consent
   useEffect(() => {
     if (getXCookieConsentValue) {
       const consentValue = getXCookieConsentValue("cookieConsent");
       if (consentValue === "true") {
         setHasConsent(true);
-        initGA();
       }
     }
   }, [getXCookieConsentValue]);
@@ -58,59 +63,54 @@ export default function CookieBanner() {
     }
   }, [location, hasConsent]);
 
-  // Add GA script if consent is given
+  // Initialize GTM and clean UTM params if consent is given
+  const gtmId = VibesDiyEnv.GTM_CONTAINER_ID();
   useEffect(() => {
-    if (
-      VibesDiyEnv.GA_TRACKING_ID() &&
-      hasConsent &&
-      typeof document !== "undefined"
-    ) {
+    if (gtmId && hasConsent && typeof document !== "undefined") {
       // Opt in to PostHog
       posthog?.opt_in_capturing();
 
-      // Add GA script
-      const script = document.createElement("script");
-      script.async = true;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${VibesDiyEnv.GA_TRACKING_ID()}`;
-      document.head.appendChild(script);
-
-      // Define window.dataLayer with proper TypeScript type
-      interface WindowWithDataLayer extends Window {
-        dataLayer: unknown[];
-        gtag: (...args: unknown[]) => void;
-      }
-
-      const windowWithDataLayer = window as unknown as WindowWithDataLayer;
-      windowWithDataLayer.dataLayer = windowWithDataLayer.dataLayer || [];
-
-      function gtag(...args: unknown[]) {
-        windowWithDataLayer.dataLayer.push(args);
-      }
-
-      windowWithDataLayer.gtag = gtag;
-      gtag("js", new Date());
-      gtag("config", VibesDiyEnv.GA_TRACKING_ID());
+      // Inject GTM (centralized here only)
+      initGTM(gtmId);
 
       if (window.history && window.history.replaceState) {
         const url = new URL(window.location.href);
-        url.searchParams.delete("utm_source");
-        url.searchParams.delete("utm_medium");
-        url.searchParams.delete("utm_campaign");
-        window.history.replaceState(
-          {},
-          document.title,
-          url.pathname + url.hash,
-        );
+        [
+          "utm_source",
+          "utm_medium",
+          "utm_campaign",
+          "utm_term",
+          "utm_content",
+          "fpref",
+        ].forEach((k) => url.searchParams.delete(k));
+        const searchStr = url.searchParams.toString();
+        const newUrl = `${url.pathname}${searchStr ? `?${searchStr}` : ""}${
+          url.hash || ""
+        }`;
+        window.history.replaceState({}, document.title, newUrl);
       }
     }
-  }, [hasConsent, VibesDiyEnv.GA_TRACKING_ID()]);
+  }, [hasConsent, gtmId]);
+
+  // Track cookie banner shown (only once per session when actually rendered)
+  useEffect(() => {
+    // Only track if banner will actually render
+    if (!XCookieConsent || !messageHasBeenSent) {
+      return;
+    }
+
+    if (typeof sessionStorage !== "undefined") {
+      if (!sessionStorage.getItem("cookie_banner_shown")) {
+        trackEvent("cookie_banner_shown");
+        sessionStorage.setItem("cookie_banner_shown", "true");
+      }
+    }
+  }, [XCookieConsent, messageHasBeenSent]);
 
   // Don't render anything if any of these conditions are met:
   // 1. CookieConsent is not loaded
   // 2. No message has been sent yet
-  // 3. Google Analytics ID is not set (making analytics optional)
-  if (!XCookieConsent || !messageHasBeenSent || !VibesDiyEnv.GA_TRACKING_ID())
-    return null;
+  if (!XCookieConsent || !messageHasBeenSent) return null;
 
   return (
     <XCookieConsent
@@ -143,9 +143,11 @@ export default function CookieBanner() {
       expires={365}
       enableDeclineButton
       onAccept={() => {
+        trackEvent("cookie_accept");
         setHasConsent(true);
-        initGA();
-        pageview(location.pathname + location.search);
+      }}
+      onDecline={() => {
+        trackEvent("cookie_decline");
       }}
     >
       This website uses cookies to enhance the user experience and analyze site

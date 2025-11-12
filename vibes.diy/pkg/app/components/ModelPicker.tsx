@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { trackEvent } from "../utils/analytics.js";
 
 export interface ModelOption {
   id: string;
@@ -124,6 +125,7 @@ export default function ModelPicker({
     try {
       setUpdating(true);
       setOpen(false);
+      trackEvent("model_selected", { model: id });
       await Promise.resolve(onModelChange(id));
     } finally {
       setUpdating(false);
@@ -146,10 +148,19 @@ export default function ModelPicker({
         aria-label={
           current?.name ? `AI model: ${current.name}` : "Change AI model"
         }
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          const willOpen = !open;
+          if (willOpen) {
+            trackEvent("model_picker_open");
+          }
+          setOpen(willOpen);
+        }}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
             e.preventDefault();
+            if (!open) {
+              trackEvent("model_picker_open");
+            }
             setOpen(true);
           }
         }}

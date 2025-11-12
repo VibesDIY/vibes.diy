@@ -1,15 +1,14 @@
-import { Str } from "chanfana";
 import { z } from "zod";
 
 const App = z.object({
-  name: Str({ example: "my-awesome-app" }),
-  slug: Str().min(4),
-  code: Str(),
+  name: z.string(),
+  slug: z.string().min(4),
+  code: z.string(),
   raw: z.string().nullable().optional(),
   prompt: z.string().nullable().optional(),
   title: z.string().nullable().optional(),
   templatedCode: z.string().nullable().optional(),
-  chatId: Str(),
+  chatId: z.string(),
   userId: z.string().nullable().optional(),
   email: z.string().nullable().optional(),
   hasScreenshot: z.boolean().nullable().optional(),

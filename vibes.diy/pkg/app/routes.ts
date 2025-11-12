@@ -1,10 +1,11 @@
 import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
-  index("./routes/home.tsx"),
+  index("./routes/create.tsx"),
   // This route is only needed for dev server to prevent 404 flash
-  route("index.html", "./routes/home.tsx", { id: "index-html" }),
+  route("index.html", "./routes/create.tsx", { id: "index-html" }),
 
+  route("chat", "./routes/home.tsx", { id: "chat-home" }),
   route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
   route("chat/:sessionId/:title", "./routes/home.tsx", { id: "chat" }),
   route("chat/:sessionId/:title/app", "./routes/home.tsx", { id: "chat-app" }),
@@ -24,9 +25,18 @@ export default [
 
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
+  route("create", "./routes/create.tsx", { id: "create" }),
+  route("create/:sessionId", "./routes/create.tsx", { id: "create-session" }, [
+    route("preview", "./routes/create.preview.tsx", { id: "create-preview" }),
+  ]),
   route("auth/callback", "./routes/auth-callback.tsx", { id: "auth-callback" }),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
-  route("vibe/:vibeSlug", "./routes/vibe.tsx", { id: "vibe-iframe" }),
+  route("vibe/:titleId/:uuid", "./routes/vibe.$titleId.$uuid.tsx", {
+    id: "vibe-instance-viewer",
+  }),
+  route("vibe/:titleId", "./routes/vibe.$titleId.tsx", {
+    id: "vibe-instances-list",
+  }),
   route("firehose", "./routes/firehose.tsx", { id: "firehose" }),
   route("legal/privacy", "./routes/legal/privacy.tsx", {
     id: "privacy-policy",

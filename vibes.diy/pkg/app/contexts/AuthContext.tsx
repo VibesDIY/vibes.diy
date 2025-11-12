@@ -54,6 +54,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Valid token and payload
         setToken(newToken);
         setUserPayload(payload.payload); // Store the full payload
+
+        // Identity + auth events (GTM)
+        const userId = payload.payload.userId;
+        if (userId && typeof window !== "undefined") {
+          try {
+            const prev = localStorage.getItem("fp_user_id");
+            const isReturning = prev === userId;
+            // Only push if user has granted cookie consent
+            const hasConsentCookie =
+              typeof document !== "undefined" &&
+              /(?:^|; )cookieConsent=(true|false)(?:;|$)/.test(
+                document.cookie,
+              ) &&
+              document.cookie.includes("cookieConsent=true");
+            if (hasConsentCookie) {
+              // Push identity + auth event to dataLayer directly to avoid tight coupling
+              const w = window as unknown as Window & { dataLayer?: unknown[] };
+              w.dataLayer = w.dataLayer || [];
+              w.dataLayer.push({ event: "identify", user_id: userId });
+              w.dataLayer.push({
+                event: isReturning ? "login" : "sign_up",
+                user_id: userId,
+              });
+            }
+            localStorage.setItem("fp_user_id", userId);
+          } catch {
+            // ignore storage errors
+          }
+        }
       } else {
         // Token is invalid or expired
         localStorage.removeItem("auth_token");

@@ -52,6 +52,11 @@ class vibesDiyEnv {
     () => this.env().get("VITE_GOOGLE_ANALYTICS_ID") ?? "",
   );
 
+  // Google Tag Manager
+  readonly GTM_CONTAINER_ID = Lazy(
+    () => this.env().get("VITE_GTM_CONTAINER_ID") ?? "",
+  );
+
   // PostHog
   readonly POSTHOG_KEY = Lazy(() => this.env().get("VITE_POSTHOG_KEY") ?? "");
   readonly POSTHOG_HOST = Lazy(() => this.env().get("VITE_POSTHOG_HOST") ?? "");
@@ -105,6 +110,12 @@ class vibesDiyEnv {
     () =>
       (this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats") +
       getVersionSuffix(),
+  );
+
+  // Vibesbox Worker URL
+  // Default to apex domain for subdomain-based isolation
+  readonly VIBESBOX_BASE_URL = Lazy(
+    () => this.env().get("VITE_VIBESBOX_BASE_URL") ?? "https://vibesbox.dev",
   );
 }
 

@@ -38,10 +38,11 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240925.0",
-    "@types/node": "^24.7.2",
+    "@types/node": "^24.9.1",
+    "@vitest/browser-playwright": "^4.0.2",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.2"
   },
   "engines": {
     "node": ">=20.0.0"

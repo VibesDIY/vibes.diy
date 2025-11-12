@@ -6,10 +6,11 @@ import {
   type VibeDocument,
   type SystemPromptResult,
 } from "@vibes.diy/prompts";
-import { trackChatInputClick } from "../utils/analytics.js";
+import { trackChatInputClick, trackEvent } from "../utils/analytics.js";
 import { parseContent } from "@vibes.diy/prompts";
 import { streamAI } from "../utils/streamHandler.js";
 import { generateTitle } from "../utils/titleGenerator.js";
+import { AUTH_REQUIRED_ERROR } from "../utils/authErrors.js";
 
 export interface SendMessageContext {
   userMessage: ChatMessageDocument;
@@ -127,7 +128,7 @@ export async function sendChatMessage(
     (content) => throttledMergeAiMessage(content),
     currentApiKey,
     userId,
-    // setNeedsLogin,
+    setNeedsLogin,
   )
     .then(async (finalContent) => {
       isProcessingRef.current = true;
@@ -176,6 +177,25 @@ export async function sendChatMessage(
         setPendingAiMessage({ ...aiMessage, _id: id });
         setSelectedResponseId(id);
 
+        // Emit app_created once per session (guard on first AI message id)
+        try {
+          if (aiMessage?.session_id) {
+            const key = `app_created_${aiMessage.session_id}`;
+            const already = sessionStorage.getItem(key);
+            if (!already) {
+              trackEvent("app_created", {
+                session_id: aiMessage.session_id,
+                model: modelToUse,
+                title: vibeDoc?.title || undefined,
+                user_id: userId,
+              });
+              sessionStorage.setItem(key, "1");
+            }
+          }
+        } catch {
+          // ignore storage errors
+        }
+
         // Skip title generation if the response is an error or title was set manually
         const isErrorResponse =
           typeof finalContent === "string" && finalContent.startsWith("Error:");
@@ -202,6 +222,23 @@ export async function sendChatMessage(
     })
     .catch((error) => {
       console.warn("Error in sendMessage:", error);
+
+      // If authentication error, trigger login flow
+      if (error.message === AUTH_REQUIRED_ERROR) {
+        // Force login modal to show (this will work even if local state thinks we're authenticated)
+        setNeedsLogin(true);
+
+        // Clean up state
+        isProcessingRef.current = false;
+        setPendingAiMessage(null);
+        setSelectedResponseId("");
+
+        // Restore the user's input so they can retry after login
+        setInput(promptText);
+        return; // Exit early without saving error to chat
+      }
+
+      // For other errors, clean up as usual
       isProcessingRef.current = false;
       setPendingAiMessage(null);
       setSelectedResponseId("");

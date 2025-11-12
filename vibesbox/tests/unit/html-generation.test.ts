@@ -15,7 +15,6 @@ describe("HTML Generation", () => {
 
       // Check for use-vibes CSS
       expect(html).toContain("use-vibes");
-      expect(html).toContain("ImgGen.css");
 
       // Check for container element
       expect(html).toContain('id="container"');
@@ -97,7 +96,8 @@ describe("HTML Generation", () => {
       const response = await worker.fetch(request);
       const html = await response.text();
 
-      expect(html).toContain("loadVibe");
+      // Wrapper should set up forwarding from parent to inner iframe
+      expect(html).toContain("setupForwarding");
       expect(html).toContain("iframe.contentWindow.postMessage");
       expect(html).toContain("execute-code");
     });

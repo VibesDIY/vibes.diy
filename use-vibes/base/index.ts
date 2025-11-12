@@ -8,7 +8,13 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
-import { ManualRedirectStrategy } from './ManualRedirectStrategy.js';
+import { ManualRedirectStrategy, isJWTExpired } from './ManualRedirectStrategy.js';
+import {
+  VIBES_SYNC_ENABLE_EVENT,
+  VIBES_SYNC_DISABLE_EVENT,
+  VIBES_SYNC_ENABLED_CLASS,
+  VIBES_SYNC_ERROR_EVENT,
+} from './constants.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -37,22 +43,43 @@ function updateBodyClass() {
   );
 
   if (hasAnySyncEnabled) {
-    document.body.classList.add('vibes-connect-true');
+    document.body.classList.add(VIBES_SYNC_ENABLED_CLASS);
   } else {
-    document.body.classList.remove('vibes-connect-true');
+    document.body.classList.remove(VIBES_SYNC_ENABLED_CLASS);
   }
 }
 
-export { fireproof, ImgFile, ManualRedirectStrategy };
+export { fireproof, ImgFile, ManualRedirectStrategy, isJWTExpired };
 
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
 
 // Helper function to create toCloud configuration with ManualRedirectStrategy
 export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+  const strategy = new ManualRedirectStrategy();
+
+  // Check if an external token exists in localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
+      if (externalToken) {
+        // Validate token is not expired before using it
+        if (isJWTExpired(externalToken)) {
+          // Token is expired, remove it from localStorage
+          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
+        } else {
+          // Token is still valid, use it
+          strategy.setToken(externalToken);
+        }
+      }
+    } catch {
+      // Ignore localStorage errors (privacy mode, SSR, etc.)
+    }
+  }
+
   const attachable = originalToCloud({
     ...opts,
-    strategy: new ManualRedirectStrategy(),
+    strategy,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
@@ -64,18 +91,15 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
   // DIAGNOSTIC: Enhanced useFireproof hook entry
-  console.log('[useFireproof] Enhanced hook called with:', nameOrDatabase);
-  console.log('[useFireproof] Import source detection - enhanced version is active');
 
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
 
-  console.log('[useFireproof] Hook instance ID:', instanceId);
-
-  // Get database name for localStorage key
+  // Get database name for tracking purposes
   const dbName =
     typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'default';
-  const syncKey = `fireproof-sync-${dbName}`;
+  // Use global sync key - all databases share the same auth token and sync state
+  const syncKey = 'fireproof-sync-enabled';
 
   // Check if sync was previously enabled (persists across refreshes)
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
@@ -102,14 +126,79 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       result.database
         .attach(cloudConfig)
         .then((attached) => {
+          // Try to access token state (ctx might be a function or object)
+          const ctx = typeof attached?.ctx === 'function' ? attached.ctx() : attached?.ctx;
+
+          // Type assertion for token state access
+          const ctxWithToken = ctx as
+            | { tokenAndClaims?: { state: string; tokenAndClaims?: { token: string } } }
+            | undefined;
+
+          if (ctxWithToken?.tokenAndClaims) {
+            if (
+              ctxWithToken.tokenAndClaims.state === 'ready' &&
+              ctxWithToken.tokenAndClaims.tokenAndClaims?.token
+            ) {
+              localStorage.setItem(
+                VIBES_AUTH_TOKEN_KEY,
+                ctxWithToken.tokenAndClaims.tokenAndClaims.token
+              );
+            }
+          }
+
           setManualAttach({ state: 'attached', attached });
           // Save preference for next refresh
           localStorage.setItem(syncKey, 'true');
         })
         .catch((error) => {
-          console.error('Failed to attach:', error);
           setManualAttach({ state: 'error', error });
+          // Emit a low-noise diagnostic event for observers
+          try {
+            document.dispatchEvent(
+              new CustomEvent(VIBES_SYNC_ERROR_EVENT, { detail: { error, phase: 'attach' } })
+            );
+          } catch {
+            // Ignore when not in a DOM environment
+          }
         });
+
+      // Wait for overlay ready event, then programmatically click the auth link
+      let eventReceived = false;
+
+      const handleOverlayReady = () => {
+        eventReceived = true;
+        clearTimeout(timeoutId);
+
+        // Wait a tiny bit for DOM to be fully interactive
+        setTimeout(() => {
+          const authLink = document.querySelector('.fpOverlay a[href]') as HTMLAnchorElement;
+          if (authLink) {
+            authLink.click();
+
+            // Hide the overlay after clicking since we're opening the popup
+            const overlay = document.querySelector('.fpOverlay') as HTMLElement;
+            if (overlay) {
+              overlay.style.display = 'none';
+            }
+          }
+        }, 100);
+      };
+
+      // Set up event listener
+      document.addEventListener('vibes-auth-overlay-ready', handleOverlayReady, { once: true });
+
+      // Safety timeout in case event never fires (5 seconds)
+      const timeoutId = setTimeout(() => {
+        if (!eventReceived) {
+          document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
+        }
+      }, 5000);
+
+      // Cleanup
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
+      };
     }
   }, [manualAttach, result.database, syncKey, dbName]);
 
@@ -204,26 +293,18 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         try {
           // Store the token for call-ai integration
           localStorage.setItem(VIBES_AUTH_TOKEN_KEY, tokenData.token);
-          console.log(
-            '[useFireproof] Synced Fireproof token to localStorage for call-ai integration'
-          );
-        } catch {
-          // Ignore localStorage errors (privacy mode, SSR, etc.)
-          console.warn(
-            '[useFireproof] Failed to sync auth token to localStorage - storage may be restricted'
-          );
+        } catch (error) {
+          // Emit a diagnostic event instead of noisy console logs
+          try {
+            document.dispatchEvent(
+              new CustomEvent(VIBES_SYNC_ERROR_EVENT, {
+                detail: { error, phase: 'token-sync' },
+              })
+            );
+          } catch {
+            // Ignore when not in a DOM environment
+          }
         }
-      }
-    } else if (!syncEnabled) {
-      // If sync is not enabled, ensure token is cleared
-      try {
-        const existingToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
-        if (existingToken) {
-          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-          console.log('[useFireproof] Cleared vibes-diy-auth-token - sync disabled');
-        }
-      } catch {
-        // Ignore localStorage errors (privacy mode, SSR, etc.)
       }
     }
   }, [result.attach, manualAttach, syncEnabled]);
@@ -231,18 +312,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
     async (options: { email: string; role?: 'admin' | 'member'; right?: 'read' | 'write' }) => {
-      console.log('[useFireproof] Share function called with:', options);
-
       // Get the attachment context
       const attach = result.attach || manualAttach;
-
-      console.log('[useFireproof] Attachment context:', {
-        'result.attach': result.attach?.state,
-        manualAttach:
-          typeof manualAttach === 'object' && manualAttach ? manualAttach.state : manualAttach,
-        'final attach':
-          attach && typeof attach === 'object' && 'state' in attach ? attach.state : 'no-state',
-      });
 
       // Type guard: ensure attach is an object with ctx property
       if (
@@ -311,10 +382,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    console.log('[useFireproof] Setting up vibes-share-request event listener');
-
     const handleShareRequest = async (event: Event) => {
-      console.log('[useFireproof] Received vibes-share-request event:', event);
       const customEvent = event as CustomEvent<{
         email: string;
         role?: 'admin' | 'member';
@@ -323,11 +391,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
       const { email, role = 'member', right = 'read' } = customEvent.detail || {};
 
-      console.log('[useFireproof] Share request details:', { email, role, right });
-
       if (!email) {
         const error = new Error('vibes-share-request requires email in event detail');
-        console.error(error.message);
         document.dispatchEvent(
           new CustomEvent('vibes-share-error', {
             detail: { error, originalEvent: event },
@@ -338,9 +403,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       }
 
       try {
-        console.log('[useFireproof] Calling share function with:', { email, role, right });
         const result = await share({ email, role, right });
-        console.log('[useFireproof] Share function completed successfully:', result);
 
         // Dispatch success event
         document.dispatchEvent(
@@ -350,7 +413,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
           })
         );
       } catch (error) {
-        console.error('[useFireproof] Share function failed:', error);
         // Dispatch error event
         document.dispatchEvent(
           new CustomEvent('vibes-share-error', {
@@ -372,17 +434,14 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    console.log('[useFireproof] Setting up vibes-sync-enable event listener');
-
     const handleSyncEnable = () => {
-      console.log('[useFireproof] Received vibes-sync-enable event');
       enableSync();
     };
 
-    document.addEventListener('vibes-sync-enable', handleSyncEnable);
+    document.addEventListener(VIBES_SYNC_ENABLE_EVENT, handleSyncEnable);
 
     return () => {
-      document.removeEventListener('vibes-sync-enable', handleSyncEnable);
+      document.removeEventListener(VIBES_SYNC_ENABLE_EVENT, handleSyncEnable);
     };
   }, [enableSync]);
 
@@ -390,17 +449,14 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    console.log('[useFireproof] Setting up vibes-sync-disable event listener');
-
     const handleSyncDisable = () => {
-      console.log('[useFireproof] Received vibes-sync-disable event');
       disableSync();
     };
 
-    document.addEventListener('vibes-sync-disable', handleSyncDisable);
+    document.addEventListener(VIBES_SYNC_DISABLE_EVENT, handleSyncDisable);
 
     return () => {
-      document.removeEventListener('vibes-sync-disable', handleSyncDisable);
+      document.removeEventListener(VIBES_SYNC_DISABLE_EVENT, handleSyncDisable);
     };
   }, [disableSync]);
 
@@ -519,6 +575,12 @@ export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
 export { AuthWall } from './components/AuthWall/AuthWall.js';
 export type { AuthWallProps } from './components/AuthWall/AuthWall.js';
+export { BrutalistCard } from './components/BrutalistCard/index.js';
+export type {
+  BrutalistCardProps,
+  BrutalistCardVariant,
+  BrutalistCardSize,
+} from './components/BrutalistCard/index.js';
 
 // Export unified mount function - the main API for non-React environments
 export { mountVibesApp, mountVibesAppToBody } from './vibe-app-mount.js';

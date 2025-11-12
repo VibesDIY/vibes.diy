@@ -169,12 +169,12 @@ export function generateRandomInstanceId(): string {
 /**
  * Generate a URL for a fresh data install (new instance with same app slug)
  *
- * @returns URL for fresh install with new random instance ID using new v-slug--installID format
+ * @returns Full URL for fresh install with new random instance ID
  */
 export function generateFreshDataUrl(): string {
-  const appSlug = getAppSlug();
-  const newInstanceId = generateRandomInstanceId();
-  return `https://v-${appSlug}--${newInstanceId}.vibesdiy.net`;
+  const titleId = getAppSlug();
+  const installId = generateRandomInstanceId();
+  return `https://vibes.diy/vibe/${titleId}/${installId}`;
 }
 
 /**
@@ -278,33 +278,21 @@ export function parseSubdomain(hostname: string): ParsedSubdomain {
 
 /**
  * Construct a subdomain string from parsed components
- * Domain-aware: .net uses new v-slug--installId format, others use legacy slug_installId
+ * Always uses new v-slug--installId format for all domains
  *
  * @param appSlug - The app slug
  * @param installId - Optional install ID for instances
- * @param domain - Optional domain to determine format (defaults to current hostname)
  * @returns The constructed subdomain string
  * @throws Error if installId is empty string (would create invalid subdomain)
  */
-export function constructSubdomain(appSlug: string, installId?: string, domain?: string): string {
+export function constructSubdomain(appSlug: string, installId?: string): string {
   if (installId !== undefined) {
     if (installId.trim().length === 0) {
       throw new Error('Install ID cannot be empty string - would create invalid subdomain');
     }
 
-    // Determine domain for format selection
-    const targetDomain =
-      domain ||
-      (typeof window !== 'undefined'
-        ? window.location.hostname.split('.').slice(1).join('.')
-        : 'vibesdiy.app');
-
-    // Domain-aware format selection
-    if (targetDomain.endsWith('.net')) {
-      return `v-${appSlug}--${installId}`; // New format for .net
-    } else {
-      return `${appSlug}_${installId}`; // Legacy format for .app and others
-    }
+    // All domains now use the new format with v- prefix and -- separator
+    return `v-${appSlug}--${installId}`;
   }
   return appSlug;
 }

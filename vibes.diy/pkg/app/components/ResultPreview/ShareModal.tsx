@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { trackPublishClick } from "../../utils/analytics.js";
+import { trackPublishClick, trackEvent } from "../../utils/analytics.js";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -30,6 +30,7 @@ export function ShareModal({
   useEffect(() => {
     // Reset state when modal opens/closes
     if (isOpen) {
+      trackEvent("share_modal_open");
       setShowUpdateSuccess(false);
       setShareToFirehose(isFirehoseShared);
     }
@@ -52,16 +53,18 @@ export function ShareModal({
 
   const handleBackdropClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     if (e.target === e.currentTarget) {
+      trackEvent("share_modal_dismiss");
       onClose();
     }
   };
 
   const handlePublish = async () => {
     try {
+      // Track the user's intent immediately (consent-gated in helper)
+      trackPublishClick({ firehose_shared: shareToFirehose });
       await onPublish(shareToFirehose);
       if (publishedAppUrl) {
         setShowUpdateSuccess(true);
-        trackPublishClick({ publishedAppUrl });
         setTimeout(() => setShowUpdateSuccess(false), 2000);
       }
     } catch (error) {
@@ -75,6 +78,7 @@ export function ShareModal({
       onClick={handleBackdropClick}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
+          trackEvent("share_modal_dismiss");
           onClose();
         }
       }}
@@ -126,7 +130,12 @@ export function ShareModal({
                     <input
                       type="checkbox"
                       checked={shareToFirehose}
-                      onChange={(e) => setShareToFirehose(e.target.checked)}
+                      onChange={(e) => {
+                        trackEvent("share_firehose_toggle", {
+                          enabled: e.target.checked,
+                        });
+                        setShareToFirehose(e.target.checked);
+                      }}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:focus:ring-blue-600"
                     />
                     <span className="text-gray-700 dark:text-gray-300">
@@ -198,7 +207,12 @@ export function ShareModal({
                   <input
                     type="checkbox"
                     checked={shareToFirehose}
-                    onChange={(e) => setShareToFirehose(e.target.checked)}
+                    onChange={(e) => {
+                      trackEvent("share_firehose_toggle", {
+                        enabled: e.target.checked,
+                      });
+                      setShareToFirehose(e.target.checked);
+                    }}
                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:focus:ring-blue-600"
                   />
                   <span className="text-gray-700 dark:text-gray-300">

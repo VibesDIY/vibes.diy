@@ -6,14 +6,19 @@ import {
   getImageSectionStyle,
   getOverlayStyle,
   getMenuStyle,
-  getFormContainerStyle,
   getTitleStyle,
   getDescriptionStyle,
 } from './AuthWall.styles.js';
 import { VibesButton } from '../VibesButton/VibesButton.js';
+import { BrutalistCard } from '../BrutalistCard/BrutalistCard.js';
 
 const FALLBACK_IMAGE_URL =
   'https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+
+// Animation timing constants (centralized for consistency between CSS and JS)
+const MENU_OPEN_DELAY_MS = 500;
+const MENU_SLIDE_DURATION_MS = 900; // matches 0.9s
+const FADE_OUT_DURATION_MS = 500; // matches 0.5s
 
 export interface AuthWallProps {
   onLogin: () => void;
@@ -30,66 +35,121 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   const [menuHeight, setMenuHeight] = useState(0);
   const [actualImageUrl, setActualImageUrl] = useState(imageUrl);
   const menuRef = useRef<HTMLDivElement>(null);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const prevOpenRef = useRef<boolean | undefined>(undefined);
+  const prevMenuHeightRef = useRef(0);
 
-  // Set menu height on render
+  // Check for reduced motion preference
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Set menu height whenever component becomes visible
   useEffect(() => {
+    if (!isVisible) return;
+
     if (menuRef.current) {
       setMenuHeight(menuRef.current.offsetHeight);
     }
-  }, []);
+  }, [isVisible]);
 
   // Recalculate height when content changes
   useEffect(() => {
+    if (!isVisible) return;
+
     const menuEl = menuRef.current;
     if (!menuEl) return;
 
     const updateHeight = () => setMenuHeight(menuEl.offsetHeight);
     updateHeight();
 
-    const resizeObserver = new ResizeObserver(() => {
-      updateHeight();
-    });
+    let ro: ResizeObserver | null = null;
+    const hasRO = typeof window !== 'undefined' && 'ResizeObserver' in window;
 
-    resizeObserver.observe(menuEl);
+    if (hasRO) {
+      ro = new ResizeObserver(() => {
+        updateHeight();
+      });
+      ro.observe(menuEl);
+    } else {
+      window.addEventListener('resize', updateHeight);
+    }
 
     return () => {
-      resizeObserver.disconnect();
+      if (ro) {
+        ro.disconnect();
+      } else {
+        window.removeEventListener('resize', updateHeight);
+      }
     };
-  }, []);
+  }, [isVisible]);
 
   // Handle opening animation with timer
   useEffect(() => {
+    const prevOpen = prevOpenRef.current;
+    const openChanged = prevOpen !== open;
+    const menuHeightBecameAvailable = prevMenuHeightRef.current === 0 && menuHeight > 0;
+
+    prevOpenRef.current = open;
+    prevMenuHeightRef.current = menuHeight;
+
+    // Only run if open changed or menuHeight just became available (for initial load)
+    if (!openChanged && !menuHeightBecameAvailable) return;
+
+    // Clear all pending timeouts from previous state changes
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+
+    // Skip animations if user prefers reduced motion
+    if (prefersReducedMotion) {
+      setIsVisible(open);
+      setMenuOpen(open);
+      setIsFadingOut(false);
+      return;
+    }
+
     if (open) {
+      // Opening animation
       setIsVisible(true);
       setIsFadingOut(false);
-
-      // Open menu after half a second
-      const openTimeout = setTimeout(() => {
-        setMenuOpen(true);
-      }, 500);
-
-      return () => clearTimeout(openTimeout);
-    } else if (isVisible) {
-      // Close menu first
       setMenuOpen(false);
 
-      // After menu closes (400ms), start fade out
+      // Only start animation if menuHeight is calculated
+      if (menuHeight > 0) {
+        // Open menu after configured delay
+        const openTimeout = setTimeout(() => {
+          setMenuOpen(true);
+        }, MENU_OPEN_DELAY_MS);
+        timeoutsRef.current.push(openTimeout);
+      }
+    } else {
+      // Avoid closing timers on initial closed state
+      if (!prevOpen) return;
+
+      // Closing animation
+      setMenuOpen(false);
+
+      // After menu slides closed, start fade out
       const fadeTimeout = setTimeout(() => {
         setIsFadingOut(true);
-      }, 400);
+      }, MENU_SLIDE_DURATION_MS);
+      timeoutsRef.current.push(fadeTimeout);
 
-      // After fade out (500ms), hide completely
+      // After fade out completes, hide completely
       const hideTimeout = setTimeout(() => {
         setIsVisible(false);
         setIsFadingOut(false);
-      }, 900);
-
-      return () => {
-        clearTimeout(fadeTimeout);
-        clearTimeout(hideTimeout);
-      };
+      }, MENU_SLIDE_DURATION_MS + FADE_OUT_DURATION_MS);
+      timeoutsRef.current.push(hideTimeout);
     }
-  }, [open, isVisible]);
+  }, [open, menuHeight, prefersReducedMotion]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+    };
+  }, []);
 
   // Preload and handle fallback for any imageUrl
   useEffect(() => {
@@ -132,15 +192,18 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
   // Image content wrapper style - slides up to reveal menu (like HiddenMenuWrapper content)
   const imageContentWrapperStyle = {
     ...getImageContentWrapperStyle(),
-    transition: 'transform 0.9s ease, opacity 0.5s ease',
+    transition: prefersReducedMotion
+      ? 'none'
+      : `transform ${MENU_SLIDE_DURATION_MS / 1000}s ease, opacity ${FADE_OUT_DURATION_MS / 1000}s ease`,
     transform: menuOpen ? `translateY(-${menuHeight}px)` : 'translateY(0)',
     opacity: isFadingOut ? 0 : 1,
+    willChange: 'transform, opacity',
   };
 
   // Menu style - always at bottom, with fade
   const menuStyle = {
     ...getMenuStyle(),
-    transition: 'opacity 0.5s ease',
+    transition: prefersReducedMotion ? 'none' : `opacity ${FADE_OUT_DURATION_MS / 1000}s ease`,
     opacity: isFadingOut ? 0 : 1,
   };
 
@@ -148,7 +211,15 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
     <div style={getWrapperStyle()}>
       {/* Menu at bottom (like HiddenMenuWrapper menu) - always there */}
       <div ref={menuRef} style={menuStyle}>
-        <div style={getFormContainerStyle()}>
+        <BrutalistCard
+          size="lg"
+          style={{
+            position: 'relative',
+            textAlign: 'left',
+            maxWidth: '400px',
+            width: '90%',
+          }}
+        >
           <h1 style={getTitleStyle()}>{title}</h1>
           <p style={getDescriptionStyle()}>Login to access this Vibe!</p>
           <VibesButton
@@ -159,7 +230,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
           >
             Login
           </VibesButton>
-        </div>
+        </BrutalistCard>
       </div>
 
       {/* Image content wrapper (like HiddenMenuWrapper content) - slides up to reveal menu */}

@@ -175,20 +175,76 @@ const IframeContent: React.FC<IframeContentProps> = ({
 
       const transformedCode = transformImports(normalizedCode);
 
-      // Use vibesbox.dev subdomain for origin isolation
-      const iframeUrl = `https://${sessionIdValue}.vibesbox.dev/`;
+      // Use vibesbox subdomain for origin isolation
+      // In production with apex domain: https://${sessionId}.vibesbox.dev/
+      // In production with workers.dev: https://vibesbox.workers.dev/ (no subdomain injection)
+      // In local dev: http://localhost:8989/
+      const baseUrl = new URL(VibesDiyEnv.VIBESBOX_BASE_URL());
+
+      // Check if this is a local development URL
+      const isLocalDev =
+        baseUrl.hostname === "localhost" ||
+        baseUrl.hostname === "127.0.0.1" ||
+        baseUrl.hostname === "[::1]" ||
+        baseUrl.hostname === "::1";
+
+      let iframeUrl: string;
+
+      if (isLocalDev) {
+        // Local dev: use as-is (preserves protocol, port, path)
+        iframeUrl = baseUrl.href;
+      } else if (baseUrl.hostname === "vibesbox.dev") {
+        // Apex domain: inject sessionId as subdomain
+        baseUrl.hostname = `${sessionIdValue}.vibesbox.dev`;
+        iframeUrl = baseUrl.href;
+      } else {
+        // Already has subdomain (workers.dev, etc.) or other: use as-is
+        iframeUrl = baseUrl.href;
+      }
+
       iframeRef.current.src = iframeUrl;
+      console.log(
+        "🔧 [VIBES.DIY] IframeContent using vibesbox URL:",
+        iframeUrl,
+      );
 
       // Send code via postMessage after iframe loads
       const handleIframeLoad = () => {
         if (iframeRef.current?.contentWindow) {
+          // Get auth token from localStorage for API authentication
+          // Check both new and legacy token keys for compatibility
+          let authToken: string | undefined;
+          try {
+            authToken =
+              localStorage.getItem("vibes-diy-auth-token") ||
+              localStorage.getItem("auth_token") ||
+              undefined;
+            console.log(
+              "🔐 [VIBES.DIY] Reading auth token from localStorage:",
+              authToken ? authToken.substring(0, 20) + "..." : "NOT FOUND",
+            );
+          } catch (e) {
+            console.warn("🔐 [VIBES.DIY] Failed to read auth token:", e);
+            // Ignore localStorage errors (privacy mode, SSR, etc.)
+          }
+
           const messageData = {
             type: "execute-code",
             code: transformedCode,
             apiKey: "sk-vibes-proxy-managed",
             sessionId: sessionIdValue,
             endpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
+            authToken, // Pass auth token to iframe
           };
+
+          console.log(
+            "🔐 [VIBES.DIY] Sending message to iframe with authToken:",
+            authToken ? "YES" : "NO",
+          );
+          console.log(
+            "🔐 [VIBES.DIY] Message data keys:",
+            Object.keys(messageData),
+          );
           iframeRef.current.contentWindow.postMessage(messageData, "*");
         }
       };

@@ -48,9 +48,10 @@
     "@vibes.diy/use-vibes-base": "workspace:*"
   },
   "devDependencies": {
+    "@vitest/browser-playwright": "^4.0.2",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
-    "wrangler": "^3.87.0"
+    "wrangler": "^4.45.1"
   },
   "engines": {
     "node": ">=20.0.0"

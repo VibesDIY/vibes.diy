@@ -8,8 +8,8 @@ interface Todo {
 }
 
 export function ShareExample() {
-  const { database, useLiveQuery, syncEnabled } = useFireproof('todos-shared-15');
-  const todos = useLiveQuery<Todo>('_id', { limit: 10 }).docs;
+  const { database, useLiveQuery, syncEnabled } = useFireproof('todos-shared-abc1');
+  const todos = useLiveQuery<Todo>('_id', { limit: 15 }).docs;
   const [newTodo, setNewTodo] = useState('');
   const [shareEmail, setShareEmail] = useState('');
   const [shareSuccess, setShareSuccess] = useState<string | null>(null);

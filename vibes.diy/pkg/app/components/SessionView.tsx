@@ -12,6 +12,19 @@ import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
+import { useAuth } from "../contexts/AuthContext.js";
+import { useAuthPopup } from "../hooks/useAuthPopup.js";
+import { trackAuthClick, trackEvent } from "../utils/analytics.js";
+import { VibesSwitch } from "use-vibes";
+
+// Vibe switch button component with animation
+function VibesLoginButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="vibes-login-button">
+      Login
+    </button>
+  );
+}
 
 interface SessionViewProps {
   sessionId: string;
@@ -24,6 +37,104 @@ interface SessionViewProps {
 }
 
 export default function SessionView({
+  sessionId,
+  pathname,
+  search: _search,
+  locationState,
+  navigate,
+  urlPrompt,
+  urlModel,
+}: SessionViewProps) {
+  // Check authentication before allowing access to the chat interface
+  const { isAuthenticated, isLoading } = useAuth();
+  const { initiateLogin } = useAuthPopup();
+
+  // Track unauthenticated view render once
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      trackEvent("unauthenticated_session_view");
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
+        <div className="text-center">
+          <div className="text-light-primary dark:text-dark-primary mb-4 text-xl">
+            Loading...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    const handleLogin = async () => {
+      trackAuthClick({
+        label: "Session View Login",
+        isUserAuthenticated: false,
+      });
+      await initiateLogin();
+    };
+
+    return (
+      <div className="grid-background flex h-screen w-screen items-center justify-center relative">
+        {/* Center content */}
+        <div className="text-center max-w-md px-4 w-full">
+          <h1 className="mb-4 text-3xl font-bold" style={{ color: "#1a1a1a" }}>
+            Welcome to Vibes DIY
+          </h1>
+          <p className="mb-6 text-lg" style={{ color: "#1a1a1a" }}>
+            You can just code things.
+          </p>
+          <VibesLoginButton onClick={handleLogin} />
+        </div>
+
+        {/* Vibe switch in lower right corner */}
+        <button
+          type="button"
+          onClick={handleLogin}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleLogin();
+            }
+          }}
+          className="cursor-pointer fixed"
+          style={{
+            bottom: "1.5rem",
+            right: "6rem",
+            width: "80px",
+            zIndex: 50,
+            background: "none",
+            border: "none",
+            padding: 0,
+          }}
+          aria-label="Login to Vibes DIY"
+        >
+          <VibesSwitch size={80} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <AuthenticatedSessionView
+      sessionId={sessionId}
+      pathname={pathname}
+      search={_search}
+      locationState={locationState}
+      navigate={navigate}
+      urlPrompt={urlPrompt}
+      urlModel={urlModel}
+    />
+  );
+}
+
+// Separate component for authenticated session to avoid hook ordering issues
+function AuthenticatedSessionView({
   sessionId,
   pathname,
   search: _search,

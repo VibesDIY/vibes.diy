@@ -42,11 +42,11 @@ export const template = `<!DOCTYPE html>
       // prettier-ignore-end
 
       // Mount the app using vibes app system for proper overlay integration
+      // Note: database parameter removed - app's own useFireproof() call manages its database
       mountVibesApp({
         container: document.getElementById('container'),
         appComponent: App,
-        title: document.title,
-        database: 'app-{{APP_SLUG}}'
+        title: document.title
       });
     </script>
   </body>
