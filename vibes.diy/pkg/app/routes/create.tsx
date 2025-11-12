@@ -11,6 +11,7 @@ import { useFireproof } from "use-fireproof";
 import ReactMarkdown from "react-markdown";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { useAuth } from "../contexts/AuthContext.js";
+import { NeedsLoginModal } from "../components/NeedsLoginModal.js";
 
 export function meta() {
   return [
@@ -208,13 +209,22 @@ export default function Create() {
   const isPreviewRoute = location.pathname.endsWith("/preview");
 
   const handleLetsGo = async () => {
+    console.log("=== handleLetsGo called ===");
+    console.log("isAuthenticated:", isAuthenticated);
+    console.log("promptText:", promptText);
+    console.log("sessionId:", sessionId);
+
     // Check authentication before proceeding
     if (!isAuthenticated) {
+      console.log("Not authenticated, triggering login modal");
       setNeedsLogin(true); // Triggers NeedsLoginModal
       return;
     }
 
+    console.log("User is authenticated");
+
     if (promptText.trim() && !sessionId) {
+      console.log("Creating session with prompt:", promptText.trim());
       // Create a Fireproof document and use its _id as the session ID
       const sessionDoc: CreateSessionDoc = {
         type: "create-session",
@@ -224,9 +234,13 @@ export default function Create() {
 
       const result = await database.put(sessionDoc);
       const newSessionId = result.id;
+      console.log("Created session with ID:", newSessionId);
 
       // Navigate to the new session route
+      console.log("Navigating to:", `/create/${newSessionId}`);
       navigate(`/create/${newSessionId}`);
+    } else {
+      console.log("Skipping session creation - promptText:", promptText, "sessionId:", sessionId);
     }
   };
 
@@ -334,6 +348,9 @@ export default function Create() {
           </a>
         </div>
       </div>
+
+      {/* Login modal - appears when needsLogin is true */}
+      <NeedsLoginModal />
     </div>
   );
 }
