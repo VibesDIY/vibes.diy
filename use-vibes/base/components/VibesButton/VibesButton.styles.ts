@@ -8,10 +8,13 @@ export const buttonColors: {
   tertiary: '#FEDD00',
 };
 
+export type ButtonSize = 'default' | 'small';
+
 export function getButtonStyle(
   variant: keyof typeof buttonColors,
   isHovered: boolean,
-  isActive: boolean
+  isActive: boolean,
+  size: ButtonSize = 'default'
 ): React.CSSProperties {
   let transform = 'translate(0px, 0px)';
   let boxShadow = `4px 5px 0px 0px ${buttonColors[variant]}`;
@@ -26,14 +29,16 @@ export function getButtonStyle(
     boxShadow = 'none';
   }
 
+  const isSmall = size === 'small';
+
   return {
-    width: '100%',
-    padding: '1rem 2rem',
+    width: isSmall ? 'fit-content' : '100%',
+    padding: isSmall ? '0.5rem 1rem' : '1rem 2rem',
     background: '#fff',
     color: '#1a1a1a',
     border: '3px solid #1a1a1a',
     borderRadius: '12px',
-    fontSize: '1rem',
+    fontSize: isSmall ? '0.8rem' : '1rem',
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
