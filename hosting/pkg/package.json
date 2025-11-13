@@ -58,7 +58,7 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20251011.0",
+    "@cloudflare/workers-types": "^4.20251111.0",
     "@vibes.diy/hosting-base": "workspace:*",
     "@vibes.diy/utils": "workspace:*",
     "chanfana": "^2.8.2",
