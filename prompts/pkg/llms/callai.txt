@@ -2,26 +2,6 @@
 
 The `callAI` helper function provides an easy way to make AI requests to OpenAI-compatible model providers.
 
-## Installation
-
-```bash
-npm install call-ai
-```
-
-## API Key
-
-You can set the API key in the `window` object:
-
-```javascript
-window.CALLAI_API_KEY = "your-api-key";
-```
-
-Or pass it directly to the `callAI` function:
-
-```javascript
-const response = await callAI("Write a haiku", { apiKey: "your-api-key" });
-```
-
 ## Basic Usage
 
 By default the function returns a Promise that resolves to the complete response:
@@ -135,22 +115,6 @@ try {
    - Avoid deeply nested object hierarchies (more than 2 levels deep)
    - Keep array items simple (strings or flat objects)
 
-3. **Model-specific considerations**:
-   - **OpenAI models**: Best overall schema adherence and handle complex nesting well
-   - **Claude models**: Great for simple schemas, occasional JSON formatting issues with complex structures
-   - **Gemini models**: Good general performance, handles array properties well
-   - **Llama/Mistral/Deepseek**: Strong with flat schemas, but often ignore nesting structure and provide their own organization
-
-4. **For mission-critical applications** requiring schema adherence, use OpenAI models or implement fallback mechanisms.
-
-### Models for Structured Outputs
-
-- OpenAI models: Best overall schema adherence and handle complex nesting well
-- Claude models: Great for simple schemas, occasional JSON formatting issues with complex structures
-- Gemini models: Good general performance, handles array properties well
-- Llama/Mistral/Deepseek: Strong with flat schemas, but often ignore nesting structure and provide their own organization
-
-
 ## Specifying a Model
 
 By default, the function uses `openrouter/auto` (automatic model selection). You can specify a different model:
@@ -215,61 +179,6 @@ const nextResponse = await callAI(messages);
 console.log(nextResponse);
 ```
 
-## Using with OpenAI API
-
-You can use callAI with OpenAI's API directly by providing the appropriate endpoint and API key:
-
-```javascript
-import { callAI } from 'call-ai';
-
-// Use with OpenAI's API
-const response = await callAI(
-  "Explain the theory of relativity", 
-  {
-    model: "gpt-4",
-    apiKey: "sk-...", // Your OpenAI API key
-    endpoint: "https://api.openai.com/v1/chat/completions"
-  }
-);
-
-console.log(response);
-
-// Or with streaming
-const generator = callAI(
-  "Explain the theory of relativity", 
-  {
-    model: "gpt-4",
-    apiKey: "sk-...", // Your OpenAI API key
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    stream: true
-  }
-);
-
-for await (const chunk of generator) {
-  console.log(chunk);
-}
-```
-
-## Custom Endpoints
-
-You can specify a custom endpoint for any OpenAI-compatible API:
-
-```javascript
-import { callAI } from 'call-ai';
-
-// Use with any OpenAI-compatible API
-const response = await callAI(
-  "Generate ideas for a mobile app",
-  {
-    model: "your-model-name",
-    apiKey: "your-api-key",
-    endpoint: "https://your-custom-endpoint.com/v1/chat/completions"
-  }
-);
-
-console.log(response);
-```
-
 ## Recommended Models
 
 | Model | Best For | Speed vs Quality |
@@ -281,18 +190,6 @@ console.log(response);
 | `anthropic/claude-3-opus` | Complex reasoning | Slower, highest quality |
 | `mistralai/mistral-large` | Open weights alternative | Good balance |
 
-## Automatic Retry Mechanism
-
-Call-AI has a built-in fallback mechanism that automatically retries with `openrouter/auto` if the requested model is invalid or unavailable. This ensures your application remains functional even when specific models experience issues.
-
-If you need to disable this behavior (for example, in test environments), you can use the `skipRetry` option:
-
-```javascript
-const response = await callAI("Your prompt", {
-  model: "your-model-name",
-  skipRetry: true  // Disable automatic fallback
-});
-```
 
 ## Items with lists
 
