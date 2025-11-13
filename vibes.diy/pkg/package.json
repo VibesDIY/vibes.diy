@@ -87,7 +87,7 @@
     "prettier": "^3.6.2",
     "shiki": "^3.2.1",
     "storybook": "^10.0.6",
-    "tailwindcss": "^4.1.2",
+    "tailwindcss": "^4.1.17",
     "tsx": "^4.19.3",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
