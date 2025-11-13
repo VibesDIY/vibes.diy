@@ -51,7 +51,7 @@ importers:
         specifier: ^0.7.1
         version: 0.7.1(prettier@3.6.2)
       puppeteer:
-        specifier: ^24.25.0
+        specifier: ^24.29.1
         version: 24.30.0(typescript@5.9.3)
       typescript-eslint:
         specifier: ^8.46.1
@@ -11039,7 +11039,7 @@ snapshots:
       https-proxy-agent: 7.0.6(supports-color@10.2.2)
       node-fetch: 2.7.0
       nopt: 8.1.0
-      semver: 7.7.2
+      semver: 7.7.3
       tar: 7.5.2
     transitivePeerDependencies:
       - encoding
@@ -11244,7 +11244,7 @@ snapshots:
       image-size: 2.0.2
       js-image-generator: 1.0.4
       parse-gitignore: 2.0.0
-      semver: 7.7.2
+      semver: 7.7.3
       tmp-promise: 3.0.3
       uuid: 11.1.0
       write-file-atomic: 5.0.1
@@ -16934,7 +16934,7 @@ snapshots:
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.7.2
+      semver: 7.7.3
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@7.0.1:
@@ -17202,7 +17202,7 @@ snapshots:
       ky: 1.14.0
       registry-auth-token: 5.1.0
       registry-url: 6.0.1
-      semver: 7.7.2
+      semver: 7.7.3
 
   parallel-transform@1.2.0:
     dependencies:
