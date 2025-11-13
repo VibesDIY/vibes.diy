@@ -24,7 +24,7 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.4.53",
+    "@adviser/cement": "^0.4.64",
     "@fireproof/core-types-base": "^0.23.15",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*"
