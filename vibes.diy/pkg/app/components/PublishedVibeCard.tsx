@@ -1,5 +1,6 @@
 import React, { ReactElement } from "react";
 import { Link } from "react-router-dom";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 interface PublishedVibeCardProps {
   slug: string;
@@ -18,7 +19,7 @@ export default function PublishedVibeCard({
   const vibeName = name || slug || "Published Vibe";
 
   return (
-    <div className="border-light-decorative-01 dark:border-dark-decorative-01 relative overflow-hidden rounded-md border transition-colors hover:border-blue-500">
+    <BrutalistCard size="sm" className="overflow-hidden transition-colors hover:border-blue-500">
       <Link to={linkUrl} className="block h-full w-full">
         <div className="p-2 py-1">
           <div className="flex h-8 items-center justify-between">
@@ -59,6 +60,6 @@ export default function PublishedVibeCard({
           </div>
         </div>
       </Link>
-    </div>
+    </BrutalistCard>
   );
 }

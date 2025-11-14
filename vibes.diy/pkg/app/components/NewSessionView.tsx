@@ -142,12 +142,11 @@ export default function NewSessionView({
             </BrutalistCard>
 
             {/* Featured vibes section */}
-            <div className="sm:w-4/5 mx-auto">
-              <h3 className="mb-4 text-center text-sm font-medium text-gray-600">
-                Or remix a featured vibe
-              </h3>
-              <FeaturedVibes count={9} />
-            </div>
+            <BrutalistCard size="lg">
+              <h2 className="text-3xl font-bold">Or remix a featured vibe</h2>
+            </BrutalistCard>
+
+            <FeaturedVibes count={3} />
           </div>
         </div>
       </div>
