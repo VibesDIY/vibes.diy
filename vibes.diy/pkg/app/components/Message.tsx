@@ -8,6 +8,7 @@ import type {
   ViewType,
 } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 interface MessageProps {
   message: ChatMessageDocument;
@@ -71,7 +72,7 @@ const AIMessage = memo(
             </svg>
           </div>
         </div>
-        <div className="text-light-primary dark:bg-dark-background-01 dark:text-dark-primary max-w-[85%] rounded-xl bg-white px-5 py-3 shadow-md">
+        <div className="max-w-[85%]">
           <StructuredMessage
             segments={segments || []}
             isStreaming={isStreaming}
@@ -109,11 +110,11 @@ const AIMessage = memo(
 const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
   return (
     <div className="mb-4 flex flex-row justify-end px-4">
-      <div className="bg-light-background-02 dark:bg-dark-decorative-00 text-light-primary dark:text-dark-primary max-w-[85%] rounded-xl px-5 py-3 shadow-md">
+      <BrutalistCard size="md" className="max-w-[85%]">
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           <ReactMarkdown>{message.text}</ReactMarkdown>
         </div>
-      </div>
+      </BrutalistCard>
     </div>
   );
 });

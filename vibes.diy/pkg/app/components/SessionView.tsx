@@ -16,6 +16,7 @@ import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { trackAuthClick, trackEvent } from "../utils/analytics.js";
 import { VibesSwitch } from "use-vibes";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 // Vibe switch button component with animation
 function VibesLoginButton({ onClick }: { onClick: () => void }) {
@@ -499,29 +500,31 @@ function AuthenticatedSessionView({
           />
         }
         chatInput={
-          <ChatInput
-            ref={chatInputRef}
-            chatState={chatState}
-            showModelPickerInChat={chatState.showModelPickerInChat}
-            currentModel={effectiveModel}
-            onModelChange={async (modelId: string) => {
-              if (chatState.updateSelectedModel) {
-                await chatState.updateSelectedModel(modelId);
+          <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
+            <ChatInput
+              ref={chatInputRef}
+              chatState={chatState}
+              showModelPickerInChat={chatState.showModelPickerInChat}
+              currentModel={effectiveModel}
+              onModelChange={async (modelId: string) => {
+                if (chatState.updateSelectedModel) {
+                  await chatState.updateSelectedModel(modelId);
+                }
+              }}
+              models={
+                models as {
+                  id: string;
+                  name: string;
+                  description: string;
+                  featured?: boolean;
+                }[]
               }
-            }}
-            models={
-              models as {
-                id: string;
-                name: string;
-                description: string;
-                featured?: boolean;
-              }[]
-            }
-            globalModel={chatState.globalModel}
-            onSend={() => {
-              setMessageHasBeenSent(true);
-            }}
-          />
+              globalModel={chatState.globalModel}
+              onSend={() => {
+                setMessageHasBeenSent(true);
+              }}
+            />
+          </BrutalistCard>
         }
         suggestionsComponent={undefined}
         mobilePreviewShown={displayView === "chat" ? false : mobilePreviewShown}
