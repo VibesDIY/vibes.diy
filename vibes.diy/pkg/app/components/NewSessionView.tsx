@@ -72,7 +72,7 @@ export default function NewSessionView({
         </div>
 
         {/* Main content section */}
-        <div className="flex-1 p-8">
+        <div className="flex-1 px-8 pb-8">
           <div
             style={{
               maxWidth: "800px",
