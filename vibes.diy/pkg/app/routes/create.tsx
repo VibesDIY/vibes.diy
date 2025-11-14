@@ -52,8 +52,11 @@ function CreateWithStreaming({
   }, [chatState, promptText]);
 
   // Auto-navigate to preview when we detect content after code segment
+  // Only triggers during active streaming, not when loading existing sessions
   useEffect(() => {
     if (hasNavigated.current) return;
+    // Only auto-navigate when actively streaming
+    if (!chatState.isStreaming) return;
 
     const latestAiMessage = chatState.docs
       .filter((doc) => doc.type === "ai")
@@ -82,7 +85,7 @@ function CreateWithStreaming({
         onNavigateToPreview(code);
       }
     }
-  }, [chatState.docs, onNavigateToPreview]);
+  }, [chatState.docs, chatState.isStreaming, onNavigateToPreview]);
 
   // Auto-scroll to bottom when segments change
   useEffect(() => {
