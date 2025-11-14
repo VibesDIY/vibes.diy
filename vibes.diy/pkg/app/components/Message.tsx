@@ -128,11 +128,12 @@ const SystemMessage = memo(
     const errorDetails = lines.slice(1).join("\n");
 
     // Map error category to BrutalistCard variant
-    const variant = message.errorCategory === "immediate"
-      ? "error"
-      : message.errorCategory === "advisory"
-        ? "warning"
-        : "default";
+    const variant =
+      message.errorCategory === "immediate"
+        ? "error"
+        : message.errorCategory === "advisory"
+          ? "warning"
+          : "default";
 
     return (
       <div className="mb-4 flex flex-row justify-center px-4">
