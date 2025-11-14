@@ -32,14 +32,17 @@ function CreateWithStreaming({
   sessionId,
   promptText,
   onNavigateToPreview,
+  showInputAtBottom,
 }: {
   sessionId: string;
   promptText: string;
   onNavigateToPreview: (code: string) => void;
+  showInputAtBottom?: boolean;
 }) {
   const chatState = useSimpleChat(sessionId);
   const hasSentMessage = useRef(false);
   const hasNavigated = useRef(false);
+  const [newPromptText, setNewPromptText] = useState("");
 
   // Send the message once chatState is ready
   useEffect(() => {
@@ -51,7 +54,7 @@ function CreateWithStreaming({
     }
   }, [chatState, promptText]);
 
-  // Auto-navigate to preview when we detect content after code segment
+  // Auto-navigate to preview when content after code segment STARTS streaming
   // Only triggers during active streaming, not when loading existing sessions
   useEffect(() => {
     if (hasNavigated.current) return;
@@ -68,18 +71,27 @@ function CreateWithStreaming({
     const segments = parsed.segments;
     const codeSegments = segments.filter((seg) => seg.type === "code");
 
-    // Check if we have code and content after the last code segment
+    // Check if we have code and content after the last code segment is CURRENTLY being streamed
     if (codeSegments.length > 0) {
       const lastCodeIndex = segments.findLastIndex(
         (seg) => seg.type === "code",
       );
-      const hasContentAfterCode =
-        segments.length > lastCodeIndex + 1 &&
-        segments
-          .slice(lastCodeIndex + 1)
-          .some((seg) => seg.content && seg.content.trim().length > 0);
 
-      if (hasContentAfterCode) {
+      // Only navigate if there's content after code AND we're still streaming
+      // This means the post-code content is actively being generated RIGHT NOW
+      const segmentsAfterCode = segments.slice(lastCodeIndex + 1);
+      const hasContentAfterCode = segmentsAfterCode.some(
+        (seg) => seg.content && seg.content.trim().length > 0
+      );
+
+      // Additional check: Only navigate if this is fresh content being streamed
+      // Check that the last segment after code is at the end (still being written to)
+      const isStreamingPostCodeContent =
+        hasContentAfterCode &&
+        segmentsAfterCode.length > 0 &&
+        segments[segments.length - 1] !== segments[lastCodeIndex]; // Last segment is not the code
+
+      if (isStreamingPostCodeContent) {
         hasNavigated.current = true;
         const code = codeSegments[0]?.content || "";
         onNavigateToPreview(code);
@@ -102,18 +114,21 @@ function CreateWithStreaming({
     });
   }, [chatState.docs]);
 
+  // Filter and dedupe AI messages
+  const aiMessages = chatState.docs
+    .filter((doc) => doc.type === "ai")
+    .sort((a, b) => a.created_at - b.created_at);
+
+  // Deduplicate by _id
+  const uniqueMessages = Array.from(
+    new Map(aiMessages.map((msg) => [msg._id, msg])).values()
+  );
+
   return (
     <>
-      {/* Streaming Display Section */}
-      {(() => {
-        // Get the latest AI message
-        const latestAiMessage = chatState.docs
-          .filter((doc) => doc.type === "ai")
-          .sort((a, b) => b.created_at - a.created_at)[0];
-
-        if (!latestAiMessage?.text) return null;
-
-        const parsed = parseContent(latestAiMessage.text);
+      {/* Display all messages in conversation */}
+      {uniqueMessages.map((message) => {
+        const parsed = parseContent(message.text);
         const segments = parsed.segments;
         const codeSegments = segments.filter((seg) => seg.type === "code");
         const codeLines = codeSegments.reduce(
@@ -122,19 +137,19 @@ function CreateWithStreaming({
         );
 
         return (
-          <>
-            {segments.map((segment, index) => {
-              if (segment.type === "markdown" && segment.content) {
-                return (
-                  <BrutalistCard key={`markdown-${index}`} size="md">
-                    <div className="ai-markdown prose">
-                      <ReactMarkdown>{segment.content}</ReactMarkdown>
-                    </div>
-                  </BrutalistCard>
-                );
-              } else if (segment.type === "code" && segment.content) {
-                return (
-                  <BrutalistCard key={`code-${index}`} size="md">
+          <div key={message._id}>
+              {segments.map((segment, index) => {
+                if (segment.type === "markdown" && segment.content) {
+                  return (
+                    <BrutalistCard key={`${message._id}-markdown-${index}`} size="md">
+                      <div className="ai-markdown prose">
+                        <ReactMarkdown>{segment.content}</ReactMarkdown>
+                      </div>
+                    </BrutalistCard>
+                  );
+                } else if (segment.type === "code" && segment.content) {
+                  return (
+                    <BrutalistCard key={`${message._id}-code-${index}`} size="md">
                     <div className="flex items-center justify-between p-2">
                       <span className="font-mono text-sm text-accent-01 dark:text-accent-01">
                         {`${codeLines} line${codeLines !== 1 ? "s" : ""}`}
@@ -174,22 +189,63 @@ function CreateWithStreaming({
                     </pre>
                   </BrutalistCard>
                 );
-              }
-              return null;
-            })}
+            }
+            return null;
+          })}
+        </div>
+      );
+    })}
 
-            {/* Show streaming indicator when actively streaming */}
-            {chatState.isStreaming && (
-              <BrutalistCard size="sm">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="bg-light-primary dark:bg-dark-primary inline-block h-4 w-2 animate-pulse" />
-                  <span>Generating...</span>
-                </div>
-              </BrutalistCard>
-            )}
-          </>
-        );
-      })()}
+      {/* Show streaming indicator when actively streaming */}
+      {chatState.isStreaming && (
+        <BrutalistCard size="sm">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="bg-light-primary dark:bg-dark-primary inline-block h-4 w-2 animate-pulse" />
+            <span>Generating...</span>
+          </div>
+        </BrutalistCard>
+      )}
+
+      {/* Input section at bottom when there are existing messages */}
+      {showInputAtBottom && chatState.docs.length > 0 && (
+        <>
+          <BrutalistCard size="md" style={{ width: "100%" }}>
+            <div style={{ marginBottom: "12px", fontWeight: 600 }}>
+              Continue the conversation
+            </div>
+            <textarea
+              value={newPromptText}
+              onChange={(e) => setNewPromptText(e.target.value)}
+              placeholder="Add more details or make changes..."
+              rows={4}
+              style={{
+                width: "100%",
+                border: "none",
+                background: "transparent",
+                color: "inherit",
+                fontSize: "inherit",
+                fontWeight: "inherit",
+                letterSpacing: "inherit",
+                padding: "4px",
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
+            />
+          </BrutalistCard>
+          <VibesButton
+            variant="primary"
+            style={{ width: "200px" }}
+            onClick={() => {
+              if (newPromptText.trim()) {
+                chatState.sendMessage(newPromptText.trim());
+                setNewPromptText("");
+              }
+            }}
+          >
+            Let's Go
+          </VibesButton>
+        </>
+      )}
     </>
   );
 }
@@ -325,53 +381,76 @@ export default function Create() {
             <h1 className="text-4xl font-bold">Vibes are for sharing</h1>
           </BrutalistCard>
 
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <VibesButton
-              variant="primary"
-              style={{ flex: "1" }}
-              onClick={() => setPromptText(partyPlannerPrompt)}
-            >
-              Party Planner
-            </VibesButton>
-            <VibesButton
-              variant="secondary"
-              style={{ flex: "1" }}
-              onClick={() => setPromptText(progressTrackerPrompt)}
-            >
-              Progress Tracker
-            </VibesButton>
-            <VibesButton
-              variant="tertiary"
-              style={{ flex: "1" }}
-              onClick={() => setPromptText(jamSessionPrompt)}
-            >
-              Jam Session
-            </VibesButton>
-          </div>
+          {/* Show suggestion buttons and textarea only when no session exists */}
+          {!sessionId && (
+            <>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                <VibesButton
+                  variant="primary"
+                  style={{ flex: "1" }}
+                  onClick={() => setPromptText(partyPlannerPrompt)}
+                >
+                  Party Planner
+                </VibesButton>
+                <VibesButton
+                  variant="secondary"
+                  style={{ flex: "1" }}
+                  onClick={() => setPromptText(progressTrackerPrompt)}
+                >
+                  Progress Tracker
+                </VibesButton>
+                <VibesButton
+                  variant="tertiary"
+                  style={{ flex: "1" }}
+                  onClick={() => setPromptText(jamSessionPrompt)}
+                >
+                  Jam Session
+                </VibesButton>
+              </div>
 
-          <BrutalistCard size="md" style={{ width: "100%" }}>
-            <div style={{ marginBottom: "12px", fontWeight: 600 }}>
-              Describe your vibe
-            </div>
-            <textarea
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              placeholder="What do you want to build..."
-              rows={6}
-              style={{
-                width: "100%",
-                border: "none",
-                background: "transparent",
-                color: "inherit",
-                fontSize: "inherit",
-                fontWeight: "inherit",
-                letterSpacing: "inherit",
-                padding: "4px",
-                resize: "vertical",
-                fontFamily: "inherit",
-              }}
-            />
-          </BrutalistCard>
+              <BrutalistCard size="md" style={{ width: "100%" }}>
+                <div style={{ marginBottom: "12px", fontWeight: 600 }}>
+                  Describe your vibe
+                </div>
+                <textarea
+                  value={promptText}
+                  onChange={(e) => setPromptText(e.target.value)}
+                  placeholder="What do you want to build..."
+                  rows={6}
+                  style={{
+                    width: "100%",
+                    border: "none",
+                    background: "transparent",
+                    color: "inherit",
+                    fontSize: "inherit",
+                    fontWeight: "inherit",
+                    letterSpacing: "inherit",
+                    padding: "4px",
+                    resize: "vertical",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </BrutalistCard>
+
+              <VibesButton
+                variant="primary"
+                style={{ width: "200px" }}
+                onClick={handleLetsGo}
+              >
+                Let's Go
+              </VibesButton>
+            </>
+          )}
+
+          {/* Show first user message when session exists */}
+          {sessionId && promptText && (
+            <BrutalistCard size="md" style={{ width: "100%" }}>
+              <div style={{ marginBottom: "8px", fontWeight: 600, opacity: 0.7 }}>
+                Your request:
+              </div>
+              <div>{promptText}</div>
+            </BrutalistCard>
+          )}
 
           {/* Streaming Display Section */}
           {sessionId && (
@@ -379,17 +458,9 @@ export default function Create() {
               sessionId={sessionId}
               promptText={promptText}
               onNavigateToPreview={handleNavigateToPreview}
+              showInputAtBottom={true}
             />
           )}
-
-          <VibesButton
-            variant="primary"
-            style={{ width: "200px" }}
-            onClick={handleLetsGo}
-            disabled={!!sessionId}
-          >
-            {sessionId ? "Generating..." : "Let's Go"}
-          </VibesButton>
 
           <a
             href="/chat"
