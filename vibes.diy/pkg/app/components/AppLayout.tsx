@@ -1,6 +1,5 @@
 import React from "react";
 import type { ReactNode } from "react";
-import LightUpYourData from "./ResultPreview/LightUpYourData.js";
 import { Toaster } from "react-hot-toast";
 
 interface AppLayoutProps {
@@ -27,13 +26,9 @@ export default function AppLayout({
   fullWidthChat = false,
 }: AppLayoutProps) {
   return (
-    <div className="relative flex h-dvh flex-col md:flex-row md:overflow-hidden">
+    <div className="page-grid-background grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden">
       <div>
         <Toaster />
-      </div>
-      {/* Background component that covers the entire viewport */}
-      <div className="absolute inset-0 z-0 h-full w-full overflow-hidden">
-        <LightUpYourData />
       </div>
 
       {/* Content with relative positioning to appear above the background */}
