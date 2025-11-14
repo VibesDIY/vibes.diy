@@ -102,7 +102,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     }, []);
 
     return (
-      <div ref={containerRef} className="px-4 py-2">
+      <div ref={containerRef} className="px-2 py-1">
         <div className="space-y-1">
           <textarea
             ref={chatState.inputRef}

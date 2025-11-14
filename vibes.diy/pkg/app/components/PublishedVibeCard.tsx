@@ -19,7 +19,7 @@ export default function PublishedVibeCard({
   const vibeName = name || slug || "Published Vibe";
 
   return (
-    <BrutalistCard size="sm" className="overflow-hidden transition-colors hover:border-blue-500">
+    <BrutalistCard size="md" className="overflow-hidden transition-colors hover:border-blue-500">
       <Link to={linkUrl} className="block h-full w-full">
         <div className="p-2 py-1">
           <div className="flex h-8 items-center justify-between">

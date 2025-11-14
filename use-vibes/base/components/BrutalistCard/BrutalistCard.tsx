@@ -40,8 +40,26 @@ export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps
     }: BrutalistCardProps,
     ref
   ) => {
+    // Detect dark mode
+    const [isDark, setIsDark] = React.useState(false);
+
+    React.useEffect(() => {
+      const checkDarkMode = () => {
+        setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      };
+
+      checkDarkMode();
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addEventListener('change', checkDarkMode);
+
+      return () => mediaQuery.removeEventListener('change', checkDarkMode);
+    }, []);
+
     const cardStyle = {
       ...getBrutalistCardStyle(variant, size),
+      background: isDark ? '#1a1a1a' : '#fff',
+      color: isDark ? '#fff' : '#1a1a1a',
+      border: isDark ? '3px solid #555' : '3px solid #1a1a1a',
       ...style,
     } as React.CSSProperties;
 

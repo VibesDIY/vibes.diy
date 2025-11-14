@@ -16,7 +16,7 @@ function getShadowColor(variant: BrutalistCardVariant): string {
       return '#FEDD00'; // Yellow
     case 'default':
     default:
-      return '#666'; // Gray
+      return '#1a1a1a'; // Dark gray
   }
 }
 
@@ -64,7 +64,7 @@ function getBoxShadow(size: BrutalistCardSize, variant: BrutalistCardVariant): s
     case 'md':
       return `4px 5px 0px 0px ${color}`;
     case 'lg':
-      return `6px 6px 0px 0px ${color === '#666' ? '#1a1a1a' : color}`; // lg uses black for default
+      return `6px 6px 0px 0px ${color}`;
     default:
       return `4px 5px 0px 0px ${color}`;
   }
@@ -78,9 +78,7 @@ export function getBrutalistCardStyle(
   size: BrutalistCardSize = 'md'
 ): CSSProperties {
   return {
-    background: '#fff',
-    color: '#1a1a1a',
-    border: '3px solid #1a1a1a',
+    // background, color, and border are now controlled by CSS classes for dark mode support
     borderRadius: '12px',
     padding: getPadding(size),
     fontSize: getFontSize(size),

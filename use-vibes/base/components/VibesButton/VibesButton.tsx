@@ -16,13 +16,25 @@ export function VibesButton({
   onHover,
   onUnhover,
   style: customStyle,
+  className,
   ...props
 }: MenuButtonProps) {
   const [isHovered, setHovered] = useState(false);
   const [isActive, setActive] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
-  const baseStyle = getButtonStyle(variant, isHovered, isActive);
-  const mergedStyle = { ...baseStyle, ...customStyle };
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    };
+
+    checkDarkMode();
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkDarkMode);
+
+    return () => mediaQuery.removeEventListener('change', checkDarkMode);
+  }, []);
 
   useEffect(() => {
     if (isHovered) {
@@ -32,9 +44,19 @@ export function VibesButton({
     }
   }, [isHovered, onHover, onUnhover]);
 
+  const baseStyle = getButtonStyle(variant, isHovered, isActive);
+  const mergedStyle = {
+    ...baseStyle,
+    background: isDark ? '#1a1a1a' : '#fff',
+    color: isDark ? '#fff' : '#1a1a1a',
+    border: isDark ? '3px solid #555' : '3px solid #1a1a1a',
+    ...customStyle,
+  };
+
   return (
     <button
       {...props}
+      className={className}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => {
         setHovered(false);
