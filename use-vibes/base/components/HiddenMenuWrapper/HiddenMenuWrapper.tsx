@@ -215,8 +215,18 @@ export function HiddenMenuWrapper({
   useEffect(() => {
     const menuEl = menuRef.current;
     if (!menuEl) return;
-    // Use microtask to let layout settle, then measure
-    queueMicrotask?.(() => {
+    // Defer measurement to allow layout to settle, with a portable fallback
+    const defer = (cb: () => void) => {
+      if (typeof queueMicrotask === 'function') {
+        queueMicrotask(cb);
+      } else if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(cb);
+      } else {
+        setTimeout(cb, 0);
+      }
+    };
+
+    defer(() => {
       const next = menuEl.offsetHeight;
       setMenuHeight((prev) => (prev !== next ? next : prev));
     });
