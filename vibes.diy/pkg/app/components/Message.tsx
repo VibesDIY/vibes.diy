@@ -127,19 +127,16 @@ const SystemMessage = memo(
     const errorTitle = lines[0] || "System Message";
     const errorDetails = lines.slice(1).join("\n");
 
-    // Determine if this is an error message (vs other potential system messages)
-    const isError = message.errorType && message.errorCategory;
-    const errorClass = isError
-      ? message.errorCategory === "immediate"
-        ? "border-red-500 bg-red-50 dark:bg-red-900/20"
-        : "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-      : "border-blue-500 bg-blue-50 dark:bg-blue-900/20";
+    // Map error category to BrutalistCard variant
+    const variant = message.errorCategory === "immediate"
+      ? "error"
+      : message.errorCategory === "advisory"
+        ? "warning"
+        : "default";
 
     return (
       <div className="mb-4 flex flex-row justify-center px-4">
-        <div
-          className={`text-light-primary dark:text-dark-secondary max-w-[90%] rounded border-l-4 px-4 py-3 shadow-sm ${errorClass}`}
-        >
+        <BrutalistCard variant={variant} size="lg" className="max-w-[80%]">
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <h4 className="m-0 font-semibold">{errorTitle}</h4>
             {errorDetails && (
@@ -148,7 +145,7 @@ const SystemMessage = memo(
               </pre>
             )}
           </div>
-        </div>
+        </BrutalistCard>
       </div>
     );
   },
