@@ -19,7 +19,12 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar/utils", () => {
 });
 
 // Import mocked modules
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+  useLocation,
+  type NavigateFunction,
+} from "react-router-dom";
 
 describe("useViewState", () => {
   let mockNavigate: ReturnType<typeof vi.fn>;
@@ -31,7 +36,9 @@ describe("useViewState", () => {
     mockNavigate = vi.fn();
 
     // Setup default mocks
-    vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+    vi.mocked(useNavigate).mockReturnValue(
+      mockNavigate as unknown as NavigateFunction,
+    );
     vi.mocked(useParams).mockReturnValue({
       sessionId: mockSessionId,
       title: mockTitle,
@@ -52,7 +59,7 @@ describe("useViewState", () => {
           previewReady: true,
         },
         "/chat/session123/title/app",
-        mockNavigate,
+        mockNavigate as unknown as NavigateFunction,
       ),
     );
 
@@ -71,7 +78,7 @@ describe("useViewState", () => {
           previewReady: true,
         },
         "/chat/session123/title/code",
-        mockNavigate,
+        mockNavigate as unknown as NavigateFunction,
       ),
     );
 
@@ -90,7 +97,7 @@ describe("useViewState", () => {
           previewReady: true,
         },
         "/chat/session123/title/data",
-        mockNavigate,
+        mockNavigate as unknown as NavigateFunction,
       ),
     );
 
@@ -112,7 +119,7 @@ describe("useViewState", () => {
           previewReady: false,
         },
         "/chat/session123/title/app",
-        mockNavigate,
+        mockNavigate as unknown as NavigateFunction,
       ),
     );
 
@@ -146,7 +153,7 @@ describe("useViewState", () => {
           previewReady: false,
         },
         "/chat/session123/title/code",
-        mockNavigate,
+        mockNavigate as unknown as NavigateFunction,
       ),
     );
 
@@ -180,7 +187,7 @@ describe("useViewState", () => {
           previewReady: false,
         },
         "/chat/session123/title/data",
-        mockNavigate,
+        mockNavigate as unknown as NavigateFunction,
       ),
     );
 
@@ -323,7 +330,7 @@ describe("useViewState", () => {
           previewReady: true,
         },
         "/chat/session123/title/settings",
-        mockNavigate,
+        mockNavigate as unknown as NavigateFunction,
       ),
     );
 
