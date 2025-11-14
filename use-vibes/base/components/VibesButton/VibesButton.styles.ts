@@ -29,17 +29,15 @@ export function getButtonStyle(
   return {
     width: '100%',
     padding: '1rem 2rem',
-    background: '#fff',
-    color: '#1a1a1a',
-    border: '3px solid #1a1a1a',
+    // background, color, and border moved to CSS classes for dark mode support
     borderRadius: '12px',
     fontSize: '1rem',
     fontWeight: 700,
-    textTransform: 'uppercase',
+    textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
-    position: 'relative',
+    position: 'relative' as const,
     transform,
     boxShadow,
   };
