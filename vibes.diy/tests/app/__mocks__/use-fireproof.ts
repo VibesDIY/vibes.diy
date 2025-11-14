@@ -70,7 +70,6 @@ export default {
 
 // Mock RedirectStrategy class for ManualRedirectStrategy to extend
 export class RedirectStrategy {
-  constructor() {}
   authorize() {
     return Promise.resolve();
   }

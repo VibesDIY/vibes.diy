@@ -52,8 +52,9 @@ export function createMockIframe(postMessage = vi.fn()): MockIframe {
   });
 
   // Override methods with mocks
-  actualIframe.addEventListener = iframe.addEventListener;
-  actualIframe.removeEventListener = iframe.removeEventListener;
+  actualIframe.addEventListener = iframe.addEventListener as HTMLIFrameElement['addEventListener'];
+  actualIframe.removeEventListener =
+    iframe.removeEventListener as HTMLIFrameElement['removeEventListener'];
 
   // Mock document.createElement to return our enhanced iframe when 'iframe' is requested
   const originalCreateElement = document.createElement;
