@@ -104,11 +104,11 @@ export default function FeaturedVibes({
     <div className={`w-full ${className}`}>
       <div className="flex flex-wrap gap-4">
         {filteredVibes.map((vibe) => (
-          <div key={vibe.name} className="flex-1 min-w-full sm:min-w-[calc(33.333%-1rem)]">
-            <PublishedVibeCard
-              slug={vibe.slug}
-              name={vibe.name}
-            />
+          <div
+            key={vibe.name}
+            className="flex-1 min-w-full sm:min-w-[calc(33.333%-1rem)]"
+          >
+            <PublishedVibeCard slug={vibe.slug} name={vibe.name} />
           </div>
         ))}
       </div>

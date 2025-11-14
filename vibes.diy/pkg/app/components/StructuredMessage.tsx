@@ -233,7 +233,11 @@ const StructuredMessage = ({
           .map((segment, index) => {
             if (segment.type === "markdown") {
               return (
-                <BrutalistCard key={`markdown-${index}`} size="sm" className="my-4">
+                <BrutalistCard
+                  key={`markdown-${index}`}
+                  size="sm"
+                  className="my-4"
+                >
                   <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
                     <ReactMarkdown>{segment.content || ""}</ReactMarkdown>
                   </div>
