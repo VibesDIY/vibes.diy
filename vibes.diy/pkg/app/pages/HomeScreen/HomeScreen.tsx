@@ -38,6 +38,7 @@ import {
 import { HomeScreenProps } from "./HomeScreen.types.ts";
 import { useIsMobile } from "../../hooks/index.ts";
 import { AnimatedScene } from "./AnimatedScene.tsx";
+import { CreateSection } from "./CreateSection.tsx";
 import computerAnimGif from "../../assets/computer-anim.gif";
 
 // Helper function to convert URLs in text to clickable links
@@ -574,6 +575,24 @@ export const HomeScreen = ({}: HomeScreenProps) => {
               </DraggableSection>
             )}
 
+            <DraggableSection color="red" x={550} y={500}>
+              <div
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: 'center',
+                  }}
+                >
+              <CreateSection />
+                </div>
+            </DraggableSection>
+
+            <DraggableCard color="blue" x={550} y={100}>
+              <p style={{ maxWidth: "250px", fontWeight: "bold" }}>
+                No coding experience required. Just build what you need, when
+                you need it, and share it instantly with the group chat.
+              </p>
+            </DraggableCard>
             <DraggableCard color="blue" x={550} y={100}>
               <p style={{ maxWidth: "250px", fontWeight: "bold" }}>
                 No coding experience required. Just build what you need, when
