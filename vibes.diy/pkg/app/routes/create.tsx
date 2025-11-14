@@ -81,7 +81,7 @@ function CreateWithStreaming({
       // This means the post-code content is actively being generated RIGHT NOW
       const segmentsAfterCode = segments.slice(lastCodeIndex + 1);
       const hasContentAfterCode = segmentsAfterCode.some(
-        (seg) => seg.content && seg.content.trim().length > 0
+        (seg) => seg.content && seg.content.trim().length > 0,
       );
 
       // Additional check: Only navigate if this is fresh content being streamed
@@ -121,7 +121,7 @@ function CreateWithStreaming({
 
   // Deduplicate by _id
   const uniqueMessages = Array.from(
-    new Map(aiMessages.map((msg) => [msg._id, msg])).values()
+    new Map(aiMessages.map((msg) => [msg._id, msg])).values(),
   );
 
   return (
@@ -138,18 +138,21 @@ function CreateWithStreaming({
 
         return (
           <div key={message._id}>
-              {segments.map((segment, index) => {
-                if (segment.type === "markdown" && segment.content) {
-                  return (
-                    <BrutalistCard key={`${message._id}-markdown-${index}`} size="md">
-                      <div className="ai-markdown prose">
-                        <ReactMarkdown>{segment.content}</ReactMarkdown>
-                      </div>
-                    </BrutalistCard>
-                  );
-                } else if (segment.type === "code" && segment.content) {
-                  return (
-                    <BrutalistCard key={`${message._id}-code-${index}`} size="md">
+            {segments.map((segment, index) => {
+              if (segment.type === "markdown" && segment.content) {
+                return (
+                  <BrutalistCard
+                    key={`${message._id}-markdown-${index}`}
+                    size="md"
+                  >
+                    <div className="ai-markdown prose">
+                      <ReactMarkdown>{segment.content}</ReactMarkdown>
+                    </div>
+                  </BrutalistCard>
+                );
+              } else if (segment.type === "code" && segment.content) {
+                return (
+                  <BrutalistCard key={`${message._id}-code-${index}`} size="md">
                     <div className="flex items-center justify-between p-2">
                       <span className="font-mono text-sm text-accent-01 dark:text-accent-01">
                         {`${codeLines} line${codeLines !== 1 ? "s" : ""}`}
@@ -189,12 +192,12 @@ function CreateWithStreaming({
                     </pre>
                   </BrutalistCard>
                 );
-            }
-            return null;
-          })}
-        </div>
-      );
-    })}
+              }
+              return null;
+            })}
+          </div>
+        );
+      })}
 
       {/* Show streaming indicator when actively streaming */}
       {chatState.isStreaming && (
@@ -445,7 +448,9 @@ export default function Create() {
           {/* Show first user message when session exists */}
           {sessionId && promptText && (
             <BrutalistCard size="md" style={{ width: "100%" }}>
-              <div style={{ marginBottom: "8px", fontWeight: 600, opacity: 0.7 }}>
+              <div
+                style={{ marginBottom: "8px", fontWeight: 600, opacity: 0.7 }}
+              >
                 Your request:
               </div>
               <div>{promptText}</div>
