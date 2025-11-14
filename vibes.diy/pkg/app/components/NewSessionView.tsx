@@ -1,10 +1,15 @@
 import React, { useCallback, useState } from "react";
 import { useNewSessionChat } from "../hooks/useNewSessionChat.js";
 import ChatInput from "./ChatInput.js";
-import QuickSuggestions from "./QuickSuggestions.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
 import { MenuIcon } from "./ChatHeaderIcons.js";
+import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
+import {
+  partyPlannerPrompt,
+  progressTrackerPrompt,
+  jamSessionPrompt,
+} from "../data/quick-suggestions-data.js";
 import models from "../data/models.json" with { type: "json" };
 import { Toaster } from "react-hot-toast";
 
@@ -52,7 +57,7 @@ export default function NewSessionView({
       <div>
         <Toaster />
       </div>
-      <div className="flex min-h-screen flex-col">
+      <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
         {/* Header with menu button */}
         <div className="flex items-center justify-between p-4">
           <button
@@ -68,19 +73,50 @@ export default function NewSessionView({
 
         {/* Main content section */}
         <div className="flex-1 p-8">
-          <div className="mx-auto max-w-4xl">
-            <h1 className="mb-4 text-center text-3xl font-bold">
-              Shareable in seconds
-            </h1>
-            <p className="mb-8 text-center text-lg text-gray-600">
-              Make apps with your friends
-            </p>
+          <div
+            style={{
+              maxWidth: "800px",
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+              margin: "0 auto",
+            }}
+          >
+            <BrutalistCard size="lg">
+              <h1 className="text-4xl font-bold">Vibes are for sharing</h1>
+            </BrutalistCard>
 
             {/* Prompt suggestions section */}
-            <QuickSuggestions onSelectSuggestion={handleSelectSuggestion} />
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <VibesButton
+                variant="primary"
+                style={{ flex: "1" }}
+                onClick={() => handleSelectSuggestion(partyPlannerPrompt)}
+              >
+                Party Planner
+              </VibesButton>
+              <VibesButton
+                variant="secondary"
+                style={{ flex: "1" }}
+                onClick={() => handleSelectSuggestion(progressTrackerPrompt)}
+              >
+                Progress Tracker
+              </VibesButton>
+              <VibesButton
+                variant="tertiary"
+                style={{ flex: "1" }}
+                onClick={() => handleSelectSuggestion(jamSessionPrompt)}
+              >
+                Jam Session
+              </VibesButton>
+            </div>
 
             {/* Chat input form */}
-            <div className="mb-12">
+            <BrutalistCard size="md" style={{ width: "100%" }}>
+              <div style={{ marginBottom: "12px", fontWeight: 600 }}>
+                Describe your vibe
+              </div>
               <ChatInput
                 chatState={chatState}
                 showModelPickerInChat={chatState.showModelPickerInChat}
@@ -103,7 +139,7 @@ export default function NewSessionView({
                   // Session creation is handled in chatState.sendMessage
                 }}
               />
-            </div>
+            </BrutalistCard>
 
             {/* Featured vibes section */}
             <div className="sm:w-4/5 mx-auto">

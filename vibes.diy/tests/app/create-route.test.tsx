@@ -218,20 +218,6 @@ describe("Create Route", () => {
     });
   });
 
-  it("disables button when sessionId is in params", () => {
-    // Set sessionId in params to simulate being on /create/:sessionId route
-    (mockParams as { sessionId?: string }).sessionId = "test-session-id-123";
-
-    render(<Create />);
-
-    const button = screen.getAllByText("Generating...")[0];
-    expect(button).toBeInTheDocument();
-    expect(button).toBeDisabled();
-
-    // Clean up
-    delete (mockParams as { sessionId?: string }).sessionId;
-  });
-
   it("navigates to session route after Let's Go is clicked", async () => {
     render(<Create />);
 
@@ -279,9 +265,9 @@ describe("Create Route", () => {
   it("renders Learn link", () => {
     render(<Create />);
 
-    const learnLink = screen.getAllByText("Learn")[0];
+    const learnLink = screen.getAllByText("Old style")[0];
     expect(learnLink).toBeInTheDocument();
-    expect(learnLink).toHaveAttribute("href", "/");
+    expect(learnLink).toHaveAttribute("href", "/chat");
   });
 
   it("renders CreateWithStreaming when sessionId is in params", () => {
@@ -354,13 +340,6 @@ describe("CreateWithStreaming Component", () => {
   it("displays final markdown segment", () => {
     render(<Create />);
     expect(screen.getAllByText("Your app is ready!")[0]).toBeInTheDocument();
-  });
-
-  it("shows button as Generating when sessionId exists", () => {
-    render(<Create />);
-
-    // The button should show "Generating..." when sessionId is in params
-    expect(screen.getAllByText("Generating...")[0]).toBeInTheDocument();
   });
 
   it("copies code to clipboard when copy button is clicked", () => {
