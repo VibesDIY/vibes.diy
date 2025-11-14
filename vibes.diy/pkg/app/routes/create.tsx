@@ -389,10 +389,10 @@ export default function Create() {
           </VibesButton>
 
           <a
-            href="/"
+            href="/chat"
             style={{ textAlign: "right", textDecoration: "underline" }}
           >
-            Learn
+            Old style
           </a>
         </div>
       </div>
