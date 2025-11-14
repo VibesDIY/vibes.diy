@@ -33,7 +33,7 @@ const { database, useLiveQuery, useDocument } = useFireproof("my-ledger");
 
 #### Put and Get Documents
 
-Each document an `_id`, which can be auto-generated or set explicitly. Auto-generation is recommended to ensure uniqueness and avoid conflicts. If multiple replicas update the same database, Fireproof merges them via CRDTs, deterministically choosing the winner for each `_id`.
+Each document has an `_id`, which can be auto-generated or set explicitly. Auto-generation is recommended to ensure uniqueness and avoid conflicts. If multiple replicas update the same database, Fireproof merges them via CRDTs, deterministically choosing the winner for each `_id`.
 
 Use granular documents, e.g. one document per user action, so saving a form or clicking a button should typically create or update a single document, or just a few documents. Avoid patterns that require a single document to grow without bound.
 
@@ -41,7 +41,7 @@ Fireproof is a local database, no loading states required, just empty data state
 
 ### Basic Example
 
-This example shows Fireproof's `_id` allowse easy sorting with `useLiveQuery`.
+This example shows Fireproof's `_id` allows easy sorting with `useLiveQuery`.
 
 ```js
 const App = () => {
@@ -103,7 +103,7 @@ When you call submit, the document is reset, so if you didn't provide an `_id` t
 
 Data is queried by sorted indexes defined by the application. Sort by strings, numbers, or booleans, as well as arrays for grouping. Use numbers when possible for sorting continuous data.
 
-You can use the `_id` field for temporal sorting so you dont have to write code to get simple recent document lists, as in the basic example above.
+You can use the `_id` field for temporal sorting so you don't have to write code to get simple recent document lists, as in the basic example above.
 
 Here are other common patterns:
 
@@ -170,9 +170,10 @@ When you want to group rows easily, you can use an array index key. This is grea
 
 ```js
 const queryResult = useLiveQuery(
-  (doc) => { 
-    const date = new Date(doc);
-    return [date.getFullYear(), date.getMonth(), date.getDate()]
+  (doc) => {
+    const date = new Date(doc.date);
+    if (Number.isNaN(date.getTime())) return; // return nothing to skip docs without a valid date
+    return [date.getFullYear(), date.getMonth(), date.getDate()];
   },
   { prefix: [2024, 11] }
 );
