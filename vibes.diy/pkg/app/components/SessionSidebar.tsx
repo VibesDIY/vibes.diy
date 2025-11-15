@@ -174,7 +174,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                         await initiateLogin();
                         onClose();
                       }}
-                      className={`bg-light-decorative-02 dark:bg-dark-decorative-02 text-light-primary dark:text-dark-primary flex w-full items-center rounded-md px-4 py-3 text-left text-sm font-bold transition-colors hover:opacity-90`}
+                      className={`bg-light-decorative-02 dark:bg-dark-decorative-01 text-light-primary dark:text-dark-primary flex w-full items-center rounded-md px-4 py-3 text-left text-sm font-bold transition-colors hover:opacity-90`}
                     >
                       <span>Log in</span>
                     </button>
