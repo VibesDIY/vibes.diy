@@ -216,7 +216,21 @@ const IframeContent: React.FC<IframeContentProps> = ({
       const handleIframeLoad = async () => {
         if (iframeRef.current?.contentWindow) {
           // Validate code before sending to iframe (headless validation)
-          if (monacoApiRef.current) {
+          if (monacoApiRef.current && monacoEditorRef.current) {
+            // First, check what the visible editor sees
+            const visibleModel = monacoEditorRef.current.getModel();
+            if (visibleModel) {
+              const visibleMarkers = monacoApiRef.current.editor.getModelMarkers({
+                resource: visibleModel.uri,
+              });
+              const visibleErrors = visibleMarkers.filter(
+                (m) => m.severity === monacoApiRef.current.MarkerSeverity.Error,
+              );
+              console.log("🔍 [VALIDATION] Visible editor URI:", visibleModel.uri.toString());
+              console.log("🔍 [VALIDATION] Visible editor has", visibleErrors.length, "errors");
+              console.log("🔍 [VALIDATION] Visible editor errors:", visibleErrors);
+            }
+
             console.log("🔍 [VALIDATION] Running headless syntax check...");
             try {
               const validationErrors = await validateCodeHeadless(
