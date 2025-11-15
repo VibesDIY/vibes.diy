@@ -11,10 +11,21 @@ import { DatabaseListView } from "./DataView/index.js";
 import { setupMonacoEditor } from "./setupMonacoEditor.js";
 import { editor } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
-import {
-  validateCodeHeadless,
-  formatValidationErrors,
-} from "../../utils/validateCodeHeadless.js";
+
+// Helper to format validation errors for console output
+function formatValidationErrors(
+  errors: Array<{
+    line: number;
+    column: number;
+    message: string;
+  }>,
+): string {
+  if (errors.length === 0) return "";
+  const errorList = errors
+    .map((err) => `Line ${err.line}, Column ${err.column}: ${err.message}`)
+    .join("\n");
+  return `Found ${errors.length} syntax error${errors.length > 1 ? "s" : ""}:\n\n${errorList}`;
+}
 
 interface IframeContentProps {
   activeView: "preview" | "code" | "data" | "chat" | "settings";
@@ -215,45 +226,39 @@ const IframeContent: React.FC<IframeContentProps> = ({
       // Send code via postMessage after iframe loads
       const handleIframeLoad = async () => {
         if (iframeRef.current?.contentWindow) {
-          // Validate code before sending to iframe (headless validation)
+          // Validate code before sending to iframe using visible editor's markers
           if (monacoApiRef.current && monacoEditorRef.current) {
-            // First, check what the visible editor sees
             const visibleModel = monacoEditorRef.current.getModel();
             if (visibleModel) {
-              const visibleMarkers = monacoApiRef.current.editor.getModelMarkers({
+              const markers = monacoApiRef.current.editor.getModelMarkers({
                 resource: visibleModel.uri,
               });
-              const visibleErrors = visibleMarkers.filter(
+              const errors = markers.filter(
                 (m) => m.severity === monacoApiRef.current.MarkerSeverity.Error,
               );
-              console.log("🔍 [VALIDATION] Visible editor URI:", visibleModel.uri.toString());
-              console.log("🔍 [VALIDATION] Visible editor has", visibleErrors.length, "errors");
-              console.log("🔍 [VALIDATION] Visible editor errors:", visibleErrors);
-            }
 
-            console.log("🔍 [VALIDATION] Running headless syntax check...");
-            try {
-              const validationErrors = await validateCodeHeadless(
-                transformedCode,
-                monacoApiRef.current,
-              );
-
-              if (validationErrors.length > 0) {
+              if (errors.length > 0) {
                 console.error(
-                  "❌ [VALIDATION] Syntax errors found:",
-                  validationErrors,
+                  "❌ [VALIDATION] Found",
+                  errors.length,
+                  "syntax errors - not sending to iframe",
                 );
-                console.error(formatValidationErrors(validationErrors));
+                console.error(
+                  formatValidationErrors(
+                    errors.map((e) => ({
+                      line: e.startLineNumber,
+                      column: e.startColumn,
+                      endLine: e.endLineNumber,
+                      endColumn: e.endColumn,
+                      message: e.message,
+                      severity: e.severity,
+                    })),
+                  ),
+                );
                 // Don't send code to iframe if validation fails
                 return;
               }
-              console.log("✅ [VALIDATION] Code passed syntax check");
-            } catch (err) {
-              console.warn(
-                "⚠️ [VALIDATION] Validation failed, proceeding anyway:",
-                err,
-              );
-              // Continue even if validation throws an error
+              console.log("✅ [VALIDATION] No syntax errors detected");
             }
           }
 
