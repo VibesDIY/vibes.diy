@@ -127,9 +127,6 @@ export const iframeHtml = `<!doctype html>
           script.onload = () => {
             captureScreenshotWithFallback();
           };
-          script.onerror = (e) => {
-            postToParent({ type: "screenshot-error", error: "Failed to load html2canvas" });
-          };
           document.head.appendChild(script);
           return;
         }
@@ -138,29 +135,18 @@ export const iframeHtml = `<!doctype html>
       }
 
       function captureScreenshotWithFallback() {
-        try {
-          // Let html2canvas-pro do its job with modern CSS
-          html2canvas(document.body, {
-            allowTaint: true,
-            useCORS: true,
-            scale: 1,
-            logging: false,
-          })
-            .then((canvas) => {
-              // Crop to max 3:1 aspect ratio (3 times taller than wide)
-              const croppedCanvas = cropToMaxAspectRatio(canvas, 3);
-              const dataURI = croppedCanvas.toDataURL();
-              postToParent({ type: "screenshot", data: dataURI });
-            })
-            .catch((err) => {
-              postToParent({
-                type: "screenshot-error",
-                error: "Screenshot capture failed: " + (err.message || "Unknown error"),
-              });
-            });
-        } catch (err) {
-          postToParent({ type: "screenshot-error", error: "Unexpected error during screenshot capture" });
-        }
+        // Let html2canvas-pro do its job with modern CSS
+        html2canvas(document.body, {
+          allowTaint: true,
+          useCORS: true,
+          scale: 1,
+          logging: false,
+        }).then((canvas) => {
+          // Crop to max 3:1 aspect ratio (3 times taller than wide)
+          const croppedCanvas = cropToMaxAspectRatio(canvas, 3);
+          const dataURI = croppedCanvas.toDataURL();
+          postToParent({ type: "screenshot", data: dataURI });
+        });
       }
 
       function pageIsLoaded() {
@@ -215,35 +201,6 @@ export const iframeHtml = `<!doctype html>
       });
 
       // Removed DOMContentLoaded listener - preview-ready now sent after React renders
-
-      // Global error handlers to catch and log all errors
-      window.onerror = function (message, source, lineno, colno, error) {
-        const errorDetails = {
-          type: "error",
-          message: message,
-          source: source,
-          lineno: lineno,
-          colno: colno,
-          stack: error?.stack || "No stack trace available",
-          timestamp: new Date().toISOString(),
-        };
-        console.error("Uncaught error:", errorDetails);
-        // Send error to parent window
-        postToParent({ type: "iframe-error", error: errorDetails });
-        return false; // Let the default error handler run
-      };
-
-      // Handle unhandled promise rejections
-      window.addEventListener("unhandledrejection", function (event) {
-        const errorDetails = {
-          type: "unhandledrejection",
-          reason: event.reason?.toString() || "Unknown reason",
-          stack: event.reason?.stack || "No stack trace available",
-          timestamp: new Date().toISOString(),
-        };
-        // Send rejection to parent window
-        postToParent({ type: "iframe-error", error: errorDetails });
-      });
     </script>
   </head>
   <body>
@@ -279,127 +236,7 @@ export const iframeHtml = `<!doctype html>
       {{IMPORT_MAP}}
     </script>
 
-    <!-- Enhanced Babel and JSX error handling script -->
     <script>
-      window.babelTransformError = null;
-
-      // 1. Patch console.error to capture JSX parse errors that are only logged to console
-      const originalConsoleError = console.error;
-      console.error = function (...args) {
-        const errorMsg = args.join(" ");
-
-        // Look for specific JSX parse errors that might not trigger other handlers
-        if (
-          errorMsg.includes("parse-error.ts") ||
-          (errorMsg.includes("SyntaxError") &&
-            errorMsg.includes("Unexpected token")) ||
-          errorMsg.includes("JSX")
-        ) {
-          // Extract line and position information if available
-          let lineInfo = "";
-          const lineMatch =
-            errorMsg.match(/(\d+):(\d+)/) ||
-            errorMsg.match(/line (\d+).+column (\d+)/);
-          if (lineMatch) {
-            lineInfo = \` at line \${lineMatch[1]}, column \${lineMatch[2]}\`;
-          }
-
-          // Extract meaningful error message
-          let message = "JSX Syntax Error";
-          if (errorMsg.includes("Unexpected token")) {
-            const tokenMatch = errorMsg.match(
-              /Unexpected token[,:]?\\s*([^,\\n)]+)/,
-            );
-            if (tokenMatch) {
-              message = \`JSX Syntax Error: Unexpected token \${tokenMatch[1].trim()}\`;
-            }
-          } else if (errorMsg.includes("expected")) {
-            const expectedMatch = errorMsg.match(/expected\\s+([^,\\n)]+)/);
-            if (expectedMatch) {
-              message = \`JSX Syntax Error: Expected \${expectedMatch[1].trim()}\`;
-            }
-          }
-
-          const errorDetails = {
-            type: "error",
-            message: \`\${message}\${lineInfo}\`,
-            source: "jsx-parser",
-            stack: errorMsg,
-            timestamp: new Date().toISOString(),
-            errorType: "SyntaxError",
-          };
-
-          // Only send if we haven't already reported an error
-          if (!window.babelTransformError) {
-            postToParent({ type: "iframe-error", error: errorDetails });
-            window.babelTransformError = errorDetails;
-          }
-        }
-
-        // Call original console.error
-        originalConsoleError.apply(console, args);
-      };
-
-      // 2. Patch Babel transform for errors caught during transformation
-      if (window.Babel && window.Babel.transform) {
-        const originalTransform = window.Babel.transform;
-        window.Babel.transform = function (code, options) {
-          try {
-            return originalTransform.call(this, code, options);
-          } catch (err) {
-            // Capture and format Babel error
-            const errorDetails = {
-              type: "error",
-              message: \`Babel Syntax Error: \${err.message || "Invalid syntax"}\`,
-              source: "babel-transform",
-              stack: err.stack || "",
-              timestamp: new Date().toISOString(),
-              errorType: "SyntaxError",
-            };
-            // Report error to parent
-            postToParent({ type: "iframe-error", error: errorDetails });
-            window.babelTransformError = errorDetails;
-            throw err;
-          }
-        };
-      }
-
-      // 3. Enhanced unhandled error handler specifically for syntax errors
-      window.addEventListener(
-        "error",
-        function (event) {
-          // Skip if we already caught the error elsewhere
-          if (window.babelTransformError) return;
-
-          // Focus on syntax errors and parse errors
-          if (
-            event.error?.stack?.includes("parse-error.ts") ||
-            event.message?.includes("SyntaxError") ||
-            (event.message === "Script error." && !event.filename)
-          ) {
-            let message = event.message;
-            if (message === "Script error.") {
-              message = "JSX Syntax Error: Unable to parse JSX code";
-            }
-
-            const errorDetails = {
-              type: "error",
-              message: message,
-              source: event.filename || "jsx-parser",
-              lineno: event.lineno || 0,
-              colno: event.colno || 0,
-              stack: event.error?.stack || "",
-              timestamp: new Date().toISOString(),
-              errorType: "SyntaxError",
-            };
-
-            postToParent({ type: "iframe-error", error: errorDetails });
-            window.babelTransformError = errorDetails;
-          }
-        },
-        true,
-      );
-
       // Do not read auth tokens from URL parameters (avoid leakage via referrers/history).
 
       // Code execution function
@@ -461,11 +298,7 @@ export const iframeHtml = `<!doctype html>
           globalThis.VIBE_HOSTING_DOMAIN = data.hostingDomain;
         }
 
-        try {
-          // Reset error state
-          window.babelTransformError = null;
-
-          // Set up Fireproof debug configuration BEFORE any imports
+        // Set up Fireproof debug configuration BEFORE any imports
           if (data.debugConfig && data.debugConfig.enabled) {
             globalThis[Symbol.for("FP_PRESET_ENV")] = {
               FP_DEBUG: data.debugConfig.value || "*",
@@ -572,9 +405,6 @@ export const iframeHtml = `<!doctype html>
             imageUrl
           });
 
-          // Notify parent that execution was successful
-          postToParent({ type: 'execution-success' });
-
           // Wait for React to render, then notify parent that preview is ready
           setTimeout(() => {
             postToParent({ type: 'preview-ready' });
@@ -583,31 +413,6 @@ export const iframeHtml = `<!doctype html>
 
           scriptElement.textContent = modifiedCode;
           document.head.appendChild(scriptElement);
-        } catch (error) {
-          console.error("Code execution failed:", error);
-          console.error("Error stack:", error.stack);
-          console.error("Error occurred at line:", error.lineNumber);
-
-          const errorDetails = {
-            type: "error",
-            message: \`Code execution failed: \${error.message}\`,
-            source: "code-execution",
-            stack: error.stack || "",
-            timestamp: new Date().toISOString(),
-            errorType: "ExecutionError",
-          };
-          postToParent({ type: "iframe-error", error: errorDetails });
-
-          // Show error in container
-          const container = document.getElementById("container");
-          container.innerHTML = \`
-            <div style="padding: 20px; color: red; font-family: monospace; white-space: pre-wrap;">
-              <h2>Execution Error</h2>
-              <p>\\\${error.message}</p>
-              <pre>\\\${error.stack}</pre>
-            </div>
-          \`;
-        }
       };
     </script>
   </body>
