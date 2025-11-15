@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import type { BaseChatState } from "@vibes.diy/prompts";
 import ModelPicker, { type ModelOption } from "./ModelPicker.js";
+import { Button } from "./ui/button.js";
 
 interface ChatInputProps {
   chatState: BaseChatState;
@@ -145,16 +146,18 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             ) : (
               <span aria-hidden="true" />
             )}
-            <button
+            <Button
               ref={submitButtonRef}
               type="button"
+        
               onClick={handleSendMessage}
               disabled={chatState.isStreaming}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+              variant="blue"
+              size="fixed"
               aria-label={chatState.isStreaming ? "Generating" : "Send message"}
             >
               {chatState.isStreaming ? "•••" : "Code"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

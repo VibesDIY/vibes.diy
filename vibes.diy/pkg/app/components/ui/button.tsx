@@ -23,6 +23,7 @@ const buttonVariants = cva(`${baseClasses} ${shadowClasses} ${activeClasses}`, {
     },
     size: {
       default: "h-10 w-10 sm:w-auto sm:px-4 sm:gap-2",
+      fixed: "h-10 px-4 gap-2",
     },
   },
   defaultVariants: {
