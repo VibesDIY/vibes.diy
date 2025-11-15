@@ -23,7 +23,7 @@ export const iframeHtml = `<!doctype html>
     </style>
     <script>
       // Version marker for cache busting verification
-      console.log('🔵 VIBESBOX IFRAME TEMPLATE v2024-11-09-auth-inheritance');
+      console.log('🔵 VIBESBOX IFRAME TEMPLATE v2025-11-15-minimal-protocol-no-error-handling');
 
       // Compute parent origin once for safe postMessage targeting
       let __PARENT_ORIGIN = (() => {
