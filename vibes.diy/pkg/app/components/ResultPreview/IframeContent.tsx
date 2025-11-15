@@ -11,6 +11,10 @@ import { DatabaseListView } from "./DataView/index.js";
 import { setupMonacoEditor } from "./setupMonacoEditor.js";
 import { editor } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
+import {
+  validateCodeHeadless,
+  formatValidationErrors,
+} from "../../utils/validateCodeHeadless.js";
 
 interface IframeContentProps {
   activeView: "preview" | "code" | "data" | "chat" | "settings";
@@ -209,8 +213,36 @@ const IframeContent: React.FC<IframeContentProps> = ({
       );
 
       // Send code via postMessage after iframe loads
-      const handleIframeLoad = () => {
+      const handleIframeLoad = async () => {
         if (iframeRef.current?.contentWindow) {
+          // Validate code before sending to iframe (headless validation)
+          if (monacoApiRef.current) {
+            console.log("🔍 [VALIDATION] Running headless syntax check...");
+            try {
+              const validationErrors = await validateCodeHeadless(
+                transformedCode,
+                monacoApiRef.current,
+              );
+
+              if (validationErrors.length > 0) {
+                console.error(
+                  "❌ [VALIDATION] Syntax errors found:",
+                  validationErrors,
+                );
+                console.error(formatValidationErrors(validationErrors));
+                // Don't send code to iframe if validation fails
+                return;
+              }
+              console.log("✅ [VALIDATION] Code passed syntax check");
+            } catch (err) {
+              console.warn(
+                "⚠️ [VALIDATION] Validation failed, proceeding anyway:",
+                err,
+              );
+              // Continue even if validation throws an error
+            }
+          }
+
           // Get auth token from localStorage for API authentication
           // Check both new and legacy token keys for compatibility
           let authToken: string | undefined;
