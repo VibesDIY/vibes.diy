@@ -149,7 +149,6 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             <Button
               ref={submitButtonRef}
               type="button"
-        
               onClick={handleSendMessage}
               disabled={chatState.isStreaming}
               variant="blue"
