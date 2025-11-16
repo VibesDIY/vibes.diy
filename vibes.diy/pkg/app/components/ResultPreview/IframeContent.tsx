@@ -230,11 +230,93 @@ const IframeContent: React.FC<IframeContentProps> = ({
           if (monacoApiRef.current && monacoEditorRef.current) {
             const visibleModel = monacoEditorRef.current.getModel();
             if (visibleModel) {
-              const markers = monacoApiRef.current.editor.getModelMarkers({
+              console.log("🔍 [VALIDATION] About to check markers");
+              console.log(
+                "🔍 [VALIDATION] Visible model URI:",
+                visibleModel.uri.toString(),
+              );
+              console.log(
+                "🔍 [VALIDATION] Visible model language:",
+                visibleModel.getLanguageId(),
+              );
+              console.log(
+                "🔍 [VALIDATION] Visible model line count:",
+                visibleModel.getLineCount(),
+              );
+
+              // Get ALL markers (not just errors) to see what Monaco knows
+              const allMarkers = monacoApiRef.current.editor.getModelMarkers({
                 resource: visibleModel.uri,
               });
-              const errors = markers.filter(
+              console.log(
+                "🔍 [VALIDATION] Total markers (all severities):",
+                allMarkers.length,
+              );
+              console.log("🔍 [VALIDATION] All markers:", allMarkers);
+
+              // Wait for markers to be ready using event listener
+              console.log("🔍 [VALIDATION] Waiting for markers to be ready...");
+              await new Promise<void>((resolve) => {
+                let resolved = false;
+
+                // Listen for marker changes
+                const disposable =
+                  monacoApiRef.current.editor.onDidChangeMarkers((uris) => {
+                    // Check if our model's URI is in the changed URIs
+                    if (
+                      uris.some(
+                        (uri) =>
+                          uri.toString() === visibleModel.uri.toString(),
+                      )
+                    ) {
+                      if (!resolved) {
+                        resolved = true;
+                        // Small delay to ensure markers are fully processed
+                        setTimeout(() => {
+                          disposable.dispose();
+                          console.log(
+                            "🔍 [VALIDATION] Markers ready (via event)",
+                          );
+                          resolve();
+                        }, 50);
+                      }
+                    }
+                  });
+
+                // Fallback timeout in case markers never change (already valid code)
+                setTimeout(() => {
+                  if (!resolved) {
+                    resolved = true;
+                    disposable.dispose();
+                    console.log(
+                      "🔍 [VALIDATION] Markers check timeout (fallback)",
+                    );
+                    resolve();
+                  }
+                }, 500);
+              });
+
+              // Check again after waiting
+              const allMarkersAfterWait =
+                monacoApiRef.current.editor.getModelMarkers({
+                  resource: visibleModel.uri,
+                });
+              console.log(
+                "🔍 [VALIDATION] Total markers after wait:",
+                allMarkersAfterWait.length,
+              );
+              console.log(
+                "🔍 [VALIDATION] All markers after wait:",
+                allMarkersAfterWait,
+              );
+
+              // Filter for errors
+              const errors = allMarkersAfterWait.filter(
                 (m) => m.severity === monacoApiRef.current.MarkerSeverity.Error,
+              );
+              console.log(
+                "🔍 [VALIDATION] Error markers (severity 8):",
+                errors.length,
               );
 
               if (errors.length > 0) {
