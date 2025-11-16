@@ -110,7 +110,7 @@ const AIMessage = memo(
 const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
   return (
     <div className="mb-4 flex flex-row justify-end px-4">
-      <BrutalistCard size="md" className="max-w-[85%]">
+      <BrutalistCard size="md" messageType="user" className="max-w-[85%]">
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           <ReactMarkdown>{message.text}</ReactMarkdown>
         </div>
