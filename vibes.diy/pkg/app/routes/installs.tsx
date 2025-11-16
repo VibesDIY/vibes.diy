@@ -102,9 +102,8 @@ export default function InstallsRoute() {
                             ? new Date(instance.updatedAt).toLocaleDateString()
                             : "—"}
                           {(() => {
-                            const shareCount = (
-                              instance.sharedWith ?? []
-                            ).length;
+                            const shareCount = (instance.sharedWith ?? [])
+                              .length;
                             return shareCount > 0 ? (
                               <span className="ml-2">
                                 · SHARED WITH {shareCount}{" "}
