@@ -124,6 +124,9 @@ export const iframeHtml = `<!doctype html>
           script.onload = () => {
             captureScreenshotWithFallback();
           };
+          script.onerror = (e) => {
+            postToParent({ type: "screenshot-error", error: "Failed to load html2canvas" });
+          };
           document.head.appendChild(script);
           return;
         }
@@ -132,18 +135,29 @@ export const iframeHtml = `<!doctype html>
       }
 
       function captureScreenshotWithFallback() {
-        // Let html2canvas-pro do its job with modern CSS
-        html2canvas(document.body, {
-          allowTaint: true,
-          useCORS: true,
-          scale: 1,
-          logging: false,
-        }).then((canvas) => {
-          // Crop to max 3:1 aspect ratio (3 times taller than wide)
-          const croppedCanvas = cropToMaxAspectRatio(canvas, 3);
-          const dataURI = croppedCanvas.toDataURL();
-          postToParent({ type: "screenshot", data: dataURI });
-        });
+        try {
+          // Let html2canvas-pro do its job with modern CSS
+          html2canvas(document.body, {
+            allowTaint: true,
+            useCORS: true,
+            scale: 1,
+            logging: false,
+          })
+            .then((canvas) => {
+              // Crop to max 3:1 aspect ratio (3 times taller than wide)
+              const croppedCanvas = cropToMaxAspectRatio(canvas, 3);
+              const dataURI = croppedCanvas.toDataURL();
+              postToParent({ type: "screenshot", data: dataURI });
+            })
+            .catch((err) => {
+              postToParent({
+                type: "screenshot-error",
+                error: "Screenshot capture failed: " + (err.message || "Unknown error"),
+              });
+            });
+        } catch (err) {
+          postToParent({ type: "screenshot-error", error: "Unexpected error during screenshot capture" });
+        }
       }
 
       function pageIsLoaded() {
@@ -198,6 +212,35 @@ export const iframeHtml = `<!doctype html>
       });
 
       // Removed DOMContentLoaded listener - preview-ready now sent after React renders
+
+      // Global error handlers to catch and log all errors
+      window.onerror = function (message, source, lineno, colno, error) {
+        const errorDetails = {
+          type: "error",
+          message: message,
+          source: source,
+          lineno: lineno,
+          colno: colno,
+          stack: error?.stack || "No stack trace available",
+          timestamp: new Date().toISOString(),
+        };
+        console.error("Uncaught error:", errorDetails);
+        // Send error to parent window
+        postToParent({ type: "iframe-error", error: errorDetails });
+        return false; // Let the default error handler run
+      };
+
+      // Handle unhandled promise rejections
+      window.addEventListener("unhandledrejection", function (event) {
+        const errorDetails = {
+          type: "unhandledrejection",
+          reason: event.reason?.toString() || "Unknown reason",
+          stack: event.reason?.stack || "No stack trace available",
+          timestamp: new Date().toISOString(),
+        };
+        // Send rejection to parent window
+        postToParent({ type: "iframe-error", error: errorDetails });
+      });
     </script>
   </head>
   <body>
@@ -295,7 +338,8 @@ export const iframeHtml = `<!doctype html>
           globalThis.VIBE_HOSTING_DOMAIN = data.hostingDomain;
         }
 
-        // Set up Fireproof debug configuration BEFORE any imports
+        try {
+          // Set up Fireproof debug configuration BEFORE any imports
           if (data.debugConfig && data.debugConfig.enabled) {
             globalThis[Symbol.for("FP_PRESET_ENV")] = {
               FP_DEBUG: data.debugConfig.value || "*",
@@ -410,6 +454,31 @@ export const iframeHtml = `<!doctype html>
 
           scriptElement.textContent = modifiedCode;
           document.head.appendChild(scriptElement);
+        } catch (error) {
+          console.error("Code execution failed:", error);
+          console.error("Error stack:", error.stack);
+          console.error("Error occurred at line:", error.lineNumber);
+
+          const errorDetails = {
+            type: "error",
+            message: \`Code execution failed: \${error.message}\`,
+            source: "code-execution",
+            stack: error.stack || "",
+            timestamp: new Date().toISOString(),
+            errorType: "ExecutionError",
+          };
+          postToParent({ type: "iframe-error", error: errorDetails });
+
+          // Show error in container
+          const container = document.getElementById("container");
+          container.innerHTML = \`
+            <div style="padding: 20px; color: red; font-family: monospace; white-space: pre-wrap;">
+              <h2>Execution Error</h2>
+              <p>\\\${error.message}</p>
+              <pre>\\\${error.stack}</pre>
+            </div>
+          \`;
+        }
       };
     </script>
   </body>
