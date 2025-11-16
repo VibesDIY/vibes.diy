@@ -320,27 +320,37 @@ const IframeContent: React.FC<IframeContentProps> = ({
               );
 
               if (errors.length > 0) {
+                const errorDetails = errors.map((e) => ({
+                  line: e.startLineNumber,
+                  column: e.startColumn,
+                  endLine: e.endLineNumber,
+                  endColumn: e.endColumn,
+                  message: e.message,
+                  severity: e.severity,
+                }));
+
                 console.error(
                   "❌ [VALIDATION] Found",
                   errors.length,
                   "syntax errors - not sending to iframe",
                 );
-                console.error(
-                  formatValidationErrors(
-                    errors.map((e) => ({
-                      line: e.startLineNumber,
-                      column: e.startColumn,
-                      endLine: e.endLineNumber,
-                      endColumn: e.endColumn,
-                      message: e.message,
-                      severity: e.severity,
-                    })),
-                  ),
-                );
+                console.error(formatValidationErrors(errorDetails));
+
+                // Notify parent about syntax errors (triggers auto-repair)
+                if (onSyntaxErrorChange) {
+                  onSyntaxErrorChange(errors.length, errorDetails);
+                }
+
                 // Don't send code to iframe if validation fails
                 return;
               }
+
               console.log("✅ [VALIDATION] No syntax errors detected");
+
+              // Notify parent that errors are cleared
+              if (onSyntaxErrorChange) {
+                onSyntaxErrorChange(0);
+              }
             }
           }
 

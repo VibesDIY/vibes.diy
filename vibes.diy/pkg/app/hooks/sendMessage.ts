@@ -120,6 +120,10 @@ export async function sendChatMessage(
     vibeDoc,
   );
 
+  // Reserve temporal position for AI message by creating empty placeholder
+  const placeholder = await sessionDatabase.put({});
+  const reservedId = placeholder.id;
+
   return streamAI(
     modelToUse,
     currentSystemPrompt,
@@ -173,6 +177,8 @@ export async function sendChatMessage(
         }
 
         aiMessage.model = modelToUse;
+        // Use reserved _id from placeholder to maintain correct temporal order
+        aiMessage._id = reservedId;
         const { id } = (await sessionDatabase.put(aiMessage)) as { id: string };
         setPendingAiMessage({ ...aiMessage, _id: id });
         setSelectedResponseId(id);
