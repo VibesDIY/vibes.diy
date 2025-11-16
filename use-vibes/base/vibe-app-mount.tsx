@@ -10,6 +10,7 @@ export interface MountVibesAppOptions {
   readonly title?: string;
   readonly imageUrl?: string;
   readonly appComponent?: React.ComponentType;
+  readonly showVibesSwitch?: boolean;
 }
 
 export interface MountVibesAppResult {
@@ -29,10 +30,12 @@ const safeGetLocalStorage = (key: string): string | null => {
 function VibesApp({
   title = 'Vibes App',
   imageUrl = '/screenshot.png',
+  showVibesSwitch = true,
   children,
 }: {
   title?: string;
   imageUrl?: string;
+  showVibesSwitch?: boolean;
   children?: React.ReactNode;
 }) {
   // Check if sync is already enabled globally by checking body class
@@ -77,7 +80,9 @@ function VibesApp({
   return (
     <>
       <div style={showAuthWall ? { display: 'none' } : undefined}>
-        <HiddenMenuWrapper menuContent={<VibesPanel />}>{children}</HiddenMenuWrapper>
+        <HiddenMenuWrapper menuContent={<VibesPanel />} showVibesSwitch={showVibesSwitch}>
+          {children}
+        </HiddenMenuWrapper>
       </div>
       <AuthWall onLogin={handleLogin} imageUrl={imageUrl} title={title} open={showAuthWall} />
     </>
@@ -85,7 +90,7 @@ function VibesApp({
 }
 
 export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesAppResult {
-  const { container: containerOption, title, imageUrl, appComponent } = options;
+  const { container: containerOption, title, imageUrl, appComponent, showVibesSwitch } = options;
 
   let containerElement: HTMLElement;
   if (typeof containerOption === 'string') {
@@ -132,7 +137,11 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
   const AppComponent = appComponent;
 
   root.render(
-    <VibesApp {...(title !== undefined && { title })} {...(imageUrl !== undefined && { imageUrl })}>
+    <VibesApp
+      {...(title !== undefined && { title })}
+      {...(imageUrl !== undefined && { imageUrl })}
+      {...(showVibesSwitch !== undefined && { showVibesSwitch })}
+    >
       {/* If appComponent is provided, render it instead of preserving DOM */}
       {AppComponent ? (
         <AppComponent />

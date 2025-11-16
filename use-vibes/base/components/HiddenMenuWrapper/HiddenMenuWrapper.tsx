@@ -13,12 +13,14 @@ export interface HiddenMenuWrapperProps {
   children: React.ReactNode;
   menuContent: React.ReactNode;
   triggerBounce?: boolean;
+  showVibesSwitch?: boolean;
 }
 
 export function HiddenMenuWrapper({
   children,
   menuContent,
   triggerBounce,
+  showVibesSwitch = true,
 }: HiddenMenuWrapperProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuHeight, setMenuHeight] = useState(0);
@@ -255,16 +257,18 @@ export function HiddenMenuWrapper({
       </div>
 
       {/* Button */}
-      <button
-        aria-haspopup="dialog"
-        aria-expanded={menuOpen}
-        aria-controls="hidden-menu"
-        ref={buttonRef}
-        onClick={() => setMenuOpen(!menuOpen)}
-        style={getToggleButtonStyle()}
-      >
-        <VibesSwitch size={80} />
-      </button>
+      {showVibesSwitch && (
+        <button
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+          aria-controls="hidden-menu"
+          ref={buttonRef}
+          onClick={() => setMenuOpen(!menuOpen)}
+          style={getToggleButtonStyle()}
+        >
+          <VibesSwitch size={80} />
+        </button>
+      )}
     </div>
   );
 }

@@ -443,7 +443,8 @@ export const iframeHtml = `<!doctype html>
             container,
             appComponent: \${functionName},
             title,
-            imageUrl
+            imageUrl,
+            showVibesSwitch: data.showVibesSwitch !== false
           });
 
           // Wait for React to render, then notify parent that preview is ready
