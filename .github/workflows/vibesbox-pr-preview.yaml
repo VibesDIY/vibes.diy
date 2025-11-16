@@ -1,0 +1,129 @@
+name: Deploy Vibesbox PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "vibesbox/**/*"
+      - ".github/workflows/vibesbox-pr-preview.yaml"
+
+# Ensure only one preview deployment runs at a time per PR
+concurrency:
+  group: vibesbox-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write  # Allow posting comments
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup runtime environment
+        uses: ./actions/runtime
+
+      - name: Set PR number
+        id: pr
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          WORKER_NAME="vibesbox-pr-${PR_NUMBER}"
+          PREVIEW_URL="https://${WORKER_NAME}.workers.dev"
+          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "worker_name=${WORKER_NAME}" >> $GITHUB_OUTPUT
+          echo "preview_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run vibesbox CI checks
+        run: |
+          echo "🏗️ Running vibesbox CI checks..."
+          pnpm vibesbox:check
+
+      - name: Deploy PR preview
+        id: deploy
+        run: |
+          cd vibesbox/pkg
+          echo "🚀 Deploying preview for PR #${{ steps.pr.outputs.number }}..."
+          echo "📦 Worker name: ${{ steps.pr.outputs.worker_name }}"
+
+          # Deploy with custom worker name using --var
+          npx wrangler deploy --env preview --var name:${{ steps.pr.outputs.worker_name }}
+
+          echo "✅ Preview deployed successfully"
+          echo "preview_url=${{ steps.pr.outputs.preview_url }}" >> $GITHUB_OUTPUT
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # TODO: Using test Clerk key - upgrade to production key before merging to main
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const previewUrl = '${{ steps.pr.outputs.preview_url }}';
+            const workerName = '${{ steps.pr.outputs.worker_name }}';
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('🎉 Vibesbox Preview Deployment')
+            );
+
+            const commentBody = `## 🎉 Vibesbox Preview Deployment
+
+            **Preview URL:** ${previewUrl}
+            **Worker:** \`${workerName}\`
+            **Commit:** ${context.sha.substring(0, 7)}
+
+            ### Test the preview:
+            1. Visit the preview URL above
+            2. Test iframe isolation functionality
+            3. Verify postMessage communication works
+            4. Check Fireproof version parameter
+
+            ---
+            <sub>This preview will be automatically updated on each push to this PR</sub>`;
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody,
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody,
+              });
+            }
+
+      - name: Deployment summary
+        run: |
+          echo ""
+          echo "🎉 PR Preview Deployment Summary"
+          echo "================================="
+          echo "✅ PR: #${{ steps.pr.outputs.number }}"
+          echo "📦 Worker: ${{ steps.pr.outputs.worker_name }}"
+          echo "🌐 Preview URL: ${{ steps.pr.outputs.preview_url }}"
+          echo ""
+          echo "📝 The preview has been deployed and is ready for testing!"
+          echo "💬 A comment has been posted to the PR with the preview URL"
+          echo ""
