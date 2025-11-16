@@ -13,7 +13,7 @@ jobs:
     environment: production
     permissions:
       contents: read
-      pull-requests: write  # Allow posting comments
+      pull-requests: write # Allow posting comments
 
     steps:
       - name: Checkout code
