@@ -9,6 +9,8 @@ export interface BrutalistCardProps extends React.HTMLAttributes<HTMLDivElement>
   variant?: BrutalistCardVariant;
   /** Size affecting padding, font size, and shadow size */
   size?: BrutalistCardSize;
+  /** Message type for chat bubble corner rounding */
+  messageType?: 'user' | 'ai';
 }
 
 /**
@@ -34,6 +36,7 @@ export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps
       children,
       variant = 'default',
       size = 'md',
+      messageType,
       style,
       className,
       ...divProps
@@ -56,7 +59,7 @@ export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps
     }, []);
 
     const cardStyle = {
-      ...getBrutalistCardStyle(variant, size),
+      ...getBrutalistCardStyle(variant, size, messageType),
       background: isDark ? '#1a1a1a' : '#fff',
       color: isDark ? '#fff' : '#1a1a1a',
       border: isDark ? '3px solid #555' : '3px solid #1a1a1a',
