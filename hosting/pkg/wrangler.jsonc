@@ -90,4 +90,16 @@
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/
    */
+
+  /**
+   * Environments
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#environments
+   */
+  "env": {
+    "preview": {
+      // No custom domain routes for previews - use workers.dev URL only
+      // Worker name will be set via CLI: --name pr-{number}-vibes-hosting-v2
+      "routes": [],
+    },
+  },
 }
