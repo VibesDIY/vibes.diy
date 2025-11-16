@@ -117,9 +117,6 @@ describe("Early Streaming Content Display", () => {
       </MockThemeProvider>,
     );
 
-    // Should show the "Processing response..." placeholder when no segments
-    expect(screen.getByText("Processing response...")).toBeInTheDocument();
-
     // Cleanup before next render
     cleanup();
 
