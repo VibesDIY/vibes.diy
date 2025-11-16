@@ -25,6 +25,12 @@ inputs:
   ANTHROPIC_API_KEY:
     description: "Anthropic API key for Claude chat (optional)"
     required: false
+  CLERK_SECRET_KEY:
+    description: "Clerk secret key for backend authentication"
+    required: true
+  CLERK_PUBLISHABLE_KEY:
+    description: "Clerk publishable key for frontend authentication"
+    required: true
   DISCORD_WEBHOOK_URL:
     description: "Discord webhook URL for notifications (optional)"
     required: false
@@ -86,6 +92,10 @@ runs:
         # Required AI API keys
         echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY
         echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY
+
+        # Required Clerk keys
+        echo "${{ inputs.CLERK_SECRET_KEY }}" | npx wrangler secret put CLERK_SECRET_KEY
+        echo "${{ inputs.CLERK_PUBLISHABLE_KEY }}" | npx wrangler secret put CLERK_PUBLISHABLE_KEY
 
         echo "✅ Required secrets configured"
 

@@ -73,6 +73,7 @@ jobs:
           echo "${{ secrets.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY --name ${{ steps.pr.outputs.worker_name }}
           echo "${{ secrets.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY --name ${{ steps.pr.outputs.worker_name }}
           echo "${{ secrets.CLERK_SECRET_KEY }}" | npx wrangler secret put CLERK_SECRET_KEY --name ${{ steps.pr.outputs.worker_name }}
+          echo "${{ secrets.CLERK_PUBLISHABLE_KEY }}" | npx wrangler secret put CLERK_PUBLISHABLE_KEY --name ${{ steps.pr.outputs.worker_name }}
 
           # Optional secrets
           if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
