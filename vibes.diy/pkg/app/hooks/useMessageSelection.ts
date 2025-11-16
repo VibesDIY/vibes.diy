@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect, useRef } from "react";
+import { useMemo, useCallback } from "react";
 import type { Segment, ChatMessageDocument } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
 
@@ -20,8 +20,6 @@ export function useMessageSelection({
   selectedResponseId: string;
   pendingAiMessage: ChatMessageDocument | null;
 }) {
-  const prevMessageCountRef = useRef<number>(0);
-
   const messages = useMemo(() => {
     // First filter the docs to get messages we want to display
     const baseDocs = docs.filter(
@@ -43,21 +41,6 @@ export function useMessageSelection({
     // Default case - just use the messages from the database
     return baseDocs;
   }, [docs, isStreaming, aiMessage]);
-
-  // Log message changes for debugging disappearance issues
-  useEffect(() => {
-    if (messages.length !== prevMessageCountRef.current) {
-      console.log(
-        `[MESSAGE_COUNT_CHANGE] ${prevMessageCountRef.current} → ${messages.length}`,
-      );
-      messages.forEach((msg, idx) => {
-        console.log(
-          `  [${idx}] type=${msg.type} _id=${msg._id || "none"} textLength=${msg.text?.length || 0} isStreaming=${(msg as any).isStreaming || false}`,
-        );
-      });
-      prevMessageCountRef.current = messages.length;
-    }
-  }, [messages]);
 
   const selectedResponseDoc = useMemo(() => {
     // Priority 1: Explicit user selection (from confirmed docs)
