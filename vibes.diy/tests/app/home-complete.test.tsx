@@ -2,8 +2,6 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AuthContextType } from "~/vibes.diy/app/contexts/AuthContext.js";
-import { AuthContext } from "~/vibes.diy/app/contexts/AuthContext.js";
 // import * as useSimpleChatModule from "~/vibes.diy/app/hooks/useSimpleChat.js";
 import UnifiedSession from "~/vibes.diy/app/routes/home.js";
 import type {
@@ -12,8 +10,6 @@ import type {
   Segment,
   UserChatMessage,
 } from "@vibes.diy/prompts";
-// import * as segmentParser from "~/vibes.diy/app/utils/segmentParser.js";
-import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 // Mock the CookieConsentContext
 vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
@@ -256,25 +252,13 @@ vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async (original) => {
 // Using the centralized mock from the __mocks__/use-fireproof.ts file
 // This ensures consistency across all tests
 
-describe("Home Route in completed state", () => {
-  // let mockCode: string;
-  const authenticatedState: Partial<AuthContextType> = {
-    isAuthenticated: true,
-    isLoading: false,
-    token: "mock-token",
-    userPayload: {
-      userId: "test-user-id",
-      exp: 9999999999,
-      tenants: [],
-      ledgers: [],
-      iat: 1234567890,
-      iss: "FP_CLOUD",
-      aud: "PUBLIC",
-    },
-    checkAuthStatus: vi.fn(),
-    processToken: vi.fn(),
-  };
+// Mock @clerk/clerk-react
+const mockUseAuth = vi.fn();
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: mockUseAuth,
+}));
 
+describe("Home Route in completed state", () => {
   beforeEach(() => {
     globalThis.document.body.innerHTML = "";
     // Clear all mocks before each test
@@ -291,23 +275,16 @@ describe("Home Route in completed state", () => {
   it("displays the correct number of code lines in the preview when session exists", async () => {
     // Set mock params to simulate sessionId in URL
     mockParams = { sessionId: "test-session-123" };
+    mockUseAuth.mockReturnValue({
+      isSignedIn: true,
+      isLoaded: true,
+      userId: "test-user-id",
+    });
 
     render(
-      <MockThemeProvider>
-        <MemoryRouter initialEntries={["/chat/test-session-123"]}>
-          <AuthContext.Provider
-            value={
-              {
-                ...authenticatedState,
-                checkAuthStatus: vi.fn(),
-                processToken: vi.fn(),
-              } as AuthContextType
-            }
-          >
-            <UnifiedSession />
-          </AuthContext.Provider>
-        </MemoryRouter>
-      </MockThemeProvider>,
+      <MemoryRouter initialEntries={["/chat/test-session-123"]}>
+        <UnifiedSession />
+      </MemoryRouter>,
     );
 
     await waitFor(() => {
@@ -320,23 +297,16 @@ describe("Home Route in completed state", () => {
   it("shows share button and handles sharing when session exists", async () => {
     // Set mock params to simulate sessionId in URL
     mockParams = { sessionId: "test-session-123" };
+    mockUseAuth.mockReturnValue({
+      isSignedIn: true,
+      isLoaded: true,
+      userId: "test-user-id",
+    });
 
     render(
-      <MockThemeProvider>
-        <MemoryRouter initialEntries={["/chat/test-session-123"]}>
-          <AuthContext.Provider
-            value={
-              {
-                ...authenticatedState,
-                checkAuthStatus: vi.fn(),
-                processToken: vi.fn(),
-              } as AuthContextType
-            }
-          >
-            <UnifiedSession />
-          </AuthContext.Provider>
-        </MemoryRouter>
-      </MockThemeProvider>,
+      <MemoryRouter initialEntries={["/chat/test-session-123"]}>
+        <UnifiedSession />
+      </MemoryRouter>,
     );
 
     const shareButton = await screen.findByTestId("share-button");
@@ -363,23 +333,16 @@ describe("Home Route in completed state", () => {
 
     // Clear mock tracking
     navigateMock.mockClear();
+    mockUseAuth.mockReturnValue({
+      isSignedIn: true,
+      isLoaded: true,
+      userId: "test-user-id",
+    });
 
     render(
-      <MockThemeProvider>
-        <MemoryRouter>
-          <AuthContext.Provider
-            value={
-              {
-                ...authenticatedState,
-                checkAuthStatus: vi.fn(),
-                processToken: vi.fn(),
-              } as AuthContextType
-            }
-          >
-            <UnifiedSession />
-          </AuthContext.Provider>
-        </MemoryRouter>
-      </MockThemeProvider>,
+      <MemoryRouter>
+        <UnifiedSession />
+      </MemoryRouter>,
     );
 
     // Find create session button and click it
@@ -409,23 +372,16 @@ describe("Home Route in completed state", () => {
   it("renders NewSessionView by default when no session in URL", async () => {
     // Clear mock params to simulate no sessionId in URL
     mockParams = {};
+    mockUseAuth.mockReturnValue({
+      isSignedIn: true,
+      isLoaded: true,
+      userId: "test-user-id",
+    });
 
     render(
-      <MockThemeProvider>
-        <MemoryRouter initialEntries={["/"]}>
-          <AuthContext.Provider
-            value={
-              {
-                ...authenticatedState,
-                checkAuthStatus: vi.fn(),
-                processToken: vi.fn(),
-              } as AuthContextType
-            }
-          >
-            <UnifiedSession />
-          </AuthContext.Provider>
-        </MemoryRouter>
-      </MockThemeProvider>,
+      <MemoryRouter initialEntries={["/"]}>
+        <UnifiedSession />
+      </MemoryRouter>,
     );
 
     // Should render new session view by default

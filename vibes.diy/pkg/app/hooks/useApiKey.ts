@@ -1,17 +1,26 @@
+import { useAuth } from "@clerk/clerk-react";
+
 /**
  * Simplified hook for API key management
  * Returns a dummy key that the backend proxy can identify and handle
  */
 export function useApiKey() {
-  // Use a special dummy key that backend can recognize
-  const PROXY_DUMMY_KEY = "sk-vibes-proxy-managed";
+  const { getToken } = useAuth();
+
+  const ensureApiKey = async () => {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("User is not authenticated.");
+    }
+    return { key: token, hash: "clerk" };
+  };
 
   return {
-    apiKey: PROXY_DUMMY_KEY,
-    apiKeyObject: { key: PROXY_DUMMY_KEY, hash: "proxy" },
+    apiKey: null, // The key is now fetched asynchronously
+    apiKeyObject: null,
     error: null,
-    refreshKey: async () => ({ key: PROXY_DUMMY_KEY, hash: "proxy" }),
-    ensureApiKey: async () => ({ key: PROXY_DUMMY_KEY, hash: "proxy" }),
+    refreshKey: ensureApiKey,
+    ensureApiKey,
     saveApiKey: () => {
       /* no-op */
     },

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext.js";
+import { useUser } from "@clerk/clerk-react";
 import type { LocalVibe } from "../utils/vibeUtils.js";
 import {
   deleteVibeDatabase,
@@ -16,9 +16,9 @@ export function useVibes() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Get the current user ID from the auth hook
-  const { userPayload } = useAuth();
-  const userId = userPayload?.userId;
+  // Get the current user ID from Clerk
+  const { user } = useUser();
+  const userId = user?.id;
 
   // Function to load vibes
   const loadVibes = useCallback(async () => {

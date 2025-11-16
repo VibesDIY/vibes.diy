@@ -1,6 +1,6 @@
 import React from "react";
 import SessionSidebar from "../app/components/SessionSidebar.js";
-import { AuthProvider } from "../app/contexts/AuthContext.js";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { BrowserRouter } from "react-router-dom";
 
 // Simple wrapper that provides the real SessionSidebar component
@@ -14,7 +14,7 @@ export const MockSessionSidebar: React.FC<{
 }> = ({ isVisible, onClose }) => {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <ClerkProvider publishableKey="pk_test_storybook">
         <div style={{ position: "relative", height: "100vh", width: "100%" }}>
           {/* Backdrop overlay when sidebar is visible */}
           {isVisible && (
@@ -59,7 +59,7 @@ export const MockSessionSidebar: React.FC<{
             </div>
           </div>
         </div>
-      </AuthProvider>
+      </ClerkProvider>
     </BrowserRouter>
   );
 };

@@ -2,9 +2,13 @@ import { Bool, OpenAPIRoute, contentJson } from "chanfana";
 
 import { Context } from "hono";
 import { z } from "zod";
-import { Variables } from "../middleware/auth.js";
 import { App, PublishEvent, type AppType } from "../types.js";
 import { generateVibeSlug } from "@vibes.diy/hosting-base";
+
+// Variables type for context (was previously in deleted auth middleware)
+interface Variables {
+  user: { sub?: string; userId?: string; email?: string } | null;
+}
 
 /**
  * Process and save a screenshot from base64 data

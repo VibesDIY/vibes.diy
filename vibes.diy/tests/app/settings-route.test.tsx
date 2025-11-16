@@ -1,15 +1,12 @@
 import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  act,
-  fireEvent,
   render,
   screen,
+  fireEvent,
   waitFor,
+  act,
 } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AuthContextType } from "~/vibes.diy/app/contexts/AuthContext.js";
-import { AuthContext } from "~/vibes.diy/app/contexts/AuthContext.js";
 import Settings from "~/vibes.diy/app/routes/settings.js";
 
 // Create mock objects outside the mock function to access them in tests
@@ -80,41 +77,13 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar/HomeIcon", () => ({
   HomeIcon: () => <div data-testid="home-icon" />,
 }));
 
-// Define a wrapper component with just the AuthContext provider
-const createWrapper = (contextValue?: Partial<AuthContextType>) => {
-  const defaultContextValue: AuthContextType = {
-    token: null,
-    isAuthenticated: false,
-    isLoading: false,
-    userPayload: null,
-    checkAuthStatus: vi.fn(),
-    processToken: vi.fn(),
-    needsLogin: false,
-    setNeedsLogin: vi.fn(),
-  };
-  const valueToProvide = { ...defaultContextValue, ...contextValue };
-  return ({ children }: { children: ReactNode }) => (
-    <AuthContext.Provider value={valueToProvide}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+// Mock @clerk/clerk-react
+const mockUseAuth = vi.fn();
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: mockUseAuth,
+}));
 
 describe("Settings Route", () => {
-  const authenticatedState: Partial<AuthContextType> = {
-    isAuthenticated: true,
-    isLoading: false,
-    userPayload: {
-      userId: "test",
-      exp: 9999999999,
-      tenants: [],
-      ledgers: [],
-      iat: 1234567890,
-      iss: "FP_CLOUD",
-      aud: "PUBLIC",
-    },
-  };
-
   const mockDoc = {
     _id: "user_settings",
     stylePrompt: "",
@@ -145,14 +114,22 @@ describe("Settings Route", () => {
   });
 
   it.skip("renders the settings page with correct title and sections", async () => {
-    const wrapper = createWrapper(authenticatedState);
-    render(<Settings />, { wrapper });
+    mockUseAuth.mockReturnValue({
+      userId: "test",
+      isLoaded: true,
+      isSignedIn: true,
+    });
+    render(<Settings />);
     // ... assertions ...
   }, 10000);
 
   it("allows updating style prompt via text input", async () => {
-    const wrapper = createWrapper(authenticatedState);
-    render(<Settings />, { wrapper });
+    mockUseAuth.mockReturnValue({
+      userId: "test",
+      isLoaded: true,
+      isSignedIn: true,
+    });
+    render(<Settings />);
     const styleInput = screen.getByPlaceholderText(
       /enter or select style prompt/i,
     );
@@ -165,8 +142,12 @@ describe("Settings Route", () => {
   });
 
   it("allows selecting a style prompt from suggestions", async () => {
-    const wrapper = createWrapper(authenticatedState);
-    render(<Settings />, { wrapper });
+    mockUseAuth.mockReturnValue({
+      userId: "test",
+      isLoaded: true,
+      isSignedIn: true,
+    });
+    render(<Settings />);
     const suggestionButton = screen.getByText("synthwave");
 
     await act(async () => {
@@ -180,8 +161,12 @@ describe("Settings Route", () => {
   });
 
   it("allows updating user prompt via textarea", async () => {
-    const wrapper = createWrapper(authenticatedState);
-    render(<Settings />, { wrapper });
+    mockUseAuth.mockReturnValue({
+      userId: "test",
+      isLoaded: true,
+      isSignedIn: true,
+    });
+    render(<Settings />);
     const userPromptTextarea = screen.getByPlaceholderText(
       /enter custom instructions/i,
     );
@@ -205,8 +190,12 @@ describe("Settings Route", () => {
       return Promise.resolve({ ok: true });
     });
 
-    const wrapper = createWrapper(authenticatedState);
-    render(<Settings />, { wrapper });
+    mockUseAuth.mockReturnValue({
+      userId: "test",
+      isLoaded: true,
+      isSignedIn: true,
+    });
+    render(<Settings />);
 
     const saveButton = screen.getByRole("button", { name: /save/i });
     expect(saveButton).toBeDisabled(); // Initially disabled
@@ -247,8 +236,12 @@ describe("Settings Route", () => {
       return Promise.resolve({ ok: true });
     });
 
-    const wrapper = createWrapper(authenticatedState);
-    render(<Settings />, { wrapper });
+    mockUseAuth.mockReturnValue({
+      userId: "test",
+      isLoaded: true,
+      isSignedIn: true,
+    });
+    render(<Settings />);
 
     const saveButton = screen.getByRole("button", { name: /save/i });
 
@@ -286,8 +279,12 @@ describe("Settings Route", () => {
       merge: mockMerge,
       save: mockSave,
     });
-    const wrapper = createWrapper(authenticatedState);
-    render(<Settings />, { wrapper });
+    mockUseAuth.mockReturnValue({
+      userId: "test",
+      isLoaded: true,
+      isSignedIn: true,
+    });
+    render(<Settings />);
     const brutalistButton = await screen.findByText("brutalist web");
     await waitFor(
       () => {

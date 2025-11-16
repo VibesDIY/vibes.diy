@@ -22,27 +22,6 @@ import { createStreamingGenerator } from "./streaming.js";
 import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 
-// Centralized header name for Vibes auth
-export const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
-
-// Storage key for Vibes authentication token
-const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const;
-
-/**
- * Get the Vibes authentication token from localStorage (browser only)
- * @returns The auth token if available, undefined otherwise
- */
-export function getVibesAuthToken(): string | undefined {
-  if (typeof localStorage === "undefined") {
-    return undefined;
-  }
-  try {
-    return localStorage.getItem(VIBES_AUTH_TOKEN_KEY) || undefined;
-  } catch (e) {
-    return undefined;
-  }
-}
-
 // Key management is now imported from ./key-management
 
 // initKeyStore is imported from key-management.ts
@@ -391,13 +370,8 @@ function prepareRequestParams(
   requestOptions: RequestInit;
   schemaStrategy: SchemaStrategy;
 } {
-  // First try to get the API key from options or window globals
-  const apiKey =
-    options.apiKey ||
-    keyStore().current || // Try keyStore first in case it was refreshed in a previous call
-    callAiEnv.CALLAI_API_KEY ||
-    "sk-vibes-proxy-managed";
-  // (typeof window !== "undefined" ? (window as any).CALLAI_API_KEY : null);
+  // The API key (Clerk session token) must now be provided via options.apiKey
+  const apiKey = options.apiKey || "sk-vibes-proxy-managed"; // Fallback for development/testing
   const schema = options.schema || null;
 
   // If no API key exists, we won't throw immediately. We'll continue and let handleApiError
@@ -473,12 +447,6 @@ function prepareRequestParams(
     "HTTP-Referer": options.referer || "https://vibes.diy",
     "X-Title": options.title || "Vibes",
   });
-
-  // Add Vibes authentication token if available (late binding for vibesdiy.net apps)
-  const authToken = getVibesAuthToken();
-  if (authToken && !headers.has(VIBES_AUTH_HEADER)) {
-    headers.set(VIBES_AUTH_HEADER, authToken);
-  }
 
   if (options.headers) {
     const extra = new Headers(options.headers as HeadersInit);

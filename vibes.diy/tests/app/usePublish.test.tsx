@@ -1,17 +1,12 @@
-import React from "react";
 import { act, renderHook } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { usePublish } from "~/vibes.diy/app/components/ResultPreview/usePublish.js";
-import type { AuthContextType } from "~/vibes.diy/app/contexts/AuthContext.js";
-import { AuthContext } from "~/vibes.diy/app/contexts/AuthContext.js";
 import type {
   AiChatMessage,
   ChatMessageDocument,
   UserChatMessage,
 } from "@vibes.diy/prompts";
 import { trackPublishShared } from "~/vibes.diy/app/utils/analytics.js";
-import type { TokenPayload } from "~/vibes.diy/app/utils/auth.js";
 import { publishApp } from "~/vibes.diy/app/utils/publishUtils.js";
 
 // Mock dependencies
@@ -31,33 +26,15 @@ Object.defineProperty(navigator, "clipboard", {
   writable: true,
 });
 
-// Create wrapper with AuthProvider
-const createWrapper = () => {
-  const mockUserPayload: TokenPayload = {
+// Mock @clerk/clerk-react
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: () => ({
     userId: "test-user-id",
-    exp: 9999999999,
-    tenants: [],
-    ledgers: [],
-    iat: 1234567890,
-    iss: "FP_CLOUD",
-    aud: "PUBLIC",
-  };
-
-  const authValue: AuthContextType = {
-    token: "test-token",
-    isAuthenticated: true,
-    isLoading: false,
-    userPayload: mockUserPayload,
-    checkAuthStatus: vi.fn().mockImplementation(() => Promise.resolve()),
-    processToken: vi.fn().mockImplementation(() => Promise.resolve()),
-    needsLogin: false,
-    setNeedsLogin: vi.fn(),
-  };
-
-  return ({ children }: { children: ReactNode }) => (
-    <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>
-  );
-};
+    isLoaded: true,
+    isSignedIn: true,
+    getToken: vi.fn().mockResolvedValue("test-token"),
+  }),
+}));
 
 describe("usePublish Hook", () => {
   const mockSessionId = "test-session-id";
@@ -88,18 +65,14 @@ describe("usePublish Hook", () => {
   });
 
   it("initializes with correct default values", () => {
-    const { result } = renderHook(
-      () =>
-        usePublish({
-          sessionId: mockSessionId,
-          code: mockCode,
-          title: mockTitle,
-          messages: mockMessages,
-          updatePublishedUrl: mockUpdatePublishedUrl,
-        }),
-      {
-        wrapper: createWrapper(),
-      },
+    const { result } = renderHook(() =>
+      usePublish({
+        sessionId: mockSessionId,
+        code: mockCode,
+        title: mockTitle,
+        messages: mockMessages,
+        updatePublishedUrl: mockUpdatePublishedUrl,
+      }),
     );
 
     expect(result.current.isPublishing).toBe(false);
@@ -113,37 +86,29 @@ describe("usePublish Hook", () => {
   it("initializes with provided publishedUrl", () => {
     const initialUrl = "https://initial-app.vibesdiy.app";
 
-    const { result } = renderHook(
-      () =>
-        usePublish({
-          sessionId: mockSessionId,
-          code: mockCode,
-          title: mockTitle,
-          messages: mockMessages,
-          updatePublishedUrl: mockUpdatePublishedUrl,
-          publishedUrl: initialUrl,
-        }),
-      {
-        wrapper: createWrapper(),
-      },
+    const { result } = renderHook(() =>
+      usePublish({
+        sessionId: mockSessionId,
+        code: mockCode,
+        title: mockTitle,
+        messages: mockMessages,
+        updatePublishedUrl: mockUpdatePublishedUrl,
+        publishedUrl: initialUrl,
+      }),
     );
 
     expect(result.current.publishedAppUrl).toBe(initialUrl);
   });
 
   it("toggles the share modal", () => {
-    const { result } = renderHook(
-      () =>
-        usePublish({
-          sessionId: mockSessionId,
-          code: mockCode,
-          title: mockTitle,
-          messages: mockMessages,
-          updatePublishedUrl: mockUpdatePublishedUrl,
-        }),
-      {
-        wrapper: createWrapper(),
-      },
+    const { result } = renderHook(() =>
+      usePublish({
+        sessionId: mockSessionId,
+        code: mockCode,
+        title: mockTitle,
+        messages: mockMessages,
+        updatePublishedUrl: mockUpdatePublishedUrl,
+      }),
     );
 
     // Initial state should be closed
@@ -166,18 +131,14 @@ describe("usePublish Hook", () => {
     const mockAppUrl = "https://published-app.vibesdiy.app";
     (publishApp as Mock).mockResolvedValue(mockAppUrl);
 
-    const { result } = renderHook(
-      () =>
-        usePublish({
-          sessionId: mockSessionId,
-          code: mockCode,
-          title: mockTitle,
-          messages: mockMessages,
-          updatePublishedUrl: mockUpdatePublishedUrl,
-        }),
-      {
-        wrapper: createWrapper(),
-      },
+    const { result } = renderHook(() =>
+      usePublish({
+        sessionId: mockSessionId,
+        code: mockCode,
+        title: mockTitle,
+        messages: mockMessages,
+        updatePublishedUrl: mockUpdatePublishedUrl,
+      }),
     );
 
     // Call handlePublish
@@ -218,18 +179,14 @@ describe("usePublish Hook", () => {
       /* no-op */
     });
 
-    const { result } = renderHook(
-      () =>
-        usePublish({
-          sessionId: mockSessionId,
-          code: mockCode,
-          title: mockTitle,
-          messages: mockMessages,
-          updatePublishedUrl: mockUpdatePublishedUrl,
-        }),
-      {
-        wrapper: createWrapper(),
-      },
+    const { result } = renderHook(() =>
+      usePublish({
+        sessionId: mockSessionId,
+        code: mockCode,
+        title: mockTitle,
+        messages: mockMessages,
+        updatePublishedUrl: mockUpdatePublishedUrl,
+      }),
     );
 
     // Call handlePublish
@@ -275,18 +232,14 @@ describe("usePublish Hook", () => {
       } as AiChatMessage,
     ];
 
-    const { result } = renderHook(
-      () =>
-        usePublish({
-          sessionId: mockSessionId,
-          code: mockCode,
-          title: mockTitle,
-          messages: specialMessages,
-          updatePublishedUrl: mockUpdatePublishedUrl,
-        }),
-      {
-        wrapper: createWrapper(),
-      },
+    const { result } = renderHook(() =>
+      usePublish({
+        sessionId: mockSessionId,
+        code: mockCode,
+        title: mockTitle,
+        messages: specialMessages,
+        updatePublishedUrl: mockUpdatePublishedUrl,
+      }),
     );
 
     // Call handlePublish
@@ -303,18 +256,14 @@ describe("usePublish Hook", () => {
   });
 
   it("does nothing when no messages to publish", async () => {
-    const { result } = renderHook(
-      () =>
-        usePublish({
-          sessionId: mockSessionId,
-          code: mockCode,
-          title: mockTitle,
-          messages: [] as ChatMessageDocument[],
-          updatePublishedUrl: mockUpdatePublishedUrl,
-        }),
-      {
-        wrapper: createWrapper(),
-      },
+    const { result } = renderHook(() =>
+      usePublish({
+        sessionId: mockSessionId,
+        code: mockCode,
+        title: mockTitle,
+        messages: [] as ChatMessageDocument[],
+        updatePublishedUrl: mockUpdatePublishedUrl,
+      }),
     );
 
     // Call handlePublish

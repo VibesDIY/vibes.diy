@@ -1,14 +1,8 @@
-import React from "react";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-// Import AuthContext only - the type is defined inline in the file
-import { AuthContext } from "~/vibes.diy/app/contexts/AuthContext.js";
 import { useVibes } from "~/vibes.diy/app/hooks/useVibes.js";
 // Import VibeDocument from the correct location
 import type { VibeDocument } from "@vibes.diy/prompts";
-// Import TokenPayload for our mock
-import type { TokenPayload } from "~/vibes.diy/app/utils/auth.js";
 import type { LocalVibe } from "~/vibes.diy/app/utils/vibeUtils.js";
 import {
   deleteVibeDatabase,
@@ -26,48 +20,18 @@ vi.mock("~/vibes.diy/app/utils/vibeUtils.js", () => ({
   loadVibeDocument: vi.fn(),
 }));
 
-// Mock the AuthContext instead of the hook
-vi.mock("~/vibes.diy/app/contexts/AuthContext.js", async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import("~/vibes.diy/app/contexts/AuthContext.js")
-    >();
+// Mock @clerk/clerk-react
+vi.mock("@clerk/clerk-react", async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
-    ...actual, // Keep exports
-    // No need to mock useAuth as we'll provide context value through wrapper
+    ...actual,
+    useAuth: () => ({
+      userId: "test-user-id",
+      isLoaded: true,
+      isSignedIn: true,
+    }),
   };
 });
-
-// Wrapper definition with controlled auth context value
-const createWrapper = () => {
-  // Create a mock auth context value that matches the interface in AuthContext.tsx
-  const mockUserPayload: TokenPayload = {
-    userId: "test-user-id",
-    exp: 9999999999,
-    tenants: [],
-    ledgers: [],
-    iat: 1234567890,
-    iss: "FP_CLOUD",
-    aud: "PUBLIC",
-  };
-
-  const authContextValue = {
-    token: "mock-token",
-    isAuthenticated: true,
-    isLoading: false,
-    userPayload: mockUserPayload,
-    checkAuthStatus: vi.fn(),
-    processToken: vi.fn(),
-    needsLogin: false,
-    setNeedsLogin: vi.fn(),
-  };
-
-  return ({ children }: { children: ReactNode }) => (
-    <AuthContext.Provider value={authContextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
 
 describe("useVibes", () => {
   const mockVibes: Partial<LocalVibe>[] = [
@@ -117,8 +81,7 @@ describe("useVibes", () => {
 
   // Use wrapper for ALL renderHook calls
   it("should load vibes on mount", async () => {
-    const wrapper = createWrapper();
-    const { result } = renderHook(() => useVibes(), { wrapper });
+    const { result } = renderHook(() => useVibes());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(listLocalVibeIds).toHaveBeenCalled();
     expect(result.current.vibes).toEqual([
@@ -136,8 +99,7 @@ describe("useVibes", () => {
         ),
     );
 
-    const wrapper = createWrapper();
-    const { result } = renderHook(() => useVibes(), { wrapper });
+    const { result } = renderHook(() => useVibes());
 
     // Assert - initially loading
     expect(result.current.isLoading).toBe(true);
@@ -161,8 +123,7 @@ describe("useVibes", () => {
     const testError = new Error("Failed to load vibes");
     vi.mocked(listLocalVibeIds).mockRejectedValue(testError);
 
-    const wrapper = createWrapper();
-    const { result } = renderHook(() => useVibes(), { wrapper });
+    const { result } = renderHook(() => useVibes());
 
     // Wait for the effect to run
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -174,8 +135,7 @@ describe("useVibes", () => {
   });
 
   it("should delete a vibe and update state optimistically", async () => {
-    const wrapper = createWrapper();
-    const { result } = renderHook(() => useVibes(), { wrapper });
+    const { result } = renderHook(() => useVibes());
 
     // Wait for the initial load
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -199,8 +159,7 @@ describe("useVibes", () => {
     const deleteError = new Error("Failed to delete vibe");
     vi.mocked(deleteVibeDatabase).mockRejectedValueOnce(deleteError);
 
-    const wrapper = createWrapper();
-    const { result } = renderHook(() => useVibes(), { wrapper });
+    const { result } = renderHook(() => useVibes());
 
     // Wait for the initial load
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -230,8 +189,7 @@ describe("useVibes", () => {
   });
 
   it("should toggle favorite status and update state optimistically", async () => {
-    const wrapper = createWrapper();
-    const { result } = renderHook(() => useVibes(), { wrapper });
+    const { result } = renderHook(() => useVibes());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     // Setup state with safer optional chaining
@@ -256,8 +214,7 @@ describe("useVibes", () => {
     vi.mocked(toggleVibeFavorite).mockRejectedValueOnce(
       new Error("Toggle failed"),
     );
-    const wrapper = createWrapper();
-    const { result } = renderHook(() => useVibes(), { wrapper });
+    const { result } = renderHook(() => useVibes());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     vi.mocked(listLocalVibeIds).mockClear();
     await act(async () => {

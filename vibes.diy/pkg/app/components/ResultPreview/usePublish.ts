@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../contexts/AuthContext.js";
 import { trackPublishShared } from "../../utils/analytics.js";
 import { publishApp } from "../../utils/publishUtils.js";
 import { ChatMessageDocument } from "@vibes.diy/prompts";
@@ -12,7 +11,6 @@ interface UsePublishProps {
   updatePublishedUrl: (url: string) => Promise<void>;
   updateFirehoseShared?: (shared: boolean) => Promise<void>;
   publishedUrl?: string;
-  userId?: string;
 }
 
 export const usePublish = ({
@@ -30,8 +28,6 @@ export const usePublish = ({
   const [publishedAppUrl, setPublishedAppUrl] = useState<string | undefined>(
     initialPublishedUrl,
   );
-
-  const { userPayload, token } = useAuth();
 
   // Update publishedAppUrl when the initial URL changes
   useEffect(() => {
@@ -73,11 +69,8 @@ export const usePublish = ({
         prompt,
         updatePublishedUrl,
         updateFirehoseShared,
-        userId: userPayload?.userId,
-        token,
         shareToFirehose,
       });
-
       if (appUrl) {
         setPublishedAppUrl(appUrl);
         // Copy the URL to clipboard after publishing
@@ -89,7 +82,6 @@ export const usePublish = ({
           published_url: appUrl,
           session_id: sessionId,
           title,
-          user_id: userPayload?.userId,
           firehose_shared: shareToFirehose,
         });
 

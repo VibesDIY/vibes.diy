@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useFireproof } from "use-fireproof";
 import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
-import { useAuth } from "../contexts/AuthContext.js";
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import modelsList from "../data/models.json" with { type: "json" };
 import { VibesDiyEnv } from "../config/env.js";
 import { UserSettings, stylePrompts } from "@vibes.diy/prompts";
@@ -21,7 +21,10 @@ export default function Settings() {
   const navigate = useNavigate();
   // Use the main database directly instead of through useSession
   const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
-  const { isAuthenticated, checkAuthStatus } = useAuth();
+  const { isSignedIn: isAuthenticated } = useClerkAuth();
+  const checkAuthStatus = async () => {
+    // Clerk handles auth status automatically
+  };
 
   const {
     doc: settings,

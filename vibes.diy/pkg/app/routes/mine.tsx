@@ -6,7 +6,7 @@ import { EditIcon } from "../components/ChatHeaderIcons.js";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { VibeCardData } from "../components/VibeCardData.js";
 import VibesDIYLogo from "../components/VibesDIYLogo.js";
-import { useAuth } from "../contexts/AuthContext.js";
+import { useUser } from "@clerk/clerk-react";
 import { useVibes } from "../hooks/useVibes.js";
 
 export function meta() {
@@ -20,9 +20,9 @@ export default function MyVibesRoute(): ReactElement {
   const navigate = useNavigate();
   // Removed useSession() call since this route doesn't need session context
 
-  // Use the new hook and get userId from payload
-  const { userPayload } = useAuth();
-  const userId = userPayload?.userId;
+  // Use Clerk's useUser hook
+  const { user } = useUser();
+  const userId = user?.id;
 
   // Use our custom hook for vibes state management
   const { vibes, isLoading } = useVibes();

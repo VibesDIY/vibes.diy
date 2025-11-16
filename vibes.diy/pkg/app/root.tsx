@@ -16,7 +16,7 @@ import "./app.css";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
 import GtmNoScript from "./components/GtmNoScript.js";
-import { AuthProvider } from "./contexts/AuthContext.js";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { getLibraryImportMap } from "./config/import-map.js";
 
@@ -121,7 +121,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         {/* TODO: Re-enable GtmNoScript when consent can be checked server-side */}
         {/* <GtmNoScript /> */}
-        <AuthProvider>
+        <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
           <PostHogProvider
             apiKey={VibesDiyEnv.POSTHOG_KEY()}
             options={{
@@ -138,7 +138,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <ScrollRestoration data-testid="scroll-restoration" />
             <Scripts data-testid="scripts" />
           </PostHogProvider>
-        </AuthProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

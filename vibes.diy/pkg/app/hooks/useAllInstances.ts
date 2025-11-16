@@ -1,5 +1,5 @@
 import { useFireproof } from "use-vibes";
-import { useAuth } from "../contexts/AuthContext.js";
+import { useAuth } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
 
 /**
@@ -8,12 +8,12 @@ import type { VibeInstanceDocument } from "@vibes.diy/prompts";
  */
 export function useAllInstances() {
   const { useLiveQuery } = useFireproof("vibes-diy-instances");
-  const { userPayload } = useAuth();
-  const userId = userPayload?.userId || "anonymous";
+  const { userId } = useAuth();
 
   // Query ALL instances for this user (no titleId filter)
   const instancesResult = useLiveQuery<VibeInstanceDocument>(
-    (doc) => doc.userId === userId || doc.sharedWith?.includes(userId),
+    (doc) =>
+      doc.userId === userId || (userId && doc.sharedWith?.includes(userId)),
   );
 
   const instances = instancesResult.docs || [];

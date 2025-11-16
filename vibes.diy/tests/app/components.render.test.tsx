@@ -1,23 +1,15 @@
 import React from "react";
-// Vitest will automatically use mocks from __mocks__ directory
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  mockUseAuth,
-  resetMockAuthState,
-  setMockAuthState,
-} from "./__mocks__/useAuth.js";
 import ChatHeader from "~/vibes.diy/app/components/ChatHeaderContent.js";
 import MessageList from "~/vibes.diy/app/components/MessageList.js";
 import SessionSidebar from "~/vibes.diy/app/components/SessionSidebar.js";
-import type { AuthContextType } from "~/vibes.diy/app/contexts/AuthContext.js";
 import type {
   AiChatMessage,
   ChatMessageDocument,
   UserChatMessage,
 } from "@vibes.diy/prompts";
 import { mockSessionSidebarProps } from "./mockData.js";
-import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 // Mock dependencies
 vi.mock("react-markdown", () => {
@@ -54,10 +46,10 @@ vi.mock("react-router-dom", () => {
   };
 });
 
-// Mock the useAuth hook for SessionSidebar
-vi.mock("~/vibes.diy/app/contexts/AuthContext", () => ({
+// Mock @clerk/clerk-react
+const mockUseAuth = vi.fn();
+vi.mock("@clerk/clerk-react", () => ({
   useAuth: mockUseAuth,
-  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 // Mock the useSessionMessages hook for MessageList
@@ -133,34 +125,29 @@ describe("Component Rendering", () => {
   beforeEach(() => {
     globalThis.document.body.innerHTML = "";
     vi.resetAllMocks();
-    resetMockAuthState();
   });
 
   describe("ChatHeader", () => {
     it("renders without crashing", () => {
       render(
-        <MockThemeProvider>
-          <ChatHeader
-            onOpenSidebar={onOpenSidebar}
-            title="Test Chat"
-            isStreaming={false}
-            codeReady={false}
-          />
-        </MockThemeProvider>,
+        <ChatHeader
+          onOpenSidebar={onOpenSidebar}
+          title="Test Chat"
+          isStreaming={false}
+          codeReady={false}
+        />,
       );
       expect(screen.getByText("Test Chat")).toBeInTheDocument();
     });
 
     it("applies tooltip classes correctly", () => {
       render(
-        <MockThemeProvider>
-          <ChatHeader
-            onOpenSidebar={onOpenSidebar}
-            title="Test Chat"
-            isStreaming={false}
-            codeReady={false}
-          />
-        </MockThemeProvider>,
+        <ChatHeader
+          onOpenSidebar={onOpenSidebar}
+          title="Test Chat"
+          isStreaming={false}
+          codeReady={false}
+        />,
       );
       expect(
         screen.getByText("New Vibe", { selector: "span.pointer-events-none" }),
@@ -169,14 +156,12 @@ describe("Component Rendering", () => {
 
     it("handles new chat button click", () => {
       render(
-        <MockThemeProvider>
-          <ChatHeader
-            onOpenSidebar={onOpenSidebar}
-            title="Test Chat"
-            isStreaming={false}
-            codeReady={false}
-          />
-        </MockThemeProvider>,
+        <ChatHeader
+          onOpenSidebar={onOpenSidebar}
+          title="Test Chat"
+          isStreaming={false}
+          codeReady={false}
+        />,
       );
 
       // Just verify the new vibe button exists since we can't easily mock document.location
@@ -189,57 +174,38 @@ describe("Component Rendering", () => {
   });
 
   describe("SessionSidebar", () => {
-    const authenticatedState: Partial<AuthContextType> = {
-      isAuthenticated: true,
-      isLoading: false,
-      userPayload: {
-        userId: "test-user",
-        exp: 9999,
-        tenants: [],
-        ledgers: [],
-        iat: 1234567890,
-        iss: "FP_CLOUD",
-        aud: "PUBLIC",
-      },
-    };
-    const unauthenticatedState: Partial<AuthContextType> = {
-      isAuthenticated: false,
-      isLoading: false,
-      userPayload: null,
-    };
-
     it("renders in hidden state", async () => {
       const props = { ...mockSessionSidebarProps, isVisible: false };
-      setMockAuthState(authenticatedState);
-      render(
-        <MockThemeProvider>
-          <SessionSidebar {...props} />
-        </MockThemeProvider>,
-      );
+      mockUseAuth.mockReturnValue({
+        isSignedIn: true,
+        isLoaded: true,
+        userId: "test-user",
+      });
+      render(<SessionSidebar {...props} />);
       const sidebarElement = await screen.findByTestId("session-sidebar");
       expect(sidebarElement).toHaveClass("-translate-x-full");
     });
 
     it("renders in visible state", async () => {
       const props = { ...mockSessionSidebarProps, isVisible: true };
-      setMockAuthState(authenticatedState);
-      render(
-        <MockThemeProvider>
-          <SessionSidebar {...props} />
-        </MockThemeProvider>,
-      );
+      mockUseAuth.mockReturnValue({
+        isSignedIn: true,
+        isLoaded: true,
+        userId: "test-user",
+      });
+      render(<SessionSidebar {...props} />);
       const sidebarElement = await screen.findByTestId("session-sidebar");
       expect(sidebarElement).not.toHaveClass("-translate-x-full");
     });
 
     it("shows navigation menu items when authenticated", async () => {
       const props = { ...mockSessionSidebarProps, isVisible: true };
-      setMockAuthState(authenticatedState);
-      render(
-        <MockThemeProvider>
-          <SessionSidebar {...props} />
-        </MockThemeProvider>,
-      );
+      mockUseAuth.mockReturnValue({
+        isSignedIn: true,
+        isLoaded: true,
+        userId: "test-user",
+      });
+      render(<SessionSidebar {...props} />);
       expect(await screen.findByText("Settings")).toBeInTheDocument();
       expect(screen.getByText("Home")).toBeInTheDocument();
       expect(screen.getByText("My Vibes")).toBeInTheDocument();
@@ -248,12 +214,12 @@ describe("Component Rendering", () => {
 
     it("shows Login button when not authenticated", async () => {
       const props = { ...mockSessionSidebarProps, isVisible: true };
-      setMockAuthState(unauthenticatedState);
-      render(
-        <MockThemeProvider>
-          <SessionSidebar {...props} />
-        </MockThemeProvider>,
-      );
+      mockUseAuth.mockReturnValue({
+        isSignedIn: false,
+        isLoaded: true,
+        userId: null,
+      });
+      render(<SessionSidebar {...props} />);
       expect(await screen.findByText("Log in")).toBeInTheDocument();
       expect(screen.queryByText("Settings")).not.toBeInTheDocument();
     });
@@ -265,12 +231,12 @@ describe("Component Rendering", () => {
         isVisible: true,
         onClose: onCloseMock,
       };
-      setMockAuthState(authenticatedState);
-      render(
-        <MockThemeProvider>
-          <SessionSidebar {...props} />
-        </MockThemeProvider>,
-      );
+      mockUseAuth.mockReturnValue({
+        isSignedIn: true,
+        isLoaded: true,
+        userId: "test-user",
+      });
+      render(<SessionSidebar {...props} />);
       fireEvent.click(screen.getByLabelText("Close sidebar"));
       expect(onCloseMock).toHaveBeenCalled();
     });
@@ -279,22 +245,20 @@ describe("Component Rendering", () => {
   describe("MessageList", () => {
     it("renders empty list", () => {
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={[]}
-            isStreaming={false}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={[]}
+          isStreaming={false}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
 
       // Verify the container is rendered but empty
@@ -323,22 +287,20 @@ describe("Component Rendering", () => {
       ];
 
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={messages}
-            isStreaming={false}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={messages}
+          isStreaming={false}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
       expect(screen.getByText("Hello")).toBeInTheDocument();
       expect(screen.getByText("Hi there")).toBeInTheDocument();
@@ -365,22 +327,20 @@ describe("Component Rendering", () => {
       ];
 
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={messages}
-            isStreaming={true}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={messages}
+          isStreaming={true}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
       // The Message component in our test displays "Processing response..." in a markdown element
       // when there's no content but streaming is true
@@ -401,44 +361,40 @@ describe("Component Rendering", () => {
       ];
 
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={messages}
-            isStreaming={true}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={messages}
+          isStreaming={true}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
       expect(screen.getByText("I am thinking...")).toBeInTheDocument();
     });
 
     it("renders without crashing", () => {
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={[]}
-            isStreaming={false}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={[]}
+          isStreaming={false}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
     });
 
@@ -457,22 +413,20 @@ describe("Component Rendering", () => {
       ] as ChatMessageDocument[];
 
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={messages}
-            isStreaming={false}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={messages}
+          isStreaming={false}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
     });
 
@@ -491,22 +445,20 @@ describe("Component Rendering", () => {
       ] as ChatMessageDocument[];
 
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={messages}
-            isStreaming={true}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={messages}
+          isStreaming={true}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
     });
 
@@ -524,22 +476,20 @@ describe("Component Rendering", () => {
       ] as unknown as ChatMessageDocument[];
 
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={messages}
-            isStreaming={true}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={messages}
+          isStreaming={true}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
     });
 
@@ -559,22 +509,20 @@ describe("Component Rendering", () => {
       ] as unknown as ChatMessageDocument[];
 
       render(
-        <MockThemeProvider>
-          <MessageList
-            messages={messages}
-            isStreaming={false}
-            setSelectedResponseId={() => {
-              /* no-op */
-            }}
-            selectedResponseId=""
-            setMobilePreviewShown={() => {
-              /* no-op */
-            }}
-            navigateToView={() => {
-              /* no-op */
-            }}
-          />
-        </MockThemeProvider>,
+        <MessageList
+          messages={messages}
+          isStreaming={false}
+          setSelectedResponseId={() => {
+            /* no-op */
+          }}
+          selectedResponseId=""
+          setMobilePreviewShown={() => {
+            /* no-op */
+          }}
+          navigateToView={() => {
+            /* no-op */
+          }}
+        />,
       );
 
       expect(screen.getByText("Hello")).toBeInTheDocument();

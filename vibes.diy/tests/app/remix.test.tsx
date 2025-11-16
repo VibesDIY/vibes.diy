@@ -1,8 +1,6 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthContext } from "~/vibes.diy/app/contexts/AuthContext.js";
-import type { TokenPayload } from "~/vibes.diy/app/utils/auth.js";
 import Remix from "~/vibes.diy/app/routes/remix.js";
 
 // Mock useLazyFireproof first
@@ -20,93 +18,14 @@ vi.mock("~/vibes.diy/app/hooks/useLazyFireproof", () => ({
   }),
 }));
 
-// Mock the Session hooks
-vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
-  useSession: () => ({
-    session: {
-      _id: "test-session-id",
-      title: "Test Session",
-      publishedUrl: "",
-      firehoseShared: false,
-    },
-    docs: [],
-    sessionDatabase: {
-      get: vi.fn().mockImplementation((id) => {
-        if (id === "vibe") {
-          return Promise.resolve({ _id: "vibe", created_at: Date.now() });
-        }
-        throw new Error("Not found");
-      }),
-      put: vi.fn().mockResolvedValue({ ok: true }),
-    },
-    openSessionDatabase: vi.fn().mockResolvedValue({}),
-    updateTitle: vi.fn().mockResolvedValue(undefined),
-    updatePublishedUrl: vi.fn(),
-    updateFirehoseShared: vi.fn(),
-    addScreenshot: vi.fn(),
-    userMessage: {
-      _id: "user-msg",
-      type: "user",
-      session_id: "test-session-id",
-      text: "",
-      created_at: Date.now(),
-    },
-    aiMessage: {
-      _id: "ai-msg",
-      type: "ai",
-      session_id: "test-session-id",
-      text: "",
-      created_at: Date.now(),
-    },
-    vibeDoc: {
-      _id: "vibe",
-      title: "",
-      encodedTitle: "",
-      created_at: Date.now(),
-      remixOf: "",
-    },
-    mergeUserMessage: vi.fn(),
-    saveUserMessage: vi.fn(),
-    submitUserMessage: vi.fn(),
-    mergeAiMessage: vi.fn(),
-    saveAiMessage: vi.fn(),
-    submitAiMessage: vi.fn(),
-    mergeVibeDoc: vi.fn(),
+// Mock @clerk/clerk-react
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: () => ({
+    userId: "test-user-id",
+    isLoaded: true,
+    isSignedIn: true,
   }),
 }));
-
-// Create a wrapper component with auth context
-const renderWithAuthContext = (
-  ui: React.ReactNode,
-  { isAuthenticated = true, userId = "test-user-id" } = {},
-) => {
-  const userPayload: TokenPayload | null = isAuthenticated
-    ? {
-        userId,
-        exp: 9999999999,
-        tenants: [],
-        ledgers: [],
-        iat: 1234567890,
-        iss: "FP_CLOUD",
-        aud: "PUBLIC",
-      }
-    : null;
-
-  const authValue = {
-    token: isAuthenticated ? "test-token" : null,
-    isAuthenticated,
-    isLoading: false,
-    userPayload,
-    checkAuthStatus: vi.fn(() => Promise.resolve()),
-    processToken: vi.fn(),
-    needsLogin: false,
-    setNeedsLogin: vi.fn(),
-  };
-
-  return render(
-    <AuthContext.Provider value={authValue}>{ui}</AuthContext.Provider>,
-  );
-};
 
 // Mock the API Key hook
 vi.mock("~/vibes.diy/app/hooks/useApiKey", () => ({
@@ -185,7 +104,7 @@ describe("Remix Route", () => {
     };
 
     const mockOnNavigate = vi.fn();
-    renderWithAuthContext(<Remix onNavigate={mockOnNavigate} />);
+    render(<Remix onNavigate={mockOnNavigate} />);
     // Verify loading screen is displayed
     expect(screen.getByText(/REMIXING TEST-APP-SLUG/i)).toBeInTheDocument();
 
@@ -204,7 +123,7 @@ describe("Remix Route", () => {
     locationMock = { search: "", pathname: "/remix/test-app-slug" };
 
     const mockOnNavigate = vi.fn();
-    renderWithAuthContext(<Remix onNavigate={mockOnNavigate} />);
+    render(<Remix onNavigate={mockOnNavigate} />);
 
     // Wait for the navigation to occur without prompt parameter
     await waitFor(() => {

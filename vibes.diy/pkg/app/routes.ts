@@ -24,9 +24,12 @@ export default [
 
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
-  route("auth/callback", "./routes/auth-callback.tsx", { id: "auth-callback" }),
+  route("create", "./routes/create.tsx", { id: "create" }),
+  route("create/:sessionId", "./routes/create.tsx", { id: "create-session" }, [
+    route("preview", "./routes/create.preview.tsx", { id: "create-preview" }),
+  ]),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
-  route("vibe/:titleId/:installId", "./routes/vibe.$titleId.$installId.tsx", {
+  route("vibe/:titleId/:uuid", "./routes/vibe.$titleId.$uuid.tsx", {
     id: "vibe-instance-viewer",
   }),
   route("vibe/:titleId", "./routes/vibe.$titleId.tsx", {

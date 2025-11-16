@@ -2,9 +2,18 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthContext } from "~/vibes.diy/app/contexts/AuthContext.js";
 import UnifiedSession from "~/vibes.diy/app/routes/home.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
+
+// Mock Clerk
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: () => ({ isSignedIn: true, isLoaded: true }),
+  useUser: () => ({ user: { id: "test-user-id" } }),
+  useSignIn: () => ({ signIn: null }),
+  ClerkProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}));
 
 // Mock the CookieConsentContext
 vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
@@ -174,28 +183,7 @@ describe("Home Route", () => {
     render(
       <MockThemeProvider>
         <MemoryRouter initialEntries={["/"]}>
-          <AuthContext.Provider
-            value={{
-              token: "mock-token",
-              isAuthenticated: true,
-              isLoading: false,
-              userPayload: {
-                userId: "test",
-                exp: 9999999999,
-                tenants: [],
-                ledgers: [],
-                iat: 1234567890,
-                iss: "FP_CLOUD",
-                aud: "PUBLIC",
-              },
-              needsLogin: false,
-              setNeedsLogin: vi.fn(),
-              checkAuthStatus: vi.fn(),
-              processToken: vi.fn(),
-            }}
-          >
-            <UnifiedSession />
-          </AuthContext.Provider>
+          <UnifiedSession />
         </MemoryRouter>
       </MockThemeProvider>,
     );
@@ -213,28 +201,7 @@ describe("Home Route", () => {
     render(
       <MockThemeProvider>
         <MemoryRouter initialEntries={["/chat/test-session-123"]}>
-          <AuthContext.Provider
-            value={{
-              token: "mock-token",
-              isAuthenticated: true,
-              isLoading: false,
-              userPayload: {
-                userId: "test",
-                exp: 9999999999,
-                tenants: [],
-                ledgers: [],
-                iat: 1234567890,
-                iss: "FP_CLOUD",
-                aud: "PUBLIC",
-              },
-              needsLogin: false,
-              setNeedsLogin: vi.fn(),
-              checkAuthStatus: vi.fn(),
-              processToken: vi.fn(),
-            }}
-          >
-            <UnifiedSession />
-          </AuthContext.Provider>
+          <UnifiedSession />
         </MemoryRouter>
       </MockThemeProvider>,
     );

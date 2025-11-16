@@ -8,7 +8,7 @@ import {
 } from "@vibes.diy/hosting-base";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { authMiddleware } from "./middleware/auth.js";
+import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import queueConsumer from "./queue-consumer.js";
 import renderApp from "./renderApp.js";
 
@@ -24,7 +24,7 @@ const openapi = fromHono(app, {
 });
 
 // Add middleware to log Authorization header
-openapi.use("/api/*", authMiddleware);
+openapi.use("/api/*", clerkMiddleware());
 
 // Register OpenAPI endpoints
 openapi.use("/api/*", cors());
@@ -73,7 +73,6 @@ export {
   FIRST_PARTY_APEX_DOMAINS,
   type TokenPayload,
 } from "@vibes.diy/hosting-base";
-export { authMiddleware } from "./middleware/auth.js";
 export { PublishEvent } from "./types.js";
 export type { PublishEvent as PublishEventType } from "./types.js";
 export { default as renderApp } from "./renderApp.js";

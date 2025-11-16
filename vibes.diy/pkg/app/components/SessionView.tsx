@@ -12,8 +12,7 @@ import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
-import { useAuth } from "../contexts/AuthContext.js";
-import { useAuthPopup } from "../hooks/useAuthPopup.js";
+import { useAuth, useSignIn } from "@clerk/clerk-react";
 import { trackAuthClick, trackEvent } from "../utils/analytics.js";
 import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 import LoggedOutView from "./LoggedOutView.js";
@@ -38,8 +37,16 @@ export default function SessionView({
   urlModel,
 }: SessionViewProps) {
   // Check authentication before allowing access to the chat interface
-  const { isAuthenticated, isLoading } = useAuth();
-  const { initiateLogin } = useAuthPopup();
+  const { isSignedIn: isAuthenticated, isLoaded } = useAuth();
+  const isLoading = !isLoaded;
+  const { signIn } = useSignIn();
+  const initiateLogin = async () => {
+    await signIn?.authenticateWithRedirect({
+      strategy: "oauth_google",
+      redirectUrl: "/sso-callback",
+      redirectUrlComplete: window.location.href,
+    });
+  };
 
   // Track unauthenticated view render once
   useEffect(() => {

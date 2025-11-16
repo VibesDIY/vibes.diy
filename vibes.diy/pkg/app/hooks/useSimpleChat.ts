@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "../contexts/AuthContext.js";
+import { useAuth } from "@clerk/clerk-react";
 import type {
   AiChatMessageDocument,
   ChatMessageDocument,
@@ -38,14 +38,9 @@ export function useSimpleChat(sessionId: string): ChatState {
     throw new Error("No session ID provided");
   }
   // Get userId from auth system
-  const { userPayload, isAuthenticated, setNeedsLogin } = useAuth();
-  const userId = userPayload?.userId;
+  const { userId: _userId, isLoaded: _isLoaded, isSignedIn } = useAuth();
 
   // Get API key
-  // For anonymous users: uses the sessionId (chat ID) as an identifier
-  // For logged-in users: uses userId from auth
-  // This approach ensures anonymous users get one API key with limited credits
-  // and logged-in users will get proper credit assignment based on their ID
   // Using the useApiKey hook to get API key related functionality
   // Note: ensureApiKey is the key function we need for lazy loading
   const { ensureApiKey } = useApiKey();
@@ -206,7 +201,9 @@ export function useSimpleChat(sessionId: string): ChatState {
         setPendingUserDoc,
         setIsStreaming,
         ensureApiKey,
-        setNeedsLogin,
+        setNeedsLogin: () => {
+          // No-op: Clerk handles auth differently
+        },
         ensureSystemPrompt,
         submitUserMessage,
         buildMessageHistory,
@@ -219,9 +216,8 @@ export function useSimpleChat(sessionId: string): ChatState {
         setSelectedResponseId,
         updateTitle,
         setInput,
-        userId,
         titleModel: TITLE_MODEL,
-        isAuthenticated,
+        isAuthenticated: !!isSignedIn,
         vibeDoc,
       };
       return sendChatMessage(ctx, textOverride);
@@ -242,7 +238,7 @@ export function useSimpleChat(sessionId: string): ChatState {
       updateTitle,
       boundCheckCredits,
       ensureApiKey,
-      isAuthenticated,
+      isSignedIn,
     ],
   );
 

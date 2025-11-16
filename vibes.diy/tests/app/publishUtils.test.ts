@@ -167,7 +167,7 @@ describe("publishApp", () => {
       title: testTitle,
       userId: "test-user-id",
       prompt: "Create an original app",
-      token: null,
+      token: undefined,
       fetch: mockFetch,
     });
 
@@ -247,7 +247,7 @@ describe("publishApp", () => {
       code: testCode,
       userId: "test-user-id",
       prompt: "Create an app without authentication",
-      token: null,
+      token: undefined,
       fetch: mockFetch,
     });
 

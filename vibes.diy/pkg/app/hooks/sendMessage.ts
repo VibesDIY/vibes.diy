@@ -36,7 +36,6 @@ export interface SendMessageContext {
   setSelectedResponseId: (id: string) => void;
   updateTitle: (title: string, isManual?: boolean) => Promise<void>;
   setInput: (text: string) => void;
-  userId: string | undefined;
   titleModel: string;
   isAuthenticated: boolean;
   vibeDoc: VibeDocument;
@@ -63,7 +62,6 @@ export async function sendChatMessage(
     setSelectedResponseId,
     updateTitle,
     setInput,
-    userId,
     titleModel,
     isAuthenticated,
     vibeDoc,
@@ -127,7 +125,6 @@ export async function sendChatMessage(
     promptText,
     (content) => throttledMergeAiMessage(content),
     currentApiKey,
-    userId,
     setNeedsLogin,
   )
     .then(async (finalContent) => {
@@ -187,7 +184,6 @@ export async function sendChatMessage(
                 session_id: aiMessage.session_id,
                 model: modelToUse,
                 title: vibeDoc?.title || undefined,
-                user_id: userId,
               });
               sessionStorage.setItem(key, "1");
             }

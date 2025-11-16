@@ -1,7 +1,7 @@
 import React from "react";
 import ResultPreviewHeaderContent from "../app/components/ResultPreview/ResultPreviewHeaderContent.js";
 import type { ViewType, ViewControlsType } from "@vibes.diy/prompts";
-import { AuthProvider } from "../app/contexts/AuthContext.js";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { BrowserRouter } from "react-router-dom";
 
 // Mock state provider for interactive demo
@@ -101,7 +101,7 @@ export const MockedResultPreviewHeaderContent: React.FC<MockedHeaderProps> = ({
 
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <ClerkProvider publishableKey="pk_test_storybook">
         <div className="border-b bg-white dark:bg-gray-900">
           <ResultPreviewHeaderContent
             displayView={displayView}
@@ -120,7 +120,7 @@ export const MockedResultPreviewHeaderContent: React.FC<MockedHeaderProps> = ({
             syntaxErrorCount={syntaxErrorCount}
           />
         </div>
-      </AuthProvider>
+      </ClerkProvider>
     </BrowserRouter>
   );
 };

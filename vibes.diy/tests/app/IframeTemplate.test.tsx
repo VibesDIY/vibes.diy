@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, act } from "@testing-library/react";
 import { ejectTemplateWithPlaceholders } from "~/vibes.diy/app/utils/eject-template.js";
 import ResultPreview from "~/vibes.diy/app/components/ResultPreview/ResultPreview.js";
-import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 vi.mock("@remix-run/router", () => ({
   createBrowserRouter: vi.fn(),
@@ -23,13 +22,12 @@ vi.mock("~/vibes.diy/app/hooks/useApiKey", () => ({
   }),
 }));
 
-vi.mock("~/vibes.diy/app/contexts/AuthContext", () => ({
+// Mock @clerk/clerk-react
+vi.mock("@clerk/clerk-react", () => ({
   useAuth: () => ({
-    token: "test-auth-token",
-    userPayload: { userId: "test-user-id" },
-    isAuthenticated: true,
-    login: vi.fn(),
-    logout: vi.fn(),
+    userId: "test-user-id",
+    isLoaded: true,
+    isSignedIn: true,
   }),
 }));
 
@@ -235,20 +233,18 @@ describe("Eject Template", () => {
 
       // Render the ResultPreview component with sample code
       render(
-        <MockThemeProvider>
-          <ResultPreview
-            code={testAppCode}
-            dependencies={{}}
-            onScreenshotCaptured={onScreenshotCapturedMock}
-            sessionId="test-session"
-            isStreaming={false}
-            codeReady={true}
-            displayView="preview"
-            onPreviewLoaded={onPreviewLoadedMock}
-            setMobilePreviewShown={vi.fn()}
-            updateTitle={vi.fn().mockResolvedValue(undefined)}
-          />
-        </MockThemeProvider>,
+        <ResultPreview
+          code={testAppCode}
+          dependencies={{}}
+          onScreenshotCaptured={onScreenshotCapturedMock}
+          sessionId="test-session"
+          isStreaming={false}
+          codeReady={true}
+          displayView="preview"
+          onPreviewLoaded={onPreviewLoadedMock}
+          setMobilePreviewShown={vi.fn()}
+          updateTitle={vi.fn().mockResolvedValue(undefined)}
+        />,
       );
 
       // Get the mock iframe created by our mocks
