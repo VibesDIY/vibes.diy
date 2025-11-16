@@ -16,18 +16,21 @@ import renderApp from "./renderApp.js";
 const app = new Hono();
 
 // Apply CORS globally before mounting routes
-app.use('*', cors({
-  origin: '*',
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-  allowHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Title',
-    'HTTP-Referer',
-    'X-VIBES-Token',
-  ],
-  maxAge: 86400,
-}));
+app.use(
+  "*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Title",
+      "HTTP-Referer",
+      "X-VIBES-Token",
+    ],
+    maxAge: 86400,
+  }),
+);
 
 // Mount the renderApp router
 app.route("/", renderApp);

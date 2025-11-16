@@ -115,57 +115,38 @@ export class OpenRouterChat extends OpenAPIRoute {
       // Get validated request data from JSON body
       const data = await c.req.json();
 
-      // Get user from context (set by auth middleware from X-VIBES-Token)
+      // Require authentication for OpenRouter API usage
       const user = c.get("user");
-      const userId = user?.userId;
+      if (!user) {
+        return c.json(
+          {
+            error: {
+              message:
+                "Authentication required. Please log in to use AI features.",
+              type: "authentication_error",
+              code: 401,
+            },
+          },
+          401,
+        );
+      }
 
-      // Get client IP for logging
+      const userId = user?.userId;
       const clientIp = c.req.header("cf-connecting-ip") ?? "";
 
-      // Check for Bearer token (BYOK - bring your own key)
-      const authHeader = c.req.header("Authorization");
-      let apiKey: string;
-      let _isUserProvidedKey = false;
-
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        const providedKey = authHeader.substring(7);
-
-        // Check if it's the dummy key indicating proxy-managed authentication
-        if (providedKey === "sk-vibes-proxy-managed") {
-          // Require authentication for proxy-managed API key usage
-          if (!user) {
-            return c.json(
-              {
-                error: {
-                  message:
-                    "Authentication required. Please log in to use AI features.",
-                  type: "authentication_error",
-                  code: 401,
-                },
-              },
-              401,
-            );
-          }
-
-          // Use server's OpenRouter key
-          apiKey = c.env.SERVER_OPENROUTER_API_KEY;
-          if (!apiKey) {
-            return c.json({ error: "OpenRouter API key not configured" }, 500);
-          }
-          console.log(
-            `🔑 OpenRouter Chat: User ${userId || "anonymous"} (IP: ${clientIp}) using proxy-managed API key`,
-          );
-        } else {
-          // User is providing their own OpenRouter key
-          apiKey = providedKey;
-          _isUserProvidedKey = true;
-          console.log(
-            `🔑 OpenRouter Chat: User ${userId || "anonymous"} (IP: ${clientIp}) using their own API key`,
-          );
-        }
-      } else {
-        // No authorization header - require it
-        return c.json({ error: "Authorization header required" }, 401);
+      // Always use server's OpenRouter API key
+      const apiKey = c.env.SERVER_OPENROUTER_API_KEY;
+      if (!apiKey) {
+        return c.json(
+          {
+            error: {
+              message: "OpenRouter API key not configured",
+              type: "server_error",
+              code: 500,
+            },
+          },
+          500,
+        );
       }
 
       console.log(

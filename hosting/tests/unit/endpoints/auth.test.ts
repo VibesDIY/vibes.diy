@@ -49,7 +49,7 @@ describe("AI Endpoints Authentication", () => {
   });
 
   describe("OpenRouterChat", () => {
-    it("should reject unauthenticated requests with proxy-managed key", async () => {
+    it("should reject unauthenticated requests", async () => {
       // Mock unauthenticated user
       vi.mocked(mockContext.get).mockReturnValue(null);
       vi.mocked(mockContext.req.json).mockResolvedValue({
@@ -57,7 +57,6 @@ describe("AI Endpoints Authentication", () => {
         messages: [{ role: "user", content: "test" }],
       });
       vi.mocked(mockContext.req.header).mockImplementation((name) => {
-        if (name === "Authorization") return "Bearer sk-vibes-proxy-managed";
         if (name === "cf-connecting-ip") return "127.0.0.1";
         return undefined;
       });
@@ -78,7 +77,7 @@ describe("AI Endpoints Authentication", () => {
       );
     });
 
-    it("should allow authenticated requests with proxy-managed key", async () => {
+    it("should allow authenticated requests", async () => {
       // Mock authenticated user
       vi.mocked(mockContext.get).mockReturnValue({ userId: "user123" });
       vi.mocked(mockContext.req.json).mockResolvedValue({
@@ -86,48 +85,6 @@ describe("AI Endpoints Authentication", () => {
         messages: [{ role: "user", content: "test" }],
       });
       vi.mocked(mockContext.req.header).mockImplementation((name) => {
-        if (name === "Authorization") return "Bearer sk-vibes-proxy-managed";
-        if (name === "cf-connecting-ip") return "127.0.0.1";
-        return undefined;
-      });
-
-      // Mock global fetch for OpenRouter API call
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            choices: [{ message: { content: "test response" } }],
-            usage: {
-              prompt_tokens: 10,
-              completion_tokens: 5,
-              total_tokens: 15,
-            },
-          }),
-      });
-
-      const endpoint = new OpenRouterChat();
-      await endpoint.handle(mockContext as unknown);
-
-      // Should not call json with error response
-      expect(mockContext.json).not.toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            type: "authentication_error",
-          }),
-        }),
-        401,
-      );
-    });
-
-    it("should allow user-provided API keys without authentication", async () => {
-      // Mock unauthenticated user but with user's own API key
-      vi.mocked(mockContext.get).mockReturnValue(null);
-      vi.mocked(mockContext.req.json).mockResolvedValue({
-        model: "anthropic/claude-3-opus",
-        messages: [{ role: "user", content: "test" }],
-      });
-      vi.mocked(mockContext.req.header).mockImplementation((name) => {
-        if (name === "Authorization") return "Bearer sk-user-provided-key";
         if (name === "cf-connecting-ip") return "127.0.0.1";
         return undefined;
       });
