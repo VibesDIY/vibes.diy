@@ -297,7 +297,8 @@ function AuthenticatedSessionView({
       setSyntaxErrorCount(errorCount);
 
       // Convert Monaco syntax errors to RuntimeError format and trigger auto-repair
-      if (errorCount > 0 && errors) {
+      // Only process errors when NOT streaming to avoid intermediate syntax errors
+      if (errorCount > 0 && errors && !chatState.isStreaming) {
         errors.forEach((err) => {
           chatState.addError({
             type: "error",
@@ -310,7 +311,7 @@ function AuthenticatedSessionView({
         });
       }
     },
-    [chatState.addError],
+    [chatState.addError, chatState.isStreaming],
   );
 
   // Add a ref to track whether streaming was active previously

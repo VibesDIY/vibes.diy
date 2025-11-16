@@ -219,82 +219,8 @@ const IframeContent: React.FC<IframeContentProps> = ({
       // Send code via postMessage after iframe loads
       const handleIframeLoad = async () => {
         if (iframeRef.current?.contentWindow) {
-          // Validate code before sending to iframe using visible editor's markers
-          if (monacoApiRef.current && monacoEditorRef.current) {
-            const visibleModel = monacoEditorRef.current.getModel();
-            if (visibleModel) {
-              // Wait for markers to be ready using event listener
-              // Capture monaco API reference for use in async callbacks
-              const monacoApi = monacoApiRef.current;
-              await new Promise<void>((resolve) => {
-                let resolved = false;
-
-                // Listen for marker changes
-                const disposable = monacoApi.editor.onDidChangeMarkers(
-                  (uris) => {
-                    // Check if our model's URI is in the changed URIs
-                    if (
-                      uris.some(
-                        (uri) => uri.toString() === visibleModel.uri.toString(),
-                      )
-                    ) {
-                      if (!resolved) {
-                        resolved = true;
-                        // Small delay to ensure markers are fully processed
-                        setTimeout(() => {
-                          disposable.dispose();
-                          resolve();
-                        }, 50);
-                      }
-                    }
-                  },
-                );
-
-                // Fallback timeout in case markers never change (already valid code)
-                setTimeout(() => {
-                  if (!resolved) {
-                    resolved = true;
-                    disposable.dispose();
-                    resolve();
-                  }
-                }, 500);
-              });
-
-              // Check again after waiting
-              const allMarkersAfterWait = monacoApi.editor.getModelMarkers({
-                resource: visibleModel.uri,
-              });
-
-              // Filter for errors
-              const errors = allMarkersAfterWait.filter(
-                (m) => m.severity === monacoApi.MarkerSeverity.Error,
-              );
-
-              if (errors.length > 0) {
-                const errorDetails = errors.map((e) => ({
-                  line: e.startLineNumber,
-                  column: e.startColumn,
-                  endLine: e.endLineNumber,
-                  endColumn: e.endColumn,
-                  message: e.message,
-                  severity: e.severity,
-                }));
-
-                // Notify parent about syntax errors (triggers auto-repair)
-                if (onSyntaxErrorChange) {
-                  onSyntaxErrorChange(errors.length, errorDetails);
-                }
-
-                // Don't send code to iframe if validation fails
-                return;
-              }
-
-              // Notify parent that errors are cleared
-              if (onSyntaxErrorChange) {
-                onSyntaxErrorChange(0);
-              }
-            }
-          }
+          // Note: Pre-validation removed to allow iframe to handle its own errors
+          // Syntax validation still happens in Monaco editor for UI feedback
 
           // Get auth token from localStorage for API authentication
           // Check both new and legacy token keys for compatibility
