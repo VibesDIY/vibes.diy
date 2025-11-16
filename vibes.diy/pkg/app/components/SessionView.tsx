@@ -287,12 +287,12 @@ function AuthenticatedSessionView({
   const handleSyntaxErrorChange = useCallback(
     (
       errorCount: number,
-      errors?: Array<{
+      errors?: {
         line: number;
         column: number;
         message: string;
         severity: number;
-      }>,
+      }[],
     ) => {
       setSyntaxErrorCount(errorCount);
 
