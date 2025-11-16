@@ -10,6 +10,7 @@ on:
 jobs:
   cleanup-preview:
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       pull-requests: write  # Allow posting comments

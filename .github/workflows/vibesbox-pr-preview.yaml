@@ -15,6 +15,7 @@ concurrency:
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       pull-requests: write  # Allow posting comments
