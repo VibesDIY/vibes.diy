@@ -51,19 +51,33 @@ export function useImmediateErrorAutoSend({
         });
         setDidSendErrors(true);
 
-        // Auto-click the Code button after a small delay to ensure message is set
-        setTimeout(() => {
+        // Auto-submit after ensuring streaming has completed
+        // Poll until button is enabled (not disabled), then click it
+        const checkAndSubmit = () => {
           const buttons = document.querySelectorAll("button");
           const codeButton = Array.from(buttons).find(
             (btn) => btn.textContent?.trim() === "Code",
           );
-          if (codeButton && !codeButton.hasAttribute("disabled")) {
-            codeButton.click();
+
+          if (codeButton) {
+            if (!codeButton.hasAttribute("disabled")) {
+              // Button is enabled, click it
+              codeButton.click();
+            } else {
+              // Button still disabled (streaming), check again in 100ms
+              setTimeout(checkAndSubmit, 100);
+            }
+          } else {
+            // Button not found, retry in 100ms
+            setTimeout(checkAndSubmit, 100);
           }
-        }, 100);
+        };
+
+        // Start checking after a small initial delay
+        setTimeout(checkAndSubmit, 2000);
 
         debouncedSendRef.current = null;
-      }, 500);
+      }, 1000);
     }
 
     return () => {
