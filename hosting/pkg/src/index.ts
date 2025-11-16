@@ -19,7 +19,13 @@ const app = new Hono();
 app.use('*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-  allowHeaders: ['Content-Type', 'Authorization', 'x-vibes-token'],
+  allowHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Title',
+    'HTTP-Referer',
+    'X-VIBES-Token',
+  ],
   maxAge: 86400,
 }));
 
