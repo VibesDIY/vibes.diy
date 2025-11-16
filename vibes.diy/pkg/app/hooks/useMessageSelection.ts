@@ -40,9 +40,15 @@ export function useMessageSelection({
         doc.type === "ai" || doc.type === "user" || doc.type === "system",
     ) as unknown as ChatMessageDocument[];
 
-    // If currently streaming, include the streaming message
+    // If currently streaming, merge streaming content onto placeholder IN MEMORY
     if (isStreaming && aiMessage.text.length > 0) {
-      return [...baseDocs, aiMessage];
+      return baseDocs.map((doc) => {
+        // Find the placeholder with isStreaming flag and merge content
+        if (doc.type === "ai" && doc.isStreaming) {
+          return { ...doc, text: aiMessage.text };
+        }
+        return doc;
+      });
     }
 
     // When streaming just ended, check if the last message is in docs
