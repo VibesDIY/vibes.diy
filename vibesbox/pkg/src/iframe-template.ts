@@ -22,9 +22,6 @@ export const iframeHtml = `<!doctype html>
       }
     </style>
     <script>
-      // Version marker for cache busting verification
-      console.log('🔵 VIBESBOX IFRAME TEMPLATE v2024-11-09-auth-inheritance');
-
       // Compute parent origin once for safe postMessage targeting
       let __PARENT_ORIGIN = (() => {
         try { return new URL(document.referrer).origin; } catch { return null; }
@@ -279,127 +276,7 @@ export const iframeHtml = `<!doctype html>
       {{IMPORT_MAP}}
     </script>
 
-    <!-- Enhanced Babel and JSX error handling script -->
     <script>
-      window.babelTransformError = null;
-
-      // 1. Patch console.error to capture JSX parse errors that are only logged to console
-      const originalConsoleError = console.error;
-      console.error = function (...args) {
-        const errorMsg = args.join(" ");
-
-        // Look for specific JSX parse errors that might not trigger other handlers
-        if (
-          errorMsg.includes("parse-error.ts") ||
-          (errorMsg.includes("SyntaxError") &&
-            errorMsg.includes("Unexpected token")) ||
-          errorMsg.includes("JSX")
-        ) {
-          // Extract line and position information if available
-          let lineInfo = "";
-          const lineMatch =
-            errorMsg.match(/(\d+):(\d+)/) ||
-            errorMsg.match(/line (\d+).+column (\d+)/);
-          if (lineMatch) {
-            lineInfo = \` at line \${lineMatch[1]}, column \${lineMatch[2]}\`;
-          }
-
-          // Extract meaningful error message
-          let message = "JSX Syntax Error";
-          if (errorMsg.includes("Unexpected token")) {
-            const tokenMatch = errorMsg.match(
-              /Unexpected token[,:]?\\s*([^,\\n)]+)/,
-            );
-            if (tokenMatch) {
-              message = \`JSX Syntax Error: Unexpected token \${tokenMatch[1].trim()}\`;
-            }
-          } else if (errorMsg.includes("expected")) {
-            const expectedMatch = errorMsg.match(/expected\\s+([^,\\n)]+)/);
-            if (expectedMatch) {
-              message = \`JSX Syntax Error: Expected \${expectedMatch[1].trim()}\`;
-            }
-          }
-
-          const errorDetails = {
-            type: "error",
-            message: \`\${message}\${lineInfo}\`,
-            source: "jsx-parser",
-            stack: errorMsg,
-            timestamp: new Date().toISOString(),
-            errorType: "SyntaxError",
-          };
-
-          // Only send if we haven't already reported an error
-          if (!window.babelTransformError) {
-            postToParent({ type: "iframe-error", error: errorDetails });
-            window.babelTransformError = errorDetails;
-          }
-        }
-
-        // Call original console.error
-        originalConsoleError.apply(console, args);
-      };
-
-      // 2. Patch Babel transform for errors caught during transformation
-      if (window.Babel && window.Babel.transform) {
-        const originalTransform = window.Babel.transform;
-        window.Babel.transform = function (code, options) {
-          try {
-            return originalTransform.call(this, code, options);
-          } catch (err) {
-            // Capture and format Babel error
-            const errorDetails = {
-              type: "error",
-              message: \`Babel Syntax Error: \${err.message || "Invalid syntax"}\`,
-              source: "babel-transform",
-              stack: err.stack || "",
-              timestamp: new Date().toISOString(),
-              errorType: "SyntaxError",
-            };
-            // Report error to parent
-            postToParent({ type: "iframe-error", error: errorDetails });
-            window.babelTransformError = errorDetails;
-            throw err;
-          }
-        };
-      }
-
-      // 3. Enhanced unhandled error handler specifically for syntax errors
-      window.addEventListener(
-        "error",
-        function (event) {
-          // Skip if we already caught the error elsewhere
-          if (window.babelTransformError) return;
-
-          // Focus on syntax errors and parse errors
-          if (
-            event.error?.stack?.includes("parse-error.ts") ||
-            event.message?.includes("SyntaxError") ||
-            (event.message === "Script error." && !event.filename)
-          ) {
-            let message = event.message;
-            if (message === "Script error.") {
-              message = "JSX Syntax Error: Unable to parse JSX code";
-            }
-
-            const errorDetails = {
-              type: "error",
-              message: message,
-              source: event.filename || "jsx-parser",
-              lineno: event.lineno || 0,
-              colno: event.colno || 0,
-              stack: event.error?.stack || "",
-              timestamp: new Date().toISOString(),
-              errorType: "SyntaxError",
-            };
-
-            postToParent({ type: "iframe-error", error: errorDetails });
-            window.babelTransformError = errorDetails;
-          }
-        },
-        true,
-      );
-
       // Do not read auth tokens from URL parameters (avoid leakage via referrers/history).
 
       // Code execution function
@@ -462,9 +339,6 @@ export const iframeHtml = `<!doctype html>
         }
 
         try {
-          // Reset error state
-          window.babelTransformError = null;
-
           // Set up Fireproof debug configuration BEFORE any imports
           if (data.debugConfig && data.debugConfig.enabled) {
             globalThis[Symbol.for("FP_PRESET_ENV")] = {
@@ -575,9 +449,6 @@ export const iframeHtml = `<!doctype html>
             imageUrl,
             showVibesSwitch: globalThis.SHOW_VIBES_SWITCH !== false
           });
-
-          // Notify parent that execution was successful
-          postToParent({ type: 'execution-success' });
 
           // Wait for React to render, then notify parent that preview is ready
           setTimeout(() => {

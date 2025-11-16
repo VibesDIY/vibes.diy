@@ -284,9 +284,35 @@ function AuthenticatedSessionView({
   );
 
   // Handle syntax error changes from editor
-  const handleSyntaxErrorChange = useCallback((errorCount: number) => {
-    setSyntaxErrorCount(errorCount);
-  }, []);
+  const handleSyntaxErrorChange = useCallback(
+    (
+      errorCount: number,
+      errors?: {
+        line: number;
+        column: number;
+        message: string;
+        severity: number;
+      }[],
+    ) => {
+      setSyntaxErrorCount(errorCount);
+
+      // Convert Monaco syntax errors to RuntimeError format and trigger auto-repair
+      // Only process errors when NOT streaming to avoid intermediate syntax errors
+      if (errorCount > 0 && errors && !chatState.isStreaming) {
+        errors.forEach((err) => {
+          chatState.addError({
+            type: "error",
+            errorType: "SyntaxError",
+            message: err.message,
+            source: "monaco-editor",
+            timestamp: Date.now().toString(),
+            stack: `Line ${err.line}, Column ${err.column}`,
+          });
+        });
+      }
+    },
+    [chatState.addError, chatState.isStreaming],
+  );
 
   // Add a ref to track whether streaming was active previously
   const wasStreamingRef = useRef(false);

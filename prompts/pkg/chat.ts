@@ -85,6 +85,7 @@ export type AiChatMessageDocument = BaseChatMessageDocument & {
   type: "ai";
   model?: string; // The model used to generate this message
   isEditedCode?: boolean; // Flag to indicate this message contains edited code
+  isStreaming?: boolean; // Flag to indicate this message is currently streaming
 };
 
 export type SystemChatMessageDocument = BaseChatMessageDocument & {

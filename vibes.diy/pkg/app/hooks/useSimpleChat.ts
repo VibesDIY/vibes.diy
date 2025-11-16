@@ -249,12 +249,10 @@ export function useSimpleChat(sessionId: string): ChatState {
   // Login handling no longer needed - proxy handles authentication
 
   // Determine if code is ready for display
+  // Only trigger when we have segments with code, not based on streaming state
   const codeReady = useMemo(() => {
-    return (
-      (!isStreaming && selectedSegments.length > 1) ||
-      selectedSegments.length > 2
-    );
-  }, [isStreaming, selectedSegments]);
+    return selectedSegments.length > 1 && selectedCode.content.length > 0;
+  }, [selectedSegments, selectedCode]);
 
   // Effect to clear pending message once it appears in the main docs list
   useEffect(() => {

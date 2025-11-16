@@ -219,12 +219,7 @@ const StructuredMessage = ({
       className="structured-message"
       style={{ overflow: "visible", position: "relative" }}
     >
-      {!hasContent ? (
-        // Show placeholder if there are no segments with content
-        <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
-          <p>Processing response...</p>
-        </div>
-      ) : (
+      {hasContent &&
         // Map and render each segment that has content
         validSegments
           .filter((segment): segment is Segment =>
@@ -262,8 +257,7 @@ const StructuredMessage = ({
               );
             }
             return null;
-          })
-      )}
+          })}
 
       {/* Show streaming indicator only when this is the latest message, streaming is active, and we already have content */}
       {isStreaming && hasContent && isLatestMessage && (

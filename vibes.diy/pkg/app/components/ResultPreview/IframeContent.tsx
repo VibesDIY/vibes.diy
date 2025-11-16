@@ -21,7 +21,15 @@ interface IframeContentProps {
   sessionId: string;
   onCodeSave?: (code: string) => void;
   onCodeChange?: (hasChanges: boolean, saveHandler: () => void) => void;
-  onSyntaxErrorChange?: (errorCount: number) => void;
+  onSyntaxErrorChange?: (
+    errorCount: number,
+    errors?: {
+      line: number;
+      column: number;
+      message: string;
+      severity: number;
+    }[],
+  ) => void;
 }
 
 const IframeContent: React.FC<IframeContentProps> = ({
@@ -209,8 +217,11 @@ const IframeContent: React.FC<IframeContentProps> = ({
       );
 
       // Send code via postMessage after iframe loads
-      const handleIframeLoad = () => {
+      const handleIframeLoad = async () => {
         if (iframeRef.current?.contentWindow) {
+          // Note: Pre-validation removed to allow iframe to handle its own errors
+          // Syntax validation still happens in Monaco editor for UI feedback
+
           // Get auth token from localStorage for API authentication
           // Check both new and legacy token keys for compatibility
           let authToken: string | undefined;
@@ -219,12 +230,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
               localStorage.getItem("vibes-diy-auth-token") ||
               localStorage.getItem("auth_token") ||
               undefined;
-            console.log(
-              "🔐 [VIBES.DIY] Reading auth token from localStorage:",
-              authToken ? authToken.substring(0, 20) + "..." : "NOT FOUND",
-            );
           } catch (e) {
-            console.warn("🔐 [VIBES.DIY] Failed to read auth token:", e);
             // Ignore localStorage errors (privacy mode, SSR, etc.)
           }
 

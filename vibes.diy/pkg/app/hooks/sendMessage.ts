@@ -120,6 +120,16 @@ export async function sendChatMessage(
     vibeDoc,
   );
 
+  // Reserve temporal position for AI message with placeholder that appears in queries
+  const placeholder = await sessionDatabase.put({
+    type: "ai",
+    session_id: aiMessage.session_id,
+    text: "",
+    isStreaming: true, // Flag to identify during streaming
+    created_at: Date.now(),
+  });
+  const reservedId = placeholder.id;
+
   return streamAI(
     modelToUse,
     currentSystemPrompt,
@@ -173,9 +183,16 @@ export async function sendChatMessage(
         }
 
         aiMessage.model = modelToUse;
+        // Use reserved _id from placeholder to maintain correct temporal order
+        aiMessage._id = reservedId;
+        aiMessage.isStreaming = false; // Clear streaming flag in final save
         const { id } = (await sessionDatabase.put(aiMessage)) as { id: string };
         setPendingAiMessage({ ...aiMessage, _id: id });
         setSelectedResponseId(id);
+
+        // Delay streaming false to allow live query to update (typically 10-50ms)
+        // Document's isStreaming flag is the authoritative signal for merge logic
+        setTimeout(() => setIsStreaming(false), 50);
 
         // Emit app_created once per session (guard on first AI message id)
         try {
@@ -235,6 +252,7 @@ export async function sendChatMessage(
 
         // Restore the user's input so they can retry after login
         setInput(promptText);
+        setIsStreaming(false);
         return; // Exit early without saving error to chat
       }
 
@@ -242,9 +260,6 @@ export async function sendChatMessage(
       isProcessingRef.current = false;
       setPendingAiMessage(null);
       setSelectedResponseId("");
-    })
-    .finally(() => {
       setIsStreaming(false);
-      // Credit checking no longer needed
     });
 }

@@ -50,8 +50,10 @@ export function useImmediateErrorAutoSend({
           text: "Please help me fix the errors shown above. Simplify the code if necessary.",
         });
         setDidSendErrors(true);
+
+        // Note: User must manually click "Code" button to submit
         debouncedSendRef.current = null;
-      }, 500);
+      }, 1000);
     }
 
     return () => {
