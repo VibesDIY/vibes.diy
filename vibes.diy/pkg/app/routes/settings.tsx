@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useFireproof } from "use-fireproof";
 import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
-import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useAuth as useClerkAuth, useClerk } from "@clerk/clerk-react";
 import modelsList from "../data/models.json" with { type: "json" };
 import { VibesDiyEnv } from "../config/env.js";
 import { UserSettings, stylePrompts } from "@vibes.diy/prompts";
@@ -22,9 +22,7 @@ export default function Settings() {
   // Use the main database directly instead of through useSession
   const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
   const { isSignedIn: isAuthenticated } = useClerkAuth();
-  const checkAuthStatus = async () => {
-    // Clerk handles auth status automatically
-  };
+  const { signOut } = useClerk();
 
   const {
     doc: settings,
@@ -116,14 +114,12 @@ export default function Settings() {
     }
   }, [saveSettings, settings, navigate]);
 
-  const handleLogout = useCallback(() => {
-    // Clear the auth token and navigate to home page
-    localStorage.removeItem("vibes-diy-auth-token");
-    // Update the auth context state before navigation
-    checkAuthStatus().then(() => {
-      navigate("/");
-    });
-  }, [navigate, checkAuthStatus]);
+  const handleLogout = useCallback(async () => {
+    // Sign out with Clerk
+    await signOut();
+    // Navigate to home page after sign out
+    navigate("/");
+  }, [signOut, navigate]);
 
   const handleShowModelPickerInChatChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
