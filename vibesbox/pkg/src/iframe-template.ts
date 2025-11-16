@@ -421,6 +421,9 @@ export const iframeHtml = `<!doctype html>
             functionName = exportMatch[1];
           }
 
+          // Set showVibesSwitch on globalThis for module script access
+          globalThis.SHOW_VIBES_SWITCH = data.showVibesSwitch !== false;
+
           const modifiedCode =
             transformedCode.code.replace(
               /export\\s+default\\s+function\\s+(\\w+)/g,
@@ -444,7 +447,7 @@ export const iframeHtml = `<!doctype html>
             appComponent: \${functionName},
             title,
             imageUrl,
-            showVibesSwitch: data.showVibesSwitch !== false
+            showVibesSwitch: globalThis.SHOW_VIBES_SWITCH !== false
           });
 
           // Wait for React to render, then notify parent that preview is ready

@@ -7,7 +7,7 @@ import type { VibeInstanceDocument } from "@vibes.diy/prompts";
  * Returns all instances across all vibes (not filtered by titleId)
  */
 export function useAllInstances() {
-  const { database, useLiveQuery } = useFireproof("vibes-diy-instances");
+  const { useLiveQuery } = useFireproof("vibes-diy-instances");
   const { userPayload } = useAuth();
   const userId = userPayload?.userId || "anonymous";
 
