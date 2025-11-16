@@ -50,6 +50,18 @@ export function useImmediateErrorAutoSend({
           text: "Please help me fix the errors shown above. Simplify the code if necessary.",
         });
         setDidSendErrors(true);
+
+        // Auto-click the Code button after a small delay to ensure message is set
+        setTimeout(() => {
+          const buttons = document.querySelectorAll("button");
+          const codeButton = Array.from(buttons).find(
+            (btn) => btn.textContent?.trim() === "Code",
+          );
+          if (codeButton && !codeButton.hasAttribute("disabled")) {
+            codeButton.click();
+          }
+        }, 100);
+
         debouncedSendRef.current = null;
       }, 500);
     }
