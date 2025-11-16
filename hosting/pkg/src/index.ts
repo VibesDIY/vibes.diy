@@ -15,6 +15,14 @@ import renderApp from "./renderApp.js";
 // Start a Hono app
 const app = new Hono();
 
+// Apply CORS globally before mounting routes
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowHeaders: ['Content-Type', 'Authorization', 'x-vibes-token'],
+  maxAge: 86400,
+}));
+
 // Mount the renderApp router
 app.route("/", renderApp);
 
@@ -23,12 +31,10 @@ const openapi = fromHono(app, {
   docs_url: "/docs",
 });
 
-// Add middleware to log Authorization header
+// Add Clerk authentication middleware
 openapi.use("/api/*", clerkMiddleware());
 
 // Register OpenAPI endpoints
-openapi.use("/api/*", cors());
-
 openapi.post("/api/apps", AppCreate);
 // openapi.post("/api/keys", KeyCreate);
 
