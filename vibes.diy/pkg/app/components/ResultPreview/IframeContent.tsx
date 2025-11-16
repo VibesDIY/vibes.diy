@@ -12,21 +12,6 @@ import { setupMonacoEditor } from "./setupMonacoEditor.js";
 import { editor } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 
-// Helper to format validation errors for console output
-function formatValidationErrors(
-  errors: Array<{
-    line: number;
-    column: number;
-    message: string;
-  }>,
-): string {
-  if (errors.length === 0) return "";
-  const errorList = errors
-    .map((err) => `Line ${err.line}, Column ${err.column}: ${err.message}`)
-    .join("\n");
-  return `Found ${errors.length} syntax error${errors.length > 1 ? "s" : ""}:\n\n${errorList}`;
-}
-
 interface IframeContentProps {
   activeView: "preview" | "code" | "data" | "chat" | "settings";
   filesContent: IframeFiles;
@@ -230,32 +215,12 @@ const IframeContent: React.FC<IframeContentProps> = ({
           if (monacoApiRef.current && monacoEditorRef.current) {
             const visibleModel = monacoEditorRef.current.getModel();
             if (visibleModel) {
-              console.log("🔍 [VALIDATION] About to check markers");
-              console.log(
-                "🔍 [VALIDATION] Visible model URI:",
-                visibleModel.uri.toString(),
-              );
-              console.log(
-                "🔍 [VALIDATION] Visible model language:",
-                visibleModel.getLanguageId(),
-              );
-              console.log(
-                "🔍 [VALIDATION] Visible model line count:",
-                visibleModel.getLineCount(),
-              );
-
               // Get ALL markers (not just errors) to see what Monaco knows
               const allMarkers = monacoApiRef.current.editor.getModelMarkers({
                 resource: visibleModel.uri,
               });
-              console.log(
-                "🔍 [VALIDATION] Total markers (all severities):",
-                allMarkers.length,
-              );
-              console.log("🔍 [VALIDATION] All markers:", allMarkers);
 
               // Wait for markers to be ready using event listener
-              console.log("🔍 [VALIDATION] Waiting for markers to be ready...");
               await new Promise<void>((resolve) => {
                 let resolved = false;
 
@@ -274,9 +239,6 @@ const IframeContent: React.FC<IframeContentProps> = ({
                         // Small delay to ensure markers are fully processed
                         setTimeout(() => {
                           disposable.dispose();
-                          console.log(
-                            "🔍 [VALIDATION] Markers ready (via event)",
-                          );
                           resolve();
                         }, 50);
                       }
@@ -288,9 +250,6 @@ const IframeContent: React.FC<IframeContentProps> = ({
                   if (!resolved) {
                     resolved = true;
                     disposable.dispose();
-                    console.log(
-                      "🔍 [VALIDATION] Markers check timeout (fallback)",
-                    );
                     resolve();
                   }
                 }, 500);
@@ -301,22 +260,10 @@ const IframeContent: React.FC<IframeContentProps> = ({
                 monacoApiRef.current.editor.getModelMarkers({
                   resource: visibleModel.uri,
                 });
-              console.log(
-                "🔍 [VALIDATION] Total markers after wait:",
-                allMarkersAfterWait.length,
-              );
-              console.log(
-                "🔍 [VALIDATION] All markers after wait:",
-                allMarkersAfterWait,
-              );
 
               // Filter for errors
               const errors = allMarkersAfterWait.filter(
                 (m) => m.severity === monacoApiRef.current.MarkerSeverity.Error,
-              );
-              console.log(
-                "🔍 [VALIDATION] Error markers (severity 8):",
-                errors.length,
               );
 
               if (errors.length > 0) {
@@ -329,13 +276,6 @@ const IframeContent: React.FC<IframeContentProps> = ({
                   severity: e.severity,
                 }));
 
-                console.error(
-                  "❌ [VALIDATION] Found",
-                  errors.length,
-                  "syntax errors - not sending to iframe",
-                );
-                console.error(formatValidationErrors(errorDetails));
-
                 // Notify parent about syntax errors (triggers auto-repair)
                 if (onSyntaxErrorChange) {
                   onSyntaxErrorChange(errors.length, errorDetails);
@@ -344,8 +284,6 @@ const IframeContent: React.FC<IframeContentProps> = ({
                 // Don't send code to iframe if validation fails
                 return;
               }
-
-              console.log("✅ [VALIDATION] No syntax errors detected");
 
               // Notify parent that errors are cleared
               if (onSyntaxErrorChange) {
@@ -362,12 +300,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
               localStorage.getItem("vibes-diy-auth-token") ||
               localStorage.getItem("auth_token") ||
               undefined;
-            console.log(
-              "🔐 [VIBES.DIY] Reading auth token from localStorage:",
-              authToken ? authToken.substring(0, 20) + "..." : "NOT FOUND",
-            );
           } catch (e) {
-            console.warn("🔐 [VIBES.DIY] Failed to read auth token:", e);
             // Ignore localStorage errors (privacy mode, SSR, etc.)
           }
 
