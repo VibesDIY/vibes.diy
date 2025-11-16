@@ -12,8 +12,18 @@ import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import queueConsumer from "./queue-consumer.js";
 import renderApp from "./renderApp.js";
 
+// Variables type for context
+interface Variables {
+  user: {
+    sub?: string;
+    userId?: string;
+    sessionId?: string;
+    email?: string;
+  } | null;
+}
+
 // Start a Hono app
-const app = new Hono();
+const app = new Hono<{ Variables: Variables }>();
 
 // Apply CORS globally before mounting routes
 app.use(
@@ -42,6 +52,31 @@ const openapi = fromHono(app, {
 
 // Add Clerk authentication middleware
 openapi.use("/api/*", clerkMiddleware());
+
+// Extract user from Clerk auth and set on context
+openapi.use("/api/*", async (c, next) => {
+  const auth = getAuth(c);
+
+  console.log("🔐 Auth middleware:", {
+    hasAuth: !!auth,
+    userId: auth?.userId,
+    sessionId: auth?.sessionId,
+    path: c.req.path,
+  });
+
+  if (auth?.userId) {
+    // Set user on context for endpoints to access
+    c.set("user", {
+      userId: auth.userId,
+      sessionId: auth.sessionId,
+    });
+    console.log("✅ User set on context:", auth.userId);
+  } else {
+    console.log("⚠️  No authenticated user found");
+  }
+
+  await next();
+});
 
 // Register OpenAPI endpoints
 openapi.post("/api/apps", AppCreate);

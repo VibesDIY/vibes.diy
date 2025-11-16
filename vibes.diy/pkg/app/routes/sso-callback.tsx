@@ -1,6 +1,6 @@
+import React, { useEffect } from "react";
 import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
 import { useNavigate } from "react-router";
-import { useEffect } from "react";
 
 /**
  * SSO Callback route for Clerk OAuth redirect
