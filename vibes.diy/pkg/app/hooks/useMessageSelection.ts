@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useEffect } from "react";
+import { useMemo, useCallback, useEffect, useRef } from "react";
 import type { Segment, ChatMessageDocument } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
 
@@ -20,18 +20,7 @@ export function useMessageSelection({
   selectedResponseId: string;
   pendingAiMessage: ChatMessageDocument | null;
 }) {
-  // The list of messages for the UI: docs + streaming message if active
-  // Also include the last message that was streaming even after streaming ends
-  // This prevents temporarily losing the message during the transition
-  const [prevStreamingMessage, setPrevStreamingMessage] =
-    useState<ChatMessageDocument | null>(null);
-
-  // When streaming and we have text, capture the streaming message
-  useEffect(() => {
-    if (isStreaming && aiMessage.text.length > 0) {
-      setPrevStreamingMessage(aiMessage);
-    }
-  }, [isStreaming, aiMessage.text]);
+  const prevMessageCountRef = useRef<number>(0);
 
   const messages = useMemo(() => {
     // First filter the docs to get messages we want to display
@@ -51,42 +40,24 @@ export function useMessageSelection({
       });
     }
 
-    // When streaming just ended, check if the last message is in docs
-    if (!isStreaming && prevStreamingMessage) {
-      // Look for the message ID in the docs to see if it's been saved
-      const messageInDocs = baseDocs.some(
-        (doc) =>
-          prevStreamingMessage._id && doc._id === prevStreamingMessage._id,
-      );
-
-      // If the message has been saved to the database, no need to append it
-      if (messageInDocs) {
-        // Message exists in docs, clear the prevStreamingMessage to avoid duplicates
-        setPrevStreamingMessage(null);
-        return baseDocs;
-      }
-
-      // Check if we have a similar message with the same text content
-      // This helps prevent duplicates during session ID transitions
-      const similarMessageExists = baseDocs.some(
-        (doc) => doc.type === "ai" && doc.text === prevStreamingMessage.text,
-      );
-
-      if (similarMessageExists) {
-        // We have a message with identical content - likely the same message
-        // saved with a different ID after session migration
-        setPrevStreamingMessage(null);
-        return baseDocs;
-      }
-
-      // Otherwise keep showing the message until it appears in the database
-      // This prevents the chat from temporarily resetting during the transition
-      return [...baseDocs, prevStreamingMessage];
-    }
-
     // Default case - just use the messages from the database
     return baseDocs;
-  }, [docs, isStreaming, aiMessage, prevStreamingMessage]);
+  }, [docs, isStreaming, aiMessage]);
+
+  // Log message changes for debugging disappearance issues
+  useEffect(() => {
+    if (messages.length !== prevMessageCountRef.current) {
+      console.log(
+        `[MESSAGE_COUNT_CHANGE] ${prevMessageCountRef.current} → ${messages.length}`,
+      );
+      messages.forEach((msg, idx) => {
+        console.log(
+          `  [${idx}] type=${msg.type} _id=${msg._id || "none"} textLength=${msg.text?.length || 0} isStreaming=${(msg as any).isStreaming || false}`,
+        );
+      });
+      prevMessageCountRef.current = messages.length;
+    }
+  }, [messages]);
 
   const selectedResponseDoc = useMemo(() => {
     // Priority 1: Explicit user selection (from confirmed docs)
