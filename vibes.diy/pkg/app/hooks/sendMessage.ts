@@ -190,6 +190,10 @@ export async function sendChatMessage(
         setPendingAiMessage({ ...aiMessage, _id: id });
         setSelectedResponseId(id);
 
+        // Delay streaming false to allow live query to update (typically 10-50ms)
+        // Document's isStreaming flag is the authoritative signal for merge logic
+        setTimeout(() => setIsStreaming(false), 50);
+
         // Emit app_created once per session (guard on first AI message id)
         try {
           if (aiMessage?.session_id) {
@@ -248,6 +252,7 @@ export async function sendChatMessage(
 
         // Restore the user's input so they can retry after login
         setInput(promptText);
+        setIsStreaming(false);
         return; // Exit early without saving error to chat
       }
 
@@ -255,9 +260,6 @@ export async function sendChatMessage(
       isProcessingRef.current = false;
       setPendingAiMessage(null);
       setSelectedResponseId("");
-    })
-    .finally(() => {
       setIsStreaming(false);
-      // Credit checking no longer needed
     });
 }
