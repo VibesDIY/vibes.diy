@@ -219,7 +219,7 @@ const StructuredMessage = ({
       className="structured-message"
       style={{ overflow: "visible", position: "relative" }}
     >
-      {hasContent && (
+      {hasContent &&
         // Map and render each segment that has content
         validSegments
           .filter((segment): segment is Segment =>
@@ -256,8 +256,7 @@ const StructuredMessage = ({
               );
             }
             return null;
-          })
-      )}
+          })}
 
       {/* Show streaming indicator only when this is the latest message, streaming is active, and we already have content */}
       {isStreaming && hasContent && isLatestMessage && (

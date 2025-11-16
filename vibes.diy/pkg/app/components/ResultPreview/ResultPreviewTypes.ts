@@ -20,12 +20,12 @@ export interface ResultPreviewProps {
   onCodeChange?: (hasChanges: boolean, saveHandler: () => void) => void;
   onSyntaxErrorChange?: (
     errorCount: number,
-    errors?: Array<{
+    errors?: {
       line: number;
       column: number;
       message: string;
       severity: number;
-    }>,
+    }[],
   ) => void;
 }
 

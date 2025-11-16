@@ -21,7 +21,15 @@ interface IframeContentProps {
   sessionId: string;
   onCodeSave?: (code: string) => void;
   onCodeChange?: (hasChanges: boolean, saveHandler: () => void) => void;
-  onSyntaxErrorChange?: (errorCount: number) => void;
+  onSyntaxErrorChange?: (
+    errorCount: number,
+    errors?: {
+      line: number;
+      column: number;
+      message: string;
+      severity: number;
+    }[],
+  ) => void;
 }
 
 const IframeContent: React.FC<IframeContentProps> = ({
@@ -215,23 +223,19 @@ const IframeContent: React.FC<IframeContentProps> = ({
           if (monacoApiRef.current && monacoEditorRef.current) {
             const visibleModel = monacoEditorRef.current.getModel();
             if (visibleModel) {
-              // Get ALL markers (not just errors) to see what Monaco knows
-              const allMarkers = monacoApiRef.current.editor.getModelMarkers({
-                resource: visibleModel.uri,
-              });
-
               // Wait for markers to be ready using event listener
+              // Capture monaco API reference for use in async callbacks
+              const monacoApi = monacoApiRef.current;
               await new Promise<void>((resolve) => {
                 let resolved = false;
 
                 // Listen for marker changes
-                const disposable =
-                  monacoApiRef.current.editor.onDidChangeMarkers((uris) => {
+                const disposable = monacoApi.editor.onDidChangeMarkers(
+                  (uris) => {
                     // Check if our model's URI is in the changed URIs
                     if (
                       uris.some(
-                        (uri) =>
-                          uri.toString() === visibleModel.uri.toString(),
+                        (uri) => uri.toString() === visibleModel.uri.toString(),
                       )
                     ) {
                       if (!resolved) {
@@ -243,7 +247,8 @@ const IframeContent: React.FC<IframeContentProps> = ({
                         }, 50);
                       }
                     }
-                  });
+                  },
+                );
 
                 // Fallback timeout in case markers never change (already valid code)
                 setTimeout(() => {
@@ -256,14 +261,13 @@ const IframeContent: React.FC<IframeContentProps> = ({
               });
 
               // Check again after waiting
-              const allMarkersAfterWait =
-                monacoApiRef.current.editor.getModelMarkers({
-                  resource: visibleModel.uri,
-                });
+              const allMarkersAfterWait = monacoApi.editor.getModelMarkers({
+                resource: visibleModel.uri,
+              });
 
               // Filter for errors
               const errors = allMarkersAfterWait.filter(
-                (m) => m.severity === monacoApiRef.current.MarkerSeverity.Error,
+                (m) => m.severity === monacoApi.MarkerSeverity.Error,
               );
 
               if (errors.length > 0) {
