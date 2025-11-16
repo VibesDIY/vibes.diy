@@ -120,8 +120,14 @@ export async function sendChatMessage(
     vibeDoc,
   );
 
-  // Reserve temporal position for AI message by creating empty placeholder
-  const placeholder = await sessionDatabase.put({});
+  // Reserve temporal position for AI message with placeholder that appears in queries
+  const placeholder = await sessionDatabase.put({
+    type: "ai",
+    session_id: aiMessage.session_id,
+    text: "",
+    isStreaming: true, // Flag to identify during streaming
+    created_at: Date.now(),
+  });
   const reservedId = placeholder.id;
 
   return streamAI(
@@ -179,6 +185,7 @@ export async function sendChatMessage(
         aiMessage.model = modelToUse;
         // Use reserved _id from placeholder to maintain correct temporal order
         aiMessage._id = reservedId;
+        aiMessage.isStreaming = false; // Clear streaming flag in final save
         const { id } = (await sessionDatabase.put(aiMessage)) as { id: string };
         setPendingAiMessage({ ...aiMessage, _id: id });
         setSelectedResponseId(id);
