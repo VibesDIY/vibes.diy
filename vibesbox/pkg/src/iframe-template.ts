@@ -569,7 +569,8 @@ export const iframeHtml = `<!doctype html>
             container,
             appComponent: \${functionName},
             title,
-            imageUrl
+            imageUrl,
+            showVibesSwitch: data.showVibesSwitch !== false
           });
 
           // Notify parent that execution was successful
