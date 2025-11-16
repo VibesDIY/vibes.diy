@@ -231,6 +231,7 @@ const StructuredMessage = ({
                 <BrutalistCard
                   key={`markdown-${index}`}
                   size="sm"
+                  messageType="ai"
                   className="my-4"
                 >
                   <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">

@@ -71,15 +71,30 @@ function getBoxShadow(size: BrutalistCardSize, variant: BrutalistCardVariant): s
 }
 
 /**
+ * Get border radius based on message type
+ */
+function getBorderRadius(messageType?: 'user' | 'ai'): string {
+  switch (messageType) {
+    case 'user':
+      return '12px 12px 0 12px'; // Bottom-right not rounded
+    case 'ai':
+      return '12px 12px 12px 0'; // Bottom-left not rounded
+    default:
+      return '12px'; // All corners rounded
+  }
+}
+
+/**
  * Get the brutalist card style
  */
 export function getBrutalistCardStyle(
   variant: BrutalistCardVariant = 'default',
-  size: BrutalistCardSize = 'md'
+  size: BrutalistCardSize = 'md',
+  messageType?: 'user' | 'ai'
 ): CSSProperties {
   return {
     // background, color, and border are now controlled by CSS classes for dark mode support
-    borderRadius: '12px',
+    borderRadius: getBorderRadius(messageType),
     padding: getPadding(size),
     fontSize: getFontSize(size),
     fontWeight: 500,
