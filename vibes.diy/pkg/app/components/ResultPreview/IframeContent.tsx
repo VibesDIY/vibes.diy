@@ -315,6 +315,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
             sessionId: sessionIdValue,
             endpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
             authToken, // Pass auth token to iframe
+            showVibesSwitch: false, // Hide vibes switch in result preview
           };
 
           console.log(
