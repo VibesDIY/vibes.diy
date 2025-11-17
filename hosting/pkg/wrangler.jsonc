@@ -100,6 +100,13 @@
       // No custom domain routes for previews - use workers.dev URL only
       // Worker name will be set via CLI: --name pr-{number}-vibes-hosting-v2
       "routes": [],
+      // Use same KV namespace as production for preview workers
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "342352a479b64835931b4e5f9f3277a0",
+        },
+      ],
     },
   },
 }
