@@ -15,6 +15,7 @@ import {
   VIBES_SYNC_ENABLED_CLASS,
   VIBES_SYNC_ERROR_EVENT,
 } from './constants.js';
+import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -55,8 +56,11 @@ export { fireproof, ImgFile, ManualRedirectStrategy, isJWTExpired };
 export type * as Fireproof from 'use-fireproof';
 
 // Helper function to create toCloud configuration with ManualRedirectStrategy
-export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
-  const strategy = new ManualRedirectStrategy();
+export function toCloud(
+  opts?: UseFpToCloudParam,
+  vibeMetadata?: VibeMetadata | null
+): ToCloudAttachable {
+  const strategy = new ManualRedirectStrategy({ vibeMetadata });
 
   // Check if an external token exists in localStorage
   if (typeof window !== 'undefined') {
@@ -92,6 +96,9 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
 export function useFireproof(nameOrDatabase?: string | Database) {
   // DIAGNOSTIC: Enhanced useFireproof hook entry
 
+  // Read vibe context if available (for inline rendering with proper ledger naming)
+  const vibeMetadata = useVibeContext();
+
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
 
@@ -104,8 +111,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Check if sync was previously enabled (persists across refreshes)
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
 
-  // Create attach config only if sync was previously enabled
-  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
+  // Create attach config only if sync was previously enabled, passing vibeMetadata
+  const attachConfig = wasSyncEnabled ? toCloud(undefined, vibeMetadata) : undefined;
 
   // Use original useFireproof with attach config only if previously enabled
   // This preserves the createAttach lifecycle for token persistence
@@ -122,7 +129,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Handle first-time sync enable without reload
   useEffect(() => {
     if (manualAttach === 'pending' && result.database) {
-      const cloudConfig = toCloud();
+      const cloudConfig = toCloud(undefined, vibeMetadata);
       result.database
         .attach(cloudConfig)
         .then((attached) => {
@@ -200,7 +207,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
       };
     }
-  }, [manualAttach, result.database, syncKey, dbName]);
+  }, [manualAttach, result.database, syncKey, dbName, vibeMetadata]);
 
   // Function to enable sync and trigger popup directly
   const enableSync = useCallback(() => {
@@ -609,3 +616,7 @@ export type {
   VibesInstallTrackerOptions,
   VibesInstallTrackerResult,
 } from './install-tracker.js';
+
+// Export VibeContext for inline rendering with proper ledger naming
+export { VibeContextProvider, useVibeContext } from './contexts/VibeContext.js';
+export type { VibeMetadata } from './contexts/VibeContext.js';
