@@ -4,6 +4,7 @@ import { AuthWall } from './components/AuthWall/AuthWall.js';
 import { VIBES_SYNC_ENABLE_EVENT, VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
+import { VibeContextProvider, type VibeMetadata } from './contexts/VibeContext.js';
 
 export interface MountVibesAppOptions {
   readonly container?: string | HTMLElement;
@@ -11,6 +12,7 @@ export interface MountVibesAppOptions {
   readonly imageUrl?: string;
   readonly appComponent?: React.ComponentType;
   readonly showVibesSwitch?: boolean;
+  readonly vibeMetadata?: VibeMetadata;
 }
 
 export interface MountVibesAppResult {
@@ -31,11 +33,13 @@ function VibesApp({
   title = 'Vibes App',
   imageUrl = '/screenshot.png',
   showVibesSwitch = true,
+  vibeMetadata,
   children,
 }: {
   title?: string;
   imageUrl?: string;
   showVibesSwitch?: boolean;
+  vibeMetadata?: VibeMetadata;
   children?: React.ReactNode;
 }) {
   // Check if sync is already enabled globally by checking body class
@@ -77,7 +81,7 @@ function VibesApp({
 
   // Render both app component (to register event listener) and AuthWall (as overlay)
   // App component must mount first so its useFireproof listener exists when login is clicked
-  return (
+  const content = (
     <>
       <div style={showAuthWall ? { display: 'none' } : undefined}>
         <HiddenMenuWrapper menuContent={<VibesPanel />} showVibesSwitch={showVibesSwitch}>
@@ -87,10 +91,24 @@ function VibesApp({
       <AuthWall onLogin={handleLogin} imageUrl={imageUrl} title={title} open={showAuthWall} />
     </>
   );
+
+  // Wrap in VibeContextProvider if vibeMetadata is provided
+  if (vibeMetadata) {
+    return <VibeContextProvider metadata={vibeMetadata}>{content}</VibeContextProvider>;
+  }
+
+  return content;
 }
 
 export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesAppResult {
-  const { container: containerOption, title, imageUrl, appComponent, showVibesSwitch } = options;
+  const {
+    container: containerOption,
+    title,
+    imageUrl,
+    appComponent,
+    showVibesSwitch,
+    vibeMetadata,
+  } = options;
 
   let containerElement: HTMLElement;
   if (typeof containerOption === 'string') {
@@ -141,6 +159,7 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
       {...(title !== undefined && { title })}
       {...(imageUrl !== undefined && { imageUrl })}
       {...(showVibesSwitch !== undefined && { showVibesSwitch })}
+      {...(vibeMetadata !== undefined && { vibeMetadata })}
     >
       {/* If appComponent is provided, render it instead of preserving DOM */}
       {AppComponent ? (

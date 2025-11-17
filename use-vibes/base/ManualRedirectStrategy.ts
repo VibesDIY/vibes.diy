@@ -5,6 +5,7 @@ import type { ToCloudOpts, TokenAndClaims } from '@fireproof/core-types-protocol
 import { RedirectStrategy } from 'use-fireproof';
 import { AUTH_OVERLAY_READY_EVENT, AUTH_OVERLAY_HIDDEN_CLASS } from './events.js';
 import type { AuthOverlayReadyDetail } from './events.js';
+import type { VibeMetadata } from './contexts/VibeContext.js';
 
 interface BuildURIBuilder {
   from: (uri: string) => URLBuilder;
@@ -22,8 +23,17 @@ declare global {
 }
 
 // Generate ledger name combining titleId, installId, and database name
-function generateLedgerName(dbName: string): string {
-  // Prefer explicit instance UUID when available (iframe runner sets this)
+export function generateLedgerName(dbName: string, vibeMetadata?: VibeMetadata | null): string {
+  // Priority 1: Use React Context metadata if provided (inline rendering)
+  if (vibeMetadata) {
+    const { installId, titleId } = vibeMetadata;
+    const safeInstallId = String(installId).replace(/[^a-z0-9-]/gi, '-');
+    const safeTitleId = String(titleId).replace(/[^a-z0-9-]/gi, '-');
+    const safeDb = String(dbName).replace(/[^a-z0-9-]/gi, '-');
+    return `${safeInstallId}-${safeTitleId}-${safeDb}`;
+  }
+
+  // Priority 2: Prefer explicit instance UUID when available (iframe runner sets this)
   // VIBE_UUID now contains the full _id in format: ${titleId}-${installId}
   if (typeof globalThis !== 'undefined' && globalThis.VIBE_UUID) {
     // Use the full UUID (titleId-installId) plus dbName
@@ -32,7 +42,7 @@ function generateLedgerName(dbName: string): string {
     return `${safeUuid}-${safeDb}`;
   }
 
-  // Fallback to origin-based naming for direct hosting (when not in iframe)
+  // Priority 3: Fallback to origin-based naming for direct hosting (when not in iframe)
   const origin =
     typeof window !== 'undefined'
       ? window.location.origin.replace(/[^a-z0-9]/gi, '-')
@@ -89,6 +99,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
   private authOpened = false;
   private pollingStarted = false;
   private resolveToken?: (value: TokenAndClaims | undefined) => void;
+  private vibeMetadata?: VibeMetadata | null;
 
   // Override the hash property to return our implementation
   readonly hash = (): string => {
@@ -108,7 +119,13 @@ export class ManualRedirectStrategy extends RedirectStrategy {
     };
   }
 
-  constructor(opts: { overlayHtml?: (url: string) => string; overlayCss?: string } = {}) {
+  constructor(
+    opts: {
+      overlayHtml?: (url: string) => string;
+      overlayCss?: string;
+      vibeMetadata?: VibeMetadata | null;
+    } = {}
+  ) {
     // Create custom CSS for subtle bottom slide-up
     const customCss =
       opts.overlayCss ||
@@ -233,6 +250,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
     `);
 
     super({ overlayCss: customCss, overlayHtml: customHtml });
+    this.vibeMetadata = opts.vibeMetadata;
   }
 
   // Override the open method to not automatically open the popup
@@ -329,7 +347,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
       .from(dashboardURI)
       .setParam('back_url', window.location.href)
       .setParam('result_id', this.resultId || '')
-      .setParam('local_ledger_name', generateLedgerName(deviceId));
+      .setParam('local_ledger_name', generateLedgerName(deviceId, this.vibeMetadata));
 
     if (opts.ledger) {
       url.setParam('ledger', String(opts.ledger));
