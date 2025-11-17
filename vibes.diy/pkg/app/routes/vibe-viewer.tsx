@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
+import * as Babel from "@babel/standalone";
+import { mountVibesApp, useFireproof } from "use-vibes";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
-import { mountVibesApp } from "use-vibes";
 
 export function meta({
   params,
@@ -28,25 +29,22 @@ async function evaluateVibeCode(
   code: string,
 ): Promise<React.ComponentType | null> {
   try {
-    // Check if Babel is available (loaded via CDN in HTML)
-    const Babel = (
-      window as unknown as {
-        Babel?: {
-          transform: (
-            code: string,
-            opts: { presets: string[] },
-          ) => { code: string };
-        };
-      }
-    ).Babel;
-    if (!Babel) {
-      throw new Error("Babel is not loaded. Cannot transform JSX.");
-    }
-
-    // Transform JSX to regular JavaScript
+    // Transform JSX to regular JavaScript using imported Babel
     const transformed = Babel.transform(code, {
-      presets: ["react", "es2015"],
+      presets: [
+        "react",
+        ["env", {
+          modules: false,           // Keep ES modules, don't transform to CommonJS
+          targets: { esmodules: true }  // Target modern browsers (ES2022+)
+        }]
+      ]
     });
+
+    // Strip import statements since we're injecting dependencies directly
+    const codeWithoutImports = transformed.code
+      .replace(/import\s+.*?from\s+['"].*?['"];?/g, '')
+      .replace(/export\s+default\s+/g, 'exports.default = ')
+      .replace(/export\s+{([^}]+)}/g, 'Object.assign(exports, {$1})');
 
     // Create a function that evaluates the transformed code
     const evalFunc = new Function(
@@ -59,26 +57,20 @@ async function evaluateVibeCode(
       "useFireproof",
       `
       let exports = {};
-      ${transformed.code}
+      ${codeWithoutImports}
       return exports.default || exports.App;
       `,
     );
 
     // Import necessary dependencies
-    const { useState, useEffect, useRef, useCallback, useMemo } = React;
-    // @ts-expect-error - use-vibes is loaded via CDN
-    const { useFireproof } = window.UseVibes || {};
+    const { useState, useEffect: useEffectHook, useRef: useRefHook, useCallback, useMemo } = React;
 
-    if (!useFireproof) {
-      throw new Error("use-vibes is not loaded");
-    }
-
-    // Execute and get the component
+    // Execute and get the component with imported dependencies
     const component = evalFunc(
       React,
       useState,
-      useEffect,
-      useRef,
+      useEffectHook,
+      useRefHook,
       useCallback,
       useMemo,
       useFireproof,
