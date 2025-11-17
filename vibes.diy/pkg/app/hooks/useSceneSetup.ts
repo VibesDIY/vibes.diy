@@ -6,9 +6,9 @@ import {
   LIGHTING,
   RENDERING,
   COUNTERBOY_POSITIONS,
-} from "../constants/scene.ts";
-import { CounterBoy } from "../classes/CounterBoy.ts";
-import { ScreenshotBoy } from "../classes/ScreenshotBoy.ts";
+} from "../constants/scene.js";
+import { CounterBoy } from "../classes/CounterBoy.js";
+import { ScreenshotBoy } from "../classes/ScreenshotBoy.js";
 import bonsaiImg from "../assets/screenshots/bonsai.png";
 import deasImg from "../assets/screenshots/deas.png";
 import encryptImg from "../assets/screenshots/encrypt.png";
@@ -55,7 +55,6 @@ export function useSceneSetup(
     );
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    // @ts-ignore
     renderer.localClippingEnabled = true;
     rendererRef.current = renderer;
     mountRef.current.appendChild(renderer.domElement);
@@ -108,7 +107,6 @@ export function useSceneSetup(
         });
         screenshotBoys.push(screenshotBoy);
         scene.add(screenshotBoy.group);
-        // @ts-ignore - visible exists on Group
         screenshotBoy.group.visible = false;
         screenshotIndex++;
       }
@@ -132,7 +130,6 @@ export function useSceneSetup(
     // Position at midpoint between origin and right CounterBoy
     const midpoint = COUNTERBOY_POSITIONS.RIGHT[0] / 2;
     replicator.position.set(midpoint, 0, 0);
-    // @ts-ignore - visible exists on Mesh
     replicator.visible = false; // Hidden by default
     replicatorRef.current = replicator;
     scene.add(replicator);
@@ -243,10 +240,15 @@ export function useSceneSetup(
 
     // Cleanup replicator
     if (replicatorRef.current) {
-      // @ts-ignore - geometry and material exist
       replicatorRef.current.geometry?.dispose();
-      // @ts-ignore
-      replicatorRef.current.material?.dispose();
+      const material = replicatorRef.current.material;
+      if (material) {
+        if (Array.isArray(material)) {
+          material.forEach((mat) => mat.dispose());
+        } else {
+          material.dispose();
+        }
+      }
     }
   };
 

@@ -1,1 +1,1 @@
-export * from "./DraggableCard.tsx";
+export * from "./DraggableCard.js";

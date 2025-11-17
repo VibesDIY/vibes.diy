@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import type { Segment, ViewType } from "@vibes.diy/prompts";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 interface StructuredMessageProps {
   segments: Segment[];
@@ -60,15 +61,16 @@ const CodeSegment = ({
   };
 
   return (
-    <div
+    <BrutalistCard
       ref={codeSegmentRef}
+      size="sm"
       data-code-segment={index}
       style={{
         position: "sticky",
         top: "8px",
         zIndex: 10,
       }}
-      className="border-light-decorative-01 bg-light-background-01 hover:bg-light-background-01 dark:border-dark-decorative-00 dark:bg-dark-decorative-00 dark:hover:bg-dark-decorative-01 sticky-active relative my-4 cursor-pointer rounded-md border p-4 shadow-sm transition-all"
+      className="sticky-active relative mx-3 my-4 cursor-pointer transition-all"
       onClick={handleCodeClick}
     >
       <div
@@ -138,7 +140,7 @@ const CodeSegment = ({
           <div className="text-accent-01 dark:text-accent-01">...</div>
         )}
       </div>
-    </div>
+    </BrutalistCard>
   );
 };
 
@@ -231,9 +233,16 @@ const StructuredMessage = ({
           .map((segment, index) => {
             if (segment.type === "markdown") {
               return (
-                <div key={`markdown-${index}`} className="ai-markdown prose">
-                  <ReactMarkdown>{segment.content || ""}</ReactMarkdown>
-                </div>
+                <BrutalistCard
+                  key={`markdown-${index}`}
+                  size="sm"
+                  messageType="ai"
+                  className="my-4"
+                >
+                  <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
+                    <ReactMarkdown>{segment.content || ""}</ReactMarkdown>
+                  </div>
+                </BrutalistCard>
               );
             } else if (segment.type === "code") {
               return (

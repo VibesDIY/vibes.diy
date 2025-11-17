@@ -5,7 +5,7 @@ import {
   ANIMATION_DURATIONS,
   SCENE_DIMENSIONS,
   COLORS,
-} from "../constants/scene";
+} from "../constants/scene.js";
 import {
   makeEnclosure,
   makeEnclosureBack,
@@ -13,7 +13,7 @@ import {
   makeGridGroup,
   makeDataLayer,
   makeBlockSituation,
-} from "../factories/sceneObjects";
+} from "../factories/sceneObjects.js";
 
 export interface CounterBoyConfig {
   position?: [number, number, number];
@@ -45,33 +45,30 @@ export class CounterBoy {
   private dataLayer!: THREE.Group;
   private display!: THREE.Mesh;
   private button!: THREE.Mesh;
-  // @ts-ignore - used in createObjects but TypeScript doesn't detect it
 
   // Geometry references for thickness animation
-  // @ts-ignore - unused but kept for potential future use
   private originalEnclosureGeometry!: THREE.BoxGeometry;
 
   // State
-  private encryptedBlocksCount: number = 0;
-  private isExploded: boolean = false;
-  private isTension: boolean = false;
-  private isReclined: boolean = false;
-  private isAnimating: boolean = false;
+  private encryptedBlocksCount = 0;
+  private isExploded = false;
+  private isTension = false;
+  private isReclined = false;
+  private isAnimating = false;
 
   // Block animation state
   private blockSituations: BlockSituationObjects[] = [];
-  private isBlockAnimating: boolean = false;
-  private blockAnimationRef: any = null;
+  private isBlockAnimating = false;
+  private blockAnimationRef: { cancel: () => void } | null = null;
 
   // Animation refs
-  private currentAnimation: any = null;
+  private currentAnimation: { cancel: () => void } | null = null;
 
   constructor(config: CounterBoyConfig = {}) {
     this.id =
       config.id || `counterboy-${Math.random().toString(36).substr(2, 9)}`;
     this.scene = config.scene;
     this.group = new THREE.Group();
-    // @ts-ignore
     this.group.name = this.id;
 
     // Set position
@@ -91,7 +88,6 @@ export class CounterBoy {
     this.button = button;
 
     // Store reference to original geometry for thickness animation
-    // @ts-ignore - geometry exists on Mesh
     this.originalEnclosureGeometry = this.enclosure
       .geometry as THREE.BoxGeometry;
 
@@ -110,7 +106,6 @@ export class CounterBoy {
       this.enclosureBack.position.z + EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET;
 
     // Grid should be hidden initially (only visible in tension/exploded states)
-    // @ts-ignore - visible exists on Group
     this.gridGroup.visible = false;
   }
 
@@ -151,27 +146,24 @@ export class CounterBoy {
   public animateBlockEncryption(
     preset: { hexPair: string; textureOffsetX: number; textureOffsetY: number },
     onComplete?: () => void,
-    skipUnencrypted: boolean = false,
+    skipUnencrypted = false,
   ) {
     if (this.isBlockAnimating) return;
 
     // Count visible encrypted blocks
     const visibleEncryptedBlocks = this.blockSituations.filter(
-      (situation) => (situation.encryptedBlock as any).visible,
+      (situation) => situation.encryptedBlock.visible,
     );
 
     // If there are already 5 visible encrypted blocks, hide the oldest one
     if (visibleEncryptedBlocks.length >= 5) {
       const oldestVisible = visibleEncryptedBlocks[0];
-      // @ts-ignore
       oldestVisible.encryptedBlock.visible = false;
-      // @ts-ignore
       oldestVisible.cid.visible = false;
     }
 
     // Move all existing block situations to the left
     this.blockSituations.forEach((situation) => {
-      // @ts-ignore - position exists on Group
       situation.group.position.x -= 1.0;
     });
 
@@ -182,12 +174,10 @@ export class CounterBoy {
 
       if (skipUnencrypted) {
         // For synced animations: just show encrypted block and CID instantly
-        (newBlockSituation.encryptedBlock as any).visible = true;
-        (newBlockSituation.cid as any).visible = true;
+        newBlockSituation.encryptedBlock.visible = true;
+        newBlockSituation.cid.visible = true;
         // Remove the unencrypted block since we don't need it
-        (newBlockSituation.group as any).remove(
-          newBlockSituation.unencryptedBlock,
-        );
+        newBlockSituation.group.remove(newBlockSituation.unencryptedBlock);
 
         // Increment encrypted blocks count and update display
         this.encryptedBlocksCount++;
@@ -214,12 +204,10 @@ export class CounterBoy {
     });
 
     // Position at origin since it's now a child of this.group
-    // @ts-ignore
     blockSituation.group.position.set(0, 0, 0);
 
     // New block situations should inherit visibility based on current state
     // Only visible if in tension or exploded state
-    // @ts-ignore - visible exists on Group
     blockSituation.group.visible = this.isTension || this.isExploded;
 
     this.group.add(blockSituation.group);
@@ -237,7 +225,7 @@ export class CounterBoy {
     const { speed } = params;
 
     // Show the unencrypted block when animation starts
-    (unencryptedBlock as any).visible = true;
+    unencryptedBlock.visible = true;
 
     // Calculate animation duration based on distance and speed
     // Use duration of 0 when not exploded and not in tension state (blocks are hidden anyway)
@@ -253,20 +241,17 @@ export class CounterBoy {
       ease: "linear",
       onRender: () => {
         // Show encrypted block when unencrypted block passes through
-        if (
-          unencryptedBlock.position.z <= 1 &&
-          !(encryptedBlock as any).visible
-        ) {
-          (encryptedBlock as any).visible = true;
+        if (unencryptedBlock.position.z <= 1 && !encryptedBlock.visible) {
+          encryptedBlock.visible = true;
           this.startTextureAnimation(encryptedBlock);
         }
       },
       onComplete: () => {
         // Remove unencrypted block when animation completes
-        (blockSituation.group as any).remove(unencryptedBlock);
+        blockSituation.group.remove(unencryptedBlock);
 
         // Add 3D cid text behind the encrypted block
-        (cid as any).visible = true;
+        cid.visible = true;
 
         // Increment encrypted blocks count and update display
         this.encryptedBlocksCount++;
@@ -284,7 +269,7 @@ export class CounterBoy {
 
   private startTextureAnimation(encryptedBlock: THREE.Mesh) {
     let frameCount = 0;
-    const material = encryptedBlock.material as any;
+    const material = encryptedBlock.material as THREE.MeshToonMaterial;
 
     // Store initial offsets for deterministic animation
     const initialX = material?.map?.offset.x || 0;
@@ -326,22 +311,18 @@ export class CounterBoy {
   }
 
   // Method to animate enclosure thickness
-  // @ts-ignore - duration parameter unused but kept for API consistency
   private animateEnclosureThickness(
     targetThickness: number,
-    duration: number = 400,
+    _duration = 400,
     onComplete?: () => void,
   ) {
-    // @ts-ignore - geometry exists on Mesh
     if (!this.enclosure.geometry) return;
 
     // Create new geometry with target thickness
     const newGeometry = this.createEnclosureGeometry(targetThickness);
 
     // Replace the geometry (this preserves children like display and button)
-    // @ts-ignore - geometry exists on Mesh
     const oldGeometry = this.enclosure.geometry;
-    // @ts-ignore
     this.enclosure.geometry = newGeometry;
 
     // Dispose of old geometry to prevent memory leaks
@@ -450,10 +431,8 @@ export class CounterBoy {
 
     // Handle visibility - show grid/blocks when progress exceeds threshold
     const isVisible = progress > EXPLOSION.VISIBILITY_THRESHOLD;
-    // @ts-ignore - visible exists on Group
     this.gridGroup.visible = isVisible;
     this.blockSituations.forEach((situation) => {
-      // @ts-ignore - visible exists on Group
       situation.group.visible = isVisible;
     });
 
@@ -465,13 +444,10 @@ export class CounterBoy {
 
   // Helper to set enclosure thickness instantly
   private setEnclosureThickness(thickness: number) {
-    // @ts-ignore - geometry exists on Mesh
     if (!this.enclosure.geometry) return;
 
     const newGeometry = this.createEnclosureGeometry(thickness);
-    // @ts-ignore - geometry exists on Mesh
     const oldGeometry = this.enclosure.geometry;
-    // @ts-ignore
     this.enclosure.geometry = newGeometry;
     oldGeometry.dispose();
   }
@@ -507,10 +483,8 @@ export class CounterBoy {
     this.isTension = true;
 
     // Show grid and all blocks when entering tension state
-    // @ts-ignore - visible exists on Group
     this.gridGroup.visible = true;
     this.blockSituations.forEach((situation) => {
-      // @ts-ignore - visible exists on Group
       situation.group.visible = true;
     });
 
@@ -616,10 +590,8 @@ export class CounterBoy {
 
   private animateToNormal(onComplete?: () => void) {
     // Hide grid and all blocks when returning to normal state
-    // @ts-ignore - visible exists on Group
     this.gridGroup.visible = false;
     this.blockSituations.forEach((situation) => {
-      // @ts-ignore - visible exists on Group
       situation.group.visible = false;
     });
 
@@ -695,13 +667,13 @@ export class CounterBoy {
 
   // Button interactions
   public pressButton() {
-    if ((this.button as any).scale.y > 0.5) {
-      (this.button as any).scale.y = 0.5;
+    if (this.button.scale.y > 0.5) {
+      this.button.scale.y = 0.5;
     }
   }
 
   public releaseButton() {
-    (this.button as any).scale.y = 1;
+    this.button.scale.y = 1;
   }
 
   // Display update
@@ -710,7 +682,8 @@ export class CounterBoy {
     const canvas = document.createElement("canvas");
     canvas.width = SCENE_DIMENSIONS.DISPLAY.CANVAS.WIDTH;
     canvas.height = SCENE_DIMENSIONS.DISPLAY.CANVAS.HEIGHT;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
     // Draw simple content on canvas
     ctx.fillStyle = "#ffffff";
@@ -735,9 +708,7 @@ export class CounterBoy {
     if (Array.isArray(this.display.material)) {
       const textMaterial2 = this.display.material[2] as THREE.MeshToonMaterial;
       if (textMaterial2) {
-        // @ts-ignore - map and needsUpdate exist on MeshToonMaterial
         textMaterial2.map = texture;
-        // @ts-ignore
         textMaterial2.needsUpdate = true;
       }
     }
@@ -766,15 +737,15 @@ export class CounterBoy {
 
     // Clean up block situations
     this.blockSituations.forEach((situation) => {
-      if ((situation.group as any).parent) {
-        (situation.group as any).parent.remove(situation.group);
+      if (situation.group.parent) {
+        situation.group.parent.remove(situation.group);
       }
       // Dispose block geometries and materials
-      (situation.group as any).traverse((child: any) => {
+      situation.group.traverse((child: THREE.Object3D) => {
         if (child instanceof THREE.Mesh) {
-          (child as any).geometry?.dispose();
+          child.geometry?.dispose();
           if (Array.isArray(child.material)) {
-            child.material.forEach((material: any) => material.dispose());
+            child.material.forEach((material) => material.dispose());
           } else {
             child.material?.dispose();
           }
@@ -784,16 +755,16 @@ export class CounterBoy {
     this.blockSituations = [];
 
     // Remove from parent if it has one
-    if ((this.group as any).parent) {
-      (this.group as any).parent.remove(this.group);
+    if (this.group.parent) {
+      this.group.parent.remove(this.group);
     }
 
     // Dispose of geometries and materials
-    (this.group as any).traverse((child: any) => {
+    this.group.traverse((child: THREE.Object3D) => {
       if (child instanceof THREE.Mesh) {
-        (child as any).geometry?.dispose();
+        child.geometry?.dispose();
         if (Array.isArray(child.material)) {
-          child.material.forEach((material: any) => material.dispose());
+          child.material.forEach((material) => material.dispose());
         } else {
           child.material?.dispose();
         }
@@ -801,8 +772,8 @@ export class CounterBoy {
     });
 
     // Remove from parent if it has one
-    if ((this.group as any).parent) {
-      (this.group as any).parent.remove(this.group);
+    if (this.group.parent) {
+      this.group.parent.remove(this.group);
     }
   }
 }

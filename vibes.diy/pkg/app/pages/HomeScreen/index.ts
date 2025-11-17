@@ -1,2 +1,2 @@
-export * from "./HomeScreen.tsx";
-export * from "./CreateSection.tsx";
+export * from "./HomeScreen.js";
+export * from "./CreateSection.js";

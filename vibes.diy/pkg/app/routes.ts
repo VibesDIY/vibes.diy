@@ -1,11 +1,9 @@
 import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
-  index("./routes/create.tsx"),
+  index("./routes/home.tsx"),
   // This route is only needed for dev server to prevent 404 flash
-  route("index.html", "./routes/create.tsx", { id: "index-html" }),
-
-  route("chat", "./routes/home.tsx", { id: "chat-home" }),
+  route("index.html", "./routes/home.tsx", { id: "index-html" }),
   route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
   route("chat/:sessionId/:title", "./routes/home.tsx", { id: "chat" }),
   route("chat/:sessionId/:title/app", "./routes/home.tsx", { id: "chat-app" }),
@@ -22,6 +20,7 @@ export default [
     id: "chat-app-settings",
   }),
   route("vibes/mine", "./routes/mine.tsx", { id: "my-vibes" }),
+  route("vibes/installs", "./routes/installs.tsx", { id: "installs" }),
 
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),

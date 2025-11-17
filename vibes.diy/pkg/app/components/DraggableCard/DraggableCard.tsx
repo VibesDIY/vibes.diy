@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
-import { DraggableCardProps } from "./DraggableCard.types.ts";
+import { DraggableCardProps } from "./DraggableCard.types.js";
 import {
   getCardChildrenStyle,
   getCardStyle,
   getTitleBarStyle,
-} from "./DraggableCard.styles.ts";
-import { useIsMobile } from "../../hooks/index.ts";
+} from "./DraggableCard.styles.js";
+import { useIsMobile } from "../../hooks/index.js";
 
 export const DraggableCard = ({
   color,

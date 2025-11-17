@@ -12,7 +12,7 @@ import {
   EXTERNAL_URLS,
   TEXT_CONTENT,
   ANIMATION_DURATIONS,
-} from "../constants/scene";
+} from "../constants/scene.js";
 import noise3Url from "../assets/noise3.png";
 
 // Deterministic pseudo-random generator for block presets
@@ -109,10 +109,7 @@ export function makeUnencryptedBlock() {
   return block;
 }
 
-export function makeEncryptedBlock(
-  textureOffsetX: number = 0,
-  textureOffsetY: number = 0,
-) {
+export function makeEncryptedBlock(textureOffsetX = 0, textureOffsetY = 0) {
   // Block (as child of enclosure)
   const blockGeometry = new THREE.CylinderGeometry(
     SCENE_DIMENSIONS.BLOCK.WIDTH / 2, // top radius (half width for cylinder)
@@ -120,21 +117,16 @@ export function makeEncryptedBlock(
     SCENE_DIMENSIONS.BLOCK.HEIGHT, // height
     SCENE_DIMENSIONS.BLOCK.SEGMENTS,
   );
-  // @ts-ignore
   const textureLoader = new THREE.TextureLoader();
   const noiseTexture = textureLoader.load(noise3Url);
   // Stretch the texture by scaling it down
   noiseTexture.repeat.set(0.08, 0.1);
   // Move texture to use a different part of the image (deterministic)
   noiseTexture.offset.set(textureOffsetX, textureOffsetY);
-  // @ts-ignore
   noiseTexture.minFilter = THREE.NearestFilter;
-  // @ts-ignore
-  noiseTexture.maxFilter = THREE.NearestFilter;
+  noiseTexture.magFilter = THREE.NearestFilter;
   noiseTexture.needsUpdate = true;
-  // @ts-ignore
   noiseTexture.wrapS = THREE.RepeatWrapping;
-  // @ts-ignore
   noiseTexture.wrapT = THREE.RepeatWrapping;
   const blockMaterial = new THREE.MeshToonMaterial({ map: noiseTexture });
   const block = new THREE.Mesh(blockGeometry, blockMaterial);
@@ -152,7 +144,7 @@ export function makeCid(hexPair: string) {
   const loader = new FontLoader();
   const textGroup = new THREE.Group();
 
-  loader.load(EXTERNAL_URLS.HELVETICA_FONT, function (font: any) {
+  loader.load(EXTERNAL_URLS.HELVETICA_FONT, function (font) {
     const textGeometry = new TextGeometry(hexPair, {
       font: font,
       size: 0.3,
@@ -171,11 +163,8 @@ export function makeCid(hexPair: string) {
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
     // Position on the grid behind the encrypted block (now that blocks are flat)
-    // @ts-ignore
     textMesh.rotation.z = -Math.PI / 2;
-    // @ts-ignore
     textMesh.position.x = -0.25;
-    // @ts-ignore
     textMesh.position.y = -1;
     textGroup.add(textMesh);
   });
@@ -202,27 +191,18 @@ export function makeBlockSituation(
   encryptedBlock.rotation.x = Math.PI / 2;
   unencryptedBlock.rotation.x = Math.PI / 2;
 
-  // @ts-ignore
   encryptedBlock.position.x = SCENE_DIMENSIONS.BUTTON.POSITION.X;
-  // @ts-ignore
   encryptedBlock.position.y = SCENE_DIMENSIONS.BUTTON.POSITION.Y;
 
-  // @ts-ignore
   encryptedBlock.visible = false;
-  // @ts-ignore
   unencryptedBlock.visible = false; // Hidden until animation starts
-  // @ts-ignore
   unencryptedBlock.position.x = SCENE_DIMENSIONS.BUTTON.POSITION.X;
-  // @ts-ignore
   unencryptedBlock.position.y = SCENE_DIMENSIONS.BUTTON.POSITION.Y;
   unencryptedBlock.position.z = startPosition;
 
   const cid = makeCid(hexPair);
-  // @ts-ignore
   cid.position.x = SCENE_DIMENSIONS.BUTTON.POSITION.X;
-  // @ts-ignore
   cid.position.y = SCENE_DIMENSIONS.BUTTON.POSITION.Y + 2;
-  // @ts-ignore
   cid.visible = false;
   group.add(cid);
 
@@ -240,7 +220,7 @@ export function makeBlockSituation(
 
 export function makeTabletLabel(gridGroup: THREE.Group) {
   const loader = new FontLoader();
-  loader.load(EXTERNAL_URLS.HELVETICA_FONT, function (font: any) {
+  loader.load(EXTERNAL_URLS.HELVETICA_FONT, function (font) {
     const textGeometry = new TextGeometry(TEXT_CONTENT.SAMPLE_TEXT, {
       font: font,
       size: SCENE_DIMENSIONS.TEXT.SIZE,
@@ -344,12 +324,13 @@ export function makeChrome() {
   return chrome;
 }
 
-export function makeDisplayTexture(counter: number = 0) {
+export function makeDisplayTexture(counter = 0) {
   // Create canvas for display content
   const canvas = document.createElement("canvas");
   canvas.width = SCENE_DIMENSIONS.DISPLAY.CANVAS.WIDTH;
   canvas.height = SCENE_DIMENSIONS.DISPLAY.CANVAS.HEIGHT;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
 
   // Draw simple content on canvas
   ctx.fillStyle = "#ffffff";
@@ -427,6 +408,7 @@ export function makeEnclosure() {
       displayMaterial,
       displayMaterial,
     ];
+    // @ts-expect-error - Three.js allows material arrays for multi-material meshes
     display.material = materials;
   }, RENDERING.FONT_LOAD_DELAY);
 

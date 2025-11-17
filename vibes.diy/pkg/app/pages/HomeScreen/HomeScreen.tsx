@@ -34,11 +34,11 @@ import {
   DraggableCard,
   DraggableSection,
   VibesSwitch,
-} from "../../components/index.ts";
-import { HomeScreenProps } from "./HomeScreen.types.ts";
-import { useIsMobile } from "../../hooks/index.ts";
-import { AnimatedScene } from "./AnimatedScene.tsx";
-import { CreateSection } from "./CreateSection.tsx";
+} from "../../components/index.js";
+import { HomeScreenProps } from "./HomeScreen.types.js";
+import { useIsMobile } from "../../hooks/index.js";
+import { AnimatedScene } from "./AnimatedScene.js";
+import { CreateSection } from "./CreateSection.js";
 import computerAnimGif from "../../assets/computer-anim.gif";
 
 // Helper function to convert URLs in text to clickable links
@@ -69,7 +69,7 @@ const renderMessageWithLinks = (text: string) => {
   });
 };
 
-export const HomeScreen = ({}: HomeScreenProps) => {
+export const HomeScreen = (_props: HomeScreenProps) => {
   const isMobile = useIsMobile();
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
@@ -577,14 +577,14 @@ export const HomeScreen = ({}: HomeScreenProps) => {
 
             <DraggableSection color="red" x={550} y={500}>
               <div
-                  style={{
-                    display: 'flex',
-                    width: '100%',
-                    justifyContent: 'center',
-                  }}
-                >
-              <CreateSection />
-                </div>
+                style={{
+                  display: "flex",
+                  width: "100%",
+                  justifyContent: "center",
+                }}
+              >
+                <CreateSection ignoreDarkMode={true} />
+              </div>
             </DraggableSection>
 
             <DraggableCard color="blue" x={550} y={100}>

@@ -8,6 +8,8 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
   children: React.ReactNode;
   onHover?: () => void;
   onUnhover?: () => void;
+  /** If true, ignores dark mode and always uses light styling */
+  ignoreDarkMode?: boolean;
 }
 
 export function VibesButton({
@@ -15,14 +17,29 @@ export function VibesButton({
   children,
   onHover,
   onUnhover,
+  ignoreDarkMode = false,
   style: customStyle,
+  className,
   ...props
 }: MenuButtonProps) {
   const [isHovered, setHovered] = useState(false);
   const [isActive, setActive] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
-  const baseStyle = getButtonStyle(variant, isHovered, isActive);
-  const mergedStyle = { ...baseStyle, ...customStyle };
+  // Detect dark mode
+  useEffect(() => {
+    if (ignoreDarkMode) return;
+
+    const checkDarkMode = () => {
+      setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    };
+
+    checkDarkMode();
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkDarkMode);
+
+    return () => mediaQuery.removeEventListener('change', checkDarkMode);
+  }, [ignoreDarkMode]);
 
   useEffect(() => {
     if (isHovered) {
@@ -32,9 +49,21 @@ export function VibesButton({
     }
   }, [isHovered, onHover, onUnhover]);
 
+  const shouldApplyDarkMode = isDark && !ignoreDarkMode;
+
+  const baseStyle = getButtonStyle(variant, isHovered, isActive);
+  const mergedStyle = {
+    ...baseStyle,
+    background: shouldApplyDarkMode ? '#1a1a1a' : '#fff',
+    color: shouldApplyDarkMode ? '#fff' : '#1a1a1a',
+    border: shouldApplyDarkMode ? '3px solid #555' : '3px solid #1a1a1a',
+    ...customStyle,
+  };
+
   return (
     <button
       {...props}
+      className={className}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => {
         setHovered(false);

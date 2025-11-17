@@ -1,2 +1,2 @@
-export * from "./useIsMobile.ts";
-export * from "./useSceneSetup.ts";
+export * from "./useIsMobile.js";
+export * from "./useSceneSetup.js";

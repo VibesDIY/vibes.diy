@@ -58,20 +58,20 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20251011.0",
+    "@cloudflare/workers-types": "^4.20251111.0",
     "@vibes.diy/hosting-base": "workspace:*",
     "@vibes.diy/utils": "workspace:*",
     "chanfana": "^2.8.2",
     "dotenv": "^17.2.3",
     "hono": "^4.10.2",
-    "jose": "^6.1.0",
+    "jose": "^6.1.1",
     "multiformats": "^13.4.0",
     "unique-names-generator": "^4.7.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.2",
+    "@vitest/browser-playwright": "^4.0.8",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "wrangler": "^4.45.1"

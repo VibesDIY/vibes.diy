@@ -8,8 +8,8 @@ import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
 import { StarIcon } from "./SessionSidebar/StarIcon.js";
 import { FirehoseIcon } from "./SessionSidebar/FirehoseIcon.js";
-import VibesDIYLogo, { randomColorway } from "./VibesDIYLogo.js";
-import { dark, light } from "./colorways.js";
+import { InstallsIcon } from "./SessionSidebar/InstallsIcon.js";
+import VibesDIYLogo from "./VibesDIYLogo.js";
 
 /**
  * Component that displays a navigation sidebar with menu items
@@ -18,14 +18,6 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, isLoading } = useAuth();
   const { isPolling, pollError, initiateLogin } = useAuthPopup();
-  // Use CSS-based dark mode detection like the rest of the UI
-  const isDarkMode =
-    typeof document !== "undefined"
-      ? document.documentElement.classList.contains("dark")
-      : true; // Default to dark mode for SSR
-
-  const colorway = randomColorway();
-  const rando = isDarkMode ? dark[colorway] : light[colorway];
 
   // Handle clicks outside the sidebar to close it
   useEffect(() => {
@@ -61,8 +53,8 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
       <div className="flex h-full flex-col overflow-auto">
         <div className="border-light-decorative-01 dark:border-dark-decorative-00 flex items-center justify-between border-b p-4">
           <VibesDIYLogo
-            width={100}
-            className="pointer-events-none -mt-18 -mb-20 -ml-2"
+            width={50}
+            className="pointer-events-none -mt-18 -mb-14 -ml-3"
           />
 
           <button
@@ -108,6 +100,16 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
               >
                 <StarIcon className="text-accent-01 mr-3 h-5 w-5" />
                 <span>My Vibes</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/vibes/installs"
+                onClick={() => onClose()}
+                className="hover:bg-light-background-01 dark:hover:bg-dark-background-01 flex items-center rounded-md px-4 py-3 text-sm font-medium"
+              >
+                <InstallsIcon className="text-accent-01 mr-3 h-5 w-5" />
+                <span>Installs</span>
               </Link>
             </li>
             <li>
@@ -183,18 +185,9 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                         await initiateLogin();
                         onClose();
                       }}
-                      style={{
-                        backgroundColor: rando.diy,
-                      }}
-                      className={`flex w-full items-center rounded-md px-4 py-3 text-left text-sm font-bold transition-colors`}
+                      className={`bg-light-decorative-02 dark:bg-dark-decorative-01 text-light-primary dark:text-dark-primary flex w-full items-center rounded-md px-4 py-3 text-left text-sm font-bold transition-colors hover:opacity-90`}
                     >
-                      <span
-                        style={{
-                          color: rando.diyText,
-                        }}
-                      >
-                        Log in
-                      </span>
+                      <span>Log in</span>
                     </button>
                   </li>
                 </>

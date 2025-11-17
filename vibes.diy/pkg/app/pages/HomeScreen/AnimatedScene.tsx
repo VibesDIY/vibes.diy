@@ -1,18 +1,20 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { animate } from "animejs";
-import { useSceneSetup } from "../../hooks/index.ts";
+import * as THREE from "three";
+import { useSceneSetup } from "../../hooks/index.js";
 import {
   COUNTERBOY_POSITIONS,
   ANIMATION_DURATIONS,
   CAMERA_VIEW_POSITIONS,
-} from "../../constants/scene.ts";
-import { generateBlockPreset } from "../../factories/sceneObjects.ts";
-import React from "react";
+} from "../../constants/scene.js";
+import { generateBlockPreset } from "../../factories/sceneObjects.js";
+import { CounterBoy } from "../../classes/CounterBoy.js";
+import { ScreenshotBoy } from "../../classes/ScreenshotBoy.js";
 
 interface TimelineSegment {
   at: number; // start percentage (0-100)
   until: number; // end percentage (0-100)
-  animation: any; // paused anime.js animation
+  animation: ReturnType<typeof animate>; // paused anime.js animation
 }
 
 interface TimelinePoint {
@@ -202,7 +204,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
           autoplay: false,
           onRender: () => {
             // Update all CounterBoy instances with current explosion progress
-            explosionState.counterBoys.forEach((counterBoy: any) => {
+            explosionState.counterBoys.forEach((counterBoy: CounterBoy) => {
               counterBoy.setExplosionProgress(explosionState.progress);
             });
           },
@@ -263,7 +265,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
           autoplay: false,
           onRender: () => {
             // Update all CounterBoy instances with current collapse progress
-            collapseState.counterBoys.forEach((counterBoy: any) => {
+            collapseState.counterBoys.forEach((counterBoy: CounterBoy) => {
               counterBoy.setExplosionProgress(collapseState.progress);
             });
           },
@@ -284,11 +286,17 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
           autoplay: false,
           onRender: () => {
             // Update all ScreenshotBoy instances with current progress
-            screenshotBoysState.boys.forEach((boy: any) => {
+            screenshotBoysState.boys.forEach((boy: ScreenshotBoy) => {
               // Enable transparency on all materials
-              boy.group.traverse((child: any) => {
-                if (child.material) {
-                  child.material.transparent = true;
+              boy.group.traverse((child: THREE.Object3D) => {
+                const mesh = child as THREE.Mesh;
+                if (mesh.material) {
+                  const materials = Array.isArray(mesh.material)
+                    ? mesh.material
+                    : [mesh.material];
+                  materials.forEach((mat) => {
+                    mat.transparent = true;
+                  });
                 }
               });
 
@@ -297,9 +305,15 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
 
               // Interpolate position and opacity based on progress
               boy.group.position.y = -20 + 20 * screenshotBoysState.progress;
-              boy.group.traverse((child: any) => {
-                if (child.material) {
-                  child.material.opacity = screenshotBoysState.progress;
+              boy.group.traverse((child: THREE.Object3D) => {
+                const mesh = child as THREE.Mesh;
+                if (mesh.material) {
+                  const materials = Array.isArray(mesh.material)
+                    ? mesh.material
+                    : [mesh.material];
+                  materials.forEach((mat) => {
+                    mat.opacity = screenshotBoysState.progress;
+                  });
                 }
               });
             });
@@ -354,7 +368,6 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
     if (shouldShowRight !== showRightCounterBoyRef.current) {
       showRightCounterBoyRef.current = shouldShowRight;
       if (sceneSetup.counterBoyRightRef.current) {
-        // @ts-ignore - visible exists on Group
         sceneSetup.counterBoyRightRef.current.group.visible = shouldShowRight;
       }
     }
@@ -376,7 +389,6 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
 
     // Hide right counterboy initially
     if (sceneSetup.counterBoyRightRef.current) {
-      // @ts-ignore - visible exists on Group
       sceneSetup.counterBoyRightRef.current.group.visible = false;
     }
 

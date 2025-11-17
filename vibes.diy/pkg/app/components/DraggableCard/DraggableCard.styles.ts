@@ -1,5 +1,5 @@
 import React from "react";
-import { CardColor } from "./DraggableCard.types.ts";
+import { CardColor } from "./DraggableCard.types.js";
 
 const titleColorLiteral: Record<CardColor, string> = {
   yellow: "#FEDD009b",

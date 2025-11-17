@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import {
   getWrapperStyle,
   getMenuStyle,
@@ -13,18 +13,23 @@ export interface HiddenMenuWrapperProps {
   children: React.ReactNode;
   menuContent: React.ReactNode;
   triggerBounce?: boolean;
+  showVibesSwitch?: boolean;
 }
 
 export function HiddenMenuWrapper({
   children,
   menuContent,
   triggerBounce,
+  showVibesSwitch = true,
 }: HiddenMenuWrapperProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuHeight, setMenuHeight] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuContainerRef = useRef<HTMLDivElement>(null);
+  type TimerId = number | ReturnType<typeof setTimeout>;
+  const rafIdRef = useRef<TimerId | null>(null);
+  const cancelRef = useRef<null | ((id: TimerId) => void)>(null);
 
   const [isBouncing, setIsBouncing] = useState(false);
   const [hasBouncedOnMount, setHasBouncedOnMount] = useState(false);
@@ -81,10 +86,11 @@ export function HiddenMenuWrapper({
     }
   }, [triggerBounce]);
 
-  // Set menu height on render
+  // Set menu height on render or when menu content prop changes
   useEffect(() => {
     if (menuRef.current) {
-      setMenuHeight(menuRef.current.offsetHeight);
+      const next = menuRef.current.offsetHeight;
+      setMenuHeight((prev) => (prev !== next ? next : prev));
     }
   }, [menuContent]);
 
@@ -134,25 +140,99 @@ export function HiddenMenuWrapper({
     }
   }, [menuOpen]);
 
-  // recalculate when childrens change
-  useEffect(() => {
+  // Recalculate when children change size, with feature detection and rAF scheduling
+  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+  useIsomorphicLayoutEffect(() => {
     const menuEl = menuRef.current;
     if (!menuEl) return;
 
-    const updateHeight = () => setMenuHeight(menuEl.offsetHeight);
+    const scheduleSetHeight = (h: number) => {
+      // Cancel previous scheduled update
+      if (rafIdRef.current != null && cancelRef.current) {
+        cancelRef.current(rafIdRef.current);
+        rafIdRef.current = null;
+      }
 
-    updateHeight(); // initial
+      const run = () => setMenuHeight((prev) => (prev !== h ? h : prev));
 
-    const resizeObserver = new ResizeObserver(() => {
-      updateHeight();
+      if (typeof requestAnimationFrame !== 'undefined') {
+        const id = requestAnimationFrame(() => run());
+        rafIdRef.current = id;
+        cancelRef.current = (cancelId: TimerId) => cancelAnimationFrame(cancelId as number);
+      } else {
+        const id = setTimeout(run, 0);
+        rafIdRef.current = id;
+        cancelRef.current = (cancelId: TimerId) =>
+          clearTimeout(cancelId as ReturnType<typeof setTimeout>);
+      }
+    };
+
+    // Initial measure before first paint to avoid flicker
+    scheduleSetHeight(menuEl.offsetHeight);
+
+    // Prefer ResizeObserver when available
+    if (
+      typeof (window as unknown as { ResizeObserver?: typeof ResizeObserver }).ResizeObserver !==
+      'undefined'
+    ) {
+      const RO = (window as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver;
+      const resizeObserver = new RO(() => {
+        scheduleSetHeight(menuEl.offsetHeight);
+      });
+
+      resizeObserver.observe(menuEl);
+
+      return () => {
+        resizeObserver.disconnect();
+        if (rafIdRef.current != null && cancelRef.current) {
+          cancelRef.current(rafIdRef.current);
+          rafIdRef.current = null;
+        }
+      };
+    }
+
+    // Fallback: MutationObserver + window resize listener
+    const mutationObserver = new MutationObserver(() => {
+      scheduleSetHeight(menuEl.offsetHeight);
     });
+    mutationObserver.observe(menuEl, { childList: true, subtree: true });
 
-    resizeObserver.observe(menuEl);
+    const onResize = () => scheduleSetHeight(menuEl.offsetHeight);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
 
     return () => {
-      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+      if (rafIdRef.current != null && cancelRef.current) {
+        cancelRef.current(rafIdRef.current);
+        rafIdRef.current = null;
+      }
     };
   }, []);
+
+  // When menu open state toggles, schedule a measure in case layout changes
+  useEffect(() => {
+    const menuEl = menuRef.current;
+    if (!menuEl) return;
+    // Defer measurement to allow layout to settle, with a portable fallback
+    const defer = (cb: () => void) => {
+      if (typeof queueMicrotask === 'function') {
+        queueMicrotask(cb);
+      } else if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(cb);
+      } else {
+        setTimeout(cb, 0);
+      }
+    };
+
+    defer(() => {
+      const next = menuEl.offsetHeight;
+      setMenuHeight((prev) => (prev !== next ? next : prev));
+    });
+  }, [menuOpen]);
 
   return (
     <div style={getWrapperStyle()}>
@@ -177,16 +257,18 @@ export function HiddenMenuWrapper({
       </div>
 
       {/* Button */}
-      <button
-        aria-haspopup="dialog"
-        aria-expanded={menuOpen}
-        aria-controls="hidden-menu"
-        ref={buttonRef}
-        onClick={() => setMenuOpen(!menuOpen)}
-        style={getToggleButtonStyle()}
-      >
-        <VibesSwitch size={80} />
-      </button>
+      {showVibesSwitch && (
+        <button
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+          aria-controls="hidden-menu"
+          ref={buttonRef}
+          onClick={() => setMenuOpen(!menuOpen)}
+          style={getToggleButtonStyle()}
+        >
+          <VibesSwitch size={80} />
+        </button>
+      )}
     </div>
   );
 }

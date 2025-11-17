@@ -24,7 +24,7 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.4.53",
+    "@adviser/cement": "^0.4.64",
     "@fireproof/core-types-base": "^0.23.15",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*"
@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "^0.23.15",
-    "@vitest/browser-playwright": "^4.0.2",
+    "@vitest/browser-playwright": "^4.0.8",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.1"
   }

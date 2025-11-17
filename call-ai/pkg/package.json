@@ -33,14 +33,14 @@
   "devDependencies": {
     "@fireproof/core-cli": "^0.23.15",
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.2",
+    "@vitest/browser-playwright": "^4.0.8",
     "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@adviser/cement": "^0.4.53",
+    "@adviser/cement": "^0.4.64",
     "@fireproof/core-runtime": "^0.23.15"
   }
 }

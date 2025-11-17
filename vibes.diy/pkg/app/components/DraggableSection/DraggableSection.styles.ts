@@ -8,7 +8,7 @@ const titleColorLiteral: Record<CardColor, string> = {
   grey: "#61625f9b",
 };
 
-const titleBorderColorLiteral: Record<CardColor, string> = {
+const _titleBorderColorLiteral: Record<CardColor, string> = {
   yellow: "#d6a038",
   red: "#c23d2b",
   blue: "#254581",
@@ -40,7 +40,7 @@ export const getCardStyle = (
   color: CardColor,
   isMobile: boolean,
   isDragging: boolean,
-  isStatic: boolean = false,
+  isStatic = false,
 ): React.CSSProperties => {
   const base = getCardBasicStyle();
 

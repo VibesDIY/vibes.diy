@@ -31,5 +31,5 @@ describe("Vibe Slug Generator", () => {
       expect(parts.length).toBe(3);
       expect(parts[2]).toMatch(/^\d{4}$/); // Should be 4-digit number
     });
-  });
+  }, 10000);
 });

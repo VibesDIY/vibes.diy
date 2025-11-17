@@ -1,1 +1,1 @@
-export * from "./HomeScreen/index.ts";
+export * from "./HomeScreen/index.js";

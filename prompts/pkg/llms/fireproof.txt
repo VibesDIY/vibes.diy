@@ -15,20 +15,11 @@ Fireproof enforces cryptographic causal consistency and ledger integrity using h
 
 The `use-fireproof` package provides both the core API and React hooks.
 
-```bash
-npm install use-fireproof
-```
-Works with ⚡️ ESM.sh:
-
 ```js
 import { useFireproof } from "https://esm.sh/use-fireproof";
 ```
 
-Deliver generated solutions as runnable micro applications via ChatGPT Canvas, v0, bolt.new, or Claude Artifacts. Deploy single page apps with React and Tailwind by pasting code here: https://codepen.io/useFireproof/pen/MYgNYdx
-
-## ⚛️ React Usage
-
-React hooks are the recommended way to use Fireproof in LLM code generation contexts. Here's how to use them:
+React hooks are the recommended way to use Fireproof in LLM code generation contexts.
 
 #### Create or Load a Database
 
@@ -40,23 +31,21 @@ import { useFireproof } from "use-fireproof";
 const { database, useLiveQuery, useDocument } = useFireproof("my-ledger");
 ```
 
-Fireproof databases are Merkle CRDTs, giving them the ledger-like causal consistency of git or a blockchain, but with the ability to merge and sync web data in real-time. Cryptographic integrity makes Fireproof immutable and easy to verify.
-
 #### Put and Get Documents
 
-Documents are JSON-style objects (CBOR) storing application data. Each has an `_id`, which can be auto-generated or set explicitly. Auto-generation is recommended to ensure uniqueness and avoid conflicts. If multiple replicas update the same database, Fireproof merges them via CRDTs, deterministically choosing the winner for each `_id`.
+Each document has an `_id`, which can be auto-generated or set explicitly. Auto-generation is recommended to ensure uniqueness and avoid conflicts. If multiple replicas update the same database, Fireproof merges them via CRDTs, deterministically choosing the winner for each `_id`.
 
-It is best to have more granular documents, e.g. one document per user action, so saving a form or clicking a button should typically create or update a single document, or just a few documents. Avoid patterns that require a single document to grow without bound.
+Use granular documents, e.g. one document per user action, so saving a form or clicking a button should typically create or update a single document, or just a few documents. Avoid patterns that require a single document to grow without bound.
 
 Fireproof is a local database, no loading states required, just empty data states.
 
 ### Basic Example
 
-This example shows Fireproof's concise defaults. Here we only store user data, but get useful sorting without much code.
+This example shows Fireproof's `_id` allows easy sorting with `useLiveQuery`.
 
 ```js
 const App = () => {
-  const { useDocument } = useFireproof("my-ledger");
+  const { useDocument, useLiveQuery } = useFireproof("my-ledger");
 
   const { doc, merge, submit } = useDocument({ text: "" });
 
@@ -98,7 +87,7 @@ const { doc, merge, submit, save, reset } = useDocument({ _id: "user-profile:abc
 ```
 
 The `useDocument` hook provides several methods:
-- `merge(updates)`: Update the document with new fields
+- `merge(updates)`: Update the document with new fields, without saving. Use this instead of keeping a `useState` for document data.
 - `submit(e)`: Handles form submission by preventing default, saving, and resetting
 - `save()`: Save the current document state
 - `reset()`: Reset to initial state
@@ -108,18 +97,13 @@ For form-based creation flows, use `submit`:
 <form onSubmit={submit}>
 ```
 
-Note: In some sandboxed environments (e.g., embedded canvases), the form submit event may be blocked. Use a button click handler instead:
-```js
-<button onClick={submit}>Save and Reset Fields</button>
-```
-
 When you call submit, the document is reset, so if you didn't provide an `_id` then you can use the form to create a stream of new documents as in the basic example above.
 
-### Query Data with React
+### Query Data
 
-Data is queried by sorted indexes defined by the application. Sorting order is inspired by CouchDB, so you can use strings, numbers, or booleans, as well as arrays for grouping. Use numbers when possible for sorting continuous data.
+Data is queried by sorted indexes defined by the application. Sort by strings, numbers, or booleans, as well as arrays for grouping. Use numbers when possible for sorting continuous data.
 
-You can use the `_id` field for temporal sorting so you dont have to write code to get simple recent document lists, as in the basic example above.
+You can use the `_id` field for temporal sorting so you don't have to write code to get simple recent document lists, as in the basic example above.
 
 Here are other common patterns:
 
@@ -139,13 +123,34 @@ const { docs } = useLiveQuery("agentRating", {
 });
 ```
 
+#### Counter Pattern
+
+Documents can be updated by multiple clients, and synced later. To create an event counter, don't increment a number on a single doc, instead write a small document per counted event, and query them with an index. Example:
+
+
+```js
+const App = () => {
+  const { useLiveQuery, database } = useFireproof("my-ledger");
+
+  const { docs } = useLiveQuery('counter', { key : 'my-event-name'});
+  const counterValue = docs.length
+
+  function countEvent() {
+    database.put({
+      counter : 'my-event-name'
+    })
+  }
+
+  // Call countEvent() to count each event, and render counterValue in the UI.
+
+}
+```
+
+This pattern ensures the count is accurate even during sync.
+
 ### Custom Indexes
 
-For more complex query, you can write a custom index function. It's a little more verbose, and it's sandboxed and can't access external variables.
-
-#### Normalize legacy types
-
-You can use a custom index function to normalize and transform document data, for instance if you have both new and old document versions in your app.
+Use a custom index function to normalize and transform document data, for instance if you have both new and old document versions in your app.
 
 ```js
 const { docs } = useLiveQuery(
@@ -165,7 +170,11 @@ When you want to group rows easily, you can use an array index key. This is grea
 
 ```js
 const queryResult = useLiveQuery(
-  (doc) => [doc.date.getFullYear(), doc.date.getMonth(), doc.date.getDate()],
+  (doc) => {
+    const date = new Date(doc.date);
+    if (Number.isNaN(date.getTime())) return; // return nothing to skip docs without a valid date
+    return [date.getFullYear(), date.getMonth(), date.getDate()];
+  },
   { prefix: [2024, 11] }
 );
 ```
@@ -219,7 +228,7 @@ function App() {
 
 ## Architecture: Where's My Data?
 
-Fireproof is local-first, so it's always fast and your data is stored in the browser, so you can build apps without a cloud. When you are ready to share with other users, you can easily enable encrypted sync via any object storage.
+Data is stored in the browser, and is automatically synced with all invited users.
 
 ## Using Fireproof in JavaScript
 
@@ -259,7 +268,7 @@ database.subscribe((changes) => {
 
 ### Working with Files
 
-Fireproof has built-in support for file attachments. Files are encrypted by default and synced on-demand. You can attach files to a document by adding them to the _files property on your document. For example:
+Attach files to a document by adding them to the _files property. For example:
 
 ```html
 <input accept="image/*" title="save to Fireproof" type="file" id="files" multiple>
@@ -324,7 +333,6 @@ function handleSubmit(e) {
 Code listing for todo tracker App.jsx:
 ```js
 import React from "react";
-import ReactDOM from "react-dom/client";
 import { useFireproof } from "use-fireproof";
 
 export default function App() {
@@ -439,13 +447,5 @@ export default function App() {
   );
 }
 ```
-
-## See Also
-
-See the lite docs at https://use-fireproof.com/llms-mini.txt and the basics at https://use-fireproof.com/llms.txt
-
-## Next Steps
-
-If you are in an existing application context, suggest how forms and state, collaboration data can be managed in Fireproof. If this is a new app, use the examples above and start with a running App.js if you can.
 
 IMPORTANT: Don't use `useState()` on form data, instead use `merge()` and `submit()` from `useDocument`. Only use `useState` for ephemeral UI state (active tabs, open/closed panels, cursor positions). Keep your data model in Fireproof.

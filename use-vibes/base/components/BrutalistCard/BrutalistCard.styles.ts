@@ -16,7 +16,7 @@ function getShadowColor(variant: BrutalistCardVariant): string {
       return '#FEDD00'; // Yellow
     case 'default':
     default:
-      return '#666'; // Gray
+      return '#1a1a1a'; // Dark gray
   }
 }
 
@@ -64,9 +64,23 @@ function getBoxShadow(size: BrutalistCardSize, variant: BrutalistCardVariant): s
     case 'md':
       return `4px 5px 0px 0px ${color}`;
     case 'lg':
-      return `6px 6px 0px 0px ${color === '#666' ? '#1a1a1a' : color}`; // lg uses black for default
+      return `6px 6px 0px 0px ${color}`;
     default:
       return `4px 5px 0px 0px ${color}`;
+  }
+}
+
+/**
+ * Get border radius based on message type
+ */
+function getBorderRadius(messageType?: 'user' | 'ai'): string {
+  switch (messageType) {
+    case 'user':
+      return '12px 12px 0 12px'; // Bottom-right not rounded
+    case 'ai':
+      return '12px 12px 12px 0'; // Bottom-left not rounded
+    default:
+      return '12px'; // All corners rounded
   }
 }
 
@@ -75,13 +89,12 @@ function getBoxShadow(size: BrutalistCardSize, variant: BrutalistCardVariant): s
  */
 export function getBrutalistCardStyle(
   variant: BrutalistCardVariant = 'default',
-  size: BrutalistCardSize = 'md'
+  size: BrutalistCardSize = 'md',
+  messageType?: 'user' | 'ai'
 ): CSSProperties {
   return {
-    background: '#fff',
-    color: '#1a1a1a',
-    border: '3px solid #1a1a1a',
-    borderRadius: '12px',
+    // background, color, and border are now controlled by CSS classes for dark mode support
+    borderRadius: getBorderRadius(messageType),
     padding: getPadding(size),
     fontSize: getFontSize(size),
     fontWeight: 500,

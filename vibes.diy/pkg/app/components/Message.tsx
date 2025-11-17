@@ -8,6 +8,7 @@ import type {
   ViewType,
 } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 interface MessageProps {
   message: ChatMessageDocument;
@@ -71,7 +72,7 @@ const AIMessage = memo(
             </svg>
           </div>
         </div>
-        <div className="text-light-primary dark:bg-dark-background-01 dark:text-dark-primary max-w-[85%] rounded-xl bg-white px-5 py-3 shadow-md">
+        <div className="max-w-[85%]">
           <StructuredMessage
             segments={segments || []}
             isStreaming={isStreaming}
@@ -109,11 +110,11 @@ const AIMessage = memo(
 const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
   return (
     <div className="mb-4 flex flex-row justify-end px-4">
-      <div className="bg-light-background-02 dark:bg-dark-decorative-00 text-light-primary dark:text-dark-primary max-w-[85%] rounded-xl px-5 py-3 shadow-md">
+      <BrutalistCard size="md" messageType="user" className="max-w-[85%]">
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           <ReactMarkdown>{message.text}</ReactMarkdown>
         </div>
-      </div>
+      </BrutalistCard>
     </div>
   );
 });
@@ -126,19 +127,17 @@ const SystemMessage = memo(
     const errorTitle = lines[0] || "System Message";
     const errorDetails = lines.slice(1).join("\n");
 
-    // Determine if this is an error message (vs other potential system messages)
-    const isError = message.errorType && message.errorCategory;
-    const errorClass = isError
-      ? message.errorCategory === "immediate"
-        ? "border-red-500 bg-red-50 dark:bg-red-900/20"
-        : "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-      : "border-blue-500 bg-blue-50 dark:bg-blue-900/20";
+    // Map error category to BrutalistCard variant
+    const variant =
+      message.errorCategory === "immediate"
+        ? "error"
+        : message.errorCategory === "advisory"
+          ? "warning"
+          : "default";
 
     return (
       <div className="mb-4 flex flex-row justify-center px-4">
-        <div
-          className={`text-light-primary dark:text-dark-secondary max-w-[90%] rounded border-l-4 px-4 py-3 shadow-sm ${errorClass}`}
-        >
+        <BrutalistCard variant={variant} size="lg" className="max-w-[80%]">
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <h4 className="m-0 font-semibold">{errorTitle}</h4>
             {errorDetails && (
@@ -147,7 +146,7 @@ const SystemMessage = memo(
               </pre>
             )}
           </div>
-        </div>
+        </BrutalistCard>
       </div>
     );
   },

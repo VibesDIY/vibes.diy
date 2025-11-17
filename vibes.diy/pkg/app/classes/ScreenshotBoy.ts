@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { SCENE_DIMENSIONS, EXPLOSION } from "../constants/scene";
-import { makeChrome } from "../factories/sceneObjects";
+import { SCENE_DIMENSIONS, EXPLOSION } from "../constants/scene.js";
+import { makeChrome } from "../factories/sceneObjects.js";
 
 export interface ScreenshotBoyConfig {
   position?: [number, number, number];
@@ -26,7 +26,6 @@ export class ScreenshotBoy {
     this.color = config.color ?? 0xffff00; // Default to yellow
     this.screenshotPath = config.screenshotPath;
     this.group = new THREE.Group();
-    // @ts-ignore
     this.group.name = this.id;
 
     // Set position
@@ -53,7 +52,7 @@ export class ScreenshotBoy {
     );
 
     // Create materials - use array if screenshot is provided
-    let materials: any;
+    let materials: THREE.Material | THREE.Material[];
 
     if (this.screenshotPath) {
       // Calculate dimensions of the large face (top/bottom face)
@@ -66,11 +65,10 @@ export class ScreenshotBoy {
       const faceAspect = faceWidth / faceHeight;
 
       // Load screenshot texture
-      // @ts-ignore
       const textureLoader = new THREE.TextureLoader();
       const texture = textureLoader.load(
         this.screenshotPath,
-        (loadedTexture: any) => {
+        (loadedTexture: THREE.Texture) => {
           // Configure texture to crop (not stretch) after image loads
           const imgAspect =
             loadedTexture.image.width / loadedTexture.image.height;
@@ -130,16 +128,16 @@ export class ScreenshotBoy {
   // Cleanup
   public dispose() {
     // Remove from parent if it has one
-    if ((this.group as any).parent) {
-      (this.group as any).parent.remove(this.group);
+    if (this.group.parent) {
+      this.group.parent.remove(this.group);
     }
 
     // Dispose of geometries and materials
-    (this.group as any).traverse((child: any) => {
+    this.group.traverse((child: THREE.Object3D) => {
       if (child instanceof THREE.Mesh) {
-        (child as any).geometry?.dispose();
+        child.geometry?.dispose();
         if (Array.isArray(child.material)) {
-          child.material.forEach((material: any) => material.dispose());
+          child.material.forEach((material) => material.dispose());
         } else {
           child.material?.dispose();
         }

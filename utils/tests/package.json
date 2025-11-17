@@ -34,8 +34,8 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.2",
-    "jose": "^6.1.0",
+    "@vitest/browser-playwright": "^4.0.8",
+    "jose": "^6.1.1",
     "multiformats": "^13.4.0",
     "typescript": "^5.7.2",
     "vitest": "^4.0.2"
