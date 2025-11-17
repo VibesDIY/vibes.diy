@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
+import { mountVibesApp } from "use-vibes";
 
 export function meta({
   params,
@@ -22,10 +23,79 @@ function getHostnameFromUrl(url: string): string {
   }
 }
 
+// Helper to evaluate JSX code and extract the component
+async function evaluateVibeCode(
+  code: string,
+): Promise<React.ComponentType | null> {
+  try {
+    // Check if Babel is available (loaded via CDN in HTML)
+    const Babel = (
+      window as unknown as {
+        Babel?: {
+          transform: (
+            code: string,
+            opts: { presets: string[] },
+          ) => { code: string };
+        };
+      }
+    ).Babel;
+    if (!Babel) {
+      throw new Error("Babel is not loaded. Cannot transform JSX.");
+    }
+
+    // Transform JSX to regular JavaScript
+    const transformed = Babel.transform(code, {
+      presets: ["react", "es2015"],
+    });
+
+    // Create a function that evaluates the transformed code
+    const evalFunc = new Function(
+      "React",
+      "useState",
+      "useEffect",
+      "useRef",
+      "useCallback",
+      "useMemo",
+      "useFireproof",
+      `
+      let exports = {};
+      ${transformed.code}
+      return exports.default || exports.App;
+      `,
+    );
+
+    // Import necessary dependencies
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    // @ts-expect-error - use-vibes is loaded via CDN
+    const { useFireproof } = window.UseVibes || {};
+
+    if (!useFireproof) {
+      throw new Error("use-vibes is not loaded");
+    }
+
+    // Execute and get the component
+    const component = evalFunc(
+      React,
+      useState,
+      useEffect,
+      useRef,
+      useCallback,
+      useMemo,
+      useFireproof,
+    );
+
+    return component as React.ComponentType;
+  } catch (err) {
+    console.error("Failed to evaluate vibe code:", err);
+    return null;
+  }
+}
+
 export default function VibeInstanceViewer() {
   const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // Lazy instance creation: ensure instance exists in database
   const { instances, createInstance } = useVibeInstances(titleId || "");
@@ -50,87 +120,59 @@ export default function VibeInstanceViewer() {
   }, [titleId, uuid, instances, createInstance, creationAttempted]);
 
   useEffect(() => {
-    if (!titleId || !uuid || !iframeRef.current) return;
+    if (!titleId || !uuid || !containerRef.current || mounted) return;
 
-    // Reconstruct full vibeUUID: if uuid doesn't include titleId, prepend it
-    const vibeUUID = uuid.includes("-")
-      ? uuid.startsWith(`${titleId}-`)
-        ? uuid // Already full format
-        : `${titleId}-${uuid}` // Short format, reconstruct
-      : `${titleId}-${uuid}`; // Legacy or short format
-
-    // Fetch the published vibe code from hosting
-    const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
-    const vibeUrl = `https://${titleId}.${hostname}/App.jsx`;
-
-    // Set up iframe using configured Vibesbox worker wrapper route
-    const base = VibesDiyEnv.VIBESBOX_BASE_URL().replace(/\/$/, "");
-
-    // Forward v_vibes parameter if present in current URL
-    const currentUrl = new URL(window.location.href);
-    const vVibes = currentUrl.searchParams.get("v_vibes");
-    const iframeUrl = vVibes
-      ? `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}?v_vibes=${encodeURIComponent(vVibes)}`
-      : `${base}/vibe/${titleId}/${encodeURIComponent(uuid)}`;
-    const handleIframeLoad = async () => {
+    const loadAndMount = async () => {
       try {
-        // Fetch the vibe code from the /App.jsx endpoint
+        // Fetch the published vibe code from hosting
+        const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
+        const vibeUrl = `https://${titleId}.${hostname}/App.jsx`;
+
         const response = await fetch(vibeUrl);
         if (!response.ok) {
           throw new Error(`Failed to fetch vibe code: ${response.statusText}`);
         }
 
-        // /App.jsx endpoint returns raw JavaScript directly
         const vibeCode = await response.text();
 
-        // Get auth token from localStorage (do not place in URL)
-        let authToken: string | undefined;
-        try {
-          authToken =
-            localStorage.getItem("vibes-diy-auth-token") ||
-            localStorage.getItem("auth_token") ||
-            undefined;
-        } catch {
-          // ignore storage errors
+        // Evaluate the JSX code to get the component
+        const AppComponent = await evaluateVibeCode(vibeCode);
+
+        if (!AppComponent) {
+          throw new Error("Failed to extract component from vibe code");
         }
 
-        // Send code via postMessage like the editor does
-        if (iframeRef.current?.contentWindow) {
-          const messageData = {
-            type: "execute-code",
-            code: vibeCode,
-            apiKey: "sk-vibes-proxy-managed",
-            sessionId: vibeUUID,
-            endpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
-            authToken,
+        // Mount the vibe app inline with proper metadata for ledger naming
+        if (!containerRef.current) {
+          throw new Error("Container ref is null");
+        }
+
+        const result = mountVibesApp({
+          container: containerRef.current,
+          appComponent: AppComponent,
+          title: titleId,
+          imageUrl: `/screenshot.png`,
+          showVibesSwitch: true,
+          vibeMetadata: {
             titleId,
-            vibeUUID: vibeUUID,
-            hostingDomain: hostname, // Pass the hosting domain for screenshot URLs
-          };
+            installId: uuid,
+          },
+        });
 
-          // Use a specific target origin for safety
-          const targetOrigin = new URL(iframeUrl).origin;
-          iframeRef.current.contentWindow.postMessage(
-            messageData,
-            targetOrigin,
-          );
-        }
+        setMounted(true);
+
+        // Cleanup on unmount
+        return () => {
+          result.unmount();
+        };
       } catch (err) {
         console.error("Error loading vibe:", err);
         setError(err instanceof Error ? err.message : String(err));
       }
     };
 
-    // Register load handler BEFORE setting src to avoid race conditions
-    iframeRef.current.addEventListener("load", handleIframeLoad, {
-      once: true,
-    } as AddEventListenerOptions);
-    iframeRef.current.src = iframeUrl;
-
-    return () => {
-      iframeRef.current?.removeEventListener("load", handleIframeLoad);
-    };
-  }, [titleId, uuid]);
+    loadAndMount();
+  }, [titleId, uuid, mounted]);
 
   if (!titleId || !uuid) {
     return (
@@ -160,15 +202,8 @@ export default function VibeInstanceViewer() {
         </div>
       )}
 
-      {/* Vibesbox Iframe */}
-      <iframe
-        ref={iframeRef}
-        title={`${titleId} - ${uuid}`}
-        className="w-full h-full border-none"
-        allow="clipboard-read; clipboard-write; fullscreen"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"
-        allowFullScreen
-      />
+      {/* Inline Vibe Container */}
+      <div ref={containerRef} className="w-full h-full" />
     </div>
   );
 }
