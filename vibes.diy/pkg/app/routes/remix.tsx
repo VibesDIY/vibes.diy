@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { useSession } from "../hooks/useSession.js";
 import { VibeDocument } from "@vibes.diy/prompts";
+import { constructVibeCodeUrl } from "../utils/vibeUrls.js";
 
 export function meta() {
   return [
@@ -56,8 +57,8 @@ export default function Remix({
         const appName = vibeSlug;
         setAppDomain(appName);
 
-        // Fetch the app code
-        const appUrl = `https://${appName}.vibesdiy.app/App.jsx`;
+        // Fetch the app code using query parameter routing
+        const appUrl = constructVibeCodeUrl(appName);
         const response = await fetch(appUrl, {
           headers: {
             "X-VIBES-Token": localStorage.getItem("vibes-diy-auth-token") || "",

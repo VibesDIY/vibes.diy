@@ -1,6 +1,7 @@
 import React, { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { BrutalistCard } from "@vibes.diy/use-vibes-base";
+import { constructVibeScreenshotUrl } from "../utils/vibeUrls.js";
 
 interface PublishedVibeCardProps {
   slug: string;
@@ -11,8 +12,8 @@ export default function PublishedVibeCard({
   slug,
   name,
 }: PublishedVibeCardProps): ReactElement {
-  // Normalize the URL by adding iframe domain
-  const normalizedUrl = `https://${slug}.vibesdiy.app`;
+  // Construct screenshot URL with query parameter
+  const screenshotUrl = constructVibeScreenshotUrl(slug);
   const linkUrl = `/vibe/${slug}`;
 
   // Use provided name or extract from URL
@@ -44,7 +45,7 @@ export default function PublishedVibeCard({
           {/* Blurred background version */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <img
-              src={`${normalizedUrl}/screenshot.png`}
+              src={screenshotUrl}
               className="h-full w-full scale-110 object-cover"
               alt=""
               style={{ filter: "blur(10px)", opacity: 0.9 }}
@@ -55,7 +56,7 @@ export default function PublishedVibeCard({
           {/* Foreground image with fixed height */}
           <div className="relative z-10 flex h-48 w-full justify-center py-2">
             <img
-              src={`${normalizedUrl}/screenshot.png`}
+              src={screenshotUrl}
               alt={`Screenshot from ${vibeName}`}
               className="max-h-full max-w-full object-contain"
               loading="lazy"
