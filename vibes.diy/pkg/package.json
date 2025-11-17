@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.4.64",
+    "@babel/standalone": "^7.28.5",
     "@cloudflare/workers-types": "^4.20251111.0",
     "@fireproof/core": "^0.23.15",
     "@fireproof/core-runtime": "^0.23.15",
