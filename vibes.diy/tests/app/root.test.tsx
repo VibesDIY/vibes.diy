@@ -2,6 +2,12 @@ import React from "react";
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ErrorBoundary, Layout } from "~/vibes.diy/app/root.js";
+import { VibesDiyEnv } from "~/vibes.diy/app/config/env.js";
+
+// Ensure required Clerk configuration is present for tests
+VibesDiyEnv.env().sets({
+  VITE_CLERK_PUBLISHABLE_KEY: "pk_test_vibes_diy_clerk_key",
+});
 
 // Mock React Router components to avoid HTML validation errors
 vi.mock("react-router", () => ({
@@ -124,6 +130,9 @@ vi.mock("~/vibes.diy/app/hooks/useSimpleChat", () => ({
 
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", () => ({
+  ClerkProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   useAuth: () => ({
     userId: "test-user-id",
     isLoaded: true,
