@@ -1,16 +1,11 @@
 import { Editor, Monaco } from "@monaco-editor/react";
 import React, { useEffect, useRef, useState } from "react";
 import type { IframeFiles } from "./ResultPreviewTypes.js";
-// API key import removed - proxy handles authentication
-import { VibesDiyEnv } from "../../config/env.js";
-import {
-  normalizeComponentExports,
-  transformImports,
-} from "@vibes.diy/prompts";
 import { DatabaseListView } from "./DataView/index.js";
 import { setupMonacoEditor } from "./setupMonacoEditor.js";
 import { editor } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
+import { InlinePreview } from "./InlinePreview.js";
 
 interface IframeContentProps {
   activeView: "preview" | "code" | "data" | "chat" | "settings";
@@ -35,11 +30,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
   onCodeChange,
   onSyntaxErrorChange,
 }) => {
-  // API key no longer needed - proxy handles authentication
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   // Theme state is now received from parent via props
-  const contentLoadedRef = useRef(false);
-  const lastContentRef = useRef(""); // Use ref to track last rendered code
 
   // Reference to store the current Monaco editor instance
   const monacoEditorRef = useRef<editor.IStandaloneCodeEditor>(null);
@@ -152,123 +143,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
     }
   }, [isStreaming]);
 
-  // This effect is now managed at the ResultPreview component level
-
-  // API key management removed - proxy handles authentication
-
-  // Update iframe when code is ready
-  useEffect(() => {
-    if (codeReady && iframeRef.current) {
-      // Skip if content hasn't changed
-      if (contentLoadedRef.current && appCode === lastContentRef.current) {
-        return;
-      }
-
-      contentLoadedRef.current = true;
-      lastContentRef.current = appCode; // Update ref
-
-      // Use the extracted function to normalize component export patterns
-      const normalizedCode = normalizeComponentExports(appCode);
-
-      // Create a session ID variable for the iframe
-      const sessionIdValue = sessionId || "default-session";
-
-      const transformedCode = transformImports(normalizedCode);
-
-      // Use vibesbox subdomain for origin isolation
-      // In production with apex domain: https://${sessionId}.vibesbox.dev/
-      // In production with workers.dev: https://vibesbox.workers.dev/ (no subdomain injection)
-      // In local dev: http://localhost:8989/
-      const baseUrl = new URL(VibesDiyEnv.VIBESBOX_BASE_URL());
-
-      // Check if this is a local development URL
-      const isLocalDev =
-        baseUrl.hostname === "localhost" ||
-        baseUrl.hostname === "127.0.0.1" ||
-        baseUrl.hostname === "[::1]" ||
-        baseUrl.hostname === "::1";
-
-      let iframeUrl: string;
-
-      if (isLocalDev) {
-        // Local dev: use as-is (preserves protocol, port, path)
-        iframeUrl = baseUrl.href;
-      } else if (baseUrl.hostname === "vibesbox.dev") {
-        // Apex domain: inject sessionId as subdomain
-        baseUrl.hostname = `${sessionIdValue}.vibesbox.dev`;
-        iframeUrl = baseUrl.href;
-      } else {
-        // Already has subdomain (workers.dev, etc.) or other: use as-is
-        iframeUrl = baseUrl.href;
-      }
-
-      iframeRef.current.src = iframeUrl;
-      console.log(
-        "🔧 [VIBES.DIY] IframeContent using vibesbox URL:",
-        iframeUrl,
-      );
-
-      // Send code via postMessage after iframe loads
-      const handleIframeLoad = () => {
-        if (iframeRef.current?.contentWindow) {
-          // Get auth token from localStorage for API authentication
-          // Check both new and legacy token keys for compatibility
-          let authToken: string | undefined;
-          try {
-            authToken =
-              localStorage.getItem("vibes-diy-auth-token") ||
-              localStorage.getItem("auth_token") ||
-              undefined;
-            console.log(
-              "🔐 [VIBES.DIY] Reading auth token from localStorage:",
-              authToken ? authToken.substring(0, 20) + "..." : "NOT FOUND",
-            );
-          } catch (e) {
-            console.warn("🔐 [VIBES.DIY] Failed to read auth token:", e);
-            // Ignore localStorage errors (privacy mode, SSR, etc.)
-          }
-
-          const messageData = {
-            type: "execute-code",
-            code: transformedCode,
-            apiKey: "sk-vibes-proxy-managed",
-            sessionId: sessionIdValue,
-            endpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
-            authToken, // Pass auth token to iframe
-            showVibesSwitch: false, // Hide vibes switch in result preview
-          };
-
-          console.log(
-            "🔐 [VIBES.DIY] Sending message to iframe with authToken:",
-            authToken ? "YES" : "NO",
-          );
-          console.log(
-            "🔐 [VIBES.DIY] Message data keys:",
-            Object.keys(messageData),
-          );
-          iframeRef.current.contentWindow.postMessage(messageData, "*");
-        }
-      };
-
-      iframeRef.current.addEventListener("load", handleIframeLoad);
-
-      // Setup message listener for preview ready signal
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data?.type === "preview-ready") {
-          // bundlingComplete state is removed, no action needed here
-        }
-      };
-
-      window.addEventListener("message", handleMessage);
-
-      return () => {
-        if (iframeRef.current) {
-          iframeRef.current.removeEventListener("load", handleIframeLoad);
-        }
-        window.removeEventListener("message", handleMessage);
-      };
-    }
-  }, [appCode, codeReady]);
+  // Iframe removed - now using inline rendering with InlinePreview component
 
   // Determine which view to show based on URL path - gives more stable behavior on refresh
   const getViewFromPath = () => {
@@ -297,12 +172,10 @@ const IframeContent: React.FC<IframeContentProps> = ({
           left: 0,
         }}
       >
-        <iframe
-          ref={iframeRef}
-          className="h-full w-full border-0"
-          title="Preview"
-          allow="accelerometer *; bluetooth *; camera *; encrypted-media *; display-capture *; geolocation *; gyroscope *; microphone *; midi *; clipboard-read *; clipboard-write *; web-share *; serial *; xr-spatial-tracking *"
-          allowFullScreen={true}
+        <InlinePreview
+          code={appCode}
+          sessionId={sessionId}
+          codeReady={codeReady}
         />
       </div>
       <div
