@@ -126,14 +126,18 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   );
 
   // State to track manual attachment for first-time enable
-  const [manualAttach, setManualAttach] = useState<
-    null | 'pending' | { state: 'attached' | 'error'; attached?: unknown; error?: unknown }
-  >(null);
+  // Captures vibeMetadata at enableSync time to avoid race conditions
+  const [manualAttach, setManualAttach] = useState<null | {
+    state: 'pending' | 'attached' | 'error';
+    vibeMetadata: VibeMetadata | null;
+    attached?: unknown;
+    error?: unknown;
+  }>(null);
 
   // Handle first-time sync enable without reload
   useEffect(() => {
-    if (manualAttach === 'pending' && result.database) {
-      const cloudConfig = toCloud({ vibeMetadata });
+    if (manualAttach?.state === 'pending' && result.database) {
+      const cloudConfig = toCloud({ vibeMetadata: manualAttach.vibeMetadata });
       result.database
         .attach(cloudConfig)
         .then((attached) => {
@@ -157,12 +161,12 @@ export function useFireproof(nameOrDatabase?: string | Database) {
             }
           }
 
-          setManualAttach({ state: 'attached', attached });
+          setManualAttach({ state: 'attached', vibeMetadata: manualAttach.vibeMetadata, attached });
           // Save preference for next refresh
           localStorage.setItem(syncKey, 'true');
         })
         .catch((error) => {
-          setManualAttach({ state: 'error', error });
+          setManualAttach({ state: 'error', vibeMetadata: manualAttach.vibeMetadata, error });
           // Emit a low-noise diagnostic event for observers
           try {
             document.dispatchEvent(
@@ -211,13 +215,14 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
       };
     }
-  }, [manualAttach, result.database, syncKey, dbName, vibeMetadata]);
+  }, [manualAttach, result.database, syncKey, dbName]);
 
   // Function to enable sync and trigger popup directly
   const enableSync = useCallback(() => {
     if (!wasSyncEnabled && !manualAttach) {
       // First time enabling - manual attach
-      setManualAttach('pending');
+      // Capture vibeMetadata at this moment to avoid race conditions
+      setManualAttach({ state: 'pending', vibeMetadata });
     }
 
     // After a short delay, programmatically click the sign-in link in the overlay
@@ -233,7 +238,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         }
       }
     }, 100); // Small delay to ensure overlay is rendered
-  }, [wasSyncEnabled, manualAttach]);
+  }, [wasSyncEnabled, manualAttach, vibeMetadata]);
 
   // Wire up vibes-login-link button if it exists
   useEffect(() => {
@@ -279,7 +284,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const syncEnabled =
     (wasSyncEnabled &&
       (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
-    (manualAttach && typeof manualAttach === 'object' && manualAttach.state === 'attached');
+    manualAttach?.state === 'attached';
 
   // Bridge Fireproof authentication to call-ai by syncing tokens to localStorage
   useEffect(() => {
@@ -622,5 +627,10 @@ export type {
 } from './install-tracker.js';
 
 // Export VibeContext for inline rendering with proper ledger naming
-export { VibeContextProvider, useVibeContext } from './contexts/VibeContext.js';
+export {
+  VibeContextProvider,
+  useVibeContext,
+  VibeMetadataValidationError,
+  VIBE_METADATA_ERROR_CODES,
+} from './contexts/VibeContext.js';
 export type { VibeMetadata } from './contexts/VibeContext.js';

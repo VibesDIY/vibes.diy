@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import * as Babel from "@babel/standalone";
 import { VibesDiyEnv } from "../config/env.js";
@@ -146,7 +146,11 @@ async function mountVibeWithCleanup(
 export default function VibeInstanceViewer() {
   const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
   const [error, setError] = useState<string | null>(null);
-  const containerIdRef = useRef(`vibe-container-${Date.now()}`);
+  // Generate unique container ID using crypto.randomUUID for better collision resistance
+  // Regenerate on each navigation to make debugging easier
+  const [containerId, setContainerId] = useState(
+    () => `vibe-container-${crypto.randomUUID()}`,
+  );
 
   // Lazy instance creation: ensure instance exists in database
   const { instances, createInstance } = useVibeInstances(titleId || "");
@@ -173,6 +177,10 @@ export default function VibeInstanceViewer() {
   useEffect(() => {
     if (!titleId || !uuid) return;
 
+    // Generate new container ID for this navigation
+    const newContainerId = `vibe-container-${crypto.randomUUID()}`;
+    setContainerId(newContainerId);
+
     let active = true;
     let unmountVibe: (() => void) | null = null;
 
@@ -194,7 +202,7 @@ export default function VibeInstanceViewer() {
         // Mount the vibe code and capture the unmount callback via event
         unmountVibe = await mountVibeWithCleanup(
           vibeCode,
-          containerIdRef.current,
+          newContainerId,
           titleId,
           uuid,
         );
@@ -221,9 +229,7 @@ export default function VibeInstanceViewer() {
       }
 
       // Clean up the script tag
-      const script = document.getElementById(
-        `vibe-script-${containerIdRef.current}`,
-      );
+      const script = document.getElementById(`vibe-script-${newContainerId}`);
       if (script) {
         script.remove();
       }
@@ -259,7 +265,7 @@ export default function VibeInstanceViewer() {
       )}
 
       {/* Container for vibe module to mount into */}
-      <div id={containerIdRef.current} className="w-full h-full" />
+      <div id={containerId} className="w-full h-full" />
     </div>
   );
 }
