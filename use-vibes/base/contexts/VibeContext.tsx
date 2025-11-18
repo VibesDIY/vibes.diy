@@ -36,12 +36,18 @@ const VibeMetadataSchema = z.object({
     .string()
     .trim()
     .min(1, 'VibeMetadata.titleId must be a non-empty string')
-    .regex(/^[a-z0-9-]+$/i, 'VibeMetadata.titleId must contain only alphanumeric characters and hyphens'),
+    .regex(
+      /^[a-z0-9-]+$/i,
+      'VibeMetadata.titleId must contain only alphanumeric characters and hyphens'
+    ),
   installId: z
     .string()
     .trim()
     .min(1, 'VibeMetadata.installId must be a non-empty string')
-    .regex(/^[a-z0-9-]+$/i, 'VibeMetadata.installId must contain only alphanumeric characters and hyphens'),
+    .regex(
+      /^[a-z0-9-]+$/i,
+      'VibeMetadata.installId must contain only alphanumeric characters and hyphens'
+    ),
 });
 
 /**
@@ -67,13 +73,15 @@ export function validateVibeMetadata(metadata: unknown): asserts metadata is Vib
       let message: string = firstIssue.message;
 
       if (firstIssue.path[0] === 'titleId') {
-        code = firstIssue.code === 'too_small'
-          ? VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY
-          : VIBE_METADATA_ERROR_CODES.TITLEID_INVALID_CHARS;
+        code =
+          firstIssue.code === 'too_small'
+            ? VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY
+            : VIBE_METADATA_ERROR_CODES.TITLEID_INVALID_CHARS;
       } else if (firstIssue.path[0] === 'installId') {
-        code = firstIssue.code === 'too_small'
-          ? VIBE_METADATA_ERROR_CODES.INSTALLID_EMPTY
-          : VIBE_METADATA_ERROR_CODES.INSTALLID_INVALID_CHARS;
+        code =
+          firstIssue.code === 'too_small'
+            ? VIBE_METADATA_ERROR_CODES.INSTALLID_EMPTY
+            : VIBE_METADATA_ERROR_CODES.INSTALLID_INVALID_CHARS;
       } else {
         code = 'UNKNOWN_ERROR';
       }
@@ -84,7 +92,7 @@ export function validateVibeMetadata(metadata: unknown): asserts metadata is Vib
   }
 }
 
-const VibeContext = createContext<VibeMetadata | null>(null);
+const VibeContext = createContext<VibeMetadata | undefined>(undefined);
 
 export interface VibeContextProviderProps {
   readonly metadata: VibeMetadata;
@@ -95,6 +103,6 @@ export function VibeContextProvider({ metadata, children }: VibeContextProviderP
   return <VibeContext.Provider value={metadata}>{children}</VibeContext.Provider>;
 }
 
-export function useVibeContext(): VibeMetadata | null {
+export function useVibeContext(): VibeMetadata | undefined {
   return useContext(VibeContext);
 }
