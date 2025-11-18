@@ -47,9 +47,16 @@ async function mountVibeCode(
 
       ${transformed.code}
 
-      // Mount the component using its own React instance from esm.sh
-      const container = document.getElementById("${containerId}");
-      if (container && App) {
+      // Wrap mounting logic in try/catch to emit error events
+      try {
+        const container = document.getElementById("${containerId}");
+        if (!container) {
+          throw new Error("Container element not found: ${containerId}");
+        }
+        if (typeof App === 'undefined') {
+          throw new Error("App component is not defined - check your default export");
+        }
+
         const mountResult = mountVibesApp({
           container: container,
           appComponent: App,
@@ -60,10 +67,18 @@ async function mountVibeCode(
           },
         });
 
-        // Dispatch event with unmount callback for cleanup
+        // Dispatch success event with unmount callback
         document.dispatchEvent(new CustomEvent('vibes-mount-ready', {
           detail: {
             unmount: mountResult.unmount,
+            containerId: "${containerId}"
+          }
+        }));
+      } catch (error) {
+        // Dispatch error event for mount failures
+        document.dispatchEvent(new CustomEvent('vibes-mount-error', {
+          detail: {
+            error: error instanceof Error ? error.message : String(error),
             containerId: "${containerId}"
           }
         }));
@@ -93,6 +108,12 @@ interface VibesMountReadyDetail {
   containerId: string;
 }
 
+// Type definition for vibes-mount-error event detail
+interface VibesMountErrorDetail {
+  error: string;
+  containerId: string;
+}
+
 // Helper to assert CustomEvent type
 function isVibesMountReadyEvent(
   event: Event,
@@ -100,7 +121,15 @@ function isVibesMountReadyEvent(
   return event.type === "vibes-mount-ready";
 }
 
+// Helper to assert vibes-mount-error event type
+function isVibesMountErrorEvent(
+  event: Event,
+): event is CustomEvent<VibesMountErrorDetail> {
+  return event.type === "vibes-mount-error";
+}
+
 // Helper to mount vibe code and return cleanup function
+// Uses three-tier approach: success event, error event, timeout fallback
 async function mountVibeWithCleanup(
   code: string,
   containerId: string,
@@ -108,36 +137,71 @@ async function mountVibeWithCleanup(
   installId: string,
 ): Promise<() => void> {
   return new Promise((resolve) => {
-    let unmountCallback: (() => void) | null = null;
+    let resolved = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    // Event handler to capture unmount callback
+    // Cleanup function to remove all listeners and timers
+    const cleanup = () => {
+      document.removeEventListener("vibes-mount-ready", handleMountReady);
+      document.removeEventListener("vibes-mount-error", handleMountError);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+
+    // Single resolution function to prevent multiple resolutions
+    const resolveOnce = (unmount: () => void) => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      resolve(unmount);
+    };
+
+    // Tier 1: Success event handler
     const handleMountReady = (event: Event) => {
       if (!isVibesMountReadyEvent(event)) return;
 
       const { unmount, containerId: eventContainerId } = event.detail;
       if (eventContainerId === containerId) {
-        unmountCallback = unmount;
-        document.removeEventListener("vibes-mount-ready", handleMountReady);
+        console.log(`[Vibe Lifecycle] Mount succeeded: ${containerId}`);
+        resolveOnce(unmount);
+      }
+    };
 
-        // Resolve with cleanup function
-        resolve(() => {
-          if (unmountCallback) {
-            unmountCallback();
-          }
+    // Tier 2: Error event handler
+    const handleMountError = (event: Event) => {
+      if (!isVibesMountErrorEvent(event)) return;
+
+      const { error, containerId: eventContainerId } = event.detail;
+      if (eventContainerId === containerId) {
+        console.error(`[Vibe Lifecycle] Mount failed: ${error}`);
+        resolveOnce(() => {
+          // No-op cleanup - mount never succeeded
         });
       }
     };
 
-    // Listen for mount completion
+    // Tier 3: Timeout fallback (5 seconds)
+    timeoutId = setTimeout(() => {
+      if (!resolved) {
+        console.warn(
+          `[Vibe Lifecycle] Mount timeout after 5s: ${containerId}. ` +
+            `Neither success nor error event received.`,
+        );
+        resolveOnce(() => {
+          // No-op cleanup - unknown state
+        });
+      }
+    }, 5000);
+
+    // Register event listeners
     document.addEventListener("vibes-mount-ready", handleMountReady);
+    document.addEventListener("vibes-mount-error", handleMountError);
 
     // Mount the vibe
     mountVibeCode(code, containerId, titleId, installId).catch((err) => {
-      document.removeEventListener("vibes-mount-ready", handleMountReady);
-      console.error("Failed to mount vibe:", err);
-      // Resolve with no-op cleanup on error
-      resolve(() => {
-        // No-op
+      // Babel/transform errors - caught before module execution
+      console.error("[Vibe Lifecycle] Pre-execution error:", err);
+      resolveOnce(() => {
+        // No-op cleanup
       });
     });
   });
