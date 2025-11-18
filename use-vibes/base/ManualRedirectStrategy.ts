@@ -23,7 +23,7 @@ declare global {
 }
 
 // Generate ledger name combining titleId, installId, and database name
-export function generateLedgerName(dbName: string, vibeMetadata?: VibeMetadata | null): string {
+export function generateLedgerName(dbName: string, vibeMetadata?: VibeMetadata): string {
   // Priority 1: Use React Context metadata if provided (inline rendering)
   if (vibeMetadata) {
     // Validate metadata before using it to prevent malformed ledger names
@@ -105,18 +105,18 @@ export function isJWTExpired(token: string): boolean {
  */
 export interface ManualRedirectStrategyOptions {
   /** Custom HTML generator for the auth overlay */
-  overlayHtml?: (url: string) => string;
+  readonly overlayHtml?: (url: string) => string;
   /** Custom CSS for the auth overlay */
-  overlayCss?: string;
+  readonly overlayCss?: string;
   /** Vibe metadata for ledger name generation */
-  vibeMetadata?: VibeMetadata | null;
+  readonly vibeMetadata?: VibeMetadata;
 }
 
 export class ManualRedirectStrategy extends RedirectStrategy {
   private authOpened = false;
   private pollingStarted = false;
   private resolveToken?: (value: TokenAndClaims | undefined) => void;
-  private vibeMetadata?: VibeMetadata | null;
+  private readonly vibeMetadata?: VibeMetadata;
 
   // Override the hash property to return our implementation
   readonly hash = (): string => {
