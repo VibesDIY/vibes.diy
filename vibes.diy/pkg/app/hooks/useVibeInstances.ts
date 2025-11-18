@@ -85,14 +85,14 @@ export function useVibeInstances(titleId: string) {
    */
   const updateInstance = useCallback(
     async (
-      uuid: string,
+      installId: string,
       updates: { description?: string; options?: Record<string, unknown> },
     ) => {
       try {
         setError(null);
 
         // Get existing document
-        const existing = await database.get<VibeInstanceDocument>(uuid);
+        const existing = await database.get<VibeInstanceDocument>(installId);
 
         // Verify ownership
         if (existing.userId !== userId) {
@@ -125,12 +125,12 @@ export function useVibeInstances(titleId: string) {
    * Delete an instance
    */
   const deleteInstance = useCallback(
-    async (uuid: string) => {
+    async (installId: string) => {
       try {
         setError(null);
 
         // Get existing document to verify ownership
-        const existing = await database.get<VibeInstanceDocument>(uuid);
+        const existing = await database.get<VibeInstanceDocument>(installId);
 
         // Ensure this instance belongs to the current vibe
         if (existing.titleId !== titleId) {
@@ -142,7 +142,7 @@ export function useVibeInstances(titleId: string) {
         }
 
         // Delete from Fireproof
-        await database.del(uuid);
+        await database.del(installId);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
@@ -156,12 +156,12 @@ export function useVibeInstances(titleId: string) {
    * Share an instance with another user
    */
   const shareInstance = useCallback(
-    async (uuid: string, email: string) => {
+    async (installId: string, email: string) => {
       try {
         setError(null);
 
         // Get existing document
-        const existing = await database.get<VibeInstanceDocument>(uuid);
+        const existing = await database.get<VibeInstanceDocument>(installId);
 
         // Ensure this instance belongs to the current vibe
         if (existing.titleId !== titleId) {

@@ -66,8 +66,8 @@ export default function VibeInstancesList() {
     if (instances.length === 0) {
       // No instances: create one called "Begin" and navigate to it
       hasAutoNavigated.current = true;
-      createInstance("Begin").then((uuid) => {
-        const installId = extractInstallId(uuid, titleId);
+      createInstance("Begin").then((fullId) => {
+        const installId = extractInstallId(fullId, titleId);
         navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
       });
     } else if (instances.length === 1) {
@@ -84,11 +84,11 @@ export default function VibeInstancesList() {
     if (!newDescription.trim()) return;
 
     try {
-      const uuid = await createInstance(newDescription.trim());
+      const fullId = await createInstance(newDescription.trim());
       setNewDescription("");
       setShowCreateDialog(false);
       // Navigate to the new instance (extract short ID and preserve query params)
-      const installId = extractInstallId(uuid, titleId);
+      const installId = extractInstallId(fullId, titleId);
       const search = searchParams.toString();
       navigate(`/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`);
     } catch (err) {
@@ -96,11 +96,11 @@ export default function VibeInstancesList() {
     }
   };
 
-  const handleUpdate = async (uuid: string) => {
+  const handleUpdate = async (fullId: string) => {
     if (!editDescription.trim()) return;
 
     try {
-      await updateInstance(uuid, { description: editDescription.trim() });
+      await updateInstance(fullId, { description: editDescription.trim() });
       setEditingId(null);
       setEditDescription("");
     } catch (err) {
@@ -108,18 +108,18 @@ export default function VibeInstancesList() {
     }
   };
 
-  const handleDelete = async (uuid: string) => {
+  const handleDelete = async (fullId: string) => {
     if (!confirm("Are you sure you want to delete this instance?")) return;
 
     try {
-      await deleteInstance(uuid);
+      await deleteInstance(fullId);
     } catch (err) {
       console.error("Failed to delete instance:", err);
     }
   };
 
-  const startEditing = (uuid: string, currentDescription: string) => {
-    setEditingId(uuid);
+  const startEditing = (fullId: string, currentDescription: string) => {
+    setEditingId(fullId);
     setEditDescription(currentDescription);
   };
 
