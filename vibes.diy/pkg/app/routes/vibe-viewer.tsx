@@ -82,7 +82,6 @@ async function mountVibeCode(
 export default function VibeInstanceViewer() {
   const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
   const containerIdRef = useRef(`vibe-container-${Date.now()}`);
 
   // Lazy instance creation: ensure instance exists in database
@@ -108,7 +107,7 @@ export default function VibeInstanceViewer() {
   }, [titleId, uuid, instances, createInstance, creationAttempted]);
 
   useEffect(() => {
-    if (!titleId || !uuid || mounted) return;
+    if (!titleId || !uuid) return;
 
     let active = true;
 
@@ -129,10 +128,6 @@ export default function VibeInstanceViewer() {
 
         // Mount the vibe code using its own React instance from the import map
         await mountVibeCode(vibeCode, containerIdRef.current, titleId, uuid);
-
-        if (active) {
-          setMounted(true);
-        }
       } catch (err) {
         console.error("Error loading vibe:", err);
         if (active) {
@@ -140,6 +135,9 @@ export default function VibeInstanceViewer() {
         }
       }
     };
+
+    // Reset error state when navigating to a new vibe
+    setError(null);
 
     loadAndMountVibe();
 
@@ -154,7 +152,7 @@ export default function VibeInstanceViewer() {
         script.remove();
       }
     };
-  }, [titleId, uuid, mounted]);
+  }, [titleId, uuid]);
 
   if (!titleId || !uuid) {
     return (
