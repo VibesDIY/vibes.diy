@@ -27,7 +27,8 @@
     "call-ai": "workspace:*",
     "react-dom": "^19.2.0",
     "use-fireproof": "^0.23.15",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "^3.25.76"
   },
   "peerDependencies": {
     "react": ">=19.1.0"

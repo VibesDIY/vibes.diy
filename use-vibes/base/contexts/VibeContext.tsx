@@ -1,12 +1,9 @@
 import React, { createContext, useContext, type ReactNode } from 'react';
-
-export interface VibeMetadata {
-  titleId: string;
-  installId: string;
-}
+import { z } from 'zod';
 
 /**
  * Error codes for VibeMetadata validation failures.
+ * Preserved for backward compatibility.
  */
 export const VIBE_METADATA_ERROR_CODES = {
   TITLEID_EMPTY: 'TITLEID_EMPTY',
@@ -30,41 +27,60 @@ export class VibeMetadataValidationError extends Error {
 }
 
 /**
+ * Zod schema for VibeMetadata validation.
+ * Enforces alphanumeric characters and hyphens only to prevent heavy mangling
+ * during ledger name generation.
+ */
+const VibeMetadataSchema = z.object({
+  titleId: z
+    .string()
+    .trim()
+    .min(1, 'VibeMetadata.titleId must be a non-empty string')
+    .regex(/^[a-z0-9-]+$/i, 'VibeMetadata.titleId must contain only alphanumeric characters and hyphens'),
+  installId: z
+    .string()
+    .trim()
+    .min(1, 'VibeMetadata.installId must be a non-empty string')
+    .regex(/^[a-z0-9-]+$/i, 'VibeMetadata.installId must contain only alphanumeric characters and hyphens'),
+});
+
+/**
+ * Type inference from Zod schema
+ */
+export type VibeMetadata = z.infer<typeof VibeMetadataSchema>;
+
+/**
  * Validates that VibeMetadata contains non-empty titleId and installId with valid characters.
- * Enforces alphanumeric characters and hyphens only to prevent heavy mangling during
- * ledger name generation.
+ * Uses Zod for validation but preserves backward-compatible error codes.
  *
  * @param metadata - The VibeMetadata object to validate
  * @throws {VibeMetadataValidationError} If titleId or installId are missing, empty, or contain invalid characters
  */
-export function validateVibeMetadata(metadata: VibeMetadata): void {
-  // Non-empty checks
-  if (!metadata.titleId || !metadata.titleId.trim()) {
-    throw new VibeMetadataValidationError(
-      'VibeMetadata.titleId must be a non-empty string',
-      VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY
-    );
-  }
-  if (!metadata.installId || !metadata.installId.trim()) {
-    throw new VibeMetadataValidationError(
-      'VibeMetadata.installId must be a non-empty string',
-      VIBE_METADATA_ERROR_CODES.INSTALLID_EMPTY
-    );
-  }
+export function validateVibeMetadata(metadata: unknown): asserts metadata is VibeMetadata {
+  try {
+    VibeMetadataSchema.parse(metadata);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      // Map Zod errors to our custom error codes for backward compatibility
+      const firstIssue = error.issues[0];
+      let code: string;
+      let message: string = firstIssue.message;
 
-  // Character set validation to prevent heavy mangling during ledger name generation
-  const validPattern = /^[a-z0-9-]+$/i;
-  if (!validPattern.test(metadata.titleId)) {
-    throw new VibeMetadataValidationError(
-      'VibeMetadata.titleId must contain only alphanumeric characters and hyphens',
-      VIBE_METADATA_ERROR_CODES.TITLEID_INVALID_CHARS
-    );
-  }
-  if (!validPattern.test(metadata.installId)) {
-    throw new VibeMetadataValidationError(
-      'VibeMetadata.installId must contain only alphanumeric characters and hyphens',
-      VIBE_METADATA_ERROR_CODES.INSTALLID_INVALID_CHARS
-    );
+      if (firstIssue.path[0] === 'titleId') {
+        code = firstIssue.code === 'too_small'
+          ? VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY
+          : VIBE_METADATA_ERROR_CODES.TITLEID_INVALID_CHARS;
+      } else if (firstIssue.path[0] === 'installId') {
+        code = firstIssue.code === 'too_small'
+          ? VIBE_METADATA_ERROR_CODES.INSTALLID_EMPTY
+          : VIBE_METADATA_ERROR_CODES.INSTALLID_INVALID_CHARS;
+      } else {
+        code = 'UNKNOWN_ERROR';
+      }
+
+      throw new VibeMetadataValidationError(message, code);
+    }
+    throw error;
   }
 }
 
