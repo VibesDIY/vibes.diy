@@ -16,8 +16,6 @@ packages:
   - "hosting/base"
   - "hosting/pkg"
   - "hosting/tests/unit"
-  - "vibesbox/pkg"
-  - "vibesbox/tests/unit"
   - "utils/pkg"
   - "utils/tests"
 

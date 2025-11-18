@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import * as Babel from "@babel/standalone";
-import { IdService } from "@adviser/cement";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { transformImports } from "../../../../hosting/base/utils/codeTransform.js";
-
-// Singleton ID generator using cement's IdService (UUID mode by default)
-const idService = new IdService();
+import { mountVibeWithCleanup } from "use-vibes";
 
 export function meta({
   params,
@@ -28,196 +24,13 @@ function getHostnameFromUrl(url: string): string {
   }
 }
 
-// Helper to mount vibe code directly using its own React instance
-async function mountVibeCode(
-  code: string,
-  containerId: string,
-  titleId: string,
-  installId: string,
-): Promise<void> {
-  try {
-    // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
-    const codeWithTransformedImports = transformImports(code);
-
-    // Step 2: Transform JSX to JavaScript (preserve ES modules)
-    const transformed = Babel.transform(codeWithTransformedImports, {
-      presets: ["react"], // Only transform JSX, keep imports as-is
-    });
-
-    // Step 3: Inject mounting code that uses the module's own React/ReactDOM
-    // This ensures the component uses the same React instance it imported
-    const moduleCode = `
-      import { mountVibesApp } from "use-vibes";
-
-      ${transformed.code}
-
-      // Wrap mounting logic in try/catch to emit error events
-      try {
-        const container = document.getElementById("${containerId}");
-        if (!container) {
-          throw new Error("Container element not found: ${containerId}");
-        }
-        if (typeof App === 'undefined') {
-          throw new Error("App component is not defined - check your default export");
-        }
-
-        const mountResult = mountVibesApp({
-          container: container,
-          appComponent: App,
-          showVibesSwitch: true,
-          vibeMetadata: {
-            titleId: "${titleId}",
-            installId: "${installId}",
-          },
-        });
-
-        // Dispatch success event with unmount callback
-        document.dispatchEvent(new CustomEvent('vibes-mount-ready', {
-          detail: {
-            unmount: mountResult.unmount,
-            containerId: "${containerId}"
-          }
-        }));
-      } catch (error) {
-        // Dispatch error event for mount failures
-        document.dispatchEvent(new CustomEvent('vibes-mount-error', {
-          detail: {
-            error: error instanceof Error ? error.message : String(error),
-            containerId: "${containerId}"
-          }
-        }));
-      }
-    `;
-
-    // Step 4: Create and execute module script
-    const scriptElement = document.createElement("script");
-    scriptElement.type = "module";
-    scriptElement.textContent = moduleCode;
-    scriptElement.id = `vibe-script-${containerId}`;
-
-    // Add script to DOM
-    document.head.appendChild(scriptElement);
-
-    // Note: The unmount callback will be captured via the vibes-mount-ready event
-    // No return value needed here - event listener handles it
-  } catch (err) {
-    console.error("Failed to mount vibe code:", err);
-    throw err;
-  }
-}
-
-// Type definition for vibes-mount-ready event detail
-interface VibesMountReadyDetail {
-  unmount: () => void;
-  containerId: string;
-}
-
-// Type definition for vibes-mount-error event detail
-interface VibesMountErrorDetail {
-  error: string;
-  containerId: string;
-}
-
-// Helper to assert CustomEvent type
-function isVibesMountReadyEvent(
-  event: Event,
-): event is CustomEvent<VibesMountReadyDetail> {
-  return event.type === "vibes-mount-ready";
-}
-
-// Helper to assert vibes-mount-error event type
-function isVibesMountErrorEvent(
-  event: Event,
-): event is CustomEvent<VibesMountErrorDetail> {
-  return event.type === "vibes-mount-error";
-}
-
-// Helper to mount vibe code and return cleanup function
-// Uses three-tier approach: success event, error event, timeout fallback
-async function mountVibeWithCleanup(
-  code: string,
-  containerId: string,
-  titleId: string,
-  installId: string,
-): Promise<() => void> {
-  return new Promise((resolve) => {
-    let resolved = false;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    // Cleanup function to remove all listeners and timers
-    const cleanup = () => {
-      document.removeEventListener("vibes-mount-ready", handleMountReady);
-      document.removeEventListener("vibes-mount-error", handleMountError);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-
-    // Single resolution function to prevent multiple resolutions
-    const resolveOnce = (unmount: () => void) => {
-      if (resolved) return;
-      resolved = true;
-      cleanup();
-      resolve(unmount);
-    };
-
-    // Tier 1: Success event handler
-    const handleMountReady = (event: Event) => {
-      if (!isVibesMountReadyEvent(event)) return;
-
-      const { unmount, containerId: eventContainerId } = event.detail;
-      if (eventContainerId === containerId) {
-        console.log(`[Vibe Lifecycle] Mount succeeded: ${containerId}`);
-        resolveOnce(unmount);
-      }
-    };
-
-    // Tier 2: Error event handler
-    const handleMountError = (event: Event) => {
-      if (!isVibesMountErrorEvent(event)) return;
-
-      const { error, containerId: eventContainerId } = event.detail;
-      if (eventContainerId === containerId) {
-        console.error(`[Vibe Lifecycle] Mount failed: ${error}`);
-        resolveOnce(() => {
-          // No-op cleanup - mount never succeeded
-        });
-      }
-    };
-
-    // Tier 3: Timeout fallback (5 seconds)
-    timeoutId = setTimeout(() => {
-      if (!resolved) {
-        console.warn(
-          `[Vibe Lifecycle] Mount timeout after 5s: ${containerId}. ` +
-            `Neither success nor error event received.`,
-        );
-        resolveOnce(() => {
-          // No-op cleanup - unknown state
-        });
-      }
-    }, 5000);
-
-    // Register event listeners
-    document.addEventListener("vibes-mount-ready", handleMountReady);
-    document.addEventListener("vibes-mount-error", handleMountError);
-
-    // Mount the vibe
-    mountVibeCode(code, containerId, titleId, installId).catch((err) => {
-      // Babel/transform errors - caught before module execution
-      console.error("[Vibe Lifecycle] Pre-execution error:", err);
-      resolveOnce(() => {
-        // No-op cleanup
-      });
-    });
-  });
-}
-
 export default function VibeInstanceViewer() {
   const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
   const [error, setError] = useState<string | null>(null);
-  // Generate unique container ID using cement's IdService
+  // Generate unique container ID using crypto.randomUUID
   // Regenerate on each navigation to make debugging easier
   const [containerId, setContainerId] = useState(
-    () => `vibe-container-${idService.NextId()}`,
+    () => `vibe-container-${crypto.randomUUID()}`,
   );
 
   // Lazy instance creation: ensure instance exists in database
@@ -273,6 +86,7 @@ export default function VibeInstanceViewer() {
           newContainerId,
           titleId,
           uuid,
+          transformImports,
         );
       } catch (err) {
         console.error("Error loading vibe:", err);
