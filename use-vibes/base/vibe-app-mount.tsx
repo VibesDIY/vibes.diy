@@ -8,6 +8,7 @@ import {
   VibeContextProvider,
   type VibeMetadata,
   validateVibeMetadata,
+  VibeMetadataValidationError,
 } from './contexts/VibeContext.js';
 
 export interface MountVibesAppOptions {
@@ -33,6 +34,11 @@ const safeGetLocalStorage = (key: string): string | null => {
   }
 };
 
+/**
+ * Internal component for Vibes app mounting.
+ * DO NOT use directly - use mountVibesApp() instead.
+ * @internal
+ */
 function VibesApp({
   title = 'Vibes App',
   imageUrl = '/screenshot.png',
@@ -116,7 +122,17 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
 
   // Validate vibeMetadata if provided to prevent malformed ledger names
   if (vibeMetadata) {
-    validateVibeMetadata(vibeMetadata);
+    try {
+      validateVibeMetadata(vibeMetadata);
+    } catch (error) {
+      if (error instanceof VibeMetadataValidationError) {
+        throw new Error(
+          `Failed to mount Vibes app: ${error.message} (code: ${error.code}). ` +
+            `Received vibeMetadata: ${JSON.stringify(vibeMetadata)}`
+        );
+      }
+      throw error;
+    }
   }
 
   let containerElement: HTMLElement;

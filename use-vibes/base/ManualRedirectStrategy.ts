@@ -30,6 +30,8 @@ export function generateLedgerName(dbName: string, vibeMetadata?: VibeMetadata |
     validateVibeMetadata(vibeMetadata);
 
     const { installId, titleId } = vibeMetadata;
+    // NOTE: Validation (via validateVibeMetadata) ensures non-empty strings with valid characters.
+    // This sanitization is defensive normalization - ensures any edge cases are safe for ledger names.
     const safeInstallId = String(installId).replace(/[^a-z0-9-]/gi, '-');
     const safeTitleId = String(titleId).replace(/[^a-z0-9-]/gi, '-');
     const safeDb = String(dbName).replace(/[^a-z0-9-]/gi, '-');
