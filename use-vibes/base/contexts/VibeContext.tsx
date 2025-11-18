@@ -71,8 +71,8 @@ export function validateVibeMetadata(metadata: VibeMetadata): void {
 const VibeContext = createContext<VibeMetadata | null>(null);
 
 export interface VibeContextProviderProps {
-  metadata: VibeMetadata;
-  children: ReactNode;
+  readonly metadata: VibeMetadata;
+  readonly children: ReactNode;
 }
 
 export function VibeContextProvider({ metadata, children }: VibeContextProviderProps) {

@@ -57,7 +57,7 @@ export type * as Fireproof from 'use-fireproof';
 
 // Extended interface for use-vibes toCloud options that includes vibeMetadata
 export interface UseVibesCloudParam extends UseFpToCloudParam {
-  readonly vibeMetadata?: VibeMetadata | null;
+  readonly vibeMetadata?: VibeMetadata;
 }
 
 // Helper function to create toCloud configuration with ManualRedirectStrategy
@@ -127,12 +127,12 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // State to track manual attachment for first-time enable
   // Captures vibeMetadata at enableSync time to avoid race conditions
-  const [manualAttach, setManualAttach] = useState<null | {
+  const [manualAttach, setManualAttach] = useState<{
     state: 'pending' | 'attached' | 'error';
-    vibeMetadata: VibeMetadata | null;
-    attached?: unknown;
-    error?: unknown;
-  }>(null);
+    vibeMetadata?: VibeMetadata;
+    attached?: ToCloudAttachable;
+    error?: Error;
+  } | undefined>(undefined);
 
   // Handle first-time sync enable without reload
   useEffect(() => {
