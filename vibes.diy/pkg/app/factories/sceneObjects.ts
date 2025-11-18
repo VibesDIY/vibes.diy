@@ -2,8 +2,11 @@ import * as THREE from "three";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
-import { FontLoader } from "three/addons/loaders/FontLoader.js";
-import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+import {
+  FontLoader,
+  type Font,
+} from "three/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import {
   SCENE_DIMENSIONS,
   COLORS,
@@ -140,11 +143,13 @@ interface BlockSituationParams {
   textureOffsetY?: number;
 }
 
-export function makeCid(hexPair: string) {
+export function makeCid(hexPair: string, options?: { signal?: AbortSignal }) {
   const loader = new FontLoader();
   const textGroup = new THREE.Group();
 
-  loader.load(EXTERNAL_URLS.HELVETICA_FONT, function (font) {
+  loader.load(EXTERNAL_URLS.HELVETICA_FONT, function (font: Font) {
+    if (options?.signal?.aborted) return;
+
     const textGeometry = new TextGeometry(hexPair, {
       font: font,
       size: 0.3,
@@ -175,6 +180,7 @@ export function makeCid(hexPair: string) {
 export function makeBlockSituation(
   hexPair: string,
   params: BlockSituationParams = {},
+  options?: { signal?: AbortSignal },
 ) {
   const {
     speed = ANIMATION_DURATIONS.BLOCK_SPEED,
@@ -200,7 +206,7 @@ export function makeBlockSituation(
   unencryptedBlock.position.y = SCENE_DIMENSIONS.BUTTON.POSITION.Y;
   unencryptedBlock.position.z = startPosition;
 
-  const cid = makeCid(hexPair);
+  const cid = makeCid(hexPair, options);
   cid.position.x = SCENE_DIMENSIONS.BUTTON.POSITION.X;
   cid.position.y = SCENE_DIMENSIONS.BUTTON.POSITION.Y + 2;
   cid.visible = false;
@@ -220,7 +226,7 @@ export function makeBlockSituation(
 
 export function makeTabletLabel(gridGroup: THREE.Group) {
   const loader = new FontLoader();
-  loader.load(EXTERNAL_URLS.HELVETICA_FONT, function (font) {
+  loader.load(EXTERNAL_URLS.HELVETICA_FONT, function (font: Font) {
     const textGeometry = new TextGeometry(TEXT_CONTENT.SAMPLE_TEXT, {
       font: font,
       size: SCENE_DIMENSIONS.TEXT.SIZE,
@@ -408,8 +414,9 @@ export function makeEnclosure() {
       displayMaterial,
       displayMaterial,
     ];
-    // @ts-expect-error - Three.js allows material arrays for multi-material meshes
-    display.material = materials;
+    (
+      display as unknown as THREE.Mesh<THREE.BoxGeometry, THREE.Material[]>
+    ).material = materials;
   }, RENDERING.FONT_LOAD_DELAY);
 
   return { enclosure, display, button };

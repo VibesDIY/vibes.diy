@@ -294,7 +294,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
                   const materials = Array.isArray(mesh.material)
                     ? mesh.material
                     : [mesh.material];
-                  materials.forEach((mat) => {
+                  materials.forEach((mat: THREE.Material) => {
                     mat.transparent = true;
                   });
                 }
@@ -311,7 +311,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
                   const materials = Array.isArray(mesh.material)
                     ? mesh.material
                     : [mesh.material];
-                  materials.forEach((mat) => {
+                  materials.forEach((mat: THREE.Material) => {
                     mat.opacity = screenshotBoysState.progress;
                   });
                 }

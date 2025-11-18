@@ -69,9 +69,14 @@ export class ScreenshotBoy {
       const texture = textureLoader.load(
         this.screenshotPath,
         (loadedTexture: THREE.Texture) => {
+          const image = loadedTexture.image as
+            | HTMLImageElement
+            | HTMLCanvasElement
+            | ImageBitmap;
+          if (!image) return;
+
           // Configure texture to crop (not stretch) after image loads
-          const imgAspect =
-            loadedTexture.image.width / loadedTexture.image.height;
+          const imgAspect = image.width / image.height;
 
           if (imgAspect > faceAspect) {
             // Image is wider - crop sides

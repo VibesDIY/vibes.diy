@@ -389,12 +389,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   // Direct scroll listener for Section 2 AnimatedScene (0-50)
   useEffect(() => {
     const animatedSection4Container = animatedSceneSection4Ref.current;
-    const section4Element = section4Ref.current;
-    if (!animatedSection4Container || !section4Element) {
+    if (!animatedSection4Container) {
       return;
     }
-
-    let isScrolling = false;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } =
@@ -404,21 +401,6 @@ export const HomeScreen = (_props: HomeScreenProps) => {
           ? (scrollTop / (scrollHeight - clientHeight)) * 50
           : 0;
       setAnimationProgress(Math.max(0, Math.min(50, scrollProgress)));
-
-      // Center the section when scrolling starts
-      if (!isScrolling) {
-        isScrolling = true;
-        section4Element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        });
-
-        // Reset flag after scroll animation completes
-        setTimeout(() => {
-          isScrolling = false;
-        }, 1000);
-      }
     };
 
     animatedSection4Container.addEventListener("scroll", handleScroll, {
@@ -432,12 +414,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   // Direct scroll listener for Section 4 AnimatedScene (50-100)
   useEffect(() => {
     const animatedSection6Container = animatedSceneSection6Ref.current;
-    const section6Element = section6Ref.current;
-    if (!animatedSection6Container || !section6Element) {
+    if (!animatedSection6Container) {
       return;
     }
-
-    let isScrolling = false;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } =
@@ -447,21 +426,6 @@ export const HomeScreen = (_props: HomeScreenProps) => {
           ? 50 + (scrollTop / (scrollHeight - clientHeight)) * 50
           : 50;
       setAnimationProgress(Math.max(50, Math.min(100, scrollProgress)));
-
-      // Center the section when scrolling starts
-      if (!isScrolling) {
-        isScrolling = true;
-        section6Element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        });
-
-        // Reset flag after scroll animation completes
-        setTimeout(() => {
-          isScrolling = false;
-        }, 1000);
-      }
     };
 
     animatedSection6Container.addEventListener("scroll", handleScroll, {

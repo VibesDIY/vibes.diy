@@ -46,8 +46,12 @@ export class CounterBoy {
   private display!: THREE.Mesh;
   private button!: THREE.Mesh;
 
-  // Geometry references for thickness animation
-  private originalEnclosureGeometry!: THREE.BoxGeometry;
+  // Display texture and animation refs
+  private displayTexture: THREE.CanvasTexture | null = null;
+  private textureAnimationFrame: number | null = null;
+
+  // Font loading control for async CID labels
+  private fontLoadAbortController: AbortController | null = null;
 
   // State
   private encryptedBlocksCount = 0;
@@ -71,6 +75,10 @@ export class CounterBoy {
     this.group = new THREE.Group();
     this.group.name = this.id;
 
+    if (typeof AbortController !== "undefined") {
+      this.fontLoadAbortController = new AbortController();
+    }
+
     // Set position
     if (config.position) {
       this.group.position.set(...config.position);
@@ -86,10 +94,6 @@ export class CounterBoy {
     this.enclosure = enclosure;
     this.display = display;
     this.button = button;
-
-    // Store reference to original geometry for thickness animation
-    this.originalEnclosureGeometry = this.enclosure
-      .geometry as THREE.BoxGeometry;
 
     this.enclosureBack = makeEnclosureBack();
     this.chrome = makeChrome();
@@ -198,10 +202,16 @@ export class CounterBoy {
   }): BlockSituationObjects | null {
     if (!this.scene) return null;
 
-    const blockSituation = makeBlockSituation(preset.hexPair, {
-      textureOffsetX: preset.textureOffsetX,
-      textureOffsetY: preset.textureOffsetY,
-    });
+    const blockSituation = makeBlockSituation(
+      preset.hexPair,
+      {
+        textureOffsetX: preset.textureOffsetX,
+        textureOffsetY: preset.textureOffsetY,
+      },
+      this.fontLoadAbortController
+        ? { signal: this.fontLoadAbortController.signal }
+        : undefined,
+    );
 
     // Position at origin since it's now a child of this.group
     blockSituation.group.position.set(0, 0, 0);
@@ -268,35 +278,51 @@ export class CounterBoy {
   }
 
   private startTextureAnimation(encryptedBlock: THREE.Mesh) {
+    if (this.textureAnimationFrame !== null) {
+      cancelAnimationFrame(this.textureAnimationFrame);
+      this.textureAnimationFrame = null;
+    }
+
     let frameCount = 0;
     const material = encryptedBlock.material as THREE.MeshToonMaterial;
 
+    const map = material?.map;
+    if (!map) return;
+
     // Store initial offsets for deterministic animation
-    const initialX = material?.map?.offset.x || 0;
-    const initialY = material?.map?.offset.y || 0;
+    const initialX = map.offset.x;
+    const initialY = map.offset.y;
 
     const animateTexture = () => {
-      if (!this.isBlockAnimating) return;
+      if (!this.isBlockAnimating || !material || !material.map) {
+        return;
+      }
 
       // Deterministic texture animation based on frame count and initial offset
       frameCount++;
-      if (frameCount % 3 === 0 && material && material.map) {
-        // Create deterministic but random-looking pattern using sine waves
+      if (frameCount % 3 === 0) {
         const time = frameCount * 0.1;
         material.map.offset.x = (initialX + Math.sin(time * 0.7) * 0.2) % 1;
         material.map.offset.y = (initialY + Math.cos(time * 0.5) * 0.2) % 1;
         material.map.needsUpdate = true;
       }
 
-      if (this.isBlockAnimating) {
-        requestAnimationFrame(animateTexture);
+      if (!this.isBlockAnimating) {
+        this.textureAnimationFrame = null;
+        return;
       }
+
+      this.textureAnimationFrame = requestAnimationFrame(animateTexture);
     };
-    animateTexture();
+
+    this.textureAnimationFrame = requestAnimationFrame(animateTexture);
   }
 
   private stopTextureAnimation() {
-    // Texture animation will stop when isBlockAnimating becomes false
+    if (this.textureAnimationFrame !== null) {
+      cancelAnimationFrame(this.textureAnimationFrame);
+      this.textureAnimationFrame = null;
+    }
   }
 
   // Helper method to create enclosure geometry with specific depth
@@ -700,22 +726,39 @@ export class CounterBoy {
       canvas.height / 2 + SCENE_DIMENSIONS.DISPLAY.FONT_SIZE / 2,
     );
 
-    // Update texture
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
+    if (!Array.isArray(this.display.material)) return;
 
-    // Handle material array (display uses an array of materials with texture on index 1 and 2)
-    if (Array.isArray(this.display.material)) {
-      const textMaterial2 = this.display.material[2] as THREE.MeshToonMaterial;
-      if (textMaterial2) {
-        textMaterial2.map = texture;
-        textMaterial2.needsUpdate = true;
-      }
+    const textMaterial = this.display.material[2] as THREE.MeshToonMaterial;
+    if (!textMaterial) return;
+
+    if (!this.displayTexture) {
+      this.displayTexture = new THREE.CanvasTexture(canvas);
+    } else {
+      this.displayTexture.image = canvas;
+      this.displayTexture.needsUpdate = true;
     }
+
+    textMaterial.map = this.displayTexture;
+    textMaterial.needsUpdate = true;
   }
 
   // Cleanup
   public dispose() {
+    // Stop any in-flight texture animation loop
+    this.isBlockAnimating = false;
+    this.stopTextureAnimation();
+
+    // Abort any pending font loads for CID labels
+    if (this.fontLoadAbortController) {
+      this.fontLoadAbortController.abort();
+      this.fontLoadAbortController = null;
+    }
+
+    if (this.displayTexture) {
+      this.displayTexture.dispose();
+      this.displayTexture = null;
+    }
+
     if (this.currentAnimation) {
       if (
         typeof this.currentAnimation === "object" &&
@@ -745,7 +788,9 @@ export class CounterBoy {
         if (child instanceof THREE.Mesh) {
           child.geometry?.dispose();
           if (Array.isArray(child.material)) {
-            child.material.forEach((material) => material.dispose());
+            child.material.forEach((material: THREE.Material) => {
+              material.dispose();
+            });
           } else {
             child.material?.dispose();
           }
@@ -764,7 +809,9 @@ export class CounterBoy {
       if (child instanceof THREE.Mesh) {
         child.geometry?.dispose();
         if (Array.isArray(child.material)) {
-          child.material.forEach((material) => material.dispose());
+          child.material.forEach((material: THREE.Material) => {
+            material.dispose();
+          });
         } else {
           child.material?.dispose();
         }
