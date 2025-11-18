@@ -127,12 +127,15 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // State to track manual attachment for first-time enable
   // Captures vibeMetadata at enableSync time to avoid race conditions
-  const [manualAttach, setManualAttach] = useState<{
-    state: 'pending' | 'attached' | 'error';
-    vibeMetadata?: VibeMetadata;
-    attached?: ToCloudAttachable;
-    error?: Error;
-  } | undefined>(undefined);
+  const [manualAttach, setManualAttach] = useState<
+    | {
+        state: 'pending' | 'attached' | 'error';
+        vibeMetadata?: VibeMetadata;
+        attached?: unknown;
+        error?: Error;
+      }
+    | undefined
+  >(undefined);
 
   // Handle first-time sync enable without reload
   useEffect(() => {
@@ -277,7 +280,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     }
 
     // Clear manual attach state
-    setManualAttach(null);
+    setManualAttach(undefined);
   }, [syncKey, result.attach]);
 
   // Determine sync status - check for actual attachment state
