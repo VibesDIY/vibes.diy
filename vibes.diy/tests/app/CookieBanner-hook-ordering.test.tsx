@@ -37,7 +37,6 @@ vi.mock("~/vibes.diy/app/utils/analytics", () => ({
 
 vi.mock("~/vibes.diy/app/utils/gtm", () => ({
   initGTM: vi.fn(),
-  persistUtmParams: vi.fn(),
 }));
 
 vi.mock("~/vibes.diy/app/config/env", () => ({
