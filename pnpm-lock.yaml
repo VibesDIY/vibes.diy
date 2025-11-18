@@ -412,6 +412,9 @@ importers:
       '@adviser/cement':
         specifier: ^0.4.66
         version: 0.4.66(typescript@5.9.3)
+      '@babel/standalone':
+        specifier: ^7.28.5
+        version: 7.28.5
       '@fireproof/core-runtime':
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
@@ -464,6 +467,9 @@ importers:
       '@storybook/react-vite':
         specifier: ^10.0.8
         version: 10.0.8(esbuild@0.25.12)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.2)(storybook@10.0.8(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
+      '@types/babel__standalone':
+        specifier: ^7.1.9
+        version: 7.1.9
       '@types/react':
         specifier: ~19.2.2
         version: 19.2.4
@@ -1138,56 +1144,6 @@ importers:
         specifier: ^4.0.10
         version: 4.0.12(@opentelemetry/api@1.9.0)(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
 
-  vibesbox/pkg:
-    dependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4.20251111.0
-        version: 4.20251111.0
-      '@vibes.diy/hosting-base':
-        specifier: workspace:*
-        version: link:../../hosting/base
-      '@vibes.diy/use-vibes-base':
-        specifier: workspace:*
-        version: link:../../use-vibes/base
-    devDependencies:
-      '@vitest/browser-playwright':
-        specifier: ^4.0.10
-        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.12)
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      wrangler:
-        specifier: ^4.45.1
-        version: 4.47.0(@cloudflare/workers-types@4.20251111.0)
-
-  vibesbox/tests/unit:
-    dependencies:
-      '@vibes.diy/vibesbox':
-        specifier: workspace:*
-        version: link:../../pkg
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4.20251111.0
-        version: 4.20251111.0
-      '@types/node':
-        specifier: ^24.9.1
-        version: 24.10.1
-      '@vitest/browser-playwright':
-        specifier: ^4.0.10
-        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.12)
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.10
-        version: 4.0.12(@opentelemetry/api@1.9.0)(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
-
 packages:
 
   '@adobe/css-tools@4.4.4':
@@ -1421,6 +1377,10 @@ packages:
 
   '@babel/runtime@7.28.4':
     resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/standalone@7.28.5':
+    resolution: {integrity: sha512-1DViPYJpRU50irpGMfLBQ9B4kyfQuL6X7SS7pwTeWeZX0mNkjzPi0XFqxCjSdddZXUQy4AhnQnnesA/ZHnvAdw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.27.2':
@@ -9937,6 +9897,8 @@ snapshots:
       - supports-color
 
   '@babel/runtime@7.28.4': {}
+
+  '@babel/standalone@7.28.5': {}
 
   '@babel/template@7.27.2':
     dependencies:
