@@ -30,7 +30,7 @@ async function mountVibeCode(
   containerId: string,
   titleId: string,
   installId: string,
-): Promise<() => void> {
+): Promise<void> {
   try {
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
     const codeWithTransformedImports = transformImports(code);
@@ -42,7 +42,6 @@ async function mountVibeCode(
 
     // Step 3: Inject mounting code that uses the module's own React/ReactDOM
     // This ensures the component uses the same React instance it imported
-    const unmountGlobalKey = `__vibes_unmount_${containerId}`;
     const moduleCode = `
       import { mountVibesApp } from "use-vibes";
 
@@ -61,8 +60,13 @@ async function mountVibeCode(
           },
         });
 
-        // Expose unmount callback globally for cleanup
-        window['${unmountGlobalKey}'] = mountResult.unmount;
+        // Dispatch event with unmount callback for cleanup
+        document.dispatchEvent(new CustomEvent('vibes-mount-ready', {
+          detail: {
+            unmount: mountResult.unmount,
+            containerId: "${containerId}"
+          }
+        }));
       }
     `;
 
@@ -75,22 +79,68 @@ async function mountVibeCode(
     // Add script to DOM
     document.head.appendChild(scriptElement);
 
-    // Wait for module to execute and mount
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    // Return cleanup function that calls the exposed unmount
-    return () => {
-      const unmount = (window as Record<string, unknown>)[unmountGlobalKey];
-      if (typeof unmount === "function") {
-        unmount();
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete (window as Record<string, unknown>)[unmountGlobalKey];
-      }
-    };
+    // Note: The unmount callback will be captured via the vibes-mount-ready event
+    // No return value needed here - event listener handles it
   } catch (err) {
     console.error("Failed to mount vibe code:", err);
     throw err;
   }
+}
+
+// Type definition for vibes-mount-ready event detail
+interface VibesMountReadyDetail {
+  unmount: () => void;
+  containerId: string;
+}
+
+// Helper to assert CustomEvent type
+function isVibesMountReadyEvent(
+  event: Event,
+): event is CustomEvent<VibesMountReadyDetail> {
+  return event.type === "vibes-mount-ready";
+}
+
+// Helper to mount vibe code and return cleanup function
+async function mountVibeWithCleanup(
+  code: string,
+  containerId: string,
+  titleId: string,
+  installId: string,
+): Promise<() => void> {
+  return new Promise((resolve) => {
+    let unmountCallback: (() => void) | null = null;
+
+    // Event handler to capture unmount callback
+    const handleMountReady = (event: Event) => {
+      if (!isVibesMountReadyEvent(event)) return;
+
+      const { unmount, containerId: eventContainerId } = event.detail;
+      if (eventContainerId === containerId) {
+        unmountCallback = unmount;
+        document.removeEventListener("vibes-mount-ready", handleMountReady);
+
+        // Resolve with cleanup function
+        resolve(() => {
+          if (unmountCallback) {
+            unmountCallback();
+          }
+        });
+      }
+    };
+
+    // Listen for mount completion
+    document.addEventListener("vibes-mount-ready", handleMountReady);
+
+    // Mount the vibe
+    mountVibeCode(code, containerId, titleId, installId).catch((err) => {
+      document.removeEventListener("vibes-mount-ready", handleMountReady);
+      console.error("Failed to mount vibe:", err);
+      // Resolve with no-op cleanup on error
+      resolve(() => {
+        // No-op
+      });
+    });
+  });
 }
 
 export default function VibeInstanceViewer() {
@@ -141,8 +191,8 @@ export default function VibeInstanceViewer() {
 
         if (!active) return;
 
-        // Mount the vibe code and capture the unmount callback
-        unmountVibe = await mountVibeCode(
+        // Mount the vibe code and capture the unmount callback via event
+        unmountVibe = await mountVibeWithCleanup(
           vibeCode,
           containerIdRef.current,
           titleId,
