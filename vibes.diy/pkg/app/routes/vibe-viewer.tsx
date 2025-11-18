@@ -147,7 +147,9 @@ export default function VibeInstanceViewer() {
     return () => {
       active = false;
       // Clean up the script tag
-      const script = document.getElementById(`vibe-script-${containerIdRef.current}`);
+      const script = document.getElementById(
+        `vibe-script-${containerIdRef.current}`,
+      );
       if (script) {
         script.remove();
       }
