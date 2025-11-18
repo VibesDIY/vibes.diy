@@ -16,12 +16,6 @@ interface URLBuilder {
   toString: () => string;
 }
 
-// Extend globalThis to include our custom properties
-declare global {
-  var VIBE_UUID: string | undefined;
-  var VIBE_TITLE_ID: string | undefined;
-}
-
 // Generate ledger name combining titleId, installId, and database name
 export function generateLedgerName(dbName: string, vibeMetadata?: VibeMetadata): string {
   // Priority 1: Use React Context metadata if provided (inline rendering)
@@ -38,16 +32,7 @@ export function generateLedgerName(dbName: string, vibeMetadata?: VibeMetadata):
     return `${safeInstallId}-${safeTitleId}-${safeDb}`;
   }
 
-  // Priority 2: Prefer explicit instance UUID when available (iframe runner sets this)
-  // VIBE_UUID now contains the full _id in format: ${titleId}-${installId}
-  if (typeof globalThis !== 'undefined' && globalThis.VIBE_UUID) {
-    // Use the full UUID (titleId-installId) plus dbName
-    const safeUuid = String(globalThis.VIBE_UUID).replace(/[^a-z0-9-]/gi, '-');
-    const safeDb = String(dbName).replace(/[^a-z0-9-]/gi, '-');
-    return `${safeUuid}-${safeDb}`;
-  }
-
-  // Priority 3: Fallback to origin-based naming for direct hosting (when not in iframe)
+  // Priority 2: Fallback to origin-based naming (when context not available)
   const origin =
     typeof window !== 'undefined'
       ? window.location.origin.replace(/[^a-z0-9]/gi, '-')
