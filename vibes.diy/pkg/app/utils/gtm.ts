@@ -32,27 +32,3 @@ export function gtmPush(obj: Record<string, unknown>) {
   w.dataLayer = w.dataLayer || [];
   w.dataLayer.push(obj);
 }
-
-/**
- * Persist UTM parameters to localStorage for GTM/HubSpot usage.
- * Call as early as possible (can be before consent) — storage only.
- */
-export function persistUtmParams() {
-  if (typeof window === "undefined") return;
-  try {
-    const url = new URL(window.location.href);
-    const keys = [
-      "utm_source",
-      "utm_medium",
-      "utm_campaign",
-      "utm_term",
-      "utm_content",
-    ];
-    for (const k of keys) {
-      const v = url.searchParams.get(k);
-      if (v) localStorage.setItem(k, v);
-    }
-  } catch {
-    // ignore
-  }
-}

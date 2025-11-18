@@ -4,7 +4,7 @@ import { useLocation } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { pageview, trackEvent } from "../utils/analytics.js";
-import { initGTM, persistUtmParams } from "../utils/gtm.js";
+import { initGTM } from "../utils/gtm.js";
 import { CookieConsent, getCookieConsentValue } from "react-cookie-consent";
 
 // We'll use any type for dynamic imports to avoid TypeScript errors with the cookie consent component
@@ -41,11 +41,6 @@ export default function CookieBanner() {
     });
   }, []);
 
-  // Persist UTM params as early as possible (storage only)
-  useEffect(() => {
-    persistUtmParams();
-  }, []);
-
   // Check for existing cookie consent
   useEffect(() => {
     if (getXCookieConsentValue) {
@@ -63,7 +58,7 @@ export default function CookieBanner() {
     }
   }, [location, hasConsent]);
 
-  // Initialize GTM and clean UTM params if consent is given
+  // Initialize GTM if consent is given
   const gtmId = VibesDiyEnv.GTM_CONTAINER_ID();
   useEffect(() => {
     if (gtmId && hasConsent && typeof document !== "undefined") {
@@ -72,23 +67,6 @@ export default function CookieBanner() {
 
       // Inject GTM (centralized here only)
       initGTM(gtmId);
-
-      if (window.history && window.history.replaceState) {
-        const url = new URL(window.location.href);
-        [
-          "utm_source",
-          "utm_medium",
-          "utm_campaign",
-          "utm_term",
-          "utm_content",
-          "fpref",
-        ].forEach((k) => url.searchParams.delete(k));
-        const searchStr = url.searchParams.toString();
-        const newUrl = `${url.pathname}${searchStr ? `?${searchStr}` : ""}${
-          url.hash || ""
-        }`;
-        window.history.replaceState({}, document.title, newUrl);
-      }
     }
   }, [hasConsent, gtmId]);
 
