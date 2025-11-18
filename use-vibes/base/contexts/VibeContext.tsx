@@ -70,7 +70,7 @@ export function validateVibeMetadata(metadata: unknown): asserts metadata is Vib
       // Map Zod errors to our custom error codes for backward compatibility
       const firstIssue = error.issues[0];
       let code: string;
-      let message: string = firstIssue.message;
+      const message: string = firstIssue.message;
 
       if (firstIssue.path[0] === 'titleId') {
         code =
