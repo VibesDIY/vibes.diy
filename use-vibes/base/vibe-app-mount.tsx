@@ -4,7 +4,11 @@ import { AuthWall } from './components/AuthWall/AuthWall.js';
 import { VIBES_SYNC_ENABLE_EVENT, VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
-import { VibeContextProvider, type VibeMetadata, validateVibeMetadata } from './contexts/VibeContext.js';
+import {
+  VibeContextProvider,
+  type VibeMetadata,
+  validateVibeMetadata,
+} from './contexts/VibeContext.js';
 
 export interface MountVibesAppOptions {
   readonly container?: string | HTMLElement;
