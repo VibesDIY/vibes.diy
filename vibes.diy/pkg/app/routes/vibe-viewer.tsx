@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import * as Babel from "@babel/standalone";
-import { mountVibesApp, useFireproof } from "use-vibes";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
+import { transformImports } from "../../../../hosting/base/utils/codeTransform.js";
 
 export function meta({
   params,
@@ -24,70 +24,66 @@ function getHostnameFromUrl(url: string): string {
   }
 }
 
-// Helper to evaluate JSX code and extract the component
-async function evaluateVibeCode(
+// Helper to mount vibe code directly using its own React instance
+async function mountVibeCode(
   code: string,
-): Promise<React.ComponentType | null> {
+  containerId: string,
+  titleId: string,
+  installId: string,
+): Promise<void> {
   try {
-    // Transform JSX to regular JavaScript using imported Babel
-    const transformed = Babel.transform(code, {
-      presets: [
-        "react",
-        ["env", {
-          modules: false,           // Keep ES modules, don't transform to CommonJS
-          targets: { esmodules: true }  // Target modern browsers (ES2022+)
-        }]
-      ]
+    // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
+    const codeWithTransformedImports = transformImports(code);
+
+    // Step 2: Transform JSX to JavaScript (preserve ES modules)
+    const transformed = Babel.transform(codeWithTransformedImports, {
+      presets: ["react"], // Only transform JSX, keep imports as-is
     });
 
-    // Strip import statements since we're injecting dependencies directly
-    const codeWithoutImports = transformed.code
-      .replace(/import\s+.*?from\s+['"].*?['"];?/g, '')
-      .replace(/export\s+default\s+/g, 'exports.default = ')
-      .replace(/export\s+{([^}]+)}/g, 'Object.assign(exports, {$1})');
+    // Step 3: Inject mounting code that uses the module's own React/ReactDOM
+    // This ensures the component uses the same React instance it imported
+    const moduleCode = `
+      import { mountVibesApp } from "use-vibes";
 
-    // Create a function that evaluates the transformed code
-    const evalFunc = new Function(
-      "React",
-      "useState",
-      "useEffect",
-      "useRef",
-      "useCallback",
-      "useMemo",
-      "useFireproof",
-      `
-      let exports = {};
-      ${codeWithoutImports}
-      return exports.default || exports.App;
-      `,
-    );
+      ${transformed.code}
 
-    // Import necessary dependencies
-    const { useState, useEffect: useEffectHook, useRef: useRefHook, useCallback, useMemo } = React;
+      // Mount the component using its own React instance from esm.sh
+      const container = document.getElementById("${containerId}");
+      if (container && App) {
+        mountVibesApp({
+          container: container,
+          appComponent: App,
+          showVibesSwitch: true,
+          vibeMetadata: {
+            titleId: "${titleId}",
+            installId: "${installId}",
+          },
+        });
+      }
+    `;
 
-    // Execute and get the component with imported dependencies
-    const component = evalFunc(
-      React,
-      useState,
-      useEffectHook,
-      useRefHook,
-      useCallback,
-      useMemo,
-      useFireproof,
-    );
+    // Step 4: Create and execute module script
+    const scriptElement = document.createElement("script");
+    scriptElement.type = "module";
+    scriptElement.textContent = moduleCode;
+    scriptElement.id = `vibe-script-${containerId}`;
 
-    return component as React.ComponentType;
+    // Add script to DOM
+    document.head.appendChild(scriptElement);
+
+    // Wait for module to execute and mount
+    await new Promise((resolve) => setTimeout(resolve, 200));
   } catch (err) {
-    console.error("Failed to evaluate vibe code:", err);
-    return null;
+    console.error("Failed to mount vibe code:", err);
+    throw err;
   }
 }
 
 export default function VibeInstanceViewer() {
   const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
-  const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const containerIdRef = useRef(`vibe-container-${Date.now()}`);
 
   // Lazy instance creation: ensure instance exists in database
   const { instances, createInstance } = useVibeInstances(titleId || "");
@@ -112,9 +108,11 @@ export default function VibeInstanceViewer() {
   }, [titleId, uuid, instances, createInstance, creationAttempted]);
 
   useEffect(() => {
-    if (!titleId || !uuid || !containerRef.current || mounted) return;
+    if (!titleId || !uuid || mounted) return;
 
-    const loadAndMount = async () => {
+    let active = true;
+
+    const loadAndMountVibe = async () => {
       try {
         // Fetch the published vibe code from hosting
         const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
@@ -127,43 +125,33 @@ export default function VibeInstanceViewer() {
 
         const vibeCode = await response.text();
 
-        // Evaluate the JSX code to get the component
-        const AppComponent = await evaluateVibeCode(vibeCode);
+        if (!active) return;
 
-        if (!AppComponent) {
-          throw new Error("Failed to extract component from vibe code");
+        // Mount the vibe code using its own React instance from the import map
+        await mountVibeCode(vibeCode, containerIdRef.current, titleId, uuid);
+
+        if (active) {
+          setMounted(true);
         }
-
-        // Mount the vibe app inline with proper metadata for ledger naming
-        if (!containerRef.current) {
-          throw new Error("Container ref is null");
-        }
-
-        const result = mountVibesApp({
-          container: containerRef.current,
-          appComponent: AppComponent,
-          title: titleId,
-          imageUrl: `/screenshot.png`,
-          showVibesSwitch: true,
-          vibeMetadata: {
-            titleId,
-            installId: uuid,
-          },
-        });
-
-        setMounted(true);
-
-        // Cleanup on unmount
-        return () => {
-          result.unmount();
-        };
       } catch (err) {
         console.error("Error loading vibe:", err);
-        setError(err instanceof Error ? err.message : String(err));
+        if (active) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
       }
     };
 
-    loadAndMount();
+    loadAndMountVibe();
+
+    // Cleanup function
+    return () => {
+      active = false;
+      // Clean up the script tag
+      const script = document.getElementById(`vibe-script-${containerIdRef.current}`);
+      if (script) {
+        script.remove();
+      }
+    };
   }, [titleId, uuid, mounted]);
 
   if (!titleId || !uuid) {
@@ -194,8 +182,8 @@ export default function VibeInstanceViewer() {
         </div>
       )}
 
-      {/* Inline Vibe Container */}
-      <div ref={containerRef} className="w-full h-full" />
+      {/* Container for vibe module to mount into */}
+      <div id={containerIdRef.current} className="w-full h-full" />
     </div>
   );
 }
