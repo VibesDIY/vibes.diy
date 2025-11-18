@@ -20,7 +20,7 @@ export async function mountVibeCode(
     // Step 3: Inject mounting code that uses the module's own React/ReactDOM
     // This ensures the component uses the same React instance it imported
     const moduleCode = `
-      import { mountVibesApp } from "https://esm.sh/use-vibes";
+      import { mountVibesApp } from "use-vibes";
 
       ${transformed.code}
 
