@@ -5,7 +5,7 @@ import type { ToCloudOpts, TokenAndClaims } from '@fireproof/core-types-protocol
 import { RedirectStrategy } from 'use-fireproof';
 import { AUTH_OVERLAY_READY_EVENT, AUTH_OVERLAY_HIDDEN_CLASS } from './events.js';
 import type { AuthOverlayReadyDetail } from './events.js';
-import type { VibeMetadata } from './contexts/VibeContext.js';
+import { type VibeMetadata, validateVibeMetadata } from './contexts/VibeContext.js';
 
 interface BuildURIBuilder {
   from: (uri: string) => URLBuilder;
@@ -26,6 +26,9 @@ declare global {
 export function generateLedgerName(dbName: string, vibeMetadata?: VibeMetadata | null): string {
   // Priority 1: Use React Context metadata if provided (inline rendering)
   if (vibeMetadata) {
+    // Validate metadata before using it to prevent malformed ledger names
+    validateVibeMetadata(vibeMetadata);
+
     const { installId, titleId } = vibeMetadata;
     const safeInstallId = String(installId).replace(/[^a-z0-9-]/gi, '-');
     const safeTitleId = String(titleId).replace(/[^a-z0-9-]/gi, '-');
@@ -95,6 +98,18 @@ export function isJWTExpired(token: string): boolean {
   }
 }
 
+/**
+ * Configuration options for ManualRedirectStrategy.
+ */
+export interface ManualRedirectStrategyOptions {
+  /** Custom HTML generator for the auth overlay */
+  overlayHtml?: (url: string) => string;
+  /** Custom CSS for the auth overlay */
+  overlayCss?: string;
+  /** Vibe metadata for ledger name generation */
+  vibeMetadata?: VibeMetadata | null;
+}
+
 export class ManualRedirectStrategy extends RedirectStrategy {
   private authOpened = false;
   private pollingStarted = false;
@@ -119,13 +134,7 @@ export class ManualRedirectStrategy extends RedirectStrategy {
     };
   }
 
-  constructor(
-    opts: {
-      overlayHtml?: (url: string) => string;
-      overlayCss?: string;
-      vibeMetadata?: VibeMetadata | null;
-    } = {}
-  ) {
+  constructor(opts: ManualRedirectStrategyOptions = {}) {
     // Create custom CSS for subtle bottom slide-up
     const customCss =
       opts.overlayCss ||
