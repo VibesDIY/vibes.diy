@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* Alte Haas Grotesk Font Faces */
+@font-face {
+  font-family: "Alte Haas Grotesk";
+  src: url("../public/fonts/AlteHaasGroteskRegular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Alte Haas Grotesk";
+  src: url("../public/fonts/AlteHaasGroteskBold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   /* Color definitions - these will be available as bg-midnight, text-tahiti, etc. */
   --color-midnight: #333;

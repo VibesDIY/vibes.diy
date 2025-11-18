@@ -9,6 +9,10 @@ export interface BrutalistCardProps extends React.HTMLAttributes<HTMLDivElement>
   variant?: BrutalistCardVariant;
   /** Size affecting padding, font size, and shadow size */
   size?: BrutalistCardSize;
+  /** Message type for chat bubble corner rounding */
+  messageType?: 'user' | 'ai';
+  /** If true, ignores dark mode and always uses light styling */
+  ignoreDarkMode?: boolean;
 }
 
 /**
@@ -34,14 +38,38 @@ export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps
       children,
       variant = 'default',
       size = 'md',
+      messageType,
+      ignoreDarkMode = false,
       style,
       className,
       ...divProps
     }: BrutalistCardProps,
     ref
   ) => {
+    // Detect dark mode
+    const [isDark, setIsDark] = React.useState(false);
+
+    React.useEffect(() => {
+      if (ignoreDarkMode) return;
+
+      const checkDarkMode = () => {
+        setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      };
+
+      checkDarkMode();
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addEventListener('change', checkDarkMode);
+
+      return () => mediaQuery.removeEventListener('change', checkDarkMode);
+    }, [ignoreDarkMode]);
+
+    const shouldApplyDarkMode = isDark && !ignoreDarkMode;
+
     const cardStyle = {
-      ...getBrutalistCardStyle(variant, size),
+      ...getBrutalistCardStyle(variant, size, messageType),
+      background: shouldApplyDarkMode ? '#1a1a1a' : '#fff',
+      color: shouldApplyDarkMode ? '#fff' : '#1a1a1a',
+      border: shouldApplyDarkMode ? '3px solid #555' : '3px solid #1a1a1a',
       ...style,
     } as React.CSSProperties;
 

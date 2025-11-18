@@ -7,6 +7,7 @@ import {
 } from "react-router";
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
+import { HomeScreen } from "../pages/index.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 
 export function meta() {
@@ -108,6 +109,11 @@ export default function SessionWrapper() {
   // Conditional rendering - true deferred session creation
   // Use either the URL param or local state during the initial transition
   const effectiveSessionId = urlSessionId ?? sessionId;
+
+  // Show HomeScreen when on root path without sessionId
+  if (!effectiveSessionId && pathname === "/") {
+    return <HomeScreen />;
+  }
 
   if (!effectiveSessionId) {
     return <NewSessionView onSessionCreate={handleSessionCreate} />;
