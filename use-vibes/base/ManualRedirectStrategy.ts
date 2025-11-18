@@ -2,6 +2,7 @@
 import type { Logger } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import type { ToCloudOpts, TokenAndClaims } from '@fireproof/core-types-protocols-cloud';
+import { hashObjectSync } from '@fireproof/core-runtime';
 import { RedirectStrategy } from 'use-fireproof';
 import { AUTH_OVERLAY_READY_EVENT, AUTH_OVERLAY_HIDDEN_CLASS } from './events.js';
 import type { AuthOverlayReadyDetail } from './events.js';
@@ -103,9 +104,14 @@ export class ManualRedirectStrategy extends RedirectStrategy {
   private resolveToken?: (value: TokenAndClaims | undefined) => void;
   private readonly vibeMetadata?: VibeMetadata;
 
-  // Override the hash property to return our implementation
+  // Override the hash property to return a proper hash of the configuration
+  // This ensures different strategy instances with different configs get different hashes
   readonly hash = (): string => {
-    return 'manual-redirect-strategy';
+    return hashObjectSync({
+      overlayCss: this.overlayCss,
+      overlayHtml: this.overlayHtml('X').toString(),
+      vibeMetadata: this.vibeMetadata,
+    });
   };
 
   // Public method to set an external token (e.g., from localStorage)
