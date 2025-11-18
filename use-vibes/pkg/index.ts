@@ -48,6 +48,14 @@ export {
   constructSubdomain,
   generateInstallId,
 
+  // Mounting utilities for inline vibe rendering
+  mountVibeCode,
+  mountVibeWithCleanup,
+  isVibesMountReadyEvent,
+  isVibesMountErrorEvent,
+  type VibesMountReadyDetail,
+  type VibesMountErrorDetail,
+
   // Type namespaces
   type Fireproof,
   type CallAI,

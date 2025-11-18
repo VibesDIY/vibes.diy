@@ -637,3 +637,12 @@ export {
   VIBE_METADATA_ERROR_CODES,
 } from './contexts/VibeContext.js';
 export type { VibeMetadata } from './contexts/VibeContext.js';
+
+// Export mounting utilities for inline vibe rendering
+export {
+  mountVibeCode,
+  mountVibeWithCleanup,
+  isVibesMountReadyEvent,
+  isVibesMountErrorEvent,
+} from './mounting/index.js';
+export type { VibesMountReadyDetail, VibesMountErrorDetail } from './mounting/index.js';
