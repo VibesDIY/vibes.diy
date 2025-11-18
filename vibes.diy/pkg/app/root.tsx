@@ -120,6 +120,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             }),
           }}
         />
+        {/* Tailwind CSS v4 for inline vibe rendering - matches hosting runtime */}
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
       </head>
       <body>
         {/* TODO: Re-enable GtmNoScript when consent can be checked server-side */}
