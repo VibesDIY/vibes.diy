@@ -30,7 +30,7 @@ async function mountVibeCode(
   containerId: string,
   titleId: string,
   installId: string,
-): Promise<void> {
+): Promise<() => void> {
   try {
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
     const codeWithTransformedImports = transformImports(code);
@@ -42,6 +42,7 @@ async function mountVibeCode(
 
     // Step 3: Inject mounting code that uses the module's own React/ReactDOM
     // This ensures the component uses the same React instance it imported
+    const unmountGlobalKey = `__vibes_unmount_${containerId}`;
     const moduleCode = `
       import { mountVibesApp } from "use-vibes";
 
@@ -50,7 +51,7 @@ async function mountVibeCode(
       // Mount the component using its own React instance from esm.sh
       const container = document.getElementById("${containerId}");
       if (container && App) {
-        mountVibesApp({
+        const mountResult = mountVibesApp({
           container: container,
           appComponent: App,
           showVibesSwitch: true,
@@ -59,6 +60,9 @@ async function mountVibeCode(
             installId: "${installId}",
           },
         });
+
+        // Expose unmount callback globally for cleanup
+        window['${unmountGlobalKey}'] = mountResult.unmount;
       }
     `;
 
@@ -73,6 +77,16 @@ async function mountVibeCode(
 
     // Wait for module to execute and mount
     await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Return cleanup function that calls the exposed unmount
+    return () => {
+      const unmount = (window as Record<string, unknown>)[unmountGlobalKey];
+      if (typeof unmount === "function") {
+        unmount();
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete (window as Record<string, unknown>)[unmountGlobalKey];
+      }
+    };
   } catch (err) {
     console.error("Failed to mount vibe code:", err);
     throw err;
@@ -110,6 +124,7 @@ export default function VibeInstanceViewer() {
     if (!titleId || !uuid) return;
 
     let active = true;
+    let unmountVibe: (() => void) | null = null;
 
     const loadAndMountVibe = async () => {
       try {
@@ -126,8 +141,13 @@ export default function VibeInstanceViewer() {
 
         if (!active) return;
 
-        // Mount the vibe code using its own React instance from the import map
-        await mountVibeCode(vibeCode, containerIdRef.current, titleId, uuid);
+        // Mount the vibe code and capture the unmount callback
+        unmountVibe = await mountVibeCode(
+          vibeCode,
+          containerIdRef.current,
+          titleId,
+          uuid,
+        );
       } catch (err) {
         console.error("Error loading vibe:", err);
         if (active) {
@@ -144,6 +164,12 @@ export default function VibeInstanceViewer() {
     // Cleanup function
     return () => {
       active = false;
+
+      // Call the unmount callback to properly cleanup the React root
+      if (unmountVibe) {
+        unmountVibe();
+      }
+
       // Clean up the script tag
       const script = document.getElementById(
         `vibe-script-${containerIdRef.current}`,
