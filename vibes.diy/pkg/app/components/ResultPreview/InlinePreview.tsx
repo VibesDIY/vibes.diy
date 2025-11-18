@@ -33,7 +33,7 @@ export function InlinePreview({
         }
 
         // Mount the vibe code and capture the unmount callback via event
-        const unmount = await mountVibeWithCleanup(
+        const { unmount, outcome } = await mountVibeWithCleanup(
           code,
           containerId,
           sessionId, // Use session ID as titleId
@@ -41,13 +41,24 @@ export function InlinePreview({
           transformImports,
         );
 
-        if (active) {
-          unmountVibeRef.current = unmount;
-          setError(null);
-        } else {
+        if (!active) {
           // Component was unmounted while mounting, clean up immediately
           unmount();
+          return;
         }
+
+        if (outcome !== "success") {
+          const outcomeMessage =
+            outcome === "timeout"
+              ? "Preview mount timed out. Check console for details."
+              : "Preview mount failed. Check console for details.";
+          setError(outcomeMessage);
+          // Mount never fully succeeded; do not track an unmount callback
+          return;
+        }
+
+        setError(null);
+        unmountVibeRef.current = unmount;
       } catch (err) {
         console.error("Error mounting inline preview:", err);
         if (active) {

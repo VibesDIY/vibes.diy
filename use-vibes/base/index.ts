@@ -642,4 +642,9 @@ export {
   isVibesMountReadyEvent,
   isVibesMountErrorEvent,
 } from './mounting/index.js';
-export type { VibesMountReadyDetail, VibesMountErrorDetail } from './mounting/index.js';
+export type {
+  VibesMountReadyDetail,
+  VibesMountErrorDetail,
+  MountResult,
+  MountOutcome,
+} from './mounting/index.js';

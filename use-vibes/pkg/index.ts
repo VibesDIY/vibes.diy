@@ -55,6 +55,8 @@ export {
   isVibesMountErrorEvent,
   type VibesMountReadyDetail,
   type VibesMountErrorDetail,
+  type MountResult,
+  type MountOutcome,
 
   // Type namespaces
   type Fireproof,

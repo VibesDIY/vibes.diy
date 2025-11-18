@@ -81,13 +81,29 @@ export default function VibeInstanceViewer() {
         if (!active) return;
 
         // Mount the vibe code and capture the unmount callback via event
-        unmountVibe = await mountVibeWithCleanup(
+        const { unmount, outcome } = await mountVibeWithCleanup(
           vibeCode,
           newContainerId,
           titleId,
           uuid,
           transformImports,
         );
+
+        if (!active) {
+          // Component was unmounted while mounting, clean up immediately
+          unmount();
+          return;
+        }
+
+        if (outcome !== "success") {
+          const outcomeMessage =
+            outcome === "timeout"
+              ? "Vibe mount timed out. Check console for details."
+              : "Vibe mount failed. Check console for details.";
+          setError(outcomeMessage);
+        }
+
+        unmountVibe = unmount;
       } catch (err) {
         console.error("Error loading vibe:", err);
         if (active) {
