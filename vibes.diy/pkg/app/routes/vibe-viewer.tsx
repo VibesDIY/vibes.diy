@@ -12,7 +12,7 @@ const idService = new IdService();
 export function meta({
   params,
 }: {
-  params: { titleId: string; uuid: string };
+  params: { titleId: string; installId: string };
 }) {
   return [
     { title: `${params.titleId} | Vibes DIY` },
@@ -212,7 +212,7 @@ async function mountVibeWithCleanup(
 }
 
 export default function VibeInstanceViewer() {
-  const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
+  const { titleId, installId } = useParams<{ titleId: string; installId: string }>();
   const [error, setError] = useState<string | null>(null);
   // Generate unique container ID using cement's IdService
   // Regenerate on each navigation to make debugging easier
@@ -225,25 +225,25 @@ export default function VibeInstanceViewer() {
   const [creationAttempted, setCreationAttempted] = useState(false);
 
   useEffect(() => {
-    if (!titleId || !uuid || creationAttempted) return;
+    if (!titleId || !installId || creationAttempted) return;
 
     // Check if instance exists
-    const fullId = `${titleId}-${uuid}`;
+    const fullId = `${titleId}-${installId}`;
     const instanceExists = instances.some((inst) => inst._id === fullId);
 
     // Create instance if it doesn't exist (lazy creation for Fresh Data)
-    // Pass the UUID explicitly to ensure correct _id is created
+    // Pass the installId explicitly to ensure correct _id is created
     if (!instanceExists && instances.length >= 0) {
       setCreationAttempted(true);
-      createInstance("Fresh Data", {}, uuid).catch((err) => {
+      createInstance("Fresh Data", {}, installId).catch((err) => {
         console.error("Failed to lazy-create instance:", err);
         setCreationAttempted(false); // Allow retry on error
       });
     }
-  }, [titleId, uuid, instances, createInstance, creationAttempted]);
+  }, [titleId, installId, instances, createInstance, creationAttempted]);
 
   useEffect(() => {
-    if (!titleId || !uuid) return;
+    if (!titleId || !installId) return;
 
     // Generate new container ID for this navigation
     const newContainerId = `vibe-container-${crypto.randomUUID()}`;
@@ -272,7 +272,7 @@ export default function VibeInstanceViewer() {
           vibeCode,
           newContainerId,
           titleId,
-          uuid,
+          installId,
         );
       } catch (err) {
         console.error("Error loading vibe:", err);
@@ -302,13 +302,13 @@ export default function VibeInstanceViewer() {
         script.remove();
       }
     };
-  }, [titleId, uuid]);
+  }, [titleId, installId]);
 
-  if (!titleId || !uuid) {
+  if (!titleId || !installId) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <p className="text-red-600 text-lg">Missing title ID or UUID</p>
+          <p className="text-red-600 text-lg">Missing title ID or install ID</p>
         </div>
       </div>
     );
