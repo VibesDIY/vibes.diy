@@ -55,11 +55,15 @@ export { fireproof, ImgFile, ManualRedirectStrategy, isJWTExpired };
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
 
+// Extended interface for use-vibes toCloud options that includes vibeMetadata
+export interface UseVibesCloudParam extends UseFpToCloudParam {
+  readonly vibeMetadata?: VibeMetadata | null;
+}
+
 // Helper function to create toCloud configuration with ManualRedirectStrategy
-export function toCloud(
-  opts?: UseFpToCloudParam,
-  vibeMetadata?: VibeMetadata | null
-): ToCloudAttachable {
+export function toCloud(opts?: UseVibesCloudParam): ToCloudAttachable {
+  // Extract vibeMetadata from opts
+  const { vibeMetadata, ...fpOpts } = opts || {};
   const strategy = new ManualRedirectStrategy({ vibeMetadata });
 
   // Check if an external token exists in localStorage
@@ -82,7 +86,7 @@ export function toCloud(
   }
 
   const attachable = originalToCloud({
-    ...opts,
+    ...fpOpts,
     strategy,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
@@ -112,7 +116,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
 
   // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud(undefined, vibeMetadata) : undefined;
+  const attachConfig = wasSyncEnabled ? toCloud({ vibeMetadata }) : undefined;
 
   // Use original useFireproof with attach config only if previously enabled
   // This preserves the createAttach lifecycle for token persistence
@@ -129,7 +133,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Handle first-time sync enable without reload
   useEffect(() => {
     if (manualAttach === 'pending' && result.database) {
-      const cloudConfig = toCloud(undefined, vibeMetadata);
+      const cloudConfig = toCloud({ vibeMetadata });
       result.database
         .attach(cloudConfig)
         .then((attached) => {
