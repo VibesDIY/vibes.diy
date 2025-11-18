@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import * as Babel from "@babel/standalone";
+import { IdService } from "@adviser/cement";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { transformImports } from "../../../../hosting/base/utils/codeTransform.js";
+
+// Singleton ID generator using cement's IdService (UUID mode by default)
+const idService = new IdService();
 
 export function meta({
   params,
@@ -210,10 +214,10 @@ async function mountVibeWithCleanup(
 export default function VibeInstanceViewer() {
   const { titleId, uuid } = useParams<{ titleId: string; uuid: string }>();
   const [error, setError] = useState<string | null>(null);
-  // Generate unique container ID using crypto.randomUUID for better collision resistance
+  // Generate unique container ID using cement's IdService
   // Regenerate on each navigation to make debugging easier
   const [containerId, setContainerId] = useState(
-    () => `vibe-container-${crypto.randomUUID()}`,
+    () => `vibe-container-${idService.NextId()}`,
   );
 
   // Lazy instance creation: ensure instance exists in database
