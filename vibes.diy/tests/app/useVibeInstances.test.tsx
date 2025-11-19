@@ -474,9 +474,7 @@ describe("useVibeInstances", () => {
       });
 
       await act(async () => {
-        await expect(
-          result.current.createInstance("Test"),
-        ).rejects.toThrow();
+        await expect(result.current.createInstance("Test")).rejects.toThrow();
       });
 
       expect(result.current.error).not.toBe(null);
@@ -586,9 +584,7 @@ describe("useVibeInstances", () => {
       });
 
       await act(async () => {
-        await expect(
-          result.current.createInstance("Test"),
-        ).rejects.toThrow();
+        await expect(result.current.createInstance("Test")).rejects.toThrow();
       });
 
       expect(result.current.error).not.toBe(null);
