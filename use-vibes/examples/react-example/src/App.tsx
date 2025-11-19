@@ -5,7 +5,6 @@ import VibesGeneratorExample from './VibesGeneratorExample';
 import VibeControlExample from './VibeControlExample';
 import { ShareExample } from './ShareExample';
 import './App.css';
-import VibeAuthWallExample from './VibeAuthWallExample';
 import MountVibesAppExample from './MountVibesAppExample';
 
 type ExampleKey =
@@ -15,7 +14,6 @@ type ExampleKey =
   | 'vibes-generator'
   | 'vibe-control'
   | 'share'
-  | 'vibe-auth-wall'
   | 'mount-vibes-app';
 
 function App() {
@@ -90,12 +88,6 @@ function App() {
       title: 'Vibe Control',
       description: 'Floating action button with overlay - works in React and vanilla JS',
       component: <VibeControlExample setCurrentExample={handleExampleChange} />,
-    },
-    {
-      key: 'vibe-auth-wall' as const,
-      title: 'Vibe Auth Wall',
-      description: 'Authentication wall',
-      component: <VibeAuthWallExample />,
     },
     {
       key: 'mount-vibes-app' as const,
