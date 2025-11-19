@@ -238,8 +238,8 @@ importers:
         specifier: ^4.10.6
         version: 4.10.6
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       multiformats:
         specifier: ^13.4.0
         version: 13.4.1
@@ -707,8 +707,8 @@ importers:
   utils/pkg:
     dependencies:
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       multiformats:
         specifier: ^13.4.0
         version: 13.4.1
@@ -736,8 +736,8 @@ importers:
         specifier: ^4.0.10
         version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       multiformats:
         specifier: ^13.4.0
         version: 13.4.1
@@ -805,8 +805,8 @@ importers:
         specifier: ^5.1.25
         version: 5.1.32
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       monaco-editor:
         specifier: ^0.54.0
         version: 0.54.0
@@ -968,8 +968,8 @@ importers:
         specifier: ^5.1.25
         version: 5.1.32
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       multiformats:
         specifier: ^13.3.7
         version: 13.4.1
@@ -1068,8 +1068,8 @@ importers:
         specifier: ^5.1.25
         version: 5.1.32
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       multiformats:
         specifier: ^13.3.7
         version: 13.4.1
@@ -6730,6 +6730,9 @@ packages:
   jose@6.1.1:
     resolution: {integrity: sha512-GWSqjfOPf4cWOkBzw5THBjtGPhXKqYnfRBzh4Ni+ArTrQQ9unvmsA3oFLqaYKoKe5sjWmGu5wVKg9Ft1i+LQfg==}
 
+  jose@6.1.2:
+    resolution: {integrity: sha512-MpcPtHLE5EmztuFIqB0vzHAWJPpmN1E6L4oo+kze56LIs3MyXIj9ZHMDxqOvkP38gBR7K1v3jqd4WU2+nrfONQ==}
+
   jpeg-js@0.4.4:
     resolution: {integrity: sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==}
 
@@ -10558,7 +10561,7 @@ snapshots:
       '@fireproof/core-types-blockstore': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
-      jose: 6.1.1
+      jose: 6.1.2
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -10626,7 +10629,7 @@ snapshots:
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
-      jose: 6.1.1
+      jose: 6.1.2
       multiformats: 13.4.1
       zod: 4.1.12
     transitivePeerDependencies:
@@ -10677,7 +10680,7 @@ snapshots:
       '@fireproof/core-types-blockstore': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
-      jose: 6.1.1
+      jose: 6.1.2
       multiformats: 13.4.1
       prolly-trees: 1.0.4
       zod: 4.1.12
@@ -10701,7 +10704,7 @@ snapshots:
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
-      jose: 6.1.1
+      jose: 6.1.2
       multiformats: 13.4.1
       zod: 4.1.12
     transitivePeerDependencies:
@@ -16168,6 +16171,8 @@ snapshots:
 
   jose@6.1.1: {}
 
+  jose@6.1.2: {}
+
   jpeg-js@0.4.4: {}
 
   js-cookie@2.2.1: {}
@@ -19213,7 +19218,7 @@ snapshots:
       '@fireproof/core-types-protocols-cloud': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
       dompurify: 3.3.0
-      jose: 6.1.1
+      jose: 6.1.2
       react: 19.2.0
       ts-essentials: 10.1.1(typescript@5.9.3)
     transitivePeerDependencies:
