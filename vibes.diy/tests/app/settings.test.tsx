@@ -138,8 +138,10 @@ describe("Settings page", () => {
     const logoutButton = screen.getByText("Logout");
     fireEvent.click(logoutButton);
 
-    // Check that localStorage.removeItem was called with 'auth_token'
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith("auth_token");
+    // Check that localStorage.removeItem was called with 'vibes-diy-auth-token'
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+      "vibes-diy-auth-token",
+    );
 
     // For now, we won't test the navigate call since it's difficult to mock correctly
     // and is peripheral to the main logout functionality we're testing
