@@ -2,7 +2,18 @@ import React, { useState, useEffect, useId } from 'react';
 import { VibesButton, BLUE, RED, YELLOW, GRAY } from '../VibesButton/index.js';
 import { BrutalistCard } from '../BrutalistCard/BrutalistCard.js';
 import { generateFreshDataUrl, generateRemixUrl } from '../../utils/appSlug.js';
-import { styles } from './VibesPanel.styles.js';
+import {
+  getOuterContainerStyle,
+  getResponsiveContainerStyle,
+  getResponsiveLabelStyle,
+  getResponsiveButtonWrapperStyle,
+  getButtonContainerStyle,
+  getInviteFormStyle,
+  getInviteLabelStyle,
+  getInviteInputWrapperStyle,
+  getInviteInputStyle,
+  getInviteStatusStyle,
+} from './VibesPanel.styles.js';
 
 export interface VibesPanelProps {
   /** Optional custom styling for the panel container */
@@ -27,6 +38,9 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     'idle'
   );
   const [inviteMessage, setInviteMessage] = useState('');
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
+  );
 
   const handleMutateClick = () => {
     if (mode === 'default') {
@@ -82,6 +96,27 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     );
   };
 
+  // Listen for window resize to update mobile state
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile(e.matches);
+    };
+
+    // Modern browsers
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+    // Fallback for older browsers
+    else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, []);
+
   // Listen for share response events
   useEffect(() => {
     const handleShareSuccess = (event: Event) => {
@@ -109,43 +144,12 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     };
   }, []);
 
-  // Inject styles
-  useEffect(() => {
-    const styleId = 'vibes-panel-styles';
-    if (!document.getElementById(styleId)) {
-      const styleTag = document.createElement('style');
-      styleTag.id = styleId;
-      styleTag.textContent = styles;
-      document.head.appendChild(styleTag);
-    }
-  }, []);
-
-  const containerStyle: React.CSSProperties = {
-    padding: '12px',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: '12px',
-    ...style,
-  };
-
-  const buttonContainerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: '24px',
-    flexWrap: 'wrap',
-    maxWidth: '100%',
-  };
-
   return (
-    <div style={containerStyle} className={className}>
-      <div className="vibes-panel-container">
-        <div className="vibes-panel-label">Settings</div>
-        <div className="vibes-panel-button-wrapper">
-          <div style={buttonContainerStyle}>
+    <div style={getOuterContainerStyle(style)} className={className}>
+      <div style={getResponsiveContainerStyle(isMobile)}>
+        <div style={getResponsiveLabelStyle(isMobile)}>Settings</div>
+        <div style={getResponsiveButtonWrapperStyle(isMobile)}>
+          <div style={getButtonContainerStyle()}>
             {mode === 'mutate' ? (
               // Mutate mode buttons
               <>
@@ -164,30 +168,18 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
               <>
                 {inviteStatus === 'idle' ? (
                   // Show form when idle
-                  <form
-                    onSubmit={handleInviteSubmit}
-                    style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}
-                  >
-                    <label htmlFor={emailId} style={{ alignSelf: 'flex-start', fontWeight: 600 }}>
+                  <form onSubmit={handleInviteSubmit} style={getInviteFormStyle()}>
+                    <label htmlFor={emailId} style={getInviteLabelStyle()}>
                       Invite by email
                     </label>
-                    <BrutalistCard size="md" style={{ width: '100%' }}>
+                    <BrutalistCard size="md" style={getInviteInputWrapperStyle()}>
                       <input
                         id={emailId}
                         type="email"
                         placeholder="friend@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        style={{
-                          width: '100%',
-                          border: 'none',
-                          background: 'transparent',
-                          color: 'inherit',
-                          fontSize: 'inherit',
-                          fontWeight: 'inherit',
-                          letterSpacing: 'inherit',
-                          padding: 0,
-                        }}
+                        style={getInviteInputStyle()}
                         autoComplete="email"
                         required
                       />
@@ -210,7 +202,7 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
                           ? 'error'
                           : 'success'
                     }
-                    style={{ textAlign: 'center' }}
+                    style={getInviteStatusStyle()}
                   >
                     {inviteStatus === 'sending' ? 'Inviting...' : inviteMessage}
                   </BrutalistCard>

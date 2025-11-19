@@ -1,62 +1,153 @@
-export const styles = `
-  .vibes-panel-container {
-    position: relative;
-    display: inline-flex;
-    align-items: stretch;
-    width: auto;
-    margin-bottom: 40px;
+import type React from 'react';
+
+export function getOuterContainerStyle(
+  customStyle?: React.CSSProperties
+): React.CSSProperties {
+  return {
+    padding: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '12px',
+    ...customStyle,
+  };
+}
+
+export function getContainerStyle(): React.CSSProperties {
+  return {
+    position: 'relative',
+    display: 'inline-flex',
+    alignItems: 'stretch',
+    width: 'auto',
+    marginBottom: '40px',
+  };
+}
+
+export function getLabelStyle(): React.CSSProperties {
+  return {
+    background: '#e5e5e5',
+    border: '2px solid #000',
+    borderLeft: 'none',
+    borderTopRightRadius: '8px',
+    borderBottomRightRadius: '8px',
+    padding: '12px 8px',
+    fontWeight: 700,
+    fontSize: '14px',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    whiteSpace: 'nowrap',
+    color: '#000',
+    writingMode: 'vertical-rl',
+    transform: 'rotate(180deg)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    margin: '32px 0px',
+  };
+}
+
+export function getButtonWrapperStyle(): React.CSSProperties {
+  return {
+    background: '#e5e5e5',
+    border: '2px solid #000',
+    borderRadius: '8px',
+    padding: '24px 24px 32px 24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 'auto',
+  };
+}
+
+export function getButtonContainerStyle(): React.CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '24px',
+    flexWrap: 'wrap',
+    maxWidth: '100%',
+  };
+}
+
+export function getInviteFormStyle(): React.CSSProperties {
+  return {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  };
+}
+
+export function getInviteLabelStyle(): React.CSSProperties {
+  return {
+    alignSelf: 'flex-start',
+    fontWeight: 600,
+  };
+}
+
+export function getInviteInputWrapperStyle(): React.CSSProperties {
+  return {
+    width: '100%',
+  };
+}
+
+export function getInviteInputStyle(): React.CSSProperties {
+  return {
+    width: '100%',
+    border: 'none',
+    background: 'transparent',
+    color: 'inherit',
+    fontSize: 'inherit',
+    fontWeight: 'inherit',
+    letterSpacing: 'inherit',
+    padding: 0,
+  };
+}
+
+export function getInviteStatusStyle(): React.CSSProperties {
+  return {
+    textAlign: 'center',
+  };
+}
+
+// Media query helpers (use window.matchMedia in component for responsive behavior)
+export function getResponsiveLabelStyle(isMobile: boolean): React.CSSProperties {
+  if (isMobile) {
+    return {
+      display: 'none',
+    };
   }
+  return getLabelStyle();
+}
 
-  .vibes-panel-label {
-    background: #e5e5e5;
-    border: 2px solid #000;
-    border-left: none;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-    padding: 12px 8px;
-    font-weight: 700;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;
-    color: #000;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin: 32px 0px;
+export function getResponsiveButtonWrapperStyle(isMobile: boolean): React.CSSProperties {
+  if (isMobile) {
+    return {
+      background: 'transparent',
+      border: 'none',
+      borderRadius: '0',
+      padding: '0',
+      paddingBottom: '24px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 'auto',
+    };
   }
+  return getButtonWrapperStyle();
+}
 
-  .vibes-panel-button-wrapper {
-    background: #e5e5e5;
-    border: 2px solid #000;
-    border-radius: 8px;
-    padding: 24px 24px 32px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
+export function getResponsiveContainerStyle(isMobile: boolean): React.CSSProperties {
+  if (isMobile) {
+    return {
+      ...getContainerStyle(),
+      flexDirection: 'column',
+      width: '100%',
+    };
   }
-
-  @media (max-width: 768px) {
-    .vibes-panel-container {
-      flex-direction: column;
-      width: 100%;
-    }
-
-    .vibes-panel-label {
-      display: none;
-    }
-
-    .vibes-panel-button-wrapper {
-      background: transparent;
-      border: none;
-      border-radius: 0;
-      padding: 0;
-      padding-bottom: 24px;
-    }
-  }
-`;
+  return getContainerStyle();
+}
