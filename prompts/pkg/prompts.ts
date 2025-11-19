@@ -113,7 +113,9 @@ export interface LlmSelectionDecisions {
   demoData: boolean;
 }
 
-const warnOnce = Lazy(() => console.warn("vibes-diy-auth-token is not support on node"));
+const warnOnce = Lazy(() =>
+  console.warn("vibes-diy-auth-token is not support on node"),
+);
 function defaultGetAuthToken(
   fn?: () => Promise<string>,
 ): () => Promise<string> {
@@ -122,7 +124,8 @@ function defaultGetAuthToken(
   }
   const rn = runtimeFn();
   if (rn.isBrowser) {
-    return () => Promise.resolve(localStorage.getItem("vibes-diy-auth-token") || "");
+    return () =>
+      Promise.resolve(localStorage.getItem("vibes-diy-auth-token") || "");
   }
   return () => {
     warnOnce();
