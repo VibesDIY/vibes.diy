@@ -113,6 +113,26 @@ export interface LlmSelectionDecisions {
   demoData: boolean;
 }
 
+<<<<<<< HEAD
+=======
+const warnOnce = Lazy(() => console.warn("vibes-diy-auth-token is not support on node"));
+function defaultGetAuthToken(
+  fn?: () => Promise<string>,
+): () => Promise<string> {
+  if (typeof fn === "function") {
+    return () => fn();
+  }
+  const rn = runtimeFn();
+  if (rn.isBrowser) {
+    return () => Promise.resolve(localStorage.getItem("vibes-diy-auth-token") || "");
+  }
+  return () => {
+    warnOnce();
+    return Promise.resolve("Unsupported.JWT-Token");
+  };
+}
+
+>>>>>>> c94155dc (Update auth_token usage to vibes-diy-auth-token)
 export interface LlmSelectionOptions {
   readonly appMode?: "test" | "production";
   readonly callAiEndpoint?: CoerceURI;

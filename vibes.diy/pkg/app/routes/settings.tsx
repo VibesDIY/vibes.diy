@@ -114,12 +114,23 @@ export default function Settings() {
     }
   }, [saveSettings, settings, navigate]);
 
+<<<<<<< HEAD
   const handleLogout = useCallback(async () => {
     // Sign out with Clerk
     await signOut();
     // Navigate to home page after sign out
     navigate("/");
   }, [signOut, navigate]);
+=======
+  const handleLogout = useCallback(() => {
+    // Clear the auth token and navigate to home page
+    localStorage.removeItem("vibes-diy-auth-token");
+    // Update the auth context state before navigation
+    checkAuthStatus().then(() => {
+      navigate("/");
+    });
+  }, [navigate, checkAuthStatus]);
+>>>>>>> c94155dc (Update auth_token usage to vibes-diy-auth-token)
 
   const handleShowModelPickerInChatChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {

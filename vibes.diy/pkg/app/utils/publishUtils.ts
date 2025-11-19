@@ -130,6 +130,10 @@ export async function publishApp({
     // Prepare headers with optional Authorization
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+<<<<<<< HEAD
+=======
+      "X-VIBES-Token": localStorage.getItem("vibes-diy-auth-token") || "",
+>>>>>>> c94155dc (Update auth_token usage to vibes-diy-auth-token)
     };
 
     // Add Authorization header if token is provided

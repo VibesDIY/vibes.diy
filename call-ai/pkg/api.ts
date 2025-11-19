@@ -22,6 +22,37 @@ import { createStreamingGenerator } from "./streaming.js";
 import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 
+<<<<<<< HEAD
+=======
+// Centralized header name for Vibes auth
+export const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
+
+// Storage keys for authentication tokens
+const VIBES_API_AUTH_TOKEN_KEY = "vibes-api-auth-token" as const; // For API auth from parent window
+const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const; // For Fireproof sync token
+const LEGACY_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const; // Legacy vibes.diy key
+
+/**
+ * Get the Vibes authentication token from localStorage (browser only)
+ * Checks API token key first, then Fireproof sync key, then legacy key
+ * @returns The auth token if available, undefined otherwise
+ */
+export function getVibesAuthToken(): string | undefined {
+  if (typeof localStorage === "undefined") {
+    return undefined;
+  }
+  try {
+    // Check API auth key first (from parent window), then sync key, then legacy key
+    const apiToken = localStorage.getItem(VIBES_API_AUTH_TOKEN_KEY);
+    const newToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
+    const legacyToken = localStorage.getItem(LEGACY_AUTH_TOKEN_KEY);
+    return apiToken || newToken || legacyToken || undefined;
+  } catch (e) {
+    return undefined;
+  }
+}
+
+>>>>>>> c94155dc (Update auth_token usage to vibes-diy-auth-token)
 // Key management is now imported from ./key-management
 
 // initKeyStore is imported from key-management.ts

@@ -66,6 +66,21 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
       const normalizedCode = normalizeComponentExports(code);
       const transformedCode = transformImports(normalizedCode);
 
+<<<<<<< HEAD
+=======
+      // Get auth token from localStorage for API authentication
+      // Check both new and legacy token keys for compatibility
+      let authToken: string | undefined;
+      try {
+        authToken =
+          localStorage.getItem('vibes-diy-auth-token') ||
+          localStorage.getItem('vibes-diy-auth-token') ||
+          undefined;
+      } catch {
+        // Ignore localStorage errors (privacy mode, SSR, etc.)
+      }
+
+>>>>>>> c94155dc (Update auth_token usage to vibes-diy-auth-token)
       // Send code to iframe
       const messageData = {
         type: 'execute-code',

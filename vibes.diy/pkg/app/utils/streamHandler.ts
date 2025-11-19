@@ -51,6 +51,10 @@ export async function streamAI(
     headers: {
       "HTTP-Referer": "https://vibes.diy",
       "X-Title": "Vibes DIY",
+<<<<<<< HEAD
+=======
+      "X-VIBES-Token": localStorage.getItem("vibes-diy-auth-token") || "",
+>>>>>>> c94155dc (Update auth_token usage to vibes-diy-auth-token)
     },
   };
 
