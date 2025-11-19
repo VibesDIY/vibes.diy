@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { VibesDiyEnv } from "../config/env.js";
+import { useAuth } from "../contexts/AuthContext.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
   return [
@@ -20,7 +21,7 @@ function extractInstallId(fullId: string, titleId: string): string {
   return fullId.startsWith(prefix) ? fullId.slice(prefix.length) : fullId;
 }
 
-export default function VibeInstancesList() {
+function VibeInstancesListContent() {
   const { titleId } = useParams<{ titleId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -353,4 +354,36 @@ export default function VibeInstancesList() {
       </div>
     </div>
   );
+}
+
+// Auth wrapper component - only renders content when authenticated
+export default function VibeInstancesList() {
+  const { isAuthenticated, isLoading, setNeedsLogin } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setNeedsLogin(true);
+    }
+  }, [isAuthenticated, isLoading, setNeedsLogin]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-gray-700 text-lg">Checking authentication...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-gray-700 text-lg">
+          Please log in to view vibe instances
+        </div>
+      </div>
+    );
+  }
+
+  // Only render the actual component (which calls useFireproof) when authenticated
+  return <VibeInstancesListContent />;
 }
