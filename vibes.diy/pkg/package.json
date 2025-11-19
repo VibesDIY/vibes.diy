@@ -86,7 +86,7 @@
     "netlify-cli": "^23.11.1",
     "prettier": "^3.6.2",
     "shiki": "^3.15.0",
-    "storybook": "^10.0.6",
+    "storybook": "^10.0.8",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.19.3",
     "typescript": "^5.9.3",
