@@ -82,7 +82,7 @@
     "@vitest/browser-playwright": "^4.0.10",
     "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
-    "netlify": "^23.1.4",
+    "netlify": "^23.11.1",
     "netlify-cli": "^23.11.1",
     "prettier": "^3.6.2",
     "shiki": "^3.15.0",
