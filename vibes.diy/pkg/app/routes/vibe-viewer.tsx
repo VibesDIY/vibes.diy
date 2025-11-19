@@ -6,6 +6,7 @@ import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { transformImports } from "../../../../hosting/base/utils/codeTransform.js";
 import { useAuth } from "../contexts/AuthContext.js";
+import { useAuthPopup } from "../hooks/useAuthPopup.js";
 
 // Singleton ID generator using cement's IdService (UUID mode by default)
 const idService = new IdService();
@@ -344,13 +345,8 @@ function VibeInstanceViewerContent() {
 
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstanceViewer() {
-  const { isAuthenticated, isLoading, setNeedsLogin } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setNeedsLogin(true);
-    }
-  }, [isAuthenticated, isLoading, setNeedsLogin]);
+  const { isAuthenticated, isLoading } = useAuth();
+  const { initiateLogin, isPolling } = useAuthPopup();
 
   if (isLoading) {
     return (
@@ -362,10 +358,17 @@ export default function VibeInstanceViewer() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-white text-lg">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 gap-6">
+        <div className="text-white text-xl font-medium">
           Please log in to access this vibe
         </div>
+        <button
+          onClick={initiateLogin}
+          disabled={isPolling}
+          className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isPolling ? "Logging in..." : "Log In with Fireproof"}
+        </button>
       </div>
     );
   }
