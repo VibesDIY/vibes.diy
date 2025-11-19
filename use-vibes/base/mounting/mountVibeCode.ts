@@ -22,9 +22,9 @@ export async function mountVibeCode(
     // This ensures the component uses the same React instance it imported
     // We alias the imports to avoid collisions with the user's code
     const moduleCode = `
-      import __React__ from "https://esm.sh/react";
-      import { createRoot as __createRoot__ } from "https://esm.sh/react-dom/client";
-      import { mountVibesApp as __mountVibesApp__ } from "https://esm.sh/use-vibes";
+      import __React__ from "react";
+      import { createRoot as __createRoot__ } from "react-dom/client";
+      import { mountVibesApp as __mountVibesApp__ } from "use-vibes";
 
       ${transformed.code}
 
