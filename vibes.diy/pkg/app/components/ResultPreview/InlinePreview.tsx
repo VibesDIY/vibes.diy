@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
+import { transformImports } from "@vibes.diy/hosting-base";
 import { mountVibeWithCleanup } from "use-vibes";
-import { transformImports } from "../../../../../hosting/base/utils/codeTransform.js";
 
 interface InlinePreviewProps {
   code: string;
