@@ -241,11 +241,10 @@ const { database, useLiveQuery, enableSync, disableSync, syncEnabled } =
 #### Key Enhancements Added
 
 1. **Local-first behavior** - starts without sync by default
-2. **ManualRedirectStrategy** - custom auth strategy with subtle UI overlay
-3. **enableSync()** function - allows users to manually trigger sync
-4. **disableSync()** function - allows users to disable sync
-5. **syncEnabled** state - tracks current sync status
-6. **Persistent preferences** - remembers sync choice in localStorage
+2. **enableSync()** function - allows users to manually trigger sync
+3. **disableSync()** function - allows users to disable sync
+4. **syncEnabled** state - tracks current sync status
+5. **Persistent preferences** - remembers sync choice in localStorage
 
 ### Module Integration Architecture
 
@@ -256,8 +255,7 @@ use-vibes/pkg/index.ts (public API)
 
 @vibes.diy/use-vibes-base/index.ts (core implementation)
 ├── Enhanced useFireproof hook (wraps original)
-├── toCloud helper (with ManualRedirectStrategy)
-├── ManualRedirectStrategy class
+├── toCloud helper
 ├── ImgGen components and utilities
 └── Re-exports from use-fireproof + call-ai
 ```
@@ -266,12 +264,10 @@ use-vibes/pkg/index.ts (public API)
 
 The use-vibes `useFireproof` is a **wrapper** around the original that adds:
 
-1. **Automatic ManualRedirectStrategy injection** - uses custom auth flow instead of default redirect
-2. **Conditional sync** - only attaches cloud sync when explicitly enabled by user
-3. **State management** - tracks manual vs automatic sync states using React state
-4. **UI automation** - programmatically triggers auth popups via DOM manipulation
-5. **Persistence** - uses localStorage to remember user's sync preference across sessions
-6. **Dual attachment modes** - supports both original flow (for returning users) and manual flow (for first-time)
+1. **Conditional sync** - only attaches cloud sync when explicitly enabled by user
+2. **State management** - tracks manual vs automatic sync states using React state
+3. **Persistence** - uses localStorage to remember user's sync preference across sessions
+4. **Dual attachment modes** - supports both original flow (for returning users) and manual flow (for first-time)
 
 ### Drop-in Replacement Strategy
 
@@ -279,7 +275,6 @@ For users who change their import from `use-fireproof` to `use-vibes`, the enhan
 
 - **Same API surface** - all original useFireproof functionality preserved
 - **Implicit cloud sync** - cloud sync is always enabled (no need for `{ attach: toCloud() }`)
-- **Enhanced defaults** - better auth UX with ManualRedirectStrategy
 - **Optional sync features** - `enableSync`/`disableSync` available but not required
 - **Backward compatibility** - existing code continues to work without changes
 - **Progressive enhancement** - users can opt-in to new sync features when ready
@@ -298,7 +293,6 @@ const { database, useLiveQuery, enableSync, syncEnabled } =
 - Automatic `vibes-login-link` button detection and wiring
 - **Automatic ledger naming**: Generates cloud ledger names like `https-myapp-com-kanban-board`
 - **Environment isolation**: Different origins (localhost vs production) get separate ledgers
-- ManualRedirectStrategy provides better auth UX
 - **Respects user preferences**: Only enables sync when user clicks the button or has previously enabled it
 - Sync state is managed through localStorage (`wasSyncEnabled` preference)
 
@@ -314,13 +308,6 @@ The enhanced `useFireproof` automatically detects and wires up a button with `id
 
 This allows vibes runtime containers to provide a login button that automatically triggers sync for all active `useFireproof` instances.
 
-### ManualRedirectStrategy Features
-
-- **Subtle UI overlay** - bottom-right notification instead of full-screen redirect
-- **Custom CSS animations** - slide-up animation with modern styling
-- **Programmatic auth** - JavaScript-triggered popup instead of page redirect
-- **Better UX** - non-blocking authentication flow
-- **Configurable** - custom overlay HTML and CSS can be provided
 - dont write releases to code until they are shipped. we cant derefernce that url until its on npm, otherwise esm.sh gets bad cache
 - never push to main
 - dont squash next time rebase

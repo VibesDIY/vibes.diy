@@ -29,8 +29,6 @@ export {
   type HiddenMenuWrapperProps,
   VibesPanel,
   type VibesPanelProps,
-  AuthWall,
-  type AuthWallProps,
 
   // Main mount function - unified API for non-React environments
   mountVibesApp,
