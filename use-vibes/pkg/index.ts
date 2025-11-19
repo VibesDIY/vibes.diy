@@ -34,7 +34,6 @@ export {
 
   // Main mount function - unified API for non-React environments
   mountVibesApp,
-  mountVibesAppToBody,
   type MountVibesAppOptions,
   type MountVibesAppResult,
   vibeControlTheme,
