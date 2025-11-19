@@ -54,18 +54,10 @@ export { fireproof, ImgFile };
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
 
-// Extended interface for use-vibes toCloud options that includes vibeMetadata
-export interface UseVibesCloudParam extends UseFpToCloudParam {
-  readonly vibeMetadata?: VibeMetadata;
-}
-
 // Helper function to create toCloud configuration
-export function toCloud(opts?: UseVibesCloudParam): ToCloudAttachable {
-  // Extract vibeMetadata from opts
-  const { vibeMetadata: _vibeMetadata, ...fpOpts } = opts || {};
-
+export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
   const attachable = originalToCloud({
-    ...fpOpts,
+    ...opts,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
@@ -94,7 +86,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
 
   // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud({ vibeMetadata }) : undefined;
+  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
 
   // Use original useFireproof with attach config only if previously enabled
   // This preserves the createAttach lifecycle for token persistence
@@ -118,7 +110,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Handle first-time sync enable without reload
   useEffect(() => {
     if (manualAttach?.state === 'pending' && result.database) {
-      const cloudConfig = toCloud({ vibeMetadata: manualAttach.vibeMetadata });
+      const cloudConfig = toCloud();
       result.database
         .attach(cloudConfig)
         .then((attached) => {
