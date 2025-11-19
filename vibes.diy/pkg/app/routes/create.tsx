@@ -236,7 +236,7 @@ function CreateWithStreaming({
             />
           </BrutalistCard>
           <VibesButton
-            variant="primary"
+            color="blue"
             style={{ width: "200px" }}
             onClick={() => {
               if (newPromptText.trim()) {
@@ -389,21 +389,21 @@ export default function Create() {
             <>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <VibesButton
-                  variant="primary"
+                  color="blue"
                   style={{ flex: "1" }}
                   onClick={() => setPromptText(partyPlannerPrompt)}
                 >
                   Party Planner
                 </VibesButton>
                 <VibesButton
-                  variant="secondary"
+                  color="red"
                   style={{ flex: "1" }}
                   onClick={() => setPromptText(progressTrackerPrompt)}
                 >
                   Progress Tracker
                 </VibesButton>
                 <VibesButton
-                  variant="tertiary"
+                  color="yellow"
                   style={{ flex: "1" }}
                   onClick={() => setPromptText(jamSessionPrompt)}
                 >
@@ -436,7 +436,7 @@ export default function Create() {
               </BrutalistCard>
 
               <VibesButton
-                variant="primary"
+                color="blue"
                 style={{ width: "200px" }}
                 onClick={handleLetsGo}
               >

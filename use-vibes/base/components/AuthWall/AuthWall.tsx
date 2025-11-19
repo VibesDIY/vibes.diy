@@ -223,7 +223,7 @@ export function AuthWall({ onLogin, imageUrl, title, open }: AuthWallProps) {
           <h1 style={getTitleStyle()}>{title}</h1>
           <p style={getDescriptionStyle()}>Login to access this Vibe!</p>
           <VibesButton
-            variant="primary"
+            color="blue"
             onClick={onLogin}
             onHover={() => setIsHovering(true)}
             onUnhover={() => setIsHovering(false)}
