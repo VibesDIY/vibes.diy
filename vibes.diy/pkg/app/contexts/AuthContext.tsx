@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } else {
         // Token is invalid or expired
-        localStorage.removeItem("auth_token");
+        localStorage.removeItem("vibes-diy-auth-token");
         setToken(null);
         setUserPayload(null);
       }
@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuthStatus = useCallback(async () => {
     setIsLoading(true);
     try {
-      const storedToken = localStorage.getItem("auth_token");
+      const storedToken = localStorage.getItem("vibes-diy-auth-token");
       await processToken(storedToken);
     } catch (error) {
       console.error("Error reading auth token from storage:", error);
@@ -131,7 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const receivedToken = event.data.token;
         setIsLoading(true); // Set loading while processing token
         try {
-          localStorage.setItem("auth_token", receivedToken);
+          localStorage.setItem("vibes-diy-auth-token", receivedToken);
           await processToken(receivedToken); // Use async processToken
         } catch (error) {
           console.error("Error processing token from popup message:", error);
