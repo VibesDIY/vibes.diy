@@ -81,6 +81,19 @@ export function isJWTExpired(token: string): boolean {
   }
 }
 
+/**
+ * VibesAuthStrategy
+ *
+ * This strategy is a "hack" to bridge the authentication state from the host application (vibes.diy)
+ * into the use-vibes library's Fireproof instance.
+ *
+ * The host app stores the JWT in localStorage under 'vibes-diy-auth-token'.
+ * We need to inject this token into Fireproof's internal state so it can connect to the cloud
+ * without triggering a new authentication flow (popup).
+ *
+ * We extend RedirectStrategy and manually set the protected `currentToken` property.
+ * This avoids the need for the complex ManualRedirectStrategy that was previously used.
+ */
 // Minimal strategy to inject external auth token
 class VibesAuthStrategy extends RedirectStrategy {
   setToken(token: string): void {
