@@ -60,7 +60,7 @@ export default function Remix({
         const appUrl = `https://${appName}.vibesdiy.app/App.jsx`;
         const response = await fetch(appUrl, {
           headers: {
-            "X-VIBES-Token": localStorage.getItem("auth_token") || "",
+            "X-VIBES-Token": localStorage.getItem("vibes-diy-auth-token") || "",
           },
         });
 
