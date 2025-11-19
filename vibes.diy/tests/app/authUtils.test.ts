@@ -137,7 +137,9 @@ describe("auth utils", () => {
           body: JSON.stringify({ token: "old.token", type: "reqExtendToken" }),
         }),
       );
-      expect(localStorage.getItem("auth_token")).toBe("new.extended.token");
+      expect(localStorage.getItem("vibes-diy-auth-token")).toBe(
+        "new.extended.token",
+      );
     });
   });
 
@@ -150,7 +152,9 @@ describe("auth utils", () => {
       });
       const result = await auth.extendToken("oldtoken", { fetch });
       expect(result).toBe("newtoken123");
-      expect(window.localStorage.getItem("auth_token")).toBe("newtoken123");
+      expect(window.localStorage.getItem("vibes-diy-auth-token")).toBe(
+        "newtoken123",
+      );
     });
     it("returns null on network error", async () => {
       setEnv({ VITE_CONNECT_API_URL: "https://api" });

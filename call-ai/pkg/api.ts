@@ -28,7 +28,7 @@ export const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
 // Storage keys for authentication tokens
 const VIBES_API_AUTH_TOKEN_KEY = "vibes-api-auth-token" as const; // For API auth from parent window
 const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const; // For Fireproof sync token
-const LEGACY_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const; // Legacy vibes.diy key
+const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const; // Legacy vibes.diy key (pre-rename)
 
 /**
  * Get the Vibes authentication token from localStorage (browser only)
