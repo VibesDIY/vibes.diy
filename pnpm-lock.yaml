@@ -66,8 +66,8 @@ importers:
   call-ai/pkg:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
@@ -88,8 +88,8 @@ importers:
   call-ai/tests/integration:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -131,8 +131,8 @@ importers:
   call-ai/tests/unit:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -309,8 +309,8 @@ importers:
   prompts/pkg:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
@@ -341,7 +341,7 @@ importers:
     dependencies:
       '@react-router/dev':
         specifier: ^7.9.4
-        version: 7.9.5(@react-router/serve@7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.47.0(@cloudflare/workers-types@4.20251111.0))(yaml@2.8.1)
+        version: 7.9.5(@react-router/serve@7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.49.0(@cloudflare/workers-types@4.20251111.0))(yaml@2.8.1)
       '@tailwindcss/vite':
         specifier: ^4.1.11
         version: 4.1.17(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
@@ -356,11 +356,11 @@ importers:
         version: 19.2.0(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.15
-        version: 0.23.15(@adviser/cement@0.4.64(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.15(@adviser/cement@0.4.66(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
     devDependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.56.0
         version: 1.56.1
@@ -410,8 +410,8 @@ importers:
   use-vibes/base:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
@@ -438,7 +438,7 @@ importers:
         version: 19.2.0(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.15
-        version: 0.23.15(@adviser/cement@0.4.64(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.15(@adviser/cement@0.4.66(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -601,7 +601,7 @@ importers:
         version: 0.0.3(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       '@react-router/dev':
         specifier: ^7.9.4
-        version: 7.9.5(@react-router/serve@7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.47.0(@cloudflare/workers-types@4.20251111.0))(yaml@2.8.1)
+        version: 7.9.5(@react-router/serve@7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.49.0(@cloudflare/workers-types@4.20251111.0))(yaml@2.8.1)
       '@tailwindcss/vite':
         specifier: ^4.1.11
         version: 4.1.17(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
@@ -613,7 +613,7 @@ importers:
         version: 19.2.0(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.15
-        version: 0.23.15(@adviser/cement@0.4.64(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.15(@adviser/cement@0.4.66(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -689,7 +689,7 @@ importers:
         version: 19.2.0
       use-fireproof:
         specifier: ^0.23.15
-        version: 0.23.15(@adviser/cement@0.4.64(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.15(@adviser/cement@0.4.66(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
     devDependencies:
       '@fireproof/core-cli':
         specifier: ^0.23.15
@@ -751,8 +751,8 @@ importers:
   vibes.diy/pkg:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@cloudflare/workers-types':
         specifier: ^4.20251111.0
         version: 4.20251111.0
@@ -851,7 +851,7 @@ importers:
         version: 10.1.1(typescript@5.9.3)
       use-fireproof:
         specifier: ^0.23.15
-        version: 0.23.15(@adviser/cement@0.4.64(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.15(@adviser/cement@0.4.66(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
@@ -864,13 +864,13 @@ importers:
         version: 4.1.2(storybook@10.0.7(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))
       '@cloudflare/vite-plugin':
         specifier: ^1.14.0
-        version: 1.14.1(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20251109.0)(wrangler@4.47.0(@cloudflare/workers-types@4.20251111.0))
+        version: 1.14.1(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20251113.0)(wrangler@4.49.0(@cloudflare/workers-types@4.20251111.0))
       '@fireproof/core-cli':
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
       '@react-router/dev':
         specifier: ^7.9.4
-        version: 7.9.5(@react-router/serve@7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.47.0(@cloudflare/workers-types@4.20251111.0))(yaml@2.8.1)
+        version: 7.9.5(@react-router/serve@7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.49.0(@cloudflare/workers-types@4.20251111.0))(yaml@2.8.1)
       '@storybook/addon-a11y':
         specifier: ^9.1.13
         version: 9.1.16(storybook@10.0.7(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)))
@@ -938,8 +938,8 @@ importers:
   vibes.diy/tests/app:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.54.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1002,7 +1002,7 @@ importers:
         version: 7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.15
-        version: 0.23.15(@adviser/cement@0.4.64(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.15(@adviser/cement@0.4.66(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -1041,8 +1041,8 @@ importers:
   vibes.diy/tests/simple-chat:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.64
-        version: 0.4.64(typescript@5.9.3)
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.54.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1099,7 +1099,7 @@ importers:
         version: 7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       use-fireproof:
         specifier: ^0.23.15
-        version: 0.23.15(@adviser/cement@0.4.64(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        version: 0.23.15(@adviser/cement@0.4.66(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -1187,8 +1187,8 @@ packages:
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
 
-  '@adviser/cement@0.4.64':
-    resolution: {integrity: sha512-0luiHy89T+re/rWFLOS0/HsLa3neGBUaew8vAGQmtHHZ+Vr2cxVIvwio5H2M80tNsC9pjwvxJN/cP/3d3Tcgsw==}
+  '@adviser/cement@0.4.66':
+    resolution: {integrity: sha512-XBILRw/kIOKiXpam6WYZ5GY2V/uPJXNNhzQAHPudXfUG9iK0rn6QFKxWq8cJft39xAl0MZjEKkiqNT0orebKVw==}
     engines: {node: '>=20.19.0'}
     hasBin: true
 
@@ -1487,8 +1487,20 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@cloudflare/workerd-darwin-64@1.20251113.0':
+    resolution: {integrity: sha512-GBlun9onB69rDMZIJ9TdvQ9d3KS5L2FXwlzJ9+AjrbHqYnIif8eH5wyLPIR5wfkXNyrEFiWtEYses+aUQZQLWQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
   '@cloudflare/workerd-darwin-arm64@1.20251109.0':
     resolution: {integrity: sha512-fpLJvZi3i+btgrXJcOtKYrbmdnHVTKpaZigoKIcpBX4mbwxUh/GVbrCmOqLebr57asQC+PmBfghUEYniqRgnhA==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20251113.0':
+    resolution: {integrity: sha512-CFakh0Plmkwe8BHuc3iQ0rSIMttvJ3XpWYPjhWUL6KxA2zL6FvYUiWG0hpaEW60KPqgFMisBoPzH0kzyzSKMhg==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
@@ -1499,14 +1511,32 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-64@1.20251113.0':
+    resolution: {integrity: sha512-6JqK+Csie47656Kr+48GHl8v1zK940ruOczY4Da67xvsUAsFkUEOQkes4rW5i3I3XjNbcnyf96l0gnI6lzTKlQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
   '@cloudflare/workerd-linux-arm64@1.20251109.0':
     resolution: {integrity: sha512-f2AeJlpSwrEvEV57+JU+vRPL8c/Dv8nwY4XW+YwnzPo2TpbI/zzqloPXQ6PY79ftDfEsJJPzQuaDDPq3UOGJQA==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-arm64@1.20251113.0':
+    resolution: {integrity: sha512-Ye9I2AeXZ2IPcWOYD9xIrjcFrnH0UkS/ijvgI81mJCr8w7dMd4ONb+BK5oXUJtBW8IEAV3yRU7Mz7DBLaXe/AQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
   '@cloudflare/workerd-windows-64@1.20251109.0':
     resolution: {integrity: sha512-IGo/lzbYoeJdfLkpaKLoeG6C7Rwcf5kXjzV0wO8fLUSmlfOLQvXTIehWc7EkbHFHjPapDqYqR0KsmbizBi68Lg==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workerd-windows-64@1.20251113.0':
+    resolution: {integrity: sha512-H2sq6H2sMhjt/72S3ZAsZV+GC3chRJkwwGq7AGVjIehR66e/z5KKhxOX8u29iqtShyERvFUVHyfCzRBKfmJwfw==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -7213,6 +7243,11 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  miniflare@4.20251113.0:
+    resolution: {integrity: sha512-uaNiBJu8JQY27pcM7Q/E+hLggClmJCQji9uOOBdlZV+aJ7rk7tFnyIvjpLxYJRpryrMjm3aKNeMvE8ham01DtA==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
 
@@ -9468,12 +9503,27 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  workerd@1.20251113.0:
+    resolution: {integrity: sha512-XLQKbzzn6DndOosyCviYc0ExQVKPem5KAqvsgY+yrsJXvQnKXojIG8rtI0JQgKflHD6sHwjjg17P+q4lPvaLGQ==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   wrangler@4.47.0:
     resolution: {integrity: sha512-JP0U8oqUETK9D+ZbrSjFFOxGdufYsS6HsT0vLU1IAQrban9a6woMHdBZlGNn/lt8QA70xv1uFiJK8DUMPzC73A==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@cloudflare/workers-types': ^4.20251109.0
+    peerDependenciesMeta:
+      '@cloudflare/workers-types':
+        optional: true
+
+  wrangler@4.49.0:
+    resolution: {integrity: sha512-AptJADXtZwDiYS5b0G3kYNYnW4fsoInMBxw++eCs5wot1h0Q6B7HXNaoizD11rLGkU03Tpsh49hYqYyT5qkIvg==}
+    engines: {node: '>=20.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.20251113.0
     peerDependenciesMeta:
       '@cloudflare/workers-types':
         optional: true
@@ -9622,7 +9672,7 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@adviser/cement@0.4.64(typescript@5.9.3)':
+  '@adviser/cement@0.4.66(typescript@5.9.3)':
     dependencies:
       ts-essentials: 10.1.1(typescript@5.9.3)
       yaml: 2.8.1
@@ -9965,9 +10015,15 @@ snapshots:
     optionalDependencies:
       workerd: 1.20251109.0
 
-  '@cloudflare/vite-plugin@1.14.1(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20251109.0)(wrangler@4.47.0(@cloudflare/workers-types@4.20251111.0))':
+  '@cloudflare/unenv-preset@2.7.10(unenv@2.0.0-rc.24)(workerd@1.20251113.0)':
     dependencies:
-      '@cloudflare/unenv-preset': 2.7.10(unenv@2.0.0-rc.24)(workerd@1.20251109.0)
+      unenv: 2.0.0-rc.24
+    optionalDependencies:
+      workerd: 1.20251113.0
+
+  '@cloudflare/vite-plugin@1.14.1(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(workerd@1.20251113.0)(wrangler@4.49.0(@cloudflare/workers-types@4.20251111.0))':
+    dependencies:
+      '@cloudflare/unenv-preset': 2.7.10(unenv@2.0.0-rc.24)(workerd@1.20251113.0)
       '@remix-run/node-fetch-server': 0.8.1
       get-port: 7.1.0
       miniflare: 4.20251109.0
@@ -9975,7 +10031,7 @@ snapshots:
       tinyglobby: 0.2.15
       unenv: 2.0.0-rc.24
       vite: 7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
-      wrangler: 4.47.0(@cloudflare/workers-types@4.20251111.0)
+      wrangler: 4.49.0(@cloudflare/workers-types@4.20251111.0)
       ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
@@ -10002,16 +10058,31 @@ snapshots:
   '@cloudflare/workerd-darwin-64@1.20251109.0':
     optional: true
 
+  '@cloudflare/workerd-darwin-64@1.20251113.0':
+    optional: true
+
   '@cloudflare/workerd-darwin-arm64@1.20251109.0':
+    optional: true
+
+  '@cloudflare/workerd-darwin-arm64@1.20251113.0':
     optional: true
 
   '@cloudflare/workerd-linux-64@1.20251109.0':
     optional: true
 
+  '@cloudflare/workerd-linux-64@1.20251113.0':
+    optional: true
+
   '@cloudflare/workerd-linux-arm64@1.20251109.0':
     optional: true
 
+  '@cloudflare/workerd-linux-arm64@1.20251113.0':
+    optional: true
+
   '@cloudflare/workerd-windows-64@1.20251109.0':
+    optional: true
+
+  '@cloudflare/workerd-windows-64@1.20251113.0':
     optional: true
 
   '@cloudflare/workers-types@4.20251111.0': {}
@@ -10374,7 +10445,7 @@ snapshots:
 
   '@fireproof/core-base@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-blockstore': 0.23.15(typescript@5.9.3)
       '@fireproof/core-keybag': 0.23.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
@@ -10393,7 +10464,7 @@ snapshots:
 
   '@fireproof/core-blockstore@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-gateways-cloud': 0.23.15(typescript@5.9.3)
       '@fireproof/core-gateways-file': 0.23.15(typescript@5.9.3)
@@ -10419,7 +10490,7 @@ snapshots:
 
   '@fireproof/core-cli@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
@@ -10438,7 +10509,7 @@ snapshots:
 
   '@fireproof/core-gateways-base@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.23.15(typescript@5.9.3)
@@ -10450,7 +10521,7 @@ snapshots:
 
   '@fireproof/core-gateways-cloud@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-protocols-cloud': 0.23.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
@@ -10466,7 +10537,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-deno@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
       '@types/deno': 2.5.0
@@ -10476,7 +10547,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-node@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
     transitivePeerDependencies:
@@ -10484,7 +10555,7 @@ snapshots:
 
   '@fireproof/core-gateways-file@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-gateways-file-deno': 0.23.15(typescript@5.9.3)
       '@fireproof/core-gateways-file-node': 0.23.15(typescript@5.9.3)
@@ -10497,7 +10568,7 @@ snapshots:
 
   '@fireproof/core-gateways-indexeddb@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
@@ -10509,7 +10580,7 @@ snapshots:
 
   '@fireproof/core-gateways-memory@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
@@ -10520,7 +10591,7 @@ snapshots:
 
   '@fireproof/core-keybag@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-gateways-file': 0.23.15(typescript@5.9.3)
       '@fireproof/core-gateways-indexeddb': 0.23.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
@@ -10534,7 +10605,7 @@ snapshots:
 
   '@fireproof/core-protocols-cloud@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.23.15(typescript@5.9.3)
@@ -10548,7 +10619,7 @@ snapshots:
 
   '@fireproof/core-protocols-dashboard@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-runtime': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.23.15(typescript@5.9.3)
@@ -10558,7 +10629,7 @@ snapshots:
 
   '@fireproof/core-runtime@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@adviser/ts-xxhash': 1.0.2
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.23.15(typescript@5.9.3)
@@ -10573,7 +10644,7 @@ snapshots:
 
   '@fireproof/core-types-base@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
@@ -10586,7 +10657,7 @@ snapshots:
 
   '@fireproof/core-types-blockstore@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-runtime': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
@@ -10597,7 +10668,7 @@ snapshots:
 
   '@fireproof/core-types-protocols-cloud@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
@@ -10609,7 +10680,7 @@ snapshots:
 
   '@fireproof/core-types-runtime@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
       multiformats: 13.4.1
     transitivePeerDependencies:
@@ -10617,7 +10688,7 @@ snapshots:
 
   '@fireproof/core@0.23.15(react@19.2.0)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.23.15(typescript@5.9.3)
       '@fireproof/vendor': 0.23.15(typescript@5.9.3)
@@ -10630,7 +10701,7 @@ snapshots:
 
   '@fireproof/vendor@0.23.15(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
@@ -11858,7 +11929,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.4
 
-  '@react-router/dev@7.9.5(@react-router/serve@7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.47.0(@cloudflare/workers-types@4.20251111.0))(yaml@2.8.1)':
+  '@react-router/dev@7.9.5(@react-router/serve@7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.20.6)(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(wrangler@4.49.0(@cloudflare/workers-types@4.20251111.0))(yaml@2.8.1)':
     dependencies:
       '@babel/core': 7.28.5
       '@babel/generator': 7.28.5
@@ -11893,7 +11964,7 @@ snapshots:
     optionalDependencies:
       '@react-router/serve': 7.9.5(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       typescript: 5.9.3
-      wrangler: 4.47.0(@cloudflare/workers-types@4.20251111.0)
+      wrangler: 4.49.0(@cloudflare/workers-types@4.20251111.0)
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -16628,6 +16699,24 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  miniflare@4.20251113.0:
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      acorn: 8.14.0
+      acorn-walk: 8.3.2
+      exit-hook: 2.2.1
+      glob-to-regexp: 0.4.1
+      sharp: 0.33.5
+      stoppable: 1.1.0
+      undici: 7.14.0
+      workerd: 1.20251113.0
+      ws: 8.18.0
+      youch: 4.1.0-beta.10
+      zod: 3.22.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   minimatch@3.1.2:
     dependencies:
       brace-expansion: 1.1.12
@@ -19022,9 +19111,9 @@ snapshots:
 
   urlpattern-polyfill@8.0.2: {}
 
-  use-fireproof@0.23.15(@adviser/cement@0.4.64(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3):
+  use-fireproof@0.23.15(@adviser/cement@0.4.66(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3):
     dependencies:
-      '@adviser/cement': 0.4.64(typescript@5.9.3)
+      '@adviser/cement': 0.4.66(typescript@5.9.3)
       '@fireproof/core-base': 0.23.15(typescript@5.9.3)
       '@fireproof/core-gateways-cloud': 0.23.15(typescript@5.9.3)
       '@fireproof/core-keybag': 0.23.15(typescript@5.9.3)
@@ -19346,6 +19435,14 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20251109.0
       '@cloudflare/workerd-windows-64': 1.20251109.0
 
+  workerd@1.20251113.0:
+    optionalDependencies:
+      '@cloudflare/workerd-darwin-64': 1.20251113.0
+      '@cloudflare/workerd-darwin-arm64': 1.20251113.0
+      '@cloudflare/workerd-linux-64': 1.20251113.0
+      '@cloudflare/workerd-linux-arm64': 1.20251113.0
+      '@cloudflare/workerd-windows-64': 1.20251113.0
+
   wrangler@4.47.0(@cloudflare/workers-types@4.20251111.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.0
@@ -19356,6 +19453,23 @@ snapshots:
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
       workerd: 1.20251109.0
+    optionalDependencies:
+      '@cloudflare/workers-types': 4.20251111.0
+      fsevents: 2.3.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  wrangler@4.49.0(@cloudflare/workers-types@4.20251111.0):
+    dependencies:
+      '@cloudflare/kv-asset-handler': 0.4.0
+      '@cloudflare/unenv-preset': 2.7.10(unenv@2.0.0-rc.24)(workerd@1.20251113.0)
+      blake3-wasm: 2.1.5
+      esbuild: 0.25.4
+      miniflare: 4.20251113.0
+      path-to-regexp: 6.3.0
+      unenv: 2.0.0-rc.24
+      workerd: 1.20251113.0
     optionalDependencies:
       '@cloudflare/workers-types': 4.20251111.0
       fsevents: 2.3.3
