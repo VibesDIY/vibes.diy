@@ -6,7 +6,8 @@ export async function mountVibeCode(
   containerId: string,
   titleId: string,
   installId: string,
-  transformImports: (code: string) => string
+  transformImports: (code: string) => string,
+  showVibesSwitch: boolean = true
 ): Promise<void> {
   try {
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
@@ -37,7 +38,7 @@ export async function mountVibeCode(
         const mountResult = mountVibesApp({
           container: container,
           appComponent: App,
-          showVibesSwitch: true,
+          showVibesSwitch: ${showVibesSwitch},
           vibeMetadata: {
             titleId: "${titleId}",
             installId: "${installId}",
