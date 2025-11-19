@@ -8,7 +8,6 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
-import { ManualRedirectStrategy, isJWTExpired } from './ManualRedirectStrategy.js';
 import {
   VIBES_SYNC_ENABLE_EVENT,
   VIBES_SYNC_DISABLE_EVENT,
@@ -50,7 +49,7 @@ function updateBodyClass() {
   }
 }
 
-export { fireproof, ImgFile, ManualRedirectStrategy, isJWTExpired };
+export { fireproof, ImgFile };
 
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
@@ -60,34 +59,13 @@ export interface UseVibesCloudParam extends UseFpToCloudParam {
   readonly vibeMetadata?: VibeMetadata;
 }
 
-// Helper function to create toCloud configuration with ManualRedirectStrategy
+// Helper function to create toCloud configuration
 export function toCloud(opts?: UseVibesCloudParam): ToCloudAttachable {
   // Extract vibeMetadata from opts
   const { vibeMetadata, ...fpOpts } = opts || {};
-  const strategy = new ManualRedirectStrategy({ vibeMetadata });
-
-  // Check if an external token exists in localStorage
-  if (typeof window !== 'undefined') {
-    try {
-      const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
-      if (externalToken) {
-        // Validate token is not expired before using it
-        if (isJWTExpired(externalToken)) {
-          // Token is expired, remove it from localStorage
-          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-        } else {
-          // Token is still valid, use it
-          strategy.setToken(externalToken);
-        }
-      }
-    } catch {
-      // Ignore localStorage errors (privacy mode, SSR, etc.)
-    }
-  }
 
   const attachable = originalToCloud({
     ...fpOpts,
-    strategy,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
@@ -592,8 +570,6 @@ export type { VibeControlClasses } from './utils/vibe-control-styles.js';
 // Export additional components
 export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
-export { AuthWall } from './components/AuthWall/AuthWall.js';
-export type { AuthWallProps } from './components/AuthWall/AuthWall.js';
 export { BrutalistCard } from './components/BrutalistCard/index.js';
 export type {
   BrutalistCardProps,

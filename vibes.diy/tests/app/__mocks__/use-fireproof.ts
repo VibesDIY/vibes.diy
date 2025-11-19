@@ -68,12 +68,5 @@ export default {
   useFireproof,
 };
 
-// Mock RedirectStrategy class for ManualRedirectStrategy to extend
-export class RedirectStrategy {
-  authorize() {
-    return Promise.resolve();
-  }
-}
-
 // Named exports for ESM compatibility
 export { fireproof, useFireproof };
