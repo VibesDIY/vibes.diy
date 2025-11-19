@@ -7,7 +7,7 @@ export async function mountVibeCode(
   titleId: string,
   installId: string,
   transformImports: (code: string) => string,
-  showVibesSwitch: boolean = true
+  showVibesSwitch = true
 ): Promise<void> {
   try {
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)

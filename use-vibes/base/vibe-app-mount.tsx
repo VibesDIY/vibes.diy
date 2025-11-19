@@ -1,7 +1,5 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { AuthWall } from './components/AuthWall/AuthWall.js';
-import { VIBES_SYNC_ENABLE_EVENT, VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 import {
@@ -13,8 +11,6 @@ import {
 
 export interface MountVibesAppOptions {
   readonly container?: string | HTMLElement;
-  readonly title?: string;
-  readonly imageUrl?: string;
   readonly appComponent?: React.ComponentType;
   readonly showVibesSwitch?: boolean;
   readonly vibeMetadata?: VibeMetadata;
@@ -25,81 +21,29 @@ export interface MountVibesAppResult {
   getContainer: () => HTMLElement;
 }
 
-// Safe localStorage access
-const safeGetLocalStorage = (key: string): string | null => {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-
 /**
  * Internal component for Vibes app mounting.
  * DO NOT use directly - use mountVibesApp() instead.
  * @internal
  */
 function VibesApp({
-  title = 'Vibes App',
-  imageUrl = '/screenshot.png',
   showVibesSwitch = true,
   vibeMetadata,
   children,
 }: {
-  title?: string;
-  imageUrl?: string;
   showVibesSwitch?: boolean;
   vibeMetadata?: VibeMetadata;
   children?: React.ReactNode;
 }) {
-  // Check if sync is already enabled globally by checking body class
-  const syncEnabled =
-    typeof window !== 'undefined' && document.body.classList.contains(VIBES_SYNC_ENABLED_CLASS);
-
-  // Check if sync was previously enabled in localStorage (with safe access)
-  const wasSyncEnabled =
-    typeof window !== 'undefined' && safeGetLocalStorage('fireproof-sync-enabled') === 'true';
-
-  const mockLogin =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('mock_login') === 'true';
-
-  // Don't show AuthWall if sync was previously enabled, is currently enabled, or mockLogin is active
-  const [showAuthWall, setShowAuthWall] = React.useState(
-    !syncEnabled && !mockLogin && !wasSyncEnabled
-  );
-
-  React.useEffect(() => {
-    const observer = new MutationObserver(() => {
-      const isConnected = document.body.classList.contains(VIBES_SYNC_ENABLED_CLASS);
-      // Respect wasSyncEnabled - don't show AuthWall if it was previously enabled
-      setShowAuthWall(!isConnected && !mockLogin && !wasSyncEnabled);
-    });
-
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-
-    return () => observer.disconnect();
-  }, [mockLogin, wasSyncEnabled]);
-
-  const handleLogin = () => {
-    // Dispatch global sync enable event - app's useFireproof will handle it
-    document.dispatchEvent(new CustomEvent(VIBES_SYNC_ENABLE_EVENT));
-  };
-
-  // Render both app component (to register event listener) and AuthWall (as overlay)
-  // App component must mount first so its useFireproof listener exists when login is clicked
-  const content = (
-    <>
-      <div style={showAuthWall ? { display: 'none' } : undefined}>
-        <HiddenMenuWrapper menuContent={<VibesPanel />} showVibesSwitch={showVibesSwitch}>
-          {children}
-        </HiddenMenuWrapper>
-      </div>
-      <AuthWall onLogin={handleLogin} imageUrl={imageUrl} title={title} open={showAuthWall} />
-    </>
+  // Conditional rendering based on showVibesSwitch:
+  // - When true (vibe-viewer): Use HiddenMenuWrapper with VibesPanel for full control panel
+  // - When false (result-preview): Render children directly for inline containment
+  const content = showVibesSwitch ? (
+    <HiddenMenuWrapper menuContent={<VibesPanel />} showVibesSwitch={true}>
+      {children}
+    </HiddenMenuWrapper>
+  ) : (
+    <>{children}</>
   );
 
   // Wrap in VibeContextProvider if vibeMetadata is provided
@@ -111,14 +55,7 @@ function VibesApp({
 }
 
 export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesAppResult {
-  const {
-    container: containerOption,
-    title,
-    imageUrl,
-    appComponent,
-    showVibesSwitch,
-    vibeMetadata,
-  } = options;
+  const { container: containerOption, appComponent, showVibesSwitch, vibeMetadata } = options;
 
   // Validate vibeMetadata if provided to prevent malformed ledger names
   if (vibeMetadata) {
@@ -181,8 +118,6 @@ export function mountVibesApp(options: MountVibesAppOptions = {}): MountVibesApp
 
   root.render(
     <VibesApp
-      {...(title !== undefined && { title })}
-      {...(imageUrl !== undefined && { imageUrl })}
       {...(showVibesSwitch !== undefined && { showVibesSwitch })}
       {...(vibeMetadata !== undefined && { vibeMetadata })}
     >

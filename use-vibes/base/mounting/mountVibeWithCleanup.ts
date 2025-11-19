@@ -9,7 +9,7 @@ export async function mountVibeWithCleanup(
   titleId: string,
   installId: string,
   transformImports: (code: string) => string,
-  showVibesSwitch: boolean = true
+  showVibesSwitch = true
 ): Promise<() => void> {
   return new Promise((resolve) => {
     let resolved = false;
@@ -72,12 +72,14 @@ export async function mountVibeWithCleanup(
     document.addEventListener('vibes-mount-error', handleMountError);
 
     // Mount the vibe
-    mountVibeCode(code, containerId, titleId, installId, transformImports, showVibesSwitch).catch((err) => {
-      // Babel/transform errors - caught before module execution
-      console.error('[Vibe Lifecycle] Pre-execution error:', err);
-      resolveOnce(() => {
-        // No-op cleanup
-      });
-    });
+    mountVibeCode(code, containerId, titleId, installId, transformImports, showVibesSwitch).catch(
+      (err) => {
+        // Babel/transform errors - caught before module execution
+        console.error('[Vibe Lifecycle] Pre-execution error:', err);
+        resolveOnce(() => {
+          // No-op cleanup
+        });
+      }
+    );
   });
 }
