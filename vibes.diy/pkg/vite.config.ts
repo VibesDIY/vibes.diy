@@ -25,6 +25,14 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     base: process.env.VITE_APP_BASENAME || "/",
     build: {
       outDir: "build",
+      rollupOptions: {
+        external: [
+          "react",
+          "react-dom",
+          "react-dom/client",
+          "react/jsx-runtime",
+        ],
+      },
     },
     // Define global constants
     // define: {
