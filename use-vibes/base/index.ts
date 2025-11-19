@@ -602,7 +602,7 @@ export type {
 } from './components/BrutalistCard/index.js';
 
 // Export unified mount function - the main API for non-React environments
-export { mountVibesApp, mountVibesAppToBody } from './vibe-app-mount.js';
+export { mountVibesApp } from './vibe-app-mount.js';
 export type { MountVibesAppOptions, MountVibesAppResult } from './vibe-app-mount.js';
 
 // Export app slug utilities
