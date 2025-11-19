@@ -789,6 +789,9 @@ importers:
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.1.17)
+      '@vibes.diy/hosting-base':
+        specifier: workspace:*
+        version: link:../../hosting/base
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
