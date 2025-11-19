@@ -167,7 +167,9 @@ async function mountVibeWithCleanup(
 
       const { unmount, containerId: eventContainerId } = event.detail;
       if (eventContainerId === containerId) {
-        console.log(`[Vibe Lifecycle] Mount succeeded: ${titleId}/${installId}`);
+        console.log(
+          `[Vibe Lifecycle] Mount succeeded: ${titleId}/${installId}`,
+        );
         resolveOnce(unmount);
       }
     };
@@ -226,11 +228,12 @@ function VibeInstanceViewerContent() {
   );
 
   // Lazy instance creation: ensure instance exists in database
-  const { instances, createInstance } = useVibeInstances(titleId || "");
-  const [creationAttempted, setCreationAttempted] = useState(false);
+  const { instances, createInstance, isCreating } = useVibeInstances(
+    titleId || "",
+  );
 
   useEffect(() => {
-    if (!titleId || !installId || creationAttempted) return;
+    if (!titleId || !installId || isCreating) return;
 
     // Check if instance exists
     const fullId = `${titleId}-${installId}`;
@@ -238,14 +241,11 @@ function VibeInstanceViewerContent() {
 
     // Create instance if it doesn't exist (lazy creation for Fresh Data)
     // Pass the installId explicitly to ensure correct _id is created
-    if (!instanceExists && instances.length >= 0) {
-      setCreationAttempted(true);
-      createInstance("Fresh Data", {}, installId).catch((err) => {
-        console.error("Failed to lazy-create instance:", err);
-        setCreationAttempted(false); // Allow retry on error
-      });
+    if (!instanceExists) {
+      // Let error throw - no catch handler
+      createInstance("Fresh Data", {}, installId);
     }
-  }, [titleId, installId, instances, createInstance, creationAttempted]);
+  }, [titleId, installId, instances, createInstance, isCreating]);
 
   useEffect(() => {
     if (!titleId || !installId) return;
