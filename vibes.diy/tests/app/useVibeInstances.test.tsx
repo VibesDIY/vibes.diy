@@ -442,10 +442,9 @@ describe("useVibeInstances", () => {
       });
 
       expect(mockPut).not.toHaveBeenCalled();
-      expect(result.current.error).toBeInstanceOf(Error);
     });
 
-    it("should handle update errors and set error state", async () => {
+    it("should handle update errors and throw", async () => {
       mockGet.mockResolvedValue({
         _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
@@ -464,13 +463,11 @@ describe("useVibeInstances", () => {
           }),
         ).rejects.toThrow("Update failed");
       });
-
-      expect(result.current.error).toBeInstanceOf(Error);
     });
 
     it("should clear error state on successful update", async () => {
-      // First, set an error
-      mockGet.mockRejectedValueOnce(new Error("Get error"));
+      // First, trigger an error via createInstance (which does set error state)
+      mockPut.mockRejectedValueOnce(new Error("Create error"));
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
@@ -478,15 +475,13 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.updateInstance("kanban-board-a3f9c2e1", {
-            description: "Test",
-          }),
+          result.current.createInstance("Test"),
         ).rejects.toThrow();
       });
 
       expect(result.current.error).not.toBe(null);
 
-      // Now succeed
+      // Now succeed with updateInstance - it should clear error state
       mockGet.mockResolvedValueOnce({
         _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
@@ -561,10 +556,9 @@ describe("useVibeInstances", () => {
       });
 
       expect(mockDel).not.toHaveBeenCalled();
-      expect(result.current.error).toBeInstanceOf(Error);
     });
 
-    it("should handle delete errors and set error state", async () => {
+    it("should handle delete errors and throw", async () => {
       mockGet.mockResolvedValue({
         _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
@@ -581,13 +575,11 @@ describe("useVibeInstances", () => {
           result.current.deleteInstance("kanban-board-a3f9c2e1"),
         ).rejects.toThrow("Delete failed");
       });
-
-      expect(result.current.error).toBeInstanceOf(Error);
     });
 
     it("should clear error state on successful delete", async () => {
-      // First, set an error
-      mockGet.mockRejectedValueOnce(new Error("Get error"));
+      // First, trigger an error via createInstance (which does set error state)
+      mockPut.mockRejectedValueOnce(new Error("Create error"));
 
       const { result } = renderHook(() => useVibeInstances(titleId), {
         wrapper: createWrapper(),
@@ -595,13 +587,13 @@ describe("useVibeInstances", () => {
 
       await act(async () => {
         await expect(
-          result.current.deleteInstance("kanban-board-a3f9c2e1"),
+          result.current.createInstance("Test"),
         ).rejects.toThrow();
       });
 
       expect(result.current.error).not.toBe(null);
 
-      // Now succeed
+      // Now succeed with deleteInstance - it should clear error state
       mockGet.mockResolvedValueOnce({
         _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
@@ -751,10 +743,9 @@ describe("useVibeInstances", () => {
       });
 
       expect(mockPut).not.toHaveBeenCalled();
-      expect(result.current.error).toBeInstanceOf(Error);
     });
 
-    it("should handle share errors and set error state", async () => {
+    it("should handle share errors and throw", async () => {
       mockGet.mockResolvedValue({
         _id: "kanban-board-a3f9c2e1",
         userId: "user-123",
@@ -775,8 +766,6 @@ describe("useVibeInstances", () => {
           ),
         ).rejects.toThrow("Share failed");
       });
-
-      expect(result.current.error).toBeInstanceOf(Error);
     });
   });
 
