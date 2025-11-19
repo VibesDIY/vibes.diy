@@ -62,7 +62,7 @@ export interface UseVibesCloudParam extends UseFpToCloudParam {
 // Helper function to create toCloud configuration
 export function toCloud(opts?: UseVibesCloudParam): ToCloudAttachable {
   // Extract vibeMetadata from opts
-  const { vibeMetadata, ...fpOpts } = opts || {};
+  const { vibeMetadata: _vibeMetadata, ...fpOpts } = opts || {};
 
   const attachable = originalToCloud({
     ...fpOpts,
