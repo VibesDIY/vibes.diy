@@ -30,6 +30,7 @@ export function generateLedgerName(dbName: string, vibeMetadata?: VibeMetadata):
     const safeInstallId = String(installId).replace(/[^a-z0-9-]/gi, '-');
     const safeTitleId = String(titleId).replace(/[^a-z0-9-]/gi, '-');
     const safeDb = String(dbName).replace(/[^a-z0-9-]/gi, '-');
+    console.log(`Generated ledger name: ${safeInstallId}-${safeTitleId}-${safeDb}`);
     return `${safeInstallId}-${safeTitleId}-${safeDb}`;
   }
 
