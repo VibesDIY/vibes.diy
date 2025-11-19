@@ -36,7 +36,7 @@ export async function mountVibeWithCleanup(
 
       const { unmount, containerId: eventContainerId } = event.detail;
       if (eventContainerId === containerId) {
-        console.log(`[Vibe Lifecycle] Mount succeeded: ${containerId}`);
+        console.log(`[Vibe Lifecycle] Mount succeeded: ${titleId} (${installId})`);
         resolveOnce(unmount);
       }
     };
