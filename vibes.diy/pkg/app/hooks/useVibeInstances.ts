@@ -46,10 +46,10 @@ export function useVibeInstances(titleId: string) {
       options?: Record<string, unknown>,
       installId?: string,
     ) => {
-      try {
-        setIsCreating(true);
-        setError(null);
+      setIsCreating(true);
+      setError(null);
 
+      try {
         // Use provided installId or generate a new one
         const finalInstallId = installId || generateInstallId();
         const customId = `${titleId}-${finalInstallId}`;
@@ -67,14 +67,14 @@ export function useVibeInstances(titleId: string) {
         };
 
         const result = await database.put(doc);
+        setIsCreating(false);
 
         return result.id; // Return the custom ID
       } catch (err) {
+        setIsCreating(false);
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
         throw error;
-      } finally {
-        setIsCreating(false);
       }
     },
     [database, titleId, userId],
@@ -88,35 +88,29 @@ export function useVibeInstances(titleId: string) {
       installId: string,
       updates: { description?: string; options?: Record<string, unknown> },
     ) => {
-      try {
-        setError(null);
+      setError(null);
 
-        // Get existing document
-        const existing = await database.get<VibeInstanceDocument>(installId);
+      // Get existing document
+      const existing = await database.get<VibeInstanceDocument>(installId);
 
-        // Verify ownership
-        if (existing.userId !== userId) {
-          throw new Error("You do not have permission to edit this instance");
-        }
-
-        // Ensure this instance belongs to the current vibe
-        if (existing.titleId !== titleId) {
-          throw new Error("This instance does not belong to the current vibe");
-        }
-
-        // Update document
-        const updated: VibeInstanceDocument = {
-          ...existing,
-          ...updates,
-          updatedAt: new Date().toISOString(),
-        };
-
-        await database.put(updated);
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        setError(error);
-        throw error;
+      // Verify ownership
+      if (existing.userId !== userId) {
+        throw new Error("You do not have permission to edit this instance");
       }
+
+      // Ensure this instance belongs to the current vibe
+      if (existing.titleId !== titleId) {
+        throw new Error("This instance does not belong to the current vibe");
+      }
+
+      // Update document
+      const updated: VibeInstanceDocument = {
+        ...existing,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await database.put(updated);
     },
     [database, titleId, userId],
   );
@@ -126,28 +120,22 @@ export function useVibeInstances(titleId: string) {
    */
   const deleteInstance = useCallback(
     async (installId: string) => {
-      try {
-        setError(null);
+      setError(null);
 
-        // Get existing document to verify ownership
-        const existing = await database.get<VibeInstanceDocument>(installId);
+      // Get existing document to verify ownership
+      const existing = await database.get<VibeInstanceDocument>(installId);
 
-        // Ensure this instance belongs to the current vibe
-        if (existing.titleId !== titleId) {
-          throw new Error("This instance does not belong to the current vibe");
-        }
-
-        if (existing.userId !== userId) {
-          throw new Error("You do not have permission to delete this instance");
-        }
-
-        // Delete from Fireproof
-        await database.del(installId);
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        setError(error);
-        throw error;
+      // Ensure this instance belongs to the current vibe
+      if (existing.titleId !== titleId) {
+        throw new Error("This instance does not belong to the current vibe");
       }
+
+      if (existing.userId !== userId) {
+        throw new Error("You do not have permission to delete this instance");
+      }
+
+      // Delete from Fireproof
+      await database.del(installId);
     },
     [database, titleId, userId],
   );
@@ -157,44 +145,38 @@ export function useVibeInstances(titleId: string) {
    */
   const shareInstance = useCallback(
     async (installId: string, email: string) => {
-      try {
-        setError(null);
+      setError(null);
 
-        // Get existing document
-        const existing = await database.get<VibeInstanceDocument>(installId);
+      // Get existing document
+      const existing = await database.get<VibeInstanceDocument>(installId);
 
-        // Ensure this instance belongs to the current vibe
-        if (existing.titleId !== titleId) {
-          throw new Error("This instance does not belong to the current vibe");
-        }
-
-        // Verify ownership
-        if (existing.userId !== userId) {
-          throw new Error("You do not have permission to share this instance");
-        }
-
-        // Add to sharedWith if not already there
-        const sharedWith = existing.sharedWith || [];
-        if (!sharedWith.includes(email)) {
-          sharedWith.push(email);
-        }
-
-        // Update document
-        const updated: VibeInstanceDocument = {
-          ...existing,
-          sharedWith,
-          updatedAt: new Date().toISOString(),
-        };
-
-        await database.put(updated);
-
-        // Also call Fireproof share API (TODO: implement)
-        // This would use the share() function from useFireproof
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        setError(error);
-        throw error;
+      // Ensure this instance belongs to the current vibe
+      if (existing.titleId !== titleId) {
+        throw new Error("This instance does not belong to the current vibe");
       }
+
+      // Verify ownership
+      if (existing.userId !== userId) {
+        throw new Error("You do not have permission to share this instance");
+      }
+
+      // Add to sharedWith if not already there
+      const sharedWith = existing.sharedWith || [];
+      if (!sharedWith.includes(email)) {
+        sharedWith.push(email);
+      }
+
+      // Update document
+      const updated: VibeInstanceDocument = {
+        ...existing,
+        sharedWith,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await database.put(updated);
+
+      // Also call Fireproof share API (TODO: implement)
+      // This would use the share() function from useFireproof
     },
     [database, titleId, userId],
   );

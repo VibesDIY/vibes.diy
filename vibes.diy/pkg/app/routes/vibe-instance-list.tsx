@@ -85,39 +85,27 @@ function VibeInstancesListContent() {
   const handleCreate = async () => {
     if (!newDescription.trim()) return;
 
-    try {
-      const fullId = await createInstance(newDescription.trim());
-      setNewDescription("");
-      setShowCreateDialog(false);
-      // Navigate to the new instance (extract short ID and preserve query params)
-      const installId = extractInstallId(fullId, titleId);
-      const search = searchParams.toString();
-      navigate(`/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`);
-    } catch (err) {
-      console.error("Failed to create instance:", err);
-    }
+    const fullId = await createInstance(newDescription.trim());
+    setNewDescription("");
+    setShowCreateDialog(false);
+    // Navigate to the new instance (extract short ID and preserve query params)
+    const installId = extractInstallId(fullId, titleId);
+    const search = searchParams.toString();
+    navigate(`/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`);
   };
 
   const handleUpdate = async (fullId: string) => {
     if (!editDescription.trim()) return;
 
-    try {
-      await updateInstance(fullId, { description: editDescription.trim() });
-      setEditingId(null);
-      setEditDescription("");
-    } catch (err) {
-      console.error("Failed to update instance:", err);
-    }
+    await updateInstance(fullId, { description: editDescription.trim() });
+    setEditingId(null);
+    setEditDescription("");
   };
 
   const handleDelete = async (fullId: string) => {
     if (!confirm("Are you sure you want to delete this instance?")) return;
 
-    try {
-      await deleteInstance(fullId);
-    } catch (err) {
-      console.error("Failed to delete instance:", err);
-    }
+    await deleteInstance(fullId);
   };
 
   const startEditing = (fullId: string, currentDescription: string) => {
