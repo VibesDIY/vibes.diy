@@ -212,7 +212,10 @@ async function mountVibeWithCleanup(
 }
 
 export default function VibeInstanceViewer() {
-  const { titleId, installId } = useParams<{ titleId: string; installId: string }>();
+  const { titleId, installId } = useParams<{
+    titleId: string;
+    installId: string;
+  }>();
   const [error, setError] = useState<string | null>(null);
   // Generate unique container ID using cement's IdService
   // Regenerate on each navigation to make debugging easier
