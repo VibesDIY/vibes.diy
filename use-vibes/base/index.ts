@@ -5,6 +5,7 @@ import {
   ImgFile,
   toCloud as originalToCloud,
   useFireproof as originalUseFireproof,
+  RedirectStrategy,
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
@@ -54,10 +55,68 @@ export { fireproof, ImgFile };
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
 
+// Helper to parse JWT token
+function parseJWT(token: string): unknown {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return undefined;
+    const payload = parts[1];
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedBase64 = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    return JSON.parse(atob(paddedBase64));
+  } catch {
+    return undefined;
+  }
+}
+
+// Helper to check if JWT token is expired
+export function isJWTExpired(token: string): boolean {
+  try {
+    const claims = parseJWT(token) as { exp?: number };
+    if (!claims || typeof claims.exp !== 'number') return true;
+    // Buffer of 60 seconds
+    return Date.now() >= claims.exp * 1000 - 60000;
+  } catch {
+    return true;
+  }
+}
+
+// Minimal strategy to inject external auth token
+class VibesAuthStrategy extends RedirectStrategy {
+  setToken(token: string): void {
+    const claims = parseJWT(token);
+    // Inject token into parent class state
+    // @ts-expect-error - accessing protected/private property to bridge auth
+    this.currentToken = {
+      token,
+      claims,
+    };
+  }
+}
+
 // Helper function to create toCloud configuration
 export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+  const strategy = new VibesAuthStrategy();
+
+  // Check if an external token exists in localStorage and inject it
+  if (typeof window !== 'undefined') {
+    try {
+      const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
+      if (externalToken) {
+        if (isJWTExpired(externalToken)) {
+          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
+        } else {
+          strategy.setToken(externalToken);
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
   const attachable = originalToCloud({
     ...opts,
+    strategy,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
