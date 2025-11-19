@@ -5,6 +5,7 @@ import { IdService } from "@adviser/cement";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { transformImports } from "../../../../hosting/base/utils/codeTransform.js";
+import { useAuth } from "../contexts/AuthContext.js";
 
 // Singleton ID generator using cement's IdService (UUID mode by default)
 const idService = new IdService();
@@ -211,7 +212,7 @@ async function mountVibeWithCleanup(
   });
 }
 
-export default function VibeInstanceViewer() {
+function VibeInstanceViewerContent() {
   const { titleId, installId } = useParams<{
     titleId: string;
     installId: string;
@@ -339,4 +340,36 @@ export default function VibeInstanceViewer() {
       <div id={containerId} className="w-full h-full" />
     </div>
   );
+}
+
+// Auth wrapper component - only renders content when authenticated
+export default function VibeInstanceViewer() {
+  const { isAuthenticated, isLoading, setNeedsLogin } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setNeedsLogin(true);
+    }
+  }, [isAuthenticated, isLoading, setNeedsLogin]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="text-white text-lg">Checking authentication...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="text-white text-lg">
+          Please log in to access this vibe
+        </div>
+      </div>
+    );
+  }
+
+  // Only render the actual component (which calls useFireproof) when authenticated
+  return <VibeInstanceViewerContent />;
 }
