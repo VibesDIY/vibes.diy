@@ -50,6 +50,6 @@
     "@vitest/browser": "^4.0.10",
     "@vitest/browser-playwright": "^4.0.10",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.2"
+    "vitest": "^4.0.10"
   }
 }

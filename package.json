@@ -67,7 +67,7 @@
     "prettier-plugin-tailwindcss": "^0.7.1",
     "puppeteer": "^24.29.1",
     "typescript-eslint": "^8.46.1",
-    "vitest": "^4.0.2",
+    "vitest": "^4.0.10",
     "wrangler": "^4.45.1"
   }
 }
