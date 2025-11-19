@@ -67,7 +67,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^4.1.1",
+    "@chromatic-com/storybook": "^4.1.3",
     "@cloudflare/vite-plugin": "^1.14.0",
     "@fireproof/core-cli": "^0.23.15",
     "@react-router/dev": "^7.9.4",
