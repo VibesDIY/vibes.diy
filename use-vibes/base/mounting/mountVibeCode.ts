@@ -20,8 +20,11 @@ export async function mountVibeCode(
 
     // Step 3: Inject mounting code that uses the module's own React/ReactDOM
     // This ensures the component uses the same React instance it imported
+    // We alias the imports to avoid collisions with the user's code
     const moduleCode = `
-      import { mountVibesApp } from "https://esm.sh/use-vibes";
+      import __React__ from "https://esm.sh/react";
+      import { createRoot as __createRoot__ } from "https://esm.sh/react-dom/client";
+      import { mountVibesApp as __mountVibesApp__ } from "https://esm.sh/use-vibes";
 
       ${transformed.code}
 
@@ -35,7 +38,11 @@ export async function mountVibeCode(
           throw new Error("App component is not defined - check your default export");
         }
 
-        const mountResult = mountVibesApp({
+        // Use mountVibesApp for all cases
+        // Note: In preview mode (!showVibesSwitch), the parent container handles
+        // layout containment via CSS (isolation: isolate) even if the package version
+        // renders full-screen elements.
+        const mountResult = __mountVibesApp__({
           container: container,
           appComponent: App,
           showVibesSwitch: ${showVibesSwitch},
@@ -52,6 +59,7 @@ export async function mountVibeCode(
             containerId: "${containerId}"
           }
         }));
+
       } catch (error) {
         // Dispatch error event for mount failures
         document.dispatchEvent(new CustomEvent('vibes-mount-error', {

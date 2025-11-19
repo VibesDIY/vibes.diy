@@ -81,7 +81,10 @@ export function InlinePreview({
   }, [code, codeReady, containerId, sessionId]);
 
   return (
-    <div className="w-full h-full bg-gray-900">
+    <div
+      className="relative w-full h-full bg-gray-900 overflow-hidden"
+      style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
+    >
       {/* Error Overlay */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
