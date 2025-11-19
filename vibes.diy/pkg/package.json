@@ -72,7 +72,7 @@
     "@fireproof/core-cli": "^0.23.15",
     "@react-router/dev": "^7.9.4",
     "@storybook/addon-a11y": "^9.1.13",
-    "@storybook/addon-docs": "^10.0.0",
+    "@storybook/addon-docs": "^10.0.8",
     "@storybook/addon-onboarding": "^10.0.8",
     "@storybook/react": "^10.0.7",
     "@storybook/react-vite": "^10.0.8",
