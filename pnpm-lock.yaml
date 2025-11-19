@@ -27,11 +27,11 @@ importers:
         specifier: 7.0.0-dev.20251027.1
         version: 7.0.0-dev.20251027.1
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       '@vitest/coverage-v8':
         specifier: 4.0.10
-        version: 4.0.10(vitest@4.0.8)
+        version: 4.0.10(@vitest/browser@4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8))(vitest@4.0.8)
       cross-env:
         specifier: ^10.0.0
         version: 10.1.0
@@ -58,7 +58,7 @@ importers:
         version: 8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       wrangler:
         specifier: ^4.45.1
         version: 4.47.0(@cloudflare/workers-types@4.20251111.0)
@@ -79,8 +79,8 @@ importers:
         specifier: ^24.9.1
         version: 24.10.1
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -113,8 +113,8 @@ importers:
         specifier: ^24.9.1
         version: 24.10.1
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       tsx:
         specifier: ^4.20.3
         version: 4.20.6
@@ -123,7 +123,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       zx:
         specifier: ^8.8.4
         version: 8.8.5
@@ -162,8 +162,8 @@ importers:
         specifier: ^24.9.1
         version: 24.10.1
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       jest:
         specifier: ^30.0.5
         version: 30.2.0(@types/node@24.10.1)(ts-node@10.9.2(@types/node@24.10.1)(typescript@5.9.3))
@@ -175,7 +175,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       zx:
         specifier: ^8.8.4
         version: 8.8.5
@@ -211,8 +211,8 @@ importers:
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -254,8 +254,8 @@ importers:
         specifier: ^24.9.1
         version: 24.10.1
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -282,8 +282,8 @@ importers:
         specifier: ^24.9.1
         version: 24.10.1
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       chanfana:
         specifier: ^2.8.2
         version: 2.8.3
@@ -301,7 +301,7 @@ importers:
         version: 7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       wrangler:
         specifier: ^4.45.1
         version: 4.47.0(@cloudflare/workers-types@4.20251111.0)
@@ -328,8 +328,8 @@ importers:
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -381,10 +381,10 @@ importers:
         version: 5.1.1(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       '@vitest/browser':
         specifier: ^4.0.2
-        version: 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        version: 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       playwright:
         specifier: ^1.56.1
         version: 1.56.1
@@ -468,8 +468,8 @@ importers:
         specifier: ~19.2.2
         version: 19.2.3(@types/react@19.2.4)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       storybook:
         specifier: ^10.0.6
         version: 10.0.7(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
@@ -505,8 +505,8 @@ importers:
         specifier: ^5.0.4
         version: 5.1.1(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -521,7 +521,7 @@ importers:
         version: 7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
 
   use-vibes/examples/react-example:
     dependencies:
@@ -548,8 +548,8 @@ importers:
         specifier: ^5.0.4
         version: 5.1.1(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       eslint:
         specifier: ^9.38.0
         version: 9.39.1(jiti@2.6.1)
@@ -591,8 +591,8 @@ importers:
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
 
   use-vibes/tests:
     dependencies:
@@ -625,7 +625,7 @@ importers:
         version: 5.1.4(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
     devDependencies:
       '@playwright/test':
         specifier: ^1.56.0
@@ -652,8 +652,8 @@ importers:
         specifier: ^4.0.2
         version: 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -698,8 +698,8 @@ importers:
         specifier: ~19.2.2
         version: 19.2.4
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -717,8 +717,8 @@ importers:
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -733,8 +733,8 @@ importers:
         specifier: ^24.9.1
         version: 24.10.1
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       jose:
         specifier: ^6.1.1
         version: 6.1.1
@@ -746,7 +746,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
 
   vibes.diy/pkg:
     dependencies:
@@ -896,8 +896,8 @@ importers:
         specifier: ~19.2.2
         version: 19.2.3(@types/react@19.2.4)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       concurrently:
         specifier: ^9.1.2
         version: 9.2.1
@@ -1029,14 +1029,14 @@ importers:
         specifier: ^4.0.2
         version: 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       vite-tsconfig-paths:
         specifier: ^5.1.4
         version: 5.1.4(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
 
   vibes.diy/tests/simple-chat:
     dependencies:
@@ -1123,14 +1123,14 @@ importers:
         specifier: ^4.0.2
         version: 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       vite-tsconfig-paths:
         specifier: ^5.1.4
         version: 5.1.4(typescript@5.9.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
 
   vibesbox/pkg:
     dependencies:
@@ -1145,8 +1145,8 @@ importers:
         version: link:../../use-vibes/base
     devDependencies:
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -1170,8 +1170,8 @@ importers:
         specifier: ^24.9.1
         version: 24.10.1
       '@vitest/browser-playwright':
-        specifier: ^4.0.8
-        version: 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+        specifier: ^4.0.10
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -1180,7 +1180,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
 
 packages:
 
@@ -4046,11 +4046,16 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
 
-  '@vitest/browser-playwright@4.0.8':
-    resolution: {integrity: sha512-MUi0msIAPXcA2YAuVMcssrSYP/yylxLt347xyTC6+ODl0c4XQFs0d2AN3Pc3iTa0pxIGmogflUV6eogXpPbJeA==}
+  '@vitest/browser-playwright@4.0.10':
+    resolution: {integrity: sha512-pm7Hl7BNyluox+uGJPnT7vCRDSI+ibHcWQRtnCACAZWxD6/b2gN+8pO0qTDPHpxDSTPKDS5sT2dKTHLcr+lsng==}
     peerDependencies:
       playwright: '*'
-      vitest: 4.0.8
+      vitest: 4.0.10
+
+  '@vitest/browser@4.0.10':
+    resolution: {integrity: sha512-irO+aGxYx/rAhjEBLsGPO4JQ8dA+A43enIST0j4xQ2kYHatHi9tUcxkRRGpClGuUVU42mi+iQsFFzd4xxpoV3g==}
+    peerDependencies:
+      vitest: 4.0.10
 
   '@vitest/browser@4.0.8':
     resolution: {integrity: sha512-oG6QJAR0d7S5SDnIYZwjxCj/a5fhbp9ZE7GtMgZn+yCUf4CxtqbBV6aXyg0qmn8nbUWT+rGuXL2ZB6qDBUjv/A==}
@@ -10087,7 +10092,7 @@ snapshots:
       devalue: 5.5.0
       miniflare: 4.20251109.0
       semver: 7.7.3
-      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       wrangler: 4.47.0(@cloudflare/workers-types@4.20251111.0)
       zod: 3.25.76
     transitivePeerDependencies:
@@ -12825,42 +12830,59 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/browser-playwright@4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)':
+  '@vitest/browser-playwright@4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)':
     dependencies:
-      '@vitest/browser': 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
-      '@vitest/mocker': 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
+      '@vitest/browser': 4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+      '@vitest/mocker': 4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       playwright: 1.56.1
       tinyrainbow: 3.0.3
-      vitest: 4.0.10(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+      vitest: 4.0.10(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
     transitivePeerDependencies:
       - bufferutil
       - msw
       - utf-8-validate
       - vite
 
-  '@vitest/browser-playwright@4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)':
+  '@vitest/browser-playwright@4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)':
     dependencies:
-      '@vitest/browser': 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
-      '@vitest/mocker': 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
+      '@vitest/browser': 4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+      '@vitest/mocker': 4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
       playwright: 1.56.1
       tinyrainbow: 3.0.3
-      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
     transitivePeerDependencies:
       - bufferutil
       - msw
       - utf-8-validate
       - vite
 
-  '@vitest/browser@4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)':
+  '@vitest/browser@4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)':
     dependencies:
-      '@vitest/mocker': 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
-      '@vitest/utils': 4.0.8
+      '@vitest/mocker': 4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
+      '@vitest/utils': 4.0.10
       magic-string: 0.30.21
       pixelmatch: 7.1.0
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.0.3
-      vitest: 4.0.10(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+      vitest: 4.0.10(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+      ws: 8.18.3
+    transitivePeerDependencies:
+      - bufferutil
+      - msw
+      - utf-8-validate
+      - vite
+
+  '@vitest/browser@4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)':
+    dependencies:
+      '@vitest/mocker': 4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
+      '@vitest/utils': 4.0.10
+      magic-string: 0.30.21
+      pixelmatch: 7.1.0
+      pngjs: 7.0.0
+      sirv: 3.0.2
+      tinyrainbow: 3.0.3
+      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
@@ -12877,7 +12899,7 @@ snapshots:
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.0.3
-      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
       ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
@@ -12885,7 +12907,7 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@vitest/coverage-v8@4.0.10(vitest@4.0.8)':
+  '@vitest/coverage-v8@4.0.10(@vitest/browser@4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8))(vitest@4.0.8)':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.0.10
@@ -12898,7 +12920,9 @@ snapshots:
       magicast: 0.5.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+      vitest: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+    optionalDependencies:
+      '@vitest/browser': 4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
     transitivePeerDependencies:
       - supports-color
 
@@ -19298,7 +19322,7 @@ snapshots:
       tsx: 4.20.6
       yaml: 2.8.1
 
-  vitest@4.0.10(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1):
+  vitest@4.0.10(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1):
     dependencies:
       '@vitest/expect': 4.0.10
       '@vitest/mocker': 4.0.10(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
@@ -19323,7 +19347,7 @@ snapshots:
     optionalDependencies:
       '@types/debug': 4.1.12
       '@types/node': 24.10.1
-      '@vitest/browser-playwright': 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
+      '@vitest/browser-playwright': 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.10)
     transitivePeerDependencies:
       - jiti
       - less
@@ -19338,7 +19362,7 @@ snapshots:
       - tsx
       - yaml
 
-  vitest@4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1):
+  vitest@4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1):
     dependencies:
       '@vitest/expect': 4.0.8
       '@vitest/mocker': 4.0.8(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
@@ -19363,7 +19387,7 @@ snapshots:
     optionalDependencies:
       '@types/debug': 4.1.12
       '@types/node': 24.10.1
-      '@vitest/browser-playwright': 4.0.8(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
+      '@vitest/browser-playwright': 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8)
     transitivePeerDependencies:
       - jiti
       - less
