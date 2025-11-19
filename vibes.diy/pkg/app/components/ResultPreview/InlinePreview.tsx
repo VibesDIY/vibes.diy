@@ -39,6 +39,7 @@ export function InlinePreview({
           sessionId, // Use session ID as titleId
           "preview", // Use "preview" as installId for result preview context
           transformImports,
+          false, // Hide vibes switch in result preview mode
         );
 
         if (active) {
@@ -80,7 +81,7 @@ export function InlinePreview({
   }, [code, codeReady, containerId, sessionId]);
 
   return (
-    <div className="relative w-full h-full bg-gray-900">
+    <div className="w-full h-full bg-gray-900">
       {/* Error Overlay */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
