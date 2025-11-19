@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
+import { transformImports } from "@vibes.diy/hosting-base";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
-import { transformImports } from "../../../../hosting/base/utils/codeTransform.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { mountVibeWithCleanup } from "use-vibes";
