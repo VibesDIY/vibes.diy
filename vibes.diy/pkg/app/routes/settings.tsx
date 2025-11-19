@@ -115,7 +115,7 @@ export default function Settings() {
 
   const handleLogout = useCallback(() => {
     // Clear the auth token and navigate to home page
-    localStorage.removeItem("auth_token");
+    localStorage.removeItem("vibes-diy-auth-token");
     // Update the auth context state before navigation
     checkAuthStatus().then(() => {
       navigate("/");
