@@ -70,7 +70,7 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
       try {
         authToken =
           localStorage.getItem('vibes-diy-auth-token') ||
-          localStorage.getItem('auth_token') ||
+          localStorage.getItem('vibes-diy-auth-token') ||
           undefined;
       } catch {
         // Ignore localStorage errors (privacy mode, SSR, etc.)

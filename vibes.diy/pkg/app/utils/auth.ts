@@ -98,7 +98,7 @@ export async function pollForAuthToken(
       if (parseResult.success && parseResult.data.token) {
         const { token } = parseResult.data;
         // Store the token in localStorage for future use
-        localStorage.setItem("auth_token", token);
+        localStorage.setItem("vibes-diy-auth-token", token);
         mock.toast.success("Logged in successfully!");
         return token;
       }
@@ -161,7 +161,7 @@ export async function extendToken(
 
   if (result) {
     // Store the new token in localStorage (vibes.diy specific behavior)
-    localStorage.setItem("auth_token", result);
+    localStorage.setItem("vibes-diy-auth-token", result);
   }
 
   return result;

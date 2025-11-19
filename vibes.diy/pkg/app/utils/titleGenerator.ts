@@ -53,7 +53,7 @@ export async function generateTitle(
     headers: {
       "HTTP-Referer": "https://vibes.diy",
       "X-Title": "Vibes DIY",
-      "X-VIBES-Token": localStorage.getItem("auth_token") || "",
+      "X-VIBES-Token": localStorage.getItem("vibes-diy-auth-token") || "",
     },
   };
 
