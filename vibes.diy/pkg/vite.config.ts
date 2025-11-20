@@ -1,10 +1,54 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
-import type { ConfigEnv, UserConfig } from "vite";
+import type { ConfigEnv, UserConfig, Plugin } from "vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 // import { cloudflare } from "@cloudflare/vite-plugin";
+
+// Plugin to move importmap to the beginning of <head>
+function moveImportmapFirst(): Plugin {
+  return {
+    name: "move-importmap-first",
+    enforce: "post",
+    async closeBundle() {
+      // Post-process the generated HTML file
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      const htmlPath = path.join(
+        process.cwd(),
+        "build",
+        "client",
+        "index.html",
+      );
+
+      try {
+        let html = await fs.readFile(htmlPath, "utf-8");
+
+        // Find the importmap script
+        const importmapRegex =
+          /<script type="importmap"[^>]*>[\s\S]*?<\/script>/;
+        const importmapMatch = html.match(importmapRegex);
+
+        if (!importmapMatch) {
+          return;
+        }
+
+        const importmapScript = importmapMatch[0];
+
+        // Remove the importmap from its current position
+        html = html.replace(importmapRegex, "");
+
+        // Insert it right after <head>
+        html = html.replace(/<head>/, `<head>${importmapScript}`);
+
+        await fs.writeFile(htmlPath, html, "utf-8");
+      } catch (error) {
+        // Silently ignore - file doesn't exist in all build environments
+      }
+    },
+  };
+}
 
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   // Disable React Router plugin for tests or when explicitly disabled
@@ -21,6 +65,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       }),
       //      cloudflare(),
       ...(!disableReactRouter ? [reactRouter()] : []),
+      moveImportmapFirst(),
     ],
     base: process.env.VITE_APP_BASENAME || "/",
     ssr: {
