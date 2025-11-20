@@ -227,9 +227,9 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
 
       const importMap = JSON.parse(importMapMatch[1]);
 
-      // React versions should remain unchanged
-      expect(importMap.imports.react).toContain("react@>=19.1.0");
-      expect(importMap.imports["react-dom"]).toContain("react-dom@>=19.1.0");
+      // React versions should remain unpinned (no version specifiers)
+      expect(importMap.imports.react).toBe("https://esm.sh/react");
+      expect(importMap.imports["react-dom"]).toBe("https://esm.sh/react-dom");
 
       // Only use-vibes related imports should be affected
       expect(importMap.imports["use-vibes"]).toBe(
