@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "../contexts/AuthContext.js";
@@ -31,19 +31,12 @@ function VibeInstanceViewerContent() {
     titleId: string;
     installId: string;
   }>();
-  const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   // Generate unique container ID using crypto.randomUUID
   // Regenerate on each navigation to make debugging easier
   const [containerId, setContainerId] = useState(
     () => `vibe-container-${crypto.randomUUID()}`,
   );
-
-  // Extract and validate v_vibes version parameter (same pattern as hosting)
-  const versionParam = (searchParams.get("v_vibes") || "").trim();
-  const semverPattern =
-    /^[0-9]+(?:\.[0-9]+(?:\.[0-9]+)?)?(?:-[A-Za-z0-9.-]+)?(?:\+[A-Za-z0-9.-]+)?$/;
-  const vibesVersion = semverPattern.test(versionParam) ? versionParam : "";
 
   // Lazy instance creation: ensure instance exists in database
   const { instances, createInstance, isCreating } = useVibeInstances(
@@ -71,13 +64,6 @@ function VibeInstanceViewerContent() {
     // Expose libraries to window for development shim
     setupDevShims();
 
-    // Log version override if present
-    if (vibesVersion) {
-      console.log(
-        `[vibe-viewer] Using use-vibes version override: ${vibesVersion}`,
-      );
-    }
-
     // Generate new container ID for this navigation
     const newContainerId = `vibe-container-${crypto.randomUUID()}`;
     setContainerId(newContainerId);
@@ -100,17 +86,13 @@ function VibeInstanceViewerContent() {
 
         if (!active) return;
 
-        // Create transform function with optional version override
-        const transformWithVersion = (code: string) =>
-          transformImportsDev(code, vibesVersion || undefined);
-
         // Mount the vibe code and capture the unmount callback via event
         unmountVibe = await mountVibeWithCleanup(
           vibeCode,
           newContainerId,
           titleId,
           installId,
-          transformWithVersion,
+          transformImportsDev,
         );
       } catch (err) {
         console.error("Error loading vibe:", err);
@@ -140,7 +122,7 @@ function VibeInstanceViewerContent() {
         script.remove();
       }
     };
-  }, [titleId, installId, vibesVersion]);
+  }, [titleId, installId]);
 
   if (!titleId || !installId) {
     return (
