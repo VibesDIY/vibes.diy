@@ -99,7 +99,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
          */}
         {/* FIREPROOF-UPGRADE-BRANCH: Fireproof 0.23.0 */}
         <Meta data-testid="meta" />
-        <Links />
         {/* Import map for inline vibe rendering with ES modules */}
         <script
           type="importmap"
@@ -125,6 +124,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             }),
           }}
         />
+        <Links />
         {/* Tailwind CSS v4 for inline vibe rendering - matches hosting runtime */}
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
       </head>
