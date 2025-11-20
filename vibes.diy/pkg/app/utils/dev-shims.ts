@@ -46,36 +46,14 @@ export function setupDevShims() {
  * Wraps the standard `transformImports` but adds a post-processing step
  * to rewrite specific package imports to use the global window variables
  * we set up in `setupDevShims`.
- *
- * @param code - The source code to transform
- * @param vibesVersion - Optional version override for use-vibes packages (e.g., "1.2.3")
- *                       When provided, skips dev shims and uses versioned esm.sh URLs
  */
-export function transformImportsDev(code: string, vibesVersion?: string) {
+export function transformImportsDev(code: string) {
   // First run the standard transformation (which might resolve bare specifiers to esm.sh)
   // We need to handle both the original bare specifiers AND the resolved esm.sh URLs
   // because standard transformImports might have already run or might run before this replacement logic depending on implementation.
   // Actually, transformImports returns code with esm.sh URLs.
   // So we should probably run our dev replacement ON TOP of that, targeting both keys.
   let res = transformImports(code);
-
-  // If vibesVersion is provided, apply version overrides instead of dev shims
-  if (vibesVersion) {
-    // Apply version overrides to use-vibes packages
-    res = res.replace(
-      /https:\/\/esm\.sh\/use-vibes(?!@)/g,
-      `https://esm.sh/use-vibes@${vibesVersion}`,
-    );
-    res = res.replace(
-      /https:\/\/esm\.sh\/use-fireproof(?!@)/g,
-      `https://esm.sh/use-vibes@${vibesVersion}`,
-    );
-    res = res.replace(
-      /https:\/\/esm\.sh\/call-ai(?!@)/g,
-      `https://esm.sh/call-ai@${vibesVersion}`,
-    );
-    return res;
-  }
 
   if (import.meta.env.DEV) {
     const replacements: Record<string, string> = {

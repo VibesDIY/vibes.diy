@@ -170,10 +170,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // DIAGNOSTIC: Log database name construction
   if (vibeMetadata) {
-    const originalName =
-      typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'undefined';
-    const augmentedName =
-      typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'undefined';
+    const originalName = typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'undefined';
+    const augmentedName = typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'undefined';
     console.log('[useFireproof] Database naming:', {
       original: originalName,
       augmented: augmentedName,
