@@ -27,10 +27,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const html = await response.text();
 
       expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+        '"use-vibes": "https://esm.sh/use-vibes@0.16.2"',
       );
       expect(html).toContain(
-        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+        '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
       );
     });
 
@@ -147,10 +147,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
         const html = await response.text();
 
         expect(html).toContain(
-          '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+          '"use-vibes": "https://esm.sh/use-vibes@0.16.2"',
         );
         expect(html).toContain(
-          '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+          '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
         );
       }
     });
@@ -180,10 +180,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const html = await response.text();
 
       expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+        '"use-vibes": "https://esm.sh/use-vibes@0.16.2"',
       );
       expect(html).toContain(
-        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+        '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
       );
     });
   });
