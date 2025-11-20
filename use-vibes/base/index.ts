@@ -170,7 +170,12 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // DIAGNOSTIC: Unconditional log for debugging
   console.log('[useFireproof] Hook called:', {
-    nameOrDatabase: typeof nameOrDatabase === 'string' ? nameOrDatabase : typeof nameOrDatabase === 'object' ? 'Database object' : 'undefined',
+    nameOrDatabase:
+      typeof nameOrDatabase === 'string'
+        ? nameOrDatabase
+        : typeof nameOrDatabase === 'object'
+          ? 'Database object'
+          : 'undefined',
     vibeMetadata: vibeMetadata || 'UNDEFINED',
     hasContext: !!vibeMetadata,
   });
