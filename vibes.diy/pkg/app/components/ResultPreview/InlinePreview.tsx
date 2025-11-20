@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { transformImports } from "@vibes.diy/hosting-base";
 import { mountVibeWithCleanup } from "use-vibes";
+import { setupDevShims, transformImportsDev } from "../../utils/dev-shims.js";
 
 interface InlinePreviewProps {
   code: string;
@@ -22,6 +22,9 @@ export function InlinePreview({
   useEffect(() => {
     if (!codeReady || !code) return;
 
+    // Expose libraries to window for development shim
+    setupDevShims();
+
     let active = true;
 
     const loadAndMountVibe = async () => {
@@ -38,7 +41,7 @@ export function InlinePreview({
           containerId,
           sessionId, // Use session ID as titleId
           "preview", // Use "preview" as installId for result preview context
-          transformImports,
+          transformImportsDev,
           false, // Hide vibes switch in result preview mode
         );
 
