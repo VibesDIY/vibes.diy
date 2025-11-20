@@ -11,18 +11,18 @@ import {
   generateStandaloneHtml,
   downloadTextFile,
 } from "~/vibes.diy/app/utils/exportHtml.js";
-import iframeTemplateRaw from "~/vibes.diy/app/components/ResultPreview/templates/iframe-template.html?raw";
+import { ejectTemplateWithPlaceholders } from "~/vibes.diy/app/utils/eject-template.js";
 
 describe("exportHtml utilities", () => {
   describe("generateStandaloneHtml", () => {
-    it("injects code and environment tokens into the iframe template", () => {
-      // Sanity-check: the raw template has the placeholders we expect to replace
-      expect(iframeTemplateRaw).toContain("{{APP_CODE}}");
-      expect(iframeTemplateRaw).toContain("{{CALLAI_ENDPOINT}}");
-      expect(iframeTemplateRaw).toContain("{{API_KEY}}");
+    it("injects code and environment tokens into the eject template", () => {
+      // Sanity-check: the template has the placeholders we expect to replace
+      expect(ejectTemplateWithPlaceholders).toContain("{{APP_CODE}}");
+      expect(ejectTemplateWithPlaceholders).toContain("{{CALLAI_ENDPOINT}}");
+      expect(ejectTemplateWithPlaceholders).toContain("{{API_KEY}}");
       // SESSION_ID placeholder no longer exists in template
-      expect(iframeTemplateRaw).not.toContain("{{SESSION_ID}}");
-      expect(iframeTemplateRaw).not.toContain("window.SESSION_ID");
+      expect(ejectTemplateWithPlaceholders).not.toContain("{{SESSION_ID}}");
+      expect(ejectTemplateWithPlaceholders).not.toContain("window.SESSION_ID");
 
       const code = "const a = 1;";
       const sessionId = "my-session-123"; // Keep this to test that it doesn't appear in output
