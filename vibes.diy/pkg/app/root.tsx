@@ -88,18 +88,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/**
-         * Netlify Split Testing opt-in/out via query params (pre-mount)
-         *
-         * Moved to a small static file to keep CSP strict (no 'unsafe-inline').
-         * The script must execute before the app mounts; keep it first in <head>.
-         * <script src="/nf-ab.cookie.js"></script>
-         */}
-        {/* FIREPROOF-UPGRADE-BRANCH: Fireproof 0.23.0 */}
-        <Meta data-testid="meta" />
-        {/* Import map for inline vibe rendering with ES modules */}
+        {/* Dope import map for inline vibe rendering with ES modules */}
         <script
           type="importmap"
           dangerouslySetInnerHTML={{
@@ -124,6 +113,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
             }),
           }}
         />
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/**
+         * Netlify Split Testing opt-in/out via query params (pre-mount)
+         *
+         * Moved to a small static file to keep CSP strict (no 'unsafe-inline').
+         * The script must execute before the app mounts; keep it first in <head>.
+         * <script src="/nf-ab.cookie.js"></script>
+         */}
+        {/* FIREPROOF-UPGRADE-BRANCH: Fireproof 0.23.0 */}
+        <Meta data-testid="meta" />
         <Links />
         {/* Tailwind CSS v4 for inline vibe rendering - matches hosting runtime */}
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
