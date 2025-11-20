@@ -1,8 +1,6 @@
 import type React from 'react';
 
-export function getOuterContainerStyle(
-  customStyle?: React.CSSProperties
-): React.CSSProperties {
+export function getOuterContainerStyle(customStyle?: React.CSSProperties): React.CSSProperties {
   return {
     padding: '12px',
     display: 'flex',
