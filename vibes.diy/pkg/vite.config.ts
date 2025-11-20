@@ -6,7 +6,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 // import { cloudflare } from "@cloudflare/vite-plugin";
 
-export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
+export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
   // Disable React Router plugin for tests or when explicitly disabled
   const disableReactRouter =
     mode === "test" || process.env.DISABLE_REACT_ROUTER === "true";
@@ -23,6 +23,15 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       ...(!disableReactRouter ? [reactRouter()] : []),
     ],
     base: process.env.VITE_APP_BASENAME || "/",
+    ssr: {
+      external: [
+        "react",
+        "react-dom",
+        "react-dom/client",
+        "react/jsx-runtime",
+        "use-vibes",
+      ],
+    },
     build: {
       outDir: "build",
       rollupOptions: {
