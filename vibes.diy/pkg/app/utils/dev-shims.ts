@@ -2,7 +2,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 import * as JSX from "react/jsx-runtime";
-import * as UseFireproof from "use-fireproof";
 import * as UseVibes from "use-vibes";
 import * as CallAI from "call-ai";
 import { transformImports } from "@vibes.diy/hosting-base";
@@ -12,7 +11,7 @@ interface VibeWindow extends Window {
   __VIBE_REACT_DOM__: typeof ReactDOM;
   __VIBE_REACT_DOM_CLIENT__: typeof ReactDOMClient;
   __VIBE_REACT_JSX_RUNTIME__: typeof JSX;
-  __VIBE_USE_FIREPROOF__: typeof UseFireproof;
+  __VIBE_USE_FIREPROOF__: typeof UseVibes; // use-fireproof maps to use-vibes (enhanced version)
   __VIBE_USE_VIBES__: typeof UseVibes;
   __VIBE_CALL_AI__: typeof CallAI;
 }
@@ -49,10 +48,10 @@ export function setupDevShims() {
  */
 export function transformImportsDev(code: string) {
   // DIAGNOSTIC: Log environment mode
-  console.log('[dev-shims] transformImportsDev called:', {
+  console.log("[dev-shims] transformImportsDev called:", {
     isDev: import.meta.env.DEV,
     mode: import.meta.env.MODE,
-    willTransform: import.meta.env.DEV ? 'YES' : 'NO'
+    willTransform: import.meta.env.DEV ? "YES" : "NO",
   });
 
   // First run the standard transformation (which might resolve bare specifiers to esm.sh)
@@ -126,7 +125,7 @@ export function transformImportsDev(code: string) {
   // DIAGNOSTIC: Log a sample of the transformed code
   if (import.meta.env.DEV) {
     const sample = res.substring(0, 800); // First 800 chars
-    console.log('[dev-shims] Transformed code sample:', sample);
+    console.log("[dev-shims] Transformed code sample:", sample);
   }
 
   return res;

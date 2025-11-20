@@ -66,10 +66,16 @@ function VibeInstanceViewerContent() {
 
     // DIAGNOSTIC: Verify window globals are set
     if (import.meta.env.DEV) {
-      console.log('[vibe-viewer] Window globals check:', {
-        hasUseVibes: !!(window as any).__VIBE_USE_VIBES__,
-        hasUseFireproof: !!((window as any).__VIBE_USE_VIBES__ as any)?.useFireproof,
-        useFireproofType: typeof ((window as any).__VIBE_USE_VIBES__ as any)?.useFireproof,
+      interface VibeWindow extends Window {
+        __VIBE_USE_VIBES__?: {
+          useFireproof?: unknown;
+        };
+      }
+      const vibeWindow = window as unknown as VibeWindow;
+      console.log("[vibe-viewer] Window globals check:", {
+        hasUseVibes: !!vibeWindow.__VIBE_USE_VIBES__,
+        hasUseFireproof: !!vibeWindow.__VIBE_USE_VIBES__?.useFireproof,
+        useFireproofType: typeof vibeWindow.__VIBE_USE_VIBES__?.useFireproof,
       });
     }
 
