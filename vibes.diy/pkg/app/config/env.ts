@@ -7,31 +7,6 @@ import { Lazy } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { callAiEnv } from "call-ai";
 
-// Function to get the current database version from local storage
-function getDatabaseVersion(): number {
-  if (typeof window === "undefined") return 0;
-
-  const storedVersion = localStorage.getItem("vibes-db-version") || "";
-  return storedVersion ? JSON.parse(storedVersion) : 0;
-}
-
-// Function to increment the database version
-export function incrementDatabaseVersion(): number {
-  if (typeof window === "undefined") return 0;
-
-  const currentVersion = getDatabaseVersion();
-  const newVersion = currentVersion === 0 ? 1 : currentVersion + 1;
-
-  localStorage.setItem("vibes-db-version", JSON.stringify(newVersion));
-  return newVersion;
-}
-
-// Fireproof database name with version suffix
-export function getVersionSuffix(): string {
-  const version = getDatabaseVersion();
-  return version === 0 ? "" : `${version}`;
-}
-
 // --- Vite Environment Variables ---
 // Access environment variables safely with fallbacks
 
@@ -108,14 +83,7 @@ class vibesDiyEnv {
   // Chat History Database
   readonly SETTINGS_DBNAME = Lazy(
     () =>
-      (this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats") +
-      getVersionSuffix(),
-  );
-
-  // Vibesbox Worker URL
-  // Default to apex domain for subdomain-based isolation
-  readonly VIBESBOX_BASE_URL = Lazy(
-    () => this.env().get("VITE_VIBESBOX_BASE_URL") ?? "https://vibesbox.dev",
+      (this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats")
   );
 }
 
