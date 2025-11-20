@@ -902,7 +902,7 @@ beforeEach(() => {
 
   vi.spyOn(Storage.prototype, "getItem");
   localStorage.getItem = vi.fn((key) => {
-    if (key === "auth_token") return testJwt;
+    if (key === "vibes-diy-auth-token") return testJwt;
     return null;
   });
 });
