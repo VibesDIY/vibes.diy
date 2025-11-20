@@ -82,8 +82,7 @@ class vibesDiyEnv {
 
   // Chat History Database
   readonly SETTINGS_DBNAME = Lazy(
-    () =>
-      (this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats")
+    () => this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats",
   );
 }
 
