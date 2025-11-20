@@ -138,19 +138,54 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
   return attachable;
 }
 
+// Helper function to construct database name with vibe metadata
+function constructDatabaseName(
+  nameOrDatabase: string | Database | undefined,
+  vibeMetadata: VibeMetadata | undefined
+): string | Database | undefined {
+  // No metadata = return as-is (backward compatibility)
+  if (!vibeMetadata) {
+    return nameOrDatabase;
+  }
+
+  // Database object = return as-is (can't augment object type)
+  if (typeof nameOrDatabase === 'object' && nameOrDatabase !== null) {
+    return nameOrDatabase;
+  }
+
+  // Augment string name or use 'default' if undefined/empty
+  const baseName = nameOrDatabase || 'default';
+
+  // Construct: baseName-titleId-installId
+  return `${baseName}-${vibeMetadata.titleId}-${vibeMetadata.installId}`;
+}
+
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
-  // DIAGNOSTIC: Enhanced useFireproof hook entry
-
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
+
+  // Construct augmented database name with vibe metadata (titleId + installId)
+  const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
+
+  // DIAGNOSTIC: Log database name construction
+  if (vibeMetadata) {
+    const originalName = typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'undefined';
+    const augmentedName = typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'undefined';
+    console.log('[useFireproof] Database naming:', {
+      original: originalName,
+      augmented: augmentedName,
+      titleId: vibeMetadata.titleId,
+      installId: vibeMetadata.installId,
+    });
+  }
 
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
 
-  // Get database name for tracking purposes
+  // Get database name for tracking purposes (use augmented name)
   const dbName =
-    typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'default';
+    typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
   // Use global sync key - all databases share the same auth token and sync state
   const syncKey = 'fireproof-sync-enabled';
 
@@ -160,10 +195,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Create attach config only if sync was previously enabled, passing vibeMetadata
   const attachConfig = wasSyncEnabled ? toCloud() : undefined;
 
-  // Use original useFireproof with attach config only if previously enabled
-  // This preserves the createAttach lifecycle for token persistence
+  // Use original useFireproof with augmented database name
+  // This ensures each titleId + installId combination gets its own database
   const result = originalUseFireproof(
-    nameOrDatabase as string | Database | undefined,
+    augmentedDbName as string | Database | undefined,
     attachConfig ? { attach: attachConfig } : {}
   );
 
@@ -182,6 +217,13 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Handle first-time sync enable without reload
   useEffect(() => {
     if (manualAttach?.state === 'pending' && result.database) {
+      // DIAGNOSTIC: Log cloud attachment
+      console.log('[useFireproof] Attaching to cloud:', {
+        databaseName: result.database.name,
+        titleId: manualAttach.vibeMetadata?.titleId,
+        installId: manualAttach.vibeMetadata?.installId,
+      });
+
       const cloudConfig = toCloud();
       result.database
         .attach(cloudConfig)
