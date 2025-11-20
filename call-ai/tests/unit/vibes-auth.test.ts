@@ -1,9 +1,8 @@
 import { callAi, CallAIOptions } from "call-ai";
 import { describe, expect, it, beforeEach, vi, Mock } from "vitest";
 
-// Storage key constants (matching call-ai/pkg/api.ts)
+// Storage key constant (matching call-ai/pkg/api.ts)
 const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const;
-const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const;
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -55,30 +54,6 @@ describe("callAi Vibes Auth Enhancement", () => {
     const init = globalFetch.mock.calls[0][1] as RequestInit;
     const headers = new Headers(init?.headers);
     expect(headers.get("X-VIBES-Token")).toBe("test-vibes-token");
-  });
-
-  it("should add X-VIBES-Token header when legacy auth_token is available", async () => {
-    mockLocalStorage.getItem.mockImplementation((key) => (key === LEGACY_AUTH_TOKEN_KEY ? "legacy-vibes-token" : null));
-    await callAi("Hello", { apiKey: "test-key" });
-
-    // Check that fetch was called with the enhanced headers
-    const init = globalFetch.mock.calls[0][1] as RequestInit;
-    const headers = new Headers(init?.headers);
-    expect(headers.get("X-VIBES-Token")).toBe("legacy-vibes-token");
-  });
-
-  it("should prefer vibes-diy-auth-token over legacy auth_token", async () => {
-    mockLocalStorage.getItem.mockImplementation((key) => {
-      if (key === VIBES_AUTH_TOKEN_KEY) return "new-token";
-      if (key === LEGACY_AUTH_TOKEN_KEY) return "legacy-token";
-      return null;
-    });
-    await callAi("Hello", { apiKey: "test-key" });
-
-    // Check that the new token is used, not the legacy one
-    const init = globalFetch.mock.calls[0][1] as RequestInit;
-    const headers = new Headers(init?.headers);
-    expect(headers.get("X-VIBES-Token")).toBe("new-token");
   });
 
   it("should not add X-VIBES-Token header when no auth token is available", async () => {
