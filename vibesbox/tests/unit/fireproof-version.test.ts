@@ -18,9 +18,7 @@ describe("Vibes Version Parameter (v_vibes)", () => {
       const html = await response.text();
 
       // Should use default version range from library import map
-      expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@0.16.2"',
-      );
+      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes@0.16.2"');
       expect(html).toContain(
         '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
       );
@@ -73,9 +71,7 @@ describe("Vibes Version Parameter (v_vibes)", () => {
       const html = await response.text();
 
       // Falls back to default library import map
-      expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@0.16.2"',
-      );
+      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes@0.16.2"');
       expect(html).toContain(
         '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
       );
@@ -97,9 +93,7 @@ describe("Vibes Version Parameter (v_vibes)", () => {
       const html = await response.text();
 
       // Falls back to default library import map
-      expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@0.16.2"',
-      );
+      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes@0.16.2"');
       expect(html).toContain(
         '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
       );
