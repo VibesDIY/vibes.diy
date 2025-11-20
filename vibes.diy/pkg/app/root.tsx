@@ -113,6 +113,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* FIREPROOF-UPGRADE-BRANCH: Fireproof 0.23.0 */}
         <Meta data-testid="meta" />
         <Links />
+<<<<<<< HEAD
+=======
+        {/* Import map for inline vibe rendering with ES modules */}
+        <script
+          type="importmap"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              imports: {
+                eruda: "https://esm.sh/eruda",
+                three: "https://esm.sh/three",
+                ...(!import.meta.env.DEV
+                  ? {
+                      react: "https://esm.sh/react",
+                      "react-dom": "https://esm.sh/react-dom",
+                      "react-dom/client": "https://esm.sh/react-dom/client",
+                      "use-fireproof": "https://esm.sh/use-vibes",
+                      "call-ai": "https://esm.sh/call-ai",
+                      "use-vibes": "https://esm.sh/use-vibes",
+                      "https://esm.sh/use-fireproof":
+                        "https://esm.sh/use-vibes",
+                    }
+                  : {}),
+              },
+            }),
+          }}
+        />
+>>>>>>> d4a69b31 (refactor: remove version specifiers from import maps)
         {/* Tailwind CSS v4 for inline vibe rendering - matches hosting runtime */}
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
         {/* Babel Standalone for JSX transformation in inline vibe rendering */}

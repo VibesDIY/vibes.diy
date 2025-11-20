@@ -28,7 +28,13 @@
 
     <script type="module">
       try {
+<<<<<<< HEAD
         const { mountVibesApp } = await import("https://esm.sh/use-vibes");
+=======
+        const { mountVibesApp } = await import(
+          "https://esm.sh/use-vibes"
+        );
+>>>>>>> d4a69b31 (refactor: remove version specifiers from import maps)
 
         document.getElementById("output").textContent =
           "Success: mountVibesApp imported and mounted!";
