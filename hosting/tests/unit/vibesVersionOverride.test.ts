@@ -27,10 +27,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const html = await response.text();
 
       expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+        '"use-vibes": "https://esm.sh/use-vibes"',
       );
       expect(html).toContain(
-        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+        '"use-fireproof": "https://esm.sh/use-vibes"',
       );
     });
 
@@ -147,10 +147,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
         const html = await response.text();
 
         expect(html).toContain(
-          '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+          '"use-vibes": "https://esm.sh/use-vibes"',
         );
         expect(html).toContain(
-          '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+          '"use-fireproof": "https://esm.sh/use-vibes"',
         );
       }
     });
@@ -180,10 +180,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const html = await response.text();
 
       expect(html).toContain(
-        '"use-vibes": "https://esm.sh/use-vibes@>=0.13.0"',
+        '"use-vibes": "https://esm.sh/use-vibes"',
       );
       expect(html).toContain(
-        '"use-fireproof": "https://esm.sh/use-vibes@>=0.13.0"',
+        '"use-fireproof": "https://esm.sh/use-vibes"',
       );
     });
   });
@@ -240,8 +240,8 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const importMap = JSON.parse(importMapMatch[1]);
 
       // React versions should remain unchanged
-      expect(importMap.imports.react).toContain("react@>=19.1.0");
-      expect(importMap.imports["react-dom"]).toContain("react-dom@>=19.1.0");
+      expect(importMap.imports.react).toBe("https://esm.sh/react");
+      expect(importMap.imports["react-dom"]).toBe("https://esm.sh/react-dom");
 
       // Only use-vibes related imports should be affected
       expect(importMap.imports["use-vibes"]).toBe(
