@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from "react";
+import * as ReactDOM from "react-dom";
+import * as ReactDOMClient from "react-dom/client";
+import * as UseFireproof from "use-fireproof";
+import * as UseVibes from "use-vibes";
+import * as CallAI from "call-ai";
 import { useParams } from "react-router";
 import { transformImports } from "@vibes.diy/hosting-base";
 import { VibesDiyEnv } from "../config/env.js";
@@ -61,6 +66,71 @@ function VibeInstanceViewerContent() {
   useEffect(() => {
     if (!titleId || !installId) return;
 
+    // Expose libraries to window for development shim
+    if (import.meta.env.DEV) {
+      (window as any).__VIBE_REACT__ = React;
+      (window as any).__VIBE_REACT_DOM__ = ReactDOM;
+      (window as any).__VIBE_REACT_DOM_CLIENT__ = ReactDOMClient;
+      (window as any).__VIBE_USE_FIREPROOF__ = UseFireproof;
+      (window as any).__VIBE_USE_VIBES__ = UseVibes;
+      (window as any).__VIBE_CALL_AI__ = CallAI;
+    }
+
+    // Custom transform for development to use shared instances
+    const transformImportsDev = (code: string) => {
+      let res = transformImports(code);
+      if (import.meta.env.DEV) {
+        const replacements: Record<string, string> = {
+          react: "__VIBE_REACT__",
+          "react-dom": "__VIBE_REACT_DOM__",
+          "react-dom/client": "__VIBE_REACT_DOM_CLIENT__",
+          "use-fireproof": "__VIBE_USE_FIREPROOF__",
+          "use-vibes": "__VIBE_USE_VIBES__",
+          "call-ai": "__VIBE_CALL_AI__",
+        };
+
+        for (const [pkg, varName] of Object.entries(replacements)) {
+          // Handle: import * as X from "pkg"
+          res = res.replace(
+            new RegExp(
+              `import\\s+\\*\\s+as\\s+([a-zA-Z0-9_]+)\\s+from\\s+['"]${pkg}['"];?`,
+              "g",
+            ),
+            `const $1 = window.${varName};`,
+          );
+
+          // Handle: import X from "pkg"
+          // Use default if available, fallback to module object (for React which might be synthetic default)
+          res = res.replace(
+            new RegExp(
+              `import\\s+([a-zA-Z0-9_]+)\\s+from\\s+['"]${pkg}['"];?`,
+              "g",
+            ),
+            `const $1 = window.${varName}.default || window.${varName};`,
+          );
+
+          // Handle: import { X, Y } from "pkg"
+          res = res.replace(
+            new RegExp(
+              `import\\s+\\{([^}]+)\\}\\s+from\\s+['"]${pkg}['"];?`,
+              "g",
+            ),
+            `const {$1} = window.${varName};`,
+          );
+
+          // Handle: import X, { Y } from "pkg"
+          res = res.replace(
+            new RegExp(
+              `import\\s+([a-zA-Z0-9_]+)\\s*,\\s*\\{([^}]+)\\}\\s+from\\s+['"]${pkg}['"];?`,
+              "g",
+            ),
+            `const $1 = window.${varName}.default || window.${varName}; const {$2} = window.${varName};`,
+          );
+        }
+      }
+      return res;
+    };
+
     // Generate new container ID for this navigation
     const newContainerId = `vibe-container-${crypto.randomUUID()}`;
     setContainerId(newContainerId);
@@ -89,7 +159,7 @@ function VibeInstanceViewerContent() {
           newContainerId,
           titleId,
           installId,
-          transformImports,
+          transformImportsDev,
         );
       } catch (err) {
         console.error("Error loading vibe:", err);
