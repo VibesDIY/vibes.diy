@@ -168,6 +168,13 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
 
+  // DIAGNOSTIC: Unconditional log for debugging
+  console.log('[useFireproof] Hook called:', {
+    nameOrDatabase: typeof nameOrDatabase === 'string' ? nameOrDatabase : typeof nameOrDatabase === 'object' ? 'Database object' : 'undefined',
+    vibeMetadata: vibeMetadata || 'UNDEFINED',
+    hasContext: !!vibeMetadata,
+  });
+
   // DIAGNOSTIC: Log database name construction
   if (vibeMetadata) {
     const originalName =
