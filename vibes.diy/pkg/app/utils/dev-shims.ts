@@ -64,12 +64,12 @@ export function transformImportsDev(code: string) {
 
     for (const [pkg, varName] of Object.entries(replacements)) {
       // Escape the pkg string for use in Regex (specifically for dots and slashes)
-      const escapedPkg = pkg.replace(/[.*+?^${}()|[\\]/g, "\\$& ");
+      const escapedPkg = pkg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
       // Handle: import * as X from "pkg"
       res = res.replace(
         new RegExp(
-          `import\\s+\\*\\s+as\\s+([a-zA-Z0-9_]+)\\s+from\\s+['"]${escapedPkg}['"]`;?`,
+          `import\\s+\\*\\s+as\\s+([a-zA-Z0-9_]+)\\s+from\\s+[\'\"]${escapedPkg}[\'\"];?`,
           "g"
         ),
         `const $1 = window.${varName};`
@@ -79,7 +79,7 @@ export function transformImportsDev(code: string) {
       // Use default if available, fallback to module object
       res = res.replace(
         new RegExp(
-          `import\\s+([a-zA-Z0-9_]+)\\s+from\\s+['"]${escapedPkg}['"]`;?`,
+          `import\\s+([a-zA-Z0-9_]+)\\s+from\\s+[\'\"]${escapedPkg}[\'\"];?`,
           "g"
         ),
         `const $1 = window.${varName}.default || window.${varName};`
@@ -88,7 +88,7 @@ export function transformImportsDev(code: string) {
       // Handle: import { X, Y } from "pkg"
       res = res.replace(
         new RegExp(
-          `import\\s+\\{([^}]+)\\}'s+from\\s+['"]${escapedPkg}['"]`;?`,
+          `import\\s+\\{([^}]+)\}\\s+from\\s+[\'\"]${escapedPkg}[\'\"];?`,
           "g"
         ),
         `const {$1} = window.${varName};`
@@ -97,7 +97,7 @@ export function transformImportsDev(code: string) {
       // Handle: import X, { Y } from "pkg"
       res = res.replace(
         new RegExp(
-          `import\\s+([a-zA-Z0-9_]+)\\s*,\\s*\{([^}]+)\}\s+from\\s+['"]${escapedPkg}['"]`;?`,
+          `import\\s+([a-zA-Z0-9_]+)\\s*,\\s*\\{([^}]+)\}\\s+from\\s+[\'\"]${escapedPkg}[\'\"];?`,
           "g"
         ),
         `const $1 = window.${varName}.default || window.${varName}; const {$2} = window.${varName};`
