@@ -18,6 +18,7 @@ import CookieBanner from "./components/CookieBanner.js";
 import GtmNoScript from "./components/GtmNoScript.js";
 import { AuthProvider } from "./contexts/AuthContext.js";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
+import { libraryImportMap, reactImports } from "./config/import-map.js";
 
 export const links: Route.LinksFunction = () => [
   {
@@ -88,27 +89,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        {/* Dope import map for inline vibe rendering with ES modules */}
+        {/* Import map for inline vibe rendering with ES modules */}
         <script
           type="importmap"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               imports: {
-                eruda: "https://esm.sh/eruda",
-                three: "https://esm.sh/three",
-                ...(!import.meta.env.DEV
-                  ? {
-                      react: "https://esm.sh/react",
-                      "react-dom": "https://esm.sh/react-dom",
-                      "react-dom/client": "https://esm.sh/react-dom/client",
-                      "react/jsx-runtime": "https://esm.sh/react/jsx-runtime",
-                      "use-fireproof": "https://esm.sh/use-vibes",
-                      "call-ai": "https://esm.sh/call-ai",
-                      "use-vibes": "https://esm.sh/use-vibes",
-                      "https://esm.sh/use-fireproof":
-                        "https://esm.sh/use-vibes",
-                    }
-                  : {}),
+                // Always include eruda and three
+                eruda: libraryImportMap.eruda,
+                three: libraryImportMap.three,
+                // Only include React imports in production (dev mode uses bundled versions)
+                ...(!import.meta.env.DEV ? reactImports : {}),
               },
             }),
           }}
