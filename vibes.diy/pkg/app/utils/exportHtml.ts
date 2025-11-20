@@ -1,5 +1,5 @@
 import { VibesDiyEnv } from "../config/env.js";
-import iframeTemplateRaw from "../components/ResultPreview/templates/iframe-template.html?raw";
+import { ejectTemplateWithPlaceholders } from "./eject-template.js";
 import {
   normalizeComponentExports,
   transformImports,
@@ -9,7 +9,7 @@ export function generateStandaloneHtml(params: { code: string }): string {
   const normalized = normalizeComponentExports(params.code);
   const transformed = transformImports(normalized);
 
-  return iframeTemplateRaw
+  return ejectTemplateWithPlaceholders
     .replaceAll("{{API_KEY}}", "sk-vibes-proxy-managed")
     .replaceAll("{{CALLAI_ENDPOINT}}", VibesDiyEnv.CALLAI_ENDPOINT())
     .replace("{{APP_CODE}}", transformed);

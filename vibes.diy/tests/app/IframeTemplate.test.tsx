@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, act } from "@testing-library/react";
-import iframeTemplateRaw from "~/vibes.diy/app/components/ResultPreview/templates/iframe-template.html?raw";
+import { ejectTemplateWithPlaceholders } from "~/vibes.diy/app/utils/eject-template.js";
 import ResultPreview from "~/vibes.diy/app/components/ResultPreview/ResultPreview.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
@@ -44,7 +44,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
   }),
 }));
 
-describe("Iframe Template", () => {
+describe("Eject Template", () => {
   beforeEach(() => {
     globalThis.document.body.innerHTML = "";
     vi.clearAllMocks();
@@ -52,11 +52,11 @@ describe("Iframe Template", () => {
   });
   it("contains proper APP_CODE placeholder format", () => {
     // Verify the template contains the correct APP_CODE placeholder pattern
-    expect(iframeTemplateRaw).toContain("{{APP_CODE}}");
+    expect(ejectTemplateWithPlaceholders).toContain("{{APP_CODE}}");
 
     // Ensure there are no nested JS object syntax patterns that would cause ReferenceError
     const problematicPattern = /\{\s*\{\s*APP_CODE\s*;\s*\}\s*\}/;
-    expect(problematicPattern.test(iframeTemplateRaw)).toBe(false);
+    expect(problematicPattern.test(ejectTemplateWithPlaceholders)).toBe(false);
   });
 
   describe("Iframe Rendering", () => {
