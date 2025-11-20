@@ -7,6 +7,16 @@ import * as UseVibes from "use-vibes";
 import * as CallAI from "call-ai";
 import { transformImports } from "@vibes.diy/hosting-base";
 
+interface VibeWindow extends Window {
+  __VIBE_REACT__: typeof React;
+  __VIBE_REACT_DOM__: typeof ReactDOM;
+  __VIBE_REACT_DOM_CLIENT__: typeof ReactDOMClient;
+  __VIBE_REACT_JSX_RUNTIME__: typeof JSX;
+  __VIBE_USE_FIREPROOF__: typeof UseFireproof;
+  __VIBE_USE_VIBES__: typeof UseVibes;
+  __VIBE_CALL_AI__: typeof CallAI;
+}
+
 /**
  * In development mode, we want the Vibe (User Code) running in a Blob URL
  * to use the EXACT SAME React instance as the Host App (Vite).
@@ -20,13 +30,14 @@ import { transformImports } from "@vibes.diy/hosting-base";
  */
 export function setupDevShims() {
   if (import.meta.env.DEV) {
-    (window as any).__VIBE_REACT__ = React;
-    (window as any).__VIBE_REACT_DOM__ = ReactDOM;
-    (window as any).__VIBE_REACT_DOM_CLIENT__ = ReactDOMClient;
-    (window as any).__VIBE_REACT_JSX_RUNTIME__ = JSX;
-    (window as any).__VIBE_USE_FIREPROOF__ = UseFireproof;
-    (window as any).__VIBE_USE_VIBES__ = UseVibes;
-    (window as any).__VIBE_CALL_AI__ = CallAI;
+    const vibeWindow = window as unknown as VibeWindow;
+    vibeWindow.__VIBE_REACT__ = React;
+    vibeWindow.__VIBE_REACT_DOM__ = ReactDOM;
+    vibeWindow.__VIBE_REACT_DOM_CLIENT__ = ReactDOMClient;
+    vibeWindow.__VIBE_REACT_JSX_RUNTIME__ = JSX;
+    vibeWindow.__VIBE_USE_FIREPROOF__ = UseFireproof;
+    vibeWindow.__VIBE_USE_VIBES__ = UseVibes;
+    vibeWindow.__VIBE_CALL_AI__ = CallAI;
   }
 }
 
@@ -69,38 +80,38 @@ export function transformImportsDev(code: string) {
       // Handle: import * as X from "pkg"
       res = res.replace(
         new RegExp(
-          `import\\s+\\*\\s+as\\s+([a-zA-Z0-9_]+)\\s+from\\s+[\'\"]${escapedPkg}[\'\"];?`,
-          "g"
+          `import\\s+\\*\\s+as\\s+([a-zA-Z0-9_]+)\\s+from\\s+['"]${escapedPkg}['"];?`,
+          "g",
         ),
-        `const $1 = window.${varName};`
+        `const $1 = window.${varName};`,
       );
 
       // Handle: import X from "pkg"
       // Use default if available, fallback to module object
       res = res.replace(
         new RegExp(
-          `import\\s+([a-zA-Z0-9_]+)\\s+from\\s+[\'\"]${escapedPkg}[\'\"];?`,
-          "g"
+          `import\\s+([a-zA-Z0-9_]+)\\s+from\\s+['"]${escapedPkg}['"];?`,
+          "g",
         ),
-        `const $1 = window.${varName}.default || window.${varName};`
+        `const $1 = window.${varName}.default || window.${varName};`,
       );
 
       // Handle: import { X, Y } from "pkg"
       res = res.replace(
         new RegExp(
-          `import\\s+\\{([^}]+)\}\\s+from\\s+[\'\"]${escapedPkg}[\'\"];?`,
-          "g"
+          `import\\s+\\{([^}]+)}\\s+from\\s+['"]${escapedPkg}['"];?`,
+          "g",
         ),
-        `const {$1} = window.${varName};`
+        `const {$1} = window.${varName};`,
       );
 
       // Handle: import X, { Y } from "pkg"
       res = res.replace(
         new RegExp(
-          `import\\s+([a-zA-Z0-9_]+)\\s*,\\s*\\{([^}]+)\}\\s+from\\s+[\'\"]${escapedPkg}[\'\"];?`,
-          "g"
+          `import\\s+([a-zA-Z0-9_]+)\\s*,\\s*\\{([^}]+)}\\s+from\\s+['"]${escapedPkg}['"];?`,
+          "g",
         ),
-        `const $1 = window.${varName}.default || window.${varName}; const {$2} = window.${varName};`
+        `const $1 = window.${varName}.default || window.${varName}; const {$2} = window.${varName};`,
       );
     }
   }
