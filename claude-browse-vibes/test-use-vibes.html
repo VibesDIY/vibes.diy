@@ -28,9 +28,7 @@
 
     <script type="module">
       try {
-        const { mountVibesApp } = await import(
-          "https://esm.sh/use-vibes"
-        );
+        const { mountVibesApp } = await import("https://esm.sh/use-vibes");
 
         document.getElementById("output").textContent =
           "Success: mountVibesApp imported and mounted!";
