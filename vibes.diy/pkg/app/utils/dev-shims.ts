@@ -35,7 +35,7 @@ export function setupDevShims() {
     vibeWindow.__VIBE_REACT_DOM__ = ReactDOM;
     vibeWindow.__VIBE_REACT_DOM_CLIENT__ = ReactDOMClient;
     vibeWindow.__VIBE_REACT_JSX_RUNTIME__ = JSX;
-    vibeWindow.__VIBE_USE_FIREPROOF__ = UseFireproof;
+    vibeWindow.__VIBE_USE_FIREPROOF__ = UseVibes; // Map use-fireproof imports to use-vibes (enhanced version)
     vibeWindow.__VIBE_USE_VIBES__ = UseVibes;
     vibeWindow.__VIBE_CALL_AI__ = CallAI;
   }
@@ -48,6 +48,13 @@ export function setupDevShims() {
  * we set up in `setupDevShims`.
  */
 export function transformImportsDev(code: string) {
+  // DIAGNOSTIC: Log environment mode
+  console.log('[dev-shims] transformImportsDev called:', {
+    isDev: import.meta.env.DEV,
+    mode: import.meta.env.MODE,
+    willTransform: import.meta.env.DEV ? 'YES' : 'NO'
+  });
+
   // First run the standard transformation (which might resolve bare specifiers to esm.sh)
   // We need to handle both the original bare specifiers AND the resolved esm.sh URLs
   // because standard transformImports might have already run or might run before this replacement logic depending on implementation.
@@ -115,5 +122,12 @@ export function transformImportsDev(code: string) {
       );
     }
   }
+
+  // DIAGNOSTIC: Log a sample of the transformed code
+  if (import.meta.env.DEV) {
+    const sample = res.substring(0, 800); // First 800 chars
+    console.log('[dev-shims] Transformed code sample:', sample);
+  }
+
   return res;
 }
