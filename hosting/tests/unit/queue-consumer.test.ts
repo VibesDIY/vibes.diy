@@ -413,9 +413,11 @@ describe("Queue Consumer", () => {
 
     // Verify error was logged (multiple error logs expected: Discord error, Task failure, and processing error)
     expect(consoleSpy).toHaveBeenCalled();
-    expect(consoleSpy.mock.calls.some(call =>
-      call[0].includes("Error") && call.length > 1
-    )).toBe(true);
+    expect(
+      consoleSpy.mock.calls.some(
+        (call) => call[0].includes("Error") && call.length > 1,
+      ),
+    ).toBe(true);
 
     // Clean up spy
     consoleSpy.mockRestore();

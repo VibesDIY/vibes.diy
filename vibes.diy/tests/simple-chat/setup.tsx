@@ -869,8 +869,6 @@ const createWrapper = () => {
   return ({ children }: { children: ReactNode }) => <>{children}</>;
 };
 
-const testJwt =
-  "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0=.eyJ1c2VySWQiOiJ0ZXN0LXVzZXItaWQiLCJleHAiOjI1MzQwMjMwMDc5OX0=.";
 beforeEach(() => {
   // Credit checking mocks no longer needed
 

@@ -60,11 +60,7 @@ export class CallAIEnv {
   }
 
   get CALLAI_API_KEY() {
-    return (
-      this.env().get("CALLAI_API_KEY") ??
-      this.env().get("OPENROUTER_API_KEY") ??
-      this.getWindowCALLAI_API_KEY()
-    );
+    return this.env().get("CALLAI_API_KEY") ?? this.env().get("OPENROUTER_API_KEY") ?? this.getWindowCALLAI_API_KEY();
   }
   get CALLAI_REFRESH_ENDPOINT() {
     return this.env().get("CALLAI_REFRESH_ENDPOINT");
