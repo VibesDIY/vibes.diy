@@ -213,12 +213,13 @@ describe("Subdomain Parser", () => {
   });
 
   describe("generateInstallId", () => {
-    it("should generate a 12-character alphanumeric ID", () => {
+    it("should generate an alphanumeric ID", () => {
       const id = generateInstallId();
 
-      // Should be exactly 12 characters, only alphanumeric
-      expect(id).toHaveLength(12);
-      expect(id).toMatch(/^[0-9a-z]+$/);
+      // Should be reasonable length (cement's nextId generates variable-length IDs)
+      expect(id.length).toBeGreaterThanOrEqual(8);
+      expect(id.length).toBeLessThanOrEqual(16);
+      expect(id).toMatch(/^[a-zA-Z0-9]+$/);
     });
 
     it("should generate unique IDs", () => {
@@ -226,16 +227,17 @@ describe("Subdomain Parser", () => {
       const id2 = generateInstallId();
 
       expect(id1).not.toBe(id2);
-      expect(id1).toHaveLength(12);
-      expect(id2).toHaveLength(12);
+      expect(id1.length).toBeGreaterThanOrEqual(8);
+      expect(id2.length).toBeGreaterThanOrEqual(8);
     });
 
     it("should generate multiple unique IDs in sequence", () => {
       const ids = new Set();
       for (let i = 0; i < 100; i++) {
         const id = generateInstallId();
-        expect(id).toHaveLength(12);
-        expect(id).toMatch(/^[0-9a-z]+$/);
+        expect(id.length).toBeGreaterThanOrEqual(8);
+        expect(id.length).toBeLessThanOrEqual(16);
+        expect(id).toMatch(/^[a-zA-Z0-9]+$/);
         ids.add(id);
       }
 

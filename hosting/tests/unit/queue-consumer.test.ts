@@ -310,10 +310,10 @@ describe("Queue Consumer", () => {
     expect(mockMessage.retry).toHaveBeenCalledOnce();
     expect(mockMessage.ack).not.toHaveBeenCalled();
 
-    // Verify error was logged (lenient - any error message containing "Error")
+    // Verify error was logged (new safeParse behavior logs "Invalid message format")
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Error"),
-      expect.any(Error),
+      expect.stringContaining("Invalid message format"),
+      expect.anything(), // ZodError from safeParse
     );
 
     // Clean up spy
@@ -411,9 +411,9 @@ describe("Queue Consumer", () => {
     expect(mockMessage.retry).toHaveBeenCalledOnce();
     expect(mockMessage.ack).not.toHaveBeenCalled();
 
-    // Verify error was logged (lenient - any error message containing "Error")
+    // Verify error was logged (processing error, not validation error)
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Error"),
+      expect.stringContaining("Error processing message"),
       expect.any(Error),
     );
 

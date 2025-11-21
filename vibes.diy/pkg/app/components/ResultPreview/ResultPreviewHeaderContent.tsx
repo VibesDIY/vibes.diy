@@ -37,7 +37,6 @@ const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
   navigateToView,
   viewControls,
   showViewControls,
-  previewReady,
   setMobilePreviewShown,
   setUserClickedBack,
   code,
@@ -125,17 +124,13 @@ const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
             />
           )}
 
-          {showViewControls &&
-            (previewReady ||
-              (displayView === "settings" && publishedAppUrl)) && (
-              <ShareButton
-                ref={publishButtonRef}
-                onClick={toggleShareModal}
-                isPublishing={isPublishing}
-                urlCopied={urlCopied}
-                hasPublishedUrl={!!publishedAppUrl}
-              />
-            )}
+          <ShareButton
+            ref={publishButtonRef}
+            onClick={toggleShareModal}
+            isPublishing={isPublishing}
+            urlCopied={urlCopied}
+            hasPublishedUrl={!!publishedAppUrl}
+          />
         </div>
       </div>
       {/* Share Modal */}

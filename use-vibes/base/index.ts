@@ -1,6 +1,10 @@
 import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
+import { getKeyBag } from '@fireproof/core-keybag';
+import { Lazy } from '@adviser/cement';
+import { ensureSuperThis } from '@fireproof/core-runtime';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Attached,
   fireproof,
   ImgFile,
   toCloud as originalToCloud,
@@ -50,30 +54,24 @@ function updateBodyClass() {
   }
 }
 
+const sthis = Lazy(() => ensureSuperThis());
+
 export { fireproof, ImgFile };
 
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
 
-// Helper to parse JWT token
-function parseJWT(token: string): unknown {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return undefined;
-    const payload = parts[1];
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const paddedBase64 = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    return JSON.parse(atob(paddedBase64));
-  } catch {
-    return undefined;
-  }
-}
-
 // Helper to check if JWT token is expired
-export function isJWTExpired(token: string): boolean {
+export async function isJWTExpired(token: string): Promise<boolean> {
   try {
-    const claims = parseJWT(token) as { exp?: number };
-    if (!claims || typeof claims.exp !== 'number') return true;
+    const kb = await getKeyBag(sthis());
+    await kb.setJwt('vibes-temp-check', token);
+    const result = await kb.getJwt('vibes-temp-check');
+
+    if (result.isErr()) return true;
+
+    const claims = result.Ok().claims;
+    if (!claims?.exp || typeof claims.exp !== 'number') return true;
     // Buffer of 60 seconds
     return Date.now() >= claims.exp * 1000 - 60000;
   } catch {
@@ -97,12 +95,27 @@ export function isJWTExpired(token: string): boolean {
 // Minimal strategy to inject external auth token
 class VibesAuthStrategy extends RedirectStrategy {
   setToken(token: string): void {
-    const claims = parseJWT(token);
-    // Inject token into parent class state
+    // Use KeyBag to decode and validate JWT asynchronously
+    // Fire-and-forget pattern since setToken is synchronous
+    getKeyBag(sthis()).then(async (kb: Awaited<ReturnType<typeof getKeyBag>>) => {
+      await kb.setJwt('vibes-auth-token', token);
+      const result = await kb.getJwt('vibes-auth-token');
+
+      const claims = result.isOk() ? result.Ok().claims : undefined;
+
+      // Inject token into parent class state
+      // @ts-expect-error - accessing protected/private property to bridge auth
+      this.currentToken = {
+        token,
+        claims,
+      };
+    });
+
+    // Temporary synchronous fallback for immediate access
     // @ts-expect-error - accessing protected/private property to bridge auth
     this.currentToken = {
       token,
-      claims,
+      claims: {}, // Will be populated async
     };
   }
 }
@@ -116,11 +129,14 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
     try {
       const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
       if (externalToken) {
-        if (isJWTExpired(externalToken)) {
-          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-        } else {
-          strategy.setToken(externalToken);
-        }
+        // Check expiration asynchronously
+        isJWTExpired(externalToken).then((expired) => {
+          if (expired) {
+            localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
+          } else {
+            strategy.setToken(externalToken);
+          }
+        });
       }
     } catch {
       // Ignore storage errors
@@ -138,19 +154,42 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
   return attachable;
 }
 
+// Helper function to construct database name with vibe metadata
+function constructDatabaseName(
+  nameOrDatabase?: string | Database,
+  vibeMetadata?: VibeMetadata
+): string | Database {
+  // If it's already a Database object, return it directly
+  if (typeof nameOrDatabase === 'object' && nameOrDatabase !== null) {
+    return nameOrDatabase;
+  }
+
+  // Determine the base name. If nameOrDatabase is undefined or an empty string, use 'default'.
+  const baseName: string = (nameOrDatabase as string | undefined) || 'default';
+
+  // If no vibeMetadata, return the baseName as is
+  if (!vibeMetadata) {
+    return baseName;
+  }
+
+  // Otherwise, augment the baseName with vibeMetadata
+  return `vf-${baseName}-${vibeMetadata.titleId}-${vibeMetadata.installId}`;
+}
+
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
-  // DIAGNOSTIC: Enhanced useFireproof hook entry
-
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
+
+  // Construct augmented database name with vibe metadata (titleId + installId)
+  const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
 
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
 
-  // Get database name for tracking purposes
+  // Get database name for tracking purposes (use augmented name)
   const dbName =
-    typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'default';
+    typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
   // Use global sync key - all databases share the same auth token and sync state
   const syncKey = 'fireproof-sync-enabled';
 
@@ -160,24 +199,21 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Create attach config only if sync was previously enabled, passing vibeMetadata
   const attachConfig = wasSyncEnabled ? toCloud() : undefined;
 
-  // Use original useFireproof with attach config only if previously enabled
-  // This preserves the createAttach lifecycle for token persistence
+  // Use original useFireproof with augmented database name
+  // This ensures each titleId + installId combination gets its own database
   const result = originalUseFireproof(
-    nameOrDatabase as string | Database | undefined,
+    augmentedDbName,
     attachConfig ? { attach: attachConfig } : {}
   );
 
   // State to track manual attachment for first-time enable
   // Captures vibeMetadata at enableSync time to avoid race conditions
-  const [manualAttach, setManualAttach] = useState<
-    | {
-        state: 'pending' | 'attached' | 'error';
-        vibeMetadata?: VibeMetadata;
-        attached?: unknown;
-        error?: Error;
-      }
-    | undefined
-  >(undefined);
+  const [manualAttach, setManualAttach] = useState<{
+    state: 'pending' | 'attached' | 'error';
+    vibeMetadata?: VibeMetadata;
+    attached?: Attached;
+    error?: Error;
+  } | null>(null);
 
   // Handle first-time sync enable without reload
   useEffect(() => {
@@ -322,7 +358,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     }
 
     // Clear manual attach state
-    setManualAttach(undefined);
+    setManualAttach(null);
   }, [syncKey, result.attach]);
 
   // Determine sync status - check for actual attachment state
@@ -373,29 +409,18 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
     async (options: { email: string; role?: 'admin' | 'member'; right?: 'read' | 'write' }) => {
-      // Get the attachment context
-      const attach = result.attach || manualAttach;
+      // Get token directly from localStorage (vibes.diy auth)
+      const token =
+        typeof window !== 'undefined' ? localStorage.getItem(VIBES_AUTH_TOKEN_KEY) : null;
 
-      // Type guard: ensure attach is an object with ctx property
-      if (
-        !attach ||
-        typeof attach === 'string' ||
-        !('ctx' in attach) ||
-        !attach.ctx?.tokenAndClaims ||
-        attach.ctx.tokenAndClaims.state !== 'ready'
-      ) {
-        throw new Error('Authentication required. Please enable sync first.');
+      if (!token) {
+        throw new Error('Unable to retrieve authentication token.');
       }
 
-      // Extract the token from the ready state
-      // ReadyTokenAndClaimsState has: { state: "ready", tokenAndClaims: { token: string, claims?: FPCloudClaim } }
-      const readyState = attach.ctx.tokenAndClaims;
-      const tokenData = readyState.tokenAndClaims;
-
-      // Create auth object matching AuthType interface: { type: "better", token: string }
+      // Create auth object matching AuthType interface: { type: "clerk", token: string }
       const auth = {
         type: 'clerk' as const,
-        token: tokenData.token,
+        token,
       };
 
       // Call the dashboard API (same pattern as other Fireproof dashboard requests)
@@ -648,26 +673,15 @@ export type { MountVibesAppOptions, MountVibesAppResult } from './vibe-app-mount
 // Export app slug utilities
 export {
   getAppSlug,
+  getInstanceId,
   getFullAppIdentifier,
   isDevelopmentEnvironment,
   isProductionEnvironment,
   generateRandomInstanceId,
   generateFreshDataUrl,
   generateRemixUrl,
-  parseSubdomain,
-  constructSubdomain,
-  isValidSubdomain,
   generateInstallId,
 } from './utils/appSlug.js';
-export type { ParsedSubdomain } from './utils/appSlug.js';
-
-// Export install tracking functionality
-export { initVibesInstalls } from './install-tracker.js';
-export type {
-  Install,
-  VibesInstallTrackerOptions,
-  VibesInstallTrackerResult,
-} from './install-tracker.js';
 
 // Export VibeContext for inline rendering with proper ledger naming
 export {

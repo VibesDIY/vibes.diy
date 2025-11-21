@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Lazy } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
@@ -6,6 +8,9 @@ import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { mountVibeWithCleanup } from "use-vibes";
 import { setupDevShims, transformImportsDev } from "../utils/dev-shims.js";
+import LoggedOutView from "../components/LoggedOutView.js";
+
+const sthis = Lazy(() => ensureSuperThis());
 
 export function meta({
   params,
@@ -35,7 +40,7 @@ function VibeInstanceViewerContent() {
   // Generate unique container ID using crypto.randomUUID
   // Regenerate on each navigation to make debugging easier
   const [containerId, setContainerId] = useState(
-    () => `vibe-container-${crypto.randomUUID()}`,
+    () => `vibe-container-${sthis().nextId().str}`,
   );
 
   // Lazy instance creation: ensure instance exists in database
@@ -65,7 +70,7 @@ function VibeInstanceViewerContent() {
     setupDevShims();
 
     // Generate new container ID for this navigation
-    const newContainerId = `vibe-container-${crypto.randomUUID()}`;
+    const newContainerId = `vibe-container-${sthis().nextId().str}`;
     setContainerId(newContainerId);
 
     let active = true;
@@ -161,7 +166,7 @@ function VibeInstanceViewerContent() {
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstanceViewer() {
   const { isAuthenticated, isLoading } = useAuth();
-  const { initiateLogin, isPolling } = useAuthPopup();
+  const { initiateLogin } = useAuthPopup();
 
   if (isLoading) {
     return (
@@ -172,20 +177,7 @@ export default function VibeInstanceViewer() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 gap-6">
-        <div className="text-white text-xl font-medium">
-          Please log in to access this vibe
-        </div>
-        <button
-          onClick={initiateLogin}
-          disabled={isPolling}
-          className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isPolling ? "Logging in..." : "Log In with Fireproof"}
-        </button>
-      </div>
-    );
+    return <LoggedOutView onLogin={initiateLogin} />;
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated

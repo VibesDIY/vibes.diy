@@ -2,17 +2,15 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 import * as JSX from "react/jsx-runtime";
-import * as UseFireproof from "use-fireproof";
 import * as UseVibes from "use-vibes";
 import * as CallAI from "call-ai";
-import { transformImports } from "@vibes.diy/hosting-base";
 
 interface VibeWindow extends Window {
   __VIBE_REACT__: typeof React;
   __VIBE_REACT_DOM__: typeof ReactDOM;
   __VIBE_REACT_DOM_CLIENT__: typeof ReactDOMClient;
   __VIBE_REACT_JSX_RUNTIME__: typeof JSX;
-  __VIBE_USE_FIREPROOF__: typeof UseFireproof;
+  __VIBE_USE_FIREPROOF__: typeof UseVibes; // use-fireproof maps to use-vibes (enhanced version)
   __VIBE_USE_VIBES__: typeof UseVibes;
   __VIBE_CALL_AI__: typeof CallAI;
 }
@@ -35,24 +33,56 @@ export function setupDevShims() {
     vibeWindow.__VIBE_REACT_DOM__ = ReactDOM;
     vibeWindow.__VIBE_REACT_DOM_CLIENT__ = ReactDOMClient;
     vibeWindow.__VIBE_REACT_JSX_RUNTIME__ = JSX;
-    vibeWindow.__VIBE_USE_FIREPROOF__ = UseFireproof;
+    vibeWindow.__VIBE_USE_FIREPROOF__ = UseVibes; // Map use-fireproof imports to use-vibes (enhanced version)
     vibeWindow.__VIBE_USE_VIBES__ = UseVibes;
     vibeWindow.__VIBE_CALL_AI__ = CallAI;
   }
 }
 
+import { getLibraryImportMap } from "../config/import-map.js";
+
+/**
+ * Transform bare imports to esm.sh URLs
+ * Skips imports that are in the library map, already URLs, or relative paths
+ *
+ * This is exported separately from transformImportsDev so it can be tested
+ * and used without the dev-mode window global replacements.
+ */
+export function transformImports(code: string): string {
+  const importKeys = Object.keys(getLibraryImportMap());
+  return code.replace(
+    /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+(?:\s*,\s*\{[^}]*\})?)\s+from\s+)?['"]([^'"]+)['"];?/g,
+    (match, importPath) => {
+      // Don't transform if it's in our library map
+      if (importKeys.includes(importPath)) {
+        return match;
+      }
+      // Don't transform if it's already a URL (contains :// or starts with http/https)
+      if (importPath.includes("://") || importPath.startsWith("http")) {
+        return match;
+      }
+      // Don't transform relative imports (starting with ./ or ../)
+      if (importPath.startsWith("./") || importPath.startsWith("../")) {
+        return match;
+      }
+      // Replace the import path with ESM.sh URL
+      return match.replace(
+        new RegExp(
+          `['"]${importPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}['"]`,
+        ),
+        `"https://esm.sh/${importPath}"`,
+      );
+    },
+  );
+}
+
 /**
  * Custom import transformer for development.
- * Wraps the standard `transformImports` but adds a post-processing step
- * to rewrite specific package imports to use the global window variables
+ * Rewrites specific package imports to use the global window variables
  * we set up in `setupDevShims`.
  */
 export function transformImportsDev(code: string) {
-  // First run the standard transformation (which might resolve bare specifiers to esm.sh)
-  // We need to handle both the original bare specifiers AND the resolved esm.sh URLs
-  // because standard transformImports might have already run or might run before this replacement logic depending on implementation.
-  // Actually, transformImports returns code with esm.sh URLs.
-  // So we should probably run our dev replacement ON TOP of that, targeting both keys.
+  // First transform bare imports to esm.sh URLs (for both dev and prod)
   let res = transformImports(code);
 
   if (import.meta.env.DEV) {

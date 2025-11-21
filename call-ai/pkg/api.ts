@@ -25,14 +25,11 @@ import { callAiEnv } from "./env.js";
 // Centralized header name for Vibes auth
 export const VIBES_AUTH_HEADER = "X-VIBES-Token" as const;
 
-// Storage keys for authentication tokens
-const VIBES_API_AUTH_TOKEN_KEY = "vibes-api-auth-token" as const; // For API auth from parent window
-const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const; // For Fireproof sync token
-const LEGACY_AUTH_TOKEN_KEY = "auth_token" as const; // Legacy vibes.diy key (pre-rename)
+// Storage key for Vibes authentication token
+const VIBES_AUTH_TOKEN_KEY = "vibes-diy-auth-token" as const;
 
 /**
  * Get the Vibes authentication token from localStorage (browser only)
- * Checks API token key first, then Fireproof sync key, then legacy key
  * @returns The auth token if available, undefined otherwise
  */
 export function getVibesAuthToken(): string | undefined {
@@ -40,11 +37,7 @@ export function getVibesAuthToken(): string | undefined {
     return undefined;
   }
   try {
-    // Check API auth key first (from parent window), then sync key, then legacy key
-    const apiToken = localStorage.getItem(VIBES_API_AUTH_TOKEN_KEY);
-    const newToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
-    const legacyToken = localStorage.getItem(LEGACY_AUTH_TOKEN_KEY);
-    return apiToken || newToken || legacyToken || undefined;
+    return localStorage.getItem(VIBES_AUTH_TOKEN_KEY) || undefined;
   } catch (e) {
     return undefined;
   }
