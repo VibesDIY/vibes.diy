@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useFireproof } from "use-vibes";
-import { useAuth } from "../contexts/AuthContext.js";
+import { useUser } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
 
 /**
@@ -18,8 +18,8 @@ function generateInstallId(): string {
  */
 export function useVibeInstances(titleId: string) {
   const { database, useLiveQuery } = useFireproof("vibes-diy-instances");
-  const { userPayload } = useAuth();
-  const userId = userPayload?.userId || "anonymous";
+  const { user } = useUser();
+  const userId = user?.id || "anonymous";
 
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<Error | null>(null);

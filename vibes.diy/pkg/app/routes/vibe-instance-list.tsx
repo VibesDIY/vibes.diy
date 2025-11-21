@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { VibesDiyEnv } from "../config/env.js";
-import { useAuth } from "../contexts/AuthContext.js";
-import { useAuthPopup } from "../hooks/useAuthPopup.js";
+import { useAuth } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
@@ -353,16 +352,9 @@ function VibeInstancesListContent() {
 
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstancesList() {
-  const { isAuthenticated, isLoading, setNeedsLogin } = useAuth();
-  const { initiateLogin } = useAuthPopup();
+  const { isSignedIn, isLoaded } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setNeedsLogin(true);
-    }
-  }, [isAuthenticated, isLoading, setNeedsLogin]);
-
-  if (isLoading) {
+  if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-gray-700 text-lg">Checking authentication...</div>
@@ -370,8 +362,8 @@ export default function VibeInstancesList() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <LoggedOutView onLogin={initiateLogin} />;
+  if (!isSignedIn) {
+    return <LoggedOutView onLogin={() => {/* Clerk handles this */}} />;
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated
