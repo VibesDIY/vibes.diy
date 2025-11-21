@@ -50,11 +50,11 @@ const libraryImportMap: Record<string, string> = {
   "react-dom": "https://esm.sh/react-dom",
   "react-dom/client": "https://esm.sh/react-dom/client",
   "react/jsx-runtime": "https://esm.sh/react/jsx-runtime",
-  "use-fireproof": "https://esm.sh/use-vibes@0.17.3",
-  "call-ai": "https://esm.sh/call-ai@0.17.3",
-  "use-vibes": "https://esm.sh/use-vibes@0.17.3",
-  "https://esm.sh/use-fireproof": "https://esm.sh/use-vibes@0.17.3",
-  "https://esm.sh/use-vibes": "https://esm.sh/use-vibes@0.17.3",
+  "use-fireproof": "https://esm.sh/use-vibes@0.17.4",
+  "call-ai": "https://esm.sh/call-ai@0.17.4",
+  "use-vibes": "https://esm.sh/use-vibes@0.17.4",
+  "https://esm.sh/use-fireproof": "https://esm.sh/use-vibes@0.17.4",
+  "https://esm.sh/use-vibes": "https://esm.sh/use-vibes@0.17.4",
 };
 
 /**
