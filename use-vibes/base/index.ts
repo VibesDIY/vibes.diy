@@ -173,7 +173,7 @@ function constructDatabaseName(
   }
 
   // Otherwise, augment the baseName with vibeMetadata
-  return `${baseName}-${vibeMetadata.titleId}-${vibeMetadata.installId}`;
+  return `vf-${baseName}-${vibeMetadata.titleId}-${vibeMetadata.installId}`;
 }
 
 // Custom useFireproof hook with implicit cloud sync and button integration
