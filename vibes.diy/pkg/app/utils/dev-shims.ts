@@ -40,6 +40,56 @@ export function setupDevShims() {
 }
 
 /**
+ * Library import map - packages that should NOT be transformed to esm.sh
+ * These are handled by the HTML importmap in root.tsx
+ */
+const libraryImportMap: Record<string, string> = {
+  eruda: "https://esm.sh/eruda",
+  three: "https://esm.sh/three",
+  react: "https://esm.sh/react",
+  "react-dom": "https://esm.sh/react-dom",
+  "react-dom/client": "https://esm.sh/react-dom/client",
+  "react/jsx-runtime": "https://esm.sh/react/jsx-runtime",
+  "use-fireproof": "https://esm.sh/use-vibes",
+  "call-ai": "https://esm.sh/call-ai",
+  "use-vibes": "https://esm.sh/use-vibes",
+  "https://esm.sh/use-fireproof": "https://esm.sh/use-vibes",
+  "https://esm.sh/use-vibes": "https://esm.sh/use-vibes",
+};
+
+/**
+ * Transform bare imports to esm.sh URLs
+ * Skips imports that are in the library map, already URLs, or relative paths
+ */
+function transformImports(code: string): string {
+  const importKeys = Object.keys(libraryImportMap);
+  return code.replace(
+    /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+(?:\s*,\s*\{[^}]*\})?)\s+from\s+)?['"]([^'"]+)['"];?/g,
+    (match, importPath) => {
+      // Don't transform if it's in our library map
+      if (importKeys.includes(importPath)) {
+        return match;
+      }
+      // Don't transform if it's already a URL (contains :// or starts with http/https)
+      if (importPath.includes("://") || importPath.startsWith("http")) {
+        return match;
+      }
+      // Don't transform relative imports (starting with ./ or ../)
+      if (importPath.startsWith("./") || importPath.startsWith("../")) {
+        return match;
+      }
+      // Replace the import path with ESM.sh URL
+      return match.replace(
+        new RegExp(
+          `['"]${importPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}['"]`,
+        ),
+        `"https://esm.sh/${importPath}"`,
+      );
+    },
+  );
+}
+
+/**
  * Custom import transformer for development.
  * Rewrites specific package imports to use the global window variables
  * we set up in `setupDevShims`.
@@ -52,8 +102,8 @@ export function transformImportsDev(code: string) {
     willTransform: import.meta.env.DEV ? "YES" : "NO",
   });
 
-  // Start with the original code
-  let res = code;
+  // First transform bare imports to esm.sh URLs (for both dev and prod)
+  let res = transformImports(code);
 
   if (import.meta.env.DEV) {
     const replacements: Record<string, string> = {
