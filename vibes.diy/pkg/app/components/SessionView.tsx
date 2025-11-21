@@ -41,10 +41,33 @@ export default function SessionView({
   const { isAuthenticated, isLoading } = useAuth();
   const { initiateLogin } = useAuthPopup();
 
+  // Typewriter effect state
+  const [displayedText, setDisplayedText] = useState("");
+  const fullText = "Welcome to Vibes DIY";
+
   // Track unauthenticated view render once
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       trackEvent("unauthenticated_session_view");
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // Typewriter animation effect
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading) {
+      let currentIndex = 0;
+      const typingSpeed = 100; // milliseconds per character
+
+      const typingInterval = setInterval(() => {
+        if (currentIndex <= fullText.length) {
+          setDisplayedText(fullText.slice(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(typingInterval);
+        }
+      }, typingSpeed);
+
+      return () => clearInterval(typingInterval);
     }
   }, [isAuthenticated, isLoading]);
 
@@ -71,7 +94,7 @@ export default function SessionView({
       await initiateLogin();
     };
 
-    return <LoggedOutView onLogin={handleLogin} />;
+    return <LoggedOutView onLogin={handleLogin} isAuthenticated={isAuthenticated} isLoading={isLoading} />;
   }
 
   return (

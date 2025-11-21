@@ -659,6 +659,8 @@ export type { VibeControlClasses } from './utils/vibe-control-styles.js';
 // Export additional components
 export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
+export { LabelContainer } from './components/VibesPanel/LabelContainer.js';
+export type { LabelContainerProps } from './components/VibesPanel/LabelContainer.js';
 export { BrutalistCard } from './components/BrutalistCard/index.js';
 export type {
   BrutalistCardProps,

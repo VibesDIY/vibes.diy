@@ -24,8 +24,8 @@ export function getContainerStyle(): React.CSSProperties {
 
 export function getLabelStyle(): React.CSSProperties {
   return {
-    background: '#e5e5e5',
-    border: '2px solid #000',
+    background: 'var(--vibes-card-bg)',
+    border: '2px solid var(--vibes-card-border)',
     borderLeft: 'none',
     borderTopRightRadius: '8px',
     borderBottomRightRadius: '8px',
@@ -35,7 +35,7 @@ export function getLabelStyle(): React.CSSProperties {
     textTransform: 'uppercase',
     letterSpacing: '1px',
     whiteSpace: 'nowrap',
-    color: '#000',
+    color: 'var(--vibes-card-text)',
     writingMode: 'vertical-rl',
     transform: 'rotate(180deg)',
     display: 'flex',
@@ -48,8 +48,8 @@ export function getLabelStyle(): React.CSSProperties {
 
 export function getButtonWrapperStyle(): React.CSSProperties {
   return {
-    background: '#e5e5e5',
-    border: '2px solid #000',
+    background: 'var(--vibes-card-bg)',
+    border: '2px solid var(--vibes-card-border)',
     borderRadius: '8px',
     padding: '24px 24px 32px 24px',
     display: 'flex',

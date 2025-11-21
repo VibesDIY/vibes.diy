@@ -1,22 +1,24 @@
 /* ImgGen Component Styling System
  * This file contains all base styles for the ImgGen component hierarchy
  * Uses CSS custom properties to enable easy theming without affecting layout
+ *
+ * NOTE: Import ../../styles/colors.css before using this file to access base color tokens
  */
 
 /* ---- CSS Custom Properties (Variables) ---- */
 :root {
-  /* Colors */
-  --imggen-text-color: #333;
-  --imggen-background: #333333;
-  --imggen-overlay-bg: rgba(255, 255, 255, 0.5);
-  --imggen-accent: #0066cc;
-  --imggen-flash: #fe0;
-  --imggen-error-bg: rgba(0, 0, 0, 0.7);
-  --imggen-error-border: #ff6666;
-  --imggen-error-text: #ff6666;
-  --imggen-button-bg: rgba(255, 255, 255, 0.7);
-  --imggen-error-text-body: #ffffff;
-  --imggen-delete-hover-color: #ff3333;
+  /* Colors - using centralized color tokens */
+  --imggen-text-color: var(--vibes-text-primary);
+  --imggen-background: var(--vibes-gray-dark);
+  --imggen-overlay-bg: var(--vibes-bg-overlay);
+  --imggen-accent: var(--vibes-blue-accent);
+  --imggen-flash: var(--vibes-yellow-bright);
+  --imggen-error-bg: var(--vibes-error-bg);
+  --imggen-error-border: var(--vibes-error-border);
+  --imggen-error-text: var(--vibes-error-text);
+  --imggen-button-bg: var(--imggen-button-bg); /* Note: defined in colors.css */
+  --imggen-error-text-body: var(--vibes-error-text-body);
+  --imggen-delete-hover-color: var(--vibes-red-delete);
 
   /* Dimensions */
   --imggen-border-radius: 8px;
@@ -367,7 +369,7 @@
 
 /* Error container wrapper to ensure consistent dark background */
 .imggen-error-container {
-  background-color: #222;
+  background-color: var(--vibes-dark-gray);
   aspect-ratio: 1 / 1; /* Maintain square aspect ratio like images */
   display: flex;
   flex-direction: column;
@@ -381,7 +383,7 @@
 
 /* Error container */
 .imggen-error {
-  background-color: #000;
+  background-color: var(--vibes-black);
   color: var(--imggen-error-text);
   padding: 1.5rem;
   border-radius: var(--imggen-border-radius);
@@ -425,7 +427,7 @@
   justify-content: center;
   padding: 2rem;
   box-sizing: border-box;
-  background-color: #222; /* Dark gray background */
+  background-color: var(--vibes-dark-gray);
   /* aspect-ratio: 1 / 1; Maintain square aspect ratio like images */
   border-radius: var(--imggen-border-radius);
 }
@@ -472,8 +474,8 @@
 
 /* Delete cancel button */
 .imggen-delete-cancel {
-  background-color: #555;
-  color: white;
+  background-color: var(--vibes-gray-mid);
+  color: var(--vibes-white);
   border: none;
   padding: 8px 16px;
   border-radius: 4px;
@@ -491,7 +493,7 @@
 .imggen-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: var(--vibes-shadow-backdrop);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -532,7 +534,7 @@
 
 .imggen-file-drop {
   padding: 1.5rem;
-  border: 2px dashed #ccc;
+  border: 2px dashed var(--vibes-border-input);
   border-radius: 8px;
   text-align: center;
   cursor: pointer;
@@ -543,13 +545,13 @@
 }
 
 .imggen-file-drop:hover {
-  border-color: #999;
-  background-color: rgba(0, 0, 0, 0.02);
+  border-color: var(--vibes-gray-light);
+  background-color: var(--vibes-bg-overlay);
 }
 
 .imggen-file-drop-active {
-  border-color: #4a9df8;
-  background-color: rgba(74, 157, 248, 0.05);
+  border-color: var(--vibes-blue-darker);
+  background-color: var(--vibes-bg-dropzone-active);
 }
 
 .imggen-file-drop-disabled {
@@ -559,7 +561,7 @@
 
 .imggen-file-drop-message {
   font-size: 0.95rem;
-  color: #666;
+  color: var(--vibes-text-secondary);
 }
 
 /* Upload waiting state styles */
@@ -575,7 +577,7 @@
 
 .imggen-upload-count {
   font-size: 0.9rem;
-  color: #555;
+  color: var(--vibes-text-secondary);
   margin-bottom: 0.5rem;
 }
 
@@ -590,7 +592,7 @@
   height: 80px;
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid #ddd;
+  border: 1px solid var(--vibes-border-light);
 }
 
 .imggen-thumbnail-img {
@@ -605,8 +607,8 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  background-color: #f5f5f5;
-  color: #999;
+  background-color: var(--vibes-bg-secondary);
+  color: var(--vibes-text-muted);
   font-size: 0.8rem;
 }
 
@@ -616,14 +618,14 @@
   justify-content: center;
   width: 80px;
   height: 80px;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--vibes-bg-overlay);
   border-radius: 4px;
-  color: #666;
+  color: var(--vibes-text-secondary);
   font-size: 0.9rem;
 }
 
 .imggen-no-uploads {
-  color: #999;
+  color: var(--vibes-text-muted);
   font-style: italic;
   font-size: 0.9rem;
 }
@@ -636,15 +638,17 @@
 .imggen-prompt-input {
   flex: 1;
   padding: 0.75rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--vibes-border-input);
   border-radius: 4px;
   font-size: 0.95rem;
+  background-color: var(--vibes-bg-input);
+  color: var(--vibes-text-primary);
 }
 
 .imggen-prompt-submit {
   /* padding: 0.75rem 1.25rem; */
-  background-color: #4a9df8;
-  color: white;
+  background-color: var(--vibes-blue-darker);
+  color: var(--vibes-white);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -653,11 +657,11 @@
 }
 
 .imggen-prompt-submit:hover {
-  background-color: #3a8de8;
+  background-color: var(--vibes-blue-dark);
 }
 
 .imggen-prompt-submit:disabled {
-  background-color: #ccc;
+  background-color: var(--vibes-border-secondary);
   cursor: not-allowed;
 }
 
