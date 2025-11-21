@@ -704,26 +704,15 @@ export type { MountVibesAppOptions, MountVibesAppResult } from './vibe-app-mount
 // Export app slug utilities
 export {
   getAppSlug,
+  getInstanceId,
   getFullAppIdentifier,
   isDevelopmentEnvironment,
   isProductionEnvironment,
   generateRandomInstanceId,
   generateFreshDataUrl,
   generateRemixUrl,
-  parseSubdomain,
-  constructSubdomain,
-  isValidSubdomain,
   generateInstallId,
 } from './utils/appSlug.js';
-export type { ParsedSubdomain } from './utils/appSlug.js';
-
-// Export install tracking functionality
-export { initVibesInstalls } from './install-tracker.js';
-export type {
-  Install,
-  VibesInstallTrackerOptions,
-  VibesInstallTrackerResult,
-} from './install-tracker.js';
 
 // Export VibeContext for inline rendering with proper ledger naming
 export {
