@@ -36,6 +36,7 @@ function VibeInstanceViewerContent() {
     titleId: string;
     installId: string;
   }>();
+  const { isAuthenticated } = useAuth();
   const [error, setError] = useState<string | null>(null);
   // Generate unique container ID using crypto.randomUUID
   // Regenerate on each navigation to make debugging easier
@@ -98,6 +99,8 @@ function VibeInstanceViewerContent() {
           titleId,
           installId,
           transformImportsDev,
+          true, // showVibesSwitch
+          isAuthenticated, // syncEnabled
         );
       } catch (err) {
         console.error("Error loading vibe:", err);

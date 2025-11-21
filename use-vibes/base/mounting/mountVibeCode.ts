@@ -18,7 +18,8 @@ export async function mountVibeCode(
   titleId: string,
   installId: string,
   transformImports: (code: string) => string,
-  showVibesSwitch = true
+  showVibesSwitch = true,
+  syncEnabled?: boolean
 ): Promise<void> {
   let objectURL: string | undefined;
 
@@ -65,6 +66,7 @@ export async function mountVibeCode(
         titleId: titleId,
         installId: installId,
       },
+      syncEnabled: syncEnabled,
     });
 
     // Dispatch success event with unmount callback

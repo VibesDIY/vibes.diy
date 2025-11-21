@@ -92,17 +92,31 @@ export function validateVibeMetadata(metadata: unknown): asserts metadata is Vib
   }
 }
 
-const VibeContext = createContext<VibeMetadata | undefined>(undefined);
+export interface VibeContextValue {
+  readonly metadata?: VibeMetadata;
+  readonly syncEnabled?: boolean;
+}
+
+const VibeContext = createContext<VibeContextValue | undefined>(undefined);
 
 export interface VibeContextProviderProps {
   readonly metadata: VibeMetadata;
+  readonly syncEnabled?: boolean;
   readonly children: ReactNode;
 }
 
-export function VibeContextProvider({ metadata, children }: VibeContextProviderProps) {
-  return <VibeContext.Provider value={metadata}>{children}</VibeContext.Provider>;
+export function VibeContextProvider({ metadata, syncEnabled, children }: VibeContextProviderProps) {
+  const value: VibeContextValue = { metadata, syncEnabled };
+  return <VibeContext.Provider value={value}>{children}</VibeContext.Provider>;
 }
 
-export function useVibeContext(): VibeMetadata | undefined {
+export function useVibeContext(): VibeContextValue | undefined {
   return useContext(VibeContext);
+}
+
+/**
+ * Hook to get VibeMetadata only (for backward compatibility)
+ */
+export function useVibeMetadata(): VibeMetadata | undefined {
+  return useContext(VibeContext)?.metadata;
 }

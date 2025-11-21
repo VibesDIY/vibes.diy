@@ -2,9 +2,8 @@ import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
 import { getKeyBag } from '@fireproof/core-keybag';
 import { Lazy } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
-  Attached,
   fireproof,
   ImgFile,
   toCloud as originalToCloud,
@@ -13,12 +12,7 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
-import {
-  VIBES_SYNC_ENABLE_EVENT,
-  VIBES_SYNC_DISABLE_EVENT,
-  VIBES_SYNC_ENABLED_CLASS,
-  VIBES_SYNC_ERROR_EVENT,
-} from './constants.js';
+import { VIBES_SYNC_ENABLED_CLASS, VIBES_SYNC_ERROR_EVENT } from './constants.js';
 import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
 
 // Interface for share API response
@@ -129,19 +123,28 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
     try {
       const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
       if (externalToken) {
-        // Check expiration asynchronously
+        // Set token immediately (synchronously) so it's available when ToCloud is created
+        strategy.setToken(externalToken);
+
+        // Check expiration asynchronously and clean up if expired
         isJWTExpired(externalToken).then((expired) => {
           if (expired) {
+            console.log('[toCloud] Token expired, removing from localStorage');
             localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-          } else {
-            strategy.setToken(externalToken);
+            // Note: The attach may have already started with this token,
+            // but it will fail auth and trigger the popup flow
           }
         });
+      } else {
+        console.log('[toCloud] No token found in localStorage, will trigger auth flow');
       }
-    } catch {
+    } catch (e) {
+      console.log('[toCloud] Error reading token from localStorage:', e);
       // Ignore storage errors
     }
   }
+
+  console.log('[toCloud] VibesAuthStrategy', opts, strategy);
 
   const attachable = originalToCloud({
     ...opts,
@@ -178,8 +181,10 @@ function constructDatabaseName(
 
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
-  // Read vibe context if available (for inline rendering with proper ledger naming)
-  const vibeMetadata = useVibeContext();
+  // Read vibe context if available (for inline rendering with proper ledger naming and sync control)
+  const vibeContext = useVibeContext();
+  const vibeMetadata = vibeContext?.metadata;
+  const shouldEnableSync = vibeContext?.syncEnabled ?? false;
 
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
@@ -190,189 +195,31 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Get database name for tracking purposes (use augmented name)
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
-  // Use global sync key - all databases share the same auth token and sync state
-  const syncKey = 'fireproof-sync-enabled';
 
-  // Check if sync was previously enabled (persists across refreshes)
-  const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
-
-  // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
+  // Create attach config if context says sync should be enabled
+  const attachConfig = shouldEnableSync ? toCloud() : undefined;
 
   // Use original useFireproof with augmented database name
   // This ensures each titleId + installId combination gets its own database
+
+  console.log('[useFireproof] augmentedDbName:', augmentedDbName, 'attachConfig:', attachConfig);
+
   const result = originalUseFireproof(
     augmentedDbName,
     attachConfig ? { attach: attachConfig } : {}
   );
 
-  // State to track manual attachment for first-time enable
-  // Captures vibeMetadata at enableSync time to avoid race conditions
-  const [manualAttach, setManualAttach] = useState<{
-    state: 'pending' | 'attached' | 'error';
-    vibeMetadata?: VibeMetadata;
-    attached?: Attached;
-    error?: Error;
-  } | null>(null);
-
-  // Handle first-time sync enable without reload
-  useEffect(() => {
-    if (manualAttach?.state === 'pending' && result.database) {
-      const cloudConfig = toCloud();
-      result.database
-        .attach(cloudConfig)
-        .then((attached) => {
-          // Try to access token state (ctx might be a function or object)
-          const ctx = typeof attached?.ctx === 'function' ? attached.ctx() : attached?.ctx;
-
-          // Type assertion for token state access
-          const ctxWithToken = ctx as
-            | { tokenAndClaims?: { state: string; tokenAndClaims?: { token: string } } }
-            | undefined;
-
-          if (ctxWithToken?.tokenAndClaims) {
-            if (
-              ctxWithToken.tokenAndClaims.state === 'ready' &&
-              ctxWithToken.tokenAndClaims.tokenAndClaims?.token
-            ) {
-              localStorage.setItem(
-                VIBES_AUTH_TOKEN_KEY,
-                ctxWithToken.tokenAndClaims.tokenAndClaims.token
-              );
-            }
-          }
-
-          setManualAttach({ state: 'attached', vibeMetadata: manualAttach.vibeMetadata, attached });
-          // Save preference for next refresh
-          localStorage.setItem(syncKey, 'true');
-        })
-        .catch((error) => {
-          setManualAttach({ state: 'error', vibeMetadata: manualAttach.vibeMetadata, error });
-          // Emit a low-noise diagnostic event for observers
-          try {
-            document.dispatchEvent(
-              new CustomEvent(VIBES_SYNC_ERROR_EVENT, { detail: { error, phase: 'attach' } })
-            );
-          } catch {
-            // Ignore when not in a DOM environment
-          }
-        });
-
-      // Wait for overlay ready event, then programmatically click the auth link
-      let eventReceived = false;
-
-      const handleOverlayReady = () => {
-        eventReceived = true;
-        clearTimeout(timeoutId);
-
-        // Wait a tiny bit for DOM to be fully interactive
-        setTimeout(() => {
-          const authLink = document.querySelector('.fpOverlay a[href]') as HTMLAnchorElement;
-          if (authLink) {
-            authLink.click();
-
-            // Hide the overlay after clicking since we're opening the popup
-            const overlay = document.querySelector('.fpOverlay') as HTMLElement;
-            if (overlay) {
-              overlay.style.display = 'none';
-            }
-          }
-        }, 100);
-      };
-
-      // Set up event listener
-      document.addEventListener('vibes-auth-overlay-ready', handleOverlayReady, { once: true });
-
-      // Safety timeout in case event never fires (5 seconds)
-      const timeoutId = setTimeout(() => {
-        if (!eventReceived) {
-          document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
-        }
-      }, 5000);
-
-      // Cleanup
-      return () => {
-        clearTimeout(timeoutId);
-        document.removeEventListener('vibes-auth-overlay-ready', handleOverlayReady);
-      };
-    }
-  }, [manualAttach, result.database, syncKey, dbName]);
-
-  // Function to enable sync and trigger popup directly
-  const enableSync = useCallback(() => {
-    if (!wasSyncEnabled && !manualAttach) {
-      // First time enabling - manual attach
-      // Capture vibeMetadata at this moment to avoid race conditions
-      setManualAttach({ state: 'pending', vibeMetadata });
-    }
-
-    // After a short delay, programmatically click the sign-in link in the overlay
-    setTimeout(() => {
-      const authLink = document.querySelector('.fpOverlay a[href]') as HTMLAnchorElement;
-      if (authLink) {
-        authLink.click();
-
-        // Hide the overlay after clicking since we're opening the popup
-        const overlay = document.querySelector('.fpOverlay') as HTMLElement;
-        if (overlay) {
-          overlay.style.display = 'none';
-        }
-      }
-    }, 100); // Small delay to ensure overlay is rendered
-  }, [wasSyncEnabled, manualAttach, vibeMetadata]);
-
-  // Wire up vibes-login-link button if it exists
-  useEffect(() => {
-    const button = document.getElementById('vibes-login-link');
-    if (!button) return;
-
-    const handleClick = () => {
-      enableSync();
-    };
-
-    button.addEventListener('click', handleClick);
-
-    // Cleanup removes this listener on unmount
-    return () => {
-      button.removeEventListener('click', handleClick);
-    };
-  }, [enableSync]);
-
-  // Function to disable sync
-  const disableSync = useCallback(() => {
-    localStorage.removeItem(syncKey);
-
-    // Clear the authentication token for call-ai integration
-    try {
-      localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-    } catch {
-      // Ignore localStorage errors (privacy mode, SSR, etc.)
-    }
-
-    // Reset token if attached through original flow
-    if (
-      result.attach?.ctx?.tokenAndClaims?.state === 'ready' &&
-      result.attach.ctx.tokenAndClaims.reset
-    ) {
-      result.attach.ctx.tokenAndClaims.reset();
-    }
-
-    // Clear manual attach state
-    setManualAttach(null);
-  }, [syncKey, result.attach]);
-
-  // Determine sync status - check for actual attachment state
+  // Determine sync status based on context and attachment state
   const syncEnabled =
-    (wasSyncEnabled &&
-      (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
-    manualAttach?.state === 'attached';
+    shouldEnableSync &&
+    (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
 
   // Bridge Fireproof authentication to call-ai by syncing tokens to localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Get the attach context (prefer result.attach over manualAttach)
-    const attach = result.attach || manualAttach;
+    // Get the attach context
+    const attach = result.attach;
 
     // Check if we have a ready token state
     const hasReadyToken =
@@ -404,7 +251,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         }
       }
     }
-  }, [result.attach, manualAttach, syncEnabled]);
+  }, [result.attach, syncEnabled]);
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
@@ -460,7 +307,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         message: shareData.message || 'User added to ledger successfully',
       };
     },
-    [dbName, result.attach, manualAttach]
+    [dbName, result.attach]
   );
 
   // Listen for custom 'vibes-share-request' events on document
@@ -516,36 +363,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     };
   }, [share]);
 
-  // Listen for custom 'vibes-sync-enable' event on document
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleSyncEnable = () => {
-      enableSync();
-    };
-
-    document.addEventListener(VIBES_SYNC_ENABLE_EVENT, handleSyncEnable);
-
-    return () => {
-      document.removeEventListener(VIBES_SYNC_ENABLE_EVENT, handleSyncEnable);
-    };
-  }, [enableSync]);
-
-  // Listen for custom 'vibes-sync-disable' event on document
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleSyncDisable = () => {
-      disableSync();
-    };
-
-    document.addEventListener(VIBES_SYNC_DISABLE_EVENT, handleSyncDisable);
-
-    return () => {
-      document.removeEventListener(VIBES_SYNC_DISABLE_EVENT, handleSyncDisable);
-    };
-  }, [disableSync]);
-
   // Manage global sync status tracking and body class
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -582,12 +399,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     };
   }, [syncEnabled, dbName, instanceId]);
 
-  // Return combined result, preferring original attach over manual
+  // Return combined result with sync status and share function
   return {
     ...result,
-    attach: result.attach || manualAttach,
-    enableSync,
-    disableSync,
     syncEnabled,
     share,
   };

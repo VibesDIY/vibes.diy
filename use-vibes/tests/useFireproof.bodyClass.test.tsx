@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, cleanup } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { useFireproof } from '@vibes.diy/use-vibes-base';
+import { useFireproof, VibeContextProvider } from '@vibes.diy/use-vibes-base';
 
 // Mock the original useFireproof
 const mockOriginalUseFireproof = vi.fn();
@@ -24,10 +24,26 @@ function TestComponent({ dbName = 'test-db' }: { dbName?: string }) {
   return <div data-testid="sync-status">{syncEnabled ? 'connected' : 'disconnected'}</div>;
 }
 
+// Wrapper component that provides VibeContext
+function TestWrapper({
+  children,
+  syncEnabled = false,
+}: {
+  children: React.ReactNode;
+  syncEnabled?: boolean;
+}) {
+  return (
+    <VibeContextProvider
+      metadata={{ titleId: 'test-title', installId: 'test-install' }}
+      syncEnabled={syncEnabled}
+    >
+      {children}
+    </VibeContextProvider>
+  );
+}
+
 describe('useFireproof body class management', () => {
   beforeEach(() => {
-    // Clear localStorage
-    localStorage.clear();
     // Remove any existing classes from document.body
     document.body.classList.remove('vibes-connect-true');
     // Reset mocks
@@ -48,10 +64,11 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    // Set localStorage to indicate sync was previously enabled (global key)
-    localStorage.setItem('fireproof-sync-enabled', 'true');
-
-    render(<TestComponent />);
+    render(
+      <TestWrapper syncEnabled={true}>
+        <TestComponent />
+      </TestWrapper>
+    );
 
     // Body should have the class when sync is enabled
     expect(document.body.classList.contains('vibes-connect-true')).toBe(true);
@@ -65,10 +82,11 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    // Ensure localStorage doesn't indicate sync was enabled (global key)
-    localStorage.removeItem('fireproof-sync-enabled');
-
-    render(<TestComponent />);
+    render(
+      <TestWrapper syncEnabled={false}>
+        <TestComponent />
+      </TestWrapper>
+    );
 
     // Body should not have the class when sync is disabled
     expect(document.body.classList.contains('vibes-connect-true')).toBe(false);
@@ -83,10 +101,11 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    // Set global sync preference
-    localStorage.setItem('fireproof-sync-enabled', 'true');
-
-    const { unmount } = render(<TestComponent />);
+    const { unmount } = render(
+      <TestWrapper syncEnabled={true}>
+        <TestComponent />
+      </TestWrapper>
+    );
 
     // Class should be present
     expect(document.body.classList.contains('vibes-connect-true')).toBe(true);
@@ -107,11 +126,16 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    // Set global sync preference (shared across all databases)
-    localStorage.setItem('fireproof-sync-enabled', 'true');
-
-    const { unmount: unmount1 } = render(<TestComponent dbName="db1" />);
-    const { unmount: unmount2 } = render(<TestComponent dbName="db2" />);
+    const { unmount: unmount1 } = render(
+      <TestWrapper syncEnabled={true}>
+        <TestComponent dbName="db1" />
+      </TestWrapper>
+    );
+    const { unmount: unmount2 } = render(
+      <TestWrapper syncEnabled={true}>
+        <TestComponent dbName="db2" />
+      </TestWrapper>
+    );
 
     // Class should be present when any instance has sync enabled
     expect(document.body.classList.contains('vibes-connect-true')).toBe(true);
@@ -134,12 +158,17 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    // Set global sync preference
-    localStorage.setItem('fireproof-sync-enabled', 'true');
-
     // Multiple components using the same database name
-    const { unmount: unmount1 } = render(<TestComponent dbName="same-db" />);
-    const { unmount: unmount2 } = render(<TestComponent dbName="same-db" />);
+    const { unmount: unmount1 } = render(
+      <TestWrapper syncEnabled={true}>
+        <TestComponent dbName="same-db" />
+      </TestWrapper>
+    );
+    const { unmount: unmount2 } = render(
+      <TestWrapper syncEnabled={true}>
+        <TestComponent dbName="same-db" />
+      </TestWrapper>
+    );
 
     // Class should be present
     expect(document.body.classList.contains('vibes-connect-true')).toBe(true);
