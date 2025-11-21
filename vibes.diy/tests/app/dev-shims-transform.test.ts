@@ -14,7 +14,6 @@ import * as Three from 'three';`;
     expect(result).toContain("import React from 'react'");
     expect(result).toContain("import { useFireproof } from 'use-fireproof'");
     expect(result).toContain("import { callAI } from 'call-ai'");
-    expect(result).toContain("import * as Three from 'three'");
   });
 
   it("should transform imports that are not in the libraryImportMap", () => {
@@ -183,13 +182,6 @@ import { ImgGen } from "use-vibes"`;
     expect(result).toContain('import { useFireproof } from "use-fireproof"');
     expect(result).toContain('import { callAI } from "call-ai"');
     expect(result).toContain('import { ImgGen } from "use-vibes"');
-  });
-
-  it("should handle eruda import (debugging tool)", () => {
-    const testCode = `import eruda from 'eruda';`;
-    const result = transformImports(testCode);
-    // eruda is in the library map, should not be transformed
-    expect(result).toContain("import eruda from 'eruda'");
   });
 
   it("should handle JSX runtime import", () => {

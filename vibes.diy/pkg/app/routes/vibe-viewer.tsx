@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Lazy } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
@@ -7,6 +9,8 @@ import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { mountVibeWithCleanup } from "use-vibes";
 import { setupDevShims, transformImportsDev } from "../utils/dev-shims.js";
 import LoggedOutView from "../components/LoggedOutView.js";
+
+const sthis = Lazy(() => ensureSuperThis());
 
 export function meta({
   params,
@@ -36,7 +40,7 @@ function VibeInstanceViewerContent() {
   // Generate unique container ID using crypto.randomUUID
   // Regenerate on each navigation to make debugging easier
   const [containerId, setContainerId] = useState(
-    () => `vibe-container-${crypto.randomUUID()}`,
+    () => `vibe-container-${sthis().nextId().str}`,
   );
 
   // Lazy instance creation: ensure instance exists in database
@@ -66,7 +70,7 @@ function VibeInstanceViewerContent() {
     setupDevShims();
 
     // Generate new container ID for this navigation
-    const newContainerId = `vibe-container-${crypto.randomUUID()}`;
+    const newContainerId = `vibe-container-${sthis().nextId().str}`;
     setContainerId(newContainerId);
 
     let active = true;
