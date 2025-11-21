@@ -63,24 +63,29 @@ function VibeInstancesListContent() {
     // Only auto-navigate once, and only after instances have loaded
     if (hasAutoNavigated.current || isCreating) return;
 
-    const search = searchParams.toString();
-    const searchSuffix = search ? `?${search}` : "";
+    // Wait 200ms for database to load before checking instance count
+    const timeoutId = setTimeout(() => {
+      const search = searchParams.toString();
+      const searchSuffix = search ? `?${search}` : "";
 
-    if (instances.length === 0) {
-      // No instances: create one called "Begin" and navigate to it
-      hasAutoNavigated.current = true;
-      createInstance("Begin").then((fullId) => {
-        const installId = extractInstallId(fullId, titleId);
+      if (instances.length === 0) {
+        // No instances: create one called "Begin" and navigate to it
+        hasAutoNavigated.current = true;
+        createInstance("Begin").then((fullId) => {
+          const installId = extractInstallId(fullId, titleId);
+          navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
+        });
+      } else if (instances.length === 1) {
+        // Exactly 1 instance: navigate directly to it
+        hasAutoNavigated.current = true;
+        const instance = instances[0];
+        const installId = extractInstallId(instance._id || "", titleId);
         navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
-      });
-    } else if (instances.length === 1) {
-      // Exactly 1 instance: navigate directly to it
-      hasAutoNavigated.current = true;
-      const instance = instances[0];
-      const installId = extractInstallId(instance._id || "", titleId);
-      navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
-    }
-    // If 2+ instances: do nothing, show the list
+      }
+      // If 2+ instances: do nothing, show the list
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
   }, [instances, isCreating, titleId, navigate, searchParams, createInstance]);
 
   const handleCreate = async () => {
