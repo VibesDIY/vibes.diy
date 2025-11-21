@@ -26,8 +26,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const response = await renderAppInstance(context, parsed, mockApp);
       const html = await response.text();
 
-      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes"');
-      expect(html).toContain('"use-fireproof": "https://esm.sh/use-vibes"');
+      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes@0.16.2"');
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
+      );
     });
 
     it("should override use-vibes and use-fireproof versions when valid v_vibes parameter is provided", async () => {
@@ -142,8 +144,12 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
         const response = await renderAppInstance(context, parsed, mockApp);
         const html = await response.text();
 
-        expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes"');
-        expect(html).toContain('"use-fireproof": "https://esm.sh/use-vibes"');
+        expect(html).toContain(
+          '"use-vibes": "https://esm.sh/use-vibes@0.16.2"',
+        );
+        expect(html).toContain(
+          '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
+        );
       }
     });
 
@@ -171,8 +177,10 @@ describe("Vibes Version Override (v_vibes parameter)", () => {
       const response = await renderAppInstance(context, parsed, mockApp);
       const html = await response.text();
 
-      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes"');
-      expect(html).toContain('"use-fireproof": "https://esm.sh/use-vibes"');
+      expect(html).toContain('"use-vibes": "https://esm.sh/use-vibes@0.16.2"');
+      expect(html).toContain(
+        '"use-fireproof": "https://esm.sh/use-vibes@0.16.2"',
+      );
     });
   });
 
