@@ -41,7 +41,7 @@
     "@vitest/browser-playwright": "^4.0.10",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.2",
+    "vitest": "^4.0.10",
     "zx": "^8.8.4"
   },
   "engines": {

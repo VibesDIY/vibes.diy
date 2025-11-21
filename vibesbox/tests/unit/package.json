@@ -1,9 +1,9 @@
 {
-  "name": "@vibes.diy/hosting-tests",
+  "name": "@vibes.diy/vibesbox-tests",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Tests for @vibes.diy/hosting Cloudflare Worker",
+  "description": "Tests for @vibes.diy/vibesbox Cloudflare Worker",
   "repository": {
     "type": "git",
     "url": "https://github.com/VibesDIY/vibes.diy.git"
@@ -26,28 +26,23 @@
     "cloudflare",
     "worker",
     "tests",
-    "vibes",
-    "hosting"
+    "vibesbox",
+    "iframe"
   ],
   "contributors": [
     "J Chris Anderson"
   ],
-  "license": "Apache-2.0",
+  "license": "MIT",
+  "dependencies": {
+    "@vibes.diy/vibesbox": "workspace:*"
+  },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.10.1",
     "@cloudflare/workers-types": "^4.20251111.0",
     "@types/node": "^24.9.1",
     "@vitest/browser-playwright": "^4.0.10",
-    "chanfana": "^2.8.2",
-    "hono": "^4.10.6",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
-    "vite": "^7.2.2",
-    "vitest": "^4.0.10",
-    "wrangler": "^4.45.1"
-  },
-  "dependencies": {
-    "@vibes.diy/hosting": "workspace:*"
+    "vitest": "^4.0.10"
   },
   "engines": {
     "node": ">=20.0.0"
