@@ -95,9 +95,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               imports: {
-                // Always include eruda and three
-                eruda: libraryImportMap.eruda,
-                three: libraryImportMap.three,
                 // Only include React imports in production (dev mode uses bundled versions)
                 ...(!import.meta.env.DEV ? reactImports : {}),
               },
