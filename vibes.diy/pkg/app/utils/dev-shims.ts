@@ -60,8 +60,11 @@ const libraryImportMap: Record<string, string> = {
 /**
  * Transform bare imports to esm.sh URLs
  * Skips imports that are in the library map, already URLs, or relative paths
+ *
+ * This is exported separately from transformImportsDev so it can be tested
+ * and used without the dev-mode window global replacements.
  */
-function transformImports(code: string): string {
+export function transformImports(code: string): string {
   const importKeys = Object.keys(libraryImportMap);
   return code.replace(
     /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+(?:\s*,\s*\{[^}]*\})?)\s+from\s+)?['"]([^'"]+)['"];?/g,
