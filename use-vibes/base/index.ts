@@ -168,32 +168,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
 
-  // DIAGNOSTIC: Unconditional log for debugging
-  console.log('[useFireproof] Hook called:', {
-    nameOrDatabase:
-      typeof nameOrDatabase === 'string'
-        ? nameOrDatabase
-        : typeof nameOrDatabase === 'object'
-          ? 'Database object'
-          : 'undefined',
-    vibeMetadata: vibeMetadata || 'UNDEFINED',
-    hasContext: !!vibeMetadata,
-  });
-
-  // DIAGNOSTIC: Log database name construction
-  if (vibeMetadata) {
-    const originalName =
-      typeof nameOrDatabase === 'string' ? nameOrDatabase : nameOrDatabase?.name || 'undefined';
-    const augmentedName =
-      typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'undefined';
-    console.log('[useFireproof] Database naming:', {
-      original: originalName,
-      augmented: augmentedName,
-      titleId: vibeMetadata.titleId,
-      installId: vibeMetadata.installId,
-    });
-  }
-
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
 
@@ -231,13 +205,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Handle first-time sync enable without reload
   useEffect(() => {
     if (manualAttach?.state === 'pending' && result.database) {
-      // DIAGNOSTIC: Log cloud attachment
-      console.log('[useFireproof] Attaching to cloud:', {
-        databaseName: result.database.name,
-        titleId: manualAttach.vibeMetadata?.titleId,
-        installId: manualAttach.vibeMetadata?.installId,
-      });
-
       const cloudConfig = toCloud();
       result.database
         .attach(cloudConfig)

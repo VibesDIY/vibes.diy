@@ -65,21 +65,6 @@ function VibeInstanceViewerContent() {
     // Expose libraries to window for development shim
     setupDevShims();
 
-    // DIAGNOSTIC: Verify window globals are set
-    if (import.meta.env.DEV) {
-      interface VibeWindow extends Window {
-        __VIBE_USE_VIBES__?: {
-          useFireproof?: unknown;
-        };
-      }
-      const vibeWindow = window as unknown as VibeWindow;
-      console.log("[vibe-viewer] Window globals check:", {
-        hasUseVibes: !!vibeWindow.__VIBE_USE_VIBES__,
-        hasUseFireproof: !!vibeWindow.__VIBE_USE_VIBES__?.useFireproof,
-        useFireproofType: typeof vibeWindow.__VIBE_USE_VIBES__?.useFireproof,
-      });
-    }
-
     // Generate new container ID for this navigation
     const newContainerId = `vibe-container-${crypto.randomUUID()}`;
     setContainerId(newContainerId);
@@ -101,13 +86,6 @@ function VibeInstanceViewerContent() {
         const vibeCode = await response.text();
 
         if (!active) return;
-
-        // DIAGNOSTIC: Log mounting parameters
-        console.log("[vibe-viewer] Mounting vibe with metadata:", {
-          titleId,
-          installId,
-          containerId: newContainerId,
-        });
 
         // Mount the vibe code and capture the unmount callback via event
         unmountVibe = await mountVibeWithCleanup(
