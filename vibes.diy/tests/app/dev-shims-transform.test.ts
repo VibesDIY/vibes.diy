@@ -25,7 +25,9 @@ import async from 'async';`;
     const result = transformImports(testCode);
 
     expect(result).toContain('import axios from "https://esm.sh/axios"');
-    expect(result).toContain('import { debounce } from "https://esm.sh/lodash"');
+    expect(result).toContain(
+      'import { debounce } from "https://esm.sh/lodash"',
+    );
     expect(result).toContain('import async from "https://esm.sh/async"');
   });
 
@@ -38,8 +40,12 @@ import { something } from 'http://example.com/module';`;
 
     // Should remain unchanged since these are already URLs
     expect(result).toContain("import React from 'https://esm.sh/react@19.1.1'");
-    expect(result).toContain("import axios from 'https://cdn.skypack.dev/axios'");
-    expect(result).toContain("import { something } from 'http://example.com/module'");
+    expect(result).toContain(
+      "import axios from 'https://cdn.skypack.dev/axios'",
+    );
+    expect(result).toContain(
+      "import { something } from 'http://example.com/module'",
+    );
   });
 
   it("should handle mixed imports correctly", () => {
@@ -54,8 +60,12 @@ import something from 'https://esm.sh/something';`;
     expect(result).toContain("import React from 'react'");
     expect(result).toContain('import axios from "https://esm.sh/axios"');
     expect(result).toContain("import { useFireproof } from 'use-fireproof'");
-    expect(result).toContain('import { debounce } from "https://esm.sh/lodash"');
-    expect(result).toContain("import something from 'https://esm.sh/something'");
+    expect(result).toContain(
+      'import { debounce } from "https://esm.sh/lodash"',
+    );
+    expect(result).toContain(
+      "import something from 'https://esm.sh/something'",
+    );
   });
 
   it("should handle different import syntaxes", () => {
@@ -66,10 +76,18 @@ import defaultExport, { named } from 'date-fns';`;
 
     const result = transformImports(testCode);
 
-    expect(result).toContain('import defaultExport from "https://esm.sh/moment"');
-    expect(result).toContain('import * as everything from "https://esm.sh/rxjs"');
-    expect(result).toContain('import { named1, named2 } from "https://esm.sh/ramda"');
-    expect(result).toContain('import defaultExport, { named } from "https://esm.sh/date-fns"');
+    expect(result).toContain(
+      'import defaultExport from "https://esm.sh/moment"',
+    );
+    expect(result).toContain(
+      'import * as everything from "https://esm.sh/rxjs"',
+    );
+    expect(result).toContain(
+      'import { named1, named2 } from "https://esm.sh/ramda"',
+    );
+    expect(result).toContain(
+      'import defaultExport, { named } from "https://esm.sh/date-fns"',
+    );
   });
 
   it("should handle imports with and without semicolons", () => {
@@ -159,7 +177,9 @@ import { ImgGen } from "use-vibes"`;
     const result = transformImports(testCode);
 
     // Should keep all imports unchanged since they're in libraryImportMap
-    expect(result).toContain('import React, { useState, useEffect } from "react"');
+    expect(result).toContain(
+      'import React, { useState, useEffect } from "react"',
+    );
     expect(result).toContain('import { useFireproof } from "use-fireproof"');
     expect(result).toContain('import { callAI } from "call-ai"');
     expect(result).toContain('import { ImgGen } from "use-vibes"');
