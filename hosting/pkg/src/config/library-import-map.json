@@ -4,7 +4,7 @@
     "react-dom": "https://esm.sh/react-dom@>=19.1.0",
     "react-dom/client": "https://esm.sh/react-dom@>=19.1.0/client",
     "use-fireproof": "https://esm.sh/use-vibes@0.16.2",
-    "call-ai": "https://esm.sh/call-ai",
+    "call-ai": "https://esm.sh/call-ai@0.16.2",
     "use-vibes": "https://esm.sh/use-vibes@0.16.2",
     "https://esm.sh/use-fireproof": "https://esm.sh/use-vibes@0.16.2",
     "https://esm.sh/use-vibes": "https://esm.sh/use-vibes@0.16.2",
