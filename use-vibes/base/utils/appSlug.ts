@@ -7,7 +7,7 @@
  */
 
 import { Lazy } from '@adviser/cement';
-import { ensureSuperThis } from '@fireproof/core-runtime';
+import { ensureSuperThis, runtimeFn } from '@fireproof/core-runtime';
 
 const sthis = Lazy(() => ensureSuperThis());
 
@@ -24,7 +24,7 @@ const DEFAULT_APP_SLUG = 'atmospheric-tiger-9377';
  * getAppSlug() // → "cute-frog-9259"
  */
 export function getAppSlug(): string {
-  if (typeof window === 'undefined') {
+  if (!runtimeFn().isBrowser) {
     throw new Error('getAppSlug can only be called in a browser environment');
   }
 
@@ -32,7 +32,7 @@ export function getAppSlug(): string {
 
   // Parse path-based routing: /vibe/{slug}/{instance-id}
   if (pathname.startsWith('/vibe/')) {
-    const pathPart = pathname.slice(6); // Remove '/vibe/'
+    const pathPart = pathname.slice('/vibe/'.length); // Remove '/vibe/'
     if (pathPart) {
       const slug = pathPart.split('/')[0]; // Take first segment
       if (slug) {
@@ -54,7 +54,7 @@ export function getAppSlug(): string {
  * getInstanceId() // → "asd223222f4"
  */
 export function getInstanceId(): string | undefined {
-  if (typeof window === 'undefined') {
+  if (!runtimeFn().isBrowser) {
     return undefined;
   }
 
@@ -62,7 +62,7 @@ export function getInstanceId(): string | undefined {
 
   // Parse path-based routing: /vibe/{slug}/{instance-id}
   if (pathname.startsWith('/vibe/')) {
-    const pathPart = pathname.slice(6); // Remove '/vibe/'
+    const pathPart = pathname.slice('/vibe/'.length); // Remove '/vibe/'
     if (pathPart) {
       const parts = pathPart.split('/');
       if (parts.length >= 2 && parts[1]) {
@@ -84,7 +84,7 @@ export function getInstanceId(): string | undefined {
  * getFullAppIdentifier() // → "cute-frog-9259/asd223222f4"
  */
 export function getFullAppIdentifier(): string {
-  if (typeof window === 'undefined') {
+  if (!runtimeFn().isBrowser) {
     return DEFAULT_APP_SLUG;
   }
 
@@ -92,7 +92,7 @@ export function getFullAppIdentifier(): string {
 
   // Parse path-based routing: /vibe/{slug}/{instance-id}
   if (pathname.startsWith('/vibe/')) {
-    const pathPart = pathname.slice(6); // Remove '/vibe/'
+    const pathPart = pathname.slice('/vibe/'.length); // Remove '/vibe/'
     if (pathPart) {
       // Remove trailing slash if present
       return pathPart.replace(/\/$/, '');
@@ -108,7 +108,7 @@ export function getFullAppIdentifier(): string {
  * @returns True if running in development environment
  */
 export function isDevelopmentEnvironment(): boolean {
-  if (typeof window === 'undefined') {
+  if (!runtimeFn().isBrowser) {
     return false;
   }
 
@@ -122,7 +122,7 @@ export function isDevelopmentEnvironment(): boolean {
  * @returns True if running in production environment
  */
 export function isProductionEnvironment(): boolean {
-  if (typeof window === 'undefined') {
+  if (!runtimeFn().isBrowser) {
     return false;
   }
 
