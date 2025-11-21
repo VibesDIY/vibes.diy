@@ -4,7 +4,6 @@ import * as ReactDOMClient from "react-dom/client";
 import * as JSX from "react/jsx-runtime";
 import * as UseVibes from "use-vibes";
 import * as CallAI from "call-ai";
-import { transformImports } from "@vibes.diy/hosting-base";
 
 interface VibeWindow extends Window {
   __VIBE_REACT__: typeof React;
@@ -42,8 +41,7 @@ export function setupDevShims() {
 
 /**
  * Custom import transformer for development.
- * Wraps the standard `transformImports` but adds a post-processing step
- * to rewrite specific package imports to use the global window variables
+ * Rewrites specific package imports to use the global window variables
  * we set up in `setupDevShims`.
  */
 export function transformImportsDev(code: string) {
@@ -54,12 +52,8 @@ export function transformImportsDev(code: string) {
     willTransform: import.meta.env.DEV ? "YES" : "NO",
   });
 
-  // First run the standard transformation (which might resolve bare specifiers to esm.sh)
-  // We need to handle both the original bare specifiers AND the resolved esm.sh URLs
-  // because standard transformImports might have already run or might run before this replacement logic depending on implementation.
-  // Actually, transformImports returns code with esm.sh URLs.
-  // So we should probably run our dev replacement ON TOP of that, targeting both keys.
-  let res = transformImports(code);
+  // Start with the original code
+  let res = code;
 
   if (import.meta.env.DEV) {
     const replacements: Record<string, string> = {
