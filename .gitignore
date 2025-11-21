@@ -1,3 +1,6 @@
+## macOS
+.DS_Store
+
 node_modules
 **/__screenshots__/
 **/build/
@@ -17,4 +20,8 @@ claude-browse-vibes/*.png
 test-results/
 playwright-report/
 playwright/.cache/
+
+## CLI tools output
+cli/**/vibes-output/
+cli/**/.claude/settings.local.json
 
