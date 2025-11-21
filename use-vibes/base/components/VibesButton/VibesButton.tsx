@@ -12,22 +12,16 @@ import remixIconUrl from '../../assets/remix.png';
 import inviteIconUrl from '../../assets/invite.png';
 import settingsIconUrl from '../../assets/settings.png';
 import backIconUrl from '../../assets/back.png';
+import '../../styles/colors.css';
 
-// Color constants
+// Variant constants
 export const BLUE = 'blue' as const;
 export const RED = 'red' as const;
 export const YELLOW = 'yellow' as const;
 export const GRAY = 'gray' as const;
 
-type ButtonColors = 'blue' | 'red' | 'yellow' | 'gray';
+type ButtonVariant = 'blue' | 'red' | 'yellow' | 'gray';
 type IconName = 'logout' | 'remix' | 'invite' | 'settings' | 'back';
-
-const colorMap: Record<ButtonColors, string> = {
-  blue: '#3b82f6',
-  red: '#ef4444',
-  yellow: '#eab308',
-  gray: '#6b7280',
-};
 
 // Icon map - maps icon names to URLs
 const iconMap: Record<IconName, string> = {
@@ -39,43 +33,39 @@ const iconMap: Record<IconName, string> = {
 };
 
 export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  color?: ButtonColors;
+  /**
+   * Visual variant of the button. In light mode uses standard colors,
+   * in dark mode uses vibrant neon/phosphorescent colors.
+   * @default 'blue'
+   */
+  variant?: ButtonVariant;
   children: React.ReactNode;
   onHover?: () => void;
   onUnhover?: () => void;
   icon?: IconName;
+  /**
+   * When true, button colors remain constant (cream/light) regardless of dark mode.
+   * When false, button adapts to dark mode with darker background and lighter text.
+   * @default true
+   */
+  ignoreDarkMode?: boolean;
 }
 
 export function VibesButton({
-  color = 'blue',
+  variant = 'blue',
   children,
   onHover,
   onUnhover,
   icon,
   style: customStyle,
-  className,
+  className = '',
+  ignoreDarkMode = false,
   ...props
 }: MenuButtonProps) {
-  // Use color if provided, otherwise fall back to variant
-  const buttonColor = color;
-  const hexColor = colorMap[buttonColor];
+  const buttonVariant = variant;
   const [isHovered, setHovered] = useState(false);
   const [isActive, setActive] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
-  // Detect dark mode
-  useEffect(() => {
-    const checkDarkMode = () => {
-      setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
-    };
-
-    checkDarkMode();
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', checkDarkMode);
-
-    return () => mediaQuery.removeEventListener('change', checkDarkMode);
-  }, []);
 
   // Detect mobile
   useEffect(() => {
@@ -100,9 +90,9 @@ export function VibesButton({
 
   const iconUrl = icon ? iconMap[icon] : undefined;
 
-  const baseStyle = getButtonStyle(buttonColor, isHovered, isActive, isMobile);
-  const mergedStyle = getMergedButtonStyle(baseStyle, isDark, customStyle);
-  const iconContainerStyle = getIconContainerStyle(hexColor, isMobile, !!iconUrl);
+  const baseStyle = getButtonStyle(buttonVariant, isHovered, isActive, isMobile);
+  const mergedStyle = getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle);
+  const iconContainerStyle = getIconContainerStyle(buttonVariant, isMobile, !!iconUrl);
   const iconStyle = getIconStyle(isMobile, isHovered, isActive);
   const contentWrapperStyle = getContentWrapperStyle(isMobile, !!iconUrl);
 

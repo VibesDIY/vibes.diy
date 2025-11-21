@@ -1,15 +1,21 @@
 import type React from 'react';
 
-const colorMap: Record<string, string> = {
-  blue: '#3b82f6',
-  red: '#ef4444',
-  yellow: '#eab308',
-  gray: '#6b7280',
+// Map variant names to CSS variables that automatically adapt to dark mode
+const variantColors: Record<string, string> = {
+  blue: 'var(--vibes-variant-blue)',
+  red: 'var(--vibes-variant-red)',
+  yellow: 'var(--vibes-variant-yellow)',
+  gray: 'var(--vibes-variant-gray)',
 };
 
-// Bounce animation keyframes
+// Get the appropriate color based on variant
+function getVariantColor(variant: string): string {
+  return variantColors[variant] || variant;
+}
+
+// Bounce animation keyframes for icons
 export const bounceKeyframes = `
-  @keyframes bounce {
+  @keyframes vibes-button-bounce {
     0%, 100% {
       transform: translateY(0);
     }
@@ -20,18 +26,18 @@ export const bounceKeyframes = `
 `;
 
 export function getButtonStyle(
-  color: string,
+  variant: string,
   isHovered: boolean,
   isActive: boolean,
   isMobile = false
 ): React.CSSProperties {
-  const hexColor = colorMap[color] || color;
+  const cssColor = getVariantColor(variant);
   let transform = 'translate(0px, 0px)';
-  let boxShadow = `8px 10px 0px 0px ${hexColor}, 8px 10px 0px 2px #1a1a1a`;
+  let boxShadow = `8px 10px 0px 0px ${cssColor}, 8px 10px 0px 2px var(--vibes-button-border)`;
 
   if (isHovered && !isActive) {
     transform = 'translate(2px, 2px)';
-    boxShadow = `2px 3px 0px 0px ${hexColor}, 2px 3px 0px 2px #1a1a1a`;
+    boxShadow = `2px 3px 0px 0px ${cssColor}, 2px 3px 0px 2px var(--vibes-button-border)`;
   }
 
   if (isActive) {
@@ -59,35 +65,39 @@ export function getButtonStyle(
 
 export function getMergedButtonStyle(
   baseStyle: React.CSSProperties,
-  isDark: boolean,
+  ignoreDarkMode: boolean,
   customStyle?: React.CSSProperties
 ): React.CSSProperties {
   return {
     ...baseStyle,
-    background: isDark ? '#FFFFF0' : '#FFFFF0',
-    color: isDark ? '#1a1a1a' : '#1a1a1a',
-    border: isDark ? '2px solid #1a1a1a' : '2px solid #1a1a1a',
+    background: ignoreDarkMode ? 'var(--vibes-button-bg)' : 'var(--vibes-button-bg-dark-aware)',
+    color: ignoreDarkMode ? 'var(--vibes-button-text)' : 'var(--vibes-button-text-dark-aware)',
+    border: ignoreDarkMode
+      ? '2px solid var(--vibes-button-border)'
+      : '2px solid var(--vibes-button-border-dark-aware)',
     ...customStyle,
   };
 }
 
 export function getIconContainerStyle(
-  hexColor: string,
+  variant: string,
   isMobile: boolean,
   hasIcon: boolean
 ): React.CSSProperties {
   if (!hasIcon) return {};
 
+  const cssColor = getVariantColor(variant);
+
   return {
     width: isMobile ? '48px' : '80px',
     height: isMobile ? '48px' : '80px',
-    backgroundColor: hexColor,
+    backgroundColor: cssColor,
     borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    border: '2px solid black',
+    border: '2px solid var(--vibes-black)',
   };
 }
 
@@ -100,9 +110,9 @@ export function getIconStyle(
     width: isMobile ? '28px' : '50px',
     height: isMobile ? '28px' : '50px',
     objectFit: 'contain' as const,
-    backgroundColor: 'white',
+    backgroundColor: 'var(--vibes-button-icon-bg)',
     borderRadius: '50%',
-    animation: isHovered && !isActive ? 'bounce 0.8s ease-in-out infinite' : 'none',
+    animation: isHovered && !isActive ? 'vibes-button-bounce 0.8s ease-in-out infinite' : 'none',
   };
 }
 

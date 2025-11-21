@@ -16,16 +16,8 @@ import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { trackAuthClick, trackEvent } from "../utils/analytics.js";
 import { VibesSwitch } from "use-vibes";
-import { BrutalistCard } from "@vibes.diy/use-vibes-base";
+import { BrutalistCard, LabelContainer, VibesButton } from "@vibes.diy/use-vibes-base";
 
-// Vibe switch button component with animation
-function VibesLoginButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="vibes-login-button">
-      Login
-    </button>
-  );
-}
 
 interface SessionViewProps {
   sessionId: string;
@@ -50,10 +42,33 @@ export default function SessionView({
   const { isAuthenticated, isLoading } = useAuth();
   const { initiateLogin } = useAuthPopup();
 
+  // Typewriter effect state
+  const [displayedText, setDisplayedText] = useState("");
+  const fullText = "Welcome to Vibes DIY";
+
   // Track unauthenticated view render once
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       trackEvent("unauthenticated_session_view");
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // Typewriter animation effect
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading) {
+      let currentIndex = 0;
+      const typingSpeed = 100; // milliseconds per character
+
+      const typingInterval = setInterval(() => {
+        if (currentIndex <= fullText.length) {
+          setDisplayedText(fullText.slice(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(typingInterval);
+        }
+      }, typingSpeed);
+
+      return () => clearInterval(typingInterval);
     }
   }, [isAuthenticated, isLoading]);
 
@@ -83,14 +98,51 @@ export default function SessionView({
     return (
       <div className="grid-background flex h-screen w-screen items-center justify-center relative">
         {/* Center content */}
-        <div className="text-center max-w-md px-4 w-full">
-          <h1 className="mb-4 text-3xl font-bold" style={{ color: "#1a1a1a" }}>
-            Welcome to Vibes DIY
-          </h1>
-          <p className="mb-6 text-lg" style={{ color: "#1a1a1a" }}>
-            You can just code things.
-          </p>
-          <VibesLoginButton onClick={handleLogin} />
+        <div className="text-center px-4 w-full">
+          <LabelContainer label="Login">
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "1rem",
+              }}
+            >
+                            <VibesButton icon="logout" variant={'blue'} onClick={handleLogin}>
+                Login
+              </VibesButton>
+              <div style={{width: '300px'}}>
+              <h1
+                className="mb-4 text-3xl font-bold"
+                style={{ color: "var(--vibes-text-primary)" }}
+              >
+                {displayedText}
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '3px',
+                    height: '1em',
+                    backgroundColor: 'var(--vibes-text-primary)',
+                    marginLeft: '2px',
+                    animation: 'blink 1s step-end infinite',
+                  }}
+                />
+              </h1>
+              <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes blink {
+                  0%, 50% { opacity: 1; }
+                  51%, 100% { opacity: 0; }
+                }
+              ` }} />
+              <p
+                className="mb-6 text-lg"
+                style={{ color: "var(--vibes-text-primary)" }}
+              >
+                You can just code things.
+              </p>
+              </div>
+            </div>
+          </LabelContainer>
         </div>
 
         {/* Vibe switch in lower right corner */}

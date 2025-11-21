@@ -389,21 +389,21 @@ export default function Create() {
             <>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <VibesButton
-                  color="blue"
+                  variant="blue"
                   style={{ flex: "1" }}
                   onClick={() => setPromptText(partyPlannerPrompt)}
                 >
                   Party Planner
                 </VibesButton>
                 <VibesButton
-                  color="red"
+                  variant="red"
                   style={{ flex: "1" }}
                   onClick={() => setPromptText(progressTrackerPrompt)}
                 >
                   Progress Tracker
                 </VibesButton>
                 <VibesButton
-                  color="yellow"
+                  variant="yellow"
                   style={{ flex: "1" }}
                   onClick={() => setPromptText(jamSessionPrompt)}
                 >

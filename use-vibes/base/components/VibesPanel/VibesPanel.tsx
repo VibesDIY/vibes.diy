@@ -2,11 +2,9 @@ import React, { useState, useEffect, useId } from 'react';
 import { VibesButton, BLUE, RED, YELLOW, GRAY } from '../VibesButton/index.js';
 import { BrutalistCard } from '../BrutalistCard/BrutalistCard.js';
 import { generateFreshDataUrl, generateRemixUrl } from '../../utils/appSlug.js';
+import { LabelContainer } from './LabelContainer.js';
 import {
   getOuterContainerStyle,
-  getResponsiveContainerStyle,
-  getResponsiveLabelStyle,
-  getResponsiveButtonWrapperStyle,
   getButtonContainerStyle,
   getInviteFormStyle,
   getInviteLabelStyle,
@@ -14,6 +12,7 @@ import {
   getInviteInputStyle,
   getInviteStatusStyle,
 } from './VibesPanel.styles.js';
+import '../../styles/colors.css';
 
 export interface VibesPanelProps {
   /** Optional custom styling for the panel container */
@@ -38,9 +37,6 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     'idle'
   );
   const [inviteMessage, setInviteMessage] = useState('');
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
-  );
 
   const handleMutateClick = () => {
     if (mode === 'default') {
@@ -96,27 +92,6 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     );
   };
 
-  // Listen for window resize to update mobile state
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
-    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      setIsMobile(e.matches);
-    };
-
-    // Modern browsers
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-    // Fallback for older browsers
-    else if (mediaQuery.addListener) {
-      mediaQuery.addListener(handleChange);
-      return () => mediaQuery.removeListener(handleChange);
-    }
-  }, []);
-
   // Listen for share response events
   useEffect(() => {
     const handleShareSuccess = (event: Event) => {
@@ -146,91 +121,88 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
 
   return (
     <div style={getOuterContainerStyle(style)} className={className}>
-      <div style={getResponsiveContainerStyle(isMobile)}>
-        <div style={getResponsiveLabelStyle(isMobile)}>Settings</div>
-        <div style={getResponsiveButtonWrapperStyle(isMobile)}>
-          <div style={getButtonContainerStyle()}>
-            {mode === 'mutate' ? (
-              // Mutate mode buttons
-              <>
-                <VibesButton color={BLUE} onClick={handleFreshDataClick}>
-                  Fresh Start
-                </VibesButton>
-                <VibesButton color={RED} onClick={handleChangeCodeClick} icon="remix">
-                  Remix Code
-                </VibesButton>
-                <VibesButton color={YELLOW} onClick={handleBackClick} icon="back">
-                  Back
-                </VibesButton>
-              </>
-            ) : mode === 'invite' ? (
-              // Invite mode form
-              <>
-                {inviteStatus === 'idle' ? (
-                  // Show form when idle
-                  <form onSubmit={handleInviteSubmit} style={getInviteFormStyle()}>
-                    <label htmlFor={emailId} style={getInviteLabelStyle()}>
-                      Invite by email
-                    </label>
-                    <BrutalistCard size="md" style={getInviteInputWrapperStyle()}>
-                      <input
-                        id={emailId}
-                        type="email"
-                        placeholder="friend@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={getInviteInputStyle()}
-                        autoComplete="email"
-                        required
-                      />
-                    </BrutalistCard>
-                    <VibesButton color={BLUE} type="submit" disabled={!email.trim()}>
-                      Send Invite
-                    </VibesButton>
-                  </form>
-                ) : (
-                  // Show status when sending/complete
-                  <BrutalistCard
-                    id="invite-status"
-                    role="status"
-                    aria-live="polite"
-                    size="sm"
-                    variant={
-                      inviteStatus === 'sending'
-                        ? 'default'
-                        : inviteStatus === 'error'
-                          ? 'error'
-                          : 'success'
-                    }
-                    style={getInviteStatusStyle()}
-                  >
-                    {inviteStatus === 'sending' ? 'Inviting...' : inviteMessage}
+      <LabelContainer label="Settings">
+        <div style={getButtonContainerStyle()}>
+          {mode === 'mutate' ? (
+            // Mutate mode buttons
+            <>
+              <VibesButton variant={BLUE} onClick={handleFreshDataClick}>
+                Fresh Start
+              </VibesButton>
+              <VibesButton variant={RED} onClick={handleChangeCodeClick} icon="remix">
+                Remix Code
+              </VibesButton>
+              <VibesButton variant={YELLOW} onClick={handleBackClick} icon="back">
+                Back
+              </VibesButton>
+            </>
+          ) : mode === 'invite' ? (
+            // Invite mode form
+            <>
+              {inviteStatus === 'idle' ? (
+                // Show form when idle
+                <form onSubmit={handleInviteSubmit} style={getInviteFormStyle()}>
+                  <label htmlFor={emailId} style={getInviteLabelStyle()}>
+                    Invite by email
+                  </label>
+                  <BrutalistCard size="md" style={getInviteInputWrapperStyle()}>
+                    <input
+                      id={emailId}
+                      type="email"
+                      placeholder="friend@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      style={getInviteInputStyle()}
+                      autoComplete="email"
+                      required
+                    />
                   </BrutalistCard>
-                )}
-                <VibesButton color={YELLOW} onClick={handleBackClick} icon="back">
-                  Back
-                </VibesButton>
-              </>
-            ) : (
-              // Default buttons
-              <>
-                <VibesButton color={BLUE} onClick={handleLogoutClick} icon="logout">
-                  Logout
-                </VibesButton>
-                <VibesButton color={RED} onClick={handleMutateClick} icon="remix">
-                  Remix
-                </VibesButton>
-                <VibesButton color={YELLOW} onClick={handleInviteClick} icon="invite">
-                  Invite
-                </VibesButton>
-                <VibesButton color={GRAY} icon="settings">
-                  Settings
-                </VibesButton>
-              </>
-            )}
-          </div>
+                  <VibesButton variant={BLUE} type="submit" disabled={!email.trim()}>
+                    Send Invite
+                  </VibesButton>
+                </form>
+              ) : (
+                // Show status when sending/complete
+                <BrutalistCard
+                  id="invite-status"
+                  role="status"
+                  aria-live="polite"
+                  size="sm"
+                  variant={
+                    inviteStatus === 'sending'
+                      ? 'default'
+                      : inviteStatus === 'error'
+                        ? 'error'
+                        : 'success'
+                  }
+                  style={getInviteStatusStyle()}
+                >
+                  {inviteStatus === 'sending' ? 'Inviting...' : inviteMessage}
+                </BrutalistCard>
+              )}
+              <VibesButton variant={YELLOW} onClick={handleBackClick} icon="back">
+                Back
+              </VibesButton>
+            </>
+          ) : (
+            // Default buttons
+            <>
+              <VibesButton variant={BLUE} onClick={handleLogoutClick} icon="logout">
+                Logout
+              </VibesButton>
+              <VibesButton variant={RED} onClick={handleMutateClick} icon="remix">
+                Remix
+              </VibesButton>
+              <VibesButton variant={YELLOW} onClick={handleInviteClick} icon="invite">
+                Invite
+              </VibesButton>
+              <VibesButton variant={GRAY} icon="settings">
+                Settings
+              </VibesButton>
+            </>
+          )}
         </div>
-      </div>
+      </LabelContainer>
     </div>
   );
 }
