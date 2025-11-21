@@ -142,22 +142,24 @@ export function generateRandomInstanceId(): string {
 /**
  * Generate a URL for a fresh data install (new instance with same app slug)
  *
+ * @param baseURL - Base URL for the vibes platform
  * @returns Full URL for fresh install with new random instance ID
  */
-export function generateFreshDataUrl(): string {
+export function generateFreshDataUrl(baseURL: string): string {
   const slug = getAppSlug();
   const instanceId = generateRandomInstanceId();
-  return `https://vibes.diy/vibe/${slug}/${instanceId}`;
+  return `${baseURL}/vibe/${slug}/${instanceId}`;
 }
 
 /**
  * Generate a URL for the remix/change code endpoint
  *
+ * @param baseURL - Base URL for the vibes platform
  * @returns URL for remix endpoint
  */
-export function generateRemixUrl(): string {
+export function generateRemixUrl(baseURL: string): string {
   const appSlug = getAppSlug();
-  return `https://vibes.diy/remix/${appSlug}`;
+  return `${baseURL}/remix/${appSlug}`;
 }
 
 /**
