@@ -18,17 +18,22 @@ vi.mock("call-ai", async () => {
   };
 });
 
-// Mock AuthContext to avoid state updates during tests
-vi.mock("~/vibes.diy/app/contexts/AuthContext", () => {
+// Mock Clerk to avoid requiring ClerkProvider during tests
+vi.mock("@clerk/clerk-react", () => {
   return {
-    AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
     useAuth: () => ({
-      token: "mock-token",
-      isAuthenticated: true,
-      isLoading: false,
-      userPayload: { userId: "test-user-id", exp: 0, tenants: [], ledgers: [] },
-      checkAuthStatus: vi.fn(),
-      processToken: vi.fn(),
+      isSignedIn: true,
+      isLoaded: true,
+      userId: "test-user-id",
+      getToken: vi.fn().mockResolvedValue("mock-clerk-token"),
+    }),
+    useUser: () => ({
+      user: { id: "test-user-id" },
+      isLoaded: true,
+      isSignedIn: true,
+    }),
+    useSignIn: () => ({
+      signIn: { authenticateWithRedirect: vi.fn() },
     }),
   };
 });

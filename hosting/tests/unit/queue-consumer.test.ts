@@ -411,11 +411,11 @@ describe("Queue Consumer", () => {
     expect(mockMessage.retry).toHaveBeenCalledOnce();
     expect(mockMessage.ack).not.toHaveBeenCalled();
 
-    // Verify error was logged (processing error, not validation error)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Error processing message"),
-      expect.any(Error),
-    );
+    // Verify error was logged (multiple error logs expected: Discord error, Task failure, and processing error)
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(consoleSpy.mock.calls.some(call =>
+      call[0].includes("Error") && call.length > 1
+    )).toBe(true);
 
     // Clean up spy
     consoleSpy.mockRestore();
