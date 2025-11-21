@@ -15,17 +15,8 @@ import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { trackAuthClick, trackEvent } from "../utils/analytics.js";
-import { VibesSwitch } from "use-vibes";
 import { BrutalistCard } from "@vibes.diy/use-vibes-base";
-
-// Vibe switch button component with animation
-function VibesLoginButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="vibes-login-button">
-      Login
-    </button>
-  );
-}
+import LoggedOutView from "./LoggedOutView.js";
 
 interface SessionViewProps {
   sessionId: string;
@@ -80,45 +71,7 @@ export default function SessionView({
       await initiateLogin();
     };
 
-    return (
-      <div className="grid-background flex h-screen w-screen items-center justify-center relative">
-        {/* Center content */}
-        <div className="text-center max-w-md px-4 w-full">
-          <h1 className="mb-4 text-3xl font-bold" style={{ color: "#1a1a1a" }}>
-            Welcome to Vibes DIY
-          </h1>
-          <p className="mb-6 text-lg" style={{ color: "#1a1a1a" }}>
-            You can just code things.
-          </p>
-          <VibesLoginButton onClick={handleLogin} />
-        </div>
-
-        {/* Vibe switch in lower right corner */}
-        <button
-          type="button"
-          onClick={handleLogin}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleLogin();
-            }
-          }}
-          className="cursor-pointer fixed"
-          style={{
-            bottom: "1.5rem",
-            right: "6rem",
-            width: "80px",
-            zIndex: 50,
-            background: "none",
-            border: "none",
-            padding: 0,
-          }}
-          aria-label="Login to Vibes DIY"
-        >
-          <VibesSwitch size={80} />
-        </button>
-      </div>
-    );
+    return <LoggedOutView onLogin={handleLogin} />;
   }
 
   return (
