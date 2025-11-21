@@ -166,7 +166,7 @@ export async function selectLlmsAndOptions(
     callAiEndpoint: iopts.callAiEndpoint ? iopts.callAiEndpoint : undefined,
     fallBackUrl: URI.from(
       iopts.fallBackUrl ??
-        "https://esm.sh/use-vibes@0.17.4/prompt-catalog/llms",
+        "https://esm.sh/use-vibes@0.17.5/prompt-catalog/llms",
     ).toString(),
     getAuthToken: defaultGetAuthToken(iopts.getAuthToken),
   };
