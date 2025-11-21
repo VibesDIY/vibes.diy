@@ -6,6 +6,11 @@
  * - instance-id: asd223222f4
  */
 
+import { Lazy } from '@adviser/cement';
+import { ensureSuperThis } from '@fireproof/core-runtime';
+
+const sthis = Lazy(() => ensureSuperThis());
+
 // Default fallback app slug when detection fails
 const DEFAULT_APP_SLUG = 'atmospheric-tiger-9377';
 
@@ -131,25 +136,7 @@ export function isProductionEnvironment(): boolean {
  * @returns A random instance ID (e.g., "abc123def456")
  */
 export function generateRandomInstanceId(): string {
-  // Generate a 12-character alphanumeric ID
-  const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
-  let result = '';
-
-  // Use crypto.getRandomValues if available for better randomness
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const array = new Uint8Array(12);
-    crypto.getRandomValues(array);
-    for (let i = 0; i < 12; i++) {
-      result += chars[array[i] % chars.length];
-    }
-  } else {
-    // Fallback to Math.random()
-    for (let i = 0; i < 12; i++) {
-      result += chars[Math.floor(Math.random() * chars.length)];
-    }
-  }
-
-  return result;
+  return sthis().nextId().str;
 }
 
 /**
