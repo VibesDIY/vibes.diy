@@ -1,6 +1,9 @@
 import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
+import { FPCloudClaimSchema } from '@fireproof/core-types-protocols-cloud';
+import { decodeJwt } from 'jose';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Attached,
   fireproof,
   ImgFile,
   toCloud as originalToCloud,
@@ -55,25 +58,11 @@ export { fireproof, ImgFile };
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
 
-// Helper to parse JWT token
-function parseJWT(token: string): unknown {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return undefined;
-    const payload = parts[1];
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const paddedBase64 = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    return JSON.parse(atob(paddedBase64));
-  } catch {
-    return undefined;
-  }
-}
-
 // Helper to check if JWT token is expired
 export function isJWTExpired(token: string): boolean {
   try {
-    const claims = parseJWT(token) as { exp?: number };
-    if (!claims || typeof claims.exp !== 'number') return true;
+    const claims = decodeJwt(token);
+    if (!claims.exp || typeof claims.exp !== 'number') return true;
     // Buffer of 60 seconds
     return Date.now() >= claims.exp * 1000 - 60000;
   } catch {
@@ -97,7 +86,12 @@ export function isJWTExpired(token: string): boolean {
 // Minimal strategy to inject external auth token
 class VibesAuthStrategy extends RedirectStrategy {
   setToken(token: string): void {
-    const claims = parseJWT(token);
+    const rawClaims = decodeJwt(token);
+
+    // Validate with Fireproof schema (lenient - falls back to raw claims if invalid)
+    const parseResult = FPCloudClaimSchema.safeParse(rawClaims);
+    const claims = parseResult.success ? parseResult.data : rawClaims;
+
     // Inject token into parent class state
     // @ts-expect-error - accessing protected/private property to bridge auth
     this.currentToken = {
@@ -140,23 +134,23 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
 
 // Helper function to construct database name with vibe metadata
 function constructDatabaseName(
-  nameOrDatabase: string | Database | undefined,
-  vibeMetadata: VibeMetadata | undefined
-): string | Database | undefined {
-  // No metadata = return as-is (backward compatibility)
-  if (!vibeMetadata) {
-    return nameOrDatabase;
-  }
-
-  // Database object = return as-is (can't augment object type)
+  nameOrDatabase?: string | Database,
+  vibeMetadata?: VibeMetadata
+): string | Database {
+  // If it's already a Database object, return it directly
   if (typeof nameOrDatabase === 'object' && nameOrDatabase !== null) {
     return nameOrDatabase;
   }
 
-  // Augment string name or use 'default' if undefined/empty
-  const baseName = nameOrDatabase || 'default';
+  // Determine the base name. If nameOrDatabase is undefined or an empty string, use 'default'.
+  const baseName: string = (nameOrDatabase as string | undefined) || 'default';
 
-  // Construct: baseName-titleId-installId
+  // If no vibeMetadata, return the baseName as is
+  if (!vibeMetadata) {
+    return baseName;
+  }
+
+  // Otherwise, augment the baseName with vibeMetadata
   return `${baseName}-${vibeMetadata.titleId}-${vibeMetadata.installId}`;
 }
 
@@ -186,21 +180,18 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Use original useFireproof with augmented database name
   // This ensures each titleId + installId combination gets its own database
   const result = originalUseFireproof(
-    augmentedDbName as string | Database | undefined,
+    augmentedDbName,
     attachConfig ? { attach: attachConfig } : {}
   );
 
   // State to track manual attachment for first-time enable
   // Captures vibeMetadata at enableSync time to avoid race conditions
-  const [manualAttach, setManualAttach] = useState<
-    | {
-        state: 'pending' | 'attached' | 'error';
-        vibeMetadata?: VibeMetadata;
-        attached?: unknown;
-        error?: Error;
-      }
-    | undefined
-  >(undefined);
+  const [manualAttach, setManualAttach] = useState<{
+    state: 'pending' | 'attached' | 'error';
+    vibeMetadata?: VibeMetadata;
+    attached?: Attached;
+    error?: Error;
+  } | null>(null);
 
   // Handle first-time sync enable without reload
   useEffect(() => {
@@ -345,7 +336,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     }
 
     // Clear manual attach state
-    setManualAttach(undefined);
+    setManualAttach(null);
   }, [syncKey, result.attach]);
 
   // Determine sync status - check for actual attachment state
