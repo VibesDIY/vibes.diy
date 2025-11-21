@@ -1,4 +1,5 @@
 import { Hono, Context } from "hono";
+import { URI } from "@adviser/cement";
 import {
   parseSubdomain,
   isValidSubdomain,
@@ -45,11 +46,16 @@ app.get("/", async (c) => {
     // Redirect to new path-based URL
     if (debugParsed.isInstance && debugParsed.installId) {
       return c.redirect(
-        `https://vibes.diy/vibe/${debugParsed.appSlug}/${debugParsed.installId}`,
+        URI.from(
+          `https://vibes.diy/vibe/${debugParsed.appSlug}/${debugParsed.installId}`,
+        ).toString(),
         302,
       );
     } else {
-      return c.redirect(`https://vibes.diy/vibe/${debugParsed.appSlug}`, 302);
+      return c.redirect(
+        URI.from(`https://vibes.diy/vibe/${debugParsed.appSlug}`).toString(),
+        302,
+      );
     }
   }
 
@@ -80,12 +86,12 @@ app.get("/", async (c) => {
 
   // Validate the parsed subdomain
   if (!isValidSubdomain(parsed)) {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Handle apex domain redirects
   if (parsed.appSlug === "www" || isFirstPartyApexDomain(hostname)) {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Look up the app in KV
@@ -102,12 +108,17 @@ app.get("/", async (c) => {
   if (parsed.isInstance && parsed.installId) {
     // Instance URL: redirect to https://vibes.diy/vibe/{slug}/{installId}
     return c.redirect(
-      `https://vibes.diy/vibe/${parsed.appSlug}/${parsed.installId}`,
+      URI.from(
+        `https://vibes.diy/vibe/${parsed.appSlug}/${parsed.installId}`,
+      ).toString(),
       302,
     );
   } else {
     // Catalog URL: redirect to https://vibes.diy/vibe/{slug}
-    return c.redirect(`https://vibes.diy/vibe/${parsed.appSlug}`, 302);
+    return c.redirect(
+      URI.from(`https://vibes.diy/vibe/${parsed.appSlug}`).toString(),
+      302,
+    );
   }
 });
 
@@ -150,12 +161,12 @@ app.get("/App.jsx", async (c) => {
 
   // Validate the parsed subdomain
   if (!isValidSubdomain(parsed)) {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Handle apex domain redirects
   if (parsed.appSlug === "www") {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Try to find the app in KV using the app slug as the key
@@ -227,12 +238,12 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
 
   // Validate the parsed subdomain
   if (!isValidSubdomain(parsed)) {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Handle apex domain redirects
   if (parsed.appSlug === "www") {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Calculate screenshot key based on app slug (screenshots are always for the base app)

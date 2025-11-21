@@ -24,18 +24,27 @@ export default {
     console.log(`📦 Queue batch received: ${batch.messages.length} messages`);
 
     for (const message of batch.messages) {
+      console.log(`🔄 Processing message ID: ${message.id}`);
+      const result = PublishEvent.safeParse(message.body);
+
+      if (!result.success) {
+        console.error(`❌ Invalid message format:`, result.error);
+        message.retry();
+        console.log(`🔄 Message ${message.id} scheduled for retry`);
+        continue;
+      }
+
+      const event = result.data;
+
+      console.log(`📊 Event details:`, {
+        type: event.type,
+        appSlug: event.app.slug,
+        userId: event.metadata.userId,
+        isUpdate: event.metadata.isUpdate,
+        timestamp: new Date(event.metadata.timestamp).toISOString(),
+      });
+
       try {
-        console.log(`🔄 Processing message ID: ${message.id}`);
-        const event = PublishEvent.parse(message.body);
-
-        console.log(`📊 Event details:`, {
-          type: event.type,
-          appSlug: event.app.slug,
-          userId: event.metadata.userId,
-          isUpdate: event.metadata.isUpdate,
-          timestamp: new Date(event.metadata.timestamp).toISOString(),
-        });
-
         await processAppEvent(event, env);
         message.ack();
         console.log(`✅ Message ${message.id} processed successfully`);

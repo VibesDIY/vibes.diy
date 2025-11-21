@@ -182,6 +182,12 @@ importers:
 
   hosting/base:
     dependencies:
+      '@adviser/cement':
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: ^0.23.15
+        version: 0.23.15(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -219,6 +225,9 @@ importers:
 
   hosting/pkg:
     dependencies:
+      '@adviser/cement':
+        specifier: ^0.4.66
+        version: 0.4.66(typescript@5.9.3)
       '@cloudflare/workers-types':
         specifier: ^4.20251111.0
         version: 4.20251111.0

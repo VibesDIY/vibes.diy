@@ -54,13 +54,15 @@ describe('App Slug Utilities', () => {
       // Should generate different IDs
       expect(id1).not.toBe(id2);
 
-      // Should be 12 characters long
-      expect(id1.length).toBe(12);
-      expect(id2.length).toBe(12);
+      // Should be reasonable length (cement's nextId generates variable-length IDs)
+      expect(id1.length).toBeGreaterThanOrEqual(8);
+      expect(id1.length).toBeLessThanOrEqual(16);
+      expect(id2.length).toBeGreaterThanOrEqual(8);
+      expect(id2.length).toBeLessThanOrEqual(16);
 
-      // Should only contain lowercase letters and numbers
-      expect(id1).toMatch(/^[a-z0-9]{12}$/);
-      expect(id2).toMatch(/^[a-z0-9]{12}$/);
+      // Should only contain alphanumeric characters
+      expect(id1).toMatch(/^[a-zA-Z0-9]+$/);
+      expect(id2).toMatch(/^[a-zA-Z0-9]+$/);
     });
 
     // Note: Tests for getAppSlug(), getInstanceId(), generateFreshDataUrl(), and generateRemixUrl()
