@@ -4,7 +4,7 @@
  * that uses the single source of truth for importmaps
  */
 
-import { importMapJson } from "../config/import-map.js";
+import { getImportMapJson } from "../config/import-map.js";
 
 /**
  * Generates a standalone HTML file that can be downloaded and run independently
@@ -49,7 +49,7 @@ export function generateEjectHtml(
       window.CALLAI_IMG_URL = "${callaiEndpoint}";
     </script>
     <script type="importmap">
-      ${importMapJson}
+      ${getImportMapJson()}
     </script>
     <script type="text/babel" data-type="module">
       import ReactDOMClient from "react-dom/client";
@@ -107,7 +107,7 @@ export const ejectTemplateWithPlaceholders = `<!doctype html>
       window.CALLAI_IMG_URL = "{{CALLAI_ENDPOINT}}";
     </script>
     <script type="importmap">
-      ${importMapJson}
+      ${getImportMapJson()}
     </script>
     <script type="text/babel" data-type="module">
       import ReactDOMClient from "react-dom/client";

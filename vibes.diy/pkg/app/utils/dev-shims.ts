@@ -39,21 +39,7 @@ export function setupDevShims() {
   }
 }
 
-/**
- * Library import map - packages that should NOT be transformed to esm.sh
- * These are handled by the HTML importmap in root.tsx
- */
-const libraryImportMap: Record<string, string> = {
-  react: "https://esm.sh/react",
-  "react-dom": "https://esm.sh/react-dom",
-  "react-dom/client": "https://esm.sh/react-dom/client",
-  "react/jsx-runtime": "https://esm.sh/react/jsx-runtime",
-  "use-fireproof": "https://esm.sh/use-vibes@0.17.4",
-  "call-ai": "https://esm.sh/call-ai@0.17.4",
-  "use-vibes": "https://esm.sh/use-vibes@0.17.4",
-  "https://esm.sh/use-fireproof": "https://esm.sh/use-vibes@0.17.4",
-  "https://esm.sh/use-vibes": "https://esm.sh/use-vibes@0.17.4",
-};
+import { getLibraryImportMap } from "../config/import-map.js";
 
 /**
  * Transform bare imports to esm.sh URLs
@@ -63,7 +49,7 @@ const libraryImportMap: Record<string, string> = {
  * and used without the dev-mode window global replacements.
  */
 export function transformImports(code: string): string {
-  const importKeys = Object.keys(libraryImportMap);
+  const importKeys = Object.keys(getLibraryImportMap());
   return code.replace(
     /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+(?:\s*,\s*\{[^}]*\})?)\s+from\s+)?['"]([^'"]+)['"];?/g,
     (match, importPath) => {
