@@ -87,7 +87,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           "react/jsx-runtime",
           "use-vibes",
           "use-fireproof",
-          "call-ai",
         ],
       },
     },
