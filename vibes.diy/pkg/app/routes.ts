@@ -28,7 +28,7 @@ export default [
   route("create", "./routes/create.tsx", { id: "create" }),
   route("create/:sessionId", "./routes/create.tsx", { id: "create-session" }),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
-  route("vibe/:titleId/:uuid", "./routes/vibe.$titleId.$uuid.tsx", {
+  route("vibe/:titleId/:installId", "./routes/vibe.$titleId.$installId.tsx", {
     id: "vibe-instance-viewer",
   }),
   route("vibe/:titleId", "./routes/vibe.$titleId.tsx", {
