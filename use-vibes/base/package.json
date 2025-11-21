@@ -19,6 +19,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.4.66",
+    "@fireproof/core-keybag": "^0.23.15",
     "@fireproof/core-runtime": "^0.23.15",
     "@fireproof/core-types-base": "^0.23.15",
     "@fireproof/core-types-protocols-cloud": "^0.23.15",

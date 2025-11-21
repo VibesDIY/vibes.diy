@@ -1,6 +1,7 @@
 import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
-import { FPCloudClaimSchema } from '@fireproof/core-types-protocols-cloud';
-import { decodeJwt } from 'jose';
+import { getKeyBag } from '@fireproof/core-keybag';
+import { Lazy } from '@adviser/cement';
+import { ensureSuperThis } from '@fireproof/core-runtime';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Attached,
@@ -53,16 +54,24 @@ function updateBodyClass() {
   }
 }
 
+const sthis = Lazy(() => ensureSuperThis());
+
 export { fireproof, ImgFile };
 
 // Re-export all types under a namespace
 export type * as Fireproof from 'use-fireproof';
 
 // Helper to check if JWT token is expired
-export function isJWTExpired(token: string): boolean {
+export async function isJWTExpired(token: string): Promise<boolean> {
   try {
-    const claims = decodeJwt(token);
-    if (!claims.exp || typeof claims.exp !== 'number') return true;
+    const kb = await getKeyBag(sthis());
+    await kb.setJwt('vibes-temp-check', token);
+    const result = await kb.getJwt('vibes-temp-check');
+
+    if (result.isErr()) return true;
+
+    const claims = result.Ok().claims;
+    if (!claims?.exp || typeof claims.exp !== 'number') return true;
     // Buffer of 60 seconds
     return Date.now() >= claims.exp * 1000 - 60000;
   } catch {
@@ -86,17 +95,27 @@ export function isJWTExpired(token: string): boolean {
 // Minimal strategy to inject external auth token
 class VibesAuthStrategy extends RedirectStrategy {
   setToken(token: string): void {
-    const rawClaims = decodeJwt(token);
+    // Use KeyBag to decode and validate JWT asynchronously
+    // Fire-and-forget pattern since setToken is synchronous
+    getKeyBag(sthis()).then(async (kb: Awaited<ReturnType<typeof getKeyBag>>) => {
+      await kb.setJwt('vibes-auth-token', token);
+      const result = await kb.getJwt('vibes-auth-token');
 
-    // Validate with Fireproof schema (lenient - falls back to raw claims if invalid)
-    const parseResult = FPCloudClaimSchema.safeParse(rawClaims);
-    const claims = parseResult.success ? parseResult.data : rawClaims;
+      const claims = result.isOk() ? result.Ok().claims : undefined;
 
-    // Inject token into parent class state
+      // Inject token into parent class state
+      // @ts-expect-error - accessing protected/private property to bridge auth
+      this.currentToken = {
+        token,
+        claims,
+      };
+    });
+
+    // Temporary synchronous fallback for immediate access
     // @ts-expect-error - accessing protected/private property to bridge auth
     this.currentToken = {
       token,
-      claims,
+      claims: {}, // Will be populated async
     };
   }
 }
@@ -110,11 +129,14 @@ export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
     try {
       const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
       if (externalToken) {
-        if (isJWTExpired(externalToken)) {
-          localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-        } else {
-          strategy.setToken(externalToken);
-        }
+        // Check expiration asynchronously
+        isJWTExpired(externalToken).then((expired) => {
+          if (expired) {
+            localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
+          } else {
+            strategy.setToken(externalToken);
+          }
+        });
       }
     } catch {
       // Ignore storage errors
