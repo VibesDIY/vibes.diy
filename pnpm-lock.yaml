@@ -421,6 +421,9 @@ importers:
       '@adviser/cement':
         specifier: ^0.4.66
         version: 0.4.66(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: ^0.23.15
+        version: 0.23.15(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: ^0.23.15
         version: 0.23.15(typescript@5.9.3)
