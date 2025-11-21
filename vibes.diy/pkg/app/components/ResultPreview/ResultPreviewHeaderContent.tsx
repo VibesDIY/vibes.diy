@@ -37,7 +37,6 @@ const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
   navigateToView,
   viewControls,
   showViewControls,
-  previewReady,
   setMobilePreviewShown,
   setUserClickedBack,
   code,
