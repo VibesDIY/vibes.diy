@@ -175,7 +175,13 @@ export default function VibeInstanceViewer() {
   }
 
   if (!isSignedIn) {
-    return <LoggedOutView onLogin={() => {/* Clerk handles this */}} />;
+    return (
+      <LoggedOutView
+        onLogin={() => {
+          /* Clerk handles this */
+        }}
+      />
+    );
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated
