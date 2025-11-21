@@ -98,13 +98,6 @@ export function transformImports(code: string): string {
  * we set up in `setupDevShims`.
  */
 export function transformImportsDev(code: string) {
-  // DIAGNOSTIC: Log environment mode
-  console.log("[dev-shims] transformImportsDev called:", {
-    isDev: import.meta.env.DEV,
-    mode: import.meta.env.MODE,
-    willTransform: import.meta.env.DEV ? "YES" : "NO",
-  });
-
   // First transform bare imports to esm.sh URLs (for both dev and prod)
   let res = transformImports(code);
 
@@ -167,12 +160,6 @@ export function transformImportsDev(code: string) {
         `const $1 = window.${varName}.default || window.${varName}; const {$2} = window.${varName};`,
       );
     }
-  }
-
-  // DIAGNOSTIC: Log a sample of the transformed code
-  if (import.meta.env.DEV) {
-    const sample = res.substring(0, 800); // First 800 chars
-    console.log("[dev-shims] Transformed code sample:", sample);
   }
 
   return res;
