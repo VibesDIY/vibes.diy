@@ -906,10 +906,7 @@ beforeEach(() => {
   resetSharedSessionDatabase();
 
   vi.spyOn(Storage.prototype, "getItem");
-  localStorage.getItem = vi.fn((key) => {
-    if (key === "vibes-diy-auth-token") return testJwt;
-    return null;
-  });
+  localStorage.getItem = vi.fn(() => null);
 });
 
 afterEach(() => {

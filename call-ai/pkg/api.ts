@@ -370,8 +370,15 @@ function prepareRequestParams(
   requestOptions: RequestInit;
   schemaStrategy: SchemaStrategy;
 } {
-  // The API key (Clerk session token) must now be provided via options.apiKey
-  const apiKey = options.apiKey || "sk-vibes-proxy-managed"; // Fallback for development/testing
+  // The API key (Clerk session token) must be provided via options.apiKey
+  const apiKey = options.apiKey;
+  if (!apiKey) {
+    throw new CallAIError({
+      message: "API key is required",
+      status: 401,
+      errorType: "authentication_error",
+    });
+  }
   const schema = options.schema || null;
 
   // If no API key exists, we won't throw immediately. We'll continue and let handleApiError

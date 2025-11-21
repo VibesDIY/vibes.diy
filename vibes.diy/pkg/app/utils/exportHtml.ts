@@ -10,7 +10,7 @@ export function generateStandaloneHtml(params: { code: string }): string {
   const transformed = transformImports(normalized);
 
   return ejectTemplateWithPlaceholders
-    .replaceAll("{{API_KEY}}", "sk-vibes-proxy-managed")
+    .replaceAll("{{API_KEY}}", "") // API key must be provided by user
     .replaceAll("{{CALLAI_ENDPOINT}}", VibesDiyEnv.CALLAI_ENDPOINT())
     .replace("{{APP_CODE}}", transformed);
 }

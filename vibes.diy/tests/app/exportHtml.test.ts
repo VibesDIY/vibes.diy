@@ -43,10 +43,8 @@ describe("exportHtml utilities", () => {
       expect(html).toContain(`window.CALLAI_IMG_URL = "${expectedEndpoint}"`);
       expect(html).not.toContain("{{CALLAI_ENDPOINT}}");
 
-      // API key token is replaced by a managed proxy key literal
-      expect(html).toContain(
-        `window.CALLAI_API_KEY = "sk-vibes-proxy-managed"`,
-      );
+      // API key placeholder is replaced with empty string (user must provide)
+      expect(html).toContain(`window.CALLAI_API_KEY = ""`);
       expect(html).not.toContain("{{API_KEY}}");
     });
 

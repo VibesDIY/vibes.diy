@@ -48,12 +48,11 @@ export async function generateTitle(
   // Configure callAI options
   const options = {
     chatUrl: VibesDiyEnv.CALLAI_ENDPOINT().replace(/\/+$/, ""), // Remove trailing slash to prevent double slash
-    apiKey: apiKey || "sk-vibes-proxy-managed", // Use dummy key if no key provided
+    apiKey: apiKey, // Clerk session token
     model: model,
     headers: {
       "HTTP-Referer": "https://vibes.diy",
       "X-Title": "Vibes DIY",
-      "X-VIBES-Token": localStorage.getItem("vibes-diy-auth-token") || "",
     },
   };
 

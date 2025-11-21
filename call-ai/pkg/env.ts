@@ -63,9 +63,7 @@ export class CallAIEnv {
     return (
       this.env().get("CALLAI_API_KEY") ??
       this.env().get("OPENROUTER_API_KEY") ??
-      this.getWindowCALLAI_API_KEY() ??
-      this.env().get("LOW_BALANCE_OPENROUTER_API_KEY") ??
-      "sk-vibes-proxy-managed"
+      this.getWindowCALLAI_API_KEY()
     );
   }
   get CALLAI_REFRESH_ENDPOINT() {

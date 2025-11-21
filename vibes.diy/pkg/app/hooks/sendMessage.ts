@@ -89,19 +89,17 @@ export async function sendChatMessage(
 
   setIsStreaming(true);
 
-  // Get API key - will return dummy key for proxy-managed auth
+  // Get API key (Clerk session token)
   let currentApiKey = "";
   try {
     const keyObject = await ensureApiKey();
-    // Always use the key from ensureApiKey (will be dummy key 'sk-vibes-proxy-managed')
     currentApiKey = keyObject?.key || "";
   } catch (err) {
     console.warn("Error getting API key:", err);
-    // This should not happen with the new useApiKey implementation
-    currentApiKey = "sk-vibes-proxy-managed";
+    throw new Error("Authentication required");
   }
 
-  // Credit checking no longer needed - proxy handles it
+  // Credit checking handled by backend
 
   // Build the history that will be used for the code-writing prompt
   const messageHistory = buildMessageHistory();

@@ -44,7 +44,7 @@ export async function streamAI(
   const defaultMaxTokens = userId ? 150000 : 75000;
   const options: CallAIOptions = {
     chatUrl: VibesDiyEnv.CALLAI_ENDPOINT().replace(/\/+$/, ""), // Remove trailing slash to prevent double slash
-    apiKey: apiKey, // Pass through the API key (including dummy keys)
+    apiKey: apiKey, // Clerk session token passed as API key
     model: model,
     transforms: ["middle-out"],
     stream: true,
@@ -53,7 +53,6 @@ export async function streamAI(
     headers: {
       "HTTP-Referer": "https://vibes.diy",
       "X-Title": "Vibes DIY",
-      "X-VIBES-Token": localStorage.getItem("vibes-diy-auth-token") || "",
     },
   };
 
