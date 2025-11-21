@@ -38,14 +38,14 @@
     "@chromatic-com/storybook": "^4.1.3",
     "@fireproof/core-cli": "^0.23.15",
     "@storybook/addon-a11y": "^9.1.13",
-    "@storybook/addon-docs": "^10.0.0",
+    "@storybook/addon-docs": "^10.0.8",
     "@storybook/react": "^10.0.7",
     "@storybook/react-vite": "^10.0.8",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.2",
     "@types/react-dom": "~19.2.2",
     "@vitest/browser-playwright": "^4.0.10",
-    "storybook": "^10.0.6",
+    "storybook": "^10.0.8",
     "typescript": "^5.9.3",
     "vite": "^7.2.2"
   }
