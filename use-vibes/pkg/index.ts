@@ -40,9 +40,7 @@ export {
   type VibeControlClasses,
   hiddenMenuTheme,
 
-  // Install tracking for catalog pages
-  initVibesInstalls,
-  constructSubdomain,
+  // Install ID generation
   generateInstallId,
 
   // Mounting utilities for inline vibe rendering
