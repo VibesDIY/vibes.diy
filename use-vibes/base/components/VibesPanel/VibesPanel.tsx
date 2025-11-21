@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useId } from 'react';
 import { VibesButton, BLUE, RED, YELLOW, GRAY } from '../VibesButton/index.js';
+import { runtimeFn } from '@fireproof/core-runtime';
 import { BrutalistCard } from '../BrutalistCard/BrutalistCard.js';
 import { generateFreshDataUrl, generateRemixUrl } from '../../utils/appSlug.js';
 import { LabelContainer } from './LabelContainer.js';
@@ -19,6 +20,8 @@ export interface VibesPanelProps {
   style?: React.CSSProperties;
   /** Optional className for the panel container */
   className?: string;
+  /** Optional base URL for vibes platform (defaults to current origin or vibes.diy) */
+  baseURL?: string;
 }
 
 /**
@@ -29,7 +32,7 @@ export interface VibesPanelProps {
  */
 type PanelMode = 'default' | 'mutate' | 'invite';
 
-export function VibesPanel({ style, className }: VibesPanelProps = {}) {
+export function VibesPanel({ style, className, baseURL }: VibesPanelProps = {}) {
   const emailId = useId();
   const [mode, setMode] = useState<PanelMode>('default');
   const [email, setEmail] = useState('');
@@ -37,6 +40,10 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
     'idle'
   );
   const [inviteMessage, setInviteMessage] = useState('');
+
+  // Safe browser check for base URL
+  const defaultBaseURL = runtimeFn().isBrowser ? window.location.origin : 'https://vibes.diy';
+  const effectiveBaseURL = baseURL ?? defaultBaseURL;
 
   const handleMutateClick = () => {
     if (mode === 'default') {
@@ -58,11 +65,11 @@ export function VibesPanel({ style, className }: VibesPanelProps = {}) {
   };
 
   const handleFreshDataClick = () => {
-    window.open(generateFreshDataUrl(), '_top');
+    window.open(generateFreshDataUrl(effectiveBaseURL), '_top');
   };
 
   const handleChangeCodeClick = () => {
-    window.open(generateRemixUrl(), '_top');
+    window.open(generateRemixUrl(effectiveBaseURL), '_top');
   };
 
   const handleLogoutClick = () => {

@@ -117,7 +117,7 @@ describe("Settings page", () => {
     vi.clearAllMocks();
     // Reset the localStorage mock
     localStorageMock.clear();
-    localStorageMock.setItem("auth_token", "test-token");
+    localStorageMock.setItem("vibes-diy-auth-token", "test-token");
 
     // Reset the navigate mock
     navigateMock.mockClear();

@@ -1,13 +1,13 @@
 // Type definitions for vibe mounting events
 
 export interface VibesMountReadyDetail {
-  unmount: () => void;
-  containerId: string;
+  unmount(): void;
+  readonly containerId: string;
 }
 
 export interface VibesMountErrorDetail {
-  error: string;
-  containerId: string;
+  readonly error: string;
+  readonly containerId: string;
 }
 
 // Type guards for mount events

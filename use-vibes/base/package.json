@@ -19,17 +19,17 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.4.66",
-    "@babel/standalone": "^7.28.5",
+    "@fireproof/core-keybag": "^0.23.15",
     "@fireproof/core-runtime": "^0.23.15",
     "@fireproof/core-types-base": "^0.23.15",
     "@fireproof/core-types-protocols-cloud": "^0.23.15",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*",
+    "jose": "^6.1.1",
     "react-dom": "^19.2.0",
     "use-fireproof": "^0.23.15",
-    "uuid": "^11.1.0",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "peerDependencies": {
     "react": ">=19.1.0"
@@ -38,14 +38,14 @@
     "@chromatic-com/storybook": "^4.1.3",
     "@fireproof/core-cli": "^0.23.15",
     "@storybook/addon-a11y": "^9.1.13",
-    "@storybook/addon-docs": "^10.0.8",
+    "@storybook/addon-docs": "^10.0.0",
     "@storybook/react": "^10.0.7",
     "@storybook/react-vite": "^10.0.8",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.2",
     "@types/react-dom": "~19.2.2",
     "@vitest/browser-playwright": "^4.0.10",
-    "storybook": "^10.0.8",
+    "storybook": "^10.0.6",
     "typescript": "^5.9.3",
     "vite": "^7.2.2"
   }

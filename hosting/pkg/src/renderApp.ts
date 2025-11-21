@@ -1,26 +1,13 @@
 import { Hono, Context } from "hono";
+import { URI } from "@adviser/cement";
 import {
   parseSubdomain,
   isValidSubdomain,
-  renderAppInstance,
-  renderCatalogTitle,
   isCustomDomain,
   isFirstPartyApexDomain,
   getFirstPartyDomain,
 } from "@vibes.diy/hosting-base";
 import { testAppData } from "../test-app-data.js";
-// We'll use a different approach for serving the favicons
-
-// Helper function to adapt Hono context to RenderContext interface
-function createRenderContext(c: Context<{ Bindings: Bindings }>) {
-  return {
-    req: { url: c.req.url },
-    html: (content: string, status?: number) => {
-      // Hono expects specific status codes, default to 200 if none provided
-      return c.html(content, (status as 200 | 404 | 500) || 200);
-    },
-  };
-}
 
 interface Bindings {
   KV: KVNamespace;
@@ -56,20 +43,18 @@ app.get("/", async (c) => {
 
     const debugParsed = parseSubdomain(debugSubdomain);
 
-    // Route based on whether this is an instance (has underscore) or catalog title (no underscore)
-    if (debugParsed.isInstance) {
-      // Render app instance using existing logic
-      return renderAppInstance(
-        createRenderContext(c),
-        debugParsed,
-        testAppData,
+    // Redirect to new path-based URL
+    if (debugParsed.isInstance && debugParsed.installId) {
+      return c.redirect(
+        URI.from(
+          `https://vibes.diy/vibe/${debugParsed.appSlug}/${debugParsed.installId}`,
+        ).toString(),
+        302,
       );
     } else {
-      // Render catalog title page
-      return renderCatalogTitle(
-        createRenderContext(c),
-        debugParsed,
-        testAppData,
+      return c.redirect(
+        URI.from(`https://vibes.diy/vibe/${debugParsed.appSlug}`).toString(),
+        302,
       );
     }
   }
@@ -101,12 +86,12 @@ app.get("/", async (c) => {
 
   // Validate the parsed subdomain
   if (!isValidSubdomain(parsed)) {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Handle apex domain redirects
   if (parsed.appSlug === "www" || isFirstPartyApexDomain(hostname)) {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Look up the app in KV
@@ -119,23 +104,20 @@ app.get("/", async (c) => {
   // Parse the app data
   const app = JSON.parse(appData);
 
-  // Route based on whether this is an instance (has underscore) or catalog title (no underscore)
-  if (parsed.isInstance) {
-    // Render app instance - pass custom domain and original domain
-    return renderAppInstance(
-      createRenderContext(c),
-      parsed,
-      app,
-      customDomain,
-      originalDomain,
+  // Redirect to new path-based URL format
+  if (parsed.isInstance && parsed.installId) {
+    // Instance URL: redirect to https://vibes.diy/vibe/{slug}/{installId}
+    return c.redirect(
+      URI.from(
+        `https://vibes.diy/vibe/${parsed.appSlug}/${parsed.installId}`,
+      ).toString(),
+      302,
     );
   } else {
-    // Render catalog title page with original domain
-    return renderCatalogTitle(
-      createRenderContext(c),
-      parsed,
-      app,
-      originalDomain,
+    // Catalog URL: redirect to https://vibes.diy/vibe/{slug}
+    return c.redirect(
+      URI.from(`https://vibes.diy/vibe/${parsed.appSlug}`).toString(),
+      302,
     );
   }
 });
@@ -179,12 +161,12 @@ app.get("/App.jsx", async (c) => {
 
   // Validate the parsed subdomain
   if (!isValidSubdomain(parsed)) {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Handle apex domain redirects
   if (parsed.appSlug === "www") {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Try to find the app in KV using the app slug as the key
@@ -256,12 +238,12 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
 
   // Validate the parsed subdomain
   if (!isValidSubdomain(parsed)) {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Handle apex domain redirects
   if (parsed.appSlug === "www") {
-    return c.redirect("https://vibes.diy", 301);
+    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
   }
 
   // Calculate screenshot key based on app slug (screenshots are always for the base app)

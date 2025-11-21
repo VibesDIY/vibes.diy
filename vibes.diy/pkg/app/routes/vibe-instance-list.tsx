@@ -4,6 +4,7 @@ import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { VibesDiyEnv } from "../config/env.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
+import LoggedOutView from "../components/LoggedOutView.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
   return [
@@ -62,24 +63,29 @@ function VibeInstancesListContent() {
     // Only auto-navigate once, and only after instances have loaded
     if (hasAutoNavigated.current || isCreating) return;
 
-    const search = searchParams.toString();
-    const searchSuffix = search ? `?${search}` : "";
+    // Wait 200ms for database to load before checking instance count
+    const timeoutId = setTimeout(() => {
+      const search = searchParams.toString();
+      const searchSuffix = search ? `?${search}` : "";
 
-    if (instances.length === 0) {
-      // No instances: create one called "Begin" and navigate to it
-      hasAutoNavigated.current = true;
-      createInstance("Begin").then((fullId) => {
-        const installId = extractInstallId(fullId, titleId);
+      if (instances.length === 0) {
+        // No instances: create one called "Begin" and navigate to it
+        hasAutoNavigated.current = true;
+        createInstance("Begin").then((fullId) => {
+          const installId = extractInstallId(fullId, titleId);
+          navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
+        });
+      } else if (instances.length === 1) {
+        // Exactly 1 instance: navigate directly to it
+        hasAutoNavigated.current = true;
+        const instance = instances[0];
+        const installId = extractInstallId(instance._id || "", titleId);
         navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
-      });
-    } else if (instances.length === 1) {
-      // Exactly 1 instance: navigate directly to it
-      hasAutoNavigated.current = true;
-      const instance = instances[0];
-      const installId = extractInstallId(instance._id || "", titleId);
-      navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
-    }
-    // If 2+ instances: do nothing, show the list
+      }
+      // If 2+ instances: do nothing, show the list
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
   }, [instances, isCreating, titleId, navigate, searchParams, createInstance]);
 
   const handleCreate = async () => {
@@ -348,7 +354,7 @@ function VibeInstancesListContent() {
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstancesList() {
   const { isAuthenticated, isLoading, setNeedsLogin } = useAuth();
-  const { initiateLogin, isPolling } = useAuthPopup();
+  const { initiateLogin } = useAuthPopup();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -365,20 +371,7 @@ export default function VibeInstancesList() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-6">
-        <div className="text-gray-700 text-xl font-medium">
-          Please log in to view vibe instances
-        </div>
-        <button
-          onClick={initiateLogin}
-          disabled={isPolling}
-          className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isPolling ? "Logging in..." : "Log In with Fireproof"}
-        </button>
-      </div>
-    );
+    return <LoggedOutView onLogin={initiateLogin} />;
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated

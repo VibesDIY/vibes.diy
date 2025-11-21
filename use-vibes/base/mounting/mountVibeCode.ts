@@ -1,5 +1,13 @@
-import * as Babel from '@babel/standalone';
 import { mountVibesApp } from '../vibe-app-mount.js';
+
+// Declare Babel as a global loaded via CDN script tag
+declare global {
+  interface Window {
+    Babel: {
+      transform: (code: string, options: { presets: string[] }) => { code: string | null };
+    };
+  }
+}
 
 // Helper to mount vibe code using Blob URL dynamic import
 // With React externalized in vite.config, both the host app and user Vibe code
@@ -18,8 +26,15 @@ export async function mountVibeCode(
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
     const codeWithTransformedImports = transformImports(code);
 
-    // Step 2: Transform JSX to JavaScript (preserve ES modules)
-    const transformed = Babel.transform(codeWithTransformedImports, {
+    // Step 2: Ensure Babel is loaded (from CDN script tag)
+    if (!window.Babel) {
+      throw new Error(
+        'Babel not loaded - add <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script> to your HTML'
+      );
+    }
+
+    // Step 3: Transform JSX to JavaScript (preserve ES modules)
+    const transformed = window.Babel.transform(codeWithTransformedImports, {
       presets: ['react'], // Only transform JSX, keep imports as-is
     });
 

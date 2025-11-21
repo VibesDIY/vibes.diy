@@ -1,6 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
+import { Lazy } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { mountVibeWithCleanup } from "use-vibes";
 import { setupDevShims, transformImportsDev } from "../../utils/dev-shims.js";
+
+const sthis = Lazy(() => ensureSuperThis());
 
 interface InlinePreviewProps {
   code: string;
@@ -14,7 +18,7 @@ export function InlinePreview({
   codeReady,
 }: InlinePreviewProps) {
   const [containerId] = useState(
-    () => `preview-container-${crypto.randomUUID()}`,
+    () => `preview-container-${sthis().nextId().str}`,
   );
   const [error, setError] = useState<string | null>(null);
   const unmountVibeRef = useRef<(() => void) | null>(null);

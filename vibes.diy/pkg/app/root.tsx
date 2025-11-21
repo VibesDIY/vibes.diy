@@ -18,7 +18,7 @@ import CookieBanner from "./components/CookieBanner.js";
 import GtmNoScript from "./components/GtmNoScript.js";
 import { AuthProvider } from "./contexts/AuthContext.js";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
-import { libraryImportMap, reactImports } from "./config/import-map.js";
+import { getLibraryImportMap } from "./config/import-map.js";
 
 export const links: Route.LinksFunction = () => [
   {
@@ -95,11 +95,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               imports: {
-                // Always include eruda and three
-                eruda: libraryImportMap.eruda,
-                three: libraryImportMap.three,
                 // Only include React imports in production (dev mode uses bundled versions)
-                ...(!import.meta.env.DEV ? reactImports : {}),
+                ...(!import.meta.env.DEV ? getLibraryImportMap() : {}),
               },
             }),
           }}
@@ -118,6 +115,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
         {/* Tailwind CSS v4 for inline vibe rendering - matches hosting runtime */}
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        {/* Babel Standalone for JSX transformation in inline vibe rendering */}
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
       </head>
       <body>
         {/* TODO: Re-enable GtmNoScript when consent can be checked server-side */}
