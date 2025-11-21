@@ -8,13 +8,13 @@
 
 export interface ParsedSubdomain {
   /** The app slug (part before underscore/double-dash, or full subdomain if no separator) */
-  appSlug: string;
+  readonly appSlug: string;
   /** The install ID (part after underscore/double-dash, if present) */
-  installId?: string;
+  readonly installId?: string;
   /** Whether this is an app instance (has separator) or catalog title (no separator) */
-  isInstance: boolean;
+  readonly isInstance: boolean;
   /** The original full subdomain for reference */
-  fullSubdomain: string;
+  readonly fullSubdomain: string;
 }
 
 /**
