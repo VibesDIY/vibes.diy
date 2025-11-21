@@ -18,7 +18,7 @@ import CookieBanner from "./components/CookieBanner.js";
 import GtmNoScript from "./components/GtmNoScript.js";
 import { AuthProvider } from "./contexts/AuthContext.js";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
-import { libraryImportMap, reactImports } from "./config/import-map.js";
+import { getLibraryImportMap } from "./config/import-map.js";
 
 export const links: Route.LinksFunction = () => [
   {
@@ -96,7 +96,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             __html: JSON.stringify({
               imports: {
                 // Only include React imports in production (dev mode uses bundled versions)
-                ...(!import.meta.env.DEV ? reactImports : {}),
+                ...(!import.meta.env.DEV ? getLibraryImportMap() : {}),
               },
             }),
           }}
