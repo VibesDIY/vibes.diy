@@ -59,15 +59,12 @@ export {
   OpenRouterChat,
 } from "@vibes.diy/hosting-base";
 export {
-  transformImports,
   generateVibeSlug,
   parseSubdomain,
   constructSubdomain,
   isValidSubdomain,
   generateInstallId,
   type ParsedSubdomain,
-  renderAppInstance,
-  renderCatalogTitle,
   isCustomDomain,
   isFirstPartyApexDomain,
   isFirstPartySubdomain,
