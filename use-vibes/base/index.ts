@@ -409,29 +409,18 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
     async (options: { email: string; role?: 'admin' | 'member'; right?: 'read' | 'write' }) => {
-      // Get the attachment context
-      const attach = result.attach || manualAttach;
+      // Get token directly from localStorage (vibes.diy auth)
+      const token =
+        typeof window !== 'undefined' ? localStorage.getItem(VIBES_AUTH_TOKEN_KEY) : null;
 
-      // Type guard: ensure attach is an object with ctx property
-      if (
-        !attach ||
-        typeof attach === 'string' ||
-        !('ctx' in attach) ||
-        !attach.ctx?.tokenAndClaims ||
-        attach.ctx.tokenAndClaims.state !== 'ready'
-      ) {
-        throw new Error('Authentication required. Please enable sync first.');
+      if (!token) {
+        throw new Error('Unable to retrieve authentication token.');
       }
 
-      // Extract the token from the ready state
-      // ReadyTokenAndClaimsState has: { state: "ready", tokenAndClaims: { token: string, claims?: FPCloudClaim } }
-      const readyState = attach.ctx.tokenAndClaims;
-      const tokenData = readyState.tokenAndClaims;
-
-      // Create auth object matching AuthType interface: { type: "better", token: string }
+      // Create auth object matching AuthType interface: { type: "clerk", token: string }
       const auth = {
         type: 'clerk' as const,
-        token: tokenData.token,
+        token,
       };
 
       // Call the dashboard API (same pattern as other Fireproof dashboard requests)
