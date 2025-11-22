@@ -9,14 +9,14 @@ export type BrutalistCardSize = 'sm' | 'md' | 'lg';
 function getShadowColor(variant: BrutalistCardVariant): string {
   switch (variant) {
     case 'success':
-      return '#51cf66'; // Green
+      return 'var(--vibes-green)'; // Green
     case 'error':
-      return '#DA291C'; // Red
+      return 'var(--vibes-red-accent)'; // Red
     case 'warning':
-      return '#FEDD00'; // Yellow
+      return 'var(--vibes-yellow-accent)'; // Yellow
     case 'default':
     default:
-      return '#1a1a1a'; // Dark gray
+      return 'var(--vibes-shadow-color)'; // Dark gray (theme-aware)
   }
 }
 
