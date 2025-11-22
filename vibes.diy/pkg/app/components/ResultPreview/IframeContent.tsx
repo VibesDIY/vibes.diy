@@ -148,11 +148,22 @@ const IframeContent: React.FC<IframeContentProps> = ({
     const monacoInstance = monacoApiRef.current;
     if (!monacoInstance) return;
 
-    const defaults =
-      monacoInstance.languages.typescript
-        .javascriptDefaults as MonacoDiagnosticsDefaults;
+    const defaults = monacoInstance.languages.typescript
+      .javascriptDefaults as MonacoDiagnosticsDefaults;
 
-    const current = defaults.getDiagnosticsOptions?.();
+    if (typeof defaults.setDiagnosticsOptions !== "function") {
+      // This should never happen with a real Monaco instance; log so
+      // misconfigured test/mocked environments are easier to debug.
+      console.error(
+        "[IframeContent] Monaco javascriptDefaults.setDiagnosticsOptions is missing; skipping diagnostics toggle.",
+      );
+      return;
+    }
+
+    const current =
+      typeof defaults.getDiagnosticsOptions === "function"
+        ? defaults.getDiagnosticsOptions()
+        : undefined;
 
     defaults.setDiagnosticsOptions(diagnosticsForCodeReady(codeReady, current));
   }, [codeReady]);

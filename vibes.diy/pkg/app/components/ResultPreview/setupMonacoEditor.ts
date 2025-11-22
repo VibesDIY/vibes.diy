@@ -32,6 +32,13 @@ interface Options {
   setHighlighter: (highlighter: HighlighterCore) => void;
 }
 
+/**
+ * Derive diagnostics options for the current code readiness state.
+ *
+ * This helper always overwrites `noSemanticValidation` and
+ * `noSyntaxValidation` based on `codeReady`, while preserving any
+ * other existing diagnostics flags from `previous`.
+ */
 export function diagnosticsForCodeReady(
   codeReady: boolean,
   previous?: MonacoDiagnosticsOptions,
@@ -81,9 +88,8 @@ export async function setupMonacoEditor(
   // When the code is still streaming/incomplete (`codeReady === false`), we
   // disable diagnostics to avoid noisy red squiggles. A React effect in
   // `IframeContent` will update these options as `codeReady` changes over time.
-  const jsDefaults =
-    monaco.languages.typescript.javascriptDefaults as MonacoDiagnosticsDefaults;
-
+  const jsDefaults = monaco.languages.typescript
+    .javascriptDefaults as MonacoDiagnosticsDefaults;
   const currentDiagnostics = jsDefaults.getDiagnosticsOptions?.();
 
   jsDefaults.setDiagnosticsOptions(
