@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { VibesDiyEnv } from "../config/env.js";
 import {
   makeBaseSystemPrompt,
@@ -20,6 +21,8 @@ export function useSystemPromptManager(
   settingsDoc: UserSettings | undefined,
   vibeDoc?: VibeDocument,
 ) {
+  const { getToken } = useAuth();
+
   // Stateless builder: always constructs and returns a fresh system prompt
   const ensureSystemPrompt = useCallback(
     async (overrides?: {
@@ -44,6 +47,7 @@ export function useSystemPromptManager(
           fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
           callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
           userPrompt: overrides?.userPrompt || "",
+          getAuthToken: async () => (await getToken()) || "",
           ...(settingsDoc || {}),
           ...(vibeDoc || {}),
           ...overrides,
@@ -52,7 +56,7 @@ export function useSystemPromptManager(
 
       return result;
     },
-    [settingsDoc, vibeDoc],
+    [settingsDoc, vibeDoc, getToken],
   );
 
   // Export only the builder function

@@ -208,7 +208,6 @@ export async function selectLlmsAndOptions(
     headers: {
       "HTTP-Referer": "https://vibes.diy",
       "X-Title": "Vibes DIY",
-      "X-VIBES-Token": await opts.getAuthToken?.(),
     },
     mock: opts.mock,
   };
