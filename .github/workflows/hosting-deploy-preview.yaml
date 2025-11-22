@@ -1,0 +1,54 @@
+name: Deploy Preview Hosting Worker
+
+on:
+  # Deploy preview worker whenever production deploys
+  push:
+    paths:
+      - "hosting/**/*"
+    branches:
+      - main
+
+  # Manual trigger for controlled deployments
+  workflow_dispatch:
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    environment: preview # Use preview environment with test Clerk keys
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup runtime environment
+        uses: ./actions/runtime
+
+      - name: Deploy preview worker
+        id: deploy
+        uses: ./hosting/actions/deploy
+        with:
+          environment: preview
+          worker_name: vibes-hosting-v2-preview
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SERVER_OPENROUTER_API_KEY: ${{ secrets.SERVER_OPENROUTER_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CLERK_SECRET_KEY_TEST: ${{ secrets.CLERK_SECRET_KEY_TEST }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+
+      - name: Deployment summary
+        run: |
+          echo ""
+          echo "🎉 Preview Worker Deployment Complete"
+          echo "======================================"
+          echo "✅ Worker: vibes-hosting-v2-preview"
+          echo "🌐 Worker URL: https://vibes-hosting-v2-preview.jchris.workers.dev"
+          echo "🔑 Using: TEST Clerk keys (for localhost/PR preview development)"
+          echo ""
+          echo "💡 Usage:"
+          echo "- Localhost: Set VITE_CALLAI_ENDPOINT=https://vibes-hosting-v2-preview.jchris.workers.dev"
+          echo "- Frontend PR previews: Configure VITE_CALLAI_ENDPOINT to point here"
+          echo ""
