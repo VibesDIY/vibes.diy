@@ -73,12 +73,19 @@ class vibesDiyEnv {
   });
 
   // Vibes Service API
-  readonly API_BASE_URL = Lazy(
-    () =>
-      new URL(
-        this.env().get("VITE_API_BASE_URL") ?? "https://vibes-diy-api.com",
-      ).href, // Keep trailing slash - standardize on YES trailing slash
-  );
+  readonly API_BASE_URL = Lazy(() => {
+    const envUrl = this.env().get("VITE_API_BASE_URL");
+    if (envUrl) {
+      return new URL(envUrl).href;
+    }
+    // Use production worker ONLY for vibes.diy, preview worker for everything else
+    const isProduction =
+      runtimeFn().isBrowser && window.location.hostname === "vibes.diy";
+    const defaultUrl = isProduction
+      ? "https://vibes-diy-api.com"
+      : "https://vibes-hosting-v2-preview.jchris.workers.dev";
+    return new URL(defaultUrl).href;
+  });
   readonly APP_HOST_BASE_URL = Lazy(
     () =>
       new URL(
