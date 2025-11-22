@@ -25,8 +25,6 @@ export default [
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
   route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
-  route("create", "./routes/create.tsx", { id: "create" }),
-  route("create/:sessionId", "./routes/create.tsx", { id: "create-session" }),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
   route("vibe/:titleId/:installId", "./routes/vibe.$titleId.$installId.tsx", {
     id: "vibe-instance-viewer",
