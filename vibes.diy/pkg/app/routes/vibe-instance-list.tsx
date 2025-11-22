@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { VibesDiyEnv } from "../config/env.js";
-import { useAuth, useSignIn, useClerk } from "@clerk/clerk-react";
+import { useAuth, useClerk } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
-import { trackAuthClick } from "../utils/analytics.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
   return [
