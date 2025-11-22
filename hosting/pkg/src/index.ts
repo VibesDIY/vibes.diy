@@ -25,7 +25,7 @@ interface Variables {
 // Start a Hono app
 const app = new Hono<{ Variables: Variables }>();
 
-// Apply CORS globally before mounting routes
+// Apply CORS globally before routes are mounted
 app.use(
   "*",
   cors({
