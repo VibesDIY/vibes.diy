@@ -50,31 +50,6 @@ const openapi = fromHono(app, {
   docs_url: "/docs",
 });
 
-// Clerk key selection based on client origin
-openapi.use("/api/*", async (c, next) => {
-  const referer = c.req.header("Referer") || c.req.header("Origin") || "";
-  const refererUrl = referer ? new URL(referer) : null;
-  const clientHostname = refererUrl?.hostname || "vibes.diy";
-
-  // Use LIVE key ONLY for vibes.diy, test key for everything else
-  const isProductionClient = clientHostname === "vibes.diy";
-
-  console.log("🔐 Clerk key selection:", {
-    clientHostname,
-    isProductionClient,
-    hasTestKey: !!c.env.CLERK_SECRET_KEY_TEST,
-  });
-
-  if (!isProductionClient && c.env.CLERK_SECRET_KEY_TEST) {
-    c.env.CLERK_SECRET_KEY = c.env.CLERK_SECRET_KEY_TEST;
-    console.log("✅ Using TEST Clerk secret key");
-  } else {
-    console.log("✅ Using LIVE Clerk secret key");
-  }
-
-  await next();
-});
-
 // Add Clerk authentication middleware
 openapi.use("/api/*", clerkMiddleware());
 
