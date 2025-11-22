@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { trackPublishShared } from "../../utils/analytics.js";
 import { publishApp } from "../../utils/publishUtils.js";
 import { ChatMessageDocument } from "@vibes.diy/prompts";
@@ -22,6 +23,7 @@ export const usePublish = ({
   updateFirehoseShared,
   publishedUrl: initialPublishedUrl,
 }: UsePublishProps) => {
+  const { getToken, userId } = useAuth();
   const [isPublishing, setIsPublishing] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -62,6 +64,14 @@ export const usePublish = ({
         }
       }
 
+      // Get auth token from Clerk
+      const token = await getToken();
+      if (!token) {
+        throw new Error(
+          "Authentication required. Please log in to publish apps.",
+        );
+      }
+
       const appUrl = await publishApp({
         sessionId,
         code,
@@ -70,6 +80,8 @@ export const usePublish = ({
         updatePublishedUrl,
         updateFirehoseShared,
         shareToFirehose,
+        token,
+        userId: userId || undefined,
       });
       if (appUrl) {
         setPublishedAppUrl(appUrl);
