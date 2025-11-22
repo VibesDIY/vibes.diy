@@ -74,7 +74,7 @@ export function mountVibesApp(options: MountVibesAppOptions): MountVibesAppResul
     // Set window.CALLAI_API_KEY if apiKey is provided in metadata
     // This allows call-ai to pick up the key automatically
     if (vibeMetadata.apiKey && typeof window !== 'undefined') {
-      (window as any).CALLAI_API_KEY = vibeMetadata.apiKey;
+      (window as { CALLAI_API_KEY?: string }).CALLAI_API_KEY = vibeMetadata.apiKey;
     }
   }
 
