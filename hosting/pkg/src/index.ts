@@ -80,7 +80,6 @@ openapi.use("/api/*", async (c, next) => {
 
 // Register OpenAPI endpoints
 openapi.post("/api/apps", AppCreate);
-// openapi.post("/api/keys", KeyCreate);
 
 // Register OpenAI image endpoints
 openapi.post("/api/openai-image/generate", ImageGenerate);
