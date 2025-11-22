@@ -7,6 +7,7 @@ interface IframeVibesComponentProps {
   baseUrl?: string;
   onReady?: () => void;
   onError?: (error: Error) => void;
+  authToken?: string;
 }
 
 const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
@@ -15,6 +16,7 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
   baseUrl,
   onReady,
   onError,
+  authToken,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isReady, setIsReady] = useState(false);
@@ -64,18 +66,6 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
       const normalizedCode = normalizeComponentExports(code);
       const transformedCode = transformImports(normalizedCode);
 
-      // Get auth token from localStorage for API authentication
-      // Check both new and legacy token keys for compatibility
-      let authToken: string | undefined;
-      try {
-        authToken =
-          localStorage.getItem('vibes-diy-auth-token') ||
-          localStorage.getItem('vibes-diy-auth-token') ||
-          undefined;
-      } catch {
-        // Ignore localStorage errors (privacy mode, SSR, etc.)
-      }
-
       // Send code to iframe
       const messageData = {
         type: 'execute-code',
@@ -94,7 +84,7 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
       window.removeEventListener('message', handleMessage);
       iframe.removeEventListener('load', handleIframeLoad);
     };
-  }, [code, effectiveSessionId, onReady, onError]);
+  }, [code, effectiveSessionId, onReady, onError, authToken]);
 
   return (
     <div data-testid="placeholder">

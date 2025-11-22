@@ -36,9 +36,6 @@ const syncEnabledInstances = new Map<string, Set<string>>();
 // Simple counter for generating unique instance IDs (avoids React.useId conflicts)
 let instanceCounter = 0;
 
-// Storage key for authentication token sync
-const VIBES_AUTH_TOKEN_KEY = 'vibes-diy-auth-token' as const;
-
 // Helper to update body class based on global sync status
 function updateBodyClass() {
   if (typeof window === 'undefined' || !document?.body) return;
@@ -79,73 +76,10 @@ export async function isJWTExpired(token: string): Promise<boolean> {
   }
 }
 
-/**
- * VibesAuthStrategy
- *
- * This strategy is a "hack" to bridge the authentication state from the host application (vibes.diy)
- * into the use-vibes library's Fireproof instance.
- *
- * The host app stores the JWT in localStorage under 'vibes-diy-auth-token'.
- * We need to inject this token into Fireproof's internal state so it can connect to the cloud
- * without triggering a new authentication flow (popup).
- *
- * We extend RedirectStrategy and manually set the protected `currentToken` property.
- * This avoids the need for the complex ManualRedirectStrategy that was previously used.
- */
-// Minimal strategy to inject external auth token
-class VibesAuthStrategy extends RedirectStrategy {
-  setToken(token: string): void {
-    // Use KeyBag to decode and validate JWT asynchronously
-    // Fire-and-forget pattern since setToken is synchronous
-    getKeyBag(sthis()).then(async (kb: Awaited<ReturnType<typeof getKeyBag>>) => {
-      await kb.setJwt('vibes-auth-token', token);
-      const result = await kb.getJwt('vibes-auth-token');
-
-      const claims = result.isOk() ? result.Ok().claims : undefined;
-
-      // Inject token into parent class state
-      // @ts-expect-error - accessing protected/private property to bridge auth
-      this.currentToken = {
-        token,
-        claims,
-      };
-    });
-
-    // Temporary synchronous fallback for immediate access
-    // @ts-expect-error - accessing protected/private property to bridge auth
-    this.currentToken = {
-      token,
-      claims: {}, // Will be populated async
-    };
-  }
-}
-
 // Helper function to create toCloud configuration
 export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
-  const strategy = new VibesAuthStrategy();
-
-  // Check if an external token exists in localStorage and inject it
-  if (typeof window !== 'undefined') {
-    try {
-      const externalToken = localStorage.getItem(VIBES_AUTH_TOKEN_KEY);
-      if (externalToken) {
-        // Check expiration asynchronously
-        isJWTExpired(externalToken).then((expired) => {
-          if (expired) {
-            localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-          } else {
-            strategy.setToken(externalToken);
-          }
-        });
-      }
-    } catch {
-      // Ignore storage errors
-    }
-  }
-
   const attachable = originalToCloud({
     ...opts,
-    strategy,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
@@ -222,26 +156,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       result.database
         .attach(cloudConfig)
         .then((attached) => {
-          // Try to access token state (ctx might be a function or object)
-          const ctx = typeof attached?.ctx === 'function' ? attached.ctx() : attached?.ctx;
-
-          // Type assertion for token state access
-          const ctxWithToken = ctx as
-            | { tokenAndClaims?: { state: string; tokenAndClaims?: { token: string } } }
-            | undefined;
-
-          if (ctxWithToken?.tokenAndClaims) {
-            if (
-              ctxWithToken.tokenAndClaims.state === 'ready' &&
-              ctxWithToken.tokenAndClaims.tokenAndClaims?.token
-            ) {
-              localStorage.setItem(
-                VIBES_AUTH_TOKEN_KEY,
-                ctxWithToken.tokenAndClaims.tokenAndClaims.token
-              );
-            }
-          }
-
           setManualAttach({ state: 'attached', vibeMetadata: manualAttach.vibeMetadata, attached });
           // Save preference for next refresh
           localStorage.setItem(syncKey, 'true');
@@ -342,13 +256,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const disableSync = useCallback(() => {
     localStorage.removeItem(syncKey);
 
-    // Clear the authentication token for call-ai integration
-    try {
-      localStorage.removeItem(VIBES_AUTH_TOKEN_KEY);
-    } catch {
-      // Ignore localStorage errors (privacy mode, SSR, etc.)
-    }
-
     // Reset token if attached through original flow
     if (
       result.attach?.ctx?.tokenAndClaims?.state === 'ready' &&
@@ -367,54 +274,18 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       (result.attach?.state === 'attached' || result.attach?.state === 'attaching')) ||
     manualAttach?.state === 'attached';
 
-  // Bridge Fireproof authentication to call-ai by syncing tokens to localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Get the attach context (prefer result.attach over manualAttach)
-    const attach = result.attach || manualAttach;
-
-    // Check if we have a ready token state
-    const hasReadyToken =
-      attach &&
-      typeof attach === 'object' &&
-      'ctx' in attach &&
-      attach.ctx?.tokenAndClaims?.state === 'ready';
-
-    if (hasReadyToken && attach.ctx?.tokenAndClaims) {
-      // Extract the token from the ready state
-      const readyState = attach.ctx.tokenAndClaims;
-      const tokenData = readyState.tokenAndClaims;
-
-      if (tokenData?.token) {
-        try {
-          // Store the token for call-ai integration
-          localStorage.setItem(VIBES_AUTH_TOKEN_KEY, tokenData.token);
-        } catch (error) {
-          // Emit a diagnostic event instead of noisy console logs
-          try {
-            document.dispatchEvent(
-              new CustomEvent(VIBES_SYNC_ERROR_EVENT, {
-                detail: { error, phase: 'token-sync' },
-              })
-            );
-          } catch {
-            // Ignore when not in a DOM environment
-          }
-        }
-      }
-    }
-  }, [result.attach, manualAttach, syncEnabled]);
-
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
-    async (options: { email: string; role?: 'admin' | 'member'; right?: 'read' | 'write' }) => {
-      // Get token directly from localStorage (vibes.diy auth)
-      const token =
-        typeof window !== 'undefined' ? localStorage.getItem(VIBES_AUTH_TOKEN_KEY) : null;
+    async (options: {
+      email: string;
+      role?: 'admin' | 'member';
+      right?: 'read' | 'write';
+      token?: string;
+    }) => {
+      const token = options.token;
 
       if (!token) {
-        throw new Error('Unable to retrieve authentication token.');
+        throw new Error('Authentication token required for sharing.');
       }
 
       // Create auth object matching AuthType interface: { type: "clerk", token: string }
@@ -473,9 +344,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         email: string;
         role?: 'admin' | 'member';
         right?: 'read' | 'write';
+        token?: string;
       }>;
 
-      const { email, role = 'member', right = 'read' } = customEvent.detail || {};
+      const { email, role = 'member', right = 'read', token } = customEvent.detail || {};
 
       if (!email) {
         const error = new Error('vibes-share-request requires email in event detail');
@@ -488,8 +360,19 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         return;
       }
 
+      if (!token) {
+        const error = new Error('vibes-share-request requires token in event detail');
+        document.dispatchEvent(
+          new CustomEvent('vibes-share-error', {
+            detail: { error, originalEvent: event },
+            bubbles: true,
+          })
+        );
+        return;
+      }
+
       try {
-        const result = await share({ email, role, right });
+        const result = await share({ email, role, right, token });
 
         // Dispatch success event
         document.dispatchEvent(

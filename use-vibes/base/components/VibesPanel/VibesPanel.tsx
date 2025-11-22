@@ -11,6 +11,8 @@ export interface VibesPanelProps {
   className?: string;
   /** Optional base URL for vibes platform (defaults to current origin or vibes.diy) */
   baseURL?: string;
+  /** Authentication token for sharing functionality */
+  token?: string;
 }
 
 /**
@@ -21,7 +23,7 @@ export interface VibesPanelProps {
  */
 type PanelMode = 'default' | 'mutate' | 'invite';
 
-export function VibesPanel({ style, className, baseURL }: VibesPanelProps = {}) {
+export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps = {}) {
   const emailId = useId();
   const [mode, setMode] = useState<PanelMode>('default');
   const [email, setEmail] = useState('');
@@ -83,6 +85,7 @@ export function VibesPanel({ style, className, baseURL }: VibesPanelProps = {}) 
           email: email.trim(),
           role: 'member',
           right: 'read',
+          token,
         },
       })
     );

@@ -175,6 +175,7 @@ Return only the JSX code with a default export. Use modern React patterns with h
           React.createElement(IframeVibesComponent, {
             code: codeToUse,
             sessionId: sessionId,
+            authToken: options.authToken,
             onReady: () => {
               // Component is ready
             },

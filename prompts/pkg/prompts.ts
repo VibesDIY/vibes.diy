@@ -113,26 +113,6 @@ export interface LlmSelectionDecisions {
   demoData: boolean;
 }
 
-const warnOnce = Lazy(() =>
-  console.warn("vibes-diy-auth-token is not support on node"),
-);
-function defaultGetAuthToken(
-  fn?: () => Promise<string>,
-): () => Promise<string> {
-  if (typeof fn === "function") {
-    return () => fn();
-  }
-  const rn = runtimeFn();
-  if (rn.isBrowser) {
-    return () =>
-      Promise.resolve(localStorage.getItem("vibes-diy-auth-token") || "");
-  }
-  return () => {
-    warnOnce();
-    return Promise.resolve("Unsupported.JWT-Token");
-  };
-}
-
 export interface LlmSelectionOptions {
   readonly appMode?: "test" | "production";
   readonly callAiEndpoint?: CoerceURI;
@@ -168,7 +148,7 @@ export async function selectLlmsAndOptions(
       iopts.fallBackUrl ??
         "https://esm.sh/use-vibes@0.17.5/prompt-catalog/llms",
     ).toString(),
-    getAuthToken: defaultGetAuthToken(iopts.getAuthToken),
+    getAuthToken: iopts.getAuthToken,
   };
   const llmsCatalog = await getLlmCatalog(opts.fallBackUrl);
   const catalog = llmsCatalog.map((l) => ({

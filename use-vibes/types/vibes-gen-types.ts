@@ -26,6 +26,9 @@ export interface UseVibesOptions {
 
   /** Load existing vibe by document ID instead of generating new */
   _id?: string;
+
+  /** Authentication token for API calls within the generated component */
+  authToken?: string;
 }
 
 /**
