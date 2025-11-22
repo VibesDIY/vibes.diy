@@ -24,11 +24,10 @@ export function useVibeInstances(titleId: string) {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Query instances for this titleId
+  // Query instances for this titleId using index
   const instancesResult = useLiveQuery<VibeInstanceDocument>(
-    (doc) =>
-      doc.titleId === titleId &&
-      (doc.userId === userId || doc.sharedWith?.includes(userId)),
+    "titleId",
+    { key: titleId },
   );
 
   const instances = instancesResult.docs || [];
