@@ -79,7 +79,7 @@ runs:
         else
           WORKER_NAME="vibes-hosting-v2"
           echo "🚀 Deploying ${WORKER_NAME} worker (default production)..."
-          npx wrangler deploy
+          npx wrangler deploy --env=""
         fi
 
         echo "✅ Worker deployed successfully"
