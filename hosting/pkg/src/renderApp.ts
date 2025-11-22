@@ -144,33 +144,45 @@ app.get("/App.jsx", async (c) => {
   // Get the KV namespace from the context
   const kv = c.env.KV;
 
-  // Extract the original first-party domain for preservation
-  const originalDomain = getFirstPartyDomain(hostname) || "vibesdiy.app";
+  // Check for slug query parameter first
+  const slugParam = url.searchParams.get("slug");
 
-  // First, check if this is a custom domain
-  let effectiveHostname = hostname;
-  const customDomainMapping = await kv.get(`domain:${hostname}`);
+  let appSlug: string;
 
-  if (customDomainMapping) {
-    // This is a custom domain, use the mapped subdomain + original domain
-    effectiveHostname = `${customDomainMapping}.${originalDomain}`;
-  }
+  if (slugParam) {
+    // Use slug from query parameter
+    appSlug = slugParam;
+  } else {
+    // Fall back to subdomain parsing
+    const originalDomain = getFirstPartyDomain(hostname) || "vibesdiy.app";
 
-  // Parse the subdomain using our new parser
-  const parsed = parseSubdomain(effectiveHostname);
+    // First, check if this is a custom domain
+    let effectiveHostname = hostname;
+    const customDomainMapping = await kv.get(`domain:${hostname}`);
 
-  // Validate the parsed subdomain
-  if (!isValidSubdomain(parsed)) {
-    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
-  }
+    if (customDomainMapping) {
+      // This is a custom domain, use the mapped subdomain + original domain
+      effectiveHostname = `${customDomainMapping}.${originalDomain}`;
+    }
 
-  // Handle apex domain redirects
-  if (parsed.appSlug === "www") {
-    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
+    // Parse the subdomain using our new parser
+    const parsed = parseSubdomain(effectiveHostname);
+
+    // Validate the parsed subdomain
+    if (!isValidSubdomain(parsed)) {
+      return c.redirect(URI.from("https://vibes.diy").toString(), 301);
+    }
+
+    // Handle apex domain redirects
+    if (parsed.appSlug === "www") {
+      return c.redirect(URI.from("https://vibes.diy").toString(), 301);
+    }
+
+    appSlug = parsed.appSlug;
   }
 
   // Try to find the app in KV using the app slug as the key
-  const appData = await kv.get(parsed.appSlug);
+  const appData = await kv.get(appSlug);
 
   if (!appData) {
     return c.notFound();
@@ -221,33 +233,45 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
   // Get the KV namespace from the context
   const kv = c.env.KV;
 
-  // Extract the original first-party domain for preservation
-  const originalDomain = getFirstPartyDomain(hostname) || "vibesdiy.app";
+  // Check for slug query parameter first
+  const slugParam = url.searchParams.get("slug");
 
-  // First, check if this is a custom domain
-  let effectiveHostname = hostname;
-  const customDomainMapping = await kv.get(`domain:${hostname}`);
+  let appSlug: string;
 
-  if (customDomainMapping) {
-    // This is a custom domain, use the mapped subdomain + original domain
-    effectiveHostname = `${customDomainMapping}.${originalDomain}`;
-  }
+  if (slugParam) {
+    // Use slug from query parameter
+    appSlug = slugParam;
+  } else {
+    // Fall back to subdomain parsing
+    const originalDomain = getFirstPartyDomain(hostname) || "vibesdiy.app";
 
-  // Parse the subdomain using our new parser
-  const parsed = parseSubdomain(effectiveHostname);
+    // First, check if this is a custom domain
+    let effectiveHostname = hostname;
+    const customDomainMapping = await kv.get(`domain:${hostname}`);
 
-  // Validate the parsed subdomain
-  if (!isValidSubdomain(parsed)) {
-    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
-  }
+    if (customDomainMapping) {
+      // This is a custom domain, use the mapped subdomain + original domain
+      effectiveHostname = `${customDomainMapping}.${originalDomain}`;
+    }
 
-  // Handle apex domain redirects
-  if (parsed.appSlug === "www") {
-    return c.redirect(URI.from("https://vibes.diy").toString(), 301);
+    // Parse the subdomain using our new parser
+    const parsed = parseSubdomain(effectiveHostname);
+
+    // Validate the parsed subdomain
+    if (!isValidSubdomain(parsed)) {
+      return c.redirect(URI.from("https://vibes.diy").toString(), 301);
+    }
+
+    // Handle apex domain redirects
+    if (parsed.appSlug === "www") {
+      return c.redirect(URI.from("https://vibes.diy").toString(), 301);
+    }
+
+    appSlug = parsed.appSlug;
   }
 
   // Calculate screenshot key based on app slug (screenshots are always for the base app)
-  const screenshotKey = `${parsed.appSlug}-screenshot`;
+  const screenshotKey = `${appSlug}-screenshot`;
 
   // Get the screenshot from KV
   const screenshot = await kv.get(screenshotKey, "arrayBuffer");
