@@ -5,15 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import UnifiedSession from "~/vibes.diy/app/routes/home.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
-// Mock Clerk
-vi.mock("@clerk/clerk-react", () => ({
-  useAuth: () => ({ isSignedIn: true, isLoaded: true }),
-  useUser: () => ({ user: { id: "test-user-id" } }),
-  useSignIn: () => ({ signIn: null }),
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-}));
+// Mock Clerk using centralized mock
+vi.mock("@clerk/clerk-react");
 
 // Mock the CookieConsentContext
 vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({

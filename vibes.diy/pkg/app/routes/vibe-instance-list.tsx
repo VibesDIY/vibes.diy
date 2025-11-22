@@ -4,6 +4,7 @@ import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { VibesDiyEnv } from "../config/env.js";
 import { useAuth, useSignIn } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
+import { trackAuthClick } from "../utils/analytics.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
   return [
@@ -364,17 +365,19 @@ export default function VibeInstancesList() {
   }
 
   if (!isSignedIn) {
-    return (
-      <LoggedOutView
-        onLogin={async () => {
-          await signIn?.authenticateWithRedirect({
-            strategy: "oauth_google",
-            redirectUrl: "/sso-callback",
-            redirectUrlComplete: window.location.href,
-          });
-        }}
-      />
-    );
+    const handleLogin = async () => {
+      trackAuthClick({
+        label: "Vibe Instances Login",
+        isUserAuthenticated: false,
+      });
+      await signIn?.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: window.location.href,
+      });
+    };
+
+    return <LoggedOutView onLogin={handleLogin} />;
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated

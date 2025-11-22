@@ -123,7 +123,6 @@ export async function sendChatMessage(
     promptText,
     (content) => throttledMergeAiMessage(content),
     currentApiKey,
-    undefined, // userId
     setNeedsLogin,
   )
     .then(async (finalContent) => {

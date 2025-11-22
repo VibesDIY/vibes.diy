@@ -15,7 +15,6 @@ import { AUTH_REQUIRED_ERROR, isAuthErrorMessage } from "./authErrors.js";
  * @param userMessage - The current user message
  * @param onContent - Callback function that receives the accumulated content so far
  * @param apiKey - The API key to use for the callAI service
- * @param userId - The user ID
  * @param setNeedsLogin - Optional callback to set needs login flag
  * @returns A promise that resolves to the complete response when streaming is complete
  */
@@ -29,7 +28,6 @@ export async function streamAI(
   userMessage: string,
   onContent: (content: string) => void,
   apiKey: string, // API key (can be dummy key for proxy)
-  userId?: string,
   setNeedsLogin?: (value: boolean) => void,
 ): Promise<string> {
   // Stream process starts
@@ -41,7 +39,7 @@ export async function streamAI(
     { role: "user", content: userMessage },
   ];
   // Configure call-ai options with default maximum token limit
-  const defaultMaxTokens = userId ? 150000 : 75000;
+  const defaultMaxTokens = 150000;
   const options: CallAIOptions = {
     chatUrl: VibesDiyEnv.CALLAI_ENDPOINT().replace(/\/+$/, ""), // Remove trailing slash to prevent double slash
     apiKey: apiKey, // Clerk session token passed as API key

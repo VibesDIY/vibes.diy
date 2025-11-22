@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
 import { useNavigate } from "react-router";
+import { trackEvent } from "../utils/analytics.js";
 
 /**
  * SSO Callback route for Clerk OAuth redirect
@@ -17,6 +18,16 @@ export default function SSOCallback() {
     const timeout = setTimeout(() => {
       // Only redirect if we're still on this page (Clerk didn't handle it)
       if (window.location.pathname === "/sso-callback") {
+        console.error(
+          "SSO callback timeout: Clerk did not complete authentication within 3 seconds",
+        );
+
+        trackEvent("sso_callback_timeout", {
+          pathname: window.location.pathname,
+          search: window.location.search,
+          referrer: document.referrer,
+        });
+
         navigate("/");
       }
     }, 3000);
