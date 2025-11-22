@@ -17,11 +17,39 @@ import type { CSSProperties } from 'react';
  * }
  */
 
+// Inject CSS variables for HiddenMenuWrapper component
+if (typeof document !== 'undefined') {
+  const styleId = 'hidden-menu-wrapper-vars';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      :root {
+        --hm-menu-bg: var(--vibes-gray-lightest);
+        --hm-menu-text: var(--vibes-white);
+        --hm-content-bg: #1e1e1e;
+        --hm-shadow: rgba(0, 0, 0, 0.3);
+        --hm-grid-line: rgba(255, 255, 255, 0.5);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --hm-menu-bg: #2a2a2a;
+          --hm-menu-text: var(--vibes-gray-ultralight);
+          --hm-content-bg: var(--vibes-near-black);
+          --hm-shadow: rgba(255, 255, 255, 0.1);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
 // CSS Custom Properties (Variables) as JavaScript constants with fallbacks
 export const hiddenMenuTheme = {
   colors: {
-    menuBg: 'var(--hm-menu-bg, #d4d4d4)',
-    menuText: 'var(--hm-menu-text, white)',
+    menuBg: 'var(--hm-menu-bg, var(--vibes-gray-lightest))',
+    menuText: 'var(--hm-menu-text, var(--vibes-white))',
     contentBg: 'var(--hm-content-bg, #1e1e1e)',
     shadow: 'var(--hm-shadow, rgba(0, 0, 0, 0.3))',
     gridLineColor: 'var(--hm-grid-line, rgba(255, 255, 255, 0.5))',

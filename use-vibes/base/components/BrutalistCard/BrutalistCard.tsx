@@ -1,7 +1,7 @@
 import React from 'react';
 import { getBrutalistCardStyle } from './BrutalistCard.styles.js';
 import type { BrutalistCardVariant, BrutalistCardSize } from './BrutalistCard.styles.js';
-import { useThemeDetection } from '../../hooks/useThemeDetection.js';
+import '../../styles/colors.css';
 
 export interface BrutalistCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Content to render inside the card */
@@ -44,13 +44,11 @@ export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps
     }: BrutalistCardProps,
     ref
   ) => {
-    const isDark = useThemeDetection();
-
     const cardStyle = {
       ...getBrutalistCardStyle(variant, size, messageType),
-      background: isDark ? '#1a1a1a' : '#fff',
-      color: isDark ? '#fff' : '#1a1a1a',
-      border: isDark ? '3px solid #555' : '3px solid #1a1a1a',
+      background: 'var(--vibes-card-bg)',
+      color: 'var(--vibes-card-text)',
+      border: '3px solid var(--vibes-card-border)',
       ...style,
     } as React.CSSProperties;
 

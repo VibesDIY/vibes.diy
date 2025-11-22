@@ -1,0 +1,679 @@
+/* ImgGen Component Styling System
+ * This file contains all base styles for the ImgGen component hierarchy
+ * Uses CSS custom properties to enable easy theming without affecting layout
+ *
+ * NOTE: Import ../../styles/colors.css before using this file to access base color tokens
+ */
+
+/* ---- CSS Custom Properties (Variables) ---- */
+:root {
+  /* Colors - using centralized color tokens */
+  --imggen-text-color: var(--vibes-text-primary);
+  --imggen-background: var(--vibes-gray-dark);
+  --imggen-overlay-bg: var(--vibes-bg-overlay);
+  --imggen-accent: var(--vibes-blue-accent);
+  --imggen-flash: var(--vibes-yellow-bright);
+  --imggen-error-bg: var(--vibes-error-bg);
+  --imggen-error-border: var(--vibes-error-border);
+  --imggen-error-text: var(--vibes-error-text);
+  --imggen-button-bg: var(--imggen-button-bg); /* Note: defined in colors.css */
+  --imggen-error-text-body: var(--vibes-error-text-body);
+  --imggen-delete-hover-color: var(--vibes-red-delete);
+
+  /* Dimensions */
+  --imggen-border-radius: 8px;
+  --imggen-padding: 8px;
+  --imggen-button-size: 28px;
+  --imggen-progress-height: 8px;
+
+  /* Typography */
+  --imggen-font-size: 14px;
+  --imggen-font-weight: bold;
+  --imggen-line-height: 1.5;
+
+  /* Effects */
+  --imggen-blur-radius: 4px;
+  --imggen-transition-speed: 0.2s;
+  --imggen-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ---- Core Components ---- */
+
+/* Root container */
+.imggen-root {
+  position: relative;
+  max-width: 100%;
+  /* No border-radius to allow downstream apps to set their own */
+  overflow: hidden;
+}
+
+/* Image container */
+.imggen-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Image container with expand button */
+.imggen-image-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  /* No border-radius to allow downstream apps to set their own */
+}
+
+/* Expand button in upper left corner */
+.imggen-expand-button {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  background-color: var(--imggen-button-bg);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  opacity: 0; /* Initially invisible */
+  transition:
+    opacity var(--imggen-transition-speed) ease,
+    transform var(--imggen-transition-speed) ease;
+  padding: 0;
+  color: var(--imggen-text-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Show button on container hover */
+.imggen-image-container:hover .imggen-expand-button {
+  opacity: 0.5;
+}
+
+.imggen-expand-button:hover {
+  opacity: 1 !important;
+  transform: scale(1.1);
+}
+
+.imggen-expand-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (hover: none) {
+  /* On touch devices, always show the expand button */
+  .imggen-expand-button {
+    opacity: 0.5 !important;
+  }
+}
+
+/* The image itself - limited styling since we can't change ImgFile */
+.imggen-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* No border-radius to allow downstream apps to set their own */
+}
+
+/* ---- Overlays ---- */
+
+/* Base overlay that appears at the bottom */
+.imggen-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--imggen-padding);
+  background-color: var(--imggen-overlay-bg);
+  backdrop-filter: blur(var(--imggen-blur-radius));
+  transition: opacity var(--imggen-transition-speed) ease;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top line row with prompt and version indicator */
+.imggen-top-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* Prompt text container */
+.imggen-prompt {
+  width: 100%;
+  padding: 4px;
+  margin-bottom: 8px;
+}
+
+/* Prompt text styling */
+.imggen-prompt-text {
+  color: var(--imggen-text-color);
+  width: 100%;
+  text-align: center;
+  font-weight: var(--imggen-font-weight);
+  padding: 2px;
+  cursor: pointer;
+}
+
+/* Prompt input for editing */
+.imggen-prompt-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: var(--imggen-font-size);
+  font-weight: var(--imggen-font-weight);
+  color: var(--imggen-text-color);
+  background-color: white;
+}
+
+.imggen-edit-mode {
+  border: 2px solid var(--imggen-accent);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* Controls row */
+.imggen-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 2px;
+}
+
+/* Control button group */
+.imggen-control-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ---- Buttons ---- */
+
+/* Base button styling */
+.imggen-button {
+  background: var(--imggen-button-bg);
+  border-radius: 50%;
+  width: var(--imggen-button-size);
+  height: var(--imggen-button-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--imggen-transition-speed) ease;
+  padding: 0;
+  font-size: var(--imggen-font-size);
+  color: var(--imggen-text-color);
+}
+
+.imggen-button-highlight {
+  background-color: var(--imggen-accent);
+  color: white;
+}
+
+.imggen-button:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.imggen-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Info button (appears at bottom left) */
+.imggen-info-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #fff;
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity var(--imggen-transition-speed) ease;
+}
+
+.imggen-info-button:hover {
+  opacity: 1;
+}
+
+/* Delete button (top right corner) */
+.imggen-delete-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 20;
+  background-color: var(--imggen-button-bg);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  font-size: 16px;
+  opacity: 0.5;
+  transition: opacity var(--imggen-transition-speed) ease;
+  padding: 0;
+}
+
+.imggen-delete-button:hover {
+  opacity: 1;
+  color: var(--imggen-delete-hover-color);
+}
+
+/* ---- Progress Indicators ---- */
+
+/* Progress bar container */
+.imggen-progress-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+}
+
+/* Actual progress bar */
+.imggen-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--imggen-progress-height);
+  background-color: var(--imggen-accent);
+  transition: width 0.3s ease-in-out;
+  z-index: 11; /* Ensure it appears above the overlay */
+}
+
+/* Version indicator text */
+.imggen-version-indicator {
+  font-size: var(--imggen-font-size);
+  color: var(--imggen-text-color);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Version flash animation */
+@keyframes version-flash {
+  0% {
+    color: var(--imggen-text-color);
+    transform: scale(1);
+  }
+  30% {
+    color: var(--imggen-flash);
+    transform: scale(1.3);
+    /* font-weight: bold; */
+  }
+  70% {
+    color: var(--imggen-flash);
+    transform: scale(1.1);
+    font-weight: bold;
+  }
+  100% {
+    color: var(--imggen-text-color);
+    transform: scale(1);
+  }
+}
+
+.imggen-version-flash {
+  animation: version-flash 2s ease-in-out;
+}
+
+/* Regenerate spinner animation */
+@keyframes regen-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.imggen-regen-spinning {
+  animation: regen-spin 2s linear infinite;
+  display: inline-block;
+}
+
+/* Status text (e.g. Generating...) */
+.imggen-status-text {
+  width: 100%;
+  text-align: center;
+  font-size: var(--imggen-font-size);
+  color: var(--imggen-text-color);
+  opacity: 0.7;
+  padding: 8px 0;
+}
+
+/* ---- Placeholders & Errors ---- */
+
+/* Placeholder styling */
+.imggen-placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: var(--imggen-background);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Error container wrapper to ensure consistent dark background */
+.imggen-error-container {
+  background-color: var(--vibes-dark-gray);
+  aspect-ratio: 1 / 1; /* Maintain square aspect ratio like images */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  width: 100%;
+  border-radius: var(--imggen-border-radius);
+  overflow: hidden;
+}
+
+/* Error container */
+.imggen-error {
+  background-color: var(--vibes-black);
+  color: var(--imggen-error-text);
+  padding: 1.5rem;
+  border-radius: var(--imggen-border-radius);
+  border: 1px solid var(--imggen-error-border);
+  box-shadow: var(--imggen-shadow);
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Error title */
+.imggen-error-title {
+  color: var(--imggen-error-text);
+  margin-top: 0;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* Error message */
+.imggen-error-message {
+  white-space: pre-wrap;
+  color: var(--imggen-error-text-body);
+  font-size: var(--imggen-font-size);
+  line-height: var(--imggen-line-height);
+  text-align: left;
+  font-family: monospace, sans-serif;
+  margin-bottom: 0;
+}
+
+/* Error display in full-screen backdrop */
+.imggen-backdrop-error {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+  background-color: var(--vibes-dark-gray);
+  /* aspect-ratio: 1 / 1; Maintain square aspect ratio like images */
+  border-radius: var(--imggen-border-radius);
+}
+
+/* Delete confirmation overlay */
+.imggen-delete-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  padding: 20px;
+  text-align: center;
+}
+
+/* Delete confirmation message */
+.imggen-delete-message {
+  color: white;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+/* Delete confirmation button group */
+.imggen-delete-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Delete confirmation button */
+.imggen-delete-confirm {
+  background-color: var(--imggen-error-border);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Delete cancel button */
+.imggen-delete-cancel {
+  background-color: var(--vibes-gray-mid);
+  color: var(--vibes-white);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Helper classes */
+.imggen-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Simple fullscreen backdrop ---- */
+.imggen-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--vibes-shadow-backdrop);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* anchor to top to avoid vertical jump */
+  padding-top: 5vh; /* give top breathing room */
+  z-index: 9999;
+  gap: 8px;
+}
+
+.imggen-backdrop-image {
+  max-width: 90vw;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--imggen-border-radius);
+}
+
+.imggen-backdrop .imggen-overlay {
+  position: static;
+  width: 100%;
+  box-sizing: border-box; /* include padding in width */
+  margin: 0;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  background-color: var(--imggen-overlay-bg);
+  backdrop-filter: blur(var(--imggen-blur-radius));
+  border-radius: var(--imggen-border-radius);
+}
+
+/* Wrapper ensures overlay width matches image intrinsic width */
+.imggen-full-wrapper {
+  display: inline-block; /* shrink-wrap to content width */
+  width: min(90vw, 70vh); /* Size proportional to viewport, matching backdrop-image constraints */
+  aspect-ratio: 1 / 1; /* Maintain square aspect ratio like images */
+}
+
+/* ---- File Drop Component ---- */
+
+.imggen-file-drop {
+  padding: 1.5rem;
+  border: 2px dashed var(--vibes-border-input);
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+  margin-bottom: 1rem;
+}
+
+.imggen-file-drop:hover {
+  border-color: var(--vibes-gray-light);
+  background-color: var(--vibes-bg-overlay);
+}
+
+.imggen-file-drop-active {
+  border-color: var(--vibes-blue-darker);
+  background-color: var(--vibes-bg-dropzone-active);
+}
+
+.imggen-file-drop-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.imggen-file-drop-message {
+  font-size: 0.95rem;
+  color: var(--vibes-text-secondary);
+}
+
+/* Upload waiting state styles */
+.imggen-upload-waiting {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.imggen-uploaded-previews {
+  margin-bottom: 0.5rem;
+}
+
+.imggen-upload-count {
+  font-size: 0.9rem;
+  color: var(--vibes-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.imggen-thumbnails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.imggen-thumbnail {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--vibes-border-light);
+}
+
+.imggen-thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imggen-thumbnail-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: var(--vibes-bg-secondary);
+  color: var(--vibes-text-muted);
+  font-size: 0.8rem;
+}
+
+.imggen-more-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background-color: var(--vibes-bg-overlay);
+  border-radius: 4px;
+  color: var(--vibes-text-secondary);
+  font-size: 0.9rem;
+}
+
+.imggen-no-uploads {
+  color: var(--vibes-text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.imggen-prompt-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.imggen-prompt-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--vibes-border-input);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  background-color: var(--vibes-bg-input);
+  color: var(--vibes-text-primary);
+}
+
+.imggen-prompt-submit {
+  /* padding: 0.75rem 1.25rem; */
+  background-color: var(--vibes-blue-darker);
+  color: var(--vibes-white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.imggen-prompt-submit:hover {
+  background-color: var(--vibes-blue-dark);
+}
+
+.imggen-prompt-submit:disabled {
+  background-color: var(--vibes-border-secondary);
+  cursor: not-allowed;
+}
+
+.fade-transition {
+  animation: fadeOut 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
