@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
@@ -18,6 +18,8 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const { isSignedIn: isAuthenticated, isLoaded } = useAuth();
   const isLoading = !isLoaded;
   const clerk = useClerk();
+  const { user } = useUser();
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
 
   // Clerk doesn't have polling state like the old auth system
   const isPolling = false;
@@ -166,7 +168,21 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                 <li className="flex items-center rounded-md px-4 py-3 text-sm font-medium text-gray-400">
                   <span className="animate-pulse">Loading...</span>
                 </li>
-              ) : isAuthenticated ? null : isPolling ? (
+              ) : isAuthenticated ? (
+                // AUTHENTICATED - Show "Logout {email}"
+                <li>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await clerk.signOut();
+                      onClose();
+                    }}
+                    className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-md px-4 py-3 text-left text-sm font-bold transition-colors hover:opacity-90"
+                  >
+                    <span>Logout {userEmail}</span>
+                  </button>
+                </li>
+              ) : isPolling ? (
                 <li>
                   <div className="flex flex-col gap-1 px-4 py-3 text-sm font-medium">
                     <span className="">Opening log in window...</span>
