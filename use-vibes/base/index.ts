@@ -9,7 +9,6 @@ import {
   ImgFile,
   toCloud as originalToCloud,
   useFireproof as originalUseFireproof,
-  RedirectStrategy,
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';

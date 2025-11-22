@@ -1,7 +1,7 @@
 import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
 
 import type { HistoryMessage, UserSettings } from "./settings.js";
-import { CoerceURI, Lazy, runtimeFn, URI } from "@adviser/cement";
+import { CoerceURI, Lazy, URI } from "@adviser/cement";
 import {
   getJsonDocs,
   getLlmCatalog,
