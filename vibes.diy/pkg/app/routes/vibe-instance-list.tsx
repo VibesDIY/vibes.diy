@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { VibesDiyEnv } from "../config/env.js";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useSignIn } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
@@ -353,6 +353,7 @@ function VibeInstancesListContent() {
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstancesList() {
   const { isSignedIn, isLoaded } = useAuth();
+  const { signIn } = useSignIn();
 
   if (!isLoaded) {
     return (
@@ -365,8 +366,12 @@ export default function VibeInstancesList() {
   if (!isSignedIn) {
     return (
       <LoggedOutView
-        onLogin={() => {
-          /* Clerk handles this */
+        onLogin={async () => {
+          await signIn?.authenticateWithRedirect({
+            strategy: "oauth_google",
+            redirectUrl: "/sso-callback",
+            redirectUrlComplete: window.location.href,
+          });
         }}
       />
     );

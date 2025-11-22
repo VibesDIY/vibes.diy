@@ -4,7 +4,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useSignIn } from "@clerk/clerk-react";
 import { mountVibeWithCleanup } from "use-vibes";
 import { setupDevShims, transformImportsDev } from "../utils/dev-shims.js";
 import LoggedOutView from "../components/LoggedOutView.js";
@@ -165,6 +165,7 @@ function VibeInstanceViewerContent() {
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstanceViewer() {
   const { isSignedIn, isLoaded } = useAuth();
+  const { signIn } = useSignIn();
 
   if (!isLoaded) {
     return (
@@ -177,8 +178,12 @@ export default function VibeInstanceViewer() {
   if (!isSignedIn) {
     return (
       <LoggedOutView
-        onLogin={() => {
-          /* Clerk handles this */
+        onLogin={async () => {
+          await signIn?.authenticateWithRedirect({
+            strategy: "oauth_google",
+            redirectUrl: "/sso-callback",
+            redirectUrlComplete: window.location.href,
+          });
         }}
       />
     );
