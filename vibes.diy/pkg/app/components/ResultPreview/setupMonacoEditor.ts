@@ -11,6 +11,14 @@ import type React from "react";
 import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
 
+export type MonacoDiagnosticsOptions =
+  monaco.languages.typescript.DiagnosticsOptions;
+
+export interface MonacoDiagnosticsDefaults {
+  setDiagnosticsOptions: (options: MonacoDiagnosticsOptions) => void;
+  getDiagnosticsOptions?: () => MonacoDiagnosticsOptions | undefined;
+}
+
 interface Options {
   isStreaming: boolean;
   codeReady: boolean;
@@ -22,6 +30,23 @@ interface Options {
     monaco: Monaco,
   ) => void;
   setHighlighter: (highlighter: HighlighterCore) => void;
+}
+
+export function diagnosticsForCodeReady(
+  codeReady: boolean,
+  previous?: MonacoDiagnosticsOptions,
+): MonacoDiagnosticsOptions {
+  const {
+    noSemanticValidation: _prevSemantic,
+    noSyntaxValidation: _prevSyntax,
+    ...rest
+  } = previous ?? {};
+
+  return {
+    ...rest,
+    noSemanticValidation: !codeReady,
+    noSyntaxValidation: !codeReady,
+  };
 }
 
 export async function setupMonacoEditor(
@@ -52,11 +77,18 @@ export async function setupMonacoEditor(
     skipLibCheck: true,
   });
 
-  // Enable syntax error detection for JavaScript/JSX
-  monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-    noSemanticValidation: false, // Enable semantic validation
-    noSyntaxValidation: false, // Enable syntax error detection
-  });
+  // Configure syntax and semantic validation based on initial code readiness.
+  // When the code is still streaming/incomplete (`codeReady === false`), we
+  // disable diagnostics to avoid noisy red squiggles. A React effect in
+  // `IframeContent` will update these options as `codeReady` changes over time.
+  const jsDefaults =
+    monaco.languages.typescript.javascriptDefaults as MonacoDiagnosticsDefaults;
+
+  const currentDiagnostics = jsDefaults.getDiagnosticsOptions?.();
+
+  jsDefaults.setDiagnosticsOptions(
+    diagnosticsForCodeReady(codeReady, currentDiagnostics),
+  );
 
   editor.updateOptions({
     tabSize: 2,

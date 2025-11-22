@@ -2,7 +2,11 @@ import { Editor, Monaco } from "@monaco-editor/react";
 import React, { useEffect, useRef, useState } from "react";
 import type { IframeFiles } from "./ResultPreviewTypes.js";
 import { DatabaseListView } from "./DataView/index.js";
-import { setupMonacoEditor } from "./setupMonacoEditor.js";
+import {
+  diagnosticsForCodeReady,
+  setupMonacoEditor,
+} from "./setupMonacoEditor.js";
+import type { MonacoDiagnosticsDefaults } from "./setupMonacoEditor.js";
 import { editor } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { InlinePreview } from "./InlinePreview.js";
@@ -134,6 +138,24 @@ const IframeContent: React.FC<IframeContentProps> = ({
       monacoApiRef.current.editor.setTheme(currentTheme);
     }
   }, [isDarkMode]);
+
+  // Enable Monaco diagnostics only when the generated code is ready. While
+  // the AI is still streaming partial code (`codeReady === false`), we
+  // disable both syntax and semantic validation to avoid distracting
+  // transient errors. The initial value is also configured in
+  // `setupMonacoEditor` so this effect only needs to respond to changes.
+  useEffect(() => {
+    const monacoInstance = monacoApiRef.current;
+    if (!monacoInstance) return;
+
+    const defaults =
+      monacoInstance.languages.typescript
+        .javascriptDefaults as MonacoDiagnosticsDefaults;
+
+    const current = defaults.getDiagnosticsOptions?.();
+
+    defaults.setDiagnosticsOptions(diagnosticsForCodeReady(codeReady, current));
+  }, [codeReady]);
 
   // Reset manual scroll flag when streaming state changes
   useEffect(() => {
