@@ -4,7 +4,7 @@
  * Provides fallback values for required environment variables
  */
 import { Lazy } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis, runtimeFn } from "@fireproof/core-runtime";
 import { callAiEnv } from "call-ai";
 
 // --- Vite Environment Variables ---
@@ -59,11 +59,18 @@ class vibesDiyEnv {
       "zeWndr5LEoaySgKSo2aZniYqWtx2vKfVz4dd5GQwAuby3fPKcNyLp6mFpf9nCRFYbUcPiN2YT1ZApJ6f3WipiVjuMvyP1JYgHwkaoxDBpJiLoz1grRYkbao9ntukNNo2TQ4uSznUmNPrr4ZxjihoavHwB1zLhLNp5Qj78fBkjgEMA",
   );
 
-  readonly CLERK_PUBLISHABLE_KEY = Lazy(
-    () =>
-      this.env().get("VITE_CLERK_PUBLISHABLE_KEY") ??
-      "pk_live_Y2xlcmsudmliZXMuZGl5JA",
-  );
+  readonly CLERK_PUBLISHABLE_KEY = Lazy(() => {
+    const envKey = this.env().get("VITE_CLERK_PUBLISHABLE_KEY");
+    if (envKey) {
+      return envKey;
+    }
+    // Use live key ONLY for vibes.diy, test key for everything else
+    const isProduction =
+      runtimeFn().isBrowser && window.location.hostname === "vibes.diy";
+    return isProduction
+      ? "pk_live_Y2xlcmsudmliZXMuZGl5JA"
+      : "pk_test_c2luY2VyZS1jaGVldGFoLTMwLmNsZXJrLmFjY291bnRzLmRldiQ";
+  });
 
   // Vibes Service API
   readonly API_BASE_URL = Lazy(

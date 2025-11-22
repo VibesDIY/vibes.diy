@@ -75,6 +75,11 @@ jobs:
           echo "${{ secrets.CLERK_SECRET_KEY }}" | npx wrangler secret put CLERK_SECRET_KEY --name ${{ steps.pr.outputs.worker_name }}
           echo "${{ secrets.CLERK_PUBLISHABLE_KEY }}" | npx wrangler secret put CLERK_PUBLISHABLE_KEY --name ${{ steps.pr.outputs.worker_name }}
 
+          # Clerk test key for PR previews
+          if [ -n "${{ secrets.CLERK_SECRET_KEY_TEST }}" ]; then
+            echo "${{ secrets.CLERK_SECRET_KEY_TEST }}" | npx wrangler secret put CLERK_SECRET_KEY_TEST --name ${{ steps.pr.outputs.worker_name }}
+          fi
+
           # Optional secrets
           if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
             echo "${{ secrets.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY --name ${{ steps.pr.outputs.worker_name }}

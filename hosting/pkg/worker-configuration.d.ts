@@ -4,6 +4,8 @@ declare namespace Cloudflare {
   interface Env {
     KV: KVNamespace;
     PUBLISH_QUEUE: Queue;
+    CLERK_SECRET_KEY: string;
+    CLERK_SECRET_KEY_TEST?: string;
   }
 }
 interface Env extends Cloudflare.Env {}

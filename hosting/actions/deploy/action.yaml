@@ -28,6 +28,9 @@ inputs:
   CLERK_SECRET_KEY:
     description: "Clerk secret key for backend authentication"
     required: true
+  CLERK_SECRET_KEY_TEST:
+    description: "Clerk test secret key for development/testing"
+    required: false
   CLERK_PUBLISHABLE_KEY:
     description: "Clerk publishable key for frontend authentication"
     required: true
@@ -96,6 +99,14 @@ runs:
         # Required Clerk keys
         echo "${{ inputs.CLERK_SECRET_KEY }}" | npx wrangler secret put CLERK_SECRET_KEY
         echo "${{ inputs.CLERK_PUBLISHABLE_KEY }}" | npx wrangler secret put CLERK_PUBLISHABLE_KEY
+
+        # Optional Clerk test key
+        if [ -n "${{ inputs.CLERK_SECRET_KEY_TEST }}" ]; then
+          echo "🔐 Setting Clerk test secret key..."
+          echo "${{ inputs.CLERK_SECRET_KEY_TEST }}" | npx wrangler secret put CLERK_SECRET_KEY_TEST
+        else
+          echo "ℹ️  Clerk test key not provided (optional - localhost development will use live keys)"
+        fi
 
         echo "✅ Required secrets configured"
 
