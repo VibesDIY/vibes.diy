@@ -59,13 +59,11 @@ class vibesDiyEnv {
       "zeWndr5LEoaySgKSo2aZniYqWtx2vKfVz4dd5GQwAuby3fPKcNyLp6mFpf9nCRFYbUcPiN2YT1ZApJ6f3WipiVjuMvyP1JYgHwkaoxDBpJiLoz1grRYkbao9ntukNNo2TQ4uSznUmNPrr4ZxjihoavHwB1zLhLNp5Qj78fBkjgEMA",
   );
 
-  readonly CLERK_PUBLISHABLE_KEY = Lazy(() => {
-    const key = this.env().get("VITE_CLERK_PUBLISHABLE_KEY");
-    if (!key) {
-      throw new Error("VITE_CLERK_PUBLISHABLE_KEY is required for Clerk auth");
-    }
-    return key;
-  });
+  readonly CLERK_PUBLISHABLE_KEY = Lazy(
+    () =>
+      this.env().get("VITE_CLERK_PUBLISHABLE_KEY") ??
+      "pk_live_Y2xlcmsudmliZXMuZGl5JA",
+  );
 
   // Vibes Service API
   readonly API_BASE_URL = Lazy(
