@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useSignIn } from "@clerk/clerk-react";
+import { useClerk } from "@clerk/clerk-react";
 import { trackAuthClick, trackEvent } from "../utils/analytics.js";
 
 /**
@@ -10,7 +10,7 @@ import { trackAuthClick, trackEvent } from "../utils/analytics.js";
 export function NeedsLoginModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [needsLogin] = useState(false);
-  const { signIn } = useSignIn();
+  const clerk = useClerk();
 
   // Show the modal when needsLogin becomes true or is already true
   useEffect(() => {
@@ -30,10 +30,8 @@ export function NeedsLoginModal() {
       label: "Get Credits Modal",
       isUserAuthenticated: false,
     });
-    await signIn?.authenticateWithRedirect({
-      strategy: "oauth_google",
-      redirectUrl: "/sso-callback",
-      redirectUrlComplete: window.location.href,
+    await clerk.redirectToSignIn({
+      redirectUrl: window.location.href,
     });
     setIsOpen(false); // Close the modal after attempting to open the popup
   };

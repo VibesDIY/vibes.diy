@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useAuth, useSignIn } from "@clerk/clerk-react";
+import { useAuth, useClerk } from "@clerk/clerk-react";
 import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
@@ -17,16 +17,14 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { isSignedIn: isAuthenticated, isLoaded } = useAuth();
   const isLoading = !isLoaded;
-  const { signIn } = useSignIn();
+  const clerk = useClerk();
 
   // Clerk doesn't have polling state like the old auth system
   const isPolling = false;
   const pollError = null;
   const initiateLogin = async () => {
-    await signIn?.authenticateWithRedirect({
-      strategy: "oauth_google",
-      redirectUrl: "/sso-callback",
-      redirectUrlComplete: window.location.href,
+    await clerk.redirectToSignIn({
+      redirectUrl: window.location.href,
     });
   };
 

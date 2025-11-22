@@ -12,7 +12,7 @@ import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
-import { useAuth, useSignIn } from "@clerk/clerk-react";
+import { useAuth, useClerk } from "@clerk/clerk-react";
 import { trackAuthClick, trackEvent } from "../utils/analytics.js";
 import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 import LoggedOutView from "./LoggedOutView.js";
@@ -39,12 +39,10 @@ export default function SessionView({
   // Check authentication before allowing access to the chat interface
   const { isSignedIn: isAuthenticated, isLoaded } = useAuth();
   const isLoading = !isLoaded;
-  const { signIn } = useSignIn();
+  const clerk = useClerk();
   const initiateLogin = async () => {
-    await signIn?.authenticateWithRedirect({
-      strategy: "oauth_google",
-      redirectUrl: "/sso-callback",
-      redirectUrlComplete: window.location.href,
+    await clerk.redirectToSignIn({
+      redirectUrl: window.location.href,
     });
   };
 

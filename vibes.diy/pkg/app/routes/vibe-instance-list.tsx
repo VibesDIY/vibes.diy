@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { VibesDiyEnv } from "../config/env.js";
-import { useAuth, useSignIn } from "@clerk/clerk-react";
+import { useAuth, useSignIn, useClerk } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
 import { trackAuthClick } from "../utils/analytics.js";
 
@@ -354,7 +354,7 @@ function VibeInstancesListContent() {
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstancesList() {
   const { isSignedIn, isLoaded } = useAuth();
-  const { signIn } = useSignIn();
+  const clerk = useClerk();
 
   if (!isLoaded) {
     return (
@@ -365,19 +365,15 @@ export default function VibeInstancesList() {
   }
 
   if (!isSignedIn) {
-    const handleLogin = async () => {
-      trackAuthClick({
-        label: "Vibe Instances Login",
-        isUserAuthenticated: false,
-      });
-      await signIn?.authenticateWithRedirect({
-        strategy: "oauth_google",
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: window.location.href,
-      });
-    };
-
-    return <LoggedOutView onLogin={handleLogin} />;
+    return (
+      <LoggedOutView
+        onLogin={async () => {
+          await clerk.redirectToSignIn({
+            redirectUrl: window.location.href,
+          });
+        }}
+      />
+    );
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated
