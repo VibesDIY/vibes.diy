@@ -194,7 +194,7 @@ export async function selectLlmsAndOptions(
     chatUrl: opts.callAiEndpoint
       ? opts.callAiEndpoint.toString().replace(/\/+$/, "")
       : undefined,
-    apiKey: "sk-vibes-proxy-managed",
+    apiKey: (await opts.getAuthToken?.()) || "",
     model,
     schema: {
       name: "module_and_options_selection",
