@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Lazy } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
+import { useAuth } from "@clerk/clerk-react";
 import { mountVibeWithCleanup } from "use-vibes";
 import { setupDevShims, transformImportsDev } from "../../utils/dev-shims.js";
 
@@ -17,6 +18,7 @@ export function InlinePreview({
   sessionId,
   codeReady,
 }: InlinePreviewProps) {
+  const { getToken } = useAuth();
   const [containerId] = useState(
     () => `preview-container-${sthis().nextId().str}`,
   );
@@ -39,6 +41,9 @@ export function InlinePreview({
           unmountVibeRef.current = null;
         }
 
+        // Get Clerk token to pass to vibe context
+        const clerkToken = await getToken();
+
         // Mount the vibe code and capture the unmount callback via event
         const unmount = await mountVibeWithCleanup(
           code,
@@ -47,6 +52,7 @@ export function InlinePreview({
           "preview", // Use "preview" as installId for result preview context
           transformImportsDev,
           false, // Hide vibes switch in result preview mode
+          clerkToken || undefined,
         );
 
         if (active) {

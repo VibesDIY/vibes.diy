@@ -70,6 +70,12 @@ export function mountVibesApp(options: MountVibesAppOptions): MountVibesAppResul
       }
       throw error;
     }
+
+    // Set window.CALLAI_API_KEY if apiKey is provided in metadata
+    // This allows call-ai to pick up the key automatically
+    if (vibeMetadata.apiKey && typeof window !== 'undefined') {
+      (window as any).CALLAI_API_KEY = vibeMetadata.apiKey;
+    }
   }
 
   const root = ReactDOM.createRoot(container);

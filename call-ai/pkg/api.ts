@@ -370,8 +370,13 @@ function prepareRequestParams(
   requestOptions: RequestInit;
   schemaStrategy: SchemaStrategy;
 } {
-  // The API key (Clerk session token) must be provided via options.apiKey
-  const apiKey = options.apiKey;
+  // Try to get API key from multiple sources (in priority order):
+  // 1. Explicit options.apiKey parameter (highest priority)
+  // 2. window.CALLAI_API_KEY global (set by vibe host)
+  // 3. Environment variable via callAiEnv
+  const apiKey = options.apiKey || callAiEnv.CALLAI_API_KEY; // This checks window.CALLAI_API_KEY
+
+  // Only throw if no API key found from any source
   if (!apiKey) {
     throw new CallAIError({
       message: "API key is required",
