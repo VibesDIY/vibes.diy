@@ -36,15 +36,20 @@ jobs:
       - name: Determine deployment type
         id: deployment
         run: |
+          # Determine target environment
           if [[ "${{ github.event_name }}" == "push" ]]; then
-            echo "type=production" >> $GITHUB_OUTPUT  
-            echo "worker_name=vibes-hosting-v2" >> $GITHUB_OUTPUT
-            echo "environment=production" >> $GITHUB_OUTPUT
+            TARGET_ENV="production"
           else
-            echo "type=manual" >> $GITHUB_OUTPUT
-            echo "worker_name=vibes-hosting-v2" >> $GITHUB_OUTPUT
-            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            TARGET_ENV="${{ github.event.inputs.environment }}"
           fi
+
+          echo "environment=${TARGET_ENV}" >> $GITHUB_OUTPUT
+
+          # Set worker name only for non-production environments
+          if [[ "${TARGET_ENV}" == "preview" ]]; then
+            echo "worker_name=vibes-hosting-v2-preview" >> $GITHUB_OUTPUT
+          fi
+          # For production/dev, don't set worker_name (uses default from wrangler.jsonc)
 
       - name: Deploy hosting worker
         id: deploy
