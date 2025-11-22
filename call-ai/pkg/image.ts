@@ -34,6 +34,10 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       const origin = customOrigin || callAiEnv.def.CALLAI_CHAT_URL;
       const generateEndpoint = joinUrlParts(origin, "/api/openai-image/generate");
 
+      if (!apiKey) {
+        throw new Error("API key is required for image generation (simple)");
+      }
+
       // HTTP headers for the request
       const headers = new Headers({
         Authorization: `Bearer ${apiKey}`,
@@ -92,6 +96,10 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       // Use custom origin or proper API fallback
       const origin = customOrigin || callAiEnv.def.CALLAI_CHAT_URL;
       const editEndpoint = joinUrlParts(origin, "/api/openai-image/edit");
+
+      if (!apiKey) {
+        throw new Error("API key is required for image generation (edit)");
+      }
 
       // HTTP headers for the request
       const headers = new Headers({
