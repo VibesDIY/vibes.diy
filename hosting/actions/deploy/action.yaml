@@ -31,9 +31,6 @@ inputs:
   CLERK_SECRET_KEY_TEST:
     description: "Clerk test secret key for development/testing"
     required: false
-  CLERK_PUBLISHABLE_KEY:
-    description: "Clerk publishable key for frontend authentication"
-    required: true
   DISCORD_WEBHOOK_URL:
     description: "Discord webhook URL for notifications (optional)"
     required: false
@@ -98,7 +95,6 @@ runs:
 
         # Required Clerk keys
         echo "${{ inputs.CLERK_SECRET_KEY }}" | npx wrangler secret put CLERK_SECRET_KEY
-        echo "${{ inputs.CLERK_PUBLISHABLE_KEY }}" | npx wrangler secret put CLERK_PUBLISHABLE_KEY
 
         # Optional Clerk test key
         if [ -n "${{ inputs.CLERK_SECRET_KEY_TEST }}" ]; then
