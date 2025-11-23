@@ -42,12 +42,10 @@ describe("Claude JSON Property Splitting Test", () => {
         const reader = this.body!.getReader();
         while (true) {
           const x = await reader.read();
-          // console.log("Reading...", x);
           const { done, value } = x;
           if (done) break;
           result += new TextDecoder().decode(value);
         }
-        // console.log("xxxx", result);
         return result;
       },
       body: {
@@ -110,11 +108,8 @@ describe("Claude JSON Property Splitting Test", () => {
     let chunkCount = 0;
 
     for await (const chunk of generator) {
-      console.log(`Chunk ${++chunkCount}:`, chunk);
       finalResult = chunk;
     }
-
-    console.log("Final result:", finalResult);
 
     // The key test - our implementation should produce valid JSON
     // despite the property name "population" being split across chunks

@@ -7,15 +7,13 @@ import { render } from '@testing-library/react';
 // Mock use-fireproof module (placed before imports that use it)
 vi.mock('use-fireproof', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
-  console.log('>>>>>>', actual.ImgFile);
+
   return {
     ...actual,
     File: vi.fn().mockImplementation((data, name, options) => {
-      // console.log('>>>>> File', { data, name, options });
       return { name, type: options?.type };
     }),
     ImgFile: vi.fn().mockImplementation(({ className, alt, style }) => {
-      // console.log('>>>>> ImgFile', { className, alt, style });
       return React.createElement(
         'div',
         {
@@ -34,7 +32,6 @@ vi.mock('use-fireproof', async (importOriginal) => {
     // )),
     // ImgGenDisplay: vi.fn().mockImplementation((opts) => {
 
-    //   console.log(">>>>>", opts, actual().then(i => console.log("xxxxx", "ImgGenDisplay" in i)))
     // }),
 
     // return React.createElement(

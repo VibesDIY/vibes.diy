@@ -75,7 +75,6 @@ describe("Simple callAi integration tests", () => {
       `should generate recipe with ${modelName} model using schema`,
       async () => {
         // Make API call with a recipe schema
-        console.log("xxxx", modelId);
         const result = await callAi("Create a recipe for a healthy dinner.", {
           apiKey: callAiEnv.CALLAI_API_KEY,
           model: modelId.id,

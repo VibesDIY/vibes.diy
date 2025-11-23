@@ -14,15 +14,11 @@ describe("Call-AI Vision Recognition", () => {
   itif(Boolean(haveApiKey))(
     "should analyze cat.png with callAi function",
     async () => {
-      console.log("Testing vision recognition with callAi");
-
       // Read the image file and convert to base64
       const imagePath = path.resolve(__dirname, "../fixtures/cat.png");
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
       const dataUri = `data:image/png;base64,${base64Image}`;
-
-      console.log("Image loaded and converted to base64");
 
       // Create a multimodal message for vision using the library's ContentItem type
       const content: ContentItem[] = [
@@ -38,17 +34,12 @@ describe("Call-AI Vision Recognition", () => {
         },
       ];
 
-      console.log("Calling callAi with vision model");
-
       try {
         // Call the callAi function with the vision model
         const result = await callAi([{ role: "user", content }], {
           apiKey: callAiEnv.CALLAI_API_KEY,
           model: "openai/gpt-4o-2024-08-06",
         });
-
-        console.log("Vision model's description of the image:");
-        console.log(result);
 
         // Verify that the response contains a description of a cat
         // TypeScript needs assurance that result is a string

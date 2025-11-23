@@ -62,16 +62,9 @@ describe('useVibes with iframe integration', () => {
   });
 
   it('should return IframeVibesComponent when code is extracted', async () => {
-    console.log('🧪 TEST Starting: should return IframeVibesComponent when code is extracted');
-    const startTime = performance.now();
+    const _startTime = performance.now();
 
-    const mockCallAI = vi.fn().mockImplementation((messages, options) => {
-      console.log(
-        '🧪 MOCK callAI called with messages:',
-        messages?.length,
-        'model:',
-        options?.model
-      );
+    const mockCallAI = vi.fn().mockImplementation((_messages, _options) => {
       return Promise.resolve(`
 Here's a button component:
 
@@ -93,18 +86,15 @@ This creates a simple button.
     expect(result.current.loading).toBe(true);
     expect(result.current.App).toBe(null);
 
-    console.log('🧪 TEST Waiting for completion...');
     // Wait for the hook to complete with reduced timeout
     await waitFor(
       () => {
-        console.log('🧪 TEST Loading state:', result.current.loading);
         expect(result.current.loading).toBe(false);
       },
       { timeout: 2000, interval: 50 }
     );
 
-    const endTime = performance.now();
-    console.log(`🧪 TEST Completed in ${endTime - startTime}ms`);
+    const _endTime = performance.now();
 
     // Should have extracted the code
     expect(result.current.code).toContain('function App()');

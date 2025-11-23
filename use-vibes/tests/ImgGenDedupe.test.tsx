@@ -17,7 +17,7 @@ const mockData = vi.hoisted(() => {
 // since they're hoisted to the top of the file before normal initialization
 // const mockImageGen = vi.hoisted(() => {
 //   return vi.fn().mockImplementation((prompt, _options) => {
-//     console.log(`[Mock imageGen] called with: ${prompt}`);
+
 //     return Promise.resolve({
 //       created: Date.now(),
 //       data: [
@@ -33,8 +33,7 @@ const mockData = vi.hoisted(() => {
 
 // Mock the callImageGeneration function which is created by createImageGenerator
 const mockCallImageGen = vi.hoisted(() => {
-  return vi.fn().mockImplementation((prompt, _options) => {
-    console.log(`[Mock callImageGen] called with: ${prompt}`);
+  return vi.fn().mockImplementation((_prompt, _options) => {
     return Promise.resolve({
       created: Date.now(),
       data: [
@@ -54,7 +53,6 @@ vi.hoisted(() => {
     // Return a function that immediately calls mockCallImageGen when invoked
     // This ensures that the hook can call it properly with the right parameters
     return function actualCallImageGeneration(prompt: string, options: unknown) {
-      console.log(`[Mock createImageGenerator] Generated function called with: ${prompt}`);
       // Forward all arguments to the mock implementation
       return mockCallImageGen(prompt, options);
     };
@@ -64,8 +62,6 @@ vi.hoisted(() => {
 // Mock database operations
 const mockDbPut = vi.hoisted(() => {
   return vi.fn().mockImplementation((doc) => {
-    console.log('[Mock DB] Put called with document:', doc.type);
-
     // Track all database puts
     const docWithId = {
       ...doc,
@@ -145,7 +141,7 @@ const mockImgFile = vi.hoisted(() => {
 
 //       // Track in module state and write to DB
 //       MODULE_STATE.createdDocuments.set(stableKey, docId);
-//       console.log(`[TEST] Creating document for prompt: ${prompt}`);
+
 //       mockDbPut(doc);
 //     }, [prompt, JSON.stringify(options)]);
 

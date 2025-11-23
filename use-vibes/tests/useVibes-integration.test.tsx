@@ -84,16 +84,9 @@ describe('useVibes Integration Tests', () => {
   });
 
   it('should complete full flow from prompt to iframe render', async () => {
-    console.log('🧪 TEST Starting: should complete full flow from prompt to iframe render');
-    const startTime = performance.now();
+    const _startTime = performance.now();
 
-    const mockCallAI = vi.fn().mockImplementation((messages, options) => {
-      console.log(
-        '🧪 MOCK callAI called with messages:',
-        messages?.length,
-        'model:',
-        options?.model
-      );
+    const mockCallAI = vi.fn().mockImplementation((_messages, _options) => {
       return Promise.resolve(`
 Here's your todo app:
 
@@ -171,17 +164,14 @@ This creates a fully functional todo app with Fireproof for data persistence.
     expect(result.current.code).toBe(null);
 
     // Wait for AI response and parsing
-    console.log('🧪 TEST Waiting for completion...');
     await waitFor(
       () => {
-        console.log('🧪 TEST Loading state:', result.current.loading);
         expect(result.current.loading).toBe(false);
       },
       { timeout: 2000, interval: 50 }
     );
 
-    const endTime = performance.now();
-    console.log(`🧪 TEST Completed in ${endTime - startTime}ms`);
+    const _endTime = performance.now();
 
     // Verify code was extracted correctly
     expect(result.current.code).toContain('TodoApp');
@@ -235,9 +225,6 @@ export default function DataDashboard() {
         }
       })
       setData(lodash.shuffle(response.items))
-    } catch (error) {
-      console.error("Failed to fetch data:", error)
-    } finally {
       setLoading(false)
     }
   }

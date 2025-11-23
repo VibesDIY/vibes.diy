@@ -8,7 +8,6 @@ import { imageGen } from 'call-ai';
 vi.mock('call-ai', () => {
   return {
     imageGen: vi.fn().mockImplementation((prompt, options) => {
-      console.log('imageGen called with:', prompt, options);
       return Promise.resolve({
         created: Date.now(),
         data: [
@@ -64,7 +63,6 @@ describe('ImgGen Render Test', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     // Check how many times imageGen was called
-    console.log('Number of imageGen calls:', mockImageGen.mock.calls.length);
 
     // This should be 1, but the bug might show 2 or more
     expect(mockImageGen).toHaveBeenCalledTimes(1);
@@ -94,7 +92,6 @@ describe('ImgGen Render Test', () => {
 
     // Check initial calls
     const initialCalls = mockImageGen.mock.calls.length;
-    console.log('Initial imageGen calls:', initialCalls);
 
     // Change the prompt
     await act(async () => {
@@ -106,7 +103,6 @@ describe('ImgGen Render Test', () => {
 
     // Should only have one additional call
     const finalCalls = mockImageGen.mock.calls.length;
-    console.log('Final imageGen calls:', finalCalls);
 
     // We expect exactly one more call
     expect(finalCalls).toBe(initialCalls + 1);
