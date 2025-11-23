@@ -11,7 +11,8 @@ export async function mountVibeWithCleanup(
   installId: string,
   transformImports: (code: string) => string,
   showVibesSwitch = true,
-  apiKey?: string
+  apiKey?: string,
+  chatUrl?: string
 ): Promise<() => void> {
   return new Promise<() => void>((resolve) => {
     const resolveOnce = new ResolveOnce<void>();
@@ -73,7 +74,8 @@ export async function mountVibeWithCleanup(
       installId,
       transformImports,
       showVibesSwitch,
-      apiKey
+      apiKey,
+      chatUrl
     ).catch((_err) => {
       // Babel/transform errors - caught before module execution
       resolveOnce.once(() => {

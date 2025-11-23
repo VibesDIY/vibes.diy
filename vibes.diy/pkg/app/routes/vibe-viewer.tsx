@@ -94,12 +94,16 @@ function VibeInstanceViewerContent() {
         // Get Clerk token for API authentication
         const clerkToken = await getToken();
 
+        // Get configured API endpoint (respects preview mode via env)
+        const callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
+
         console.log("[vibe-viewer] Got Clerk token:", {
           hasToken: !!clerkToken,
           tokenLength: clerkToken?.length,
           tokenPrefix: clerkToken?.substring(0, 10),
           tokenSuffix: clerkToken?.substring(clerkToken.length - 10),
           fetchedAt: Date.now(),
+          callaiEndpoint,
           titleId,
           installId,
         });
@@ -113,6 +117,7 @@ function VibeInstanceViewerContent() {
           transformImportsDev,
           true, // showVibesSwitch
           clerkToken || undefined, // Pass Clerk token as apiKey
+          callaiEndpoint, // Pass API endpoint so vibe uses same endpoint as host
         );
       } catch (err) {
         console.error("Error loading vibe:", err);

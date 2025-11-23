@@ -4,6 +4,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { mountVibeWithCleanup } from "use-vibes";
 import { setupDevShims, transformImportsDev } from "../../utils/dev-shims.js";
 import { useAuth } from "@clerk/clerk-react";
+import { VibesDiyEnv } from "../../config/env.js";
 
 const sthis = Lazy(() => ensureSuperThis());
 
@@ -44,6 +45,9 @@ export function InlinePreview({
         // Get Clerk token for API authentication
         const clerkToken = await getToken();
 
+        // Get configured API endpoint (respects preview mode via env)
+        const callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
+
         // Mount the vibe code and capture the unmount callback via event
         const unmount = await mountVibeWithCleanup(
           code,
@@ -53,6 +57,7 @@ export function InlinePreview({
           transformImportsDev,
           false, // Hide vibes switch in result preview mode
           clerkToken || undefined, // Pass Clerk token as apiKey
+          callaiEndpoint, // Pass API endpoint so vibe uses same endpoint as host
         );
 
         if (active) {
