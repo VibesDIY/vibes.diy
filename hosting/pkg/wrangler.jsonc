@@ -107,7 +107,7 @@
           "id": "342352a479b64835931b4e5f9f3277a0",
         },
       ],
-      // Use same queue configuration as production
+      // Preview can produce to the queue, but only production consumes it
       "queues": {
         "producers": [
           {
@@ -116,15 +116,7 @@
             "delivery_delay": 0,
           },
         ],
-        "consumers": [
-          {
-            "queue": "publish-events-v2",
-            "max_batch_size": 10,
-            "max_batch_timeout": 30,
-            "max_retries": 3,
-            "dead_letter_queue": "publish-events-v2-dlq",
-          },
-        ],
+        // No consumers - only production worker processes the queue
       },
       // Use same vars as production (but note ENVIRONMENT still says "production")
       "vars": {
