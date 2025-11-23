@@ -45,11 +45,10 @@ jobs:
 
           echo "environment=${TARGET_ENV}" >> $GITHUB_OUTPUT
 
-          # Set worker name only for non-production environments
-          if [[ "${TARGET_ENV}" == "preview" ]]; then
-            echo "worker_name=vibes-hosting-v2-preview" >> $GITHUB_OUTPUT
-          fi
-          # For production/dev, don't set worker_name (uses default from wrangler.jsonc)
+          # Don't set worker_name - let the deploy action use --env flag
+          # This allows wrangler to automatically append environment suffix
+          # Production: vibes-hosting-v2
+          # Preview: vibes-hosting-v2-preview (via --env preview)
 
       - name: Deploy hosting worker
         id: deploy

@@ -50,6 +50,19 @@ const openapi = fromHono(app, {
   docs_url: "/docs",
 });
 
+// Add diagnostic logging for environment variables
+openapi.use("/api/*", async (c, next) => {
+  const env = c.env as Env;
+  console.log("🔍 Environment check:", {
+    hasClerkSecretKey: !!env.CLERK_SECRET_KEY,
+    hasClerkPublishableKey: !!env.CLERK_PUBLISHABLE_KEY,
+    clerkSecretKeyPrefix: env.CLERK_SECRET_KEY?.substring(0, 10),
+    clerkPublishableKeyPrefix: env.CLERK_PUBLISHABLE_KEY?.substring(0, 10),
+    path: c.req.path,
+  });
+  await next();
+});
+
 // Add Clerk authentication middleware
 openapi.use("/api/*", clerkMiddleware());
 

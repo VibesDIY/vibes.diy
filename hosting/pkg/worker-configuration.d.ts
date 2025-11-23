@@ -6,6 +6,7 @@ declare namespace Cloudflare {
     PUBLISH_QUEUE: Queue;
     CLERK_SECRET_KEY: string;
     CLERK_SECRET_KEY_TEST?: string;
+    CLERK_PUBLISHABLE_KEY: string;
   }
 }
 interface Env extends Cloudflare.Env {}

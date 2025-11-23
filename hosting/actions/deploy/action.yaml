@@ -70,16 +70,26 @@ runs:
       run: |
         cd hosting/pkg
 
-        # Determine worker name and environment
+        # Determine worker name and deployment strategy
         if [ -n "${{ inputs.worker_name }}" ]; then
+          # Custom worker name provided (e.g., PR previews)
+          # Use --name only to avoid environment suffix duplication
           WORKER_NAME="${{ inputs.worker_name }}"
-          ENV_FLAG="--env ${{ inputs.environment }}"
-          echo "🚀 Deploying ${WORKER_NAME} worker (environment: ${{ inputs.environment }})..."
-          npx wrangler deploy --name ${WORKER_NAME} ${ENV_FLAG}
+          echo "🚀 Deploying ${WORKER_NAME} worker (custom name)..."
+          npx wrangler deploy --name ${WORKER_NAME}
         else
-          WORKER_NAME="vibes-hosting-v2"
-          echo "🚀 Deploying ${WORKER_NAME} worker (default production)..."
-          npx wrangler deploy --env=""
+          # Use default name from wrangler.jsonc with environment
+          if [ "${{ inputs.environment }}" = "preview" ]; then
+            # Let wrangler append the environment suffix
+            WORKER_NAME="vibes-hosting-v2-preview"
+            echo "🚀 Deploying ${WORKER_NAME} worker (preview environment)..."
+            npx wrangler deploy --env preview
+          else
+            # Production deployment - use base configuration
+            WORKER_NAME="vibes-hosting-v2"
+            echo "🚀 Deploying ${WORKER_NAME} worker (production)..."
+            npx wrangler deploy
+          fi
         fi
 
         echo "✅ Worker deployed successfully"
@@ -97,9 +107,15 @@ runs:
 
         # Set flags to match deployment configuration
         if [ -n "${{ inputs.worker_name }}" ]; then
-          WRANGLER_FLAGS="--name ${{ inputs.worker_name }} --env ${{ inputs.environment }}"
+          # Custom worker name - use --name only (no --env to avoid duplication)
+          WRANGLER_FLAGS="--name ${{ inputs.worker_name }}"
         else
-          WRANGLER_FLAGS=""
+          # Default name - use --env for preview, nothing for production
+          if [ "${{ inputs.environment }}" = "preview" ]; then
+            WRANGLER_FLAGS="--env preview"
+          else
+            WRANGLER_FLAGS=""
+          fi
         fi
 
         echo "🔐 Setting required API secrets..."
