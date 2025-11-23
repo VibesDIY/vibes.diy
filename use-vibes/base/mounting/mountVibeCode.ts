@@ -18,7 +18,8 @@ export async function mountVibeCode(
   titleId: string,
   installId: string,
   transformImports: (code: string) => string,
-  showVibesSwitch = true
+  showVibesSwitch = true,
+  apiKey?: string
 ): Promise<void> {
   let objectURL: string | undefined;
 
@@ -64,6 +65,7 @@ export async function mountVibeCode(
       vibeMetadata: {
         titleId: titleId,
         installId: installId,
+        ...(apiKey && { apiKey }),
       },
     });
 

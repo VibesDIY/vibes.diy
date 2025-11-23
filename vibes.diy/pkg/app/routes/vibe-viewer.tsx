@@ -35,6 +35,7 @@ function VibeInstanceViewerContent() {
     titleId: string;
     installId: string;
   }>();
+  const { getToken } = useAuth();
   const [error, setError] = useState<string | null>(null);
   // Generate unique container ID using crypto.randomUUID
   // Regenerate on each navigation to make debugging easier
@@ -90,6 +91,9 @@ function VibeInstanceViewerContent() {
 
         if (!active) return;
 
+        // Get Clerk token to pass to vibe context
+        const clerkToken = await getToken();
+
         // Mount the vibe code and capture the unmount callback via event
         unmountVibe = await mountVibeWithCleanup(
           vibeCode,
@@ -97,6 +101,8 @@ function VibeInstanceViewerContent() {
           titleId,
           installId,
           transformImportsDev,
+          true,
+          clerkToken || undefined,
         );
       } catch (err) {
         console.error("Error loading vibe:", err);
