@@ -21,43 +21,25 @@ export interface QueueEnv {
 
 export default {
   async queue(batch: MessageBatch, env: QueueEnv) {
-    console.log(`📦 Queue batch received: ${batch.messages.length} messages`);
-
     for (const message of batch.messages) {
-      console.log(`🔄 Processing message ID: ${message.id}`);
       const result = PublishEvent.safeParse(message.body);
 
       if (!result.success) {
         console.error(`❌ Invalid message format:`, result.error);
         message.retry();
-        console.log(`🔄 Message ${message.id} scheduled for retry`);
         continue;
       }
 
       const event = result.data;
 
-      console.log(`📊 Event details:`, {
-        type: event.type,
-        appSlug: event.app.slug,
-        userId: event.metadata.userId,
-        isUpdate: event.metadata.isUpdate,
-        timestamp: new Date(event.metadata.timestamp).toISOString(),
-      });
-
       try {
         await processAppEvent(event, env);
         message.ack();
-        console.log(`✅ Message ${message.id} processed successfully`);
       } catch (error) {
         console.error(`❌ Error processing message ${message.id}:`, error);
         message.retry();
-        console.log(`🔄 Message ${message.id} scheduled for retry`);
       }
     }
-
-    console.log(
-      `🏁 Batch processing complete: ${batch.messages.length} messages handled`,
-    );
   },
 };
 
@@ -67,20 +49,15 @@ async function processAppEvent(
 ) {
   const { type, app } = event;
 
-  console.log(`🎯 Processing ${type} event for app ${app.slug}`);
-  const startTime = Date.now();
-
   const tasks = [postToDiscord(app, env)];
 
   // Add Bluesky posting if shareToFirehose is enabled
   if (app.shareToFirehose && env.BLUESKY_HANDLE && env.BLUESKY_APP_PASSWORD) {
     tasks.push(postToBluesky(app, env));
-    console.log(`🟦 Adding Bluesky posting task (shareToFirehose enabled)`);
   } else if (app.shareToFirehose) {
     console.warn(`⚠️ shareToFirehose enabled but Bluesky credentials missing`);
   }
 
-  console.log(`🚀 Starting ${tasks.length} background tasks...`);
   const results = await Promise.allSettled(tasks);
 
   let hasFailure = false;
@@ -90,13 +67,8 @@ async function processAppEvent(
     if (result.status === "rejected") {
       console.error(`❌ Task ${index} (${taskName}) failed:`, result.reason);
       hasFailure = true;
-    } else {
-      console.log(`✅ Task ${index} (${taskName}) completed successfully`);
     }
   });
-
-  const duration = Date.now() - startTime;
-  console.log(`⏱️ Event processing completed in ${duration}ms`);
 
   if (hasFailure) {
     throw new Error("One or more tasks failed during event processing");
@@ -161,13 +133,6 @@ ${app.prompt}
       ],
     };
 
-    console.log("Discord webhook body:", JSON.stringify(discordBody, null, 2));
-    console.log("Screenshot URL:", screenshotUrl);
-    console.log(
-      "Screenshot markdown:",
-      `![${app.title || app.name}](${screenshotUrl})`,
-    );
-
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -177,12 +142,6 @@ ${app.prompt}
     if (!response.ok) {
       throw new Error(
         `Discord webhook failed: ${response.status} ${response.statusText}`,
-      );
-    } else {
-      console.log(
-        `✅ Discord webhook sent successfully`,
-        response.status,
-        response.statusText,
       );
     }
   } catch (error) {
@@ -197,8 +156,6 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
   }
 
   try {
-    console.log(`🟦 Creating Bluesky session for ${env.BLUESKY_HANDLE}`);
-
     // Step 1: Create session
     const sessionResponse = await fetch(
       "https://bsky.social/xrpc/com.atproto.server.createSession",
@@ -225,7 +182,6 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
       refreshJwt: string;
       handle: string;
     };
-    console.log(`✅ Bluesky session created for DID: ${session.did}`);
 
     // Step 2: Get screenshot from KV and upload as blob
     const screenshotKey = `${app.slug}-screenshot`;
@@ -234,8 +190,6 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
     try {
       const screenshotData = await env.KV.get(screenshotKey, "arrayBuffer");
       if (screenshotData) {
-        console.log(`🟦 Uploading screenshot as blob for ${app.slug}`);
-
         const blobResponse = await fetch(
           "https://bsky.social/xrpc/com.atproto.repo.uploadBlob",
           {
@@ -251,14 +205,11 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
         if (blobResponse.ok) {
           const blobResult = (await blobResponse.json()) as AtProtoBlobResponse;
           thumbnailBlob = blobResult.blob;
-          console.log(`✅ Screenshot blob uploaded successfully`);
         } else {
           console.warn(
             `⚠️ Failed to upload screenshot blob: ${blobResponse.status}`,
           );
         }
-      } else {
-        console.log(`📷 No screenshot found for ${app.slug}`);
       }
     } catch (error) {
       console.warn(`⚠️ Error uploading screenshot blob:`, error);
@@ -291,12 +242,6 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
       embed: externalEmbed,
     };
 
-    console.log(`🟦 Creating Bluesky post with embed:`, {
-      text: post.text,
-      length: post.text.length,
-      hasThumb: !!thumbnailBlob,
-    });
-
     const postResponse = await fetch(
       "https://bsky.social/xrpc/com.atproto.repo.createRecord",
       {
@@ -319,15 +264,6 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
         `Failed to create Bluesky post: ${postResponse.status} ${errorText}`,
       );
     }
-
-    const postResult = (await postResponse.json()) as {
-      uri: string;
-      cid: string;
-    };
-    console.log(`✅ Bluesky post created successfully:`, {
-      uri: postResult.uri,
-      cid: postResult.cid,
-    });
   } catch (error) {
     console.error("Error posting to Bluesky:", error);
     throw error;

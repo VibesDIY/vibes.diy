@@ -25,15 +25,10 @@ describe("Call-AI Vision Recognition", () => {
   it(
     "should analyze cat.png with callAi function",
     async () => {
-      console.log("Testing vision recognition with callAi");
-
       // Read the image file and convert to base64
       const imageBuffer = await fetch("http://localhost:15731/fixtures/cat.png").then((r) => r.blob());
       const base64Image = await blobToBase64(imageBuffer);
-      console.log("Base64 image length:", base64Image.length);
       const dataUri = `data:image/png;base64,${base64Image}`;
-
-      console.log("Image loaded and converted to base64");
 
       // Create a multimodal message for vision using the library's ContentItem type
       const content: ContentItem[] = [
@@ -48,8 +43,6 @@ describe("Call-AI Vision Recognition", () => {
           },
         },
       ];
-
-      console.log("Calling callAi with vision model");
 
       try {
         // Call the callAi function with the vision model

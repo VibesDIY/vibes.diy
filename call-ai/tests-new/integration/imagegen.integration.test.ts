@@ -44,7 +44,6 @@ describe("Image Generation Integration Tests", () => {
       mock,
     });
 
-    console.log("Image editing test result:", result);
     // Verify the structure of the response
     expect(result).toBeDefined();
     expect(Array.isArray(result.data)).toBe(true);
@@ -75,8 +74,6 @@ describe("Image Generation Integration Tests", () => {
     const requestBody = JSON.parse(mockCall[1].body);
     expect(requestBody.prompt).toBe(testPrompt);
     expect(requestBody.model).toBe("gpt-image-1");
-
-    console.log("Image generation test completed successfully");
   });
 
   it("should handle image editing with multiple input images", async () => {
@@ -124,7 +121,5 @@ describe("Image Generation Integration Tests", () => {
         body: expect.any(FormData),
       }),
     );
-
-    console.log("Image editing test completed successfully");
   });
 });

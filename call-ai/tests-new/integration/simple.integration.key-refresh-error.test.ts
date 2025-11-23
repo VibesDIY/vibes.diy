@@ -131,19 +131,13 @@ describe("Simple callAi integration tests", () => {
             // Try to parse as JSON
             try {
               // Log the entire response for debugging
-              console.log(`\n===== Response from ${modelName} =====`);
-              console.log(result.substring(0, 500) + (result.length > 500 ? "..." : ""));
 
               const data = JSON.parse(result);
 
               // Log parsed data for debugging
-              console.log(`\n===== Parsed data from ${modelName} =====`);
-              console.log(JSON.stringify(data, null, 2));
 
               // Verify actual API call timing
               const meta = getMeta(result);
-              console.log(`\n===== Timing for ${modelName} =====`);
-              console.log(JSON.stringify(meta?.timing || "No timing data", null, 2));
 
               // Ensure the call took at least 5ms (to detect mocks or cached responses)
               if (meta?.timing?.duration !== undefined) {

@@ -18,7 +18,6 @@ describe("OpenAI Wire Protocol Tests", () => {
     return fetch("http://localhost:15731/fixtures/openai-stream-response.txt")
       .then(async (r) => {
         const text = await r.text();
-        // console.log("OpenAI Stream Response:", text);
         return text;
       })
       .catch((e) => {
@@ -55,7 +54,6 @@ describe("OpenAI Wire Protocol Tests", () => {
                 });
 
               let chunkIndex = 0;
-              // console.log("Chunks:", await openaiStreamResponseFixture());
 
               return {
                 read: async () => {
@@ -113,7 +111,6 @@ describe("OpenAI Wire Protocol Tests", () => {
     const actualRequestBody = JSON.parse(mock.fetch.mock.calls[0][1].body);
 
     const expectedRequestBody = await openaiRequestFixture();
-    console.log("Actual Request Body:", expectedRequestBody);
     // Check that the essential parts match our fixture
     expect(actualRequestBody.model).toEqual(expectedRequestBody.model);
     expect(actualRequestBody.messages).toEqual(expectedRequestBody.messages);
