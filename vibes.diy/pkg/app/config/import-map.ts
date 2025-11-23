@@ -3,7 +3,7 @@
  * Used by: root.tsx, eject-template.ts, hosting packages
  */
 
-const VIBES_VERSION = "0.18.1";
+const VIBES_VERSION = "0.18.3-dev-debug-log";
 
 export function getLibraryImportMap() {
   return {
