@@ -31,6 +31,7 @@ function getHostnameFromUrl(url: string): string {
 }
 
 function VibeInstanceViewerContent() {
+  const { getToken } = useAuth();
   const { titleId, installId } = useParams<{
     titleId: string;
     installId: string;
@@ -90,6 +91,9 @@ function VibeInstanceViewerContent() {
 
         if (!active) return;
 
+        // Get Clerk token for API authentication
+        const clerkToken = await getToken();
+
         // Mount the vibe code and capture the unmount callback via event
         unmountVibe = await mountVibeWithCleanup(
           vibeCode,
@@ -97,6 +101,8 @@ function VibeInstanceViewerContent() {
           titleId,
           installId,
           transformImportsDev,
+          true, // showVibesSwitch
+          clerkToken || undefined, // Pass Clerk token as apiKey
         );
       } catch (err) {
         console.error("Error loading vibe:", err);
