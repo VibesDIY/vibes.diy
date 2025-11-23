@@ -33,54 +33,15 @@ export async function mountVibeCode(
     // This allows call-ai to use these values when no explicit options are provided
     if (typeof window !== 'undefined') {
       if (apiKey) {
-        console.log('[mountVibeCode] Setting window.CALLAI_API_KEY:', {
-          tokenLength: apiKey.length,
-          tokenPrefix: apiKey.substring(0, 10),
-          tokenSuffix: apiKey.substring(apiKey.length - 10),
-          timestamp: Date.now(),
-          titleId,
-          installId,
-        });
         window.CALLAI_API_KEY = apiKey;
-
-        // Verify it was set correctly
-        console.log('[mountVibeCode] Verified window.CALLAI_API_KEY:', {
-          matches: window.CALLAI_API_KEY === apiKey,
-          actualLength: window.CALLAI_API_KEY?.length,
-          actualPrefix: window.CALLAI_API_KEY?.substring(0, 10),
-        });
       }
 
       if (chatUrl) {
-        console.log('[mountVibeCode] Setting window.CALLAI_CHAT_URL:', {
-          chatUrl,
-          timestamp: Date.now(),
-          titleId,
-          installId,
-        });
         window.CALLAI_CHAT_URL = chatUrl;
-
-        // Verify it was set correctly
-        console.log('[mountVibeCode] Verified window.CALLAI_CHAT_URL:', {
-          matches: window.CALLAI_CHAT_URL === chatUrl,
-          actual: window.CALLAI_CHAT_URL,
-        });
       }
 
       if (imgUrl) {
-        console.log('[mountVibeCode] Setting window.CALLAI_IMG_URL:', {
-          imgUrl,
-          timestamp: Date.now(),
-          titleId,
-          installId,
-        });
         window.CALLAI_IMG_URL = imgUrl;
-
-        // Verify it was set correctly
-        console.log('[mountVibeCode] Verified window.CALLAI_IMG_URL:', {
-          matches: window.CALLAI_IMG_URL === imgUrl,
-          actual: window.CALLAI_IMG_URL,
-        });
       }
     }
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)

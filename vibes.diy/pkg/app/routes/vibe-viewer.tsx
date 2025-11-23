@@ -97,17 +97,6 @@ function VibeInstanceViewerContent() {
         // Get configured API endpoint (respects preview mode via env)
         const callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
 
-        console.log("[vibe-viewer] Got Clerk token:", {
-          hasToken: !!clerkToken,
-          tokenLength: clerkToken?.length,
-          tokenPrefix: clerkToken?.substring(0, 10),
-          tokenSuffix: clerkToken?.substring(clerkToken.length - 10),
-          fetchedAt: Date.now(),
-          callaiEndpoint,
-          titleId,
-          installId,
-        });
-
         // Mount the vibe code and capture the unmount callback via event
         unmountVibe = await mountVibeWithCleanup(
           vibeCode,
