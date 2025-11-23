@@ -23,10 +23,6 @@ export async function generateImage(
   params: ImageGenerateRequest,
   apiKey: string,
 ): Promise<Response> {
-  console.log(
-    `🖼️ OpenAI Image: Generating image, userId: ${params.userId || "anonymous"}`,
-  );
-
   try {
     const {
       prompt,
@@ -50,10 +46,6 @@ export async function generateImage(
         },
       });
     }
-
-    console.log(
-      `🎨 OpenAI Image: Generate with prompt: "${prompt.substring(0, 50)}${prompt.length > 50 ? "..." : ""}"`,
-    );
 
     // Prepare request body
     const requestBody: Record<string, unknown> = {
@@ -133,10 +125,6 @@ export async function generateImage(
     }
 
     // Stream the response
-    console.log(
-      `✅ OpenAI Image: Successfully generated image - streaming response`,
-    );
-
     // Create a stream for the response
     const { readable, writable } = new TransformStream();
 
@@ -178,9 +166,6 @@ export async function editImage(
   params: ImageEditRequest,
   apiKey: string,
 ): Promise<Response> {
-  console.log(
-    `🖌️ OpenAI Image: Editing image, userId: ${params.userId || "anonymous"}`,
-  );
   try {
     const {
       prompt,
@@ -212,9 +197,6 @@ export async function editImage(
     // Process form data to extract images
     const formData = await c.req.formData();
     for (const [name, value] of formData.entries()) {
-      // Log the form field names we're receiving
-      console.log(`📄 Image Form Field: ${name}`);
-
       if (name === "image" && value instanceof File) {
         imageData = await value.arrayBuffer();
       } else if (name === "mask" && value instanceof File) {
@@ -243,13 +225,6 @@ export async function editImage(
         },
       );
     }
-
-    console.log(
-      `🎨 OpenAI Image: Edit with prompt: "${prompt.substring(0, 50)}${prompt.length > 50 ? "..." : ""}"`,
-    );
-    console.log(
-      `📊 OpenAI Image: Edit with ${imageData ? "single image" : ""} ${maskData ? "and mask" : ""} ${multipleImages.length > 0 ? `and ${multipleImages.length} reference images` : ""}`,
-    );
 
     // Prepare request body
     const formDataToSend = new FormData();
@@ -298,12 +273,6 @@ export async function editImage(
       }
     }
 
-    // Log what we're sending to OpenAI
-    console.log(
-      `📤 OpenAI Image: Sending edit request with fields:`,
-      [...formDataToSend.entries()].map((e) => e[0]),
-    );
-
     // Send request to OpenAI API
     try {
       const openaiResponse = await fetch(
@@ -315,17 +284,6 @@ export async function editImage(
           },
           body: formDataToSend,
         },
-      );
-
-      // Log response details
-      console.log(
-        `📥 OpenAI Image: Response status:`,
-        openaiResponse.status,
-        openaiResponse.statusText,
-      );
-      console.log(
-        `📥 OpenAI Image: Response headers:`,
-        Object.fromEntries(openaiResponse.headers.entries()),
       );
 
       // If there's an error from the OpenAI API, handle it
@@ -364,10 +322,6 @@ export async function editImage(
       }
 
       // Stream the response efficiently
-      console.log(
-        `✅ OpenAI Image: Successfully edited image - streaming response`,
-      );
-
       // Use native body with proper error handling
       const { readable, writable } = new TransformStream();
 
