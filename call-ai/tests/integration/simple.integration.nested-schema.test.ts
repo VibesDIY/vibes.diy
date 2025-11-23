@@ -151,7 +151,6 @@ describe("Simple callAi integration tests", () => {
           expectOrWarn(modelId, typeof result === "string", `Result is not a string but a ${typeof result} in ${modelName} model`);
 
           // Log raw response information
-          console.log(`Raw response for ${modelId.id}:`, resultMeta?.rawResponse ? "available" : "undefined");
 
           // Verify metadata
           expectOrWarn(modelId, !!resultMeta, `Metadata should be defined for ${modelName} model`);

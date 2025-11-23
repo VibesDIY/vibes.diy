@@ -13,14 +13,9 @@ describe("Vibe Slug Generator", () => {
       generatedSlugs.add(slug);
     }
 
-    // Print all generated slugs to console
-    console.log("\nGenerated 30 vibe slugs:");
-    slugs.forEach((slug, index) => {
-      console.log(`${index + 1}. ${slug}`);
-    });
-
-    // Check that we have 30 unique slugs (no duplicates)
-    console.log(`\nUnique slugs: ${generatedSlugs.size}/30`);
+    // Log the generated slugs for visual inspection
+    for (const [index, slug] of generatedSlugs.entries()) {
+    }
 
     // Test passes if all 30 slugs are unique
     expect(generatedSlugs.size).toBe(30);

@@ -19,12 +19,6 @@ const modelEntries = Object.entries(supportedModels);
 
 describe("Low Balance API Key Tests", () => {
   // Skip the entire test suite if no low balance API key is available
-  if (!callAiEnv.CALLAI_API_KEY) {
-    it.skip("Skipping low balance tests - no LOW_BALANCE_OPENROUTER_API_KEY available", () => {
-      /* no-op */
-    });
-    return;
-  }
 
   modelEntries.forEach(([modelName, modelInfo]) => {
     it(`should verify key limit exceeded error occurs with ${modelName} model`, async () => {
@@ -60,7 +54,6 @@ describe("Low Balance API Key Tests", () => {
         expect(errorStr).toContain("Key limit exceeded");
 
         // Log the error for visibility
-        console.log("Received expected low balance error:", errorStr.substring(0, 200));
       }
     });
   });
