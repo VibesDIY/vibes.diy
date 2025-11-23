@@ -128,8 +128,6 @@ export async function claudeChat(
   params: ClaudeMessagesRequest,
   apiKey: string,
 ): Promise<Response> {
-  console.log(`🤖 Claude API: Processing request, model: ${params.model}`);
-
   try {
     const { systemPrompt, claudeMessages } = convertToClaudeFormat(
       params.messages,
@@ -179,8 +177,6 @@ export async function claudeChat(
 
     // Handle streaming responses
     if (params.stream) {
-      console.log(`🔄 Claude API: Streaming response`);
-
       // Create a transformer to convert Claude stream format to OpenAI format
       const transformStream = new TransformStream({
         start(_controller) {
@@ -325,8 +321,6 @@ export async function claudeChat(
     }
 
     // For non-streaming responses, convert from Claude to OpenAI format
-    console.log(`✅ Claude API: Successfully processed request`);
-
     const claudeData = (await response.json()) as ClaudeMessagesResponse;
     const openAIFormat = convertToOpenAIFormat(claudeData);
 

@@ -131,9 +131,6 @@ export class OpenRouterChat extends OpenAPIRoute {
         );
       }
 
-      const userId = user?.userId;
-      const clientIp = c.req.header("cf-connecting-ip") ?? "";
-
       // Always use server's OpenRouter API key
       const apiKey = c.env.SERVER_OPENROUTER_API_KEY;
       if (!apiKey) {
@@ -148,10 +145,6 @@ export class OpenRouterChat extends OpenAPIRoute {
           500,
         );
       }
-
-      console.log(
-        `🤖 OpenRouter Chat: Processing request for user ${userId || "anonymous"} (IP: ${clientIp}), model: ${data.model}`,
-      );
 
       // Add OpenRouter specific headers
       const headers = {
@@ -173,8 +166,6 @@ export class OpenRouterChat extends OpenAPIRoute {
 
       // Handle streaming responses if requested
       if (data.stream) {
-        console.log(`🔄 OpenRouter Chat: Streaming response`);
-
         if (!response.ok) {
           const errorData = await response.json();
           console.error(`❌ OpenRouter Chat: Error:`, errorData);
@@ -235,8 +226,6 @@ export class OpenRouterChat extends OpenAPIRoute {
       }
 
       // For non-streaming responses, pass through the original response
-      console.log(`✅ OpenRouter Chat: Successfully processed request`);
-
       const responseData = await response.json();
 
       return c.json(responseData);

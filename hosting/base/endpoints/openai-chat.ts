@@ -35,8 +35,6 @@ export async function chatCompletion(
     params.model = params.model.replace("openai/", "");
   }
 
-  console.log(`🤖 OpenAI Chat: Processing request, model: ${params.model}`);
-
   try {
     const requestBody = { ...params };
 
@@ -52,7 +50,6 @@ export async function chatCompletion(
 
     // Handle streaming responses if requested
     if (params.stream) {
-      console.log(`🔄 OpenAI Chat: Streaming response`);
       // Create a stream for the response
       const { readable, writable } = new TransformStream();
 
@@ -93,8 +90,6 @@ export async function chatCompletion(
     }
 
     // For non-streaming responses, pass through the original response
-    console.log(`✅ OpenAI Chat: Successfully processed request`);
-
     const responseData = await response.json();
 
     return new Response(JSON.stringify(responseData), {
