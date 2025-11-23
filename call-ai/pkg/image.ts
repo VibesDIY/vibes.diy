@@ -30,13 +30,6 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
   // Get custom origin if set
   const customOrigin = options.imgUrl || callAiEnv.CALLAI_IMG_URL;
 
-  console.log('[imageGen] Debug endpoint resolution:', {
-    'options.imgUrl': options.imgUrl,
-    'callAiEnv.CALLAI_IMG_URL': callAiEnv.CALLAI_IMG_URL,
-    customOrigin,
-    'callAiEnv.def.CALLAI_CHAT_URL': callAiEnv.def.CALLAI_CHAT_URL,
-  });
-
   try {
     // Handle image generation
     if (!options.images || options.images.length === 0) {
@@ -44,12 +37,6 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       // Use custom origin or proper API fallback
       const origin = customOrigin || callAiEnv.def.CALLAI_CHAT_URL;
       const generateEndpoint = joinUrlParts(origin, "/api/openai-image/generate");
-
-      console.log('[imageGen] Final endpoint resolution:', {
-        origin,
-        generateEndpoint,
-        timestamp: Date.now(),
-      });
 
       if (!apiKey) {
         throw new Error("API key is required for image generation (simple)");
