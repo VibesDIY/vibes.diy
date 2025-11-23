@@ -19,6 +19,49 @@
  * }
  */
 
+// Inject CSS variables for VibeControl component
+if (typeof document !== 'undefined') {
+  const styleId = 'vibe-control-vars';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      :root {
+        --vc-button-bg: var(--vibes-red-bright);
+        --vc-button-bg-hover: var(--vibes-red-dark);
+        --vc-button-text: var(--vibes-white);
+        --vc-button-border: var(--vibes-red-bright);
+
+        --vc-overlay-backdrop: rgba(0, 0, 0, 0.5);
+        --vc-overlay-bg: var(--vibes-white);
+        --vc-overlay-text: var(--vibes-gray-dark);
+        --vc-overlay-border: var(--vibes-gray-ultralight);
+
+        --vc-close-bg: var(--vibes-gray-whisper);
+        --vc-close-bg-hover: var(--vibes-gray-ultralight);
+        --vc-close-text: var(--vibes-gray-medium);
+
+        --vc-accent: var(--vibes-blue-accent);
+        --vc-shadow: rgba(0, 0, 0, 0.15);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --vc-button-bg: var(--vibes-blue-darker);
+          --vc-button-bg-hover: var(--vibes-blue-dark);
+          --vc-overlay-bg: var(--vibes-near-black);
+          --vc-overlay-text: var(--vibes-gray-ultralight);
+          --vc-overlay-border: #404040;
+          --vc-close-bg: #2a2a2a;
+          --vc-close-bg-hover: #404040;
+          --vc-close-text: var(--vibes-gray-lighter);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
 // Position type for VibeControl button
 export type VibeControlPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
@@ -26,21 +69,21 @@ export type VibeControlPosition = 'bottom-right' | 'bottom-left' | 'top-right' |
 export const vibeControlTheme = {
   // Colors with dark mode support using CSS variables with fallbacks
   colors: {
-    buttonBg: 'var(--vc-button-bg, #dc2626)',
-    buttonBgHover: 'var(--vc-button-bg-hover, #b91c1c)',
-    buttonText: 'var(--vc-button-text, #ffffff)',
-    buttonBorder: 'var(--vc-button-border, #dc2626)',
+    buttonBg: 'var(--vc-button-bg, var(--vibes-red-bright))',
+    buttonBgHover: 'var(--vc-button-bg-hover, var(--vibes-red-dark))',
+    buttonText: 'var(--vc-button-text, var(--vibes-white))',
+    buttonBorder: 'var(--vc-button-border, var(--vibes-red-bright))',
 
     overlayBackdrop: 'var(--vc-overlay-backdrop, rgba(0, 0, 0, 0.5))',
-    overlayBg: 'var(--vc-overlay-bg, #ffffff)',
-    overlayText: 'var(--vc-overlay-text, #333333)',
-    overlayBorder: 'var(--vc-overlay-border, #e0e0e0)',
+    overlayBg: 'var(--vc-overlay-bg, var(--vibes-white))',
+    overlayText: 'var(--vc-overlay-text, var(--vibes-gray-dark))',
+    overlayBorder: 'var(--vc-overlay-border, var(--vibes-gray-ultralight))',
 
-    closeButtonBg: 'var(--vc-close-bg, #f5f5f5)',
-    closeButtonBgHover: 'var(--vc-close-bg-hover, #e0e0e0)',
-    closeButtonText: 'var(--vc-close-text, #666666)',
+    closeButtonBg: 'var(--vc-close-bg, var(--vibes-gray-whisper))',
+    closeButtonBgHover: 'var(--vc-close-bg-hover, var(--vibes-gray-ultralight))',
+    closeButtonText: 'var(--vc-close-text, var(--vibes-gray-medium))',
 
-    accent: 'var(--vc-accent, #0066cc)',
+    accent: 'var(--vc-accent, var(--vibes-blue-accent))',
     shadow: 'var(--vc-shadow, rgba(0, 0, 0, 0.15))',
   },
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { switchColors } from './VibesSwitch.styles.js';
+import '../../styles/colors.css';
 
 export interface VibesSwitchProps {
   size?: number | string;
