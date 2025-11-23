@@ -1,11 +1,12 @@
 import { mountVibesApp } from '../vibe-app-mount.js';
 
-// Declare Babel as a global loaded via CDN script tag
+// Declare Babel and CALLAI_API_KEY as globals loaded via CDN script tag or set at runtime
 declare global {
   interface Window {
     Babel: {
       transform: (code: string, options: { presets: string[] }) => { code: string | null };
     };
+    CALLAI_API_KEY?: string;
   }
 }
 
@@ -18,11 +19,17 @@ export async function mountVibeCode(
   titleId: string,
   installId: string,
   transformImports: (code: string) => string,
-  showVibesSwitch = true
+  showVibesSwitch = true,
+  apiKey?: string
 ): Promise<void> {
   let objectURL: string | undefined;
 
   try {
+    // Set window.CALLAI_API_KEY if apiKey is provided
+    // This allows call-ai to use the key via callAiEnv.CALLAI_API_KEY
+    if (apiKey && typeof window !== 'undefined') {
+      window.CALLAI_API_KEY = apiKey;
+    }
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
     const codeWithTransformedImports = transformImports(code);
 

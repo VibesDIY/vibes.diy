@@ -370,8 +370,8 @@ function prepareRequestParams(
   requestOptions: RequestInit;
   schemaStrategy: SchemaStrategy;
 } {
-  // The API key (Clerk session token) must be provided via options.apiKey
-  const apiKey = options.apiKey;
+  // Try multiple sources for the API key: explicit option, keyStore, or environment
+  const apiKey = options.apiKey || keyStore().current || callAiEnv.CALLAI_API_KEY;
   if (!apiKey) {
     throw new CallAIError({
       message: "API key is required",
