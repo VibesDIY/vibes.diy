@@ -57,7 +57,8 @@ export function InlinePreview({
           transformImportsDev,
           false, // Hide vibes switch in result preview mode
           clerkToken || undefined, // Pass Clerk token as apiKey
-          callaiEndpoint, // Pass API endpoint so vibe uses same endpoint as host
+          callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
+          callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
         );
 
         if (active) {

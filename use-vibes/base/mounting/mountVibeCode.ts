@@ -8,6 +8,7 @@ declare global {
     };
     CALLAI_API_KEY?: string;
     CALLAI_CHAT_URL?: string;
+    CALLAI_IMG_URL?: string;
   }
 }
 
@@ -22,7 +23,8 @@ export async function mountVibeCode(
   transformImports: (code: string) => string,
   showVibesSwitch = true,
   apiKey?: string,
-  chatUrl?: string
+  chatUrl?: string,
+  imgUrl?: string
 ): Promise<void> {
   let objectURL: string | undefined;
 
@@ -62,6 +64,22 @@ export async function mountVibeCode(
         console.log('[mountVibeCode] Verified window.CALLAI_CHAT_URL:', {
           matches: window.CALLAI_CHAT_URL === chatUrl,
           actual: window.CALLAI_CHAT_URL,
+        });
+      }
+
+      if (imgUrl) {
+        console.log('[mountVibeCode] Setting window.CALLAI_IMG_URL:', {
+          imgUrl,
+          timestamp: Date.now(),
+          titleId,
+          installId,
+        });
+        window.CALLAI_IMG_URL = imgUrl;
+
+        // Verify it was set correctly
+        console.log('[mountVibeCode] Verified window.CALLAI_IMG_URL:', {
+          matches: window.CALLAI_IMG_URL === imgUrl,
+          actual: window.CALLAI_IMG_URL,
         });
       }
     }
