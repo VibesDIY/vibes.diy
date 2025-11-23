@@ -26,6 +26,21 @@ export function InlinePreview({
   const [error, setError] = useState<string | null>(null);
   const unmountVibeRef = useRef<(() => void) | null>(null);
 
+  // Keep window.CALLAI_API_KEY fresh by periodically refreshing the Clerk token
+  useEffect(() => {
+    const refreshToken = async () => {
+      const freshToken = await getToken();
+      if (freshToken && typeof window !== "undefined") {
+        window.CALLAI_API_KEY = freshToken;
+      }
+    };
+
+    // Refresh token every 30 seconds (half of Clerk's 60-second token lifetime)
+    const interval = setInterval(refreshToken, 30000);
+
+    return () => clearInterval(interval);
+  }, [getToken]);
+
   useEffect(() => {
     if (!codeReady || !code) return;
 

@@ -63,6 +63,21 @@ function VibeInstanceViewerContent() {
     }
   }, [titleId, installId, instances, createInstance, isCreating]);
 
+  // Keep window.CALLAI_API_KEY fresh by periodically refreshing the Clerk token
+  useEffect(() => {
+    const refreshToken = async () => {
+      const freshToken = await getToken();
+      if (freshToken && typeof window !== "undefined") {
+        window.CALLAI_API_KEY = freshToken;
+      }
+    };
+
+    // Refresh token every 30 seconds (half of Clerk's 60-second token lifetime)
+    const interval = setInterval(refreshToken, 30000);
+
+    return () => clearInterval(interval);
+  }, [getToken]);
+
   useEffect(() => {
     if (!titleId || !installId) return;
 
