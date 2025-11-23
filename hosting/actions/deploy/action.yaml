@@ -98,27 +98,29 @@ runs:
       run: |
         cd hosting/pkg
 
-        # Set name flag if worker_name is provided
+        # Set flags to match deployment configuration
         if [ -n "${{ inputs.worker_name }}" ]; then
           NAME_FLAG="--name ${{ inputs.worker_name }}"
+          ENV_FLAG="--env ${{ inputs.environment }}"
         else
           NAME_FLAG=""
+          ENV_FLAG='--env=""'
         fi
 
         echo "🔐 Setting required API secrets..."
 
         # Required AI API keys
-        echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY $NAME_FLAG
-        echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY $NAME_FLAG
+        echo "${{ inputs.SERVER_OPENROUTER_API_KEY }}" | npx wrangler secret put SERVER_OPENROUTER_API_KEY $NAME_FLAG $ENV_FLAG
+        echo "${{ inputs.OPENAI_API_KEY }}" | npx wrangler secret put OPENAI_API_KEY $NAME_FLAG $ENV_FLAG
 
         # Required Clerk keys
-        echo "${{ inputs.CLERK_SECRET_KEY }}" | npx wrangler secret put CLERK_SECRET_KEY $NAME_FLAG
-        echo "${{ inputs.CLERK_PUBLISHABLE_KEY }}" | npx wrangler secret put CLERK_PUBLISHABLE_KEY $NAME_FLAG
+        echo "${{ inputs.CLERK_SECRET_KEY }}" | npx wrangler secret put CLERK_SECRET_KEY $NAME_FLAG $ENV_FLAG
+        echo "${{ inputs.CLERK_PUBLISHABLE_KEY }}" | npx wrangler secret put CLERK_PUBLISHABLE_KEY $NAME_FLAG $ENV_FLAG
 
         # Optional Clerk test key
         if [ -n "${{ inputs.CLERK_SECRET_KEY_TEST }}" ]; then
           echo "🔐 Setting Clerk test secret key..."
-          echo "${{ inputs.CLERK_SECRET_KEY_TEST }}" | npx wrangler secret put CLERK_SECRET_KEY_TEST $NAME_FLAG
+          echo "${{ inputs.CLERK_SECRET_KEY_TEST }}" | npx wrangler secret put CLERK_SECRET_KEY_TEST $NAME_FLAG $ENV_FLAG
         else
           echo "ℹ️  Clerk test key not provided (optional - localhost development will use live keys)"
         fi
@@ -128,7 +130,7 @@ runs:
         # Optional Anthropic key
         if [ -n "${{ inputs.ANTHROPIC_API_KEY }}" ]; then
           echo "🔐 Setting Anthropic API key..."
-          echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY $NAME_FLAG
+          echo "${{ inputs.ANTHROPIC_API_KEY }}" | npx wrangler secret put ANTHROPIC_API_KEY $NAME_FLAG $ENV_FLAG
         else
           echo "ℹ️  Anthropic API key not provided (optional - Claude endpoints will be disabled)"
         fi
@@ -136,14 +138,14 @@ runs:
         # Optional secrets
         if [ -n "${{ inputs.DISCORD_WEBHOOK_URL }}" ]; then
           echo "🔐 Setting Discord webhook..."
-          echo "${{ inputs.DISCORD_WEBHOOK_URL }}" | npx wrangler secret put DISCORD_WEBHOOK_URL $NAME_FLAG
+          echo "${{ inputs.DISCORD_WEBHOOK_URL }}" | npx wrangler secret put DISCORD_WEBHOOK_URL $NAME_FLAG $ENV_FLAG
         else
           echo "ℹ️  Discord webhook not provided (optional)"
         fi
 
         if [ -n "${{ inputs.BLUESKY_APP_PASSWORD }}" ]; then
           echo "🔐 Setting Bluesky credentials..."
-          echo "${{ inputs.BLUESKY_APP_PASSWORD }}" | npx wrangler secret put BLUESKY_APP_PASSWORD $NAME_FLAG
+          echo "${{ inputs.BLUESKY_APP_PASSWORD }}" | npx wrangler secret put BLUESKY_APP_PASSWORD $NAME_FLAG $ENV_FLAG
         else
           echo "ℹ️  Bluesky password not provided (optional)"
         fi
