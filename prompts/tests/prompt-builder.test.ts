@@ -56,7 +56,6 @@ let llmsJsonModules: JsonDocs;
 // }) as Record<string, { default: unknown }>;
 
 // Filter to only include our known set, deterministic order by name
-// console.log("llmsJsonModules", llmsJsonModules);
 let orderedLlms: LlmCatalogEntry[];
 
 // Load the raw text files; key by filepath, value is file contents

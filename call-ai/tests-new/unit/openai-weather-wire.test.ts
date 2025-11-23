@@ -19,7 +19,6 @@ describe("OpenAI Weather Streaming Tests", () => {
     return fetch("http://localhost:15731/fixtures/openai-weather-response.txt")
       .then(async (r) => {
         const text = await r.text();
-        // console.log("OpenAI Weather Response:", text);
         return text;
       })
       .catch((e) => {
