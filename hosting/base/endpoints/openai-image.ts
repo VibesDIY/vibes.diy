@@ -144,7 +144,6 @@ export async function generateImage(
       },
     });
   } catch (error: unknown) {
-    console.error(`❌ OpenAI Image: Error in generateImage:`, error);
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : String(error),
