@@ -32,7 +32,13 @@ export class CallAIEnv {
       CALLAI_IMG_URL?: string;
       callAi?: { IMG_URL?: string };
     };
-    return w?.CALLAI_IMG_URL ?? w?.callAi?.IMG_URL;
+    const result = w?.CALLAI_IMG_URL ?? w?.callAi?.IMG_URL;
+    console.log('[env] getWindowCALLAI_IMG_URL:', {
+      'window.CALLAI_IMG_URL': w?.CALLAI_IMG_URL,
+      'window.callAi.IMG_URL': w?.callAi?.IMG_URL,
+      result,
+    });
+    return result;
   }
 
   getWindowCALLAI_CHAT_URL() {
@@ -44,7 +50,15 @@ export class CallAIEnv {
   }
 
   get CALLAI_IMG_URL() {
-    return this.env().get("CALLAI_IMG_URL") ?? this.getWindowCALLAI_IMG_URL();
+    const envValue = this.env().get("CALLAI_IMG_URL");
+    const windowValue = this.getWindowCALLAI_IMG_URL();
+    const result = envValue ?? windowValue;
+    console.log('[env] CALLAI_IMG_URL getter:', {
+      envValue,
+      windowValue,
+      result,
+    });
+    return result;
   }
 
   get CALLAI_CHAT_URL() {
