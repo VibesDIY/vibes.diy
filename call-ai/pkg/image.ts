@@ -16,7 +16,11 @@ import { PACKAGE_VERSION } from "./version.js";
  * @returns A Promise that resolves to the image response containing base64 encoded image data
  */
 export async function imageGen(prompt: string, options: ImageGenOptions = {}): Promise<ImageResponse> {
-  const { model = "gpt-image-1", apiKey = "VIBES_DIY", debug = false, size = "1024x1024" } = options;
+  const { model = "gpt-image-1", apiKey = callAiEnv.CALLAI_API_KEY, debug = false, size = "1024x1024" } = options;
+
+  if (!apiKey) {
+    throw new Error("API key is required for image generation. Provide via options.apiKey or set window.CALLAI_API_KEY");
+  }
 
   if (debug) {
     console.log(`[imageGen:${PACKAGE_VERSION}] Generating image with prompt: ${prompt.substring(0, 50)}...`);
