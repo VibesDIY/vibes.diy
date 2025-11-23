@@ -161,7 +161,7 @@
     --vibes-border-input: var(--vibes-gray-mid);
 
     /* Shadows */
-    --vibes-shadow-color: var(--vibes-gray-mid);
+    --vibes-shadow-color: var(--vibes-near-black);
     --vibes-shadow-sm: rgba(255, 255, 255, 0.1);
     --vibes-shadow-md: rgba(255, 255, 255, 0.1);
     --vibes-shadow-lg: rgba(0, 0, 0, 0.5);
