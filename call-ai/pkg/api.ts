@@ -371,7 +371,32 @@ function prepareRequestParams(
   schemaStrategy: SchemaStrategy;
 } {
   // Try multiple sources for the API key: explicit option, keyStore, or environment
+  const optionsKey = options.apiKey;
+  const keyStoreKey = keyStore().current;
+  const windowKey = callAiEnv.CALLAI_API_KEY;
+
+  console.log("[call-ai] API key resolution debug:", {
+    optionsApiKey: optionsKey ? `${optionsKey.substring(0, 10)}...${optionsKey.substring(optionsKey.length - 10)}` : optionsKey,
+    optionsApiKeyType: typeof optionsKey,
+    optionsApiKeyLength: optionsKey?.length,
+    keyStoreCurrent: keyStoreKey
+      ? `${keyStoreKey.substring(0, 10)}...${keyStoreKey.substring(keyStoreKey.length - 10)}`
+      : keyStoreKey,
+    keyStoreType: typeof keyStoreKey,
+    windowGlobal: windowKey ? `${windowKey.substring(0, 10)}...${windowKey.substring(windowKey.length - 10)}` : windowKey,
+    windowType: typeof windowKey,
+    model: options.model,
+    endpoint: options.endpoint || "default",
+  });
+
   const apiKey = options.apiKey || keyStore().current || callAiEnv.CALLAI_API_KEY;
+
+  console.log("[call-ai] Resolved API key:", {
+    source: options.apiKey ? "options.apiKey" : keyStore().current ? "keyStore" : "window.CALLAI_API_KEY",
+    token: apiKey ? `${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 10)}` : apiKey,
+    tokenLength: apiKey?.length,
+  });
+
   if (!apiKey) {
     throw new CallAIError({
       message: "API key is required",
