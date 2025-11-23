@@ -28,7 +28,22 @@ export async function mountVibeCode(
     // Set window.CALLAI_API_KEY if apiKey is provided
     // This allows call-ai to use the key via callAiEnv.CALLAI_API_KEY
     if (apiKey && typeof window !== 'undefined') {
+      console.log('[mountVibeCode] Setting window.CALLAI_API_KEY:', {
+        tokenLength: apiKey.length,
+        tokenPrefix: apiKey.substring(0, 10),
+        tokenSuffix: apiKey.substring(apiKey.length - 10),
+        timestamp: Date.now(),
+        titleId,
+        installId,
+      });
       window.CALLAI_API_KEY = apiKey;
+
+      // Verify it was set correctly
+      console.log('[mountVibeCode] Verified window.CALLAI_API_KEY:', {
+        matches: window.CALLAI_API_KEY === apiKey,
+        actualLength: window.CALLAI_API_KEY?.length,
+        actualPrefix: window.CALLAI_API_KEY?.substring(0, 10),
+      });
     }
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
     const codeWithTransformedImports = transformImports(code);
