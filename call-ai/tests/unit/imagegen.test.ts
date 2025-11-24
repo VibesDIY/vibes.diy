@@ -76,6 +76,7 @@ describe("imageGen", () => {
       status: 200,
       statusText: "OK",
       json: vitest.fn().mockResolvedValue(mockImageResponse),
+      text: vitest.fn().mockResolvedValue(JSON.stringify(mockImageResponse)),
     });
   });
 
@@ -92,19 +93,25 @@ describe("imageGen", () => {
 
     // Check that fetch was called with the correct parameters
     expect(mock.fetch).toHaveBeenCalledTimes(1);
-    expect(mock.fetch).toHaveBeenCalledWith(
-      expect.stringMatching("/api/openai-image/generate"),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer VIBES_DIY",
-          "Content-Type": "application/json",
-        }),
-      }),
-    );
+    const [url, optionsArg] = mock.fetch.mock.calls[0];
+    
+    expect(url).toContain("/api/openai-image/generate");
+    expect(optionsArg.method).toBe("POST");
+    
+    // Check headers
+    const headers = optionsArg.headers;
+    expect(headers).toBeDefined();
+    if (headers instanceof Headers) {
+      expect(headers.get("Authorization")).toBe("Bearer VIBES_DIY");
+      expect(headers.get("Content-Type")).toBe("application/json");
+    } else {
+      // Fallback if headers is a plain object (though likely Headers in this env)
+      expect(headers["Authorization"]).toBe("Bearer VIBES_DIY");
+      expect(headers["Content-Type"]).toBe("application/json");
+    }
 
     // Check request body
-    const requestBody = JSON.parse(mock.fetch.mock.calls[0][1].body);
+    const requestBody = JSON.parse(optionsArg.body);
     expect(requestBody).toEqual({
       model: "gpt-image-1",
       prompt: "A children's book drawing of a veterinarian using a stethoscope to listen to the heartbeat of a baby otter.",
@@ -139,16 +146,23 @@ describe("imageGen", () => {
 
     // Check that fetch was called with the correct parameters
     expect(mock.fetch).toHaveBeenCalledTimes(1);
-    expect(mock.fetch).toHaveBeenCalledWith(
-      expect.stringMatching("/api/openai-image/edit"),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer VIBES_DIY",
-        }),
-        body: expect.any(FormData),
-      }),
-    );
+    const [url, optionsArg] = mock.fetch.mock.calls[0];
+    
+    expect(url).toContain("/api/openai-image/edit");
+    expect(optionsArg.method).toBe("POST");
+    
+    // Check headers
+    const headers = optionsArg.headers;
+    expect(headers).toBeDefined();
+    if (headers instanceof Headers) {
+      expect(headers.get("Authorization")).toBe("Bearer VIBES_DIY");
+      // Content-Type should NOT be set manually for FormData (browser sets it with boundary)
+      // or if it is set, it might be multipart/form-data
+    } else {
+      expect(headers["Authorization"]).toBe("Bearer VIBES_DIY");
+    }
+    
+    expect(optionsArg.body).toBeInstanceOf(FormData);
 
     // Check response structure
     expect(result).toEqual(mockImageResponse);
