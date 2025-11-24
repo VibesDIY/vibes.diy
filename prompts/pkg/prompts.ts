@@ -8,7 +8,7 @@ import {
   getLlmCatalogNames,
   LlmCatalogEntry,
 } from "./json-docs.js";
-import { getDefaultDependencies } from "./catalog.js";
+
 import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
 
@@ -16,9 +16,9 @@ import { defaultStylePrompt } from "./style-prompts.js";
 export const DEFAULT_CODING_MODEL = "anthropic/claude-sonnet-4.5" as const;
 
 // Model used for RAG decisions (module selection)
-export const RAG_DECISION_MODEL = "openai/gpt-4o" as const;
+const RAG_DECISION_MODEL = "openai/gpt-4o" as const;
 
-export async function defaultCodingModel() {
+async function defaultCodingModel() {
   return DEFAULT_CODING_MODEL;
 }
 
@@ -45,6 +45,10 @@ export async function resolveEffectiveModel(
   const globalChoice = normalizeModelIdInternal(settingsDoc?.model);
   if (globalChoice) return globalChoice;
   return defaultCodingModel();
+}
+
+export async function getDefaultDependencies(): Promise<string[]> {
+  return ["fireproof", "callai"];
 }
 
 export interface SystemPromptResult {
@@ -107,13 +111,13 @@ async function detectModulesInHistory(
   return detected;
 }
 
-export interface LlmSelectionDecisions {
+interface LlmSelectionDecisions {
   selected: string[];
   instructionalText: boolean;
   demoData: boolean;
 }
 
-export interface LlmSelectionOptions {
+interface LlmSelectionOptions {
   readonly appMode?: "test" | "production";
   readonly callAiEndpoint?: CoerceURI;
   readonly fallBackUrl?: CoerceURI;
@@ -122,7 +126,7 @@ export interface LlmSelectionOptions {
   readonly mock?: Mocks;
 }
 
-export type LlmSelectionWithFallbackUrl = Omit<
+type LlmSelectionWithFallbackUrl = Omit<
   Omit<LlmSelectionOptions, "fallBackUrl">,
   "callAiEndpoint"
 > & {
@@ -134,7 +138,8 @@ async function sleepReject<T>(ms: number) {
   return new Promise<T>((_, rj) => setTimeout(rj, ms));
 }
 
-export async function selectLlmsAndOptions(
+// move this to the other file along with referenced types
+async function selectLlmsAndOptions(
   model: string,
   userPrompt: string,
   history: HistoryMessage[],
@@ -217,7 +222,7 @@ export async function selectLlmsAndOptions(
       ]);
 
     const raw = (await withTimeout(
-      callCallAI(options)(messages, options),
+      (options.mock?.callAI || callAI)(messages, options),
     )) as string;
 
     if (raw === undefined || raw === null) {
@@ -244,10 +249,6 @@ export async function selectLlmsAndOptions(
     console.warn("Module/options selection call failed:", err);
     return { selected: [], instructionalText: true, demoData: true };
   }
-}
-
-function callCallAI(option: CallAIOptions) {
-  return option.mock?.callAI || callAI;
 }
 
 export function generateImportStatements(llms: LlmCatalogEntry[]) {
@@ -277,6 +278,7 @@ export function generateImportStatements(llms: LlmCatalogEntry[]) {
     .join("");
 }
 
+// move this function to its own file along with generateImportStatements and selectLlmsAndOptions, and rexport from here
 export async function makeBaseSystemPrompt(
   model: string,
   sessionDoc: Partial<UserSettings> & LlmSelectionOptions,
