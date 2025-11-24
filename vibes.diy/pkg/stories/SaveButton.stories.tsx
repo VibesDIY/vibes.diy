@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
-import { SaveButton } from "../app/components/ResultPreview/SaveButton/SaveButton.js";
+import { SaveButton } from "../app/components/ResultPreview/SaveButton.js";
 
 const meta = {
   title: "Components/Save Button",
