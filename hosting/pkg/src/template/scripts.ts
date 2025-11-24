@@ -75,23 +75,7 @@ export const scripts = /* javascript */ `
           }
         });
 
-        // Wire up login buttons to dispatch sync enable events
-        const loginButtons = [
-          document.getElementById('vibes-login-link'),
-          document.getElementById('vibes-login-link-connected')
-        ];
-
-        loginButtons.forEach(button => {
-          if (button) {
-            button.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-
-              // Dispatch custom event to enable sync
-              document.dispatchEvent(new CustomEvent('vibes-sync-enable'));
-            });
-          }
-        });
+        // TODO: Wire login buttons to enable sync with Clerk token
       });
 `;
 
