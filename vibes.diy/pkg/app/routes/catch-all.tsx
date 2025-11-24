@@ -46,24 +46,7 @@ export default function CatchAllDispatcher() {
 
 function NotFoundPage() {
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center"
-      style={{
-        background:
-          "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)",
-        backgroundImage: `
-        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
-        repeating-linear-gradient(
-          90deg,
-          transparent,
-          transparent 2px,
-          rgba(255, 255, 255, 0.02) 2px,
-          rgba(255, 255, 255, 0.02) 4px
-        )
-      `,
-      }}
-    >
+    <div className="grid-background flex min-h-screen flex-col items-center justify-center">
       {/* Film strip holes */}
       <div className="absolute top-0 bottom-0 left-4 flex w-6 flex-col justify-center space-y-4">
         {Array.from({ length: 20 }).map((_, i) => (
