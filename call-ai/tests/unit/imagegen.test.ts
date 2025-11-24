@@ -94,10 +94,10 @@ describe("imageGen", () => {
     // Check that fetch was called with the correct parameters
     expect(mock.fetch).toHaveBeenCalledTimes(1);
     const [url, optionsArg] = mock.fetch.mock.calls[0];
-    
+
     expect(url).toContain("/api/openai-image/generate");
     expect(optionsArg.method).toBe("POST");
-    
+
     // Check headers
     const headers = optionsArg.headers;
     expect(headers).toBeDefined();
@@ -147,10 +147,10 @@ describe("imageGen", () => {
     // Check that fetch was called with the correct parameters
     expect(mock.fetch).toHaveBeenCalledTimes(1);
     const [url, optionsArg] = mock.fetch.mock.calls[0];
-    
+
     expect(url).toContain("/api/openai-image/edit");
     expect(optionsArg.method).toBe("POST");
-    
+
     // Check headers
     const headers = optionsArg.headers;
     expect(headers).toBeDefined();
@@ -161,7 +161,7 @@ describe("imageGen", () => {
     } else {
       expect(headers["Authorization"]).toBe("Bearer VIBES_DIY");
     }
-    
+
     expect(optionsArg.body).toBeInstanceOf(FormData);
 
     // Check response structure
