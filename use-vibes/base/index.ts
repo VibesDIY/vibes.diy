@@ -178,6 +178,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
           Accept: 'application/json',
         },
         body: JSON.stringify({
+          // todo, after fireproof dashboard API imported, use that instead of raw fetch
           type: 'reqShareWithUser',
           auth: auth,
           email: options.email,
@@ -209,6 +210,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // Listen for custom 'vibes-share-request' events on document
   // Any element can dispatch this event to trigger share
+  // does this event chaining make sense? identify callers and listeners, are there othere other dispatchers?
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -382,8 +384,8 @@ export {
 } from './utils/vibe-control-styles.js';
 export type { VibeControlClasses } from './utils/vibe-control-styles.js';
 // Export additional components
-export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
-export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
+export { VibesPanel } from './components/VibesPanel.js';
+export type { VibesPanelProps } from './components/VibesPanel.tsx';
 export { BrutalistCard } from './components/BrutalistCard/index.js';
 export type {
   BrutalistCardProps,
