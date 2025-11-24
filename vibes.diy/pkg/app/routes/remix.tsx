@@ -104,18 +104,7 @@ export default function Remix({
 
         // Generate a better title based on the code content
         const finalTitle = `Remix of ${appName}`;
-        // try {
-        //   // Parse the content to get segments
-        //   const { segments } = parseContent(aiMessage.text);
-
-        //   // Use the title generation model from useSimpleChat
-        //   const titleModel = 'meta-llama/llama-3.1-8b-instruct';
-
-        //   finalTitle = await generateTitle(segments, titleModel, apiKey);
-        // } catch (titleError) {
-        //   console.error('Error generating title:', titleError);
-        //   // Keep the initial title if generation fails
-        // }
+       
         await updateTitle(finalTitle);
 
         // Build the target URL, including the prompt parameter if it exists

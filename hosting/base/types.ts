@@ -1,6 +1,8 @@
 import { Str } from "chanfana";
 import { z } from "zod";
 
+// todo dedupe with vibes.diy/hosting/pkg/src/types.ts
+
 const App = z.object({
   name: Str({ example: "my-awesome-app" }),
   slug: Str().min(4),
@@ -31,7 +33,6 @@ const PublishEvent = z.object({
 });
 
 // Type aliases for Zod schemas
-export type AppType = z.infer<typeof App>;
 export type PublishEventType = z.infer<typeof PublishEvent>;
 
 export { App, PublishEvent };
