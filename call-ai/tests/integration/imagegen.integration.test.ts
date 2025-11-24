@@ -129,7 +129,7 @@ describe("Image Generation Integration Tests", () => {
     } else {
       expect(headers["Authorization"]).toBe("Bearer VIBES_DIY");
     }
-    
+
     expect(optionsArg.body).toBeInstanceOf(FormData);
   });
 });

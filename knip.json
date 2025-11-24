@@ -11,7 +11,5 @@
     ".react-router/**",
     "call-ai/tests-new/**"
   ],
-  "ignoreDependencies": [
-    "prettier-plugin-tailwindcss"
-  ]
+  "ignoreDependencies": ["prettier-plugin-tailwindcss"]
 }
