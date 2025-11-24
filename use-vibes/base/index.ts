@@ -339,6 +339,7 @@ export { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
 
 // Export hooks
 export { hashInput, useImageGen } from './hooks/image-gen/index.js';
+export { useThemeDetection } from './hooks/useThemeDetection.js';
 
 // Export style utilities
 export { defaultClasses } from './utils/style-utils.js';
