@@ -70,13 +70,6 @@ openapi.use("/api/*", clerkMiddleware());
 openapi.use("/api/*", async (c, next) => {
   const auth = getAuth(c);
 
-  console.log("🔐 Auth middleware:", {
-    hasAuth: !!auth,
-    userId: auth?.userId,
-    sessionId: auth?.sessionId,
-    path: c.req.path,
-  });
-
   if (auth?.userId) {
     // Set user on context for endpoints to access
     c.set("user", {
@@ -103,6 +96,7 @@ openapi.post("/api/v1/chat/completions", OpenRouterChat);
 openapi.post("/api/v1/openrouter/chat/completions", OpenRouterChat);
 
 // Register Claude chat endpoint (with OpenAI-compatible interface)
+// todo file a GitHub issue using gh, saying we should evaluate using this endpoint in the vibes.diy app when a claude model is selected
 openapi.post("/api/v1/claude/chat/completions", ClaudeChat);
 
 // Export the Hono app with queue handler for Cloudflare Workers
@@ -115,12 +109,14 @@ export default {
 export { AppCreate } from "./endpoints/appCreate.js";
 // Re-export from hosting-base
 export {
-  ClaudeChat,
+  // the only import of these is tests, they should take direct from hosting-base, and then remove these lines
+  // ClaudeChat,
   ImageEdit,
   ImageGenerate,
   OpenRouterChat,
 } from "@vibes.diy/hosting-base";
 export {
+  // evaluate each of these individually to see if the above note applies
   generateVibeSlug,
   parseSubdomain,
   constructSubdomain,
@@ -133,9 +129,8 @@ export {
   getFirstPartyDomain,
   FIRST_PARTY_DOMAINS,
   FIRST_PARTY_APEX_DOMAINS,
-  type TokenPayload,
 } from "@vibes.diy/hosting-base";
-export { PublishEvent } from "./types.js";
-export type { PublishEvent as PublishEventType } from "./types.js";
+export { PublishEvent } from "./types.js"; // same as above, its tests only, import direct from base
+export type { PublishEvent as PublishEventType } from "./types.js"; // reconcile this with the real PublishEventType in hosting/base/types
 export { default as renderApp } from "./renderApp.js";
 export { default as queueConsumer } from "./queue-consumer.js";
