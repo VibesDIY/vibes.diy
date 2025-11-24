@@ -62,7 +62,6 @@
     "@cloudflare/workers-types": "^4.20251111.0",
     "@hono/clerk-auth": "^3.0.3",
     "@vibes.diy/hosting-base": "workspace:*",
-    "@vibes.diy/utils": "workspace:*",
     "chanfana": "^2.8.2",
     "hono": "^4.10.6",
     "jose": "^6.1.1",

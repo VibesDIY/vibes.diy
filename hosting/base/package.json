@@ -24,7 +24,6 @@
     "@fireproof/core-runtime": "^0.23.15",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
-    "@vibes.diy/utils": "workspace:*",
     "call-ai": "workspace:*",
     "chanfana": "^2.1.4",
     "hono": "^4.10.6",

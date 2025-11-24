@@ -2,7 +2,7 @@ import { Bool, OpenAPIRoute, contentJson } from "chanfana";
 
 import { Context } from "hono";
 import { z } from "zod";
-import { App, PublishEvent, type AppType } from "../types.js";
+import { App, PublishEvent } from "../types.js";
 import { generateVibeSlug } from "@vibes.diy/hosting-base";
 
 // Variables type for context (was previously in deleted auth middleware)
@@ -13,14 +13,12 @@ interface Variables {
 /**
  * Process and save a screenshot from base64 data
  * @param kv KV namespace to store the screenshot
- * @param appData App data to update with screenshot info
  * @param base64Screenshot Base64 encoded screenshot data
  * @param keyIdentifier Identifier to use for the screenshot key (usually slug)
  * @returns Updated app data with screenshot information
  */
 async function processScreenshot(
   kv: KVNamespace,
-  _appData: AppType,
   base64Screenshot: string,
   keyIdentifier: string,
 ) {
@@ -191,7 +189,7 @@ export class AppCreate extends OpenAPIRoute {
 
       // Process screenshot if provided
       if (app.screenshot && app.screenshot.trim()) {
-        await processScreenshot(kv, parsedApp, app.screenshot, parsedApp.slug);
+        await processScreenshot(kv, app.screenshot, parsedApp.slug);
       }
 
       savedApp = parsedApp;
@@ -227,7 +225,7 @@ export class AppCreate extends OpenAPIRoute {
 
       // Process screenshot if provided
       if (app.screenshot && app.screenshot.trim()) {
-        await processScreenshot(kv, appToSave, app.screenshot, slug);
+        await processScreenshot(kv, app.screenshot, slug);
       }
 
       savedApp = appToSave;
