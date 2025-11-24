@@ -56,11 +56,6 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@react-router/dev": "^7.9.4",
-    "@tailwindcss/vite": "^4.1.11",
-    "@vibes.diy/prompts": "workspace:0.0.0",
-    "call-ai": "workspace:0.0.0",
-    "react-dom": "^19.2.0",
-    "use-fireproof": "^0.23.15"
+    "@vibes.diy/prompts": "workspace:0.0.0"
   }
 }
