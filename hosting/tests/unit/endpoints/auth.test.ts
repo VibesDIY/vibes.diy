@@ -4,7 +4,7 @@ import {
   ClaudeChat,
   ImageGenerate,
   ImageEdit,
-} from "@vibes.diy/hosting";
+} from "@vibes.diy/hosting-base";
 
 describe("AI Endpoints Authentication", () => {
   let mockContext: {
