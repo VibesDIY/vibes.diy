@@ -94,13 +94,6 @@ vi.mock("~/vibes.diy/app/components/CookieBanner", () => ({
   default: () => <div data-testid="cookie-banner">Cookie Banner</div>,
 }));
 
-// Mock NeedsLoginModal component
-vi.mock("~/vibes.diy/app/components/NeedsLoginModal", () => ({
-  NeedsLoginModal: () => (
-    <div data-testid="needs-login-modal">Needs Login Modal</div>
-  ),
-}));
-
 // Mock the useFireproof hook
 vi.mock("use-fireproof", () => ({
   useFireproof: () => ({
