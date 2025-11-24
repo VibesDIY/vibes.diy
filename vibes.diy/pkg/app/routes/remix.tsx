@@ -104,7 +104,7 @@ export default function Remix({
 
         // Generate a better title based on the code content
         const finalTitle = `Remix of ${appName}`;
-       
+
         await updateTitle(finalTitle);
 
         // Build the target URL, including the prompt parameter if it exists
