@@ -11,17 +11,6 @@ const mockDb = {
   query: vi.fn(),
 };
 
-/*
-// Mock the call-ai module
-vi.mock('call-ai', () => ({
-  imageGen: vi.fn().mockImplementation(async () => ({
-    created: Date.now(),
-    data: [{ b64_json: 'test-base64-data' }],
-  })),
-  callAI: vi.fn().mockImplementation(async () => 'Mocked text response'),
-}));
-*/
-
 // Mock utility function to simulate addNewVersion behavior
 const mockAddNewVersion = vi.fn((doc, file, prompt) => ({
   ...doc,

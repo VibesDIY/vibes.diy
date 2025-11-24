@@ -50,21 +50,6 @@ vi.mock('use-fireproof', async (importOriginal) => {
 
 import { ImgGenDisplay } from '@vibes.diy/use-vibes-base';
 
-/*
-// Mock components from use-vibes-base
-vi.mock(import('@vibes.diy/use-vibes-base'), async (actual) => {
-  return {
-    ...actual,
-    ImageOverlay: vi.fn(() => <div data-testid="mock-image-overlay">Mocked Image Overlay</div>),
-    DeleteConfirmationOverlay: vi.fn(() => (
-      <div data-testid="mock-delete-confirmation">Mocked Delete Confirmation</div>
-    )),
-  };
-});
-*/
-
-// Import after mocks
-
 // Type simplification for testing purposes
 interface TestDoc {
   readonly _id: string;
