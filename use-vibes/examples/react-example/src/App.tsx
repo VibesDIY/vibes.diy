@@ -7,7 +7,7 @@ import { ShareExample } from './ShareExample';
 import './App.css';
 import MountVibesAppExample from './MountVibesAppExample';
 
-type ExampleKey =
+export type ExampleKey =
   | 'home'
   | 'image-generator'
   | 'todo-list'
