@@ -10,7 +10,6 @@
     "dev": "react-router dev",
     "dev:router": "react-router dev",
     "dev:netlify": "netlify dev",
-    "deploy": "wrangler deploy -c wrangler.toml",
     "start": "serve -s build/client",
     "typecheck": "react-router typegen && tsc",
     "test:router": "vitest run",
