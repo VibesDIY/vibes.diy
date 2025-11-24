@@ -58,6 +58,7 @@ export const meta: MetaFunction = () => {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   // Handle dark mode detection and class management (replaces ThemeContext)
+  // should we use ThemeContext instead? dont need both
   useEffect(() => {
     if (typeof window === "undefined") return;
 

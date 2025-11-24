@@ -9,6 +9,7 @@ import { useFireproof } from "use-fireproof";
 import { VibesDiyEnv } from "../config/env.js";
 import { trackEvent } from "../utils/analytics.js";
 
+// investigate if this can be combined with useSimpleChat() by passing an option on new sessions
 export function useNewSessionChat(
   onSessionCreate: (sessionId: string) => void,
 ): NewSessionChatState {

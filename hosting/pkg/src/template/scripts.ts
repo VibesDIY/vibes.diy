@@ -1,4 +1,5 @@
 // Template scripts with JavaScript syntax highlighting via comment directive
+// must this be a string literal or can we use real code in the right context?
 export const scripts = /* javascript */ `
       // Event handling for VibeControl integration
       document.addEventListener('DOMContentLoaded', () => {
