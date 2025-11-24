@@ -170,9 +170,6 @@ importers:
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../../use-vibes/base
-      '@vibes.diy/utils':
-        specifier: workspace:*
-        version: link:../../utils/pkg
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -213,9 +210,6 @@ importers:
       '@vibes.diy/hosting-base':
         specifier: workspace:*
         version: link:../base
-      '@vibes.diy/utils':
-        specifier: workspace:*
-        version: link:../../utils/pkg
       chanfana:
         specifier: ^2.8.2
         version: 2.8.3
@@ -253,6 +247,9 @@ importers:
       '@vibes.diy/hosting':
         specifier: workspace:*
         version: link:../../pkg
+      '@vibes.diy/hosting-base':
+        specifier: workspace:*
+        version: link:../../base
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.10.1
@@ -677,50 +674,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  utils/pkg:
-    dependencies:
-      jose:
-        specifier: ^6.1.1
-        version: 6.1.1
-      multiformats:
-        specifier: ^13.4.0
-        version: 13.4.1
-    devDependencies:
-      '@fireproof/core-cli':
-        specifier: ^0.23.15
-        version: 0.23.15(typescript@5.9.3)
-      '@vitest/browser-playwright':
-        specifier: ^4.0.10
-        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
-  utils/tests:
-    dependencies:
-      '@vibes.diy/utils':
-        specifier: workspace:0.0.0
-        version: link:../pkg
-    devDependencies:
-      '@types/node':
-        specifier: ^24.9.1
-        version: 24.10.1
-      '@vitest/browser-playwright':
-        specifier: ^4.0.10
-        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
-      jose:
-        specifier: ^6.1.1
-        version: 6.1.1
-      multiformats:
-        specifier: ^13.4.0
-        version: 13.4.1
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.2
-        version: 4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
-
   vibes.diy/pkg:
     dependencies:
       '@adviser/cement':
@@ -768,9 +721,6 @@ importers:
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
-      '@vibes.diy/utils':
-        specifier: workspace:*
-        version: link:../../utils/pkg
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
