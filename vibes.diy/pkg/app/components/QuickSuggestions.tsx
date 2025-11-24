@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { quickSuggestions } from "../data/quick-suggestions-data.js";
-
+// TODO save to evalute using this on the new home page, after it is merged
 interface QuickSuggestionsProps {
   onSelectSuggestion: (suggestion: string) => void;
 }

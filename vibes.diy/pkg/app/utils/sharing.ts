@@ -2,9 +2,12 @@
  * Utilities for sharing and clipboard operations
  */
 
+// rename file to clipboard.ts?
+
 /**
  * Copy text to clipboard using the Clipboard API with fallback for older browsers
  */
+// is this unused? should we centralize to this implemenation?
 export function copyToClipboard(text: string): void {
   if (navigator.clipboard) {
     navigator.clipboard

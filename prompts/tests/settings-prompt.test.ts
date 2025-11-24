@@ -36,7 +36,7 @@ Mock documentation for ${llm.label}
 
       // Get user prompt from session document if available
       const userPrompt = sessionDoc?.userPrompt || "";
-
+      // evaluate removing this duplications AFTER you complete the refactor noted in prompts.ts
       const systemPrompt = `
 You are an AI assistant tasked with creating React components. You should create components that:
 - Use modern React practices and follow the rules of hooks
