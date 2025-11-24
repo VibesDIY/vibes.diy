@@ -8,22 +8,10 @@
     "dist/**",
     "build/**",
     ".netlify/**",
-    ".react-router/**"
+    ".react-router/**",
+    "call-ai/tests-new/**"
   ],
-  "entry": [
-    "**/*.{test,spec}.{js,jsx,ts,tsx}",
-    "**/vitest.config.{js,ts}",
-    "**/vite.config.{js,ts}",
-    "**/eslint.config.{js,mjs}",
-    "**/playwright.config.{js,ts}",
-    "**/tailwind.config.js",
-    "scripts/*.{js,ts}",
-    "actions/**/*.yaml"
-  ],
-  "project": ["**/*.{js,jsx,ts,tsx}"],
   "ignoreDependencies": [
-    "eslint-config-prettier",
-    "eslint-plugin-prettier",
     "prettier-plugin-tailwindcss"
   ]
 }
