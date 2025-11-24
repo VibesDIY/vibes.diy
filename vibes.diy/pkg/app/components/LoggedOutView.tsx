@@ -1,5 +1,7 @@
 import React from "react";
 import { VibesSwitch } from "use-vibes";
+import { useClerk } from "@clerk/clerk-react";
+import { trackAuthClick } from "../utils/analytics.js";
 
 // Vibe switch button component with animation
 function VibesLoginButton({ onClick }: { onClick: () => void }) {
@@ -11,11 +13,43 @@ function VibesLoginButton({ onClick }: { onClick: () => void }) {
 }
 
 export interface LoggedOutViewProps {
-  /** Login handler function */
-  onLogin: () => void;
+  /** Whether Clerk has finished loading */
+  isLoaded?: boolean;
+  /** Optional event name for analytics tracking */
+  trackingEventName?: string;
 }
 
-export default function LoggedOutView({ onLogin }: LoggedOutViewProps) {
+export default function LoggedOutView({
+  isLoaded = true,
+  trackingEventName,
+}: LoggedOutViewProps) {
+  const clerk = useClerk();
+
+  const handleLogin = async () => {
+    if (trackingEventName) {
+      trackAuthClick({
+        label: trackingEventName,
+        isUserAuthenticated: false,
+      });
+    }
+    await clerk.redirectToSignIn({
+      redirectUrl: window.location.href,
+    });
+  };
+
+  // Show loading state with grid background
+  if (!isLoaded) {
+    return (
+      <div className="grid-background flex h-screen w-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg" style={{ color: "#1a1a1a" }}>
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid-background flex h-screen w-screen items-center justify-center relative">
       {/* Center content */}
@@ -26,17 +60,17 @@ export default function LoggedOutView({ onLogin }: LoggedOutViewProps) {
         <p className="mb-6 text-lg" style={{ color: "#1a1a1a" }}>
           You can just code things.
         </p>
-        <VibesLoginButton onClick={onLogin} />
+        <VibesLoginButton onClick={handleLogin} />
       </div>
 
       {/* Vibe switch in lower right corner */}
       <button
         type="button"
-        onClick={onLogin}
+        onClick={handleLogin}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            onLogin();
+            handleLogin();
           }
         }}
         className="cursor-pointer fixed"

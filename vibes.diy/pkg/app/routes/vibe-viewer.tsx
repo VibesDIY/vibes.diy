@@ -4,7 +4,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
-import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import { mountVibeWithCleanup } from "use-vibes";
 import { setupDevShims, transformImportsDev } from "../utils/dev-shims.js";
 import LoggedOutView from "../components/LoggedOutView.js";
@@ -191,26 +191,9 @@ function VibeInstanceViewerContent() {
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstanceViewer() {
   const { isSignedIn, isLoaded } = useAuth();
-  const clerk = useClerk();
-
-  if (!isLoaded) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-white text-lg">Checking authentication...</div>
-      </div>
-    );
-  }
 
   if (!isSignedIn) {
-    return (
-      <LoggedOutView
-        onLogin={async () => {
-          await clerk.redirectToSignIn({
-            redirectUrl: window.location.href,
-          });
-        }}
-      />
-    );
+    return <LoggedOutView isLoaded={isLoaded} />;
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated

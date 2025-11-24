@@ -12,8 +12,8 @@ import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
 import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
-import { useAuth, useClerk } from "@clerk/clerk-react";
-import { trackAuthClick, trackEvent } from "../utils/analytics.js";
+import { useAuth } from "@clerk/clerk-react";
+import { trackEvent } from "../utils/analytics.js";
 import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 import LoggedOutView from "./LoggedOutView.js";
 
@@ -39,12 +39,6 @@ export default function SessionView({
   // Check authentication before allowing access to the chat interface
   const { isSignedIn: isAuthenticated, isLoaded } = useAuth();
   const isLoading = !isLoaded;
-  const clerk = useClerk();
-  const initiateLogin = async () => {
-    await clerk.redirectToSignIn({
-      redirectUrl: window.location.href,
-    });
-  };
 
   // Track unauthenticated view render once
   useEffect(() => {
@@ -53,30 +47,14 @@ export default function SessionView({
     }
   }, [isAuthenticated, isLoading]);
 
-  // Show loading state while checking authentication
-  if (isLoading) {
+  // Show login/loading screen if not authenticated
+  if (!isAuthenticated || isLoading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-light-background-00 dark:bg-dark-background-00">
-        <div className="text-center">
-          <div className="text-light-primary dark:text-dark-primary mb-4 text-xl">
-            Loading...
-          </div>
-        </div>
-      </div>
+      <LoggedOutView
+        isLoaded={!isLoading}
+        trackingEventName="Session View Login"
+      />
     );
-  }
-
-  // Show login screen if not authenticated
-  if (!isAuthenticated) {
-    const handleLogin = async () => {
-      trackAuthClick({
-        label: "Session View Login",
-        isUserAuthenticated: false,
-      });
-      await initiateLogin();
-    };
-
-    return <LoggedOutView onLogin={handleLogin} />;
   }
 
   return (
