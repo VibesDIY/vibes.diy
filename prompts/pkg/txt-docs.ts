@@ -1,6 +1,8 @@
 import { CoerceURI, ResolveOnce } from "@adviser/cement";
 import { loadDocs } from "./load-docs.js";
 
+// TODO: Replace loadDocs with loadAsset for better cement integration
+
 export interface TxtDoc {
   readonly name: string;
   readonly txt: string;
@@ -14,16 +16,6 @@ const files = [
   "d3.md",
   "three-js.md",
 ];
-
-export interface TxtDocs {
-  "fireproof.txt": TxtDoc;
-  "image-gen.txt": TxtDoc;
-  "web-audio.txt": TxtDoc;
-  "d3.md": TxtDoc;
-  "three-js.md": TxtDoc;
-
-  [key: string]: TxtDoc;
-}
 
 // Lazy loading per file instead of eager loading all files
 const fileLoaders = new Map<string, ResolveOnce<TxtDoc | undefined>>();
@@ -56,13 +48,6 @@ async function loadTxtDoc(
     }
     return { name: file, txt: rAsset.Ok() };
   });
-}
-
-export async function getTxtDocs(_fallBackUrl: CoerceURI): Promise<TxtDocs> {
-  // Only load files that are actually requested
-  const m: TxtDocs = {} as TxtDocs;
-  // Don't eagerly load all files - they'll be loaded on demand
-  return m;
 }
 
 export async function getTexts(
