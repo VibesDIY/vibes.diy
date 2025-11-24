@@ -19,19 +19,12 @@ export function hasConsent(): boolean {
 }
 
 /**
- * Initialize Google Analytics
- */
-export function initGA() {
-  // GA is managed via GTM. Nothing to do here, but keep function
-  // to avoid changing call sites.
-}
-
-/**
  * Track page view
  * @param path - The page path
  */
 export function pageview(path: string): void {
   // Push a GA4-compatible page_view event for SPA route changes
+  // should call trackEvent()
   gtmPush({
     event: "page_view",
     page_path: path,
@@ -47,6 +40,7 @@ export function pageview(path: string): void {
  * @param label - Event label (optional)
  * @param value - Event value (optional)
  */
+// likely remove
 export const event = (
   category: string,
   action: string,
@@ -95,7 +89,6 @@ export const trackAuthClick = (
 export const trackPublishClick = (
   additionalParams?: Record<string, unknown>,
 ): void => {
-  if (!hasConsent()) return;
   trackEvent("publish_click", additionalParams);
 };
 
@@ -104,7 +97,6 @@ export const trackPublishClick = (
  * @param params - metadata to include with the event (e.g., published_url, session_id, title, user_id, firehose_shared)
  */
 export const trackPublishShared = (params?: Record<string, unknown>): void => {
-  if (!hasConsent()) return;
   trackEvent("app_shared", params);
 };
 
@@ -117,7 +109,6 @@ export const trackChatInputClick = (
   messageLength: number,
   additionalParams?: Record<string, unknown>,
 ): void => {
-  if (!hasConsent()) return;
   trackEvent("chat_input", {
     message_length: messageLength,
     ...additionalParams,
