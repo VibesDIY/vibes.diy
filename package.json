@@ -21,7 +21,7 @@
     "lint": "eslint . && cd hosting/pkg && pnpm lint",
     "knip": "knip",
     "test": "cross-env DISABLE_REACT_ROUTER=true vitest --run",
-    "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage --watch",
+    "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage",
     "test:all": "cd vibes.diy/tests/app && pnpm run test && cd ../simple-chat && pnpm run test && cd ../../../prompts/tests && pnpm run test && cd ../../use-vibes/tests && pnpm run test && cd ../../call-ai/tests && pnpm run test",
     "playwright:claude": "playwright test -c claude-browse-vibes/playwright.config.js",
     "test:screenshot:local": "node claude-browse-vibes/test-screenshot-api.js",
