@@ -31,7 +31,7 @@ function getHostnameFromUrl(url: string): string {
 }
 
 function VibeInstanceViewerContent() {
-  const { getToken } = useAuth();
+  const { getToken, signOut } = useAuth();
   const { titleId, installId } = useParams<{
     titleId: string;
     installId: string;
@@ -77,6 +77,17 @@ function VibeInstanceViewerContent() {
 
     return () => clearInterval(interval);
   }, [getToken]);
+
+  // Handle logout requests from VibesPanel
+  useEffect(() => {
+    const handleLogout = async () => {
+      await signOut();
+    };
+
+    document.addEventListener("vibes-logout-request", handleLogout);
+    return () =>
+      document.removeEventListener("vibes-logout-request", handleLogout);
+  }, [signOut]);
 
   useEffect(() => {
     if (!titleId || !installId) return;

@@ -65,10 +65,7 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
 
   const handleLogoutClick = () => {
     document.dispatchEvent(new CustomEvent('vibes-sync-disable'));
-    // Reload the page after logout
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    document.dispatchEvent(new CustomEvent('vibes-logout-request'));
   };
 
   const handleInviteSubmit = (e: React.FormEvent) => {
