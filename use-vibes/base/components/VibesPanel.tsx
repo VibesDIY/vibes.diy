@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useId } from 'react';
 import { runtimeFn } from '@fireproof/core-runtime';
-import { VibesButton } from '../VibesButton/VibesButton.js';
-import { BrutalistCard } from '../BrutalistCard/BrutalistCard.js';
-import { generateFreshDataUrl, generateRemixUrl } from '../../utils/appSlug.js';
+import { VibesButton } from './VibesButton/VibesButton.js';
+import { BrutalistCard } from './BrutalistCard/BrutalistCard.js';
+import { generateFreshDataUrl, generateRemixUrl } from '../utils/appSlug.js';
 
 export interface VibesPanelProps {
   /** Optional custom styling for the panel container */
