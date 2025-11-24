@@ -17,5 +17,6 @@ claude-browse-vibes/*.png
 test-results/
 playwright-report/
 playwright/.cache/
+coverage/
 
 .DS_Store
