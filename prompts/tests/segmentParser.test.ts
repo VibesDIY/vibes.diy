@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { parseContent } from "@vibes.diy/prompts";
 import { BuildURI, loadAsset, pathOps } from "@adviser/cement";
 
+// move this test to @vibes.diy/prompts test package, also the referenced fixtures
+
 describe("segmentParser utilities", () => {
   it("correctly parses markdown content with no code blocks", () => {
     const text = "This is a simple markdown text with no code blocks.";
