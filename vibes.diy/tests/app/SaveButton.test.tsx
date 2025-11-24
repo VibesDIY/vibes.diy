@@ -1,7 +1,7 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SaveButton } from "~/vibes.diy/app/components/ResultPreview/SaveButton/index.js";
+import { SaveButton } from "~/vibes.diy/app/components/ResultPreview/SaveButton.js";
 
 describe("SaveButton", () => {
   const mockOnClick = vi.fn();
