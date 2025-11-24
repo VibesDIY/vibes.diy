@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
+import { useTheme } from "../contexts/ThemeContext.js";
 import { pageview, trackEvent } from "../utils/analytics.js";
 import { initGTM } from "../utils/gtm.js";
 import { CookieConsent, getCookieConsentValue } from "react-cookie-consent";
@@ -13,11 +14,7 @@ export default function CookieBanner() {
   const location = useLocation();
   const [hasConsent, setHasConsent] = useState(false);
   const { messageHasBeenSent } = useCookieConsent();
-  // Use CSS-based dark mode detection like the rest of the UI
-  const isDarkMode =
-    typeof document !== "undefined"
-      ? document.documentElement.classList.contains("dark")
-      : true; // Default to dark mode for SSR
+  const { isDarkMode } = useTheme();
 
   // Dynamic import for client-side only
   const [XCookieConsent, setXCookieConsent] = useState<
