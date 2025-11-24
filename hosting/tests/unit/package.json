@@ -47,7 +47,8 @@
     "wrangler": "^4.45.1"
   },
   "dependencies": {
-    "@vibes.diy/hosting": "workspace:*"
+    "@vibes.diy/hosting": "workspace:*",
+    "@vibes.diy/hosting-base": "workspace:*"
   },
   "engines": {
     "node": ">=20.0.0"

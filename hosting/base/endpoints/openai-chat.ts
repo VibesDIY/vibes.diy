@@ -3,7 +3,7 @@ import { Context } from "hono";
 import { z } from "zod";
 
 // TypeScript interfaces for OpenAI Chat API requests
-export interface ChatCompletionRequest {
+interface ChatCompletionRequest {
   model: string;
   messages: {
     role: string;
@@ -26,7 +26,7 @@ export interface ChatCompletionRequest {
 }
 
 // Core function to handle chat completions via OpenAI API
-export async function chatCompletion(
+async function chatCompletion(
   params: ChatCompletionRequest,
   apiKey: string,
 ): Promise<Response> {

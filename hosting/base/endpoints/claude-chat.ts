@@ -3,12 +3,12 @@ import { Context } from "hono";
 import { z } from "zod";
 
 // TypeScript interfaces for Claude API requests
-export interface ClaudeMessage {
+interface ClaudeMessage {
   role: string;
   content: string;
 }
 
-export interface ClaudeMessagesRequest {
+interface ClaudeMessagesRequest {
   model: string;
   messages: {
     role: string;
@@ -24,7 +24,7 @@ export interface ClaudeMessagesRequest {
 }
 
 // Interface for Claude API response
-export interface ClaudeMessagesResponse {
+interface ClaudeMessagesResponse {
   id: string;
   type: string;
   model: string;
@@ -124,7 +124,7 @@ function convertToOpenAIFormat(
 }
 
 // Core function to handle chat completions via Claude API
-export async function claudeChat(
+async function claudeChat(
   params: ClaudeMessagesRequest,
   apiKey: string,
 ): Promise<Response> {
