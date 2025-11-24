@@ -11,6 +11,7 @@ import {
   generateStandaloneHtml,
 } from "../../utils/exportHtml.js";
 import { useSession } from "../../hooks/useSession.js";
+import { useTheme } from "../../contexts/ThemeContext.js";
 
 function ResultPreview({
   code,
@@ -31,11 +32,7 @@ function ResultPreview({
   onCodeChange,
   onSyntaxErrorChange,
 }: ResultPreviewProps & { children?: React.ReactNode }) {
-  // Use CSS-based dark mode detection like the rest of the UI
-  const isDarkMode =
-    typeof document !== "undefined"
-      ? document.documentElement.classList.contains("dark")
-      : true; // Default to dark mode for SSR
+  const { isDarkMode } = useTheme();
   const {
     vibeDoc,
     updateDependencies,

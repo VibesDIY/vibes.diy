@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import type { MetaFunction } from "react-router";
 import {
   Links,
@@ -18,6 +18,7 @@ import CookieBanner from "./components/CookieBanner.js";
 import GtmNoScript from "./components/GtmNoScript.js";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
+import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { getLibraryImportMap } from "./config/import-map.js";
 
 export const links: Route.LinksFunction = () => [
@@ -57,36 +58,6 @@ export const meta: MetaFunction = () => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  // Handle dark mode detection and class management (replaces ThemeContext)
-  // should we use ThemeContext instead? dont need both
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    // Initialize dark mode based on system preference or existing class
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const updateDarkMode = (isDarkMode: boolean) => {
-      if (isDarkMode) {
-        document.documentElement.classList.add("dark");
-        document.documentElement.dataset.theme = "dark";
-      } else {
-        document.documentElement.classList.remove("dark");
-        document.documentElement.dataset.theme = "light";
-      }
-    };
-
-    // Set initial state based on system preference
-    const initialIsDarkMode = mediaQuery.matches;
-    updateDarkMode(initialIsDarkMode);
-
-    // Listen for system preference changes
-    const handleChange = (e: MediaQueryListEvent) => {
-      updateDarkMode(e.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
-
   return (
     <html lang="en">
       <head>
@@ -123,22 +94,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* TODO: Re-enable GtmNoScript when consent can be checked server-side */}
         {/* <GtmNoScript /> */}
         <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
-          <PostHogProvider
-            apiKey={VibesDiyEnv.POSTHOG_KEY()}
-            options={{
-              api_host: VibesDiyEnv.POSTHOG_HOST(),
-              opt_out_capturing_by_default: true,
-            }}
-          >
-            <CookieConsentProvider>
-              {children}
-              <ClientOnly>
-                <CookieBanner />
-              </ClientOnly>
-            </CookieConsentProvider>
-            <ScrollRestoration data-testid="scroll-restoration" />
-            <Scripts data-testid="scripts" />
-          </PostHogProvider>
+          <ThemeProvider>
+            <PostHogProvider
+              apiKey={VibesDiyEnv.POSTHOG_KEY()}
+              options={{
+                api_host: VibesDiyEnv.POSTHOG_HOST(),
+                opt_out_capturing_by_default: true,
+              }}
+            >
+              <CookieConsentProvider>
+                {children}
+                <ClientOnly>
+                  <CookieBanner />
+                </ClientOnly>
+              </CookieConsentProvider>
+              <ScrollRestoration data-testid="scroll-restoration" />
+              <Scripts data-testid="scripts" />
+            </PostHogProvider>
+          </ThemeProvider>
         </ClerkProvider>
       </body>
     </html>
