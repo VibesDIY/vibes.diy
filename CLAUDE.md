@@ -241,10 +241,9 @@ const { database, useLiveQuery, enableSync, disableSync, syncEnabled } =
 #### Key Enhancements Added
 
 1. **Local-first behavior** - starts without sync by default
-2. **enableSync()** function - allows users to manually trigger sync
-3. **disableSync()** function - allows users to disable sync
-4. **syncEnabled** state - tracks current sync status
-5. **Persistent preferences** - remembers sync choice in localStorage
+2. **syncEnabled** state - tracks current sync status
+3. **Persistent preferences** - remembers sync choice in localStorage
+4. **enableSync()** and **disableSync()** functions - Stub functions (not yet implemented, will use Clerk token)
 
 ### Module Integration Architecture
 
@@ -264,49 +263,25 @@ use-vibes/pkg/index.ts (public API)
 
 The use-vibes `useFireproof` is a **wrapper** around the original that adds:
 
-1. **Conditional sync** - only attaches cloud sync when explicitly enabled by user
-2. **State management** - tracks manual vs automatic sync states using React state
+1. **Automatic sync for returning users** - attaches cloud sync if previously enabled
+2. **State tracking** - tracks sync status using React state
 3. **Persistence** - uses localStorage to remember user's sync preference across sessions
-4. **Dual attachment modes** - supports both original flow (for returning users) and manual flow (for first-time)
 
 ### Drop-in Replacement Strategy
 
 For users who change their import from `use-fireproof` to `use-vibes`, the enhanced version provides:
 
 - **Same API surface** - all original useFireproof functionality preserved
-- **Implicit cloud sync** - cloud sync is always enabled (no need for `{ attach: toCloud() }`)
-- **Optional sync features** - `enableSync`/`disableSync` available but not required
+- **Automatic sync for returning users** - cloud sync enabled automatically if previously used
+- **Sync status tracking** - `syncEnabled` boolean indicates current sync state
+- **Stub sync functions** - `enableSync()`/`disableSync()` are exported but not yet implemented (TODO: will use Clerk token)
 - **Backward compatibility** - existing code continues to work without changes
-- **Progressive enhancement** - users can opt-in to new sync features when ready
 
-#### Enhanced Button Integration
+**Important Notes:**
 
-```typescript
-// Simple API - no manual sync config needed:
-const { database, useLiveQuery, enableSync, syncEnabled } =
-  useFireproof("db-name");
-```
-
-**Key Enhancement:**
-
-- No need to manually pass `{ attach: toCloud() }` parameter
-- Automatic `vibes-login-link` button detection and wiring
-- **Automatic ledger naming**: Generates cloud ledger names like `https-myapp-com-kanban-board`
-- **Environment isolation**: Different origins (localhost vs production) get separate ledgers
-- **Respects user preferences**: Only enables sync when user clicks the button or has previously enabled it
-- Sync state is managed through localStorage (`wasSyncEnabled` preference)
-
-#### Automatic Button Integration
-
-The enhanced `useFireproof` automatically detects and wires up a button with `id="vibes-login-link"`:
-
-- **Button Detection**: Searches for `#vibes-login-link` on component mount
-- **Event Handling**: Connects button clicks to the `enableSync()` function
-- **Multiple Instances**: Each `useFireproof` hook adds its own event listener
-- **Clean Cleanup**: Event listeners are properly removed on component unmount
-- **Graceful Degradation**: Works without the button (no errors if not found)
-
-This allows vibes runtime containers to provide a login button that automatically triggers sync for all active `useFireproof` instances.
+- No manual sync triggers currently implemented
+- Future implementation will use Clerk authentication tokens
+- Automatic ledger naming based on vibe metadata (titleId + installId)
 
 - dont write releases to code until they are shipped. we cant derefernce that url until its on npm, otherwise esm.sh gets bad cache
 - never push to main
