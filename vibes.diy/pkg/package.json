@@ -48,7 +48,7 @@
     "clsx": "^2.1.1",
     "isbot": "^5.1.25",
     "jose": "^6.1.1",
-    "monaco-editor": "^0.54.0",
+    "monaco-editor": "^0.55.1",
     "multiformats": "^13.3.7",
     "posthog-js": "^1.298.0",
     "react": "^19.2.0",
