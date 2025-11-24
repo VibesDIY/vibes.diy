@@ -1,0 +1,29 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": [
+    "**/*.d.ts",
+    "**/notes/**",
+    "vibesbox/**",
+    "claude-browse-vibes/**",
+    "dist/**",
+    "build/**",
+    ".netlify/**",
+    ".react-router/**"
+  ],
+  "entry": [
+    "**/*.{test,spec}.{js,jsx,ts,tsx}",
+    "**/vitest.config.{js,ts}",
+    "**/vite.config.{js,ts}",
+    "**/eslint.config.{js,mjs}",
+    "**/playwright.config.{js,ts}",
+    "**/tailwind.config.js",
+    "scripts/*.{js,ts}",
+    "actions/**/*.yaml"
+  ],
+  "project": ["**/*.{js,jsx,ts,tsx}"],
+  "ignoreDependencies": [
+    "eslint-config-prettier",
+    "eslint-plugin-prettier",
+    "prettier-plugin-tailwindcss"
+  ]
+}
