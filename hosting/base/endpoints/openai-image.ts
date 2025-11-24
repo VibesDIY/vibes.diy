@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Context as HonoContext } from "hono";
 
 // TypeScript interfaces for OpenAI Image API requests
-export interface ImageGenerateRequest {
+interface ImageGenerateRequest {
   prompt: string;
   model?: string;
   n?: number;
@@ -16,10 +16,10 @@ export interface ImageGenerateRequest {
   userId?: string;
 }
 
-export type ImageEditRequest = ImageGenerateRequest;
+type ImageEditRequest = ImageGenerateRequest; // can we remove this line and migrate its users?
 
 // Core function to generate images using OpenAI API
-export async function generateImage(
+async function generateImage(
   params: ImageGenerateRequest,
   apiKey: string,
 ): Promise<Response> {

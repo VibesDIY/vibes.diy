@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
-import { VibesPanel } from './components/VibesPanel/VibesPanel.js';
+import { VibesPanel } from './components/VibesPanel.js';
 import {
   VibeContextProvider,
   type VibeMetadata,
