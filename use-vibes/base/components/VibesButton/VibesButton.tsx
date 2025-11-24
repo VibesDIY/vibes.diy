@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getButtonStyle } from './VibesButton.styles.js';
+import { useThemeDetection } from '../../hooks/useThemeDetection.js';
 
 type ButtonVariant = 'primary' | 'secondary' | 'tertiary';
 
@@ -21,20 +22,7 @@ export function VibesButton({
 }: MenuButtonProps) {
   const [isHovered, setHovered] = useState(false);
   const [isActive, setActive] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-
-  // Detect dark mode
-  useEffect(() => {
-    const checkDarkMode = () => {
-      setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
-    };
-
-    checkDarkMode();
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', checkDarkMode);
-
-    return () => mediaQuery.removeEventListener('change', checkDarkMode);
-  }, []);
+  const isDark = useThemeDetection();
 
   useEffect(() => {
     if (isHovered) {

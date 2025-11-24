@@ -1,6 +1,7 @@
 import React from 'react';
 import { getBrutalistCardStyle } from './BrutalistCard.styles.js';
 import type { BrutalistCardVariant, BrutalistCardSize } from './BrutalistCard.styles.js';
+import { useThemeDetection } from '../../hooks/useThemeDetection.js';
 
 export interface BrutalistCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Content to render inside the card */
@@ -43,20 +44,7 @@ export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps
     }: BrutalistCardProps,
     ref
   ) => {
-    // Detect dark mode
-    const [isDark, setIsDark] = React.useState(false);
-
-    React.useEffect(() => {
-      const checkDarkMode = () => {
-        setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
-      };
-
-      checkDarkMode();
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      mediaQuery.addEventListener('change', checkDarkMode);
-
-      return () => mediaQuery.removeEventListener('change', checkDarkMode);
-    }, []);
+    const isDark = useThemeDetection();
 
     const cardStyle = {
       ...getBrutalistCardStyle(variant, size, messageType),
