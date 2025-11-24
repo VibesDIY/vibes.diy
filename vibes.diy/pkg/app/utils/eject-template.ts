@@ -14,6 +14,8 @@ import { getImportMapJson } from "../config/import-map.js";
  * @param callaiEndpoint - CallAI endpoint URL
  * @returns Complete HTML string ready for export
  */
+// this seemes unused. it was made to support the html download link on the vibe settings tab
+// we should use it there or remove it, maybe remove the duplicated functionality elsewhere if there is some
 export function generateEjectHtml(
   appCode: string,
   apiKey: string,
