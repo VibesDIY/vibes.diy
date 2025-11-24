@@ -1,31 +1,18 @@
-import {
-  DEFAULT_CODING_MODEL,
-  type NewSessionChatState,
-  type UserSettings,
-} from "@vibes.diy/prompts";
+import { type NewSessionChatState } from "@vibes.diy/prompts";
 import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { useFireproof } from "use-fireproof";
-import { VibesDiyEnv } from "../config/env.js";
 import { trackEvent } from "../utils/analytics.js";
+import { useModelSelection } from "./useModelSelection.js";
 
-// investigate if this can be combined with useSimpleChat() by passing an option on new sessions
 export function useNewSessionChat(
   onSessionCreate: (sessionId: string) => void,
 ): NewSessionChatState {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string | undefined>(
-    undefined,
-  );
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const navigate = useNavigate();
 
-  // Get settings document to read showModelPickerInChat preference
-  const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
-  const { doc: settingsDoc } = useDocument<UserSettings>({
-    _id: "user_settings",
-  });
+  const modelSelection = useModelSelection();
 
   const sendMessage = useCallback(
     async (textOverride?: string) => {
@@ -49,15 +36,15 @@ export function useNewSessionChat(
         urlParams.set("prompt", userMessage);
 
         // If user selected a specific model, pass it to the new session
-        if (selectedModel) {
-          urlParams.set("model", selectedModel);
+        if (modelSelection.selectedModel) {
+          urlParams.set("model", modelSelection.selectedModel);
         }
 
         const targetUrl = `/chat/${newSessionId}?${urlParams.toString()}`;
 
         // Track session creation before navigation
         trackEvent("new_session_created", {
-          model: selectedModel || effectiveModel,
+          model: modelSelection.effectiveModel,
         });
 
         // Delay navigation slightly to allow analytics event to flush
@@ -68,7 +55,13 @@ export function useNewSessionChat(
         setIsStreaming(false);
       }
     },
-    [input, selectedModel, settingsDoc, onSessionCreate, navigate],
+    [
+      input,
+      modelSelection.selectedModel,
+      modelSelection.effectiveModel,
+      onSessionCreate,
+      navigate,
+    ],
   );
 
   // Stub functions that are not needed for new session creation
@@ -94,14 +87,10 @@ export function useNewSessionChat(
 
   const updateSelectedModel = useCallback(
     async (modelId: string): Promise<void> => {
-      setSelectedModel(modelId);
+      modelSelection.setSelectedModel(modelId);
     },
-    [],
+    [modelSelection],
   );
-
-  // Determine effective model: user selection > global setting > default
-  const effectiveModel =
-    selectedModel || settingsDoc?.model || DEFAULT_CODING_MODEL;
 
   return {
     input,
@@ -114,10 +103,10 @@ export function useNewSessionChat(
     codeReady: false, // No code ready in new session
     title: "", // No title for new session
     sessionId: null, // No session ID until created
-    showModelPickerInChat: settingsDoc?.showModelPickerInChat || false,
-    effectiveModel,
-    globalModel: settingsDoc?.model || DEFAULT_CODING_MODEL,
-    selectedModel,
+    showModelPickerInChat: modelSelection.showModelPickerInChat,
+    effectiveModel: modelSelection.effectiveModel,
+    globalModel: modelSelection.globalModel,
+    selectedModel: modelSelection.selectedModel,
     updateSelectedModel,
     saveCodeAsAiMessage,
     updateTitle,

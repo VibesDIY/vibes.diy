@@ -4,13 +4,9 @@ import type {
   AiChatMessageDocument,
   ChatMessageDocument,
   ChatState,
-  UserSettings,
   SystemPromptResult,
 } from "@vibes.diy/prompts";
-import { DEFAULT_CODING_MODEL } from "@vibes.diy/prompts";
 
-import { useFireproof } from "use-fireproof";
-import { VibesDiyEnv } from "../config/env.js";
 import { saveErrorAsSystemMessage } from "./saveErrorAsSystemMessage.js";
 import { useApiKey } from "./useApiKey.js";
 import { useImmediateErrorAutoSend } from "./useImmediateErrorAutoSend.js";
@@ -24,6 +20,7 @@ import { useSystemPromptManager } from "./useSystemPromptManager.js";
 import { useThrottledUpdates } from "./useThrottledUpdates.js";
 import { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ErrorCategory, useRuntimeErrors } from "./useRuntimeErrors.js";
+import { useModelSelection } from "./useModelSelection.js";
 
 // Constants
 const TITLE_MODEL = "meta-llama/llama-3.1-8b-instruct";
@@ -63,9 +60,6 @@ export function useSimpleChat(sessionId: string): ChatState {
     updateSelectedModel,
   } = useSession(sessionId);
 
-  // Get main database directly for settings document
-  const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
-
   // Function to save errors as system messages to the session database
   const saveErrorAsSystemMessageCb = useCallback(
     (error: RuntimeError, category: ErrorCategory) =>
@@ -96,10 +90,8 @@ export function useSimpleChat(sessionId: string): ChatState {
   // Reference for input element
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Get settings document
-  const { doc: settingsDoc } = useDocument<UserSettings>({
-    _id: "user_settings",
-  });
+  // Get model selection from shared hook
+  const modelSelection = useModelSelection();
 
   // State hooks
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
@@ -113,7 +105,10 @@ export function useSimpleChat(sessionId: string): ChatState {
   const modelToUse = effectiveModel;
 
   // Use our custom hooks
-  const baseEnsureSystemPrompt = useSystemPromptManager(settingsDoc, vibeDoc);
+  const baseEnsureSystemPrompt = useSystemPromptManager(
+    modelSelection.settingsDoc,
+    vibeDoc,
+  );
 
   // Create wrapper that handles dependency updates
   const ensureSystemPrompt = useCallback(
@@ -345,10 +340,9 @@ ${code}
     sessionId: session._id,
     vibeDoc,
     selectedModel: vibeDoc?.selectedModel,
-    effectiveModel:
-      effectiveModel[0] || settingsDoc?.model || DEFAULT_CODING_MODEL,
-    globalModel: settingsDoc?.model,
-    showModelPickerInChat: settingsDoc?.showModelPickerInChat || false,
+    effectiveModel: effectiveModel[0] || modelSelection.effectiveModel,
+    globalModel: modelSelection.globalModel,
+    showModelPickerInChat: modelSelection.showModelPickerInChat,
     addScreenshot,
     docs: messages,
     setSelectedResponseId,
