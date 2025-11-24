@@ -3,7 +3,7 @@ import { VibesButton, BLUE, RED, YELLOW, GRAY } from '../VibesButton/index.js';
 import { runtimeFn } from '@fireproof/core-runtime';
 import { BrutalistCard } from '../BrutalistCard/BrutalistCard.js';
 import { generateFreshDataUrl, generateRemixUrl } from '../../utils/appSlug.js';
-import { LabelContainer } from './LabelContainer.js';
+import { LabelContainer } from '../LabelContainer/index.js';
 import {
   getOuterContainerStyle,
   getButtonContainerStyle,
@@ -128,7 +128,7 @@ export function VibesPanel({ style, className, baseURL }: VibesPanelProps = {}) 
 
   return (
     <div style={getOuterContainerStyle(style)} className={className}>
-      <LabelContainer label="Settings">
+      <LabelContainer label="Settings" disappear={true}>
         <div style={getButtonContainerStyle()}>
           {mode === 'mutate' ? (
             // Mutate mode buttons

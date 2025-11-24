@@ -10,12 +10,12 @@ import ResultPreviewHeaderContent from "./ResultPreview/ResultPreviewHeaderConte
 import SessionSidebar from "./SessionSidebar.js";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useSimpleChat } from "../hooks/useSimpleChat.js";
-import { isMobileViewport, useViewState } from "../utils/ViewState.js";
+import { useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAuthPopup } from "../hooks/useAuthPopup.js";
 import { trackAuthClick, trackEvent } from "../utils/analytics.js";
-import { BrutalistCard } from "@vibes.diy/use-vibes-base";
+import { BrutalistCard, useMobile } from "@vibes.diy/use-vibes-base";
 import LoggedOutView from "./LoggedOutView.js";
 
 interface SessionViewProps {
@@ -41,33 +41,10 @@ export default function SessionView({
   const { isAuthenticated, isLoading } = useAuth();
   const { initiateLogin } = useAuthPopup();
 
-  // Typewriter effect state
-  const [displayedText, setDisplayedText] = useState("");
-  const fullText = "Welcome to Vibes DIY";
-
   // Track unauthenticated view render once
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       trackEvent("unauthenticated_session_view");
-    }
-  }, [isAuthenticated, isLoading]);
-
-  // Typewriter animation effect
-  useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      let currentIndex = 0;
-      const typingSpeed = 100; // milliseconds per character
-
-      const typingInterval = setInterval(() => {
-        if (currentIndex <= fullText.length) {
-          setDisplayedText(fullText.slice(0, currentIndex));
-          currentIndex++;
-        } else {
-          clearInterval(typingInterval);
-        }
-      }, typingSpeed);
-
-      return () => clearInterval(typingInterval);
     }
   }, [isAuthenticated, isLoading]);
 
@@ -94,7 +71,13 @@ export default function SessionView({
       await initiateLogin();
     };
 
-    return <LoggedOutView onLogin={handleLogin} isAuthenticated={isAuthenticated} isLoading={isLoading} />;
+    return (
+      <LoggedOutView
+        onLogin={handleLogin}
+        isAuthenticated={isAuthenticated}
+        isLoading={isLoading}
+      />
+    );
   }
 
   return (
@@ -123,6 +106,7 @@ function AuthenticatedSessionView({
   const chatState = useSimpleChat(sessionId);
   const hasAutoSentMessage = useRef(false);
   const chatInputRef = useRef<ChatInputRef>(null);
+  const isMobile = useMobile();
 
   const { setMessageHasBeenSent } = useCookieConsent();
 
@@ -291,12 +275,12 @@ function AuthenticatedSessionView({
     setPreviewReady(true);
 
     // Always show preview on mobile devices when it's ready, regardless of streaming status
-    if (isMobileViewport()) {
+    if (isMobile) {
       setMobilePreviewShown(true);
     }
 
     // setActiveView('preview'); // This is now handled by useViewState when previewReady changes
-  }, []); // chatState.isStreaming, chatState.codeReady removed as setActiveView is gone and useViewState handles this logic
+  }, [isMobile]); // chatState.isStreaming, chatState.codeReady removed as setActiveView is gone and useViewState handles this logic
 
   // URL update effect
   useEffect(() => {
@@ -376,15 +360,15 @@ function AuthenticatedSessionView({
       // Only show preview when:
       // 1. Streaming has finished (!chatState.isStreaming)
       // 2. Preview is ready (previewReady)
-      // 3. We're on mobile (isMobileViewport())
-      if (!chatState.isStreaming && previewReady && isMobileViewport()) {
+      // 3. We're on mobile (isMobile)
+      if (!chatState.isStreaming && previewReady && isMobile) {
         setMobilePreviewShown(true);
       }
     }
 
     // Update wasStreaming ref to track state changes
     wasStreamingRef.current = chatState.isStreaming;
-  }, [chatState.selectedCode, chatState.isStreaming, previewReady]);
+  }, [chatState.selectedCode, chatState.isStreaming, previewReady, isMobile]);
 
   // Initial URL navigation effect
   useEffect(() => {

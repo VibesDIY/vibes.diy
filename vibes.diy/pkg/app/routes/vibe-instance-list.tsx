@@ -371,7 +371,13 @@ export default function VibeInstancesList() {
   }
 
   if (!isAuthenticated) {
-    return <LoggedOutView onLogin={initiateLogin} />;
+    return (
+      <LoggedOutView
+        onLogin={initiateLogin}
+        isAuthenticated={isAuthenticated}
+        isLoading={isLoading}
+      />
+    );
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated

@@ -2,11 +2,7 @@ import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { ViewControlsType, ViewState, ViewType } from "@vibes.diy/prompts";
-
-// Helper to detect mobile viewport
-export const isMobileViewport = () => {
-  return typeof window !== "undefined" && window.innerWidth < 768;
-};
+import { useMobile } from "@vibes.diy/use-vibes-base";
 
 export interface ViewStateProps {
   sessionId: string;
@@ -27,6 +23,9 @@ export function useViewState(
     sessionId: string;
     title: string;
   }>();
+
+  // Use mobile detection hook
+  const isMobile = useMobile();
 
   // Router hooks now passed as parameters to prevent infinite render loops
 
@@ -67,7 +66,7 @@ export function useViewState(
       !wasStreamingRef.current &&
       (!hadCodeRef.current || props.code?.length === 0) &&
       // Don't auto-switch on mobile
-      !isMobileViewport()
+      !isMobile
     ) {
       // For the initial code streaming, we want to display code without changing URL
       // This is handled by the component that uses this hook
@@ -107,6 +106,8 @@ export function useViewState(
     sessionId,
     encodedTitle,
     navigate,
+    isMobile,
+    pathname,
   ]);
 
   // We handle the initial view display without changing the URL
@@ -187,7 +188,7 @@ export function useViewState(
     ? currentView // Respect user's explicit view choice from URL
     : props.previewReady
       ? "preview"
-      : props.isStreaming && !isMobileViewport()
+      : props.isStreaming && !isMobile
         ? "code"
         : currentView;
 

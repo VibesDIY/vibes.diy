@@ -12,6 +12,7 @@ import remixIconUrl from '../../assets/remix.png';
 import inviteIconUrl from '../../assets/invite.png';
 import settingsIconUrl from '../../assets/settings.png';
 import backIconUrl from '../../assets/back.png';
+import { useMobile } from '../../hooks/useMobile.js';
 import '../../styles/colors.css';
 
 // Variant constants
@@ -65,20 +66,7 @@ export function VibesButton({
   const buttonVariant = variant;
   const [isHovered, setHovered] = useState(false);
   const [isActive, setActive] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.matchMedia('(max-width: 768px)').matches);
-    };
-
-    checkMobile();
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
-    mediaQuery.addEventListener('change', checkMobile);
-
-    return () => mediaQuery.removeEventListener('change', checkMobile);
-  }, []);
+  const isMobile = useMobile();
 
   useEffect(() => {
     if (isHovered) {
@@ -90,7 +78,7 @@ export function VibesButton({
 
   const iconUrl = icon ? iconMap[icon] : undefined;
 
-  const baseStyle = getButtonStyle(buttonVariant, isHovered, isActive, isMobile);
+  const baseStyle = getButtonStyle(buttonVariant, isHovered, isActive, isMobile, !!iconUrl);
   const mergedStyle = getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle);
   const iconContainerStyle = getIconContainerStyle(buttonVariant, isMobile, !!iconUrl);
   const iconStyle = getIconStyle(isMobile, isHovered, isActive);

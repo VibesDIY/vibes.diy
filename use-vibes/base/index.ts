@@ -612,6 +612,7 @@ export { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
 
 // Export hooks
 export { hashInput, useImageGen } from './hooks/image-gen/index.js';
+export { useMobile } from './hooks/useMobile.js';
 
 // Export style utilities
 export { defaultClasses } from './utils/style-utils.js';
@@ -659,8 +660,8 @@ export type { VibeControlClasses } from './utils/vibe-control-styles.js';
 // Export additional components
 export { VibesPanel } from './components/VibesPanel/VibesPanel.js';
 export type { VibesPanelProps } from './components/VibesPanel/VibesPanel.js';
-export { LabelContainer } from './components/VibesPanel/LabelContainer.js';
-export type { LabelContainerProps } from './components/VibesPanel/LabelContainer.js';
+export { LabelContainer } from './components/LabelContainer/index.js';
+export type { LabelContainerProps } from './components/LabelContainer/index.js';
 export { BrutalistCard } from './components/BrutalistCard/index.js';
 export type {
   BrutalistCardProps,
