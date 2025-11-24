@@ -116,7 +116,7 @@ export function InlinePreview({
 
   return (
     <div
-      className="relative w-full h-full bg-gray-900 overflow-hidden"
+      className="relative w-full h-full bg-gray-900 overflow-auto"
       style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
     >
       {/* Error Overlay */}
