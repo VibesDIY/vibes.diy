@@ -26,10 +26,8 @@ export default function FireproofRoute() {
     queryFn: async () => {
       const res = await api.listTenantsByUser({});
       if (res.isErr()) {
-        // @ts-ignore - Err() might return string or object with message
-        throw new Error(
-          res.Err().message || res.Err() || "Failed to list tenants",
-        );
+        const e = res.Err();
+        throw e instanceof Error ? e : new Error(String(e) || "Failed to list tenants");
       }
       return res.Ok();
     },
@@ -41,10 +39,8 @@ export default function FireproofRoute() {
     queryFn: async () => {
       const res = await api.listLedgersByUser({});
       if (res.isErr()) {
-        // @ts-ignore
-        throw new Error(
-          res.Err().message || res.Err() || "Failed to list ledgers",
-        );
+        const e = res.Err();
+        throw e instanceof Error ? e : new Error(String(e) || "Failed to list ledgers");
       }
       return res.Ok();
     },
