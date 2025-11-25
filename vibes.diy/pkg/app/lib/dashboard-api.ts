@@ -87,7 +87,9 @@ export class DashboardApi {
     });
   }
 
-  private async request<T extends TypeString, S>(req: WithType<T>): Promise<Result<S>> {
+  private async request<T extends TypeString, S>(
+    req: WithType<T>,
+  ): Promise<Result<S>> {
     const rAuth = await this.getAuth();
     if (rAuth.isErr()) {
       return Result.Err(rAuth.Err());
@@ -114,67 +116,138 @@ export class DashboardApi {
     return Result.Err(`HTTP: ${res.status} ${res.statusText}: ${body}`);
   }
 
-  ensureUser(req: WithoutTypeAndAuth<ReqEnsureUser>): Promise<Result<ResEnsureUser>> {
-    return this.request<ReqEnsureUser, ResEnsureUser>({ ...req, type: "reqEnsureUser" });
+  ensureUser(
+    req: WithoutTypeAndAuth<ReqEnsureUser>,
+  ): Promise<Result<ResEnsureUser>> {
+    return this.request<ReqEnsureUser, ResEnsureUser>({
+      ...req,
+      type: "reqEnsureUser",
+    });
   }
   findUser(req: WithoutTypeAndAuth<ReqFindUser>): Promise<Result<ResFindUser>> {
-    return this.request<ReqFindUser, ResFindUser>({ ...req, type: "reqFindUser" });
+    return this.request<ReqFindUser, ResFindUser>({
+      ...req,
+      type: "reqFindUser",
+    });
   }
-  createTenant(req: WithoutTypeAndAuth<ReqCreateTenant>): Promise<Result<ResCreateTenant>> {
-    return this.request<ReqCreateTenant, ResCreateTenant>({ ...req, type: "reqCreateTenant" });
+  createTenant(
+    req: WithoutTypeAndAuth<ReqCreateTenant>,
+  ): Promise<Result<ResCreateTenant>> {
+    return this.request<ReqCreateTenant, ResCreateTenant>({
+      ...req,
+      type: "reqCreateTenant",
+    });
   }
-  updateTenant(req: WithoutTypeAndAuth<ReqUpdateTenant>): Promise<Result<ResUpdateTenant>> {
-    return this.request<ReqUpdateTenant, ResUpdateTenant>({ ...req, type: "reqUpdateTenant" });
+  updateTenant(
+    req: WithoutTypeAndAuth<ReqUpdateTenant>,
+  ): Promise<Result<ResUpdateTenant>> {
+    return this.request<ReqUpdateTenant, ResUpdateTenant>({
+      ...req,
+      type: "reqUpdateTenant",
+    });
   }
-  deleteTenant(req: WithoutTypeAndAuth<ReqDeleteTenant>): Promise<Result<ResDeleteTenant>> {
-    return this.request<ReqDeleteTenant, ResDeleteTenant>({ ...req, type: "reqDeleteTenant" });
+  deleteTenant(
+    req: WithoutTypeAndAuth<ReqDeleteTenant>,
+  ): Promise<Result<ResDeleteTenant>> {
+    return this.request<ReqDeleteTenant, ResDeleteTenant>({
+      ...req,
+      type: "reqDeleteTenant",
+    });
   }
-  connectUserToTenant(req: WithoutTypeAndAuth<ReqRedeemInvite>): Promise<Result<ResRedeemInvite>> {
-    return this.request<ReqRedeemInvite, ResRedeemInvite>({ ...req, type: "reqRedeemInvite" });
+  connectUserToTenant(
+    req: WithoutTypeAndAuth<ReqRedeemInvite>,
+  ): Promise<Result<ResRedeemInvite>> {
+    return this.request<ReqRedeemInvite, ResRedeemInvite>({
+      ...req,
+      type: "reqRedeemInvite",
+    });
   }
-  listTenantsByUser(req: WithoutTypeAndAuth<ReqListTenantsByUser>): Promise<Result<ResListTenantsByUser>> {
+  listTenantsByUser(
+    req: WithoutTypeAndAuth<ReqListTenantsByUser>,
+  ): Promise<Result<ResListTenantsByUser>> {
     return this.request<ReqListTenantsByUser, ResListTenantsByUser>({
       ...req,
       type: "reqListTenantsByUser",
     });
   }
-  inviteUser(req: WithoutTypeAndAuth<ReqInviteUser>): Promise<Result<ResInviteUser>> {
-    return this.request<ReqInviteUser, ResInviteUser>({ ...req, type: "reqInviteUser" });
+  inviteUser(
+    req: WithoutTypeAndAuth<ReqInviteUser>,
+  ): Promise<Result<ResInviteUser>> {
+    return this.request<ReqInviteUser, ResInviteUser>({
+      ...req,
+      type: "reqInviteUser",
+    });
   }
-  listInvites(req: WithoutTypeAndAuth<ReqListInvites>): Promise<Result<ResListInvites>> {
-    return this.request<ReqListInvites, ResListInvites>({ ...req, type: "reqListInvites" });
+  listInvites(
+    req: WithoutTypeAndAuth<ReqListInvites>,
+  ): Promise<Result<ResListInvites>> {
+    return this.request<ReqListInvites, ResListInvites>({
+      ...req,
+      type: "reqListInvites",
+    });
   }
-  deleteInvite(req: WithoutTypeAndAuth<ReqDeleteInvite>): Promise<Result<ResDeleteInvite>> {
-    return this.request<ReqDeleteInvite, ResDeleteInvite>({ ...req, type: "reqDeleteInvite" });
+  deleteInvite(
+    req: WithoutTypeAndAuth<ReqDeleteInvite>,
+  ): Promise<Result<ResDeleteInvite>> {
+    return this.request<ReqDeleteInvite, ResDeleteInvite>({
+      ...req,
+      type: "reqDeleteInvite",
+    });
   }
-  updateUserTenant(req: WithoutTypeAndAuth<ReqUpdateUserTenant>): Promise<Result<ResUpdateUserTenant>> {
+  updateUserTenant(
+    req: WithoutTypeAndAuth<ReqUpdateUserTenant>,
+  ): Promise<Result<ResUpdateUserTenant>> {
     return this.request<ReqUpdateUserTenant, ResUpdateUserTenant>({
       ...req,
       type: "reqUpdateUserTenant",
     });
   }
-  createLedger(req: WithoutTypeAndAuth<ReqCreateLedger>): Promise<Result<ResCreateLedger>> {
-    return this.request<ReqCreateLedger, ResCreateLedger>({ ...req, type: "reqCreateLedger" });
+  createLedger(
+    req: WithoutTypeAndAuth<ReqCreateLedger>,
+  ): Promise<Result<ResCreateLedger>> {
+    return this.request<ReqCreateLedger, ResCreateLedger>({
+      ...req,
+      type: "reqCreateLedger",
+    });
   }
-  updateLedger(req: WithoutTypeAndAuth<ReqUpdateLedger>): Promise<Result<ResUpdateLedger>> {
-    return this.request<ReqUpdateLedger, ResUpdateLedger>({ ...req, type: "reqUpdateLedger" });
+  updateLedger(
+    req: WithoutTypeAndAuth<ReqUpdateLedger>,
+  ): Promise<Result<ResUpdateLedger>> {
+    return this.request<ReqUpdateLedger, ResUpdateLedger>({
+      ...req,
+      type: "reqUpdateLedger",
+    });
   }
-  deleteLedger(req: WithoutTypeAndAuth<ReqDeleteLedger>): Promise<Result<ResDeleteLedger>> {
-    return this.request<ReqDeleteLedger, ResDeleteLedger>({ ...req, type: "reqDeleteLedger" });
+  deleteLedger(
+    req: WithoutTypeAndAuth<ReqDeleteLedger>,
+  ): Promise<Result<ResDeleteLedger>> {
+    return this.request<ReqDeleteLedger, ResDeleteLedger>({
+      ...req,
+      type: "reqDeleteLedger",
+    });
   }
-  listLedgersByUser(req: WithoutTypeAndAuth<ReqListLedgersByUser>): Promise<Result<ResListLedgersByUser>> {
+  listLedgersByUser(
+    req: WithoutTypeAndAuth<ReqListLedgersByUser>,
+  ): Promise<Result<ResListLedgersByUser>> {
     return this.request<ReqListLedgersByUser, ResListLedgersByUser>({
       ...req,
       type: "reqListLedgersByUser",
     });
   }
-  getCloudSessionToken(req: WithoutTypeAndAuth<ReqCloudSessionToken>): Promise<Result<ResCloudSessionToken>> {
+  getCloudSessionToken(
+    req: WithoutTypeAndAuth<ReqCloudSessionToken>,
+  ): Promise<Result<ResCloudSessionToken>> {
     return this.request<ReqCloudSessionToken, ResCloudSessionToken>({
       ...req,
       type: "reqCloudSessionToken",
     });
   }
-  getCertFromCsr(req: WithoutTypeAndAuth<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>> {
-    return this.request<ReqCertFromCsr, ResCertFromCsr>({ ...req, type: "reqCertFromCsr" });
+  getCertFromCsr(
+    req: WithoutTypeAndAuth<ReqCertFromCsr>,
+  ): Promise<Result<ResCertFromCsr>> {
+    return this.request<ReqCertFromCsr, ResCertFromCsr>({
+      ...req,
+      type: "reqCertFromCsr",
+    });
   }
 }
