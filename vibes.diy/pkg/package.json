@@ -34,6 +34,7 @@
     "@fireproof/core": "0.24.0",
     "@fireproof/core-protocols-dashboard": "0.24.0",
     "@fireproof/core-runtime": "0.24.0",
+    "@fireproof/core-types-base": "0.24.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-router/node": "^7.9.4",
