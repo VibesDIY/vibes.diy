@@ -37,6 +37,7 @@ export default [
     id: "privacy-policy",
   }),
   route("legal/tos", "./routes/legal/tos.tsx", { id: "terms-of-service" }),
+  route("fireproof", "./routes/fireproof.tsx", { id: "fireproof" }),
   // 404 catch-all route - must be last
   route("*", "./routes/$.tsx", { id: "not-found" }),
 ] satisfies RouteConfig;
