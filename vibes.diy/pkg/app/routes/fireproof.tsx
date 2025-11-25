@@ -27,7 +27,9 @@ export default function FireproofRoute() {
       const res = await api.listTenantsByUser({});
       if (res.isErr()) {
         const e = res.Err();
-        throw e instanceof Error ? e : new Error(String(e) || "Failed to list tenants");
+        throw e instanceof Error
+          ? e
+          : new Error(String(e) || "Failed to list tenants");
       }
       return res.Ok();
     },
@@ -40,7 +42,9 @@ export default function FireproofRoute() {
       const res = await api.listLedgersByUser({});
       if (res.isErr()) {
         const e = res.Err();
-        throw e instanceof Error ? e : new Error(String(e) || "Failed to list ledgers");
+        throw e instanceof Error
+          ? e
+          : new Error(String(e) || "Failed to list ledgers");
       }
       return res.Ok();
     },
