@@ -10,62 +10,71 @@ VibesDiyEnv.env().sets({
 });
 
 // Mock React Router components to avoid HTML validation errors
-vi.mock("react-router", () => ({
-  Meta: ({ "data-testid": testId }: { "data-testid"?: string }) => (
-    <meta data-testid={testId} />
-  ),
-  Links: () => <link data-testid="links" />,
-  Scripts: ({ "data-testid": testId }: { "data-testid"?: string }) => (
-    <script data-testid={testId} />
-  ),
-  ScrollRestoration: ({
-    "data-testid": testId,
-  }: {
-    "data-testid"?: string;
-  }) => <div data-testid={testId} />,
-  isRouteErrorResponse: vi.fn(),
-  useLocation: () => ({ pathname: "/", search: "" }),
-  Outlet: () => <div data-testid="outlet" />,
-}));
+vi.mock("react-router", async () => {
+  const { vi } = await import("vitest");
+  return {
+    Meta: ({ "data-testid": testId }: { "data-testid"?: string }) => (
+      <meta data-testid={testId} />
+    ),
+    Links: () => <link data-testid="links" />,
+    Scripts: ({ "data-testid": testId }: { "data-testid"?: string }) => (
+      <script data-testid={testId} />
+    ),
+    ScrollRestoration: ({
+      "data-testid": testId,
+    }: {
+      "data-testid"?: string;
+    }) => <div data-testid={testId} />,
+    isRouteErrorResponse: vi.fn(),
+    useLocation: () => ({ pathname: "/", search: "" }),
+    Outlet: () => <div data-testid="outlet" />,
+  };
+});
 
 // Mock the cookie consent library
-vi.mock("react-cookie-consent", () => ({
-  default: ({
-    children,
-    buttonText,
-    onAccept,
-  }: {
-    children: React.ReactNode;
-    buttonText: string;
-    onAccept: () => void;
-  }) => (
-    <div data-testid="cookie-consent">
-      {children}
-      <button type="button" onClick={onAccept}>
-        {buttonText}
-      </button>
-    </div>
-  ),
-  getCookieConsentValue: vi.fn().mockReturnValue(null),
-  Cookies: {
-    get: vi.fn(),
-    set: vi.fn(),
-    remove: vi.fn(),
-  },
-}));
+vi.mock("react-cookie-consent", async () => {
+  const { vi } = await import("vitest");
+  return {
+    default: ({
+      children,
+      buttonText,
+      onAccept,
+    }: {
+      children: React.ReactNode;
+      buttonText: string;
+      onAccept: () => void;
+    }) => (
+      <div data-testid="cookie-consent">
+        {children}
+        <button type="button" onClick={onAccept}>
+          {buttonText}
+        </button>
+      </div>
+    ),
+    getCookieConsentValue: vi.fn().mockReturnValue(null),
+    Cookies: {
+      get: vi.fn(),
+      set: vi.fn(),
+      remove: vi.fn(),
+    },
+  };
+});
 
 // Mock the CookieConsentContext
-vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
-  useCookieConsent: () => ({
-    messageHasBeenSent: false,
-    setMessageHasBeenSent: vi.fn(),
-    cookieConsent: true,
-    setCookieConsent: vi.fn(),
-  }),
-  CookieConsentProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-}));
+vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useCookieConsent: () => ({
+      messageHasBeenSent: false,
+      setMessageHasBeenSent: vi.fn(),
+      cookieConsent: true,
+      setCookieConsent: vi.fn(),
+    }),
+    CookieConsentProvider: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+  };
+});
 
 // Mock the ThemeContext
 vi.mock("~/vibes.diy/app/contexts/ThemeContext", () => ({
@@ -95,31 +104,37 @@ vi.mock("~/vibes.diy/app/components/CookieBanner", () => ({
 }));
 
 // Mock the useFireproof hook
-vi.mock("use-fireproof", () => ({
-  useFireproof: () => ({
-    useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
-    useLiveQuery: () => [[]],
-  }),
-}));
+vi.mock("use-fireproof", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useFireproof: () => ({
+      useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
+      useLiveQuery: () => [[]],
+    }),
+  };
+});
 
 // Mock the useSimpleChat hook
-vi.mock("~/vibes.diy/app/hooks/useSimpleChat", () => ({
-  useSimpleChat: () => ({
-    docs: [],
-    isStreaming: false,
-    codeReady: false,
-    sendMessage: vi.fn(),
-    setInput: vi.fn(),
-    input: "",
-    selectedSegments: [],
-    selectedCode: "",
-    setSelectedResponseId: vi.fn(),
-    immediateErrors: [],
-    advisoryErrors: [],
-    needsLoginTriggered: false,
-    setNeedsLoginTriggered: vi.fn(),
-  }),
-}));
+vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useSimpleChat: () => ({
+      docs: [],
+      isStreaming: false,
+      codeReady: false,
+      sendMessage: vi.fn(),
+      setInput: vi.fn(),
+      input: "",
+      selectedSegments: [],
+      selectedCode: "",
+      setSelectedResponseId: vi.fn(),
+      immediateErrors: [],
+      advisoryErrors: [],
+      needsLoginTriggered: false,
+      setNeedsLoginTriggered: vi.fn(),
+    }),
+  };
+});
 
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", () => ({

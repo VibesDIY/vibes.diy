@@ -8,21 +8,33 @@ import type {
 } from "@vibes.diy/prompts";
 
 // Mock all imports before importing the component to test
-vi.mock("react-router", () => ({
-  useParams: vi.fn(),
-}));
+vi.mock("react-router", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useParams: vi.fn(),
+  };
+});
 
-vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
-  useSession: vi.fn(),
-}));
+vi.mock("~/vibes.diy/app/hooks/useSession", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useSession: vi.fn(),
+  };
+});
 
-vi.mock("~/vibes.diy/app/utils/ViewState", () => ({
-  useViewState: vi.fn(),
-}));
+vi.mock("~/vibes.diy/app/utils/ViewState", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useViewState: vi.fn(),
+  };
+});
 
-vi.mock("~/vibes.diy/app/components/ResultPreview/usePublish.js", () => ({
-  usePublish: vi.fn(),
-}));
+vi.mock("~/vibes.diy/app/components/ResultPreview/usePublish.js", async () => {
+  const { vi } = await import("vitest");
+  return {
+    usePublish: vi.fn(),
+  };
+});
 
 // Mock child components
 vi.mock("~/vibes.diy/app/components/ResultPreview/BackButton.js", () => ({
@@ -64,69 +76,75 @@ vi.mock("~/vibes.diy/app/components/ResultPreview/ViewControls.js", () => ({
   },
 }));
 
-vi.mock("~/vibes.diy/app/components/ResultPreview/ShareButton", () => ({
-  ShareButton: vi
-    .fn()
-    .mockImplementation(
-      ({
-        onClick,
-        isPublishing,
-        urlCopied,
-        hasPublishedUrl,
-        ref,
-      }: {
-        onClick: () => void;
-        isPublishing: boolean;
-        urlCopied: boolean;
-        hasPublishedUrl: boolean;
-        ref?: React.RefObject<HTMLButtonElement>;
-      }) => (
-        <button
-          data-testid="publish-button"
-          onClick={onClick}
-          disabled={isPublishing}
-          data-copied={urlCopied ? "true" : "false"}
-          data-has-url={hasPublishedUrl ? "true" : "false"}
-          ref={ref}
-        >
-          {isPublishing ? "Publishing..." : urlCopied ? "Copied!" : "Publish"}
-        </button>
-      ),
-    ),
-}));
-
-vi.mock("~/vibes.diy/app/components/ResultPreview/ShareModal", () => ({
-  ShareModal: vi.fn().mockImplementation(
-    ({
-      isOpen,
-      onClose,
-      publishedAppUrl,
-      onPublish,
-      isPublishing,
-      // buttonRef,
-    }: {
-      isOpen: boolean;
-      onClose: () => void;
-      publishedAppUrl?: string;
-      onPublish: () => void;
-      isPublishing: boolean;
-      buttonRef?: React.RefObject<HTMLButtonElement>;
-    }) =>
-      isOpen ? (
-        <div data-testid="share-modal">
-          <span>URL: {publishedAppUrl || "none"}</span>
-          <button onClick={onClose}>Close</button>
+vi.mock("~/vibes.diy/app/components/ResultPreview/ShareButton", async () => {
+  const { vi } = await import("vitest");
+  return {
+    ShareButton: vi
+      .fn()
+      .mockImplementation(
+        ({
+          onClick,
+          isPublishing,
+          urlCopied,
+          hasPublishedUrl,
+          ref,
+        }: {
+          onClick: () => void;
+          isPublishing: boolean;
+          urlCopied: boolean;
+          hasPublishedUrl: boolean;
+          ref?: React.RefObject<HTMLButtonElement>;
+        }) => (
           <button
-            onClick={onPublish}
+            data-testid="publish-button"
+            onClick={onClick}
             disabled={isPublishing}
-            data-testid="modal-publish-button"
+            data-copied={urlCopied ? "true" : "false"}
+            data-has-url={hasPublishedUrl ? "true" : "false"}
+            ref={ref}
           >
-            {isPublishing ? "Publishing..." : "Publish"}
+            {isPublishing ? "Publishing..." : urlCopied ? "Copied!" : "Publish"}
           </button>
-        </div>
-      ) : null,
-  ),
-}));
+        ),
+      ),
+  };
+});
+
+vi.mock("~/vibes.diy/app/components/ResultPreview/ShareModal", async () => {
+  const { vi } = await import("vitest");
+  return {
+    ShareModal: vi.fn().mockImplementation(
+      ({
+        isOpen,
+        onClose,
+        publishedAppUrl,
+        onPublish,
+        isPublishing,
+        // buttonRef,
+      }: {
+        isOpen: boolean;
+        onClose: () => void;
+        publishedAppUrl?: string;
+        onPublish: () => void;
+        isPublishing: boolean;
+        buttonRef?: React.RefObject<HTMLButtonElement>;
+      }) =>
+        isOpen ? (
+          <div data-testid="share-modal">
+            <span>URL: {publishedAppUrl || "none"}</span>
+            <button onClick={onClose}>Close</button>
+            <button
+              onClick={onPublish}
+              disabled={isPublishing}
+              data-testid="modal-publish-button"
+            >
+              {isPublishing ? "Publishing..." : "Publish"}
+            </button>
+          </div>
+        ) : null,
+    ),
+  };
+});
 
 // Import after all mocks are set up
 import ResultPreviewHeaderContent from "~/vibes.diy/app/components/ResultPreview/ResultPreviewHeaderContent.js";

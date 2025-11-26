@@ -19,33 +19,39 @@ URL.createObjectURL = vi.fn().mockReturnValue(mockObjectUrl);
 URL.revokeObjectURL = vi.fn();
 
 // Mock useSession hook to prevent Fireproof initialization during tests
-vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
-  useSession: vi.fn().mockReturnValue({
-    updateTitle: vi.fn().mockResolvedValue(undefined),
-    session: { title: "Test Session" },
-    updatePublishedUrl: vi.fn(),
-    updateFirehoseShared: vi.fn(),
-    addScreenshot: vi.fn(),
-  }),
-}));
+vi.mock("~/vibes.diy/app/hooks/useSession", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useSession: vi.fn().mockReturnValue({
+      updateTitle: vi.fn().mockResolvedValue(undefined),
+      session: { title: "Test Session" },
+      updatePublishedUrl: vi.fn(),
+      updateFirehoseShared: vi.fn(),
+      addScreenshot: vi.fn(),
+    }),
+  };
+});
 
 // Mock SandpackProvider and related components
-vi.mock("@codesandbox/sandpack-react", () => ({
-  SandpackProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="sandpack-provider">{children}</div>
-  ),
-  SandpackLayout: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SandpackCodeEditor: () => <div data-testid="sandpack-editor">Editor</div>,
-  SandpackPreview: () => <div data-testid="sandpack-preview">Preview</div>,
-  useSandpack: () => ({
-    sandpack: { activeFile: "/App.jsx" },
-    listen: vi.fn().mockReturnValue(() => {
-      /* no-op */
+vi.mock("@codesandbox/sandpack-react", async () => {
+  const { vi } = await import("vitest");
+  return {
+    SandpackProvider: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="sandpack-provider">{children}</div>
+    ),
+    SandpackLayout: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    SandpackCodeEditor: () => <div data-testid="sandpack-editor">Editor</div>,
+    SandpackPreview: () => <div data-testid="sandpack-preview">Preview</div>,
+    useSandpack: () => ({
+      sandpack: { activeFile: "/App.jsx" },
+      listen: vi.fn().mockReturnValue(() => {
+        /* no-op */
+      }),
     }),
-  }),
-}));
+  };
+});
 
 // Mock WelcomeScreen
 vi.mock("~/vibes.diy/app/components/ResultPreview/WelcomeScreen", () => ({

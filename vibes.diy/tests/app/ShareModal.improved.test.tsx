@@ -9,10 +9,13 @@ vi.mock("react-dom", () => ({
 }));
 
 // Mock the analytics tracking function (not used in current tests)
-vi.mock("~/vibes.diy/app/utils/analytics", () => ({
-  trackPublishClick: vi.fn(),
-  trackEvent: vi.fn(),
-}));
+vi.mock("~/vibes.diy/app/utils/analytics", async () => {
+  const { vi } = await import("vitest");
+  return {
+    trackPublishClick: vi.fn(),
+    trackEvent: vi.fn(),
+  };
+});
 
 describe("ShareModal", () => {
   const mockOnClose = vi.fn();

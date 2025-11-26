@@ -3,8 +3,15 @@ import { render, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import React from "react";
 
+const mocks = vi.hoisted(() => {
+  return {
+    mockCookieConsentValue: { value: "false" },
+  };
+});
+
 // Mock React Router
 vi.mock("react-router", async () => {
+  const { vi } = await import("vitest");
   const actual =
     await vi.importActual<typeof import("react-router")>("react-router");
   return {
@@ -18,11 +25,14 @@ vi.mock("react-router", async () => {
 });
 
 // Mock dependencies
-vi.mock("posthog-js/react", () => ({
-  usePostHog: () => ({
-    opt_in_capturing: vi.fn(),
-  }),
-}));
+vi.mock("posthog-js/react", async () => {
+  const { vi } = await import("vitest");
+  return {
+    usePostHog: () => ({
+      opt_in_capturing: vi.fn(),
+    }),
+  };
+});
 
 vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
   useCookieConsent: () => ({
@@ -30,14 +40,20 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
   }),
 }));
 
-vi.mock("~/vibes.diy/app/utils/analytics", () => ({
-  pageview: vi.fn(),
-  trackEvent: vi.fn(),
-}));
+vi.mock("~/vibes.diy/app/utils/analytics", async () => {
+  const { vi } = await import("vitest");
+  return {
+    pageview: vi.fn(),
+    trackEvent: vi.fn(),
+  };
+});
 
-vi.mock("~/vibes.diy/app/utils/gtm", () => ({
-  initGTM: vi.fn(),
-}));
+vi.mock("~/vibes.diy/app/utils/gtm", async () => {
+  const { vi } = await import("vitest");
+  return {
+    initGTM: vi.fn(),
+  };
+});
 
 vi.mock("~/vibes.diy/app/config/env", () => ({
   VibesDiyEnv: {
@@ -46,7 +62,6 @@ vi.mock("~/vibes.diy/app/config/env", () => ({
 }));
 
 // Mock react-cookie-consent
-let mockCookieConsentValue = "false";
 vi.mock("react-cookie-consent", () => ({
   default: ({
     children,
@@ -67,7 +82,7 @@ vi.mock("react-cookie-consent", () => ({
       </button>
     </div>
   ),
-  getCookieConsentValue: () => mockCookieConsentValue,
+  getCookieConsentValue: () => mocks.mockCookieConsentValue.value,
 }));
 
 // Import component after mocks
@@ -81,7 +96,7 @@ describe("CookieBanner Hook Ordering", () => {
     consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    mockCookieConsentValue = "false";
+    mocks.mockCookieConsentValue.value = "false";
 
     // Mock sessionStorage
     Object.defineProperty(window, "sessionStorage", {
@@ -307,7 +322,7 @@ describe("CookieBanner Hook Ordering", () => {
     });
 
     // Simulate user accepting cookies
-    mockCookieConsentValue = "true";
+    mocks.mockCookieConsentValue.value = "true";
 
     // Re-render after consent change
     rerender(

@@ -11,8 +11,15 @@ import type {
 } from "@vibes.diy/prompts";
 import { mockSessionSidebarProps } from "./mockData.js";
 
+const mocks = vi.hoisted(() => {
+  return {
+    mockUseAuth: vi.fn(),
+  };
+});
+
 // Mock dependencies
-vi.mock("react-markdown", () => {
+vi.mock("react-markdown", async () => {
+  const { vi } = await import("vitest");
   return {
     default: vi.fn(({ children }: { children: string }) => {
       // Use React.createElement instead of JSX
@@ -26,10 +33,13 @@ vi.mock("react-markdown", () => {
 });
 
 // Mock the scrollIntoView method
-window.HTMLElement.prototype.scrollIntoView = vi.fn();
+// window.HTMLElement.prototype.scrollIntoView = vi.fn(); // Do this in beforeEach or after dynamic import if needed, but top level is risky if vi is not ready.
+// Actually, vi is imported from vitest at top level, but for mocking modules we should use dynamic import inside factory.
+// For global stubs, we can use vi.stubGlobal or just assignment in beforeEach.
 
 // Mock Link component from react-router-dom
-vi.mock("react-router-dom", () => {
+vi.mock("react-router-dom", async () => {
+  const { vi } = await import("vitest");
   return {
     Link: vi.fn(({ to, children, onClick, ...props }) => {
       return React.createElement(
@@ -47,13 +57,13 @@ vi.mock("react-router-dom", () => {
 });
 
 // Mock @clerk/clerk-react
-const mockUseAuth = vi.fn();
 vi.mock("@clerk/clerk-react", () => ({
-  useAuth: mockUseAuth,
+  useAuth: mocks.mockUseAuth,
 }));
 
 // Mock the useSessionMessages hook for MessageList
-vi.mock("~/vibes.diy/app/hooks/useSessionMessages", () => {
+vi.mock("~/vibes.diy/app/hooks/useSessionMessages", async () => {
+  const { vi } = await import("vitest");
   return {
     useSessionMessages: (sessionId: string | null) => {
       // Check the sessionId to determine what to return
@@ -125,6 +135,7 @@ describe("Component Rendering", () => {
   beforeEach(() => {
     globalThis.document.body.innerHTML = "";
     vi.resetAllMocks();
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
   });
 
   describe("ChatHeader", () => {
@@ -176,7 +187,7 @@ describe("Component Rendering", () => {
   describe("SessionSidebar", () => {
     it("renders in hidden state", async () => {
       const props = { ...mockSessionSidebarProps, isVisible: false };
-      mockUseAuth.mockReturnValue({
+      mocks.mockUseAuth.mockReturnValue({
         isSignedIn: true,
         isLoaded: true,
         userId: "test-user",
@@ -188,7 +199,7 @@ describe("Component Rendering", () => {
 
     it("renders in visible state", async () => {
       const props = { ...mockSessionSidebarProps, isVisible: true };
-      mockUseAuth.mockReturnValue({
+      mocks.mockUseAuth.mockReturnValue({
         isSignedIn: true,
         isLoaded: true,
         userId: "test-user",
@@ -200,7 +211,7 @@ describe("Component Rendering", () => {
 
     it("shows navigation menu items when authenticated", async () => {
       const props = { ...mockSessionSidebarProps, isVisible: true };
-      mockUseAuth.mockReturnValue({
+      mocks.mockUseAuth.mockReturnValue({
         isSignedIn: true,
         isLoaded: true,
         userId: "test-user",
@@ -214,7 +225,7 @@ describe("Component Rendering", () => {
 
     it("shows Login button when not authenticated", async () => {
       const props = { ...mockSessionSidebarProps, isVisible: true };
-      mockUseAuth.mockReturnValue({
+      mocks.mockUseAuth.mockReturnValue({
         isSignedIn: false,
         isLoaded: true,
         userId: null,
@@ -231,7 +242,7 @@ describe("Component Rendering", () => {
         isVisible: true,
         onClose: onCloseMock,
       };
-      mockUseAuth.mockReturnValue({
+      mocks.mockUseAuth.mockReturnValue({
         isSignedIn: true,
         isLoaded: true,
         userId: "test-user",
