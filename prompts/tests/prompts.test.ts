@@ -2,27 +2,30 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import { makeBaseSystemPrompt, RESPONSE_FORMAT } from "@vibes.diy/prompts";
 
 // We need to mock the module properly, not test the real implementation yet
-vi.mock("@vibes.diy/prompts", () => ({
-  makeBaseSystemPrompt: vi.fn().mockResolvedValue({
-    systemPrompt: "mocked system prompt",
-    dependencies: ["fireproof", "callai"],
-    instructionalText: true,
-    demoData: true,
-    model: "test-model",
-  }),
-  RESPONSE_FORMAT: {
-    dependencies: {
-      format: '{dependencies: { "package-name": "version" }}',
-      note: "use-fireproof is already provided, do not include it",
+vi.mock("@vibes.diy/prompts", async () => {
+  const { vi } = await import("vitest");
+  return {
+    makeBaseSystemPrompt: vi.fn().mockResolvedValue({
+      systemPrompt: "mocked system prompt",
+      dependencies: ["fireproof", "callai"],
+      instructionalText: true,
+      demoData: true,
+      model: "test-model",
+    }),
+    RESPONSE_FORMAT: {
+      dependencies: {
+        format: '{dependencies: { "package-name": "version" }}',
+        note: "use-fireproof is already provided, do not include it",
+      },
+      structure: [
+        "Brief explanation",
+        "Component code with proper Fireproof integration",
+        "Real-time updates",
+        "Data persistence",
+      ],
     },
-    structure: [
-      "Brief explanation",
-      "Component code with proper Fireproof integration",
-      "Real-time updates",
-      "Data persistence",
-    ],
-  },
-}));
+  };
+});
 
 describe("Prompts Utility", () => {
   const opts = {

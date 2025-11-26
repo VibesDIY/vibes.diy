@@ -3,23 +3,94 @@ import { cleanup } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, vi } from "vitest";
 import { VibesDiyEnv } from "~/vibes.diy/app/config/env.js";
+import type {
+  AiChatMessage,
+  ChatMessage,
+  UserChatMessage,
+} from "@vibes.diy/prompts";
+import type { DocResponse } from "use-fireproof";
+import { parseContent } from "@vibes.diy/prompts";
+
+type MockDoc = AiChatMessage | UserChatMessage;
+type AnyChatMessage = AiChatMessage | UserChatMessage;
+
+const { mockState, mockMergeUserMessage } = vi.hoisted(() => {
+  const initialDocs: MockDoc[] = [
+    {
+      _id: "ai-message-1",
+      type: "ai",
+      text: "AI test message",
+      session_id: "test-session-id",
+      timestamp: Date.now(),
+      created_at: Date.now(),
+    },
+    {
+      _id: "user-message-1",
+      type: "user",
+      text: "User test message",
+      session_id: "test-session-id",
+      timestamp: Date.now(),
+      created_at: Date.now(),
+    },
+    {
+      _id: "ai-message-0",
+      type: "ai",
+      text: 'Older AI message with code:\n\n```javascript\nfunction example() {\n  return "This is a code example";\n}\n```\n\nThe above function returns a string.',
+      session_id: "test-session-id",
+      timestamp: Date.now() - 2000,
+      created_at: Date.now(),
+    },
+  ];
+
+  const state = {
+    callCount: 0,
+    mockDocs: [...initialDocs],
+    initialDocs,
+    currentUserMessage: {
+      text: "",
+      _id: "user-message-draft",
+      type: "user" as const,
+      session_id: "test-session-id",
+      created_at: Date.now(),
+    } as MockDoc,
+    currentAiMessage: {
+      text: "",
+      _id: "ai-message-draft",
+      type: "ai" as const,
+      session_id: "test-session-id",
+      created_at: Date.now(),
+    } as MockDoc,
+  };
+
+  const mergeUserMessageImpl = (data?: { text: string }) => {
+    if (data && typeof data.text === "string") {
+      state.currentUserMessage.text = data.text;
+    }
+  };
+
+  return {
+    mockState: state,
+    mockMergeUserMessage: vi.fn(mergeUserMessageImpl),
+  };
+});
 
 // IMPORTANT: Mock call-ai BEFORE any modules that might import it
-let callCount = 0;
 vi.mock("call-ai", async () => {
+  const { vi } = await import("vitest");
   const al = await vi.importActual("call-ai");
   return {
     ...al,
     callAI: vi.fn(async () => {
       // Return a different value on subsequent calls to simulate state change
-      callCount += 1;
-      return callCount === 1 ? "Mock Title" : "Updated Mock Title";
+      mockState.callCount += 1;
+      return mockState.callCount === 1 ? "Mock Title" : "Updated Mock Title";
     }),
   };
 });
 
 // Mock Clerk to avoid requiring ClerkProvider during tests
-vi.mock("@clerk/clerk-react", () => {
+vi.mock("@clerk/clerk-react", async () => {
+  const { vi } = await import("vitest");
   return {
     useAuth: () => ({
       isSignedIn: true,
@@ -37,13 +108,6 @@ vi.mock("@clerk/clerk-react", () => {
     }),
   };
 });
-import type {
-  AiChatMessage,
-  ChatMessage,
-  UserChatMessage,
-} from "@vibes.diy/prompts";
-import type { DocResponse } from "use-fireproof";
-import { parseContent } from "@vibes.diy/prompts";
 
 // Helper function to convert chunks into SSE format
 function formatAsSSE(chunks: string[]): string[] {
@@ -72,6 +136,7 @@ function formatAsSSE(chunks: string[]): string[] {
 
 // Mock the prompts module
 vi.mock("@vibes.diy/prompts", async (improve) => {
+  const { vi } = await import("vitest");
   const all = (await improve()) as typeof import("@vibes.diy/prompts");
   return {
     ...all,
@@ -79,39 +144,39 @@ vi.mock("@vibes.diy/prompts", async (improve) => {
   };
 });
 
-// Credit checking mocks no longer needed
-
 // Mock the utils/streamHandler to avoid real streaming and loops
-vi.mock("~/vibes.diy/app/utils/streamHandler", () => ({
-  streamAI: vi.fn(
-    async (
-      _model: string,
-      _sys: string,
-      _hist: unknown[],
-      _user: string,
-      onContent: (c: string) => void,
-    ) => {
-      // simulate streaming updates
-      onContent("Mock stream part 1");
-      onContent("Mock stream part 2");
-      return "Mock stream part 1Mock stream part 2";
-    },
-  ),
-}));
+vi.mock("~/vibes.diy/app/utils/streamHandler", async () => {
+  const { vi } = await import("vitest");
+  return {
+    streamAI: vi.fn(
+      async (
+        _model: string,
+        _sys: string,
+        _hist: unknown[],
+        _user: string,
+        onContent: (c: string) => void,
+      ) => {
+        // simulate streaming updates
+        onContent("Mock stream part 1");
+        onContent("Mock stream part 2");
+        return "Mock stream part 1Mock stream part 2";
+      },
+    ),
+  };
+});
 
 // Mock the env module
-
 VibesDiyEnv.env().sets({
   CALLAI_API_KEY: "mock-callai-api-key-for-testing",
   CALLAI_ENDPOINT: "https://mock-callai-endpoint.com",
   SETTINGS_DBNAME: "test-chat-history",
   GA_TRACKING_ID: "mock-ga-tracking-id",
   APP_MODE: "test", // Added mock APP_MODE
-  // callAiEnv.set("CALLAI_API_KEY", "test-api-key");
 });
 
 // Mock Fireproof to prevent CRDT errors
 vi.mock("use-fireproof", async (original) => {
+  const { vi } = await import("vitest");
   const all = (await original()) as typeof import("use-fireproof");
   return {
     ...all,
@@ -144,84 +209,28 @@ vi.mock("use-fireproof", async (original) => {
   };
 });
 
-// Define shared state and reset function *outside* the mock factory
-// interface MockDoc {
-//   _id?: string;
-//   type: string;
-//   text: string;
-//   session_id: string;
-//   timestamp?: number;
-//   created_at?: number;
-//   segments?: unknown[];
-//   dependenciesString?: string;
-//   isStreaming?: boolean;
-//   model?: string;
-//   dataUrl?: string; // For screenshot docs
-// }
-
-type MockDoc = AiChatMessage | UserChatMessage;
-
-let mockDocs: MockDoc[] = [];
-const initialMockDocs: MockDoc[] = [
-  {
-    _id: "ai-message-1",
-    type: "ai",
-    text: "AI test message",
-    session_id: "test-session-id",
-    timestamp: Date.now(),
-    created_at: Date.now(),
-  },
-  {
-    _id: "user-message-1",
-    type: "user",
-    text: "User test message",
-    session_id: "test-session-id",
-    timestamp: Date.now(),
-    created_at: Date.now(),
-  },
-  {
-    _id: "ai-message-0",
-    type: "ai",
-    text: 'Older AI message with code:\n\n```javascript\nfunction example() {\n  return "This is a code example";\n}\n```\n\nThe above function returns a string.',
-    session_id: "test-session-id",
-    timestamp: Date.now() - 2000,
-    created_at: Date.now(),
-  },
-];
-let currentUserMessage: MockDoc;
-let currentAiMessage: MockDoc;
-
 const resetMockState = () => {
-  mockDocs = [...initialMockDocs]; // Reset docs to initial state
-  currentUserMessage = {
+  // Clear array without replacing reference
+  mockState.mockDocs.length = 0;
+  mockState.mockDocs.push(...mockState.initialDocs);
+
+  mockState.currentUserMessage = {
     text: "",
     _id: "user-message-draft",
     type: "user" as const,
     session_id: "test-session-id",
     created_at: Date.now(),
-  };
-  currentAiMessage = {
+  } as MockDoc;
+
+  mockState.currentAiMessage = {
     text: "",
     _id: "ai-message-draft",
     type: "ai" as const,
     session_id: "test-session-id",
     created_at: Date.now(),
-  };
+  } as MockDoc;
 };
 
-// Define the mergeUserMessage implementation separately
-const mergeUserMessageImpl = (data?: { text: string }) => {
-  if (data && typeof data.text === "string") {
-    currentUserMessage.text = data.text;
-  }
-};
-
-// Create a spy wrapping the implementation
-const mockMergeUserMessage = vi.fn(mergeUserMessageImpl);
-
-// A single shared sessionDatabase instance used by the mocked useSession hook.
-// Tests can override these methods at runtime to affect the hook under test.
-type AnyChatMessage = AiChatMessage | UserChatMessage;
 interface SessionDatabase {
   put: (
     doc: Partial<AnyChatMessage> & { _id?: string },
@@ -241,13 +250,13 @@ function makeDefaultSessionDatabase(): SessionDatabase {
       return Promise.resolve({ id } as DocResponse);
     }),
     get: vi.fn(async (id: string) => {
-      const found = mockDocs.find((d) => d._id === id);
+      const found = mockState.mockDocs.find((d) => d._id === id);
       if (found) return Promise.resolve(found);
       return Promise.reject(new Error("Not found"));
     }),
     query: vi.fn(async (field: string, options: { key: string }) => {
       const key = options?.key;
-      const filtered = mockDocs.filter((doc) => {
+      const filtered = mockState.mockDocs.filter((doc) => {
         // Type-safe field access for known chat message fields
         if (field === "session_id") return doc.session_id === key;
         if (field === "type") return doc.type === key;
@@ -259,8 +268,8 @@ function makeDefaultSessionDatabase(): SessionDatabase {
       });
     }),
     delete: vi.fn(async (id: string) => {
-      const idx = mockDocs.findIndex((d) => d._id === id);
-      if (idx >= 0) mockDocs.splice(idx, 1);
+      const idx = mockState.mockDocs.findIndex((d) => d._id === id);
+      if (idx >= 0) mockState.mockDocs.splice(idx, 1);
       return Promise.resolve({ ok: true });
     }),
   };
@@ -280,6 +289,8 @@ function resetSharedSessionDatabase() {
 
 // Mock the useSession hook
 vi.mock("~/vibes.diy/app/hooks/useSession", async (original) => {
+  const { vi } = await import("vitest");
+  const { parseContent } = await import("@vibes.diy/prompts");
   const all =
     (await original()) as typeof import("~/vibes.diy/app/hooks/useSession.js");
   return {
@@ -294,47 +305,47 @@ vi.mock("~/vibes.diy/app/hooks/useSession", async (original) => {
           type: "session" as const,
           created_at: Date.now(),
         },
-        docs: mockDocs,
+        docs: mockState.mockDocs,
         updateTitle: vi
           .fn()
           .mockImplementation(async (_title) => Promise.resolve()),
         addScreenshot: vi.fn(),
         sessionDatabase: sharedSessionDatabase,
         openSessionDatabase: vi.fn(),
-        userMessage: currentUserMessage,
+        userMessage: mockState.currentUserMessage,
         mergeUserMessage: mockMergeUserMessage,
         submitUserMessage: vi.fn().mockImplementation(async () => {
           const id = `user-message-${Date.now()}`;
           const newDoc = {
-            ...currentUserMessage,
+            ...mockState.currentUserMessage,
             _id: id,
           };
-          mockDocs.push(newDoc);
+          mockState.mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
-        aiMessage: currentAiMessage,
+        aiMessage: mockState.currentAiMessage,
         mergeAiMessage: vi.fn((data) => {
           if (data && typeof data.text === "string") {
-            currentAiMessage.text = data.text;
+            mockState.currentAiMessage.text = data.text;
           }
         }),
         submitAiMessage: vi.fn().mockImplementation(async () => {
           const id = `ai-message-${Date.now()}`;
           const newDoc = {
-            ...currentAiMessage,
+            ...mockState.currentAiMessage,
             _id: id,
           };
-          mockDocs.push(newDoc);
+          mockState.mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
         saveAiMessage: vi.fn().mockImplementation(async (existingDoc) => {
           const id = existingDoc?._id || `ai-message-${Date.now()}`;
           const newDoc = {
-            ...currentAiMessage,
+            ...mockState.currentAiMessage,
             ...existingDoc,
             _id: id,
           };
-          mockDocs.push(newDoc);
+          mockState.mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
         effectiveModel: ["anthropic/claude-sonnet-4.5"],
@@ -342,7 +353,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", async (original) => {
         // Mock message handling
         addUserMessage: vi.fn().mockImplementation(async (text) => {
           const created_at = Date.now();
-          mockDocs.push({
+          mockState.mockDocs.push({
             _id: `user-${created_at}`,
             type: "user",
             text,
@@ -357,7 +368,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", async (original) => {
             const created_at = timestamp || Date.now();
             parseContent(rawContent); // Call parseContent but don't use the result
 
-            mockDocs.push({
+            mockState.mockDocs.push({
               _id: `ai-${created_at}`,
               type: "ai",
               text: rawContent,
@@ -373,7 +384,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", async (original) => {
               const now = timestamp || Date.now();
 
               // Find existing message with this timestamp or create a new index for it
-              const existingIndex = mockDocs.findIndex(
+              const existingIndex = mockState.mockDocs.findIndex(
                 (msg) => msg.type === "ai" && msg.timestamp === now,
               );
 
@@ -580,9 +591,9 @@ export default Timer;`,
               }
 
               if (existingIndex >= 0) {
-                mockDocs[existingIndex] = aiMessage;
+                mockState.mockDocs[existingIndex] = aiMessage;
               } else {
-                mockDocs.push(aiMessage);
+                mockState.mockDocs.push(aiMessage);
               }
 
               return Promise.resolve(aiMessage);
@@ -594,7 +605,9 @@ export default Timer;`,
 });
 
 // Mock the useSessionMessages hook
-vi.mock("~/vibes.diy/app/hooks/useSessionMessages", () => {
+vi.mock("~/vibes.diy/app/hooks/useSessionMessages", async () => {
+  const { vi } = await import("vitest");
+  const { parseContent } = await import("@vibes.diy/prompts");
   // Track messages across test runs
   const messagesStore: Record<string, ChatMessage[]> = {};
 
@@ -870,8 +883,6 @@ const createWrapper = () => {
 };
 
 beforeEach(() => {
-  // Credit checking mocks no longer needed
-
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => {
@@ -896,9 +907,6 @@ beforeEach(() => {
   );
 
   Element.prototype.scrollIntoView = vi.fn();
-
-  // VibesDiyEnv.set("CALLAI_API_KEY", "test-api-key");
-  // vi.stubEnv("VITE_CALLAI_API_KEY", "test-api-key");
 
   resetMockState();
   resetSharedSessionDatabase();

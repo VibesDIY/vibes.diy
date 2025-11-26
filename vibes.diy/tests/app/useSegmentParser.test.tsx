@@ -2,8 +2,29 @@ import type { AiChatMessage, ChatMessage } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
 import { describe, expect, it, vi } from "vitest";
 
+// Define shared state using vi.hoisted
+const mockState = vi.hoisted(() => {
+  const mockDocs: (ChatMessage | AiChatMessage)[] = [];
+  const currentUserMessage: Partial<ChatMessage | AiChatMessage> = {};
+  const currentAiMessage: Partial<ChatMessage | AiChatMessage> = {};
+
+  const mergeUserMessageImpl = (data: Partial<ChatMessage>) => {
+    if (data && typeof data.text === "string") {
+      currentUserMessage.text = data.text;
+    }
+  };
+
+  return {
+    mockDocs,
+    currentUserMessage,
+    currentAiMessage,
+    mockMergeUserMessage: vi.fn(mergeUserMessageImpl),
+  };
+});
+
 // Mock the prompts module - we'll unmock parseContent for these tests
 vi.mock("@vibes.diy/prompts", async (importOriginal) => {
+  const { vi } = await import("vitest");
   const actual = await importOriginal<typeof import("@vibes.diy/prompts")>();
   return {
     ...actual,
@@ -28,25 +49,10 @@ vi.mock("~/vibes.diy/app/config/env", () => ({
   SETTINGS_DBNAME: "test-chat-history",
 }));
 
-// Define shared state and reset function *outside* the mock factory
-type MockDoc = ChatMessage | AiChatMessage;
-const mockDocs: MockDoc[] = [];
-
-const currentUserMessage: Partial<MockDoc> = {};
-const currentAiMessage: Partial<MockDoc> = {};
-
-// Define the mergeUserMessage implementation separately
-const mergeUserMessageImpl = (data: Partial<ChatMessage>) => {
-  if (data && typeof data.text === "string") {
-    currentUserMessage.text = data.text;
-  }
-};
-
-// Create a spy wrapping the implementation
-const mockMergeUserMessage = vi.fn(mergeUserMessageImpl);
-
 // Mock the useSession hook
-vi.mock("~/vibes.diy/app/hooks/useSession", () => {
+vi.mock("~/vibes.diy/app/hooks/useSession", async () => {
+  const { vi } = await import("vitest");
+  const { parseContent } = await import("@vibes.diy/prompts");
   return {
     useSession: () => {
       // Don't reset here, reset is done in beforeEach
@@ -57,7 +63,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
           type: "session" as const,
           created_at: Date.now(),
         },
-        docs: mockDocs,
+        docs: mockState.mockDocs,
         updateTitle: vi.fn().mockImplementation(async () => Promise.resolve()),
         addScreenshot: vi.fn(),
         sessionDatabase: {
@@ -66,62 +72,67 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
             return Promise.resolve({ id: id });
           }),
           get: vi.fn(async (id: string) => {
-            const found = mockDocs.find((doc) => doc._id === id);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const found = mockState.mockDocs.find((doc: any) => doc._id === id);
             if (found) return Promise.resolve(found);
             return Promise.reject(new Error("Not found"));
           }),
           query: vi.fn(async (field: string, options?: { key: string }) => {
             const key = options?.key;
-            const filtered = mockDocs.filter((doc) => {
-              // x@ts-ignore - we know the field exists
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = mockState.mockDocs.filter((doc: any) => {
               return (doc as unknown as Record<string, string>)[field] === key;
             });
             return Promise.resolve({
-              rows: filtered.map((doc) => ({ id: doc._id, doc })),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              rows: filtered.map((doc: any) => ({
+                id: doc._id,
+                doc,
+              })),
             });
           }),
         },
         openSessionDatabase: vi.fn(),
-        userMessage: currentUserMessage,
-        mergeUserMessage: mockMergeUserMessage,
+        userMessage: mockState.currentUserMessage,
+        mergeUserMessage: mockState.mockMergeUserMessage,
         submitUserMessage: vi.fn().mockImplementation(async () => {
           const id = `user-message-${Date.now()}`;
           const newDoc = {
-            ...currentUserMessage,
+            ...mockState.currentUserMessage,
             _id: id,
-          } as MockDoc;
-          mockDocs.push(newDoc);
+          } as ChatMessage | AiChatMessage;
+          mockState.mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
-        aiMessage: currentAiMessage,
+        aiMessage: mockState.currentAiMessage,
         mergeAiMessage: vi.fn((data) => {
           if (data && typeof data.text === "string") {
-            currentAiMessage.text = data.text;
+            mockState.currentAiMessage.text = data.text;
           }
         }),
         submitAiMessage: vi.fn().mockImplementation(async () => {
           const id = `ai-message-${Date.now()}`;
           const newDoc = {
-            ...currentAiMessage,
+            ...mockState.currentAiMessage,
             _id: id,
-          } as MockDoc;
-          mockDocs.push(newDoc);
+          } as ChatMessage | AiChatMessage;
+          mockState.mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
         saveAiMessage: vi.fn().mockImplementation(async (existingDoc) => {
           const id = existingDoc?._id || `ai-message-${Date.now()}`;
           const newDoc = {
-            ...currentAiMessage,
+            ...mockState.currentAiMessage,
             ...existingDoc,
             _id: id,
           };
-          mockDocs.push(newDoc);
+          mockState.mockDocs.push(newDoc);
           return Promise.resolve({ id });
         }),
         // Mock message handling
         addUserMessage: vi.fn().mockImplementation(async (text) => {
           const created_at = Date.now();
-          mockDocs.push({
+          mockState.mockDocs.push({
             _id: `user-${created_at}`,
             type: "user",
             text,
@@ -136,7 +147,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
             const created_at = timestamp || Date.now();
             parseContent(rawContent); // Call parseContent but don't use the result
 
-            mockDocs.push({
+            mockState.mockDocs.push({
               _id: `ai-${created_at}`,
               type: "ai",
               text: rawContent,
@@ -152,7 +163,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
               const now = timestamp || Date.now();
 
               // Find existing message with this timestamp or create a new index for it
-              const existingIndex = mockDocs.findIndex(
+              const existingIndex = mockState.mockDocs.findIndex(
                 (msg) => msg.type === "ai" && msg.timestamp === now,
               );
 
@@ -359,9 +370,9 @@ export default Timer;`,
               }
 
               if (existingIndex >= 0) {
-                mockDocs[existingIndex] = aiMessage;
+                mockState.mockDocs[existingIndex] = aiMessage;
               } else {
-                mockDocs.push(aiMessage);
+                mockState.mockDocs.push(aiMessage);
               }
 
               return Promise.resolve(aiMessage);
@@ -373,7 +384,9 @@ export default Timer;`,
 });
 
 // Mock the useSessionMessages hook
-vi.mock("~/vibes.diy/app/hooks/useSessionMessages", () => {
+vi.mock("~/vibes.diy/app/hooks/useSessionMessages", async () => {
+  const { vi } = await import("vitest");
+  const { parseContent } = await import("@vibes.diy/prompts");
   // Track messages across test runs
   const messagesStore: Record<string, ChatMessage[]> = {};
 

@@ -3,24 +3,31 @@ import { render, waitFor, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import React from "react";
 
-// Mock React Router hooks
-let mockNavigate = vi.fn();
-let mockParams: Record<string, string | undefined> = {};
-let mockLocation = { search: "", pathname: "/", state: null };
-let mockLoaderData: { urlPrompt: string | null; urlModel: string | null } = {
-  urlPrompt: null,
-  urlModel: null,
-};
+// Mock React Router hooks using vi.hoisted
+const mocks = vi.hoisted(() => {
+  return {
+    mockNavigate: vi.fn(),
+    mockParams: { value: {} as Record<string, string | undefined> },
+    mockLocation: { value: { search: "", pathname: "/", state: null as any } },
+    mockLoaderData: {
+      value: { urlPrompt: null, urlModel: null } as {
+        urlPrompt: string | null;
+        urlModel: string | null;
+      },
+    },
+  };
+});
 
 vi.mock("react-router", async () => {
+  const { vi } = await import("vitest");
   const actual =
     await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
-    useNavigate: () => mockNavigate,
-    useParams: () => mockParams,
-    useLocation: () => mockLocation,
-    useLoaderData: () => mockLoaderData,
+    useNavigate: () => mocks.mockNavigate,
+    useParams: () => mocks.mockParams.value,
+    useLocation: () => mocks.mockLocation.value,
+    useLoaderData: () => mocks.mockLoaderData.value,
   };
 });
 
@@ -92,10 +99,10 @@ describe("SessionWrapper Hook Ordering", () => {
       .mockImplementation(() => undefined);
 
     // Reset mocks
-    mockNavigate = vi.fn();
-    mockParams = {};
-    mockLocation = { search: "", pathname: "/", state: null };
-    mockLoaderData = { urlPrompt: null, urlModel: null };
+    mocks.mockNavigate.mockClear();
+    mocks.mockParams.value = {};
+    mocks.mockLocation.value = { search: "", pathname: "/", state: null };
+    mocks.mockLoaderData.value = { urlPrompt: null, urlModel: null };
   });
 
   afterEach(() => {
@@ -105,13 +112,13 @@ describe("SessionWrapper Hook Ordering", () => {
 
   it("should maintain consistent hook ordering when navigating from ?prompt parameter", async () => {
     // Set up mocks for this test
-    mockParams = { sessionId: undefined };
-    mockLocation = {
+    mocks.mockParams.value = { sessionId: undefined };
+    mocks.mockLocation.value = {
       pathname: "/",
       search: "?prompt=Image+auto-tagger",
       state: null,
     };
-    mockLoaderData = {
+    mocks.mockLoaderData.value = {
       urlPrompt: "Image auto-tagger",
       urlModel: null,
     };
@@ -131,7 +138,7 @@ describe("SessionWrapper Hook Ordering", () => {
 
     // Wait for navigation to be called
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalled();
+      expect(mocks.mockNavigate).toHaveBeenCalled();
     });
 
     // Verify no React hook errors were logged
@@ -150,8 +157,8 @@ describe("SessionWrapper Hook Ordering", () => {
 
   it("should not violate hook rules when sessionId changes from null to value", async () => {
     // Initial render without sessionId
-    mockParams = { sessionId: undefined };
-    mockLocation = {
+    mocks.mockParams.value = { sessionId: undefined };
+    mocks.mockLocation.value = {
       pathname: "/",
       search: "",
       state: null,
@@ -174,8 +181,8 @@ describe("SessionWrapper Hook Ordering", () => {
     unmount();
 
     // Simulate session creation by updating mock params
-    mockParams = { sessionId: "session-123456" };
-    mockLocation = {
+    mocks.mockParams.value = { sessionId: "session-123456" };
+    mocks.mockLocation.value = {
       pathname: "/chat/session-123456",
       search: "",
       state: null,
@@ -211,13 +218,13 @@ describe("SessionWrapper Hook Ordering", () => {
 
   it("should handle ?prompt with ?model parameters without hook violations", async () => {
     // Set up mocks for this test
-    mockParams = { sessionId: undefined };
-    mockLocation = {
+    mocks.mockParams.value = { sessionId: undefined };
+    mocks.mockLocation.value = {
       pathname: "/",
       search: "?prompt=Image+tagger&model=anthropic/claude-sonnet-4.5",
       state: null,
     };
-    mockLoaderData = {
+    mocks.mockLoaderData.value = {
       urlPrompt: "Image tagger",
       urlModel: "anthropic/claude-sonnet-4.5",
     };
@@ -234,11 +241,11 @@ describe("SessionWrapper Hook Ordering", () => {
 
     // Wait for navigation
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalled();
+      expect(mocks.mockNavigate).toHaveBeenCalled();
     });
 
     // Check navigation was called with both parameters preserved
-    const navCall = mockNavigate.mock.calls[0];
+    const navCall = mocks.mockNavigate.mock.calls[0];
     expect(navCall[0]).toContain("prompt=Image+tagger");
     expect(navCall[0]).toContain("model=anthropic%2Fclaude-sonnet-4.5");
 
@@ -258,13 +265,13 @@ describe("SessionWrapper Hook Ordering", () => {
 
   it("should use navigate() instead of window.location.href for redirects", async () => {
     // Set up mocks for this test
-    mockParams = { sessionId: undefined };
-    mockLocation = {
+    mocks.mockParams.value = { sessionId: undefined };
+    mocks.mockLocation.value = {
       pathname: "/",
       search: "?prompt=Test",
       state: null,
     };
-    mockLoaderData = {
+    mocks.mockLoaderData.value = {
       urlPrompt: "Test",
       urlModel: null,
     };
@@ -276,25 +283,25 @@ describe("SessionWrapper Hook Ordering", () => {
     );
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalled();
+      expect(mocks.mockNavigate).toHaveBeenCalled();
     });
 
     // Verify navigate() was used instead of window.location.href
-    expect(mockNavigate).toHaveBeenCalledTimes(1);
-    const navArgs = mockNavigate.mock.calls[0];
+    expect(mocks.mockNavigate).toHaveBeenCalledTimes(1);
+    const navArgs = mocks.mockNavigate.mock.calls[0];
     expect(navArgs[0]).toMatch(/^\/chat\/session-\d+\/Test\?prompt=Test$/);
     expect(navArgs[1]).toBeUndefined();
   });
 
   it("should not call navigate() multiple times during prompt forwarding", async () => {
     // Set up mocks for this test
-    mockParams = { sessionId: undefined };
-    mockLocation = {
+    mocks.mockParams.value = { sessionId: undefined };
+    mocks.mockLocation.value = {
       pathname: "/",
       search: "?prompt=DuplicateTest",
       state: null,
     };
-    mockLoaderData = {
+    mocks.mockLoaderData.value = {
       urlPrompt: "DuplicateTest",
       urlModel: null,
     };
@@ -307,7 +314,7 @@ describe("SessionWrapper Hook Ordering", () => {
 
     // Wait for navigation to be called
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalled();
+      expect(mocks.mockNavigate).toHaveBeenCalled();
     });
 
     // Force multiple re-renders (simulating what might happen during state transitions)
@@ -323,7 +330,7 @@ describe("SessionWrapper Hook Ordering", () => {
     );
 
     // Should still only be called once (guard prevents duplicates)
-    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mocks.mockNavigate).toHaveBeenCalledTimes(1);
 
     // Verify no hook ordering errors
     const hookErrors = consoleErrorSpy.mock.calls.filter((call) =>

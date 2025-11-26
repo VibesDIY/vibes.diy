@@ -2,8 +2,70 @@ import type { AiChatMessage, ChatMessage } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
 import { vi } from "vitest";
 
+// Define shared state using vi.hoisted
+const mockState = vi.hoisted(() => {
+  const initialDocs = [
+    {
+      _id: "ai-message-1",
+      type: "ai",
+      text: "AI test message",
+      session_id: "test-session-id",
+      timestamp: Date.now(),
+    },
+    {
+      _id: "user-message-1",
+      type: "user",
+      text: "User test message",
+      session_id: "test-session-id",
+      timestamp: Date.now(),
+    },
+    {
+      _id: "ai-message-0",
+      type: "ai",
+      text: "Older AI message",
+      session_id: "test-session-id",
+      timestamp: Date.now() - 2000,
+    },
+  ];
+
+  const currentUserMessage = {
+    text: "",
+    _id: "user-message-draft",
+    type: "user" as const,
+    session_id: "test-session-id",
+    created_at: Date.now(),
+  };
+
+  const currentAiMessage = {
+    text: "",
+    _id: "ai-message-draft",
+    type: "ai" as const,
+    session_id: "test-session-id",
+    created_at: Date.now(),
+  };
+
+  const mergeUserMessageImpl = (data: Record<string, unknown>) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (data && typeof data.text === "string") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockState as any).currentUserMessage.text = data.text;
+    }
+  };
+
+  const state = {
+    initialDocs,
+    mockDocs: [...initialDocs],
+    currentUserMessage,
+    currentAiMessage,
+    // We need to attach the mock function later or use a wrapper
+    mockMergeUserMessage: vi.fn(mergeUserMessageImpl),
+  };
+  return state;
+});
+
 // Mock the prompts module - use partial mocking to keep real parseContent
 vi.mock("@vibes.diy/prompts", async (importOriginal) => {
+  const { vi } = await import("vitest");
   const actual = await importOriginal<typeof import("@vibes.diy/prompts")>();
   return {
     ...actual,
@@ -22,8 +84,6 @@ vi.mock("@vibes.diy/prompts", async (importOriginal) => {
   };
 });
 
-// Credit checking mocks no longer needed
-
 // Mock the env module
 vi.mock("~/vibes.diy/app/config/env", () => ({
   VibesDiyEnv: {
@@ -35,114 +95,41 @@ vi.mock("~/vibes.diy/app/config/env", () => ({
 }));
 
 // Mock Fireproof to prevent CRDT errors
-vi.mock("use-fireproof", () => ({
-  useFireproof: () => ({
-    useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
-    useLiveQuery: () => [[]],
-    useFind: () => [[]],
-    useLiveFind: () => [[]],
-    useIndex: () => [[]],
-    useSubscribe: () => {
-      /* no-op */
-    },
-    database: {
-      put: vi.fn().mockResolvedValue({ id: "test-id" }),
-      get: vi
-        .fn()
-        .mockResolvedValue({ _id: "test-id", title: "Test Document" }),
-      query: vi.fn().mockResolvedValue({
-        rows: [
-          { id: "session1", key: "session1", value: { title: "Test Session" } },
-        ],
-      }),
-      delete: vi.fn().mockResolvedValue({ ok: true }),
-    },
-  }),
-}));
-
-// Define shared state and reset function *outside* the mock factory
-interface MockDoc {
-  _id?: string;
-  type: string;
-  text: string;
-  session_id: string;
-  timestamp?: number;
-  created_at?: number;
-  segments?: Record<string, unknown>[];
-  dependenciesString?: string;
-  isStreaming?: boolean;
-  model?: string;
-}
-let mockDocs: MockDoc[] = [];
-const initialMockDocs: MockDoc[] = [
-  {
-    _id: "ai-message-1",
-    type: "ai",
-    text: "AI test message",
-    session_id: "test-session-id",
-    timestamp: Date.now(),
-  },
-  {
-    _id: "user-message-1",
-    type: "user",
-    text: "User test message",
-    session_id: "test-session-id",
-    timestamp: Date.now(),
-  },
-  {
-    _id: "ai-message-0",
-    type: "ai",
-    text: "Older AI message",
-    session_id: "test-session-id",
-    timestamp: Date.now() - 2000,
-  },
-];
-let currentUserMessage = {
-  text: "",
-  _id: "user-message-draft",
-  type: "user" as const,
-  session_id: "test-session-id",
-  created_at: Date.now(),
-};
-let currentAiMessage = {
-  text: "",
-  _id: "ai-message-draft",
-  type: "ai" as const,
-  session_id: "test-session-id",
-  created_at: Date.now(),
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const resetMockState = () => {
-  mockDocs = [...initialMockDocs]; // Reset docs to initial state
-  currentUserMessage = {
-    text: "",
-    _id: "user-message-draft",
-    type: "user" as const,
-    session_id: "test-session-id",
-    created_at: Date.now(),
+vi.mock("use-fireproof", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useFireproof: () => ({
+      useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
+      useLiveQuery: () => [[]],
+      useFind: () => [[]],
+      useLiveFind: () => [[]],
+      useIndex: () => [[]],
+      useSubscribe: () => {
+        /* no-op */
+      },
+      database: {
+        put: vi.fn().mockResolvedValue({ id: "test-id" }),
+        get: vi
+          .fn()
+          .mockResolvedValue({ _id: "test-id", title: "Test Document" }),
+        query: vi.fn().mockResolvedValue({
+          rows: [
+            {
+              id: "session1",
+              key: "session1",
+              value: { title: "Test Session" },
+            },
+          ],
+        }),
+        delete: vi.fn().mockResolvedValue({ ok: true }),
+      },
+    }),
   };
-  currentAiMessage = {
-    text: "",
-    _id: "ai-message-draft",
-    type: "ai" as const,
-    session_id: "test-session-id",
-    created_at: Date.now(),
-  };
-};
-
-// Define the mergeUserMessage implementation separately
-const mergeUserMessageImpl = (data: Record<string, unknown>) => {
-  if (data && typeof data.text === "string") {
-    currentUserMessage.text = data.text;
-  }
-};
-
-// Create a spy wrapping the implementation
-const mockMergeUserMessage = vi.fn(mergeUserMessageImpl);
+});
 
 // Mock the useSession hook
-vi.mock("~/vibes.diy/app/hooks/useSession", () => {
+vi.mock("~/vibes.diy/app/hooks/useSession", async () => {
+  const { vi } = await import("vitest");
   return {
     useSession: () => {
       // Don't reset here, reset is done in beforeEach
@@ -153,7 +140,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
           type: "session" as const,
           created_at: Date.now(),
         },
-        docs: mockDocs,
+        docs: mockState.mockDocs,
         updateTitle: vi.fn().mockImplementation(async () => Promise.resolve()),
         addScreenshot: vi.fn(),
         // Keep database mock simple
@@ -164,32 +151,38 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
             return Promise.resolve({ id: id });
           }),
           get: vi.fn(async (id: string) => {
-            const found = mockDocs.find((doc) => doc._id === id);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const found = mockState.mockDocs.find((doc: any) => doc._id === id);
             if (found) return Promise.resolve(found);
             return Promise.reject(new Error("Not found"));
           }),
           query: vi.fn(
             async (field: string, options: Record<string, unknown>) => {
               const key = options?.key;
-              const filtered = mockDocs.filter((doc) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const filtered = mockState.mockDocs.filter((doc: any) => {
                 return (
                   (doc as unknown as Record<string, unknown>)[field] === key
                 );
               });
               return Promise.resolve({
-                rows: filtered.map((doc) => ({ id: doc._id, doc })),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                rows: filtered.map((doc: any) => ({
+                  id: doc._id,
+                  doc,
+                })),
               });
             },
           ),
         },
         openSessionDatabase: vi.fn(),
-        aiMessage: currentAiMessage,
-        userMessage: currentUserMessage,
-        mergeUserMessage: mockMergeUserMessage,
+        aiMessage: mockState.currentAiMessage,
+        userMessage: mockState.currentUserMessage,
+        mergeUserMessage: mockState.mockMergeUserMessage,
         submitUserMessage: vi.fn().mockImplementation(() => Promise.resolve()),
         mergeAiMessage: vi.fn().mockImplementation((data) => {
           if (data && typeof data.text === "string") {
-            currentAiMessage.text = data.text;
+            mockState.currentAiMessage.text = data.text;
           }
         }),
         submitAiMessage: vi.fn().mockImplementation(() => Promise.resolve()),
@@ -207,7 +200,9 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => {
 });
 
 // Mock the useSessionMessages hook
-vi.mock("~/vibes.diy/app/hooks/useSessionMessages", () => {
+vi.mock("~/vibes.diy/app/hooks/useSessionMessages", async () => {
+  const { vi } = await import("vitest");
+  const { parseContent } = await import("@vibes.diy/prompts");
   // Track messages across test runs
   const messagesStore: Record<string, ChatMessage[]> = {};
 
@@ -460,3 +455,34 @@ vi.mock("@clerk/clerk-react", () => ({
     isSignedIn: true,
   }),
 }));
+
+const resetMockState = () => {
+  mockState.mockDocs.length = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockState.mockDocs.push(...(mockState.initialDocs as any[]));
+
+  Object.assign(mockState.currentUserMessage, {
+    text: "",
+    _id: "user-message-draft",
+    type: "user" as const,
+    session_id: "test-session-id",
+    created_at: Date.now(),
+  });
+
+  Object.assign(mockState.currentAiMessage, {
+    text: "",
+    _id: "ai-message-draft",
+    type: "ai" as const,
+    session_id: "test-session-id",
+    created_at: Date.now(),
+  });
+};
+
+export { resetMockState };
+
+describe("useSimpleChat-codeReady", () => {
+  it.skip("placeholder test", () => {
+    // This file mainly sets up mocks for other tests or is incomplete
+    expect(true).toBe(true);
+  });
+});

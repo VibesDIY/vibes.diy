@@ -3,20 +3,35 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Remix from "~/vibes.diy/app/routes/remix.js";
 
+// Mock variables for React Router using vi.hoisted
+const mocks = vi.hoisted(() => {
+  return {
+    locationMock: {
+      value: {
+        search: "?prompt=Make+it+pink",
+        pathname: "/remix/test-app-slug",
+      },
+    },
+  };
+});
+
 // Mock useLazyFireproof first
-vi.mock("~/vibes.diy/app/hooks/useLazyFireproof", () => ({
-  useLazyFireproof: () => ({
-    useDocument: () => ({
-      doc: { _id: "test-id", type: "user" },
-      merge: vi.fn(),
-      submit: vi.fn().mockResolvedValue({ ok: true }),
-      save: vi.fn(),
+vi.mock("~/vibes.diy/app/hooks/useLazyFireproof", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useLazyFireproof: () => ({
+      useDocument: () => ({
+        doc: { _id: "test-id", type: "user" },
+        merge: vi.fn(),
+        submit: vi.fn().mockResolvedValue({ ok: true }),
+        save: vi.fn(),
+      }),
+      useLiveQuery: () => ({ docs: [] }),
+      database: { get: vi.fn(), put: vi.fn() },
+      open: vi.fn(),
     }),
-    useLiveQuery: () => ({ docs: [] }),
-    database: { get: vi.fn(), put: vi.fn() },
-    open: vi.fn(),
-  }),
-}));
+  };
+});
 
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", () => ({
@@ -34,18 +49,15 @@ vi.mock("~/vibes.diy/app/hooks/useApiKey", () => ({
   }),
 }));
 
-// Mock variables for React Router
-let locationMock = {
-  search: "?prompt=Make+it+pink",
-  pathname: "/remix/test-app-slug",
-};
-
 // Mock React Router
-vi.mock("react-router", () => ({
-  useParams: () => ({ vibeSlug: "test-app-slug" }),
-  useNavigate: () => vi.fn(), // Still needed by the component even though we don't use it in tests
-  useLocation: () => locationMock,
-}));
+vi.mock("react-router", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useParams: () => ({ vibeSlug: "test-app-slug" }),
+    useNavigate: () => vi.fn(), // Still needed by the component even though we don't use it in tests
+    useLocation: () => mocks.locationMock.value,
+  };
+});
 
 // Mock fetch
 vi.stubGlobal(
@@ -74,11 +86,14 @@ vi.mock("~/components/SessionSidebar/utils", () => ({
 }));
 
 // Mock database manager
-vi.mock("~/vibes.diy/app/utils/databaseManager", () => ({
-  getSessionDatabaseName: vi
-    .fn()
-    .mockImplementation((id) => `session-${id || "default"}`),
-}));
+vi.mock("~/vibes.diy/app/utils/databaseManager", async () => {
+  const { vi } = await import("vitest");
+  return {
+    getSessionDatabaseName: vi
+      .fn()
+      .mockImplementation((id) => `session-${id || "default"}`),
+  };
+});
 
 describe("Remix Route", () => {
   beforeEach(() => {
@@ -98,7 +113,7 @@ describe("Remix Route", () => {
 
   it("should process vibe slug and navigate with prompt parameter", async () => {
     // Set up location with prompt parameter
-    locationMock = {
+    mocks.locationMock.value = {
       search: "?prompt=Make+it+pink",
       pathname: "/remix/test-app-slug",
     };
@@ -120,7 +135,7 @@ describe("Remix Route", () => {
 
   it("should handle missing prompt parameter correctly", async () => {
     // Set up location without prompt parameter
-    locationMock = { search: "", pathname: "/remix/test-app-slug" };
+    mocks.locationMock.value = { search: "", pathname: "/remix/test-app-slug" };
 
     const mockOnNavigate = vi.fn();
     render(<Remix onNavigate={mockOnNavigate} />);

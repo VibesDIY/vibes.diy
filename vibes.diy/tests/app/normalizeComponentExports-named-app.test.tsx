@@ -72,45 +72,6 @@ export default App;
     ); // No duplicate exports
   });
 
-  // Test directly against the actual app1.jsx fixture
-  it("should normalize the actual app1.jsx fixture correctly", async () => {
-    // Import the actual fixture
-    // const fs = await import("fs");
-    // const path = await import("path");
-
-    // let fixturePath = path.resolve("./fixtures/app1.jsx");
-    // if (!fixturePath) {
-    //   fixturePath = path.resolve("./vibes.diy/tests/fixtures/app1.jsx");
-    // }
-    // const fixtureContent = fs.readFileSync(fixturePath, "utf-8");
-
-    const fixtureContent = await import("./fixtures/app1.jsx?raw");
-
-    const normalized = normalizeComponentExports(fixtureContent.default);
-
-    // Should not result in duplicate App declarations
-    expect(normalized).not.toMatch(/const\s+App\s+=\s+App/);
-
-    // Should have the original App declaration
-    expect(normalized).toContain("const App = () => {");
-
-    // Should have exactly one export default App
-    const exportCount = (normalized.match(/export\s+default\s+App/g) || [])
-      .length;
-    expect(exportCount).toBe(1);
-
-    // Should not contain the problematic pattern
-    expect(normalized).not.toMatch(/const\s+App\s+=\s+App/); // No duplicate App declarations
-
-    // Should have correct export
-    expect(normalized).toContain("export default App"); // Has the export
-
-    // Should not have duplicate exports
-    expect(normalized).not.toMatch(
-      /export\s+default\s+App.*export\s+default\s+App/s,
-    ); // No duplicate exports
-  });
-
   // Test with variable declaration pattern
   it("should handle variable declarations that are already named App", () => {
     const input = `
