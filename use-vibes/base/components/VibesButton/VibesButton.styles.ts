@@ -29,7 +29,8 @@ export function getButtonStyle(
   variant: string,
   isHovered: boolean,
   isActive: boolean,
-  isMobile = false
+  isMobile = false,
+  hasIcon: boolean
 ): React.CSSProperties {
   const cssColor = getVariantColor(variant);
   let transform = 'translate(0px, 0px)';
@@ -46,8 +47,8 @@ export function getButtonStyle(
   }
 
   return {
-    width: isMobile ? '100%' : '150px',
-    height: isMobile ? 'auto' : '150px',
+    width: !hasIcon ? 'auto' : isMobile ? '100%' : '150px',
+    height: !hasIcon ? 'auto' : isMobile ? 'auto' : '150px',
     minHeight: isMobile ? '60px' : undefined,
     padding: isMobile ? '0.75rem 1.5rem' : '1rem 2rem',
     borderRadius: '12px',

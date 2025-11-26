@@ -3,7 +3,7 @@ import { VibesButton, BLUE, RED, YELLOW, GRAY } from './VibesButton/index.js';
 import { runtimeFn } from '@fireproof/core-runtime';
 import { BrutalistCard } from './BrutalistCard/BrutalistCard.js';
 import { generateFreshDataUrl, generateRemixUrl } from '../utils/appSlug.js';
-import { LabelContainer } from './LabelContainer.js';
+import { LabelContainer } from './LabelContainer/index.js';
 import {
   getOuterContainerStyle,
   getButtonContainerStyle,
