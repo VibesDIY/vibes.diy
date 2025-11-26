@@ -21,24 +21,50 @@ import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { getLibraryImportMap } from "./config/import-map.js";
 
-export const links: Route.LinksFunction = () => [
-  {
-    rel: "icon",
-    type: "image/svg+xml",
-    href: `${VibesDiyEnv.APP_BASENAME()}favicon.svg`,
-  },
-  { rel: "alternate icon", href: `${VibesDiyEnv.APP_BASENAME()}favicon.ico` },
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+export const links: Route.LinksFunction = () => {
+  const rawBase = VibesDiyEnv.APP_BASENAME();
+  const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
+
+  return [
+    {
+      rel: "icon",
+      type: "image/svg+xml",
+      href: `${base}favicon.svg`,
+    },
+    {
+      rel: "icon",
+      type: "image/png",
+      sizes: "32x32",
+      href: `${base}favicon-32x32.png`,
+    },
+    {
+      rel: "icon",
+      type: "image/png",
+      sizes: "16x16",
+      href: `${base}favicon-16x16.png`,
+    },
+    { rel: "alternate icon", href: `${base}favicon.ico` },
+    {
+      rel: "apple-touch-icon",
+      sizes: "180x180",
+      href: `${base}apple-touch-icon.png`,
+    },
+    {
+      rel: "manifest",
+      href: `${base}site.webmanifest`,
+    },
+    { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    {
+      rel: "preconnect",
+      href: "https://fonts.gstatic.com",
+      crossOrigin: "anonymous",
+    },
+    {
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    },
+  ];
+};
 
 export const meta: MetaFunction = () => {
   return [
