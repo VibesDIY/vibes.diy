@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardApi } from "@fireproof/core-protocols-dashboard";
@@ -24,13 +24,18 @@ export function meta() {
 }
 
 // Helper to convert Result monad to Promise for React Query
-function wrapResultToPromise<T>(pro: () => Promise<Result<T>>) {
+function wrapResultToPromise<T>(pro: () => Promise<Result<T>>, label: string) {
   return async (): Promise<T> => {
+    console.log(`[Fireproof Dashboard] 🚀 Starting API call: ${label}`);
     const res = await pro();
     if (res.isOk()) {
-      return res.Ok();
+      const data = res.Ok();
+      console.log(`[Fireproof Dashboard] ✅ Success for ${label}:`, data);
+      return data;
     }
-    throw res.Err();
+    const error = res.Err();
+    console.error(`[Fireproof Dashboard] ❌ Error for ${label}:`, error);
+    throw error;
   };
 }
 
@@ -39,11 +44,23 @@ export default function FireproofDashboard() {
 
   // Create DashboardApi instance with Clerk auth
   const api = useMemo(() => {
+    const apiUrl = VibesDiyEnv.CONNECT_API_URL();
+    console.log(
+      "[Fireproof Dashboard] 🔧 Creating DashboardApi instance with URL:",
+      apiUrl,
+    );
     return new DashboardApi({
-      apiUrl: VibesDiyEnv.CONNECT_API_URL(),
+      apiUrl,
       fetch: window.fetch.bind(window),
       getToken: async () => {
+        console.log(
+          "[Fireproof Dashboard] 🔑 Getting Clerk token with template: with-email",
+        );
         const token = await getToken({ template: "with-email" });
+        console.log(
+          "[Fireproof Dashboard] 🎫 Token retrieved:",
+          token ? `${token.substring(0, 20)}...` : "null",
+        );
         return {
           type: "clerk" as const,
           token: token || "",
@@ -55,16 +72,53 @@ export default function FireproofDashboard() {
   // Query to list all tenants for the logged-in user
   const tenantsQuery = useQuery<ResListTenantsByUser>({
     queryKey: ["listTenantsByUser"],
-    queryFn: wrapResultToPromise(() => api.listTenantsByUser({})),
+    queryFn: wrapResultToPromise(
+      () => api.listTenantsByUser({}),
+      "listTenantsByUser",
+    ),
     enabled: isLoaded && isSignedIn,
   });
 
   // Query to list all ledgers for the logged-in user
   const ledgersQuery = useQuery<ResListLedgersByUser>({
     queryKey: ["listLedgersByUser"],
-    queryFn: wrapResultToPromise(() => api.listLedgersByUser({})),
+    queryFn: wrapResultToPromise(
+      () => api.listLedgersByUser({}),
+      "listLedgersByUser",
+    ),
     enabled: isLoaded && isSignedIn,
   });
+
+  // Log authentication and query states
+  useEffect(() => {
+    console.log("[Fireproof Dashboard] 📊 State Update:", {
+      isLoaded,
+      isSignedIn,
+      tenantsQuery: {
+        isLoading: tenantsQuery.isLoading,
+        isError: tenantsQuery.isError,
+        isSuccess: tenantsQuery.isSuccess,
+        dataCount: tenantsQuery.data?.tenants.length,
+      },
+      ledgersQuery: {
+        isLoading: ledgersQuery.isLoading,
+        isError: ledgersQuery.isError,
+        isSuccess: ledgersQuery.isSuccess,
+        dataCount: ledgersQuery.data?.ledgers.length,
+      },
+    });
+  }, [
+    isLoaded,
+    isSignedIn,
+    tenantsQuery.isLoading,
+    tenantsQuery.isError,
+    tenantsQuery.isSuccess,
+    tenantsQuery.data,
+    ledgersQuery.isLoading,
+    ledgersQuery.isError,
+    ledgersQuery.isSuccess,
+    ledgersQuery.data,
+  ]);
 
   // Not authenticated view
   if (isLoaded && !isSignedIn) {
