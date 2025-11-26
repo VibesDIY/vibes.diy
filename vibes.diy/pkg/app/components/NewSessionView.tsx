@@ -90,21 +90,21 @@ export default function NewSessionView({
             {/* Prompt suggestions section */}
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <VibesButton
-                variant="primary"
+                variant="blue"
                 style={{ flex: "1" }}
                 onClick={() => handleSelectSuggestion(partyPlannerPrompt)}
               >
                 Party Planner
               </VibesButton>
               <VibesButton
-                variant="secondary"
+                variant="red"
                 style={{ flex: "1" }}
                 onClick={() => handleSelectSuggestion(progressTrackerPrompt)}
               >
                 Progress Tracker
               </VibesButton>
               <VibesButton
-                variant="tertiary"
+                variant="yellow"
                 style={{ flex: "1" }}
                 onClick={() => handleSelectSuggestion(jamSessionPrompt)}
               >
