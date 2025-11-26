@@ -26,11 +26,11 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/browser-playwright": "^4.0.10",
+    "@vitest/browser-playwright": "^4.0.14",
     "prettier": "^3.6.2",
     "serve": "^14.2.5",
     "typescript": "~5.9.3",
     "vite": "^7.2.2",
-    "vitest": "^4.0.2"
+    "vitest": "^4.0.14"
   }
 }
