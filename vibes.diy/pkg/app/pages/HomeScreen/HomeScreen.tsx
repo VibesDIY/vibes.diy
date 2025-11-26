@@ -752,48 +752,76 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             </section>
 
             {/* Section 2: AnimatedScene 0-50 */}
-            {/* Section 2: AnimatedScene 0-50 */}
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
                 position: "relative",
                 display: "flex",
-                alignItems: "center",
+                alignItems: "stretch",
                 justifyContent: "center",
+                gap: isMobile ? "20px" : "0px",
+                flexDirection: isMobile ? "column" : "row",
               }}
               ref={section2Ref}
-            >       
-              <DraggableSection color="blue" static>
-                <h3
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "40px",
-                    color: "#5398c9",
-                  }}
-                >
-                  You're about to make an app
-                </h3>
-                <p>
-                  <strong>The front-end is the fun part</strong>
-                  <br />
-                  Let's start there. Let's say you want to make a simple counter 
-                  that keeps track of the number of times a group of people click 
-                  a red button.
-                  <br /><br />
-                  Most AI models will give you something cool right away.
-                </p>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "60vh",
-                    position: "relative",
-                  }}
-                >
-                  
+            >
+              {/* Left column: Text (1/3 width) */}
+              <div style={{ flex: isMobile ? "1" : "0 0 33.33%", display: "flex", alignItems: "center", zIndex: 1 }}>
+                <DraggableSection color="blue" static>
+                  <h3
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "40px",
+                      color: "#5398c9",
+                      lineHeight: '40px',
+                    }}
+                  >
+                    You're about to make an app
+                  </h3>
+                  <div style={{marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '18px'}}>
+                    <b style={{fontSize: '28px', lineHeight: '28px'}}>The front-end is the fun part</b>
+                    <p>
+                      Let's start there. Let's say you want to make a simple counter
+                    that keeps track of the number of times a group of people click
+                    a red button.
+                    </p>
+                    <p>
+                    Most AI models will give you something cool right away.
+                    </p>
+                  </div>
+                </DraggableSection>
+              </div>
+
+              {/* Right column: Visual placeholder (2/3 width) */}
+              <div
+                style={{
+                  flex: isMobile ? "1" : "0 0 66.66%",
+                  position: "relative",
+                  pointerEvents: "none",
+                }}
+              />
+
+              {/* AnimatedScene overlay covering full section */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: 0,
+                  right: 0,
+                  transform: "translateY(-50%)",
+                  height: "100vh",
+                  display: "flex",
+                  alignItems: "center",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                }}
+              >
+                {/* Empty space for left column (1/3) */}
+                <div style={{ flex: "0 0 33.33%" }} />
+                {/* AnimatedScene in right area (2/3) */}
+                <div style={{ flex: "0 0 66.66%", position: "relative", height: "100%" }}>
                   <AnimatedScene progress={0} />
                 </div>
-                
-              </DraggableSection>
+              </div>
             </section>
 
             {/* Section 3: Second part of content */}
@@ -863,54 +891,59 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 ...getSectionWrapperStyle(isMobile),
                 position: "relative",
                 display: "flex",
-                alignItems: "center",
+                alignItems: "stretch",
                 justifyContent: "center",
+                gap: isMobile ? "20px" : "0px",
+                flexDirection: isMobile ? "column" : "row",
               }}
               ref={section4Ref}
             >
-              
-              {/* DraggableSection card for visual reference */}
-              <DraggableSection color="yellow" static>
-                               <h3
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "40px",
-                    color: "#FEDD00",
-                  }}
-                >
-                  Back to your counter app...
-                </h3> 
-                <p>
-                  <strong>Now you're using Fireproof + Vibes DIY</strong>
-                  <br />
-                  Your data lives locally inside your component, syncing when 
-                  and where you choose. Conflicts resolve sensibly. State just... 
-                  persists.
-                  <br /><br />
-                  You can build offline, share instantly, and grow 
-                  without rewriting your stack. Even if you have no idea what 
-                  any of that means and just want to spell out an idea and get an
-                   app. We got you.
-                  <br /><br />
-                </p>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "60vh",
-                    position: "relative",
-                  }}
-                ></div>
-              </DraggableSection>
+              {/* Left column: Text (1/3 width) */}
+              <div style={{ flex: isMobile ? "1" : "0 0 33.33%", display: "flex", alignItems: "center", zIndex: 1 }}>
+                <DraggableSection color="yellow" static>
+                  <h3
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "40px",
+                      color: "#FEDD00",
+                    }}
+                  >
+                    Back to your counter app...
+                  </h3>
+                  <p>
+                    <strong>Now you're using Fireproof + Vibes DIY</strong>
+                    <br />
+                    Your data lives locally inside your component, syncing when
+                    and where you choose. Conflicts resolve sensibly. State just...
+                    persists.
+                    <br /><br />
+                    You can build offline, share instantly, and grow
+                    without rewriting your stack. Even if you have no idea what
+                    any of that means and just want to spell out an idea and get an
+                    app. We got you.
+                    <br /><br />
+                  </p>
+                </DraggableSection>
+              </div>
 
-              {/* Scrollable AnimatedScene overlay covering full screen */}
+              {/* Right column: Visual placeholder (2/3 width) */}
+              <div
+                style={{
+                  flex: isMobile ? "1" : "0 0 66.66%",
+                  position: "relative",
+                  pointerEvents: "none",
+                }}
+              />
+
+              {/* Scrollable AnimatedScene overlay covering full section */}
               <div
                 className="animated-scene-wrapper"
                 style={{
                   position: "absolute",
-                  left: "50%",
                   top: "50%",
-                  transform: "translate(-50%, -50%)",
-                  width: "100vw",
+                  left: 0,
+                  right: 0,
+                  transform: "translateY(-50%)",
                   height: "100vh",
                   overflowY: "auto",
                   overflowX: "hidden",
@@ -925,11 +958,17 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     style={{
                       position: "sticky",
                       top: 0,
-                      width: "100vw",
+                      width: "100%",
                       height: "100vh",
+                      display: "flex",
                     }}
                   >
-                    <AnimatedScene progress={animationProgress} />
+                    {/* Empty space for left column (1/3) */}
+                    <div style={{ flex: "0 0 33.33%", pointerEvents: "none" }} />
+                    {/* AnimatedScene in right area (2/3) */}
+                    <div style={{ flex: "0 0 66.66%", position: "relative" }}>
+                      <AnimatedScene progress={animationProgress} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -980,31 +1019,55 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 ...getSectionWrapperStyle(isMobile),
                 position: "relative",
                 display: "flex",
-                alignItems: "center",
+                alignItems: "stretch",
                 justifyContent: "center",
+                gap: isMobile ? "20px" : "0px",
+                flexDirection: isMobile ? "column" : "row",
               }}
               ref={section6Ref}
             >
-              {/* DraggableSection card for visual reference */}
-              <DraggableSection color="yellow" static>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "60vh",
-                    position: "relative",
-                  }}
-                ></div>
-              </DraggableSection>
+              {/* Left column: Text (1/3 width) */}
+              <div style={{ flex: isMobile ? "1" : "0 0 33.33%", display: "flex", alignItems: "center", zIndex: 1 }}>
+                <DraggableSection color="red" static>
+                  <h3
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "40px",
+                      color: "#D94827",
+                    }}
+                  >
+                    Build together, instantly
+                  </h3>
+                  <p>
+                    <strong>No setup, no friction</strong>
+                    <br />
+                    Share your creations with a simple link. Your friends can jump
+                    in immediately — no downloads, no sign-ups, no waiting.
+                    <br /><br />
+                    Everyone's changes sync in real-time, and your data stays safe
+                    and encrypted locally.
+                  </p>
+                </DraggableSection>
+              </div>
 
-              {/* Scrollable AnimatedScene overlay covering full screen */}
+              {/* Right column: Visual placeholder (2/3 width) */}
+              <div
+                style={{
+                  flex: isMobile ? "1" : "0 0 66.66%",
+                  position: "relative",
+                  pointerEvents: "none",
+                }}
+              />
+
+              {/* Scrollable AnimatedScene overlay covering full section */}
               <div
                 className="animated-scene-wrapper"
                 style={{
                   position: "absolute",
-                  left: "50%",
                   top: "50%",
-                  transform: "translate(-50%, -50%)",
-                  width: "100vw",
+                  left: 0,
+                  right: 0,
+                  transform: "translateY(-50%)",
                   height: "100vh",
                   overflowY: "auto",
                   overflowX: "hidden",
@@ -1019,11 +1082,17 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     style={{
                       position: "sticky",
                       top: 0,
-                      width: "100vw",
+                      width: "100%",
                       height: "100vh",
+                      display: "flex",
                     }}
                   >
-                    <AnimatedScene progress={animationProgress} />
+                    {/* Empty space for left column (1/3) */}
+                    <div style={{ flex: "0 0 33.33%", pointerEvents: "none" }} />
+                    {/* AnimatedScene in right area (2/3) */}
+                    <div style={{ flex: "0 0 66.66%", position: "relative" }}>
+                      <AnimatedScene progress={animationProgress} />
+                    </div>
                   </div>
                 </div>
               </div>

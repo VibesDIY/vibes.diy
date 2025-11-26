@@ -8,6 +8,8 @@ import {
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
+// TEMPORARY: Import HomeScreen for testing
+import { HomeScreen } from "../pages/HomeScreen/HomeScreen.js";
 
 export function meta() {
   return [
@@ -29,6 +31,11 @@ export async function clientLoader({ request }: { request: Request }) {
 }
 
 export default function SessionWrapper() {
+  // TEMPORARY: Return HomeScreen for testing - DELETE THIS LATER
+  return <HomeScreen />;
+
+  // Original code below (commented out for testing):
+  /*
   const loaderData = useLoaderData<typeof clientLoader>();
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();
@@ -124,4 +131,5 @@ export default function SessionWrapper() {
       urlModel={loaderData.urlModel}
     />
   );
+  */
 }
