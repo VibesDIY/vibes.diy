@@ -7,7 +7,7 @@ import {
   setupMonacoEditor,
 } from "./setupMonacoEditor.js";
 import type { MonacoDiagnosticsDefaults } from "./setupMonacoEditor.js";
-import { editor } from "monaco-editor";
+import { editor, Uri } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { InlinePreview } from "./InlinePreview.js";
 
@@ -290,7 +290,8 @@ const IframeContent: React.FC<IframeContentProps> = ({
 
                 // Filter for error markers from any language service
                 const errorMarkers = allMarkers.filter(
-                  (marker) => marker.severity === monaco.MarkerSeverity.Error,
+                  (marker: editor.IMarker) =>
+                    marker.severity === monaco.MarkerSeverity.Error,
                 );
 
                 const errorCount = errorMarkers.length;
@@ -304,15 +305,19 @@ const IframeContent: React.FC<IframeContentProps> = ({
               scheduleSyntaxCheck(100);
 
               // Listen for marker changes - check every time markers change
-              const disposable = monaco.editor.onDidChangeMarkers((uris) => {
-                // Check if our model's URI is in the changed URIs
-                if (
-                  uris.some((uri) => uri.toString() === model.uri.toString())
-                ) {
-                  // Add a small delay to ensure markers are updated
-                  scheduleSyntaxCheck(50);
-                }
-              });
+              const disposable = monaco.editor.onDidChangeMarkers(
+                (uris: readonly Uri[]) => {
+                  // Check if our model's URI is in the changed URIs
+                  if (
+                    uris.some(
+                      (uri: Uri) => uri.toString() === model.uri.toString(),
+                    )
+                  ) {
+                    // Add a small delay to ensure markers are updated
+                    scheduleSyntaxCheck(50);
+                  }
+                },
+              );
 
               // Also listen for model content changes as a backup
               const contentDisposable = editor.onDidChangeModelContent(() => {
