@@ -2,6 +2,21 @@ import { describe, it, expect } from "vitest";
 import { parseContent } from "@vibes.diy/prompts";
 import { loadAsset, pathOps, urlDirname } from "@adviser/cement";
 
+// Helper to resolve content that might be returned as a module URL in browser environment
+async function resolveContent(content: string): Promise<string> {
+  const match = content.match(/^export default "([^"]+)"/);
+  if (match && match[1]) {
+    try {
+      const response = await fetch(match[1]);
+      return await response.text();
+    } catch (e) {
+      console.error("Failed to fetch resolved content url", match[1], e);
+      return content;
+    }
+  }
+  return content;
+}
+
 // move this test to @vibes.diy/prompts test package, also the referenced fixtures
 
 describe("segmentParser utilities", () => {
@@ -159,11 +174,15 @@ Final markdown
     for (const [filename, expectedTypes] of Object.entries(
       fixtureExpectations,
     )) {
-      const content = await loadAsset(pathOps.join("fixtures", filename), {
-        basePath: () => urlDirname(import.meta.url).toString(),
-        fallBackUrl: urlDirname(import.meta.url).toString(),
-      });
-      const result = parseContent(content.Ok());
+      const content = await loadAsset(
+        pathOps.join("tests", "fixtures", filename),
+        {
+          basePath: () => urlDirname(import.meta.url).toString(),
+          fallBackUrl: urlDirname(import.meta.url).toString(),
+        },
+      );
+      const resolvedContent = await resolveContent(content.Ok());
+      const result = parseContent(resolvedContent);
       const actualTypes = result.segments.map((segment) => segment.type);
       expect([filename, ...actualTypes]).toEqual([filename, ...expectedTypes]);
     }
@@ -174,11 +193,12 @@ Final markdown
     // const fixturePath = pathOps.join(__dirname, "fixtures", "easy-message5.txt");
     // expect(fs.existsSync(fixturePath)).toBe(true);
     // const content = fs.readFileSync(fixturePath, "utf-8");
-    const content = await loadAsset("fixtures/easy-message5.txt", {
+    const content = await loadAsset("tests/fixtures/easy-message5.txt", {
       basePath: () => urlDirname(import.meta.url).toString(),
       fallBackUrl: urlDirname(import.meta.url).toString(),
     });
-    const result = parseContent(content.Ok());
+    const resolvedContent = await resolveContent(content.Ok());
+    const result = parseContent(resolvedContent);
     expect(result.segments.length).toBe(3);
     expect(result.segments[1].type).toBe("code");
     expect(result.segments[1].content).toContain("react-modal");
@@ -186,22 +206,24 @@ Final markdown
 });
 
 it("correctly parses dependencies from hard-message2.txt fixture", async () => {
-  const rContent = await loadAsset("fixtures/hard-message2.txt", {
+  const rContent = await loadAsset("tests/fixtures/hard-message2.txt", {
     basePath: () => urlDirname(import.meta.url).toString(),
     fallBackUrl: urlDirname(import.meta.url).toString(),
   });
-  const result = parseContent(rContent.Ok());
+  const resolvedContent = await resolveContent(rContent.Ok());
+  const result = parseContent(resolvedContent);
   expect(result.segments.length).toBe(3);
   expect(result.segments[1].type).toBe("code");
   expect(result.segments[1].content).toContain("react-dropzone");
 });
 
 it("correctly parses markdown and code from hard-message3.txt fixture", async () => {
-  const rContent = await loadAsset("fixtures/hard-message3.txt", {
+  const rContent = await loadAsset("tests/fixtures/hard-message3.txt", {
     basePath: () => urlDirname(import.meta.url).toString(),
     fallBackUrl: urlDirname(import.meta.url).toString(),
   });
-  const result = parseContent(rContent.Ok());
+  const resolvedContent = await resolveContent(rContent.Ok());
+  const result = parseContent(resolvedContent);
 
   expect(result.segments.length).toBe(3);
   expect(result.segments[0].type).toBe("markdown");
