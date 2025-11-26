@@ -7,11 +7,7 @@ import {
   getContentWrapperStyle,
   bounceKeyframes,
 } from './VibesButton.styles.js';
-import logoutIconUrl from '../../assets/logout.png';
-import remixIconUrl from '../../assets/remix.png';
-import inviteIconUrl from '../../assets/invite.png';
-import settingsIconUrl from '../../assets/settings.png';
-import backIconUrl from '../../assets/back.png';
+import { LoginIcon, RemixIcon, InviteIcon, SettingsIcon, BackIcon } from '../icons/index.js';
 import { useMobile } from '../../hooks/useMobile.js';
 import '../../styles/colors.css';
 
@@ -24,13 +20,16 @@ export const GRAY = 'gray' as const;
 type ButtonVariant = 'blue' | 'red' | 'yellow' | 'gray';
 type IconName = 'logout' | 'remix' | 'invite' | 'settings' | 'back';
 
-// Icon map - maps icon names to URLs
-const iconMap: Record<IconName, string> = {
-  logout: logoutIconUrl,
-  remix: remixIconUrl,
-  invite: inviteIconUrl,
-  settings: settingsIconUrl,
-  back: backIconUrl,
+// Icon map - maps icon names to React components
+const iconMap: Record<
+  IconName,
+  React.ComponentType<{ bgFill?: string; fill?: string; width?: number; height?: number }>
+> = {
+  logout: LoginIcon,
+  remix: RemixIcon,
+  invite: InviteIcon,
+  settings: SettingsIcon,
+  back: BackIcon,
 };
 
 export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -76,13 +75,13 @@ export function VibesButton({
     }
   }, [isHovered, onHover, onUnhover]);
 
-  const iconUrl = icon ? iconMap[icon] : undefined;
+  const IconComponent = icon ? iconMap[icon] : undefined;
 
-  const baseStyle = getButtonStyle(buttonVariant, isHovered, isActive, isMobile, !!iconUrl);
+  const baseStyle = getButtonStyle(buttonVariant, isHovered, isActive, isMobile, !!IconComponent);
   const mergedStyle = getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle);
-  const iconContainerStyle = getIconContainerStyle(buttonVariant, isMobile, !!iconUrl);
+  const iconContainerStyle = getIconContainerStyle(buttonVariant, isMobile, !!IconComponent);
   const iconStyle = getIconStyle(isMobile, isHovered, isActive);
-  const contentWrapperStyle = getContentWrapperStyle(isMobile, !!iconUrl);
+  const contentWrapperStyle = getContentWrapperStyle(isMobile, !!IconComponent);
 
   return (
     <>
@@ -99,10 +98,17 @@ export function VibesButton({
         onMouseUp={() => setActive(false)}
         style={mergedStyle}
       >
-        {iconUrl ? (
+        {IconComponent ? (
           <div style={contentWrapperStyle}>
             <div style={iconContainerStyle}>
-              <img src={iconUrl} alt="" style={iconStyle} />
+              <div style={iconStyle}>
+                <IconComponent
+                  bgFill="var(--vibes-button-icon-bg)"
+                  fill="var(--vibes-button-icon-fill)"
+                  width={isMobile ? 28 : 50}
+                  height={isMobile ? 28 : 50}
+                />
+              </div>
             </div>
             <span>{children}</span>
           </div>
