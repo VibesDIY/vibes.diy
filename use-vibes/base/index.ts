@@ -336,10 +336,13 @@ export { ControlsBar } from './components/ControlsBar.js';
 export { PromptBar } from './components/PromptBar.js';
 export { VibesButton } from './components/VibesButton/VibesButton.js';
 export { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
+export { LabelContainer } from './components/LabelContainer/index.js';
+export type { LabelContainerProps } from './components/LabelContainer/index.js';
 
 // Export hooks
 export { hashInput, useImageGen } from './hooks/image-gen/index.js';
 export { useThemeDetection } from './hooks/useThemeDetection.js';
+export { useMobile } from './hooks/useMobile.js';
 
 // Export style utilities
 export { defaultClasses } from './utils/style-utils.js';
