@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseContent } from "@vibes.diy/prompts";
-import { BuildURI, loadAsset, pathOps } from "@adviser/cement";
+import { loadAsset, pathOps } from "@adviser/cement";
 
 // move this test to @vibes.diy/prompts test package, also the referenced fixtures
 
@@ -160,13 +160,7 @@ Final markdown
       fixtureExpectations,
     )) {
       const content = await loadAsset(pathOps.join("fixtures", filename), {
-        basePath: () => {
-          const r = BuildURI.from(import.meta.url)
-            .cleanParams()
-            .pathname("/")
-            .toString();
-          return r;
-        },
+        basePath: () => import.meta.url,
       });
       const result = parseContent(content.Ok());
       const actualTypes = result.segments.map((segment) => segment.type);
@@ -180,13 +174,7 @@ Final markdown
     // expect(fs.existsSync(fixturePath)).toBe(true);
     // const content = fs.readFileSync(fixturePath, "utf-8");
     const content = await loadAsset("fixtures/easy-message5.txt", {
-      basePath: () => {
-        const r = BuildURI.from(import.meta.url)
-          .cleanParams()
-          .pathname("/")
-          .toString();
-        return r;
-      },
+      basePath: () => import.meta.url,
     });
     const result = parseContent(content.Ok());
     expect(result.segments.length).toBe(3);
@@ -197,13 +185,7 @@ Final markdown
 
 it("correctly parses dependencies from hard-message2.txt fixture", async () => {
   const rContent = await loadAsset("fixtures/hard-message2.txt", {
-    basePath: () => {
-      const r = BuildURI.from(import.meta.url)
-        .cleanParams()
-        .pathname("/")
-        .toString();
-      return r;
-    },
+    basePath: () => import.meta.url,
   });
   const result = parseContent(rContent.Ok());
   expect(result.segments.length).toBe(3);
@@ -213,13 +195,7 @@ it("correctly parses dependencies from hard-message2.txt fixture", async () => {
 
 it("correctly parses markdown and code from hard-message3.txt fixture", async () => {
   const rContent = await loadAsset("fixtures/hard-message3.txt", {
-    basePath: () => {
-      const r = BuildURI.from(import.meta.url)
-        .cleanParams()
-        .pathname("/")
-        .toString();
-      return r;
-    },
+    basePath: () => import.meta.url,
   });
   const result = parseContent(rContent.Ok());
 
