@@ -11,8 +11,7 @@ import type React from "react";
 import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
 
-export type MonacoDiagnosticsOptions =
-  monaco.languages.typescript.DiagnosticsOptions;
+export type MonacoDiagnosticsOptions = Record<string, unknown>;
 
 export interface MonacoDiagnosticsDefaults {
   setDiagnosticsOptions: (options: MonacoDiagnosticsOptions) => void;
@@ -71,15 +70,17 @@ export async function setupMonacoEditor(
 ) {
   setRefs(editor, monaco);
 
-  monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-    jsx: monaco.languages.typescript.JsxEmit.React,
+  const ts = monaco.languages.typescript;
+
+  ts.javascriptDefaults.setCompilerOptions({
+    jsx: ts.JsxEmit.React,
     jsxFactory: "React.createElement",
     reactNamespace: "React",
     allowNonTsExtensions: true,
     allowJs: true,
-    target: monaco.languages.typescript.ScriptTarget.Latest,
-    module: monaco.languages.typescript.ModuleKind.ESNext,
-    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+    target: ts.ScriptTarget.Latest,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.NodeJs,
     esModuleInterop: true,
     skipLibCheck: true,
   });
@@ -88,8 +89,7 @@ export async function setupMonacoEditor(
   // When the code is still streaming/incomplete (`codeReady === false`), we
   // disable diagnostics to avoid noisy red squiggles. A React effect in
   // `IframeContent` will update these options as `codeReady` changes over time.
-  const jsDefaults = monaco.languages.typescript
-    .javascriptDefaults as MonacoDiagnosticsDefaults;
+  const jsDefaults = ts.javascriptDefaults as MonacoDiagnosticsDefaults;
   const currentDiagnostics = jsDefaults.getDiagnosticsOptions?.();
 
   jsDefaults.setDiagnosticsOptions(
