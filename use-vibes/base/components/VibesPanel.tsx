@@ -128,7 +128,7 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
 
   return (
     <div style={getOuterContainerStyle(style)} className={className}>
-      <LabelContainer label="Settings">
+      <LabelContainer label="Settings" disappear>
         <div style={getButtonContainerStyle()}>
           {mode === 'mutate' ? (
             // Mutate mode buttons
