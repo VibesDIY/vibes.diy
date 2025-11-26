@@ -22,7 +22,7 @@
     "outDir": "",
     "target": "esnext",
     "module": "esnext",
-    "types": ["@types/node", "./worker-configuration.d.ts", "./png.d.ts"]
+    "types": ["@types/node", "./worker-configuration.d.ts"]
   },
   "exclude": ["node_modules", "dist", "tests"],
   "include": ["src", "scripts", "vite.config.ts"]
