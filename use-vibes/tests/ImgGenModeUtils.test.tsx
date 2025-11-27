@@ -204,7 +204,7 @@ describe('ImgGenModeUtils', () => {
           prompt: 'test prompt',
           loading: true,
           error: undefined,
-          debug: true, // Enable debug logging
+          debug: false, // Test logic without console noise
         });
         expect(mode).toBe('display');
       });
