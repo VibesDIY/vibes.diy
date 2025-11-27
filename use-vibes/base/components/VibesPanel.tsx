@@ -194,7 +194,7 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
           ) : (
             // Default buttons
             <>
-              <VibesButton variant={BLUE} onClick={handleLogoutClick} icon="logout">
+              <VibesButton variant={BLUE} onClick={handleLogoutClick} icon="login">
                 Logout
               </VibesButton>
               <VibesButton variant={RED} onClick={handleMutateClick} icon="remix">

@@ -18,14 +18,14 @@ export const YELLOW = 'yellow' as const;
 export const GRAY = 'gray' as const;
 
 type ButtonVariant = 'blue' | 'red' | 'yellow' | 'gray';
-type IconName = 'logout' | 'remix' | 'invite' | 'settings' | 'back';
+type IconName = 'login' | 'remix' | 'invite' | 'settings' | 'back';
 
 // Icon map - maps icon names to React components
 const iconMap: Record<
   IconName,
   React.ComponentType<{ bgFill?: string; fill?: string; width?: number; height?: number }>
 > = {
-  logout: LoginIcon,
+  login: LoginIcon,
   remix: RemixIcon,
   invite: InviteIcon,
   settings: SettingsIcon,
