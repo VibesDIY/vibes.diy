@@ -84,7 +84,7 @@ export function InlinePreview({
           unmount();
         }
       } catch (err) {
-        console.error("Error mounting inline preview:", err);
+        // Error handled by setting error state
         if (active) {
           setError(err instanceof Error ? err.message : String(err));
         }
