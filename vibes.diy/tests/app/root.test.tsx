@@ -150,7 +150,9 @@ vi.mock("@clerk/clerk-react", () => ({
 
 // Mock Layout to avoid full HTML structure in tests
 vi.mock("~/vibes.diy/app/root", async () => {
-  const actual = await vi.importActual<typeof import("~/vibes.diy/app/root")>("~/vibes.diy/app/root");
+  const actual = await vi.importActual<typeof import("~/vibes.diy/app/root")>(
+    "~/vibes.diy/app/root",
+  );
   return {
     ...actual,
     Layout: ({ children }: { children: React.ReactNode }) => (
