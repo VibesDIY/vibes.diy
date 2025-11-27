@@ -38,12 +38,6 @@ export const usePublish = ({
     }
   }, [initialPublishedUrl]);
 
-  useEffect(() => {
-    if (publishedAppUrl) {
-      console.debug("Published URL updated:", publishedAppUrl);
-    }
-  }, [publishedAppUrl]);
-
   const handlePublish = async (shareToFirehose?: boolean) => {
     setIsPublishing(true);
     setUrlCopied(false);

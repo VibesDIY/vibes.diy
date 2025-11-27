@@ -26,14 +26,6 @@ describe("useMessageSelection", () => {
     // Create multiple AI messages with code blocks in chronological order
     const messages = createTestMessages(3);
 
-    // Format logs for debugging
-    console.log("Test messages with timestamps:");
-    messages.forEach((msg) => {
-      console.log(
-        `ID: ${msg._id}, Created: ${new Date(msg.created_at).toISOString()}`,
-      );
-    });
-
     const { result } = renderHook(() =>
       useMessageSelection({
         docs: messages,
@@ -73,14 +65,6 @@ describe("useMessageSelection", () => {
         created_at: Date.now() - 500, // Middle timestamp
       } as ChatMessageDocument,
     ];
-
-    // Format logs for debugging
-    console.log("Shuffled timestamp messages:");
-    messages.forEach((msg) => {
-      console.log(
-        `ID: ${msg._id}, Created: ${new Date(msg.created_at).toISOString()}`,
-      );
-    });
 
     const { result } = renderHook(() =>
       useMessageSelection({
@@ -138,14 +122,6 @@ describe("useMessageSelection", () => {
         created_at: Date.now(), // Most recent but no code
       } as ChatMessageDocument,
     ];
-
-    // Format logs for debugging
-    console.log("Messages with some missing code blocks:");
-    messages.forEach((msg) => {
-      console.log(
-        `ID: ${msg._id}, Has code: ${msg.text.includes("```")}, Created: ${new Date(msg.created_at).toISOString()}`,
-      );
-    });
 
     const { result } = renderHook(() =>
       useMessageSelection({
