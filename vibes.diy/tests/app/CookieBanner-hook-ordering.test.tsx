@@ -55,6 +55,13 @@ vi.mock("~/vibes.diy/app/utils/gtm", async () => {
   };
 });
 
+vi.mock("~/vibes.diy/app/contexts/ThemeContext", () => ({
+  useTheme: () => ({
+    isDarkMode: false,
+    toggleTheme: vi.fn(),
+  }),
+}));
+
 vi.mock("~/vibes.diy/app/config/env", () => ({
   VibesDiyEnv: {
     GTM_CONTAINER_ID: () => "GTM-TEST123",

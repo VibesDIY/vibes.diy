@@ -161,7 +161,6 @@ vi.mock("~/vibes.diy/app/components/AppLayout", () => ({
 
 // Mock segmentParser functions
 vi.mock("@vibes.diy/prompts", async (original) => {
-  const { vi } = await import("vitest");
   const mockCode = Array(210)
     .fill(0)
     .map((_, i) => `console.log("Line ${i}");`)
