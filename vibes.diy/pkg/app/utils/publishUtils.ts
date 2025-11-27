@@ -221,7 +221,7 @@ export async function publishApp({
 
     return undefined;
   } catch (error) {
-    console.error("Error publishing app:", error);
+    // Error handled by returning undefined
     return undefined;
   }
 }
