@@ -82,7 +82,7 @@ export default function LoggedOutView({
               gap: "1rem",
             }}
           >
-            <VibesButton icon="logout" variant={"blue"} onClick={handleLogin}>
+            <VibesButton icon="login" variant={"blue"} onClick={handleLogin}>
               Login
             </VibesButton>
             <div style={{ width: "300px" }}>

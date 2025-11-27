@@ -110,9 +110,9 @@ export function getIconStyle(
   return {
     width: isMobile ? '28px' : '50px',
     height: isMobile ? '28px' : '50px',
-    objectFit: 'contain' as const,
-    backgroundColor: 'var(--vibes-button-icon-bg)',
-    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     animation: isHovered && !isActive ? 'vibes-button-bounce 0.8s ease-in-out infinite' : 'none',
   };
 }

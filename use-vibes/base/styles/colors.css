@@ -101,7 +101,8 @@
   --vibes-button-bg: var(--vibes-cream);
   --vibes-button-text: var(--vibes-near-black);
   --vibes-button-border: var(--vibes-near-black);
-  --vibes-button-icon-bg: var(--vibes-white);
+  --vibes-button-icon-bg: #2a2a2a;
+  --vibes-button-icon-fill: var(--vibes-white);
 
   /* Button - Dark mode aware variants (for when ignoreDarkMode=false) */
   --vibes-button-bg-dark-aware: var(--vibes-cream);
@@ -176,6 +177,8 @@
     /* --vibes-button-bg: var(--vibes-cream); (unchanged) */
     /* --vibes-button-text: var(--vibes-near-black); (unchanged) */
     /* --vibes-button-border: var(--vibes-near-black); (unchanged) */
+    --vibes-button-icon-bg: var(--vibes-white);
+    --vibes-button-icon-fill: #2a2a2a;
 
     /* Dark mode aware buttons - darker background with light text */
     --vibes-button-bg-dark-aware: #2a2a2a;
