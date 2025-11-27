@@ -11,7 +11,14 @@ import type React from "react";
 import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
 
-export type MonacoDiagnosticsOptions = Record<string, unknown>;
+// Monaco's DiagnosticsOptions type is not directly exportable due to module structure
+// Define the interface based on actual runtime API
+export interface MonacoDiagnosticsOptions {
+  noSemanticValidation?: boolean;
+  noSyntaxValidation?: boolean;
+  noSuggestionDiagnostics?: boolean;
+  diagnosticCodesToIgnore?: number[];
+}
 
 export interface MonacoDiagnosticsDefaults {
   setDiagnosticsOptions: (options: MonacoDiagnosticsOptions) => void;
