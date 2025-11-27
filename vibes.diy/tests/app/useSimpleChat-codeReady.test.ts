@@ -1,6 +1,5 @@
 import type { AiChatMessage, ChatMessage } from "@vibes.diy/prompts";
-import { parseContent } from "@vibes.diy/prompts";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // Define shared state using vi.hoisted
 const mockState = vi.hoisted(() => {
@@ -45,7 +44,6 @@ const mockState = vi.hoisted(() => {
   };
 
   const mergeUserMessageImpl = (data: Record<string, unknown>) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (data && typeof data.text === "string") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (mockState as any).currentUserMessage.text = data.text;

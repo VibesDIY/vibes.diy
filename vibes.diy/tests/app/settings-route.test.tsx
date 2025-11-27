@@ -91,6 +91,15 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar/HomeIcon", () => ({
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", () => ({
   useAuth: mocks.mockUseAuth,
+  useClerk: () => ({
+    redirectToSignIn: vi.fn(),
+    signOut: vi.fn(),
+  }),
+  useUser: () => ({
+    user: {
+      primaryEmailAddress: { emailAddress: "test@example.com" },
+    },
+  }),
 }));
 
 describe("Settings Route", () => {

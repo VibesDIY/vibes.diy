@@ -13,7 +13,12 @@ import { mockSessionSidebarProps } from "./mockData.js";
 
 const mocks = vi.hoisted(() => {
   return {
-    mockUseAuth: vi.fn(),
+    mockUseAuth: vi.fn(() => ({
+      isSignedIn: true,
+      isLoaded: true,
+    })),
+    mockRedirectToSignIn: vi.fn(),
+    mockSignOut: vi.fn(),
     createObjectURLMock: vi.fn(() => "mocked-url"),
     revokeObjectURLMock: vi.fn(),
   };
@@ -22,6 +27,20 @@ const mocks = vi.hoisted(() => {
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", () => ({
   useAuth: mocks.mockUseAuth,
+  useClerk: () => ({
+    redirectToSignIn: mocks.mockRedirectToSignIn,
+    signOut: mocks.mockSignOut,
+  }),
+  useUser: () => ({
+    user: {
+      primaryEmailAddress: { emailAddress: "test@example.com" },
+    },
+  }),
+}));
+
+// Mock analytics utilities
+vi.mock("~/vibes.diy/app/utils/analytics", () => ({
+  trackAuthClick: vi.fn(),
 }));
 
 import { trackAuthClick } from "~/vibes.diy/app/utils/analytics.js";
@@ -60,6 +79,11 @@ describe("SessionSidebar component", () => {
   beforeEach(() => {
     globalThis.document.body.innerHTML = "";
     vi.clearAllMocks();
+    // Set default authenticated state after clearing mocks
+    mocks.mockUseAuth.mockReturnValue({
+      isSignedIn: true,
+      isLoaded: true,
+    });
     // Old auth mocks removed - now using Clerk
     vi.mocked(trackAuthClick).mockClear();
     // No window event listeners needed anymore

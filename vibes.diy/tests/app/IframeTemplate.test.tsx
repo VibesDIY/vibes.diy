@@ -30,7 +30,6 @@ vi.mock("~/vibes.diy/app/hooks/useApiKey", async () => {
 
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", async () => {
-  const { vi } = await import("vitest");
   return {
     useAuth: () => ({
       userId: "test-user-id",
@@ -39,6 +38,13 @@ vi.mock("@clerk/clerk-react", async () => {
     }),
   };
 });
+
+vi.mock("~/vibes.diy/app/contexts/ThemeContext", () => ({
+  useTheme: () => ({
+    isDarkMode: false,
+    toggleTheme: vi.fn(),
+  }),
+}));
 
 // Mock useSession hook to prevent Fireproof initialization during tests
 vi.mock("~/vibes.diy/app/hooks/useSession", async () => {

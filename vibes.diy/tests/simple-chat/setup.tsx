@@ -9,7 +9,6 @@ import type {
   UserChatMessage,
 } from "@vibes.diy/prompts";
 import type { DocResponse } from "use-fireproof";
-import { parseContent } from "@vibes.diy/prompts";
 
 type MockDoc = AiChatMessage | UserChatMessage;
 type AnyChatMessage = AiChatMessage | UserChatMessage;

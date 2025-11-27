@@ -59,6 +59,15 @@ vi.mock("react-router-dom", async () => {
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", () => ({
   useAuth: mocks.mockUseAuth,
+  useClerk: () => ({
+    redirectToSignIn: vi.fn(),
+    signOut: vi.fn(),
+  }),
+  useUser: () => ({
+    user: {
+      primaryEmailAddress: { emailAddress: "test@example.com" },
+    },
+  }),
 }));
 
 // Mock the useSessionMessages hook for MessageList

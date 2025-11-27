@@ -8,7 +8,9 @@ const mocks = vi.hoisted(() => {
   return {
     mockNavigate: vi.fn(),
     mockParams: { value: {} as Record<string, string | undefined> },
-    mockLocation: { value: { search: "", pathname: "/", state: null as any } },
+    mockLocation: {
+      value: { search: "", pathname: "/", state: null as unknown },
+    },
     mockLoaderData: {
       value: { urlPrompt: null, urlModel: null } as {
         urlPrompt: string | null;
