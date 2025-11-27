@@ -156,7 +156,9 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 disabled={chatState.isStreaming}
                 variant="blue"
                 size="fixed"
-                aria-label={chatState.isStreaming ? "Generating" : "Send message"}
+                aria-label={
+                  chatState.isStreaming ? "Generating" : "Send message"
+                }
               >
                 {chatState.isStreaming ? "•••" : "Code"}
               </Button>

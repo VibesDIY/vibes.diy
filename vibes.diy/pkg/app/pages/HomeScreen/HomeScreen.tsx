@@ -3,7 +3,6 @@ import {
   getContainerStyle,
   getWrapperStyle,
   getBackgroundStyle,
-  getNoiseTextureStyle,
   getScrollingBackgroundsStyle,
   getMenuStyle,
   getInnerContainerStyle,
@@ -76,6 +75,11 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   const animatedSceneSection6Ref = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
+  const [isAnimationLocked, setIsAnimationLocked] = useState(false);
+  const [activeSection, setActiveSection] = useState<4 | 6 | null>(null);
+  const hasCompletedSection4 = useRef(false);
+  const hasCompletedSection6 = useRef(false);
+  const scrollAccumulator = useRef(0);
 
   // References for the 8 sections to calculate dynamic backgrounds
   const section1Ref = useRef<HTMLDivElement>(null);
@@ -527,6 +531,117 @@ export const HomeScreen = (_props: HomeScreenProps) => {
     };
   }, [isMobile]);
 
+  // Mobile: Detect when sections reach center and lock them
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const scrollContainer = scrollContainerRef.current;
+    const section4 = section4Ref.current;
+    const section6 = section6Ref.current;
+
+    if (!scrollContainer || !section4 || !section6) return;
+
+    const handlePageScroll = () => {
+      // Skip if already locked
+      if (isAnimationLocked) return;
+
+      const viewportHeight = window.innerHeight;
+      const viewportCenter = viewportHeight / 2;
+
+      // Check section 4
+      if (!hasCompletedSection4.current) {
+        const rect4 = section4.getBoundingClientRect();
+        const section4Center = rect4.top + rect4.height / 2;
+        const distanceFromCenter = Math.abs(section4Center - viewportCenter);
+
+        // Lock when within 50px of center
+        if (distanceFromCenter < 50) {
+          setActiveSection(4);
+          setIsAnimationLocked(true);
+          setAnimationProgress(0);
+          scrollAccumulator.current = 0;
+          return;
+        }
+      }
+
+      // Check section 6
+      if (!hasCompletedSection6.current) {
+        const rect6 = section6.getBoundingClientRect();
+        const section6Center = rect6.top + rect6.height / 2;
+        const distanceFromCenter = Math.abs(section6Center - viewportCenter);
+
+        // Lock when within 50px of center
+        if (distanceFromCenter < 50) {
+          setActiveSection(6);
+          setIsAnimationLocked(true);
+          setAnimationProgress(50);
+          scrollAccumulator.current = 0;
+          return;
+        }
+      }
+    };
+
+    scrollContainer.addEventListener("scroll", handlePageScroll, { passive: true });
+    handlePageScroll(); // Initial call
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", handlePageScroll);
+    };
+  }, [isMobile, isAnimationLocked]);
+
+  // Mobile: Convert scroll to animation progress when locked
+  useEffect(() => {
+    if (!isMobile || !isAnimationLocked || activeSection === null) return;
+
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const SCROLL_SENSITIVITY = 3; // pixels per 1% progress
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+
+      scrollAccumulator.current += e.deltaY;
+      const progressDelta = scrollAccumulator.current / SCROLL_SENSITIVITY;
+
+      let newProgress: number;
+      if (activeSection === 4) {
+        newProgress = Math.max(0, Math.min(50, animationProgress + progressDelta));
+      } else {
+        newProgress = Math.max(50, Math.min(100, animationProgress + progressDelta));
+      }
+
+      setAnimationProgress(newProgress);
+
+      if (Math.abs(progressDelta) >= 1) {
+        scrollAccumulator.current = 0;
+      }
+
+      // Check if complete
+      const isComplete =
+        (activeSection === 4 && newProgress >= 50) ||
+        (activeSection === 6 && newProgress >= 100);
+
+      if (isComplete) {
+        if (activeSection === 4) {
+          hasCompletedSection4.current = true;
+        } else {
+          hasCompletedSection6.current = true;
+        }
+        setIsAnimationLocked(false);
+        setActiveSection(null);
+        scrollAccumulator.current = 0;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [isMobile, isAnimationLocked, activeSection, animationProgress]);
+
+
   return (
     <div style={getBlackBorderWrapper()}>
       <div style={getBackgroundStyle()} />
@@ -604,10 +719,22 @@ export const HomeScreen = (_props: HomeScreenProps) => {
         <div style={getContainerStyle()}>
           <div style={getInnerContainerStyle(isMobile)} ref={innerContainerRef}>
             <DraggableSection color="grey" x={20} y={20} removePaddingTop>
-              <h2 style={{ fontWeight: "bold", fontSize: "50px", lineHeight: '50px' }}>
+              <h2
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "50px",
+                  lineHeight: "50px",
+                }}
+              >
                 Impress the Group Chat
               </h2>
-              <p style={{ fontWeight: "bold", fontSize: "22px", lineHeight: '36px'  }}>
+              <p
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "22px",
+                  lineHeight: "36px",
+                }}
+              >
                 Instantly make your own apps on the fly
               </p>
             </DraggableSection>
@@ -622,24 +749,53 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </DraggableSection>
             )}
 
-             <DraggableCard color="blue" x={550} y={120}>
-              <p style={{ maxWidth: "250px", fontWeight: "bold", fontSize: '20px', lineHeight: '25px' }}>
-                No coding experience required. Just type an idea, and invite your friends. Our <a href="http://fireproof.storage/">purpose-built vibe coding database</a>{' '}  
-                automatically encrypts all your data. Which means the group chat's lore 
-                stays local, portable, and safe.
+            <DraggableCard color="blue" x={550} y={120}>
+              <p
+                style={{
+                  maxWidth: "250px",
+                  fontWeight: "bold",
+                  fontSize: "20px",
+                  lineHeight: "25px",
+                }}
+              >
+                No coding experience required. Just type an idea, and invite
+                your friends. Our{" "}
+                <a href="http://fireproof.storage/">
+                  purpose-built vibe coding database
+                </a>{" "}
+                automatically encrypts all your data. Which means the group
+                chat's lore stays local, portable, and safe.
               </p>
             </DraggableCard>
 
             <DraggableCard color="grey" x={870} y={100}>
-              <img src={computerAnimGif} style={{ width: "150px", fontSize: '20px', lineHeight: '25px' }} />
+              <img
+                src={computerAnimGif}
+                style={{ width: "150px", fontSize: "20px", lineHeight: "25px" }}
+              />
             </DraggableCard>
 
             <DraggableCard color="yellow" x={800} y={20}>
-              <p style={{ fontWeight: "bold", fontSize: '20px', lineHeight: '25px' }}>No app store. No downloads.</p>
+              <p
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "20px",
+                  lineHeight: "25px",
+                }}
+              >
+                No app store. No downloads.
+              </p>
             </DraggableCard>
 
             <DraggableCard color="red" x={800} y={320}>
-              <p style={{ maxWidth: "200px", fontWeight: "bold", fontSize: '20px', lineHeight: '25px' }}>
+              <p
+                style={{
+                  maxWidth: "200px",
+                  fontWeight: "bold",
+                  fontSize: "20px",
+                  lineHeight: "25px",
+                }}
+              >
                 Custom community apps. Made by and for your friends, for
                 everything you do together.
               </p>
@@ -765,63 +921,102 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ref={section2Ref}
             >
               {/* Left column: Text (1/3 width) */}
-              <div style={{ flex: isMobile ? "1" : "0 0 33.33%", display: "flex", alignItems: "center", zIndex: 1 }}>
+              <div
+                style={{
+                  flex: isMobile ? "1" : "0 0 33.33%",
+                  display: "flex",
+                  alignItems: "center",
+                  zIndex: isMobile ? "auto" : 1,
+                  position: "relative",
+                }}
+              >
                 <DraggableSection color="blue" static>
                   <h3
                     style={{
                       fontWeight: "bold",
                       fontSize: "40px",
                       color: "#5398c9",
-                      lineHeight: '40px',
+                      lineHeight: "40px",
                     }}
                   >
                     You're about to make an app
                   </h3>
-                  <div style={{marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '18px'}}>
-                    <b style={{fontSize: '28px', lineHeight: '28px'}}>The front-end is the fun part</b>
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "18px",
+                    }}
+                  >
+                    <b style={{ fontSize: "28px", lineHeight: "28px" }}>
+                      The front-end is the fun part
+                    </b>
                     <p>
-                      Let's start there. Let's say you want to make a simple counter
-                    that keeps track of the number of times a group of people click
-                    a red button.
+                      Let's start there. Let's say you want to make a simple
+                      counter that keeps track of the number of times a group of
+                      people click a red button.
                     </p>
                     <p>
-                    Most AI models will give you something cool right away.
+                      Most AI models will give you something cool right away.
                     </p>
                   </div>
                 </DraggableSection>
               </div>
 
-              {/* Right column: Visual placeholder (2/3 width) */}
-              <div
-                style={{
-                  flex: isMobile ? "1" : "0 0 66.66%",
-                  position: "relative",
-                  pointerEvents: "none",
-                }}
-              />
-
-              {/* AnimatedScene overlay covering full section */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: 0,
-                  right: 0,
-                  transform: "translateY(-50%)",
-                  height: "100vh",
-                  display: "flex",
-                  alignItems: "center",
-                  pointerEvents: "none",
-                  zIndex: 0,
-                }}
-              >
-                {/* Empty space for left column (1/3) */}
-                <div style={{ flex: "0 0 33.33%" }} />
-                {/* AnimatedScene in right area (2/3) */}
-                <div style={{ flex: "0 0 66.66%", position: "relative", height: "100%" }}>
+              {/* Right column: AnimatedScene */}
+              {isMobile ? (
+                // Mobile: AnimatedScene flows normally in layout
+                <div
+                  style={{
+                    flex: "1",
+                    position: "relative",
+                    minHeight: "400px",
+                  }}
+                >
                   <AnimatedScene progress={0} />
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Desktop: Visual placeholder (2/3 width) */}
+                  <div
+                    style={{
+                      flex: "0 0 66.66%",
+                      position: "relative",
+                      pointerEvents: "none",
+                    }}
+                  />
+
+                  {/* Desktop: AnimatedScene overlay covering full section */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: 0,
+                      right: 0,
+                      transform: "translateY(-50%)",
+                      height: "100vh",
+                      display: "flex",
+                      alignItems: "center",
+                      pointerEvents: "none",
+                      zIndex: 0,
+                    }}
+                  >
+                    {/* Empty space for left column (1/3) */}
+                    <div style={{ flex: "0 0 33.33%" }} />
+                    {/* AnimatedScene in right area (2/3) */}
+                    <div
+                      style={{
+                        flex: "0 0 66.66%",
+                        position: "relative",
+                        height: "100%",
+                      }}
+                    >
+                      <AnimatedScene progress={0} />
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
 
             {/* Section 3: Second part of content */}
@@ -845,42 +1040,56 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 <p>
                   <strong>Multiplayer features need a backend</strong>
                   <br />
-                  And backends are hard. You're a vibe coder, not a "DevOps" expert. 
-                  Messing this part up is how vibe coded apps get hacked. You can either 
-                  try to connect to something like Supabase, which is complicated and expensive.
-                  Or let someone build you a backend that you'll be stuck with forever.
-                  <br /><br />
+                  And backends are hard. You're a vibe coder, not a "DevOps"
+                  expert. Messing this part up is how vibe coded apps get
+                  hacked. You can either try to connect to something like
+                  Supabase, which is complicated and expensive. Or let someone
+                  build you a backend that you'll be stuck with forever.
+                  <br />
+                  <br />
                   <strong>Here's the problem</strong>
                   <br />
-                  You're trying to vibe code using a web stack that was made for a different problem: 
-                  building a huge startup with giant teams of <i>actual</i> programmers using millions
-                  in venture capital.
-                  <br /><br />
+                  You're trying to vibe code using a web stack that was made for
+                  a different problem: building a huge startup with giant teams
+                  of <i>actual</i> programmers using millions in venture
+                  capital.
+                  <br />
+                  <br />
                   <strong>Your web stack wasn't made for vibe coding</strong>
                   <br />
-                  Most web stacks are built for mass-market software: big schemas, strict permissions, 
-                  endless backend plumbing. Tools like Supabase and row-level auth policies work fine 
-                  for enterprise apps — but they slow down small, personal, shareable ones.
-                  <br /><br />
-                  Vibes DIY takes a different approach. It treats data as part of your creative surface, 
-                  not a distant backend. None of this would be possible if you still needed a backend to sync 
-                  data between users. But, doesn't everybody need a backend for multiplayer data? 
-                  <br /><br />
-                                  <h3
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "40px",
-                    color: "#FEDD00",
-                  }}
-                >
-                  We made a database designed for vibe coding
-                </h3>
-                  <strong>Fireproof makes the web server into a horseless carriage</strong>
+                  Most web stacks are built for mass-market software: big
+                  schemas, strict permissions, endless backend plumbing. Tools
+                  like Supabase and row-level auth policies work fine for
+                  enterprise apps — but they slow down small, personal,
+                  shareable ones.
                   <br />
-                  Vibes DIY runs on Fireproof, an open source embedded database that syncs without a web server. 
-                  It treats data as part of your creative surface, not a corporate cloud service. Fireproof uses 
-                  distributed data structures, CRDTs, content-addressed storage, and document-style records
-                  to give every app its own lightweight ledger.                  
+                  <br />
+                  Vibes DIY takes a different approach. It treats data as part
+                  of your creative surface, not a distant backend. None of this
+                  would be possible if you still needed a backend to sync data
+                  between users. But, doesn't everybody need a backend for
+                  multiplayer data?
+                  <br />
+                  <br />
+                  <h3
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "40px",
+                      color: "#FEDD00",
+                    }}
+                  >
+                    We made a database designed for vibe coding
+                  </h3>
+                  <strong>
+                    Fireproof makes the web server into a horseless carriage
+                  </strong>
+                  <br />
+                  Vibes DIY runs on Fireproof, an open source embedded database
+                  that syncs without a web server. It treats data as part of
+                  your creative surface, not a corporate cloud service.
+                  Fireproof uses distributed data structures, CRDTs,
+                  content-addressed storage, and document-style records to give
+                  every app its own lightweight ledger.
                 </p>
               </DraggableSection>
             </section>
@@ -899,7 +1108,15 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ref={section4Ref}
             >
               {/* Left column: Text (1/3 width) */}
-              <div style={{ flex: isMobile ? "1" : "0 0 33.33%", display: "flex", alignItems: "center", zIndex: 1 }}>
+              <div
+                style={{
+                  flex: isMobile ? "1" : "0 0 33.33%",
+                  display: "flex",
+                  alignItems: "center",
+                  zIndex: isMobile ? "auto" : 1,
+                  position: "relative",
+                }}
+              >
                 <DraggableSection color="yellow" static>
                   <h3
                     style={{
@@ -914,64 +1131,102 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <strong>Now you're using Fireproof + Vibes DIY</strong>
                     <br />
                     Your data lives locally inside your component, syncing when
-                    and where you choose. Conflicts resolve sensibly. State just...
-                    persists.
-                    <br /><br />
-                    You can build offline, share instantly, and grow
-                    without rewriting your stack. Even if you have no idea what
-                    any of that means and just want to spell out an idea and get an
+                    and where you choose. Conflicts resolve sensibly. State
+                    just... persists.
+                    <br />
+                    <br />
+                    You can build offline, share instantly, and grow without
+                    rewriting your stack. Even if you have no idea what any of
+                    that means and just want to spell out an idea and get an
                     app. We got you.
-                    <br /><br />
+                    <br />
+                    <br />
                   </p>
                 </DraggableSection>
               </div>
 
-              {/* Right column: Visual placeholder (2/3 width) */}
-              <div
-                style={{
-                  flex: isMobile ? "1" : "0 0 66.66%",
-                  position: "relative",
-                  pointerEvents: "none",
-                }}
-              />
-
-              {/* Scrollable AnimatedScene overlay covering full section */}
-              <div
-                className="animated-scene-wrapper"
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: 0,
-                  right: 0,
-                  transform: "translateY(-50%)",
-                  height: "100vh",
-                  overflowY: "auto",
-                  overflowX: "hidden",
-                  background: "transparent",
-                  zIndex: 10,
-                  pointerEvents: "auto",
-                }}
-                ref={animatedSceneSection4Ref}
-              >
-                <div style={{ height: "200vh" }}>
+              {/* Right column: AnimatedScene */}
+              {isMobile ? (
+                // Mobile: Container that locks to center during animation
+                <div
+                  style={{
+                    flex: "1",
+                    position: "relative",
+                    minHeight: "100vh",
+                  }}
+                >
                   <div
                     style={{
-                      position: "sticky",
-                      top: 0,
+                      position: isAnimationLocked && activeSection === 4 ? "fixed" : "relative",
+                      top: isAnimationLocked && activeSection === 4 ? "50%" : "auto",
+                      left: isAnimationLocked && activeSection === 4 ? "0" : "auto",
+                      right: isAnimationLocked && activeSection === 4 ? "0" : "auto",
+                      transform: isAnimationLocked && activeSection === 4 ? "translateY(-50%)" : "none",
                       width: "100%",
-                      height: "100vh",
+                      minHeight: "400px",
                       display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: isAnimationLocked && activeSection === 4 ? 9999 : "auto",
                     }}
                   >
-                    {/* Empty space for left column (1/3) */}
-                    <div style={{ flex: "0 0 33.33%", pointerEvents: "none" }} />
-                    {/* AnimatedScene in right area (2/3) */}
-                    <div style={{ flex: "0 0 66.66%", position: "relative" }}>
-                      <AnimatedScene progress={animationProgress} />
-                    </div>
+                    <AnimatedScene progress={animationProgress} />
                   </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Desktop: Visual placeholder (2/3 width) */}
+                  <div
+                    style={{
+                      flex: "0 0 66.66%",
+                      position: "relative",
+                      pointerEvents: "none",
+                    }}
+                  />
+
+                  {/* Desktop: Scrollable AnimatedScene overlay covering full section */}
+                  <div
+                    className="animated-scene-wrapper"
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: 0,
+                      right: 0,
+                      transform: "translateY(-50%)",
+                      height: "100vh",
+                      overflowY: "auto",
+                      overflowX: "hidden",
+                      background: "transparent",
+                      zIndex: 10,
+                      pointerEvents: "auto",
+                    }}
+                    ref={animatedSceneSection4Ref}
+                  >
+                    <div style={{ height: "200vh" }}>
+                      <div
+                        style={{
+                          position: "sticky",
+                          top: 0,
+                          width: "100%",
+                          height: "100vh",
+                          display: "flex",
+                        }}
+                      >
+                        {/* Empty space for left column (1/3) */}
+                        <div
+                          style={{ flex: "0 0 33.33%", pointerEvents: "none" }}
+                        />
+                        {/* AnimatedScene in right area (2/3) */}
+                        <div
+                          style={{ flex: "0 0 66.66%", position: "relative" }}
+                        >
+                          <AnimatedScene progress={animationProgress} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
 
             {/* Section 5: Final content */}
@@ -1027,7 +1282,15 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ref={section6Ref}
             >
               {/* Left column: Text (1/3 width) */}
-              <div style={{ flex: isMobile ? "1" : "0 0 33.33%", display: "flex", alignItems: "center", zIndex: 1 }}>
+              <div
+                style={{
+                  flex: isMobile ? "1" : "0 0 33.33%",
+                  display: "flex",
+                  alignItems: "center",
+                  zIndex: isMobile ? "auto" : 1,
+                  position: "relative",
+                }}
+              >
                 <DraggableSection color="red" static>
                   <h3
                     style={{
@@ -1041,61 +1304,98 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   <p>
                     <strong>No setup, no friction</strong>
                     <br />
-                    Share your creations with a simple link. Your friends can jump
-                    in immediately — no downloads, no sign-ups, no waiting.
-                    <br /><br />
-                    Everyone's changes sync in real-time, and your data stays safe
-                    and encrypted locally.
+                    Share your creations with a simple link. Your friends can
+                    jump in immediately — no downloads, no sign-ups, no waiting.
+                    <br />
+                    <br />
+                    Everyone's changes sync in real-time, and your data stays
+                    safe and encrypted locally.
                   </p>
                 </DraggableSection>
               </div>
 
-              {/* Right column: Visual placeholder (2/3 width) */}
-              <div
-                style={{
-                  flex: isMobile ? "1" : "0 0 66.66%",
-                  position: "relative",
-                  pointerEvents: "none",
-                }}
-              />
-
-              {/* Scrollable AnimatedScene overlay covering full section */}
-              <div
-                className="animated-scene-wrapper"
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: 0,
-                  right: 0,
-                  transform: "translateY(-50%)",
-                  height: "100vh",
-                  overflowY: "auto",
-                  overflowX: "hidden",
-                  background: "transparent",
-                  zIndex: 10,
-                  pointerEvents: "auto",
-                }}
-                ref={animatedSceneSection6Ref}
-              >
-                <div style={{ height: "200vh" }}>
+              {/* Right column: AnimatedScene */}
+              {isMobile ? (
+                // Mobile: Container that locks to center during animation
+                <div
+                  style={{
+                    flex: "1",
+                    position: "relative",
+                    minHeight: "100vh",
+                  }}
+                >
                   <div
                     style={{
-                      position: "sticky",
-                      top: 0,
+                      position: isAnimationLocked && activeSection === 6 ? "fixed" : "relative",
+                      top: isAnimationLocked && activeSection === 6 ? "50%" : "auto",
+                      left: isAnimationLocked && activeSection === 6 ? "0" : "auto",
+                      right: isAnimationLocked && activeSection === 6 ? "0" : "auto",
+                      transform: isAnimationLocked && activeSection === 6 ? "translateY(-50%)" : "none",
                       width: "100%",
-                      height: "100vh",
+                      minHeight: "400px",
                       display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: isAnimationLocked && activeSection === 6 ? 9999 : "auto",
                     }}
                   >
-                    {/* Empty space for left column (1/3) */}
-                    <div style={{ flex: "0 0 33.33%", pointerEvents: "none" }} />
-                    {/* AnimatedScene in right area (2/3) */}
-                    <div style={{ flex: "0 0 66.66%", position: "relative" }}>
-                      <AnimatedScene progress={animationProgress} />
-                    </div>
+                    <AnimatedScene progress={animationProgress} />
                   </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Desktop: Visual placeholder (2/3 width) */}
+                  <div
+                    style={{
+                      flex: "0 0 66.66%",
+                      position: "relative",
+                      pointerEvents: "none",
+                    }}
+                  />
+
+                  {/* Desktop: Scrollable AnimatedScene overlay covering full section */}
+                  <div
+                    className="animated-scene-wrapper"
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: 0,
+                      right: 0,
+                      transform: "translateY(-50%)",
+                      height: "100vh",
+                      overflowY: "auto",
+                      overflowX: "hidden",
+                      background: "transparent",
+                      zIndex: 10,
+                      pointerEvents: "auto",
+                    }}
+                    ref={animatedSceneSection6Ref}
+                  >
+                    <div style={{ height: "200vh" }}>
+                      <div
+                        style={{
+                          position: "sticky",
+                          top: 0,
+                          width: "100%",
+                          height: "100vh",
+                          display: "flex",
+                        }}
+                      >
+                        {/* Empty space for left column (1/3) */}
+                        <div
+                          style={{ flex: "0 0 33.33%", pointerEvents: "none" }}
+                        />
+                        {/* AnimatedScene in right area (2/3) */}
+                        <div
+                          style={{ flex: "0 0 66.66%", position: "relative" }}
+                        >
+                          <AnimatedScene progress={animationProgress} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
 
             {/* Section 8: Light section */}
