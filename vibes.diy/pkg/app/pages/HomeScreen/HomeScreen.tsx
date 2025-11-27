@@ -768,11 +768,24 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </p>
             </DraggableCard>
 
-            <DraggableCard color="grey" x={870} y={100}>
-              <img
-                src={computerAnimGif}
-                style={{ width: "150px", fontSize: "20px", lineHeight: "25px" }}
-              />
+            <DraggableCard color="grey" x={820} y={520}>
+              <div
+                style={{
+                  position: "relative",
+                  margin: "-16px -8px",
+                  width: "320px",
+                  height: "242px",
+                }}
+              >
+                <img
+                  src={computerAnimGif}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "block",
+                  }}
+                />
+              </div>
             </DraggableCard>
 
             <DraggableCard color="yellow" x={800} y={20}>
