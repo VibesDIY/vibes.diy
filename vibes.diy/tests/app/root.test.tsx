@@ -1,5 +1,6 @@
 import React from "react";
 import { render } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ErrorBoundary, Layout } from "~/vibes.diy/app/root.js";
 import { VibesDiyEnv } from "~/vibes.diy/app/config/env.js";
@@ -76,16 +77,6 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", async () => {
   };
 });
 
-// Mock the ThemeContext
-vi.mock("~/vibes.diy/app/contexts/ThemeContext", () => ({
-  useTheme: () => ({
-    isDarkMode: false,
-  }),
-  ThemeProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-}));
-
 // Mock PostHog
 vi.mock("posthog-js/react", () => ({
   PostHogProvider: ({ children }: { children: React.ReactNode }) => (
@@ -148,65 +139,25 @@ vi.mock("@clerk/clerk-react", () => ({
   }),
 }));
 
-// Mock Layout to avoid full HTML structure in tests
-vi.mock("~/vibes.diy/app/root", async () => {
-  const actual = await vi.importActual<typeof import("~/vibes.diy/app/root")>(
-    "~/vibes.diy/app/root",
-  );
-  return {
-    ...actual,
-    Layout: ({ children }: { children: React.ReactNode }) => (
-      <div data-testid="layout">{children}</div>
-    ),
-  };
-});
-
 describe("Root Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Mock window.matchMedia
-    Object.defineProperty(window, "matchMedia", {
-      writable: true,
-      value: vi.fn().mockImplementation((query) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      })),
-    });
 
     // Reset document classes
     document.documentElement.classList.remove("dark");
   });
 
-  it("renders the Layout component with children", () => {
-    // Since Layout renders a full HTML document with <html> and <body> tags,
-    // which can cause issues in test environments, just verify it renders without errors
-    expect(() => {
-      render(
-        <Layout>
-          <div data-testid="test-content">Test Child Content</div>
-        </Layout>,
-      );
-      // If we get here without an error, the test passes
-    }).not.toThrow();
-  });
+  // Use server-side rendering here to avoid noisy full-document render output
+  // while still verifying that the root layout and core providers compose.
+  it("statically renders Layout with children and core providers", () => {
+    const html = renderToStaticMarkup(
+      <Layout>
+        <div data-testid="test-content">Test Child Content</div>
+      </Layout>,
+    );
 
-  it("applies dark mode when system preference is dark", () => {
-    // Layout component is mocked, so we just verify it renders without errors
-    // Dark mode logic is tested in ThemeContext tests
-    expect(() => {
-      render(
-        <Layout>
-          <div>Test</div>
-        </Layout>,
-      );
-    }).not.toThrow();
+    expect(html).toContain("Test Child Content");
+    expect(html).toContain('data-testid="cookie-banner"');
   });
 
   it("renders the ErrorBoundary component with an error", () => {
