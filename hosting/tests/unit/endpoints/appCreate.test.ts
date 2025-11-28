@@ -1,13 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  beforeAll,
-  afterAll,
-  vi,
-} from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { AppCreate } from "@vibes.diy/hosting";
 import { OpenAPIRoute } from "chanfana";
 
@@ -21,20 +12,6 @@ vi.mock("call-ai", () => {
       data: [{ b64_json: mockImageBase64 }],
     }),
   };
-});
-
-const originalAtob = global.atob;
-
-beforeAll(() => {
-  if (typeof global.atob !== "function") {
-    global.atob = (data: string) => Buffer.from(data, "base64").toString("binary");
-  }
-});
-
-afterAll(() => {
-  if (originalAtob) {
-    global.atob = originalAtob;
-  }
 });
 
 describe("AppCreate endpoint", () => {
