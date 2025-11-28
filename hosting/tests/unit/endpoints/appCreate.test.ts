@@ -1,18 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { AppCreate } from "@vibes.diy/hosting";
-import { OpenAPIRoute } from "chanfana";
-
-vi.mock("call-ai", () => {
-  const mockImageBase64 =
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P///wAHAwJ/i+wW3wAAAABJRU5ErkJggg==";
-
-  return {
-    callAI: vi.fn().mockResolvedValue("Mock summary"),
-    imageGen: vi.fn().mockResolvedValue({
-      data: [{ b64_json: mockImageBase64 }],
-    }),
-  };
-});
+import type { OpenAPIRoute } from "chanfana";
 
 describe("AppCreate endpoint", () => {
   let originalFetch: typeof global.fetch;
@@ -69,8 +64,6 @@ describe("AppCreate endpoint", () => {
       env: {
         KV: mockKV,
         PUBLISH_QUEUE: mockQueue,
-        CALLAI_API_KEY: "test-key",
-        SERVER_OPENROUTER_API_KEY: "test-prov-key",
       },
       get: vi.fn().mockReturnValue({
         email: "test@example.com",
@@ -124,9 +117,9 @@ describe("AppCreate endpoint", () => {
     expect(result.success).toBe(true);
     expect(result.app).toBeDefined();
     expect(result.app.title).toBe("Test App");
-    expect(result.app.summary).toBe("Mock summary");
-    expect(result.app.hasIcon).toBe(true);
-    expect(result.app.iconKey).toBeTruthy();
+    expect(result.app.summary).toBeNull();
+    expect(result.app.hasIcon).toBe(false);
+    expect(result.app.iconKey).toBeNull();
 
     // Verify Discord webhook was NOT called directly
     expect(mockFetch).not.toHaveBeenCalled();

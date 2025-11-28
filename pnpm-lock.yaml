@@ -210,6 +210,9 @@ importers:
       '@vibes.diy/hosting-base':
         specifier: workspace:*
         version: link:../base
+      call-ai:
+        specifier: workspace:*
+        version: link:../../call-ai/pkg
       chanfana:
         specifier: ^2.8.2
         version: 2.8.3
