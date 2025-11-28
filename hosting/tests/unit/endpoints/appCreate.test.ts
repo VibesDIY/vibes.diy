@@ -1,13 +1,48 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+  vi,
+} from "vitest";
 import { AppCreate } from "@vibes.diy/hosting";
 import { OpenAPIRoute } from "chanfana";
+
+vi.mock("call-ai", () => {
+  const mockImageBase64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P///wAHAwJ/i+wW3wAAAABJRU5ErkJggg==";
+
+  return {
+    callAI: vi.fn().mockResolvedValue("Mock summary"),
+    imageGen: vi.fn().mockResolvedValue({
+      data: [{ b64_json: mockImageBase64 }],
+    }),
+  };
+});
+
+const originalAtob = global.atob;
+
+beforeAll(() => {
+  if (typeof global.atob !== "function") {
+    global.atob = (data: string) => Buffer.from(data, "base64").toString("binary");
+  }
+});
+
+afterAll(() => {
+  if (originalAtob) {
+    global.atob = originalAtob;
+  }
+});
 
 describe("AppCreate endpoint", () => {
   let originalFetch: typeof global.fetch;
   let mockFetch: typeof global.fetch;
   let mockKV: {
     get: (key: string, type?: string) => Promise<string | ArrayBuffer | null>;
-    put: (key: string, value: string) => Promise<void>;
+    put: (key: string, value: unknown) => Promise<void>;
   };
   let mockContext: {
     env: { KV: typeof mockKV };
@@ -57,6 +92,7 @@ describe("AppCreate endpoint", () => {
       env: {
         KV: mockKV,
         PUBLISH_QUEUE: mockQueue,
+        CALLAI_API_KEY: "test-key",
         SERVER_OPENROUTER_API_KEY: "test-prov-key",
       },
       get: vi.fn().mockReturnValue({
@@ -111,6 +147,9 @@ describe("AppCreate endpoint", () => {
     expect(result.success).toBe(true);
     expect(result.app).toBeDefined();
     expect(result.app.title).toBe("Test App");
+    expect(result.app.summary).toBe("Mock summary");
+    expect(result.app.hasIcon).toBe(true);
+    expect(result.app.iconKey).toBeTruthy();
 
     // Verify Discord webhook was NOT called directly
     expect(mockFetch).not.toHaveBeenCalled();
