@@ -208,8 +208,10 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
 
       // Check demo data controls
       expect(res.getByText("Demo Data")).toBeInTheDocument();
-      const llmDecideDemo = res.getByDisplayValue("llm") as HTMLInputElement;
-      expect(llmDecideDemo.name).toBe("demoData");
+      const radios = res.getAllByDisplayValue("llm");
+      const llmDecideDemo = radios.find(
+        (input) => (input as HTMLInputElement).name === "demoData",
+      ) as HTMLInputElement;
       expect(llmDecideDemo).toBeChecked();
     });
 
