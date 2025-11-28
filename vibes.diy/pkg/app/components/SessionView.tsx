@@ -447,14 +447,14 @@ function AuthenticatedSessionView({
                   await chatState.updateSelectedModel(modelId);
                 }
               }}
-              models={
+              models={(
                 models as {
                   id: string;
                   name: string;
                   description: string;
                   featured?: boolean;
                 }[]
-              }
+              ).filter((m) => m.featured)}
               globalModel={chatState.globalModel}
               onSend={() => {
                 setMessageHasBeenSent(true);
