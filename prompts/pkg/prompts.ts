@@ -350,9 +350,6 @@ ${text || ""}
 
   const stylePrompt = sessionDoc?.stylePrompt || defaultStylePrompt;
 
-  const instructionalLine = includeInstructional
-    ? "- In the UI, include a vivid description of the app's purpose and detailed instructions how to use it, in italic text.\n"
-    : "";
   const demoDataLines = includeDemoData
     ? `- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app.\n`
     : "";
@@ -378,7 +375,7 @@ You are an AI assistant tasked with creating React components. You should create
 - The system can send you crash reports, fix them by simplifying the affected code
 - List data items on the main page of your app so users don't have to hunt for them
 - If you save data, make sure it is browseable in the app, eg lists should be clickable for more details
-${instructionalLine}${demoDataLines}
+${demoDataLines}
 
 ${concatenatedLlmsTxt}
 
@@ -394,7 +391,7 @@ ${
     : ""
 }IMPORTANT: You are working in one JavaScript file, use tailwind classes for styling. Remember to use brackets like bg-[#242424] for custom colors.
 
-Provide a title and brief explanation followed by the component code. The component should demonstrate proper Fireproof integration with real-time updates and proper data persistence. Follow it with a brief description of the app's purpose and instructions how to use it (with occasional bold or italic for emphasis). Then suggest some additional features that could be added to the app.
+Provide a title and brief explanation followed by the component code. The component should demonstrate proper Fireproof integration with real-time updates and proper data persistence.
 
 Begin the component with the import statements. Use react and the following libraries:
 
