@@ -1,7 +1,13 @@
 [
   {
+    "id": "anthropic/claude-opus-4.5",
+    "name": "Claude Opus 4.5 (Default)",
+    "description": "Claude Opus 4.5 is Anthropic's most powerful model, offering the best performance for complex reasoning, coding, and creative tasks",
+    "featured": true
+  },
+  {
     "id": "anthropic/claude-sonnet-4.5",
-    "name": "Claude Sonnet 4.5 (Default)",
+    "name": "Claude Sonnet 4.5",
     "description": "Claude Sonnet 4.5 is Anthropic's most advanced Sonnet model to date, optimized for real-world agents and coding workflows",
     "featured": true
   },
