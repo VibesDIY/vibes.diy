@@ -8,7 +8,6 @@ vi.mock("@vibes.diy/prompts", async () => {
     makeBaseSystemPrompt: vi.fn().mockResolvedValue({
       systemPrompt: "mocked system prompt",
       dependencies: ["fireproof", "callai"],
-      instructionalText: true,
       demoData: true,
       model: "test-model",
     }),
@@ -17,12 +16,6 @@ vi.mock("@vibes.diy/prompts", async () => {
         format: '{dependencies: { "package-name": "version" }}',
         note: "use-fireproof is already provided, do not include it",
       },
-      structure: [
-        "Brief explanation",
-        "Component code with proper Fireproof integration",
-        "Real-time updates",
-        "Data persistence",
-      ],
     },
   };
 });

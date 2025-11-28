@@ -47,9 +47,6 @@ export interface UseSession {
   submitAiMessage: (e?: Event) => Promise<void>;
   mergeAiMessage: (newDoc: Partial<AiChatMessageDocument>) => void;
   updateDependencies: (deps: string[], userOverride?: boolean) => Promise<void>;
-  updateInstructionalTextOverride: (
-    override?: boolean | undefined,
-  ) => Promise<void>;
   updateDemoDataOverride: (override?: boolean | undefined) => Promise<void>;
   updateAiSelectedDependencies: (
     aiSelectedDependencies: string[],
@@ -198,20 +195,6 @@ export function useSession(sessionId: string): UseSession {
     [sessionDatabase],
   );
 
-  // Update per‑vibe instructional text override setting
-  const updateInstructionalTextOverride = useCallback(
-    async (override?: boolean) => {
-      const base = vibeRef.current;
-      const updatedDoc = {
-        ...base,
-        instructionalTextOverride: override,
-      } as VibeDocument;
-      mergeRef.current(updatedDoc);
-      await sessionDatabase.put(updatedDoc);
-    },
-    [sessionDatabase],
-  );
-
   // Update per‑vibe demo data override setting
   const updateDemoDataOverride = useCallback(
     async (override?: boolean) => {
@@ -347,7 +330,6 @@ export function useSession(sessionId: string): UseSession {
       selectedModel: vibeDoc?.selectedModel,
       effectiveModel,
       updateDependencies,
-      updateInstructionalTextOverride,
       updateDemoDataOverride,
       updateAiSelectedDependencies,
       updateSelectedModel,
@@ -370,7 +352,6 @@ export function useSession(sessionId: string): UseSession {
       vibeDoc,
       effectiveModel,
       updateDependencies,
-      updateInstructionalTextOverride,
       updateDemoDataOverride,
       updateAiSelectedDependencies,
       updateSelectedModel,

@@ -37,12 +37,6 @@ export interface VibeDocument {
    */
   aiSelectedDependencies?: string[];
   /**
-   * When true, enable instructional text in prompts regardless of LLM decision.
-   * When false, disable instructional text regardless of LLM decision.
-   * When undefined, use LLM decision.
-   */
-  instructionalTextOverride?: boolean;
-  /**
    * When true, enable demo data in prompts regardless of LLM decision.
    * When false, disable demo data regardless of LLM decision.
    * When undefined, use LLM decision.

@@ -286,33 +286,6 @@ describe("prompt builder (real implementation)", () => {
     expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
   });
 
-  it("makeBaseSystemPrompt: respects instructionalTextOverride=false to disable instructional text", async () => {
-    // await preloadLlmsText();
-    const result = await makeBaseSystemPrompt("test-model", {
-      ...opts,
-      stylePrompt: undefined,
-      userPrompt: undefined,
-      history: [],
-      instructionalTextOverride: false,
-    });
-    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
-    // Demo data should still appear (not overridden)
-    expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-  });
-
-  it("makeBaseSystemPrompt: respects instructionalTextOverride=true to force instructional text", async () => {
-    // await preloadLlmsText();
-    const result = await makeBaseSystemPrompt("test-model", {
-      ...opts,
-      stylePrompt: undefined,
-      userPrompt: undefined,
-      history: [],
-      instructionalTextOverride: true,
-    });
-    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
-    expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-  });
-
   it("makeBaseSystemPrompt: respects demoDataOverride=false to disable demo data", async () => {
     // await preloadLlmsText();
     const result = await makeBaseSystemPrompt("test-model", {
@@ -337,19 +310,5 @@ describe("prompt builder (real implementation)", () => {
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
     expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
-  });
-
-  it("makeBaseSystemPrompt: respects both overrides simultaneously", async () => {
-    // await preloadLlmsText();
-    const result = await makeBaseSystemPrompt("test-model", {
-      ...opts,
-      stylePrompt: undefined,
-      userPrompt: undefined,
-      history: [],
-      instructionalTextOverride: false,
-      demoDataOverride: false,
-    });
-    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
-    expect(result.systemPrompt).not.toMatch(/include a Demo Data button/i);
   });
 });

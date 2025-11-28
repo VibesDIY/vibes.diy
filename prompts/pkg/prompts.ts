@@ -54,7 +54,6 @@ export async function getDefaultDependencies(): Promise<string[]> {
 export interface SystemPromptResult {
   systemPrompt: string;
   dependencies: string[];
-  instructionalText: boolean;
   demoData: boolean;
   model: string;
 }
@@ -113,7 +112,6 @@ async function detectModulesInHistory(
 
 interface LlmSelectionDecisions {
   selected: string[];
-  instructionalText: boolean;
   demoData: boolean;
 }
 
@@ -170,7 +168,7 @@ async function selectLlmsAndOptions(
     {
       role: "system",
       content:
-        'You select which library modules from a catalog should be included AND whether to include instructional UI text and a demo-data button. First analyze if the user prompt describes specific look & feel requirements. For instructional text and demo data: include them only when asked for. Read the JSON payload and return JSON with properties: "selected" (array of catalog "name" strings), "instructionalText" (boolean), and "demoData" (boolean). Only choose modules from the catalog. Include any libraries already used in history. Respond with JSON only.',
+        'You select which library modules from a catalog should be included AND whether to include a demo-data button. First analyze if the user prompt describes specific look & feel requirements. For demo data: include it only when asked for. Read the JSON payload and return JSON with properties: "selected" (array of catalog "name" strings) and "demoData" (boolean). Only choose modules from the catalog. Include any libraries already used in history. Respond with JSON only.',
     },
     { role: "user", content: JSON.stringify(payload) },
   ];
@@ -185,7 +183,6 @@ async function selectLlmsAndOptions(
       name: "module_and_options_selection",
       properties: {
         selected: { type: "array", items: { type: "string" } },
-        instructionalText: { type: "boolean" },
         demoData: { type: "boolean" },
       },
     },
@@ -230,24 +227,20 @@ async function selectLlmsAndOptions(
         "Module/options selection: call-ai returned undefined with schema present",
       );
       console.warn("This is a known issue in the prompts package environment");
-      return { selected: [], instructionalText: true, demoData: true };
+      return { selected: [], demoData: true };
     }
 
     const parsed = JSON.parse(raw) ?? {};
     const selected = Array.isArray(parsed?.selected)
       ? parsed.selected.filter((v: unknown) => typeof v === "string")
       : [];
-    const instructionalText =
-      typeof parsed?.instructionalText === "boolean"
-        ? parsed.instructionalText
-        : true;
     const demoData =
       typeof parsed?.demoData === "boolean" ? parsed.demoData : true;
 
-    return { selected, instructionalText, demoData };
+    return { selected, demoData };
   } catch (err) {
     console.warn("Module/options selection call failed:", err);
-    return { selected: [], instructionalText: true, demoData: true };
+    return { selected: [], demoData: true };
   }
 }
 
@@ -290,7 +283,6 @@ export async function makeBaseSystemPrompt(
   const useOverride = !!sessionDoc?.dependenciesUserOverride;
 
   let selectedNames: string[] = [];
-  let includeInstructional = true;
   let includeDemoData = true;
 
   const llmsCatalog = await getLlmCatalog(sessionDoc.fallBackUrl);
@@ -307,7 +299,6 @@ export async function makeBaseSystemPrompt(
       history,
       sessionDoc,
     );
-    includeInstructional = decisions.instructionalText;
     includeDemoData = decisions.demoData;
 
     const detected = await detectModulesInHistory(history, sessionDoc);
@@ -316,10 +307,6 @@ export async function makeBaseSystemPrompt(
 
     if (selectedNames.length === 0)
       selectedNames = [...(await getDefaultDependencies())];
-  }
-
-  if (typeof sessionDoc?.instructionalTextOverride === "boolean") {
-    includeInstructional = sessionDoc.instructionalTextOverride;
   }
   if (typeof sessionDoc?.demoDataOverride === "boolean") {
     includeDemoData = sessionDoc.demoDataOverride;
@@ -406,7 +393,6 @@ import React, { ... } from "react"${generateImportStatements(chosenLlms)}
   return {
     systemPrompt,
     dependencies: selectedNames,
-    instructionalText: includeInstructional,
     demoData: includeDemoData,
     model,
   };

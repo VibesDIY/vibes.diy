@@ -36,7 +36,6 @@ function ResultPreview({
   const {
     vibeDoc,
     updateDependencies,
-    updateInstructionalTextOverride,
     updateDemoDataOverride,
   } = useSession(sessionId);
   const showWelcome = !isStreaming && (!code || code.length === 0);
@@ -154,9 +153,7 @@ function ResultPreview({
             dependenciesUserOverride={vibeDoc?.dependenciesUserOverride}
             aiSelectedDependencies={vibeDoc?.aiSelectedDependencies}
             onUpdateDependencies={updateDependencies}
-            instructionalTextOverride={vibeDoc?.instructionalTextOverride}
             demoDataOverride={vibeDoc?.demoDataOverride}
-            onUpdateInstructionalTextOverride={updateInstructionalTextOverride}
             onUpdateDemoDataOverride={updateDemoDataOverride}
           />
         </div>
