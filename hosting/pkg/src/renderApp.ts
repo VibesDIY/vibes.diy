@@ -224,8 +224,12 @@ function parseRangeHeader(
   return { start, end };
 }
 
-// Shared screenshot handler logic
-async function handleScreenshotRequest(c: Context, includeBody = true) {
+// Shared image asset handler logic (screenshots/icons)
+async function handleImageRequest(
+  c: Context,
+  keySuffix: string,
+  includeBody = true,
+) {
   // Extract subdomain from the request URL
   const url = new URL(c.req.url);
   const hostname = url.hostname;
@@ -270,17 +274,17 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
     appSlug = parsed.appSlug;
   }
 
-  // Calculate screenshot key based on app slug (screenshots are always for the base app)
-  const screenshotKey = `${appSlug}-screenshot`;
+  // Calculate asset key based on app slug
+  const assetKey = `${appSlug}-${keySuffix}`;
 
-  // Get the screenshot from KV
-  const screenshot = await kv.get(screenshotKey, "arrayBuffer");
+  // Get the asset from KV
+  const asset = await kv.get(assetKey, "arrayBuffer");
 
-  if (!screenshot) {
+  if (!asset) {
     return c.notFound();
   }
 
-  const fileSize = screenshot.byteLength;
+  const fileSize = asset.byteLength;
   const rangeHeader = c.req.header("Range");
 
   // Handle Range requests
@@ -300,7 +304,7 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
 
     const { start, end } = range;
     const contentLength = end - start + 1;
-    const chunk = screenshot.slice(start, end + 1);
+    const chunk = asset.slice(start, end + 1);
 
     const headers = {
       "Content-Type": "image/png",
@@ -326,17 +330,29 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
     "Access-Control-Allow-Origin": "*",
   };
 
-  // Return the screenshot with proper headers, optionally including body
-  return new Response(includeBody ? screenshot : null, { headers });
+  // Return the asset with proper headers, optionally including body
+  return new Response(includeBody ? asset : null, { headers });
 }
 
 // Route to serve app screenshots as PNG images (GET and HEAD)
 app.all("/screenshot.png", async (c) => {
   const method = c.req.method;
   if (method === "GET") {
-    return handleScreenshotRequest(c, true);
+    return handleImageRequest(c, "screenshot", true);
   } else if (method === "HEAD") {
-    return handleScreenshotRequest(c, false);
+    return handleImageRequest(c, "screenshot", false);
+  } else {
+    return c.json({ error: "Method not allowed" }, 405);
+  }
+});
+
+// Route to serve app icons as PNG images (GET and HEAD)
+app.all("/icon.png", async (c) => {
+  const method = c.req.method;
+  if (method === "GET") {
+    return handleImageRequest(c, "icon", true);
+  } else if (method === "HEAD") {
+    return handleImageRequest(c, "icon", false);
   } else {
     return c.json({ error: "Method not allowed" }, 405);
   }

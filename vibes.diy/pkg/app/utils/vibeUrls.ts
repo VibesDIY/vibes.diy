@@ -19,3 +19,13 @@ export function constructVibeScreenshotUrl(slug: string): string {
   baseUrl.searchParams.set("slug", slug);
   return baseUrl.href;
 }
+
+/**
+ * Construct URL for vibe icon with query parameter
+ */
+export function constructVibeIconUrl(slug: string): string {
+  const baseUrl = new URL(VibesDiyEnv.APP_HOST_BASE_URL());
+  baseUrl.pathname = "/icon.png";
+  baseUrl.searchParams.set("slug", slug);
+  return baseUrl.href;
+}

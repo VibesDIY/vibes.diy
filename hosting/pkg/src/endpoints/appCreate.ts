@@ -4,6 +4,7 @@ import { Context } from "hono";
 import { z } from "zod";
 import { App, PublishEvent } from "../types.js";
 import { generateVibeSlug } from "@vibes.diy/hosting-base";
+import { callAI, imageGen } from "call-ai";
 
 // Variables type for context (was previously in deleted auth middleware)
 interface Variables {
@@ -39,6 +40,102 @@ async function processScreenshot(
     await kv.put(screenshotKey, bytes.buffer);
   } catch (error) {
     console.error("Error processing screenshot:", error);
+  }
+}
+
+function getCallAiApiKey(env: Env): string | undefined {
+  const typedEnv = env as Env & {
+    CALLAI_API_KEY?: string;
+    OPENROUTER_API_KEY?: string;
+    SERVER_OPENROUTER_API_KEY?: string;
+  };
+
+  return (
+    typedEnv.CALLAI_API_KEY ||
+    typedEnv.OPENROUTER_API_KEY ||
+    typedEnv.SERVER_OPENROUTER_API_KEY
+  );
+}
+
+function base64ToArrayBuffer(base64Data: string) {
+  if (typeof atob === "function") {
+    const binaryData = atob(base64Data);
+    const len = binaryData.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryData.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  const buffer = Buffer.from(base64Data, "base64");
+  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+}
+
+async function generateAppSummary(
+  app: z.infer<typeof App>,
+  apiKey?: string,
+): Promise<string | null> {
+  if (!apiKey) {
+    console.warn("⚠️ CALLAI_API_KEY not set - skipping app summary generation");
+    return null;
+  }
+
+  try {
+    const contextPieces = [
+      app.title ? `Title: ${app.title}` : null,
+      app.prompt ? `Prompt: ${app.prompt}` : null,
+      app.code ? `Code snippet: ${app.code.slice(0, 1000)}` : null,
+    ].filter(Boolean);
+
+    const messages = [
+      {
+        role: "system" as const,
+        content:
+          "You write concise, single-sentence summaries of small web apps. Keep it under 35 words, highlight the main category and what the app helps users do.",
+      },
+      {
+        role: "user" as const,
+        content: contextPieces.join("\n\n"),
+      },
+    ];
+
+    const response = await callAI(messages, { apiKey });
+    return typeof response === "string" ? response.trim() : null;
+  } catch (error) {
+    console.error("Error generating app summary:", error);
+    return null;
+  }
+}
+
+async function generateAppIcon(
+  app: z.infer<typeof App>,
+  kv: KVNamespace,
+  apiKey?: string,
+): Promise<string | null> {
+  if (!apiKey) {
+    console.warn("⚠️ CALLAI_API_KEY not set - skipping app icon generation");
+    return null;
+  }
+
+  try {
+    const category = app.title || app.name || "app";
+    const prompt = `Minimal black icon on a white background, enclosed in a circle, representing ${category}. Use clear, text-free imagery to convey the category. Avoid letters or numbers.`;
+    const response = await imageGen(prompt, { apiKey, size: "512x512" });
+    const iconBase64 = response.data?.[0]?.b64_json;
+
+    if (!iconBase64) {
+      console.warn("⚠️ No icon data returned from imageGen");
+      return null;
+    }
+
+    const iconArrayBuffer = base64ToArrayBuffer(iconBase64);
+    const iconKey = `${app.slug}-icon`;
+    await kv.put(iconKey, iconArrayBuffer);
+    return iconKey;
+  } catch (error) {
+    console.error("Error generating app icon:", error);
+    return null;
   }
 }
 
@@ -102,6 +199,7 @@ export class AppCreate extends OpenAPIRoute {
 
     // Get the KV namespace from the context
     const kv = c.env.KV;
+    const callAiApiKey = getCallAiApiKey(c.env);
 
     // Check if the app with this chatId already exists
     const existingApp = await kv.get(app.chatId);
@@ -210,6 +308,9 @@ export class AppCreate extends OpenAPIRoute {
         title: app.title || `App ${slug}`,
         remixOf: app.remixOf === undefined ? null : app.remixOf,
         hasScreenshot: false,
+        summary: null,
+        iconKey: null,
+        hasIcon: false,
         shareToFirehose: app.shareToFirehose,
         customDomain: app.customDomain || null,
       };
@@ -230,6 +331,21 @@ export class AppCreate extends OpenAPIRoute {
 
       savedApp = appToSave;
     }
+
+    const summary = await generateAppSummary(savedApp, callAiApiKey);
+    if (summary) {
+      savedApp.summary = summary;
+    }
+
+    const iconKey = await generateAppIcon(savedApp, kv, callAiApiKey);
+    if (iconKey) {
+      savedApp.iconKey = iconKey;
+      savedApp.hasIcon = true;
+    }
+
+    // Persist any AI-enriched fields
+    await kv.put(savedApp.chatId, JSON.stringify(savedApp));
+    await kv.put(savedApp.slug, JSON.stringify(savedApp));
 
     // Send event to queue for processing
     try {

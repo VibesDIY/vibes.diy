@@ -1,11 +1,46 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+  vi,
+} from "vitest";
 import { AppCreate, PublishEvent } from "@vibes.diy/hosting";
 import type { OpenAPIRoute } from "chanfana";
+
+vi.mock("call-ai", () => {
+  const mockImageBase64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P///wAHAwJ/i+wW3wAAAABJRU5ErkJggg==";
+
+  return {
+    callAI: vi.fn().mockResolvedValue("Mock summary"),
+    imageGen: vi.fn().mockResolvedValue({
+      data: [{ b64_json: mockImageBase64 }],
+    }),
+  };
+});
+
+const originalAtob = global.atob;
+
+beforeAll(() => {
+  if (typeof global.atob !== "function") {
+    global.atob = (data: string) => Buffer.from(data, "base64").toString("binary");
+  }
+});
+
+afterAll(() => {
+  if (originalAtob) {
+    global.atob = originalAtob;
+  }
+});
 
 // Mock types
 interface MockKV {
   get: (key: string, type?: string) => Promise<string | ArrayBuffer | null>;
-  put: (key: string, value: string) => Promise<void>;
+  put: (key: string, value: unknown) => Promise<void>;
 }
 
 interface MockQueue {
@@ -16,6 +51,7 @@ interface MockContext {
   env: {
     KV: MockKV;
     PUBLISH_QUEUE: MockQueue;
+    CALLAI_API_KEY?: string;
   };
   get: (key: string) => { email: string; userId: string };
   req: {
@@ -49,6 +85,7 @@ describe("Queue functionality", () => {
       env: {
         KV: mockKV,
         PUBLISH_QUEUE: mockQueue,
+        CALLAI_API_KEY: "test-key",
       },
       get: vi.fn().mockReturnValue({
         email: "test@example.com",
@@ -117,6 +154,8 @@ describe("Queue functionality", () => {
       expect(event.app.code).toBe("console.log('hello');");
       expect(event.app.title).toBe("Test App");
       expect(event.app.userId).toBe("user-123");
+      expect(event.app.summary).toBe("Mock summary");
+      expect(event.app.hasIcon).toBe(true);
       expect(event.metadata.isUpdate).toBe(false);
       expect(event.metadata.timestamp).toBeTypeOf("number");
     }
