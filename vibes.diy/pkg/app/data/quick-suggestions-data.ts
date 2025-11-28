@@ -104,8 +104,8 @@ export const quickSuggestions: Suggestion[] = [
     text: "Create a party planning app with guest list, RSVP tracking, and budget calculator.",
   },
   {
-    label: "Progress Tracker",
-    text: "Build a goal tracker with progress bars, streak counters, and milestone celebrations.",
+    label: "Random App",
+    text: "Create a random app idea and build it automatically.",
   },
   {
     label: "Jam Session",
@@ -117,6 +117,6 @@ export const quickSuggestions: Suggestion[] = [
 export const partyPlannerPrompt =
   "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
 export const progressTrackerPrompt =
-  "Build a goal tracker with progress bars, streak counters, and milestone celebrations.";
+  "Create a random app idea and build it automatically.";
 export const jamSessionPrompt =
   "Create a music collaboration tool with chord progressions and shared bpm and drum machine.";

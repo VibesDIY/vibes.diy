@@ -101,7 +101,7 @@ export default function NewSessionView({
                 style={{ flex: "1" }}
                 onClick={() => handleSelectSuggestion(progressTrackerPrompt)}
               >
-                Progress Tracker
+                Random App
               </VibesButton>
               <VibesButton
                 variant="yellow"
