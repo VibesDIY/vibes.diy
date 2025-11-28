@@ -37,7 +37,6 @@ export interface ComponentGenerationResult {
   metadata: {
     dependencies: string[];           // Selected library modules
     aiSelectedDependencies: string[]; // What AI chose (before overrides)
-    instructionalText: boolean;       // Include instructions in UI
     demoData: boolean;                // Include demo data button
     model: string;                    // AI model used
     timestamp: number;                // Generation timestamp
@@ -57,7 +56,6 @@ export async function generateComponentWithDependencies(
 - Call `selectLlmsAndOptions()` with user prompt and history
 - AI analyzes prompt to determine:
   - Which UI libraries to include (React Hook Form, Lucide icons, etc.)
-  - Whether to include instructional text
   - Whether to add a demo data button
 - Log decisions for debugging: `console.log('🎯 AI selected dependencies:', ...)`
 
@@ -206,7 +204,6 @@ For debugging and future database storage preparation:
    ```
    🎯 Component generation: AI selected dependencies: {
      selected: ['useFireproof', 'LucideIcons'],
-     instructionalText: true,
      demoData: false,
      prompt: "Create a todo app",
      model: "anthropic/claude-sonnet-4.5"
@@ -218,7 +215,6 @@ For debugging and future database storage preparation:
    📦 Component metadata for storage: {
      dependencies: ['useFireproof', 'LucideIcons'],
      aiSelectedDependencies: ['useFireproof', 'LucideIcons'],
-     instructionalText: true,
      demoData: false,
      model: "anthropic/claude-sonnet-4.5",
      timestamp: 1735234567890

@@ -125,7 +125,6 @@ export function useVibes(
 Use Fireproof for data persistence. Begin the component with the import statements.
 Return only the JSX code with a default export. Use modern React patterns with hooks if needed.`,
             dependencies: options.dependencies || ['useFireproof'],
-            instructionalText: true,
             demoData: false,
             model: options.model || 'anthropic/claude-sonnet-4.5',
           };
@@ -135,7 +134,6 @@ Return only the JSX code with a default export. Use modern React patterns with h
         const metadata = {
           dependencies: result.dependencies,
           aiSelectedDependencies: result.dependencies,
-          instructionalText: result.instructionalText,
           demoData: result.demoData,
           model: result.model,
           timestamp: Date.now(),

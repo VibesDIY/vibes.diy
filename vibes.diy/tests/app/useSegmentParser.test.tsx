@@ -31,7 +31,6 @@ vi.mock("@vibes.diy/prompts", async (importOriginal) => {
     makeBaseSystemPrompt: vi.fn().mockResolvedValue({
       systemPrompt: "Mocked system prompt",
       dependencies: ["useFireproof"],
-      instructionalText: true,
       demoData: false,
       model: "anthropic/claude-sonnet-4.5",
     }),

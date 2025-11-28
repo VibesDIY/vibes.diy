@@ -79,7 +79,6 @@ import { callAI } from "call-ai"
       return {
         systemPrompt,
         dependencies: ["fireproof", "callai"],
-        instructionalText: true,
         demoData: true,
         model,
       };

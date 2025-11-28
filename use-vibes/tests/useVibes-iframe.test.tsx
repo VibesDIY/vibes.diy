@@ -41,7 +41,6 @@ vi.mock('@vibes.diy/prompts', () => ({
     return {
       systemPrompt: 'You are a React component generator',
       dependencies: options?.dependencies || ['useFireproof'],
-      instructionalText: true,
       demoData: false,
       model: model || 'anthropic/claude-sonnet-4.5',
     };
