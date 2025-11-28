@@ -10,7 +10,7 @@ import {
   progressTrackerPrompt,
   jamSessionPrompt,
 } from "../data/quick-suggestions-data.js";
-import models from "../data/models.json" with { type: "json" };
+import { featuredModels } from "../data/models.js";
 import { Toaster } from "react-hot-toast";
 
 interface NewSessionViewProps {
@@ -126,14 +126,7 @@ export default function NewSessionView({
                     await chatState.updateSelectedModel(modelId);
                   }
                 }}
-                models={
-                  models as {
-                    id: string;
-                    name: string;
-                    description: string;
-                    featured?: boolean;
-                  }[]
-                }
+                models={featuredModels}
                 globalModel={chatState.globalModel}
                 onSend={() => {
                   // Session creation is handled in chatState.sendMessage
