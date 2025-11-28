@@ -210,6 +210,9 @@ importers:
       '@vibes.diy/hosting-base':
         specifier: workspace:*
         version: link:../base
+      call-ai:
+        specifier: workspace:*
+        version: link:../../call-ai/pkg
       chanfana:
         specifier: ^2.8.2
         version: 2.8.3
@@ -263,6 +266,9 @@ importers:
       '@vitest/browser-playwright':
         specifier: ^4.0.10
         version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.8(@types/debug@4.1.12)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1))
+      call-ai:
+        specifier: workspace:*
+        version: link:../../../call-ai/pkg
       chanfana:
         specifier: ^2.8.2
         version: 2.8.3
