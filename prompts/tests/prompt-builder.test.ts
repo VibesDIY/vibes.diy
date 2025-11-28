@@ -283,7 +283,9 @@ describe("prompt builder (real implementation)", () => {
       history: [],
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
+    expect(result.systemPrompt).not.toMatch(
+      /vivid description of the app's purpose/i,
+    );
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=false to disable demo data", async () => {
@@ -296,7 +298,9 @@ describe("prompt builder (real implementation)", () => {
       demoDataOverride: false,
     });
     expect(result.systemPrompt).not.toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
+    expect(result.systemPrompt).not.toMatch(
+      /vivid description of the app's purpose/i,
+    );
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=true to force demo data", async () => {
@@ -309,6 +313,8 @@ describe("prompt builder (real implementation)", () => {
       demoDataOverride: true,
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
+    expect(result.systemPrompt).not.toMatch(
+      /vivid description of the app's purpose/i,
+    );
   });
 });

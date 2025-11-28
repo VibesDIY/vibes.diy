@@ -13,9 +13,7 @@ const { mockMakeBaseSystemPrompt, mockCallAI } = vi.hoisted(() => ({
   mockCallAI: vi.fn().mockImplementation((messages) => {
     // First call is for dependency selection (has catalog in system prompt)
     if (messages.some((m: { content?: string }) => m.content && m.content.includes('catalog'))) {
-      return Promise.resolve(
-        '{"selected": ["fireproof", "callai"], "demoData": false}'
-      );
+      return Promise.resolve('{"selected": ["fireproof", "callai"], "demoData": false}');
     }
     // Second call is for component generation
     return Promise.resolve(
@@ -54,9 +52,7 @@ describe('useVibes - Basic Structure', () => {
     mockCallAI.mockImplementation((messages) => {
       // First call is for dependency selection (has catalog in system prompt)
       if (messages.some((m: { content?: string }) => m.content && m.content.includes('catalog'))) {
-        return Promise.resolve(
-          '{"selected": ["fireproof", "callai"], "demoData": false}'
-        );
+        return Promise.resolve('{"selected": ["fireproof", "callai"], "demoData": false}');
       }
       // Second call is for component generation
       return Promise.resolve(
