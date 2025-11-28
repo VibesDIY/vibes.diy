@@ -274,7 +274,7 @@ describe("prompt builder (real implementation)", () => {
     expect(result.systemPrompt).not.toContain("<callAI-docs>");
   });
 
-  it("makeBaseSystemPrompt: includes instructional-text and demo-data guidance when selector enables them (test mode)", async () => {
+  it("makeBaseSystemPrompt: includes demo-data guidance when selector enables it (test mode)", async () => {
     // await preloadLlmsText();
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
@@ -283,9 +283,7 @@ describe("prompt builder (real implementation)", () => {
       history: [],
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).toMatch(
-      /include a vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
   });
 
   it("makeBaseSystemPrompt: respects instructionalTextOverride=false to disable instructional text", async () => {
@@ -297,9 +295,7 @@ describe("prompt builder (real implementation)", () => {
       history: [],
       instructionalTextOverride: false,
     });
-    expect(result.systemPrompt).not.toMatch(
-      /include a vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
     // Demo data should still appear (not overridden)
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
   });
@@ -313,9 +309,7 @@ describe("prompt builder (real implementation)", () => {
       history: [],
       instructionalTextOverride: true,
     });
-    expect(result.systemPrompt).toMatch(
-      /include a vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
   });
 
@@ -329,10 +323,7 @@ describe("prompt builder (real implementation)", () => {
       demoDataOverride: false,
     });
     expect(result.systemPrompt).not.toMatch(/include a Demo Data button/i);
-    // Instructional text should still appear (not overridden)
-    expect(result.systemPrompt).toMatch(
-      /include a vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=true to force demo data", async () => {
@@ -345,9 +336,7 @@ describe("prompt builder (real implementation)", () => {
       demoDataOverride: true,
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).toMatch(
-      /include a vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
   });
 
   it("makeBaseSystemPrompt: respects both overrides simultaneously", async () => {
@@ -360,9 +349,7 @@ describe("prompt builder (real implementation)", () => {
       instructionalTextOverride: false,
       demoDataOverride: false,
     });
-    expect(result.systemPrompt).not.toMatch(
-      /include a vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
     expect(result.systemPrompt).not.toMatch(/include a Demo Data button/i);
   });
 });
