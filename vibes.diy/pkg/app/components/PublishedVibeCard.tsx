@@ -27,15 +27,25 @@ export default function PublishedVibeCard({
     setUsingIcon(true);
   }, [iconUrl]);
 
-  const handleImageError = () => {
-    if (imageSrc !== screenshotUrl) {
-      setImageSrc(screenshotUrl);
-      setUsingIcon(false);
+  const handleImageError: React.ReactEventHandler<HTMLImageElement> = (
+    event,
+  ) => {
+    const failedSrc = event.currentTarget.src;
+
+    // If the screenshot also fails, don't loop between sources
+    if (failedSrc === screenshotUrl) {
+      return;
     }
+
+    setImageSrc(screenshotUrl);
+    setUsingIcon(false);
   };
 
-  const handleImageLoad = () => {
-    setUsingIcon(imageSrc === iconUrl);
+  const handleImageLoad: React.ReactEventHandler<HTMLImageElement> = (
+    event,
+  ) => {
+    const loadedSrc = event.currentTarget.src;
+    setUsingIcon(loadedSrc === iconUrl);
   };
   const linkUrl = `/vibe/${slug}`;
 
@@ -82,7 +92,11 @@ export default function PublishedVibeCard({
           <div className="relative z-10 flex h-48 w-full justify-center py-2">
             <img
               src={imageSrc}
-              alt={usingIcon ? `Icon for ${vibeName}` : `Screenshot from ${vibeName}`}
+              alt={
+                usingIcon
+                  ? `Icon for ${vibeName}`
+                  : `Screenshot from ${vibeName}`
+              }
               className="max-h-full max-w-full object-contain"
               loading="lazy"
               onError={handleImageError}

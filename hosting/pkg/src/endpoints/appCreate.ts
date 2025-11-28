@@ -6,6 +6,14 @@ import { App, PublishEvent } from "../types.js";
 import { generateVibeSlug } from "@vibes.diy/hosting-base";
 import { callAI, imageGen } from "call-ai";
 
+const AI_API_KEY_ENV_VARS = [
+  "CALLAI_API_KEY",
+  "OPENROUTER_API_KEY",
+  "SERVER_OPENROUTER_API_KEY",
+] as const;
+
+type AiApiKeyEnvVar = (typeof AI_API_KEY_ENV_VARS)[number];
+
 // Variables type for context (was previously in deleted auth middleware)
 interface Variables {
   user: { sub?: string; userId?: string; email?: string } | null;
@@ -44,32 +52,30 @@ async function processScreenshot(
 }
 
 function getCallAiApiKey(env: Env): string | undefined {
-  const typedEnv = env as Env & {
-    CALLAI_API_KEY?: string;
-    OPENROUTER_API_KEY?: string;
-    SERVER_OPENROUTER_API_KEY?: string;
-  };
+  const typedEnv = env as Env & Record<AiApiKeyEnvVar, string | undefined>;
 
-  return (
-    typedEnv.CALLAI_API_KEY ||
-    typedEnv.OPENROUTER_API_KEY ||
-    typedEnv.SERVER_OPENROUTER_API_KEY
-  );
+  for (const key of AI_API_KEY_ENV_VARS) {
+    const value = typedEnv[key];
+    if (value) return value;
+  }
+
+  return undefined;
 }
 
 function base64ToArrayBuffer(base64Data: string) {
-  if (typeof atob === "function") {
-    const binaryData = atob(base64Data);
-    const len = binaryData.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryData.charCodeAt(i);
-    }
-    return bytes.buffer;
+  if (typeof atob !== "function") {
+    throw new Error(
+      "base64ToArrayBuffer: atob is not available in this runtime",
+    );
   }
 
-  const buffer = Buffer.from(base64Data, "base64");
-  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+  const binaryData = atob(base64Data);
+  const len = binaryData.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryData.charCodeAt(i);
+  }
+  return bytes.buffer;
 }
 
 async function generateAppSummary(
@@ -77,7 +83,9 @@ async function generateAppSummary(
   apiKey?: string,
 ): Promise<string | null> {
   if (!apiKey) {
-    console.warn("⚠️ CALLAI_API_KEY not set - skipping app summary generation");
+    console.warn(
+      `⚠️ AI API key not set (${AI_API_KEY_ENV_VARS.join(", ")}) - skipping app summary generation`,
+    );
     return null;
   }
 
@@ -114,7 +122,9 @@ async function generateAppIcon(
   apiKey?: string,
 ): Promise<string | null> {
   if (!apiKey) {
-    console.warn("⚠️ CALLAI_API_KEY not set - skipping app icon generation");
+    console.warn(
+      `⚠️ AI API key not set (${AI_API_KEY_ENV_VARS.join(", ")}) - skipping app icon generation`,
+    );
     return null;
   }
 
@@ -332,15 +342,23 @@ export class AppCreate extends OpenAPIRoute {
       savedApp = appToSave;
     }
 
-    const summary = await generateAppSummary(savedApp, callAiApiKey);
-    if (summary) {
-      savedApp.summary = summary;
+    const hasSummary =
+      typeof savedApp.summary === "string" &&
+      savedApp.summary.trim().length > 0;
+    if (!hasSummary) {
+      const summary = await generateAppSummary(savedApp, callAiApiKey);
+      if (summary) {
+        savedApp.summary = summary;
+      }
     }
 
-    const iconKey = await generateAppIcon(savedApp, kv, callAiApiKey);
-    if (iconKey) {
-      savedApp.iconKey = iconKey;
-      savedApp.hasIcon = true;
+    const hasIcon = Boolean(savedApp.hasIcon && savedApp.iconKey);
+    if (!hasIcon) {
+      const iconKey = await generateAppIcon(savedApp, kv, callAiApiKey);
+      if (iconKey) {
+        savedApp.iconKey = iconKey;
+        savedApp.hasIcon = true;
+      }
     }
 
     // Persist any AI-enriched fields
