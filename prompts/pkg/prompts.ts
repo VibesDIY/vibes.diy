@@ -13,7 +13,7 @@ import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
 
 // Single source of truth for the default coding model used across the repo.
-export const DEFAULT_CODING_MODEL = "anthropic/claude-sonnet-4.5" as const;
+export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
 
 // Model used for RAG decisions (module selection)
 const RAG_DECISION_MODEL = "openai/gpt-4o" as const;
