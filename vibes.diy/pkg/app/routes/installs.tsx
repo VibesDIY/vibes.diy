@@ -98,7 +98,9 @@ export default function InstallsRoute() {
                           <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
                             Updated{" "}
                             {instance.updatedAt
-                              ? new Date(instance.updatedAt).toLocaleDateString()
+                              ? new Date(
+                                  instance.updatedAt,
+                                ).toLocaleDateString()
                               : "—"}
                             {(() => {
                               const shareCount = (instance.sharedWith ?? [])
