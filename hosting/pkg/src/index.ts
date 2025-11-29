@@ -1,5 +1,6 @@
 import { fromHono } from "chanfana";
 import { AppCreate } from "./endpoints/appCreate.js";
+import { AuthExchangeToken } from "./endpoints/authExchangeToken.js";
 import {
   ClaudeChat,
   ImageEdit,
@@ -11,6 +12,7 @@ import { cors } from "hono/cors";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import queueConsumer from "./queue-consumer.js";
 import renderApp from "./renderApp.js";
+import { vibesTokenMiddleware } from "./middleware/vibesTokenAuth.js";
 
 // Variables type for context
 interface Variables {
@@ -78,14 +80,18 @@ openapi.use("/api/*", async (c, next) => {
     });
     console.log("✅ User set on context:", auth.userId);
   } else {
-    console.log("⚠️  No authenticated user found");
+    console.log("⚠️  No authenticated user found via Clerk");
   }
 
   await next();
 });
 
+// Add Vibes Token authentication middleware (fallback if Clerk didn't find a user)
+openapi.use("/api/*", vibesTokenMiddleware());
+
 // Register OpenAPI endpoints
 openapi.post("/api/apps", AppCreate);
+openapi.post("/api/auth/exchange-token", AuthExchangeToken);
 
 // Register OpenAI image endpoints
 openapi.post("/api/openai-image/generate", ImageGenerate);

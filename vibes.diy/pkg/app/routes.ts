@@ -37,6 +37,9 @@ export default [
     id: "privacy-policy",
   }),
   route("legal/tos", "./routes/legal/tos.tsx", { id: "terms-of-service" }),
+  route("auth/token-provider", "./routes/auth.token-provider.tsx", {
+    id: "auth-token-provider",
+  }),
   // 404 catch-all route - must be last
   route("*", "./routes/$.tsx", { id: "not-found" }),
 ] satisfies RouteConfig;
