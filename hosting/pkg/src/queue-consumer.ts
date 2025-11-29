@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { App, PublishEvent } from "./types.js";
+import { callAI, imageGen } from "call-ai";
 
 interface AtProtoBlobResponse {
   blob: {
@@ -17,6 +18,124 @@ export interface QueueEnv {
   DISCORD_WEBHOOK_URL?: string;
   BLUESKY_HANDLE?: string;
   BLUESKY_APP_PASSWORD?: string;
+  CALLAI_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
+  SERVER_OPENROUTER_API_KEY?: string;
+  OPENAI_API_KEY?: string;
+}
+
+const AI_API_KEY_ENV_VARS = [
+  "CALLAI_API_KEY",
+  "OPENROUTER_API_KEY",
+  "SERVER_OPENROUTER_API_KEY",
+] as const;
+
+type AiApiKeyEnvVar = (typeof AI_API_KEY_ENV_VARS)[number];
+
+function getCallAiApiKey(env: QueueEnv): string | undefined {
+  const typedEnv = env as QueueEnv & Record<AiApiKeyEnvVar, string | undefined>;
+
+  for (const key of AI_API_KEY_ENV_VARS) {
+    const value = typedEnv[key];
+    if (value) return value;
+  }
+
+  return undefined;
+}
+
+function base64ToArrayBuffer(base64Data: string) {
+  if (typeof atob !== "function") {
+    throw new Error(
+      "base64ToArrayBuffer: atob is not available in this runtime",
+    );
+  }
+
+  const binaryData = atob(base64Data);
+  const len = binaryData.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryData.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+async function generateAppSummary(
+  app: z.infer<typeof App>,
+  apiKey?: string,
+): Promise<string | null> {
+  if (!apiKey) {
+    console.warn(
+      `⚠️ AI API key not set (${AI_API_KEY_ENV_VARS.join(", ")}) - skipping app summary generation`,
+    );
+    return null;
+  }
+
+  try {
+    const contextPieces = [
+      app.title ? `Title: ${app.title}` : null,
+      app.prompt ? `Prompt: ${app.prompt}` : null,
+      app.code ? `Code snippet: ${app.code.slice(0, 1000)}` : null,
+    ].filter(Boolean);
+
+    const messages = [
+      {
+        role: "system" as const,
+        content:
+          "You write concise, single-sentence summaries of small web apps. Keep it under 35 words, highlight the main category and what the app helps users do.",
+      },
+      {
+        role: "user" as const,
+        content: contextPieces.join("\n\n"),
+      },
+    ];
+
+    // Call OpenRouter directly from the server
+    const response = await callAI(messages, {
+      apiKey,
+      endpoint: "https://openrouter.ai/api/v1/chat/completions",
+    });
+    return typeof response === "string" ? response.trim() : null;
+  } catch (error) {
+    console.error("Error generating app summary:", error);
+    return null;
+  }
+}
+
+async function generateAppIcon(
+  app: z.infer<typeof App>,
+  kv: KVNamespace,
+  openaiApiKey?: string,
+): Promise<string | null> {
+  if (!openaiApiKey) {
+    console.warn(`⚠️ OPENAI_API_KEY not set - skipping app icon generation`);
+    return null;
+  }
+
+  try {
+    const category = app.title || app.name || "app";
+    const prompt = `Minimal black icon on a white background, enclosed in a circle, representing ${category}. Use clear, text-free imagery to convey the category. Avoid letters or numbers.`;
+
+    // Call OpenAI directly from the server
+    const response = await imageGen(prompt, {
+      apiKey: openaiApiKey,
+      size: "1024x1024",
+      endpoint: "https://api.openai.com/v1/images/generations",
+    });
+    const iconBase64 = response.data?.[0]?.b64_json;
+
+    if (!iconBase64) {
+      console.warn("⚠️ No icon data returned from imageGen");
+      return null;
+    }
+
+    const iconArrayBuffer = base64ToArrayBuffer(iconBase64);
+    const iconKey = `${app.slug}-icon`;
+    await kv.put(iconKey, iconArrayBuffer);
+    return iconKey;
+  } catch (error) {
+    console.error("Error generating app icon:", error);
+    return null;
+  }
 }
 
 export default {
@@ -49,12 +168,77 @@ async function processAppEvent(
 ) {
   const { type, app } = event;
 
-  const tasks = [postToDiscord(app, env)];
+  // Reload app from KV to ensure freshness, as other processes (like re-deploy) might have updated it
+  // This is critical to avoid overwriting newer data with stale data from the queue event
+  let currentApp = app;
+  try {
+    const kvAppStr = await env.KV.get(app.slug);
+    if (kvAppStr) {
+      const kvApp = JSON.parse(kvAppStr);
+      // Basic validation to ensure we got the right object
+      if (kvApp.slug === app.slug) {
+        currentApp = kvApp;
+      }
+    }
+  } catch (error) {
+    console.warn(
+      `⚠️ Failed to reload app from KV for ${app.slug}, using event data:`,
+      error,
+    );
+  }
+
+  // Generate summary and icon if missing
+  const callAiApiKey = getCallAiApiKey(env);
+  const openaiApiKey = env.OPENAI_API_KEY;
+  let appUpdated = false;
+
+  const hasSummary =
+    typeof currentApp.summary === "string" &&
+    currentApp.summary.trim().length > 0;
+
+  if (!hasSummary) {
+    const summary = await generateAppSummary(currentApp, callAiApiKey);
+    if (summary) {
+      currentApp.summary = summary;
+      appUpdated = true;
+    }
+  }
+
+  const hasIcon = Boolean(currentApp.hasIcon && currentApp.iconKey);
+  if (!hasIcon) {
+    const iconKey = await generateAppIcon(currentApp, env.KV, openaiApiKey);
+    if (iconKey) {
+      currentApp.iconKey = iconKey;
+      currentApp.hasIcon = true;
+      appUpdated = true;
+    }
+  }
+
+  // If we updated the app with AI content, save it back to KV
+  if (appUpdated) {
+    try {
+      await env.KV.put(currentApp.chatId, JSON.stringify(currentApp));
+      await env.KV.put(currentApp.slug, JSON.stringify(currentApp));
+      console.log(`✅ Updated app ${currentApp.slug} with AI content`);
+    } catch (error) {
+      console.error(
+        `❌ Failed to save updated app ${currentApp.slug} to KV:`,
+        error,
+      );
+      // We continue with posting even if saving failed, using the enriched object in memory
+    }
+  }
+
+  const tasks = [postToDiscord(currentApp, env)];
 
   // Add Bluesky posting if shareToFirehose is enabled
-  if (app.shareToFirehose && env.BLUESKY_HANDLE && env.BLUESKY_APP_PASSWORD) {
-    tasks.push(postToBluesky(app, env));
-  } else if (app.shareToFirehose) {
+  if (
+    currentApp.shareToFirehose &&
+    env.BLUESKY_HANDLE &&
+    env.BLUESKY_APP_PASSWORD
+  ) {
+    tasks.push(postToBluesky(currentApp, env));
+  } else if (currentApp.shareToFirehose) {
     console.warn(`⚠️ shareToFirehose enabled but Bluesky credentials missing`);
   }
 
