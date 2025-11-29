@@ -460,6 +460,13 @@ export interface ImageGenOptions {
   readonly imgUrl?: string;
 
   /**
+   * Direct API endpoint to use for image generation
+   * When provided, this takes precedence over imgUrl and bypasses
+   * the default endpoint construction (useful for calling OpenAI directly)
+   */
+  readonly endpoint?: string;
+
+  /**
    * Enable debug logging
    */
   readonly debug?: boolean;

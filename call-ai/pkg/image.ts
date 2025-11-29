@@ -25,9 +25,9 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
   // Handle image generation
   if (!options.images || options.images.length === 0) {
     // Simple image generation with text prompt
-    // Use custom origin or proper API fallback
-    const origin = customOrigin || callAiEnv.def.CALLAI_CHAT_URL;
-    const generateEndpoint = joinUrlParts(origin, "/api/openai-image/generate");
+    // Use explicit endpoint if provided (highest priority), otherwise construct from origin
+    const generateEndpoint =
+      options.endpoint || joinUrlParts(customOrigin || callAiEnv.def.CALLAI_CHAT_URL, "/api/openai-image/generate");
 
     if (!apiKey) {
       throw new Error("API key is required for image generation (simple)");
@@ -80,9 +80,8 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
     if (options.quality) formData.append("quality", options.quality);
     if (options.style) formData.append("style", options.style);
 
-    // Use custom origin or proper API fallback
-    const origin = customOrigin || callAiEnv.def.CALLAI_CHAT_URL;
-    const editEndpoint = joinUrlParts(origin, "/api/openai-image/edit");
+    // Use explicit endpoint if provided (highest priority), otherwise construct from origin
+    const editEndpoint = options.endpoint || joinUrlParts(customOrigin || callAiEnv.def.CALLAI_CHAT_URL, "/api/openai-image/edit");
 
     if (!apiKey) {
       throw new Error("API key is required for image generation (edit)");
