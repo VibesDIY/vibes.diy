@@ -214,4 +214,100 @@ describe("imageGen", () => {
       expect((error as Error).message).toContain("400 Bad Request");
     }
   });
+
+  it("should use custom endpoint when provided for image generation", async () => {
+    const prompt = "A beautiful sunset over mountains";
+    const customEndpoint = "https://api.openai.com/v1/images/generations";
+    const options = {
+      apiKey: "sk-test-openai-key",
+      model: "dall-e-3",
+      size: "1024x1024",
+      endpoint: customEndpoint,
+      debug: true,
+      mock,
+    };
+
+    const result = await imageGen(prompt, options);
+
+    // Check that fetch was called with the custom endpoint
+    expect(mock.fetch).toHaveBeenCalledTimes(1);
+    const [url, optionsArg] = mock.fetch.mock.calls[0];
+
+    // Verify the custom endpoint was used directly, not the default vibes.diy endpoint
+    expect(url).toBe(customEndpoint);
+    expect(url).not.toContain("vibes-diy-api.com");
+    expect(url).not.toContain("/api/openai-image/generate");
+
+    // Verify the request was made with correct headers
+    const headers = optionsArg.headers;
+    expect(headers).toBeDefined();
+    if (headers instanceof Headers) {
+      expect(headers.get("Authorization")).toBe("Bearer sk-test-openai-key");
+      expect(headers.get("Content-Type")).toBe("application/json");
+    }
+
+    // Verify request body
+    const requestBody = JSON.parse(optionsArg.body);
+    expect(requestBody).toEqual({
+      model: "dall-e-3",
+      prompt: "A beautiful sunset over mountains",
+      size: "1024x1024",
+    });
+
+    // Check response
+    expect(result).toEqual(mockImageResponse);
+  });
+
+  it("should use custom endpoint when provided for image editing", async () => {
+    const prompt = "Edit this image to add a rainbow";
+    const customEndpoint = "https://api.openai.com/v1/images/edits";
+    const mockImageBlob = new Blob(["fake image data"], { type: "image/png" });
+    const mockFiles = [new File([mockImageBlob], "image.png", { type: "image/png" })];
+
+    const options = {
+      apiKey: "sk-test-openai-key",
+      model: "dall-e-2",
+      images: mockFiles,
+      size: "512x512",
+      endpoint: customEndpoint,
+      debug: true,
+      mock,
+    };
+
+    const result = await imageGen(prompt, options);
+
+    // Check that fetch was called with the custom endpoint
+    expect(mock.fetch).toHaveBeenCalledTimes(1);
+    const [url, optionsArg] = mock.fetch.mock.calls[0];
+
+    // Verify the custom endpoint was used directly
+    expect(url).toBe(customEndpoint);
+    expect(url).not.toContain("vibes-diy-api.com");
+    expect(url).not.toContain("/api/openai-image/edit");
+
+    // Verify the request was made with FormData
+    expect(optionsArg.body).toBeInstanceOf(FormData);
+
+    // Check response
+    expect(result).toEqual(mockImageResponse);
+  });
+
+  it("should fallback to default endpoint when endpoint option is not provided", async () => {
+    const prompt = "Test fallback behavior";
+    const options = {
+      apiKey: "VIBES_DIY",
+      model: "gpt-image-1",
+      debug: true,
+      mock,
+    };
+
+    await imageGen(prompt, options);
+
+    // Check that fetch was called with the default endpoint
+    expect(mock.fetch).toHaveBeenCalledTimes(1);
+    const [url] = mock.fetch.mock.calls[0];
+
+    // Should use the default vibes.diy endpoint
+    expect(url).toContain("/api/openai-image/generate");
+  });
 });

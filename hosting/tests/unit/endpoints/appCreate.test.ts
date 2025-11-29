@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppCreate } from "@vibes.diy/hosting";
 import type { OpenAPIRoute } from "chanfana";
 

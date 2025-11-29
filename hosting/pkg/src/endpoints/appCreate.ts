@@ -108,7 +108,11 @@ async function generateAppSummary(
       },
     ];
 
-    const response = await callAI(messages, { apiKey });
+    // Call OpenRouter directly from the server
+    const response = await callAI(messages, {
+      apiKey,
+      endpoint: "https://openrouter.ai/api/v1/chat/completions",
+    });
     return typeof response === "string" ? response.trim() : null;
   } catch (error) {
     console.error("Error generating app summary:", error);
@@ -119,19 +123,23 @@ async function generateAppSummary(
 async function generateAppIcon(
   app: z.infer<typeof App>,
   kv: KVNamespace,
-  apiKey?: string,
+  openaiApiKey?: string,
 ): Promise<string | null> {
-  if (!apiKey) {
-    console.warn(
-      `⚠️ AI API key not set (${AI_API_KEY_ENV_VARS.join(", ")}) - skipping app icon generation`,
-    );
+  if (!openaiApiKey) {
+    console.warn(`⚠️ OPENAI_API_KEY not set - skipping app icon generation`);
     return null;
   }
 
   try {
     const category = app.title || app.name || "app";
     const prompt = `Minimal black icon on a white background, enclosed in a circle, representing ${category}. Use clear, text-free imagery to convey the category. Avoid letters or numbers.`;
-    const response = await imageGen(prompt, { apiKey, size: "512x512" });
+
+    // Call OpenAI directly from the server
+    const response = await imageGen(prompt, {
+      apiKey: openaiApiKey,
+      size: "512x512",
+      endpoint: "https://api.openai.com/v1/images/generations",
+    });
     const iconBase64 = response.data?.[0]?.b64_json;
 
     if (!iconBase64) {
@@ -210,6 +218,7 @@ export class AppCreate extends OpenAPIRoute {
     // Get the KV namespace from the context
     const kv = c.env.KV;
     const callAiApiKey = getCallAiApiKey(c.env);
+    const openaiApiKey = c.env.OPENAI_API_KEY;
 
     // Check if the app with this chatId already exists
     const existingApp = await kv.get(app.chatId);
@@ -354,7 +363,7 @@ export class AppCreate extends OpenAPIRoute {
 
     const hasIcon = Boolean(savedApp.hasIcon && savedApp.iconKey);
     if (!hasIcon) {
-      const iconKey = await generateAppIcon(savedApp, kv, callAiApiKey);
+      const iconKey = await generateAppIcon(savedApp, kv, openaiApiKey);
       if (iconKey) {
         savedApp.iconKey = iconKey;
         savedApp.hasIcon = true;
