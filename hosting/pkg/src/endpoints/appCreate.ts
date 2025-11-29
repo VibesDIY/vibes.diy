@@ -137,7 +137,7 @@ async function generateAppIcon(
     // Call OpenAI directly from the server
     const response = await imageGen(prompt, {
       apiKey: openaiApiKey,
-      size: "512x512",
+      size: "1024x1024",
       endpoint: "https://api.openai.com/v1/images/generations",
     });
     const iconBase64 = response.data?.[0]?.b64_json;
