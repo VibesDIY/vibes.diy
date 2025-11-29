@@ -4,15 +4,6 @@ import { Context } from "hono";
 import { z } from "zod";
 import { App, PublishEvent } from "../types.js";
 import { generateVibeSlug } from "@vibes.diy/hosting-base";
-import { callAI, imageGen } from "call-ai";
-
-const AI_API_KEY_ENV_VARS = [
-  "CALLAI_API_KEY",
-  "OPENROUTER_API_KEY",
-  "SERVER_OPENROUTER_API_KEY",
-] as const;
-
-type AiApiKeyEnvVar = (typeof AI_API_KEY_ENV_VARS)[number];
 
 // Variables type for context (was previously in deleted auth middleware)
 interface Variables {
@@ -48,112 +39,6 @@ async function processScreenshot(
     await kv.put(screenshotKey, bytes.buffer);
   } catch (error) {
     console.error("Error processing screenshot:", error);
-  }
-}
-
-function getCallAiApiKey(env: Env): string | undefined {
-  const typedEnv = env as Env & Record<AiApiKeyEnvVar, string | undefined>;
-
-  for (const key of AI_API_KEY_ENV_VARS) {
-    const value = typedEnv[key];
-    if (value) return value;
-  }
-
-  return undefined;
-}
-
-function base64ToArrayBuffer(base64Data: string) {
-  if (typeof atob !== "function") {
-    throw new Error(
-      "base64ToArrayBuffer: atob is not available in this runtime",
-    );
-  }
-
-  const binaryData = atob(base64Data);
-  const len = binaryData.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryData.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
-async function generateAppSummary(
-  app: z.infer<typeof App>,
-  apiKey?: string,
-): Promise<string | null> {
-  if (!apiKey) {
-    console.warn(
-      `⚠️ AI API key not set (${AI_API_KEY_ENV_VARS.join(", ")}) - skipping app summary generation`,
-    );
-    return null;
-  }
-
-  try {
-    const contextPieces = [
-      app.title ? `Title: ${app.title}` : null,
-      app.prompt ? `Prompt: ${app.prompt}` : null,
-      app.code ? `Code snippet: ${app.code.slice(0, 1000)}` : null,
-    ].filter(Boolean);
-
-    const messages = [
-      {
-        role: "system" as const,
-        content:
-          "You write concise, single-sentence summaries of small web apps. Keep it under 35 words, highlight the main category and what the app helps users do.",
-      },
-      {
-        role: "user" as const,
-        content: contextPieces.join("\n\n"),
-      },
-    ];
-
-    // Call OpenRouter directly from the server
-    const response = await callAI(messages, {
-      apiKey,
-      endpoint: "https://openrouter.ai/api/v1/chat/completions",
-    });
-    return typeof response === "string" ? response.trim() : null;
-  } catch (error) {
-    console.error("Error generating app summary:", error);
-    return null;
-  }
-}
-
-async function generateAppIcon(
-  app: z.infer<typeof App>,
-  kv: KVNamespace,
-  openaiApiKey?: string,
-): Promise<string | null> {
-  if (!openaiApiKey) {
-    console.warn(`⚠️ OPENAI_API_KEY not set - skipping app icon generation`);
-    return null;
-  }
-
-  try {
-    const category = app.title || app.name || "app";
-    const prompt = `Minimal black icon on a white background, enclosed in a circle, representing ${category}. Use clear, text-free imagery to convey the category. Avoid letters or numbers.`;
-
-    // Call OpenAI directly from the server
-    const response = await imageGen(prompt, {
-      apiKey: openaiApiKey,
-      size: "1024x1024",
-      endpoint: "https://api.openai.com/v1/images/generations",
-    });
-    const iconBase64 = response.data?.[0]?.b64_json;
-
-    if (!iconBase64) {
-      console.warn("⚠️ No icon data returned from imageGen");
-      return null;
-    }
-
-    const iconArrayBuffer = base64ToArrayBuffer(iconBase64);
-    const iconKey = `${app.slug}-icon`;
-    await kv.put(iconKey, iconArrayBuffer);
-    return iconKey;
-  } catch (error) {
-    console.error("Error generating app icon:", error);
-    return null;
   }
 }
 
@@ -217,8 +102,6 @@ export class AppCreate extends OpenAPIRoute {
 
     // Get the KV namespace from the context
     const kv = c.env.KV;
-    const callAiApiKey = getCallAiApiKey(c.env);
-    const openaiApiKey = c.env.OPENAI_API_KEY;
 
     // Check if the app with this chatId already exists
     const existingApp = await kv.get(app.chatId);
@@ -351,30 +234,8 @@ export class AppCreate extends OpenAPIRoute {
       savedApp = appToSave;
     }
 
-    const hasSummary =
-      typeof savedApp.summary === "string" &&
-      savedApp.summary.trim().length > 0;
-    if (!hasSummary) {
-      const summary = await generateAppSummary(savedApp, callAiApiKey);
-      if (summary) {
-        savedApp.summary = summary;
-      }
-    }
-
-    const hasIcon = Boolean(savedApp.hasIcon && savedApp.iconKey);
-    if (!hasIcon) {
-      const iconKey = await generateAppIcon(savedApp, kv, openaiApiKey);
-      if (iconKey) {
-        savedApp.iconKey = iconKey;
-        savedApp.hasIcon = true;
-      }
-    }
-
-    // Persist any AI-enriched fields
-    await kv.put(savedApp.chatId, JSON.stringify(savedApp));
-    await kv.put(savedApp.slug, JSON.stringify(savedApp));
-
     // Send event to queue for processing
+    // The queue consumer will handle generating summary and icon if needed
     try {
       if (!c.env.PUBLISH_QUEUE) {
         console.warn(
