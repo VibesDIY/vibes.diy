@@ -219,6 +219,7 @@ function VibeInstancesListContent() {
               </p>
             </BrutalistCard>
           ) : (
+            <div className="space-y-4">
               {/* Newest first by createdAt; fallback to _id lexical when createdAt missing */}
               {[...instances]
                 .sort((a, b) => {
