@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { trackPublishClick, trackEvent } from "../../utils/analytics.js";
+import PublishedVibeCard from "../PublishedVibeCard.js";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -122,6 +123,14 @@ export function ShareModal({
                     {publishedSubdomain}
                   </a>
                 </strong>
+              </div>
+
+              {/* Show vibe icon/screenshot preview */}
+              <div className="mt-3 mb-3">
+                <PublishedVibeCard
+                  slug={publishedSubdomain}
+                  name={publishedSubdomain}
+                />
               </div>
 
               <div className="mt-2">
