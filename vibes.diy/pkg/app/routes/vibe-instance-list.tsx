@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
-import { VibesDiyEnv } from "../config/env.js";
 import { useAuth } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
 import PublishedVibeCard from "../components/PublishedVibeCard.js";
@@ -119,17 +118,6 @@ function VibeInstancesListContent() {
     setEditingId(fullId);
     setEditDescription(currentDescription);
   };
-
-  // Get hosting domain for screenshot URL
-  const getHostname = (url: string): string => {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return "vibesdiy.app";
-    }
-  };
-  const hostname = getHostname(VibesDiyEnv.APP_HOST_BASE_URL());
-  const screenshotUrl = `https://${titleId}.${hostname}/screenshot.png`;
 
   return (
     <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
