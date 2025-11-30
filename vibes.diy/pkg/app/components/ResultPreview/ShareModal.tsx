@@ -11,6 +11,7 @@ interface ShareModalProps {
   onPublish: (shareToFirehose?: boolean) => Promise<void>;
   isPublishing: boolean;
   isFirehoseShared?: boolean;
+  title?: string;
 }
 
 export function ShareModal({
@@ -21,6 +22,7 @@ export function ShareModal({
   onPublish,
   isPublishing,
   isFirehoseShared = false,
+  title,
 }: ShareModalProps) {
   const [showUpdateSuccess, setShowUpdateSuccess] = useState(false);
   const [shareToFirehose, setShareToFirehose] = useState(isFirehoseShared);
@@ -129,7 +131,7 @@ export function ShareModal({
               <div className="mt-3 mb-3">
                 <PublishedVibeCard
                   slug={publishedSubdomain}
-                  name={publishedSubdomain}
+                  name={title || publishedSubdomain}
                 />
               </div>
 
