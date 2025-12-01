@@ -255,8 +255,8 @@ importers:
         version: link:../../base
     devDependencies:
       '@cloudflare/vitest-pool-workers':
-        specifier: ^0.10.1
-        version: 0.10.6(@cloudflare/workers-types@4.20251111.0)(@vitest/runner@4.0.14)(@vitest/snapshot@4.0.14)(vitest@4.0.14)
+        specifier: ^0.10.11
+        version: 0.10.11(@cloudflare/workers-types@4.20251111.0)(@vitest/runner@4.0.14)(@vitest/snapshot@4.0.14)(vitest@4.0.14)
       '@cloudflare/workers-types':
         specifier: ^4.20251111.0
         version: 4.20251111.0
@@ -1413,8 +1413,8 @@ packages:
       vite: ^6.1.0 || ^7.0.0
       wrangler: ^4.51.0
 
-  '@cloudflare/vitest-pool-workers@0.10.6':
-    resolution: {integrity: sha512-57woz4dKKMOLnwYgOxML+4jnMBMGDkMVF4KOSVcTXQnn2S2EnLYDkjGdcQ8LXpHMjd9c7tWzkbdgVhIk/IiNaA==}
+  '@cloudflare/vitest-pool-workers@0.10.11':
+    resolution: {integrity: sha512-p83iZIqIGysgJANtAqxn1o5t18sCW87waOP2/RUyS8ULUUnhyYqE4Fwaj33V405ApjTZAUOT5EhwrnlskNykeg==}
     peerDependencies:
       '@vitest/runner': 2.0.x - 3.2.x
       '@vitest/snapshot': 2.0.x - 3.2.x
@@ -10600,17 +10600,17 @@ snapshots:
       - utf-8-validate
       - workerd
 
-  '@cloudflare/vitest-pool-workers@0.10.6(@cloudflare/workers-types@4.20251111.0)(@vitest/runner@4.0.14)(@vitest/snapshot@4.0.14)(vitest@4.0.14)':
+  '@cloudflare/vitest-pool-workers@0.10.11(@cloudflare/workers-types@4.20251111.0)(@vitest/runner@4.0.14)(@vitest/snapshot@4.0.14)(vitest@4.0.14)':
     dependencies:
       '@vitest/runner': 4.0.14
       '@vitest/snapshot': 4.0.14
       birpc: 0.2.14
       cjs-module-lexer: 1.4.3
       devalue: 5.5.0
-      miniflare: 4.20251109.0
+      miniflare: 4.20251125.0
       semver: 7.7.3
       vitest: 4.0.14(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(@vitest/browser-playwright@4.0.14)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.1)
-      wrangler: 4.47.0(@cloudflare/workers-types@4.20251111.0)
+      wrangler: 4.51.0(@cloudflare/workers-types@4.20251111.0)
       zod: 3.25.76
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
@@ -12115,7 +12115,7 @@ snapshots:
       validate-npm-package-name: 5.0.1
       yaml: 2.8.1
       yargs: 17.7.2
-      zod: 4.1.12
+      zod: 4.1.13
 
   '@netlify/config@24.1.1':
     dependencies:
