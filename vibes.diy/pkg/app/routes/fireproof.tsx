@@ -86,6 +86,19 @@ export default function FireproofDashboard() {
           try {
             const claims = decodeJwt(token);
             const header = decodeProtectedHeader(token);
+            
+            // Check KID match for debugging
+            const expectedKid = "ins_35qNS5Jwyc7z4aJRBIS7o205yzb";
+            if (header.kid === expectedKid) {
+              console.log("[Fireproof Dashboard] ✅ KID MATCHES expected dev key:", header.kid);
+            } else {
+              console.warn("[Fireproof Dashboard] ⚠️ KID MISMATCH:", { 
+                tokenKid: header.kid, 
+                expectedKid,
+                note: "This might be why verification fails if the backend is using the 'expected' key."
+              });
+            }
+
             const now = Date.now() / 1000;
             const exp = claims.exp || 0;
             const ttl = exp - now;
