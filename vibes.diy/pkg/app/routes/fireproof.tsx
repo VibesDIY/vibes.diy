@@ -91,6 +91,15 @@ export default function FireproofDashboard() {
                 "[Fireproof Dashboard] ❌ Token is EXPIRED! Client clock may be wrong or Clerk returned old token.",
               );
             }
+
+            // Check if issuer matches the expected production issuer
+            // This is just a hint for debugging, not a hard enforcement
+            const PROD_ISSUER = "https://clerk.fireproof.direct";
+            if (claims.iss && claims.iss !== PROD_ISSUER) {
+              console.warn(
+                `[Fireproof Dashboard] ⚠️ Token issuer mismatch! \nExpected: ${PROD_ISSUER}\nReceived: ${claims.iss}\n\nThis is likely why the request is failing. The Fireproof backend is expecting a token from the production Clerk instance.`,
+              );
+            }
           } catch (e) {
             console.error("[Fireproof Dashboard] ⚠️ Failed to parse token:", e);
           }
