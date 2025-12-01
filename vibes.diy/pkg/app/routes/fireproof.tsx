@@ -145,7 +145,7 @@ export default function FireproofDashboard() {
         const result = await api.getCloudSessionToken({});
         if (result.isOk()) {
           setFpCloudToken(result.Ok().token);
-          console.log("[Fireproof Dashboard] ✅ Successfully retrieved fp-cloud-jwt.");
+          console.log("[Fireproof Dashboard] ✅ Successfully retrieved fp-cloud-jwt. Enabling data queries.");
         } else {
           console.error("[Fireproof Dashboard] ❌ Error getting fp-cloud-jwt:", result.Err());
         }
