@@ -1,16 +1,13 @@
 import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { playwright } from "@vitest/browser-playwright";
-import type { PluginOption } from "vite";
 
 export default defineConfig({
   plugins: [
-    tsconfigPaths({
-      configNames: ["tsconfig.test.json"],
-    }) as PluginOption,
+    tsconfigPaths({ configNames: ["tsconfig.test.json"], }) as never,
   ],
   optimizeDeps: {
-    exclude: ["fsevents", "lightningcss"],
+    exclude: ["fsevents", "lightningcss"]
   },
   // cacheDir: "./node_modules/.vibes.diy-vite-cache",
   test: {
