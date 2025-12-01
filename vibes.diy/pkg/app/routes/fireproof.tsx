@@ -35,6 +35,19 @@ function wrapResultToPromise<T>(pro: () => Promise<Result<T>>, label: string) {
     }
     const error = res.Err();
     console.error(`[Fireproof Dashboard] ❌ Error for ${label}:`, error);
+
+    // Enhance error message for JWKS verification failure
+    if (
+      error instanceof Error &&
+      error.message.includes("No well-known JWKS URL could verify the token")
+    ) {
+      const improvedError = new Error(
+        `Authentication failed: The Fireproof backend could not verify your token. This usually happens when using a development Clerk instance with the production Fireproof backend. Please set VITE_CONNECT_API_URL to a compatible development backend.`,
+      );
+      improvedError.stack = error.stack;
+      throw improvedError;
+    }
+
     throw error;
   };
 }
