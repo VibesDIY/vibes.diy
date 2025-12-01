@@ -20,6 +20,7 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { getLibraryImportMap } from "./config/import-map.js";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export const links: Route.LinksFunction = () => {
   const rawBase = VibesDiyEnv.APP_BASENAME();
@@ -84,6 +85,7 @@ export const meta: MetaFunction = () => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const [queryClient] = React.useState(() => new QueryClient());
   return (
     <html lang="en">
       <head>
@@ -120,24 +122,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* TODO: Re-enable GtmNoScript when consent can be checked server-side */}
         {/* <GtmNoScript /> */}
         <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
-          <ThemeProvider>
-            <PostHogProvider
-              apiKey={VibesDiyEnv.POSTHOG_KEY()}
-              options={{
-                api_host: VibesDiyEnv.POSTHOG_HOST(),
-                opt_out_capturing_by_default: true,
-              }}
-            >
-              <CookieConsentProvider>
-                {children}
-                <ClientOnly>
-                  <CookieBanner />
-                </ClientOnly>
-              </CookieConsentProvider>
-              <ScrollRestoration data-testid="scroll-restoration" />
-              <Scripts data-testid="scripts" />
-            </PostHogProvider>
-          </ThemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider>
+              <PostHogProvider
+                apiKey={VibesDiyEnv.POSTHOG_KEY()}
+                options={{
+                  api_host: VibesDiyEnv.POSTHOG_HOST(),
+                  opt_out_capturing_by_default: true,
+                }}
+              >
+                <CookieConsentProvider>
+                  {children}
+                  <ClientOnly>
+                    <CookieBanner />
+                  </ClientOnly>
+                </CookieConsentProvider>
+                <ScrollRestoration data-testid="scroll-restoration" />
+                <Scripts data-testid="scripts" />
+              </PostHogProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
         </ClerkProvider>
       </body>
     </html>
