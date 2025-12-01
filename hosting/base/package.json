@@ -20,7 +20,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.4.66",
+    "@adviser/cement": "^0.4.81",
     "@fireproof/core-runtime": "0.24.0",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
