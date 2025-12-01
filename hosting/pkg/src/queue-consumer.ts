@@ -187,7 +187,38 @@ async function processAppEvent(
     );
   }
 
-  // Generate summary and icon if missing
+  // Handle icon repair events separately
+  if (type === "icon_repair") {
+    const openaiApiKey = env.OPENAI_API_KEY;
+    const iconKey = await generateAppIcon(currentApp, env.KV, openaiApiKey);
+
+    if (iconKey) {
+      currentApp.iconKey = iconKey;
+      currentApp.hasIcon = true;
+
+      try {
+        await env.KV.put(currentApp.chatId, JSON.stringify(currentApp));
+        await env.KV.put(currentApp.slug, JSON.stringify(currentApp));
+        console.log(`✅ Repaired icon for app ${currentApp.slug}`);
+      } catch (error) {
+        console.error(
+          `❌ Failed to save repaired app ${currentApp.slug} to KV:`,
+          error,
+        );
+      }
+
+      // Clear the under-repair flag
+      const repairFlagKey = `${currentApp.slug}-icon-repair`;
+      await env.KV.delete(repairFlagKey);
+    } else {
+      console.error(`❌ Failed to generate icon for ${currentApp.slug}`);
+    }
+
+    // Skip Discord/Bluesky posting for repair events
+    return;
+  }
+
+  // Generate summary and icon if missing (for app_created/app_updated events)
   const callAiApiKey = getCallAiApiKey(env);
   const openaiApiKey = env.OPENAI_API_KEY;
   let appUpdated = false;

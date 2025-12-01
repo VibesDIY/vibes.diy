@@ -12,6 +12,7 @@ import { testAppData } from "../test-app-data.js";
 interface Bindings {
   KV: KVNamespace;
   SERVER_OPENROUTER_API_KEY: string;
+  PUBLISH_QUEUE: Queue;
 }
 // Start a Hono app
 const app = new Hono<{ Bindings: Bindings }>();
@@ -336,6 +337,42 @@ async function handleImageRequest(
   const asset = await kv.get(assetKey, "arrayBuffer");
 
   if (!asset) {
+    // If icon is missing but app exists, enqueue a repair
+    if (keySuffix === "icon") {
+      const repairFlagKey = `${appSlug}-icon-repair`;
+
+      // Check if already under repair
+      const underRepair = await kv.get(repairFlagKey);
+
+      if (!underRepair) {
+        // Check if app record exists
+        const appData = await kv.get(appSlug);
+
+        if (appData) {
+          // Set under-repair flag immediately to prevent duplicate repairs
+          await kv.put(repairFlagKey, "true", { expirationTtl: 3600 }); // 1 hour expiry
+
+          try {
+            const app = JSON.parse(appData);
+            // Enqueue repair event
+            await c.env.PUBLISH_QUEUE.send({
+              type: "icon_repair",
+              app,
+              metadata: {
+                timestamp: Date.now(),
+                isUpdate: false,
+              },
+            });
+          } catch (error) {
+            console.error(
+              `Failed to enqueue icon repair for ${appSlug}:`,
+              error,
+            );
+          }
+        }
+      }
+    }
+
     return c.notFound();
   }
 
