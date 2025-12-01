@@ -18,7 +18,7 @@
   "dependencies": {
     "@adviser/cement": "^0.4.66",
     "@monaco-editor/react": "^4.7.0",
-    "@react-router/node": "^7.9.4",
+    "@react-router/node": "^7.9.6",
     "@react-router/serve": "^7.9.6",
     "@shikijs/monaco": "^3.17.1",
     "@tailwindcss/typography": "^0.5.19",
