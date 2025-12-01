@@ -46,7 +46,7 @@
     "@vitest/browser-playwright": "^4.0.14",
     "call-ai": "workspace:*",
     "playwright": "^1.57.0",
-    "playwright-chromium": "^1.56.1",
+    "playwright-chromium": "^1.57.0",
     "react": "^19.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
