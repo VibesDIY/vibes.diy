@@ -1,10 +1,8 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardApi } from "@fireproof/core-protocols-dashboard";
-import type {
-  ResEnsureUser,
-} from "@fireproof/core-protocols-dashboard";
+import type { ResEnsureUser } from "@fireproof/core-protocols-dashboard";
 import type { Result } from "@adviser/cement";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
@@ -55,10 +53,7 @@ export default function FireproofDashboard() {
   // Query to ensure the user exists and is active
   const ensureUserQuery = useQuery<ResEnsureUser>({
     queryKey: ["ensureUser"],
-    queryFn: wrapResultToPromise(
-      () => api.ensureUser({}),
-      "ensureUser",
-    ),
+    queryFn: wrapResultToPromise(() => api.ensureUser({}), "ensureUser"),
     enabled: isLoaded && isSignedIn,
   });
 
