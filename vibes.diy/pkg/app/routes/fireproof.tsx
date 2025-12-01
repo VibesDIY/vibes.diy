@@ -46,7 +46,8 @@ export default function FireproofDashboard() {
       apiUrl,
       fetch: window.fetch.bind(window), // Optional per comments
       getToken: async () => {
-        const token = await getToken({ template: "with-email" });
+        // Attempt to set an audience to satisfy backend validation
+        const token = await getToken({ template: "with-email", audience: "fireproof" });
         return {
           type: "clerk",
           token: token || "",
