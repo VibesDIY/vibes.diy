@@ -32,14 +32,14 @@ function wrapResultToPromise<T>(pro: () => Promise<Result<T>>, label: string) {
 }
 
 export default function FireproofDashboard() {
-  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const { isSignedIn, isLoaded, getToken, userId } = useAuth();
 
   // Create DashboardApi instance with Clerk auth
   const api = useMemo(() => {
     const apiUrl = VibesDiyEnv.CONNECT_API_URL();
     return new DashboardApi({
       apiUrl,
-      fetch: window.fetch.bind(window), // Optional per comments
+      fetch: fetch, // Use global fetch
       getToken: async () => {
         const token = await getToken({ template: "with-email" });
         return {
@@ -52,13 +52,41 @@ export default function FireproofDashboard() {
 
   // Query to ensure the user exists and is active
   const ensureUserQuery = useQuery<ResEnsureUser>({
-    queryKey: ["ensureUser"],
+    queryKey: ["ensureUser", userId],
     queryFn: wrapResultToPromise(() => api.ensureUser({}), "ensureUser"),
     enabled: isLoaded && isSignedIn,
   });
 
+  // Loading state while Clerk initializes
+  if (!isLoaded) {
+    return (
+      <SimpleAppLayout
+        headerLeft={
+          <div className="flex items-center">
+            <a
+              href="/"
+              className="text-light-primary dark:text-dark-primary hover:text-accent-02-light dark:hover:text-accent-02-dark flex items-center px-3 py-2"
+              aria-label="Go to home"
+            >
+              <HomeIcon className="h-6 w-6" />
+            </a>
+          </div>
+        }
+      >
+        <div className="mx-auto max-w-4xl px-4 py-8">
+          <h1 className="text-2xl font-bold mb-6">Fireproof Dashboard</h1>
+          <div className="border-light-decorative-01 dark:border-dark-decorative-01 rounded-sm border p-6">
+            <p className="text-light-secondary dark:text-dark-secondary">
+              Loading...
+            </p>
+          </div>
+        </div>
+      </SimpleAppLayout>
+    );
+  }
+
   // Not authenticated view
-  if (isLoaded && !isSignedIn) {
+  if (!isSignedIn) {
     return (
       <SimpleAppLayout
         headerLeft={
