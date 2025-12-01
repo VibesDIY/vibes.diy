@@ -55,9 +55,70 @@ function wrapResultToPromise<T>(pro: () => Promise<Result<T>>, label: string) {
 
 export default function FireproofDashboard() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
-  const [fpCloudToken, setFpCloudToken] = useState<string | null>(null);
 
-  useEffect(() => {
+  const [fpCloudToken, setFpCloudToken] = useState<string | null>(null); // Moved useState here
+
+  // Create DashboardApi instance with Clerk auth
+  const api = useMemo(() => {
+    const apiUrl = VibesDiyEnv.CONNECT_API_URL();
+    console.log(
+      "[Fireproof Dashboard] 🔧 Creating DashboardApi instance with URL:",
+      apiUrl,
+    );
+    return new DashboardApi({
+      apiUrl,
+      fetch: window.fetch.bind(window),
+      getToken: async () => {
+        if (fpCloudToken) {
+          console.log("[Fireproof Dashboard] 🔑 Using existing fp-cloud-jwt.");
+          return {
+            type: "ucan" as const, // Corrected type here
+            token: fpCloudToken,
+          };
+        }
+
+        console.log(
+          "[Fireproof Dashboard] 🔑 Getting Clerk token with template: with-email",
+        );
+        const token = await getToken({ template: "with-email" });
+
+        if (token) {
+          try {
+            const claims = decodeJwt(token);
+            const now = Date.now() / 1000;
+            const exp = claims.exp || 0;
+            const ttl = exp - now;
+
+            console.log("[Fireproof Dashboard] 🕵️‍♀️ Token Claims:", {
+              iss: claims.iss,
+              exp: claims.exp,
+              iat: claims.iat,
+              ttl: ttl.toFixed(2) + "s",
+            });
+
+            if (exp < now) {
+              console.error(
+                "/[Fireproof Dashboard] ❌ Token is EXPIRED! Client clock may be wrong or Clerk returned old token.",
+              );
+            }
+          } catch (e) {
+            console.error("[Fireproof Dashboard] ⚠️ Failed to parse token:", e);
+          }
+        }
+
+        console.log(
+          "/[Fireproof Dashboard] 🎫 Token retrieved:",
+          token ? `${token.substring(0, 20)}...` : "null",
+        );
+        return {
+          type: "clerk" as const,
+          token: token || "",
+        };
+      },
+    });
+  }, [getToken, fpCloudToken]);
+
+  useEffect(() => { // Moved useEffect here
     if (!isLoaded || !isSignedIn || fpCloudToken) return;
 
     const fetchFpCloudToken = async () => {
@@ -78,65 +139,6 @@ export default function FireproofDashboard() {
     fetchFpCloudToken();
   }, [isLoaded, isSignedIn, fpCloudToken, api]);
 
-  // Create DashboardApi instance with Clerk auth
-  const api = useMemo(() => {
-    const apiUrl = VibesDiyEnv.CONNECT_API_URL();
-    console.log(
-      "[Fireproof Dashboard] 🔧 Creating DashboardApi instance with URL:",
-      apiUrl,
-    );
-    return new DashboardApi({
-      apiUrl,
-      fetch: window.fetch.bind(window),
-            getToken: async () => {
-              if (fpCloudToken) {
-                console.log("[Fireproof Dashboard] 🔑 Using existing fp-cloud-jwt.");
-                return {
-                  type: "fp-cloud-jwt" as const,
-                  token: fpCloudToken,
-                };
-              }
-      
-              console.log(
-                "[Fireproof Dashboard] 🔑 Getting Clerk token with template: with-email",
-              );
-              const token = await getToken({ template: "with-email" });
-      
-              if (token) {
-                try {
-                  const claims = decodeJwt(token);
-                  const now = Date.now() / 1000;
-                  const exp = claims.exp || 0;
-                  const ttl = exp - now;
-      
-                  console.log("[Fireproof Dashboard] 🕵️‍♀️ Token Claims:", {
-                    iss: claims.iss,
-                    exp: claims.exp,
-                    iat: claims.iat,
-                    ttl: ttl.toFixed(2) + "s",
-                  });
-      
-                  if (exp < now) {
-                    console.error(
-                      "[Fireproof Dashboard] ❌ Token is EXPIRED! Client clock may be wrong or Clerk returned old token.",
-                    );
-                  }
-                } catch (e) {
-                  console.error("[Fireproof Dashboard] ⚠️ Failed to parse token:", e);
-                }
-              }
-      
-              console.log(
-                "[Fireproof Dashboard] 🎫 Token retrieved:",
-                token ? `${token.substring(0, 20)}...` : "null",
-              );
-              return {
-                type: "clerk" as const,
-                token: token || "",
-              };
-            },
-          });
-        }, [getToken, fpCloudToken]);
 
   // Query to list all tenants for the logged-in user
   const tenantsQuery = useQuery<ResListTenantsByUser>({
@@ -216,7 +218,6 @@ export default function FireproofDashboard() {
       </SimpleAppLayout>
     );
   }
-
   return (
     <SimpleAppLayout
       headerLeft={
@@ -357,20 +358,28 @@ export default function FireproofDashboard() {
                             Tenant: {ledger.tenantId}
                           </p>
                         </div>
-                        <div className="text-sm text-light-secondary dark:text-dark-secondary">
+                        <div
+                          className="text-sm text-light-secondary dark:text-dark-secondary"
+                        >
                           <p>Users: {ledger.users.length}</p>
                           <p>Max shares: {ledger.maxShares}</p>
                         </div>
                       </div>
-                      <div className="mt-2 text-sm text-light-secondary dark:text-dark-secondary">
+                      <div
+                        className="mt-2 text-sm text-light-secondary dark:text-dark-secondary"
+                      >
                         <p>
                           Created:{" "}
                           {new Date(ledger.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       {ledger.users.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-light-decorative-01 dark:border-dark-decorative-01">
-                          <p className="text-xs font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                        <div
+                          className="mt-3 pt-3 border-t border-light-decorative-01 dark:border-dark-decorative-01"
+                        >
+                          <p
+                            className="text-xs font-medium text-light-secondary dark:text-dark-secondary mb-2"
+                          >
                             User Access:
                           </p>
                           <div className="flex flex-wrap gap-2">
