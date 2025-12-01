@@ -883,40 +883,48 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     fontWeight: "bold",
                     fontSize: "40px",
                     color: "#5398c9",
+                    lineHeight: "40px",
                   }}
                 >
                   Community Code
                 </h3>
-                <p>
-                  <strong>For people who care about people</strong>
-                  <br />
-                  Your group chat isn't a start-up. It's a community, and every
-                  community has its own unique needs. So why should you rely on
-                  one-sized-fits-all apps made by people who care more about
-                  shareholders than stakeholders? Infinitely remixable,
-                  small-scale software made for the people you love: that's the
-                  vibe.
-                </p>
-
-                <h3
+                <div
                   style={{
-                    fontWeight: "bold",
-                    fontSize: "40px",
-                    color: "#5398c9",
+                    marginTop: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "18px",
                   }}
                 >
-                  The App to End all Apps
-                </h3>
-                <p>
-                  <strong>What you need and nothing else</strong>
-                  <br />
-                  Vibes is every app you could ever need in one place — with no
-                  app store, no downloads, and no software updates. It's a tool
-                  for building what you need, only when you need it. Share your
-                  creations instantly with the group chat and mix them up
-                  together. Best of all, everyone's data stays local, portable,
-                  and safe.
-                </p>
+                  <b style={{ fontSize: "28px", lineHeight: "28px" }}>For people who care about people</b>
+                  <span>
+                    Your group chat isn't a start-up. It's a community, and every
+                    community has its own unique needs. So why should you rely on
+                    one-sized-fits-all apps made by people who care more about
+                    shareholders than stakeholders? Infinitely remixable,
+                    small-scale software made for the people you love: that's the
+                    vibe.</span>
+
+                  <h3
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "40px",
+                      color: "#5398c9",
+                      lineHeight: "40px",
+                    }}
+                  >
+                    The App to End all Apps
+                  </h3>
+                  <b style={{ fontSize: "28px", lineHeight: "28px" }}>What you need and nothing else</b>
+                  <span>
+                    Vibes is every app you could ever need in one place — with no
+                    app store, no downloads, and no software updates. It's a tool
+                    for building what you need, only when you need it. Share your
+                    creations instantly with the group chat and mix them up
+                    together. Best of all, everyone's data stays local, portable,
+                    and safe.
+                  </span>
+                </div>
               </DraggableSection>
             </section>
 
@@ -1046,64 +1054,61 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     fontWeight: "bold",
                     fontSize: "40px",
                     color: "#FEDD00",
+                    lineHeight: "40px",
                   }}
                 >
                   Now comes the hard part
                 </h3>
-                <p>
-                  <strong>Multiplayer features need a backend</strong>
-                  <br />
-                  And backends are hard. You're a vibe coder, not a "DevOps"
-                  expert. Messing this part up is how vibe coded apps get
-                  hacked. You can either try to connect to something like
-                  Supabase, which is complicated and expensive. Or let someone
-                  build you a backend that you'll be stuck with forever.
-                  <br />
-                  <br />
-                  <strong>Here's the problem</strong>
-                  <br />
-                  You're trying to vibe code using a web stack that was made for
-                  a different problem: building a huge startup with giant teams
-                  of <i>actual</i> programmers using millions in venture
-                  capital.
-                  <br />
-                  <br />
-                  <strong>Your web stack wasn't made for vibe coding</strong>
-                  <br />
-                  Most web stacks are built for mass-market software: big
-                  schemas, strict permissions, endless backend plumbing. Tools
-                  like Supabase and row-level auth policies work fine for
-                  enterprise apps — but they slow down small, personal,
-                  shareable ones.
-                  <br />
-                  <br />
-                  Vibes DIY takes a different approach. It treats data as part
-                  of your creative surface, not a distant backend. None of this
-                  would be possible if you still needed a backend to sync data
-                  between users. But, doesn't everybody need a backend for
-                  multiplayer data?
-                  <br />
-                  <br />
+                <div
+                  style={{
+                    marginTop: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "18px",
+                  }}
+                >
+                  <b style={{ fontSize: "28px", lineHeight: "28px" }}>Multiplayer features need a backend</b>
+                  <span>And backends are hard. You're a vibe coder, not a "DevOps"
+                    expert. Messing this part up is how vibe coded apps get
+                    hacked. You can either try to connect to something like
+                    Supabase, which is complicated and expensive. Or let someone
+                    build you a backend that you'll be stuck with forever.</span>
+                  <b style={{ fontSize: "28px", lineHeight: "28px" }}>Here's the problem</b>
+                  <span>You're trying to vibe code using a web stack that was made for
+                    a different problem: building a huge startup with giant teams
+                    of <i>actual</i> programmers using millions in venture
+                    capital.</span>
+                  <b style={{ fontSize: "28px", lineHeight: "28px" }}>Your web stack wasn't made for vibe coding</b>
+                  <span>Most web stacks are built for mass-market software: big
+                    schemas, strict permissions, endless backend plumbing. Tools
+                    like Supabase and row-level auth policies work fine for
+                    enterprise apps — but they slow down small, personal,
+                    shareable ones.</span>
+                  <span>Vibes DIY takes a different approach. It treats data as part
+                    of your creative surface, not a distant backend. None of this
+                    would be possible if you still needed a backend to sync data
+                    between users. But, doesn't everybody need a backend for
+                    multiplayer data?</span>
                   <h3
                     style={{
                       fontWeight: "bold",
                       fontSize: "40px",
                       color: "#FEDD00",
+                      lineHeight: "40px",
                     }}
                   >
                     We made a database designed for vibe coding
                   </h3>
-                  <strong>
+                  <b style={{ fontSize: "28px", lineHeight: "28px" }}>
                     Fireproof makes the web server into a horseless carriage
-                  </strong>
-                  <br />
-                  Vibes DIY runs on Fireproof, an open source embedded database
-                  that syncs without a web server. It treats data as part of
-                  your creative surface, not a corporate cloud service.
-                  Fireproof uses distributed data structures, CRDTs,
-                  content-addressed storage, and document-style records to give
-                  every app its own lightweight ledger.
-                </p>
+                  </b>
+                  <span>Vibes DIY runs on Fireproof, an open source embedded database
+                    that syncs without a web server. It treats data as part of
+                    your creative surface, not a corporate cloud service.
+                    Fireproof uses distributed data structures, CRDTs,
+                    content-addressed storage, and document-style records to give
+                    every app its own lightweight ledger.</span>
+                </div>
               </DraggableSection>
             </section>
 
@@ -1136,25 +1141,29 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       fontWeight: "bold",
                       fontSize: "40px",
                       color: "#FEDD00",
+                      lineHeight: "40px",
                     }}
                   >
                     Back to your counter app...
                   </h3>
-                  <p>
-                    <strong>Now you're using Fireproof + Vibes DIY</strong>
-                    <br />
-                    Your data lives locally inside your component, syncing when
-                    and where you choose. Conflicts resolve sensibly. State
-                    just... persists.
-                    <br />
-                    <br />
-                    You can build offline, share instantly, and grow without
-                    rewriting your stack. Even if you have no idea what any of
-                    that means and just want to spell out an idea and get an
-                    app. We got you.
-                    <br />
-                    <br />
-                  </p>
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "18px",
+                    }}
+                  >
+                    <b style={{ fontSize: "28px", lineHeight: "28px" }}>Now you're using Fireproof + Vibes DIY</b>
+                    <span>Your data lives locally inside your component, syncing when
+                      and where you choose. Conflicts resolve sensibly. State
+                      just... persists.</span>
+                    <span>
+                      You can build offline, share instantly, and grow without
+                      rewriting your stack. Even if you have no idea what any of
+                      that means and just want to spell out an idea and get an
+                      app. We got you.</span>
+                  </div>
                 </DraggableSection>
               </div>
 
@@ -1252,31 +1261,40 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             >
               <DraggableSection color="red" static>
                 <div style={getSecondCardStyle()}>
-                  <p>You love your group chat. Meet your group app. </p>
-                  <p>
-                    Remember that camping trip when nobody packed coffee? The
-                    Friendsgiving with six mac n' cheeses and no turkey? You
-                    love your friends, but organizing them can be a headache.
-                    Make planning painless with custom community apps, made by
-                    and for your friends, for everything you do together.
-                  </p>
-                  <p>
-                    Like volunteer sign-ups and school drop-offs. Project
-                    checklists and vacation planners. Pick-up basketball
-                    schedules and fantasy football rankings. A cooperative chore
-                    wheel for the roomies and the ultimate Oscars bracket for
-                    movie club. Whatever the vibe, you can build it with Vibes.
-                  </p>
-                  <p>
-                    Share and use your new apps instantly, and remix them on the
-                    fly. Everyone's ideas are welcome and everyone's data is
-                    protected. This is software that communities build together
-                    in real time — to make life easier, fairer, and more fun for
-                    everyone.
-                  </p>
-                  <p>
-                    You and your friends aren't users anymore. You're makers.
-                  </p>
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "18px",
+                    }}
+                  >
+                    <span>You love your group chat. Meet your group app. </span>
+                    <span>
+                      Remember that camping trip when nobody packed coffee? The
+                      Friendsgiving with six mac n' cheeses and no turkey? You
+                      love your friends, but organizing them can be a headache.
+                      Make planning painless with custom community apps, made by
+                      and for your friends, for everything you do together.
+                    </span>
+                    <span>
+                      Like volunteer sign-ups and school drop-offs. Project
+                      checklists and vacation planners. Pick-up basketball
+                      schedules and fantasy football rankings. A cooperative chore
+                      wheel for the roomies and the ultimate Oscars bracket for
+                      movie club. Whatever the vibe, you can build it with Vibes.
+                    </span>
+                    <span>
+                      Share and use your new apps instantly, and remix them on the
+                      fly. Everyone's ideas are welcome and everyone's data is
+                      protected. This is software that communities build together
+                      in real time — to make life easier, fairer, and more fun for
+                      everyone.
+                    </span>
+                    <span>
+                      You and your friends aren't users anymore. You're makers.
+                    </span>
+                  </div>
                 </div>
               </DraggableSection>
             </section>
@@ -1310,20 +1328,28 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       fontWeight: "bold",
                       fontSize: "40px",
                       color: "#D94827",
+                      lineHeight: "40px",
                     }}
                   >
                     Build together, instantly
                   </h3>
-                  <p>
-                    <strong>No setup, no friction</strong>
-                    <br />
-                    Share your creations with a simple link. Your friends can
-                    jump in immediately — no downloads, no sign-ups, no waiting.
-                    <br />
-                    <br />
-                    Everyone's changes sync in real-time, and your data stays
-                    safe and encrypted locally.
-                  </p>
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "18px",
+                    }}
+                  >
+                    <b style={{ fontSize: "28px", lineHeight: "28px" }}>No setup, no friction</b>
+                    <span>
+                      Share your creations with a simple link. Your friends can
+                      jump in immediately — no downloads, no sign-ups, no waiting.
+                    </span>
+                    <span>
+                      Everyone's changes sync in real-time, and your data stays
+                      safe and encrypted locally.</span>
+                  </div>
                 </DraggableSection>
               </div>
 
@@ -1425,15 +1451,23 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     fontWeight: "bold",
                     fontSize: "40px",
                     color: "#000000",
+                    lineHeight: "40px",
                   }}
                 >
                   Section 8
                 </h3>
-                <p>
-                  <strong>Content for light section</strong>
-                  <br />
-                  This is the light section with color oklch(84.6% 0.026 111).
-                </p>
+                <div
+                  style={{
+                    marginTop: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "18px",
+                  }}
+                >
+                  <b style={{ fontSize: "28px", lineHeight: "28px" }}>Content for light section</b>
+                  <span>
+                    This is the light section with color oklch(84.6% 0.026 111).</span>
+                </div>
               </DraggableSection>
             </section>
           </div>
