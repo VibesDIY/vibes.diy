@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardApi } from "@fireproof/core-protocols-dashboard";
@@ -55,6 +55,28 @@ function wrapResultToPromise<T>(pro: () => Promise<Result<T>>, label: string) {
 
 export default function FireproofDashboard() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
+  const [fpCloudToken, setFpCloudToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || fpCloudToken) return;
+
+    const fetchFpCloudToken = async () => {
+      console.log("[Fireproof Dashboard] 🚀 Attempting to get fp-cloud-jwt...");
+      try {
+        const result = await api.getCloudSessionToken({});
+        if (result.isOk()) {
+          setFpCloudToken(result.Ok().token);
+          console.log("[Fireproof Dashboard] ✅ Successfully retrieved fp-cloud-jwt.");
+        } else {
+          console.error("[Fireproof Dashboard] ❌ Error getting fp-cloud-jwt:", result.Err());
+        }
+      } catch (e) {
+        console.error("[Fireproof Dashboard] ❌ Exception getting fp-cloud-jwt:", e);
+      }
+    };
+
+    fetchFpCloudToken();
+  }, [isLoaded, isSignedIn, fpCloudToken, api]);
 
   // Create DashboardApi instance with Clerk auth
   const api = useMemo(() => {
@@ -66,49 +88,55 @@ export default function FireproofDashboard() {
     return new DashboardApi({
       apiUrl,
       fetch: window.fetch.bind(window),
-      getToken: async () => {
-        console.log(
-          "[Fireproof Dashboard] 🔑 Getting Clerk token with template: with-email",
-        );
-        const token = await getToken({ template: "with-email" });
-
-        if (token) {
-          try {
-            const claims = decodeJwt(token);
-            const now = Date.now() / 1000;
-            const exp = claims.exp || 0;
-            const ttl = exp - now;
-
-            console.log("[Fireproof Dashboard] 🕵️‍♀️ Token Claims:", {
-              iss: claims.iss,
-              exp: claims.exp,
-              iat: claims.iat,
-              ttl: ttl.toFixed(2) + "s",
-            });
-
-            if (exp < now) {
-              console.error(
-                "[Fireproof Dashboard] ❌ Token is EXPIRED! Client clock may be wrong or Clerk returned old token.",
+            getToken: async () => {
+              if (fpCloudToken) {
+                console.log("[Fireproof Dashboard] 🔑 Using existing fp-cloud-jwt.");
+                return {
+                  type: "fp-cloud-jwt" as const,
+                  token: fpCloudToken,
+                };
+              }
+      
+              console.log(
+                "[Fireproof Dashboard] 🔑 Getting Clerk token with template: with-email",
               );
-            }
-
-
-          } catch (e) {
-            console.error("[Fireproof Dashboard] ⚠️ Failed to parse token:", e);
-          }
-        }
-
-        console.log(
-          "[Fireproof Dashboard] 🎫 Token retrieved:",
-          token ? `${token.substring(0, 20)}...` : "null",
-        );
-        return {
-          type: "clerk" as const,
-          token: token || "",
-        };
-      },
-    });
-  }, [getToken]);
+              const token = await getToken({ template: "with-email" });
+      
+              if (token) {
+                try {
+                  const claims = decodeJwt(token);
+                  const now = Date.now() / 1000;
+                  const exp = claims.exp || 0;
+                  const ttl = exp - now;
+      
+                  console.log("[Fireproof Dashboard] 🕵️‍♀️ Token Claims:", {
+                    iss: claims.iss,
+                    exp: claims.exp,
+                    iat: claims.iat,
+                    ttl: ttl.toFixed(2) + "s",
+                  });
+      
+                  if (exp < now) {
+                    console.error(
+                      "[Fireproof Dashboard] ❌ Token is EXPIRED! Client clock may be wrong or Clerk returned old token.",
+                    );
+                  }
+                } catch (e) {
+                  console.error("[Fireproof Dashboard] ⚠️ Failed to parse token:", e);
+                }
+              }
+      
+              console.log(
+                "[Fireproof Dashboard] 🎫 Token retrieved:",
+                token ? `${token.substring(0, 20)}...` : "null",
+              );
+              return {
+                type: "clerk" as const,
+                token: token || "",
+              };
+            },
+          });
+        }, [getToken, fpCloudToken]);
 
   // Query to list all tenants for the logged-in user
   const tenantsQuery = useQuery<ResListTenantsByUser>({
