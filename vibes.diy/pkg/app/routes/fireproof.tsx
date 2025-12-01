@@ -9,7 +9,7 @@ import type {
   LedgerUser,
 } from "@fireproof/core-protocols-dashboard";
 import type { Result } from "@adviser/cement";
-import { decodeJwt } from "jose";
+import { decodeJwt, decodeProtectedHeader } from "jose";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
 import { VibesDiyEnv } from "../config/env.js";
@@ -85,15 +85,20 @@ export default function FireproofDashboard() {
         if (token) {
           try {
             const claims = decodeJwt(token);
+            const header = decodeProtectedHeader(token);
             const now = Date.now() / 1000;
             const exp = claims.exp || 0;
             const ttl = exp - now;
 
-            console.log("[Fireproof Dashboard] 🕵️‍♀️ Token Claims:", {
-              iss: claims.iss,
-              exp: claims.exp,
-              iat: claims.iat,
-              ttl: ttl.toFixed(2) + "s",
+            console.log("[Fireproof Dashboard] 🕵️‍♀️ Token Details:", {
+              header,
+              payload: {
+                iss: claims.iss,
+                aud: claims.aud,
+                exp: claims.exp,
+                iat: claims.iat,
+                ttl: ttl.toFixed(2) + "s",
+              },
             });
 
             if (exp < now) {
