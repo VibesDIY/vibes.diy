@@ -9,6 +9,7 @@ import type {
   LedgerUser,
 } from "@fireproof/core-protocols-dashboard";
 import type { Result } from "@adviser/cement";
+import { decodeJwt } from "jose";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
 import { VibesDiyEnv } from "../config/env.js";
@@ -70,6 +71,31 @@ export default function FireproofDashboard() {
           "[Fireproof Dashboard] 🔑 Getting Clerk token with template: with-email",
         );
         const token = await getToken({ template: "with-email" });
+
+        if (token) {
+          try {
+            const claims = decodeJwt(token);
+            const now = Date.now() / 1000;
+            const exp = claims.exp || 0;
+            const ttl = exp - now;
+
+            console.log("[Fireproof Dashboard] 🕵️‍♀️ Token Claims:", {
+              iss: claims.iss,
+              exp: claims.exp,
+              iat: claims.iat,
+              ttl: ttl.toFixed(2) + "s",
+            });
+
+            if (exp < now) {
+              console.error(
+                "[Fireproof Dashboard] ❌ Token is EXPIRED! Client clock may be wrong or Clerk returned old token.",
+              );
+            }
+          } catch (e) {
+            console.error("[Fireproof Dashboard] ⚠️ Failed to parse token:", e);
+          }
+        }
+
         console.log(
           "[Fireproof Dashboard] 🎫 Token retrieved:",
           token ? `${token.substring(0, 20)}...` : "null",
