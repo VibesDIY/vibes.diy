@@ -86,16 +86,19 @@ export default function FireproofDashboard() {
           try {
             const claims = decodeJwt(token);
             const header = decodeProtectedHeader(token);
-            
+
             // Check KID match for debugging
             const expectedKid = "ins_35qNS5Jwyc7z4aJRBIS7o205yzb";
             if (header.kid === expectedKid) {
-              console.log("[Fireproof Dashboard] ✅ KID MATCHES expected dev key:", header.kid);
+              console.log(
+                "[Fireproof Dashboard] ✅ KID MATCHES expected dev key:",
+                header.kid,
+              );
             } else {
-              console.warn("[Fireproof Dashboard] ⚠️ KID MISMATCH:", { 
-                tokenKid: header.kid, 
+              console.warn("[Fireproof Dashboard] ⚠️ KID MISMATCH:", {
+                tokenKid: header.kid,
                 expectedKid,
-                note: "This might be why verification fails if the backend is using the 'expected' key."
+                note: "This might be why verification fails if the backend is using the 'expected' key.",
               });
             }
 
@@ -136,7 +139,8 @@ export default function FireproofDashboard() {
     });
   }, [getToken, fpCloudToken]);
 
-  useEffect(() => { // Moved useEffect here
+  useEffect(() => {
+    // Moved useEffect here
     if (!isLoaded || !isSignedIn || fpCloudToken) return;
 
     const fetchFpCloudToken = async () => {
@@ -145,18 +149,25 @@ export default function FireproofDashboard() {
         const result = await api.getCloudSessionToken({});
         if (result.isOk()) {
           setFpCloudToken(result.Ok().token);
-          console.log("[Fireproof Dashboard] ✅ Successfully retrieved fp-cloud-jwt. Enabling data queries.");
+          console.log(
+            "[Fireproof Dashboard] ✅ Successfully retrieved fp-cloud-jwt. Enabling data queries.",
+          );
         } else {
-          console.error("[Fireproof Dashboard] ❌ Error getting fp-cloud-jwt:", result.Err());
+          console.error(
+            "[Fireproof Dashboard] ❌ Error getting fp-cloud-jwt:",
+            result.Err(),
+          );
         }
       } catch (e) {
-        console.error("[Fireproof Dashboard] ❌ Exception getting fp-cloud-jwt:", e);
+        console.error(
+          "[Fireproof Dashboard] ❌ Exception getting fp-cloud-jwt:",
+          e,
+        );
       }
     };
 
     fetchFpCloudToken();
   }, [isLoaded, isSignedIn, fpCloudToken, api]);
-
 
   // Query to list all tenants for the logged-in user
   const tenantsQuery = useQuery<ResListTenantsByUser>({
@@ -376,28 +387,20 @@ export default function FireproofDashboard() {
                             Tenant: {ledger.tenantId}
                           </p>
                         </div>
-                        <div
-                          className="text-sm text-light-secondary dark:text-dark-secondary"
-                        >
+                        <div className="text-sm text-light-secondary dark:text-dark-secondary">
                           <p>Users: {ledger.users.length}</p>
                           <p>Max shares: {ledger.maxShares}</p>
                         </div>
                       </div>
-                      <div
-                        className="mt-2 text-sm text-light-secondary dark:text-dark-secondary"
-                      >
+                      <div className="mt-2 text-sm text-light-secondary dark:text-dark-secondary">
                         <p>
                           Created:{" "}
                           {new Date(ledger.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       {ledger.users.length > 0 && (
-                        <div
-                          className="mt-3 pt-3 border-t border-light-decorative-01 dark:border-dark-decorative-01"
-                        >
-                          <p
-                            className="text-xs font-medium text-light-secondary dark:text-dark-secondary mb-2"
-                          >
+                        <div className="mt-3 pt-3 border-t border-light-decorative-01 dark:border-dark-decorative-01">
+                          <p className="text-xs font-medium text-light-secondary dark:text-dark-secondary mb-2">
                             User Access:
                           </p>
                           <div className="flex flex-wrap gap-2">
