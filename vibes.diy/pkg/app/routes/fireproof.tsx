@@ -97,7 +97,7 @@ export default function FireproofDashboard() {
             const PROD_ISSUER = "https://clerk.fireproof.direct";
             if (claims.iss && claims.iss !== PROD_ISSUER) {
               console.warn(
-                `[Fireproof Dashboard] ⚠️ Token issuer mismatch!\nExpected: ${PROD_ISSUER}\nReceived: ${claims.iss}\n\nThe backend rejected this token with "token-invalid-signature" because it defaulted to verifying against the production issuer's JWKS.\n\nThis confirms that while the token is valid, the CURRENT production backend is NOT correctly respecting the 'iss' claim to select the right verification keys for this development environment.\n\nTo fix this, you must either:\n1. Set VITE_CONNECT_API_URL to a dev/staging backend that supports this issuer.\n2. Use a production Clerk account/token.`,
+                `[Fireproof Dashboard] ⚠️ Authentication Type Mismatch!\nExpected Auth Type: fp-cloud-jwt\nReceived Auth Type: clerk (from issuer ${claims.iss})\n\nEven though the token from ${claims.iss} is valid, the Fireproof backend is currently configured to ONLY accept authentication of type 'fp-cloud-jwt'.\n\nThis is a backend-side limitation. Please contact the Fireproof team to enable support for Clerk-issued tokens or provide a backend URL (via VITE_CONNECT_API_URL) that is configured to accept Clerk tokens.`,
               );
             }
           } catch (e) {
