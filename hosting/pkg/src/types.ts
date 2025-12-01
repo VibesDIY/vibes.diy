@@ -25,7 +25,7 @@ const App = z.object({
 });
 
 const PublishEvent = z.object({
-  type: z.enum(["app_created", "app_updated"]),
+  type: z.enum(["app_created", "app_updated", "icon_repair"]),
   app: App,
   metadata: z.object({
     timestamp: z.number(),
