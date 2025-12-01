@@ -49,7 +49,6 @@ export default function FireproofDashboard() {
         // Attempt to set an audience to satisfy backend validation
         const token = await getToken({
           template: "with-email",
-          audience: "fireproof",
         });
         return {
           type: "clerk",
