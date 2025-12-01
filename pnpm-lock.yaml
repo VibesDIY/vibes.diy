@@ -220,8 +220,8 @@ importers:
         specifier: ^4.10.6
         version: 4.10.6
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       multiformats:
         specifier: ^13.4.0
         version: 13.4.1
@@ -401,8 +401,8 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       react:
         specifier: '>=19.1.0'
         version: 19.2.0
@@ -740,8 +740,8 @@ importers:
         specifier: ^5.1.25
         version: 5.1.32
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       monaco-editor:
         specifier: ^0.55.1
         version: 0.55.1
@@ -894,8 +894,8 @@ importers:
         specifier: ^5.1.25
         version: 5.1.32
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       multiformats:
         specifier: ^13.3.7
         version: 13.4.1
@@ -997,8 +997,8 @@ importers:
         specifier: ^5.1.25
         version: 5.1.32
       jose:
-        specifier: ^6.1.1
-        version: 6.1.1
+        specifier: ^6.1.2
+        version: 6.1.2
       multiformats:
         specifier: ^13.3.7
         version: 13.4.1
@@ -7112,9 +7112,6 @@ packages:
   jiti@2.6.1:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
-
-  jose@6.1.1:
-    resolution: {integrity: sha512-GWSqjfOPf4cWOkBzw5THBjtGPhXKqYnfRBzh4Ni+ArTrQQ9unvmsA3oFLqaYKoKe5sjWmGu5wVKg9Ft1i+LQfg==}
 
   jose@6.1.2:
     resolution: {integrity: sha512-MpcPtHLE5EmztuFIqB0vzHAWJPpmN1E6L4oo+kze56LIs3MyXIj9ZHMDxqOvkP38gBR7K1v3jqd4WU2+nrfONQ==}
@@ -17196,8 +17193,6 @@ snapshots:
       - ts-node
 
   jiti@2.6.1: {}
-
-  jose@6.1.1: {}
 
   jose@6.1.2: {}
 
