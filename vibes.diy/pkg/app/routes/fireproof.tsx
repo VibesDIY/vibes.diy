@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardApi } from "@fireproof/core-protocols-dashboard";
@@ -9,7 +9,6 @@ import type {
   LedgerUser,
 } from "@fireproof/core-protocols-dashboard";
 import type { Result } from "@adviser/cement";
-import { decodeJwt, decodeProtectedHeader } from "jose";
 import SimpleAppLayout from "../components/SimpleAppLayout.js";
 import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
 import { VibesDiyEnv } from "../config/env.js";
@@ -27,28 +26,12 @@ export function meta() {
 // Helper to convert Result monad to Promise for React Query
 function wrapResultToPromise<T>(pro: () => Promise<Result<T>>, label: string) {
   return async (): Promise<T> => {
-    console.log(`[Fireproof Dashboard] 🚀 Starting API call: ${label}`);
     const res = await pro();
     if (res.isOk()) {
-      const data = res.Ok();
-      console.log(`[Fireproof Dashboard] ✅ Success for ${label}:`, data);
-      return data;
+      return res.Ok();
     }
     const error = res.Err();
     console.error(`[Fireproof Dashboard] ❌ Error for ${label}:`, error);
-
-    // Enhance error message for JWKS verification failure
-    if (
-      error instanceof Error &&
-      error.message.includes("No well-known JWKS URL could verify the token")
-    ) {
-      const improvedError = new Error(
-        `Authentication failed: The Fireproof backend could not verify your token. This usually happens when using a development Clerk instance with the production Fireproof backend. Please set VITE_CONNECT_API_URL to a compatible development backend.`,
-      );
-      improvedError.stack = error.stack;
-      throw improvedError;
-    }
-
     throw error;
   };
 }
@@ -56,118 +39,21 @@ function wrapResultToPromise<T>(pro: () => Promise<Result<T>>, label: string) {
 export default function FireproofDashboard() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
 
-  const [fpCloudToken, setFpCloudToken] = useState<string | null>(null); // Moved useState here
-
   // Create DashboardApi instance with Clerk auth
   const api = useMemo(() => {
     const apiUrl = VibesDiyEnv.CONNECT_API_URL();
-    console.log(
-      "[Fireproof Dashboard] 🔧 Creating DashboardApi instance with URL:",
-      apiUrl,
-    );
     return new DashboardApi({
       apiUrl,
-      fetch: window.fetch.bind(window),
+      // fetch: window.fetch.bind(window), // Optional per comments
       getToken: async () => {
-        if (fpCloudToken) {
-          console.log("[Fireproof Dashboard] 🔑 Using existing fp-cloud-jwt.");
-          return {
-            type: "ucan" as const, // Corrected type here
-            token: fpCloudToken,
-          };
-        }
-
-        console.log(
-          "[Fireproof Dashboard] 🔑 Getting Clerk token with template: with-email",
-        );
         const token = await getToken({ template: "with-email" });
-
-        if (token) {
-          try {
-            const claims = decodeJwt(token);
-            const header = decodeProtectedHeader(token);
-
-            // Check KID match for debugging
-            const expectedKid = "ins_35qNS5Jwyc7z4aJRBIS7o205yzb";
-            if (header.kid === expectedKid) {
-              console.log(
-                "[Fireproof Dashboard] ✅ KID MATCHES expected dev key:",
-                header.kid,
-              );
-            } else {
-              console.warn("[Fireproof Dashboard] ⚠️ KID MISMATCH:", {
-                tokenKid: header.kid,
-                expectedKid,
-                note: "This might be why verification fails if the backend is using the 'expected' key.",
-              });
-            }
-
-            const now = Date.now() / 1000;
-            const exp = claims.exp || 0;
-            const ttl = exp - now;
-
-            console.log("[Fireproof Dashboard] 🕵️‍♀️ Token Details:", {
-              header,
-              payload: {
-                iss: claims.iss,
-                aud: claims.aud,
-                exp: claims.exp,
-                iat: claims.iat,
-                ttl: ttl.toFixed(2) + "s",
-              },
-            });
-
-            if (exp < now) {
-              console.error(
-                "/[Fireproof Dashboard] ❌ Token is EXPIRED! Client clock may be wrong or Clerk returned old token.",
-              );
-            }
-          } catch (e) {
-            console.error("[Fireproof Dashboard] ⚠️ Failed to parse token:", e);
-          }
-        }
-
-        console.log(
-          "/[Fireproof Dashboard] 🎫 Token retrieved:",
-          token ? `${token.substring(0, 20)}...` : "null",
-        );
         return {
-          type: "clerk" as const,
+          type: "clerk",
           token: token || "",
         };
       },
     });
-  }, [getToken, fpCloudToken]);
-
-  useEffect(() => {
-    // Moved useEffect here
-    if (!isLoaded || !isSignedIn || fpCloudToken) return;
-
-    const fetchFpCloudToken = async () => {
-      console.log("[Fireproof Dashboard] 🚀 Attempting to get fp-cloud-jwt...");
-      try {
-        const result = await api.getCloudSessionToken({});
-        if (result.isOk()) {
-          setFpCloudToken(result.Ok().token);
-          console.log(
-            "[Fireproof Dashboard] ✅ Successfully retrieved fp-cloud-jwt. Enabling data queries.",
-          );
-        } else {
-          console.error(
-            "[Fireproof Dashboard] ❌ Error getting fp-cloud-jwt:",
-            result.Err(),
-          );
-        }
-      } catch (e) {
-        console.error(
-          "[Fireproof Dashboard] ❌ Exception getting fp-cloud-jwt:",
-          e,
-        );
-      }
-    };
-
-    fetchFpCloudToken();
-  }, [isLoaded, isSignedIn, fpCloudToken, api]);
+  }, [getToken]);
 
   // Query to list all tenants for the logged-in user
   const tenantsQuery = useQuery<ResListTenantsByUser>({
@@ -176,7 +62,7 @@ export default function FireproofDashboard() {
       () => api.listTenantsByUser({}),
       "listTenantsByUser",
     ),
-    enabled: isLoaded && isSignedIn && !!fpCloudToken,
+    enabled: isLoaded && isSignedIn,
   });
 
   // Query to list all ledgers for the logged-in user
@@ -186,39 +72,8 @@ export default function FireproofDashboard() {
       () => api.listLedgersByUser({}),
       "listLedgersByUser",
     ),
-    enabled: isLoaded && isSignedIn && !!fpCloudToken,
+    enabled: isLoaded && isSignedIn,
   });
-
-  // Log authentication and query states
-  useEffect(() => {
-    console.log("[Fireproof Dashboard] 📊 State Update:", {
-      isLoaded,
-      isSignedIn,
-      tenantsQuery: {
-        isLoading: tenantsQuery.isLoading,
-        isError: tenantsQuery.isError,
-        isSuccess: tenantsQuery.isSuccess,
-        dataCount: tenantsQuery.data?.tenants.length,
-      },
-      ledgersQuery: {
-        isLoading: ledgersQuery.isLoading,
-        isError: ledgersQuery.isError,
-        isSuccess: ledgersQuery.isSuccess,
-        dataCount: ledgersQuery.data?.ledgers.length,
-      },
-    });
-  }, [
-    isLoaded,
-    isSignedIn,
-    tenantsQuery.isLoading,
-    tenantsQuery.isError,
-    tenantsQuery.isSuccess,
-    tenantsQuery.data,
-    ledgersQuery.isLoading,
-    ledgersQuery.isError,
-    ledgersQuery.isSuccess,
-    ledgersQuery.data,
-  ]);
 
   // Not authenticated view
   if (isLoaded && !isSignedIn) {
