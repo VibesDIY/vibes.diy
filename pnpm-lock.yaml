@@ -801,8 +801,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.7(@types/react@19.2.7)(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/addon-onboarding':
-        specifier: ^10.0.8
-        version: 10.0.8(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+        specifier: ^10.1.2
+        version: 10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@storybook/react':
         specifier: ^10.0.8
         version: 10.0.8(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
@@ -3707,10 +3707,10 @@ packages:
     peerDependencies:
       storybook: ^10.0.7
 
-  '@storybook/addon-onboarding@10.0.8':
-    resolution: {integrity: sha512-VHZT4yoNvE9CGtO/C5NgJyZdAeeKkXJN2IOg21YLEUuqY/tVUY4Ljt6iI0OxTh3EEkXzMVrO/CrC2HFqWMVu0Q==}
+  '@storybook/addon-onboarding@10.1.2':
+    resolution: {integrity: sha512-a6R8gjjI2t7A9AME7cxoMgsa1jrfOue5iBtNxpNdw8IUevjwdhzN+090AJrkfrVvgD0asT3GbvFnaDEezMWUhw==}
     peerDependencies:
-      storybook: ^10.0.8
+      storybook: ^10.1.2
 
   '@storybook/builder-vite@10.0.8':
     resolution: {integrity: sha512-kaf/pUENzXxYgQMHGGPNiIk1ieb+SOMuSeLKx8wAUOlQOrzhtSH+ItACW/l43t+O6YZ8jYHoNBMF1kdQ1+Y5+w==}
@@ -12983,7 +12983,7 @@ snapshots:
       - vite
       - webpack
 
-  '@storybook/addon-onboarding@10.0.8(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+  '@storybook/addon-onboarding@10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
     dependencies:
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
