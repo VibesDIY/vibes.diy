@@ -147,7 +147,7 @@ export default function FireproofDashboard() {
       () => api.listTenantsByUser({}),
       "listTenantsByUser",
     ),
-    enabled: isLoaded && isSignedIn,
+    enabled: isLoaded && isSignedIn && !!fpCloudToken,
   });
 
   // Query to list all ledgers for the logged-in user
@@ -157,7 +157,7 @@ export default function FireproofDashboard() {
       () => api.listLedgersByUser({}),
       "listLedgersByUser",
     ),
-    enabled: isLoaded && isSignedIn,
+    enabled: isLoaded && isSignedIn && !!fpCloudToken,
   });
 
   // Log authentication and query states
