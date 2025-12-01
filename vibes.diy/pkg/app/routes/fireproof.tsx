@@ -48,7 +48,6 @@ export default function FireproofDashboard() {
       getToken: async () => {
         // Attempt to set an audience to satisfy backend validation
         const token = await getToken({ template: "with-email", audience: "fireproof" });
-        console.log("[Fireproof Dashboard] Clerk JWT (for verification):", token);
         return {
           type: "clerk",
           token: token || "",
