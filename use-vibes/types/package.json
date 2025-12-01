@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.0",
-    "@types/react": "~19.2.2",
+    "@types/react": "~19.2.7",
     "@vitest/browser-playwright": "^4.0.14",
     "typescript": "^5.9.3"
   }
