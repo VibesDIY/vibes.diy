@@ -44,7 +44,7 @@ export default function FireproofDashboard() {
     const apiUrl = VibesDiyEnv.CONNECT_API_URL();
     return new DashboardApi({
       apiUrl,
-      // fetch: window.fetch.bind(window), // Optional per comments
+      fetch: window.fetch.bind(window), // Optional per comments
       getToken: async () => {
         const token = await getToken({ template: "with-email" });
         return {
