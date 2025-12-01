@@ -47,7 +47,7 @@
     "playwright": "^1.57.0",
     "playwright-chromium": "^1.56.1",
     "react": "^19.2.0",
-    "tsx": "^4.20.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite-plugin-devtools-json": "^1.0.0",
     "zx": "^8.8.4"
