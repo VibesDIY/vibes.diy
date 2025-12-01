@@ -92,14 +92,7 @@ export default function FireproofDashboard() {
               );
             }
 
-            // Check if issuer matches the expected production issuer
-            // This is just a hint for debugging, not a hard enforcement
-            const PROD_ISSUER = "https://clerk.fireproof.direct";
-            if (claims.iss && claims.iss !== PROD_ISSUER) {
-              console.warn(
-                `[Fireproof Dashboard] ⚠️ Authentication Type Mismatch!\nExpected Auth Type: fp-cloud-jwt\nReceived Auth Type: clerk (from issuer ${claims.iss})\n\nEven though the token from ${claims.iss} is valid, the Fireproof backend is currently configured to ONLY accept authentication of type 'fp-cloud-jwt'.\n\nThis is a backend-side limitation. Please contact the Fireproof team to enable support for Clerk-issued tokens or provide a backend URL (via VITE_CONNECT_API_URL) that is configured to accept Clerk tokens.`,
-              );
-            }
+
           } catch (e) {
             console.error("[Fireproof Dashboard] ⚠️ Failed to parse token:", e);
           }
