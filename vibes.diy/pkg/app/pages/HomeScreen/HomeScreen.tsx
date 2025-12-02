@@ -47,6 +47,9 @@ import { HomeScreenProps } from "./HomeScreen.types.js";
 import { useIsMobile } from "../../hooks/index.js";
 import { AnimatedScene } from "./AnimatedScene.js";
 import computerAnimGif from "../../assets/computer-anim.gif";
+import htmlpng from "../../assets/screenshots/html.png";
+import vibesStack from "../../assets/vibes-stack.png";
+import fireproofLogo from "../../assets/fireproof-logo.png";
 
 // Helper function to convert URLs in text to clickable links
 const renderMessageWithLinks = (text: string) => {
@@ -729,12 +732,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             <DraggableCard color="blue" x={550} y={120}>
               <p style={getCardTextStyle("250px")}>
                 No coding experience required. Just type an idea, and invite
-                your friends. Our{" "}
-                <a href="http://fireproof.storage/">
-                  purpose-built vibe coding database
-                </a>{" "}
-                automatically encrypts all your data. Which means the group
-                chat's lore stays local, portable, and safe.
+                your friends. 
               </p>
             </DraggableCard>
 
@@ -750,10 +748,53 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             <DraggableCard color="red" x={800} y={320}>
               <p style={getCardTextStyle("200px")}>
-                Custom community apps. Made by and for your friends, for
-                everything you do together.
+                Our unhackable{" "}
+                <a href="http://fireproof.storage/">
+                  vibe coding database
+                </a>{" "}
+                 encrypts all your data. Which means the group
+                chat's lore stays local, portable, and safe.
               </p>
             </DraggableCard>
+            <DraggableCard color="yellow" x={1000} y={1700}>
+              <p
+                style={{
+                  maxWidth: "250px",
+                  fontWeight: "bold",
+                  fontSize: "20px",
+                  lineHeight: "25px",
+                }}
+              >
+                <img src={vibesStack} style={getFullSizeImageStyle()} />
+              </p>
+            </DraggableCard>
+            <DraggableCard color="blue" x={800} y={4100}>
+              <p
+                style={{
+                  maxWidth: "250px",
+                  fontWeight: "bold",
+                  fontSize: "20px",
+                  lineHeight: "25px",
+                }}
+              >
+                <img src={fireproofLogo} style={getFullSizeImageStyle()} />
+              </p>
+            </DraggableCard>
+
+            <DraggableCard color="yellow" x={800} y={5690}>
+              <p
+                style={{
+                  maxWidth: "200px",
+                  fontWeight: "bold",
+                  fontSize: "20px",
+                  lineHeight: "25px",
+                }}
+              >
+                <img src={htmlpng} style={getFullSizeImageStyle()} />
+              </p>
+            </DraggableCard>
+            
+            
             {!isMobile && (
               <div
                 className="chat-container-wrapper"
@@ -836,18 +877,22 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   </span>
 
                   <h3 style={getSectionHeadingStyle("#5398c9")}>
-                    The App to End all Apps
+                    The Vibe Coding Stack That Fits In Your Pocket
                   </h3>
                   <b style={getSubheadingBoldStyle()}>
-                    What you need and nothing else
+                    Vibes is an open source web stack was designed for vibe coding - easy, fast, secure, and portable
                   </b>
                   <span>
-                    Vibes is every app you could ever need in one place — with
-                    no app store, no downloads, and no software updates. It's a
-                    tool for building what you need, only when you need it.
-                    Share your creations instantly with the group chat and mix
-                    them up together. Best of all, everyone's data stays local,
-                    portable, and safe.
+                    <b>Easy</b> because it uses Fireproof, a database that lives in your web browser and syncs without a web server.
+                  </span>
+                  <span>
+                    <b>Fast</b> because the data is local, so you don't need to ask a server for it.
+                  </span>
+                  <span>
+                    <b>Secure</b> because all data is encrypted by default. No .env variables to accidentally check into Github!
+                  </span>
+                  <span>
+                    <b>Portable</b>, because you don't have to host these apps with us. It's all open source - Vibes work anywhere the web works.
                   </span>
                 </div>
               </DraggableSection>
@@ -863,6 +908,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 justifyContent: "center",
                 gap: isMobile ? "20px" : "0px",
                 flexDirection: isMobile ? "column" : "row",
+                minHeight: isMobile ? "200vh" : undefined,
+                ...(isMobile && { padding: "0px" }),
               }}
               ref={section2Ref}
             >
@@ -874,6 +921,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   alignItems: "center",
                   zIndex: isMobile ? "auto" : 1,
                   position: "relative",
+                  ...(isMobile && { padding: "0px 20px" }),
                 }}
               >
                 <DraggableSection color="blue" static>
@@ -898,12 +946,12 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
               {/* Right column: AnimatedScene */}
               {isMobile ? (
-                // Mobile: AnimatedScene flows normally in layout
+                // Mobile: Container with same size as other animated sections
                 <div
                   style={{
-                    flex: "1",
+                    width: "100%",
+                    height: "100vh",
                     position: "relative",
-                    minHeight: "400px",
                   }}
                 >
                   <AnimatedScene progress={0} />
@@ -1027,6 +1075,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 gap: isMobile ? "20px" : "0px",
                 flexDirection: isMobile ? "column" : "row",
                 minHeight: isMobile ? "200vh" : undefined,
+                ...(isMobile && { padding: "0px" }),
               }}
               ref={section4Ref}
             >
@@ -1038,6 +1087,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   alignItems: "center",
                   zIndex: isMobile ? "auto" : 1,
                   position: "relative",
+                  ...(isMobile && { padding: "0px 20px" }),
                 }}
               >
                 <DraggableSection color="yellow" static>
@@ -1176,32 +1226,34 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             >
               <DraggableSection color="red" static>
                 <div style={getSecondCardStyle()}>
+                  <h3 style={getSectionHeadingStyle("#DA291C")}>
+                    One shot. Then Ship It.
+                  </h3>
                   <div style={getContentWrapperStyle()}>
-                    <span>You love your group chat. Meet your group app. </span>
+                    <b style={getSubheadingBoldStyle()}>
+                      Get more app for your prompt.
+                    </b>
                     <span>
-                      Remember that camping trip when nobody packed coffee? The
-                      Friendsgiving with six mac n' cheeses and no turkey? You
-                      love your friends, but organizing them can be a headache.
-                      Make planning painless with custom community apps, made by
-                      and for your friends, for everything you do together.
+                      When you vibe code an app, your coding agent has to choose a web stack.
+                      When you tell your agent to use the Vibe Stack, you're giving it an
+                      unfair advantage. Because Vibes collapses <i>application code</i> and
+                      <i>application state</i> into a single, local HTML file.
                     </span>
                     <span>
-                      Like volunteer sign-ups and school drop-offs. Project
-                      checklists and vacation planners. Pick-up basketball
-                      schedules and fantasy football rankings. A cooperative
-                      chore wheel for the roomies and the ultimate Oscars
-                      bracket for movie club. Whatever the vibe, you can build
-                      it with Vibes.
+                      Think about it. AI doesn't make apps - it makes <i>text</i>. Embedding
+                      the database in javascript (via the browser) lets your agent describe
+                      an entire app—including its persistence layer—<strong>in one shot</strong>.
                     </span>
                     <span>
-                      Share and use your new apps instantly, and remix them on
-                      the fly. Everyone's ideas are welcome and everyone's data
-                      is protected. This is software that communities build
-                      together in real time — to make life easier, fairer, and
-                      more fun for everyone.
+                      This means the AI doesn't have to give you, the human, instructions about
+                      how to setup a server, or import a schema. It just gives you a working app.
+                      Fast. And it works as pure HTML, so you're not locked into someone's virtual
+                      server.
                     </span>
                     <span>
-                      You and your friends aren't users anymore. You're makers.
+                      This yields a brand new vibe coding magic trick: prompt-to-vibe. A single file
+                      encodes UI, logic, and seed data, making vibe-coded apps trivially shareable
+                      and endlessly remixable by your group chat.
                     </span>
                   </div>
                 </div>
@@ -1219,6 +1271,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 gap: isMobile ? "20px" : "0px",
                 flexDirection: isMobile ? "column" : "row",
                 minHeight: isMobile ? "200vh" : undefined,
+                ...(isMobile && { padding: "0px" }),
               }}
               ref={section6Ref}
             >
@@ -1230,6 +1283,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   alignItems: "center",
                   zIndex: isMobile ? "auto" : 1,
                   position: "relative",
+                  ...(isMobile && { padding: "0px 20px" }),
                 }}
               >
                 <DraggableSection color="red" static>
@@ -1242,12 +1296,13 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     </b>
                     <span>
                       Share your creations with a simple link. Your friends can
-                      jump in immediately — no downloads, no sign-ups, no
-                      waiting.
+                      jump in immediately — no downloads, no waiting.
                     </span>
                     <span>
                       Everyone's changes sync in real-time, and your data stays
-                      safe and encrypted locally.
+                      safe and encrypted locally. And the entire community of Vibes
+                      is like a community-run app store with no monopolist gatekeeper
+                      (shots fired).
                     </span>
                   </div>
                 </DraggableSection>
@@ -1365,13 +1420,31 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ref={section8Ref}
             >
               <DraggableSection color="grey" static>
-                <h3 style={getSectionHeadingStyle("#000000")}>Section 8</h3>
+                <h3 style={getSectionHeadingStyle("#000000")}>
+                  Join the party
+                </h3>
                 <div style={getContentWrapperStyle()}>
                   <b style={getSubheadingBoldStyle()}>
-                    Content for light section
+                    You're early. But right on time.
                   </b>
                   <span>
-                    This is the light section with color oklch(84.6% 0.026 111).
+                    Volunteer sign-ups and school drop-offs. Project checklists
+                    and vacation planners. Pick-up basketball schedules and
+                    fantasy football rankings. A cooperative chore wheel for the
+                    roomies and the ultimate Oscars bracket for movie club. Each
+                    of these concepts can be vibe coded in <i>60 seconds</i>. Whatever
+                    the vibe, you can build it with Vibes.
+                  </span>
+                  <span>
+                    Everyone's ideas are welcome and everyone's data is protected. This is
+                    software that communities build together in real time — to make life
+                    easier, fairer, and more fun for everyone.
+                  </span>
+                  <span>
+                    You and your friends aren't users anymore. You're makers.
+                  </span>
+                  <span>
+                    Curious? Try a prompt using our open source web builder. Join our Discord, read our Substack, and follow us on YouTube, Github, and Bluesky.
                   </span>
                 </div>
               </DraggableSection>
