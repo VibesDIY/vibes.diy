@@ -17,6 +17,7 @@ export class ClerkTokenStrategy implements TokenStrategie {
   private getClerkToken: () => Promise<string | null>;
   private deviceId?: string;
   private opts?: ToCloudOpts;
+  private cacheByDevice = new Map<string, { token: string; expiresAt: number }>();
 
   constructor(getClerkToken: () => Promise<string | null>) {
     this.getClerkToken = getClerkToken;
@@ -35,6 +36,41 @@ export class ClerkTokenStrategy implements TokenStrategie {
     this.opts = opts;
   }
 
+  private getCachedToken(deviceId: string | undefined): string | undefined {
+    if (!deviceId) return undefined;
+
+    const entry = this.cacheByDevice.get(deviceId);
+    if (!entry) return undefined;
+
+    if (Date.now() >= entry.expiresAt) {
+      this.cacheByDevice.delete(deviceId);
+      return undefined;
+    }
+
+    return entry.token;
+  }
+
+  private updateCacheFromClaims(deviceId: string, jwt: string, claims?: { exp?: unknown }): void {
+    if (!deviceId) return;
+
+    const now = Date.now();
+
+    if (claims && typeof claims.exp === 'number') {
+      const expireTime = claims.exp * 1000;
+
+      // Respect the token's own expiry when available, with a small
+      // safety window to refresh slightly before it actually expires.
+      const safetyExpiry = expireTime - 30000;
+      if (safetyExpiry > now) {
+        this.cacheByDevice.set(deviceId, { token: jwt, expiresAt: safetyExpiry });
+        return;
+      }
+    }
+
+    // Fallback: simple 30s in-memory TTL when we don't have a usable exp.
+    this.cacheByDevice.set(deviceId, { token: jwt, expiresAt: now + 30000 });
+  }
+
   async tryToken(
     sthis: SuperThis,
     logger: Logger,
@@ -43,21 +79,26 @@ export class ClerkTokenStrategy implements TokenStrategie {
     const deviceId = this.deviceId;
     if (!deviceId) return undefined;
 
+    // First, reuse any valid in-memory token to avoid unnecessary
+    // dashboard or Clerk calls.
+    const cachedToken = this.getCachedToken(deviceId);
+    if (cachedToken) {
+      return { token: cachedToken };
+    }
+
     // Get KeyBag for storing/retrieving cloud tokens
-    // Note: KeyBag handles token caching internally, so no need for in-memory cache here
     const kb = await getKeyBag(sthis);
 
     // Try to get existing cloud token from KeyBag
     const existingTokenResult = await kb.getJwt(deviceId);
     if (existingTokenResult.isOk()) {
       const { jwt, claims } = existingTokenResult.Ok();
-      // Check if token is still valid (not expired, with 60s buffer)
-      if (claims?.exp && typeof claims.exp === 'number') {
-        const now = Date.now();
-        const expireTime = claims.exp * 1000;
-        if (now < expireTime - 60000) {
-          return { token: jwt };
-        }
+
+      this.updateCacheFromClaims(deviceId, jwt, claims as { exp?: unknown } | undefined);
+
+      const cachedFromKeyBag = this.getCachedToken(deviceId);
+      if (cachedFromKeyBag) {
+        return { token: cachedFromKeyBag };
       }
     }
 
@@ -90,6 +131,16 @@ export class ClerkTokenStrategy implements TokenStrategie {
 
     // Store the cloud token in KeyBag (it will parse claims automatically)
     await kb.setJwt(deviceId, cloudToken);
+
+    // Refresh cache from KeyBag so we reuse the JWT's own exp when
+    // available, falling back to a 30s TTL when it is not.
+    const storedTokenResult = await kb.getJwt(deviceId);
+    if (storedTokenResult.isOk()) {
+      const { jwt, claims } = storedTokenResult.Ok();
+      this.updateCacheFromClaims(deviceId, jwt, claims as { exp?: unknown } | undefined);
+    } else {
+      this.updateCacheFromClaims(deviceId, cloudToken);
+    }
 
     // Return the cloud token
     return { token: cloudToken };

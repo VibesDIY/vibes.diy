@@ -75,6 +75,10 @@ export async function isJWTExpired(token: string): Promise<boolean> {
 export function toCloud(
   opts?: UseFpToCloudParam & { tokenStrategy?: TokenStrategie }
 ): ToCloudAttachable {
+  if (opts?.strategy && opts?.tokenStrategy) {
+    throw new Error("toCloud: provide either 'strategy' or 'tokenStrategy', not both.");
+  }
+
   const attachable = originalToCloud({
     ...opts,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
