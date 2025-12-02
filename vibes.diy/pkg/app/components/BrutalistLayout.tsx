@@ -34,7 +34,7 @@ export default function BrutalistLayout({
         sessionId=""
       />
 
-      <div className="px-8 py-8">
+      <div className="px-8 pb-8 pt-4">
         {/* Hamburger menu button - top left in normal flow with z-index */}
         <div className="mb-6 relative z-20">
           <VibesSwitch
