@@ -36,6 +36,22 @@ import {
   getSectionHeadingStyle,
   getContentWrapperStyle,
   getSubheadingBoldStyle,
+  getImageCardStyle,
+  getImageCardStyleSmall,
+  getSectionWithAnimatedSceneStyle,
+  getAnimatedSectionTextColumnStyle,
+  getStaticAnimatedSceneMobileContainerStyle,
+  getAnimatedSceneDesktopPlaceholderStyle,
+  getStaticAnimatedSceneDesktopOverlayStyle,
+  getAnimatedSceneDesktopLeftSpacerStyle,
+  getAnimatedSceneDesktopRightContainerStyle,
+  getScrollableAnimatedSceneMobileContainerStyle,
+  getScrollableAnimatedSceneWrapperStyle,
+  getScrollableAnimatedSceneInnerStyle,
+  getStickyAnimatedSceneMobileStyle,
+  getStickyAnimatedSceneDesktopStyle,
+  getStickyAnimatedSceneDesktopLeftSpacerStyle,
+  getStickyAnimatedSceneDesktopRightContainerStyle,
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
@@ -540,7 +556,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       // On mobile, account for the 64px menu at the top
       const menuHeight = isMobile ? 64 : 0;
       const availableHeight = window.innerHeight - menuHeight;
-      const viewportCenter = menuHeight + (availableHeight / 2);
+      const viewportCenter = menuHeight + availableHeight / 2;
 
       const targetScroll = elementCenter - viewportCenter;
 
@@ -551,18 +567,24 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       });
     };
 
-    const handleSection4Interaction = (e: WheelEvent | MouseEvent | TouchEvent) => {
+    const handleSection4Interaction = (
+      e: WheelEvent | MouseEvent | TouchEvent,
+    ) => {
       if (animatedSection4Container?.contains(e.target as Node)) {
         // On mobile, center the container; on desktop, center the section
-        const targetElement = isMobile && container4Mobile ? container4Mobile : section4;
+        const targetElement =
+          isMobile && container4Mobile ? container4Mobile : section4;
         if (targetElement) centerElement(targetElement);
       }
     };
 
-    const handleSection6Interaction = (e: WheelEvent | MouseEvent | TouchEvent) => {
+    const handleSection6Interaction = (
+      e: WheelEvent | MouseEvent | TouchEvent,
+    ) => {
       if (animatedSection6Container?.contains(e.target as Node)) {
         // On mobile, center the container; on desktop, center the section
-        const targetElement = isMobile && container6Mobile ? container6Mobile : section6;
+        const targetElement =
+          isMobile && container6Mobile ? container6Mobile : section6;
         if (targetElement) centerElement(targetElement);
       }
     };
@@ -732,7 +754,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             <DraggableCard color="blue" x={550} y={120}>
               <p style={getCardTextStyle("250px")}>
                 No coding experience required. Just type an idea, and invite
-                your friends. 
+                your friends.
               </p>
             </DraggableCard>
 
@@ -749,52 +771,28 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             <DraggableCard color="red" x={800} y={320}>
               <p style={getCardTextStyle("200px")}>
                 Our unhackable{" "}
-                <a href="http://fireproof.storage/">
-                  vibe coding database
-                </a>{" "}
-                 encrypts all your data. Which means the group
-                chat's lore stays local, portable, and safe.
+                <a href="http://fireproof.storage/">vibe coding database</a>{" "}
+                encrypts all your data. Which means the group chat's lore stays
+                local, portable, and safe.
               </p>
             </DraggableCard>
             <DraggableCard color="yellow" x={1000} y={1700}>
-              <p
-                style={{
-                  maxWidth: "250px",
-                  fontWeight: "bold",
-                  fontSize: "20px",
-                  lineHeight: "25px",
-                }}
-              >
+              <p style={getImageCardStyle()}>
                 <img src={vibesStack} style={getFullSizeImageStyle()} />
               </p>
             </DraggableCard>
             <DraggableCard color="blue" x={800} y={4100}>
-              <p
-                style={{
-                  maxWidth: "250px",
-                  fontWeight: "bold",
-                  fontSize: "20px",
-                  lineHeight: "25px",
-                }}
-              >
+              <p style={getImageCardStyle()}>
                 <img src={fireproofLogo} style={getFullSizeImageStyle()} />
               </p>
             </DraggableCard>
 
             <DraggableCard color="yellow" x={800} y={5690}>
-              <p
-                style={{
-                  maxWidth: "200px",
-                  fontWeight: "bold",
-                  fontSize: "20px",
-                  lineHeight: "25px",
-                }}
-              >
+              <p style={getImageCardStyleSmall()}>
                 <img src={htmlpng} style={getFullSizeImageStyle()} />
               </p>
             </DraggableCard>
-            
-            
+
             {!isMobile && (
               <div
                 className="chat-container-wrapper"
@@ -880,19 +878,25 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     The Vibe Coding Stack That Fits In Your Pocket
                   </h3>
                   <b style={getSubheadingBoldStyle()}>
-                    Vibes is an open source web stack was designed for vibe coding - easy, fast, secure, and portable
+                    Vibes is an open source web stack was designed for vibe
+                    coding - easy, fast, secure, and portable
                   </b>
                   <span>
-                    <b>Easy</b> because it uses Fireproof, a database that lives in your web browser and syncs without a web server.
+                    <b>Easy</b> because it uses Fireproof, a database that lives
+                    in your web browser and syncs without a web server.
                   </span>
                   <span>
-                    <b>Fast</b> because the data is local, so you don't need to ask a server for it.
+                    <b>Fast</b> because the data is local, so you don't need to
+                    ask a server for it.
                   </span>
                   <span>
-                    <b>Secure</b> because all data is encrypted by default. No .env variables to accidentally check into Github!
+                    <b>Secure</b> because all data is encrypted by default. No
+                    .env variables to accidentally check into Github!
                   </span>
                   <span>
-                    <b>Portable</b>, because you don't have to host these apps with us. It's all open source - Vibes work anywhere the web works.
+                    <b>Portable</b>, because you don't have to host these apps
+                    with us. It's all open source - Vibes work anywhere the web
+                    works.
                   </span>
                 </div>
               </DraggableSection>
@@ -902,28 +906,12 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
-                position: "relative",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "center",
-                gap: isMobile ? "20px" : "0px",
-                flexDirection: isMobile ? "column" : "row",
-                minHeight: isMobile ? "200vh" : undefined,
-                ...(isMobile && { padding: "0px" }),
+                ...getSectionWithAnimatedSceneStyle(isMobile),
               }}
               ref={section2Ref}
             >
               {/* Left column: Text (1/3 width) */}
-              <div
-                style={{
-                  flex: isMobile ? "1" : "0 0 33.33%",
-                  display: "flex",
-                  alignItems: "center",
-                  zIndex: isMobile ? "auto" : 1,
-                  position: "relative",
-                  ...(isMobile && { padding: "0px 20px" }),
-                }}
-              >
+              <div style={getAnimatedSectionTextColumnStyle(isMobile)}>
                 <DraggableSection color="blue" static>
                   <h3 style={getSectionHeadingStyle("#5398c9")}>
                     You're about to make an app
@@ -947,51 +935,20 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               {/* Right column: AnimatedScene */}
               {isMobile ? (
                 // Mobile: Container with same size as other animated sections
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100vh",
-                    position: "relative",
-                  }}
-                >
+                <div style={getStaticAnimatedSceneMobileContainerStyle()}>
                   <AnimatedScene progress={0} />
                 </div>
               ) : (
                 <>
                   {/* Desktop: Visual placeholder (2/3 width) */}
-                  <div
-                    style={{
-                      flex: "0 0 66.66%",
-                      position: "relative",
-                      pointerEvents: "none",
-                    }}
-                  />
+                  <div style={getAnimatedSceneDesktopPlaceholderStyle()} />
 
                   {/* Desktop: AnimatedScene overlay covering full section */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: 0,
-                      right: 0,
-                      transform: "translateY(-50%)",
-                      height: "100vh",
-                      display: "flex",
-                      alignItems: "center",
-                      pointerEvents: "none",
-                      zIndex: 0,
-                    }}
-                  >
+                  <div style={getStaticAnimatedSceneDesktopOverlayStyle()}>
                     {/* Empty space for left column (1/3) */}
-                    <div style={{ flex: "0 0 33.33%" }} />
+                    <div style={getAnimatedSceneDesktopLeftSpacerStyle()} />
                     {/* AnimatedScene in right area (2/3) */}
-                    <div
-                      style={{
-                        flex: "0 0 66.66%",
-                        position: "relative",
-                        height: "100%",
-                      }}
-                    >
+                    <div style={getAnimatedSceneDesktopRightContainerStyle()}>
                       <AnimatedScene progress={0} />
                     </div>
                   </div>
@@ -1068,28 +1025,12 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
-                position: "relative",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "center",
-                gap: isMobile ? "20px" : "0px",
-                flexDirection: isMobile ? "column" : "row",
-                minHeight: isMobile ? "200vh" : undefined,
-                ...(isMobile && { padding: "0px" }),
+                ...getSectionWithAnimatedSceneStyle(isMobile),
               }}
               ref={section4Ref}
             >
               {/* Left column: Text (1/3 width) */}
-              <div
-                style={{
-                  flex: isMobile ? "1" : "0 0 33.33%",
-                  display: "flex",
-                  alignItems: "center",
-                  zIndex: isMobile ? "auto" : 1,
-                  position: "relative",
-                  ...(isMobile && { padding: "0px 20px" }),
-                }}
-              >
+              <div style={getAnimatedSectionTextColumnStyle(isMobile)}>
                 <DraggableSection color="yellow" static>
                   <h3 style={getSectionHeadingStyle("#FEDD00")}>
                     Back to your counter app...
@@ -1118,43 +1059,16 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 // Mobile: Container with placeholder and overlay
                 <div
                   ref={animatedSceneContainer4MobileRef}
-                  style={{
-                    width: "100%",
-                    height: "100vh",
-                    position: "relative",
-                  }}
+                  style={getScrollableAnimatedSceneMobileContainerStyle()}
                 >
                   {/* Mobile: Scrollable AnimatedScene overlay centered in container */}
                   <div
                     className="animated-scene-wrapper"
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: 0,
-                      right: 0,
-                      transform: "translateY(-50%)",
-                      height: "calc(100vh - 64px)",
-                      overflowY: "auto",
-                      overflowX: "hidden",
-                      background: "transparent",
-                      zIndex: 10,
-                      pointerEvents: "auto",
-                      WebkitOverflowScrolling: "touch",
-                    }}
+                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
                     ref={animatedSceneSection4MobileRef}
                   >
-                    <div style={{ height: "200vh" }}>
-                      <div
-                        style={{
-                          position: "sticky",
-                          top: 0,
-                          width: "100%",
-                          height: "calc(100vh - 64px)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
+                    <div style={getScrollableAnimatedSceneInnerStyle()}>
+                      <div style={getStickyAnimatedSceneMobileStyle()}>
                         <AnimatedScene progress={animationProgress} />
                       </div>
                     </div>
@@ -1163,49 +1077,23 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ) : (
                 <>
                   {/* Desktop: Visual placeholder (2/3 width) */}
-                  <div
-                    style={{
-                      flex: "0 0 66.66%",
-                      position: "relative",
-                      pointerEvents: "none",
-                    }}
-                  />
+                  <div style={getAnimatedSceneDesktopPlaceholderStyle()} />
 
                   {/* Desktop: Scrollable AnimatedScene overlay covering full section */}
                   <div
                     className="animated-scene-wrapper"
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: 0,
-                      right: 0,
-                      transform: "translateY(-50%)",
-                      height: "100vh",
-                      overflowY: "auto",
-                      overflowX: "hidden",
-                      background: "transparent",
-                      zIndex: 10,
-                      pointerEvents: "auto",
-                    }}
+                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
                     ref={animatedSceneSection4Ref}
                   >
-                    <div style={{ height: "200vh" }}>
-                      <div
-                        style={{
-                          position: "sticky",
-                          top: 0,
-                          width: "100%",
-                          height: "100vh",
-                          display: "flex",
-                        }}
-                      >
+                    <div style={getScrollableAnimatedSceneInnerStyle()}>
+                      <div style={getStickyAnimatedSceneDesktopStyle()}>
                         {/* Empty space for left column (1/3) */}
                         <div
-                          style={{ flex: "0 0 33.33%", pointerEvents: "none" }}
+                          style={getStickyAnimatedSceneDesktopLeftSpacerStyle()}
                         />
                         {/* AnimatedScene in right area (2/3) */}
                         <div
-                          style={{ flex: "0 0 66.66%", position: "relative" }}
+                          style={getStickyAnimatedSceneDesktopRightContainerStyle()}
                         >
                           <AnimatedScene progress={animationProgress} />
                         </div>
@@ -1234,26 +1122,30 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       Get more app for your prompt.
                     </b>
                     <span>
-                      When you vibe code an app, your coding agent has to choose a web stack.
-                      When you tell your agent to use the Vibe Stack, you're giving it an
-                      unfair advantage. Because Vibes collapses <i>application code</i> and
+                      When you vibe code an app, your coding agent has to choose
+                      a web stack. When you tell your agent to use the Vibe
+                      Stack, you're giving it an unfair advantage. Because Vibes
+                      collapses <i>application code</i> and
                       <i>application state</i> into a single, local HTML file.
                     </span>
                     <span>
-                      Think about it. AI doesn't make apps - it makes <i>text</i>. Embedding
-                      the database in javascript (via the browser) lets your agent describe
-                      an entire app—including its persistence layer—<strong>in one shot</strong>.
+                      Think about it. AI doesn't make apps - it makes{" "}
+                      <i>text</i>. Embedding the database in javascript (via the
+                      browser) lets your agent describe an entire app—including
+                      its persistence layer—<strong>in one shot</strong>.
                     </span>
                     <span>
-                      This means the AI doesn't have to give you, the human, instructions about
-                      how to setup a server, or import a schema. It just gives you a working app.
-                      Fast. And it works as pure HTML, so you're not locked into someone's virtual
-                      server.
+                      This means the AI doesn't have to give you, the human,
+                      instructions about how to setup a server, or import a
+                      schema. It just gives you a working app. Fast. And it
+                      works as pure HTML, so you're not locked into someone's
+                      virtual server.
                     </span>
                     <span>
-                      This yields a brand new vibe coding magic trick: prompt-to-vibe. A single file
-                      encodes UI, logic, and seed data, making vibe-coded apps trivially shareable
-                      and endlessly remixable by your group chat.
+                      This yields a brand new vibe coding magic trick:
+                      prompt-to-vibe. A single file encodes UI, logic, and seed
+                      data, making vibe-coded apps trivially shareable and
+                      endlessly remixable by your group chat.
                     </span>
                   </div>
                 </div>
@@ -1264,28 +1156,12 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
-                position: "relative",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "center",
-                gap: isMobile ? "20px" : "0px",
-                flexDirection: isMobile ? "column" : "row",
-                minHeight: isMobile ? "200vh" : undefined,
-                ...(isMobile && { padding: "0px" }),
+                ...getSectionWithAnimatedSceneStyle(isMobile),
               }}
               ref={section6Ref}
             >
               {/* Left column: Text (1/3 width) */}
-              <div
-                style={{
-                  flex: isMobile ? "1" : "0 0 33.33%",
-                  display: "flex",
-                  alignItems: "center",
-                  zIndex: isMobile ? "auto" : 1,
-                  position: "relative",
-                  ...(isMobile && { padding: "0px 20px" }),
-                }}
-              >
+              <div style={getAnimatedSectionTextColumnStyle(isMobile)}>
                 <DraggableSection color="red" static>
                   <h3 style={getSectionHeadingStyle("#D94827")}>
                     Build together, instantly
@@ -1300,9 +1176,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     </span>
                     <span>
                       Everyone's changes sync in real-time, and your data stays
-                      safe and encrypted locally. And the entire community of Vibes
-                      is like a community-run app store with no monopolist gatekeeper
-                      (shots fired).
+                      safe and encrypted locally. And the entire community of
+                      Vibes is like a community-run app store with no monopolist
+                      gatekeeper (shots fired).
                     </span>
                   </div>
                 </DraggableSection>
@@ -1313,43 +1189,16 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 // Mobile: Container with placeholder and overlay
                 <div
                   ref={animatedSceneContainer6MobileRef}
-                  style={{
-                    width: "100%",
-                    height: "100vh",
-                    position: "relative",
-                  }}
+                  style={getScrollableAnimatedSceneMobileContainerStyle()}
                 >
                   {/* Mobile: Scrollable AnimatedScene overlay centered in container */}
                   <div
                     className="animated-scene-wrapper"
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: 0,
-                      right: 0,
-                      transform: "translateY(-50%)",
-                      height: "calc(100vh - 64px)",
-                      overflowY: "auto",
-                      overflowX: "hidden",
-                      background: "transparent",
-                      zIndex: 10,
-                      pointerEvents: "auto",
-                      WebkitOverflowScrolling: "touch",
-                    }}
+                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
                     ref={animatedSceneSection6MobileRef}
                   >
-                    <div style={{ height: "200vh" }}>
-                      <div
-                        style={{
-                          position: "sticky",
-                          top: 0,
-                          width: "100%",
-                          height: "calc(100vh - 64px)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
+                    <div style={getScrollableAnimatedSceneInnerStyle()}>
+                      <div style={getStickyAnimatedSceneMobileStyle()}>
                         <AnimatedScene progress={animationProgress} />
                       </div>
                     </div>
@@ -1358,49 +1207,23 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ) : (
                 <>
                   {/* Desktop: Visual placeholder (2/3 width) */}
-                  <div
-                    style={{
-                      flex: "0 0 66.66%",
-                      position: "relative",
-                      pointerEvents: "none",
-                    }}
-                  />
+                  <div style={getAnimatedSceneDesktopPlaceholderStyle()} />
 
                   {/* Desktop: Scrollable AnimatedScene overlay covering full section */}
                   <div
                     className="animated-scene-wrapper"
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: 0,
-                      right: 0,
-                      transform: "translateY(-50%)",
-                      height: "100vh",
-                      overflowY: "auto",
-                      overflowX: "hidden",
-                      background: "transparent",
-                      zIndex: 10,
-                      pointerEvents: "auto",
-                    }}
+                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
                     ref={animatedSceneSection6Ref}
                   >
-                    <div style={{ height: "200vh" }}>
-                      <div
-                        style={{
-                          position: "sticky",
-                          top: 0,
-                          width: "100%",
-                          height: "100vh",
-                          display: "flex",
-                        }}
-                      >
+                    <div style={getScrollableAnimatedSceneInnerStyle()}>
+                      <div style={getStickyAnimatedSceneDesktopStyle()}>
                         {/* Empty space for left column (1/3) */}
                         <div
-                          style={{ flex: "0 0 33.33%", pointerEvents: "none" }}
+                          style={getStickyAnimatedSceneDesktopLeftSpacerStyle()}
                         />
                         {/* AnimatedScene in right area (2/3) */}
                         <div
-                          style={{ flex: "0 0 66.66%", position: "relative" }}
+                          style={getStickyAnimatedSceneDesktopRightContainerStyle()}
                         >
                           <AnimatedScene progress={animationProgress} />
                         </div>
@@ -1432,19 +1255,22 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     and vacation planners. Pick-up basketball schedules and
                     fantasy football rankings. A cooperative chore wheel for the
                     roomies and the ultimate Oscars bracket for movie club. Each
-                    of these concepts can be vibe coded in <i>60 seconds</i>. Whatever
-                    the vibe, you can build it with Vibes.
+                    of these concepts can be vibe coded in <i>60 seconds</i>.
+                    Whatever the vibe, you can build it with Vibes.
                   </span>
                   <span>
-                    Everyone's ideas are welcome and everyone's data is protected. This is
-                    software that communities build together in real time — to make life
-                    easier, fairer, and more fun for everyone.
+                    Everyone's ideas are welcome and everyone's data is
+                    protected. This is software that communities build together
+                    in real time — to make life easier, fairer, and more fun for
+                    everyone.
                   </span>
                   <span>
                     You and your friends aren't users anymore. You're makers.
                   </span>
                   <span>
-                    Curious? Try a prompt using our open source web builder. Join our Discord, read our Substack, and follow us on YouTube, Github, and Bluesky.
+                    Curious? Try a prompt using our open source web builder.
+                    Join our Discord, read our Substack, and follow us on
+                    YouTube, Github, and Bluesky.
                   </span>
                 </div>
               </DraggableSection>

@@ -603,3 +603,151 @@ export const getSubheadingBoldStyle = (): CSSProperties => ({
   fontSize: "28px",
   lineHeight: "28px",
 });
+
+// Image card styles (for cards containing images)
+export const getImageCardStyle = (): CSSProperties => ({
+  maxWidth: "250px",
+  fontWeight: "bold",
+  fontSize: "20px",
+  lineHeight: "25px",
+});
+
+export const getImageCardStyleSmall = (): CSSProperties => ({
+  maxWidth: "200px",
+  fontWeight: "bold",
+  fontSize: "20px",
+  lineHeight: "25px",
+});
+
+// Section with AnimatedScene layout styles
+export const getSectionWithAnimatedSceneStyle = (
+  isMobile: boolean,
+): CSSProperties => ({
+  position: "relative",
+  display: "flex",
+  alignItems: "stretch",
+  justifyContent: "center",
+  gap: isMobile ? "20px" : "0px",
+  flexDirection: isMobile ? "column" : "row",
+  minHeight: isMobile ? "200vh" : undefined,
+  ...(isMobile && { padding: "0px" }),
+});
+
+// Left column for text content in AnimatedScene sections
+export const getAnimatedSectionTextColumnStyle = (
+  isMobile: boolean,
+): CSSProperties => ({
+  flex: isMobile ? "1" : "0 0 33.33%",
+  display: "flex",
+  alignItems: "center",
+  zIndex: isMobile ? "auto" : 1,
+  position: "relative",
+  ...(isMobile && { padding: "0px 20px" }),
+});
+
+// Mobile: Simple container for static AnimatedScene (Section 2)
+export const getStaticAnimatedSceneMobileContainerStyle =
+  (): CSSProperties => ({
+    width: "100%",
+    height: "100vh",
+    position: "relative",
+  });
+
+// Desktop: Visual placeholder for right column (2/3 width)
+export const getAnimatedSceneDesktopPlaceholderStyle = (): CSSProperties => ({
+  flex: "0 0 66.66%",
+  position: "relative",
+  pointerEvents: "none",
+});
+
+// Desktop: AnimatedScene overlay for Section 2 (static scene)
+export const getStaticAnimatedSceneDesktopOverlayStyle = (): CSSProperties => ({
+  position: "absolute",
+  top: "50%",
+  left: 0,
+  right: 0,
+  transform: "translateY(-50%)",
+  height: "100vh",
+  display: "flex",
+  alignItems: "center",
+  pointerEvents: "none",
+  zIndex: 0,
+});
+
+// Desktop: Empty space for left column in AnimatedScene overlay (1/3)
+export const getAnimatedSceneDesktopLeftSpacerStyle = (): CSSProperties => ({
+  flex: "0 0 33.33%",
+});
+
+// Desktop: AnimatedScene container in right area (2/3)
+export const getAnimatedSceneDesktopRightContainerStyle =
+  (): CSSProperties => ({
+    flex: "0 0 66.66%",
+    position: "relative",
+    height: "100%",
+  });
+
+// Mobile: Container for scrollable AnimatedScene (Sections 4 & 6)
+export const getScrollableAnimatedSceneMobileContainerStyle =
+  (): CSSProperties => ({
+    width: "100%",
+    height: "100vh",
+    position: "relative",
+  });
+
+// Mobile/Desktop: Scrollable wrapper for AnimatedScene
+export const getScrollableAnimatedSceneWrapperStyle = (
+  isMobile: boolean,
+): CSSProperties => ({
+  position: "absolute",
+  top: "50%",
+  left: 0,
+  right: 0,
+  transform: "translateY(-50%)",
+  height: isMobile ? "calc(100vh - 64px)" : "100vh",
+  overflowY: "auto",
+  overflowX: "hidden",
+  background: "transparent",
+  zIndex: 10,
+  pointerEvents: "auto",
+  ...(isMobile && { WebkitOverflowScrolling: "touch" }),
+});
+
+// Scrollable content inner container (200vh height for scroll effect)
+export const getScrollableAnimatedSceneInnerStyle = (): CSSProperties => ({
+  height: "200vh",
+});
+
+// Sticky AnimatedScene container for scroll effect (mobile)
+export const getStickyAnimatedSceneMobileStyle = (): CSSProperties => ({
+  position: "sticky",
+  top: 0,
+  width: "100%",
+  height: "calc(100vh - 64px)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+// Sticky AnimatedScene container for scroll effect (desktop)
+export const getStickyAnimatedSceneDesktopStyle = (): CSSProperties => ({
+  position: "sticky",
+  top: 0,
+  width: "100%",
+  height: "100vh",
+  display: "flex",
+});
+
+// Desktop: Left spacer for sticky AnimatedScene (no pointer events)
+export const getStickyAnimatedSceneDesktopLeftSpacerStyle =
+  (): CSSProperties => ({
+    flex: "0 0 33.33%",
+    pointerEvents: "none",
+  });
+
+// Desktop: Right container for sticky AnimatedScene
+export const getStickyAnimatedSceneDesktopRightContainerStyle =
+  (): CSSProperties => ({
+    flex: "0 0 66.66%",
+    position: "relative",
+  });
