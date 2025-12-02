@@ -198,27 +198,6 @@ describe("SessionSidebar component", () => {
     expect(sidebarContainer).not.toHaveClass("-translate-x-full");
   });
 
-  it("handles close button click", () => {
-    const onClose = vi.fn();
-    const props = {
-      ...mockSessionSidebarProps,
-      isVisible: true,
-      onClose: onClose,
-    };
-
-    render(<SessionSidebar {...props} />);
-
-    // Find the close button (it's a button with an SVG icon, so we use aria-label)
-    const closeButton = screen.getByLabelText("Close sidebar");
-    expect(closeButton).toBeInTheDocument();
-
-    // Click the close button
-    fireEvent.click(closeButton);
-
-    // Check that the onClose callback was called
-    expect(onClose).toHaveBeenCalled();
-  });
-
   it("handles sidebar navigation links", () => {
     // Mock useAuth to return authenticated state
     mocks.mockUseAuth.mockReturnValue({
@@ -246,13 +225,7 @@ describe("SessionSidebar component", () => {
     // This is sufficient to verify that the navigation structure is correct
   });
 
-  it("closes sidebar on mobile when clicking close button", () => {
-    // Mock useAuth to return authenticated state
-    mocks.mockUseAuth.mockReturnValue({
-      isSignedIn: true,
-      isLoaded: true,
-    });
-
+  it("closes sidebar when clicking outside", () => {
     const onClose = vi.fn();
     const props = {
       ...mockSessionSidebarProps,
@@ -262,12 +235,8 @@ describe("SessionSidebar component", () => {
 
     render(<SessionSidebar {...props} />);
 
-    // Find the close button (it's a button with an SVG icon, so we use aria-label)
-    const closeButton = screen.getByLabelText("Close sidebar");
-    expect(closeButton).toBeInTheDocument();
-
-    // Click the close button
-    fireEvent.click(closeButton);
+    // Simulate a click outside the sidebar
+    fireEvent.mouseDown(document.body);
 
     // Check that the onClose callback was called
     expect(onClose).toHaveBeenCalled();
