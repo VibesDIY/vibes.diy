@@ -55,11 +55,34 @@ function VibeInstanceViewerContent() {
     const fullId = `${titleId}-${installId}`;
     const instanceExists = instances.some((inst) => inst._id === fullId);
 
-    // Create instance if it doesn't exist (lazy creation for Fresh Data)
-    // Pass the installId explicitly to ensure correct _id is created
+    // Create instance if it doesn't exist - fetch real title from hosting API
     if (!instanceExists) {
-      // Let error throw - no catch handler
-      createInstance("Fresh Data", {}, installId);
+      const fetchAndCreateInstance = async () => {
+        try {
+          // Fetch app metadata from hosting API
+          const apiBaseUrl =
+            import.meta.env.VITE_API_BASE_URL ||
+            "https://vibes-hosting-v2-preview.jchris.workers.dev";
+          const response = await fetch(`${apiBaseUrl}/api/apps/${titleId}`);
+
+          let title = titleId; // Fallback to slug if fetch fails
+          if (response.ok) {
+            const data = (await response.json()) as {
+              app?: { title?: string };
+            };
+            title = data.app?.title || titleId;
+          }
+
+          // Create instance with real title
+          await createInstance(title, {}, installId);
+        } catch (error) {
+          // If fetch fails, use slug as title
+          console.warn("Failed to fetch app metadata, using slug:", error);
+          await createInstance(titleId, {}, installId);
+        }
+      };
+
+      fetchAndCreateInstance();
     }
   }, [titleId, installId, instances, createInstance, isCreating]);
 

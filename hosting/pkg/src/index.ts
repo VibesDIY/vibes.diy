@@ -1,5 +1,6 @@
 import { fromHono } from "chanfana";
 import { AppCreate } from "./endpoints/appCreate.js";
+import { AppGet } from "./endpoints/appGet.js";
 import {
   ClaudeChat,
   ImageEdit,
@@ -86,6 +87,7 @@ openapi.use("/api/*", async (c, next) => {
 
 // Register OpenAPI endpoints
 openapi.post("/api/apps", AppCreate);
+openapi.get("/api/apps/:slug", AppGet);
 
 // Register OpenAI image endpoints
 openapi.post("/api/openai-image/generate", ImageGenerate);
@@ -107,6 +109,7 @@ export default {
 
 // Test exports - expose internal modules for testing
 export { AppCreate } from "./endpoints/appCreate.js";
+export { AppGet } from "./endpoints/appGet.js";
 // Re-export from hosting-base
 export {
   // the only import of these is tests, they should take direct from hosting-base, and then remove these lines

@@ -215,5 +215,5 @@ export interface ChatInterfaceProps extends ChatState {
 export interface SessionSidebarProps {
   isVisible: boolean;
   onClose: () => void;
-  sessionId: string;
+  sessionId?: string;
 }

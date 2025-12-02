@@ -28,11 +28,7 @@ export default function BrutalistLayout({
   return (
     <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
       {/* SessionSidebar */}
-      <SessionSidebar
-        isVisible={isSidebarVisible}
-        onClose={closeSidebar}
-        sessionId=""
-      />
+      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} />
 
       <div className="px-8 pt-0">
         {/* Hamburger menu button - top left in normal flow with z-index */}
