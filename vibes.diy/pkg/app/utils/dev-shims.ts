@@ -39,7 +39,7 @@ export function setupDevShims() {
   }
 }
 
-import { getLibraryImportMap } from "../config/import-map.js";
+import { getLibraryImportMap } from "../config/importmap.js";
 
 /**
  * Transform bare imports to esm.sh URLs
