@@ -532,3 +532,74 @@ export const getSection8BackgroundStyle = (
     `,
   };
 };
+
+// Link styles for renderMessageWithLinks
+export const getLinkStyle = (): CSSProperties => ({
+  color: "inherit",
+  textDecoration: "underline",
+  cursor: "pointer",
+});
+
+// Hero section heading (Impress the Group Chat)
+export const getHeroHeadingStyle = (): CSSProperties => ({
+  fontWeight: "bold",
+  fontSize: "50px",
+  lineHeight: "50px",
+});
+
+// Hero section subheading
+export const getHeroSubheadingStyle = (): CSSProperties => ({
+  fontWeight: "bold",
+  fontSize: "22px",
+  lineHeight: "36px",
+});
+
+// Card text paragraph (with optional maxWidth)
+export const getCardTextStyle = (maxWidth?: string): CSSProperties => ({
+  maxWidth: maxWidth || undefined,
+  fontWeight: "bold",
+  fontSize: "20px",
+  lineHeight: "25px",
+});
+
+// Computer animation container
+export const getComputerAnimContainerStyle = (): CSSProperties => ({
+  position: "relative",
+  margin: "-16px -8px",
+  width: "320px",
+  height: "242px",
+});
+
+// Full size image
+export const getFullSizeImageStyle = (): CSSProperties => ({
+  width: "100%",
+  height: "100%",
+  display: "block",
+});
+
+// Message wrapper div (100% width)
+export const getMessageContentWrapperStyle = (): CSSProperties => ({
+  width: "100%",
+});
+
+// Section heading h3 (40px, bold, with color)
+export const getSectionHeadingStyle = (color: string): CSSProperties => ({
+  fontWeight: "bold",
+  fontSize: "40px",
+  color: color,
+  lineHeight: "40px",
+});
+
+// Content wrapper div (flex column with gap)
+export const getContentWrapperStyle = (): CSSProperties => ({
+  marginTop: "12px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "18px",
+});
+
+// Subheading bold text (28px)
+export const getSubheadingBoldStyle = (): CSSProperties => ({
+  fontSize: "28px",
+  lineHeight: "28px",
+});
