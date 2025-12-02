@@ -165,12 +165,15 @@ export function useFireproof(nameOrDatabase?: string | Database) {
       : undefined;
   console.log('[useFireproof] Got attachConfig:', !!attachConfig);
 
+  // Memoize the options object to prevent re-creating on every render
+  const options = useMemo(
+    () => (attachConfig ? { attach: attachConfig } : undefined),
+    [attachConfig]
+  );
+
   // Use original useFireproof with augmented database name and optional attach config
   console.log('[useFireproof] Calling originalUseFireproof with:', augmentedDbName, 'attach:', !!attachConfig);
-  const result = originalUseFireproof(
-    augmentedDbName,
-    attachConfig ? { attach: attachConfig } : {}
-  );
+  const result = originalUseFireproof(augmentedDbName, options);
   console.log('[useFireproof] Got result from originalUseFireproof');
 
   // Sync is enabled only when running in a vibe-viewer context and the attach state is connected
