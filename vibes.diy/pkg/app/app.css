@@ -1,14 +1,14 @@
 @font-face {
-  font-family: 'AlteHaasGrotesk';
-  src: url('./assets/fonts/AlteHaasGroteskRegular.ttf') format('truetype');
+  font-family: "AlteHaasGrotesk";
+  src: url("./assets/fonts/AlteHaasGroteskRegular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'AlteHaasGrotesk';
-  src: url('./assets/fonts/AlteHaasGroteskBold.ttf') format('truetype');
+  font-family: "AlteHaasGrotesk";
+  src: url("./assets/fonts/AlteHaasGroteskBold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -56,8 +56,8 @@
   --color-accent-03-dark: #666;
 
   --font-sans:
-    "AlteHaasGrotesk", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    "AlteHaasGrotesk", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 html {

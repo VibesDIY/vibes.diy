@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useClerk } from "@clerk/clerk-react";
+import { SideMenu } from "./SideMenu.js";
 import {
   getContainerStyle,
   getWrapperStyle,
@@ -52,6 +54,10 @@ import {
   getStickyAnimatedSceneDesktopStyle,
   getStickyAnimatedSceneDesktopLeftSpacerStyle,
   getStickyAnimatedSceneDesktopRightContainerStyle,
+  getButtonsWrapper,
+  getButtonsNavbar,
+  getNavbarButtonIconWrapper,
+  getNavbarButtonLabel,
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
@@ -66,6 +72,10 @@ import computerAnimGif from "../../assets/computer-anim.gif";
 import htmlpng from "../../assets/html.png";
 import vibesStack from "../../assets/vibes-stack.png";
 import fireproofLogo from "../../assets/fireproof-logo.png";
+import {
+  LoginIcon,
+  SettingsIcon,
+} from "../../../../../use-vibes/base/components/icons/index.js";
 
 // Helper function to convert URLs in text to clickable links
 const renderMessageWithLinks = (text: string) => {
@@ -94,6 +104,7 @@ const renderMessageWithLinks = (text: string) => {
 export const HomeScreen = (_props: HomeScreenProps) => {
   const isMobile = useIsMobile();
   const isDarkMode = usePrefersDarkMode();
+  const clerk = useClerk();
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
   const animatedSceneContainerRef = useRef<HTMLDivElement>(null);
@@ -105,6 +116,14 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   const animatedSceneContainer6MobileRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
+
+  // Shared login function used by both navbar and side menu
+  const handleLogin = async () => {
+    await clerk.redirectToSignIn({
+      redirectUrl: window.location.href,
+    });
+  };
 
   // References for the 8 sections to calculate dynamic backgrounds
   const section1Ref = useRef<HTMLDivElement>(null);
@@ -235,6 +254,109 @@ export const HomeScreen = (_props: HomeScreenProps) => {
           50% {
             transform: translateY(-15px);
           }
+        }
+
+        @keyframes wiggle {
+          0%, 100% {
+            transform: rotate(0deg);
+          }
+          25% {
+            transform: rotate(-5deg);
+          }
+          75% {
+            transform: rotate(5deg);
+          }
+        }
+
+        @keyframes shake {
+          0%, 100% {
+            transform: translateX(0);
+          }
+          25% {
+            transform: translateX(-3px);
+          }
+          75% {
+            transform: translateX(3px);
+          }
+        }
+
+        .navbar-button-wrapper button {
+          width: 64px;
+          justify-content: center;
+        }
+
+        .navbar-button-wrapper .navbar-button-label {
+          width: 0;
+          padding: 0;
+        }
+
+        .navbar-button-wrapper:hover button {
+          width: 200px !important;
+          justify-content: flex-start !important;
+        }
+
+        .navbar-button-wrapper:hover .navbar-button-label {
+          opacity: 1 !important;
+          width: auto !important;
+          max-width: 150px !important;
+          padding: 0 16px 0 8px !important;
+        }
+
+        .navbar-button-wrapper:hover .navbar-button-icon {
+          animation: wiggle 0.6s ease-in-out infinite;
+        }
+
+        button:active {
+          animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes slideInItem {
+          from {
+            opacity: 0;
+            transform: translateX(50px) rotate(2deg);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0) rotate(0deg);
+          }
+        }
+
+        .side-menu-item:hover {
+          transform: translateX(-8px);
+          box-shadow: 10px 10px 0px #231F20 !important;
+        }
+
+        .side-menu-item:active {
+          transform: translateX(-4px);
+          box-shadow: 6px 6px 0px #231F20 !important;
+        }
+
+        button[style*="getSideMenuLoginButton"]:hover {
+          transform: scale(1.02);
+          box-shadow: 8px 8px 0px #231F20 !important;
+        }
+
+        button[style*="getSideMenuLoginButton"]:active {
+          transform: scale(0.98);
+          box-shadow: 4px 4px 0px #231F20 !important;
         }
 
         .message-current-user, .message-other-user {
@@ -666,6 +788,56 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       <div style={getBlackBorderInnerWrapper()} ref={scrollContainerRef}>
         <div style={getMenuStyle()}>
           <VibesSwitch size={64} />
+          <div style={getButtonsWrapper()}>
+            <div className="navbar-button-wrapper">
+              <button
+                style={getButtonsNavbar("#EDCE02")}
+                onClick={() => setIsSideMenuOpen(true)}
+              >
+                <div
+                  className="navbar-button-icon"
+                  style={getNavbarButtonIconWrapper()}
+                >
+                  <SettingsIcon
+                    fill="#fffff0"
+                    bgFill="#231F20"
+                    width={35}
+                    height={35}
+                  />
+                </div>
+                <div
+                  className="navbar-button-label"
+                  style={getNavbarButtonLabel()}
+                >
+                  Settings
+                </div>
+              </button>
+            </div>
+            <div className="navbar-button-wrapper">
+              <button
+                style={getButtonsNavbar("#D92A1C")}
+                onClick={handleLogin}
+              >
+                <div
+                  className="navbar-button-icon"
+                  style={getNavbarButtonIconWrapper()}
+                >
+                  <LoginIcon
+                    fill="#fffff0"
+                    bgFill="#231F20"
+                    width={35}
+                    height={35}
+                  />
+                </div>
+                <div
+                  className="navbar-button-label"
+                  style={getNavbarButtonLabel()}
+                >
+                  Log In
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div
@@ -1288,6 +1460,13 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             </section>
           </div>
         </div>
+
+        {/* Side Menu */}
+        <SideMenu
+          isOpen={isSideMenuOpen}
+          onClose={() => setIsSideMenuOpen(false)}
+          onLogin={handleLogin}
+        />
       </div>
     </div>
   );

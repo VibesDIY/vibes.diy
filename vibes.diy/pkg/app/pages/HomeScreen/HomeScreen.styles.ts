@@ -92,6 +92,7 @@ export const getMenuStyle = (): CSSProperties => ({
   backgroundColor: "#fefff2",
   display: "flex",
   alignItems: "center",
+  justifyContent: "space-between",
   padding: "0 20px",
   zIndex: 1000, // Very high z-index to stay on top of everything
   borderBottom: "1px solid black",
@@ -99,6 +100,55 @@ export const getMenuStyle = (): CSSProperties => ({
   borderTopLeftRadius: "10px",
   borderTopRightRadius: "10px",
   boxShadow: `0px 1px 0px 0px "#fefff2"`,
+});
+
+// Buttons wrapper
+export const getButtonsWrapper = (): CSSProperties => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+// Buttons navbar wrapper
+export const getButtonsNavbar = (color: string): CSSProperties => ({
+  display: "flex",
+  alignItems: "center",
+  height: "63px",
+  backgroundColor: color,
+  fontFamily: HomeScreenTheme.fonts.primary,
+  border: "none",
+  cursor: "pointer",
+  transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+  overflow: "hidden",
+  padding: "0",
+  position: "relative",
+});
+
+// Navbar button icon wrapper
+export const getNavbarButtonIconWrapper = (): CSSProperties => ({
+  width: "64px",
+  height: "63px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+});
+
+// Navbar button label (neo-brutalist style)
+export const getNavbarButtonLabel = (): CSSProperties => ({
+  color: "#fefff2",
+  fontSize: "14px",
+  fontWeight: "bold",
+  whiteSpace: "nowrap",
+  fontFamily: HomeScreenTheme.fonts.primary,
+  textTransform: "uppercase",
+  letterSpacing: "1.5px",
+  opacity: 0,
+  transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+  overflow: "hidden",
+  display: "inline-block",
+  textShadow: "1px 1px 2px rgba(0, 0, 0, 0.3)",
+  flexShrink: 0,
 });
 
 // Scrollable container for content (needs high z-index so children can be above grid)
