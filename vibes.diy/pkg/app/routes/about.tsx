@@ -1,7 +1,6 @@
 import React from "react";
-import SimpleAppLayout from "../components/SimpleAppLayout.js";
-import { HomeIcon } from "../components/SessionSidebar/HomeIcon.js";
-import VibesDIYLogo from "../components/VibesDIYLogo.js";
+import BrutalistLayout from "../components/BrutalistLayout.js";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 export function meta() {
   return [
@@ -12,111 +11,89 @@ export function meta() {
 
 export default function About() {
   return (
-    <SimpleAppLayout
-      headerLeft={
-        <div className="flex items-center">
+    <BrutalistLayout title="About" subtitle="AI-powered app builder">
+      {/* What is Vibes DIY */}
+      <BrutalistCard size="md">
+        <h2 className="text-xl font-bold mb-3">What is Vibes DIY?</h2>
+        <p>
+          An AI-powered app builder that lets you create custom applications
+          with your preferred style and functionality. No extensive coding
+          knowledge required.
+        </p>
+      </BrutalistCard>
+
+      {/* Open Source */}
+      <BrutalistCard size="md">
+        <h2 className="text-xl font-bold mb-3">Open source</h2>
+        <p>
+          Share your apps with the{" "}
           <a
-            href="/"
-            className="text-light-primary dark:text-dark-primary hover:text-accent-02-light dark:hover:text-accent-02-dark flex items-center px-3 py-2"
-            aria-label="Go to home"
+            href="https://discord.gg/vnpWycj4Ta"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline dark:text-blue-400"
           >
-            <HomeIcon className="h-6 w-6" />
+            community
+          </a>{" "}
+          and fork the{" "}
+          <a
+            href="https://github.com/fireproof-storage/vibes.diy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline dark:text-blue-400"
+          >
+            builder repo
           </a>
-        </div>
-      }
-    >
-      <div className="h-full">
-        <div className="mw-10 flex items-center justify-center">
-          <VibesDIYLogo width={300} />
-        </div>
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="pb-4 text-2xl font-bold">About</h1>
+          .
+        </p>
+      </BrutalistCard>
 
-          <div className="space-y-6">
-            <div className="border-light-decorative-01 dark:border-dark-decorative-01 rounded-sm border p-5">
-              <h2 className="text-light-primary mb-3 text-xl font-medium dark:text-white">
-                What is Vibes DIY?
-              </h2>
-              <p className="text-light-secondary dark:text-dark-secondary">
-                An AI-powered app builder that lets you create custom
-                applications with your preferred style and functionality. No
-                extensive coding knowledge required.
-              </p>
-            </div>
+      {/* Key Features */}
+      <BrutalistCard size="md">
+        <h2 className="text-xl font-bold mb-3">Key Features</h2>
+        <ul className="ml-5 list-disc space-y-2">
+          <li>
+            <span className="font-medium">AI-Powered Generation</span> - Create
+            applications using natural language prompts
+          </li>
+          <li>
+            <span className="font-medium">Custom Styling</span> - Choose from
+            various design styles or create your own
+          </li>
+          <li>
+            <span className="font-medium">Local-First Architecture</span> - Your
+            data is managed on your device
+          </li>
+          <li>
+            <span className="font-medium">
+              <a
+                href="https://use-fireproof.com"
+                target="_blank"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Fireproof
+              </a>
+            </span>{" "}
+            - Reliable, secure database that syncs across devices
+          </li>
+          <li>
+            <span className="font-medium">Choose Your Model</span> - Access to a
+            variety of AI models through{" "}
+            <a
+              href="https://openrouter.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              OpenRouter
+            </a>
+          </li>
+        </ul>
+      </BrutalistCard>
 
-            <div className="border-light-decorative-01 dark:border-dark-decorative-01 rounded-sm border p-5">
-              <h2 className="text-light-primary mb-3 text-xl font-medium dark:text-white">
-                Open source
-              </h2>
-              <p className="text-light-secondary dark:text-dark-secondary">
-                Share your apps with the{" "}
-                <a
-                  href="https://discord.gg/vnpWycj4Ta"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline dark:text-blue-400"
-                >
-                  community
-                </a>{" "}
-                and fork the{" "}
-                <a
-                  href="https://github.com/fireproof-storage/vibes.diy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline dark:text-blue-400"
-                >
-                  builder repo
-                </a>
-                .
-              </p>
-            </div>
-
-            <div className="border-light-decorative-01 dark:border-dark-decorative-01 rounded-sm border p-5">
-              <h2 className="text-light-primary mb-3 text-xl font-medium dark:text-white">
-                Key Features
-              </h2>
-              <ul className="text-light-secondary dark:text-dark-secondary ml-5 list-disc space-y-2">
-                <li>
-                  <span className="font-medium">AI-Powered Generation</span> -
-                  Create applications using natural language prompts
-                </li>
-                <li>
-                  <span className="font-medium">Custom Styling</span> - Choose
-                  from various design styles or create your own
-                </li>
-                <li>
-                  <span className="font-medium">Local-First Architecture</span>{" "}
-                  - Your data is managed on your device
-                </li>
-                <li>
-                  <span className="font-medium">
-                    <a
-                      href="https://use-fireproof.com"
-                      target="_blank"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      Fireproof
-                    </a>
-                  </span>{" "}
-                  - Reliable, secure database that syncs across devices
-                </li>
-                <li>
-                  <span className="font-medium">Choose Your Model</span> -
-                  Access to a variety of AI models through{" "}
-                  <a
-                    href="https://openrouter.ai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline dark:text-blue-400"
-                  >
-                    OpenRouter
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <p className="text-light-secondary dark:text-dark-secondary text-center text-xs">
+      {/* Footer */}
+      <BrutalistCard size="sm">
+        <p className="text-center text-xs">
           Copyright © 2025{" "}
           <a
             href="https://fireproof.storage"
@@ -147,7 +124,7 @@ export default function About() {
             Terms of Service
           </a>
         </p>
-      </div>
-    </SimpleAppLayout>
+      </BrutalistCard>
+    </BrutalistLayout>
   );
 }
