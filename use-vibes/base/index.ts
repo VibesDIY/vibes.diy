@@ -175,12 +175,12 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // Use original useFireproof with augmented database name and optional attach config
   console.log('[useFireproof] Calling originalUseFireproof with:', augmentedDbName, 'attach:', !!attachConfig);
-  const result = originalUseFireproof(augmentedDbName, options);
-  console.log('[useFireproof] Got result from originalUseFireproof');
+  const fpResult = originalUseFireproof(augmentedDbName, options);
+  console.log('[useFireproof] Got fpResult from originalUseFireproof');
 
   // Destructure the result to get stable references for individual properties
-  const { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach } = result;
-  console.log('[useFireproof] Destructured result, attach state:', attach?.state);
+  const { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach } = fpResult;
+  console.log('[useFireproof] Destructured fpResult, attach state:', attach?.state);
 
   // Sync is enabled only when running in a vibe-viewer context and the attach state is connected
   const rawAttachState = attach?.state;
@@ -355,19 +355,24 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Memoize the return value to prevent creating new object references on every render
   // Depend on individual properties instead of result object to avoid re-memoizing when
   // upstream useFireproof returns a new object reference (which it does on every render)
-  return useMemo(
-    () => ({
-      database,
-      useLiveQuery,
-      useDocument,
-      useAllDocs,
-      useChanges,
-      attach,
-      syncEnabled,
-      share,
-    }),
+  const result = useMemo(
+    () => {
+      console.log('[useFireproof useMemo] Creating new return object');
+      return {
+        database,
+        useLiveQuery,
+        useDocument,
+        useAllDocs,
+        useChanges,
+        attach,
+        syncEnabled,
+        share,
+      };
+    },
     [database, useLiveQuery, useDocument, useAllDocs, useChanges, attach, syncEnabled, share]
   );
+  console.log('[useFireproof] Returning result');
+  return result;
 }
 
 // Re-export specific functions and types from call-ai
