@@ -30,16 +30,25 @@ export function useAllGroups() {
   const groupsResult = useLiveQuery<VibeInstanceDocument>(filterFn);
   console.log('[useAllGroups] Got groupsResult:', groupsResult);
 
-  // Memoize groups to avoid creating new empty array on every render
-  const groups = useMemo(() => groupsResult.docs || [], [groupsResult.docs]);
+  // Extract docs array - groupsResult object changes on every render from useLiveQuery
+  const docs = groupsResult.docs;
+
+  // Memoize groups based on docs array reference
+  const groups = useMemo(() => docs || [], [docs]);
   console.log('[useAllGroups] Returning groups count:', groups.length);
 
-  // Memoize the return value to prevent creating new object references
+  // Memoize isLoading as a boolean to avoid object recreation
+  const isLoading = !docs;
+
+  // Memoize the return value - depend only on stable values
   return useMemo(
-    () => ({
-      groups,
-      isLoading: !groupsResult.docs,
-    }),
-    [groups, groupsResult.docs]
+    () => {
+      console.log('[useAllGroups useMemo] Creating return object');
+      return {
+        groups,
+        isLoading,
+      };
+    },
+    [groups, isLoading]
   );
 }
