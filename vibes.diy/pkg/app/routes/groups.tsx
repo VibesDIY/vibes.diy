@@ -97,7 +97,10 @@ function GroupsContent() {
                             }
                           >
                             <div className="flex gap-4 items-start">
-                              <div className="flex-shrink-0" style={{ width: "200px" }}>
+                              <div
+                                className="flex-shrink-0"
+                                style={{ width: "200px" }}
+                              >
                                 <PublishedVibeCard
                                   slug={titleId}
                                   name={group.description || titleId}

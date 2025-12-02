@@ -178,7 +178,10 @@ function SettingsContent() {
                 Browse all models ↗
               </a>
             </div>
-            <p className="mb-4" style={{ color: 'var(--vibes-text-secondary)' }}>
+            <p
+              className="mb-4"
+              style={{ color: "var(--vibes-text-secondary)" }}
+            >
               Enter or select an AI model to use for code generation
             </p>
 
@@ -191,15 +194,18 @@ function SettingsContent() {
                 placeholder="Enter or select model ID..."
                 className="w-full rounded border-2 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 style={{
-                  borderColor: 'var(--vibes-border-input)',
-                  background: 'var(--vibes-bg-input)',
-                  color: 'var(--vibes-text-primary)',
+                  borderColor: "var(--vibes-border-input)",
+                  background: "var(--vibes-bg-input)",
+                  color: "var(--vibes-text-primary)",
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium" style={{ color: 'var(--vibes-text-primary)' }}>
+              <label
+                className="mb-2 block text-sm font-medium"
+                style={{ color: "var(--vibes-text-primary)" }}
+              >
                 Recommended models:
               </label>
               <div className="flex flex-wrap gap-2">
@@ -216,8 +222,8 @@ function SettingsContent() {
                     style={
                       settings.model !== model.id
                         ? {
-                            background: 'var(--vibes-bg-secondary)',
-                            color: 'var(--vibes-text-primary)',
+                            background: "var(--vibes-bg-secondary)",
+                            color: "var(--vibes-text-primary)",
                           }
                         : {}
                     }
@@ -246,7 +252,10 @@ function SettingsContent() {
           {/* Style Prompt Section */}
           <BrutalistCard size="md">
             <h3 className="text-2xl font-bold mb-4">Style Prompt</h3>
-            <p className="mb-4" style={{ color: 'var(--vibes-text-secondary)' }}>
+            <p
+              className="mb-4"
+              style={{ color: "var(--vibes-text-secondary)" }}
+            >
               Choose a style for your AI-generated content
             </p>
 
@@ -259,15 +268,18 @@ function SettingsContent() {
                 placeholder="Enter or select style prompt..."
                 className="w-full rounded border-2 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 style={{
-                  borderColor: 'var(--vibes-border-input)',
-                  background: 'var(--vibes-bg-input)',
-                  color: 'var(--vibes-text-primary)',
+                  borderColor: "var(--vibes-border-input)",
+                  background: "var(--vibes-bg-input)",
+                  color: "var(--vibes-text-primary)",
                 }}
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium" style={{ color: 'var(--vibes-text-primary)' }}>
+              <label
+                className="mb-2 block text-sm font-medium"
+                style={{ color: "var(--vibes-text-primary)" }}
+              >
                 Suggestions:
               </label>
               <div className="flex flex-wrap gap-2">
@@ -286,8 +298,8 @@ function SettingsContent() {
                       settings.stylePrompt &&
                       !settings.stylePrompt.startsWith(suggestion.name)
                         ? {
-                            background: 'var(--vibes-bg-secondary)',
-                            color: 'var(--vibes-text-primary)',
+                            background: "var(--vibes-bg-secondary)",
+                            color: "var(--vibes-text-primary)",
                           }
                         : {}
                     }
@@ -303,7 +315,10 @@ function SettingsContent() {
           {/* User Prompt Section */}
           <BrutalistCard size="md">
             <h3 className="text-2xl font-bold mb-4">User Prompt</h3>
-            <p className="mb-4" style={{ color: 'var(--vibes-text-secondary)' }}>
+            <p
+              className="mb-4"
+              style={{ color: "var(--vibes-text-secondary)" }}
+            >
               Custom instructions to append to the system prompt
             </p>
 
@@ -313,9 +328,9 @@ function SettingsContent() {
               placeholder="Enter custom instructions for the AI..."
               className="w-full min-h-[120px] rounded border-2 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               style={{
-                borderColor: 'var(--vibes-border-input)',
-                background: 'var(--vibes-bg-input)',
-                color: 'var(--vibes-text-primary)',
+                borderColor: "var(--vibes-border-input)",
+                background: "var(--vibes-bg-input)",
+                color: "var(--vibes-text-primary)",
               }}
             />
           </BrutalistCard>
@@ -325,9 +340,9 @@ function SettingsContent() {
             <BrutalistCard size="md">
               <h2 className="text-2xl font-bold mb-4">Account</h2>
               <div className="flex items-center justify-between">
-                <p style={{ color: 'var(--vibes-text-secondary)' }}>
-                  Sign out from your account. Your vibes will still be in browser
-                  storage.
+                <p style={{ color: "var(--vibes-text-secondary)" }}>
+                  Sign out from your account. Your vibes will still be in
+                  browser storage.
                 </p>
                 <VibesButton variant="red" onClick={handleLogout}>
                   Logout
