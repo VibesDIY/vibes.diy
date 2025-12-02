@@ -56,19 +56,17 @@ export default function NewSessionView({
       <div>
         <Toaster />
       </div>
-      <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full relative">
-        {/* Hamburger menu button - fixed top left */}
-        <div className="absolute top-4 left-4 z-20">
-          <VibesSwitch
-            size={60}
-            isActive={isSidebarVisible}
-            onToggle={setIsSidebarVisible}
-            className="cursor-pointer"
-          />
-        </div>
-
-        {/* Main content section */}
-        <div className="flex-1 px-8 pb-8 pt-4">
+      <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
+        <div className="px-8 py-8">
+          {/* Hamburger menu button - top left in normal flow */}
+          <div className="mb-6">
+            <VibesSwitch
+              size={60}
+              isActive={isSidebarVisible}
+              onToggle={setIsSidebarVisible}
+              className="cursor-pointer"
+            />
+          </div>
           <div
             style={{
               maxWidth: "800px",
