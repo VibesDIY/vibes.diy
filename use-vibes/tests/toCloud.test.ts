@@ -3,68 +3,79 @@ import { toCloud } from '../base/index.js';
 
 describe('toCloud', () => {
   describe('basic functionality', () => {
-    it('should return a ToCloudAttachable object', () => {
+    it('returns a ToCloudAttachable with opts', () => {
       const result = toCloud();
       expect(result).toBeDefined();
       expect(typeof result).toBe('object');
+      expect(result.opts).toBeDefined();
     });
 
-    it('should be exported from the module', () => {
+    it('is exported from the base module', () => {
       expect(typeof toCloud).toBe('function');
     });
   });
 
   describe('configuration merging', () => {
-    it('should set default dashboard and API URIs', () => {
+    it('applies default URIs and base URL', () => {
       const result = toCloud();
-      expect(result.opts).toBeDefined();
-      expect(result.opts.context).toBeDefined();
+
+      const opts = result.opts as unknown as {
+        dashboardURI?: string;
+        tokenApiURI?: string;
+      };
+
+      expect(opts.dashboardURI).toBe('https://connect.fireproof.direct/fp/cloud/api/token-auto');
+      expect(opts.tokenApiURI).toBe('https://connect.fireproof.direct/api');
+      expect(result.opts.urls.car?.toString()).toBe('fpcloud://cloud.fireproof.direct/');
+      expect(result.opts.urls.file?.toString()).toBe('fpcloud://cloud.fireproof.direct/');
+      expect(result.opts.urls.meta?.toString()).toBe('fpcloud://cloud.fireproof.direct/');
     });
 
-    it('should accept and merge custom options', () => {
+    it('merges custom options like name', () => {
       const customOpts = {
         name: 'custom-cloud',
       };
       const result = toCloud(customOpts);
-      expect(result).toBeDefined();
-      expect(result.opts).toBeDefined();
+      expect(result.opts.name).toBe('custom-cloud');
     });
 
-    it('should accept a custom tokenStrategy', () => {
+    it('forwards tokenStrategy as strategy', () => {
       const mockStrategy = {
         hash: () => 'mock-hash',
-        open: () => {
-          // Mock implementation
-        },
+        open: () => undefined,
         tryToken: async () => undefined,
         waitForToken: async () => undefined,
-        stop: () => {
-          // Mock implementation
-        },
+        stop: () => undefined,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = toCloud({ tokenStrategy: mockStrategy as any });
-      expect(result).toBeDefined();
-      expect(result.opts).toBeDefined();
+      const result = toCloud({
+        tokenStrategy: mockStrategy,
+      } as Parameters<typeof toCloud>[0]);
+      expect(result.opts.strategy).toBe(mockStrategy);
     });
   });
 
-  describe('default configuration', () => {
-    it('should use connect.fireproof.direct for dashboardURI', () => {
-      const result = toCloud();
-      // The opts should be configured with the default URIs
-      expect(result.opts).toBeDefined();
-    });
+  describe('option validation', () => {
+    it('throws if both strategy and tokenStrategy are provided', () => {
+      const mockStrategy = {
+        hash: () => 'mock-hash',
+        open: () => undefined,
+        tryToken: async () => undefined,
+        waitForToken: async () => undefined,
+        stop: () => undefined,
+      };
 
-    it('should use fpcloud://cloud.fireproof.direct as base URL', () => {
-      const result = toCloud();
-      expect(result.opts).toBeDefined();
+      expect(() =>
+        toCloud({
+          strategy: mockStrategy,
+          tokenStrategy: mockStrategy,
+        } as Parameters<typeof toCloud>[0])
+      ).toThrowError(/provide either 'strategy' or 'tokenStrategy'/);
     });
   });
 
   describe('integration with base index', () => {
-    it('should export toCloud from base index', async () => {
+    it('exports toCloud from @vibes.diy/use-vibes-base', async () => {
       const baseModule = await import('@vibes.diy/use-vibes-base');
       expect(typeof baseModule.toCloud).toBe('function');
     });
