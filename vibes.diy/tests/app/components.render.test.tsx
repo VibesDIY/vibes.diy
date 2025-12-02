@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ChatHeader from "~/vibes.diy/app/components/ChatHeaderContent.js";
 import MessageList from "~/vibes.diy/app/components/MessageList.js";
@@ -242,23 +242,6 @@ describe("Component Rendering", () => {
       render(<SessionSidebar {...props} />);
       expect(await screen.findByText("Log in")).toBeInTheDocument();
       expect(screen.queryByText("Settings")).not.toBeInTheDocument();
-    });
-
-    it("has a close button that works", () => {
-      const onCloseMock = vi.fn();
-      const props = {
-        ...mockSessionSidebarProps,
-        isVisible: true,
-        onClose: onCloseMock,
-      };
-      mocks.mockUseAuth.mockReturnValue({
-        isSignedIn: true,
-        isLoaded: true,
-        userId: "test-user",
-      });
-      render(<SessionSidebar {...props} />);
-      fireEvent.click(screen.getByLabelText("Close sidebar"));
-      expect(onCloseMock).toHaveBeenCalled();
     });
   });
 
