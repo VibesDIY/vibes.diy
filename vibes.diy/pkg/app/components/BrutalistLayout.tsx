@@ -37,6 +37,7 @@ export default function BrutalistLayout({
       {/* Hamburger menu button - fixed top left */}
       <div className="absolute top-4 left-4 z-20">
         <VibesSwitch
+          size={60}
           isActive={isSidebarVisible}
           onToggle={setIsSidebarVisible}
           className="cursor-pointer"
