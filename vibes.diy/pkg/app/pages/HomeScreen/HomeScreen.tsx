@@ -793,6 +793,13 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </p>
             </DraggableCard>
 
+            <DraggableCard color="yellow" x={700} y={8300}>
+              <img src="https://github.com/VibesDIY/vibes.diy/blob/amber/homescreen-extraction/vibes.diy/pkg/app/assets/mouth.gif?raw=true"></img>
+              <p style={getCardTextStyle()}>
+
+              </p>
+            </DraggableCard>
+
             {!isMobile && (
               <div
                 className="chat-container-wrapper"
