@@ -61,6 +61,21 @@ describe('useFireproof body class management', () => {
     document.body.classList.remove('vibes-connect-true');
   });
 
+  it('does not enable sync or add body class outside vibe-viewer context', () => {
+    // Even if the underlying attach state is attached, lack of vibe metadata
+    // (no VibeContextProvider) should keep sync disabled.
+    const mockAttach = { state: 'attached' };
+    mockOriginalUseFireproof.mockReturnValue({
+      database: { name: 'test-db' },
+      attach: mockAttach,
+      useLiveQuery: vi.fn(),
+    });
+
+    render(<InnerTestComponent dbName="test-db" />);
+
+    expect(document.body.classList.contains('vibes-connect-true')).toBe(false);
+  });
+
   it('should add vibes-connect-true class to body when sync is enabled', () => {
     // Mock sync as enabled (attached state)
     const mockAttach = { state: 'attached' };
