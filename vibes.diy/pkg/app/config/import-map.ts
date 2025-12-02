@@ -20,7 +20,6 @@ export function getLibraryImportMap() {
     "call-ai": `https://esm.sh/call-ai@${VIBES_VERSION}`,
     "use-vibes": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
     "https://esm.sh/use-fireproof": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
-    "https://esm.sh/use-vibes": `https://esm.sh/use-vibes@${VIBES_VERSION}`, // self-mapping for consistency
   };
 }
 
