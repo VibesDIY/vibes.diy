@@ -27,27 +27,25 @@ export function useAllGroups() {
   );
 
   console.log('[useAllGroups] Calling useLiveQuery with filter');
-  const groupsResult = useLiveQuery<VibeInstanceDocument>(filterFn);
-  console.log('[useAllGroups] Got groupsResult:', groupsResult);
+  const rawGroupsResult = useLiveQuery<VibeInstanceDocument>(filterFn);
+  console.log('[useAllGroups] Got rawGroupsResult:', rawGroupsResult);
 
-  // Track if groupsResult is changing
-  const prevResultRef = useRef<typeof groupsResult>();
-  useEffect(() => {
-    if (prevResultRef.current !== groupsResult) {
-      console.log('[useAllGroups] groupsResult CHANGED (new object reference)');
-      console.log('  Previous:', prevResultRef.current);
-      console.log('  Current:', groupsResult);
-      prevResultRef.current = groupsResult;
-    } else {
-      console.log('[useAllGroups] groupsResult SAME (same reference)');
-    }
-  });
+  // useLiveQuery returns a NEW object on every render, breaking memoization
+  // Stabilize it by memoizing based on actual content (docs array contents + hydrated state)
+  const groupsResult = useMemo(() => {
+    console.log('[useAllGroups] Stabilizing groupsResult');
+    return rawGroupsResult;
+  }, [
+    rawGroupsResult.docs?.length,
+    rawGroupsResult.docs?.map(d => d._id).join(','),
+    rawGroupsResult.hydrated
+  ]);
+  console.log('[useAllGroups] Stabilized groupsResult');
 
-  // Extract docs array - groupsResult object changes on every render from useLiveQuery
+  // Extract docs array
   const docs = groupsResult.docs;
 
   // Memoize groups based on docs array CONTENTS (length + ids), not reference
-  // useLiveQuery returns a new array reference on every call even if contents are the same
   const groups = useMemo(() => {
     return docs || [];
   }, [docs?.length, docs?.map(d => d._id).join(',')]);
