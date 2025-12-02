@@ -7,7 +7,6 @@ import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
 import { StarIcon } from "./SessionSidebar/StarIcon.js";
 import { GroupsIcon } from "./SessionSidebar/GroupsIcon.js";
-import VibesDIYLogo from "./VibesDIYLogo.js";
 
 /**
  * Component that displays a navigation sidebar with menu items
@@ -60,37 +59,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
         isVisible ? "w-64 translate-x-0" : "w-64 -translate-x-full"
       }`}
     >
-      <div className="flex h-full flex-col overflow-auto">
-        <div className="border-light-decorative-01 dark:border-dark-decorative-00 flex items-center justify-between border-b p-4">
-          <VibesDIYLogo
-            width={50}
-            className="pointer-events-none -mt-18 -mb-14 -ml-3"
-          />
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-light-primary dark:text-dark-primary hover:text-accent-02-light dark:hover:text-accent-02-dark"
-            aria-label="Close sidebar"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
+      <div className="flex h-full flex-col overflow-auto pt-16">
         <nav className="flex-grow p-2">
           <ul className="space-y-1">
             <li>
