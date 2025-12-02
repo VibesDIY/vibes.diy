@@ -25,6 +25,16 @@ vi.mock('@clerk/clerk-react', () => ({
   }),
 }));
 
+// Mock VibeContext - need to provide vibe metadata for sync to work
+const mockUseVibeContext = vi.fn();
+vi.mock('@vibes.diy/use-vibes-base', async () => {
+  const actual = await vi.importActual('@vibes.diy/use-vibes-base');
+  return {
+    ...actual,
+    useVibeContext: () => mockUseVibeContext(),
+  };
+});
+
 // Test component that uses our enhanced useFireproof
 function TestComponent({ dbName = 'test-db' }: { dbName?: string }) {
   const { syncEnabled } = useFireproof(dbName);
@@ -39,6 +49,12 @@ describe('useFireproof body class management', () => {
     document.body.classList.remove('vibes-connect-true');
     // Reset mocks
     mockOriginalUseFireproof.mockReset();
+    mockUseVibeContext.mockReset();
+    // Set up vibe context by default (sync enabled when vibe context exists)
+    mockUseVibeContext.mockReturnValue({
+      titleId: 'test-title',
+      installId: 'test-install',
+    });
   });
 
   afterEach(() => {
