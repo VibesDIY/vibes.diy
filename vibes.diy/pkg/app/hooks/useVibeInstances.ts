@@ -17,7 +17,7 @@ function generateInstallId(): string {
  * Handles CRUD operations for vibe instances using Fireproof + KV
  */
 export function useVibeInstances(titleId: string) {
-  const { database, useLiveQuery } = useFireproof("vibes-diy-instances");
+  const { database, useLiveQuery } = useFireproof("vibes-groups");
   const { user } = useUser();
   const userId = user?.id || "anonymous";
 
