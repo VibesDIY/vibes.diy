@@ -38,7 +38,7 @@ export default function BrutalistLayout({
       <div className="absolute top-4 left-4 z-20">
         <VibesSwitch
           size={60}
-          isActive={isSidebarVisible}
+          isActive={!isSidebarVisible}
           onToggle={setIsSidebarVisible}
           className="cursor-pointer"
         />
