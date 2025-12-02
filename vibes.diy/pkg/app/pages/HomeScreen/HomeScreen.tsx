@@ -63,7 +63,7 @@ import { HomeScreenProps } from "./HomeScreen.types.js";
 import { useIsMobile } from "../../hooks/index.js";
 import { AnimatedScene } from "./AnimatedScene.js";
 import computerAnimGif from "../../assets/computer-anim.gif";
-import htmlpng from "../../assets/screenshots/html.png";
+import htmlpng from "../../assets/html.png";
 import vibesStack from "../../assets/vibes-stack.png";
 import fireproofLogo from "../../assets/fireproof-logo.png";
 
