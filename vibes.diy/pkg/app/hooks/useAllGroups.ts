@@ -8,7 +8,9 @@ import type { VibeInstanceDocument } from "@vibes.diy/prompts";
  */
 export function useAllGroups() {
   const { userId } = useAuth();
-  const { useLiveQuery } = useFireproof(`vibes-${userId}-groups`);
+  // Use a consistent database name to avoid hydration mismatches
+  // userId is included in the query filter instead
+  const { useLiveQuery } = useFireproof("vibes-groups");
 
   // Query ALL groups for this user (no titleId filter)
   const groupsResult = useLiveQuery<VibeInstanceDocument>(
