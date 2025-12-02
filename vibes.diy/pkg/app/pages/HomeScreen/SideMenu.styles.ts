@@ -1,7 +1,7 @@
 import { CSSProperties } from "react";
 
 // Overlay that covers the screen
-export const getSideMenuOverlay = (): CSSProperties => ({
+export const getSideMenuOverlay = (isClosing = false): CSSProperties => ({
   position: "fixed",
   top: 0,
   left: 0,
@@ -9,11 +9,13 @@ export const getSideMenuOverlay = (): CSSProperties => ({
   bottom: 0,
   backgroundColor: "rgba(0, 0, 0, 0.6)",
   zIndex: 9998,
-  animation: "fadeIn 0.3s ease-out",
+  animation: isClosing
+    ? "fadeOut 0.3s ease-out forwards"
+    : "fadeIn 0.3s ease-out",
 });
 
 // Main container - slides in from right
-export const getSideMenuContainer = (): CSSProperties => ({
+export const getSideMenuContainer = (isClosing = false): CSSProperties => ({
   position: "fixed",
   top: 0,
   right: 0,
@@ -28,7 +30,9 @@ export const getSideMenuContainer = (): CSSProperties => ({
   borderRight: "none",
   borderLeft: "none",
   boxShadow: "-12px 0 0 0 #231F20",
-  animation: "slideInRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+  animation: isClosing
+    ? "slideOutRight 0.5s cubic-bezier(0.64, 0, 0.66, 0) forwards"
+    : "slideInRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
   fontFamily: "'Alte Haas Grotesk', 'Inter', sans-serif",
 });
 
@@ -86,14 +90,16 @@ export const getSideMenuList = (): CSSProperties => ({
 });
 
 // Individual menu item
-export const getSideMenuListItem = (): CSSProperties => ({
+export const getSideMenuListItem = (isClosing = false): CSSProperties => ({
   backgroundColor: "#ffffff",
   border: "4px solid #231F20",
   padding: "20px 24px",
   cursor: "pointer",
   transition: "all 0.2s ease",
   boxShadow: "6px 6px 0px #231F20",
-  animation: "slideInItem 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards",
+  animation: isClosing
+    ? "slideOutItem 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
+    : "slideInItem 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards",
   position: "relative",
 });
 

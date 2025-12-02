@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { VibesSwitch } from "../../components/index.js";
 import {
   getSideMenuOverlay,
@@ -46,15 +46,41 @@ export const SideMenu: React.FC<SideMenuProps> = ({
   onClose,
   onLogin,
 }) => {
-  if (!isOpen) return null;
+  const [isVisible, setIsVisible] = useState(isOpen);
+  const [shouldRender, setShouldRender] = useState(isOpen);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Start rendering first
+      setShouldRender(true);
+      // Then trigger the opening animation on next frame
+      const raf = requestAnimationFrame(() => {
+        setIsVisible(true);
+      });
+      return () => cancelAnimationFrame(raf);
+    } else {
+      // Start closing animation immediately
+      setIsVisible(false);
+      // After animation completes, stop rendering
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+      }, 500); // Match the animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  if (!shouldRender) return null;
 
   return (
     <>
       {/* Overlay */}
-      <div style={getSideMenuOverlay()} onClick={onClose} />
+      <div style={getSideMenuOverlay(!isVisible)} onClick={onClose} />
 
       {/* Side Menu Container */}
-      <div className="side-menu-container" style={getSideMenuContainer()}>
+      <div
+        className="side-menu-container"
+        style={getSideMenuContainer(!isVisible)}
+      >
         {/* Header */}
         <div style={getSideMenuHeader()}>
           <div style={getSideMenuSwitchWrapper()}>
@@ -79,8 +105,10 @@ export const SideMenu: React.FC<SideMenuProps> = ({
                   key={item.label}
                   className="side-menu-item"
                   style={{
-                    ...getSideMenuListItem(),
-                    animationDelay: `${index * 0.05}s`,
+                    ...getSideMenuListItem(!isVisible),
+                    animationDelay: !isVisible
+                      ? `${(menuItems.length - 1 - index) * 0.05}s`
+                      : `${index * 0.05}s`,
                   }}
                 >
                   <a

@@ -339,6 +339,35 @@ export const HomeScreen = (_props: HomeScreenProps) => {
           }
         }
 
+        @keyframes fadeOut {
+          from {
+            opacity: 1;
+          }
+          to {
+            opacity: 0;
+          }
+        }
+
+        @keyframes slideOutRight {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(100%);
+          }
+        }
+
+        @keyframes slideOutItem {
+          from {
+            opacity: 1;
+            transform: translateX(0) rotate(0deg);
+          }
+          to {
+            opacity: 0;
+            transform: translateX(50px) rotate(-2deg);
+          }
+        }
+
         .side-menu-item:hover {
           transform: translateX(-8px);
           box-shadow: 10px 10px 0px #231F20 !important;
@@ -814,10 +843,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </button>
             </div>
             <div className="navbar-button-wrapper">
-              <button
-                style={getButtonsNavbar("#D92A1C")}
-                onClick={handleLogin}
-              >
+              <button style={getButtonsNavbar("#D92A1C")} onClick={handleLogin}>
                 <div
                   className="navbar-button-icon"
                   style={getNavbarButtonIconWrapper()}
