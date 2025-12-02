@@ -176,8 +176,11 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const result = originalUseFireproof(augmentedDbName, options);
   console.log('[useFireproof] Got result from originalUseFireproof');
 
+  // Destructure the result to get stable references for individual properties
+  const { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach } = result;
+
   // Sync is enabled only when running in a vibe-viewer context and the attach state is connected
-  const rawAttachState = result.attach?.state;
+  const rawAttachState = attach?.state;
   const syncEnabled =
     !!vibeMetadata && (rawAttachState === 'attached' || rawAttachState === 'attaching');
 
@@ -239,7 +242,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         message: shareData.message || 'User added to ledger successfully',
       };
     },
-    [dbName, result.attach]
+    [dbName, attach]
   );
 
   // Listen for custom 'vibes-share-request' events on document
@@ -346,13 +349,20 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // Return combined result with sync always enabled
   // Memoize the return value to prevent creating new object references on every render
+  // Depend on individual properties instead of result object to avoid re-memoizing when
+  // upstream useFireproof returns a new object reference (which it does on every render)
   return useMemo(
     () => ({
-      ...result,
+      database,
+      useLiveQuery,
+      useDocument,
+      useAllDocs,
+      useChanges,
+      attach,
       syncEnabled,
       share,
     }),
-    [result, syncEnabled, share]
+    [database, useLiveQuery, useDocument, useAllDocs, useChanges, attach, syncEnabled, share]
   );
 }
 
