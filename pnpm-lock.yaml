@@ -385,6 +385,9 @@ importers:
       '@fireproof/core-keybag':
         specifier: 0.24.0
         version: 0.24.0(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard':
+        specifier: 0.24.0
+        version: 0.24.0(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.0
         version: 0.24.0(typescript@5.9.3)
