@@ -51,6 +51,13 @@ export {
   type VibesMountReadyDetail,
   type VibesMountErrorDetail,
 
+  // Context providers for authentication
+  VibeContextProvider,
+  useVibeContext,
+  useVibeGetToken,
+  type VibeMetadata,
+  type VibeContextValue,
+
   // Type namespaces
   type Fireproof,
   type CallAI,

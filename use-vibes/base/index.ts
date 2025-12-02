@@ -11,9 +11,8 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
-import { useAuth } from '@clerk/clerk-react';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
-import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
+import { useVibeContext, useVibeGetToken, type VibeMetadata } from './contexts/VibeContext.js';
 import { ClerkTokenStrategy } from './clerk-token-strategy.js';
 
 // Interface for share API response
@@ -117,8 +116,9 @@ function constructDatabaseName(
 
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
-  // Get Clerk authentication
-  const { getToken } = useAuth();
+  // Get authentication token function from context (parent app provides this via VibeContextProvider)
+  // User vibes in iframes won't have ClerkProvider, so getToken will be undefined and sync disabled
+  const getToken = useVibeGetToken();
 
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
@@ -133,18 +133,21 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
 
-  // Create Clerk token strategy
+  // Create Clerk token strategy only if getToken is available
   const tokenStrategy = useMemo(() => {
+    if (!getToken) return null;
     return new ClerkTokenStrategy(async () => {
       return await getToken({ template: 'with-email' });
     });
   }, [getToken]);
 
-  // Only enable sync when vibeMetadata exists (i.e., running in vibe-viewer context)
+  // Only enable sync when both vibeMetadata exists AND Clerk auth is available
   // This ensures only instance-specific databases (with titleId + installId) get synced
-  const attachConfig = vibeMetadata
-    ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
-    : undefined;
+  // and only when running in a context where ClerkProvider is available
+  const attachConfig =
+    vibeMetadata && tokenStrategy
+      ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
+      : undefined;
 
   // Use original useFireproof with augmented database name and optional attach config
   const result = originalUseFireproof(
@@ -426,10 +429,11 @@ export {
 export {
   VibeContextProvider,
   useVibeContext,
+  useVibeGetToken,
   VibeMetadataValidationError,
   VIBE_METADATA_ERROR_CODES,
 } from './contexts/VibeContext.js';
-export type { VibeMetadata } from './contexts/VibeContext.js';
+export type { VibeMetadata, VibeContextValue } from './contexts/VibeContext.js';
 
 // Export mounting utilities for inline vibe rendering
 export {
