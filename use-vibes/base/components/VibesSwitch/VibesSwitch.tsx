@@ -9,12 +9,7 @@ export interface VibesSwitchProps {
   onToggle?: (active: boolean) => void;
 }
 
-export function VibesSwitch({
-  size = 24,
-  className,
-  isActive,
-  onToggle,
-}: VibesSwitchProps) {
+export function VibesSwitch({ size = 24, className, isActive, onToggle }: VibesSwitchProps) {
   const [internalActive, setInternalActive] = React.useState(true);
 
   const logicalActive = isActive !== undefined ? isActive : internalActive;
