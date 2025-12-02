@@ -79,12 +79,15 @@ export function toCloud(
     throw new Error("toCloud: provide either 'strategy' or 'tokenStrategy', not both.");
   }
 
+  const { tokenStrategy, strategy, ...rest } = opts ?? {};
+  const effectiveStrategy = tokenStrategy ?? strategy;
+
   const attachable = originalToCloud({
-    ...opts,
+    ...rest,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
-    strategy: opts?.tokenStrategy ?? opts?.strategy,
+    ...(effectiveStrategy ? { strategy: effectiveStrategy } : {}),
   });
 
   return attachable;
