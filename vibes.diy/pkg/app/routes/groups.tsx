@@ -33,8 +33,11 @@ function parseInstanceId(fullId: string): {
 }
 
 function GroupsContent() {
+  console.log('[GroupsContent] Component rendering');
   const navigate = useNavigate();
+  console.log('[GroupsContent] Calling useAllGroups');
   const { groups, isLoading } = useAllGroups();
+  console.log('[GroupsContent] Got groups:', groups.length, 'isLoading:', isLoading);
 
   const handleGroupClick = (fullId: string) => {
     const { titleId, installId } = parseInstanceId(fullId);
@@ -124,12 +127,16 @@ function GroupsContent() {
 
 // Auth wrapper component - only renders content when authenticated
 export default function GroupsRoute() {
+  console.log('[GroupsRoute] Route component rendering');
   const { isSignedIn, isLoaded } = useAuth();
+  console.log('[GroupsRoute] isSignedIn:', isSignedIn, 'isLoaded:', isLoaded);
 
   if (!isSignedIn) {
+    console.log('[GroupsRoute] Not signed in, showing logged out view');
     return <LoggedOutView isLoaded={isLoaded} />;
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated
+  console.log('[GroupsRoute] Rendering GroupsContent');
   return <GroupsContent />;
 }

@@ -116,44 +116,62 @@ function constructDatabaseName(
 
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
+  console.log('[useFireproof] Hook called with nameOrDatabase:', nameOrDatabase);
+
   // Get authentication token function from context (parent app provides this via VibeContextProvider)
   // User vibes in iframes won't have ClerkProvider, so getToken will be undefined and sync disabled
   const getToken = useVibeGetToken();
+  console.log('[useFireproof] Got getToken:', !!getToken);
 
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
+  console.log('[useFireproof] Got vibeMetadata:', vibeMetadata);
 
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
+  console.log('[useFireproof] Constructed augmentedDbName:', augmentedDbName);
 
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
+  console.log('[useFireproof] Generated instanceId:', instanceId);
 
   // Get database name for tracking purposes (use augmented name)
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
+  console.log('[useFireproof] Got dbName for tracking:', dbName);
 
   // Create Clerk token strategy only if getToken is available
+  console.log('[useFireproof] Creating tokenStrategy via useMemo');
   const tokenStrategy = useMemo(() => {
-    if (!getToken) return null;
+    console.log('[useFireproof useMemo] Computing tokenStrategy, getToken:', !!getToken);
+    if (!getToken) {
+      console.log('[useFireproof useMemo] No getToken, returning null');
+      return null;
+    }
+    console.log('[useFireproof useMemo] Creating ClerkTokenStrategy');
     return new ClerkTokenStrategy(async () => {
       return await getToken({ template: 'with-email' });
     });
   }, [getToken]);
+  console.log('[useFireproof] Got tokenStrategy:', !!tokenStrategy);
 
   // Only enable sync when both vibeMetadata exists AND Clerk auth is available
   // This ensures only instance-specific databases (with titleId + installId) get synced
   // and only when running in a context where ClerkProvider is available
+  console.log('[useFireproof] Computing attachConfig');
   const attachConfig =
     vibeMetadata && tokenStrategy
       ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
       : undefined;
+  console.log('[useFireproof] Got attachConfig:', !!attachConfig);
 
   // Use original useFireproof with augmented database name and optional attach config
+  console.log('[useFireproof] Calling originalUseFireproof with:', augmentedDbName, 'attach:', !!attachConfig);
   const result = originalUseFireproof(
     augmentedDbName,
     attachConfig ? { attach: attachConfig } : {}
   );
+  console.log('[useFireproof] Got result from originalUseFireproof');
 
   // Sync is enabled only when running in a vibe-viewer context and the attach state is connected
   const rawAttachState = result.attach?.state;
