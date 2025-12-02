@@ -31,7 +31,7 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.15",
-    "@vitest/browser-playwright": "^4.0.10"
+    "@fireproof/core-cli": "0.24.0",
+    "@vitest/browser-playwright": "^4.0.14"
   }
 }

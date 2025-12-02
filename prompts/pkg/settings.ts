@@ -28,7 +28,5 @@ export interface UserSettings {
 
   dependencies?: string[];
 
-  instructionalTextOverride?: boolean;
-
   demoDataOverride?: boolean;
 }

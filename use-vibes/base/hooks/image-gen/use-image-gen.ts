@@ -710,8 +710,7 @@ async function loadOrGenerateImage({
         throw new Error('Document not found and no prompt provided for generation');
       }
     } catch (error) {
-      // Log the error
-      console.error('Error retrieving from Fireproof:', error);
+      // Error handled - attempt fallback generation if conditions are met
 
       // Only try image generation as fallback for document load failures when we have a prompt
       if (prompt && !data && _id) {

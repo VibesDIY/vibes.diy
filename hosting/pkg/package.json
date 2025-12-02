@@ -62,16 +62,17 @@
     "@cloudflare/workers-types": "^4.20251111.0",
     "@hono/clerk-auth": "^3.0.3",
     "@vibes.diy/hosting-base": "workspace:*",
+    "call-ai": "workspace:*",
     "chanfana": "^2.8.2",
-    "hono": "^4.10.6",
+    "hono": "^4.10.7",
     "jose": "^6.1.1",
     "multiformats": "^13.4.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.10",
-    "prettier": "^3.6.2",
+    "@vitest/browser-playwright": "^4.0.14",
+    "prettier": "^3.7.3",
     "typescript": "^5.9.3",
     "wrangler": "^4.45.1"
   },

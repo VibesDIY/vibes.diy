@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { useAllInstances } from "../hooks/useAllInstances.js";
+import PublishedVibeCard from "../components/PublishedVibeCard.js";
 
 export function meta() {
   return [
@@ -58,7 +59,7 @@ export default function InstallsRoute() {
 
         {/* Instances List */}
         {!isLoading && (
-          <div className="space-y-4">
+          <div>
             {instances.length === 0 ? (
               <div className="p-8 bg-white border-4 border-black text-center">
                 <p className="text-xl font-black uppercase">
@@ -69,53 +70,53 @@ export default function InstallsRoute() {
                 </p>
               </div>
             ) : (
-              // Sort by most recently updated
-              [...instances]
-                .sort((a, b) => {
-                  const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
-                  const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
-                  if (tb !== ta) return tb - ta;
-                  // Fallback to _id
-                  return String(b._id).localeCompare(String(a._id));
-                })
-                .map((instance) => (
-                  <div
-                    key={instance._id}
-                    onClick={() =>
-                      instance._id && handleInstanceClick(instance._id)
-                    }
-                    className="p-6 bg-white border-4 border-black hover:border-8 transition-all cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-baseline gap-4 mb-2">
-                          <h3 className="text-2xl font-black uppercase tracking-tight">
-                            {instance.description}
-                          </h3>
-                          <span className="text-sm font-bold uppercase tracking-wider text-gray-600">
-                            {instance.titleId}
-                          </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Sort by most recently updated */}
+                {[...instances]
+                  .sort((a, b) => {
+                    const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
+                    const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
+                    if (tb !== ta) return tb - ta;
+                    // Fallback to _id
+                    return String(b._id).localeCompare(String(a._id));
+                  })
+                  .map((instance) => {
+                    const { titleId } = parseInstanceId(instance._id || "");
+                    return (
+                      <div
+                        key={instance._id}
+                        onClick={() =>
+                          instance._id && handleInstanceClick(instance._id)
+                        }
+                        className="cursor-pointer hover:scale-105 transition-transform"
+                      >
+                        <PublishedVibeCard
+                          slug={titleId}
+                          name={instance.description || titleId}
+                        />
+                        <div className="mt-2 px-2">
+                          <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                            Updated{" "}
+                            {instance.updatedAt
+                              ? new Date(
+                                  instance.updatedAt,
+                                ).toLocaleDateString()
+                              : "—"}
+                            {(() => {
+                              const shareCount = (instance.sharedWith ?? [])
+                                .length;
+                              return shareCount > 0 ? (
+                                <span className="ml-1">
+                                  · Shared with {shareCount}
+                                </span>
+                              ) : null;
+                            })()}
+                          </p>
                         </div>
-                        <p className="text-sm font-bold uppercase tracking-wider">
-                          UPDATED{" "}
-                          {instance.updatedAt
-                            ? new Date(instance.updatedAt).toLocaleDateString()
-                            : "—"}
-                          {(() => {
-                            const shareCount = (instance.sharedWith ?? [])
-                              .length;
-                            return shareCount > 0 ? (
-                              <span className="ml-2">
-                                · SHARED WITH {shareCount}{" "}
-                                {shareCount === 1 ? "PERSON" : "PEOPLE"}
-                              </span>
-                            ) : null;
-                          })()}
-                        </p>
                       </div>
-                    </div>
-                  </div>
-                ))
+                    );
+                  })}
+              </div>
             )}
           </div>
         )}

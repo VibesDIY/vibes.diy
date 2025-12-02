@@ -33,12 +33,8 @@ function ResultPreview({
   onSyntaxErrorChange,
 }: ResultPreviewProps & { children?: React.ReactNode }) {
   const { isDarkMode } = useTheme();
-  const {
-    vibeDoc,
-    updateDependencies,
-    updateInstructionalTextOverride,
-    updateDemoDataOverride,
-  } = useSession(sessionId);
+  const { vibeDoc, updateDependencies, updateDemoDataOverride } =
+    useSession(sessionId);
   const showWelcome = !isStreaming && (!code || code.length === 0);
 
   // Use title from props directly
@@ -154,9 +150,7 @@ function ResultPreview({
             dependenciesUserOverride={vibeDoc?.dependenciesUserOverride}
             aiSelectedDependencies={vibeDoc?.aiSelectedDependencies}
             onUpdateDependencies={updateDependencies}
-            instructionalTextOverride={vibeDoc?.instructionalTextOverride}
             demoDataOverride={vibeDoc?.demoDataOverride}
-            onUpdateInstructionalTextOverride={updateInstructionalTextOverride}
             onUpdateDemoDataOverride={updateDemoDataOverride}
           />
         </div>

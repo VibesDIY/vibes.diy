@@ -3,7 +3,7 @@ import { encodeTitle } from "./SessionSidebar/utils.js";
 import AppLayout from "./AppLayout.js";
 import ChatHeaderContent from "./ChatHeaderContent.js";
 import ChatInput, { ChatInputRef } from "./ChatInput.js";
-import models from "../data/models.json" with { type: "json" };
+import { featuredModels } from "../data/models.js";
 import ChatInterface from "./ChatInterface.js";
 import ResultPreview from "./ResultPreview/ResultPreview.js";
 import ResultPreviewHeaderContent from "./ResultPreview/ResultPreviewHeaderContent.js";
@@ -447,14 +447,7 @@ function AuthenticatedSessionView({
                   await chatState.updateSelectedModel(modelId);
                 }
               }}
-              models={
-                models as {
-                  id: string;
-                  name: string;
-                  description: string;
-                  featured?: boolean;
-                }[]
-              }
+              models={featuredModels}
               globalModel={chatState.globalModel}
               onSend={() => {
                 setMessageHasBeenSent(true);

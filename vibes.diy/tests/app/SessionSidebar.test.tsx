@@ -11,10 +11,36 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SessionSidebar from "~/vibes.diy/app/components/SessionSidebar.js";
 import { mockSessionSidebarProps } from "./mockData.js";
 
+const mocks = vi.hoisted(() => {
+  return {
+    mockUseAuth: vi.fn(() => ({
+      isSignedIn: true,
+      isLoaded: true,
+    })),
+    mockRedirectToSignIn: vi.fn(),
+    mockSignOut: vi.fn(),
+    createObjectURLMock: vi.fn(() => "mocked-url"),
+    revokeObjectURLMock: vi.fn(),
+  };
+});
+
 // Mock @clerk/clerk-react
-const mockUseAuth = vi.fn();
 vi.mock("@clerk/clerk-react", () => ({
-  useAuth: mockUseAuth,
+  useAuth: mocks.mockUseAuth,
+  useClerk: () => ({
+    redirectToSignIn: mocks.mockRedirectToSignIn,
+    signOut: mocks.mockSignOut,
+  }),
+  useUser: () => ({
+    user: {
+      primaryEmailAddress: { emailAddress: "test@example.com" },
+    },
+  }),
+}));
+
+// Mock analytics utilities
+vi.mock("~/vibes.diy/app/utils/analytics", () => ({
+  trackAuthClick: vi.fn(),
 }));
 
 import { trackAuthClick } from "~/vibes.diy/app/utils/analytics.js";
@@ -38,18 +64,14 @@ vi.mock("react-router-dom", () => {
   };
 });
 
-// Set up createObjectURL mock so we can track calls
-const createObjectURLMock = vi.fn(() => "mocked-url");
-const revokeObjectURLMock = vi.fn();
-
 // Override URL methods
 Object.defineProperty(globalThis.URL, "createObjectURL", {
-  value: createObjectURLMock,
+  value: mocks.createObjectURLMock,
   writable: true,
 });
 
 Object.defineProperty(globalThis.URL, "revokeObjectURL", {
-  value: revokeObjectURLMock,
+  value: mocks.revokeObjectURLMock,
   writable: true,
 });
 
@@ -57,6 +79,11 @@ describe("SessionSidebar component", () => {
   beforeEach(() => {
     globalThis.document.body.innerHTML = "";
     vi.clearAllMocks();
+    // Set default authenticated state after clearing mocks
+    mocks.mockUseAuth.mockReturnValue({
+      isSignedIn: true,
+      isLoaded: true,
+    });
     // Old auth mocks removed - now using Clerk
     vi.mocked(trackAuthClick).mockClear();
     // No window event listeners needed anymore
@@ -73,7 +100,7 @@ describe("SessionSidebar component", () => {
 
   it("should correctly render SessionSidebar component with menu items when authenticated", () => {
     // Mock useAuth to return authenticated state
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
     });
@@ -95,7 +122,7 @@ describe("SessionSidebar component", () => {
 
   it("should show Log in button when not authenticated", async () => {
     // Mock useAuth to return unauthenticated state
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: false,
       isLoaded: true,
     });
@@ -194,7 +221,7 @@ describe("SessionSidebar component", () => {
 
   it("handles sidebar navigation links", () => {
     // Mock useAuth to return authenticated state
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
     });
@@ -221,7 +248,7 @@ describe("SessionSidebar component", () => {
 
   it("closes sidebar on mobile when clicking close button", () => {
     // Mock useAuth to return authenticated state
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
     });
@@ -248,7 +275,7 @@ describe("SessionSidebar component", () => {
 
   it("is not visible when isVisible is false", () => {
     // Mock useAuth to return authenticated state
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
     });
@@ -269,7 +296,7 @@ describe("SessionSidebar component", () => {
 
   it("has navigation items rendered correctly", () => {
     // Mock useAuth to return authenticated state
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
     });
@@ -297,7 +324,7 @@ describe("SessionSidebar component", () => {
 
   it.skip("has navigation links that call onClose when clicked", () => {
     // Mock useAuth to return authenticated state
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
     });

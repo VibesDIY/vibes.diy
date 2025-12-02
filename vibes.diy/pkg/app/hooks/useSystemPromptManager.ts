@@ -36,7 +36,6 @@ export function useSystemPromptManager(
         return {
           systemPrompt: "Test system prompt",
           dependencies: ["useFireproof", "callAI"],
-          instructionalText: true,
           demoData: false,
           model: "test-model",
         } satisfies SystemPromptResult;

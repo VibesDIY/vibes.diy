@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppCreate } from "@vibes.diy/hosting";
-import { OpenAPIRoute } from "chanfana";
+import type { OpenAPIRoute } from "chanfana";
 
 describe("AppCreate endpoint", () => {
   let originalFetch: typeof global.fetch;
   let mockFetch: typeof global.fetch;
   let mockKV: {
     get: (key: string, type?: string) => Promise<string | ArrayBuffer | null>;
-    put: (key: string, value: string) => Promise<void>;
+    put: (key: string, value: unknown) => Promise<void>;
   };
   let mockContext: {
     env: { KV: typeof mockKV };
@@ -57,7 +57,6 @@ describe("AppCreate endpoint", () => {
       env: {
         KV: mockKV,
         PUBLISH_QUEUE: mockQueue,
-        SERVER_OPENROUTER_API_KEY: "test-prov-key",
       },
       get: vi.fn().mockReturnValue({
         email: "test@example.com",
@@ -111,6 +110,9 @@ describe("AppCreate endpoint", () => {
     expect(result.success).toBe(true);
     expect(result.app).toBeDefined();
     expect(result.app.title).toBe("Test App");
+    expect(result.app.summary).toBeNull();
+    expect(result.app.hasIcon).toBe(false);
+    expect(result.app.iconKey).toBeNull();
 
     // Verify Discord webhook was NOT called directly
     expect(mockFetch).not.toHaveBeenCalled();

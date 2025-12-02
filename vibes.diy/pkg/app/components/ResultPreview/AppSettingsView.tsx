@@ -26,12 +26,8 @@ interface AppSettingsViewProps {
     deps: string[],
     userOverride: boolean,
   ) => Promise<void> | void;
-  // Instructional text and demo data override settings
-  instructionalTextOverride?: boolean;
+  // Demo data override settings
   demoDataOverride?: boolean;
-  onUpdateInstructionalTextOverride?: (
-    override?: boolean,
-  ) => Promise<void> | void;
   onUpdateDemoDataOverride?: (override?: boolean) => Promise<void> | void;
 }
 
@@ -43,9 +39,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   dependenciesUserOverride,
   aiSelectedDependencies,
   onUpdateDependencies,
-  instructionalTextOverride,
   demoDataOverride,
-  onUpdateInstructionalTextOverride,
   onUpdateDemoDataOverride,
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
@@ -193,17 +187,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
       setSaveDepsErr((e as Error)?.message || "Failed to save libraries");
     }
   }, [deps, onUpdateDependencies, catalogNames]);
-
-  // Instructional text and demo data handlers
-  const handleInstructionalTextChange = useCallback(
-    (value: "llm" | "on" | "off") => {
-      trackEvent("instructional_text_override", { value });
-      const override = value === "llm" ? undefined : value === "on";
-      onUpdateInstructionalTextOverride?.(override);
-    },
-    [onUpdateInstructionalTextOverride],
-  );
-
+  // Demo data override handler
   const handleDemoDataChange = useCallback(
     (value: "llm" | "on" | "off") => {
       trackEvent("demo_data_override", { value });
@@ -375,9 +359,9 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
             {!dependenciesUserOverride && (
               <div className="mb-4 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300">
                 Libraries shown below were chosen by the AI based on your last
-                prompt. Instructional text and demo data are also chosen by the
-                LLM at runtime. Select different libraries and click Save to set
-                a manual override for this vibe.
+                prompt. Demo data is also chosen by the LLM at runtime. Select
+                different libraries and click Save to set a manual override for
+                this vibe.
               </div>
             )}
             {llmsCatalog.length === 0 ? (
@@ -424,46 +408,6 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
               Control how the AI generates code for this Vibe. You can let the
               LLM decide or override specific settings.
             </p>
-
-            <label className="text-light-primary dark:text-dark-primary mb-2 block text-sm font-semibold">
-              Instructional Text
-            </label>
-            <div className="mb-6 space-y-2">
-              {(["llm", "on", "off"] as const).map((value) => {
-                const currentValue =
-                  instructionalTextOverride === undefined
-                    ? "llm"
-                    : instructionalTextOverride
-                      ? "on"
-                      : "off";
-                const isChecked = currentValue === value;
-                const labels = {
-                  llm: "Let LLM decide",
-                  on: "Always include instructional text",
-                  off: "Never include instructional text",
-                };
-
-                return (
-                  <label
-                    key={value}
-                    className="border-light-decorative-01 dark:border-dark-decorative-01 flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm"
-                  >
-                    <input
-                      type="radio"
-                      name="instructionalText"
-                      value={value}
-                      checked={isChecked}
-                      onChange={() => handleInstructionalTextChange(value)}
-                      className="mt-0.5"
-                    />
-                    <span className="text-light-primary dark:text-dark-primary">
-                      {labels[value]}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-
             <label className="text-light-primary dark:text-dark-primary mb-2 block text-sm font-semibold">
               Demo Data
             </label>

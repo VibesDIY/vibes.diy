@@ -30,6 +30,14 @@ vi.mock("@clerk/clerk-react", async (importOriginal) => {
       isLoaded: true,
       isSignedIn: true,
     }),
+    useUser: () => ({
+      user: {
+        id: "test-user-id",
+        primaryEmailAddress: { emailAddress: "test@example.com" },
+      },
+      isLoaded: true,
+      isSignedIn: true,
+    }),
   };
 });
 

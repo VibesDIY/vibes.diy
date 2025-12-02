@@ -31,9 +31,9 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.15",
+    "@fireproof/core-cli": "0.24.0",
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.10",
+    "@vitest/browser-playwright": "^4.0.14",
     "typescript": "^5.9.3"
   },
   "engines": {
@@ -41,6 +41,6 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.4.66",
-    "@fireproof/core-runtime": "^0.23.15"
+    "@fireproof/core-runtime": "0.24.0"
   }
 }

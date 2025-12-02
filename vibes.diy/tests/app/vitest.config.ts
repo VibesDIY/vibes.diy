@@ -3,11 +3,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
-  plugins: [
-    tsconfigPaths({
-      configNames: ["tsconfig.test.json"],
-    }),
-  ],
+  plugins: [tsconfigPaths({ configNames: ["tsconfig.test.json"] }) as never],
   optimizeDeps: {
     exclude: ["fsevents", "lightningcss"],
   },

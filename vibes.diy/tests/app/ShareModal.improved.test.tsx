@@ -9,9 +9,21 @@ vi.mock("react-dom", () => ({
 }));
 
 // Mock the analytics tracking function (not used in current tests)
-vi.mock("~/vibes.diy/app/utils/analytics", () => ({
-  trackPublishClick: vi.fn(),
-  trackEvent: vi.fn(),
+vi.mock("~/vibes.diy/app/utils/analytics", async () => {
+  const { vi } = await import("vitest");
+  return {
+    trackPublishClick: vi.fn(),
+    trackEvent: vi.fn(),
+  };
+});
+
+// Mock PublishedVibeCard since it uses React Router Link
+vi.mock("~/vibes.diy/app/components/PublishedVibeCard", () => ({
+  default: ({ slug, name }: { slug: string; name?: string }) => (
+    <div data-testid="published-vibe-card" data-slug={slug} data-name={name}>
+      {name || slug}
+    </div>
+  ),
 }));
 
 describe("ShareModal", () => {
@@ -129,10 +141,10 @@ describe("ShareModal", () => {
       />,
     );
 
-    // Should show the subdomain link (test-app)
-    const subdomainLink = screen.getByText("test-app");
+    // Should show the subdomain link (test-app) - check for the link specifically
+    const subdomainLink = screen.getByRole("link", { name: "test-app" });
     expect(subdomainLink).toBeInTheDocument();
-    expect(subdomainLink.closest("a")).toHaveAttribute(
+    expect(subdomainLink).toHaveAttribute(
       "href",
       "https://vibes.diy/vibe/test-app",
     );

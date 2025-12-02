@@ -15,6 +15,9 @@ const App = z.object({
   email: z.string().nullable().optional(),
   hasScreenshot: z.boolean().nullable().optional(),
   screenshotKey: z.string().nullable().optional(),
+  summary: z.string().nullable().optional(),
+  iconKey: z.string().nullable().optional(),
+  hasIcon: z.boolean().nullable().optional(),
   remixOf: z.string().nullable().optional(),
   updateCount: z.number().nullable().optional(),
   shareToFirehose: z.boolean().nullable().optional(),
@@ -22,7 +25,7 @@ const App = z.object({
 });
 
 const PublishEvent = z.object({
-  type: z.enum(["app_created", "app_updated"]),
+  type: z.enum(["app_created", "app_updated", "icon_repair"]),
   app: App,
   metadata: z.object({
     timestamp: z.number(),

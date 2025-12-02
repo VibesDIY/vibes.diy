@@ -11,11 +11,14 @@ const useTestContext = () => useContext(TestContext);
 // No need to mock ChatContext anymore
 
 // Mock other dependencies
-vi.mock("react-markdown", () => ({
-  default: ({ children }: { children: string }) => (
-    <div data-testid="markdown">{children}</div>
-  ),
-}));
+vi.mock("react-markdown", async () => {
+  const React = (await import("react")).default;
+  return {
+    default: ({ children }: { children: string }) => (
+      <div data-testid="markdown">{children}</div>
+    ),
+  };
+});
 
 // Using the centralized mock from __mocks__/use-fireproof.ts
 

@@ -7,16 +7,13 @@ const { mockMakeBaseSystemPrompt, mockCallAI } = vi.hoisted(() => ({
     systemPrompt:
       "You are a React component generator. Generate a complete React component based on the user's prompt. Use Fireproof for data persistence.",
     dependencies: ['useFireproof'],
-    instructionalText: true,
     demoData: false,
     model: 'anthropic/claude-sonnet-4.5',
   }),
   mockCallAI: vi.fn().mockImplementation((messages) => {
     // First call is for dependency selection (has catalog in system prompt)
     if (messages.some((m: { content?: string }) => m.content && m.content.includes('catalog'))) {
-      return Promise.resolve(
-        '{"selected": ["fireproof", "callai"], "instructionalText": true, "demoData": false}'
-      );
+      return Promise.resolve('{"selected": ["fireproof", "callai"], "demoData": false}');
     }
     // Second call is for component generation
     return Promise.resolve(
@@ -55,9 +52,7 @@ describe('useVibes - Basic Structure', () => {
     mockCallAI.mockImplementation((messages) => {
       // First call is for dependency selection (has catalog in system prompt)
       if (messages.some((m: { content?: string }) => m.content && m.content.includes('catalog'))) {
-        return Promise.resolve(
-          '{"selected": ["fireproof", "callai"], "instructionalText": true, "demoData": false}'
-        );
+        return Promise.resolve('{"selected": ["fireproof", "callai"], "demoData": false}');
       }
       // Second call is for component generation
       return Promise.resolve(
@@ -269,7 +264,6 @@ describe('useVibes - Basic Structure', () => {
     expect(result.current.document).toMatchObject({
       dependencies: expect.any(Array),
       aiSelectedDependencies: expect.any(Array),
-      instructionalText: expect.any(Boolean),
       demoData: expect.any(Boolean),
       model: expect.any(String),
       timestamp: expect.any(Number),

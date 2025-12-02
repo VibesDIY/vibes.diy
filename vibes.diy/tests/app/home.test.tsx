@@ -5,68 +5,81 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import UnifiedSession from "~/vibes.diy/app/routes/home.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
+const mocks = vi.hoisted(() => {
+  return {
+    mockParams: { value: {} as Record<string, string | undefined> },
+  };
+});
+
 // Mock Clerk using centralized mock
 vi.mock("@clerk/clerk-react");
 
 // Mock the CookieConsentContext
-vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
-  useCookieConsent: () => ({
-    messageHasBeenSent: false,
-    setMessageHasBeenSent: vi.fn(),
-  }),
-  CookieConsentProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-}));
+vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useCookieConsent: () => ({
+      messageHasBeenSent: false,
+      setMessageHasBeenSent: vi.fn(),
+    }),
+    CookieConsentProvider: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+  };
+});
 
 // Mock dependencies
-vi.mock("~/vibes.diy/app/hooks/useSimpleChat", () => ({
-  useSimpleChat: () => ({
-    docs: [],
-    input: "",
-    setInput: vi.fn(),
-    isStreaming: false,
-    inputRef: { current: null },
-    sendMessage: vi.fn(),
-    selectedSegments: [],
-    selectedCode: null,
-    title: "",
-    sessionId: null,
-    selectedResponseDoc: undefined,
-    codeReady: false,
-    addScreenshot: vi.fn(),
-  }),
-}));
+vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useSimpleChat: () => ({
+      docs: [],
+      input: "",
+      setInput: vi.fn(),
+      isStreaming: false,
+      inputRef: { current: null },
+      sendMessage: vi.fn(),
+      selectedSegments: [],
+      selectedCode: null,
+      title: "",
+      sessionId: null,
+      selectedResponseDoc: undefined,
+      codeReady: false,
+      addScreenshot: vi.fn(),
+    }),
+  };
+});
 
 // Mock the useSession hook
-vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
-  useSession: () => ({
-    session: null,
-    loading: false,
-    error: null,
-    loadSession: vi.fn(),
-    updateTitle: vi.fn().mockResolvedValue(undefined),
-    updateMetadata: vi.fn(),
-    addScreenshot: vi.fn(),
-    createSession: vi.fn().mockResolvedValue("new-session-id"),
-    database: {
-      put: vi.fn().mockResolvedValue({ ok: true }),
-    },
-    mergeSession: vi.fn(),
-  }),
-}));
-
-// Using centralized mock from __mocks__/use-fireproof.ts
+vi.mock("~/vibes.diy/app/hooks/useSession", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useSession: () => ({
+      session: null,
+      loading: false,
+      error: null,
+      loadSession: vi.fn(),
+      updateTitle: vi.fn().mockResolvedValue(undefined),
+      updateMetadata: vi.fn(),
+      addScreenshot: vi.fn(),
+      createSession: vi.fn().mockResolvedValue("new-session-id"),
+      database: {
+        put: vi.fn().mockResolvedValue({ ok: true }),
+      },
+      mergeSession: vi.fn(),
+    }),
+  };
+});
 
 // Create mock implementations for react-router (note: not react-router-dom)
-let mockParams: Record<string, string | undefined> = {};
 vi.mock("react-router", async () => {
+  const { vi } = await import("vitest");
   const actual =
     await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
     useNavigate: () => vi.fn(),
-    useParams: () => mockParams,
+    useParams: () => mocks.mockParams.value,
     useLocation: () => ({ search: "", pathname: "/" }),
     useLoaderData: () => ({ urlPrompt: null, urlModel: null }),
   };
@@ -166,12 +179,12 @@ describe("Home Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset mock params
-    mockParams = {};
+    mocks.mockParams.value = {};
   });
 
   it("should render NewSessionView when no sessionId in URL", async () => {
     // Ensure mockParams is empty for this test
-    mockParams = {};
+    mocks.mockParams.value = {};
 
     render(
       <MockThemeProvider>
@@ -189,7 +202,7 @@ describe("Home Route", () => {
 
   it("should render SessionView when sessionId exists in URL", async () => {
     // Set mock params to simulate sessionId in URL
-    mockParams = { sessionId: "test-session-123" };
+    mocks.mockParams.value = { sessionId: "test-session-123" };
 
     render(
       <MockThemeProvider>

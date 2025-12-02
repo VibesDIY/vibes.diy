@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     tsconfigPaths({
       configNames: ["tsconfig.test.json"],
-    }),
+    }) as never,
   ],
   // cacheDir: "./node_modules/.vibes.diy-useSimpleChat-vite-cache",
   test: {

@@ -18,9 +18,9 @@
   "dependencies": {
     "@adviser/cement": "^0.4.66",
     "@monaco-editor/react": "^4.7.0",
-    "@react-router/node": "^7.9.4",
+    "@react-router/node": "^7.9.6",
     "@react-router/serve": "^7.9.6",
-    "@shikijs/monaco": "^3.15.0",
+    "@shikijs/monaco": "^3.17.1",
     "@tailwindcss/typography": "^0.5.19",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
@@ -28,28 +28,29 @@
     "isbot": "^5.1.25",
     "jose": "^6.1.1",
     "multiformats": "^13.3.7",
-    "posthog-js": "^1.298.0",
+    "posthog-js": "^1.298.1",
     "react": "^19.2.0",
     "react-cookie-consent": "^9.0.0",
     "react-dom": "^19.2.0",
     "react-ga4": "^2.1.0",
     "react-hot-toast": "^2.5.2",
     "react-markdown": "^10.1.0",
-    "react-router": "^7.9.5",
+    "react-router": "^7.9.6",
     "react-router-dom": "^7.9.6",
-    "use-fireproof": "^0.23.15",
+    "use-fireproof": "0.24.0",
     "use-vibes": "workspace:*",
     "vibes-diy": "workspace:*"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.15",
+    "@fireproof/core-cli": "0.24.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
-    "@types/react": "~19.2.2",
+    "@types/react": "~19.2.7",
     "@types/react-dom": "^19.2.2",
     "@vitest/browser": "^4.0.14",
-    "@vitest/browser-playwright": "^4.0.10",
+    "@vitest/browser-playwright": "^4.0.14",
+    "vite": "7.2.6",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.2"
+    "vitest": "^4.0.14"
   }
 }

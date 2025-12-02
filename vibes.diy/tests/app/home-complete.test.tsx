@@ -11,44 +11,47 @@ import type {
   UserChatMessage,
 } from "@vibes.diy/prompts";
 
+// Define mocks using vi.hoisted to ensure they are available to hoisted vi.mock calls
+const mocks = vi.hoisted(() => {
+  return {
+    navigateMock: vi.fn(),
+    mockParams: { value: {} as Record<string, string | undefined> },
+    locationMock: {
+      search: "",
+      pathname: "/",
+      hash: "",
+      state: null,
+      key: "",
+    },
+    mockUseAuth: vi.fn(),
+    cookieConsentSetMessageHasBeenSent: vi.fn(),
+  };
+});
+
 // Mock the CookieConsentContext
 vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
   useCookieConsent: () => ({
     messageHasBeenSent: false,
-    setMessageHasBeenSent: vi.fn(),
+    setMessageHasBeenSent: mocks.cookieConsentSetMessageHasBeenSent,
   }),
   CookieConsentProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
 }));
 
-// We need to define the mock before importing any modules that might use it
-const navigateMock = vi.fn();
-let mockParams: Record<string, string | undefined> = {};
-
-// Mock for useLocation that we can control per test
-let locationMock = {
-  search: "",
-  pathname: "/",
-  hash: "",
-  state: null,
-  key: "",
-};
-
 // Create mock implementations for react-router (note: not react-router-dom)
 vi.mock("react-router", async () => {
+  const { vi } = await import("vitest");
   const actual =
     await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
-    useNavigate: () => navigateMock,
-    useLocation: () => locationMock,
-    useParams: () => mockParams,
+    useNavigate: () => mocks.navigateMock,
+    useLocation: () => mocks.locationMock,
+    useParams: () => mocks.mockParams.value,
     useLoaderData: () => ({ urlPrompt: null, urlModel: null }),
   };
 });
-
-// Remove duplicate mock - the first mock above is sufficient
 
 // Define types for mock components
 interface _ChatInterfaceProps {
@@ -99,23 +102,6 @@ Object.defineProperty(navigator, "clipboard", {
   writable: true,
 });
 
-// Mock window.location
-// vi.stubGlobal('location', {
-//   origin: 'https://example.com',
-//   pathname: '/',
-//   hash: '',
-// });
-
-// Object.defineProperty(window, "location", {
-//   value: {
-//     // Use only the properties we want to override
-//     origin: "https://example.com",
-//     pathname: "/",
-//     hash: "",
-//   },
-//   writable: true,
-// });
-
 // Mock the new session architecture components
 vi.mock("~/vibes.diy/app/components/NewSessionView", () => ({
   default: ({ onSessionCreate }: { onSessionCreate: (id: string) => void }) => (
@@ -164,8 +150,6 @@ vi.mock("~/vibes.diy/app/components/SessionView", () => ({
   ),
 }));
 
-// Remove this mock since we're mocking at component level now
-
 vi.mock("~/vibes.diy/app/components/AppLayout", () => ({
   default: ({ chatPanel, previewPanel }: AppLayoutProps) => (
     <div data-testid="mock-app-layout">
@@ -194,9 +178,8 @@ vi.mock("@vibes.diy/prompts", async (original) => {
 });
 
 // Mock useSimpleChat hook
-
-// Mock useSimpleChat hook to return a chat with completed AI message containing code
 vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async (original) => {
+  const { vi } = await import("vitest");
   const mockCode = Array(210)
     .fill(0)
     .map((_, i) => `console.log("Line ${i}");`)
@@ -214,7 +197,7 @@ vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async (original) => {
         } as UserChatMessage,
         {
           type: "ai",
-          text: `javascript\n${mockCode}\n\n\nExplanation of the code`,
+          text: `   javascript\n${mockCode}\n   \n\nExplanation of the code`,
           segments: [
             { type: "markdown", content: "Explanation of the code" } as Segment,
             { type: "code", content: mockCode } as Segment,
@@ -236,7 +219,7 @@ vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async (original) => {
       title: "React App",
       selectedResponseDoc: {
         type: "ai",
-        text: `javascript\n${mockCode}\n\n\nExplanation of the code`,
+        text: `   javascript\n${mockCode}\n   \n\nExplanation of the code`,
         segments: [
           { type: "markdown", content: "Explanation of the code" } as Segment,
           { type: "code", content: mockCode } as Segment,
@@ -249,13 +232,9 @@ vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async (original) => {
   };
 });
 
-// Using the centralized mock from the __mocks__/use-fireproof.ts file
-// This ensures consistency across all tests
-
 // Mock @clerk/clerk-react
-const mockUseAuth = vi.fn();
 vi.mock("@clerk/clerk-react", () => ({
-  useAuth: mockUseAuth,
+  useAuth: mocks.mockUseAuth,
 }));
 
 describe("Home Route in completed state", () => {
@@ -264,7 +243,7 @@ describe("Home Route in completed state", () => {
     // Clear all mocks before each test
     vi.clearAllMocks();
     // Reset mock params
-    mockParams = {};
+    mocks.mockParams.value = {};
 
     // vi.spyOn(segmentParser, "parseDependencies").mockReturnValue({
     //   react: "^18.2.0",
@@ -274,8 +253,8 @@ describe("Home Route in completed state", () => {
 
   it("displays the correct number of code lines in the preview when session exists", async () => {
     // Set mock params to simulate sessionId in URL
-    mockParams = { sessionId: "test-session-123" };
-    mockUseAuth.mockReturnValue({
+    mocks.mockParams.value = { sessionId: "test-session-123" };
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
       userId: "test-user-id",
@@ -296,8 +275,8 @@ describe("Home Route in completed state", () => {
 
   it("shows share button and handles sharing when session exists", async () => {
     // Set mock params to simulate sessionId in URL
-    mockParams = { sessionId: "test-session-123" };
-    mockUseAuth.mockReturnValue({
+    mocks.mockParams.value = { sessionId: "test-session-123" };
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
       userId: "test-user-id",
@@ -317,23 +296,18 @@ describe("Home Route in completed state", () => {
   });
 
   it.skip("creates a new session when create-session button is clicked", async () => {
-    // SKIPPED: The original test was written for a different implementation.
-    // Now the ChatInterface component doesn't have session creation functionality
-    // directly in it, and the session creation flow has changed.
-    // The flow is now: no session id → title set → id is set
-
     // Set mock location for this test
-    locationMock = {
+    Object.assign(mocks.locationMock, {
       search: "",
       pathname: "/",
       hash: "",
       state: null,
       key: "",
-    };
+    });
 
     // Clear mock tracking
-    navigateMock.mockClear();
-    mockUseAuth.mockReturnValue({
+    mocks.navigateMock.mockClear();
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
       userId: "test-user-id",
@@ -356,9 +330,9 @@ describe("Home Route in completed state", () => {
     // by using a longer timeout and looser expectations
     await waitFor(
       () => {
-        expect(navigateMock).toHaveBeenCalled();
+        expect(mocks.navigateMock).toHaveBeenCalled();
         // Check that we navigate to a session path
-        const firstCall = navigateMock.mock.calls[0];
+        const firstCall = mocks.navigateMock.mock.calls[0];
         if (firstCall) {
           const path = firstCall[0];
           expect(typeof path).toBe("string");
@@ -371,8 +345,8 @@ describe("Home Route in completed state", () => {
 
   it("renders NewSessionView by default when no session in URL", async () => {
     // Clear mock params to simulate no sessionId in URL
-    mockParams = {};
-    mockUseAuth.mockReturnValue({
+    mocks.mockParams.value = {};
+    mocks.mockUseAuth.mockReturnValue({
       isSignedIn: true,
       isLoaded: true,
       userId: "test-user-id",

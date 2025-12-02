@@ -6,13 +6,18 @@ describe("Queue Consumer", () => {
   let originalFetch: typeof global.fetch;
   let mockFetch: typeof global.fetch;
   let mockEnv: {
-    BLUESKY_HANDLE: string;
+    BLUESKY_HANDLE?: string;
     DISCORD_WEBHOOK_URL?: string;
+    BLUESKY_APP_PASSWORD?: string;
+    KV: { get: any; put: any };
+    CALLAI_API_KEY?: string;
+    OPENAI_API_KEY?: string;
   };
   let mockMessage: {
     id: string;
-    body: PublishEventType;
-    timestamp: Date;
+    body: PublishEventType | null;
+    ack: any;
+    retry: any;
   };
   let mockBatch: {
     queue: string;
@@ -25,61 +30,71 @@ describe("Queue Consumer", () => {
 
     // Mock fetch to capture Discord webhook and Bluesky API calls
     mockFetch = vi.fn().mockImplementation((url: string) => {
-      if (url.includes("discord.com/api/webhooks")) {
-        return Promise.resolve({
+      // Mock response helper
+      const createResponse = (data: any) =>
+        Promise.resolve({
           ok: true,
           status: 200,
-          json: () => Promise.resolve({ success: true }),
+          json: () => Promise.resolve(data),
+          text: () => Promise.resolve(JSON.stringify(data)),
         });
+
+      if (url.includes("discord.com/api/webhooks")) {
+        return createResponse({ success: true });
       }
 
       if (url.includes("bsky.social/xrpc/com.atproto.server.createSession")) {
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: () =>
-            Promise.resolve({
-              did: "did:plc:test123",
-              accessJwt: "test-access-token",
-              refreshJwt: "test-refresh-token",
-              handle: "test.bsky.social",
-            }),
+        return createResponse({
+          did: "did:plc:test123",
+          accessJwt: "test-access-token",
+          refreshJwt: "test-refresh-token",
+          handle: "test.bsky.social",
         });
       }
 
       if (url.includes("bsky.social/xrpc/com.atproto.repo.uploadBlob")) {
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: () =>
-            Promise.resolve({
-              blob: {
-                $type: "blob",
-                ref: { $link: "bafyblob123" },
-                mimeType: "image/png",
-                size: 12345,
-              },
-            }),
+        return createResponse({
+          blob: {
+            $type: "blob",
+            ref: { $link: "bafyblob123" },
+            mimeType: "image/png",
+            size: 12345,
+          },
         });
       }
 
       if (url.includes("bsky.social/xrpc/com.atproto.repo.createRecord")) {
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: () =>
-            Promise.resolve({
-              uri: "at://did:plc:test123/app.bsky.feed.post/test123",
-              cid: "bafytest123",
-            }),
+        return createResponse({
+          uri: "at://did:plc:test123/app.bsky.feed.post/test123",
+          cid: "bafytest123",
         });
       }
 
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({}),
-      });
+      // Mock OpenRouter (summary generation)
+      if (url.includes("openrouter.ai/api/v1/chat/completions")) {
+        return createResponse({
+          choices: [
+            {
+              message: {
+                content: "Generated App Summary",
+              },
+            },
+          ],
+        });
+      }
+
+      // Mock OpenAI (icon generation)
+      if (url.includes("api.openai.com/v1/images/generations")) {
+        return createResponse({
+          data: [
+            {
+              b64_json: "VGhpcyBpcyBhIHRlc3QgaWNvbg==", // "This is a test icon" in base64
+            },
+          ],
+        });
+      }
+
+      return createResponse({});
     });
 
     global.fetch = mockFetch;
@@ -87,16 +102,19 @@ describe("Queue Consumer", () => {
     // Mock environment
     mockEnv = {
       KV: {
-        get: vi.fn(),
-        put: vi.fn(),
+        get: vi.fn().mockImplementation((key) => Promise.resolve(null)),
+        put: vi.fn().mockResolvedValue(undefined),
       },
       DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/test/webhook",
       BLUESKY_HANDLE: "test.bsky.social",
       BLUESKY_APP_PASSWORD: "test-app-password",
+      CALLAI_API_KEY: "test-callai-key",
+      OPENAI_API_KEY: "test-openai-key",
     };
 
     // Mock message
     mockMessage = {
+      id: "msg-123",
       body: null, // Will be set in individual tests
       ack: vi.fn(),
       retry: vi.fn(),
@@ -104,6 +122,7 @@ describe("Queue Consumer", () => {
 
     // Mock batch
     mockBatch = {
+      queue: "test-queue",
       messages: [mockMessage],
     };
   });
@@ -639,10 +658,6 @@ describe("Queue Consumer", () => {
   });
 
   it("should create Bluesky post with external embed and screenshot thumbnail", async () => {
-    // Mock KV to return screenshot data
-    const mockScreenshotData = new ArrayBuffer(1024); // Mock image data
-    mockEnv.KV.get.mockResolvedValue(mockScreenshotData);
-
     const testEvent = {
       type: "app_created" as const,
       app: {
@@ -662,6 +677,18 @@ describe("Queue Consumer", () => {
         isUpdate: false,
       },
     };
+
+    // Mock KV to return screenshot data for screenshot key and app JSON for app key
+    const mockScreenshotData = new ArrayBuffer(1024); // Mock image data
+    mockEnv.KV.get.mockImplementation((key: string, type?: string) => {
+      if (key.endsWith("-screenshot")) {
+        return Promise.resolve(mockScreenshotData);
+      }
+      if (key === testEvent.app.slug) {
+        return Promise.resolve(JSON.stringify(testEvent.app));
+      }
+      return Promise.resolve(null);
+    });
 
     mockMessage.body = testEvent;
 
@@ -726,9 +753,6 @@ describe("Queue Consumer", () => {
   });
 
   it("should create Bluesky post with external embed but no thumbnail when screenshot missing", async () => {
-    // Mock KV to return null (no screenshot)
-    mockEnv.KV.get.mockResolvedValue(null);
-
     const testEvent = {
       type: "app_created" as const,
       app: {
@@ -746,6 +770,17 @@ describe("Queue Consumer", () => {
         isUpdate: false,
       },
     };
+
+    // Mock KV to return null for screenshot and app JSON for app key
+    mockEnv.KV.get.mockImplementation((key: string, type?: string) => {
+      if (key.endsWith("-screenshot")) {
+        return Promise.resolve(null);
+      }
+      if (key === testEvent.app.slug) {
+        return Promise.resolve(JSON.stringify(testEvent.app));
+      }
+      return Promise.resolve(null);
+    });
 
     mockMessage.body = testEvent;
 

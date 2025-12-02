@@ -54,6 +54,8 @@ runs:
     - name: Create queue if needed
       shell: bash
       run: |
+        export CLOUDFLARE_API_TOKEN=${{ inputs.CLOUDFLARE_API_TOKEN }}
+        export CLOUDFLARE_ACCOUNT_ID=${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
         cd hosting/pkg
         echo "📋 Ensuring queue exists..."
 
@@ -61,13 +63,12 @@ runs:
         npx wrangler queues create publish-events-v2 || echo "ℹ️ Queue may already exist"
 
         echo "✅ Queue setup complete"
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
 
     - name: Deploy to Cloudflare Workers
       shell: bash
       run: |
+        export CLOUDFLARE_API_TOKEN=${{ inputs.CLOUDFLARE_API_TOKEN }}
+        export CLOUDFLARE_ACCOUNT_ID=${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
         cd hosting/pkg
 
         # Determine worker name and deployment strategy
@@ -96,13 +97,12 @@ runs:
 
         # Set output for worker URL
         echo "worker_url=https://${WORKER_NAME}.jchris.workers.dev" >> $GITHUB_OUTPUT
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
 
     - name: Configure worker secrets
       shell: bash
       run: |
+        export CLOUDFLARE_API_TOKEN=${{ inputs.CLOUDFLARE_API_TOKEN }}
+        export CLOUDFLARE_ACCOUNT_ID=${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
         cd hosting/pkg
 
         # Set flags to match deployment configuration
@@ -154,13 +154,12 @@ runs:
         fi
 
         echo "✅ All secrets configured successfully"
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
 
     - name: Upload KV assets
       shell: bash
       run: |
+        export CLOUDFLARE_API_TOKEN=${{ inputs.CLOUDFLARE_API_TOKEN }}
+        export CLOUDFLARE_ACCOUNT_ID=${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
         cd hosting/pkg
 
         echo "📦 Uploading static assets to KV store..."
@@ -171,9 +170,6 @@ runs:
         pnpm kv:put-babel:remote || echo "⚠️  Babel upload failed, continuing..."
 
         echo "✅ Asset upload completed"
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
 
     - name: Deployment summary
       shell: bash

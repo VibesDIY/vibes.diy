@@ -35,13 +35,13 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "^0.23.15",
-    "@playwright/test": "^1.56.0",
+    "@fireproof/core-cli": "0.24.0",
+    "@playwright/test": "^1.57.0",
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.10",
-    "tsx": "^4.20.3",
+    "@vitest/browser-playwright": "^4.0.14",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.2",
+    "vitest": "^4.0.14",
     "zx": "^8.8.4"
   },
   "engines": {

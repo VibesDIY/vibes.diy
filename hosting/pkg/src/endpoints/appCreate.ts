@@ -210,6 +210,9 @@ export class AppCreate extends OpenAPIRoute {
         title: app.title || `App ${slug}`,
         remixOf: app.remixOf === undefined ? null : app.remixOf,
         hasScreenshot: false,
+        summary: null,
+        iconKey: null,
+        hasIcon: false,
         shareToFirehose: app.shareToFirehose,
         customDomain: app.customDomain || null,
       };
@@ -232,6 +235,7 @@ export class AppCreate extends OpenAPIRoute {
     }
 
     // Send event to queue for processing
+    // The queue consumer will handle generating summary and icon if needed
     try {
       if (!c.env.PUBLISH_QUEUE) {
         console.warn(

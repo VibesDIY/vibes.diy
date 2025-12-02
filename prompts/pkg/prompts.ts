@@ -13,7 +13,7 @@ import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
 
 // Single source of truth for the default coding model used across the repo.
-export const DEFAULT_CODING_MODEL = "anthropic/claude-sonnet-4.5" as const;
+export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
 
 // Model used for RAG decisions (module selection)
 const RAG_DECISION_MODEL = "openai/gpt-4o" as const;
@@ -54,7 +54,6 @@ export async function getDefaultDependencies(): Promise<string[]> {
 export interface SystemPromptResult {
   systemPrompt: string;
   dependencies: string[];
-  instructionalText: boolean;
   demoData: boolean;
   model: string;
 }
@@ -113,7 +112,6 @@ async function detectModulesInHistory(
 
 interface LlmSelectionDecisions {
   selected: string[];
-  instructionalText: boolean;
   demoData: boolean;
 }
 
@@ -170,7 +168,7 @@ async function selectLlmsAndOptions(
     {
       role: "system",
       content:
-        'You select which library modules from a catalog should be included AND whether to include instructional UI text and a demo-data button. First analyze if the user prompt describes specific look & feel requirements. For instructional text and demo data: include them only when asked for. Read the JSON payload and return JSON with properties: "selected" (array of catalog "name" strings), "instructionalText" (boolean), and "demoData" (boolean). Only choose modules from the catalog. Include any libraries already used in history. Respond with JSON only.',
+        'You select which library modules from a catalog should be included AND whether to include a demo-data button. First analyze if the user prompt describes specific look & feel requirements. For demo data: include it only when asked for. Read the JSON payload and return JSON with properties: "selected" (array of catalog "name" strings) and "demoData" (boolean). Only choose modules from the catalog. Include any libraries already used in history. Respond with JSON only.',
     },
     { role: "user", content: JSON.stringify(payload) },
   ];
@@ -185,7 +183,6 @@ async function selectLlmsAndOptions(
       name: "module_and_options_selection",
       properties: {
         selected: { type: "array", items: { type: "string" } },
-        instructionalText: { type: "boolean" },
         demoData: { type: "boolean" },
       },
     },
@@ -230,24 +227,20 @@ async function selectLlmsAndOptions(
         "Module/options selection: call-ai returned undefined with schema present",
       );
       console.warn("This is a known issue in the prompts package environment");
-      return { selected: [], instructionalText: true, demoData: true };
+      return { selected: [], demoData: true };
     }
 
     const parsed = JSON.parse(raw) ?? {};
     const selected = Array.isArray(parsed?.selected)
       ? parsed.selected.filter((v: unknown) => typeof v === "string")
       : [];
-    const instructionalText =
-      typeof parsed?.instructionalText === "boolean"
-        ? parsed.instructionalText
-        : true;
     const demoData =
       typeof parsed?.demoData === "boolean" ? parsed.demoData : true;
 
-    return { selected, instructionalText, demoData };
+    return { selected, demoData };
   } catch (err) {
     console.warn("Module/options selection call failed:", err);
-    return { selected: [], instructionalText: true, demoData: true };
+    return { selected: [], demoData: true };
   }
 }
 
@@ -290,7 +283,6 @@ export async function makeBaseSystemPrompt(
   const useOverride = !!sessionDoc?.dependenciesUserOverride;
 
   let selectedNames: string[] = [];
-  let includeInstructional = true;
   let includeDemoData = true;
 
   const llmsCatalog = await getLlmCatalog(sessionDoc.fallBackUrl);
@@ -307,7 +299,6 @@ export async function makeBaseSystemPrompt(
       history,
       sessionDoc,
     );
-    includeInstructional = decisions.instructionalText;
     includeDemoData = decisions.demoData;
 
     const detected = await detectModulesInHistory(history, sessionDoc);
@@ -316,10 +307,6 @@ export async function makeBaseSystemPrompt(
 
     if (selectedNames.length === 0)
       selectedNames = [...(await getDefaultDependencies())];
-  }
-
-  if (typeof sessionDoc?.instructionalTextOverride === "boolean") {
-    includeInstructional = sessionDoc.instructionalTextOverride;
   }
   if (typeof sessionDoc?.demoDataOverride === "boolean") {
     includeDemoData = sessionDoc.demoDataOverride;
@@ -350,9 +337,6 @@ ${text || ""}
 
   const stylePrompt = sessionDoc?.stylePrompt || defaultStylePrompt;
 
-  const instructionalLine = includeInstructional
-    ? "- In the UI, include a vivid description of the app's purpose and detailed instructions how to use it, in italic text.\n"
-    : "";
   const demoDataLines = includeDemoData
     ? `- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app.\n`
     : "";
@@ -378,7 +362,7 @@ You are an AI assistant tasked with creating React components. You should create
 - The system can send you crash reports, fix them by simplifying the affected code
 - List data items on the main page of your app so users don't have to hunt for them
 - If you save data, make sure it is browseable in the app, eg lists should be clickable for more details
-${instructionalLine}${demoDataLines}
+${demoDataLines}
 
 ${concatenatedLlmsTxt}
 
@@ -394,7 +378,7 @@ ${
     : ""
 }IMPORTANT: You are working in one JavaScript file, use tailwind classes for styling. Remember to use brackets like bg-[#242424] for custom colors.
 
-Provide a title and brief explanation followed by the component code. The component should demonstrate proper Fireproof integration with real-time updates and proper data persistence. Follow it with a brief description of the app's purpose and instructions how to use it (with occasional bold or italic for emphasis). Then suggest some additional features that could be added to the app.
+Provide a title and brief explanation followed by the component code. The component should demonstrate proper Fireproof integration with real-time updates and proper data persistence.
 
 Begin the component with the import statements. Use react and the following libraries:
 
@@ -409,7 +393,6 @@ import React, { ... } from "react"${generateImportStatements(chosenLlms)}
   return {
     systemPrompt,
     dependencies: selectedNames,
-    instructionalText: includeInstructional,
     demoData: includeDemoData,
     model,
   };

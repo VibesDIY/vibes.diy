@@ -5,7 +5,7 @@ import type { OpenAPIRoute } from "chanfana";
 // Mock types
 interface MockKV {
   get: (key: string, type?: string) => Promise<string | ArrayBuffer | null>;
-  put: (key: string, value: string) => Promise<void>;
+  put: (key: string, value: unknown) => Promise<void>;
 }
 
 interface MockQueue {
@@ -16,6 +16,7 @@ interface MockContext {
   env: {
     KV: MockKV;
     PUBLISH_QUEUE: MockQueue;
+    CALLAI_API_KEY?: string;
   };
   get: (key: string) => { email: string; userId: string };
   req: {
@@ -117,6 +118,8 @@ describe("Queue functionality", () => {
       expect(event.app.code).toBe("console.log('hello');");
       expect(event.app.title).toBe("Test App");
       expect(event.app.userId).toBe("user-123");
+      expect(event.app.summary).toBeNull();
+      expect(event.app.hasIcon).toBe(false);
       expect(event.metadata.isUpdate).toBe(false);
       expect(event.metadata.timestamp).toBeTypeOf("number");
     }

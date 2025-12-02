@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { trackPublishClick, trackEvent } from "../../utils/analytics.js";
+import PublishedVibeCard from "../PublishedVibeCard.js";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface ShareModalProps {
   onPublish: (shareToFirehose?: boolean) => Promise<void>;
   isPublishing: boolean;
   isFirehoseShared?: boolean;
+  title?: string;
 }
 
 export function ShareModal({
@@ -20,6 +22,7 @@ export function ShareModal({
   onPublish,
   isPublishing,
   isFirehoseShared = false,
+  title,
 }: ShareModalProps) {
   const [showUpdateSuccess, setShowUpdateSuccess] = useState(false);
   const [shareToFirehose, setShareToFirehose] = useState(isFirehoseShared);
@@ -122,6 +125,14 @@ export function ShareModal({
                     {publishedSubdomain}
                   </a>
                 </strong>
+              </div>
+
+              {/* Show vibe icon/screenshot preview */}
+              <div className="mt-3 mb-3">
+                <PublishedVibeCard
+                  slug={publishedSubdomain}
+                  name={title || publishedSubdomain}
+                />
               </div>
 
               <div className="mt-2">

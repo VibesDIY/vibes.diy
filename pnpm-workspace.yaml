@@ -19,6 +19,10 @@ packages:
   - "utils/pkg"
   - "utils/tests"
 
+# Override sharp version to avoid build failures with 0.34.x
+overrides:
+  sharp: 0.33.5
+
 # Avoid needing to interactively run 'pnpm approve-build' step during quickstart
 onlyBuiltDependencies:
   - "@parcel/watcher"

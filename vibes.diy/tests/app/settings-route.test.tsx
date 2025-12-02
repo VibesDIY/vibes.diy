@@ -10,15 +10,37 @@ import {
 import Settings from "~/vibes.diy/app/routes/settings.js";
 
 // Create mock objects outside the mock function to access them in tests
-const mockMerge = vi.fn();
-const mockSave = vi
-  .fn()
-  .mockImplementation(() => Promise.resolve({ ok: true }));
-const mockSettings = {
-  _id: "user_settings",
-  stylePrompt: "",
-  userPrompt: "",
-};
+const mocks = vi.hoisted(() => {
+  const mockMerge = vi.fn();
+  const mockSave = vi
+    .fn()
+    .mockImplementation(() => Promise.resolve({ ok: true }));
+  const mockSettings = {
+    _id: "user_settings",
+    stylePrompt: "",
+    userPrompt: "",
+  };
+  const mockUseDocument = vi.fn().mockReturnValue({
+    doc: mockSettings,
+    merge: mockMerge,
+    save: mockSave,
+  });
+  const mockUseFireproof = vi.fn().mockReturnValue({
+    useDocument: mockUseDocument,
+  });
+  const navigateMock = vi.fn();
+  const mockUseAuth = vi.fn();
+
+  return {
+    mockMerge,
+    mockSave,
+    mockSettings,
+    mockUseDocument,
+    mockUseFireproof,
+    navigateMock,
+    mockUseAuth,
+  };
+});
 
 // Mock the modules
 vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
@@ -27,32 +49,21 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
   }),
 }));
 
-// Create mock implementations
-const mockUseDocument = vi.fn().mockReturnValue({
-  doc: mockSettings,
-  merge: mockMerge,
-  save: mockSave,
-});
-
-const mockUseFireproof = vi.fn().mockReturnValue({
-  useDocument: mockUseDocument,
-});
-
 // Mock Fireproof
 vi.mock("use-fireproof", () => ({
-  useFireproof: () => mockUseFireproof(),
+  useFireproof: () => mocks.mockUseFireproof(),
 }));
 
 // Create mock implementations for react-router-dom
-const navigateMock = vi.fn();
 vi.mock("react-router-dom", async () => {
+  const { vi } = await import("vitest");
   const actual =
     await vi.importActual<typeof import("react-router-dom")>(
       "react-router-dom",
     );
   return {
     ...actual,
-    useNavigate: () => navigateMock,
+    useNavigate: () => mocks.navigateMock,
   };
 });
 
@@ -78,9 +89,17 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar/HomeIcon", () => ({
 }));
 
 // Mock @clerk/clerk-react
-const mockUseAuth = vi.fn();
 vi.mock("@clerk/clerk-react", () => ({
-  useAuth: mockUseAuth,
+  useAuth: mocks.mockUseAuth,
+  useClerk: () => ({
+    redirectToSignIn: vi.fn(),
+    signOut: vi.fn(),
+  }),
+  useUser: () => ({
+    user: {
+      primaryEmailAddress: { emailAddress: "test@example.com" },
+    },
+  }),
 }));
 
 describe("Settings Route", () => {
@@ -98,14 +117,14 @@ describe("Settings Route", () => {
     vi.useFakeTimers();
 
     // Reset the mock implementations
-    mockUseDocument.mockReturnValue({
+    mocks.mockUseDocument.mockReturnValue({
       doc: mockDoc,
-      merge: mockMerge,
-      save: mockSave,
+      merge: mocks.mockMerge,
+      save: mocks.mockSave,
     });
 
     // Reset navigate mock
-    navigateMock.mockReset();
+    mocks.navigateMock.mockReset();
   });
 
   afterEach(() => {
@@ -114,7 +133,7 @@ describe("Settings Route", () => {
   });
 
   it.skip("renders the settings page with correct title and sections", async () => {
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       userId: "test",
       isLoaded: true,
       isSignedIn: true,
@@ -124,7 +143,7 @@ describe("Settings Route", () => {
   }, 10000);
 
   it("allows updating style prompt via text input", async () => {
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       userId: "test",
       isLoaded: true,
       isSignedIn: true,
@@ -138,11 +157,11 @@ describe("Settings Route", () => {
       fireEvent.change(styleInput, { target: { value: "new style" } });
     });
 
-    expect(mockMerge).toHaveBeenCalledWith({ stylePrompt: "new style" });
+    expect(mocks.mockMerge).toHaveBeenCalledWith({ stylePrompt: "new style" });
   });
 
   it("allows selecting a style prompt from suggestions", async () => {
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       userId: "test",
       isLoaded: true,
       isSignedIn: true,
@@ -155,13 +174,13 @@ describe("Settings Route", () => {
       vi.runAllTimers(); // For the focus setTimeout
     });
 
-    expect(mockMerge).toHaveBeenCalledWith({
+    expect(mocks.mockMerge).toHaveBeenCalledWith({
       stylePrompt: "synthwave (80s digital aesthetic)",
     });
   });
 
   it("allows updating user prompt via textarea", async () => {
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       userId: "test",
       isLoaded: true,
       isSignedIn: true,
@@ -177,20 +196,22 @@ describe("Settings Route", () => {
       });
     });
 
-    expect(mockMerge).toHaveBeenCalledWith({ userPrompt: "custom prompt" });
+    expect(mocks.mockMerge).toHaveBeenCalledWith({
+      userPrompt: "custom prompt",
+    });
   });
 
   it("calls save when the save button is clicked", async () => {
     // Create controlled mock implementation
-    mockSave.mockImplementation(() => {
+    mocks.mockSave.mockImplementation(() => {
       // This will redirect to home page after saving
       setTimeout(() => {
-        navigateMock("/");
+        mocks.navigateMock("/");
       }, 0);
       return Promise.resolve({ ok: true });
     });
 
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       userId: "test",
       isLoaded: true,
       isSignedIn: true,
@@ -221,22 +242,22 @@ describe("Settings Route", () => {
     });
 
     // Check that save was called
-    expect(mockSave).toHaveBeenCalled();
+    expect(mocks.mockSave).toHaveBeenCalled();
     // Check navigation occurred
-    expect(navigateMock).toHaveBeenCalledWith("/");
+    expect(mocks.navigateMock).toHaveBeenCalledWith("/");
   }, 10000);
 
   it("successfully saves settings and navigates to home", async () => {
     // Override save mock to simulate navigation
-    mockSave.mockImplementation(() => {
+    mocks.mockSave.mockImplementation(() => {
       // This will redirect to home page after saving
       setTimeout(() => {
-        navigateMock("/");
+        mocks.navigateMock("/");
       }, 0);
       return Promise.resolve({ ok: true });
     });
 
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       userId: "test",
       isLoaded: true,
       isSignedIn: true,
@@ -264,8 +285,8 @@ describe("Settings Route", () => {
     });
 
     // Verify save was called and we navigated home
-    expect(mockSave).toHaveBeenCalled();
-    expect(navigateMock).toHaveBeenCalledWith("/");
+    expect(mocks.mockSave).toHaveBeenCalled();
+    expect(mocks.navigateMock).toHaveBeenCalledWith("/");
   }, 10000);
 
   it.skip("highlights the selected style prompt suggestion", async () => {
@@ -274,12 +295,12 @@ describe("Settings Route", () => {
       ...mockDoc,
       stylePrompt: "brutalist web (raw, grid-heavy)",
     };
-    mockUseDocument.mockReturnValueOnce({
+    mocks.mockUseDocument.mockReturnValueOnce({
       doc: mockSettingsWithStyle,
-      merge: mockMerge,
-      save: mockSave,
+      merge: mocks.mockMerge,
+      save: mocks.mockSave,
     });
-    mockUseAuth.mockReturnValue({
+    mocks.mockUseAuth.mockReturnValue({
       userId: "test",
       isLoaded: true,
       isSignedIn: true,

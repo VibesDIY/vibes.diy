@@ -35,20 +35,20 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@playwright/test": "^1.56.0",
+    "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^24.9.1",
-    "@types/react": "~19.2.2",
+    "@types/react": "~19.2.7",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/browser": "^4.0.14",
-    "@vitest/browser-playwright": "^4.0.10",
+    "@vitest/browser-playwright": "^4.0.14",
     "call-ai": "workspace:*",
-    "playwright": "^1.56.1",
-    "playwright-chromium": "^1.56.1",
+    "playwright": "^1.57.0",
+    "playwright-chromium": "^1.57.0",
     "react": "^19.2.0",
-    "tsx": "^4.20.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite-plugin-devtools-json": "^1.0.0",
     "zx": "^8.8.4"
@@ -62,10 +62,10 @@
     "@tailwindcss/vite": "^4.1.11",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
     "react-dom": "^19.2.0",
-    "use-fireproof": "^0.23.15",
+    "use-fireproof": "0.24.0",
     "use-vibes": "workspace:0.0.0",
-    "vite": "^7.2.2",
+    "vite": "^7.2.6",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.2"
+    "vitest": "^4.0.14"
   }
 }

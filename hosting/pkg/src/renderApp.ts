@@ -12,6 +12,7 @@ import { testAppData } from "../test-app-data.js";
 interface Bindings {
   KV: KVNamespace;
   SERVER_OPENROUTER_API_KEY: string;
+  PUBLISH_QUEUE: Queue;
 }
 // Start a Hono app
 const app = new Hono<{ Bindings: Bindings }>();
@@ -224,8 +225,67 @@ function parseRangeHeader(
   return { start, end };
 }
 
-// Shared screenshot handler logic
-async function handleScreenshotRequest(c: Context, includeBody = true) {
+function detectImageContentType(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47 &&
+    bytes[4] === 0x0d &&
+    bytes[5] === 0x0a &&
+    bytes[6] === 0x1a &&
+    bytes[7] === 0x0a
+  ) {
+    return "image/png";
+  }
+
+  if (
+    bytes.length >= 3 &&
+    bytes[0] === 0xff &&
+    bytes[1] === 0xd8 &&
+    bytes[2] === 0xff
+  ) {
+    return "image/jpeg";
+  }
+
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x38 &&
+    (bytes[4] === 0x39 || bytes[4] === 0x37) &&
+    bytes[5] === 0x61
+  ) {
+    return "image/gif";
+  }
+
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 && // R
+    bytes[1] === 0x49 && // I
+    bytes[2] === 0x46 && // F
+    bytes[3] === 0x46 && // F
+    bytes[8] === 0x57 && // W
+    bytes[9] === 0x45 && // E
+    bytes[10] === 0x42 && // B
+    bytes[11] === 0x50 // P
+  ) {
+    return "image/webp";
+  }
+
+  return "application/octet-stream";
+}
+
+// Shared image asset handler logic (screenshots/icons)
+async function handleImageRequest(
+  c: Context,
+  keySuffix: string,
+  includeBody = true,
+) {
   // Extract subdomain from the request URL
   const url = new URL(c.req.url);
   const hostname = url.hostname;
@@ -270,17 +330,54 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
     appSlug = parsed.appSlug;
   }
 
-  // Calculate screenshot key based on app slug (screenshots are always for the base app)
-  const screenshotKey = `${appSlug}-screenshot`;
+  // Calculate asset key based on app slug
+  const assetKey = `${appSlug}-${keySuffix}`;
 
-  // Get the screenshot from KV
-  const screenshot = await kv.get(screenshotKey, "arrayBuffer");
+  // Get the asset from KV
+  const asset = await kv.get(assetKey, "arrayBuffer");
 
-  if (!screenshot) {
+  if (!asset) {
+    // If icon is missing but app exists, enqueue a repair
+    if (keySuffix === "icon") {
+      const repairFlagKey = `${appSlug}-icon-repair`;
+
+      // Check if already under repair
+      const underRepair = await kv.get(repairFlagKey);
+
+      if (!underRepair) {
+        // Check if app record exists
+        const appData = await kv.get(appSlug);
+
+        if (appData) {
+          // Set under-repair flag immediately to prevent duplicate repairs
+          await kv.put(repairFlagKey, "true", { expirationTtl: 3600 }); // 1 hour expiry
+
+          try {
+            const app = JSON.parse(appData);
+            // Enqueue repair event
+            await c.env.PUBLISH_QUEUE.send({
+              type: "icon_repair",
+              app,
+              metadata: {
+                timestamp: Date.now(),
+                isUpdate: false,
+              },
+            });
+          } catch (error) {
+            console.error(
+              `Failed to enqueue icon repair for ${appSlug}:`,
+              error,
+            );
+          }
+        }
+      }
+    }
+
     return c.notFound();
   }
 
-  const fileSize = screenshot.byteLength;
+  const fileSize = asset.byteLength;
+  const contentType = detectImageContentType(asset);
   const rangeHeader = c.req.header("Range");
 
   // Handle Range requests
@@ -293,17 +390,17 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
         status: 416,
         headers: {
           "Content-Range": `bytes */${fileSize}`,
-          "Content-Type": "image/png",
+          "Content-Type": "text/plain; charset=utf-8",
         },
       });
     }
 
     const { start, end } = range;
     const contentLength = end - start + 1;
-    const chunk = screenshot.slice(start, end + 1);
+    const chunk = asset.slice(start, end + 1);
 
     const headers = {
-      "Content-Type": "image/png",
+      "Content-Type": contentType,
       "Content-Length": contentLength.toString(),
       "Content-Range": `bytes ${start}-${end}/${fileSize}`,
       "Accept-Ranges": "bytes",
@@ -319,24 +416,36 @@ async function handleScreenshotRequest(c: Context, includeBody = true) {
 
   // Standard GET/HEAD request - return full file
   const headers = {
-    "Content-Type": "image/png",
+    "Content-Type": contentType,
     "Content-Length": fileSize.toString(),
     "Accept-Ranges": "bytes",
     "Cache-Control": "public, max-age=86400",
     "Access-Control-Allow-Origin": "*",
   };
 
-  // Return the screenshot with proper headers, optionally including body
-  return new Response(includeBody ? screenshot : null, { headers });
+  // Return the asset with proper headers, optionally including body
+  return new Response(includeBody ? asset : null, { headers });
 }
 
 // Route to serve app screenshots as PNG images (GET and HEAD)
 app.all("/screenshot.png", async (c) => {
   const method = c.req.method;
   if (method === "GET") {
-    return handleScreenshotRequest(c, true);
+    return handleImageRequest(c, "screenshot", true);
   } else if (method === "HEAD") {
-    return handleScreenshotRequest(c, false);
+    return handleImageRequest(c, "screenshot", false);
+  } else {
+    return c.json({ error: "Method not allowed" }, 405);
+  }
+});
+
+// Route to serve app icons as PNG images (GET and HEAD)
+app.all("/icon.png", async (c) => {
+  const method = c.req.method;
+  if (method === "GET") {
+    return handleImageRequest(c, "icon", true);
+  } else if (method === "HEAD") {
+    return handleImageRequest(c, "icon", false);
   } else {
     return c.json({ error: "Method not allowed" }, 405);
   }

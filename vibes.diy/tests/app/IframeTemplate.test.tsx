@@ -4,43 +4,61 @@ import { render, act } from "@testing-library/react";
 import { ejectTemplateWithPlaceholders } from "~/vibes.diy/app/utils/eject-template.js";
 import ResultPreview from "~/vibes.diy/app/components/ResultPreview/ResultPreview.js";
 
-vi.mock("@remix-run/router", () => ({
-  createBrowserRouter: vi.fn(),
-}));
+vi.mock("@remix-run/router", async () => {
+  const { vi } = await import("vitest");
+  return {
+    createBrowserRouter: vi.fn(),
+  };
+});
 
 // Mock the useApiKey hook
-vi.mock("~/vibes.diy/app/hooks/useApiKey", () => ({
-  useApiKey: () => ({
-    apiKey: "test-api-key",
-    apiKeyObject: { key: "test-api-key", hash: "test-hash" },
-    isLoading: false,
-    error: null,
-    refreshKey: vi.fn(),
-    ensureApiKey: vi
-      .fn()
-      .mockResolvedValue({ key: "test-api-key", hash: "test-hash" }),
-  }),
-}));
+vi.mock("~/vibes.diy/app/hooks/useApiKey", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useApiKey: () => ({
+      apiKey: "test-api-key",
+      apiKeyObject: { key: "test-api-key", hash: "test-hash" },
+      isLoading: false,
+      error: null,
+      refreshKey: vi.fn(),
+      ensureApiKey: vi
+        .fn()
+        .mockResolvedValue({ key: "test-api-key", hash: "test-hash" }),
+    }),
+  };
+});
 
 // Mock @clerk/clerk-react
-vi.mock("@clerk/clerk-react", () => ({
-  useAuth: () => ({
-    userId: "test-user-id",
-    isLoaded: true,
-    isSignedIn: true,
+vi.mock("@clerk/clerk-react", async () => {
+  return {
+    useAuth: () => ({
+      userId: "test-user-id",
+      isLoaded: true,
+      isSignedIn: true,
+    }),
+  };
+});
+
+vi.mock("~/vibes.diy/app/contexts/ThemeContext", () => ({
+  useTheme: () => ({
+    isDarkMode: false,
+    toggleTheme: vi.fn(),
   }),
 }));
 
 // Mock useSession hook to prevent Fireproof initialization during tests
-vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
-  useSession: vi.fn().mockReturnValue({
-    updateTitle: vi.fn().mockResolvedValue(undefined),
-    session: { title: "Test Session" },
-    updatePublishedUrl: vi.fn(),
-    updateFirehoseShared: vi.fn(),
-    addScreenshot: vi.fn(),
-  }),
-}));
+vi.mock("~/vibes.diy/app/hooks/useSession", async () => {
+  const { vi } = await import("vitest");
+  return {
+    useSession: vi.fn().mockReturnValue({
+      updateTitle: vi.fn().mockResolvedValue(undefined),
+      session: { title: "Test Session" },
+      updatePublishedUrl: vi.fn(),
+      updateFirehoseShared: vi.fn(),
+      addScreenshot: vi.fn(),
+    }),
+  };
+});
 
 describe("Eject Template", () => {
   beforeEach(() => {

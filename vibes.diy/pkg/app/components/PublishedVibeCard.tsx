@@ -1,7 +1,10 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { BrutalistCard } from "@vibes.diy/use-vibes-base";
-import { constructVibeScreenshotUrl } from "../utils/vibeUrls.js";
+import {
+  constructVibeIconUrl,
+  constructVibeScreenshotUrl,
+} from "../utils/vibeUrls.js";
 
 interface PublishedVibeCardProps {
   slug: string;
@@ -12,8 +15,38 @@ export default function PublishedVibeCard({
   slug,
   name,
 }: PublishedVibeCardProps): ReactElement {
-  // Construct screenshot URL with query parameter
-  const screenshotUrl = constructVibeScreenshotUrl(slug);
+  // Construct asset URLs with query parameters
+  const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug), [slug]);
+  const iconUrl = useMemo(() => constructVibeIconUrl(slug), [slug]);
+  const [imageSrc, setImageSrc] = useState(iconUrl);
+  const [usingIcon, setUsingIcon] = useState(true);
+
+  // Reset to icon when slug changes
+  useEffect(() => {
+    setImageSrc(iconUrl);
+    setUsingIcon(true);
+  }, [iconUrl]);
+
+  const handleImageError: React.ReactEventHandler<HTMLImageElement> = (
+    event,
+  ) => {
+    const failedSrc = event.currentTarget.src;
+
+    // If the screenshot also fails, don't loop between sources
+    if (failedSrc === screenshotUrl) {
+      return;
+    }
+
+    setImageSrc(screenshotUrl);
+    setUsingIcon(false);
+  };
+
+  const handleImageLoad: React.ReactEventHandler<HTMLImageElement> = (
+    event,
+  ) => {
+    const loadedSrc = event.currentTarget.src;
+    setUsingIcon(loadedSrc === iconUrl);
+  };
   const linkUrl = `/vibe/${slug}`;
 
   // Use provided name or extract from URL
@@ -41,25 +74,33 @@ export default function PublishedVibeCard({
           </div>
         </div>
 
-        <div className="relative w-full overflow-hidden">
-          {/* Blurred background version */}
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <img
-              src={screenshotUrl}
-              className="h-full w-full scale-110 object-cover"
-              alt=""
-              style={{ filter: "blur(10px)", opacity: 0.9 }}
-              loading="lazy"
-            />
-          </div>
+        <div className="relative w-full overflow-hidden bg-white">
+          {/* Blurred background version when using screenshot */}
+          {!usingIcon && (
+            <div className="absolute inset-0 z-0 overflow-hidden">
+              <img
+                src={screenshotUrl}
+                className="h-full w-full scale-110 object-cover"
+                alt=""
+                style={{ filter: "blur(10px)", opacity: 0.9 }}
+                loading="lazy"
+              />
+            </div>
+          )}
 
           {/* Foreground image with fixed height */}
           <div className="relative z-10 flex h-48 w-full justify-center py-2">
             <img
-              src={screenshotUrl}
-              alt={`Screenshot from ${vibeName}`}
+              src={imageSrc}
+              alt={
+                usingIcon
+                  ? `Icon for ${vibeName}`
+                  : `Screenshot from ${vibeName}`
+              }
               className="max-h-full max-w-full object-contain"
               loading="lazy"
+              onError={handleImageError}
+              onLoad={handleImageLoad}
             />
           </div>
         </div>
