@@ -160,9 +160,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // and only when running in a context where ClerkProvider is available
   console.log('[useFireproof] Computing attachConfig');
   const attachConfig = useMemo(
-    () => (vibeMetadata && tokenStrategy
-      ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
-      : undefined),
+    () =>
+      vibeMetadata && tokenStrategy
+        ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
+        : undefined,
     [vibeMetadata, tokenStrategy]
   );
   console.log('[useFireproof] Got attachConfig:', !!attachConfig);
@@ -174,7 +175,12 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   );
 
   // Use original useFireproof with augmented database name and optional attach config
-  console.log('[useFireproof] Calling originalUseFireproof with:', augmentedDbName, 'attach:', !!attachConfig);
+  console.log(
+    '[useFireproof] Calling originalUseFireproof with:',
+    augmentedDbName,
+    'attach:',
+    !!attachConfig
+  );
   const fpResult = originalUseFireproof(augmentedDbName, options);
   console.log('[useFireproof] Got fpResult from originalUseFireproof');
 
@@ -186,7 +192,14 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const rawAttachState = attach?.state;
   const syncEnabled =
     !!vibeMetadata && (rawAttachState === 'attached' || rawAttachState === 'attaching');
-  console.log('[useFireproof] Computed syncEnabled:', syncEnabled, 'vibeMetadata:', !!vibeMetadata, 'rawAttachState:', rawAttachState);
+  console.log(
+    '[useFireproof] Computed syncEnabled:',
+    syncEnabled,
+    'vibeMetadata:',
+    !!vibeMetadata,
+    'rawAttachState:',
+    rawAttachState
+  );
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
@@ -355,22 +368,19 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Memoize the return value to prevent creating new object references on every render
   // Depend on individual properties instead of result object to avoid re-memoizing when
   // upstream useFireproof returns a new object reference (which it does on every render)
-  const result = useMemo(
-    () => {
-      console.log('[useFireproof useMemo] Creating new return object');
-      return {
-        database,
-        useLiveQuery,
-        useDocument,
-        useAllDocs,
-        useChanges,
-        attach,
-        syncEnabled,
-        share,
-      };
-    },
-    [database, useLiveQuery, useDocument, useAllDocs, useChanges, attach, syncEnabled, share]
-  );
+  const result = useMemo(() => {
+    console.log('[useFireproof useMemo] Creating new return object');
+    return {
+      database,
+      useLiveQuery,
+      useDocument,
+      useAllDocs,
+      useChanges,
+      attach,
+      syncEnabled,
+      share,
+    };
+  }, [database, useLiveQuery, useDocument, useAllDocs, useChanges, attach, syncEnabled, share]);
   console.log('[useFireproof] Returning result');
   return result;
 }

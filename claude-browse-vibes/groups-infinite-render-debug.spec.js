@@ -5,13 +5,13 @@ test("Debug infinite re-renders on groups page", async () => {
   console.log("🔍 Starting groups page infinite re-render debug test...");
 
   // Connect to existing Chrome instance with debugging port
-  const browser = await chromium.connectOverCDP('http://localhost:9222');
+  const browser = await chromium.connectOverCDP("http://localhost:9222");
   const contexts = browser.contexts();
   const context = contexts[0]; // Use the first context
   const pages = context.pages();
 
   // Find the groups page or create a new one
-  let page = pages.find(p => p.url().includes('localhost:8890/groups'));
+  let page = pages.find((p) => p.url().includes("localhost:8890/groups"));
   if (!page) {
     page = await context.newPage();
     console.log("📄 Created new page");
@@ -135,17 +135,23 @@ test("Debug infinite re-renders on groups page", async () => {
     console.log("useAllGroups is being called repeatedly.");
 
     // Look for useMemo logs to see if memoization is working
-    const useMemoLogs = consoleMessages.filter(m => m.text.includes("useMemo] Creating"));
+    const useMemoLogs = consoleMessages.filter((m) =>
+      m.text.includes("useMemo] Creating"),
+    );
     console.log(`\n🔍 useMemo recreation count: ${useMemoLogs.length}`);
     if (useMemoLogs.length > 5) {
-      console.log("⚠️  useMemo is recreating objects - memoization is failing!");
+      console.log(
+        "⚠️  useMemo is recreating objects - memoization is failing!",
+      );
       console.log("First 10 useMemo logs:");
       useMemoLogs.slice(0, 10).forEach((log, i) => {
         console.log(`  ${i + 1}. ${log.text}`);
       });
     } else {
       console.log("✅ useMemo seems to be working (low recreation count)");
-      console.log("🔍 The issue is likely that the component is re-rendering for other reasons");
+      console.log(
+        "🔍 The issue is likely that the component is re-rendering for other reasons",
+      );
     }
   } else {
     console.log("\n✅ No infinite re-render detected in this test run.");

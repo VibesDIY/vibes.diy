@@ -33,18 +33,26 @@ function parseInstanceId(fullId: string): {
 }
 
 const GroupsContent = React.memo(function GroupsContent() {
-  console.log('[GroupsContent] Component rendering');
+  console.log("[GroupsContent] Component rendering");
   const navigate = useNavigate();
-  console.log('[GroupsContent] Got navigate function');
-  console.log('[GroupsContent] Calling useAllGroups');
+  console.log("[GroupsContent] Got navigate function");
+  console.log("[GroupsContent] Calling useAllGroups");
   const { groups, isLoading } = useAllGroups();
-  console.log('[GroupsContent] Got groups:', groups.length, 'isLoading:', isLoading);
+  console.log(
+    "[GroupsContent] Got groups:",
+    groups.length,
+    "isLoading:",
+    isLoading,
+  );
 
   // Memoize handleGroupClick to prevent recreation
-  const handleGroupClick = useCallback((fullId: string) => {
-    const { titleId, installId } = parseInstanceId(fullId);
-    navigate(`/vibe/${titleId}/${installId}`);
-  }, [navigate]);
+  const handleGroupClick = useCallback(
+    (fullId: string) => {
+      const { titleId, installId } = parseInstanceId(fullId);
+      navigate(`/vibe/${titleId}/${installId}`);
+    },
+    [navigate],
+  );
 
   return (
     <BrutalistLayout title="My Groups" subtitle="All your vibe groups">
@@ -129,18 +137,18 @@ const GroupsContent = React.memo(function GroupsContent() {
 
 // Auth wrapper component - only renders content when authenticated
 export default function GroupsRoute() {
-  console.log('[GroupsRoute] Route component rendering');
+  console.log("[GroupsRoute] Route component rendering");
   const authResult = useAuth();
   const { isSignedIn, isLoaded } = authResult;
-  console.log('[GroupsRoute] useAuth returned new object:', authResult);
-  console.log('[GroupsRoute] isSignedIn:', isSignedIn, 'isLoaded:', isLoaded);
+  console.log("[GroupsRoute] useAuth returned new object:", authResult);
+  console.log("[GroupsRoute] isSignedIn:", isSignedIn, "isLoaded:", isLoaded);
 
   if (!isSignedIn) {
-    console.log('[GroupsRoute] Not signed in, showing logged out view');
+    console.log("[GroupsRoute] Not signed in, showing logged out view");
     return <LoggedOutView isLoaded={isLoaded} />;
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated
-  console.log('[GroupsRoute] Rendering GroupsContent');
+  console.log("[GroupsRoute] Rendering GroupsContent");
   return <GroupsContent />;
 }

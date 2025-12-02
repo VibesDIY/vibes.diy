@@ -10,6 +10,21 @@ const mockDb = {
     ],
   }),
   delete: vi.fn().mockResolvedValue({ ok: true }),
+  allDocs: vi.fn().mockResolvedValue({
+    rows: [
+      {
+        key: "session1",
+        value: {
+          _id: "session1",
+          title: "Test Session",
+          session_id: "session1",
+        },
+      },
+    ],
+  }),
+  subscribe: vi.fn().mockReturnValue(() => {
+    // Unsubscribe function
+  }),
 };
 
 // Mock session data for queries

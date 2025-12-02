@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useFireproof } from "use-vibes";
 import { useUser } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
@@ -15,21 +15,56 @@ function generateInstallId(): string {
 /**
  * Custom hook for managing vibe instances
  * Handles CRUD operations for vibe instances using Fireproof + KV
+ *
+ * Note: We use database.subscribe() instead of useLiveQuery() to avoid
+ * infinite re-render loops caused by useLiveQuery's internal state updates
  */
 export function useVibeInstances(titleId: string) {
-  const { database, useLiveQuery } = useFireproof("vibes-groups");
+  const { database } = useFireproof("vibes-groups");
   const { user } = useUser();
   const userId = user?.id || "anonymous";
 
+  const [instances, setInstances] = useState<VibeInstanceDocument[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Query instances for this titleId using index
-  const instancesResult = useLiveQuery<VibeInstanceDocument>("titleId", {
-    key: titleId,
-  });
+  // Load instances for this titleId
+  useEffect(() => {
+    let mounted = true;
 
-  const instances = instancesResult.docs || [];
+    const loadInstances = async () => {
+      try {
+        const result = await database.allDocs<VibeInstanceDocument>();
+
+        if (!mounted) return;
+
+        // Filter for instances matching this titleId
+        const titleInstances = result.rows
+          .map((row) => row.value as VibeInstanceDocument)
+          .filter((doc) => doc && doc.titleId === titleId);
+
+        setInstances(titleInstances);
+      } catch (err) {
+        console.error("[useVibeInstances] Error loading instances:", err);
+        if (mounted) {
+          setInstances([]);
+        }
+      }
+    };
+
+    // Subscribe to database changes
+    const unsubscribe = database.subscribe(() => {
+      loadInstances();
+    });
+
+    // Initial load
+    loadInstances();
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [database, titleId]);
 
   /**
    * Create a new instance
