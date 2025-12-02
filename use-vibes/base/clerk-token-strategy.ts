@@ -3,9 +3,11 @@ import type {
   TokenStrategie,
   TokenAndClaims,
   FPCloudClaim,
+  ToCloudOpts,
 } from '@fireproof/core-types-protocols-cloud';
-import { Lazy } from '@adviser/cement';
+import { Lazy, type Logger } from '@adviser/cement';
 import { FPCloudClaimParseSchema } from '@fireproof/core-types-protocols-cloud';
+import type { SuperThis } from '@fireproof/core-types-base';
 
 /**
  * ClerkTokenStrategy implements the TokenStrategie pattern for Fireproof cloud sync.
@@ -25,12 +27,16 @@ export class ClerkTokenStrategy implements TokenStrategie {
     return;
   }
 
-  open(): void {
+  open(_sthis: SuperThis, _logger: Logger, _deviceId: string, _opts: ToCloudOpts): void {
     // No initialization needed for Clerk tokens
     return;
   }
 
-  async tryToken(): Promise<TokenAndClaims | undefined> {
+  async tryToken(
+    _sthis: SuperThis,
+    _logger: Logger,
+    _opts: ToCloudOpts
+  ): Promise<TokenAndClaims | undefined> {
     const token = await this.getToken();
     if (!token) return undefined;
 
@@ -47,8 +53,13 @@ export class ClerkTokenStrategy implements TokenStrategie {
     }
   }
 
-  async waitForToken(): Promise<TokenAndClaims | undefined> {
-    return this.tryToken();
+  async waitForToken(
+    _sthis: SuperThis,
+    _logger: Logger,
+    _deviceId: string,
+    _opts: ToCloudOpts
+  ): Promise<TokenAndClaims | undefined> {
+    return this.tryToken(_sthis, _logger, _opts);
   }
 
   private getFallbackClaims(): FPCloudClaim {

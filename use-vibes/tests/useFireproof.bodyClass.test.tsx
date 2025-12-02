@@ -18,6 +18,13 @@ vi.mock('use-fireproof', () => ({
   },
 }));
 
+// Mock Clerk's useAuth
+vi.mock('@clerk/clerk-react', () => ({
+  useAuth: () => ({
+    getToken: vi.fn().mockResolvedValue('mock-token'),
+  }),
+}));
+
 // Test component that uses our enhanced useFireproof
 function TestComponent({ dbName = 'test-db' }: { dbName?: string }) {
   const { syncEnabled } = useFireproof(dbName);
