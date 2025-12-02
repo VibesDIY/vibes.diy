@@ -134,6 +134,7 @@ function VibeInstanceViewerContent() {
           clerkToken || undefined, // Pass Clerk token as apiKey
           callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
           callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
+          getToken, // Pass getToken function for authentication context - enables sync in vibe-viewer
         );
       } catch (err) {
         console.error("Error loading vibe:", err);
