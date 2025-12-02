@@ -32,7 +32,7 @@ function parseInstanceId(fullId: string): {
   return { titleId, installId };
 }
 
-function GroupsContent() {
+const GroupsContent = React.memo(function GroupsContent() {
   console.log('[GroupsContent] Component rendering');
   const navigate = useNavigate();
   console.log('[GroupsContent] Got navigate function');
@@ -125,7 +125,7 @@ function GroupsContent() {
       )}
     </BrutalistLayout>
   );
-}
+});
 
 // Auth wrapper component - only renders content when authenticated
 export default function GroupsRoute() {
