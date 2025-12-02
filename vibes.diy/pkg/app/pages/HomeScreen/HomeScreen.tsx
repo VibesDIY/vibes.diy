@@ -60,7 +60,7 @@ import {
   VibesSwitch,
 } from "../../components/index.js";
 import { HomeScreenProps } from "./HomeScreen.types.js";
-import { useIsMobile } from "../../hooks/index.js";
+import { useIsMobile, usePrefersDarkMode } from "../../hooks/index.js";
 import { AnimatedScene } from "./AnimatedScene.js";
 import computerAnimGif from "../../assets/computer-anim.gif";
 import htmlpng from "../../assets/html.png";
@@ -93,6 +93,7 @@ const renderMessageWithLinks = (text: string) => {
 
 export const HomeScreen = (_props: HomeScreenProps) => {
   const isMobile = useIsMobile();
+  const isDarkMode = usePrefersDarkMode();
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
   const animatedSceneContainerRef = useRef<HTMLDivElement>(null);
@@ -667,7 +668,12 @@ export const HomeScreen = (_props: HomeScreenProps) => {
           <VibesSwitch size={64} />
         </div>
 
-        <div style={getScrollingBackgroundsStyle()}>
+        <div
+          style={{
+            ...getScrollingBackgroundsStyle(),
+            display: isDarkMode ? "none" : undefined,
+          }}
+        >
           {refsReady && (
             <>
               <div
@@ -795,9 +801,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             <DraggableCard color="yellow" x={700} y={8300}>
               <img src="https://github.com/VibesDIY/vibes.diy/blob/amber/homescreen-extraction/vibes.diy/pkg/app/assets/mouth.gif?raw=true"></img>
-              <p style={getCardTextStyle()}>
-
-              </p>
+              <p style={getCardTextStyle()}></p>
             </DraggableCard>
 
             {!isMobile && (

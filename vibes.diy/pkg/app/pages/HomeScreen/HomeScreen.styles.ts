@@ -2,11 +2,11 @@ import { CSSProperties } from "react";
 
 export const HomeScreenTheme = {
   colors: {
-    menuBg: "var(--hm-menu-bg, #CCCDC8)",
-    menuText: "var(--hm-menu-text, white)",
-    contentBg: "var(--hm-content-bg, #1e1e1e)",
-    shadow: "var(--hm-shadow, rgba(0, 0, 0, 0.3))",
-    gridLineColor: "var(--hm-grid-line, #fffff0)",
+    menuBg: "var(--vibes-bg-primary)",
+    menuText: "white",
+    contentBg: "#1e1e1e",
+    shadow: "rgba(0, 0, 0, 0.3)",
+    gridLineColor: "#fffff0",
   },
   dimensions: {
     padding: "20px",
@@ -98,7 +98,7 @@ export const getMenuStyle = (): CSSProperties => ({
   fontFamily: HomeScreenTheme.fonts.primary,
   borderTopLeftRadius: "10px",
   borderTopRightRadius: "10px",
-  boxShadow: "0px 1px 0px 0px #fefff2",
+  boxShadow: `0px 1px 0px 0px "#fefff2"`,
 });
 
 // Scrollable container for content (needs high z-index so children can be above grid)
