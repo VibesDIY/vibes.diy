@@ -52,6 +52,9 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
 // Mock Fireproof
 vi.mock("use-fireproof", () => ({
   useFireproof: () => mocks.mockUseFireproof(),
+  ImgFile: vi.fn(),
+  fireproof: vi.fn(),
+  toCloud: vi.fn(),
 }));
 
 // Create mock implementations for react-router-dom
@@ -67,25 +70,31 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-// Mock SimpleAppLayout component
-vi.mock("~/vibes.diy/app/components/SimpleAppLayout", () => ({
+// Mock BrutalistLayout component
+vi.mock("~/vibes.diy/app/components/BrutalistLayout", () => ({
   default: ({
-    headerLeft,
     children,
+    title,
+    subtitle,
+    headerActions,
   }: {
-    headerLeft: React.ReactNode;
     children: React.ReactNode;
+    title: string;
+    subtitle?: string;
+    headerActions?: React.ReactNode;
   }) => (
-    <div data-testid="simple-app-layout">
-      <div data-testid="header-left">{headerLeft}</div>
+    <div data-testid="brutalist-layout">
+      <div data-testid="layout-title">{title}</div>
+      {subtitle && <div data-testid="layout-subtitle">{subtitle}</div>}
+      {headerActions && <div data-testid="header-actions">{headerActions}</div>}
       <div data-testid="content-area">{children}</div>
     </div>
   ),
 }));
 
-// Mock HomeIcon component
-vi.mock("~/vibes.diy/app/components/SessionSidebar/HomeIcon", () => ({
-  HomeIcon: () => <div data-testid="home-icon" />,
+// Mock LoggedOutView
+vi.mock("~/vibes.diy/app/components/LoggedOutView", () => ({
+  default: () => <div data-testid="logged-out-view">Please sign in</div>,
 }));
 
 // Mock @clerk/clerk-react
