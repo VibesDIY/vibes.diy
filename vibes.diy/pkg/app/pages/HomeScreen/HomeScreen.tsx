@@ -851,6 +851,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             </DraggableCard>
             
             <DraggableCard color="yellow" x={700} y={8300}>
+              <img src="https://github.com/VibesDIY/vibes.diy/blob/amber/homescreen-extraction/vibes.diy/pkg/app/assets/mouth.gif?raw=true"></img>
               <p
                 style={{
                   fontWeight: "bold",
@@ -858,7 +859,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   lineHeight: "25px",
                 }}
               >
-                Image: vibes.diy/pkg/app/assets/screenshots/mouth.gif
+                
               </p>
             </DraggableCard>
 
