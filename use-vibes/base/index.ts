@@ -117,20 +117,25 @@ function constructDatabaseName(
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
   const renderNum = Math.random();
-  console.log("[useFireproof] RENDER", renderNum);
+  console.log('[useFireproof] RENDER', renderNum);
 
   // Get authentication token function from context (parent app provides this via VibeContextProvider)
   // User vibes in iframes won't have ClerkProvider, so getToken will be undefined and sync disabled
   const getToken = useVibeGetToken();
-  console.log("[useFireproof]", renderNum, "getToken changed?", !!getToken);
+  console.log('[useFireproof]', renderNum, 'getToken changed?', !!getToken);
 
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
-  console.log("[useFireproof]", renderNum, "vibeMetadata changed?", !!vibeMetadata);
+  console.log('[useFireproof]', renderNum, 'vibeMetadata changed?', !!vibeMetadata);
 
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
-  console.log("[useFireproof]", renderNum, "augmentedDbName:", typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name);
+  console.log(
+    '[useFireproof]',
+    renderNum,
+    'augmentedDbName:',
+    typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name
+  );
 
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
@@ -139,7 +144,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
   // Create Clerk token strategy only if getToken is available
   const tokenStrategy = useMemo(() => {
-    console.log("[useFireproof]", renderNum, "tokenStrategy useMemo running");
+    console.log('[useFireproof]', renderNum, 'tokenStrategy useMemo running');
     if (!getToken) {
       return null;
     }
@@ -151,29 +156,23 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Only enable sync when both vibeMetadata exists AND Clerk auth is available
   // This ensures only instance-specific databases (with titleId + installId) get synced
   // and only when running in a context where ClerkProvider is available
-  const attachConfig = useMemo(
-    () => {
-      console.log("[useFireproof]", renderNum, "attachConfig useMemo running");
-      return vibeMetadata && tokenStrategy
-        ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
-        : undefined;
-    },
-    [vibeMetadata, tokenStrategy]
-  );
+  const attachConfig = useMemo(() => {
+    console.log('[useFireproof]', renderNum, 'attachConfig useMemo running');
+    return vibeMetadata && tokenStrategy
+      ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
+      : undefined;
+  }, [vibeMetadata, tokenStrategy]);
 
   // Memoize the options object to prevent re-creating on every render
-  const options = useMemo(
-    () => {
-      console.log("[useFireproof]", renderNum, "options useMemo running");
-      return attachConfig ? { attach: attachConfig } : undefined;
-    },
-    [attachConfig]
-  );
+  const options = useMemo(() => {
+    console.log('[useFireproof]', renderNum, 'options useMemo running');
+    return attachConfig ? { attach: attachConfig } : undefined;
+  }, [attachConfig]);
 
-  console.log("[useFireproof]", renderNum, "Calling originalUseFireproof");
+  console.log('[useFireproof]', renderNum, 'Calling originalUseFireproof');
   // Use original useFireproof with augmented database name and optional attach config
   const fpResult = originalUseFireproof(augmentedDbName, options);
-  console.log("[useFireproof]", renderNum, "Got fpResult, attach state:", fpResult.attach?.state);
+  console.log('[useFireproof]', renderNum, 'Got fpResult, attach state:', fpResult.attach?.state);
   // Destructure the result to get stable references for individual properties
   const { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach } = fpResult;
   // Sync is enabled only when running in a vibe-viewer context and the attach state is connected
