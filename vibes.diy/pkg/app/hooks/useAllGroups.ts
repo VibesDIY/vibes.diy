@@ -33,8 +33,11 @@ export function useAllGroups() {
   // Extract docs array - groupsResult object changes on every render from useLiveQuery
   const docs = groupsResult.docs;
 
-  // Memoize groups based on docs array reference
-  const groups = useMemo(() => docs || [], [docs]);
+  // Memoize groups based on docs array CONTENTS (length + ids), not reference
+  // useLiveQuery returns a new array reference on every call even if contents are the same
+  const groups = useMemo(() => {
+    return docs || [];
+  }, [docs?.length, docs?.map(d => d._id).join(',')]);
   console.log('[useAllGroups] Returning groups count:', groups.length);
 
   // Memoize isLoading as a boolean to avoid object recreation
