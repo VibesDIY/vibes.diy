@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { useFireproof } from "use-vibes";
 import { useAuth } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
@@ -29,6 +29,19 @@ export function useAllGroups() {
   console.log('[useAllGroups] Calling useLiveQuery with filter');
   const groupsResult = useLiveQuery<VibeInstanceDocument>(filterFn);
   console.log('[useAllGroups] Got groupsResult:', groupsResult);
+
+  // Track if groupsResult is changing
+  const prevResultRef = useRef<typeof groupsResult>();
+  useEffect(() => {
+    if (prevResultRef.current !== groupsResult) {
+      console.log('[useAllGroups] groupsResult CHANGED (new object reference)');
+      console.log('  Previous:', prevResultRef.current);
+      console.log('  Current:', groupsResult);
+      prevResultRef.current = groupsResult;
+    } else {
+      console.log('[useAllGroups] groupsResult SAME (same reference)');
+    }
+  });
 
   // Extract docs array - groupsResult object changes on every render from useLiveQuery
   const docs = groupsResult.docs;
