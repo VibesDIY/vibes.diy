@@ -15,8 +15,8 @@ export function useAllGroups() {
   // Use a consistent database name to avoid hydration mismatches
   // userId is included in the query filter instead
   console.log('[useAllGroups] Calling useFireproof("vibes-groups")');
-  const fireproofResult = useFireproof("vibes-groups");
-  console.log('[useAllGroups] Got fireproofResult, useLiveQuery:', !!fireproofResult.useLiveQuery);
+  const { useLiveQuery } = useFireproof("vibes-groups");
+  console.log('[useAllGroups] Got useLiveQuery:', !!useLiveQuery);
 
   // Query ALL groups for this user (no titleId filter)
   // Memoize the filter function to prevent infinite re-renders
@@ -27,7 +27,7 @@ export function useAllGroups() {
   );
 
   console.log('[useAllGroups] Calling useLiveQuery with filter');
-  const groupsResult = fireproofResult.useLiveQuery<VibeInstanceDocument>(filterFn);
+  const groupsResult = useLiveQuery<VibeInstanceDocument>(filterFn);
   console.log('[useAllGroups] Got groupsResult:', groupsResult);
 
   const groups = groupsResult.docs || [];

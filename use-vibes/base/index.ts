@@ -178,11 +178,13 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // Destructure the result to get stable references for individual properties
   const { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach } = result;
+  console.log('[useFireproof] Destructured result, attach state:', attach?.state);
 
   // Sync is enabled only when running in a vibe-viewer context and the attach state is connected
   const rawAttachState = attach?.state;
   const syncEnabled =
     !!vibeMetadata && (rawAttachState === 'attached' || rawAttachState === 'attaching');
+  console.log('[useFireproof] Computed syncEnabled:', syncEnabled, 'vibeMetadata:', !!vibeMetadata, 'rawAttachState:', rawAttachState);
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
