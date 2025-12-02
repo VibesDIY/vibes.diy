@@ -34,6 +34,30 @@ export default function BrutalistLayout({
       {/* SessionSidebar */}
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
 
+      {/* Hamburger menu button - fixed top left */}
+      <div className="absolute top-4 left-4">
+        <button
+          onClick={openSidebar}
+          className="flex items-center justify-center p-3 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+          aria-label="Open menu"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
+
       <div className="flex-1 px-8 py-8">
         <div
           style={{
@@ -45,30 +69,6 @@ export default function BrutalistLayout({
             gap: "24px",
           }}
         >
-          {/* Hamburger menu button at top */}
-          <div className="flex items-center">
-            <button
-              onClick={openSidebar}
-              className="flex items-center justify-center p-2 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-              aria-label="Open menu"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-          </div>
-
           {/* Header card */}
           <BrutalistCard size="lg">
             <div className="flex items-center justify-between">
