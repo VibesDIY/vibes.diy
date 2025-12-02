@@ -61,11 +61,11 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
     >
       <div className="flex h-full flex-col overflow-auto pt-24">
         <nav className="flex-grow p-2">
-          <ul className="space-y-1">
+          <ul className="space-y-2">
             <li>
               <a
                 href="/"
-                className="hover:bg-light-background-01 dark:hover:bg-dark-background-01 flex items-center rounded-md px-4 py-3 text-sm font-medium"
+                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
               >
                 <HomeIcon className="text-accent-01 mr-3 h-5 w-5" />
                 <span>Home</span>
@@ -75,7 +75,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
               <Link
                 to="/vibes/mine"
                 onClick={() => onClose()}
-                className="hover:bg-light-background-01 dark:hover:bg-dark-background-01 flex items-center rounded-md px-4 py-3 text-sm font-medium"
+                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
               >
                 <StarIcon className="text-accent-01 mr-3 h-5 w-5" />
                 <span>My Vibes</span>
@@ -85,7 +85,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
               <Link
                 to="/groups"
                 onClick={() => onClose()}
-                className="hover:bg-light-background-01 dark:hover:bg-dark-background-01 flex items-center rounded-md px-4 py-3 text-sm font-medium"
+                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
               >
                 <GroupsIcon className="text-accent-01 mr-3 h-5 w-5" />
                 <span>Groups</span>
@@ -97,7 +97,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                 <Link
                   to="/settings"
                   onClick={() => onClose()}
-                  className="hover:bg-light-background-01 dark:hover:bg-dark-background-01 flex items-center rounded-md px-4 py-3 text-sm font-medium"
+                  className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
                 >
                   <GearIcon className="text-accent-01 mr-3 h-5 w-5" />
                   <span>Settings</span>
@@ -108,7 +108,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
               <Link
                 to="/about"
                 onClick={() => onClose()}
-                className="hover:bg-light-background-01 dark:hover:bg-dark-background-01 flex items-center rounded-md px-4 py-3 text-sm font-medium"
+                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
               >
                 <InfoIcon className="text-accent-01 mr-3 h-5 w-5" />
                 <span>About</span>
@@ -120,7 +120,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
         {/* Login Status Indicator */}
         <div className="mt-auto">
           <nav className="flex-grow p-2">
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {isLoading ? (
                 // LOADING
                 <li className="flex items-center rounded-md px-4 py-3 text-sm font-medium text-gray-400">
@@ -135,7 +135,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                       await clerk.signOut();
                       onClose();
                     }}
-                    className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-md px-4 py-3 text-left text-sm font-bold transition-colors hover:opacity-90"
+                    className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
                   >
                     <span>Logout {userEmail}</span>
                   </button>
@@ -168,7 +168,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                         await initiateLogin();
                         onClose();
                       }}
-                      className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-md px-4 py-3 text-left text-sm font-bold transition-colors hover:opacity-90"
+                      className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
                     >
                       <span>Log in</span>
                     </button>
