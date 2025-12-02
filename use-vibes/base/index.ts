@@ -80,6 +80,7 @@ export function toCloud(
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
+    strategy: opts?.tokenStrategy ?? opts?.strategy,
   });
 
   return attachable;
