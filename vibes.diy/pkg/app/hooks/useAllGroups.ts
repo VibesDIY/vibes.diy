@@ -30,7 +30,8 @@ export function useAllGroups() {
   const groupsResult = useLiveQuery<VibeInstanceDocument>(filterFn);
   console.log('[useAllGroups] Got groupsResult:', groupsResult);
 
-  const groups = groupsResult.docs || [];
+  // Memoize groups to avoid creating new empty array on every render
+  const groups = useMemo(() => groupsResult.docs || [], [groupsResult.docs]);
   console.log('[useAllGroups] Returning groups count:', groups.length);
 
   // Memoize the return value to prevent creating new object references
