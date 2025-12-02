@@ -52,76 +52,72 @@ function GroupsContent() {
 
       {/* Groups List */}
       {!isLoading && (
-            <div>
-              {groups.length === 0 ? (
-                <BrutalistCard size="md">
-                  <p className="text-center text-lg">
-                    No groups yet. Visit a vibe to create your first group!
-                  </p>
-                </BrutalistCard>
-              ) : (
-                <div className="space-y-4">
-                  {/* Sort by most recently updated */}
-                  {[...groups]
-                    .sort((a, b) => {
-                      const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
-                      const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
-                      if (tb !== ta) return tb - ta;
-                      // Fallback to _id
-                      return String(b._id).localeCompare(String(a._id));
-                    })
-                    .map((group) => {
-                      const { titleId } = parseInstanceId(group._id || "");
-                      return (
-                        <BrutalistCard key={group._id} size="md">
+        <div>
+          {groups.length === 0 ? (
+            <BrutalistCard size="md">
+              <p className="text-center text-lg">
+                No groups yet. Visit a vibe to create your first group!
+              </p>
+            </BrutalistCard>
+          ) : (
+            <div className="space-y-4">
+              {/* Sort by most recently updated */}
+              {[...groups]
+                .sort((a, b) => {
+                  const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
+                  const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
+                  if (tb !== ta) return tb - ta;
+                  // Fallback to _id
+                  return String(b._id).localeCompare(String(a._id));
+                })
+                .map((group) => {
+                  const { titleId } = parseInstanceId(group._id || "");
+                  return (
+                    <BrutalistCard key={group._id} size="md">
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => group._id && handleGroupClick(group._id)}
+                      >
+                        <div className="flex gap-4 items-start">
                           <div
-                            className="cursor-pointer"
-                            onClick={() =>
-                              group._id && handleGroupClick(group._id)
-                            }
+                            className="flex-shrink-0"
+                            style={{ width: "200px" }}
                           >
-                            <div className="flex gap-4 items-start">
-                              <div
-                                className="flex-shrink-0"
-                                style={{ width: "200px" }}
-                              >
-                                <PublishedVibeCard
-                                  slug={titleId}
-                                  name={group.description || titleId}
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="text-2xl font-bold mb-2">
-                                  {group.description || titleId}
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                  Updated{" "}
-                                  {group.updatedAt
-                                    ? new Date(
-                                        group.updatedAt,
-                                      ).toLocaleDateString()
-                                    : "—"}
-                                  {(() => {
-                                    const shareCount = (group.sharedWith ?? [])
-                                      .length;
-                                    return shareCount > 0 ? (
-                                      <span className="ml-2">
-                                        · Shared with {shareCount}{" "}
-                                        {shareCount === 1 ? "person" : "people"}
-                                      </span>
-                                    ) : null;
-                                  })()}
-                                </p>
-                              </div>
-                            </div>
+                            <PublishedVibeCard
+                              slug={titleId}
+                              name={group.description || titleId}
+                            />
                           </div>
-                        </BrutalistCard>
-                      );
-                    })}
-                </div>
-              )}
+                          <div className="flex-1">
+                            <h3 className="text-2xl font-bold mb-2">
+                              {group.description || titleId}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Updated{" "}
+                              {group.updatedAt
+                                ? new Date(group.updatedAt).toLocaleDateString()
+                                : "—"}
+                              {(() => {
+                                const shareCount = (group.sharedWith ?? [])
+                                  .length;
+                                return shareCount > 0 ? (
+                                  <span className="ml-2">
+                                    · Shared with {shareCount}{" "}
+                                    {shareCount === 1 ? "person" : "people"}
+                                  </span>
+                                ) : null;
+                              })()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </BrutalistCard>
+                  );
+                })}
             </div>
           )}
+        </div>
+      )}
     </BrutalistLayout>
   );
 }
