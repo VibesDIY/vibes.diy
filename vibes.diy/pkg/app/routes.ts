@@ -20,7 +20,7 @@ export default [
     id: "chat-app-settings",
   }),
   route("vibes/mine", "./routes/mine.tsx", { id: "my-vibes" }),
-  route("vibes/installs", "./routes/installs.tsx", { id: "installs" }),
+  route("groups", "./routes/groups.tsx", { id: "groups" }),
 
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),

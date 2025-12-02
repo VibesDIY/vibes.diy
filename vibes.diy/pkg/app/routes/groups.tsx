@@ -1,12 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import { useAllInstances } from "../hooks/useAllInstances.js";
+import { useAllGroups } from "../hooks/useAllGroups.js";
 import PublishedVibeCard from "../components/PublishedVibeCard.js";
 
 export function meta() {
   return [
-    { title: "My Installs | Vibes DIY" },
-    { name: "description", content: "View all your vibe installations" },
+    { title: "My Groups | Vibes DIY" },
+    { name: "description", content: "View all your vibe groups" },
   ];
 }
 
@@ -28,11 +28,11 @@ function parseInstanceId(fullId: string): {
   return { titleId, installId };
 }
 
-export default function InstallsRoute() {
+export default function GroupsRoute() {
   const navigate = useNavigate();
-  const { instances, isLoading } = useAllInstances();
+  const { groups, isLoading } = useAllGroups();
 
-  const handleInstanceClick = (fullId: string) => {
+  const handleGroupClick = (fullId: string) => {
     const { titleId, installId } = parseInstanceId(fullId);
     navigate(`/vibe/${titleId}/${installId}`);
   };
@@ -43,10 +43,10 @@ export default function InstallsRoute() {
         {/* Header */}
         <div className="mb-8 border-8 border-black p-6 bg-white">
           <h1 className="text-5xl font-black uppercase tracking-tight">
-            MY INSTALLS
+            MY GROUPS
           </h1>
           <p className="text-xl font-bold uppercase tracking-wide mt-2">
-            ALL YOUR VIBE INSTALLATIONS
+            ALL YOUR VIBE GROUPS
           </p>
         </div>
 
@@ -57,22 +57,22 @@ export default function InstallsRoute() {
           </div>
         )}
 
-        {/* Instances List */}
+        {/* Groups List */}
         {!isLoading && (
           <div>
-            {instances.length === 0 ? (
+            {groups.length === 0 ? (
               <div className="p-8 bg-white border-4 border-black text-center">
                 <p className="text-xl font-black uppercase">
-                  NO INSTALLS YET...
+                  NO GROUPS YET...
                 </p>
                 <p className="text-sm font-bold uppercase mt-2">
-                  Visit a vibe to create your first install
+                  Visit a vibe to create your first group
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Sort by most recently updated */}
-                {[...instances]
+                {[...groups]
                   .sort((a, b) => {
                     const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
                     const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
@@ -80,30 +80,30 @@ export default function InstallsRoute() {
                     // Fallback to _id
                     return String(b._id).localeCompare(String(a._id));
                   })
-                  .map((instance) => {
-                    const { titleId } = parseInstanceId(instance._id || "");
+                  .map((group) => {
+                    const { titleId } = parseInstanceId(group._id || "");
                     return (
                       <div
-                        key={instance._id}
+                        key={group._id}
                         onClick={() =>
-                          instance._id && handleInstanceClick(instance._id)
+                          group._id && handleGroupClick(group._id)
                         }
                         className="cursor-pointer hover:scale-105 transition-transform"
                       >
                         <PublishedVibeCard
                           slug={titleId}
-                          name={instance.description || titleId}
+                          name={group.description || titleId}
                         />
                         <div className="mt-2 px-2">
                           <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
                             Updated{" "}
-                            {instance.updatedAt
+                            {group.updatedAt
                               ? new Date(
-                                  instance.updatedAt,
+                                  group.updatedAt,
                                 ).toLocaleDateString()
                               : "—"}
                             {(() => {
-                              const shareCount = (instance.sharedWith ?? [])
+                              const shareCount = (group.sharedWith ?? [])
                                 .length;
                               return shareCount > 0 ? (
                                 <span className="ml-1">
