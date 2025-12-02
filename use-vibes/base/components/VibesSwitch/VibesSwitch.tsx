@@ -15,8 +15,10 @@ export function VibesSwitch({ size = 24, className, isActive, onToggle }: VibesS
   const logicalActive = isActive !== undefined ? isActive : internalActive;
   const active = !logicalActive;
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent parent handlers from firing twice if they wrap this
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    e.preventDefault(); // Prevent ghost clicks on mobile
+
     const newState = !logicalActive;
     if (onToggle) {
       onToggle(newState);
@@ -37,7 +39,7 @@ export function VibesSwitch({ size = 24, className, isActive, onToggle }: VibesS
       viewBox="0 0 600 300"
       fill="currentColor"
       className={className}
-      onClick={handleClick}
+      onPointerDown={handlePointerDown}
     >
       <path
         fillRule="evenodd"
