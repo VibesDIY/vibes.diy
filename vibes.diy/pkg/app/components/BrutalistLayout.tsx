@@ -26,7 +26,7 @@ export default function BrutalistLayout({
   }, []);
 
   return (
-    <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full relative">
+    <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
       {/* SessionSidebar */}
       <SessionSidebar
         isVisible={isSidebarVisible}
@@ -34,17 +34,16 @@ export default function BrutalistLayout({
         sessionId=""
       />
 
-      {/* Hamburger menu button - fixed top left */}
-      <div className="absolute top-4 left-4 z-20">
-        <VibesSwitch
-          size={60}
-          isActive={isSidebarVisible}
-          onToggle={setIsSidebarVisible}
-          className="cursor-pointer"
-        />
-      </div>
-
-      <div className="flex-1 px-8 py-8">
+      <div className="px-8 py-8">
+        {/* Hamburger menu button - top left in normal flow */}
+        <div className="mb-6">
+          <VibesSwitch
+            size={60}
+            isActive={isSidebarVisible}
+            onToggle={setIsSidebarVisible}
+            className="cursor-pointer"
+          />
+        </div>
         <div
           style={{
             maxWidth: "1000px",
