@@ -5,10 +5,30 @@ import '../../styles/colors.css';
 export interface VibesSwitchProps {
   size?: number | string;
   className?: string;
+  isActive?: boolean;
+  onToggle?: (active: boolean) => void;
 }
 
-export function VibesSwitch({ size = 24, className }: VibesSwitchProps) {
-  const [active, setActive] = React.useState(true);
+export function VibesSwitch({
+  size = 24,
+  className,
+  isActive,
+  onToggle,
+}: VibesSwitchProps) {
+  const [internalActive, setInternalActive] = React.useState(true);
+
+  const active = isActive !== undefined ? isActive : internalActive;
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent parent handlers from firing twice if they wrap this
+    const newState = !active;
+    if (onToggle) {
+      onToggle(newState);
+    }
+    if (isActive === undefined) {
+      setInternalActive(newState);
+    }
+  };
 
   const originalD = `M426.866,285.985c-7.999-0.416-19.597-0.733-31.141-1.687  c-15.692-1.297-28.809-8.481-40.105-19.104c-12.77-12.008-20.478-26.828-22.714-44.177c-3.048-23.644,3.384-44.558,19.646-62.143  c9.174-9.92,20.248-17.25,33.444-20.363c7.786-1.837,15.944-2.399,23.973-2.828c9.988-0.535,20.023-0.666,30.021-0.371  c10.191,0.301,20.433,0.806,30.521,2.175c12.493,1.696,23.132,7.919,32.552,16.091c14.221,12.337,22.777,27.953,25.184,46.594  c2.822,21.859-2.605,41.617-16.777,58.695c-9.494,11.441-21.349,19.648-35.722,23.502c-6.656,1.785-13.724,2.278-20.647,2.77  C446.914,285.721,438.682,285.667,426.866,285.985z`;
 
@@ -21,7 +41,7 @@ export function VibesSwitch({ size = 24, className }: VibesSwitchProps) {
       viewBox="0 0 600 300"
       fill="currentColor"
       className={className}
-      onClick={() => setActive(!active)}
+      onClick={handleClick}
     >
       <path
         fillRule="evenodd"
