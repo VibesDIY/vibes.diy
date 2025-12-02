@@ -3,8 +3,11 @@ import { useNewSessionChat } from "../hooks/useNewSessionChat.js";
 import ChatInput from "./ChatInput.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
-import { MenuIcon } from "./ChatHeaderIcons.js";
-import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
+import {
+  BrutalistCard,
+  VibesButton,
+  VibesSwitch,
+} from "@vibes.diy/use-vibes-base";
 import {
   partyPlannerPrompt,
   progressTrackerPrompt,
@@ -25,11 +28,7 @@ export default function NewSessionView({
   // Sidebar state
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
-  // Sidebar handlers
-  const openSidebar = useCallback(() => {
-    setIsSidebarVisible(true);
-  }, []);
-
+  // Sidebar handler
   const closeSidebar = useCallback(() => {
     setIsSidebarVisible(false);
   }, []);
@@ -57,22 +56,19 @@ export default function NewSessionView({
       <div>
         <Toaster />
       </div>
-      <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
-        {/* Header with menu button */}
-        <div className="flex items-center justify-between p-4">
-          <button
-            type="button"
-            onClick={openSidebar}
-            className="mr-3 px-2 py-4 text-light-primary hover:text-accent-02-light dark:text-dark-primary dark:hover:text-accent-02-dark"
-            aria-label="Open menu"
-          >
-            <MenuIcon />
-          </button>
-          <div className="flex-1" />
+      <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full relative">
+        {/* Hamburger menu button - fixed top left */}
+        <div className="absolute top-4 left-4 z-20">
+          <VibesSwitch
+            size={60}
+            isActive={isSidebarVisible}
+            onToggle={setIsSidebarVisible}
+            className="cursor-pointer"
+          />
         </div>
 
         {/* Main content section */}
-        <div className="flex-1 px-8 pb-8">
+        <div className="flex-1 px-8 pb-8 pt-4">
           <div
             style={{
               maxWidth: "800px",
