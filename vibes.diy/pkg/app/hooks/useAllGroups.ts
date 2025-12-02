@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useFireproof } from "use-vibes";
 import { useAuth } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
@@ -18,18 +19,26 @@ export function useAllGroups() {
   console.log('[useAllGroups] Got useLiveQuery');
 
   // Query ALL groups for this user (no titleId filter)
-  console.log('[useAllGroups] Calling useLiveQuery with filter');
-  const groupsResult = useLiveQuery<VibeInstanceDocument>(
-    (doc) =>
+  // Memoize the filter function to prevent infinite re-renders
+  const filterFn = useMemo(
+    () => (doc: VibeInstanceDocument) =>
       doc.userId === userId || (userId && doc.sharedWith?.includes(userId)),
+    [userId]
   );
+
+  console.log('[useAllGroups] Calling useLiveQuery with filter');
+  const groupsResult = useLiveQuery<VibeInstanceDocument>(filterFn);
   console.log('[useAllGroups] Got groupsResult:', groupsResult);
 
   const groups = groupsResult.docs || [];
   console.log('[useAllGroups] Returning groups count:', groups.length);
 
-  return {
-    groups,
-    isLoading: !groupsResult.docs,
-  };
+  // Memoize the return value to prevent creating new object references
+  return useMemo(
+    () => ({
+      groups,
+      isLoading: !groupsResult.docs,
+    }),
+    [groups, groupsResult.docs]
+  );
 }
