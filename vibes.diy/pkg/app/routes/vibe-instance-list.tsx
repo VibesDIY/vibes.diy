@@ -127,196 +127,186 @@ function VibeInstancesListContent() {
         <div className="flex-shrink-0" style={{ width: "280px" }}>
           <PublishedVibeCard slug={titleId} name={titleId} />
         </div>
-        <div className="flex-1">
-          {/* Spacer to align with layout */}
-        </div>
+        <div className="flex-1">{/* Spacer to align with layout */}</div>
       </div>
 
-          {/* Error Display */}
-          {error && (
-            <BrutalistCard size="md">
-              <p className="text-red-600 font-medium">{error.message}</p>
-            </BrutalistCard>
-          )}
+      {/* Error Display */}
+      {error && (
+        <BrutalistCard size="md">
+          <p className="text-red-600 font-medium">{error.message}</p>
+        </BrutalistCard>
+      )}
 
-          {/* Create Button */}
-          <div>
+      {/* Create Button */}
+      <div>
+        <VibesButton variant="blue" onClick={() => setShowCreateDialog(true)}>
+          + Create New Instance
+        </VibesButton>
+      </div>
+
+      {/* Create Dialog */}
+      {showCreateDialog && (
+        <BrutalistCard size="md">
+          <h3 className="text-2xl font-bold mb-4">New Instance</h3>
+          <input
+            type="text"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            placeholder="Enter description..."
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleCreate();
+              if (e.key === "Escape") setShowCreateDialog(false);
+            }}
+            autoFocus
+          />
+          <div className="flex gap-3">
             <VibesButton
               variant="blue"
-              onClick={() => setShowCreateDialog(true)}
+              onClick={handleCreate}
+              disabled={isCreating || !newDescription.trim()}
             >
-              + Create New Instance
+              {isCreating ? "Creating..." : "Create"}
+            </VibesButton>
+            <VibesButton
+              variant="gray"
+              onClick={() => {
+                setShowCreateDialog(false);
+                setNewDescription("");
+              }}
+            >
+              Cancel
             </VibesButton>
           </div>
+        </BrutalistCard>
+      )}
 
-          {/* Create Dialog */}
-          {showCreateDialog && (
-            <BrutalistCard size="md">
-              <h3 className="text-2xl font-bold mb-4">New Instance</h3>
-              <input
-                type="text"
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="Enter description..."
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleCreate();
-                  if (e.key === "Escape") setShowCreateDialog(false);
-                }}
-                autoFocus
-              />
-              <div className="flex gap-3">
-                <VibesButton
-                  variant="blue"
-                  onClick={handleCreate}
-                  disabled={isCreating || !newDescription.trim()}
-                >
-                  {isCreating ? "Creating..." : "Create"}
-                </VibesButton>
-                <VibesButton
-                  variant="gray"
-                  onClick={() => {
-                    setShowCreateDialog(false);
-                    setNewDescription("");
-                  }}
-                >
-                  Cancel
-                </VibesButton>
-              </div>
-            </BrutalistCard>
-          )}
-
-          {/* Instances List */}
-          {instances.length === 0 ? (
-            <BrutalistCard size="md">
-              <p className="text-center text-lg">
-                No instances yet. Create one to get started!
-              </p>
-            </BrutalistCard>
-          ) : (
-            <div className="space-y-4">
-              {/* Newest first by createdAt; fallback to _id lexical when createdAt missing */}
-              {[...instances]
-                .sort((a, b) => {
-                  const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
-                  const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
-                  if (tb !== ta) return tb - ta;
-                  return String(b._id).localeCompare(String(a._id));
-                })
-                .map((instance) => (
-                  <BrutalistCard key={instance._id} size="md">
-                    {editingId === instance._id ? (
-                      <div>
-                        <input
-                          type="text"
-                          value={editDescription}
-                          onChange={(e) => setEditDescription(e.target.value)}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && instance._id)
-                              handleUpdate(instance._id);
-                            if (e.key === "Escape") setEditingId(null);
-                          }}
-                          autoFocus
-                        />
-                        <div className="flex gap-3">
-                          <VibesButton
-                            variant="blue"
-                            onClick={() =>
-                              instance._id && handleUpdate(instance._id)
-                            }
-                          >
-                            Save
-                          </VibesButton>
-                          <VibesButton
-                            variant="gray"
-                            onClick={() => setEditingId(null)}
-                          >
-                            Cancel
-                          </VibesButton>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <div
-                          className="flex-1 cursor-pointer"
-                          onClick={() => {
-                            const installId = extractInstallId(
-                              instance._id || "",
-                              titleId,
-                            );
-                            const search = searchParams.toString();
-                            navigate(
-                              `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`,
-                            );
-                          }}
-                        >
-                          <h3 className="text-2xl font-bold mb-2">
-                            {instance.description}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            Created{" "}
-                            {instance.createdAt
-                              ? new Date(
-                                  instance.createdAt,
-                                ).toLocaleDateString()
-                              : instance.updatedAt
-                                ? new Date(
-                                    instance.updatedAt,
-                                  ).toLocaleDateString()
-                                : "—"}
-                            {(() => {
-                              const shareCount = (instance.sharedWith ?? [])
-                                .length;
-                              return shareCount > 0 ? (
-                                <span className="ml-2">
-                                  · Shared with {shareCount}{" "}
-                                  {shareCount === 1 ? "person" : "people"}
-                                </span>
-                              ) : null;
-                            })()}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 ml-4">
-                          <button
-                            onClick={() =>
-                              instance._id &&
-                              startEditing(instance._id, instance.description)
-                            }
-                            className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              const installId = extractInstallId(
-                                instance._id || "",
-                                titleId,
-                              );
-                              const search = searchParams.toString();
-                              navigate(
-                                `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`,
-                              );
-                            }}
-                            className="px-3 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded transition-colors font-medium"
-                          >
-                            Open
-                          </button>
-                          <button
-                            onClick={() =>
-                              instance._id && handleDelete(instance._id)
-                            }
-                            className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </BrutalistCard>
-                ))}
-            </div>
-          )}
+      {/* Instances List */}
+      {instances.length === 0 ? (
+        <BrutalistCard size="md">
+          <p className="text-center text-lg">
+            No instances yet. Create one to get started!
+          </p>
+        </BrutalistCard>
+      ) : (
+        <div className="space-y-4">
+          {/* Newest first by createdAt; fallback to _id lexical when createdAt missing */}
+          {[...instances]
+            .sort((a, b) => {
+              const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
+              const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
+              if (tb !== ta) return tb - ta;
+              return String(b._id).localeCompare(String(a._id));
+            })
+            .map((instance) => (
+              <BrutalistCard key={instance._id} size="md">
+                {editingId === instance._id ? (
+                  <div>
+                    <input
+                      type="text"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && instance._id)
+                          handleUpdate(instance._id);
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                      autoFocus
+                    />
+                    <div className="flex gap-3">
+                      <VibesButton
+                        variant="blue"
+                        onClick={() =>
+                          instance._id && handleUpdate(instance._id)
+                        }
+                      >
+                        Save
+                      </VibesButton>
+                      <VibesButton
+                        variant="gray"
+                        onClick={() => setEditingId(null)}
+                      >
+                        Cancel
+                      </VibesButton>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div
+                      className="flex-1 cursor-pointer"
+                      onClick={() => {
+                        const installId = extractInstallId(
+                          instance._id || "",
+                          titleId,
+                        );
+                        const search = searchParams.toString();
+                        navigate(
+                          `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`,
+                        );
+                      }}
+                    >
+                      <h3 className="text-2xl font-bold mb-2">
+                        {instance.description}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Created{" "}
+                        {instance.createdAt
+                          ? new Date(instance.createdAt).toLocaleDateString()
+                          : instance.updatedAt
+                            ? new Date(instance.updatedAt).toLocaleDateString()
+                            : "—"}
+                        {(() => {
+                          const shareCount = (instance.sharedWith ?? []).length;
+                          return shareCount > 0 ? (
+                            <span className="ml-2">
+                              · Shared with {shareCount}{" "}
+                              {shareCount === 1 ? "person" : "people"}
+                            </span>
+                          ) : null;
+                        })()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() =>
+                          instance._id &&
+                          startEditing(instance._id, instance.description)
+                        }
+                        className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          const installId = extractInstallId(
+                            instance._id || "",
+                            titleId,
+                          );
+                          const search = searchParams.toString();
+                          navigate(
+                            `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`,
+                          );
+                        }}
+                        className="px-3 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded transition-colors font-medium"
+                      >
+                        Open
+                      </button>
+                      <button
+                        onClick={() =>
+                          instance._id && handleDelete(instance._id)
+                        }
+                        className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </BrutalistCard>
+            ))}
+        </div>
+      )}
     </BrutalistLayout>
   );
 }

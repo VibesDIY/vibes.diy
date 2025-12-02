@@ -32,7 +32,11 @@ export default function BrutalistLayout({
   return (
     <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full relative">
       {/* SessionSidebar */}
-      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+      <SessionSidebar
+        isVisible={isSidebarVisible}
+        onClose={closeSidebar}
+        sessionId=""
+      />
 
       {/* Hamburger menu button - fixed top left */}
       <div className="absolute top-4 left-4">
@@ -75,14 +79,19 @@ export default function BrutalistLayout({
               {/* Title */}
               <div className="flex-1">
                 <h1 className="text-4xl font-bold mb-2">{title}</h1>
-                {subtitle && <p className="text-lg" style={{ color: 'var(--vibes-text-secondary)' }}>{subtitle}</p>}
+                {subtitle && (
+                  <p
+                    className="text-lg"
+                    style={{ color: "var(--vibes-text-secondary)" }}
+                  >
+                    {subtitle}
+                  </p>
+                )}
               </div>
 
               {/* Header actions */}
               {headerActions && (
-                <div className="flex items-center gap-3">
-                  {headerActions}
-                </div>
+                <div className="flex items-center gap-3">{headerActions}</div>
               )}
             </div>
           </BrutalistCard>

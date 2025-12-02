@@ -150,191 +150,182 @@ function SettingsContent() {
         </BrutalistCard>
       )}
 
-          {/* AI Model Section */}
-          <BrutalistCard size="md">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-2xl font-bold">AI Model</h3>
-              <a
-                href="https://openrouter.ai/models"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-500 hover:text-blue-600"
+      {/* AI Model Section */}
+      <BrutalistCard size="md">
+        <div className="flex items-start justify-between mb-4">
+          <h3 className="text-2xl font-bold">AI Model</h3>
+          <a
+            href="https://openrouter.ai/models"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-500 hover:text-blue-600"
+          >
+            Browse all models ↗
+          </a>
+        </div>
+        <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
+          Enter or select an AI model to use for code generation
+        </p>
+
+        <div className="mb-4">
+          <input
+            ref={modelInputRef}
+            type="text"
+            value={settings.model || ""}
+            onChange={handleModelChange}
+            placeholder="Enter or select model ID..."
+            className="w-full rounded border-2 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            style={{
+              borderColor: "var(--vibes-border-input)",
+              background: "var(--vibes-bg-input)",
+              color: "var(--vibes-text-primary)",
+            }}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label
+            className="mb-2 block text-sm font-medium"
+            style={{ color: "var(--vibes-text-primary)" }}
+          >
+            Recommended models:
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {modelsList.map((model, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleModelSelection(model)}
+                className={`cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  settings.model === model.id
+                    ? "bg-blue-600 text-white dark:bg-purple-500"
+                    : ""
+                }`}
+                style={
+                  settings.model !== model.id
+                    ? {
+                        background: "var(--vibes-bg-secondary)",
+                        color: "var(--vibes-text-primary)",
+                      }
+                    : {}
+                }
+                title={model.description}
               >
-                Browse all models ↗
-              </a>
-            </div>
-            <p
-              className="mb-4"
-              style={{ color: "var(--vibes-text-secondary)" }}
-            >
-              Enter or select an AI model to use for code generation
-            </p>
+                {model.name}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <div className="mb-4">
-              <input
-                ref={modelInputRef}
-                type="text"
-                value={settings.model || ""}
-                onChange={handleModelChange}
-                placeholder="Enter or select model ID..."
-                className="w-full rounded border-2 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                style={{
-                  borderColor: "var(--vibes-border-input)",
-                  background: "var(--vibes-bg-input)",
-                  color: "var(--vibes-text-primary)",
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="mb-2 block text-sm font-medium"
-                style={{ color: "var(--vibes-text-primary)" }}
-              >
-                Recommended models:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {modelsList.map((model, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => handleModelSelection(model)}
-                    className={`cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      settings.model === model.id
-                        ? "bg-blue-600 text-white dark:bg-purple-500"
-                        : ""
-                    }`}
-                    style={
-                      settings.model !== model.id
-                        ? {
-                            background: "var(--vibes-bg-secondary)",
-                            color: "var(--vibes-text-primary)",
-                          }
-                        : {}
-                    }
-                    title={model.description}
-                  >
-                    {model.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Model picker visibility */}
-            <div>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={settings.showModelPickerInChat || false}
-                  onChange={handleShowModelPickerInChatChange}
-                  className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm">Show model picker in chat</span>
-              </label>
-            </div>
-          </BrutalistCard>
-
-          {/* Style Prompt Section */}
-          <BrutalistCard size="md">
-            <h3 className="text-2xl font-bold mb-4">Style Prompt</h3>
-            <p
-              className="mb-4"
-              style={{ color: "var(--vibes-text-secondary)" }}
-            >
-              Choose a style for your AI-generated content
-            </p>
-
-            <div className="mb-4">
-              <input
-                ref={stylePromptInputRef}
-                type="text"
-                value={settings.stylePrompt || ""}
-                onChange={handleStylePromptChange}
-                placeholder="Enter or select style prompt..."
-                className="w-full rounded border-2 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                style={{
-                  borderColor: "var(--vibes-border-input)",
-                  background: "var(--vibes-bg-input)",
-                  color: "var(--vibes-text-primary)",
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                className="mb-2 block text-sm font-medium"
-                style={{ color: "var(--vibes-text-primary)" }}
-              >
-                Suggestions:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {stylePrompts.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => handleStylePromptSelection(suggestion)}
-                    className={`cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      settings.stylePrompt &&
-                      settings.stylePrompt.startsWith(suggestion.name)
-                        ? "bg-blue-600 text-white dark:bg-purple-500"
-                        : ""
-                    }`}
-                    style={
-                      settings.stylePrompt &&
-                      !settings.stylePrompt.startsWith(suggestion.name)
-                        ? {
-                            background: "var(--vibes-bg-secondary)",
-                            color: "var(--vibes-text-primary)",
-                          }
-                        : {}
-                    }
-                    title={suggestion.prompt}
-                  >
-                    {suggestion.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </BrutalistCard>
-
-          {/* User Prompt Section */}
-          <BrutalistCard size="md">
-            <h3 className="text-2xl font-bold mb-4">User Prompt</h3>
-            <p
-              className="mb-4"
-              style={{ color: "var(--vibes-text-secondary)" }}
-            >
-              Custom instructions to append to the system prompt
-            </p>
-
-            <textarea
-              value={settings.userPrompt}
-              onChange={handleUserPromptChange}
-              placeholder="Enter custom instructions for the AI..."
-              className="w-full min-h-[120px] rounded border-2 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              style={{
-                borderColor: "var(--vibes-border-input)",
-                background: "var(--vibes-bg-input)",
-                color: "var(--vibes-text-primary)",
-              }}
+        {/* Model picker visibility */}
+        <div>
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={settings.showModelPickerInChat || false}
+              onChange={handleShowModelPickerInChatChange}
+              className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-          </BrutalistCard>
+            <span className="text-sm">Show model picker in chat</span>
+          </label>
+        </div>
+      </BrutalistCard>
 
-          {/* Account Section */}
-          {isAuthenticated && (
-            <BrutalistCard size="md">
-              <h2 className="text-2xl font-bold mb-4">Account</h2>
-              <div className="flex items-center justify-between">
-                <p style={{ color: "var(--vibes-text-secondary)" }}>
-                  Sign out from your account. Your vibes will still be in
-                  browser storage.
-                </p>
-                <VibesButton variant="red" onClick={handleLogout}>
-                  Logout
-                </VibesButton>
-              </div>
-            </BrutalistCard>
-          )}
+      {/* Style Prompt Section */}
+      <BrutalistCard size="md">
+        <h3 className="text-2xl font-bold mb-4">Style Prompt</h3>
+        <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
+          Choose a style for your AI-generated content
+        </p>
+
+        <div className="mb-4">
+          <input
+            ref={stylePromptInputRef}
+            type="text"
+            value={settings.stylePrompt || ""}
+            onChange={handleStylePromptChange}
+            placeholder="Enter or select style prompt..."
+            className="w-full rounded border-2 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            style={{
+              borderColor: "var(--vibes-border-input)",
+              background: "var(--vibes-bg-input)",
+              color: "var(--vibes-text-primary)",
+            }}
+          />
+        </div>
+
+        <div>
+          <label
+            className="mb-2 block text-sm font-medium"
+            style={{ color: "var(--vibes-text-primary)" }}
+          >
+            Suggestions:
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {stylePrompts.map((suggestion, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleStylePromptSelection(suggestion)}
+                className={`cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  settings.stylePrompt &&
+                  settings.stylePrompt.startsWith(suggestion.name)
+                    ? "bg-blue-600 text-white dark:bg-purple-500"
+                    : ""
+                }`}
+                style={
+                  settings.stylePrompt &&
+                  !settings.stylePrompt.startsWith(suggestion.name)
+                    ? {
+                        background: "var(--vibes-bg-secondary)",
+                        color: "var(--vibes-text-primary)",
+                      }
+                    : {}
+                }
+                title={suggestion.prompt}
+              >
+                {suggestion.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </BrutalistCard>
+
+      {/* User Prompt Section */}
+      <BrutalistCard size="md">
+        <h3 className="text-2xl font-bold mb-4">User Prompt</h3>
+        <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
+          Custom instructions to append to the system prompt
+        </p>
+
+        <textarea
+          value={settings.userPrompt}
+          onChange={handleUserPromptChange}
+          placeholder="Enter custom instructions for the AI..."
+          className="w-full min-h-[120px] rounded border-2 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          style={{
+            borderColor: "var(--vibes-border-input)",
+            background: "var(--vibes-bg-input)",
+            color: "var(--vibes-text-primary)",
+          }}
+        />
+      </BrutalistCard>
+
+      {/* Account Section */}
+      {isAuthenticated && (
+        <BrutalistCard size="md">
+          <h2 className="text-2xl font-bold mb-4">Account</h2>
+          <div className="flex items-center justify-between">
+            <p style={{ color: "var(--vibes-text-secondary)" }}>
+              Sign out from your account. Your vibes will still be in browser
+              storage.
+            </p>
+            <VibesButton variant="red" onClick={handleLogout}>
+              Logout
+            </VibesButton>
+          </div>
+        </BrutalistCard>
+      )}
     </BrutalistLayout>
   );
 }
