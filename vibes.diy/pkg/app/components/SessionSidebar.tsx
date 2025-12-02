@@ -7,7 +7,7 @@ import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
 import { StarIcon } from "./SessionSidebar/StarIcon.js";
 import { FirehoseIcon } from "./SessionSidebar/FirehoseIcon.js";
-import { InstallsIcon } from "./SessionSidebar/InstallsIcon.js";
+import { GroupsIcon } from "./SessionSidebar/GroupsIcon.js";
 import VibesDIYLogo from "./VibesDIYLogo.js";
 
 /**
@@ -115,12 +115,12 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
             </li>
             <li>
               <Link
-                to="/vibes/installs"
+                to="/groups"
                 onClick={() => onClose()}
                 className="hover:bg-light-background-01 dark:hover:bg-dark-background-01 flex items-center rounded-md px-4 py-3 text-sm font-medium"
               >
-                <InstallsIcon className="text-accent-01 mr-3 h-5 w-5" />
-                <span>Installs</span>
+                <GroupsIcon className="text-accent-01 mr-3 h-5 w-5" />
+                <span>Groups</span>
               </Link>
             </li>
             <li>
