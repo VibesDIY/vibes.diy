@@ -145,8 +145,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     attachConfig ? { attach: attachConfig } : {}
   );
 
-  // Sync is enabled when connection is established (attach config was provided and connection succeeded)
-  const syncEnabled = result.attach?.state === 'attached' || result.attach?.state === 'attaching';
+  // Sync is enabled only when running in a vibe-viewer context and the attach state is connected
+  const rawAttachState = result.attach?.state;
+  const syncEnabled =
+    !!vibeMetadata && (rawAttachState === 'attached' || rawAttachState === 'attaching');
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
