@@ -1,8 +1,8 @@
-import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
+import type { ToCloudAttachable, TokenStrategie } from '@fireproof/core-types-protocols-cloud';
 import { getKeyBag } from '@fireproof/core-keybag';
 import { Lazy } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   fireproof,
   ImgFile,
@@ -11,8 +11,10 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
+import { useAuth } from '@clerk/clerk-react';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
+import { ClerkTokenStrategy } from './clerk-token-strategy.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -70,7 +72,9 @@ export async function isJWTExpired(token: string): Promise<boolean> {
 }
 
 // Helper function to create toCloud configuration
-export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+export function toCloud(
+  opts?: UseFpToCloudParam & { tokenStrategy?: TokenStrategie }
+): ToCloudAttachable {
   const attachable = originalToCloud({
     ...opts,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
@@ -105,6 +109,9 @@ function constructDatabaseName(
 
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
+  // Get Clerk authentication
+  const { getToken } = useAuth();
+
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
 
@@ -117,35 +124,23 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Get database name for tracking purposes (use augmented name)
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
-  // Use global sync key - all databases share the same auth token and sync state
-  const syncKey = 'fireproof-sync-enabled';
 
-  // Check if sync was previously enabled (persists across refreshes)
-  const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
+  // Create Clerk token strategy
+  const tokenStrategy = useMemo(() => {
+    return new ClerkTokenStrategy(async () => {
+      return await getToken({ template: 'with-email' });
+    });
+  }, [getToken]);
 
-  // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
+  // Always create attach config with token strategy (sync always on)
+  const attachConfig = toCloud({ tokenStrategy });
 
-  // Use original useFireproof with augmented database name
-  // This ensures each titleId + installId combination gets its own database
-  const result = originalUseFireproof(
-    augmentedDbName,
-    attachConfig ? { attach: attachConfig } : {}
-  );
+  // Use original useFireproof with augmented database name and attach config
+  // This ensures each titleId + installId combination gets its own database with sync enabled
+  const result = originalUseFireproof(augmentedDbName, { attach: attachConfig });
 
-  // TODO: Enable sync with Clerk token
-  const enableSync = useCallback(() => {
-    console.log('enableSync() not implemented - TODO: Enable sync with Clerk token');
-  }, []);
-
-  // TODO: Disable sync with Clerk token
-  const disableSync = useCallback(() => {
-    console.log('disableSync() not implemented - TODO: Disable sync with Clerk token');
-  }, []);
-
-  // Determine sync status - check for actual attachment state
-  const syncEnabled =
-    wasSyncEnabled && (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
+  // Sync is always enabled with Clerk authentication
+  const syncEnabled = result.attach?.state === 'attached' || result.attach?.state === 'attaching';
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
@@ -310,11 +305,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     };
   }, [syncEnabled, dbName, instanceId]);
 
-  // Return combined result with stub sync functions
+  // Return combined result with sync always enabled
   return {
     ...result,
-    enableSync,
-    disableSync,
     syncEnabled,
     share,
   };
