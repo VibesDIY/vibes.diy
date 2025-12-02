@@ -14,6 +14,7 @@ export interface MountVibesAppOptions {
   readonly appComponent?: React.ComponentType;
   readonly showVibesSwitch?: boolean;
   readonly vibeMetadata?: VibeMetadata;
+  readonly getToken?: (options?: { template?: string }) => Promise<string | null>;
 }
 
 export interface MountVibesAppResult {
@@ -29,10 +30,12 @@ export interface MountVibesAppResult {
 function VibesApp({
   showVibesSwitch = true,
   vibeMetadata,
+  getToken,
   children,
 }: {
   showVibesSwitch?: boolean;
   vibeMetadata?: VibeMetadata;
+  getToken?: (options?: { template?: string }) => Promise<string | null>;
   children?: React.ReactNode;
 }) {
   // Conditional rendering based on showVibesSwitch:
@@ -48,14 +51,18 @@ function VibesApp({
 
   // Wrap in VibeContextProvider if vibeMetadata is provided
   if (vibeMetadata) {
-    return <VibeContextProvider metadata={vibeMetadata}>{content}</VibeContextProvider>;
+    return (
+      <VibeContextProvider metadata={vibeMetadata} getToken={getToken}>
+        {content}
+      </VibeContextProvider>
+    );
   }
 
   return content;
 }
 
 export function mountVibesApp(options: MountVibesAppOptions): MountVibesAppResult {
-  const { container, appComponent, showVibesSwitch, vibeMetadata } = options;
+  const { container, appComponent, showVibesSwitch, vibeMetadata, getToken } = options;
 
   // Validate vibeMetadata if provided to prevent malformed ledger names
   if (vibeMetadata) {
@@ -80,6 +87,7 @@ export function mountVibesApp(options: MountVibesAppOptions): MountVibesAppResul
     <VibesApp
       {...(showVibesSwitch !== undefined && { showVibesSwitch })}
       {...(vibeMetadata !== undefined && { vibeMetadata })}
+      {...(getToken !== undefined && { getToken })}
     >
       {AppComponent && <AppComponent />}
     </VibesApp>
