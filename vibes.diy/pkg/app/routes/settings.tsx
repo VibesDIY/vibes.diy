@@ -8,6 +8,7 @@ import modelsList from "../data/models.json" with { type: "json" };
 import { VibesDiyEnv } from "../config/env.js";
 import { UserSettings, stylePrompts } from "@vibes.diy/prompts";
 import LoggedOutView from "../components/LoggedOutView.js";
+import BrutalistLayout from "../components/BrutalistLayout.js";
 
 export function meta() {
   return [
@@ -129,41 +130,25 @@ function SettingsContent() {
   );
 
   return (
-    <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
-      <div className="flex-1 px-8 py-8">
-        <div
-          style={{
-            maxWidth: "1000px",
-            width: "100%",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-          }}
+    <BrutalistLayout
+      title="Settings"
+      subtitle="Configure your AI preferences"
+      headerActions={
+        <VibesButton
+          variant="blue"
+          onClick={handleSubmit}
+          disabled={!hasUnsavedChanges}
         >
-          {/* Header */}
-          <BrutalistCard size="lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold mb-2">Settings</h1>
-                <p className="text-lg">Configure your AI preferences</p>
-              </div>
-              <VibesButton
-                variant="blue"
-                onClick={handleSubmit}
-                disabled={!hasUnsavedChanges}
-              >
-                {saveSuccess ? "Saved!" : "Save"}
-              </VibesButton>
-            </div>
-          </BrutalistCard>
-
-          {/* Save Messages */}
-          {saveError && (
-            <BrutalistCard size="md">
-              <p className="text-red-600 font-medium">{saveError}</p>
-            </BrutalistCard>
-          )}
+          {saveSuccess ? "Saved!" : "Save"}
+        </VibesButton>
+      }
+    >
+      {/* Save Messages */}
+      {saveError && (
+        <BrutalistCard size="md">
+          <p className="text-red-600 font-medium">{saveError}</p>
+        </BrutalistCard>
+      )}
 
           {/* AI Model Section */}
           <BrutalistCard size="md">
@@ -350,9 +335,7 @@ function SettingsContent() {
               </div>
             </BrutalistCard>
           )}
-        </div>
-      </div>
-    </div>
+    </BrutalistLayout>
   );
 }
 

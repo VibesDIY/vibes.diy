@@ -5,6 +5,7 @@ import PublishedVibeCard from "../components/PublishedVibeCard.js";
 import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 import { useAuth } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
+import BrutalistLayout from "../components/BrutalistLayout.js";
 
 export function meta() {
   return [
@@ -41,33 +42,16 @@ function GroupsContent() {
   };
 
   return (
-    <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
-      <div className="flex-1 px-8 py-8">
-        <div
-          style={{
-            maxWidth: "1000px",
-            width: "100%",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-          }}
-        >
-          {/* Header */}
-          <BrutalistCard size="lg">
-            <h1 className="text-4xl font-bold mb-2">My Groups</h1>
-            <p className="text-lg">All your vibe groups</p>
-          </BrutalistCard>
+    <BrutalistLayout title="My Groups" subtitle="All your vibe groups">
+      {/* Loading State */}
+      {isLoading && (
+        <BrutalistCard size="md">
+          <p className="text-center text-lg">Loading...</p>
+        </BrutalistCard>
+      )}
 
-          {/* Loading State */}
-          {isLoading && (
-            <BrutalistCard size="md">
-              <p className="text-center text-lg">Loading...</p>
-            </BrutalistCard>
-          )}
-
-          {/* Groups List */}
-          {!isLoading && (
+      {/* Groups List */}
+      {!isLoading && (
             <div>
               {groups.length === 0 ? (
                 <BrutalistCard size="md">
@@ -138,9 +122,7 @@ function GroupsContent() {
               )}
             </div>
           )}
-        </div>
-      </div>
-    </div>
+    </BrutalistLayout>
   );
 }
 

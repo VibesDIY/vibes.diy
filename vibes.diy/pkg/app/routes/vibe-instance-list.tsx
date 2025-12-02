@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
 import PublishedVibeCard from "../components/PublishedVibeCard.js";
 import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
+import BrutalistLayout from "../components/BrutalistLayout.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
   return [
@@ -120,30 +121,16 @@ function VibeInstancesListContent() {
   };
 
   return (
-    <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
-      <div className="flex-1 px-8 py-8">
-        <div
-          style={{
-            maxWidth: "1000px",
-            width: "100%",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-          }}
-        >
-          {/* Header with vibe preview card */}
-          <div className="flex gap-6 items-start">
-            <div className="flex-shrink-0" style={{ width: "280px" }}>
-              <PublishedVibeCard slug={titleId} name={titleId} />
-            </div>
-            <div className="flex-1">
-              <BrutalistCard size="lg">
-                <h1 className="text-4xl font-bold mb-2">{titleId}</h1>
-                <p className="text-lg">Manage your instances</p>
-              </BrutalistCard>
-            </div>
-          </div>
+    <BrutalistLayout title={titleId} subtitle="Manage your instances">
+      {/* Vibe preview card */}
+      <div className="flex gap-6 items-start">
+        <div className="flex-shrink-0" style={{ width: "280px" }}>
+          <PublishedVibeCard slug={titleId} name={titleId} />
+        </div>
+        <div className="flex-1">
+          {/* Spacer to align with layout */}
+        </div>
+      </div>
 
           {/* Error Display */}
           {error && (
@@ -330,9 +317,7 @@ function VibeInstancesListContent() {
                 ))}
             </div>
           )}
-        </div>
-      </div>
-    </div>
+    </BrutalistLayout>
   );
 }
 
