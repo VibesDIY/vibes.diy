@@ -30,6 +30,9 @@ const syncEnabledInstances = new Map<string, Set<string>>();
 // Simple counter for generating unique instance IDs (avoids React.useId conflicts)
 let instanceCounter = 0;
 
+// Track if useFireproof has been called at least once
+let hasBeenCalledOnce = false;
+
 // Helper to update body class based on global sync status
 function updateBodyClass() {
   if (typeof window === 'undefined' || !document?.body) return;
@@ -116,6 +119,12 @@ function constructDatabaseName(
 
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
+  // Log the first time this hook is ever called
+  if (!hasBeenCalledOnce) {
+    console.log('[useFireproof] 🎉 First call to useFireproof hook');
+    hasBeenCalledOnce = true;
+  }
+
   const renderNum = Math.random();
   console.log('[useFireproof] RENDER', renderNum);
 

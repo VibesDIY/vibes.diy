@@ -18,10 +18,7 @@ export const coreImportMap = [
 
 export function transformImports(code: string): string {
   // First, transform use-fireproof → use-vibes for vibe code
-  let transformed = code.replace(
-    /(['"])use-fireproof\1/g,
-    '"use-vibes"'
-  );
+  const transformed = code.replace(/(['"])use-fireproof\1/g, '"use-vibes"');
 
   // Then handle ESM CDN transforms for non-core imports
   return transformed.replace(
