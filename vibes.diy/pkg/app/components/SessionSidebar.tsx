@@ -59,9 +59,9 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
         isVisible ? "w-64 translate-x-0" : "w-64 -translate-x-full"
       }`}
     >
-      <div className="flex h-full flex-col overflow-auto pt-24">
-        <nav className="flex-grow p-2">
-          <ul className="space-y-2">
+      <div className="flex h-full flex-col overflow-auto pt-32">
+        <nav className="flex-grow p-4">
+          <ul className="space-y-4">
             <li>
               <a
                 href="/"
