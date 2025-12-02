@@ -16,10 +16,9 @@ export function getLibraryImportMap() {
       "https://esm.sh/react@19.2.0",
     "https://esm.sh/react@19.3.0-canary-fd524fe0-20251121/es2022/react.mjs":
       "https://esm.sh/react@19.2.0",
-    "use-fireproof": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
+    "use-fireproof": "https://esm.sh/use-fireproof@0.24.1-dev-memo",
     "call-ai": `https://esm.sh/call-ai@${VIBES_VERSION}`,
     "use-vibes": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
-    "https://esm.sh/use-fireproof": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
   };
 }
 
