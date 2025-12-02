@@ -11,7 +11,6 @@ import type { VibeInstanceDocument } from "@vibes.diy/prompts";
  * infinite re-render loops caused by useLiveQuery's internal state updates
  */
 export function useAllGroups() {
-  console.log("[useAllGroups] RENDER", Math.random());
   const { userId } = useAuth();
   const { database } = useFireproof("vibes-groups");
 
@@ -19,7 +18,6 @@ export function useAllGroups() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("[useAllGroups] Effect running, userId:", userId);
     let mounted = true;
 
     const loadGroups = async () => {
@@ -44,7 +42,6 @@ export function useAllGroups() {
               (doc.userId === userId || doc.sharedWith?.includes(userId)),
           );
 
-        console.log("[useAllGroups] Loaded groups:", userGroups.length);
         setGroups(userGroups);
         setIsLoading(false);
       } catch (error) {
@@ -58,7 +55,6 @@ export function useAllGroups() {
 
     // Subscribe to changes
     const unsubscribe = database.subscribe(() => {
-      console.log("[useAllGroups] Database changed, reloading");
       loadGroups();
     });
 
