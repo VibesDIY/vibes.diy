@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useFireproof } from "use-vibes";
 import { useAuth } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
@@ -6,63 +6,74 @@ import type { VibeInstanceDocument } from "@vibes.diy/prompts";
 /**
  * Custom hook for querying all vibe groups for the current user
  * Returns all groups across all vibes (not filtered by titleId)
+ *
+ * Note: We use database.subscribe() instead of useLiveQuery() to avoid
+ * infinite re-render loops caused by useLiveQuery's internal state updates
  */
 export function useAllGroups() {
-  console.log('[useAllGroups] Hook called');
+  console.log('[useAllGroups] RENDER', Math.random());
   const { userId } = useAuth();
-  console.log('[useAllGroups] Got userId:', userId);
+  const { database } = useFireproof("vibes-groups");
 
-  // Use a consistent database name to avoid hydration mismatches
-  // userId is included in the query filter instead
-  console.log('[useAllGroups] Calling useFireproof("vibes-groups")');
-  const { useLiveQuery } = useFireproof("vibes-groups");
-  console.log('[useAllGroups] Got useLiveQuery:', !!useLiveQuery);
+  const [groups, setGroups] = useState<VibeInstanceDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Query ALL groups for this user (no titleId filter)
-  // Memoize the filter function to prevent infinite re-renders
-  const filterFn = useMemo(
-    () => (doc: VibeInstanceDocument) =>
-      doc.userId === userId || (userId && doc.sharedWith?.includes(userId)),
-    [userId]
-  );
+  useEffect(() => {
+    console.log('[useAllGroups] Effect running, userId:', userId);
+    let mounted = true;
 
-  console.log('[useAllGroups] Calling useLiveQuery with filter');
-  const rawGroupsResult = useLiveQuery<VibeInstanceDocument>(filterFn);
-  console.log('[useAllGroups] Got rawGroupsResult:', rawGroupsResult);
+    const loadGroups = async () => {
+      if (!userId) {
+        setGroups([]);
+        setIsLoading(false);
+        return;
+      }
 
-  // useLiveQuery returns a NEW object on every render, breaking memoization
-  // Stabilize it by memoizing based on actual content (docs array contents + hydrated state)
-  const groupsResult = useMemo(() => {
-    console.log('[useAllGroups] Stabilizing groupsResult');
-    return rawGroupsResult;
-  }, [
-    rawGroupsResult.docs?.length,
-    rawGroupsResult.docs?.map(d => d._id).join(','),
-    rawGroupsResult.hydrated
-  ]);
-  console.log('[useAllGroups] Stabilized groupsResult');
+      try {
+        // Query the database directly using allDocs
+        const result = await database.allDocs<VibeInstanceDocument>();
 
-  // Extract docs array
-  const docs = groupsResult.docs;
+        if (!mounted) return;
 
-  // Memoize groups based on docs array CONTENTS (length + ids), not reference
-  const groups = useMemo(() => {
-    return docs || [];
-  }, [docs?.length, docs?.map(d => d._id).join(',')]);
-  console.log('[useAllGroups] Returning groups count:', groups.length);
+        // Filter for user's groups
+        const userGroups = result.rows
+          .map(row => row.value as VibeInstanceDocument)
+          .filter(doc =>
+            doc && (doc.userId === userId || doc.sharedWith?.includes(userId))
+          );
 
-  // Memoize isLoading as a boolean to avoid object recreation
-  const isLoading = !docs;
+        console.log('[useAllGroups] Loaded groups:', userGroups.length);
+        setGroups(userGroups);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('[useAllGroups] Error loading groups:', error);
+        if (mounted) {
+          setGroups([]);
+          setIsLoading(false);
+        }
+      }
+    };
 
-  // Memoize the return value - depend only on stable values
+    // Subscribe to changes
+    const unsubscribe = database.subscribe(() => {
+      console.log('[useAllGroups] Database changed, reloading');
+      loadGroups();
+    });
+
+    // Initial load
+    loadGroups();
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [database, userId]);
+
   return useMemo(
-    () => {
-      console.log('[useAllGroups useMemo] Creating return object');
-      return {
-        groups,
-        isLoading,
-      };
-    },
+    () => ({
+      groups,
+      isLoading,
+    }),
     [groups, isLoading]
   );
 }
