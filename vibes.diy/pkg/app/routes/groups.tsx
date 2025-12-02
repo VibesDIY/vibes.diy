@@ -62,9 +62,7 @@ export default function GroupsRoute() {
           <div>
             {groups.length === 0 ? (
               <div className="p-8 bg-white border-4 border-black text-center">
-                <p className="text-xl font-black uppercase">
-                  NO GROUPS YET...
-                </p>
+                <p className="text-xl font-black uppercase">NO GROUPS YET...</p>
                 <p className="text-sm font-bold uppercase mt-2">
                   Visit a vibe to create your first group
                 </p>
@@ -85,9 +83,7 @@ export default function GroupsRoute() {
                     return (
                       <div
                         key={group._id}
-                        onClick={() =>
-                          group._id && handleGroupClick(group._id)
-                        }
+                        onClick={() => group._id && handleGroupClick(group._id)}
                         className="cursor-pointer hover:scale-105 transition-transform"
                       >
                         <PublishedVibeCard
@@ -98,9 +94,7 @@ export default function GroupsRoute() {
                           <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
                             Updated{" "}
                             {group.updatedAt
-                              ? new Date(
-                                  group.updatedAt,
-                                ).toLocaleDateString()
+                              ? new Date(group.updatedAt).toLocaleDateString()
                               : "—"}
                             {(() => {
                               const shareCount = (group.sharedWith ?? [])
