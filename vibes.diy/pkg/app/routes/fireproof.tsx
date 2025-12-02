@@ -37,13 +37,31 @@ export default function FireproofDashboard() {
   // Create DashboardApi instance with Clerk auth
   const api = useMemo(() => {
     const apiUrl = VibesDiyEnv.CONNECT_API_URL();
+    console.log("[Fireproof Dashboard] API URL:", apiUrl);
     return new DashboardApi({
       apiUrl,
-      fetch: (input, init) => fetch(input, init), // Wrap fetch to preserve context
+      fetch: window.fetch.bind(window),
       getToken: async () => {
+        // Use with-email template to get email claims in params
         const token = await getToken({ template: "with-email" });
+        if (token) {
+          // Decode JWT header to log details
+          try {
+            const [headerB64, payloadB64] = token.split(".");
+            const header = JSON.parse(atob(headerB64));
+            const payload = JSON.parse(atob(payloadB64));
+            console.log("[Fireproof Dashboard] JWT kid:", header.kid);
+            console.log("[Fireproof Dashboard] JWT iss:", payload.iss);
+            console.log("[Fireproof Dashboard] JWT sub:", payload.sub);
+            console.log("[Fireproof Dashboard] Full token:", token);
+          } catch (e) {
+            console.error("[Fireproof Dashboard] Failed to decode JWT:", e);
+          }
+        } else {
+          console.warn("[Fireproof Dashboard] No token available from getToken()");
+        }
         return {
-          type: "clerk",
+          type: "clerk" as const,
           token: token || "",
         };
       },
@@ -139,11 +157,16 @@ export default function FireproofDashboard() {
           )}
           {ensureUserQuery.isError && (
             <div className="border-red-500 rounded-sm border p-6 bg-red-50 dark:bg-red-900/20">
-              <p className="text-red-700 dark:text-red-300">
-                Error ensuring user:{" "}
+              <p className="text-red-700 dark:text-red-300 font-bold mb-2">
+                Error ensuring user:
+              </p>
+              <pre className="text-sm text-red-600 dark:text-red-400 whitespace-pre-wrap">
                 {ensureUserQuery.error instanceof Error
                   ? ensureUserQuery.error.message
-                  : "Unknown error"}
+                  : JSON.stringify(ensureUserQuery.error, null, 2)}
+              </pre>
+              <p className="text-xs text-red-500 dark:text-red-500 mt-4">
+                Check browser console for JWT details (kid, iss, sub, full token)
               </p>
             </div>
           )}
