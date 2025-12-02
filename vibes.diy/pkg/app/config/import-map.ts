@@ -11,6 +11,11 @@ export function getLibraryImportMap() {
     "react-dom": "https://esm.sh/react-dom@19.2.0",
     "react-dom/client": "https://esm.sh/react-dom@19.2.0/client",
     "react/jsx-runtime": "https://esm.sh/react@19.2.0/jsx-runtime",
+    // Redirect canary versions to stable 19.2.0
+    "https://esm.sh/react@^19.3.0-canary-fd524fe0-20251121":
+      "https://esm.sh/react@19.2.0",
+    "https://esm.sh/react@19.3.0-canary-fd524fe0-20251121/es2022/react.mjs":
+      "https://esm.sh/react@19.2.0",
     "use-fireproof": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
     "call-ai": `https://esm.sh/call-ai@${VIBES_VERSION}`,
     "use-vibes": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
