@@ -345,11 +345,15 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   }, [syncEnabled, dbName, instanceId]);
 
   // Return combined result with sync always enabled
-  return {
-    ...result,
-    syncEnabled,
-    share,
-  };
+  // Memoize the return value to prevent creating new object references on every render
+  return useMemo(
+    () => ({
+      ...result,
+      syncEnabled,
+      share,
+    }),
+    [result, syncEnabled, share]
+  );
 }
 
 // Re-export specific functions and types from call-ai
