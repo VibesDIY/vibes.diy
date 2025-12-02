@@ -2,12 +2,12 @@ import type { ReactElement } from "react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { StarIcon } from "../components/SessionSidebar/StarIcon.js";
-import { EditIcon } from "../components/ChatHeaderIcons.js";
-import SimpleAppLayout from "../components/SimpleAppLayout.js";
+import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
 import { VibeCardData } from "../components/VibeCardData.js";
-import VibesDIYLogo from "../components/VibesDIYLogo.js";
-import { useUser } from "@clerk/clerk-react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 import { useVibes } from "../hooks/useVibes.js";
+import BrutalistLayout from "../components/BrutalistLayout.js";
+import LoggedOutView from "../components/LoggedOutView.js";
 
 export function meta() {
   return [
@@ -16,10 +16,8 @@ export function meta() {
   ];
 }
 
-export default function MyVibesRoute(): ReactElement {
+function MyVibesContent(): ReactElement {
   const navigate = useNavigate();
-  // Removed useSession() call since this route doesn't need session context
-
   // Use Clerk's useUser hook
   const { user } = useUser();
   const userId = user?.id;
@@ -63,116 +61,92 @@ export default function MyVibesRoute(): ReactElement {
   }, [itemsToShow, filteredVibes.length]);
 
   return (
-    <>
-      {/* New Vibe button positioned independently at top right */}
-      <div className="fixed top-4 right-4 z-50">
-        <a
-          href="/"
-          className="peer bg-accent-02-light dark:bg-accent-02-dark hover:bg-accent-03-light dark:hover:bg-accent-03-dark flex cursor-pointer items-center justify-center rounded-full p-2.5 text-white transition-colors"
-          aria-label="New Vibe"
-          title="New Vibe"
-        >
-          <span className="sr-only">New Vibe</span>
-          <EditIcon />
-        </a>
-        <span className="bg-dark-background-01 pointer-events-none absolute top-full right-0 z-100 mt-1 rounded-sm px-2 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity peer-hover:opacity-100">
-          New Vibe
-        </span>
-      </div>
-
-      <SimpleAppLayout
-        headerLeft={
-          <div className="flex items-center">
+    <BrutalistLayout
+      title="My Vibes"
+      subtitle={
+        userId ? (
+          <>
+            Published and favorited vibes on your{" "}
             <a
-              href="/"
-              className="flex items-center px-2 py-1 hover:opacity-80"
-              title="Home"
+              href={`/~${userId}`}
+              className="text-blue-500 hover:text-blue-600 underline"
             >
-              <VibesDIYLogo width={100} className="pointer-events-none" />
+              vibespace
             </a>
+          </>
+        ) : (
+          "Your created vibes"
+        )
+      }
+      headerActions={
+        <button
+          onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+          className="flex items-center gap-2 rounded-md px-3 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+          title={showOnlyFavorites ? "Show all vibes" : "Show favorites only"}
+          aria-label={
+            showOnlyFavorites ? "Show all vibes" : "Show favorites only"
+          }
+        >
+          <StarIcon
+            filled={showOnlyFavorites}
+            className={`h-5 w-5 transition-colors duration-300 ${showOnlyFavorites ? "text-yellow-500" : "text-gray-600"} hover:text-yellow-400`}
+          />
+          <span className="text-sm">
+            {showOnlyFavorites ? "Favorites" : "All"}
+          </span>
+        </button>
+      }
+    >
+      {/* Loading State */}
+      {isLoading ? (
+        <BrutalistCard size="md">
+          <div className="flex justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
           </div>
-        }
-      >
-        {/* Content goes here */}
-        <div className="container mx-auto p-4">
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="mb-4 text-2xl font-bold">My Vibes</h2>
-                {userId && (
-                  <p className="text-accent-01 dark:text-accent-01 mb-6">
-                    Published and favorited vibes are listed on your{" "}
-                    <a
-                      href={`/~${userId}`}
-                      className="text-light-primary dark:text-dark-primary hover:text-blue-500"
-                    >
-                      vibespace
-                    </a>
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center">
-                <button
-                  onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 focus:outline-none"
-                  title={
-                    showOnlyFavorites ? "Show all vibes" : "Show favorites only"
-                  }
-                  aria-label={
-                    showOnlyFavorites ? "Show all vibes" : "Show favorites only"
-                  }
-                >
-                  <StarIcon
-                    filled={showOnlyFavorites}
-                    className={`h-5 w-5 transition-colors duration-300 ${showOnlyFavorites ? "text-yellow-500" : "text-accent-01"} hover:text-yellow-400`}
-                  />
-                  <span>
-                    {!showOnlyFavorites
-                      ? "Showing All Vibes"
-                      : "Showing Favorites Only"}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-              </div>
-            ) : filteredVibes.length === 0 ? (
-              <div className="border-light-decorative-01 dark:border-dark-decorative-01 rounded-md border py-8 text-center">
-                <p className="mb-4 text-lg">
-                  {showOnlyFavorites
-                    ? "You don't have any favorite vibes yet"
-                    : "You don't have any vibes yet"}
-                </p>
-                <button
-                  onClick={() => navigate("/")}
-                  className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
-                >
-                  Create a Vibe
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {/* Render vibes with simple slicing */}
-                {filteredVibes.slice(0, itemsToShow).map((vibe) => (
-                  <VibeCardData key={vibe.id} vibeId={vibe.id} />
-                ))}
-
-                {/* Invisible loading trigger for infinite scroll */}
-                {itemsToShow < filteredVibes.length && (
-                  <div
-                    ref={loadingTriggerRef}
-                    className="col-span-full h-4"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-            )}
+        </BrutalistCard>
+      ) : filteredVibes.length === 0 ? (
+        <BrutalistCard size="md">
+          <div className="text-center py-8">
+            <p className="mb-4 text-lg">
+              {showOnlyFavorites
+                ? "You don't have any favorite vibes yet"
+                : "You don't have any vibes yet"}
+            </p>
+            <VibesButton variant="blue" onClick={() => navigate("/")}>
+              Create a Vibe
+            </VibesButton>
           </div>
+        </BrutalistCard>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* Render vibes with simple slicing */}
+          {filteredVibes.slice(0, itemsToShow).map((vibe) => (
+            <BrutalistCard key={vibe.id} size="sm">
+              <VibeCardData vibeId={vibe.id} />
+            </BrutalistCard>
+          ))}
+
+          {/* Invisible loading trigger for infinite scroll */}
+          {itemsToShow < filteredVibes.length && (
+            <div
+              ref={loadingTriggerRef}
+              className="col-span-full h-4"
+              aria-hidden="true"
+            />
+          )}
         </div>
-      </SimpleAppLayout>
-    </>
+      )}
+    </BrutalistLayout>
   );
+}
+
+// Auth wrapper component
+export default function MyVibesRoute() {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (!isSignedIn) {
+    return <LoggedOutView isLoaded={isLoaded} />;
+  }
+
+  return <MyVibesContent />;
 }

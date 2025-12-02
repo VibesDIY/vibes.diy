@@ -5,7 +5,7 @@ import SessionSidebar from "./SessionSidebar.js";
 interface BrutalistLayoutProps {
   children: React.ReactNode;
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   headerActions?: React.ReactNode;
 }
 
