@@ -850,7 +850,18 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </p>
             </DraggableCard>
             
-            
+            <DraggableCard color="yellow" x={700} y={8300}>
+              <p
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "20px",
+                  lineHeight: "25px",
+                }}
+              >
+                Image: vibes.diy/pkg/app/assets/screenshots/mouth.gif
+              </p>
+            </DraggableCard>
+
             {!isMobile && (
               <div
                 className="chat-container-wrapper"
