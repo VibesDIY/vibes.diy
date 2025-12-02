@@ -20,6 +20,7 @@
   "dependencies": {
     "@adviser/cement": "^0.5.2",
     "@fireproof/core-keybag": "0.24.0",
+    "@fireproof/core-protocols-dashboard": "0.24.0",
     "@fireproof/core-runtime": "0.24.0",
     "@fireproof/core-types-base": "0.24.0",
     "@fireproof/core-types-protocols-cloud": "0.24.0",
