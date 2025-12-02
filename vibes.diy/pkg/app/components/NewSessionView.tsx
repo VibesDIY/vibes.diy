@@ -61,7 +61,7 @@ export default function NewSessionView({
           {/* Hamburger menu button - top left in normal flow with z-index */}
           <div className="mb-6 relative z-20">
             <VibesSwitch
-              size={60}
+              size={75}
               isActive={isSidebarVisible}
               onToggle={setIsSidebarVisible}
               className="cursor-pointer"
