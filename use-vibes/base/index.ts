@@ -77,7 +77,7 @@ export function toCloud(
 ): ToCloudAttachable {
   const attachable = originalToCloud({
     ...opts,
-    // dashboardURI removed - no popup fallback, ClerkTokenStrategy only
+    dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
   });
