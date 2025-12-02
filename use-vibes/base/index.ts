@@ -132,14 +132,19 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     });
   }, [getToken]);
 
-  // Always create attach config with token strategy (sync always on)
-  const attachConfig = toCloud({ tokenStrategy });
+  // Only enable sync when vibeMetadata exists (i.e., running in vibe-viewer context)
+  // This ensures only instance-specific databases (with titleId + installId) get synced
+  const attachConfig = vibeMetadata
+    ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
+    : undefined;
 
-  // Use original useFireproof with augmented database name and attach config
-  // This ensures each titleId + installId combination gets its own database with sync enabled
-  const result = originalUseFireproof(augmentedDbName, { attach: attachConfig });
+  // Use original useFireproof with augmented database name and optional attach config
+  const result = originalUseFireproof(
+    augmentedDbName,
+    attachConfig ? { attach: attachConfig } : {}
+  );
 
-  // Sync is always enabled with Clerk authentication
+  // Sync is enabled when connection is established (attach config was provided and connection succeeded)
   const syncEnabled = result.attach?.state === 'attached' || result.attach?.state === 'attaching';
 
   // Share function that immediately adds a user to the ledger by email

@@ -1,12 +1,9 @@
-import { decodeJwt } from 'jose';
 import type {
   TokenStrategie,
   TokenAndClaims,
-  FPCloudClaim,
   ToCloudOpts,
 } from '@fireproof/core-types-protocols-cloud';
 import { Lazy, type Logger } from '@adviser/cement';
-import { FPCloudClaimParseSchema } from '@fireproof/core-types-protocols-cloud';
 import type { SuperThis } from '@fireproof/core-types-base';
 
 /**
@@ -40,17 +37,8 @@ export class ClerkTokenStrategy implements TokenStrategie {
     const token = await this.getToken();
     if (!token) return undefined;
 
-    try {
-      const rawClaims = decodeJwt(token);
-      const rParse = FPCloudClaimParseSchema.safeParse(rawClaims);
-
-      return {
-        token,
-        claims: rParse.success ? rParse.data : this.getFallbackClaims(),
-      };
-    } catch (e) {
-      return undefined;
-    }
+    // Just return the token as-is, no need to decode or parse claims
+    return { token };
   }
 
   async waitForToken(
@@ -60,16 +48,5 @@ export class ClerkTokenStrategy implements TokenStrategie {
     _opts: ToCloudOpts
   ): Promise<TokenAndClaims | undefined> {
     return this.tryToken(_sthis, _logger, _opts);
-  }
-
-  private getFallbackClaims(): FPCloudClaim {
-    return {
-      userId: 'unknown',
-      email: 'unknown@unknown.com',
-      created: new Date(),
-      tenants: [],
-      ledgers: [],
-      selected: { tenant: '', ledger: '' },
-    };
   }
 }
