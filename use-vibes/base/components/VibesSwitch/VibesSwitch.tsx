@@ -9,14 +9,20 @@ export interface VibesSwitchProps {
   onToggle?: (active: boolean) => void;
 }
 
-export function VibesSwitch({ size = 24, className, isActive, onToggle }: VibesSwitchProps) {
+export function VibesSwitch({
+  size = 24,
+  className,
+  isActive,
+  onToggle,
+}: VibesSwitchProps) {
   const [internalActive, setInternalActive] = React.useState(true);
 
-  const active = isActive !== undefined ? isActive : internalActive;
+  const logicalActive = isActive !== undefined ? isActive : internalActive;
+  const active = !logicalActive;
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent parent handlers from firing twice if they wrap this
-    const newState = !active;
+    const newState = !logicalActive;
     if (onToggle) {
       onToggle(newState);
     }
