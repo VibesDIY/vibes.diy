@@ -60,6 +60,7 @@ export const getCardStyle = (
   color: CardColor,
   isMobile: boolean,
   isDragging: boolean,
+  isText: boolean,
 ): React.CSSProperties => {
   const base = getCardBasicStyle(color);
 
@@ -67,6 +68,7 @@ export const getCardStyle = (
     return {
       ...base,
       marginBottom: "16px",
+      width: isText ? '100%' :'fit-content',
     };
   }
 

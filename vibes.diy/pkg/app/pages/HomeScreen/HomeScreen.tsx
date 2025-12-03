@@ -58,6 +58,7 @@ import {
   getButtonsNavbar,
   getNavbarButtonIconWrapper,
   getNavbarButtonLabel,
+  getLinkOutStyle,
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
@@ -70,6 +71,8 @@ import { useIsMobile, usePrefersDarkMode } from "../../hooks/index.js";
 import { AnimatedScene } from "./AnimatedScene.js";
 import computerAnimGif from "../../assets/computer-anim.gif";
 import htmlpng from "../../assets/html.png";
+import mouth from "../../assets/mouth.gif";
+import rainbowComputer from "../../assets/rainbow-computer.gif";
 import vibesStack from "../../assets/vibes-stack.png";
 import fireproofLogo from "../../assets/fireproof-logo.png";
 import {
@@ -955,8 +958,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </DraggableSection>
             )}
 
-                        <DraggableCard color="red" x={860} y={180}>
-              <p style={getCardTextStyle("270px")}>
+            <DraggableCard color="red" x={860} y={180} isText>
+              <p style={getCardTextStyle("270px", isMobile)}>
                 Our unhackable{" "}
                 <a href="http://fireproof.storage/">vibe coding database</a>{" "}
                 encrypts all your data. Which means the group chat's lore stays
@@ -964,14 +967,14 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </p>
             </DraggableCard>
 
-            <DraggableCard color="blue" x={620} y={60}>
-              <p style={getCardTextStyle("250px")}>
+            <DraggableCard color="blue" x={620} y={60} isText>
+              <p style={getCardTextStyle("250px", isMobile)}>
                 No coding experience required. Just type an idea, and invite
                 your friends.
               </p>
             </DraggableCard>
 
-                                    <DraggableCard color="yellow" x={860} y={20}>
+            <DraggableCard color="yellow" x={860} y={20} isText>
               <p style={getCardTextStyle()}>No app store. No downloads.</p>
             </DraggableCard>
 
@@ -984,24 +987,23 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             <DraggableCard color="yellow" x={1000} y={1700}>
               <p style={getImageCardStyle()}>
-                <img src={vibesStack} style={getFullSizeImageStyle()} />
+                 <img src={rainbowComputer} style={getFullSizeImageStyle()} />
               </p>
             </DraggableCard>
-            <DraggableCard color="blue" x={800} y={4100}>
+            <DraggableCard color="blue" x={950} y={2880}>
               <p style={getImageCardStyle()}>
                 <img src={fireproofLogo} style={getFullSizeImageStyle()} />
               </p>
             </DraggableCard>
 
-            <DraggableCard color="yellow" x={800} y={5690}>
-              <p style={getImageCardStyleSmall()}>
+            <DraggableCard color="yellow" x={830} y={5240}>
+              <p style={getImageCardStyleSmall("140px")}>
                 <img src={htmlpng} style={getFullSizeImageStyle()} />
               </p>
             </DraggableCard>
 
-            <DraggableCard color="yellow" x={700} y={8300}>
-              <img src="https://github.com/VibesDIY/vibes.diy/blob/amber/homescreen-extraction/vibes.diy/pkg/app/assets/mouth.gif?raw=true"></img>
-              <p style={getCardTextStyle()}></p>
+            <DraggableCard color="yellow" x={700} y={7000}>
+              <img style={getImageCardStyleSmall("340px")} src={mouth} />
             </DraggableCard>
 
             {!isMobile && (
@@ -1064,26 +1066,17 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
-                paddingTop: isMobile ? "0px" : "500px",
+                paddingTop: isMobile ? "0px" : "200px",
               }}
               ref={section1Ref}
             >
-              <DraggableSection color="blue" static>
-                <h3 style={getSectionHeadingStyle("#5398c9")}>
-                  Community Code
-                </h3>
-                <div style={getContentWrapperStyle()}>
-                  <b style={getSubheadingBoldStyle()}>
-                    For people who care about people
-                  </b>
-                  <span>
-                    Your group chat isn't a start-up. It's a community, and
-                    every community has its own unique needs. So why should you
-                    rely on one-sized-fits-all apps made by people who care more
-                    about shareholders than stakeholders? Infinitely remixable,
-                    small-scale software made for the people you love: that's
-                    the vibe.
-                  </span>
+              <div style={{ display: "flex", gap: '30px', flexDirection: 'row' }}>
+                <DraggableSection color="blue" static>
+                  <div style={{ width: '40%' }}>
+                    <img src={vibesStack} style={{ width: '100%' }} />
+                  </div>
+                </DraggableSection>
+                <DraggableSection color="blue" static>
 
                   <h3 style={getSectionHeadingStyle("#5398c9")}>
                     The Vibe Coding Stack That Fits In Your Pocket
@@ -1109,8 +1102,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     with us. It's all open source - Vibes work anywhere the web
                     works.
                   </span>
-                </div>
-              </DraggableSection>
+                </DraggableSection>
+              </div>
             </section>
 
             {/* Section 2: AnimatedScene 0-50 */}
@@ -1118,6 +1111,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               style={{
                 ...getSectionWrapperStyle(isMobile),
                 ...getSectionWithAnimatedSceneStyle(isMobile),
+                paddingTop: isMobile ? "0px" : "100px",
               }}
               ref={section2Ref}
             >
@@ -1480,8 +1474,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   </span>
                   <span>
                     Curious? Try a prompt using our open source web builder.
-                    Join our Discord, read our Substack, and follow us on
-                    YouTube, Github, and Bluesky.
+                    <a style={getLinkOutStyle()} href="https://discord.gg/vnpWycj4Ta">Join our Discord</a>, <a style={getLinkOutStyle()} href="https://vibesdiy.substack.com/">read our Substack</a>, and follow us on
+                    <a style={getLinkOutStyle()} href="https://www.youtube.com/@VibesDIY">YouTube</a>, <a style={getLinkOutStyle()} href=" https://github.com/VibesDIY">Github</a>, and <a style={getLinkOutStyle()} href=" https://bsky.app/profile/vibes.diy">Bluesky</a>.
                   </span>
                 </div>
               </DraggableSection>

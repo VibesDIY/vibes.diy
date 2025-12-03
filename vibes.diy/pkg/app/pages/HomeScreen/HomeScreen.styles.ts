@@ -605,8 +605,8 @@ export const getHeroSubheadingStyle = (): CSSProperties => ({
 });
 
 // Card text paragraph (with optional maxWidth)
-export const getCardTextStyle = (maxWidth?: string): CSSProperties => ({
-  maxWidth: maxWidth || undefined,
+export const getCardTextStyle = (maxWidth?: string, isMobile?: boolean): CSSProperties => ({
+  maxWidth: isMobile ? '100%' : maxWidth || undefined,
   fontWeight: "bold",
   fontSize: "20px",
   lineHeight: "25px",
@@ -662,8 +662,8 @@ export const getImageCardStyle = (): CSSProperties => ({
   lineHeight: "25px",
 });
 
-export const getImageCardStyleSmall = (): CSSProperties => ({
-  maxWidth: "200px",
+export const getImageCardStyleSmall = (size?: string): CSSProperties => ({
+  maxWidth: size ? size : "200px",
   fontWeight: "bold",
   fontSize: "20px",
   lineHeight: "25px",
@@ -800,4 +800,12 @@ export const getStickyAnimatedSceneDesktopRightContainerStyle =
   (): CSSProperties => ({
     flex: "0 0 66.66%",
     position: "relative",
+  });
+
+// Link
+export const getLinkOutStyle =
+  (): CSSProperties => ({
+    color: '#D92A1C',
+    textDecoration: "underline",
+    cursor: "pointer",
   });

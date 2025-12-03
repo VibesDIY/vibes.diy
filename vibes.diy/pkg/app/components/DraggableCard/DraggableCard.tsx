@@ -12,6 +12,7 @@ export const DraggableCard = ({
   children,
   x = 0,
   y = 0,
+  isText = false,
 }: DraggableCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -73,7 +74,7 @@ export const DraggableCard = ({
   return (
     <div
       ref={cardRef}
-      style={getCardStyle(color, isMobile, isDragging)}
+      style={getCardStyle(color, isMobile, isDragging, isText)}
       onMouseDown={isMobile ? undefined : handleMouseDown}
     >
       <div style={getTitleBarStyle(color)} />
