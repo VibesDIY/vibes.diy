@@ -955,12 +955,26 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </DraggableSection>
             )}
 
-            <DraggableCard color="blue" x={550} y={120}>
+                        <DraggableCard color="red" x={860} y={180}>
+              <p style={getCardTextStyle("270px")}>
+                Our unhackable{" "}
+                <a href="http://fireproof.storage/">vibe coding database</a>{" "}
+                encrypts all your data. Which means the group chat's lore stays
+                local, portable, and safe.
+              </p>
+            </DraggableCard>
+
+            <DraggableCard color="blue" x={620} y={60}>
               <p style={getCardTextStyle("250px")}>
                 No coding experience required. Just type an idea, and invite
                 your friends.
               </p>
             </DraggableCard>
+
+                                    <DraggableCard color="yellow" x={860} y={20}>
+              <p style={getCardTextStyle()}>No app store. No downloads.</p>
+            </DraggableCard>
+
 
             <DraggableCard color="grey" x={820} y={520}>
               <div style={getComputerAnimContainerStyle()}>
@@ -968,18 +982,6 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </div>
             </DraggableCard>
 
-            <DraggableCard color="yellow" x={800} y={20}>
-              <p style={getCardTextStyle()}>No app store. No downloads.</p>
-            </DraggableCard>
-
-            <DraggableCard color="red" x={800} y={320}>
-              <p style={getCardTextStyle("200px")}>
-                Our unhackable{" "}
-                <a href="http://fireproof.storage/">vibe coding database</a>{" "}
-                encrypts all your data. Which means the group chat's lore stays
-                local, portable, and safe.
-              </p>
-            </DraggableCard>
             <DraggableCard color="yellow" x={1000} y={1700}>
               <p style={getImageCardStyle()}>
                 <img src={vibesStack} style={getFullSizeImageStyle()} />
