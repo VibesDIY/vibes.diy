@@ -410,7 +410,7 @@ importers:
         specifier: 19.2.0
         version: 19.2.0
       react-dom:
-        specifier: ^19.2.0
+        specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
       use-fireproof:
         specifier: 0.24.0
@@ -563,7 +563,7 @@ importers:
         specifier: 19.2.0
         version: 19.2.0
       react-dom:
-        specifier: ^19.2.0
+        specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
     devDependencies:
       '@fireproof/core-cli':
