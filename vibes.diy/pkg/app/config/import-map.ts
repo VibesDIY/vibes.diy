@@ -5,7 +5,7 @@
 
 import { Lazy } from "@adviser/cement";
 
-const VIBES_VERSION = "0.18.9";
+const VIBES_VERSION = "0.18.13-dev";
 
 export type ImportMap = Record<string, string>;
 
