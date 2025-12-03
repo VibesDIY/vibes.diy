@@ -21,7 +21,8 @@ export function getLibraryImportMap() {
       "https://esm.sh/use-fireproof@0.24.1-dev-memo/es2022/use-fireproof.mjs",
     "https://esm.sh/use-fireproof@0.24.0/es2022/use-fireproof.mjs":
       "https://esm.sh/use-fireproof@0.24.1-dev-memo/es2022/use-fireproof.mjs",
-    "use-fireproof": "https://esm.sh/use-fireproof@0.24.1-dev-memo/es2022/use-fireproof.mjs",
+    "use-fireproof":
+      "https://esm.sh/use-fireproof@0.24.1-dev-memo/es2022/use-fireproof.mjs",
     "call-ai": `https://esm.sh/call-ai@${VIBES_VERSION}`,
     "use-vibes": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
   };
