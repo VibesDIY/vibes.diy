@@ -1,18 +1,15 @@
 import { VibesDiyEnv } from "../config/env.js";
-import { getEjectTemplateWithPlaceholders } from "./eject-template.js";
+import { ejectTemplateWithPlaceholders } from "./eject-template.js";
 import {
   normalizeComponentExports,
   transformImports,
 } from "@vibes.diy/prompts";
 
-export async function generateStandaloneHtml(params: {
-  code: string;
-}): Promise<string> {
+export function generateStandaloneHtml(params: { code: string }): string {
   const normalized = normalizeComponentExports(params.code);
   const transformed = transformImports(normalized);
-  const template = await getEjectTemplateWithPlaceholders();
 
-  return template
+  return ejectTemplateWithPlaceholders
     .replaceAll("{{API_KEY}}", "") // API key must be provided by user
     .replaceAll("{{CALLAI_ENDPOINT}}", VibesDiyEnv.CALLAI_ENDPOINT())
     .replace("{{APP_CODE}}", transformed);
