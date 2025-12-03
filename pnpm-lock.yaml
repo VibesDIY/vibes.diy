@@ -407,7 +407,7 @@ importers:
         specifier: ^6.1.1
         version: 6.1.2
       react:
-        specifier: '>=19.1.0'
+        specifier: 19.2.0
         version: 19.2.0
       react-dom:
         specifier: ^19.2.0
@@ -560,7 +560,7 @@ importers:
         specifier: workspace:*
         version: link:../base
       react:
-        specifier: '>=19.1.0'
+        specifier: 19.2.0
         version: 19.2.0
       react-dom:
         specifier: ^19.2.0
