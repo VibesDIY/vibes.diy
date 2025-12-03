@@ -16,11 +16,12 @@ import { getImportMapJson } from "../config/import-map.js";
  */
 // this seemes unused. it was made to support the html download link on the vibe settings tab
 // we should use it there or remove it, maybe remove the duplicated functionality elsewhere if there is some
-export function generateEjectHtml(
+export async function generateEjectHtml(
   appCode: string,
   apiKey: string,
   callaiEndpoint: string,
-): string {
+): Promise<string> {
+  const importMapJson = await getImportMapJson();
   return `<!doctype html>
 <html>
   <head>
@@ -51,7 +52,7 @@ export function generateEjectHtml(
       window.CALLAI_IMG_URL = "${callaiEndpoint}";
     </script>
     <script type="importmap">
-      ${getImportMapJson()}
+      ${importMapJson}
     </script>
     <script type="text/babel" data-type="module">
       import ReactDOMClient from "react-dom/client";
@@ -79,7 +80,9 @@ export function generateEjectHtml(
  *
  * Placeholders: {{APP_CODE}}, {{API_KEY}}, {{CALLAI_ENDPOINT}}
  */
-export const ejectTemplateWithPlaceholders = `<!doctype html>
+export async function getEjectTemplateWithPlaceholders(): Promise<string> {
+  const importMapJson = await getImportMapJson();
+  return `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -109,7 +112,7 @@ export const ejectTemplateWithPlaceholders = `<!doctype html>
       window.CALLAI_IMG_URL = "{{CALLAI_ENDPOINT}}";
     </script>
     <script type="importmap">
-      ${getImportMapJson()}
+      ${importMapJson}
     </script>
     <script type="text/babel" data-type="module">
       import ReactDOMClient from "react-dom/client";
@@ -129,3 +132,4 @@ export const ejectTemplateWithPlaceholders = `<!doctype html>
     -->
   </body>
 </html>`;
+}
