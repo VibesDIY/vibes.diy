@@ -61,6 +61,6 @@
     "@vibes.diy/prompts": "workspace:0.0.0",
     "call-ai": "workspace:0.0.0",
     "react-dom": "^19.2.0",
-    "use-fireproof": "^0.23.15"
+    "use-fireproof": "^0.24.0"
   }
 }
