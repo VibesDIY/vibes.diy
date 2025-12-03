@@ -17,6 +17,11 @@
     "build-storybook": "storybook build"
   },
   "license": "Apache-2.0",
+  "importmap": {
+    "imports": {
+      "use-fireproof": "https://esm.sh/use-fireproof@0.24.1-dev-memo"
+    }
+  },
   "dependencies": {
     "@adviser/cement": "^0.5.2",
     "@fireproof/core-keybag": "0.24.1-dev-memo",
