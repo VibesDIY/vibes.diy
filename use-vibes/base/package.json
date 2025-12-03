@@ -32,7 +32,7 @@
     "zod": "^4.1.12"
   },
   "peerDependencies": {
-    "react": "19.2.1"
+    "react": "19.2.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
