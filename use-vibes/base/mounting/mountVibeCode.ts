@@ -20,7 +20,7 @@ export async function mountVibeCode(
   containerId: string,
   titleId: string,
   installId: string,
-  transformImports: (code: string) => Promise<string>,
+  transformImports: (code: string) => string,
   showVibesSwitch = true,
   apiKey?: string,
   chatUrl?: string,
@@ -45,7 +45,7 @@ export async function mountVibeCode(
       }
     }
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
-    const codeWithTransformedImports = await transformImports(code);
+    const codeWithTransformedImports = transformImports(code);
 
     // Step 2: Ensure Babel is loaded (from CDN script tag)
     if (!window.Babel) {

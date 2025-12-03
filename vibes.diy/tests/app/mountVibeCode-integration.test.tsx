@@ -12,7 +12,7 @@ describe("mountVibeCode integration with transformImportsDev", () => {
     document.body.innerHTML = "";
   });
 
-  it("should call transformImportsDev and get string, not Promise object", async () => {
+  it("should call transformImportsDev and get string, not Promise object", () => {
     const testCode = `
       import React from 'react';
       export default function App() {
@@ -20,8 +20,8 @@ describe("mountVibeCode integration with transformImportsDev", () => {
       }
     `;
 
-    // Verify transformImportsDev returns a string when awaited
-    const transformed = await transformImportsDev(testCode);
+    // Verify transformImportsDev returns a string synchronously
+    const transformed = transformImportsDev(testCode);
 
     // Critical checks - verify we got a string, not a Promise object
     expect(typeof transformed).toBe("string");
@@ -46,17 +46,14 @@ describe("mountVibeCode integration with transformImportsDev", () => {
     expect(babelResult?.code).not.toContain("[object Promise]");
   });
 
-  it("should verify transform function signature compatibility", async () => {
+  it("should verify transform function signature compatibility", () => {
     const testCode = `import React from 'react';`;
 
-    // Verify that transformImportsDev matches the expected async signature
+    // Verify that transformImportsDev is synchronous and returns a string
     const result = transformImportsDev(testCode);
 
-    // Should return a Promise
-    expect(result).toBeInstanceOf(Promise);
-
-    // When awaited, should return a string
-    const resolved = await result;
-    expect(typeof resolved).toBe("string");
+    // Should return a string directly (not a Promise)
+    expect(typeof result).toBe("string");
+    expect(result).not.toBeInstanceOf(Promise);
   });
 });
