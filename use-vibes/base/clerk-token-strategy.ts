@@ -63,7 +63,11 @@ export class ClerkTokenStrategy implements TokenStrategie {
   /**
    * Try to get a valid token. Called by Fireproof when a token is needed.
    */
-  async tryToken(sthis: SuperThis, logger: Logger, opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
+  async tryToken(
+    sthis: SuperThis,
+    logger: Logger,
+    _opts: ToCloudOpts
+  ): Promise<TokenAndClaims | undefined> {
     if (!this.dashApi || !this.deviceId) {
       return undefined;
     }
@@ -100,7 +104,12 @@ export class ClerkTokenStrategy implements TokenStrategie {
   /**
    * Wait for a token to become available. Called when tryToken returns undefined.
    */
-  async waitForToken(sthis: SuperThis, logger: Logger, deviceId: string, opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
+  async waitForToken(
+    sthis: SuperThis,
+    logger: Logger,
+    deviceId: string,
+    opts: ToCloudOpts
+  ): Promise<TokenAndClaims | undefined> {
     // For Clerk, we can just try again immediately
     // In the future, we could add exponential backoff or listen for auth state changes
     return this.tryToken(sthis, logger, opts);

@@ -147,9 +147,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // This ensures only instance-specific databases (with titleId + installId) get synced
   // and only when running in a context where ClerkProvider is available
   const attachConfig = useMemo(() => {
-    return vibeMetadata && tokenStrategy
-      ? toCloud({ tokenStrategy })
-      : undefined;
+    return vibeMetadata && tokenStrategy ? toCloud({ tokenStrategy }) : undefined;
   }, [vibeMetadata, tokenStrategy]);
 
   // Memoize the options object to prevent re-creating on every render
