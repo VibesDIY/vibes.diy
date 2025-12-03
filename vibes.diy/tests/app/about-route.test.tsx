@@ -3,6 +3,43 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
 import About from "~/vibes.diy/app/routes/about.js";
 
+// Mock react-router-dom
+vi.mock("react-router-dom", () => ({
+  Link: ({
+    to,
+    children,
+    ...props
+  }: {
+    to: string;
+    children: React.ReactNode;
+  }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+// Mock @clerk/clerk-react
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: () => ({
+    userId: "test-user-id",
+    isLoaded: true,
+    isSignedIn: true,
+    getToken: vi.fn().mockResolvedValue("test-token"),
+  }),
+  useClerk: () => ({
+    signOut: vi.fn(),
+  }),
+  useUser: () => ({
+    isLoaded: true,
+    isSignedIn: true,
+    user: {
+      id: "test-user-id",
+      primaryEmailAddress: { emailAddress: "test@example.com" },
+    },
+  }),
+}));
+
 // Mock the SimpleAppLayout component
 vi.mock("~/vibes.diy/app/components/SimpleAppLayout.js", () => ({
   default: ({
@@ -39,24 +76,19 @@ describe("About Route", () => {
   it("renders the about page with correct title and layout", () => {
     const res = renderAbout();
 
-    // Check for header content
-    const headerSection = res.getByTestId("header-left");
-    expect(headerSection).toBeInTheDocument();
+    // Check for the session sidebar (part of BrutalistLayout)
+    const sidebar = res.getByTestId("session-sidebar");
+    expect(sidebar).toBeInTheDocument();
 
-    // Check the home icon exists in the header
+    // Check the home icon exists in the sidebar
     const homeIcon = res.getByTestId("home-icon");
     expect(homeIcon).toBeInTheDocument();
-
-    // Check for the logo
-    const logo = res.getByTestId("vibes-diy-logo");
-    expect(logo).toBeInTheDocument();
   });
 
   it("displays the main about page heading", () => {
     const res = renderAbout();
-    const heading = res.getByText("About");
+    const heading = res.getByRole("heading", { level: 1, name: "About" });
     expect(heading).toBeInTheDocument();
-    expect(heading.tagName).toBe("H1");
   });
 
   it('displays the "What is Vibes DIY?" section', () => {
@@ -135,8 +167,8 @@ describe("About Route", () => {
   it("has a home navigation link", () => {
     const res = renderAbout();
 
-    // Find link to home
-    const homeLink = res.getByRole("link", { name: /go to home/i });
+    // Find link to home (in the SessionSidebar)
+    const homeLink = res.getByRole("link", { name: /home/i });
     expect(homeLink).toBeInTheDocument();
     expect(homeLink.getAttribute("href")).toBe("/");
   });
