@@ -1,4 +1,4 @@
-import { useFireproof } from "use-vibes";
+import { useFireproof } from "use-fireproof";
 import { useAuth } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
 
