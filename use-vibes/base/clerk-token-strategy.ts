@@ -108,8 +108,14 @@ export class ClerkTokenStrategy implements TokenStrategie {
     if (!clerkToken) return undefined;
 
     // Create dashboard API client
+    // Use environment variable or fallback to production
+    const apiUrl: string =
+      (typeof window !== 'undefined' &&
+        (window as { __VIBES_CONNECT_API_URL__?: string }).__VIBES_CONNECT_API_URL__) ||
+      'https://connect.fireproof.direct/api';
+
     const dashApi = new DashboardApi({
-      apiUrl: 'https://connect.fireproof.direct/api',
+      apiUrl,
       getToken: async () => ({ type: 'clerk', token: clerkToken }),
       fetch: fetch.bind(window),
     });

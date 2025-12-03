@@ -99,6 +99,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             }),
           }}
         />
+        {/* Configure dashboard API URL for Clerk token strategy */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__VIBES_CONNECT_API_URL__ = ${JSON.stringify(VibesDiyEnv.CONNECT_API_URL())};`,
+          }}
+        />
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/**
