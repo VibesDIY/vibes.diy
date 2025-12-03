@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { transformImportsDev } from "../../pkg/app/utils/dev-shims.js";
-import { mountVibeCode } from "use-vibes";
 
 describe("mountVibeCode integration with transformImportsDev", () => {
   beforeEach(() => {
