@@ -190,4 +190,14 @@ import { ImgGen } from "use-vibes"`;
     // react/jsx-runtime is in the library map, should not be transformed
     expect(result).toContain("import { jsx } from 'react/jsx-runtime'");
   });
+
+  it("should return a string, not a Promise", async () => {
+    const testCode = `import React from 'react';`;
+    const result = await transformImports(testCode);
+
+    // Explicitly verify we get a string, not a Promise object
+    expect(typeof result).toBe("string");
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(result).not.toContain("[object Promise]");
+  });
 });
