@@ -286,3 +286,4 @@ For users who change their import from `use-fireproof` to `use-vibes`, the enhan
 - dont write releases to code until they are shipped. we cant derefernce that url until its on npm, otherwise esm.sh gets bad cache
 - never push to main
 - dont squash next time rebase
+- publish first then reference
