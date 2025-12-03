@@ -11,23 +11,24 @@ import {
   generateStandaloneHtml,
   downloadTextFile,
 } from "~/vibes.diy/app/utils/exportHtml.js";
-import { ejectTemplateWithPlaceholders } from "~/vibes.diy/app/utils/eject-template.js";
+import { getEjectTemplateWithPlaceholders } from "~/vibes.diy/app/utils/eject-template.js";
 
 describe("exportHtml utilities", () => {
   describe("generateStandaloneHtml", () => {
-    it("injects code and environment tokens into the eject template", () => {
+    it("injects code and environment tokens into the eject template", async () => {
       // Sanity-check: the template has the placeholders we expect to replace
-      expect(ejectTemplateWithPlaceholders).toContain("{{APP_CODE}}");
-      expect(ejectTemplateWithPlaceholders).toContain("{{CALLAI_ENDPOINT}}");
-      expect(ejectTemplateWithPlaceholders).toContain("{{API_KEY}}");
+      const template = await getEjectTemplateWithPlaceholders();
+      expect(template).toContain("{{APP_CODE}}");
+      expect(template).toContain("{{CALLAI_ENDPOINT}}");
+      expect(template).toContain("{{API_KEY}}");
       // SESSION_ID placeholder no longer exists in template
-      expect(ejectTemplateWithPlaceholders).not.toContain("{{SESSION_ID}}");
-      expect(ejectTemplateWithPlaceholders).not.toContain("window.SESSION_ID");
+      expect(template).not.toContain("{{SESSION_ID}}");
+      expect(template).not.toContain("window.SESSION_ID");
 
       const code = "const a = 1;";
       const sessionId = "my-session-123"; // Keep this to test that it doesn't appear in output
 
-      const html = generateStandaloneHtml({ code });
+      const html = await generateStandaloneHtml({ code });
 
       // Code should be present and the placeholders should be gone
       expect(html).toContain(code);
@@ -50,9 +51,9 @@ describe("exportHtml utilities", () => {
       expect(html).not.toContain("{{API_KEY}}");
     });
 
-    it("ignores sessionId parameter even when provided", () => {
+    it("ignores sessionId parameter even when provided", async () => {
       const code = "const a = 1;";
-      const html = generateStandaloneHtml({ code });
+      const html = await generateStandaloneHtml({ code });
 
       // SESSION_ID should not appear in the HTML at all
       expect(html).not.toContain("SESSION_ID");

@@ -5,8 +5,12 @@
 
 const VIBES_VERSION = "0.18.9";
 
-export function getLibraryImportMap() {
-  return {
+export type ImportMap = Record<string, string>;
+
+export async function getImportmap({
+  overrides = {},
+}: { overrides?: ImportMap } = {}): Promise<ImportMap> {
+  const baseMap: ImportMap = {
     react: "https://esm.sh/react",
     "react-dom": "https://esm.sh/react-dom",
     "react-dom/client": "https://esm.sh/react-dom/client",
@@ -17,11 +21,16 @@ export function getLibraryImportMap() {
     "https://esm.sh/use-fireproof": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
     "https://esm.sh/use-vibes": `https://esm.sh/use-vibes@${VIBES_VERSION}`, // self-mapping for consistency
   };
+
+  return { ...baseMap, ...overrides };
 }
 
 /**
  * Pre-formatted JSON string for direct use in templates
  */
-export function getImportMapJson() {
-  return JSON.stringify({ imports: getLibraryImportMap() }, null, 2);
+export async function getImportMapJson({
+  overrides = {},
+}: { overrides?: ImportMap } = {}): Promise<string> {
+  const importMap = await getImportmap({ overrides });
+  return JSON.stringify({ imports: importMap }, null, 2);
 }

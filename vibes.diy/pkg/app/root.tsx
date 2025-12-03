@@ -19,7 +19,10 @@ import GtmNoScript from "./components/GtmNoScript.js";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
-import { getLibraryImportMap } from "./config/import-map.js";
+import { getImportmap } from "./config/import-map.js";
+
+// Resolve import map at module level with top-level await
+const libraryImportMap = await getImportmap({});
 
 export const links: Route.LinksFunction = () => {
   const rawBase = VibesDiyEnv.APP_BASENAME();
@@ -94,7 +97,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             __html: JSON.stringify({
               imports: {
                 // Only include React imports in production (dev mode uses bundled versions)
-                ...(!import.meta.env.DEV ? getLibraryImportMap() : {}),
+                ...(!import.meta.env.DEV ? libraryImportMap : {}),
               },
             }),
           }}

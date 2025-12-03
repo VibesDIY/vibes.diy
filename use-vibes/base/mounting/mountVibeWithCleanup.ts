@@ -9,7 +9,7 @@ export async function mountVibeWithCleanup(
   containerId: string,
   titleId: string,
   installId: string,
-  transformImports: (code: string) => string,
+  transformImports: (code: string) => Promise<string>,
   showVibesSwitch = true,
   apiKey?: string,
   chatUrl?: string,
