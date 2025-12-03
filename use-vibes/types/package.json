@@ -17,13 +17,13 @@
   "license": "Apache-2.0",
   "dependencies": {
     "call-ai": "workspace:*",
-    "use-fireproof": "0.24.1-dev-memo"
+    "use-fireproof": "0.24.0"
   },
   "peerDependencies": {
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.1-dev-memo",
+    "@fireproof/core-cli": "0.24.0",
     "@types/react": "~19.2.7",
     "@vitest/browser-playwright": "^4.0.14",
     "typescript": "^5.9.3"

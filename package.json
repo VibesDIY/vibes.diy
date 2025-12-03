@@ -53,7 +53,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@fireproof/core-cli": "0.24.1-dev-memo",
+    "@fireproof/core-cli": "0.24.0",
     "@playwright/test": "^1.57.0",
     "@types/deno": "^2.5.0",
     "@types/node": "^24.9.1",
