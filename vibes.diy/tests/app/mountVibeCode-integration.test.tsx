@@ -33,10 +33,13 @@ describe("mountVibeCode integration with transformImportsDev", () => {
     expect(transformed).toContain("App");
 
     // Verify Babel can parse it (this would fail if it received "[object Promise]")
-    const babelResult = (window as { Babel?: { transform: (code: string, opts: unknown) => { code: string } } }).Babel?.transform(
-      transformed,
-      { presets: ["react"] }
-    );
+    const babelResult = (
+      window as {
+        Babel?: {
+          transform: (code: string, opts: unknown) => { code: string };
+        };
+      }
+    ).Babel?.transform(transformed, { presets: ["react"] });
 
     // If Babel received "[object Promise]", this would throw or return bad code
     expect(babelResult).toBeDefined();
