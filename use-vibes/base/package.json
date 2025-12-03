@@ -7,6 +7,10 @@
     ".": {
       "types": "./index.d.ts",
       "import": "./index.js"
+    },
+    "./contexts/VibeContext": {
+      "types": "./contexts/VibeContext.d.ts",
+      "import": "./contexts/VibeContext.js"
     }
   },
   "scripts": {
