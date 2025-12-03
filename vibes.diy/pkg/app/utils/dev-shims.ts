@@ -82,8 +82,11 @@ export function transformImports(code: string): string {
  * we set up in `setupDevShims`.
  */
 export function transformImportsDev(code: string) {
-  // First transform bare imports to esm.sh URLs (for both dev and prod)
-  let res = transformImports(code);
+  // First, transform use-fireproof → use-vibes for vibe code
+  let res = code.replace(/(['"])use-fireproof\1/g, '"use-vibes"');
+
+  // Then transform bare imports to esm.sh URLs (for both dev and prod)
+  res = transformImports(res);
 
   if (import.meta.env.DEV) {
     const replacements: Record<string, string> = {
