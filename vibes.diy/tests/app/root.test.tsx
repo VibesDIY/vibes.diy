@@ -1,6 +1,5 @@
 import React from "react";
 import { render } from "@testing-library/react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ErrorBoundary, Layout } from "~/vibes.diy/app/root.js";
 import { VibesDiyEnv } from "~/vibes.diy/app/config/env.js";
@@ -147,17 +146,17 @@ describe("Root Component", () => {
     document.documentElement.classList.remove("dark");
   });
 
-  // Use server-side rendering here to avoid noisy full-document render output
-  // while still verifying that the root layout and core providers compose.
-  it("statically renders Layout with children and core providers", () => {
-    const html = renderToStaticMarkup(
+  // Use client-side rendering to handle async import map loading
+  it("statically renders Layout with children and core providers", async () => {
+    const { findByTestId, findByText } = render(
       <Layout>
         <div data-testid="test-content">Test Child Content</div>
       </Layout>,
     );
 
-    expect(html).toContain("Test Child Content");
-    expect(html).toContain('data-testid="cookie-banner"');
+    // Wait for import map to load and children to render
+    await findByText("Test Child Content");
+    await findByTestId("cookie-banner");
   });
 
   it("renders the ErrorBoundary component with an error", () => {
