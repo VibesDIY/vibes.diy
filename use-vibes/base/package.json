@@ -27,12 +27,12 @@
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*",
     "jose": "^6.1.1",
-    "react-dom": "^19.2.0",
+    "react-dom": "19.2.0",
     "use-fireproof": "^0.23.15",
     "zod": "^4.1.12"
   },
   "peerDependencies": {
-    "react": ">=19.1.0"
+    "react": "19.2.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
