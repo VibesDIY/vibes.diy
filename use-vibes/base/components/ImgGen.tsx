@@ -22,10 +22,8 @@ import {
 } from '@vibes.diy/use-vibes-types';
 import { Lazy } from '@adviser/cement';
 
-export interface ImgGenProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  'onError' | 'className'
-> {
+export interface ImgGenProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onError' | 'className'> {
   /** Text prompt for image generation (required unless _id is provided) */
   readonly prompt: string;
 
