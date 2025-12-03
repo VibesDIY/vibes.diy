@@ -4,7 +4,7 @@
  * that uses the single source of truth for importmaps
  */
 
-import { getImportMapJson } from "../config/import-map.js";
+import { getImportMapJson } from "../config/importmap.js";
 
 /**
  * Generates a standalone HTML file that can be downloaded and run independently

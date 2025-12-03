@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useAllGroups } from "../hooks/useAllGroups.js";
 import PublishedVibeCard from "../components/PublishedVibeCard.js";
@@ -32,14 +32,18 @@ function parseInstanceId(fullId: string): {
   return { titleId, installId };
 }
 
-function GroupsContent() {
+const GroupsContent = React.memo(function GroupsContent() {
   const navigate = useNavigate();
   const { groups, isLoading } = useAllGroups();
 
-  const handleGroupClick = (fullId: string) => {
-    const { titleId, installId } = parseInstanceId(fullId);
-    navigate(`/vibe/${titleId}/${installId}`);
-  };
+  // Memoize handleGroupClick to prevent recreation
+  const handleGroupClick = useCallback(
+    (fullId: string) => {
+      const { titleId, installId } = parseInstanceId(fullId);
+      navigate(`/vibe/${titleId}/${installId}`);
+    },
+    [navigate],
+  );
 
   return (
     <BrutalistLayout title="My Groups" subtitle="All your vibe groups">
@@ -120,7 +124,7 @@ function GroupsContent() {
       )}
     </BrutalistLayout>
   );
-}
+});
 
 // Auth wrapper component - only renders content when authenticated
 export default function GroupsRoute() {

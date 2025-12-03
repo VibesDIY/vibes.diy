@@ -74,6 +74,7 @@ export function InlinePreview({
           clerkToken || undefined, // Pass Clerk token as apiKey
           callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
           callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
+          // Note: getToken NOT passed - result preview runs in local-only mode
         );
 
         if (active) {

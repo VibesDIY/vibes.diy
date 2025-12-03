@@ -30,7 +30,14 @@ vi.mock("use-fireproof", async (original) => {
         save: vi.fn(),
       }),
       useLiveQuery: () => ({ docs: [] }),
-      database: { get: vi.fn(), put: vi.fn() },
+      database: {
+        get: vi.fn(),
+        put: vi.fn(),
+        allDocs: vi.fn().mockResolvedValue({ rows: [] }),
+        subscribe: vi.fn().mockReturnValue(() => {
+          // Unsubscribe function
+        }),
+      },
     } as unknown as ReturnType<typeof useFireproof>;
   });
   return {

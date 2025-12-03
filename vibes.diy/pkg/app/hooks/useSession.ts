@@ -64,11 +64,8 @@ export function useSession(sessionId: string): UseSession {
     throw new Error("useSession requires a valid sessionId");
   }
   const sessionDbName = getSessionDatabaseName(sessionId);
-  const {
-    database: sessionDatabase,
-    useDocument: useSessionDocument,
-    useLiveQuery: useSessionLiveQuery,
-  } = useFireproof(sessionDbName);
+  const { database: sessionDatabase, useDocument: useSessionDocument } =
+    useFireproof(sessionDbName);
 
   // User message is stored in the session-specific database
   const {
@@ -106,9 +103,45 @@ export function useSession(sessionId: string): UseSession {
     });
 
   // Query messages from the session-specific database
-  const { docs } = useSessionLiveQuery("session_id", { key: sessionId }) as {
-    docs: ChatMessageDocument[];
-  };
+  // Use database.subscribe() instead of useLiveQuery() to avoid infinite re-render loops
+  const [docs, setDocs] = useState<ChatMessageDocument[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadMessages = async () => {
+      try {
+        const result = await sessionDatabase.allDocs<ChatMessageDocument>();
+
+        if (!mounted) return;
+
+        // Filter for messages in this session
+        const sessionMessages = result.rows
+          .map((row) => row.value as ChatMessageDocument)
+          .filter((doc) => doc && doc.session_id === sessionId);
+
+        setDocs(sessionMessages);
+      } catch (err) {
+        console.error("[useSession] Error loading messages:", err);
+        if (mounted) {
+          setDocs([]);
+        }
+      }
+    };
+
+    // Subscribe to database changes
+    const unsubscribe = sessionDatabase.subscribe(() => {
+      loadMessages();
+    });
+
+    // Initial load
+    loadMessages();
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [sessionDatabase, sessionId]);
 
   // Stabilize merge function and vibe document with refs to avoid recreating callbacks
   const mergeRef = useRef(mergeVibeDoc);

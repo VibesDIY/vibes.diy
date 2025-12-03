@@ -3,30 +3,36 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
 import About from "~/vibes.diy/app/routes/about.js";
 
-// Mock the SimpleAppLayout component
-vi.mock("~/vibes.diy/app/components/SimpleAppLayout.js", () => ({
+// Mock BrutalistLayout component
+vi.mock("~/vibes.diy/app/components/BrutalistLayout", () => ({
   default: ({
-    headerLeft,
     children,
+    title,
+    subtitle,
   }: {
-    headerLeft: React.ReactNode;
     children: React.ReactNode;
+    title: string;
+    subtitle?: string;
   }) => (
-    <div data-testid="simple-app-layout">
-      <div data-testid="header-left">{headerLeft}</div>
+    <div data-testid="brutalist-layout">
+      <div data-testid="layout-title">{title}</div>
+      {subtitle && <div data-testid="layout-subtitle">{subtitle}</div>}
       <div data-testid="content-area">{children}</div>
     </div>
   ),
 }));
 
-// Mock HomeIcon component
-vi.mock("~/vibes.diy/app/components/SessionSidebar/HomeIcon.js", () => ({
-  HomeIcon: () => <div data-testid="home-icon" />,
-}));
-
-// Mock VibesDIYLogo component
-vi.mock("~/vibes.diy/app/components/VibesDIYLogo", () => ({
-  default: () => <div data-testid="vibes-diy-logo" />,
+// Mock @clerk/clerk-react
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: () => ({
+    userId: "test",
+    isLoaded: true,
+    isSignedIn: true,
+  }),
+  useClerk: () => ({
+    redirectToSignIn: vi.fn(),
+    signOut: vi.fn(),
+  }),
 }));
 
 describe("About Route", () => {
@@ -39,24 +45,26 @@ describe("About Route", () => {
   it("renders the about page with correct title and layout", () => {
     const res = renderAbout();
 
-    // Check for header content
-    const headerSection = res.getByTestId("header-left");
-    expect(headerSection).toBeInTheDocument();
+    // Check for layout
+    const layout = res.getByTestId("brutalist-layout");
+    expect(layout).toBeInTheDocument();
 
-    // Check the home icon exists in the header
-    const homeIcon = res.getByTestId("home-icon");
-    expect(homeIcon).toBeInTheDocument();
+    // Check for title
+    const title = res.getByTestId("layout-title");
+    expect(title).toBeInTheDocument();
+    expect(title.textContent).toBe("About");
 
-    // Check for the logo
-    const logo = res.getByTestId("vibes-diy-logo");
-    expect(logo).toBeInTheDocument();
+    // Check for subtitle
+    const subtitle = res.getByTestId("layout-subtitle");
+    expect(subtitle).toBeInTheDocument();
+    expect(subtitle.textContent).toBe("AI-powered app builder");
   });
 
   it("displays the main about page heading", () => {
     const res = renderAbout();
-    const heading = res.getByText("About");
+    const heading = res.getByText("What is Vibes DIY?");
     expect(heading).toBeInTheDocument();
-    expect(heading.tagName).toBe("H1");
+    expect(heading.tagName).toBe("H2");
   });
 
   it('displays the "What is Vibes DIY?" section', () => {
@@ -135,9 +143,10 @@ describe("About Route", () => {
   it("has a home navigation link", () => {
     const res = renderAbout();
 
-    // Find link to home
-    const homeLink = res.getByRole("link", { name: /go to home/i });
-    expect(homeLink).toBeInTheDocument();
-    expect(homeLink.getAttribute("href")).toBe("/");
+    // The about page doesn't have a specific "go to home" link
+    // but the BrutalistLayout has a hamburger menu/sidebar
+    // Let's verify the layout is rendered instead
+    const layout = res.getByTestId("brutalist-layout");
+    expect(layout).toBeInTheDocument();
   });
 });

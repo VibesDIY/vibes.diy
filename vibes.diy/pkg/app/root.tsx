@@ -19,7 +19,7 @@ import GtmNoScript from "./components/GtmNoScript.js";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
-import { getLibraryImportMap } from "./config/import-map.js";
+import { getLibraryImportMap } from "./config/importmap.js";
 
 export const links: Route.LinksFunction = () => {
   const rawBase = VibesDiyEnv.APP_BASENAME();
@@ -97,6 +97,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 ...(!import.meta.env.DEV ? getLibraryImportMap() : {}),
               },
             }),
+          }}
+        />
+        {/* Configure dashboard API URL for Clerk token strategy */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__VIBES_CONNECT_API_URL__ = ${JSON.stringify(VibesDiyEnv.CONNECT_API_URL())};`,
           }}
         />
         <meta charSet="utf-8" />

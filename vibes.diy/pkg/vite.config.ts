@@ -56,6 +56,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     mode === "test" || process.env.DISABLE_REACT_ROUTER === "true";
   console.log("disableReactRouter", disableReactRouter);
 
+  const isDev = mode === "development";
+
   return {
     plugins: [
       tailwindcss(),
@@ -68,6 +70,22 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       moveImportmapFirst(),
     ],
     base: process.env.VITE_APP_BASENAME || "/",
+    // In dev mode, don't exclude React - let Vite handle it normally
+    // The importmap will be ignored in dev mode
+    ...(isDev
+      ? {}
+      : {
+          optimizeDeps: {
+            exclude: [
+              "react",
+              "react-dom",
+              "react-dom/client",
+              "react/jsx-runtime",
+              "use-vibes",
+              "use-fireproof",
+            ],
+          },
+        }),
     ssr: {
       external: [
         "react",

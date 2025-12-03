@@ -1,8 +1,8 @@
-import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
+import type { ToCloudAttachable, TokenStrategie } from '@fireproof/core-types-protocols-cloud';
 import { getKeyBag } from '@fireproof/core-keybag';
 import { Lazy } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   fireproof,
   ImgFile,
@@ -12,7 +12,8 @@ import {
   type UseFpToCloudParam,
 } from 'use-fireproof';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
-import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
+import { useVibeContext, useVibeGetToken, type VibeMetadata } from './contexts/VibeContext.js';
+import { ClerkTokenStrategy } from './clerk-token-strategy.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -28,6 +29,9 @@ const syncEnabledInstances = new Map<string, Set<string>>();
 
 // Simple counter for generating unique instance IDs (avoids React.useId conflicts)
 let instanceCounter = 0;
+
+// Track if useFireproof has been called at least once
+let hasBeenCalledOnce = false;
 
 // Helper to update body class based on global sync status
 function updateBodyClass() {
@@ -70,12 +74,22 @@ export async function isJWTExpired(token: string): Promise<boolean> {
 }
 
 // Helper function to create toCloud configuration
-export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+export function toCloud(
+  opts?: UseFpToCloudParam & { tokenStrategy?: TokenStrategie }
+): ToCloudAttachable {
+  if (opts?.strategy && opts?.tokenStrategy) {
+    throw new Error("toCloud: provide either 'strategy' or 'tokenStrategy', not both.");
+  }
+
+  const { tokenStrategy, strategy, ...rest } = opts ?? {};
+  const effectiveStrategy = tokenStrategy ?? strategy;
+
   const attachable = originalToCloud({
-    ...opts,
+    ...rest,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
+    ...(effectiveStrategy ? { strategy: effectiveStrategy } : {}),
   });
 
   return attachable;
@@ -105,47 +119,75 @@ function constructDatabaseName(
 
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(nameOrDatabase?: string | Database) {
+  // Log the first time this hook is ever called
+  if (!hasBeenCalledOnce) {
+    console.log('[useFireproof] 🎉 First call to useFireproof hook');
+    hasBeenCalledOnce = true;
+  }
+
+  const renderNum = Math.random();
+  console.log('[useFireproof] RENDER', renderNum);
+
+  // Get authentication token function from context (parent app provides this via VibeContextProvider)
+  // User vibes in iframes won't have ClerkProvider, so getToken will be undefined and sync disabled
+  const getToken = useVibeGetToken();
+  console.log('[useFireproof]', renderNum, 'getToken changed?', !!getToken);
+
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
+  console.log('[useFireproof]', renderNum, 'vibeMetadata changed?', !!vibeMetadata);
 
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
+  console.log(
+    '[useFireproof]',
+    renderNum,
+    'augmentedDbName:',
+    typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name
+  );
 
   // Generate unique instance ID for this hook instance (no React dependency)
   const instanceId = `instance-${++instanceCounter}`;
-
   // Get database name for tracking purposes (use augmented name)
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
-  // Use global sync key - all databases share the same auth token and sync state
-  const syncKey = 'fireproof-sync-enabled';
+  // Create Clerk token strategy only if getToken is available
+  const tokenStrategy = useMemo(() => {
+    console.log('[useFireproof]', renderNum, 'tokenStrategy useMemo running');
+    if (!getToken) {
+      return null;
+    }
+    return new ClerkTokenStrategy(async () => {
+      return await getToken({ template: 'with-email' });
+    });
+  }, [getToken]);
 
-  // Check if sync was previously enabled (persists across refreshes)
-  const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
+  // Only enable sync when both vibeMetadata exists AND Clerk auth is available
+  // This ensures only instance-specific databases (with titleId + installId) get synced
+  // and only when running in a context where ClerkProvider is available
+  const attachConfig = useMemo(() => {
+    console.log('[useFireproof]', renderNum, 'attachConfig useMemo running');
+    return vibeMetadata && tokenStrategy
+      ? toCloud({ tokenStrategy: tokenStrategy as TokenStrategie })
+      : undefined;
+  }, [vibeMetadata, tokenStrategy]);
 
-  // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
+  // Memoize the options object to prevent re-creating on every render
+  const options = useMemo(() => {
+    console.log('[useFireproof]', renderNum, 'options useMemo running');
+    return attachConfig ? { attach: attachConfig } : undefined;
+  }, [attachConfig]);
 
-  // Use original useFireproof with augmented database name
-  // This ensures each titleId + installId combination gets its own database
-  const result = originalUseFireproof(
-    augmentedDbName,
-    attachConfig ? { attach: attachConfig } : {}
-  );
-
-  // TODO: Enable sync with Clerk token
-  const enableSync = useCallback(() => {
-    console.log('enableSync() not implemented - TODO: Enable sync with Clerk token');
-  }, []);
-
-  // TODO: Disable sync with Clerk token
-  const disableSync = useCallback(() => {
-    console.log('disableSync() not implemented - TODO: Disable sync with Clerk token');
-  }, []);
-
-  // Determine sync status - check for actual attachment state
+  console.log('[useFireproof]', renderNum, 'Calling originalUseFireproof');
+  // Use original useFireproof with augmented database name and optional attach config
+  const fpResult = originalUseFireproof(augmentedDbName, options);
+  console.log('[useFireproof]', renderNum, 'Got fpResult, attach state:', fpResult.attach?.state);
+  // Destructure the result to get stable references for individual properties
+  const { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach } = fpResult;
+  // Sync is enabled only when running in a vibe-viewer context and the attach state is connected
+  const rawAttachState = attach?.state;
   const syncEnabled =
-    wasSyncEnabled && (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
+    !!vibeMetadata && (rawAttachState === 'attached' || rawAttachState === 'attaching');
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
@@ -205,7 +247,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         message: shareData.message || 'User added to ledger successfully',
       };
     },
-    [dbName, result.attach]
+    [dbName, attach]
   );
 
   // Listen for custom 'vibes-share-request' events on document
@@ -310,14 +352,23 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     };
   }, [syncEnabled, dbName, instanceId]);
 
-  // Return combined result with stub sync functions
-  return {
-    ...result,
-    enableSync,
-    disableSync,
-    syncEnabled,
-    share,
-  };
+  // Return combined result with sync always enabled
+  // Memoize the return value to prevent creating new object references on every render
+  // Depend on individual properties instead of result object to avoid re-memoizing when
+  // upstream useFireproof returns a new object reference (which it does on every render)
+  const result = useMemo(() => {
+    return {
+      database,
+      useLiveQuery,
+      useDocument,
+      useAllDocs,
+      useChanges,
+      attach,
+      syncEnabled,
+      share,
+    };
+  }, [database, useLiveQuery, useDocument, useAllDocs, useChanges, attach, syncEnabled, share]);
+  return result;
 }
 
 // Re-export specific functions and types from call-ai
@@ -418,10 +469,11 @@ export {
 export {
   VibeContextProvider,
   useVibeContext,
+  useVibeGetToken,
   VibeMetadataValidationError,
   VIBE_METADATA_ERROR_CODES,
 } from './contexts/VibeContext.js';
-export type { VibeMetadata } from './contexts/VibeContext.js';
+export type { VibeMetadata, VibeContextValue } from './contexts/VibeContext.js';
 
 // Export mounting utilities for inline vibe rendering
 export {

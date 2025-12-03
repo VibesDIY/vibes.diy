@@ -2,8 +2,9 @@ import React from 'react';
 import { render, cleanup } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useFireproof } from '@vibes.diy/use-vibes-base';
+import { VibeContextProvider, type VibeMetadata } from '../base/contexts/VibeContext.js';
 
-// Mock the original useFireproof
+// Mock the original useFireproof from use-fireproof so we can control attach state
 const mockOriginalUseFireproof = vi.fn();
 
 vi.mock('use-fireproof', () => ({
@@ -18,16 +19,37 @@ vi.mock('use-fireproof', () => ({
   },
 }));
 
-// Test component that uses our enhanced useFireproof
-function TestComponent({ dbName = 'test-db' }: { dbName?: string }) {
+// Mock Clerk's useAuth so sync can initialize without real Clerk setup
+vi.mock('@clerk/clerk-react', () => ({
+  useAuth: () => ({
+    getToken: vi.fn().mockResolvedValue('mock-token'),
+  }),
+}));
+
+interface TestComponentProps {
+  dbName?: string;
+  metadata?: VibeMetadata;
+}
+
+// Component that provides VibeContext and uses the enhanced useFireproof hook
+function TestComponent({ dbName = 'test-db', metadata }: TestComponentProps) {
+  const vibeMetadata: VibeMetadata =
+    metadata ?? ({ titleId: 'test-title', installId: 'test-install' } as VibeMetadata);
+
+  return (
+    <VibeContextProvider metadata={vibeMetadata}>
+      <InnerTestComponent dbName={dbName} />
+    </VibeContextProvider>
+  );
+}
+
+function InnerTestComponent({ dbName }: { dbName: string }) {
   const { syncEnabled } = useFireproof(dbName);
   return <div data-testid="sync-status">{syncEnabled ? 'connected' : 'disconnected'}</div>;
 }
 
 describe('useFireproof body class management', () => {
   beforeEach(() => {
-    // Clear localStorage
-    localStorage.clear();
     // Remove any existing classes from document.body
     document.body.classList.remove('vibes-connect-true');
     // Reset mocks
@@ -39,6 +61,21 @@ describe('useFireproof body class management', () => {
     document.body.classList.remove('vibes-connect-true');
   });
 
+  it('does not enable sync or add body class outside vibe-viewer context', () => {
+    // Even if the underlying attach state is attached, lack of vibe metadata
+    // (no VibeContextProvider) should keep sync disabled.
+    const mockAttach = { state: 'attached' };
+    mockOriginalUseFireproof.mockReturnValue({
+      database: { name: 'test-db' },
+      attach: mockAttach,
+      useLiveQuery: vi.fn(),
+    });
+
+    render(<InnerTestComponent dbName="test-db" />);
+
+    expect(document.body.classList.contains('vibes-connect-true')).toBe(false);
+  });
+
   it('should add vibes-connect-true class to body when sync is enabled', () => {
     // Mock sync as enabled (attached state)
     const mockAttach = { state: 'attached' };
@@ -48,12 +85,9 @@ describe('useFireproof body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
-    // Set localStorage to indicate sync was previously enabled (global key)
-    localStorage.setItem('fireproof-sync-enabled', 'true');
-
     render(<TestComponent />);
 
-    // Body should have the class when sync is enabled
+    // Body should have the class when sync is enabled in a viewer context
     expect(document.body.classList.contains('vibes-connect-true')).toBe(true);
   });
 
@@ -64,9 +98,6 @@ describe('useFireproof body class management', () => {
       attach: undefined,
       useLiveQuery: vi.fn(),
     });
-
-    // Ensure localStorage doesn't indicate sync was enabled (global key)
-    localStorage.removeItem('fireproof-sync-enabled');
 
     render(<TestComponent />);
 
@@ -82,9 +113,6 @@ describe('useFireproof body class management', () => {
       attach: mockAttach,
       useLiveQuery: vi.fn(),
     });
-
-    // Set global sync preference
-    localStorage.setItem('fireproof-sync-enabled', 'true');
 
     const { unmount } = render(<TestComponent />);
 
@@ -106,9 +134,6 @@ describe('useFireproof body class management', () => {
       attach: mockAttach,
       useLiveQuery: vi.fn(),
     });
-
-    // Set global sync preference (shared across all databases)
-    localStorage.setItem('fireproof-sync-enabled', 'true');
 
     const { unmount: unmount1 } = render(<TestComponent dbName="db1" />);
     const { unmount: unmount2 } = render(<TestComponent dbName="db2" />);
@@ -133,9 +158,6 @@ describe('useFireproof body class management', () => {
       attach: mockAttach,
       useLiveQuery: vi.fn(),
     });
-
-    // Set global sync preference
-    localStorage.setItem('fireproof-sync-enabled', 'true');
 
     // Multiple components using the same database name
     const { unmount: unmount1 } = render(<TestComponent dbName="same-db" />);

@@ -5,7 +5,7 @@ import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "@clerk/clerk-react";
-import { mountVibeWithCleanup } from "use-vibes";
+import { mountVibeWithCleanup, VibeContextProvider } from "use-vibes";
 import { setupDevShims, transformImportsDev } from "../utils/dev-shims.js";
 import LoggedOutView from "../components/LoggedOutView.js";
 
@@ -134,6 +134,7 @@ function VibeInstanceViewerContent() {
           clerkToken || undefined, // Pass Clerk token as apiKey
           callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
           callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
+          getToken, // Pass getToken function for authentication context - enables sync in vibe-viewer
         );
       } catch (err) {
         console.error("Error loading vibe:", err);
@@ -201,12 +202,24 @@ function VibeInstanceViewerContent() {
 
 // Auth wrapper component - only renders content when authenticated
 export default function VibeInstanceViewer() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const { titleId, installId } = useParams<{
+    titleId: string;
+    installId: string;
+  }>();
 
   if (!isSignedIn) {
     return <LoggedOutView isLoaded={isLoaded} />;
   }
 
   // Only render the actual component (which calls useFireproof) when authenticated
-  return <VibeInstanceViewerContent />;
+  // Wrap in VibeContextProvider to provide getToken for sync
+  return (
+    <VibeContextProvider
+      metadata={{ titleId: titleId || "", installId: installId || "" }}
+      getToken={getToken}
+    >
+      <VibeInstanceViewerContent />
+    </VibeContextProvider>
+  );
 }
