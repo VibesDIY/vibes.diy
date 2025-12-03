@@ -41,9 +41,6 @@ export function setupDevShims() {
 
 import { getImportmap } from "../config/import-map.js";
 
-// Resolve import map at module level with top-level await
-const importMap = await getImportmap({});
-
 /**
  * Transform bare imports to esm.sh URLs
  * Skips imports that are in the library map, already URLs, or relative paths
@@ -51,7 +48,8 @@ const importMap = await getImportmap({});
  * This is exported separately from transformImportsDev so it can be tested
  * and used without the dev-mode window global replacements.
  */
-export function transformImports(code: string): string {
+export async function transformImports(code: string): Promise<string> {
+  const importMap = await getImportmap();
   const importKeys = Object.keys(importMap);
   return code.replace(
     /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+(?:\s*,\s*\{[^}]*\})?)\s+from\s+)?['"]([^'"]+)['"];?/g,
@@ -84,9 +82,9 @@ export function transformImports(code: string): string {
  * Rewrites specific package imports to use the global window variables
  * we set up in `setupDevShims`.
  */
-export function transformImportsDev(code: string): string {
+export async function transformImportsDev(code: string): Promise<string> {
   // First transform bare imports to esm.sh URLs (for both dev and prod)
-  let res = transformImports(code);
+  let res = await transformImports(code);
 
   if (import.meta.env.DEV) {
     const replacements: Record<string, string> = {
