@@ -19,7 +19,7 @@ export function getLibraryImportMap() {
     "use-fireproof": "https://esm.sh/use-fireproof@0.24.0",
     "call-ai": `https://esm.sh/call-ai@${VIBES_VERSION}`,
     "use-vibes": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
-    "https://esm.sh/use-fireproof": `https://esm.sh/use-vibes@${VIBES_VERSION}`,
+    "https://esm.sh/use-fireproof": "https://esm.sh/use-fireproof@0.24.0",
     "https://esm.sh/use-vibes": `https://esm.sh/use-vibes@${VIBES_VERSION}`, // self-mapping for consistency
   };
 }
