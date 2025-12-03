@@ -24,7 +24,8 @@ export async function mountVibeCode(
   showVibesSwitch = true,
   apiKey?: string,
   chatUrl?: string,
-  imgUrl?: string
+  imgUrl?: string,
+  getToken?: (options?: { template?: string }) => Promise<string | null>
 ): Promise<void> {
   let objectURL: string | undefined;
 
@@ -86,6 +87,7 @@ export async function mountVibeCode(
         titleId: titleId,
         installId: installId,
       },
+      getToken: getToken,
     });
 
     // Dispatch success event with unmount callback
