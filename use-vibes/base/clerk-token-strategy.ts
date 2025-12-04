@@ -50,9 +50,9 @@ export class ClerkTokenStrategy implements TokenStrategie {
 
     // Only create DashboardApi if it doesn't exist (reuse existing instance)
     if (!this.dashApi) {
-      const apiUrl: string =
-        (globalThis as { __VIBES_CONNECT_API_URL__?: string }).__VIBES_CONNECT_API_URL__ ||
-        'https://connect.fireproof.direct/api';
+      // Check window for API URL override (same pattern as call-ai)
+      const w = globalThis.window as { VIBES_CONNECT_API_URL?: string } | undefined;
+      const apiUrl = w?.VIBES_CONNECT_API_URL || 'https://connect.fireproof.direct/api';
 
       this.dashApi = new DashboardApi({
         apiUrl,
@@ -63,7 +63,7 @@ export class ClerkTokenStrategy implements TokenStrategie {
           }
           return { type: 'clerk', token: clerkToken };
         },
-        fetch: globalThis.fetch,
+        fetch,
       });
     }
   }
