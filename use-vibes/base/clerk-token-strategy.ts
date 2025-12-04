@@ -25,10 +25,39 @@ export class ClerkTokenStrategy implements TokenStrategie {
   }
 
   /**
+   * Update the token getter without recreating the strategy instance
+   */
+  updateTokenGetter(getClerkToken: () => Promise<string | null>): void {
+    this.getClerkToken = getClerkToken;
+  }
+
+  /**
    * Returns a hash for this strategy instance
    */
   hash(): string {
     return 'clerk-token-strategy';
+  }
+
+  /**
+   * Compute stable appId from deviceId (which includes vf- prefix) + domain + path
+   */
+  private computeAppId(deviceId: string): string {
+    if (typeof window === 'undefined') {
+      return deviceId; // Fallback for SSR
+    }
+
+    const domain = window.location.hostname;
+    const firstPathPart = window.location.pathname.split('/')[1] || '';
+
+    // Simple hash function to create stable appId
+    const str = `${deviceId}-${domain}-${firstPathPart}`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return `app-${Math.abs(hash).toString(36)}`;
   }
 
   /**
@@ -41,23 +70,25 @@ export class ClerkTokenStrategy implements TokenStrategie {
     this.opts = opts;
     this.deviceId = deviceId;
 
-    // Initialize dashboard API client
-    const apiUrl: string =
-      (typeof window !== 'undefined' &&
-        (window as { __VIBES_CONNECT_API_URL__?: string }).__VIBES_CONNECT_API_URL__) ||
-      'https://connect.fireproof.direct/api';
+    // Only create DashboardApi if it doesn't exist (reuse existing instance)
+    if (!this.dashApi) {
+      const apiUrl: string =
+        (typeof window !== 'undefined' &&
+          (window as { __VIBES_CONNECT_API_URL__?: string }).__VIBES_CONNECT_API_URL__) ||
+        'https://connect.fireproof.direct/api';
 
-    this.dashApi = new DashboardApi({
-      apiUrl,
-      getToken: async () => {
-        const clerkToken = await this.getClerkToken();
-        if (!clerkToken) {
-          throw new Error('No Clerk token available');
-        }
-        return { type: 'clerk', token: clerkToken };
-      },
-      fetch: fetch.bind(window),
-    });
+      this.dashApi = new DashboardApi({
+        apiUrl,
+        getToken: async () => {
+          const clerkToken = await this.getClerkToken();
+          if (!clerkToken) {
+            throw new Error('No Clerk token available');
+          }
+          return { type: 'clerk', token: clerkToken };
+        },
+        fetch: fetch.bind(window),
+      });
+    }
   }
 
   /**
@@ -72,14 +103,14 @@ export class ClerkTokenStrategy implements TokenStrategie {
       return undefined;
     }
 
+    // Compute stable appId from deviceId (with vf- prefix) + domain + path
+    const appId = this.computeAppId(this.deviceId);
+
     // Use ensureCloudToken which auto-creates tenant/ledger/binding
     // and returns a properly scoped cloud token
     const result = await this.dashApi.ensureCloudToken({
-      appId: this.deviceId, // Use deviceId (database name) as appId
+      appId,
       env: 'prod',
-      // Optional: if we want to specify tenant/ledger, we can pass them
-      // tenant: opts.tenant,
-      // ledger: opts.ledger,
     });
 
     if (result.isErr()) {
@@ -114,6 +145,15 @@ export class ClerkTokenStrategy implements TokenStrategie {
    * Called when the strategy should stop and clean up resources
    */
   stop(): void {
-    // No cleanup needed for this strategy
+    // Clean up DashboardApi instance
+    if (this.dashApi) {
+      this.dashApi = undefined;
+    }
+
+    // Clear other references
+    this.deviceId = undefined;
+    this.opts = undefined;
+    this.sthis = undefined;
+    this.logger = undefined;
   }
 }
