@@ -109,7 +109,7 @@ export default function NewSessionView({
             {/* Chat input form */}
             <BrutalistCard size="md" style={{ width: "100%" }}>
               <div style={{ marginBottom: "12px", fontWeight: 600 }}>
-                Describe your vibe
+                Vibe code apps instantly
               </div>
               <ChatInput
                 chatState={chatState}
