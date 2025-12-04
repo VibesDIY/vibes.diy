@@ -18,6 +18,8 @@
   "scripts": {
     "xbuild:base": "pnpm --filter use-vibes-base build",
     "build": "core-cli tsc",
+    "build:prod": "cd vibes.diy/pkg && pnpm run build",
+    "serve:prod": "npx serve -s vibes.diy/pkg/build/client",
     "lint": "eslint . && cd hosting/pkg && pnpm lint",
     "knip": "knip",
     "test": "cross-env DISABLE_REACT_ROUTER=true vitest --run",
