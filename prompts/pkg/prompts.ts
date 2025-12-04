@@ -18,6 +18,28 @@ export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
 // Model used for RAG decisions (module selection)
 const RAG_DECISION_MODEL = "openai/gpt-4o" as const;
 
+// High-quality model used to expand the raw user prompt before building
+// the main app-building system prompt.
+const PROMPT_EXPANDER_MODEL = "openai/gpt-5" as const;
+
+const PROMPT_EXPANDER_SYSTEM_PROMPT = `
+You are an expert product designer and app spec writer.
+
+Your job is to take a short, informal idea from a user and expand it into a
+crisp specification for a tiny web app with real "zest and gusto".
+
+The app you describe should:
+- be a simple, shippable 2–3 workflow app (no giant platforms)
+- have clearly named screens or flows with obvious entry points
+- focus on easy, well-specified core workflows
+- highlight at least one distinctive "click" moment where the app feels delightful
+
+Write in plain English only (no code blocks, no markdown fences). Keep the tone
+energetic but concrete, with clear inputs, outputs, and stored data.
+
+Return only the expanded app description, under 250 words.
+`.trim();
+
 async function defaultCodingModel() {
   return DEFAULT_CODING_MODEL;
 }
@@ -134,6 +156,62 @@ type LlmSelectionWithFallbackUrl = Omit<
 
 async function sleepReject<T>(ms: number) {
   return new Promise<T>((_, rj) => setTimeout(rj, ms));
+}
+
+async function expandUserPromptIfNeeded(
+  rawPrompt: string,
+  opts: LlmSelectionOptions,
+): Promise<string> {
+  const trimmed = typeof rawPrompt === "string" ? rawPrompt.trim() : "";
+  if (!trimmed) return "";
+
+  // Allow tests or callers to opt out explicitly
+  if (opts.appMode === "test") return trimmed;
+
+  const messages: Message[] = [
+    {
+      role: "system",
+      content: PROMPT_EXPANDER_SYSTEM_PROMPT,
+    },
+    {
+      role: "user",
+      content: trimmed,
+    },
+  ];
+
+  const options: CallAIOptions = {
+    chatUrl: opts.callAiEndpoint
+      ? opts.callAiEndpoint.toString().replace(/\/+$/, "")
+      : undefined,
+    apiKey: (await opts.getAuthToken?.()) || "",
+    model: PROMPT_EXPANDER_MODEL,
+    max_tokens: 800,
+    temperature: 0.4,
+    headers: {
+      "HTTP-Referer": "https://vibes.diy",
+      "X-Title": "Vibes DIY Prompt Expander",
+    },
+    mock: opts.mock,
+  };
+
+  try {
+    const raw = (await (options.mock?.callAI || callAI)(
+      messages,
+      options,
+    )) as string;
+
+    if (!raw || typeof raw !== "string") {
+      console.warn(
+        "Prompt expander: empty or non-string response, falling back to original prompt.",
+      );
+      return trimmed;
+    }
+
+    return raw.trim();
+  } catch (err) {
+    console.warn("Prompt expander call failed, using original prompt:", err);
+    return trimmed;
+  }
 }
 
 // move this to the other file along with referenced types
@@ -276,7 +354,12 @@ export async function makeBaseSystemPrompt(
   model: string,
   sessionDoc: Partial<UserSettings> & LlmSelectionOptions,
 ): Promise<SystemPromptResult> {
-  const userPrompt = sessionDoc?.userPrompt || "";
+  const originalUserPrompt = sessionDoc?.userPrompt || "";
+  const expandedUserPrompt = await expandUserPromptIfNeeded(
+    originalUserPrompt,
+    sessionDoc,
+  );
+  const userPrompt = expandedUserPrompt || originalUserPrompt || "";
   const history: HistoryMessage[] = Array.isArray(sessionDoc?.history)
     ? sessionDoc.history
     : [];
