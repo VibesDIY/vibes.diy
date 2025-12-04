@@ -2,7 +2,6 @@ import { CSSProperties } from "react";
 
 export const HomeScreenTheme = {
   colors: {
-    menuBg: "var(--vibes-bg-primary)",
     menuText: "white",
     contentBg: "#1e1e1e",
     shadow: "rgba(0, 0, 0, 0.3)",
@@ -23,14 +22,14 @@ export const HomeScreenTheme = {
 };
 
 // Fixed background layer (stays in place while content scrolls)
-export const getBackgroundStyle = (): CSSProperties => ({
+export const getBackgroundStyle = (isDarkMode: boolean): CSSProperties => ({
   position: "fixed",
   top: 10,
   left: 10,
   right: 10,
   bottom: 10,
   borderRadius: "10px",
-  backgroundColor: HomeScreenTheme.colors.menuBg,
+  backgroundColor: isDarkMode ? "var(--vibes-near-black)" : "var(--vibes-near-gray)",
   zIndex: 0, // Below everything
   fontFamily: HomeScreenTheme.fonts.primary,
 });

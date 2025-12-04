@@ -80,6 +80,8 @@ import fireproofLogo from "../../assets/fireproof-logo.png";
 import {
   LoginIcon,
   SettingsIcon,
+  MoonIcon,
+  SunIcon,
 } from "../../../../../use-vibes/base/components/icons/index.js";
 
 // Helper function to convert URLs in text to clickable links
@@ -108,7 +110,7 @@ const renderMessageWithLinks = (text: string) => {
 
 export const HomeScreen = (_props: HomeScreenProps) => {
   const isMobile = useIsMobile();
-  const isDarkMode = usePrefersDarkMode();
+  const browserPrefersDark = usePrefersDarkMode();
   const clerk = useClerk();
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
@@ -123,12 +125,40 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   const [animationProgress, setAnimationProgress] = useState(0);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
 
+  // Dark mode state - initialize from localStorage or browser preference
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const stored = localStorage.getItem("vibes-dark-mode");
+    if (stored !== null) {
+      return stored === "true";
+    }
+    return browserPrefersDark;
+  });
+
+  // Dark mode toggle handler
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const newValue = !prev;
+      localStorage.setItem("vibes-dark-mode", String(newValue));
+      return newValue;
+    });
+  };
+
   // Shared login function used by both navbar and side menu
   const handleLogin = async () => {
     await clerk.redirectToSignIn({
       redirectUrl: window.location.href,
     });
   };
+
+  // Apply dark mode to document root
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.setAttribute("data-theme", "dark");
+    } else {
+      root.removeAttribute("data-theme");
+    }
+  }, [isDarkMode]);
 
   // References for the 8 sections to calculate dynamic backgrounds
   const section1Ref = useRef<HTMLDivElement>(null);
@@ -817,7 +847,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
   return (
     <div style={getBlackBorderWrapper()}>
-      <div style={getBackgroundStyle()} />
+      <div style={getBackgroundStyle(isDarkMode)} />
       {/*<div style={getNoiseTextureStyle()} />*/}
       <div style={getBlackBorderInnerWrapper()} ref={scrollContainerRef}>
         <div style={getMenuStyle()}>
@@ -844,6 +874,39 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   style={getNavbarButtonLabel()}
                 >
                   Settings
+                </div>
+              </button>
+            </div>
+            <div className="navbar-button-wrapper">
+              <button
+                style={getButtonsNavbar(isDarkMode ? "#fa5c00ff" : "#5398c9")}
+                onClick={toggleDarkMode}
+              >
+                <div
+                  className="navbar-button-icon"
+                  style={getNavbarButtonIconWrapper()}
+                >
+                  {isDarkMode ? (
+                    <SunIcon
+                      fill="#fffff0"
+                      bgFill="#231F20"
+                      width={35}
+                      height={35}
+                    />
+                  ) : (
+                    <MoonIcon
+                      fill="#fffff0"
+                      bgFill="#231F20"
+                      width={35}
+                      height={35}
+                    />
+                  )}
+                </div>
+                <div
+                  className="navbar-button-label"
+                  style={getNavbarButtonLabel()}
+                >
+                  {isDarkMode ? "Light" : "Dark"}
                 </div>
               </button>
             </div>
@@ -1072,42 +1135,49 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ref={section1Ref}
             >
               <div
-                style={{ display: "flex", width: isMobile ? "100%" : "calc(100% - 80px - 40px)", margin: isMobile ? "0px" : "40px", gap: isMobile ? "200px" : "30px", flexDirection: isMobile ? "column" : "row" }}
+                style={{
+                  display: "flex",
+                  width: isMobile ? "100%" : "calc(100% - 80px - 40px)",
+                  margin: isMobile ? "0px" : "40px",
+                  gap: isMobile ? "200px" : "30px",
+                  flexDirection: isMobile ? "column" : "row",
+                }}
               >
                 <div style={get1of3Column(isMobile)}>
-                <DraggableSection color="blue" static removeMargin>
+                  <DraggableSection color="blue" static removeMargin>
                     <img src={vibesStack} style={{ flex: "100%" }} />
-                </DraggableSection>
+                  </DraggableSection>
                 </div>
                 <div style={get2of3Column(isMobile)}>
-                <DraggableSection color="blue" static removeMargin>
-                  <h3 style={getSectionHeadingStyle("#5398c9")}>
-                    The Vibe Coding Stack That Fits In Your Pocket
-                  </h3>
-                  <div style={getContentWrapperStyle()}>
-                  <b style={getSubheadingBoldStyle()}>
-                    Vibes is an open source web stack was designed for vibe
-                    coding - easy, fast, secure, and portable
-                  </b>
-                  <span>
-                    <b>Easy</b> because it uses Fireproof, a database that lives
-                    in your web browser and syncs without a web server.
-                  </span>
-                  <span>
-                    <b>Fast</b> because the data is local, so you don't need to
-                    ask a server for it.
-                  </span>
-                  <span>
-                    <b>Secure</b> because all data is encrypted by default. No
-                    .env variables to accidentally check into Github!
-                  </span>
-                  <span>
-                    <b>Portable</b>, because you don't have to host these apps
-                    with us. It's all open source - Vibes work anywhere the web
-                    works.
-                  </span>
-                  </div>
-                </DraggableSection>
+                  <DraggableSection color="blue" static removeMargin>
+                    <h3 style={getSectionHeadingStyle("#5398c9")}>
+                      The Vibe Coding Stack That Fits In Your Pocket
+                    </h3>
+                    <div style={getContentWrapperStyle()}>
+                      <b style={getSubheadingBoldStyle()}>
+                        Vibes is an open source web stack was designed for vibe
+                        coding - easy, fast, secure, and portable
+                      </b>
+                      <span>
+                        <b>Easy</b> because it uses Fireproof, a database that
+                        lives in your web browser and syncs without a web
+                        server.
+                      </span>
+                      <span>
+                        <b>Fast</b> because the data is local, so you don't need
+                        to ask a server for it.
+                      </span>
+                      <span>
+                        <b>Secure</b> because all data is encrypted by default.
+                        No .env variables to accidentally check into Github!
+                      </span>
+                      <span>
+                        <b>Portable</b>, because you don't have to host these
+                        apps with us. It's all open source - Vibes work anywhere
+                        the web works.
+                      </span>
+                    </div>
+                  </DraggableSection>
                 </div>
               </div>
             </section>
