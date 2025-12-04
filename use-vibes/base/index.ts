@@ -2,7 +2,7 @@ import type { ToCloudAttachable, TokenStrategie } from '@fireproof/core-types-pr
 import { getKeyBag } from '@fireproof/core-keybag';
 import { Lazy } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   fireproof,
   ImgFile,
@@ -132,14 +132,10 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Only enable sync when vibeMetadata exists
   // This ensures only instance-specific databases (with titleId + installId) get synced
   // Use global singleton strategy - no per-component instance management needed
-  const attachConfig = useMemo(() => {
-    return vibeMetadata ? toCloud({ tokenStrategy: globalClerkStrategy() }) : undefined;
-  }, [vibeMetadata]);
+  // globalClerkStrategy() is already a Lazy singleton - no need for useMemo
+  const attachConfig = vibeMetadata ? toCloud({ tokenStrategy: globalClerkStrategy() }) : undefined;
 
-  // Memoize the options object to prevent re-creating on every render
-  const options = useMemo(() => {
-    return attachConfig ? { attach: attachConfig } : undefined;
-  }, [attachConfig]);
+  const options = attachConfig ? { attach: attachConfig } : undefined;
 
   // Use original useFireproof with augmented database name and optional attach config
   const result = originalUseFireproof(augmentedDbName, options);

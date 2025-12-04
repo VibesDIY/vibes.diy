@@ -40,7 +40,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@adviser/cement": "^0.4.66",
+    "@adviser/cement": "^0.5.3",
     "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token"
   }
 }
