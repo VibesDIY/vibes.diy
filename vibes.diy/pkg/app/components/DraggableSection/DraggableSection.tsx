@@ -14,6 +14,7 @@ export const DraggableSection = ({
   y = 0,
   static: isStatic = false,
   removePaddingTop = false,
+  removeMargin = false,
 }: DraggableSectionProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -90,7 +91,7 @@ export const DraggableSection = ({
   return (
     <div
       ref={cardRef}
-      style={getCardStyle(color, isMobile, isDragging, isStatic)}
+      style={getCardStyle(color, isMobile, isDragging, isStatic, removeMargin)}
       onMouseDown={isMobile || isStatic ? undefined : handleMouseDown}
     >
       <div style={getTitleBarStyle(color)} />

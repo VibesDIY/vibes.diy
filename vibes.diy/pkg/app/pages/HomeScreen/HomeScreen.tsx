@@ -59,6 +59,8 @@ import {
   getNavbarButtonIconWrapper,
   getNavbarButtonLabel,
   getLinkOutStyle,
+  get1of3Column,
+  get2of3Column,
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
@@ -1070,17 +1072,19 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ref={section1Ref}
             >
               <div
-                style={{ display: "flex", gap: "30px", flexDirection: "row" }}
+                style={{ display: "flex", width: isMobile ? "100%" : "calc(100% - 80px - 40px)", margin: isMobile ? "0px" : "40px", gap: isMobile ? "200px" : "30px", flexDirection: isMobile ? "column" : "row" }}
               >
-                <DraggableSection color="blue" static>
-                  <div style={{ width: "40%" }}>
-                    <img src={vibesStack} style={{ width: "100%" }} />
-                  </div>
+                <div style={get1of3Column(isMobile)}>
+                <DraggableSection color="blue" static removeMargin>
+                    <img src={vibesStack} style={{ flex: "100%" }} />
                 </DraggableSection>
-                <DraggableSection color="blue" static>
+                </div>
+                <div style={get2of3Column(isMobile)}>
+                <DraggableSection color="blue" static removeMargin>
                   <h3 style={getSectionHeadingStyle("#5398c9")}>
                     The Vibe Coding Stack That Fits In Your Pocket
                   </h3>
+                  <div style={getContentWrapperStyle()}>
                   <b style={getSubheadingBoldStyle()}>
                     Vibes is an open source web stack was designed for vibe
                     coding - easy, fast, secure, and portable
@@ -1102,7 +1106,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     with us. It's all open source - Vibes work anywhere the web
                     works.
                   </span>
+                  </div>
                 </DraggableSection>
+                </div>
               </div>
             </section>
 

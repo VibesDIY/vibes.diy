@@ -698,6 +698,30 @@ export const getAnimatedSectionTextColumnStyle = (
   ...(isMobile && { padding: "0px 20px" }),
 });
 
+// 1/3 column
+export const get1of3Column = (
+  isMobile: boolean,
+): CSSProperties => ({
+  flex: isMobile ? "1" : "0 0 33.33%",
+  display: "flex",
+  alignItems: "center",
+  zIndex: isMobile ? "auto" : 1,
+  position: "relative",
+  ...(isMobile && { padding: "0px 20px" }),
+});
+
+// 2/3 column
+export const get2of3Column = (
+  isMobile: boolean,
+): CSSProperties => ({
+  flex: isMobile ? "1" : "0 0 66.66%",
+  display: "flex",
+  alignItems: "center",
+  zIndex: isMobile ? "auto" : 1,
+  position: "relative",
+  ...(isMobile && { padding: "0px 20px" }),
+});
+
 // Mobile: Simple container for static AnimatedScene (Section 2)
 export const getStaticAnimatedSceneMobileContainerStyle =
   (): CSSProperties => ({

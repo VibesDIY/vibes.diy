@@ -37,6 +37,7 @@ export const getCardStyle = (
   isMobile: boolean,
   isDragging: boolean,
   isStatic = false,
+  removeMargin = false,
 ): React.CSSProperties => {
   const base = getCardBasicStyle();
 
@@ -46,8 +47,8 @@ export const getCardStyle = (
       ...base,
       marginBottom: "16px",
       minWidth: "unset",
-      width: isMobile ? "100%" : "80%",
-      margin: isMobile ? "0" : "0 auto 16px auto", // Center on desktop
+      width: isMobile ? "100%" : removeMargin ? "100%" : "80%",
+      margin: isMobile ? "0" : removeMargin ? "0" : "0 auto 16px auto", // Center on desktop
     };
   }
 
