@@ -60,7 +60,7 @@ describe("Image Generation Integration Tests", () => {
     expect(mock.fetch).toHaveBeenCalledTimes(1);
     const [url, optionsArg] = mock.fetch.mock.calls[0];
 
-    expect(url).toMatch(/.*\/api\/openai-image\/generate$/);
+    expect(url).toMatch(/.*\/api\/openrouter-image\/generate$/);
     expect(optionsArg.method).toBe("POST");
 
     // Check headers
@@ -77,7 +77,7 @@ describe("Image Generation Integration Tests", () => {
     // Verify request body content
     const requestBody = JSON.parse(optionsArg.body);
     expect(requestBody.prompt).toBe(testPrompt);
-    expect(requestBody.model).toBe("gpt-image-1");
+    expect(requestBody.model).toBe("google/gemini-2.5-flash-image");
   });
 
   it("should handle image editing with multiple input images", async () => {
@@ -118,7 +118,7 @@ describe("Image Generation Integration Tests", () => {
     expect(mock.fetch).toHaveBeenCalledTimes(1);
     const [url, optionsArg] = mock.fetch.mock.calls[0];
 
-    expect(url).toMatch(/.*\/api\/openai-image\/edit$/);
+    expect(url).toMatch(/.*\/api\/openrouter-image\/edit$/);
     expect(optionsArg.method).toBe("POST");
 
     // Check headers

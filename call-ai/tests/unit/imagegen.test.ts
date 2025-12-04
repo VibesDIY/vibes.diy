@@ -95,7 +95,7 @@ describe("imageGen", () => {
     expect(mock.fetch).toHaveBeenCalledTimes(1);
     const [url, optionsArg] = mock.fetch.mock.calls[0];
 
-    expect(url).toContain("/api/openai-image/generate");
+    expect(url).toContain("/api/openrouter-image/generate");
     expect(optionsArg.method).toBe("POST");
 
     // Check headers
@@ -148,7 +148,7 @@ describe("imageGen", () => {
     expect(mock.fetch).toHaveBeenCalledTimes(1);
     const [url, optionsArg] = mock.fetch.mock.calls[0];
 
-    expect(url).toContain("/api/openai-image/edit");
+    expect(url).toContain("/api/openrouter-image/edit");
     expect(optionsArg.method).toBe("POST");
 
     // Check headers
@@ -236,7 +236,7 @@ describe("imageGen", () => {
     // Verify the custom endpoint was used directly, not the default vibes.diy endpoint
     expect(url).toBe(customEndpoint);
     expect(url).not.toContain("vibes-diy-api.com");
-    expect(url).not.toContain("/api/openai-image/generate");
+    expect(url).not.toContain("/api/openrouter-image/generate");
 
     // Verify the request was made with correct headers
     const headers = optionsArg.headers;
@@ -283,7 +283,7 @@ describe("imageGen", () => {
     // Verify the custom endpoint was used directly
     expect(url).toBe(customEndpoint);
     expect(url).not.toContain("vibes-diy-api.com");
-    expect(url).not.toContain("/api/openai-image/edit");
+    expect(url).not.toContain("/api/openrouter-image/edit");
 
     // Verify the request was made with FormData
     expect(optionsArg.body).toBeInstanceOf(FormData);
@@ -308,6 +308,6 @@ describe("imageGen", () => {
     const [url] = mock.fetch.mock.calls[0];
 
     // Should use the default vibes.diy endpoint
-    expect(url).toContain("/api/openai-image/generate");
+    expect(url).toContain("/api/openrouter-image/generate");
   });
 });
