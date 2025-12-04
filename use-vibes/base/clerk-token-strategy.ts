@@ -39,28 +39,6 @@ export class ClerkTokenStrategy implements TokenStrategie {
   }
 
   /**
-   * Compute stable appId from deviceId (which includes vf- prefix) + domain + path
-   */
-  private computeAppId(deviceId: string): string {
-    if (typeof window === 'undefined') {
-      return deviceId; // Fallback for SSR
-    }
-
-    const domain = window.location.hostname;
-    const firstPathPart = window.location.pathname.split('/')[1] || '';
-
-    // Simple hash function to create stable appId
-    const str = `${deviceId}-${domain}-${firstPathPart}`;
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return `app-${Math.abs(hash).toString(36)}`;
-  }
-
-  /**
    * Called by Fireproof to initialize the strategy with context
    * Note: Signature is (sthis, logger, deviceId, opts) - deviceId comes before opts
    */
@@ -73,8 +51,7 @@ export class ClerkTokenStrategy implements TokenStrategie {
     // Only create DashboardApi if it doesn't exist (reuse existing instance)
     if (!this.dashApi) {
       const apiUrl: string =
-        (typeof window !== 'undefined' &&
-          (window as { __VIBES_CONNECT_API_URL__?: string }).__VIBES_CONNECT_API_URL__) ||
+        (globalThis as { __VIBES_CONNECT_API_URL__?: string }).__VIBES_CONNECT_API_URL__ ||
         'https://connect.fireproof.direct/api';
 
       this.dashApi = new DashboardApi({
@@ -86,7 +63,7 @@ export class ClerkTokenStrategy implements TokenStrategie {
           }
           return { type: 'clerk', token: clerkToken };
         },
-        fetch: fetch.bind(window),
+        fetch: globalThis.fetch,
       });
     }
   }
@@ -103,13 +80,10 @@ export class ClerkTokenStrategy implements TokenStrategie {
       return undefined;
     }
 
-    // Compute stable appId from deviceId (with vf- prefix) + domain + path
-    const appId = this.computeAppId(this.deviceId);
-
-    // Use ensureCloudToken which auto-creates tenant/ledger/binding
-    // and returns a properly scoped cloud token
+    // Use deviceId directly as appId - it's already unique (vf-titleId-installId-dbName)
+    // ensureCloudToken auto-creates tenant/ledger/binding per appId
     const result = await this.dashApi.ensureCloudToken({
-      appId,
+      appId: this.deviceId,
       env: 'prod',
     });
 
