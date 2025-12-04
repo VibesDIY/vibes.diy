@@ -72,33 +72,28 @@ export class ClerkTokenStrategy implements TokenStrategie {
       return undefined;
     }
 
-    try {
-      // Use ensureCloudToken which auto-creates tenant/ledger/binding
-      // and returns a properly scoped cloud token
-      const result = await this.dashApi.ensureCloudToken({
-        appId: this.deviceId, // Use deviceId (database name) as appId
-        env: 'prod',
-        // Optional: if we want to specify tenant/ledger, we can pass them
-        // tenant: opts.tenant,
-        // ledger: opts.ledger,
-      });
+    // Use ensureCloudToken which auto-creates tenant/ledger/binding
+    // and returns a properly scoped cloud token
+    const result = await this.dashApi.ensureCloudToken({
+      appId: this.deviceId, // Use deviceId (database name) as appId
+      env: 'prod',
+      // Optional: if we want to specify tenant/ledger, we can pass them
+      // tenant: opts.tenant,
+      // ledger: opts.ledger,
+    });
 
-      if (result.isErr()) {
-        logger?.Error().Err(result.Err()).Msg('Failed to get cloud token via ensureCloudToken');
-        return undefined;
-      }
-
-      const response = result.Ok();
-
-      // Return the cloud token as a TokenAndClaims object
-      return {
-        token: response.cloudToken,
-        // claims will be parsed from the JWT by Fireproof
-      };
-    } catch (error) {
-      logger?.Error().Err(error).Msg('Exception in ClerkTokenStrategy.tryToken');
+    if (result.isErr()) {
+      logger?.Error().Err(result.Err()).Msg('Failed to get cloud token via ensureCloudToken');
       return undefined;
     }
+
+    const response = result.Ok();
+
+    // Return the cloud token as a TokenAndClaims object
+    return {
+      token: response.cloudToken,
+      // claims will be parsed from the JWT by Fireproof
+    };
   }
 
   /**
