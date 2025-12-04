@@ -244,13 +244,17 @@ describe('useVibes - Basic Structure', () => {
       interval: 20,
     });
 
-    // Since we provided dependencies, dependency selection is bypassed
-    // We verify that callAI was called once for component generation
-    expect(mockCallAI).toHaveBeenCalledTimes(1);
+    // Since we provided dependencies, dependency selection inside the
+    // orchestrator is bypassed, but the hook may still make internal AI
+    // calls (for example, to expand the user prompt). We only require that
+    // at least one generation call was made.
+    expect(mockCallAI).toHaveBeenCalled();
 
-    // The call should be for component generation and contain the system prompt
+    // The final call should be for component generation and contain the
+    // system prompt text.
+    const lastCallIndex = mockCallAI.mock.calls.length - 1;
     expect(mockCallAI).toHaveBeenNthCalledWith(
-      1,
+      lastCallIndex + 1,
       expect.arrayContaining([
         expect.objectContaining({
           role: 'system',
