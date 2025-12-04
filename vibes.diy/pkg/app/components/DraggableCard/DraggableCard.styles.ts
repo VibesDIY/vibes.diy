@@ -68,7 +68,7 @@ export const getCardStyle = (
     return {
       ...base,
       marginBottom: "16px",
-      width: isText ? '100%' :'fit-content',
+      width: isText ? "100%" : "fit-content",
     };
   }
 

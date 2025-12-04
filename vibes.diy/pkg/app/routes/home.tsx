@@ -8,8 +8,8 @@ import {
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
-// TEMPORARY: Import HomeScreen for testing
 import { HomeScreen } from "../pages/HomeScreen/HomeScreen.js";
+import { useAuth } from "@clerk/clerk-react";
 
 export function meta() {
   return [
@@ -31,11 +31,10 @@ export async function clientLoader({ request }: { request: Request }) {
 }
 
 export default function SessionWrapper() {
-  // TEMPORARY: Return HomeScreen for testing - DELETE THIS LATER
-  return <HomeScreen />;
+  // Check authentication state
+  const { isSignedIn } = useAuth();
 
-  // Original code below (commented out for testing):
-  /*
+  // Always call all hooks unconditionally (Rules of Hooks)
   const loaderData = useLoaderData<typeof clientLoader>();
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();
@@ -77,6 +76,9 @@ export default function SessionWrapper() {
 
   // Handle prompt query parameter forwarding for root page
   useEffect(() => {
+    // Skip if not signed in
+    if (!isSignedIn) return;
+
     // Only handle forwarding when on root page (no sessionId) and there's a prompt query
     // Guard against duplicate navigations by checking local sessionId state
     if (!urlSessionId && !sessionId && search) {
@@ -110,7 +112,12 @@ export default function SessionWrapper() {
         navigate(targetUrl);
       }
     }
-  }, [urlSessionId, search, navigate]);
+  }, [isSignedIn, urlSessionId, search, navigate, sessionId]);
+
+  // If not signed in, show HomeScreen
+  if (!isSignedIn) {
+    return <HomeScreen />;
+  }
 
   // Conditional rendering - true deferred session creation
   // Use either the URL param or local state during the initial transition
@@ -131,5 +138,4 @@ export default function SessionWrapper() {
       urlModel={loaderData.urlModel}
     />
   );
-  */
 }

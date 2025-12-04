@@ -978,7 +978,6 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               <p style={getCardTextStyle()}>No app store. No downloads.</p>
             </DraggableCard>
 
-
             <DraggableCard color="grey" x={820} y={520}>
               <div style={getComputerAnimContainerStyle()}>
                 <img src={computerAnimGif} style={getFullSizeImageStyle()} />
@@ -987,7 +986,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             <DraggableCard color="yellow" x={1000} y={1700}>
               <p style={getImageCardStyle()}>
-                 <img src={rainbowComputer} style={getFullSizeImageStyle()} />
+                <img src={rainbowComputer} style={getFullSizeImageStyle()} />
               </p>
             </DraggableCard>
             <DraggableCard color="blue" x={950} y={2880}>
@@ -1070,14 +1069,15 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               }}
               ref={section1Ref}
             >
-              <div style={{ display: "flex", gap: '30px', flexDirection: 'row' }}>
+              <div
+                style={{ display: "flex", gap: "30px", flexDirection: "row" }}
+              >
                 <DraggableSection color="blue" static>
-                  <div style={{ width: '40%' }}>
-                    <img src={vibesStack} style={{ width: '100%' }} />
+                  <div style={{ width: "40%" }}>
+                    <img src={vibesStack} style={{ width: "100%" }} />
                   </div>
                 </DraggableSection>
                 <DraggableSection color="blue" static>
-
                   <h3 style={getSectionHeadingStyle("#5398c9")}>
                     The Vibe Coding Stack That Fits In Your Pocket
                   </h3>
@@ -1474,8 +1474,41 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   </span>
                   <span>
                     Curious? Try a prompt using our open source web builder.
-                    <a style={getLinkOutStyle()} href="https://discord.gg/vnpWycj4Ta">Join our Discord</a>, <a style={getLinkOutStyle()} href="https://vibesdiy.substack.com/">read our Substack</a>, and follow us on
-                    <a style={getLinkOutStyle()} href="https://www.youtube.com/@VibesDIY">YouTube</a>, <a style={getLinkOutStyle()} href=" https://github.com/VibesDIY">Github</a>, and <a style={getLinkOutStyle()} href=" https://bsky.app/profile/vibes.diy">Bluesky</a>.
+                    <a
+                      style={getLinkOutStyle()}
+                      href="https://discord.gg/vnpWycj4Ta"
+                    >
+                      Join our Discord
+                    </a>
+                    ,{" "}
+                    <a
+                      style={getLinkOutStyle()}
+                      href="https://vibesdiy.substack.com/"
+                    >
+                      read our Substack
+                    </a>
+                    , and follow us on
+                    <a
+                      style={getLinkOutStyle()}
+                      href="https://www.youtube.com/@VibesDIY"
+                    >
+                      YouTube
+                    </a>
+                    ,{" "}
+                    <a
+                      style={getLinkOutStyle()}
+                      href=" https://github.com/VibesDIY"
+                    >
+                      Github
+                    </a>
+                    , and{" "}
+                    <a
+                      style={getLinkOutStyle()}
+                      href=" https://bsky.app/profile/vibes.diy"
+                    >
+                      Bluesky
+                    </a>
+                    .
                   </span>
                 </div>
               </DraggableSection>
