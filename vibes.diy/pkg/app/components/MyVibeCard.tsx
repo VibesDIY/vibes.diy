@@ -60,7 +60,10 @@ export function MyVibeCard({
         {/* Button bar - bottom */}
         <div
           className="absolute bottom-0 left-0 right-0 flex space-x-2 p-2 pointer-events-auto"
-          style={{ backdropFilter: "blur(8px)" }}
+          style={{
+            backdropFilter: "blur(8px)",
+            backgroundColor: "rgba(128, 128, 128, 0.2)",
+          }}
         >
           <button
             onClick={(e) => onDeleteClick(vibe.id, e)}
