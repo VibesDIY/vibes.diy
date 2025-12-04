@@ -26,12 +26,16 @@ export default function PublishedVibeCard({
   const iconUrl = useMemo(() => constructVibeIconUrl(slug), [slug]);
   const [imageSrc, setImageSrc] = useState(iconUrl);
   const [usingIcon, setUsingIcon] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
 
-  // Reset to icon when slug changes
+  // Reset state when slug changes
   useEffect(() => {
     if (!localScreenshot) {
       setImageSrc(iconUrl);
       setUsingIcon(true);
+      setImageLoaded(false);
+      setImageFailed(false);
     }
   }, [iconUrl, localScreenshot]);
 
@@ -40,13 +44,16 @@ export default function PublishedVibeCard({
   ) => {
     const failedSrc = event.currentTarget.src;
 
-    // If the screenshot also fails, don't loop between sources
+    // If the screenshot also fails, mark as failed and stop
     if (failedSrc === screenshotUrl) {
+      setImageFailed(true);
       return;
     }
 
+    // Try screenshot as fallback
     setImageSrc(screenshotUrl);
     setUsingIcon(false);
+    setImageLoaded(false);
   };
 
   const handleImageLoad: React.ReactEventHandler<HTMLImageElement> = (
@@ -54,6 +61,7 @@ export default function PublishedVibeCard({
   ) => {
     const loadedSrc = event.currentTarget.src;
     setUsingIcon(loadedSrc === iconUrl);
+    setImageLoaded(true);
   };
   const linkUrl = `/vibe/${slug}`;
 
@@ -91,34 +99,54 @@ export default function PublishedVibeCard({
         </div>
       ) : (
         <div className="relative w-full overflow-hidden bg-white">
-          {/* Blurred background version when using screenshot */}
-          {!usingIcon && (
-            <div className="absolute inset-0 z-0 overflow-hidden">
-              <img
-                src={screenshotUrl}
-                className="h-full w-full scale-110 object-cover"
-                alt=""
-                style={{ filter: "blur(10px)", opacity: 0.9 }}
-                loading="lazy"
-              />
+          {/* Empty placeholder if image failed to load */}
+          {imageFailed && (
+            <div
+              className="flex h-48 w-full items-center justify-center"
+              style={{
+                backgroundColor: "rgb(128, 128, 128)",
+                opacity: 0.5,
+                filter: "blur(10px)",
+              }}
+            >
+              <span className="text-sm text-gray-400">No preview</span>
             </div>
           )}
 
-          {/* Foreground image with fixed height */}
-          <div className="relative z-10 flex h-48 w-full justify-center py-2">
-            <img
-              src={imageSrc}
-              alt={
-                usingIcon
-                  ? `Icon for ${vibeName}`
-                  : `Screenshot from ${vibeName}`
-              }
-              className="max-h-full max-w-full object-contain"
-              loading="lazy"
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-            />
-          </div>
+          {/* Hidden image for loading */}
+          {!imageFailed && (
+            <>
+              {/* Blurred background version when using screenshot - only show after load */}
+              {!usingIcon && imageLoaded && (
+                <div className="absolute inset-0 z-0 overflow-hidden">
+                  <img
+                    src={screenshotUrl}
+                    className="h-full w-full scale-110 object-cover"
+                    alt=""
+                    style={{ filter: "blur(10px)", opacity: 0.9 }}
+                    loading="lazy"
+                  />
+                </div>
+              )}
+
+              {/* Foreground image with fixed height - only show after load */}
+              <div className="relative z-10 flex h-48 w-full justify-center py-2">
+                <img
+                  src={imageSrc}
+                  alt={
+                    usingIcon
+                      ? `Icon for ${vibeName}`
+                      : `Screenshot from ${vibeName}`
+                  }
+                  className="max-h-full max-w-full object-contain"
+                  style={{ opacity: imageLoaded ? 1 : 0 }}
+                  loading="lazy"
+                  onError={handleImageError}
+                  onLoad={handleImageLoad}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
     </>

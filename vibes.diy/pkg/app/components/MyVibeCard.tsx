@@ -33,7 +33,7 @@ export function MyVibeCard({
       : vibe.id;
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden">
       {/* Base card - PublishedVibeCard */}
       <PublishedVibeCard
         slug={displaySlug}
@@ -42,8 +42,8 @@ export function MyVibeCard({
         disableLink={!isPublished}
       />
 
-      {/* Overlay controls */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Overlay controls - inside the card bounds */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Favorite star - top right */}
         {isPublished && (
           <button
@@ -58,7 +58,10 @@ export function MyVibeCard({
         )}
 
         {/* Button bar - bottom */}
-        <div className="absolute bottom-0 left-0 right-0 flex space-x-2 bg-white/90 p-2 pointer-events-auto dark:bg-gray-900/90">
+        <div
+          className="absolute bottom-0 left-0 right-0 flex space-x-2 p-2 pointer-events-auto"
+          style={{ backdropFilter: "blur(8px)" }}
+        >
           <button
             onClick={(e) => onDeleteClick(vibe.id, e)}
             data-action="delete"
