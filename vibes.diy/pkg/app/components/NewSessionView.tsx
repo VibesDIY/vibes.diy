@@ -78,7 +78,7 @@ export default function NewSessionView({
             }}
           >
             <BrutalistCard size="lg">
-              <h1 className="text-4xl font-bold">Vibes are for sharing</h1>
+              <h1 className="text-4xl font-bold">Code is easy, now</h1>
             </BrutalistCard>
 
             {/* Prompt suggestions section */}
