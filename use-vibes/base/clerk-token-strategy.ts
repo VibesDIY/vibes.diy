@@ -3,9 +3,10 @@ import type {
   TokenAndClaims,
   ToCloudOpts,
 } from '@fireproof/core-types-protocols-cloud';
-import { type Logger } from '@adviser/cement';
+import { type Logger, Lazy } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import { DashboardApi } from '@fireproof/core-protocols-dashboard';
+import { hashObjectSync } from '@fireproof/core-runtime';
 
 /**
  * ClerkTokenStrategy implements the TokenStrategie pattern for Fireproof cloud sync.
@@ -32,11 +33,14 @@ export class ClerkTokenStrategy implements TokenStrategie {
   }
 
   /**
-   * Returns a hash for this strategy instance
+   * Returns a hash for this strategy instance based on API URL configuration.
+   * Uses Lazy to compute once and cache the result.
    */
-  hash(): string {
-    return 'clerk-token-strategy';
-  }
+  readonly hash = Lazy(() => {
+    const w = globalThis.window as { VIBES_CONNECT_API_URL?: string } | undefined;
+    const apiUrl = w?.VIBES_CONNECT_API_URL || 'https://connect.fireproof.direct/api';
+    return hashObjectSync({ strategy: 'clerk', apiUrl });
+  });
 
   /**
    * Called by Fireproof to initialize the strategy with context
