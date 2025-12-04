@@ -96,7 +96,6 @@ export function validateVibeMetadata(metadata: unknown): asserts metadata is Vib
 
 export interface VibeContextValue {
   metadata?: VibeMetadata;
-  getToken?: (options?: { template?: string }) => Promise<string | null>;
 }
 
 const VibeContext = createContext<VibeContextValue>({});
@@ -110,13 +109,6 @@ export function VibeContextProvider({ metadata, children }: VibeContextProviderP
   // Get Clerk session - must be inside ClerkProvider
   const { session } = useSession();
 
-  // Create getToken function from session for legacy context
-  const getToken = session
-    ? async (options?: { template?: string }) => {
-        return await session.getToken(options);
-      }
-    : undefined;
-
   // Fire global event when Clerk session is ready to create DashboardApi
   useEffect(() => {
     if (session) {
@@ -124,15 +116,9 @@ export function VibeContextProvider({ metadata, children }: VibeContextProviderP
     }
   }, [session]);
 
-  return <VibeContext.Provider value={{ metadata, getToken }}>{children}</VibeContext.Provider>;
+  return <VibeContext.Provider value={{ metadata }}>{children}</VibeContext.Provider>;
 }
 
 export function useVibeContext(): VibeMetadata | undefined {
   return useContext(VibeContext).metadata;
-}
-
-export function useVibeGetToken():
-  | ((options?: { template?: string }) => Promise<string | null>)
-  | undefined {
-  return useContext(VibeContext).getToken;
 }

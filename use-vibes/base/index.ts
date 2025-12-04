@@ -12,7 +12,7 @@ import {
   type UseFpToCloudParam,
 } from 'use-fireproof';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
-import { useVibeContext, useVibeGetToken, type VibeMetadata } from './contexts/VibeContext.js';
+import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
 import { globalClerkStrategy } from './clerk-token-strategy.js';
 
 // Interface for share API response
@@ -119,10 +119,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
 
-  // Get authentication token function from context (parent app provides this via VibeContextProvider)
-  // User vibes in iframes won't have ClerkProvider, so getToken will be undefined and sync disabled
-  const getToken = useVibeGetToken();
-
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
 
@@ -133,13 +129,12 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
 
-  // Only enable sync when both vibeMetadata exists AND Clerk auth is available
+  // Only enable sync when vibeMetadata exists
   // This ensures only instance-specific databases (with titleId + installId) get synced
-  // and only when running in a context where ClerkProvider is available
   // Use global singleton strategy - no per-component instance management needed
   const attachConfig = useMemo(() => {
-    return vibeMetadata && getToken ? toCloud({ tokenStrategy: globalClerkStrategy() }) : undefined;
-  }, [vibeMetadata, getToken]);
+    return vibeMetadata ? toCloud({ tokenStrategy: globalClerkStrategy() }) : undefined;
+  }, [vibeMetadata]);
 
   // Memoize the options object to prevent re-creating on every render
   const options = useMemo(() => {
