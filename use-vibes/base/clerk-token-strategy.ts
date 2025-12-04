@@ -3,18 +3,64 @@ import type {
   TokenAndClaims,
   ToCloudOpts,
 } from '@fireproof/core-types-protocols-cloud';
-import { type Logger, Lazy, OnFunc, KeyedResolvOnce } from '@adviser/cement';
+import { type Logger, Lazy, ResolveOnce, Future } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import { DashboardApi } from '@fireproof/core-protocols-dashboard';
 import { hashObjectSync } from '@fireproof/core-runtime';
-// Grace period before token expiration for auto-renewal
-const _GRACE_PERIOD_MS = 5000; // 5 seconds before 30-second expiration
 
 /**
- * Global event fired when DashboardApi is ready.
- * VibeContextProvider creates and invokes this with the DashboardApi instance.
+ * Minimal Clerk interface for type safety.
+ * Only defines the addListener method we need for session change notifications.
  */
-export const globalReadyDashApi = OnFunc<(dashApi: DashboardApi) => void>();
+interface ClerkIf {
+  addListener: (
+    callback: (resources: {
+      session?: { getToken: (opts?: { template?: string }) => Promise<string | null> } | null;
+    }) => void
+  ) => () => void;
+}
+
+/**
+ * Lazy factory that creates a DashboardApi with automatic token refresh via Clerk listener.
+ * Uses Future + ResolveOnce for async token resolution and caching.
+ *
+ * @param clerk - Clerk instance with addListener method
+ * @param apiUrl - Dashboard API base URL
+ * @returns DashboardApi instance that auto-refreshes tokens via Clerk
+ */
+export const clerkDashApi = Lazy((clerk: ClerkIf, apiUrl: string) => {
+  const getDashApi = new ResolveOnce<DashboardApi>();
+  let futureToken = new Future<string>();
+
+  const getToken = () =>
+    getDashApi.once(async () => {
+      const token = await futureToken.asPromise();
+      return { type: 'clerk' as const, token };
+    });
+
+  const opts = {
+    apiUrl,
+    getToken,
+    fetch: fetch.bind(globalThis),
+  };
+
+  const dashApi = new DashboardApi(opts);
+
+  // Clerk listener handles token refresh automatically
+  clerk.addListener(({ session }) => {
+    if (session) {
+      session.getToken({ template: 'with-email' }).then((token) => {
+        if (token) {
+          getDashApi.reset(() => dashApi);
+          futureToken.resolve(token);
+          futureToken = new Future<string>();
+        }
+      });
+    }
+  });
+
+  return dashApi;
+});
 
 /**
  * Global singleton ClerkTokenStrategy instance.
@@ -27,18 +73,18 @@ export const globalClerkStrategy = Lazy(() => new ClerkTokenStrategy());
  * It exchanges Clerk auth tokens for cloud session tokens via the dashboard API's
  * ensureCloudToken endpoint, which auto-creates tenant/ledger/binding as needed.
  *
- * Uses global coordination via OnFunc to decouple from React lifecycle.
+ * Uses clerkDashApi Lazy factory for DashboardApi creation with automatic token refresh.
  */
 export class ClerkTokenStrategy implements TokenStrategie {
   private dashApi?: DashboardApi;
   private deviceId?: string;
-  readonly tokenCache = new KeyedResolvOnce<TokenAndClaims>();
 
-  constructor() {
-    // Listen for DashboardApi ready event - just store it
-    globalReadyDashApi((dashApi) => {
-      this.dashApi = dashApi;
-    });
+  /**
+   * Sets the DashboardApi instance for this strategy.
+   * Called by VibeContextProvider after creating DashboardApi via clerkDashApi factory.
+   */
+  setDashboardApi(dashApi: DashboardApi): void {
+    this.dashApi = dashApi;
   }
 
   /**
@@ -60,10 +106,10 @@ export class ClerkTokenStrategy implements TokenStrategie {
 
   /**
    * Try to get a valid token. Called by Fireproof when a token is needed.
-   * Uses KeyedResolvOnce to cache tokens per deviceId (appId).
+   * DashboardApi.ensureCloudToken already has built-in caching via KeyedResolvOnce.
    */
   async tryToken(
-    sthis: SuperThis,
+    _sthis: SuperThis,
     logger: Logger,
     _opts: ToCloudOpts
   ): Promise<TokenAndClaims | undefined> {
@@ -71,33 +117,25 @@ export class ClerkTokenStrategy implements TokenStrategie {
       return undefined;
     }
 
-    // Use KeyedResolvOnce to cache token per deviceId
-    return this.tokenCache.get(this.deviceId).once(async (_self) => {
-      // Use deviceId directly as appId - it's already unique (vf-titleId-installId-dbName)
-      // ensureCloudToken auto-creates tenant/ledger/binding per appId
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await this.dashApi!.ensureCloudToken({
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        appId: this.deviceId!,
-        env: 'prod',
-      });
-
-      if (result.isErr()) {
-        logger?.Error().Err(result.Err()).Msg('Failed to get cloud token via ensureCloudToken');
-        throw result.Err();
-      }
-
-      const response = result.Ok();
-
-      // TODO: Auto-renewal - waiting for setRestartAfter() API in cement
-      // _self.setRestartAfter(response.expiresInSec * 1000 - _GRACE_PERIOD_MS);
-
-      // Return the cloud token as a TokenAndClaims object
-      return {
-        token: response.cloudToken,
-        // claims will be parsed from the JWT by Fireproof
-      };
+    // Use deviceId directly as appId - it's already unique (vf-titleId-installId-dbName)
+    // ensureCloudToken auto-creates tenant/ledger/binding per appId and caches internally
+    const result = await this.dashApi.ensureCloudToken({
+      appId: this.deviceId,
+      env: 'prod',
     });
+
+    if (result.isErr()) {
+      logger?.Error().Err(result.Err()).Msg('Failed to get cloud token via ensureCloudToken');
+      throw result.Err();
+    }
+
+    const response = result.Ok();
+
+    // Return the cloud token as a TokenAndClaims object
+    return {
+      token: response.cloudToken,
+      // claims will be parsed from the JWT by Fireproof
+    };
   }
 
   /**

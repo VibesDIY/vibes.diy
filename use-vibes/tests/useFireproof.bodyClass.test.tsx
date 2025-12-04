@@ -19,10 +19,13 @@ vi.mock('use-fireproof', () => ({
   },
 }));
 
-// Mock Clerk's useSession
+// Mock Clerk's useSession and useClerk
 const mockUseSession = vi.fn();
 vi.mock('@clerk/clerk-react', () => ({
   useSession: () => mockUseSession(),
+  useClerk: () => ({
+    addListener: vi.fn(() => vi.fn()), // Returns unsubscribe function
+  }),
 }));
 
 // Test component that uses our enhanced useFireproof

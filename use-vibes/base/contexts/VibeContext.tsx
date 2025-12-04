@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { z } from 'zod';
-import { useSession } from '@clerk/clerk-react';
-import { DashboardApi } from '@fireproof/core-protocols-dashboard';
-import { globalReadyDashApi } from '../clerk-token-strategy.js';
+import { useSession, useClerk } from '@clerk/clerk-react';
+import { clerkDashApi, globalClerkStrategy } from '../clerk-token-strategy.js';
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -115,26 +114,17 @@ export interface VibeContextProviderProps {
 }
 
 export function VibeContextProvider({ metadata, children }: VibeContextProviderProps) {
-  // Get Clerk session - must be inside ClerkProvider
+  // Get Clerk session and clerk instance - must be inside ClerkProvider
   const { session } = useSession();
+  const clerk = useClerk();
 
-  // Create DashboardApi and fire global event when Clerk session is ready
+  // Create DashboardApi via clerkDashApi factory when Clerk session is ready
   useEffect(() => {
     if (session) {
-      const dashApi = new DashboardApi({
-        apiUrl: getApiUrl(),
-        getToken: async () => {
-          const token = await session.getToken({ template: 'with-email' });
-          if (!token) {
-            throw new Error('No Clerk token available');
-          }
-          return { type: 'clerk', token };
-        },
-        fetch,
-      });
-      globalReadyDashApi.invoke(dashApi);
+      const dashApi = clerkDashApi(clerk, getApiUrl());
+      globalClerkStrategy().setDashboardApi(dashApi);
     }
-  }, [session]);
+  }, [session, clerk]);
 
   return <VibeContext.Provider value={{ metadata }}>{children}</VibeContext.Provider>;
 }
