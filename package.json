@@ -18,8 +18,8 @@
   "scripts": {
     "xbuild:base": "pnpm --filter use-vibes-base build",
     "build": "core-cli tsc",
-    "build:prod": "cd vibes.diy/pkg && pnpm run build",
-    "serve:prod": "npx serve -s vibes.diy/pkg/build/client",
+    "build:prod": "pnpm --filter vibes-diy build",
+    "serve:prod": "pnpm exec serve -s vibes.diy/pkg/build/client",
     "lint": "eslint . && cd hosting/pkg && pnpm lint",
     "knip": "knip",
     "test": "cross-env DISABLE_REACT_ROUTER=true vitest --run",
@@ -70,6 +70,7 @@
     "prettier": "^3.7.3",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "puppeteer": "^24.31.0",
+    "serve": "^14.2.5",
     "typescript-eslint": "^8.48.0",
     "vitest": "^4.0.14",
     "wrangler": "^4.45.1"
