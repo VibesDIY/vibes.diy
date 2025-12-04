@@ -7,6 +7,7 @@ import { type Logger, Lazy, OnFunc, KeyedResolvOnce } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import { DashboardApi } from '@fireproof/core-protocols-dashboard';
 import { hashObjectSync } from '@fireproof/core-runtime';
+import type { SessionResource } from '@clerk/shared/types';
 
 // Grace period before token expiration for auto-renewal
 // TODO: Use this with setRestartAfter() when available in cement
@@ -17,12 +18,7 @@ import { hashObjectSync } from '@fireproof/core-runtime';
  * VibeContextProvider invokes this when session becomes available.
  * Listeners should return the created DashboardApi instance.
  */
-export const globalReadyDashApi =
-  OnFunc<
-    (session: {
-      getToken: (options?: { template?: string }) => Promise<string | null>;
-    }) => DashboardApi
-  >();
+export const globalReadyDashApi = OnFunc<(session: SessionResource) => DashboardApi>();
 
 /**
  * Global singleton ClerkTokenStrategy instance.
