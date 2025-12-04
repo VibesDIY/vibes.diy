@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { VibeCard } from "./VibeCard.js";
+import { MyVibeCard } from "./MyVibeCard.js";
 import { loadVibeDocument, loadVibeScreenshot } from "../utils/vibeUtils.js";
 import type { LocalVibe } from "../utils/vibeUtils.js";
 import { useVibes } from "../hooks/useVibes.js";
@@ -157,7 +157,7 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
     };
 
     return (
-      <VibeCard
+      <MyVibeCard
         vibe={loadingVibeData}
         screenshot={screenshot}
         confirmDelete={confirmDelete}
@@ -176,7 +176,7 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
 
   // We have a valid vibe, render it
   return (
-    <VibeCard
+    <MyVibeCard
       vibe={vibe}
       screenshot={screenshot}
       confirmDelete={confirmDelete}
