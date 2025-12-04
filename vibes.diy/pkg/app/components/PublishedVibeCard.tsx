@@ -13,6 +13,7 @@ interface PublishedVibeCardProps {
   name?: string;
   localScreenshot?: DocFileMeta;
   disableLink?: boolean;
+  children?: React.ReactNode;
 }
 
 export default function PublishedVibeCard({
@@ -20,6 +21,7 @@ export default function PublishedVibeCard({
   name,
   localScreenshot,
   disableLink = false,
+  children,
 }: PublishedVibeCardProps): ReactElement {
   // Construct asset URLs with query parameters
   const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug), [slug]);
@@ -158,12 +160,16 @@ export default function PublishedVibeCard({
       className="overflow-hidden transition-colors hover:border-blue-500"
     >
       {disableLink ? (
-        <div className="block h-full w-full">{cardContent}</div>
+        <div className="block h-full w-full">
+          {cardContent}
+          {children}
+        </div>
       ) : (
         <Link to={linkUrl} className="block h-full w-full">
           {cardContent}
         </Link>
       )}
+      {!disableLink && children}
     </BrutalistCard>
   );
 }
