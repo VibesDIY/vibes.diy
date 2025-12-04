@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { z } from 'zod';
 import { useSession } from '@clerk/clerk-react';
+import { DashboardApi } from '@fireproof/core-protocols-dashboard';
 import { globalReadyDashApi } from '../clerk-token-strategy.js';
 
 /**
@@ -58,6 +59,14 @@ const VibeMetadataSchema = z.object({
 export type VibeMetadata = z.infer<typeof VibeMetadataSchema>;
 
 /**
+ * Get API URL from window global or default
+ */
+function getApiUrl(): string {
+  const w = globalThis.window as { VIBES_CONNECT_API_URL?: string } | undefined;
+  return w?.VIBES_CONNECT_API_URL || 'https://connect.fireproof.direct/api';
+}
+
+/**
  * Validates that VibeMetadata contains non-empty titleId and installId with valid characters.
  * Uses Zod for validation but preserves backward-compatible error codes.
  *
@@ -109,10 +118,21 @@ export function VibeContextProvider({ metadata, children }: VibeContextProviderP
   // Get Clerk session - must be inside ClerkProvider
   const { session } = useSession();
 
-  // Fire global event when Clerk session is ready to create DashboardApi
+  // Create DashboardApi and fire global event when Clerk session is ready
   useEffect(() => {
     if (session) {
-      globalReadyDashApi.invoke(session);
+      const dashApi = new DashboardApi({
+        apiUrl: getApiUrl(),
+        getToken: async () => {
+          const token = await session.getToken({ template: 'with-email' });
+          if (!token) {
+            throw new Error('No Clerk token available');
+          }
+          return { type: 'clerk', token };
+        },
+        fetch,
+      });
+      globalReadyDashApi.invoke(dashApi);
     }
   }, [session]);
 

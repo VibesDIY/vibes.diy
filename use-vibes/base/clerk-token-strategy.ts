@@ -7,18 +7,14 @@ import { type Logger, Lazy, OnFunc, KeyedResolvOnce } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import { DashboardApi } from '@fireproof/core-protocols-dashboard';
 import { hashObjectSync } from '@fireproof/core-runtime';
-import type { SessionResource } from '@clerk/shared/types';
-
 // Grace period before token expiration for auto-renewal
-// TODO: Use this with setRestartAfter() when available in cement
-// const GRACE_PERIOD_MS = 5000; // 5 seconds before 30-second expiration
+const _GRACE_PERIOD_MS = 5000; // 5 seconds before 30-second expiration
 
 /**
- * Global event fired when Clerk session is ready to create DashboardApi.
- * VibeContextProvider invokes this when session becomes available.
- * Listeners should return the created DashboardApi instance.
+ * Global event fired when DashboardApi is ready.
+ * VibeContextProvider creates and invokes this with the DashboardApi instance.
  */
-export const globalReadyDashApi = OnFunc<(session: SessionResource) => DashboardApi>();
+export const globalReadyDashApi = OnFunc<(dashApi: DashboardApi) => void>();
 
 /**
  * Global singleton ClerkTokenStrategy instance.
@@ -39,39 +35,18 @@ export class ClerkTokenStrategy implements TokenStrategie {
   readonly tokenCache = new KeyedResolvOnce<TokenAndClaims>();
 
   constructor() {
-    // Listen for Clerk session ready event - create and return DashboardApi ONCE
-    globalReadyDashApi((session) => {
-      if (!this.dashApi) {
-        this.dashApi = new DashboardApi({
-          apiUrl: this.getApiUrl(),
-          getToken: async () => {
-            const token = await session.getToken({ template: 'with-email' });
-            if (!token) {
-              throw new Error('No Clerk token available');
-            }
-            return { type: 'clerk', token };
-          },
-          fetch,
-        });
-      }
-      return this.dashApi;
+    // Listen for DashboardApi ready event - just store it
+    globalReadyDashApi((dashApi) => {
+      this.dashApi = dashApi;
     });
   }
 
   /**
-   * Get API URL from window global or default
-   */
-  private getApiUrl(): string {
-    const w = globalThis.window as { VIBES_CONNECT_API_URL?: string } | undefined;
-    return w?.VIBES_CONNECT_API_URL || 'https://connect.fireproof.direct/api';
-  }
-
-  /**
-   * Returns a hash for this strategy instance based on API URL configuration.
+   * Returns a hash for this strategy instance.
    * Uses Lazy to compute once and cache the result.
    */
   readonly hash = Lazy(() => {
-    return hashObjectSync({ strategy: 'clerk', apiUrl: this.getApiUrl() });
+    return hashObjectSync({ strategy: 'clerk' });
   });
 
   /**
@@ -114,8 +89,8 @@ export class ClerkTokenStrategy implements TokenStrategie {
 
       const response = result.Ok();
 
-      // TODO: Auto-renewal using future cement feature
-      // _self.setRestartAfter(response.expiresInSec * 1000 - GRACE_PERIOD_MS);
+      // TODO: Auto-renewal - waiting for setRestartAfter() API in cement
+      // _self.setRestartAfter(response.expiresInSec * 1000 - _GRACE_PERIOD_MS);
 
       // Return the cloud token as a TokenAndClaims object
       return {
