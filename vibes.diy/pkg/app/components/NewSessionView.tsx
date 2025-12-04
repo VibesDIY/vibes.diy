@@ -107,7 +107,13 @@ export default function NewSessionView({
             </div>
 
             {/* Chat input form */}
-            <BrutalistCard size="md" style={{ width: "100%" }}>
+            <BrutalistCard
+              size="md"
+              style={{
+                width: "100%",
+                background: "var(--vibes-gray-lighter)",
+              }}
+            >
               <div
                 style={{
                   marginBottom: "12px",
