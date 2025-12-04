@@ -1,5 +1,6 @@
-import React, { createContext, useContext, type ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { z } from 'zod';
+import { globalReadyDashApi } from '../clerk-token-strategy.js';
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -106,6 +107,13 @@ export interface VibeContextProviderProps {
 }
 
 export function VibeContextProvider({ metadata, getToken, children }: VibeContextProviderProps) {
+  // Fire global event when Clerk token getter is ready to create DashboardApi
+  useEffect(() => {
+    if (getToken) {
+      globalReadyDashApi.invoke(getToken);
+    }
+  }, [getToken]);
+
   return <VibeContext.Provider value={{ metadata, getToken }}>{children}</VibeContext.Provider>;
 }
 

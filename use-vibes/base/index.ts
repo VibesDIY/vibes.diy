@@ -2,7 +2,7 @@ import type { ToCloudAttachable, TokenStrategie } from '@fireproof/core-types-pr
 import { getKeyBag } from '@fireproof/core-keybag';
 import { Lazy } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   fireproof,
   ImgFile,
@@ -13,7 +13,7 @@ import {
 } from 'use-fireproof';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { useVibeContext, useVibeGetToken, type VibeMetadata } from './contexts/VibeContext.js';
-import { ClerkTokenStrategy } from './clerk-token-strategy.js';
+import { globalClerkStrategy } from './clerk-token-strategy.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -133,48 +133,13 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
 
-  // Create strategy once per hook mount, not on every getToken change
-  const tokenStrategyRef = useRef<ClerkTokenStrategy | null>(null);
-
-  useEffect(() => {
-    if (!getToken) {
-      // Clean up existing strategy if getToken becomes unavailable
-      if (tokenStrategyRef.current) {
-        tokenStrategyRef.current.stop();
-        tokenStrategyRef.current = null;
-      }
-      return;
-    }
-
-    // Create strategy only if it doesn't exist
-    if (!tokenStrategyRef.current) {
-      tokenStrategyRef.current = new ClerkTokenStrategy(async () => {
-        return await getToken({ template: 'with-email' });
-      });
-    } else {
-      // Update the token getter on existing strategy
-      tokenStrategyRef.current.updateTokenGetter(async () => {
-        return await getToken({ template: 'with-email' });
-      });
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (tokenStrategyRef.current) {
-        tokenStrategyRef.current.stop();
-        tokenStrategyRef.current = null;
-      }
-    };
-  }, [getToken]);
-
   // Only enable sync when both vibeMetadata exists AND Clerk auth is available
   // This ensures only instance-specific databases (with titleId + installId) get synced
   // and only when running in a context where ClerkProvider is available
+  // Use global singleton strategy - no per-component instance management needed
   const attachConfig = useMemo(() => {
-    return vibeMetadata && tokenStrategyRef.current
-      ? toCloud({ tokenStrategy: tokenStrategyRef.current })
-      : undefined;
-  }, [vibeMetadata]);
+    return vibeMetadata && getToken ? toCloud({ tokenStrategy: globalClerkStrategy() }) : undefined;
+  }, [vibeMetadata, getToken]);
 
   // Memoize the options object to prevent re-creating on every render
   const options = useMemo(() => {
