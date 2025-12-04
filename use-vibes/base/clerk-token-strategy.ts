@@ -26,6 +26,14 @@ export class ClerkTokenStrategy implements TokenStrategie {
   }
 
   /**
+   * Get API URL from window global or default
+   */
+  private getApiUrl(): string {
+    const w = globalThis.window as { VIBES_CONNECT_API_URL?: string } | undefined;
+    return w?.VIBES_CONNECT_API_URL || 'https://connect.fireproof.direct/api';
+  }
+
+  /**
    * Update the token getter without recreating the strategy instance
    */
   updateTokenGetter(getClerkToken: () => Promise<string | null>): void {
@@ -37,9 +45,7 @@ export class ClerkTokenStrategy implements TokenStrategie {
    * Uses Lazy to compute once and cache the result.
    */
   readonly hash = Lazy(() => {
-    const w = globalThis.window as { VIBES_CONNECT_API_URL?: string } | undefined;
-    const apiUrl = w?.VIBES_CONNECT_API_URL || 'https://connect.fireproof.direct/api';
-    return hashObjectSync({ strategy: 'clerk', apiUrl });
+    return hashObjectSync({ strategy: 'clerk', apiUrl: this.getApiUrl() });
   });
 
   /**
@@ -54,12 +60,8 @@ export class ClerkTokenStrategy implements TokenStrategie {
 
     // Only create DashboardApi if it doesn't exist (reuse existing instance)
     if (!this.dashApi) {
-      // Check window for API URL override (same pattern as call-ai)
-      const w = globalThis.window as { VIBES_CONNECT_API_URL?: string } | undefined;
-      const apiUrl = w?.VIBES_CONNECT_API_URL || 'https://connect.fireproof.direct/api';
-
       this.dashApi = new DashboardApi({
-        apiUrl,
+        apiUrl: this.getApiUrl(),
         getToken: async () => {
           const clerkToken = await this.getClerkToken();
           if (!clerkToken) {
