@@ -13,6 +13,7 @@ import {
 } from 'use-fireproof';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
+import { useVibesEnv } from './config/env.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -71,11 +72,16 @@ export async function isJWTExpired(token: string): Promise<boolean> {
 
 // Helper function to create toCloud configuration
 export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+  const urls = {
+    ...opts?.urls,
+    base: opts?.urls?.base ?? useVibesEnv.VIBES_CLOUD_BASE_URL,
+  };
+
   const attachable = originalToCloud({
     ...opts,
-    dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
-    tokenApiURI: 'https://connect.fireproof.direct/api',
-    urls: { base: 'fpcloud://cloud.fireproof.direct' },
+    dashboardURI: opts?.dashboardURI ?? useVibesEnv.VIBES_DASHBOARD_URI,
+    tokenApiURI: opts?.tokenApiURI ?? useVibesEnv.VIBES_TOKEN_API_URI,
+    urls,
   });
 
   return attachable;
@@ -169,7 +175,7 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
       // Call the dashboard API (same pattern as other Fireproof dashboard requests)
       // Uses PUT method with auth in body, not headers
-      const apiUrl = 'https://connect.fireproof.direct/api'; // Replace with your actual API URL
+      const apiUrl = useVibesEnv.VIBES_TOKEN_API_URI;
 
       const response = await fetch(apiUrl, {
         method: 'PUT',

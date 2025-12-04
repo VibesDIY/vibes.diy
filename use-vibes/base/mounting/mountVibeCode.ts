@@ -1,6 +1,7 @@
 import { mountVibesApp } from '../vibe-app-mount.js';
+import { useVibesEnv } from '../config/env.js';
 
-// Declare Babel and call-ai globals loaded via CDN script tag or set at runtime
+// Declare Babel, call-ai, and Vibes globals loaded via CDN script tag or set at runtime
 declare global {
   interface Window {
     Babel: {
@@ -9,6 +10,26 @@ declare global {
     CALLAI_API_KEY?: string;
     CALLAI_CHAT_URL?: string;
     CALLAI_IMG_URL?: string;
+    /**
+     * Optional override for the Fireproof Connect API base URL.
+     * If unset or empty, `useVibesEnv.VIBES_CONNECT_API_URL` is used.
+     */
+    VIBES_CONNECT_API_URL?: string;
+    /**
+     * Optional override for the dashboard token auto endpoint used by toCloud().
+     * If unset or empty, `useVibesEnv.VIBES_DASHBOARD_URI` is used.
+     */
+    VIBES_DASHBOARD_URI?: string;
+    /**
+     * Optional override for the token/dashboard API base URL.
+     * If unset or empty, `useVibesEnv.VIBES_TOKEN_API_URI` is used.
+     */
+    VIBES_TOKEN_API_URI?: string;
+    /**
+     * Optional override for the Fireproof cloud base URL (fpcloud protocol).
+     * If unset or empty, `useVibesEnv.VIBES_CLOUD_BASE_URL` is used.
+     */
+    VIBES_CLOUD_BASE_URL?: string;
   }
 }
 
@@ -32,6 +53,9 @@ export async function mountVibeCode(
     // Set window globals for call-ai if provided
     // This allows call-ai to use these values when no explicit options are provided
     if (typeof window !== 'undefined') {
+      // Treat only null/undefined as unset so explicit (even empty) host values are respected
+      const isUnset = (value: unknown) => value == null;
+
       if (apiKey) {
         window.CALLAI_API_KEY = apiKey;
       }
@@ -42,6 +66,23 @@ export async function mountVibeCode(
 
       if (imgUrl) {
         window.CALLAI_IMG_URL = imgUrl;
+      }
+
+      // Ensure Vibes window overrides are populated for embedded contexts
+      if (isUnset(window.VIBES_CONNECT_API_URL)) {
+        window.VIBES_CONNECT_API_URL = useVibesEnv.VIBES_CONNECT_API_URL;
+      }
+
+      if (isUnset(window.VIBES_DASHBOARD_URI)) {
+        window.VIBES_DASHBOARD_URI = useVibesEnv.VIBES_DASHBOARD_URI;
+      }
+
+      if (isUnset(window.VIBES_TOKEN_API_URI)) {
+        window.VIBES_TOKEN_API_URI = useVibesEnv.VIBES_TOKEN_API_URI;
+      }
+
+      if (isUnset(window.VIBES_CLOUD_BASE_URL)) {
+        window.VIBES_CLOUD_BASE_URL = useVibesEnv.VIBES_CLOUD_BASE_URL;
       }
     }
     // Step 1: Transform imports (rewrite unknown bare imports to esm.sh)
