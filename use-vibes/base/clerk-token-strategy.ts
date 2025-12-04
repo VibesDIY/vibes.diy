@@ -3,7 +3,7 @@ import type {
   TokenAndClaims,
   ToCloudOpts,
 } from '@fireproof/core-types-protocols-cloud';
-import { type Logger, Lazy, ResolveOnce, Future } from '@adviser/cement';
+import { type Logger, Lazy, Future } from '@adviser/cement';
 import type { SuperThis } from '@fireproof/core-types-base';
 import { DashboardApi } from '@fireproof/core-protocols-dashboard';
 import { hashObjectSync } from '@fireproof/core-runtime';
@@ -29,14 +29,12 @@ interface ClerkIf {
  * @returns DashboardApi instance that auto-refreshes tokens via Clerk
  */
 export const clerkDashApi = Lazy((clerk: ClerkIf, apiUrl: string) => {
-  const getDashApi = new ResolveOnce<DashboardApi>();
   let futureToken = new Future<string>();
 
-  const getToken = () =>
-    getDashApi.once(async () => {
-      const token = await futureToken.asPromise();
-      return { type: 'clerk' as const, token };
-    });
+  const getToken = async () => {
+    const token = await futureToken.asPromise();
+    return { type: 'clerk' as const, token };
+  };
 
   const opts = {
     apiUrl,
@@ -51,7 +49,6 @@ export const clerkDashApi = Lazy((clerk: ClerkIf, apiUrl: string) => {
     if (session) {
       session.getToken({ template: 'with-email' }).then((token) => {
         if (token) {
-          getDashApi.reset(() => dashApi);
           futureToken.resolve(token);
           futureToken = new Future<string>();
         }
