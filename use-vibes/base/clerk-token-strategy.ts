@@ -13,10 +13,16 @@ import { hashObjectSync } from '@fireproof/core-runtime';
 // const GRACE_PERIOD_MS = 5000; // 5 seconds before 30-second expiration
 
 /**
- * Global event fired when Clerk token getter is ready to create DashboardApi.
- * VibeContextProvider invokes this when getToken becomes available.
+ * Global event fired when Clerk session is ready to create DashboardApi.
+ * VibeContextProvider invokes this when session becomes available.
+ * Listeners should return the created DashboardApi instance.
  */
-export const globalReadyDashApi = OnFunc<(getToken: () => Promise<string | null>) => void>();
+export const globalReadyDashApi =
+  OnFunc<
+    (session: {
+      getToken: (options?: { template?: string }) => Promise<string | null>;
+    }) => DashboardApi
+  >();
 
 /**
  * Global singleton ClerkTokenStrategy instance.
@@ -37,13 +43,13 @@ export class ClerkTokenStrategy implements TokenStrategie {
   readonly tokenCache = new KeyedResolvOnce<TokenAndClaims>();
 
   constructor() {
-    // Listen for Clerk ready event - create DashboardApi ONCE
-    globalReadyDashApi((getToken) => {
+    // Listen for Clerk session ready event - create and return DashboardApi ONCE
+    globalReadyDashApi((session) => {
       if (!this.dashApi) {
         this.dashApi = new DashboardApi({
           apiUrl: this.getApiUrl(),
           getToken: async () => {
-            const token = await getToken();
+            const token = await session.getToken({ template: 'with-email' });
             if (!token) {
               throw new Error('No Clerk token available');
             }
@@ -52,6 +58,7 @@ export class ClerkTokenStrategy implements TokenStrategie {
           fetch,
         });
       }
+      return this.dashApi;
     });
   }
 

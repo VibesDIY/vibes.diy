@@ -38,6 +38,9 @@ vi.mock("@clerk/clerk-react", () => ({
       primaryEmailAddress: { emailAddress: "test@example.com" },
     },
   }),
+  useSession: () => ({
+    session: null,
+  }),
 }));
 
 // Mock the SimpleAppLayout component

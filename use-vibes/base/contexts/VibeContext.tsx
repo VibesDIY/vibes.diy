@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { z } from 'zod';
+import { useSession } from '@clerk/clerk-react';
 import { globalReadyDashApi } from '../clerk-token-strategy.js';
 
 /**
@@ -102,17 +103,26 @@ const VibeContext = createContext<VibeContextValue>({});
 
 export interface VibeContextProviderProps {
   readonly metadata: VibeMetadata;
-  readonly getToken?: (options?: { template?: string }) => Promise<string | null>;
   readonly children: ReactNode;
 }
 
-export function VibeContextProvider({ metadata, getToken, children }: VibeContextProviderProps) {
-  // Fire global event when Clerk token getter is ready to create DashboardApi
+export function VibeContextProvider({ metadata, children }: VibeContextProviderProps) {
+  // Get Clerk session - must be inside ClerkProvider
+  const { session } = useSession();
+
+  // Create getToken function from session for legacy context
+  const getToken = session
+    ? async (options?: { template?: string }) => {
+        return await session.getToken(options);
+      }
+    : undefined;
+
+  // Fire global event when Clerk session is ready to create DashboardApi
   useEffect(() => {
-    if (getToken) {
-      globalReadyDashApi.invoke(getToken);
+    if (session) {
+      globalReadyDashApi.invoke(session);
     }
-  }, [getToken]);
+  }, [session]);
 
   return <VibeContext.Provider value={{ metadata, getToken }}>{children}</VibeContext.Provider>;
 }

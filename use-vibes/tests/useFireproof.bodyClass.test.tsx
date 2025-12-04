@@ -19,6 +19,12 @@ vi.mock('use-fireproof', () => ({
   },
 }));
 
+// Mock Clerk's useSession
+const mockUseSession = vi.fn();
+vi.mock('@clerk/clerk-react', () => ({
+  useSession: () => mockUseSession(),
+}));
+
 // Test component that uses our enhanced useFireproof
 function TestComponent({ dbName = 'test-db' }: { dbName?: string }) {
   const { syncEnabled } = useFireproof(dbName);
@@ -35,6 +41,7 @@ describe('useFireproof sync without body class management', () => {
     document.body.className = ''; // Clear ALL classes to ensure isolation
     // Reset mocks
     mockOriginalUseFireproof.mockReset();
+    mockUseSession.mockReset();
   });
 
   afterEach(() => {
@@ -51,13 +58,16 @@ describe('useFireproof sync without body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
+    // Mock Clerk session with getToken
     const mockGetToken = vi.fn().mockResolvedValue('mock-clerk-token');
+    mockUseSession.mockReturnValue({
+      session: {
+        getToken: mockGetToken,
+      },
+    });
 
     render(
-      <VibeContextProvider
-        metadata={{ titleId: 'test-title', installId: 'test-install' }}
-        getToken={mockGetToken}
-      >
+      <VibeContextProvider metadata={{ titleId: 'test-title', installId: 'test-install' }}>
         <TestComponent />
       </VibeContextProvider>
     );
@@ -75,6 +85,9 @@ describe('useFireproof sync without body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
+    // Mock no Clerk session
+    mockUseSession.mockReturnValue({ session: null });
+
     render(<TestComponent />);
 
     // Body should not have the class when sync is disabled
@@ -90,13 +103,16 @@ describe('useFireproof sync without body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
+    // Mock Clerk session with getToken
     const mockGetToken = vi.fn().mockResolvedValue('mock-clerk-token');
+    mockUseSession.mockReturnValue({
+      session: {
+        getToken: mockGetToken,
+      },
+    });
 
     const { unmount } = render(
-      <VibeContextProvider
-        metadata={{ titleId: 'test-title', installId: 'test-install' }}
-        getToken={mockGetToken}
-      >
+      <VibeContextProvider metadata={{ titleId: 'test-title', installId: 'test-install' }}>
         <TestComponent />
       </VibeContextProvider>
     );
@@ -120,21 +136,21 @@ describe('useFireproof sync without body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
+    // Mock Clerk session with getToken
     const mockGetToken = vi.fn().mockResolvedValue('mock-clerk-token');
+    mockUseSession.mockReturnValue({
+      session: {
+        getToken: mockGetToken,
+      },
+    });
 
     const { unmount: unmount1 } = render(
-      <VibeContextProvider
-        metadata={{ titleId: 'test-title-1', installId: 'test-install-1' }}
-        getToken={mockGetToken}
-      >
+      <VibeContextProvider metadata={{ titleId: 'test-title-1', installId: 'test-install-1' }}>
         <TestComponent dbName="db1" />
       </VibeContextProvider>
     );
     const { unmount: unmount2 } = render(
-      <VibeContextProvider
-        metadata={{ titleId: 'test-title-2', installId: 'test-install-2' }}
-        getToken={mockGetToken}
-      >
+      <VibeContextProvider metadata={{ titleId: 'test-title-2', installId: 'test-install-2' }}>
         <TestComponent dbName="db2" />
       </VibeContextProvider>
     );
@@ -160,22 +176,22 @@ describe('useFireproof sync without body class management', () => {
       useLiveQuery: vi.fn(),
     });
 
+    // Mock Clerk session with getToken
     const mockGetToken = vi.fn().mockResolvedValue('mock-clerk-token');
+    mockUseSession.mockReturnValue({
+      session: {
+        getToken: mockGetToken,
+      },
+    });
 
     // Multiple components using the same database name
     const { unmount: unmount1 } = render(
-      <VibeContextProvider
-        metadata={{ titleId: 'test-title', installId: 'test-install-1' }}
-        getToken={mockGetToken}
-      >
+      <VibeContextProvider metadata={{ titleId: 'test-title', installId: 'test-install-1' }}>
         <TestComponent dbName="same-db" />
       </VibeContextProvider>
     );
     const { unmount: unmount2 } = render(
-      <VibeContextProvider
-        metadata={{ titleId: 'test-title', installId: 'test-install-2' }}
-        getToken={mockGetToken}
-      >
+      <VibeContextProvider metadata={{ titleId: 'test-title', installId: 'test-install-2' }}>
         <TestComponent dbName="same-db" />
       </VibeContextProvider>
     );

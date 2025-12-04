@@ -30,11 +30,15 @@ vi.mock("~/vibes.diy/app/hooks/useApiKey", async () => {
 
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", async () => {
+  const { vi } = await import("vitest");
   return {
     useAuth: () => ({
       userId: "test-user-id",
       isLoaded: true,
       isSignedIn: true,
+    }),
+    useSession: () => ({
+      session: null,
     }),
   };
 });
