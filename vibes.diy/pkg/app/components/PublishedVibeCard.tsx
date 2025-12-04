@@ -1,6 +1,8 @@
 import React, { ReactElement, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { BrutalistCard } from "@vibes.diy/use-vibes-base";
+import { DocFileMeta } from "use-fireproof";
+import { ImgFile } from "./SessionSidebar/ImgFile.js";
 import {
   constructVibeIconUrl,
   constructVibeScreenshotUrl,
@@ -9,11 +11,15 @@ import {
 interface PublishedVibeCardProps {
   slug: string;
   name?: string;
+  localScreenshot?: DocFileMeta;
+  disableLink?: boolean;
 }
 
 export default function PublishedVibeCard({
   slug,
   name,
+  localScreenshot,
+  disableLink = false,
 }: PublishedVibeCardProps): ReactElement {
   // Construct asset URLs with query parameters
   const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug), [slug]);
@@ -23,9 +29,11 @@ export default function PublishedVibeCard({
 
   // Reset to icon when slug changes
   useEffect(() => {
-    setImageSrc(iconUrl);
-    setUsingIcon(true);
-  }, [iconUrl]);
+    if (!localScreenshot) {
+      setImageSrc(iconUrl);
+      setUsingIcon(true);
+    }
+  }, [iconUrl, localScreenshot]);
 
   const handleImageError: React.ReactEventHandler<HTMLImageElement> = (
     event,
@@ -52,28 +60,36 @@ export default function PublishedVibeCard({
   // Use provided name or extract from URL
   const vibeName = name || slug || "Published Vibe";
 
-  return (
-    <BrutalistCard
-      size="md"
-      className="overflow-hidden transition-colors hover:border-blue-500"
-    >
-      <Link to={linkUrl} className="block h-full w-full">
-        <div className="p-2 py-1">
-          <div className="flex h-8 items-center justify-between">
-            <h3
-              className="text-responsive truncate font-medium"
-              style={{
-                fontSize:
-                  vibeName.length > 20
-                    ? Math.max(0.8, 1 - (vibeName.length - 20) * 0.02) + "rem"
-                    : "1rem",
-              }}
-            >
-              {vibeName}
-            </h3>
+  const cardContent = (
+    <>
+      <div className="p-2 py-1">
+        <div className="flex h-8 items-center justify-between">
+          <h3
+            className="text-responsive truncate font-medium"
+            style={{
+              fontSize:
+                vibeName.length > 20
+                  ? Math.max(0.8, 1 - (vibeName.length - 20) * 0.02) + "rem"
+                  : "1rem",
+            }}
+          >
+            {vibeName}
+          </h3>
+        </div>
+      </div>
+
+      {localScreenshot ? (
+        <div className="relative w-full overflow-hidden bg-white">
+          <div className="flex h-48 w-full justify-center">
+            <ImgFile
+              file={localScreenshot}
+              alt={`Screenshot from ${vibeName}`}
+              withBlurredBg={true}
+              maxHeight="12rem"
+            />
           </div>
         </div>
-
+      ) : (
         <div className="relative w-full overflow-hidden bg-white">
           {/* Blurred background version when using screenshot */}
           {!usingIcon && (
@@ -104,7 +120,22 @@ export default function PublishedVibeCard({
             />
           </div>
         </div>
-      </Link>
+      )}
+    </>
+  );
+
+  return (
+    <BrutalistCard
+      size="md"
+      className="overflow-hidden transition-colors hover:border-blue-500"
+    >
+      {disableLink ? (
+        <div className="block h-full w-full">{cardContent}</div>
+      ) : (
+        <Link to={linkUrl} className="block h-full w-full">
+          {cardContent}
+        </Link>
+      )}
     </BrutalistCard>
   );
 }
