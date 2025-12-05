@@ -1,19 +1,19 @@
 /**
  * Image generation API implementation for call-ai
- * Integration with custom image generation API
+ * Integration with OpenRouter image generation API
  */
 import { ImageGenOptions, ImageResponse } from "./types.js";
 import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 
 /**
- * Generate images using a custom API that mimics OpenAI's image generation capabilities
+ * Generate images using OpenRouter API with Gemini image generation
  * @param prompt Text prompt describing the image to generate
  * @param options Configuration options for the image generation request
  * @returns A Promise that resolves to the image response containing base64 encoded image data
  */
 export async function imageGen(prompt: string, options: ImageGenOptions = {}): Promise<ImageResponse> {
-  const { model = "gpt-image-1", apiKey = callAiEnv.CALLAI_API_KEY, size = "1024x1024" } = options;
+  const { model = "google/gemini-2.5-flash-image", apiKey = callAiEnv.CALLAI_API_KEY, size = "1024x1024" } = options;
 
   if (!apiKey) {
     throw new Error("API key is required for image generation. Provide via options.apiKey or set window.CALLAI_API_KEY");
@@ -27,7 +27,7 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
     // Simple image generation with text prompt
     // Use explicit endpoint if provided (highest priority), otherwise construct from origin
     const generateEndpoint =
-      options.endpoint || joinUrlParts(customOrigin || callAiEnv.def.CALLAI_CHAT_URL, "/api/openai-image/generate");
+      options.endpoint || joinUrlParts(customOrigin || callAiEnv.def.CALLAI_CHAT_URL, "/api/openrouter-image/generate");
 
     if (!apiKey) {
       throw new Error("API key is required for image generation (simple)");
@@ -81,7 +81,8 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
     if (options.style) formData.append("style", options.style);
 
     // Use explicit endpoint if provided (highest priority), otherwise construct from origin
-    const editEndpoint = options.endpoint || joinUrlParts(customOrigin || callAiEnv.def.CALLAI_CHAT_URL, "/api/openai-image/edit");
+    const editEndpoint =
+      options.endpoint || joinUrlParts(customOrigin || callAiEnv.def.CALLAI_CHAT_URL, "/api/openrouter-image/edit");
 
     if (!apiKey) {
       throw new Error("API key is required for image generation (edit)");

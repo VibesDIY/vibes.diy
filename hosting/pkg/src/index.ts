@@ -6,6 +6,8 @@ import {
   ImageEdit,
   ImageGenerate,
   OpenRouterChat,
+  OpenRouterImageGenerate,
+  OpenRouterImageEdit,
 } from "@vibes.diy/hosting-base";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -100,6 +102,10 @@ openapi.post("/api/openai-image/edit", ImageEdit);
 // Register OpenRouter chat endpoint
 openapi.post("/api/v1/chat/completions", OpenRouterChat);
 openapi.post("/api/v1/openrouter/chat/completions", OpenRouterChat);
+
+// Register OpenRouter image endpoints
+openapi.post("/api/openrouter-image/generate", OpenRouterImageGenerate);
+openapi.post("/api/openrouter-image/edit", OpenRouterImageEdit);
 
 // Register Claude chat endpoint (with OpenAI-compatible interface)
 // todo file a GitHub issue using gh, saying we should evaluate using this endpoint in the vibes.diy app when a claude model is selected
