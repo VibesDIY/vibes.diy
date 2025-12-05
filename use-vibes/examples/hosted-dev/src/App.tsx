@@ -21,7 +21,7 @@ declare global {
 
 // Sample app that demonstrates hosted app patterns
 export default function App() {
-  const { database, useLiveQuery, enableSync, syncEnabled } = useFireproof('hosted-dev-app');
+  const { database, useLiveQuery, attach } = useFireproof('hosted-dev-app');
   const [message, setMessage] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [loading, setLoading] = useState(false);
@@ -149,20 +149,16 @@ export default function App() {
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• API Key: {window.CALLAI_API_KEY}</li>
             <li>• Chat URL: {window.CALLAI_CHAT_URL}</li>
-            <li>• Sync Enabled: {syncEnabled ? '✅ Yes' : '❌ No'}</li>
+            <li>
+              • Sync Status: {attach?.state === 'attached' ? '✅ Connected' : '❌ Not Connected'}
+            </li>
             <li>• Database: Connected</li>
           </ul>
         </div>
 
-        {/* Sync Controls */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={enableSync}
-            disabled={syncEnabled || false}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {syncEnabled ? '✅ Sync Active' : 'Enable Sync'}
-          </button>
+        {/* Sync Info */}
+        <div className="mb-4 text-sm text-gray-600">
+          <p>Sign in with Clerk to enable automatic cloud sync</p>
         </div>
       </div>
 

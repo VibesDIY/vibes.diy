@@ -1,5 +1,6 @@
 import React, { createContext, useContext, type ReactNode } from 'react';
 import { z } from 'zod';
+import type { DashboardApiImpl } from '@fireproof/core-protocols-dashboard';
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -106,3 +107,16 @@ export function VibeContextProvider({ metadata, children }: VibeContextProviderP
 export function useVibeContext(): VibeMetadata | undefined {
   return useContext(VibeContext);
 }
+
+// DashboardApi Context for Clerk integration
+// Exported so it can be used by VibeClerkIntegration (in separate file)
+export const DashboardApiContext = createContext<DashboardApiImpl<unknown> | null>(null);
+
+export function useDashboardApi() {
+  return useContext(DashboardApiContext);
+}
+
+// VibeClerkIntegration is now in a separate file (VibeClerkIntegration.tsx)
+// to allow dynamic imports and avoid loading Clerk dependencies when not needed
+// Re-export it from ./clerk.js for convenience
+export { VibeClerkIntegration } from './clerk.js';

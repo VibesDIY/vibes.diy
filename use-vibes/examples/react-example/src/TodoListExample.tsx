@@ -16,17 +16,16 @@ function TodoListExample() {
   const [newTodoText, setNewTodoText] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
-  // Use Fireproof - starts local-first, then automatically shows sync overlay
-  const { useLiveQuery, database, attach, enableSync, syncEnabled } = useFireproof('TodoApp-100');
+  // Use Fireproof - starts local-first, then automatically syncs when logged in
+  const { useLiveQuery, database, attach } = useFireproof('TodoApp-100');
 
   // Debug logging for attach state
   useEffect(() => {
-    console.log('Sync enabled:', syncEnabled);
     console.log('Attach state:', attach?.state);
     if (attach?.ctx?.tokenAndClaims) {
       console.log('Token state:', attach.ctx.tokenAndClaims.state);
     }
-  }, [syncEnabled, attach]);
+  }, [attach]);
 
   // Get all todos sorted by creation date
   const { docs: allTodos } = useLiveQuery<TodoDocument>('type', {
@@ -113,37 +112,20 @@ function TodoListExample() {
         A simple todo list using Fireproof for real-time data sync and persistence.
       </p>
 
-      {/* Sync control button */}
-      {!syncEnabled && (
-        <div
-          style={{
-            marginBottom: '2rem',
-            padding: '1rem',
-            backgroundColor: '#f0f8ff',
-            borderRadius: '4px',
-            border: '1px solid #b0d4ff',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <span style={{ color: '#0066cc' }}>Enable sync to share your todos across devices</span>
-          <button
-            onClick={enableSync}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#007acc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-            }}
-          >
-            Enable Sync
-          </button>
-        </div>
-      )}
+      {/* Sync info */}
+      <div
+        style={{
+          marginBottom: '2rem',
+          padding: '1rem',
+          backgroundColor: '#f0f8ff',
+          borderRadius: '4px',
+          border: '1px solid #b0d4ff',
+        }}
+      >
+        <span style={{ color: '#0066cc' }}>
+          Sign in with Clerk to sync your todos across devices
+        </span>
+      </div>
 
       {/* Add new todo form */}
       <form onSubmit={handleAddTodo} style={{ marginBottom: '2rem' }}>
@@ -240,47 +222,45 @@ function TodoListExample() {
       </div>
 
       {/* Sync status indicator */}
-      {syncEnabled &&
-        attach?.state === 'attached' &&
-        attach?.ctx?.tokenAndClaims?.state === 'ready' && (
-          <div
+      {attach?.state === 'attached' && attach?.ctx?.tokenAndClaims?.state === 'ready' && (
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.5rem 1rem',
+            backgroundColor: '#d4edda',
+            borderRadius: '4px',
+            border: '1px solid #c3e6cb',
+            color: '#155724',
+            fontSize: '0.9rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span>✓ Syncing across devices</span>
+          <button
+            onClick={() => {
+              const tokenAndClaims = attach?.ctx?.tokenAndClaims;
+              if (tokenAndClaims?.state === 'ready' && tokenAndClaims?.reset) {
+                tokenAndClaims.reset();
+              }
+            }}
             style={{
-              marginBottom: '1rem',
-              padding: '0.5rem 1rem',
-              backgroundColor: '#d4edda',
-              borderRadius: '4px',
-              border: '1px solid #c3e6cb',
+              background: 'none',
+              border: 'none',
               color: '#155724',
-              fontSize: '0.9rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontSize: '0.85rem',
             }}
           >
-            <span>✓ Syncing across devices</span>
-            <button
-              onClick={() => {
-                const tokenAndClaims = attach?.ctx?.tokenAndClaims;
-                if (tokenAndClaims?.state === 'ready' && tokenAndClaims?.reset) {
-                  tokenAndClaims.reset();
-                }
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#155724',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                fontSize: '0.85rem',
-              }}
-            >
-              Sign Out
-            </button>
-          </div>
-        )}
+            Sign Out
+          </button>
+        </div>
+      )}
 
       {/* Sync state indicators */}
-      {syncEnabled && attach?.state === 'attaching' && (
+      {attach?.state === 'attaching' && (
         <div
           style={{
             marginBottom: '1rem',
@@ -296,7 +276,7 @@ function TodoListExample() {
         </div>
       )}
 
-      {syncEnabled && attach?.state === 'error' && (
+      {attach?.state === 'error' && (
         <div
           style={{
             marginBottom: '1rem',

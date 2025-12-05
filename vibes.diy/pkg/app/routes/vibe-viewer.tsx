@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/clerk-react";
 import { mountVibeWithCleanup } from "../mounting/index.js";
 import { transformImports } from "@vibes.diy/prompts";
 import LoggedOutView from "../components/LoggedOutView.js";
+import { VibeClerkIntegration } from "use-vibes";
 
 const sthis = Lazy(() => ensureSuperThis());
 
@@ -206,26 +207,28 @@ function VibeInstanceViewerContent() {
   }
 
   return (
-    <div className="relative w-full h-screen bg-gray-900">
-      {/* Error Overlay */}
-      {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
-          <div className="text-center max-w-md">
-            <p className="text-red-400 text-lg mb-4">Error loading vibe:</p>
-            <p className="text-white mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Retry
-            </button>
+    <VibeClerkIntegration>
+      <div className="relative w-full h-screen bg-gray-900">
+        {/* Error Overlay */}
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+            <div className="text-center max-w-md">
+              <p className="text-red-400 text-lg mb-4">Error loading vibe:</p>
+              <p className="text-white mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Container for vibe module to mount into */}
-      <div id={containerId} className="w-full h-full" />
-    </div>
+        {/* Container for vibe module to mount into */}
+        <div id={containerId} className="w-full h-full" />
+      </div>
+    </VibeClerkIntegration>
   );
 }
 
