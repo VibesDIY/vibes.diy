@@ -8,7 +8,7 @@ interface Bindings {
 const app = new Hono<{ Bindings: Bindings }>();
 
 // Serve import map with caching
-app.get("/import-map.json", async (c: Context) => {
+app.get("/importmap.json", async (c: Context) => {
   const importMap = getImportMapJson();
 
   return new Response(importMap, {
