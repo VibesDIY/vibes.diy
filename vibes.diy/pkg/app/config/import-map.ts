@@ -20,6 +20,8 @@ export function getLibraryImportMap() {
     "https://esm.sh/react@19.2.0": "https://esm.sh/react@19.2.1",
     "https://esm.sh/react@19.3.0-canary-fd524fe0-20251121":
       "https://esm.sh/react@19.2.1",
+    "https://esm.sh/react-dom@19.3.0-canary-fd524fe0-20251121":
+      "https://esm.sh/react-dom@19.2.1",
   };
 }
 
