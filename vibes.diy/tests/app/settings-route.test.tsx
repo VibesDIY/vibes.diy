@@ -109,6 +109,10 @@ vi.mock("@clerk/clerk-react", () => ({
       primaryEmailAddress: { emailAddress: "test@example.com" },
     },
   }),
+  useSession: () => ({
+    session: { id: "test-session-id" },
+    isLoaded: true,
+  }),
 }));
 
 describe("Settings Route", () => {

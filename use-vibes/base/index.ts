@@ -11,7 +11,6 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from 'use-fireproof';
-import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { useVibeContext, useDashboardApi, type VibeMetadata } from './contexts/VibeContext.js';
 import { ClerkTokenStrategy } from './clerk-token-strategy.js';
 
@@ -22,27 +21,6 @@ interface ShareApiResponse {
   role: string;
   right: string;
   message?: string;
-}
-
-// Track sync status by database name and instance ID
-const syncEnabledInstances = new Map<string, Set<string>>();
-
-// Simple counter for generating unique instance IDs (avoids React.useId conflicts)
-let instanceCounter = 0;
-
-// Helper to update body class based on global sync status
-function updateBodyClass() {
-  if (typeof window === 'undefined' || !document?.body) return;
-
-  const hasAnySyncEnabled = Array.from(syncEnabledInstances.values()).some(
-    (instanceSet) => instanceSet.size > 0
-  );
-
-  if (hasAnySyncEnabled) {
-    document.body.classList.add(VIBES_SYNC_ENABLED_CLASS);
-  } else {
-    document.body.classList.remove(VIBES_SYNC_ENABLED_CLASS);
-  }
 }
 
 const sthis = Lazy(() => ensureSuperThis());
@@ -115,9 +93,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
 
-  // Generate unique instance ID for this hook instance (no React dependency)
-  const instanceId = `instance-${++instanceCounter}`;
-
   // Get database name for tracking purposes (use augmented name)
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
@@ -134,18 +109,6 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     augmentedDbName,
     attachConfig ? { attach: attachConfig } : {}
   );
-
-  // Sync is enabled whenever user is logged in (dashApi exists)
-  const syncEnabled = !!strategy && (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
-
-  // Stub functions for backwards compatibility (sync is now automatic when logged in)
-  const enableSync = useCallback(() => {
-    console.log('Sync is automatic when logged in with Clerk');
-  }, []);
-
-  const disableSync = useCallback(() => {
-    console.log('Sync is automatic when logged in with Clerk - sign out to disable');
-  }, []);
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
@@ -274,48 +237,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     };
   }, [share]);
 
-  // Manage global sync status tracking and body class
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Ensure database entry exists in Map
-    if (!syncEnabledInstances.has(dbName)) {
-      syncEnabledInstances.set(dbName, new Set());
-    }
-    const instanceSet = syncEnabledInstances.get(dbName);
-    if (!instanceSet) return;
-
-    if (syncEnabled) {
-      // Add this instance to the sync-enabled set
-      instanceSet.add(instanceId);
-    } else {
-      // Remove this instance from the sync-enabled set
-      instanceSet.delete(instanceId);
-    }
-
-    // Update body class based on global sync status
-    updateBodyClass();
-
-    // Cleanup on unmount - remove this instance
-    return () => {
-      const currentInstanceSet = syncEnabledInstances.get(dbName);
-      if (currentInstanceSet) {
-        currentInstanceSet.delete(instanceId);
-        // Clean up empty sets
-        if (currentInstanceSet.size === 0) {
-          syncEnabledInstances.delete(dbName);
-        }
-        updateBodyClass();
-      }
-    };
-  }, [syncEnabled, dbName, instanceId]);
-
-  // Return combined result with stub sync functions
+  // Return combined result with share function
   return {
     ...result,
-    enableSync,
-    disableSync,
-    syncEnabled,
     share,
   };
 }

@@ -8,7 +8,7 @@ interface Todo {
 }
 
 export function ShareExample() {
-  const { database, useLiveQuery, syncEnabled } = useFireproof('todos-shared-abc1');
+  const { database, useLiveQuery } = useFireproof('todos-shared-abc1');
   const todos = useLiveQuery<Todo>('_id', { limit: 15 }).docs;
   const [newTodo, setNewTodo] = useState('');
   const [shareEmail, setShareEmail] = useState('');
@@ -94,42 +94,7 @@ export function ShareExample() {
       <h1>Todo List with Sharing</h1>
 
       <div style={{ marginBottom: '20px' }}>
-        <p>
-          Sync Status:{' '}
-          <strong style={{ color: syncEnabled ? 'green' : 'red' }}>
-            {syncEnabled ? 'Enabled' : 'Disabled'}
-          </strong>
-        </p>
-        {!syncEnabled && (
-          <button
-            onClick={handleEnableSync}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Enable Sync
-          </button>
-        )}
-        {syncEnabled && (
-          <button
-            onClick={handleDisableSync}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Disable Sync
-          </button>
-        )}
+        <p style={{ color: '#666' }}>Sign in with Clerk to enable automatic sync</p>
       </div>
 
       <div style={{ marginBottom: '20px' }}>
@@ -164,11 +129,9 @@ export function ShareExample() {
 
       <div style={{ marginBottom: '20px' }}>
         <h3 style={{ marginBottom: '10px' }}>Share with Others</h3>
-        {!syncEnabled && (
-          <p style={{ color: '#dc3545', fontSize: '14px', marginBottom: '10px' }}>
-            Please enable sync before sharing
-          </p>
-        )}
+        <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px' }}>
+          Sign in with Clerk to enable sharing
+        </p>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <input
             type="email"
@@ -176,7 +139,6 @@ export function ShareExample() {
             onChange={(e) => setShareEmail(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleShare()}
             placeholder="Enter email address..."
-            disabled={!syncEnabled}
             style={{
               flex: 1,
               padding: '10px',
@@ -186,14 +148,14 @@ export function ShareExample() {
           />
           <button
             onClick={handleShare}
-            disabled={!syncEnabled || isSharing}
+            disabled={isSharing}
             style={{
               padding: '10px 20px',
-              backgroundColor: syncEnabled ? '#ffc107' : '#6c757d',
+              backgroundColor: '#ffc107',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: syncEnabled ? 'pointer' : 'not-allowed',
+              cursor: 'pointer',
             }}
           >
             {isSharing ? 'Sharing...' : 'Share'}
