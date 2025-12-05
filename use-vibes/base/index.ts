@@ -12,7 +12,8 @@ import {
   type UseFpToCloudParam,
 } from 'use-fireproof';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
-import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
+import { useVibeContext, useDashboardApi, type VibeMetadata } from './contexts/VibeContext.js';
+import { ClerkTokenStrategy } from './clerk-token-strategy.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -108,6 +109,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeMetadata = useVibeContext();
 
+  // Get dashApi from context (for Clerk integration)
+  const dashApi = useDashboardApi();
+
   // Construct augmented database name with vibe metadata (titleId + installId)
   const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
 
@@ -123,8 +127,11 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Check if sync was previously enabled (persists across refreshes)
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
 
-  // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
+  // Create strategy if dashApi is available
+  const strategy = dashApi ? new ClerkTokenStrategy(dashApi) : undefined;
+
+  // Create attach config only if sync was previously enabled and strategy is available
+  const attachConfig = wasSyncEnabled && strategy ? toCloud({ strategy: strategy }) : undefined;
 
   // Use original useFireproof with augmented database name
   // This ensures each titleId + installId combination gets its own database
@@ -133,15 +140,30 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     attachConfig ? { attach: attachConfig } : {}
   );
 
-  // TODO: Enable sync with Clerk token
+  // Enable sync with Clerk token
   const enableSync = useCallback(() => {
-    console.log('enableSync() not implemented - TODO: Enable sync with Clerk token');
-  }, []);
+    if (!strategy) {
+      console.warn('Cannot enable sync: Clerk authentication not available');
+      return;
+    }
 
-  // TODO: Disable sync with Clerk token
+    // Set sync flag in localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(syncKey, 'true');
+    }
+
+    // Trigger re-render by updating state or forcing effect
+    console.log('Sync enabled - reload to apply');
+  }, [strategy, syncKey]);
+
+  // Disable sync with Clerk token
   const disableSync = useCallback(() => {
-    console.log('disableSync() not implemented - TODO: Disable sync with Clerk token');
-  }, []);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(syncKey);
+    }
+
+    console.log('Sync disabled - reload to apply');
+  }, [syncKey]);
 
   // Determine sync status - check for actual attachment state
   const syncEnabled =
@@ -387,7 +409,9 @@ export {
 // Export VibeContext for inline rendering with proper ledger naming (needed by useFireproof)
 export {
   VibeContextProvider,
+  VibeClerkIntegration,
   useVibeContext,
+  useDashboardApi,
   VibeMetadataValidationError,
   VIBE_METADATA_ERROR_CODES,
   validateVibeMetadata,

@@ -1,5 +1,8 @@
-import React, { createContext, useContext, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { z } from 'zod';
+import type { Clerk } from '@clerk/clerk-js';
+import { useClerk, useSession } from '@clerk/clerk-react';
+import { clerkDashApi, type DashboardApiImpl } from '@fireproof/core-protocols-dashboard';
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -105,4 +108,32 @@ export function VibeContextProvider({ metadata, children }: VibeContextProviderP
 
 export function useVibeContext(): VibeMetadata | undefined {
   return useContext(VibeContext);
+}
+
+// DashboardApi Context for Clerk integration
+const DashboardApiContext = createContext<DashboardApiImpl<unknown> | null>(null);
+
+export function useDashboardApi() {
+  return useContext(DashboardApiContext);
+}
+
+/**
+ * VibeClerkIntegration - Provider component that sets up Clerk + DashboardApi
+ * Wraps children and provides dashApi instance via context
+ */
+export function VibeClerkIntegration({ children }: { children: ReactNode }) {
+  const { session, isLoaded } = useSession();
+  const clerk = useClerk();
+  const [dashApi, setDashApi] = useState<DashboardApiImpl<unknown> | null>(null);
+
+  useEffect(() => {
+    // Wait for Clerk to be fully loaded before creating dashApi
+    if (isLoaded && session && clerk) {
+      const apiUrl = 'https://connect.fireproof.direct/fp/cloud/api';
+      const api = clerkDashApi(clerk as unknown as Clerk, { apiUrl });
+      setDashApi(api);
+    }
+  }, [isLoaded, session, clerk]);
+
+  return <DashboardApiContext.Provider value={dashApi}>{children}</DashboardApiContext.Provider>;
 }

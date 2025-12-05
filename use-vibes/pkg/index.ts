@@ -25,6 +25,10 @@ export {
   // Install ID generation
   generateInstallId,
 
+  // Clerk integration
+  VibeClerkIntegration,
+  useDashboardApi,
+
   // Hooks (kept for compatibility)
   useMobile,
 } from '@vibes.diy/use-vibes-base';
