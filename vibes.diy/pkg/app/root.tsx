@@ -19,7 +19,6 @@ import GtmNoScript from "./components/GtmNoScript.js";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
-import { getLibraryImportMap } from "@vibes.diy/hosting-base/config/library-import-map";
 
 export const links: Route.LinksFunction = () => {
   const rawBase = VibesDiyEnv.APP_BASENAME();
@@ -87,16 +86,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        {/* Import map for inline vibe rendering with ES modules */}
+        {/* Import map for inline vibe rendering with ES modules - loaded synchronously */}
         <script
-          type="importmap"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              imports: {
-                // Only include React imports in production (dev mode uses bundled versions)
-                ...(!import.meta.env.DEV ? getLibraryImportMap() : {}),
-              },
-            }),
+            __html: `
+// Fetch and inject import map synchronously before module scripts execute
+const xhr = new XMLHttpRequest();
+xhr.open('GET', '${VibesDiyEnv.API_BASE_URL()}importmap.json', false);
+xhr.send();
+if (xhr.status === 200) {
+  const script = document.createElement('script');
+  script.type = 'importmap';
+  script.textContent = xhr.responseText;
+  document.currentScript.parentNode.insertBefore(script, document.currentScript.nextSibling);
+}
+            `.trim(),
           }}
         />
         <meta charSet="utf-8" />
