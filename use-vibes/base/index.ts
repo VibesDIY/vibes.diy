@@ -334,10 +334,6 @@ export type { ImgGenProps } from './components/ImgGen.js';
 // Export all components for testing and advanced usage
 export { ControlsBar } from './components/ControlsBar.js';
 export { PromptBar } from './components/PromptBar.js';
-export { VibesButton } from './components/VibesButton/VibesButton.js';
-export { VibesSwitch } from './components/VibesSwitch/VibesSwitch.js';
-export { LabelContainer } from './components/LabelContainer/index.js';
-export type { LabelContainerProps } from './components/LabelContainer/index.js';
 
 // Export hooks
 export { hashInput, useImageGen } from './hooks/image-gen/index.js';
@@ -373,33 +369,7 @@ export type {
 export type { UseVibesOptions, UseVibesResult, VibeDocument } from '@vibes.diy/use-vibes-types';
 export { useVibes } from './hooks/vibes-gen/index.js';
 
-// Export components for React users
-export { VibeControl } from './components/VibeControl.js';
-export type { VibeControlProps } from './components/VibeControl.js';
-
-// Export HiddenMenuWrapper component and utilities
-export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
-export type { HiddenMenuWrapperProps } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
-export { hiddenMenuTheme } from './components/HiddenMenuWrapper/HiddenMenuWrapper.styles.js';
-export {
-  createVibeControlStyles,
-  defaultVibeControlClasses,
-  vibeControlTheme,
-} from './utils/vibe-control-styles.js';
-export type { VibeControlClasses } from './utils/vibe-control-styles.js';
-// Export additional components
-export { VibesPanel } from './components/VibesPanel.js';
-export type { VibesPanelProps } from './components/VibesPanel.tsx';
-export { BrutalistCard } from './components/BrutalistCard/index.js';
-export type {
-  BrutalistCardProps,
-  BrutalistCardVariant,
-  BrutalistCardSize,
-} from './components/BrutalistCard/index.js';
-
-// Export unified mount function - the main API for non-React environments
-export { mountVibesApp } from './vibe-app-mount.js';
-export type { MountVibesAppOptions, MountVibesAppResult } from './vibe-app-mount.js';
+// App-specific components moved to vibes.diy/pkg/app - no longer exported
 
 // Export app slug utilities
 export {
@@ -414,20 +384,14 @@ export {
   generateInstallId,
 } from './utils/appSlug.js';
 
-// Export VibeContext for inline rendering with proper ledger naming
+// Export VibeContext for inline rendering with proper ledger naming (needed by useFireproof)
 export {
   VibeContextProvider,
   useVibeContext,
   VibeMetadataValidationError,
   VIBE_METADATA_ERROR_CODES,
+  validateVibeMetadata,
 } from './contexts/VibeContext.js';
 export type { VibeMetadata } from './contexts/VibeContext.js';
 
-// Export mounting utilities for inline vibe rendering
-export {
-  mountVibeCode,
-  mountVibeWithCleanup,
-  isVibesMountReadyEvent,
-  isVibesMountErrorEvent,
-} from './mounting/index.js';
-export type { VibesMountReadyDetail, VibesMountErrorDetail } from './mounting/index.js';
+// Mounting utilities moved to vibes.diy/pkg/app - no longer exported

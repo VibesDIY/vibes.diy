@@ -1,5 +1,5 @@
 import React from "react";
-import { VibesSwitch } from "@vibes.diy/use-vibes-base";
+import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
 
 interface VibesDIYLogoProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: number;

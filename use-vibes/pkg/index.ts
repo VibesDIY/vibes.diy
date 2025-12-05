@@ -1,18 +1,20 @@
-// Re-export clean public API from core package
+// Clean consumer API - ONLY exports for user vibes
 export {
-  // Primary component
-  ImgGen,
-  type ImgGenProps,
-
-  // Fireproof integration
+  // Core Fireproof integration
   useFireproof,
   fireproof,
   ImgFile,
   toCloud,
+  type Fireproof,
 
   // AI integration
   callAI,
   callAi,
+  type CallAI,
+
+  // Consumer components
+  ImgGen,
+  type ImgGenProps,
 
   // Vibes generation hook
   useVibes,
@@ -20,38 +22,9 @@ export {
   type UseVibesResult,
   type VibeDocument,
 
-  // React components
-  VibeControl,
-  VibesSwitch,
-  VibesButton,
-  type VibeControlProps,
-  HiddenMenuWrapper,
-  type HiddenMenuWrapperProps,
-  VibesPanel,
-  type VibesPanelProps,
-
-  // Main mount function - unified API for non-React environments
-  mountVibesApp,
-  type MountVibesAppOptions,
-  type MountVibesAppResult,
-  vibeControlTheme,
-  createVibeControlStyles,
-  defaultVibeControlClasses,
-  type VibeControlClasses,
-  hiddenMenuTheme,
-
   // Install ID generation
   generateInstallId,
 
-  // Mounting utilities for inline vibe rendering
-  mountVibeCode,
-  mountVibeWithCleanup,
-  isVibesMountReadyEvent,
-  isVibesMountErrorEvent,
-  type VibesMountReadyDetail,
-  type VibesMountErrorDetail,
-
-  // Type namespaces
-  type Fireproof,
-  type CallAI,
+  // Hooks (kept for compatibility)
+  useMobile,
 } from '@vibes.diy/use-vibes-base';

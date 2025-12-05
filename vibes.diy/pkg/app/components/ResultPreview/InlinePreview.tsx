@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Lazy } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
-import { mountVibeWithCleanup } from "use-vibes";
+import { mountVibeWithCleanup } from "../../mounting/index.js";
 import { setupDevShims, transformImportsDev } from "../../utils/dev-shims.js";
 import { useAuth } from "@clerk/clerk-react";
 import { VibesDiyEnv } from "../../config/env.js";

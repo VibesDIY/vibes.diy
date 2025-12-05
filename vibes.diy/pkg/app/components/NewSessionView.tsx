@@ -3,11 +3,9 @@ import { useNewSessionChat } from "../hooks/useNewSessionChat.js";
 import ChatInput from "./ChatInput.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
-import {
-  BrutalistCard,
-  VibesButton,
-  VibesSwitch,
-} from "@vibes.diy/use-vibes-base";
+import { BrutalistCard } from "./vibes/BrutalistCard.js";
+import { VibesButton } from "./vibes/VibesButton/index.js";
+import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
 import {
   partyPlannerPrompt,
   progressTrackerPrompt,
