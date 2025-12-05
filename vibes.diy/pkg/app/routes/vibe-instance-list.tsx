@@ -4,7 +4,8 @@ import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
 import PublishedVibeCard from "../components/PublishedVibeCard.js";
-import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
+import { BrutalistCard } from "../components/vibes/BrutalistCard.js";
+import { VibesButton } from "../components/vibes/VibesButton/index.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
