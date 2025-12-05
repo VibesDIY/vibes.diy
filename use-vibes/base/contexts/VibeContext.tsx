@@ -120,6 +120,7 @@ export function useDashboardApi() {
 /**
  * VibeClerkIntegration - Provider component that sets up Clerk + DashboardApi
  * Wraps children and provides dashApi instance via context
+ * When dashApi is present, useFireproof will automatically enable cloud sync
  */
 export function VibeClerkIntegration({ children }: { children: ReactNode }) {
   const { session, isLoaded } = useSession();

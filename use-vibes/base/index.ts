@@ -121,17 +121,12 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Get database name for tracking purposes (use augmented name)
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
-  // Use global sync key - all databases share the same auth token and sync state
-  const syncKey = 'fireproof-sync-enabled';
 
-  // Check if sync was previously enabled (persists across refreshes)
-  const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
-
-  // Create strategy if dashApi is available
+  // Create strategy if dashApi is available (user is logged in)
   const strategy = dashApi ? new ClerkTokenStrategy(dashApi) : undefined;
 
-  // Create attach config only if sync was previously enabled and strategy is available
-  const attachConfig = wasSyncEnabled && strategy ? toCloud({ strategy: strategy }) : undefined;
+  // Sync is enabled whenever we have a strategy (user is logged in)
+  const attachConfig = strategy ? toCloud({ strategy: strategy }) : undefined;
 
   // Use original useFireproof with augmented database name
   // This ensures each titleId + installId combination gets its own database
@@ -140,34 +135,17 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     attachConfig ? { attach: attachConfig } : {}
   );
 
-  // Enable sync with Clerk token
+  // Sync is enabled whenever user is logged in (dashApi exists)
+  const syncEnabled = !!strategy && (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
+
+  // Stub functions for backwards compatibility (sync is now automatic when logged in)
   const enableSync = useCallback(() => {
-    if (!strategy) {
-      console.warn('Cannot enable sync: Clerk authentication not available');
-      return;
-    }
+    console.log('Sync is automatic when logged in with Clerk');
+  }, []);
 
-    // Set sync flag in localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(syncKey, 'true');
-    }
-
-    // Trigger re-render by updating state or forcing effect
-    console.log('Sync enabled - reload to apply');
-  }, [strategy, syncKey]);
-
-  // Disable sync with Clerk token
   const disableSync = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(syncKey);
-    }
-
-    console.log('Sync disabled - reload to apply');
-  }, [syncKey]);
-
-  // Determine sync status - check for actual attachment state
-  const syncEnabled =
-    wasSyncEnabled && (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
+    console.log('Sync is automatic when logged in with Clerk - sign out to disable');
+  }, []);
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
