@@ -6,7 +6,7 @@
  * Available via HTTPS at: https://vibes.diy/import-map.json
  */
 
-const VIBES_VERSION = "0.19.0-dev-clerk";
+const VIBES_VERSION = "0.19.1-dev-clerk";
 
 export function getLibraryImportMap() {
   return {
