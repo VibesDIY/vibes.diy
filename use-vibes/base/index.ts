@@ -1,7 +1,4 @@
-import type {
-  ToCloudAttachable,
-  TokenStrategie,
-} from '@fireproof/core-types-protocols-cloud';
+import type { ToCloudAttachable, TokenStrategie } from '@fireproof/core-types-protocols-cloud';
 import { getKeyBag } from '@fireproof/core-keybag';
 import { Lazy } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
@@ -15,11 +12,7 @@ import {
   type UseFpToCloudParam,
 } from 'use-fireproof';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
-import {
-  useVibeContext,
-  VibeClerkIntegration,
-  type VibeMetadata,
-} from './contexts/VibeContext.js';
+import { useVibeContext, VibeClerkIntegration, type VibeMetadata } from './contexts/VibeContext.js';
 import { globalClerkStrategy } from './clerk-token-strategy.js';
 
 // Interface for share API response
