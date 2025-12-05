@@ -3,7 +3,7 @@
  * Used by: hosting worker endpoint, vibes.diy app (root.tsx, eject-template.ts)
  *
  * This configuration is deployed as code to the hosting worker for fast response.
- * Available via HTTPS at: https://vibes.diy/import-map.json
+ * Available via HTTPS at: https://vibes.diy/importmap.json
  */
 
 const VIBES_VERSION = "0.19.0-dev-stable";
