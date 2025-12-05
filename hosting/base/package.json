@@ -21,7 +21,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.4.66",
-    "@fireproof/core-runtime": "0.24.0",
+    "@fireproof/core-runtime": "0.24.1-dev-react19.2",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
     "call-ai": "workspace:*",
@@ -31,7 +31,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.0",
+    "@fireproof/core-cli": "0.24.1-dev-react19.2",
     "@vitest/browser-playwright": "^4.0.14",
     "typescript": "^5.9.3"
   }
