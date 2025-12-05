@@ -19,6 +19,7 @@
     "xbuild:base": "pnpm --filter use-vibes-base build",
     "build": "core-cli tsc",
     "build:prod": "pnpm --filter vibes-diy build",
+    "preview": "pnpm build:prod && pnpm serve:prod",
     "serve:prod": "pnpm exec serve -s vibes.diy/pkg/build/client",
     "lint": "eslint . && cd hosting/pkg && pnpm lint",
     "knip": "knip",
