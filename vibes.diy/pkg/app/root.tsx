@@ -16,6 +16,7 @@ import "./app.css";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
 import GtmNoScript from "./components/GtmNoScript.js";
+import { ExposeClerkIntegration } from "./components/ExposeClerkIntegration.js";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
@@ -132,6 +133,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {children}
                 <ClientOnly>
                   <CookieBanner />
+                  <ExposeClerkIntegration />
                 </ClientOnly>
               </CookieConsentProvider>
               <ScrollRestoration data-testid="scroll-restoration" />

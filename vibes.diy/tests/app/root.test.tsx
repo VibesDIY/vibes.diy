@@ -102,6 +102,12 @@ vi.mock("use-fireproof", async () => {
       useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
       useLiveQuery: () => [[]],
     }),
+    fireproof: vi.fn(),
+    Database: class MockDatabase {},
+    DocFileMeta: class MockDocFileMeta {},
+    DocBase: {},
+    ImgFile: class MockImgFile {},
+    toCloud: vi.fn(),
   };
 });
 
@@ -136,6 +142,15 @@ vi.mock("@clerk/clerk-react", () => ({
     userId: "test-user-id",
     isLoaded: true,
     isSignedIn: true,
+  }),
+  useClerk: () => ({
+    client: {},
+    session: {},
+  }),
+  useSession: () => ({
+    session: null,
+    isLoaded: true,
+    isSignedIn: false,
   }),
 }));
 
