@@ -31,7 +31,7 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token",
+    "@fireproof/core-cli": "0.24.1-dev-react19.2",
     "@vitest/browser-playwright": "^4.0.14"
   }
 }
