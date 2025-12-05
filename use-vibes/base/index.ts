@@ -1,4 +1,7 @@
-import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
+import type {
+  ToCloudAttachable,
+  TokenStrategie,
+} from '@fireproof/core-types-protocols-cloud';
 import { getKeyBag } from '@fireproof/core-keybag';
 import { Lazy } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
@@ -12,7 +15,12 @@ import {
   type UseFpToCloudParam,
 } from 'use-fireproof';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
-import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
+import {
+  useVibeContext,
+  VibeClerkIntegration,
+  type VibeMetadata,
+} from './contexts/VibeContext.js';
+import { globalClerkStrategy } from './clerk-token-strategy.js';
 
 // Interface for share API response
 interface ShareApiResponse {
@@ -70,12 +78,22 @@ export async function isJWTExpired(token: string): Promise<boolean> {
 }
 
 // Helper function to create toCloud configuration
-export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+export function toCloud(
+  opts?: UseFpToCloudParam & { tokenStrategy?: TokenStrategie }
+): ToCloudAttachable {
+  if (opts?.strategy && opts?.tokenStrategy) {
+    throw new Error("toCloud: provide either 'strategy' or 'tokenStrategy', not both.");
+  }
+
+  const { tokenStrategy, strategy, ...rest } = opts ?? {};
+  const effectiveStrategy = tokenStrategy ?? strategy;
+
   const attachable = originalToCloud({
-    ...opts,
+    ...rest,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
     tokenApiURI: 'https://connect.fireproof.direct/api',
     urls: { base: 'fpcloud://cloud.fireproof.direct' },
+    ...(effectiveStrategy ? { strategy: effectiveStrategy } : {}),
   });
 
   return attachable;
@@ -123,8 +141,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Check if sync was previously enabled (persists across refreshes)
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
 
-  // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
+  // Create attach config using Clerk strategy when vibeMetadata is present
+  const attachConfig = vibeMetadata ? toCloud({ tokenStrategy: globalClerkStrategy() }) : undefined;
 
   // Use original useFireproof with augmented database name
   // This ensures each titleId + installId combination gets its own database
@@ -417,6 +435,7 @@ export {
 // Export VibeContext for inline rendering with proper ledger naming
 export {
   VibeContextProvider,
+  VibeClerkIntegration,
   useVibeContext,
   VibeMetadataValidationError,
   VIBE_METADATA_ERROR_CODES,
