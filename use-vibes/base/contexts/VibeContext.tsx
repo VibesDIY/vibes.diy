@@ -121,6 +121,10 @@ export function useDashboardApi() {
  * VibeClerkIntegration - Provider component that sets up Clerk + DashboardApi
  * Wraps children and provides dashApi instance via context
  * When dashApi is present, useFireproof will automatically enable cloud sync
+ *
+ * IMPORTANT: This component REQUIRES ClerkProvider to be in the component tree.
+ * It will throw an error if used outside of ClerkProvider.
+ * For apps that don't use Clerk, simply don't use this component.
  */
 export function VibeClerkIntegration({ children }: { children: ReactNode }) {
   const { session, isLoaded } = useSession();
