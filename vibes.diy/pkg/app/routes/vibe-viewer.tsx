@@ -5,7 +5,8 @@ import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "@clerk/clerk-react";
-import { mountVibeWithCleanup, VibeClerkIntegration } from "use-vibes";
+import { mountVibeWithCleanup } from "use-vibes";
+import { VibeClerkIntegration } from "@vibes.diy/use-vibes-base";
 import { setupDevShims, transformImportsDev } from "../utils/dev-shims.js";
 import LoggedOutView from "../components/LoggedOutView.js";
 

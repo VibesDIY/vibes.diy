@@ -51,9 +51,8 @@ export {
   type VibesMountReadyDetail,
   type VibesMountErrorDetail,
 
-  // VibeContext and Clerk integration
+  // VibeContext (metadata only - no Clerk integration in public API)
   VibeContextProvider,
-  VibeClerkIntegration,
   useVibeContext,
   type VibeMetadata,
 
