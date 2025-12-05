@@ -424,6 +424,7 @@ export {
 // Export VibeContext for inline rendering with proper ledger naming
 export {
   VibeContextProvider,
+  VibeClerkIntegration,
   useVibeContext,
   VibeMetadataValidationError,
   VIBE_METADATA_ERROR_CODES,

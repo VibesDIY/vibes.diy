@@ -114,19 +114,39 @@ export interface VibeContextProviderProps {
 }
 
 export function VibeContextProvider({ metadata, children }: VibeContextProviderProps) {
-  // Get Clerk session and clerk instance - must be inside ClerkProvider
+  return <VibeContext.Provider value={{ metadata }}>{children}</VibeContext.Provider>;
+}
+
+/**
+ * VibeClerkIntegration sets up Fireproof sync with Clerk authentication.
+ * This component MUST be used inside <ClerkProvider> to work correctly.
+ *
+ * Usage:
+ * - In vibe-viewer (has ClerkProvider): Include this component to enable sync
+ * - In inline rendering (no ClerkProvider): Do not include this component
+ *
+ * This separation allows VibeContextProvider to be used in contexts without Clerk,
+ * while still enabling opt-in Clerk integration when available.
+ */
+export function VibeClerkIntegration() {
+  const vibeMetadata = useVibeContext();
   const { session } = useSession();
   const clerk = useClerk();
 
   // Create DashboardApi via clerkDashApi factory when Clerk session is ready
   useEffect(() => {
-    if (session) {
+    // Only set up DashboardApi if we have all required pieces:
+    // - vibeMetadata (from VibeContext)
+    // - session (authenticated Clerk session from useSession)
+    // - clerk instance (for addListener)
+    if (session && clerk && vibeMetadata) {
       const dashApi = clerkDashApi(clerk, getApiUrl());
       globalClerkStrategy().setDashboardApi(dashApi);
     }
-  }, [session, clerk]);
+  }, [session, clerk, vibeMetadata]);
 
-  return <VibeContext.Provider value={{ metadata }}>{children}</VibeContext.Provider>;
+  // This is a side-effect-only component - no UI
+  return null;
 }
 
 export function useVibeContext(): VibeMetadata | undefined {

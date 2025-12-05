@@ -51,6 +51,12 @@ export {
   type VibesMountReadyDetail,
   type VibesMountErrorDetail,
 
+  // VibeContext and Clerk integration
+  VibeContextProvider,
+  VibeClerkIntegration,
+  useVibeContext,
+  type VibeMetadata,
+
   // Type namespaces
   type Fireproof,
   type CallAI,
