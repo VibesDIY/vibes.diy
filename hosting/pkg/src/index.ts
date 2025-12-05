@@ -12,6 +12,7 @@ import { cors } from "hono/cors";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import queueConsumer from "./queue-consumer.js";
 import renderApp from "./renderApp.js";
+import importMapEndpoint from "./endpoints/import-map.js";
 
 // Variables type for context
 interface Variables {
@@ -42,6 +43,9 @@ app.use(
     maxAge: 86400,
   }),
 );
+
+// Mount import map endpoint (no subdomain logic)
+app.route("/", importMapEndpoint);
 
 // Mount the renderApp router
 app.route("/", renderApp);
