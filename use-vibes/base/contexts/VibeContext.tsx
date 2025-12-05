@@ -1,8 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, type ReactNode } from 'react';
 import { z } from 'zod';
-import type { Clerk } from '@clerk/clerk-js';
-import { useClerk, useSession } from '@clerk/clerk-react';
-import { clerkDashApi, type DashboardApiImpl } from '@fireproof/core-protocols-dashboard';
+import type { DashboardApiImpl } from '@fireproof/core-protocols-dashboard';
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -111,34 +109,14 @@ export function useVibeContext(): VibeMetadata | undefined {
 }
 
 // DashboardApi Context for Clerk integration
-const DashboardApiContext = createContext<DashboardApiImpl<unknown> | null>(null);
+// Exported so it can be used by VibeClerkIntegration (in separate file)
+export const DashboardApiContext = createContext<DashboardApiImpl<unknown> | null>(null);
 
 export function useDashboardApi() {
   return useContext(DashboardApiContext);
 }
 
-/**
- * VibeClerkIntegration - Provider component that sets up Clerk + DashboardApi
- * Wraps children and provides dashApi instance via context
- * When dashApi is present, useFireproof will automatically enable cloud sync
- *
- * IMPORTANT: This component REQUIRES ClerkProvider to be in the component tree.
- * It will throw an error if used outside of ClerkProvider.
- * For apps that don't use Clerk, simply don't use this component.
- */
-export function VibeClerkIntegration({ children }: { children: ReactNode }) {
-  const { session, isLoaded } = useSession();
-  const clerk = useClerk();
-  const [dashApi, setDashApi] = useState<DashboardApiImpl<unknown> | null>(null);
-
-  useEffect(() => {
-    // Wait for Clerk to be fully loaded before creating dashApi
-    if (isLoaded && session && clerk) {
-      const apiUrl = 'https://connect.fireproof.direct/fp/cloud/api';
-      const api = clerkDashApi(clerk as unknown as Clerk, { apiUrl });
-      setDashApi(api);
-    }
-  }, [isLoaded, session, clerk]);
-
-  return <DashboardApiContext.Provider value={dashApi}>{children}</DashboardApiContext.Provider>;
-}
+// VibeClerkIntegration is now in a separate file (VibeClerkIntegration.tsx)
+// to allow dynamic imports and avoid loading Clerk dependencies when not needed
+// Re-export it from ./clerk.js for convenience
+export { VibeClerkIntegration } from './clerk.js';
