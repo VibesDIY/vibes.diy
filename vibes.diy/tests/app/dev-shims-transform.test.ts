@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { transformImports } from "../../pkg/app/utils/dev-shims.js";
+import { transformImports } from "@vibes.diy/prompts";
 
 describe("transformImports - Bare Import Transformation", () => {
   it("should not transform imports that are in the libraryImportMap", () => {
