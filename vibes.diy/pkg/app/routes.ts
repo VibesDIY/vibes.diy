@@ -24,6 +24,7 @@ export default [
 
   route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
+  route("fireproof", "./routes/fireproof.tsx", { id: "fireproof" }),
   route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
   route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
   route("vibe/:titleId/:installId", "./routes/vibe.$titleId.$installId.tsx", {

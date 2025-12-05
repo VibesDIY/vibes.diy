@@ -48,11 +48,17 @@ class vibesDiyEnv {
       this.env().get("VITE_CONNECT_URL") ??
       "https://connect.fireproof.direct/token",
   );
-  readonly CONNECT_API_URL = Lazy(
-    () =>
-      this.env().get("VITE_CONNECT_API_URL") ??
-      "https://connect.fireproof.direct/api",
-  );
+  readonly CONNECT_API_URL = Lazy(() => {
+    const envUrl = this.env().get("VITE_CONNECT_API_URL");
+    if (envUrl) {
+      return envUrl;
+    }
+    const isProduction =
+      runtimeFn().isBrowser && window.location.hostname === "vibes.diy";
+    return isProduction
+      ? "https://connect.fireproof.direct/api"
+      : "https://dev.connect.fireproof.direct/api";
+  });
   readonly CLOUD_SESSION_TOKEN_PUBLIC_KEY = Lazy(
     () =>
       this.env().get("VITE_CLOUD_SESSION_TOKEN_PUBLIC") ??
