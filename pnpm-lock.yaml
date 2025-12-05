@@ -15,8 +15,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.57.0
         version: 1.57.0
@@ -78,12 +78,12 @@ importers:
         specifier: ^0.4.66
         version: 0.4.81(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.0
-        version: 0.24.0(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(typescript@5.9.3)
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@types/node':
         specifier: ^24.9.1
         version: 24.10.1
@@ -101,8 +101,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.57.0
         version: 1.57.0
@@ -168,8 +168,8 @@ importers:
         specifier: ^0.4.66
         version: 0.4.81(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.0
-        version: 0.24.0(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -193,8 +193,8 @@ importers:
         version: 3.25.76
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.14
         version: 4.0.14(playwright@1.57.0)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.14)
@@ -212,7 +212,7 @@ importers:
         version: 4.20251128.0
       '@hono/clerk-auth':
         specifier: ^3.0.3
-        version: 3.0.3(hono@4.10.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 3.0.3(hono@4.10.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@vibes.diy/hosting-base':
         specifier: workspace:*
         version: link:../base
@@ -300,8 +300,8 @@ importers:
         specifier: ^0.4.66
         version: 0.4.81(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.0
-        version: 0.24.0(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(typescript@5.9.3)
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -313,8 +313,8 @@ importers:
         version: 19.2.0
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.14
         version: 4.0.14(playwright@1.57.0)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.14)
@@ -342,7 +342,7 @@ importers:
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@types/node':
         specifier: ^24.9.1
         version: 24.10.1
@@ -365,8 +365,8 @@ importers:
         specifier: ^1.57.0
         version: 1.57.0
       react:
-        specifier: ^19.2.0
-        version: 19.2.0
+        specifier: ^19.2.1
+        version: 19.2.1
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -386,17 +386,17 @@ importers:
         specifier: ^0.4.66
         version: 0.4.81(typescript@5.9.3)
       '@fireproof/core-keybag':
-        specifier: 0.24.0
-        version: 0.24.0(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.0
-        version: 0.24.0(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.0
-        version: 0.24.0(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.0
-        version: 0.24.0(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -413,33 +413,33 @@ importers:
         specifier: '>=19.1.0'
         version: 19.2.0
       react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.0)
+        specifier: ^19.2.1
+        version: 19.2.1(react@19.2.0)
       use-fireproof:
-        specifier: 0.24.0
-        version: 0.24.0(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
       zod:
         specifier: ^4.1.12
         version: 4.1.13
     devDependencies:
       '@chromatic-com/storybook':
         specifier: ^4.1.3
-        version: 4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+        version: 4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@storybook/addon-a11y':
         specifier: ^10.1.2
-        version: 10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+        version: 10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))
       '@storybook/addon-docs':
         specifier: ^10.0.0
-        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/react':
         specifier: ^10.0.8
-        version: 10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+        version: 10.1.2(react-dom@19.2.1(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@storybook/react-vite':
         specifier: ^10.0.8
-        version: 10.1.2(esbuild@0.27.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.2(esbuild@0.27.0)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@types/babel__standalone':
         specifier: ^7.1.9
         version: 7.1.9
@@ -454,7 +454,7 @@ importers:
         version: 4.0.14(playwright@1.57.0)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.14)
       storybook:
         specifier: ^10.1.2
-        version: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -468,11 +468,11 @@ importers:
         specifier: workspace:*
         version: link:../../../call-ai/pkg
       react:
-        specifier: ^19.2.0
-        version: 19.2.0
+        specifier: ^19.2.1
+        version: 19.2.1
       react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.0)
+        specifier: ^19.2.1
+        version: 19.2.1(react@19.2.1)
       use-vibes:
         specifier: workspace:*
         version: link:../../pkg
@@ -508,11 +508,11 @@ importers:
   use-vibes/examples/react-example:
     dependencies:
       react:
-        specifier: ^19.2.0
-        version: 19.2.0
+        specifier: ^19.2.1
+        version: 19.2.1
       react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.0)
+        specifier: ^19.2.1
+        version: 19.2.1(react@19.2.1)
       use-vibes:
         specifier: workspace:*
         version: link:../../pkg
@@ -566,12 +566,12 @@ importers:
         specifier: '>=19.1.0'
         version: 19.2.0
       react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.0)
+        specifier: ^19.2.1
+        version: 19.2.1(react@19.2.0)
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.14
         version: 4.0.14(playwright@1.57.0)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.14)
@@ -583,7 +583,7 @@ importers:
         version: 0.0.3(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@react-router/dev':
         specifier: ^7.9.6
-        version: 7.9.6(@react-router/serve@7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.51.0(@cloudflare/workers-types@4.20251128.0))(yaml@2.8.2)
+        version: 7.9.6(@react-router/serve@7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.51.0(@cloudflare/workers-types@4.20251128.0))(yaml@2.8.2)
       '@tailwindcss/vite':
         specifier: ^4.1.11
         version: 4.1.17(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
@@ -591,11 +591,11 @@ importers:
         specifier: workspace:0.0.0
         version: link:../base
       react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.0)
+        specifier: ^19.2.1
+        version: 19.2.1(react@19.2.1)
       use-fireproof:
-        specifier: 0.24.0
-        version: 0.24.0(@adviser/cement@0.5.2(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@adviser/cement@0.5.2(typescript@5.9.3))(react@19.2.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -617,7 +617,7 @@ importers:
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@types/node':
         specifier: ^24.9.1
         version: 24.10.1
@@ -646,8 +646,8 @@ importers:
         specifier: ^1.57.0
         version: 1.57.0
       react:
-        specifier: ^19.2.0
-        version: 19.2.0
+        specifier: ^19.2.1
+        version: 19.2.1
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -670,12 +670,12 @@ importers:
         specifier: '>=19.1.0'
         version: 19.2.0
       use-fireproof:
-        specifier: 0.24.0
-        version: 0.24.0(@adviser/cement@0.5.2(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@adviser/cement@0.5.2(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@types/react':
         specifier: ~19.2.7
         version: 19.2.7
@@ -693,28 +693,28 @@ importers:
         version: 0.4.81(typescript@5.9.3)
       '@clerk/clerk-react':
         specifier: ^5.57.0
-        version: 5.57.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 5.57.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@cloudflare/workers-types':
         specifier: ^4.20251111.0
         version: 4.20251128.0
       '@fireproof/core':
-        specifier: 0.24.0
-        version: 0.24.0(react@19.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(react@19.2.1)(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.0
-        version: 0.24.0(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@radix-ui/react-slot':
         specifier: ^1.2.4
-        version: 1.2.4(@types/react@19.2.7)(react@19.2.0)
+        version: 1.2.4(@types/react@19.2.7)(react@19.2.1)
       '@react-router/node':
         specifier: ^7.9.6
-        version: 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+        version: 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.9.6
-        version: 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+        version: 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.17.1
         version: 3.17.1
@@ -758,63 +758,63 @@ importers:
         specifier: ^1.298.1
         version: 1.298.1
       react:
-        specifier: ^19.2.0
-        version: 19.2.0
+        specifier: ^19.2.1
+        version: 19.2.1
       react-cookie-consent:
         specifier: ^9.0.0
-        version: 9.0.0(react@19.2.0)
+        version: 9.0.0(react@19.2.1)
       react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.0)
+        specifier: ^19.2.1
+        version: 19.2.1(react@19.2.1)
       react-hot-toast:
         specifier: ^2.6.0
-        version: 2.6.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 2.6.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react-markdown:
         specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.2.7)(react@19.2.0)
+        version: 10.1.0(@types/react@19.2.7)(react@19.2.1)
       react-router:
         specifier: ^7.9.6
-        version: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react-router-dom:
         specifier: ^7.9.6
-        version: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
       use-fireproof:
-        specifier: 0.24.0
-        version: 0.24.0(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
     devDependencies:
       '@chromatic-com/storybook':
         specifier: ^4.1.3
-        version: 4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+        version: 4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
       '@cloudflare/vite-plugin':
         specifier: ^1.15.3
         version: 1.15.3(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251125.0)(wrangler@4.51.0(@cloudflare/workers-types@4.20251128.0))
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@react-router/dev':
         specifier: ^7.9.6
-        version: 7.9.6(@react-router/serve@7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.51.0(@cloudflare/workers-types@4.20251128.0))(yaml@2.8.2)
+        version: 7.9.6(@react-router/serve@7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.51.0(@cloudflare/workers-types@4.20251128.0))(yaml@2.8.2)
       '@storybook/addon-a11y':
         specifier: ^10.1.2
-        version: 10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+        version: 10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
       '@storybook/addon-docs':
         specifier: ^10.0.0
-        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/addon-onboarding':
         specifier: ^10.0.8
-        version: 10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+        version: 10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
       '@storybook/react':
         specifier: ^10.0.8
-        version: 10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+        version: 10.1.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       '@storybook/react-vite':
         specifier: ^10.0.8
-        version: 10.1.2(esbuild@0.27.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.2(esbuild@0.27.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@tailwindcss/vite':
         specifier: ^4.1.2
         version: 4.1.17(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
@@ -850,7 +850,7 @@ importers:
         version: 3.17.1
       storybook:
         specifier: ^10.1.2
-        version: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       tailwindcss:
         specifier: ^4.1.17
         version: 4.1.17
@@ -874,13 +874,13 @@ importers:
         version: 0.4.81(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@react-router/node':
         specifier: ^7.9.6
-        version: 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+        version: 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.9.6
-        version: 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+        version: 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.17.1
         version: 3.17.1
@@ -909,32 +909,32 @@ importers:
         specifier: ^1.298.1
         version: 1.298.1
       react:
-        specifier: ^19.2.0
-        version: 19.2.0
+        specifier: ^19.2.1
+        version: 19.2.1
       react-cookie-consent:
         specifier: ^9.0.0
-        version: 9.0.0(react@19.2.0)
+        version: 9.0.0(react@19.2.1)
       react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.0)
+        specifier: ^19.2.1
+        version: 19.2.1(react@19.2.1)
       react-ga4:
         specifier: ^2.1.0
         version: 2.1.0
       react-hot-toast:
         specifier: ^2.5.2
-        version: 2.6.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 2.6.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react-markdown:
         specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.2.7)(react@19.2.0)
+        version: 10.1.0(@types/react@19.2.7)(react@19.2.1)
       react-router:
         specifier: ^7.9.6
-        version: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react-router-dom:
         specifier: ^7.9.6
-        version: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       use-fireproof:
-        specifier: 0.24.0
-        version: 0.24.0(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -943,14 +943,14 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@types/react':
         specifier: ~19.2.7
         version: 19.2.7
@@ -980,13 +980,13 @@ importers:
         version: 0.4.81(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@react-router/node':
         specifier: ^7.9.6
-        version: 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+        version: 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.9.6
-        version: 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+        version: 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       '@shikijs/monaco':
         specifier: ^3.17.1
         version: 3.17.1
@@ -1012,29 +1012,29 @@ importers:
         specifier: ^1.298.1
         version: 1.298.1
       react:
-        specifier: ^19.2.0
-        version: 19.2.0
+        specifier: ^19.2.1
+        version: 19.2.1
       react-cookie-consent:
         specifier: ^9.0.0
-        version: 9.0.0(react@19.2.0)
+        version: 9.0.0(react@19.2.1)
       react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.0)
+        specifier: ^19.2.1
+        version: 19.2.1(react@19.2.1)
       react-ga4:
         specifier: ^2.1.0
         version: 2.1.0
       react-hot-toast:
         specifier: ^2.5.2
-        version: 2.6.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 2.6.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react-markdown:
         specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.2.7)(react@19.2.0)
+        version: 10.1.0(@types/react@19.2.7)(react@19.2.1)
       react-router:
         specifier: ^7.9.6
-        version: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       use-fireproof:
-        specifier: 0.24.0
-        version: 0.24.0(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.1)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -1043,11 +1043,11 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.0
-        version: 0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.1-dev-react19.2
+        version: 0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@types/react':
         specifier: ~19.2.7
         version: 19.2.7
@@ -2149,72 +2149,72 @@ packages:
   '@fastify/static@7.0.4':
     resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
 
-  '@fireproof/core-base@0.24.0':
-    resolution: {integrity: sha512-HEjYNr9SdAEa2B6s/A8RI+MawXZ8dpWYZ2p3FdRjJsiBe/7r1/QSD9cAeJ6Mn4o09UUYJCOpCjwKMgCW7gLmnA==}
+  '@fireproof/core-base@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-kQ2erwEG4gzoT4lpFviNJVxFsedg3OYPDNBep1/f/+hXz/pigFqFC0XX7OJjX+t7HmElgrwZeD4rtxw5aYyu/Q==}
 
-  '@fireproof/core-blockstore@0.24.0':
-    resolution: {integrity: sha512-MPt1WGh7VG4iWPXFEG6P0shR9Nv/FTCYI/+XZDrMwUm/Z8q/u4QsywI2WowR3jhJk/Q3EX+KDP284/sF+CBJng==}
+  '@fireproof/core-blockstore@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-T8nrsOroS0C/12UvmoYw8HRc5cGMuw16rHlHrHBdin4hax75KVi0ijhPSTdPsyJ/EuIDUiLfk6+Lv4BIe2aBPw==}
 
-  '@fireproof/core-cli@0.24.0':
-    resolution: {integrity: sha512-HzBECpPK14VLuPUWx2Jos2mPtoIfpn4p3eB8OmboG8/zcoOqBHrw/fOWu9/67wzpEd5V4FB685mttDoFPczLtw==}
+  '@fireproof/core-cli@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-coBZfgWkphm70Csf3McrvsHYSXCl3KsMBpgtH6TFdbhUsZNvQJwbcO9BACsiaCZ9UaOyqDY/hBSN3yA+tSyHVQ==}
     hasBin: true
 
-  '@fireproof/core-device-id@0.24.0':
-    resolution: {integrity: sha512-P0TY+lQpf526rD/acOiKjG/f6LuuOm+wRCkra/8tPvSMY4E1YsKtoHJ65+Fqh2bigGkWd5WxVekQijHvtk8XHw==}
+  '@fireproof/core-device-id@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-CZZ/6sV2YR5ouhEWsVspnTYxIDaGKkZu9iIB/3HaLRam3bL8nwhHbzbWPkQv4IjjceACASzjl/FBAgGjed+kzg==}
     engines: {node: '>=20'}
 
-  '@fireproof/core-gateways-base@0.24.0':
-    resolution: {integrity: sha512-p7rCaygLWXHBkEzPwYjs5yADIE3tCjqDHDKT9En4FHVmBPO3aBOlibaM/dWhhadfYCFP2szeeeKT6DtkmHmXdg==}
+  '@fireproof/core-gateways-base@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-aq2/auFwhmanl1dgANL5t9fJXwhEE+rSRbgGuKDlhxx+wdC3IXww/KKHM0eEFB1NrxrECGbvFO3kXyk///YotA==}
 
-  '@fireproof/core-gateways-cloud@0.24.0':
-    resolution: {integrity: sha512-SCKflFhTBWX9aIeDRtWoLvITZf0txV5o6BqwHPZ38BRTUUXAlMpHr4xqrAGOBg43ct2rXnKonf6C6M0uSprupA==}
+  '@fireproof/core-gateways-cloud@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-slRmBVH/VyRdu8xngAo/Q51pxmEMnwJFGNlhtZbKr1xPrUOd3k1vjyDsE/U9n2Yz8ZaXn63DjVLevqgiVepDLA==}
 
-  '@fireproof/core-gateways-file-deno@0.24.0':
-    resolution: {integrity: sha512-l0aEtcZMU7HNhJTmyAUY6J3l2O6ajCdDRYp6i8XJ+a09zQftzH9J3efq11xA7tF88Z3swCSQPyoMMZd+6t1KWQ==}
+  '@fireproof/core-gateways-file-deno@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-fQwyD5vjy+ufmpt3XwNB3L3P15iB3Ezf1w+is0fyLBOaTWr8x8zDCBK+ubj7QZr37E3RMoUcS7Me52jEIRbiMw==}
 
-  '@fireproof/core-gateways-file-node@0.24.0':
-    resolution: {integrity: sha512-X2wHVthL+Tt1IHQMUhHxeTi7IdDSbn+Ig2DHYOWJqVKj2W+cvwhq4YE6siVLWYqPmkucgPiQ1K6wgjnpGtEa5A==}
+  '@fireproof/core-gateways-file-node@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-hx33HlhHYH5J9T8gTcGN7qUycnvGu99ai2tRgIOjG6RYeixeRRccJ19ByiQVb7+jJEh3+aJsCaAT1Jz2IJ7F1A==}
 
-  '@fireproof/core-gateways-file@0.24.0':
-    resolution: {integrity: sha512-MX/GuV4FWxwfLa9JjZNaCqB/PJsATvK9qlDmzyV1oEj/CHHZkXaiZWxahaPciOAdBYym9Tcfw6stWoppX3F7Og==}
+  '@fireproof/core-gateways-file@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-gK99WuvOlTuVi2oBVZ3NzinELINqAnEkMLDKsjVob79SaXaULMlhKpP/HT9j4XtLQDtsIiBmPnMCeLRLhBSsfg==}
 
-  '@fireproof/core-gateways-indexeddb@0.24.0':
-    resolution: {integrity: sha512-TBvCwMtSxmmxqjy9l8xPulWYwdp8cxpzA+lcYnSEsbj7YZ7wtJnWEwA4mPAdR9LmckUthAhXUBZb3vOOk03/AA==}
+  '@fireproof/core-gateways-indexeddb@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-X7WmTeo+ITzQU2Pk1/l09I+Rn57wWnd7+DaEc/+R27QmOurBTqOchm4IAtg4iWxlbsPG0mkIAoOe5mVwSurgnA==}
 
-  '@fireproof/core-gateways-memory@0.24.0':
-    resolution: {integrity: sha512-TRQm6Z/qXxAY3Y6mKNROVDI+Jta8lMo3J/7HG6xSTDzTOK1ZWQMX4TlOOeVPxpkGko9pioF3yiWmVPkqfcZ9XQ==}
+  '@fireproof/core-gateways-memory@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-wVVXMme79QV+NCEsVl4PACGX/nGeTGgRsNItPR+Eso0U+na93KMTFAeJRGe+94g3xMubh716qx8vMstpoA8GZw==}
 
-  '@fireproof/core-keybag@0.24.0':
-    resolution: {integrity: sha512-vnpmLNoep6752o4dIG1PMIvpWcojT68Nah4NBzT2s1FlO5xm2kpFMftTKkZWNE0bc6rhuBvXnsfjuUx/xg7QZQ==}
+  '@fireproof/core-keybag@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-5Z2642ED67vXrcMwyf1I4rDGlKhFbofYTZ9ASHP3cdGjbxqLzPP+d2IREp0DapaXpDcW8m9l2W7feLqksk6L9g==}
 
-  '@fireproof/core-protocols-cloud@0.24.0':
-    resolution: {integrity: sha512-kr0UgLhtSpZJh5ITla16y6ssMuy8I9KvOI3fJOiR32tn9TyWiuR0W4WWfMTjYCCO6rey8V1Y9hzfLGZu/F8ZXA==}
+  '@fireproof/core-protocols-cloud@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-Ku+jIIMzu+l2usS6/O1B875OmLAivkGpDyJ+rb2MJDuDuLbHj/5TP4i7f+snyyUNU2okRNnR6nfcdW2oqeOiDg==}
 
-  '@fireproof/core-protocols-dashboard@0.24.0':
-    resolution: {integrity: sha512-2iya/VbHzGNanh5F9efYdhivln+JxxQLu5vJ0JCPL0xwVdvD3MxwLxaLhOvZEfmOl46uFTZBU5MvHauPtZXloA==}
+  '@fireproof/core-protocols-dashboard@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-u4j1iGil1TnzR6IJe3/5gFHivRYt4w1jEUeHdFk6L/+NGYdqEh5c6ZxeuhdEyUiIjypMpsHrm5YVGIx4bZakoA==}
 
-  '@fireproof/core-runtime@0.24.0':
-    resolution: {integrity: sha512-32dFnXmdyu7lKSDp/Kn1t+CURPaVGAAJuPX8Sb+d44O7OzJnzjC/MaPf0LNBq0JF4rwgX8/BsHMpTnZVv2s9/g==}
+  '@fireproof/core-runtime@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-Ic7HedjTU+EkoGrKYwJlhwcfAIS72cLissAPAVRtzhrkv8Rj4GG7DOA9v5WqIjjE6aDoMT+QhKMoB7h8yCpx+Q==}
 
-  '@fireproof/core-types-base@0.24.0':
-    resolution: {integrity: sha512-S1W0KfCxUm7GZyG03JQerDsimgaFEVaHzL3hXzcs3xkex78IDBvbWGNlv4YXfy2TXVMEkRl54CW+n6rW5EVxZg==}
+  '@fireproof/core-types-base@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-d7kSOf694WgD0a9OEjhGbwsqthAI67eQfW2mXOIweL4iAckA7AvluY79ZYc7gRm0F96+7fLawp+B1CXGW4Y4zg==}
 
-  '@fireproof/core-types-blockstore@0.24.0':
-    resolution: {integrity: sha512-EoIV/GOm7bmzzWr8NKukuihY2chZGEPN3tNL0DVSDhFK6X0TnaSikq3UOT7p9L7qUkXNl5J9p+KwSEC6Kv3OPw==}
+  '@fireproof/core-types-blockstore@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-/fh3Qk5FGW7pJNqWKfniCFrSkhWgPbar4xwxdAMavBcsU4aPxfN6mFQRE3QGm4P1F5O+8Lf5hxoR6DwHSTmucg==}
 
-  '@fireproof/core-types-protocols-cloud@0.24.0':
-    resolution: {integrity: sha512-EIa9j9Yr+KoIoHFiGkhHrE4r2EL5nzOJr6OVRuuTeKtHingPbI9nYTJ7/uebaKjQayir8yM84WVkPu7wln3zUQ==}
+  '@fireproof/core-types-protocols-cloud@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-m3XYxRqBJa4B8LuscezL6T+O68+ML2rJknzVpVT7iW56xUosi4lmcDXXREpy+QRtqs2s/CUJLtGDFSkX6dmUJA==}
 
-  '@fireproof/core-types-runtime@0.24.0':
-    resolution: {integrity: sha512-PX3ZJ35wTFdkf9OyS7aOJYex0JIz8aqkty/o0GqpNJJAm59Voy6JAX0gHCUOaclxXjROrL3P5Y30ZenkUZYsvA==}
+  '@fireproof/core-types-runtime@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-zkVVynHqmX366Jm85u1hUN1DpL0sIy+Vk25k+F3QZrdMUS2vC0hANOlUhOXZV3DW8fInKJlX5QtWHCA0S4XwHg==}
 
-  '@fireproof/core@0.24.0':
-    resolution: {integrity: sha512-W/wSrTwsNhXC0jHX814itT6WztnEPubDqi/ZDjN4Ns4P3/h1/4lEmgViIbPHn57ia55d3Oj37MuEv1mjg1d94Q==}
+  '@fireproof/core@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-WjFYiwoXWgBiv9Yo1uNrPw3zMNKrsROduGTQ6s9n1ZbbZ8n/ItTSOPqyMw/FQM8hr/mA9odL7aeSZKNBzvNQ6g==}
     peerDependencies:
       react: '>=18.0.0'
 
-  '@fireproof/vendor@0.24.0':
-    resolution: {integrity: sha512-JGb9pittOQ1Q/MxGRv1Bnr3JbAU7Q03oRyihFw43G6rZqG72mzXRsmYHsm3+ZZKA2IJX+lNkRg3OO7H1555k/g==}
+  '@fireproof/vendor@0.24.1-dev-react19.2':
+    resolution: {integrity: sha512-hxX0WfwgKQMxa6BeFeeoKQdjnAHbo14cYpNnFV5PSedni8mTuJs3JhOwalmsqnIKQM3lcUU1Pi4qLZ4A1JXLhw==}
 
   '@hono/clerk-auth@3.0.3':
     resolution: {integrity: sha512-N671mw3ulvxqxY8ou8D8ojVT7EKljXE6RjdC2egWExMcrQAglMSTvqvU096MbOT5zvWtc8QMo3SKiyTXn30BrQ==}
@@ -3915,19 +3915,9 @@ packages:
     resolution: {integrity: sha512-T0XJMaRPOH3+LBbAfzR2jalckP1MSG/L9eUtY0DEzUyVaXJ/t6zN0nR7co5kz0Jko/nkSYCBRkz1djvjajVTTg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251123.1':
-    resolution: {integrity: sha512-Fr9BVEIPCapAt+nEi+tOV0tOCYG39/cNjeULPmqj07YvxhDpkU73rMShnbrXguY5Pprgi570ks5S8MI45YePIw==}
-    cpu: [arm64]
-    os: [darwin]
-
   '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251201.1':
     resolution: {integrity: sha512-PY0BrlRF3YCZEMxzuk79IFSgpGqUErkdrW7Aq+/mF8DEET5uaDypTMb8Vz4CLYJ7Xvvxz8eZsLimPbv6hYDIvA==}
     cpu: [arm64]
-    os: [darwin]
-
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20251123.1':
-    resolution: {integrity: sha512-FH9IRdvFqxPyez9k775jK00ms7d9+X3m2Kc3LcAUV3Hiwxlzfs/Q06WWDeQV20WkVHr78hxcZGlIeqt1yGZC5Q==}
-    cpu: [x64]
     os: [darwin]
 
   '@typescript/native-preview-darwin-x64@7.0.0-dev.20251201.1':
@@ -3935,19 +3925,9 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20251123.1':
-    resolution: {integrity: sha512-eHfHopS+hcoHD49bg0IIg5SYVGk4Ljq8aFZRko83LUv9vN8Zs8DBmQL6APgs3triIQMEONjqArh6v9YkpOmjHA==}
-    cpu: [arm64]
-    os: [linux]
-
   '@typescript/native-preview-linux-arm64@7.0.0-dev.20251201.1':
     resolution: {integrity: sha512-HbEn+SBTDZEtwN/VUxA2To+6vEr7x++SCRc6yGp5y4onpBL2xnH17UoxWiqN9J4Bu1DbQ9jZv3D5CzwBlofPQA==}
     cpu: [arm64]
-    os: [linux]
-
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20251123.1':
-    resolution: {integrity: sha512-ty7UBZwyAZUrSmVBavOnQ+nQia/oB3BfY3LOZW4xyfSGEhNQQFebZMlUqTh+rD4W+zsgOAa7+TGLB7HT9mHyQg==}
-    cpu: [arm]
     os: [linux]
 
   '@typescript/native-preview-linux-arm@7.0.0-dev.20251201.1':
@@ -3955,39 +3935,20 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20251123.1':
-    resolution: {integrity: sha512-Z3H+XSRrhpbhZnmeyDbqGZ4mDkxG54QO1ZIxPGRyhurBwTjdMiEI8SeCVXA54KwSgM1oeAKZS765DN7+9WTI7A==}
-    cpu: [x64]
-    os: [linux]
-
   '@typescript/native-preview-linux-x64@7.0.0-dev.20251201.1':
     resolution: {integrity: sha512-q94K/LZ3Ab/SbUBMBsf37VdsumeZ1dZmymJYlhGBqk/fdXBayL0diLR3RdzyeQWbCXAxWL5KFKLIiIc3cI/fcA==}
     cpu: [x64]
     os: [linux]
-
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20251123.1':
-    resolution: {integrity: sha512-K89G2e7r/vNkeJkR1QdxZwc7WWxsjqmi4TJCrppS7gkXCcLXHmFcSInKn4T5ewfjLe2yrGoLPtAoitP/5f23pQ==}
-    cpu: [arm64]
-    os: [win32]
 
   '@typescript/native-preview-win32-arm64@7.0.0-dev.20251201.1':
     resolution: {integrity: sha512-/AFwpsX/G05bBsfVURfg4+/JC6gfvqj9jfFe/7oe1Y1J42koN5C8TH+eSmMOOEcPYpFjR1e+NWckqBJKaCXJ4A==}
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20251123.1':
-    resolution: {integrity: sha512-Z++8epMjd5Ptz/BihxXbEUjyqPo6x0kPkNbQT8QRSCovyGhm6KST9itEYCvD5ta1J0c5EqAJL5c8krjOHeNwGQ==}
-    cpu: [x64]
-    os: [win32]
-
   '@typescript/native-preview-win32-x64@7.0.0-dev.20251201.1':
     resolution: {integrity: sha512-vTUCDEuSP4ifLHqb8aljuj44v6+M1HDKo1WLnboTDpwU7IIrTux/0jzkPfEHd9xd5FU4EhSA8ZrYDwKI0BcRcg==}
     cpu: [x64]
     os: [win32]
-
-  '@typescript/native-preview@7.0.0-dev.20251123.1':
-    resolution: {integrity: sha512-6RhDqHTom3N4QMxZYiWXxaye2bDdsVgbsPcW7J3bMCp5LVATi3KP2zYk2SZpZLJVQ0es5E/6FHLk5Gyjeb0Jzw==}
-    hasBin: true
 
   '@typescript/native-preview@7.0.0-dev.20251201.1':
     resolution: {integrity: sha512-EiPEgGwNa2uHyyKgeoWTL6wWHKUBmF3xsfZ3OHofk7TxUuxb2mpLG5igEuaBe8iUwkCUl9uZgJvOu6o0wE5NSA==}
@@ -6249,10 +6210,6 @@ packages:
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
-  hono@4.10.6:
-    resolution: {integrity: sha512-BIdolzGpDO9MQ4nu3AUuDwHZZ+KViNm+EZ75Ae55eMXMqLVhDFqEMXxtUe9Qh8hjL+pIna/frs2j6Y2yD5Ua/g==}
-    engines: {node: '>=16.9.0'}
-
   hono@4.10.7:
     resolution: {integrity: sha512-icXIITfw/07Q88nLSkB9aiUrd8rYzSweK681Kjo/TSggaGbOX4RRyxxm71v+3PC8C/j+4rlxGeoTRxQDkaJkUw==}
     engines: {node: '>=16.9.0'}
@@ -8277,10 +8234,10 @@ packages:
     resolution: {integrity: sha512-+NRMYs2DyTP4/tqWz371Oo50JqmWltR1h2gcdgUMAWZJIAvrd0/SqlCfx7tpzpl/s36rzw6qH2MjoNrxtRNYhA==}
     engines: {node: ^20.9.0 || >=22}
 
-  react-dom@19.2.0:
-    resolution: {integrity: sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ==}
+  react-dom@19.2.1:
+    resolution: {integrity: sha512-ibrK8llX2a4eOskq1mXKu/TGZj9qzomO+sNfO98M6d9zIPOEhlBkMkBUBLd1vgS0gQsLDBzA+8jJBVXDnfHmJg==}
     peerDependencies:
-      react: ^19.2.0
+      react: ^19.2.1
 
   react-ga4@2.1.0:
     resolution: {integrity: sha512-ZKS7PGNFqqMd3PJ6+C2Jtz/o1iU9ggiy8Y8nUeksgVuvNISbmrQtJiZNvC/TjDsqD0QlU5Wkgs7i+w9+OjHhhQ==}
@@ -8331,6 +8288,10 @@ packages:
 
   react@19.2.0:
     resolution: {integrity: sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==}
+    engines: {node: '>=0.10.0'}
+
+  react@19.2.1:
+    resolution: {integrity: sha512-DGrYcCWK7tvYMnWh79yrPHt+vdx9tY+1gPZa7nJQtO/p8bLTDaHp4dzwEhQB7pZ4Xe3ok4XKuEPrVuc+wlpkmw==}
     engines: {node: '>=0.10.0'}
 
   read-package-up@11.0.0:
@@ -9442,8 +9403,8 @@ packages:
   urlpattern-polyfill@8.0.2:
     resolution: {integrity: sha512-Qp95D4TPJl1kC9SKigDcqgyM2VDVO4RiJc2d4qe5GrYm+zbIQCWWKAFaJNQ4BhdFeDGwBmAxqJBwWSJDb9T3BQ==}
 
-  use-fireproof@0.24.0:
-    resolution: {integrity: sha512-LvuGVkkSfMiMO0EZc9CmCwqGHGEFvt3FwbphIDb7Gb9IduFeFaHocfpv4YhKNOyVfOGv12KaJp020X7lHYvTQg==}
+  use-fireproof@0.24.1-dev-react19.2:
+    resolution: {integrity: sha512-DBAbiSgbWNDmNoisswjCrQiNrYkI3hZCDo8y4EfSQHa0BjireRn49u7cd+zOy2dzyzYFe1Qe1usT5C3aqrrAOA==}
     peerDependencies:
       '@adviser/cement': '>=0.4.20'
       react: '>=18.0.0'
@@ -10215,22 +10176,34 @@ snapshots:
 
   '@bugsnag/safe-json-stringify@6.1.0': {}
 
-  '@chromatic-com/storybook@4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+  '@chromatic-com/storybook@4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))':
     dependencies:
       '@neoconfetti/react': 1.0.0
       chromatic: 13.3.4
       filesize: 10.1.6
       jsonfile: 6.2.0
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
       strip-ansi: 7.1.2
     transitivePeerDependencies:
       - '@chromatic-com/cypress'
       - '@chromatic-com/playwright'
 
-  '@clerk/backend@2.24.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@chromatic-com/storybook@4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))':
     dependencies:
-      '@clerk/shared': 3.36.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@clerk/types': 4.101.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@neoconfetti/react': 1.0.0
+      chromatic: 13.3.4
+      filesize: 10.1.6
+      jsonfile: 6.2.0
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      strip-ansi: 7.1.2
+    transitivePeerDependencies:
+      - '@chromatic-com/cypress'
+      - '@chromatic-com/playwright'
+
+  '@clerk/backend@2.24.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@clerk/shared': 3.36.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@clerk/types': 4.101.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       cookie: 1.0.2
       standardwebhooks: 1.0.0
       tslib: 2.8.1
@@ -10238,28 +10211,28 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/clerk-react@5.57.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@clerk/clerk-react@5.57.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
-      '@clerk/shared': 3.36.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
+      '@clerk/shared': 3.36.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
       tslib: 2.8.1
 
-  '@clerk/shared@3.36.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@clerk/shared@3.36.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
       csstype: 3.1.3
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
       js-cookie: 3.0.5
       std-env: 3.10.0
-      swr: 2.3.4(react@19.2.0)
+      swr: 2.3.4(react@19.2.1)
     optionalDependencies:
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
 
-  '@clerk/types@4.101.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@clerk/types@4.101.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
-      '@clerk/shared': 3.36.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@clerk/shared': 3.36.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
     transitivePeerDependencies:
       - react
       - react-dom
@@ -10759,16 +10732,16 @@ snapshots:
       fastq: 1.19.1
       glob: 10.5.0
 
-  '@fireproof/core-base@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-base@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       '@ipld/dag-cbor': 9.2.5
       '@web3-storage/pail': 0.6.2
       charwise: 3.0.1
@@ -10778,20 +10751,20 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-blockstore@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-blockstore@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-memory': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-file': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-indexeddb': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-memory': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       '@ipld/car': 5.4.2
       '@ipld/dag-cbor': 9.2.5
       '@ipld/dag-json': 10.2.5
@@ -10804,22 +10777,22 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-cli@0.24.0(@pnpm/logger@5.2.0)(typescript@5.9.3)':
+  '@fireproof/core-cli@0.24.1-dev-react19.2(@pnpm/logger@5.2.0)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-device-id': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
-      '@hono/node-server': 1.19.6(hono@4.10.6)
+      '@fireproof/core-device-id': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@hono/node-server': 1.19.6(hono@4.10.7)
       '@pnpm/lockfile-file': 9.1.3(@pnpm/logger@5.2.0)
-      '@typescript/native-preview': 7.0.0-dev.20251123.1
+      '@typescript/native-preview': 7.0.0-dev.20251201.1
       aws4fetch: 1.0.20
       cmd-ts: 0.14.3
       find-up: 8.0.0
       fs-extra: 11.3.2
-      hono: 4.10.6
+      hono: 4.10.7
       jose: 6.1.2
       multiformats: 13.4.1
       open: 8.4.2
@@ -10832,121 +10805,121 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fireproof/core-device-id@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-device-id@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
       jose: 6.1.2
       multiformats: 13.4.1
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-base@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-gateways-base@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       '@ipld/dag-json': 10.2.5
       '@web3-storage/pail': 0.6.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-cloud@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-gateways-cloud@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-protocols-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       jose: 6.1.2
     transitivePeerDependencies:
       - bufferutil
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-gateways-file-deno@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-gateways-file-deno@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       '@types/deno': 2.5.0
       '@types/node': 24.5.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file-node@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-gateways-file-node@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-gateways-file@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-file-deno': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-file-node': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-file-deno': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-file-node': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-indexeddb@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-gateways-indexeddb@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       idb: 8.0.3
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-memory@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-gateways-memory@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-keybag@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-keybag@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-gateways-file': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-indexeddb': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       jose: 6.1.2
       multiformats: 13.4.1
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-protocols-cloud@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-protocols-cloud@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       '@types/ws': 8.18.1
       ws: 8.18.3
     transitivePeerDependencies:
@@ -10954,27 +10927,27 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-protocols-dashboard@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-protocols-dashboard@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-device-id': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-device-id': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-runtime@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-runtime@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
       '@adviser/ts-xxhash': 1.0.2
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       cborg: 4.3.1
       jose: 6.1.2
       multiformats: 13.4.1
@@ -10982,11 +10955,11 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-base@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-types-base@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
       jose: 6.1.2
       multiformats: 13.4.1
@@ -10995,69 +10968,69 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-blockstore@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-types-blockstore@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
       multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-protocols-cloud@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-types-protocols-cloud@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       jose: 6.1.2
       multiformats: 13.4.1
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-runtime@0.24.0(typescript@5.9.3)':
+  '@fireproof/core-types-runtime@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core@0.24.0(react@19.2.0)(typescript@5.9.3)':
+  '@fireproof/core@0.24.1-dev-react19.2(react@19.2.1)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       '@types/node': 24.5.2
-      react: 19.2.0
+      react: 19.2.1
     transitivePeerDependencies:
       - bufferutil
       - typescript
       - utf-8-validate
 
-  '@fireproof/vendor@0.24.0(typescript@5.9.3)':
+  '@fireproof/vendor@0.24.1-dev-react19.2(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
 
-  '@hono/clerk-auth@3.0.3(hono@4.10.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@hono/clerk-auth@3.0.3(hono@4.10.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
-      '@clerk/backend': 2.24.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@clerk/types': 4.101.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@clerk/backend': 2.24.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@clerk/types': 4.101.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       hono: 4.10.7
     transitivePeerDependencies:
       - react
       - react-dom
 
-  '@hono/node-server@1.19.6(hono@4.10.6)':
+  '@hono/node-server@1.19.6(hono@4.10.7)':
     dependencies:
-      hono: 4.10.6
+      hono: 4.10.7
 
   '@humanfs/core@0.19.1': {}
 
@@ -11430,11 +11403,11 @@ snapshots:
       - encoding
       - supports-color
 
-  '@mdx-js/react@3.1.1(@types/react@19.2.7)(react@19.2.0)':
+  '@mdx-js/react@3.1.1(@types/react@19.2.7)(react@19.2.1)':
     dependencies:
       '@types/mdx': 2.0.13
       '@types/react': 19.2.7
-      react: 19.2.0
+      react: 19.2.1
 
   '@mjackson/node-fetch-server@0.2.0': {}
 
@@ -11442,12 +11415,12 @@ snapshots:
     dependencies:
       state-local: 1.0.7
 
-  '@monaco-editor/react@4.7.0(monaco-editor@0.55.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@monaco-editor/react@4.7.0(monaco-editor@0.55.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
       '@monaco-editor/loader': 1.7.0
       monaco-editor: 0.55.1
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
@@ -12351,20 +12324,20 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  '@radix-ui/react-compose-refs@1.1.2(@types/react@19.2.7)(react@19.2.0)':
+  '@radix-ui/react-compose-refs@1.1.2(@types/react@19.2.7)(react@19.2.1)':
     dependencies:
-      react: 19.2.0
+      react: 19.2.1
     optionalDependencies:
       '@types/react': 19.2.7
 
-  '@radix-ui/react-slot@1.2.4(@types/react@19.2.7)(react@19.2.0)':
+  '@radix-ui/react-slot@1.2.4(@types/react@19.2.7)(react@19.2.1)':
     dependencies:
-      '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.2.7)(react@19.2.0)
-      react: 19.2.0
+      '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.2.7)(react@19.2.1)
+      react: 19.2.1
     optionalDependencies:
       '@types/react': 19.2.7
 
-  '@react-router/dev@7.9.6(@react-router/serve@7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.51.0(@cloudflare/workers-types@4.20251128.0))(yaml@2.8.2)':
+  '@react-router/dev@7.9.6(@react-router/serve@7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3))(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.51.0(@cloudflare/workers-types@4.20251128.0))(yaml@2.8.2)':
     dependencies:
       '@babel/core': 7.28.5
       '@babel/generator': 7.28.5
@@ -12374,7 +12347,7 @@ snapshots:
       '@babel/traverse': 7.28.5
       '@babel/types': 7.28.5
       '@npmcli/package-json': 4.0.1
-      '@react-router/node': 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+      '@react-router/node': 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       '@remix-run/node-fetch-server': 0.9.0
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.10
@@ -12390,14 +12363,14 @@ snapshots:
       picocolors: 1.1.1
       prettier: 3.7.3
       react-refresh: 0.14.2
-      react-router: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-router: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       semver: 7.7.3
       tinyglobby: 0.2.15
       valibot: 1.2.0(typescript@5.9.3)
       vite: 7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       vite-node: 3.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     optionalDependencies:
-      '@react-router/serve': 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+      '@react-router/serve': 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       typescript: 5.9.3
       wrangler: 4.51.0(@cloudflare/workers-types@4.20251128.0)
     transitivePeerDependencies:
@@ -12416,31 +12389,31 @@ snapshots:
       - tsx
       - yaml
 
-  '@react-router/express@7.9.6(express@4.22.0)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)':
+  '@react-router/express@7.9.6(express@4.22.0)(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)':
     dependencies:
-      '@react-router/node': 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+      '@react-router/node': 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       express: 4.22.0
-      react-router: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-router: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/node@7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)':
+  '@react-router/node@7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      react-router: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-router: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/serve@7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)':
+  '@react-router/serve@7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      '@react-router/express': 7.9.6(express@4.22.0)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
-      '@react-router/node': 7.9.6(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+      '@react-router/express': 7.9.6(express@4.22.0)(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
+      '@react-router/node': 7.9.6(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
       compression: 1.8.1
       express: 4.22.0
       get-port: 5.1.1
       morgan: 1.10.1
-      react-router: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-router: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       source-map-support: 0.5.21
     transitivePeerDependencies:
       - supports-color
@@ -12605,21 +12578,27 @@ snapshots:
 
   '@standard-schema/spec@1.0.0': {}
 
-  '@storybook/addon-a11y@10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+  '@storybook/addon-a11y@10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))':
     dependencies:
       '@storybook/global': 5.0.0
       axe-core: 4.11.0
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
 
-  '@storybook/addon-docs@10.1.2(@types/react@19.2.7)(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/addon-a11y@10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))':
     dependencies:
-      '@mdx-js/react': 3.1.1(@types/react@19.2.7)(react@19.2.0)
-      '@storybook/csf-plugin': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
-      '@storybook/icons': 2.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@storybook/react-dom-shim': 10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@storybook/global': 5.0.0
+      axe-core: 4.11.0
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+
+  '@storybook/addon-docs@10.1.2(@types/react@19.2.7)(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+    dependencies:
+      '@mdx-js/react': 3.1.1(@types/react@19.2.7)(react@19.2.1)
+      '@storybook/csf-plugin': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@storybook/icons': 2.0.1(react-dom@19.2.1(react@19.2.0))(react@19.2.1)
+      '@storybook/react-dom-shim': 10.1.2(react-dom@19.2.1(react@19.2.0))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
       ts-dedent: 2.2.0
     transitivePeerDependencies:
       - '@types/react'
@@ -12628,15 +12607,32 @@ snapshots:
       - vite
       - webpack
 
-  '@storybook/addon-onboarding@10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+  '@storybook/addon-docs@10.1.2(@types/react@19.2.7)(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@mdx-js/react': 3.1.1(@types/react@19.2.7)(react@19.2.1)
+      '@storybook/csf-plugin': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@storybook/icons': 2.0.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@storybook/react-dom-shim': 10.1.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      ts-dedent: 2.2.0
+    transitivePeerDependencies:
+      - '@types/react'
+      - esbuild
+      - rollup
+      - vite
+      - webpack
 
-  '@storybook/builder-vite@10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/addon-onboarding@10.1.2(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))':
     dependencies:
-      '@storybook/csf-plugin': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+
+  '@storybook/builder-vite@10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+    dependencies:
+      '@storybook/csf-plugin': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@vitest/mocker': 3.2.4(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
       ts-dedent: 2.2.0
       vite: 7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
@@ -12645,9 +12641,31 @@ snapshots:
       - rollup
       - webpack
 
-  '@storybook/csf-plugin@10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/builder-vite@10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@storybook/csf-plugin': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@vitest/mocker': 3.2.4(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      ts-dedent: 2.2.0
+      vite: 7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+    transitivePeerDependencies:
+      - esbuild
+      - msw
+      - rollup
+      - webpack
+
+  '@storybook/csf-plugin@10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+    dependencies:
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
+      unplugin: 2.3.11
+    optionalDependencies:
+      esbuild: 0.27.0
+      rollup: 4.53.3
+      vite: 7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+
+  '@storybook/csf-plugin@10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+    dependencies:
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       unplugin: 2.3.11
     optionalDependencies:
       esbuild: 0.27.0
@@ -12656,30 +12674,52 @@ snapshots:
 
   '@storybook/global@5.0.0': {}
 
-  '@storybook/icons@2.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@storybook/icons@2.0.1(react-dom@19.2.1(react@19.2.0))(react@19.2.0)':
     dependencies:
       react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
+      react-dom: 19.2.1(react@19.2.0)
 
-  '@storybook/react-dom-shim@10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+  '@storybook/icons@2.0.1(react-dom@19.2.1(react@19.2.0))(react@19.2.1)':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.0)
+
+  '@storybook/icons@2.0.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
+  '@storybook/react-dom-shim@10.1.2(react-dom@19.2.1(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))':
     dependencies:
       react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-dom: 19.2.1(react@19.2.0)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
 
-  '@storybook/react-vite@10.1.2(esbuild@0.27.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/react-dom-shim@10.1.2(react-dom@19.2.1(react@19.2.0))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.0)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
+
+  '@storybook/react-dom-shim@10.1.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+
+  '@storybook/react-vite@10.1.2(esbuild@0.27.0)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.1(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@rollup/pluginutils': 5.3.0(rollup@4.53.3)
-      '@storybook/builder-vite': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
-      '@storybook/react': 10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
+      '@storybook/builder-vite': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@storybook/react': 10.1.2(react-dom@19.2.1(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       empathic: 2.0.0
       magic-string: 0.30.21
       react: 19.2.0
       react-docgen: 8.0.2
-      react-dom: 19.2.0(react@19.2.0)
+      react-dom: 19.2.1(react@19.2.0)
       resolve: 1.22.11
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
       tsconfig-paths: 4.2.0
       vite: 7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
@@ -12690,14 +12730,50 @@ snapshots:
       - typescript
       - webpack
 
-  '@storybook/react@10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)':
+  '@storybook/react-vite@10.1.2(esbuild@0.27.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+    dependencies:
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.1(typescript@5.9.3)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@rollup/pluginutils': 5.3.0(rollup@4.53.3)
+      '@storybook/builder-vite': 10.1.2(esbuild@0.27.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@storybook/react': 10.1.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
+      empathic: 2.0.0
+      magic-string: 0.30.21
+      react: 19.2.1
+      react-docgen: 8.0.2
+      react-dom: 19.2.1(react@19.2.1)
+      resolve: 1.22.11
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      tsconfig-paths: 4.2.0
+      vite: 7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+    transitivePeerDependencies:
+      - esbuild
+      - msw
+      - rollup
+      - supports-color
+      - typescript
+      - webpack
+
+  '@storybook/react@10.1.2(react-dom@19.2.1(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))(typescript@5.9.3)':
     dependencies:
       '@storybook/global': 5.0.0
-      '@storybook/react-dom-shim': 10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+      '@storybook/react-dom-shim': 10.1.2(react-dom@19.2.1(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0))
       react: 19.2.0
       react-docgen: 8.0.2
-      react-dom: 19.2.0(react@19.2.0)
-      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-dom: 19.2.1(react@19.2.0)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - supports-color
+
+  '@storybook/react@10.1.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)':
+    dependencies:
+      '@storybook/global': 5.0.0
+      '@storybook/react-dom-shim': 10.1.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
+      react: 19.2.1
+      react-docgen: 8.0.2
+      react-dom: 19.2.1(react@19.2.1)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -12800,12 +12876,12 @@ snapshots:
       picocolors: 1.1.1
       redent: 3.0.0
 
-  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
       '@babel/runtime': 7.28.4
       '@testing-library/dom': 10.4.1
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
     optionalDependencies:
       '@types/react': 19.2.7
       '@types/react-dom': 19.2.3(@types/react@19.2.7)
@@ -13061,57 +13137,26 @@ snapshots:
       '@typescript-eslint/types': 8.48.0
       eslint-visitor-keys: 4.2.1
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251123.1':
-    optional: true
-
   '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251201.1':
-    optional: true
-
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20251123.1':
     optional: true
 
   '@typescript/native-preview-darwin-x64@7.0.0-dev.20251201.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20251123.1':
-    optional: true
-
   '@typescript/native-preview-linux-arm64@7.0.0-dev.20251201.1':
-    optional: true
-
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20251123.1':
     optional: true
 
   '@typescript/native-preview-linux-arm@7.0.0-dev.20251201.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20251123.1':
-    optional: true
-
   '@typescript/native-preview-linux-x64@7.0.0-dev.20251201.1':
-    optional: true
-
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20251123.1':
     optional: true
 
   '@typescript/native-preview-win32-arm64@7.0.0-dev.20251201.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20251123.1':
-    optional: true
-
   '@typescript/native-preview-win32-x64@7.0.0-dev.20251201.1':
     optional: true
-
-  '@typescript/native-preview@7.0.0-dev.20251123.1':
-    optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20251123.1
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20251123.1
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20251123.1
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20251123.1
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20251123.1
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20251123.1
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20251123.1
 
   '@typescript/native-preview@7.0.0-dev.20251201.1':
     optionalDependencies:
@@ -15837,8 +15882,6 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
-  hono@4.10.6: {}
-
   hono@4.10.7: {}
 
   hosted-git-info@6.1.3:
@@ -18398,10 +18441,10 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-cookie-consent@9.0.0(react@19.2.0):
+  react-cookie-consent@9.0.0(react@19.2.1):
     dependencies:
       js-cookie: 2.2.1
-      react: 19.2.0
+      react: 19.2.1
 
   react-docgen-typescript@2.4.0(typescript@5.9.3):
     dependencies:
@@ -18422,25 +18465,30 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  react-dom@19.2.0(react@19.2.0):
+  react-dom@19.2.1(react@19.2.0):
     dependencies:
       react: 19.2.0
       scheduler: 0.27.0
 
+  react-dom@19.2.1(react@19.2.1):
+    dependencies:
+      react: 19.2.1
+      scheduler: 0.27.0
+
   react-ga4@2.1.0: {}
 
-  react-hot-toast@2.6.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  react-hot-toast@2.6.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
       csstype: 3.2.3
       goober: 2.1.18(csstype@3.2.3)
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
 
   react-is@17.0.2: {}
 
   react-is@18.3.1: {}
 
-  react-markdown@10.1.0(@types/react@19.2.7)(react@19.2.0):
+  react-markdown@10.1.0(@types/react@19.2.7)(react@19.2.1):
     dependencies:
       '@types/hast': 3.0.4
       '@types/mdast': 4.0.4
@@ -18449,7 +18497,7 @@ snapshots:
       hast-util-to-jsx-runtime: 2.3.6
       html-url-attributes: 3.0.1
       mdast-util-to-hast: 13.2.1
-      react: 19.2.0
+      react: 19.2.1
       remark-parse: 11.0.0
       remark-rehype: 11.1.2
       unified: 11.0.5
@@ -18462,21 +18510,23 @@ snapshots:
 
   react-refresh@0.18.0: {}
 
-  react-router-dom@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  react-router-dom@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-      react-router: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      react-router: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
 
-  react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
       cookie: 1.1.1
-      react: 19.2.0
+      react: 19.2.1
       set-cookie-parser: 2.7.2
     optionalDependencies:
-      react-dom: 19.2.0(react@19.2.0)
+      react-dom: 19.2.1(react@19.2.1)
 
   react@19.2.0: {}
+
+  react@19.2.1: {}
 
   read-package-up@11.0.0:
     dependencies:
@@ -19094,10 +19144,10 @@ snapshots:
 
   stoppable@1.1.0: {}
 
-  storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.0))(react@19.2.0):
     dependencies:
       '@storybook/global': 5.0.0
-      '@storybook/icons': 2.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@storybook/icons': 2.0.1(react-dom@19.2.1(react@19.2.0))(react@19.2.0)
       '@testing-library/jest-dom': 6.9.1
       '@testing-library/user-event': 14.6.1(@testing-library/dom@10.4.1)
       '@vitest/expect': 3.2.4
@@ -19106,6 +19156,28 @@ snapshots:
       recast: 0.23.11
       semver: 7.7.3
       use-sync-external-store: 1.6.0(react@19.2.0)
+      ws: 8.18.3
+    optionalDependencies:
+      prettier: 3.7.3
+    transitivePeerDependencies:
+      - '@testing-library/dom'
+      - bufferutil
+      - react
+      - react-dom
+      - utf-8-validate
+
+  storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.3)(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+    dependencies:
+      '@storybook/global': 5.0.0
+      '@storybook/icons': 2.0.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@testing-library/jest-dom': 6.9.1
+      '@testing-library/user-event': 14.6.1(@testing-library/dom@10.4.1)
+      '@vitest/expect': 3.2.4
+      '@vitest/spy': 3.2.4
+      esbuild: 0.27.0
+      recast: 0.23.11
+      semver: 7.7.3
+      use-sync-external-store: 1.6.0(react@19.2.1)
       ws: 8.18.3
     optionalDependencies:
       prettier: 3.7.3
@@ -19265,11 +19337,11 @@ snapshots:
       picocolors: 1.1.1
       sax: 1.4.3
 
-  swr@2.3.4(react@19.2.0):
+  swr@2.3.4(react@19.2.1):
     dependencies:
       dequal: 2.0.3
-      react: 19.2.0
-      use-sync-external-store: 1.6.0(react@19.2.0)
+      react: 19.2.1
+      use-sync-external-store: 1.6.0(react@19.2.1)
 
   synckit@0.11.11:
     dependencies:
@@ -19737,18 +19809,18 @@ snapshots:
 
   urlpattern-polyfill@8.0.2: {}
 
-  use-fireproof@0.24.0(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3):
+  use-fireproof@0.24.1-dev-react19.2(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3):
     dependencies:
       '@adviser/cement': 0.4.81(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       dompurify: 3.3.0
       jose: 6.1.2
       react: 19.2.0
@@ -19758,21 +19830,63 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  use-fireproof@0.24.0(@adviser/cement@0.5.2(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3):
+  use-fireproof@0.24.1-dev-react19.2(@adviser/cement@0.4.81(typescript@5.9.3))(react@19.2.1)(typescript@5.9.3):
+    dependencies:
+      '@adviser/cement': 0.4.81(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
+      dompurify: 3.3.0
+      jose: 6.1.2
+      react: 19.2.1
+      ts-essentials: 10.1.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  use-fireproof@0.24.1-dev-react19.2(@adviser/cement@0.5.2(typescript@5.9.3))(react@19.2.0)(typescript@5.9.3):
     dependencies:
       '@adviser/cement': 0.5.2(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.0(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.0(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.0(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
       dompurify: 3.3.0
       jose: 6.1.2
       react: 19.2.0
+      ts-essentials: 10.1.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  use-fireproof@0.24.1-dev-react19.2(@adviser/cement@0.5.2(typescript@5.9.3))(react@19.2.1)(typescript@5.9.3):
+    dependencies:
+      '@adviser/cement': 0.5.2(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.1-dev-react19.2(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.1-dev-react19.2(typescript@5.9.3)
+      dompurify: 3.3.0
+      jose: 6.1.2
+      react: 19.2.1
       ts-essentials: 10.1.1(typescript@5.9.3)
     transitivePeerDependencies:
       - bufferutil
@@ -19782,6 +19896,10 @@ snapshots:
   use-sync-external-store@1.6.0(react@19.2.0):
     dependencies:
       react: 19.2.0
+
+  use-sync-external-store@1.6.0(react@19.2.1):
+    dependencies:
+      react: 19.2.1
 
   util-deprecate@1.0.2: {}
 
