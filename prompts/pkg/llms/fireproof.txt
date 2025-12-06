@@ -330,11 +330,66 @@ function handleSubmit(e) {
 
 ## Example React Application
 
+### BEST PRACTICE: Presentation/Container Pattern
+
+All apps should follow this pattern with two clear parts:
+
+1. **Presentation Component** - Pure UI with no data logic, receives all data and callbacks as props
+2. **Container Component** - Data management with Fireproof hooks, state, and business logic (the default export)
+
+This pattern keeps data logic separate from presentation, making components easier to understand and modify.
+
 Code listing for todo tracker App.jsx:
 ```js
 import React from "react";
 import { useFireproof } from "use-fireproof";
 
+// Presentation Component
+function TodoListUI({ newTodo, onInputChange, onSubmit, todos, onToggle, onDelete }) {
+  return (
+    <div className="max-w-md mx-auto p-4 bg-white shadow rounded">
+      <h2 className="text-2xl font-bold mb-4">Todo List</h2>
+      <form onSubmit={onSubmit} className="mb-4">
+        <label htmlFor="todo" className="block mb-2 font-semibold">Todo</label>
+        <input
+          className="w-full border border-gray-300 rounded px-2 py-1"
+          id="todo"
+          type="text"
+          onChange={onInputChange}
+          value={newTodo.todo}
+        />
+      </form>
+      <ul className="space-y-3">
+        {todos.map((doc) => (
+          <li className="flex flex-col items-start p-2 border border-gray-200 rounded bg-gray-50" key={doc._id}>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center">
+                <input
+                  className="mr-2"
+                  type="checkbox"
+                  checked={doc.completed}
+                  onChange={() => onToggle(doc)}
+                />
+                <span className="font-medium">{doc.todo}</span>
+              </div>
+              <button
+                className="text-sm bg-red-500 text-white px-2 py-1 rounded"
+                onClick={() => onDelete(doc._id)}
+              >
+                Delete
+              </button>
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              {new Date(doc.createdAt).toISOString()}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// Container Component
 export default function App() {
   const { useLiveQuery, useDocument, database } = useFireproof("todo-list-db");
 
@@ -349,9 +404,9 @@ export default function App() {
     createdAt: Date.now()
   });
 
-  const { docs: todos } = useLiveQuery("type", { 
+  const { docs: todos } = useLiveQuery("type", {
     key: "todo",
-    descending: true 
+    descending: true
   });
 
   const handleInputChange = (e) => {
@@ -363,77 +418,60 @@ export default function App() {
     submitNewTodo();
   };
 
+  const handleToggle = (doc) => {
+    database.put({ ...doc, completed: !doc.completed });
+  };
+
+  const handleDelete = (id) => {
+    database.del(id);
+  };
+
   return (
-    <div className="max-w-md mx-auto p-4 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Todo List</h2>
-      <form onSubmit={handleSubmit} className="mb-4">
-        <label htmlFor="todo" className="block mb-2 font-semibold">Todo</label>
-        <input
-          className="w-full border border-gray-300 rounded px-2 py-1"
-          id="todo"
-          type="text"
-          onChange={handleInputChange}
-          value={newTodo.todo}
-        />
-      </form>
-      <ul className="space-y-3">
-        {todos.map((doc) => (
-          <li className="flex flex-col items-start p-2 border border-gray-200 rounded bg-gray-50" key={doc._id}>
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center">
-                <input
-                  className="mr-2"
-                  type="checkbox"
-                  checked={doc.completed}
-                  onChange={() => database.put({ ...doc, completed: !doc.completed })}
-                />
-                <span className="font-medium">{doc.todo}</span>
-              </div>
-              <button
-                className="text-sm bg-red-500 text-white px-2 py-1 rounded"
-                onClick={() => database.del(doc._id)}
-              >
-                Delete
-              </button>
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {new Date(doc.createdAt).toISOString()}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <TodoListUI
+      newTodo={newTodo}
+      onInputChange={handleInputChange}
+      onSubmit={handleSubmit}
+      todos={todos}
+      onToggle={handleToggle}
+      onDelete={handleDelete}
+    />
   );
 }
 ```
 
 ### Example Image Uploader
 
-This React example shows a simple image uploader application that uses Fireproof to store and sort images by creation date. These APIs easily work with plain JavaScript also. 
+This React example shows a simple image uploader application that uses Fireproof to store and sort images by creation date. These APIs easily work with plain JavaScript also.
 
 Code listing for App.jsx:
 ```js
 import { useFireproof, ImgFile } from "use-fireproof";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-export default function App() {
-  const { useDocument, useLiveQuery } = useFireproof("image-uploads");
-  const { doc, merge, submit } = useDocument({ _files: {}, description: "" });
-  const { docs } = useLiveQuery("_id", { descending: true, limit: 5 });
-  const [error, setError] = useState(false);
-
+// Presentation Component
+function ImageUploaderUI({ doc, onFileChange, onDescriptionChange, onUpload, docs, error }) {
   return (
     <div className="p-6 max-w-lg mx-auto bg-white shadow-lg rounded-lg">
       <h2 className="text-2xl font-bold mb-4">Image Uploader</h2>
-      <input type="file" accept="image/*" onChange={e => e.target.files[0] && merge({ _files: { uploaded: e.target.files[0] } })} className="mb-2 border p-2 w-full rounded" />
-      <input 
-        type="text" 
-        placeholder="Enter description" 
-        value={doc.description} 
-        onChange={e => {setError(false); merge({ description: e.target.value });}}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={onFileChange}
+        className="mb-2 border p-2 w-full rounded"
+      />
+      <input
+        type="text"
+        placeholder="Enter description"
+        value={doc.description}
+        onChange={onDescriptionChange}
         className={`w-full p-2 border rounded mb-4 ${error ? "border-red-500" : "border-gray-300"}`}
       />
-      <button onClick={() => doc.description.trim() ? submit() : setError(true)} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Upload</button>
+      <button
+        onClick={onUpload}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Upload
+      </button>
       <h3 className="text-lg font-semibold mt-6">Recent Uploads</h3>
       <div className="grid grid-cols-2 gap-4 mt-2">
         {docs.map(doc => (
@@ -444,6 +482,44 @@ export default function App() {
         ))}
       </div>
     </div>
+  );
+}
+
+// Container Component
+export default function App() {
+  const { useDocument, useLiveQuery } = useFireproof("image-uploads");
+  const { doc, merge, submit } = useDocument({ _files: {}, description: "" });
+  const { docs } = useLiveQuery("_id", { descending: true, limit: 5 });
+  const [error, setError] = useState(false);
+
+  const handleFileChange = (e) => {
+    if (e.target.files[0]) {
+      merge({ _files: { uploaded: e.target.files[0] } });
+    }
+  };
+
+  const handleDescriptionChange = (e) => {
+    setError(false);
+    merge({ description: e.target.value });
+  };
+
+  const handleUpload = () => {
+    if (doc.description.trim()) {
+      submit();
+    } else {
+      setError(true);
+    }
+  };
+
+  return (
+    <ImageUploaderUI
+      doc={doc}
+      onFileChange={handleFileChange}
+      onDescriptionChange={handleDescriptionChange}
+      onUpload={handleUpload}
+      docs={docs}
+      error={error}
+    />
   );
 }
 ```

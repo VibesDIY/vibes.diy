@@ -1525,6 +1525,16 @@ export default function SkyGlider() {
 
 # Visual effects example
 
+## BEST PRACTICE: Presentation/Container Pattern
+
+All Three.js visualizations should follow this pattern with three clear parts:
+
+1. **Presentation Component** - Pure UI with no Three.js logic, receives props and refs
+2. **Three.js Functions** - Scene setup, object creation, and animation logic separate from React
+3. **Container Component** - Data management, state, and effects (the default export)
+
+This pattern keeps Three.js DOM manipulation isolated from React's rendering cycle.
+
 ```javascript
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useFireproof } from "use-fireproof";
@@ -1534,361 +1544,35 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { HalftonePass } from "three/addons/postprocessing/HalftonePass.js";
 
-export default function HalftoneArtStudio() {
-  const { database, useLiveQuery } = useFireproof("halftone-studio");
-  const canvasRef = useRef(null);
-  const sceneRef = useRef(null);
-  const [currentPreset, setCurrentPreset] = useState(null);
-  const [presetName, setPresetName] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [showParameters, setShowParameters] = useState(false);
+// Constants
+const SHAPE_NAMES = ["", "Dot", "Ellipse", "Line", "Square"];
+const BLEND_MODE_NAMES = ["", "Linear", "Multiply", "Add", "Lighter", "Darker"];
+const ACTION_NAMES = {
+  "before-randomize": "🎲 Before Random",
+  randomized: "✨ Randomized",
+  manual: "✏️ Manual Edit",
+};
 
-  const { docs: presets } = useLiveQuery("type", { key: "preset" }) || {
-    docs: [],
-  };
-  const { docs: parameterHistory } = useLiveQuery("type", {
-    key: "parameter-state",
-  }) || {
-    docs: [],
-  };
-
-  const [parameters, setParameters] = useState({
-    shape: 1, // 1=Dot, 2=Ellipse, 3=Line, 4=Square
-    radius: 4,
-    rotateR: 15,
-    rotateG: 30,
-    rotateB: 45,
-    scatter: 0,
-    blending: 1,
-    blendingMode: 1, // 1=Linear, 2=Multiply, 3=Add, 4=Lighter, 5=Darker
-    greyscale: false,
-    disable: false,
-    objectCount: 25,
-    rotationSpeed: 1,
-    colorTheme: 0, // 0=Rainbow, 1=Warm, 2=Cool, 3=Monochrome
-  });
-
-  const saveParameterState = useCallback(
-    async (params, action = "manual") => {
-      await database.put({
-        _id: `param-state-${Date.now()}`,
-        type: "parameter-state",
-        parameters: { ...params },
-        action,
-        timestamp: Date.now(),
-      });
-    },
-    [database],
-  );
-
-  const savePreset = useCallback(async () => {
-    if (!presetName.trim()) return;
-
-    await database.put({
-      _id: `preset-${Date.now()}`,
-      type: "preset",
-      name: presetName,
-      parameters: { ...parameters },
-      timestamp: Date.now(),
-    });
-
-    setPresetName("");
-  }, [database, presetName, parameters]);
-
-  const loadPreset = useCallback((preset) => {
-    setParameters({ ...preset.parameters });
-    setCurrentPreset(preset);
-  }, []);
-
-  const loadParameterState = useCallback((state) => {
-    setParameters({ ...state.parameters });
-  }, []);
-
-  const generateRandomScene = useCallback(async () => {
-    setIsGenerating(true);
-
-    // Save current state before randomizing
-    await saveParameterState(parameters, "before-randomize");
-
-    // Generate random parameters
-    const newParams = {
-      shape: Math.floor(Math.random() * 4) + 1,
-      radius: Math.random() * 20 + 2,
-      rotateR: Math.random() * 90,
-      rotateG: Math.random() * 90,
-      rotateB: Math.random() * 90,
-      scatter: Math.random(),
-      blending: Math.random(),
-      blendingMode: Math.floor(Math.random() * 5) + 1,
-      greyscale: Math.random() > 0.7,
-      disable: false,
-      objectCount: Math.floor(Math.random() * 40) + 10,
-      rotationSpeed: Math.random() * 3 + 0.5,
-      colorTheme: Math.floor(Math.random() * 4),
-    };
-
-    setParameters(newParams);
-
-    // Save the new randomized state
-    setTimeout(async () => {
-      await saveParameterState(newParams, "randomized");
-      setIsGenerating(false);
-    }, 500);
-  }, [parameters, saveParameterState]);
-
-  // Save parameter changes for history
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      saveParameterState(parameters, "manual");
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [parameters, saveParameterState]);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x242424);
-
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      1,
-      1000,
-    );
-    camera.position.z = 12;
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      antialias: true,
-      preserveDrawingBuffer: true,
-    });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    // Controls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.5;
-
-    // Group for all objects
-    const group = new THREE.Group();
-    scene.add(group);
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(0xffffff, 1, 100);
-    pointLight.position.set(10, 10, 10);
-    scene.add(pointLight);
-
-    // Post-processing
-    const composer = new EffectComposer(renderer);
-    const renderPass = new RenderPass(scene, camera);
-    composer.addPass(renderPass);
-
-    const halftonePass = new HalftonePass({
-      shape: parameters.shape,
-      radius: parameters.radius,
-      rotateR: parameters.rotateR * (Math.PI / 180),
-      rotateG: parameters.rotateG * (Math.PI / 180),
-      rotateB: parameters.rotateB * (Math.PI / 180),
-      scatter: parameters.scatter,
-      blending: parameters.blending,
-      blendingMode: parameters.blendingMode,
-      greyscale: parameters.greyscale,
-      disable: parameters.disable,
-    });
-    composer.addPass(halftonePass);
-
-    // Store refs
-    sceneRef.current = {
-      scene,
-      camera,
-      renderer,
-      composer,
-      halftonePass,
-      group,
-      controls,
-      objects: [],
-    };
-
-    // Create initial objects
-    const createObjects = () => {
-      // Clear existing objects
-      sceneRef.current.objects.forEach((obj) => {
-        group.remove(obj);
-      });
-      sceneRef.current.objects = [];
-
-      // Color themes
-      const colorThemes = [
-        [0xff70a6, 0x70d6ff, 0xffd670, 0xe9ff70, 0xff9770], // Rainbow
-        [0xff9770, 0xffd670, 0xff70a6], // Warm
-        [0x70d6ff, 0xe9ff70, 0x242424], // Cool
-        [0xffffff, 0x242424], // Monochrome
-      ];
-
-      const colors = colorThemes[parameters.colorTheme] || colorThemes[0];
-
-      // Shader material for interesting effects
-      const material = new THREE.ShaderMaterial({
-        uniforms: {
-          time: { value: 0 },
-        },
-        vertexShader: `
-          varying vec2 vUv;
-          varying vec3 vNormal;
-          varying vec3 vPosition;
-          uniform float time;
-          
-          void main() {
-            vUv = uv;
-            vNormal = normalize(normalMatrix * normal);
-            vPosition = position;
-            
-            vec3 pos = position;
-            pos += sin(pos * 2.0 + time) * 0.1;
-            
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-          }
-        `,
-        fragmentShader: `
-          varying vec2 vUv;
-          varying vec3 vNormal;
-          varying vec3 vPosition;
-          uniform float time;
-          
-          void main() {
-            vec3 color = abs(vNormal) + vec3(vUv, sin(time + vPosition.x));
-            color = mix(color, vec3(1.0, 0.4, 0.6), sin(time + vPosition.y) * 0.5 + 0.5);
-            gl_FragColor = vec4(color, 1.0);
-          }
-        `,
-      });
-
-      // Create various geometric shapes
-      const geometries = [
-        new THREE.BoxGeometry(2, 2, 2),
-        new THREE.SphereGeometry(1.2, 16, 16),
-        new THREE.ConeGeometry(1, 2, 8),
-        new THREE.CylinderGeometry(0.8, 0.8, 2, 8),
-        new THREE.OctahedronGeometry(1.2),
-        new THREE.TetrahedronGeometry(1.5),
-        new THREE.DodecahedronGeometry(1),
-        new THREE.IcosahedronGeometry(1.2),
-      ];
-
-      for (let i = 0; i < parameters.objectCount; i++) {
-        const geometry =
-          geometries[Math.floor(Math.random() * geometries.length)];
-        const basicMaterial = new THREE.MeshPhongMaterial({
-          color: colors[Math.floor(Math.random() * colors.length)],
-          shininess: 100,
-          transparent: true,
-          opacity: 0.8 + Math.random() * 0.2,
-        });
-
-        const mesh = new THREE.Mesh(
-          geometry,
-          Math.random() > 0.3 ? basicMaterial : material,
-        );
-
-        mesh.position.set(
-          (Math.random() - 0.5) * 20,
-          (Math.random() - 0.5) * 20,
-          (Math.random() - 0.5) * 20,
-        );
-
-        mesh.rotation.set(
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2,
-        );
-
-        mesh.scale.setScalar(0.5 + Math.random() * 1.5);
-
-        group.add(mesh);
-        sceneRef.current.objects.push(mesh);
-      }
-    };
-
-    createObjects();
-
-    // Animation loop
-    const clock = new THREE.Clock();
-    const animate = () => {
-      const delta = clock.getDelta();
-      const elapsed = clock.getElapsedTime();
-
-      // Update material uniforms
-      sceneRef.current.objects.forEach((obj) => {
-        if (obj.material.uniforms && obj.material.uniforms.time) {
-          obj.material.uniforms.time.value = elapsed;
-        }
-
-        // Animate objects
-        obj.rotation.x += delta * parameters.rotationSpeed * 0.2;
-        obj.rotation.y += delta * parameters.rotationSpeed * 0.3;
-        obj.rotation.z += delta * parameters.rotationSpeed * 0.1;
-      });
-
-      controls.update();
-      composer.render();
-      requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    // Handle resize
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      composer.setSize(window.innerWidth, window.innerHeight);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      renderer.dispose();
-    };
-  }, [parameters]);
-
-  // Update halftone parameters
-  useEffect(() => {
-    if (sceneRef.current?.halftonePass) {
-      const pass = sceneRef.current.halftonePass;
-      pass.uniforms.shape.value = parameters.shape;
-      pass.uniforms.radius.value = parameters.radius;
-      pass.uniforms.rotateR.value = parameters.rotateR * (Math.PI / 180);
-      pass.uniforms.rotateG.value = parameters.rotateG * (Math.PI / 180);
-      pass.uniforms.rotateB.value = parameters.rotateB * (Math.PI / 180);
-      pass.uniforms.scatter.value = parameters.scatter;
-      pass.uniforms.blending.value = parameters.blending;
-      pass.uniforms.blendingMode.value = parameters.blendingMode;
-      pass.uniforms.greyscale.value = parameters.greyscale;
-      pass.uniforms.disable.value = parameters.disable;
-    }
-  }, [parameters]);
-
-  const shapeName =
-    ["", "Dot", "Ellipse", "Line", "Square"][parameters.shape] || "Dot";
-  const blendModeName =
-    ["", "Linear", "Multiply", "Add", "Lighter", "Darker"][
-      parameters.blendingMode
-    ] || "Linear";
-  const actionNames = {
-    "before-randomize": "🎲 Before Random",
-    randomized: "✨ Randomized",
-    manual: "✏️ Manual Edit",
-  };
+// Presentation Component - Pure UI
+function HalftoneStudioUI({
+  canvasRef,
+  showParameters,
+  onToggleParameters,
+  parameters,
+  onParameterChange,
+  isGenerating,
+  onGenerateRandom,
+  presetName,
+  onPresetNameChange,
+  onSavePreset,
+  presets,
+  currentPreset,
+  onLoadPreset,
+  parameterHistory,
+  onLoadParameterState,
+}) {
+  const shapeName = SHAPE_NAMES[parameters.shape] || "Dot";
+  const blendModeName = BLEND_MODE_NAMES[parameters.blendingMode] || "Linear";
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-[#242424]">
@@ -1914,7 +1598,7 @@ export default function HalftoneArtStudio() {
         {/* Always visible controls */}
         <div className="mb-4 space-y-3">
           <button
-            onClick={generateRandomScene}
+            onClick={onGenerateRandom}
             disabled={isGenerating}
             className="w-full rounded border-2 border-[#242424] bg-[#ff70a6] px-4 py-3 font-bold text-[#242424] hover:bg-[#ff9770] disabled:opacity-50"
           >
@@ -1922,7 +1606,7 @@ export default function HalftoneArtStudio() {
           </button>
 
           <button
-            onClick={() => setShowParameters(!showParameters)}
+            onClick={onToggleParameters}
             className="w-full rounded border-2 border-[#242424] bg-[#70d6ff] px-4 py-2 font-bold text-[#242424] hover:bg-[#e9ff70]"
           >
             {showParameters ? "🔼 Hide Controls" : "🔽 Show Controls"}
@@ -1940,10 +1624,7 @@ export default function HalftoneArtStudio() {
               <select
                 value={parameters.shape}
                 onChange={(e) =>
-                  setParameters((prev) => ({
-                    ...prev,
-                    shape: parseInt(e.target.value),
-                  }))
+                  onParameterChange("shape", parseInt(e.target.value))
                 }
                 className="w-full rounded border-2 border-[#242424] p-2 text-[#242424]"
               >
@@ -1966,10 +1647,7 @@ export default function HalftoneArtStudio() {
                 step="0.5"
                 value={parameters.radius}
                 onChange={(e) =>
-                  setParameters((prev) => ({
-                    ...prev,
-                    radius: parseFloat(e.target.value),
-                  }))
+                  onParameterChange("radius", parseFloat(e.target.value))
                 }
                 className="w-full"
               />
@@ -1987,10 +1665,7 @@ export default function HalftoneArtStudio() {
                   max="90"
                   value={parameters.rotateR}
                   onChange={(e) =>
-                    setParameters((prev) => ({
-                      ...prev,
-                      rotateR: parseFloat(e.target.value),
-                    }))
+                    onParameterChange("rotateR", parseFloat(e.target.value))
                   }
                   className="w-full"
                 />
@@ -2005,10 +1680,7 @@ export default function HalftoneArtStudio() {
                   max="90"
                   value={parameters.rotateG}
                   onChange={(e) =>
-                    setParameters((prev) => ({
-                      ...prev,
-                      rotateG: parseFloat(e.target.value),
-                    }))
+                    onParameterChange("rotateG", parseFloat(e.target.value))
                   }
                   className="w-full"
                 />
@@ -2023,10 +1695,7 @@ export default function HalftoneArtStudio() {
                   max="90"
                   value={parameters.rotateB}
                   onChange={(e) =>
-                    setParameters((prev) => ({
-                      ...prev,
-                      rotateB: parseFloat(e.target.value),
-                    }))
+                    onParameterChange("rotateB", parseFloat(e.target.value))
                   }
                   className="w-full"
                 />
@@ -2045,10 +1714,7 @@ export default function HalftoneArtStudio() {
                 step="0.01"
                 value={parameters.scatter}
                 onChange={(e) =>
-                  setParameters((prev) => ({
-                    ...prev,
-                    scatter: parseFloat(e.target.value),
-                  }))
+                  onParameterChange("scatter", parseFloat(e.target.value))
                 }
                 className="w-full"
               />
@@ -2065,10 +1731,7 @@ export default function HalftoneArtStudio() {
                 step="0.01"
                 value={parameters.blending}
                 onChange={(e) =>
-                  setParameters((prev) => ({
-                    ...prev,
-                    blending: parseFloat(e.target.value),
-                  }))
+                  onParameterChange("blending", parseFloat(e.target.value))
                 }
                 className="w-full"
               />
@@ -2081,10 +1744,7 @@ export default function HalftoneArtStudio() {
               <select
                 value={parameters.blendingMode}
                 onChange={(e) =>
-                  setParameters((prev) => ({
-                    ...prev,
-                    blendingMode: parseInt(e.target.value),
-                  }))
+                  onParameterChange("blendingMode", parseInt(e.target.value))
                 }
                 className="w-full rounded border-2 border-[#242424] p-2 text-[#242424]"
               >
@@ -2103,10 +1763,7 @@ export default function HalftoneArtStudio() {
                   type="checkbox"
                   checked={parameters.greyscale}
                   onChange={(e) =>
-                    setParameters((prev) => ({
-                      ...prev,
-                      greyscale: e.target.checked,
-                    }))
+                    onParameterChange("greyscale", e.target.checked)
                   }
                   className="mr-2"
                 />
@@ -2120,10 +1777,7 @@ export default function HalftoneArtStudio() {
                   type="checkbox"
                   checked={parameters.disable}
                   onChange={(e) =>
-                    setParameters((prev) => ({
-                      ...prev,
-                      disable: e.target.checked,
-                    }))
+                    onParameterChange("disable", e.target.checked)
                   }
                   className="mr-2"
                 />
@@ -2139,11 +1793,11 @@ export default function HalftoneArtStudio() {
                 type="text"
                 placeholder="Preset name..."
                 value={presetName}
-                onChange={(e) => setPresetName(e.target.value)}
+                onChange={(e) => onPresetNameChange(e.target.value)}
                 className="mb-2 w-full rounded border-2 border-[#242424] p-2 text-[#242424]"
               />
               <button
-                onClick={savePreset}
+                onClick={onSavePreset}
                 disabled={!presetName.trim()}
                 className="w-full rounded border-2 border-[#242424] bg-[#ffd670] px-4 py-2 font-bold text-[#242424] hover:bg-[#e9ff70] disabled:opacity-50"
               >
@@ -2168,18 +1822,14 @@ export default function HalftoneArtStudio() {
                             ? "border-[#242424] bg-[#ff70a6]"
                             : "border-[#242424] bg-[#ffffff] hover:bg-[#e9ff70]"
                         }`}
-                        onClick={() => loadPreset(preset)}
+                        onClick={() => onLoadPreset(preset)}
                       >
                         <div className="text-xs font-bold text-[#242424]">
                           {preset.name}
                         </div>
                         <div className="text-xs text-[#242424] opacity-75">
-                          {
-                            ["", "Dot", "Ellipse", "Line", "Square"][
-                              preset.parameters.shape
-                            ]
-                          }{" "}
-                          • {preset.parameters.greyscale ? "B&W" : "Color"}
+                          {SHAPE_NAMES[preset.parameters.shape]} •{" "}
+                          {preset.parameters.greyscale ? "B&W" : "Color"}
                         </div>
                       </div>
                     ))}
@@ -2201,18 +1851,14 @@ export default function HalftoneArtStudio() {
                       <div
                         key={state._id}
                         className="cursor-pointer rounded border-2 border-[#242424] p-2 transition-colors hover:bg-[#e9ff70]"
-                        onClick={() => loadParameterState(state)}
+                        onClick={() => onLoadParameterState(state)}
                       >
                         <div className="text-xs font-bold text-[#242424]">
-                          {actionNames[state.action] || "⚙️ Unknown"}
+                          {ACTION_NAMES[state.action] || "⚙️ Unknown"}
                         </div>
                         <div className="text-xs text-[#242424] opacity-75">
-                          {
-                            ["", "Dot", "Ellipse", "Line", "Square"][
-                              state.parameters.shape
-                            ]
-                          }{" "}
-                          • Size: {state.parameters.radius.toFixed(1)} •{" "}
+                          {SHAPE_NAMES[state.parameters.shape]} • Size:{" "}
+                          {state.parameters.radius.toFixed(1)} •{" "}
                           {state.parameters.greyscale ? "B&W" : "Color"}
                         </div>
                         <div className="text-xs text-[#242424] opacity-50">
@@ -2227,6 +1873,381 @@ export default function HalftoneArtStudio() {
         )}
       </div>
     </div>
+  );
+}
+
+// Three.js Scene Setup and Rendering Logic
+function setupThreeScene(canvasRef, parameters) {
+  if (!canvasRef.current) return null;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x242424);
+
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    1,
+    1000
+  );
+  camera.position.z = 12;
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas: canvasRef.current,
+    antialias: true,
+    preserveDrawingBuffer: true,
+  });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.5;
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambientLight);
+
+  const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+  pointLight.position.set(10, 10, 10);
+  scene.add(pointLight);
+
+  const composer = new EffectComposer(renderer);
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  const halftonePass = new HalftonePass({
+    shape: parameters.shape,
+    radius: parameters.radius,
+    rotateR: parameters.rotateR * (Math.PI / 180),
+    rotateG: parameters.rotateG * (Math.PI / 180),
+    rotateB: parameters.rotateB * (Math.PI / 180),
+    scatter: parameters.scatter,
+    blending: parameters.blending,
+    blendingMode: parameters.blendingMode,
+    greyscale: parameters.greyscale,
+    disable: parameters.disable,
+  });
+  composer.addPass(halftonePass);
+
+  return {
+    scene,
+    camera,
+    renderer,
+    composer,
+    halftonePass,
+    group,
+    controls,
+    objects: [],
+  };
+}
+
+function createSceneObjects(sceneRef, parameters) {
+  if (!sceneRef) return;
+
+  const { group, objects } = sceneRef;
+
+  // Clear existing objects
+  objects.forEach((obj) => group.remove(obj));
+  sceneRef.objects = [];
+
+  const colorThemes = [
+    [0xff70a6, 0x70d6ff, 0xffd670, 0xe9ff70, 0xff9770], // Rainbow
+    [0xff9770, 0xffd670, 0xff70a6], // Warm
+    [0x70d6ff, 0xe9ff70, 0x242424], // Cool
+    [0xffffff, 0x242424], // Monochrome
+  ];
+
+  const colors = colorThemes[parameters.colorTheme] || colorThemes[0];
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      time: { value: 0 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      uniform float time;
+
+      void main() {
+        vUv = uv;
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = position;
+
+        vec3 pos = position;
+        pos += sin(pos * 2.0 + time) * 0.1;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      uniform float time;
+
+      void main() {
+        vec3 color = abs(vNormal) + vec3(vUv, sin(time + vPosition.x));
+        color = mix(color, vec3(1.0, 0.4, 0.6), sin(time + vPosition.y) * 0.5 + 0.5);
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `,
+  });
+
+  const geometries = [
+    new THREE.BoxGeometry(2, 2, 2),
+    new THREE.SphereGeometry(1.2, 16, 16),
+    new THREE.ConeGeometry(1, 2, 8),
+    new THREE.CylinderGeometry(0.8, 0.8, 2, 8),
+    new THREE.OctahedronGeometry(1.2),
+    new THREE.TetrahedronGeometry(1.5),
+    new THREE.DodecahedronGeometry(1),
+    new THREE.IcosahedronGeometry(1.2),
+  ];
+
+  for (let i = 0; i < parameters.objectCount; i++) {
+    const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+    const basicMaterial = new THREE.MeshPhongMaterial({
+      color: colors[Math.floor(Math.random() * colors.length)],
+      shininess: 100,
+      transparent: true,
+      opacity: 0.8 + Math.random() * 0.2,
+    });
+
+    const mesh = new THREE.Mesh(
+      geometry,
+      Math.random() > 0.3 ? basicMaterial : material
+    );
+
+    mesh.position.set(
+      (Math.random() - 0.5) * 20,
+      (Math.random() - 0.5) * 20,
+      (Math.random() - 0.5) * 20
+    );
+
+    mesh.rotation.set(
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2
+    );
+
+    mesh.scale.setScalar(0.5 + Math.random() * 1.5);
+
+    group.add(mesh);
+    sceneRef.objects.push(mesh);
+  }
+}
+
+function startAnimation(sceneRef, parameters) {
+  const { composer, controls, objects } = sceneRef;
+  const clock = new THREE.Clock();
+
+  const animate = () => {
+    const delta = clock.getDelta();
+    const elapsed = clock.getElapsedTime();
+
+    objects.forEach((obj) => {
+      if (obj.material.uniforms && obj.material.uniforms.time) {
+        obj.material.uniforms.time.value = elapsed;
+      }
+
+      obj.rotation.x += delta * parameters.rotationSpeed * 0.2;
+      obj.rotation.y += delta * parameters.rotationSpeed * 0.3;
+      obj.rotation.z += delta * parameters.rotationSpeed * 0.1;
+    });
+
+    controls.update();
+    composer.render();
+    requestAnimationFrame(animate);
+  };
+
+  animate();
+}
+
+function updateHalftoneParameters(sceneRef, parameters) {
+  if (!sceneRef?.halftonePass) return;
+
+  const pass = sceneRef.halftonePass;
+  pass.uniforms.shape.value = parameters.shape;
+  pass.uniforms.radius.value = parameters.radius;
+  pass.uniforms.rotateR.value = parameters.rotateR * (Math.PI / 180);
+  pass.uniforms.rotateG.value = parameters.rotateG * (Math.PI / 180);
+  pass.uniforms.rotateB.value = parameters.rotateB * (Math.PI / 180);
+  pass.uniforms.scatter.value = parameters.scatter;
+  pass.uniforms.blending.value = parameters.blending;
+  pass.uniforms.blendingMode.value = parameters.blendingMode;
+  pass.uniforms.greyscale.value = parameters.greyscale;
+  pass.uniforms.disable.value = parameters.disable;
+}
+
+// Container Component - Data and Logic
+export default function App() {
+  const { database, useLiveQuery } = useFireproof("halftone-studio");
+  const canvasRef = useRef(null);
+  const sceneRef = useRef(null);
+
+  const [currentPreset, setCurrentPreset] = useState(null);
+  const [presetName, setPresetName] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showParameters, setShowParameters] = useState(false);
+
+  const { docs: presets } = useLiveQuery("type", { key: "preset" }) || {
+    docs: [],
+  };
+  const { docs: parameterHistory } = useLiveQuery("type", {
+    key: "parameter-state",
+  }) || {
+    docs: [],
+  };
+
+  const [parameters, setParameters] = useState({
+    shape: 1,
+    radius: 4,
+    rotateR: 15,
+    rotateG: 30,
+    rotateB: 45,
+    scatter: 0,
+    blending: 1,
+    blendingMode: 1,
+    greyscale: false,
+    disable: false,
+    objectCount: 25,
+    rotationSpeed: 1,
+    colorTheme: 0,
+  });
+
+  const saveParameterState = useCallback(
+    async (params, action = "manual") => {
+      await database.put({
+        _id: `param-state-${Date.now()}`,
+        type: "parameter-state",
+        parameters: { ...params },
+        action,
+        timestamp: Date.now(),
+      });
+    },
+    [database]
+  );
+
+  const handleParameterChange = useCallback((key, value) => {
+    setParameters((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleToggleParameters = useCallback(() => {
+    setShowParameters((prev) => !prev);
+  }, []);
+
+  const handleGenerateRandom = useCallback(async () => {
+    setIsGenerating(true);
+    await saveParameterState(parameters, "before-randomize");
+
+    const newParams = {
+      shape: Math.floor(Math.random() * 4) + 1,
+      radius: Math.random() * 20 + 2,
+      rotateR: Math.random() * 90,
+      rotateG: Math.random() * 90,
+      rotateB: Math.random() * 90,
+      scatter: Math.random(),
+      blending: Math.random(),
+      blendingMode: Math.floor(Math.random() * 5) + 1,
+      greyscale: Math.random() > 0.7,
+      disable: false,
+      objectCount: Math.floor(Math.random() * 40) + 10,
+      rotationSpeed: Math.random() * 3 + 0.5,
+      colorTheme: Math.floor(Math.random() * 4),
+    };
+
+    setParameters(newParams);
+
+    setTimeout(async () => {
+      await saveParameterState(newParams, "randomized");
+      setIsGenerating(false);
+    }, 500);
+  }, [parameters, saveParameterState]);
+
+  const handleSavePreset = useCallback(async () => {
+    if (!presetName.trim()) return;
+
+    await database.put({
+      _id: `preset-${Date.now()}`,
+      type: "preset",
+      name: presetName,
+      parameters: { ...parameters },
+      timestamp: Date.now(),
+    });
+
+    setPresetName("");
+  }, [database, presetName, parameters]);
+
+  const handleLoadPreset = useCallback((preset) => {
+    setParameters({ ...preset.parameters });
+    setCurrentPreset(preset);
+  }, []);
+
+  const handleLoadParameterState = useCallback((state) => {
+    setParameters({ ...state.parameters });
+  }, []);
+
+  // Save parameter changes for history
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      saveParameterState(parameters, "manual");
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [parameters, saveParameterState]);
+
+  // Setup Three.js scene
+  useEffect(() => {
+    const scene = setupThreeScene(canvasRef, parameters);
+    if (!scene) return;
+
+    sceneRef.current = scene;
+    createSceneObjects(sceneRef.current, parameters);
+    startAnimation(sceneRef.current, parameters);
+
+    const handleResize = () => {
+      scene.camera.aspect = window.innerWidth / window.innerHeight;
+      scene.camera.updateProjectionMatrix();
+      scene.renderer.setSize(window.innerWidth, window.innerHeight);
+      scene.composer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      scene.renderer.dispose();
+    };
+  }, [parameters]);
+
+  // Update halftone effect when parameters change
+  useEffect(() => {
+    updateHalftoneParameters(sceneRef.current, parameters);
+  }, [parameters]);
+
+  return (
+    <HalftoneStudioUI
+      canvasRef={canvasRef}
+      showParameters={showParameters}
+      onToggleParameters={handleToggleParameters}
+      parameters={parameters}
+      onParameterChange={handleParameterChange}
+      isGenerating={isGenerating}
+      onGenerateRandom={handleGenerateRandom}
+      presetName={presetName}
+      onPresetNameChange={setPresetName}
+      onSavePreset={handleSavePreset}
+      presets={presets}
+      currentPreset={currentPreset}
+      onLoadPreset={handleLoadPreset}
+      parameterHistory={parameterHistory}
+      onLoadParameterState={handleLoadParameterState}
+    />
   );
 }
 ```
