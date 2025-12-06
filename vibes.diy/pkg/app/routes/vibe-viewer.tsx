@@ -5,8 +5,8 @@ import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "@clerk/clerk-react";
-import { mountVibeWithCleanup } from "../mounting/index.js";
-import { transformImports } from "@vibes.diy/prompts";
+import { mountVibeWithCleanup } from "use-vibes";
+import { setupDevShims, transformImportsDev } from "../utils/dev-shims.js";
 import LoggedOutView from "../components/LoggedOutView.js";
 
 const sthis = Lazy(() => ensureSuperThis());
@@ -125,6 +125,9 @@ function VibeInstanceViewerContent() {
   useEffect(() => {
     if (!titleId || !installId) return;
 
+    // Expose libraries to window for development shim
+    setupDevShims();
+
     // Generate new container ID for this navigation
     const newContainerId = `vibe-container-${sthis().nextId().str}`;
     setContainerId(newContainerId);
@@ -159,7 +162,7 @@ function VibeInstanceViewerContent() {
           newContainerId,
           titleId,
           installId,
-          transformImports,
+          transformImportsDev,
           true, // showVibesSwitch
           clerkToken || undefined, // Pass Clerk token as apiKey
           callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host

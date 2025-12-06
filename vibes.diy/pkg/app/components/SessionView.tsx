@@ -14,7 +14,7 @@ import { isMobileViewport, useViewState } from "../utils/ViewState.js";
 import { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { useAuth } from "@clerk/clerk-react";
 import { trackEvent } from "../utils/analytics.js";
-import { BrutalistCard } from "./vibes/BrutalistCard.js";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 import LoggedOutView from "./LoggedOutView.js";
 
 interface SessionViewProps {

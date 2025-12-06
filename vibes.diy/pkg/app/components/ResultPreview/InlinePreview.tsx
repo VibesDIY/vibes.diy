@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Lazy } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
-import { mountVibeWithCleanup } from "../../mounting/index.js";
-import { transformImports } from "@vibes.diy/prompts";
+import { mountVibeWithCleanup } from "use-vibes";
+import { setupDevShims, transformImportsDev } from "../../utils/dev-shims.js";
 import { useAuth } from "@clerk/clerk-react";
 import { VibesDiyEnv } from "../../config/env.js";
 
@@ -44,6 +44,9 @@ export function InlinePreview({
   useEffect(() => {
     if (!codeReady || !code) return;
 
+    // Expose libraries to window for development shim
+    setupDevShims();
+
     let active = true;
 
     const loadAndMountVibe = async () => {
@@ -66,7 +69,7 @@ export function InlinePreview({
           containerId,
           sessionId, // Use session ID as titleId
           "preview", // Use "preview" as installId for result preview context
-          transformImports,
+          transformImportsDev,
           false, // Hide vibes switch in result preview mode
           clerkToken || undefined, // Pass Clerk token as apiKey
           callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host

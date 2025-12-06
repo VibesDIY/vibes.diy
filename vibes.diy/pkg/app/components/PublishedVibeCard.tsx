@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { BrutalistCard } from "./vibes/BrutalistCard.js";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 import { DocFileMeta } from "use-fireproof";
 import { ImgFile } from "./SessionSidebar/ImgFile.js";
 import {

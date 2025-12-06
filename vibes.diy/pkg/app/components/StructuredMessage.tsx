@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import type { Segment, ViewType } from "@vibes.diy/prompts";
-import { BrutalistCard } from "./vibes/BrutalistCard.js";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 interface StructuredMessageProps {
   segments: Segment[];
