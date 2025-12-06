@@ -368,7 +368,7 @@ function TodoListUI({ newTodo, onInputChange, onSubmit, todos, onToggle, onDelet
                   className="mr-2"
                   type="checkbox"
                   checked={doc.completed}
-                  onChange={() => onToggle(doc)}
+                  onChange={() => onToggle(doc._id)}
                 />
                 <span className="font-medium">{doc.todo}</span>
               </div>
@@ -380,7 +380,7 @@ function TodoListUI({ newTodo, onInputChange, onSubmit, todos, onToggle, onDelet
               </button>
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {new Date(doc.createdAt).toISOString()}
+              {doc.createdAtLabel}
             </div>
           </li>
         ))}
@@ -409,6 +409,13 @@ export default function App() {
     descending: true
   });
 
+  const viewTodos = todos.map(({ _id, todo, completed, createdAt }) => ({
+    _id,
+    todo,
+    completed,
+    createdAtLabel: new Date(createdAt).toISOString()
+  }));
+
   const handleInputChange = (e) => {
     mergeNewTodo({ todo: e.target.value });
   };
@@ -418,7 +425,9 @@ export default function App() {
     submitNewTodo();
   };
 
-  const handleToggle = (doc) => {
+  const handleToggle = (id) => {
+    const doc = todos.find((todo) => todo._id === id);
+    if (!doc) return;
     database.put({ ...doc, completed: !doc.completed });
   };
 
@@ -431,7 +440,7 @@ export default function App() {
       newTodo={newTodo}
       onInputChange={handleInputChange}
       onSubmit={handleSubmit}
-      todos={todos}
+      todos={viewTodos}
       onToggle={handleToggle}
       onDelete={handleDelete}
     />
@@ -523,5 +532,7 @@ export default function App() {
   );
 }
 ```
+
+In this pattern, validation lives in the container component: clicking "Upload" decides whether to set the `error` state, and the presentation component simply renders that `error` prop as styling. Editing the description clears the error but does not automatically submit, which keeps the UI "dumb" while the container owns all data and validation logic.
 
 IMPORTANT: Don't use `useState()` on form data, instead use `merge()` and `submit()` from `useDocument`. Only use `useState` for ephemeral UI state (active tabs, open/closed panels, cursor positions). Keep your data model in Fireproof.

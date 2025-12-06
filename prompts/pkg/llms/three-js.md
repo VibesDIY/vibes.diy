@@ -1887,7 +1887,7 @@ function setupThreeScene(canvasRef, parameters) {
     75,
     window.innerWidth / window.innerHeight,
     1,
-    1000
+    1000,
   );
   camera.position.z = 12;
 
@@ -1951,7 +1951,22 @@ function createSceneObjects(sceneRef, parameters) {
   const { group, objects } = sceneRef;
 
   // Clear existing objects
-  objects.forEach((obj) => group.remove(obj));
+  objects.forEach((obj) => {
+    group.remove(obj);
+    if (obj.geometry) {
+      obj.geometry.dispose();
+    }
+    const material = obj.material;
+    if (Array.isArray(material)) {
+      material.forEach((m) => {
+        if (m && typeof m.dispose === "function") {
+          m.dispose();
+        }
+      });
+    } else if (material && typeof material.dispose === "function") {
+      material.dispose();
+    }
+  });
   sceneRef.objects = [];
 
   const colorThemes = [
@@ -2020,19 +2035,19 @@ function createSceneObjects(sceneRef, parameters) {
 
     const mesh = new THREE.Mesh(
       geometry,
-      Math.random() > 0.3 ? basicMaterial : material
+      Math.random() > 0.3 ? basicMaterial : material,
     );
 
     mesh.position.set(
       (Math.random() - 0.5) * 20,
       (Math.random() - 0.5) * 20,
-      (Math.random() - 0.5) * 20
+      (Math.random() - 0.5) * 20,
     );
 
     mesh.rotation.set(
       Math.random() * Math.PI * 2,
       Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2
+      Math.random() * Math.PI * 2,
     );
 
     mesh.scale.setScalar(0.5 + Math.random() * 1.5);
@@ -2042,7 +2057,7 @@ function createSceneObjects(sceneRef, parameters) {
   }
 }
 
-function startAnimation(sceneRef, parameters) {
+function startAnimation(sceneRef, parametersRef, animationFrameRef) {
   const { composer, controls, objects } = sceneRef;
   const clock = new THREE.Clock();
 
@@ -2050,19 +2065,21 @@ function startAnimation(sceneRef, parameters) {
     const delta = clock.getDelta();
     const elapsed = clock.getElapsedTime();
 
+    const currentParams = parametersRef.current;
+
     objects.forEach((obj) => {
       if (obj.material.uniforms && obj.material.uniforms.time) {
         obj.material.uniforms.time.value = elapsed;
       }
 
-      obj.rotation.x += delta * parameters.rotationSpeed * 0.2;
-      obj.rotation.y += delta * parameters.rotationSpeed * 0.3;
-      obj.rotation.z += delta * parameters.rotationSpeed * 0.1;
+      obj.rotation.x += delta * currentParams.rotationSpeed * 0.2;
+      obj.rotation.y += delta * currentParams.rotationSpeed * 0.3;
+      obj.rotation.z += delta * currentParams.rotationSpeed * 0.1;
     });
 
     controls.update();
     composer.render();
-    requestAnimationFrame(animate);
+    animationFrameRef.current = requestAnimationFrame(animate);
   };
 
   animate();
@@ -2089,6 +2106,7 @@ export default function App() {
   const { database, useLiveQuery } = useFireproof("halftone-studio");
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   const [currentPreset, setCurrentPreset] = useState(null);
   const [presetName, setPresetName] = useState("");
@@ -2120,6 +2138,12 @@ export default function App() {
     colorTheme: 0,
   });
 
+  const parametersRef = useRef(parameters);
+
+  useEffect(() => {
+    parametersRef.current = parameters;
+  }, [parameters]);
+
   const saveParameterState = useCallback(
     async (params, action = "manual") => {
       await database.put({
@@ -2130,7 +2154,7 @@ export default function App() {
         timestamp: Date.now(),
       });
     },
-    [database]
+    [database],
   );
 
   const handleParameterChange = useCallback((key, value) => {
@@ -2201,14 +2225,13 @@ export default function App() {
     return () => clearTimeout(timeoutId);
   }, [parameters, saveParameterState]);
 
-  // Setup Three.js scene
+  // Setup Three.js scene (run once on mount)
   useEffect(() => {
     const scene = setupThreeScene(canvasRef, parameters);
     if (!scene) return;
 
     sceneRef.current = scene;
-    createSceneObjects(sceneRef.current, parameters);
-    startAnimation(sceneRef.current, parameters);
+    startAnimation(sceneRef.current, parametersRef, animationFrameRef);
 
     const handleResize = () => {
       scene.camera.aspect = window.innerWidth / window.innerHeight;
@@ -2221,12 +2244,18 @@ export default function App() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       scene.renderer.dispose();
     };
-  }, [parameters]);
+  }, []);
 
-  // Update halftone effect when parameters change
+  // Update scene objects and halftone effect when parameters change
   useEffect(() => {
+    if (!sceneRef.current) return;
+
+    createSceneObjects(sceneRef.current, parameters);
     updateHalftoneParameters(sceneRef.current, parameters);
   }, [parameters]);
 
