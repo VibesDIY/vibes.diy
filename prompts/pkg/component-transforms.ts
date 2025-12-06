@@ -11,13 +11,19 @@ export const coreImportMap = [
   "react",
   "react-dom",
   "react-dom/client",
-  "use-fireproof",
   "call-ai",
   "use-vibes",
 ];
 
 export function transformImports(code: string): string {
-  return code.replace(
+  // First, rewrite use-fireproof to use-vibes for user code
+  const codeWithFireproofRewrite = code.replace(
+    /import\s+((?:\{[^}]*\}|\*\s+as\s+\w+|\w+))\s+from\s+(['"])use-fireproof\2;?/g,
+    'import $1 from "use-vibes";',
+  );
+
+  // Then apply standard import transformations
+  return codeWithFireproofRewrite.replace(
     /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^/][^'"]*)['"];?/g,
     (match, importPath) => {
       if (coreImportMap.includes(importPath)) {
