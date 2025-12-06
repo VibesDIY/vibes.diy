@@ -422,6 +422,8 @@ export default function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Stamp createdAt at submission time so each todo reflects when it was actually created
+    mergeNewTodo({ createdAt: Date.now() });
     submitNewTodo();
   };
 
@@ -513,9 +515,15 @@ export default function App() {
   };
 
   const handleUpload = () => {
-    if (doc.description.trim()) {
+    const hasDescription = doc.description.trim().length > 0;
+    const hasFile = !!doc._files?.uploaded;
+
+    if (hasDescription && hasFile) {
       submit();
+      setError(false);
     } else {
+      // Keep validation in the container: a failure here simply toggles the error state
+      // that the presentation component renders as styling.
       setError(true);
     }
   };
