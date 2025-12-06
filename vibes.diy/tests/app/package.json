@@ -37,12 +37,12 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.9.6",
     "react-router-dom": "^7.9.6",
-    "use-fireproof": "0.24.2-dev-cloud-api",
+    "use-fireproof": "0.24.2-dev-clerk",
     "use-vibes": "workspace:*",
     "vibes-diy": "workspace:*"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.2-dev-cloud-api",
+    "@fireproof/core-cli": "0.24.2-dev-clerk",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/react": "~19.2.7",
