@@ -8,7 +8,7 @@ import type {
   ViewType,
 } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
-import { BrutalistCard } from "./vibes/BrutalistCard.js";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 interface MessageProps {
   message: ChatMessageDocument;

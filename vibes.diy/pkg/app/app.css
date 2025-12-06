@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./styles/colors.css";
 
 @theme {
   /* Color definitions - these will be available as bg-midnight, text-tahiti, etc. */

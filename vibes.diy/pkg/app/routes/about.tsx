@@ -1,6 +1,6 @@
 import React from "react";
 import BrutalistLayout from "../components/BrutalistLayout.js";
-import { BrutalistCard } from "../components/vibes/BrutalistCard.js";
+import { BrutalistCard } from "@vibes.diy/use-vibes-base";
 
 export function meta() {
   return [
