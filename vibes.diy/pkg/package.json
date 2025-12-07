@@ -24,7 +24,6 @@
     "check": "pnpm format:write && pnpm typecheck && pnpm test",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build",
-    "storybook": "cross-env DISABLE_REACT_ROUTER=true storybook dev -p 6006",
     "format:write": "prettier --write ."
   },
   "dependencies": {
