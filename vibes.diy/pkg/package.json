@@ -24,7 +24,6 @@
     "check": "pnpm format:write && pnpm typecheck && pnpm test",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build",
-    "storybook": "cross-env DISABLE_REACT_ROUTER=true storybook dev -p 6006",
     "format:write": "prettier --write ."
   },
   "dependencies": {
@@ -63,15 +62,9 @@
     "use-vibes": "workspace:*"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^4.1.3",
     "@cloudflare/vite-plugin": "^1.15.3",
     "@fireproof/core-cli": "0.24.2-dev-clerk",
     "@react-router/dev": "^7.9.6",
-    "@storybook/addon-a11y": "^10.1.2",
-    "@storybook/addon-docs": "^10.0.0",
-    "@storybook/addon-onboarding": "^10.0.8",
-    "@storybook/react": "^10.0.8",
-    "@storybook/react-vite": "^10.0.8",
     "@tailwindcss/vite": "^4.1.2",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.7",
@@ -83,7 +76,6 @@
     "netlify-cli": "^23.12.2",
     "prettier": "^3.7.3",
     "shiki": "^3.17.1",
-    "storybook": "^10.1.2",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",

@@ -12,9 +12,7 @@
   "scripts": {
     "build": "core-cli tsc",
     "pack": "core-cli build -x '^' --doPack",
-    "publish": "core-cli build -x '^'",
-    "storybook": "storybook dev -p 6007",
-    "build-storybook": "storybook build"
+    "publish": "core-cli build -x '^'"
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -34,17 +32,11 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^4.1.3",
     "@fireproof/core-cli": "0.24.2-dev-clerk",
-    "@storybook/addon-a11y": "^10.1.2",
-    "@storybook/addon-docs": "^10.0.0",
-    "@storybook/react": "^10.0.8",
-    "@storybook/react-vite": "^10.0.8",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.7",
     "@types/react-dom": "~19.2.2",
     "@vitest/browser-playwright": "^4.0.14",
-    "storybook": "^10.1.2",
     "typescript": "^5.9.3",
     "vite": "^7.2.6"
   }
