@@ -24,8 +24,7 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@vibes.diy/use-vibes-base": "workspace:*",
-    "react-dom": "^19.2.0"
+    "@vibes.diy/use-vibes-base": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=19.1.0"
