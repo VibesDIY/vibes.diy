@@ -35,7 +35,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.10.1",
-    "@cloudflare/workers-types": "^4.20251111.0",
+    "@cloudflare/workers-types": "^4.20251205.0",
     "@types/node": "^24.9.1",
     "@vitest/browser-playwright": "^4.0.14",
     "chanfana": "^2.8.2",
