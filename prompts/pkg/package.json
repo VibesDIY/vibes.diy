@@ -36,6 +36,7 @@
     "@fireproof/core-cli": "0.24.3-dev-use-livequery",
     "@vitest/browser-playwright": "^4.0.16",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.50.1"
+    "typescript-eslint": "^8.50.1",
+    "vitest": "^4.0.15"
   }
 }

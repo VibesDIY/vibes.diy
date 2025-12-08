@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.3-dev-use-livequery",
-    "@vitest/browser-playwright": "^4.0.16"
+    "@vitest/browser-playwright": "^4.0.16",
+    "vitest": "^4.0.15"
   }
 }

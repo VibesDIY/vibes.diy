@@ -81,12 +81,14 @@
     "netlify": "^23.13.0",
     "netlify-cli": "^23.13.0",
     "prettier": "^3.7.4",
+    "serve": "^14.2.5",
     "shiki": "^3.20.0",
     "storybook": "^10.1.10",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.0",
-    "vite-tsconfig-paths": "^6.0.3"
+    "vite-tsconfig-paths": "^6.0.3",
+    "vitest": "^4.0.15"
   }
 }

@@ -34,7 +34,10 @@
     "dev:router": "cd vibes.diy/pkg && pnpm run dev:router",
     "pack": "echo skip pack",
     "publish": "echo skip publish",
-    "check": "pnpm format && pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test"
+    "check": "pnpm format && pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test",
+    "storybook": "cd vibes.diy/pkg && cross-env DISABLE_REACT_ROUTER=true pnpm run storybook",
+    "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook",
+    "update-fireproof": "cd scripts && pnpm update-deps -C .."
   },
   "keywords": [
     "ai",
