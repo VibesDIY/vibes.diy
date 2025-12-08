@@ -1049,7 +1049,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </div>
             </DraggableCard>
 
-            <DraggableCard color="yellow" x={1000} y={1700}>
+           { !isMobile && <> <DraggableCard color="yellow" x={1000} y={1700}>
               <p style={getImageCardStyle()}>
                 <img src={rainbowComputer} style={getFullSizeImageStyle()} />
               </p>
@@ -1068,7 +1068,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             <DraggableCard color="yellow" x={700} y={7000}>
               <img style={getImageCardStyleSmall("340px")} src={mouth} />
-            </DraggableCard>
+            </DraggableCard> 
+            </>}
 
             {!isMobile && (
               <div
