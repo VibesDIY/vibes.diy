@@ -14,12 +14,7 @@ export function SunIcon({
   height = 35,
 }: SunIconProps) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 90 90"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={width} height={height} viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
       <g>
         <circle cx="45" cy="45" r="45" fill={bgFill} />
         <g transform="translate(45, 45) scale(0.75) translate(-45, -45)">

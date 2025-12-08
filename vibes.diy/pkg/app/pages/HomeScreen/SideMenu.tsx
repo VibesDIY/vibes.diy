@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { VibesSwitch } from "../../components/index.js";
+import { VibesButton } from "@vibes.diy/use-vibes-base";
 import {
   getSideMenuOverlay,
   getSideMenuContainer,
@@ -7,19 +8,11 @@ import {
   getSideMenuCloseButton,
   getSideMenuNav,
   getSideMenuList,
-  getSideMenuListItem,
-  getSideMenuIcon,
-  getSideMenuLabel,
   getSideMenuSwitchWrapper,
   getSideMenuFooter,
   getSideMenuLoginButton,
+  getSideMenuItemAnimation,
 } from "./SideMenu.styles.js";
-import { HomeIcon } from "../../components/SessionSidebar/HomeIcon.js";
-import { StarIcon } from "../../components/SessionSidebar/StarIcon.js";
-import { InstallsIcon } from "../../components/SessionSidebar/InstallsIcon.js";
-import { FirehoseIcon } from "../../components/SessionSidebar/FirehoseIcon.js";
-import { GearIcon } from "../../components/SessionSidebar/GearIcon.js";
-import { InfoIcon } from "../../components/SessionSidebar/InfoIcon.js";
 
 export interface SideMenuProps {
   isOpen: boolean;
@@ -28,17 +21,33 @@ export interface SideMenuProps {
 }
 
 interface MenuItem {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: "home" | "myvibes" | "groups" | "firehose" | "about";
   label: string;
   href: string;
+  variant?: "blue" | "red" | "yellow" | "gray";
 }
 
 const menuItems: MenuItem[] = [
-  { icon: HomeIcon, label: "Home", href: "/" },
-  { icon: StarIcon, label: "My Vibes", href: "/vibes/mine" },
-  { icon: InstallsIcon, label: "Installs", href: "/vibes/installs" },
-  { icon: FirehoseIcon, label: "Firehose", href: "/firehose" },
-  { icon: InfoIcon, label: "About", href: "/about" },
+  { icon: "home", label: "Home", href: "/", variant: "blue" },
+  {
+    icon: "myvibes",
+    label: "My Vibes",
+    href: "/vibes/mine",
+    variant: "yellow",
+  },
+  {
+    icon: "groups",
+    label: "Installs",
+    href: "/vibes/installs",
+    variant: "red",
+  },
+  {
+    icon: "firehose",
+    label: "Firehose",
+    href: "/firehose",
+    variant: "gray",
+  },
+  { icon: "about", label: "About", href: "/about", variant: "blue" },
 ];
 
 export const SideMenu: React.FC<SideMenuProps> = ({
@@ -73,6 +82,53 @@ export const SideMenu: React.FC<SideMenuProps> = ({
 
   return (
     <>
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes slideInMenuItems {
+          0% {
+            opacity: 0;
+            transform: translateY(-100px) rotateX(90deg) scale(0.3);
+            filter: blur(10px);
+          }
+          50% {
+            opacity: 0.8;
+            transform: translateY(20px) rotateX(-15deg) scale(1.1);
+            filter: blur(2px);
+          }
+          75% {
+            transform: translateY(-8px) rotateX(5deg) scale(0.95);
+            filter: blur(0px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) rotateX(0deg) scale(1);
+            filter: blur(0px);
+          }
+        }
+
+        @keyframes slideOutMenuItems {
+          0% {
+            opacity: 1;
+            transform: translateY(0) rotateX(0deg) scale(1);
+            filter: blur(0px);
+          }
+          25% {
+            transform: translateY(-8px) rotateX(5deg) scale(0.95);
+            filter: blur(0px);
+          }
+          50% {
+            opacity: 0.8;
+            transform: translateY(20px) rotateX(-15deg) scale(1.1);
+            filter: blur(2px);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-100px) rotateX(90deg) scale(0.3);
+            filter: blur(10px);
+          }
+        }
+      `}</style>
+
       {/* Overlay */}
       <div style={getSideMenuOverlay(!isVisible)} onClick={onClose} />
 
@@ -99,35 +155,24 @@ export const SideMenu: React.FC<SideMenuProps> = ({
         <nav style={getSideMenuNav()}>
           <ul style={getSideMenuList()}>
             {menuItems.map((item, index) => {
-              const Icon = item.icon;
               return (
-                <li
-                  key={item.label}
-                  className="side-menu-item"
+                <VibesButton
+                  key={index}
+                  icon={item.icon}
+                  variant={item.variant}
+                  onClick={() => {
+                    window.location.href = item.href;
+                    onClose();
+                  }}
+                  buttonType="flat-rounded"
                   style={{
-                    ...getSideMenuListItem(!isVisible),
-                    animationDelay: !isVisible
-                      ? `${(menuItems.length - 1 - index) * 0.05}s`
-                      : `${index * 0.05}s`,
+                    width: "100%",
+                    marginBottom: "12px",
+                    ...getSideMenuItemAnimation(index, !isVisible),
                   }}
                 >
-                  <a
-                    href={item.href}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      textDecoration: "none",
-                      color: "inherit",
-                      width: "100%",
-                    }}
-                    onClick={onClose}
-                  >
-                    <div style={getSideMenuIcon()}>
-                      <Icon />
-                    </div>
-                    <span style={getSideMenuLabel()}>{item.label}</span>
-                  </a>
-                </li>
+                  {item.label}
+                </VibesButton>
               );
             })}
           </ul>
@@ -136,7 +181,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({
         {/* Footer with Login Button */}
         <div style={getSideMenuFooter()}>
           <button style={getSideMenuLoginButton()} onClick={onLogin}>
-            LOG IN
+            Log In
           </button>
         </div>
       </div>

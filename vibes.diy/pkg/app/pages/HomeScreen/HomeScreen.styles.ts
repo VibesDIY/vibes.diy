@@ -29,7 +29,9 @@ export const getBackgroundStyle = (isDarkMode: boolean): CSSProperties => ({
   right: 10,
   bottom: 10,
   borderRadius: "10px",
-  backgroundColor: isDarkMode ? "var(--vibes-near-black)" : "var(--vibes-near-gray)",
+  backgroundColor: isDarkMode
+    ? "var(--vibes-near-black)"
+    : "var(--vibes-near-gray)",
   zIndex: 0, // Below everything
   fontFamily: HomeScreenTheme.fonts.primary,
 });
@@ -698,9 +700,7 @@ export const getAnimatedSectionTextColumnStyle = (
 });
 
 // 1/3 column
-export const get1of3Column = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const get1of3Column = (isMobile: boolean): CSSProperties => ({
   flex: isMobile ? "1" : "0 0 33.33%",
   display: "flex",
   alignItems: "center",
@@ -710,9 +710,7 @@ export const get1of3Column = (
 });
 
 // 2/3 column
-export const get2of3Column = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const get2of3Column = (isMobile: boolean): CSSProperties => ({
   flex: isMobile ? "1" : "0 0 66.66%",
   display: "flex",
   alignItems: "center",

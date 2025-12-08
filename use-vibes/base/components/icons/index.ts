@@ -5,3 +5,8 @@ export { SettingsIcon } from './SettingsIcon.js';
 export { BackIcon } from './BackIcon.js';
 export { MoonIcon } from './MoonIcon.js';
 export { SunIcon } from './SunIcon.js';
+export { MyVibesIcon } from './MyVibesIcon.js';
+export { GroupsIcon } from './GroupsIcon.js';
+export { HomeIconCircle } from './HomeIconCircle.js';
+export { FirehoseIcon } from './FirehoseIcon.js';
+export { AboutIcon } from './AboutIcon.js';

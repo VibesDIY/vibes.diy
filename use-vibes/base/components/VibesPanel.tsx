@@ -12,6 +12,7 @@ import {
   getInviteInputWrapperStyle,
   getInviteInputStyle,
   getInviteStatusStyle,
+  getComingSoonLabelStyle,
 } from './VibesPanel.styles.js';
 import '../styles/colors.css';
 
@@ -102,7 +103,10 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
   // Listen for share response events
   useEffect(() => {
     const handleShareSuccess = (event: Event) => {
-      const customEvent = event as CustomEvent<{ email: string; message?: string }>;
+      const customEvent = event as CustomEvent<{
+        email: string;
+        message?: string;
+      }>;
       setInviteStatus('success');
       setInviteMessage(
         customEvent.detail?.message || `Invitation sent to ${customEvent.detail?.email}!`
@@ -133,9 +137,9 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
           {mode === 'mutate' ? (
             // Mutate mode buttons
             <>
-              <VibesButton variant={BLUE} onClick={handleFreshDataClick}>
+              {/* <VibesButton variant={BLUE} onClick={handleFreshDataClick}>
                 Fresh Start
-              </VibesButton>
+              </VibesButton> */}
               <VibesButton variant={RED} onClick={handleChangeCodeClick} icon="remix">
                 Remix Code
               </VibesButton>
@@ -152,7 +156,7 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
                   <label htmlFor={emailId} style={getInviteLabelStyle()}>
                     Invite by email
                   </label>
-                  <BrutalistCard size="md" style={getInviteInputWrapperStyle()}>
+                  {/* <BrutalistCard size="md" style={getInviteInputWrapperStyle()}>
                     <input
                       id={emailId}
                       type="email"
@@ -162,11 +166,16 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
                       style={getInviteInputStyle()}
                       autoComplete="email"
                       required
-                    />
-                  </BrutalistCard>
-                  <VibesButton variant={BLUE} type="submit" disabled={!email.trim()}>
+                    /> 
+                  </BrutalistCard>*/}
+                  <div style={getComingSoonLabelStyle()}>Coming soon</div>
+                  {/* <VibesButton
+                    variant={BLUE}
+                    type="submit"
+                    disabled={!email.trim()}
+                  >
                     Send Invite
-                  </VibesButton>
+                  </VibesButton> */}
                 </form>
               ) : (
                 // Show status when sending/complete
@@ -203,8 +212,12 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
               <VibesButton variant={YELLOW} onClick={handleInviteClick} icon="invite">
                 Invite
               </VibesButton>
-              <VibesButton variant={GRAY} icon="settings">
-                Settings
+              <VibesButton
+                variant={GRAY}
+                icon="settings"
+                onClick={() => (window.location.href = 'https://vibes.diy/')}
+              >
+                Home
               </VibesButton>
             </>
           )}

@@ -7,7 +7,18 @@ import {
   getContentWrapperStyle,
   bounceKeyframes,
 } from './VibesButton.styles.js';
-import { LoginIcon, RemixIcon, InviteIcon, SettingsIcon, BackIcon } from '../icons/index.js';
+import {
+  LoginIcon,
+  RemixIcon,
+  InviteIcon,
+  SettingsIcon,
+  BackIcon,
+  MyVibesIcon,
+  GroupsIcon,
+  HomeIconCircle,
+  FirehoseIcon,
+  AboutIcon,
+} from '../icons/index.js';
 import { useMobile } from '../../hooks/useMobile.js';
 import '../../styles/colors.css';
 
@@ -18,7 +29,18 @@ export const YELLOW = 'yellow' as const;
 export const GRAY = 'gray' as const;
 
 type ButtonVariant = 'blue' | 'red' | 'yellow' | 'gray';
-type IconName = 'login' | 'remix' | 'invite' | 'settings' | 'back';
+type ButtonType = 'square' | 'flat' | 'flat-rounded';
+type IconName =
+  | 'login'
+  | 'remix'
+  | 'invite'
+  | 'settings'
+  | 'back'
+  | 'myvibes'
+  | 'groups'
+  | 'home'
+  | 'firehose'
+  | 'about';
 
 // Icon map - maps icon names to React components
 const iconMap: Record<
@@ -30,6 +52,11 @@ const iconMap: Record<
   invite: InviteIcon,
   settings: SettingsIcon,
   back: BackIcon,
+  myvibes: MyVibesIcon,
+  groups: GroupsIcon,
+  home: HomeIconCircle,
+  firehose: FirehoseIcon,
+  about: AboutIcon,
 };
 
 export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -39,6 +66,14 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
    * @default 'blue'
    */
   variant?: ButtonVariant;
+  /**
+   * Layout type of the button.
+   * - 'square': Default desktop layout (square with vertical icon/text)
+   * - 'flat': Always uses mobile layout (horizontal, full width)
+   * - 'flat-rounded': Mobile layout with 50% border radius
+   * @default 'square'
+   */
+  buttonType?: ButtonType;
   children: React.ReactNode;
   onHover?: () => void;
   onUnhover?: () => void;
@@ -53,6 +88,7 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 export function VibesButton({
   variant = 'blue',
+  buttonType = 'square',
   children,
   onHover,
   onUnhover,
@@ -77,11 +113,26 @@ export function VibesButton({
 
   const IconComponent = icon ? iconMap[icon] : undefined;
 
-  const baseStyle = getButtonStyle(buttonVariant, isHovered, isActive, isMobile, !!IconComponent);
-  const mergedStyle = getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle);
-  const iconContainerStyle = getIconContainerStyle(buttonVariant, isMobile, !!IconComponent);
-  const iconStyle = getIconStyle(isMobile, isHovered, isActive);
-  const contentWrapperStyle = getContentWrapperStyle(isMobile, !!IconComponent);
+  // Determine if we should use mobile layout based on buttonType or actual mobile state
+  const useMobileLayout = buttonType === 'flat' || buttonType === 'flat-rounded' || isMobile;
+
+  const baseStyle = getButtonStyle(
+    buttonVariant,
+    isHovered,
+    isActive,
+    useMobileLayout,
+    !!IconComponent,
+    buttonType
+  );
+  const mergedStyle = getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle, buttonType);
+  const iconContainerStyle = getIconContainerStyle(
+    buttonVariant,
+    useMobileLayout,
+    !!IconComponent,
+    buttonType
+  );
+  const iconStyle = getIconStyle(useMobileLayout, isHovered, isActive);
+  const contentWrapperStyle = getContentWrapperStyle(useMobileLayout, !!IconComponent);
 
   return (
     <>

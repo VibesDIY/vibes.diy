@@ -84,12 +84,27 @@ export function getInviteLabelStyle(): React.CSSProperties {
   return {
     alignSelf: 'flex-start',
     fontWeight: 600,
+    color: '#231F20',
   };
 }
 
 export function getInviteInputWrapperStyle(): React.CSSProperties {
   return {
     width: '100%',
+  };
+}
+
+export function getComingSoonLabelStyle(): React.CSSProperties {
+  return {
+    backgroundColor: 'rgb(255 253 222)',
+    border: '5px solid rgb(255 0 0)',
+    boxShadow: 'rgb(51, 51, 51) 0px 0px 0px 2px',
+    padding: '10px 20px',
+    display: 'inline-block',
+    color: 'rgb(86 31 12)',
+    textTransform: 'uppercase',
+    borderRadius: '8px',
+    fontWeight: '800',
   };
 }
 

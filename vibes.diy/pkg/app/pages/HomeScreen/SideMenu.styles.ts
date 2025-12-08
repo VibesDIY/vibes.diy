@@ -41,9 +41,9 @@ export const getSideMenuHeader = (): CSSProperties => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "24px",
-  borderBottom: "6px solid #231F20",
+  padding: "14px",
   backgroundColor: "#fefff2",
+  position: "relative",
 });
 
 // Switch wrapper
@@ -51,24 +51,25 @@ export const getSideMenuSwitchWrapper = (): CSSProperties => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  flex: 1,
 });
 
 // Close button
 export const getSideMenuCloseButton = (): CSSProperties => ({
-  width: "60px",
-  height: "60px",
-  backgroundColor: "#D92A1C",
-  border: "4px solid #231F20",
-  color: "#fefff2",
-  fontSize: "32px",
+  width: "35px",
+  height: "35px",
+  borderRadius: "8px",
+  border: "3px solid rgb(35, 31, 32)",
+  color: "black",
+  fontSize: "22px",
   fontWeight: "bold",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  transition: "all 0.2s ease",
-  boxShadow: "4px 4px 0px #231F20",
-  fontFamily: "'Alte Haas Grotesk', 'Inter', sans-serif",
+  transition: "0.2s",
+  position: "absolute",
+  right: "12px",
 });
 
 // Navigation container
@@ -86,64 +87,39 @@ export const getSideMenuList = (): CSSProperties => ({
   padding: 0,
   display: "flex",
   flexDirection: "column",
-  gap: "16px",
+  gap: "2px",
 });
 
-// Individual menu item
-export const getSideMenuListItem = (isClosing = false): CSSProperties => ({
-  backgroundColor: "#ffffff",
-  border: "4px solid #231F20",
-  padding: "20px 24px",
-  cursor: "pointer",
-  transition: "all 0.2s ease",
-  boxShadow: "6px 6px 0px #231F20",
+// Menu item animation - 3D flip card entrance
+export const getSideMenuItemAnimation = (
+  index: number,
+  isClosing = false,
+): CSSProperties => ({
   animation: isClosing
-    ? "slideOutItem 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
-    : "slideInItem 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards",
-  position: "relative",
-});
-
-// Icon wrapper
-export const getSideMenuIcon = (): CSSProperties => ({
-  width: "32px",
-  height: "32px",
-  marginRight: "16px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-});
-
-// Label text
-export const getSideMenuLabel = (): CSSProperties => ({
-  fontSize: "20px",
-  fontWeight: "bold",
-  textTransform: "uppercase",
-  letterSpacing: "1px",
-  color: "#231F20",
-  fontFamily: "'Alte Haas Grotesk', 'Inter', sans-serif",
+    ? `slideOutMenuItems 0.6s cubic-bezier(0.6, 0.04, 0.98, 0.335) ${index * 0.05}s forwards`
+    : `slideInMenuItems 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${index * 0.07}s forwards`,
+  animationFillMode: "both",
+  transformStyle: "preserve-3d",
+  perspective: "1000px",
 });
 
 // Footer section
 export const getSideMenuFooter = (): CSSProperties => ({
   padding: "24px",
-  borderTop: "6px solid #231F20",
   backgroundColor: "#fefff2",
 });
 
 // Login button
 export const getSideMenuLoginButton = (): CSSProperties => ({
   width: "100%",
-  padding: "20px",
-  backgroundColor: "#D92A1C",
-  border: "4px solid #231F20",
-  color: "#fefff2",
+  padding: "3px",
+  backgroundColor: "rgb(55, 154, 206)",
+  border: "1px solid rgb(35, 31, 32)",
+  color: "rgb(254, 255, 242)",
   fontSize: "24px",
   fontWeight: "bold",
-  textTransform: "uppercase",
   letterSpacing: "2px",
   cursor: "pointer",
-  transition: "all 0.2s ease",
-  boxShadow: "6px 6px 0px #231F20",
-  fontFamily: "'Alte Haas Grotesk', 'Inter', sans-serif",
+  transition: "0.2s",
+  borderRadius: "20px",
 });
