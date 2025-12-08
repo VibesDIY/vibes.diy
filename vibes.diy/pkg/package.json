@@ -30,8 +30,8 @@
     "@adviser/cement": "^0.5.5",
     "@clerk/clerk-react": "^5.57.0",
     "@cloudflare/workers-types": "^4.20251205.0",
-    "@fireproof/core": "0.24.2-dev-clerk",
-    "@fireproof/core-runtime": "0.24.2-dev-clerk",
+    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-1",
+    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-1",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-router/node": "^7.10.1",
@@ -58,13 +58,13 @@
     "react-router": "^7.9.6",
     "react-router-dom": "^7.9.6",
     "tailwind-merge": "^3.4.0",
-    "use-fireproof": "0.24.2-dev-clerk",
+    "use-fireproof": "0.24.3-dev-ensure-cloud-token-1",
     "use-vibes": "workspace:*"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
     "@cloudflare/vite-plugin": "^1.17.1",
-    "@fireproof/core-cli": "0.24.2-dev-clerk",
+    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-1",
     "@react-router/dev": "^7.9.6",
     "@storybook/addon-a11y": "^10.1.7",
     "@storybook/addon-docs": "^10.0.0",
@@ -81,12 +81,14 @@
     "netlify": "^23.12.3",
     "netlify-cli": "^23.12.2",
     "prettier": "^3.7.4",
+    "serve": "^14.2.5",
     "shiki": "^3.20.0",
     "storybook": "^10.1.2",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^7.2.7",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.15"
   }
 }

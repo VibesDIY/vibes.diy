@@ -34,7 +34,10 @@
     "dev:router": "cd vibes.diy/pkg && pnpm run dev:router",
     "pack": "echo skip pack",
     "publish": "echo skip publish",
-    "check": "pnpm format && pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test"
+    "check": "pnpm format && pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test",
+    "storybook": "cd vibes.diy/pkg && cross-env DISABLE_REACT_ROUTER=true pnpm run storybook",
+    "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook",
+    "update-fireproof": "cd scripts && pnpm update-deps -C .."
   },
   "keywords": [
     "ai",
@@ -53,7 +56,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@fireproof/core-cli": "0.24.2-dev-clerk",
+    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-1",
     "@playwright/test": "^1.57.0",
     "@types/deno": "^2.5.0",
     "@types/node": "^24.9.1",

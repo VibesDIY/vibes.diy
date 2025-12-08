@@ -1,18 +1,17 @@
-import React from "react";
-import type { MetaFunction } from "react-router";
+import React, { StrictMode, createElement, useState } from "react";
+import type { MetaFunction, RouteObject } from "react-router-dom";
 import {
-  Links,
-  Meta,
+  BrowserRouter,
   Outlet,
-  Scripts,
-  ScrollRestoration,
+  createBrowserRouter,
+  RouterProvider,
   isRouteErrorResponse,
-} from "react-router";
+} from "react-router-dom";
 
 import { PostHogProvider } from "posthog-js/react";
 import { VibesDiyEnv } from "./config/env.js";
-import type { Route } from "./+types/root";
-import "./app.css";
+// import type { Route } from "./+types/root";
+// import "./app.css";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
 import GtmNoScript from "./components/GtmNoScript.js";
@@ -21,50 +20,50 @@ import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { getLibraryImportMap } from "./config/import-map.js";
 
-export const links: Route.LinksFunction = () => {
-  const rawBase = VibesDiyEnv.APP_BASENAME();
-  const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
+// export const links: Route.LinksFunction = () => {
+//   const rawBase = VibesDiyEnv.APP_BASENAME();
+//   const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
 
-  return [
-    {
-      rel: "icon",
-      type: "image/svg+xml",
-      href: `${base}favicon.svg`,
-    },
-    {
-      rel: "icon",
-      type: "image/png",
-      sizes: "32x32",
-      href: `${base}favicon-32x32.png`,
-    },
-    {
-      rel: "icon",
-      type: "image/png",
-      sizes: "16x16",
-      href: `${base}favicon-16x16.png`,
-    },
-    { rel: "alternate icon", href: `${base}favicon.ico` },
-    {
-      rel: "apple-touch-icon",
-      sizes: "180x180",
-      href: `${base}apple-touch-icon.png`,
-    },
-    {
-      rel: "manifest",
-      href: `${base}site.webmanifest`,
-    },
-    { rel: "preconnect", href: "https://fonts.googleapis.com" },
-    {
-      rel: "preconnect",
-      href: "https://fonts.gstatic.com",
-      crossOrigin: "anonymous",
-    },
-    {
-      rel: "stylesheet",
-      href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-    },
-  ];
-};
+//   return [
+//     {
+//       rel: "icon",
+//       type: "image/svg+xml",
+//       href: `${base}favicon.svg`,
+//     },
+//     {
+//       rel: "icon",
+//       type: "image/png",
+//       sizes: "32x32",
+//       href: `${base}favicon-32x32.png`,
+//     },
+//     {
+//       rel: "icon",
+//       type: "image/png",
+//       sizes: "16x16",
+//       href: `${base}favicon-16x16.png`,
+//     },
+//     { rel: "alternate icon", href: `${base}favicon.ico` },
+//     {
+//       rel: "apple-touch-icon",
+//       sizes: "180x180",
+//       href: `${base}apple-touch-icon.png`,
+//     },
+//     {
+//       rel: "manifest",
+//       href: `${base}site.webmanifest`,
+//     },
+//     { rel: "preconnect", href: "https://fonts.googleapis.com" },
+//     {
+//       rel: "preconnect",
+//       href: "https://fonts.gstatic.com",
+//       crossOrigin: "anonymous",
+//     },
+//     {
+//       rel: "stylesheet",
+//       href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+//     },
+//   ];
+// };
 
 export const meta: MetaFunction = () => {
   return [
@@ -83,7 +82,7 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layoutx({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -95,6 +94,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               imports: {
                 // Only include React imports in production (dev mode uses bundled versions)
                 ...(!import.meta.env.DEV ? getLibraryImportMap() : {}),
+                // ...getLibraryImportMap()
               },
             }),
           }}
@@ -109,8 +109,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
          * <script src="/nf-ab.cookie.js"></script>
          */}
         {/* FIREPROOF-UPGRADE-BRANCH: Fireproof 0.23.0 */}
-        <Meta data-testid="meta" />
-        <Links />
         {/* Tailwind CSS v4 for inline vibe rendering - matches hosting runtime */}
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
         {/* Babel Standalone for JSX transformation in inline vibe rendering */}
@@ -119,60 +117,102 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         {/* TODO: Re-enable GtmNoScript when consent can be checked server-side */}
         {/* <GtmNoScript /> */}
-        <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
-          <ThemeProvider>
-            <PostHogProvider
-              apiKey={VibesDiyEnv.POSTHOG_KEY()}
-              options={{
-                api_host: VibesDiyEnv.POSTHOG_HOST(),
-                opt_out_capturing_by_default: true,
-              }}
-            >
-              <CookieConsentProvider>
-                {children}
-                <ClientOnly>
-                  <CookieBanner />
-                </ClientOnly>
-              </CookieConsentProvider>
-              <ScrollRestoration data-testid="scroll-restoration" />
-              <Scripts data-testid="scripts" />
-            </PostHogProvider>
-          </ThemeProvider>
-        </ClerkProvider>
+        <RawApp>{children}</RawApp>
       </body>
     </html>
   );
 }
 
-export default function App() {
-  return <Outlet />;
-}
-
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
-  let stack: string | undefined;
-
-  if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
-  } else if (error && error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
-  }
-
+function RawApp({ children }: { children?: React.ReactNode }) {
   return (
-    <main className="container mx-auto p-4 pt-16">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full overflow-x-auto p-4">
-          <code>{stack}</code>
-        </pre>
-      )}
-    </main>
+    <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
+      <ThemeProvider>
+        <PostHogProvider
+          apiKey={VibesDiyEnv.POSTHOG_KEY()}
+          options={{
+            api_host: VibesDiyEnv.POSTHOG_HOST(),
+            opt_out_capturing_by_default: true,
+          }}
+        >
+          <CookieConsentProvider>
+            {children}
+            <Outlet />
+            <ClientOnly>
+              <CookieBanner />
+            </ClientOnly>
+          </CookieConsentProvider>
+        </PostHogProvider>
+      </ThemeProvider>
+    </ClerkProvider>
   );
 }
+
+function HomePage() {
+  return <div>Home Page Content</div>;
+}
+
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      Component: RawApp,
+      children: [
+        {
+          index: true,
+          Component: HomePage,
+        },
+        // Add more child routes here
+      ],
+    },
+  ],
+  {
+    basename: import.meta?.env?.VITE_APP_BASENAME || "/",
+  },
+);
+
+// const routes: RouteObject[] = []
+// const router = createBrowserRouter(routes, {
+//   basename: import.meta?.env?.VITE_APP_BASENAME || "/",
+// });
+
+export function App() {
+  return (
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>
+  );
+}
+
+//     <RouterProvider router={router}>
+//     {/* <Outlet></Outlet> */}
+//     {/* <RawApp></RawApp> */}
+//     </RouterProvider>
+
+// export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+//   let message = "Oops!";
+//   let details = "An unexpected error occurred.";
+//   let stack: string | undefined;
+
+//   if (isRouteErrorResponse(error)) {
+//     message = error.status === 404 ? "404" : "Error";
+//     details =
+//       error.status === 404
+//         ? "The requested page could not be found."
+//         : error.statusText || details;
+//   } else if (error && error instanceof Error) {
+//     details = error.message;
+//     stack = error.stack;
+//   }
+
+//   return (
+//     <main className="container mx-auto p-4 pt-16">
+//       <h1>{message}</h1>
+//       <p>{details}</p>
+//       {stack && (
+//         <pre className="w-full overflow-x-auto p-4">
+//           <code>{stack}</code>
+//         </pre>
+//       )}
+//     </main>
+//   );
+// }

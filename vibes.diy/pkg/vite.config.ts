@@ -1,4 +1,4 @@
-import { reactRouter } from "@react-router/dev/vite";
+// import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import type { ConfigEnv, UserConfig, Plugin } from "vite";
 import { defineConfig } from "vite";
@@ -63,11 +63,61 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       tsconfigPaths({
         configNames: ["tsconfig.dev.json"],
       }),
+
+      {
+        name: "preserve-imports",
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const originalWrite = res.write;
+            const originalEnd = res.end;
+            const chunks: Buffer[] = [];
+
+            // @ts-ignore
+            res.write = function (chunk: any, ...args: any[]) {
+              chunks.push(Buffer.from(chunk));
+              // @ts-ignore
+              return originalWrite.apply(res, [chunk, ...args]);
+            };
+
+            // @ts-ignore
+            res.end = function (chunk: any, ...args: any[]) {
+              if (chunk) {
+                chunks.push(Buffer.from(chunk));
+              }
+
+              const body = Buffer.concat(chunks).toString("utf8");
+
+              // Only transform JS files
+              if (req.url?.endsWith(".js") && body.includes('from "/@fs/')) {
+                // Replace resolved paths back to bare specifiers
+                const transformed = body.replace(
+                  /from\s+"\/@fs\/[^"]+\/node_modules\/\.pnpm\/([^@\/]+)@[^\/]+\/node_modules\/\1[^"]*"/g,
+                  'from "$1"',
+                );
+
+                console.log("Middleware transformed:", req.url);
+
+                // Clear chunks and write transformed content
+                res.removeHeader("Content-Length");
+                // @ts-ignore
+                return originalEnd.call(res, transformed, ...args);
+              }
+
+              // @ts-ignore
+              return originalEnd.apply(res, [chunk, ...args]);
+            };
+
+            next();
+          });
+        },
+      },
+
       //      cloudflare(),
-      ...(!disableReactRouter ? [reactRouter()] : []),
-      moveImportmapFirst(),
+      // ...(!disableReactRouter ? [reactRouter({ ssr: false })] : []),
+      // moveImportmapFirst(),
     ],
     base: process.env.VITE_APP_BASENAME || "/",
+    /*
     ssr: {
       external: [
         "react",
@@ -90,17 +140,27 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         ],
       },
     },
+*/
+    build: {
+      sourcemap: false, // Disable sourcemap generation
+    },
+    optimizeDeps: {
+      disabled: true, // Disable all pre-bundling
+    },
     // Define global constants
     // define: {
     //   IFRAME__CALLAI_API_KEY: JSON.stringify(env.VITE_OPENROUTER_API_KEY),
     // },
     // Server configuration for local development
+
     server: {
       host: "0.0.0.0", // Listen on all local IPs
       port: 8888,
       allowedHosts: ["devserver-main--fireproof-ai-builder.netlify.app"], // Specific ngrok hostname
       cors: true, // Enable CORS for all origins
-      hmr: true, // Use default HMR settings for local development
+      hmr: {
+        overlay: false, // Disable HMR overlay
+      },
       // Ignore test directory changes to prevent unnecessary reloads during development
       watch: {
         ignored: ["**/tests/**"],
