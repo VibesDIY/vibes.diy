@@ -1,4 +1,4 @@
-import { mountVibesApp } from "./mountVibesApp.js";
+import { mountVibesApp as _mountVibesApp } from "./mountVibesApp.js";
 
 // Declare Babel and call-ai globals loaded via CDN script tag or set at runtime
 declare global {
@@ -24,7 +24,7 @@ export async function mountVibeCode(
   titleId: string,
   installId: string,
   transformImports: (code: string) => string,
-  showVibesSwitch = true,
+  _showVibesSwitch = true,
   apiKey?: string,
   chatUrl?: string,
   imgUrl?: string,
@@ -69,42 +69,42 @@ export async function mountVibeCode(
     // });
     // objectURL = URL.createObjectURL(blob);
 
-  //   // Dynamically import the user's Vibe module
-  //   const userVibeModule = await import(/* @vite-ignore */ objectURL);
+    //   // Dynamically import the user's Vibe module
+    //   const userVibeModule = await import(/* @vite-ignore */ objectURL);
 
-  //   const AppComponent = userVibeModule.default;
+    //   const AppComponent = userVibeModule.default;
 
-  //   if (typeof AppComponent === "undefined") {
-  //     throw new Error(
-  //       "App component is not defined - check your default export",
-  //     );
-  //   }
+    //   if (typeof AppComponent === "undefined") {
+    //     throw new Error(
+    //       "App component is not defined - check your default export",
+    //     );
+    //   }
 
-  //   const container = document.getElementById(containerId);
-  //   if (!container) {
-  //     throw new Error("Container element not found: " + containerId);
-  //   }
+    //   const container = document.getElementById(containerId);
+    //   if (!container) {
+    //     throw new Error("Container element not found: " + containerId);
+    //   }
 
-  //   // Step 4: Call the directly imported mountVibesApp with the user's component
-  //   const mountResult = mountVibesApp({
-  //     container: container,
-  //     appComponent: AppComponent,
-  //     showVibesSwitch: showVibesSwitch,
-  //     vibeMetadata: {
-  //       titleId: titleId,
-  //       installId: installId,
-  //     },
-  //   });
+    //   // Step 4: Call the directly imported mountVibesApp with the user's component
+    //   const mountResult = mountVibesApp({
+    //     container: container,
+    //     appComponent: AppComponent,
+    //     showVibesSwitch: showVibesSwitch,
+    //     vibeMetadata: {
+    //       titleId: titleId,
+    //       installId: installId,
+    //     },
+    //   });
 
-  //   // Dispatch success event with unmount callback
-  //   document.dispatchEvent(
-  //     new CustomEvent("vibes-mount-ready", {
-  //       detail: {
-  //         unmount: mountResult.unmount,
-  //         containerId: containerId,
-  //       },
-  //     }),
-  //   );
+    //   // Dispatch success event with unmount callback
+    //   document.dispatchEvent(
+    //     new CustomEvent("vibes-mount-ready", {
+    //       detail: {
+    //         unmount: mountResult.unmount,
+    //         containerId: containerId,
+    //       },
+    //     }),
+    //   );
   } catch (err) {
     console.error("Failed to mount vibe code:", err);
     // Dispatch error event for mount failures
