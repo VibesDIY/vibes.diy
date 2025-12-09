@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 function ImportMap() {
   const ver = {
@@ -53,8 +53,6 @@ function ImportMap() {
       "https://esm.sh/react-router?deps=react@19.2.1,react-dom@19.2.1",
     "react-router-dom":
       "https://esm.sh/react-router-dom?deps=react@19.2.1,react-dom@19.2.1",
-    "@fireproof/core-runtime":
-      "https://esm.sh/@fireproof/core-runtime@0.24.3-dev-ensure-cloud-token-1",
     "call-ai": "https://esm.sh/call-ai@v0.14.5",
 
     "react-hot-toast": "https://esm.sh/react-hot-toast",
@@ -76,14 +74,38 @@ function ImportMap() {
     "shiki/themes/github-light-default.mjs":
       "https://esm.sh/shiki/themes/github-light-default.mjs",
     "shiki/engine/oniguruma": undefined,
+    "shiki/wasm": undefined,
     "react-cookie-consent": undefined,
 
-    "use-fireproof": `https://esm.sh/use-fireproof@${ver.FP}`,
+    "@fireproof/": "FP",
 
-    "@fireproof/core-keybag": "FP",
+    "use-vibes": "/dist/use-vibes/pkg/index.js",
+    "use-fireproof": "/dist/use-vibes/pkg/index.js",
 
     "@vibes.diy/prompts": "/dist/prompts/pkg/index.js",
     "@vibes.diy/use-vibes-base": "/dist/use-vibes/base/index.js",
+
+    "@fireproof/core-base": "FP",
+    "@fireproof/core-blockstore": "FP",
+    "@fireproof/core-cli": "FP",
+    "@fireproof/core-device-id": "FP",
+    "@fireproof/core-gateways-base": "FP",
+    "@fireproof/core-gateways-cloud": "FP",
+    "@fireproof/core-gateways-file-deno": "FP",
+    "@fireproof/core-gateways-file-node": "FP",
+    "@fireproof/core-gateways-file": "FP",
+    "@fireproof/core-gateways-indexeddb": "FP",
+    "@fireproof/core-gateways-memory": "FP",
+    "@fireproof/core-keybag": "FP",
+    "@fireproof/core-protocols-cloud": "FP",
+    "@fireproof/core-protocols-dashboard": "FP",
+    "@fireproof/core-runtime": "FP",
+    "@fireproof/core-types-base": "FP",
+    "@fireproof/core-types-blockstore": "FP",
+    "@fireproof/core-types-protocols-cloud": "FP",
+    "@fireproof/core-types-runtime": "FP",
+    "@fireproof/core": "FP",
+    "@fireproof/vendor": "FP",
   };
 
   return (
@@ -126,11 +148,14 @@ function addReact(key: string, inUrl: string) {
 
 function enhance(
   importMap: Record<string, string | undefined>,
-  ver: Record<string, string>,
+  ver: Record<string, string>
 ) {
   return Object.entries(importMap).reduce(
     (acc, [k, v]) => {
-      if (ver[v as string]) {
+      if (k.endsWith("/")) {
+        return acc
+      }
+      if (v && ver[v]) {
         acc[k] = `https://esm.sh/${k}@${ver[v]}`;
       } else {
         switch (v) {
@@ -145,7 +170,7 @@ function enhance(
       acc[k] = addReact(k, acc[k]);
       return acc;
     },
-    {} as Record<string, string>,
+    {} as Record<string, string>
   );
 }
 
@@ -189,7 +214,8 @@ export function Links() {
       rel: "stylesheet",
       href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
     },
-  ].map((link) => <link {...link} />);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ].map((ilink) => <link {...ilink as any } />);
 }
 
 function Meta() {
@@ -220,6 +246,12 @@ export default function Index() {
   return (
     <html lang="en">
       <head>
+        <ImportMap />
+        <script
+          type="module"
+          src="https://esm.sh/@tailwindcss/browser@4"
+        ></script>
+
         <link rel="stylesheet" href="/app/app.css"></link>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -227,7 +259,6 @@ export default function Index() {
         <Links />
       </head>
       <body>
-        <ImportMap />
         <script
           type="module"
           src="/dist/vibes.diy/pkg/app/vibes.diy.js"
@@ -235,14 +266,7 @@ export default function Index() {
 
         <div id="vibes.diy"></div>
 
-        <script
-          type="module"
-          src="https://esm.sh/@tailwindcss/browser@4"
-        ></script>
-        <script
-          type="module"
-          src="https://esm.sh/@babel/standalone/babel.min.js"
-        ></script>
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
       </body>
     </html>
   );

@@ -24,7 +24,6 @@ export async function clientLoader({ request }: { request: Request }) {
 }
 
 export function Home() {
-  console.log("Home is built");
   // Get URL params directly from location instead of using loader
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();

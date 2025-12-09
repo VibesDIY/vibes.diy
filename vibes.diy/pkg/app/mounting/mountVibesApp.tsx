@@ -17,8 +17,8 @@ export interface MountVibesAppOptions {
 }
 
 export interface MountVibesAppResult {
-  unmount: () => void;
-  getContainer: () => HTMLElement;
+  unmount() : void;
+  getContainer() : HTMLElement;
 }
 
 /**
