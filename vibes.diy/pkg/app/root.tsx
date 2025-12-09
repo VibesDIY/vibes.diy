@@ -8,6 +8,7 @@ import { VibesDiyEnv } from "./config/env.js";
 // import "./app.css";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
+import { GlobalStyles } from "./components/GlobalStyles.js";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
@@ -31,6 +32,7 @@ import { CatchAll } from "./routes/catch-all.js";
 function RawApp({ children }: { children?: React.ReactNode }) {
   return (
     <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
+      <GlobalStyles />
       <ThemeProvider>
         <PostHogProvider
           apiKey={VibesDiyEnv.POSTHOG_KEY()}
@@ -61,7 +63,6 @@ export function App() {
             <Route path="/" element={<RawApp />}>
               <Route index element={<Home />} />
               <Route path="index.html" element={<Home />} />
-
 
               {/* Chat routes - all use Home component with different URL params */}
               <Route path="chat/:sessionId" element={<Home />} />

@@ -149,12 +149,12 @@ function addReact(key: string, inUrl: string) {
 
 function enhance(
   importMap: Record<string, string | undefined>,
-  ver: Record<string, string>
+  ver: Record<string, string>,
 ) {
   return Object.entries(importMap).reduce(
     (acc, [k, v]) => {
       if (k.endsWith("/")) {
-        return acc
+        return acc;
       }
       if (v && ver[v]) {
         acc[k] = `https://esm.sh/${k}@${ver[v]}`;
@@ -171,7 +171,7 @@ function enhance(
       acc[k] = addReact(k, acc[k]);
       return acc;
     },
-    {} as Record<string, string>
+    {} as Record<string, string>,
   );
 }
 
@@ -215,8 +215,8 @@ export function Links() {
       rel: "stylesheet",
       href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
     },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ].map((ilink) => <link {...ilink as any } />);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ].map((ilink) => <link {...(ilink as any)} />);
 }
 
 function Meta() {

@@ -5,8 +5,8 @@ import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "@clerk/clerk-react";
-import { mountVibeWithCleanup } from "../mounting/index.js";
-import { transformImports } from "@vibes.diy/prompts";
+import { mountVibeWithCleanup as _mountVibeWithCleanup } from "../mounting/index.js";
+import { transformImports as _transformImports } from "@vibes.diy/prompts";
 import LoggedOutView from "../components/LoggedOutView.js";
 
 const sthis = Lazy(() => ensureSuperThis());
@@ -130,7 +130,7 @@ function VibeInstanceViewerContent() {
     setContainerId(newContainerId);
 
     let active = true;
-    let unmountVibe: ((() => void) | undefined) = undefined 
+    let unmountVibe: (() => void) | undefined = undefined;
 
     const loadAndMountVibe = async () => {
       try {
@@ -148,14 +148,16 @@ function VibeInstanceViewerContent() {
         if (!active) return;
 
         // Get Clerk token for API authentication
-        const clerkToken = await getToken();
+        const _clerkToken = await getToken();
 
         // Get configured API endpoint (respects preview mode via env)
-        const callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
+        const _callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
 
-        console.log("loadAndMountVibe", vibeCode)
+        console.log("loadAndMountVibe", vibeCode);
 
-        unmountVibe = () => {}
+        unmountVibe = () => {
+          // Empty cleanup function placeholder
+        };
 
         // Mount the vibe code and capture the unmount callback via event
         // unmountVibe = await mountVibeWithCleanup(
@@ -187,7 +189,7 @@ function VibeInstanceViewerContent() {
       active = false;
 
       // Call the unmount callback to properly cleanup the React root
-      if (typeof unmountVibe === 'function') {
+      if (typeof unmountVibe === "function") {
         unmountVibe();
       }
 

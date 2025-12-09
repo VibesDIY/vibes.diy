@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Lazy } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
-import { mountVibeWithCleanup } from "../../mounting/index.js";
-import { transformImports } from "@vibes.diy/prompts";
+import { mountVibeWithCleanup as _mountVibeWithCleanup } from "../../mounting/index.js";
+import { transformImports as _transformImports } from "@vibes.diy/prompts";
 import { useAuth } from "@clerk/clerk-react";
 import { VibesDiyEnv } from "../../config/env.js";
 
@@ -55,12 +55,12 @@ export function InlinePreview({
         }
 
         // Get Clerk token for API authentication
-        const clerkToken = await getToken();
+        const _clerkToken = await getToken();
 
         // Get configured API endpoint (respects preview mode via env)
-        const callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
+        const _callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
 
-        console.log("want to mount")
+        console.log("want to mount");
         // // Mount the vibe code and capture the unmount callback via event
         // const unmount = await mountVibeWithCleanup(
         //   code,

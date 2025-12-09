@@ -32,8 +32,7 @@ function ResultPreview({
   onCodeChange,
   onSyntaxErrorChange,
 }: ResultPreviewProps & { children?: React.ReactNode }) {
-
-  return <></>
+  return <></>;
   const { isDarkMode } = useTheme();
   const { vibeDoc, updateDependencies, updateDemoDataOverride } =
     useSession(sessionId);

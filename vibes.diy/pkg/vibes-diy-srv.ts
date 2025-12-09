@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import React from "react";
-import { contentType } from "mime-types"
+import { contentType } from "mime-types";
 
 // Simple in-memory module cache
 const moduleCache = new Map();
