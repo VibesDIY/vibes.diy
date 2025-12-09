@@ -4,9 +4,8 @@
   "private": "true",
   "type": "module",
   "scripts": {
-    "postinstall": "react-router typegen",
     "tsc": "core-cli tsc",
-    "build": "react-router build",
+    "build": "echo",
     "dev": "deno run --allow-env --allow-run --allow-net --allow-read vibes-diy-srv.ts",
     "dev:netlify": "netlify dev",
     "start": "serve -s build/client",
