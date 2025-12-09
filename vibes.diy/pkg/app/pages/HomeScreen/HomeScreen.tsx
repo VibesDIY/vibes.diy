@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { SideMenu } from "./SideMenu.js";
 import {
@@ -68,8 +74,10 @@ import {
   DraggableSection,
   VibesSwitch,
 } from "../../components/index.js";
+import NewSessionContent from "../../components/NewSessionContent/index.js";
 import { HomeScreenProps } from "./HomeScreen.types.js";
 import { useIsMobile, usePrefersDarkMode } from "../../hooks/index.js";
+import { useNewSessionChat } from "../../hooks/useNewSessionChat.js";
 import { AnimatedScene } from "./AnimatedScene.js";
 import computerAnimGif from "../../assets/computer-anim.gif";
 import htmlpng from "../../assets/html.png";
@@ -125,6 +133,11 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   const [animationProgress, setAnimationProgress] = useState(0);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
 
+  // New session chat state for create section
+  const chatState = useNewSessionChat(() => {
+    // Session creation handled by useNewSessionChat navigation
+  });
+
   // Dark mode state - initialize from localStorage or browser preference
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     const stored = localStorage.getItem("vibes-dark-mode");
@@ -149,6 +162,24 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       redirectUrl: window.location.href,
     });
   };
+
+  // Handle suggestion selection for create section
+  const handleSelectSuggestion = useCallback(
+    (suggestion: string) => {
+      chatState.setInput(suggestion);
+
+      // Focus the input and position cursor at the end
+      setTimeout(() => {
+        if (chatState.inputRef.current) {
+          chatState.inputRef.current.focus();
+          // Move cursor to end of text
+          chatState.inputRef.current.selectionStart =
+            chatState.inputRef.current.selectionEnd = suggestion.length;
+        }
+      }, 0);
+    },
+    [chatState.setInput, chatState.inputRef],
+  );
 
   // Apply dark mode to document root
   useEffect(() => {
@@ -1049,27 +1080,32 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </div>
             </DraggableCard>
 
-           { !isMobile && <> <DraggableCard color="yellow" x={1000} y={1700}>
-              <p style={getImageCardStyle()}>
-                <img src={rainbowComputer} style={getFullSizeImageStyle()} />
-              </p>
-            </DraggableCard>
-            <DraggableCard color="blue" x={950} y={2880}>
-              <p style={getImageCardStyle()}>
-                <img src={fireproofLogo} style={getFullSizeImageStyle()} />
-              </p>
-            </DraggableCard>
-
-            <DraggableCard color="yellow" x={830} y={5240}>
-              <p style={getImageCardStyleSmall("140px")}>
-                <img src={htmlpng} style={getFullSizeImageStyle()} />
-              </p>
-            </DraggableCard>
-
-            <DraggableCard color="yellow" x={700} y={7000}>
-              <img style={getImageCardStyleSmall("340px")} src={mouth} />
-            </DraggableCard> 
-            </>}
+            {!isMobile && (
+              <>
+                {" "}
+                <DraggableCard color="yellow" x={1000} y={1700}>
+                  <p style={getImageCardStyle()}>
+                    <img
+                      src={rainbowComputer}
+                      style={getFullSizeImageStyle()}
+                    />
+                  </p>
+                </DraggableCard>
+                <DraggableCard color="blue" x={950} y={2880}>
+                  <p style={getImageCardStyle()}>
+                    <img src={fireproofLogo} style={getFullSizeImageStyle()} />
+                  </p>
+                </DraggableCard>
+                <DraggableCard color="yellow" x={830} y={5240}>
+                  <p style={getImageCardStyleSmall("140px")}>
+                    <img src={htmlpng} style={getFullSizeImageStyle()} />
+                  </p>
+                </DraggableCard>
+                <DraggableCard color="yellow" x={700} y={7000}>
+                  <img style={getImageCardStyleSmall("340px")} src={mouth} />
+                </DraggableCard>
+              </>
+            )}
 
             {!isMobile && (
               <div
@@ -1127,6 +1163,25 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             style={getSectionsContainerStyle(isMobile)}
             ref={sectionsContainerRef}
           >
+            {/* Section 0: Create Section */}
+            <section
+              style={{
+                ...getSectionWrapperStyle(isMobile),
+                paddingTop: isMobile ? "200px" : "100px",
+              }}
+            >
+              <div
+                style={{
+                  padding: isMobile ? "0 20px" : "0 40px",
+                }}
+              >
+                <NewSessionContent
+                  chatState={chatState}
+                  handleSelectSuggestion={handleSelectSuggestion}
+                />
+              </div>
+            </section>
+
             {/* Section 1: First part of content */}
             <section
               style={{

@@ -114,8 +114,8 @@ export default function SessionWrapper() {
     }
   }, [isSignedIn, urlSessionId, search, navigate, sessionId]);
 
-  // If not signed in, show HomeScreen
-  if (!isSignedIn) {
+  // If not signed in AND URL is empty, show HomeScreen
+  if (!isSignedIn && !urlSessionId && !search) {
     return <HomeScreen />;
   }
 

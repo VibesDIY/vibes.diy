@@ -1,16 +1,8 @@
 import React, { useCallback, useState } from "react";
 import { useNewSessionChat } from "../hooks/useNewSessionChat.js";
-import ChatInput from "./ChatInput.js";
-import FeaturedVibes from "./FeaturedVibes.js";
+import NewSessionContent from "./NewSessionContent/index.js";
 import SessionSidebar from "./SessionSidebar.js";
 import { MenuIcon } from "./ChatHeaderIcons.js";
-import { BrutalistCard, VibesButton } from "@vibes.diy/use-vibes-base";
-import {
-  partyPlannerPrompt,
-  progressTrackerPrompt,
-  jamSessionPrompt,
-} from "../data/quick-suggestions-data.js";
-import { featuredModels } from "../data/models.js";
 import { Toaster } from "react-hot-toast";
 
 interface NewSessionViewProps {
@@ -73,75 +65,10 @@ export default function NewSessionView({
 
         {/* Main content section */}
         <div className="flex-1 px-8 pb-8">
-          <div
-            style={{
-              maxWidth: "800px",
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
-              margin: "0 auto",
-            }}
-          >
-            <BrutalistCard size="lg">
-              <h1 className="text-4xl font-bold">Vibes are for sharing</h1>
-            </BrutalistCard>
-
-            {/* Prompt suggestions section */}
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <VibesButton
-                variant="blue"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(partyPlannerPrompt)}
-              >
-                Party Planner
-              </VibesButton>
-              <VibesButton
-                variant="red"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(progressTrackerPrompt)}
-              >
-                Random App
-              </VibesButton>
-              <VibesButton
-                variant="yellow"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(jamSessionPrompt)}
-              >
-                Jam Session
-              </VibesButton>
-            </div>
-
-            {/* Chat input form */}
-            <BrutalistCard size="md" style={{ width: "100%" }}>
-              <div style={{ marginBottom: "12px", fontWeight: 600 }}>
-                Describe your vibe
-              </div>
-              <ChatInput
-                chatState={chatState}
-                showModelPickerInChat={chatState.showModelPickerInChat}
-                currentModel={chatState.effectiveModel}
-                onModelChange={async (modelId: string) => {
-                  if (chatState.updateSelectedModel) {
-                    await chatState.updateSelectedModel(modelId);
-                  }
-                }}
-                models={featuredModels}
-                globalModel={chatState.globalModel}
-                onSend={() => {
-                  // Session creation is handled in chatState.sendMessage
-                }}
-              />
-            </BrutalistCard>
-
-            {/* Featured vibes section */}
-            <BrutalistCard size="lg">
-              <p>Enjoy our</p>
-              <h2 className="text-2xl font-bold">Featured vibes</h2>
-            </BrutalistCard>
-
-            <FeaturedVibes count={3} />
-          </div>
+          <NewSessionContent
+            chatState={chatState}
+            handleSelectSuggestion={handleSelectSuggestion}
+          />
         </div>
       </div>
       <SessionSidebar
