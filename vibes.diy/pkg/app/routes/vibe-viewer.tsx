@@ -130,7 +130,7 @@ function VibeInstanceViewerContent() {
     setContainerId(newContainerId);
 
     let active = true;
-    let unmountVibe: (() => void) | null = null;
+    let unmountVibe: ((() => void) | undefined) = undefined 
 
     const loadAndMountVibe = async () => {
       try {
@@ -153,18 +153,22 @@ function VibeInstanceViewerContent() {
         // Get configured API endpoint (respects preview mode via env)
         const callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
 
+        console.log("loadAndMountVibe", vibeCode)
+
+        unmountVibe = () => {}
+
         // Mount the vibe code and capture the unmount callback via event
-        unmountVibe = await mountVibeWithCleanup(
-          vibeCode,
-          newContainerId,
-          titleId,
-          installId,
-          transformImports,
-          true, // showVibesSwitch
-          clerkToken || undefined, // Pass Clerk token as apiKey
-          callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
-          callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
-        );
+        // unmountVibe = await mountVibeWithCleanup(
+        //   vibeCode,
+        //   newContainerId,
+        //   titleId,
+        //   installId,
+        //   transformImports,
+        //   true, // showVibesSwitch
+        //   clerkToken || undefined, // Pass Clerk token as apiKey
+        //   callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
+        //   callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
+        // );
       } catch (err) {
         console.error("Error loading vibe:", err);
         if (active) {
@@ -183,7 +187,7 @@ function VibeInstanceViewerContent() {
       active = false;
 
       // Call the unmount callback to properly cleanup the React root
-      if (unmountVibe) {
+      if (typeof unmountVibe === 'function') {
         unmountVibe();
       }
 

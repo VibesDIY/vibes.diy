@@ -27,6 +27,7 @@ import { VibeContainer } from "./routes/vibe-container.js";
 import { Legal_Privacy } from "./routes/legal/privacy.js";
 import { Legal_Tos } from "./routes/legal/tos.js";
 import { CatchAll } from "./routes/catch-all.js";
+import { Chat } from "./routes/chat.js";
 
 function RawApp({ children }: { children?: React.ReactNode }) {
   return (
@@ -61,6 +62,7 @@ export function App() {
             <Route path="/" element={<RawApp />}>
               <Route index element={<Home />} />
               <Route path="index.html" element={<Home />} />
+
 
               {/* Chat routes - all use Home component with different URL params */}
               <Route path="chat/:sessionId" element={<Home />} />

@@ -1,6 +1,6 @@
-import { renderToString } from "npm:react-dom/server";
-import React from "npm:react";
-import { contentType } from "jsr:@std/media-types@1";
+import { renderToString } from "react-dom/server";
+import React from "react";
+import { contentType } from "mime-types"
 
 // Simple in-memory module cache
 const moduleCache = new Map();
@@ -18,7 +18,7 @@ async function loadAndRenderTSX(filePath: string): Promise<string> {
     }
 
     // Transform TSX to JS using esbuild
-    const { build } = await import("npm:esbuild");
+    const { build } = await import("esbuild");
 
     const result = await build({
       stdin: {
@@ -53,7 +53,7 @@ async function loadAndRenderTSX(filePath: string): Promise<string> {
 
     return html;
   } catch (error) {
-    throw new Error(`Failed to render TSX: ${error.message}`);
+    throw new Error(`Failed to render TSX: ${(error as Error).message}`);
   }
 }
 
@@ -99,7 +99,7 @@ Deno.serve({ port: 8001 }, async (req) => {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
