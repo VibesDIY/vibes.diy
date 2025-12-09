@@ -73,6 +73,9 @@ importers:
       wrangler:
         specifier: ^4.56.0
         version: 4.56.0(@cloudflare/workers-types@4.20251221.0)
+      zx:
+        specifier: ^8.8.5
+        version: 8.8.5
 
   call-ai/pkg:
     dependencies:
@@ -759,6 +762,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      esbuild:
+        specifier: ^0.27.1
+        version: 0.27.2
       isbot:
         specifier: ^5.1.25
         version: 5.1.32
@@ -853,6 +859,9 @@ importers:
       cross-env:
         specifier: ^10.0.0
         version: 10.1.0
+      deno:
+        specifier: ^2.5.6
+        version: 2.6.0
       netlify:
         specifier: ^23.13.0
         version: 23.13.0(@types/node@25.0.3)(aws4fetch@1.0.20)(encoding@0.1.13)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.54.0)
@@ -1498,6 +1507,36 @@ packages:
 
   '@dabh/diagnostics@2.0.8':
     resolution: {integrity: sha512-R4MSXTVnuMzGD7bzHdW2ZhhdPC/igELENcq5IjEverBvq5hn1SXCWcsi6eSsdWP0/Ur+SItRRjAktmdoX/8R/Q==}
+
+  '@deno/darwin-arm64@2.6.0':
+    resolution: {integrity: sha512-9WHqeC4TYhyAogLE4mbFDDDnXPslKjVlbgQkreSdp7zXeUxopj0WB60mSNHaFFJk9vrRkwtT4SsIa9GM1wQjjQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@deno/darwin-x64@2.6.0':
+    resolution: {integrity: sha512-0qUO7PXerNrfKpReQ9Di3h2OQcOi+bS3dUkwOekLzN6LtFgKKhXGkT5JkqLciE92Y84OEatk/10Vt53KYBbAPw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@deno/linux-arm64-glibc@2.6.0':
+    resolution: {integrity: sha512-LZBoUwl1CShHDybrC88mvCV5n3EEOXuo94kYF4AgAJHA0W2twlOCwLBf3CreSD6v3SrAuEnnKSUDyXjQ2SkMhA==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@deno/linux-x64-glibc@2.6.0':
+    resolution: {integrity: sha512-QBFOLAZU4aFTDok6mNqz32V+Z6yvGlifPXeT5rm+AsmrFGLzXbn2dqJV/03yXaP7Fj1I2Lmp/ltPbVjsj1raqg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@deno/win32-arm64@2.6.0':
+    resolution: {integrity: sha512-+ElZwl31OHlykQ+BMkc+8gzs9UWRjaOIcb6woSIcXflGGVuhNyUUv101q2G4AV7Wv/kMA2wNTPJNAOuXOMnu/w==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@deno/win32-x64@2.6.0':
+    resolution: {integrity: sha512-vB/6WoSklXx8EozFEeQQn+5MRnMGbM6srOolDmh2U5U0C5E6gzSmkPkt/+om+tnKR4GRzatfxkJHkxzRvYhFZw==}
+    cpu: [x64]
+    os: [win32]
 
   '@dependents/detective-less@5.0.1':
     resolution: {integrity: sha512-Y6+WUMsTFWE5jb20IFP4YGa5IrGY/+a/FbOSjDF/wz9gepU2hwCYSXRHP/vPwBvwcY3SVMASt4yXxbXNXigmZQ==}
@@ -5471,6 +5510,10 @@ packages:
   degenerator@5.0.1:
     resolution: {integrity: sha512-TllpMR/t0M5sqCXfj85i4XaAzxmS5tVA16dqvdkMwGmzI+dXLXnw3J+3Vdv7VKw+ThlTMboK6i9rnZ6Nntj5CQ==}
     engines: {node: '>= 14'}
+
+  deno@2.6.0:
+    resolution: {integrity: sha512-vm+cRVxePdiOyPbaC30s3BrazMVQ2Q3lZu7TYjvBkyyUqXWaCC7eOfu2YLz4Yf8dvV5UuBJ8zugsHLLde4GpzQ==}
+    hasBin: true
 
   depd@1.1.2:
     resolution: {integrity: sha512-7emPTl6Dpo6JRXOXjLRxck+FlLRX5847cLKEn00PLAgc3g2hTZZgr+e4c2v6QpSmLeFP3n5yUo7ft6avBK/5jQ==}
@@ -10770,6 +10813,24 @@ snapshots:
       enabled: 2.0.0
       kuler: 2.0.0
 
+  '@deno/darwin-arm64@2.6.0':
+    optional: true
+
+  '@deno/darwin-x64@2.6.0':
+    optional: true
+
+  '@deno/linux-arm64-glibc@2.6.0':
+    optional: true
+
+  '@deno/linux-x64-glibc@2.6.0':
+    optional: true
+
+  '@deno/win32-arm64@2.6.0':
+    optional: true
+
+  '@deno/win32-x64@2.6.0':
+    optional: true
+
   '@dependents/detective-less@5.0.1':
     dependencies:
       gonzales-pe: 4.3.0
@@ -15354,6 +15415,15 @@ snapshots:
       ast-types: 0.13.4
       escodegen: 2.1.0
       esprima: 4.0.1
+
+  deno@2.6.0:
+    optionalDependencies:
+      '@deno/darwin-arm64': 2.6.0
+      '@deno/darwin-x64': 2.6.0
+      '@deno/linux-arm64-glibc': 2.6.0
+      '@deno/linux-x64-glibc': 2.6.0
+      '@deno/win32-arm64': 2.6.0
+      '@deno/win32-x64': 2.6.0
 
   depd@1.1.2: {}
 

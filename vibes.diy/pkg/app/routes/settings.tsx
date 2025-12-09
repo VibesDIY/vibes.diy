@@ -332,7 +332,7 @@ function SettingsContent() {
 }
 
 // Auth wrapper component
-export default function Settings() {
+export function Settings() {
   const { isSignedIn, isLoaded } = useClerkAuth();
 
   if (!isSignedIn) {

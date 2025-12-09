@@ -230,7 +230,7 @@ function VibeInstanceViewerContent() {
 }
 
 // Auth wrapper component - only renders content when authenticated
-export default function VibeInstanceViewer() {
+export function VibeViewer() {
   const { isSignedIn, isLoaded } = useAuth();
 
   if (!isSignedIn) {

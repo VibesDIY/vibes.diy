@@ -1,12 +1,6 @@
-import React, { StrictMode, createElement, useState } from "react";
-import type { MetaFunction, RouteObject } from "react-router-dom";
-import {
-  BrowserRouter,
-  Outlet,
-  createBrowserRouter,
-  RouterProvider,
-  isRouteErrorResponse,
-} from "react-router-dom";
+import React, { StrictMode } from "react";
+import type { MetaFunction } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 
 import { PostHogProvider } from "posthog-js/react";
 import { VibesDiyEnv } from "./config/env.js";
@@ -14,114 +8,25 @@ import { VibesDiyEnv } from "./config/env.js";
 // import "./app.css";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
-import GtmNoScript from "./components/GtmNoScript.js";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
-import { getLibraryImportMap } from "./config/import-map.js";
+import { ErrorBoundary } from "./ErrorBoundary.js";
 
-// export const links: Route.LinksFunction = () => {
-//   const rawBase = VibesDiyEnv.APP_BASENAME();
-//   const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
-
-//   return [
-//     {
-//       rel: "icon",
-//       type: "image/svg+xml",
-//       href: `${base}favicon.svg`,
-//     },
-//     {
-//       rel: "icon",
-//       type: "image/png",
-//       sizes: "32x32",
-//       href: `${base}favicon-32x32.png`,
-//     },
-//     {
-//       rel: "icon",
-//       type: "image/png",
-//       sizes: "16x16",
-//       href: `${base}favicon-16x16.png`,
-//     },
-//     { rel: "alternate icon", href: `${base}favicon.ico` },
-//     {
-//       rel: "apple-touch-icon",
-//       sizes: "180x180",
-//       href: `${base}apple-touch-icon.png`,
-//     },
-//     {
-//       rel: "manifest",
-//       href: `${base}site.webmanifest`,
-//     },
-//     { rel: "preconnect", href: "https://fonts.googleapis.com" },
-//     {
-//       rel: "preconnect",
-//       href: "https://fonts.gstatic.com",
-//       crossOrigin: "anonymous",
-//     },
-//     {
-//       rel: "stylesheet",
-//       href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-//     },
-//   ];
-// };
-
-export const meta: MetaFunction = () => {
-  return [
-    { title: "Vibes DIY" },
-    { name: "description", content: "Vibe coding made easy" },
-    { property: "og:title", content: "Vibes DIY" },
-    { property: "og:description", content: "Vibe coding made easy" },
-    { property: "og:image", content: "https://vibes.diy/card2.png" },
-    { property: "og:url", content: "https://vibes.diy" },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary_large_image" },
-    { name: "twitter:title", content: "Vibes DIY" },
-    { name: "twitter:description", content: "Vibe coding made easy" },
-    { name: "twitter:image", content: "https://vibes.diy/card2.png" },
-    { name: "twitter:url", content: "https://vibes.diy" },
-  ];
-};
-
-export function Layoutx({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        {/* Import map for inline vibe rendering with ES modules */}
-        <script
-          type="importmap"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              imports: {
-                // Only include React imports in production (dev mode uses bundled versions)
-                ...(!import.meta.env.DEV ? getLibraryImportMap() : {}),
-                // ...getLibraryImportMap()
-              },
-            }),
-          }}
-        />
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/**
-         * Netlify Split Testing opt-in/out via query params (pre-mount)
-         *
-         * Moved to a small static file to keep CSP strict (no 'unsafe-inline').
-         * The script must execute before the app mounts; keep it first in <head>.
-         * <script src="/nf-ab.cookie.js"></script>
-         */}
-        {/* FIREPROOF-UPGRADE-BRANCH: Fireproof 0.23.0 */}
-        {/* Tailwind CSS v4 for inline vibe rendering - matches hosting runtime */}
-        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-        {/* Babel Standalone for JSX transformation in inline vibe rendering */}
-        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-      </head>
-      <body>
-        {/* TODO: Re-enable GtmNoScript when consent can be checked server-side */}
-        {/* <GtmNoScript /> */}
-        <RawApp>{children}</RawApp>
-      </body>
-    </html>
-  );
-}
+import { Home } from "./routes/home.js";
+import { About } from "./routes/about.js";
+import { Settings } from "./routes/settings.js";
+import { Firehose } from "./routes/firehose.js";
+import { Groups } from "./routes/groups.js";
+import { MyVibes } from "./routes/my-vibes.js";
+import { Remix } from "./routes/remix.js";
+import { SsoCallback } from "./routes/sso-callback.js";
+import { VibeInstanceList } from "./routes/vibe-instance-list.js";
+import { VibeViewer } from "./routes/vibe-viewer.js";
+import { VibeContainer } from "./routes/vibe-container.js";
+import { Legal_Privacy } from "./routes/legal/privacy.js";
+import { Legal_Tos } from "./routes/legal/tos.js";
+import { CatchAll } from "./routes/catch-all.js";
 
 function RawApp({ children }: { children?: React.ReactNode }) {
   return (
@@ -147,72 +52,58 @@ function RawApp({ children }: { children?: React.ReactNode }) {
   );
 }
 
-function HomePage() {
-  return <div>Home Page Content</div>;
-}
-
-const router = createBrowserRouter(
-  [
-    {
-      path: "/",
-      Component: RawApp,
-      children: [
-        {
-          index: true,
-          Component: HomePage,
-        },
-        // Add more child routes here
-      ],
-    },
-  ],
-  {
-    basename: import.meta?.env?.VITE_APP_BASENAME || "/",
-  },
-);
-
-// const routes: RouteObject[] = []
-// const router = createBrowserRouter(routes, {
-//   basename: import.meta?.env?.VITE_APP_BASENAME || "/",
-// });
-
 export function App() {
   return (
     <StrictMode>
-      <RouterProvider router={router} />
+      <ErrorBoundary>
+        <BrowserRouter basename={import.meta?.env?.VITE_APP_BASENAME || "/"}>
+          <Routes>
+            <Route path="/" element={<RawApp />}>
+              <Route index element={<Home />} />
+              <Route path="index.html" element={<Home />} />
+
+              {/* Chat routes - all use Home component with different URL params */}
+              <Route path="chat/:sessionId" element={<Home />} />
+              <Route path="chat/:sessionId/:title" element={<Home />} />
+              <Route path="chat/:sessionId/:title/app" element={<Home />} />
+              <Route path="chat/:sessionId/:title/code" element={<Home />} />
+              <Route path="chat/:sessionId/:title/data" element={<Home />} />
+              <Route path="chat/:sessionId/:title/chat" element={<Home />} />
+              <Route
+                path="chat/:sessionId/:title/settings"
+                element={<Home />}
+              />
+
+              {/* Vibe routes */}
+              <Route path="vibes/mine" element={<MyVibes />} />
+              <Route
+                path="vibe/:titleId/:installId"
+                element={<VibeContainer />}
+              />
+              <Route path="vibe/:titleId" element={<VibeContainer />} />
+
+              {/* Other routes */}
+              <Route path="groups" element={<Groups />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="about" element={<About />} />
+              <Route path="sso-callback" element={<SsoCallback />} />
+              <Route path="remix/:vibeSlug?" element={<Remix />} />
+              <Route path="firehose" element={<Firehose />} />
+
+              {/* Legacy routes - can be removed if not needed */}
+              <Route path="vibe-instance-list" element={<VibeInstanceList />} />
+              <Route path="vibe-viewer" element={<VibeViewer />} />
+
+              {/* Legal */}
+              <Route path="legal/privacy" element={<Legal_Privacy />} />
+              <Route path="legal/tos" element={<Legal_Tos />} />
+
+              {/* 404 catch-all - must be last */}
+              <Route path="*" element={<CatchAll />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </StrictMode>
   );
 }
-
-//     <RouterProvider router={router}>
-//     {/* <Outlet></Outlet> */}
-//     {/* <RawApp></RawApp> */}
-//     </RouterProvider>
-
-// export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-//   let message = "Oops!";
-//   let details = "An unexpected error occurred.";
-//   let stack: string | undefined;
-
-//   if (isRouteErrorResponse(error)) {
-//     message = error.status === 404 ? "404" : "Error";
-//     details =
-//       error.status === 404
-//         ? "The requested page could not be found."
-//         : error.statusText || details;
-//   } else if (error && error instanceof Error) {
-//     details = error.message;
-//     stack = error.stack;
-//   }
-
-//   return (
-//     <main className="container mx-auto p-4 pt-16">
-//       <h1>{message}</h1>
-//       <p>{details}</p>
-//       {stack && (
-//         <pre className="w-full overflow-x-auto p-4">
-//           <code>{stack}</code>
-//         </pre>
-//       )}
-//     </main>
-//   );
-// }

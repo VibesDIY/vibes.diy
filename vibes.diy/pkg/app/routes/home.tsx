@@ -1,10 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import {
-  useParams,
-  useLocation,
-  useNavigate,
-  useLoaderData,
-} from "react-router";
+import { useParams, useLocation, useNavigate } from "react-router";
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
@@ -28,11 +23,19 @@ export async function clientLoader({ request }: { request: Request }) {
   };
 }
 
-export default function SessionWrapper() {
-  const loaderData = useLoaderData<typeof clientLoader>();
+export function Home() {
+  console.log("Home is built");
+  // Get URL params directly from location instead of using loader
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();
   const originalNavigate = useNavigate();
+
+  // Extract loader data from URL search params
+  const searchParams = new URLSearchParams(location.search);
+  const loaderData = {
+    urlPrompt: searchParams.get("prompt") || null,
+    urlModel: searchParams.get("model") || null,
+  };
 
   // Extract all location properties as stable strings to prevent useEffect dependency issues
   const pathname = useMemo(

@@ -10,7 +10,7 @@ import { trackEvent } from "../utils/analytics.js";
  * Clerk's AuthenticateWithRedirectCallback handles the authentication flow and
  * then redirects to the original page via redirectUrlComplete.
  */
-export default function SSOCallback() {
+export function SsoCallback() {
   const navigate = useNavigate();
 
   // Fallback: if something goes wrong, redirect to home after 3 seconds

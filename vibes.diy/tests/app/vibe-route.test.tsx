@@ -2,7 +2,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
-import VibeIframeContainer from "~/vibes.diy/app/routes/vibe.js";
+import { VibeContainer } from "~/vibes.diy/app/routes/vibe-container.js";
 import { BuildURI } from "@adviser/cement";
 
 // Mock window.location.replace to prevent navigation errors
@@ -60,7 +60,7 @@ describe("Vibe Route", () => {
         <Routes>
           <Route
             path="/vibe/:vibeSlug"
-            element={<VibeIframeContainer replace={mockReplace} />}
+            element={<VibeContainer replace={mockReplace} />}
           />
         </Routes>
       </MemoryRouter>,
@@ -81,7 +81,7 @@ describe("Vibe Route", () => {
         <Routes>
           <Route
             path="/vibe/:vibeSlug"
-            element={<VibeIframeContainer replace={mockReplace} />}
+            element={<VibeContainer replace={mockReplace} />}
           />
         </Routes>
       </MemoryRouter>,
