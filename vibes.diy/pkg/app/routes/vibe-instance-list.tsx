@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "@clerk/clerk-react";
-import LoggedOutView from "../components/LoggedOutView.js";
+// import LoggedOutView from "../components/LoggedOutView.js";
 import PublishedVibeCard from "../components/PublishedVibeCard.js";
 import { BrutalistCard } from "../components/vibes/BrutalistCard.js";
 import { VibesButton } from "../components/vibes/VibesButton/index.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
+import LoggedOutView from "../components/LoggedOutView.js";
 
 export function meta({ params }: { params: { titleId: string } }) {
   return [
@@ -313,7 +314,7 @@ function VibeInstancesListContent() {
 }
 
 // Auth wrapper component - only renders content when authenticated
-export default function VibeInstancesList() {
+export function VibeInstanceList() {
   const { isSignedIn, isLoaded } = useAuth();
 
   if (!isSignedIn) {

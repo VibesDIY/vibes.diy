@@ -142,7 +142,7 @@ function MyVibesContent(): ReactElement {
 }
 
 // Auth wrapper component
-export default function MyVibesRoute() {
+export function MyVibes() {
   const { isSignedIn, isLoaded } = useAuth();
 
   if (!isSignedIn) {

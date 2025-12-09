@@ -37,6 +37,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: 4.0.14
         version: 4.0.14(@vitest/browser@4.0.14(vite@7.2.7(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15))(vitest@4.0.15)
+      cmd-ts:
+        specifier: ^0.14.3
+        version: 0.14.3
       cross-env:
         specifier: ^10.0.0
         version: 10.1.0
@@ -73,6 +76,9 @@ importers:
       wrangler:
         specifier: ^4.54.0
         version: 4.54.0(@cloudflare/workers-types@4.20251205.0)
+      zx:
+        specifier: ^8.8.5
+        version: 8.8.5
 
   call-ai/pkg:
     dependencies:
@@ -608,8 +614,8 @@ importers:
         specifier: 19.2.1
         version: 19.2.1(react@19.2.1)
       use-fireproof:
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
+        specifier: 0.24.3-dev-ensure-cloud-token-1
+        version: 0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -756,6 +762,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      esbuild:
+        specifier: ^0.27.1
+        version: 0.27.1
       isbot:
         specifier: ^5.1.25
         version: 5.1.32
@@ -850,6 +859,9 @@ importers:
       cross-env:
         specifier: ^10.0.0
         version: 10.1.0
+      deno:
+        specifier: ^2.5.6
+        version: 2.6.0
       netlify:
         specifier: ^23.12.3
         version: 23.12.3(@types/node@25.0.1)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3)
@@ -1373,13 +1385,6 @@ packages:
     resolution: {integrity: sha512-6If+zmUiNEWVt5MoTjCl+0xiAq+uRR5kj+6HBXDG75KwRrG0eW3gH43QntQYBQU/SqhGwY2UbogEplM8ndF7Fg==}
     engines: {node: '>=18.17.0'}
 
-  '@clerk/clerk-js@5.111.0':
-    resolution: {integrity: sha512-8a+Fc6f/KJArP2TENYQh/iMQtaovW0dBt7Yjhnr0EGZkMVOJnq/ZoKwEJcEXMBGsh66veugYtn6E6APCgINkUQ==}
-    engines: {node: '>=18.17.0'}
-    peerDependencies:
-      react: 19.2.1
-      react-dom: 19.2.1
-
   '@clerk/clerk-js@5.113.0':
     resolution: {integrity: sha512-OGAqahj+j5KUnVA3IGFzO3uEOlWB0oGZi0Y80vjiAroWZpEnuX5Go4jhmVr4WTwVaAI6NupybE5YTUbmuikXFg==}
     engines: {node: '>=18.17.0'}
@@ -1502,6 +1507,36 @@ packages:
 
   '@dabh/diagnostics@2.0.8':
     resolution: {integrity: sha512-R4MSXTVnuMzGD7bzHdW2ZhhdPC/igELENcq5IjEverBvq5hn1SXCWcsi6eSsdWP0/Ur+SItRRjAktmdoX/8R/Q==}
+
+  '@deno/darwin-arm64@2.6.0':
+    resolution: {integrity: sha512-9WHqeC4TYhyAogLE4mbFDDDnXPslKjVlbgQkreSdp7zXeUxopj0WB60mSNHaFFJk9vrRkwtT4SsIa9GM1wQjjQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@deno/darwin-x64@2.6.0':
+    resolution: {integrity: sha512-0qUO7PXerNrfKpReQ9Di3h2OQcOi+bS3dUkwOekLzN6LtFgKKhXGkT5JkqLciE92Y84OEatk/10Vt53KYBbAPw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@deno/linux-arm64-glibc@2.6.0':
+    resolution: {integrity: sha512-LZBoUwl1CShHDybrC88mvCV5n3EEOXuo94kYF4AgAJHA0W2twlOCwLBf3CreSD6v3SrAuEnnKSUDyXjQ2SkMhA==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@deno/linux-x64-glibc@2.6.0':
+    resolution: {integrity: sha512-QBFOLAZU4aFTDok6mNqz32V+Z6yvGlifPXeT5rm+AsmrFGLzXbn2dqJV/03yXaP7Fj1I2Lmp/ltPbVjsj1raqg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@deno/win32-arm64@2.6.0':
+    resolution: {integrity: sha512-+ElZwl31OHlykQ+BMkc+8gzs9UWRjaOIcb6woSIcXflGGVuhNyUUv101q2G4AV7Wv/kMA2wNTPJNAOuXOMnu/w==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@deno/win32-x64@2.6.0':
+    resolution: {integrity: sha512-vB/6WoSklXx8EozFEeQQn+5MRnMGbM6srOolDmh2U5U0C5E6gzSmkPkt/+om+tnKR4GRzatfxkJHkxzRvYhFZw==}
+    cpu: [x64]
+    os: [win32]
 
   '@dependents/detective-less@5.0.1':
     resolution: {integrity: sha512-Y6+WUMsTFWE5jb20IFP4YGa5IrGY/+a/FbOSjDF/wz9gepU2hwCYSXRHP/vPwBvwcY3SVMASt4yXxbXNXigmZQ==}
@@ -2257,14 +2292,8 @@ packages:
   '@fastify/static@7.0.4':
     resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
 
-  '@fireproof/core-base@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-JklwDeY8G5+2cokYLBe621gG1ik0tOPjv9XFc7vguIgIEhVJtu6kClzTxZ7V5jjClDfNdR8q2kk/FJRxnNAPig==}
-
   '@fireproof/core-base@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-70XfkRAowgZhYFIUs89Mm+DmlrxVkeKTQzzQ8Al9FsOuaTo/6VO0g3/flrOdLAV8PpyqAgDcKVij7aiev1i9EA==}
-
-  '@fireproof/core-blockstore@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-bcnhbUgipnILRB49jvrbJ65Mm6Wg9TcaBbceFWLIxKKDeNrcf53+trKwI4deNEbBHkrTi6VfzaNzEkkawYWKgA==}
 
   '@fireproof/core-blockstore@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-FyguY4TyTEE2keRKPjol8LHjH3Mnq6iIbgWbbBnLM7NMJuxxNxugrjTINQOi91KP1RfYO4OiqbD8fL4MR1VCUQ==}
@@ -2273,100 +2302,51 @@ packages:
     resolution: {integrity: sha512-UBWJu0BJiqusd4KCwUVVrsNP+77IdeUUNxmpRADJzkJhK7xfAWdgdV3wVsOmtF1hFsT5gnC+1jfmos7Ojx8HRA==}
     hasBin: true
 
-  '@fireproof/core-device-id@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-zF7lyKJbErN40QmJUGQeaEtoYhvekDbvsWRxgtDqXE2CcrLVvzI/uz0fp/FpIqtfBhtiPBu0XHc5srxU6IEBrw==}
-    engines: {node: '>=20'}
-
   '@fireproof/core-device-id@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-CvT2oC1IQI2eBNJUVqj57JO9PaYenGCtSK9E3VpX8D9oIVrgNEO0pmXJdOg3FpuFTxJBrqjvjtp+0b718jtWEg==}
     engines: {node: '>=20'}
 
-  '@fireproof/core-gateways-base@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-o6sx9cmF1+9J5Kd0ZUo8Yjk8SYZpZWj+a0moguOeRC6dIMzU+c3cqE5YiWlinwENj87btNPsoNtTzkoEeKJ9Gw==}
-
   '@fireproof/core-gateways-base@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-s5Y9l4cMQrVFdod6/7CZNgvegvAJExB+fGGAmUFx4gEaCLruOu69XcxigOKenbRe04OqXiSlXEgUULVLHgWcIw==}
-
-  '@fireproof/core-gateways-cloud@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-5TLhv9Hxg43Vof63n1Ohu8qt95D+LE2IM3k1jnA4SvKC8wMlSn8knJCYywVCpSKGDaN5miB/fDRCUHZUEWP19A==}
 
   '@fireproof/core-gateways-cloud@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-valKl0KW4ta7E1YPPJkXpeqo+ZP1LcbeQ15T0/0tYmrZU8M/wUX2CJnWZbfDbKVQ8zS5a4KDGuzukudgTQqmJQ==}
 
-  '@fireproof/core-gateways-file-deno@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-eahgCVHN5X4DRZ9n0q5yiDqGD83uq+RcNLqTInhxkQgW8TkOd6ZpAC7FvDvK90aJlHa09juFO0k+0HG6018ujA==}
-
   '@fireproof/core-gateways-file-deno@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-2QsvBAi4NSPCONh9fH4LqYH/NwOICR7PGEWr8U8X3TpUD0K8okJAXHvmDMVfJ/vmRg1O8qkIkbuuXvyw+QGyTg==}
-
-  '@fireproof/core-gateways-file-node@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-dDWeQt37T1rU4rTAFZKRLShJPhBDp9FkuJG6Z4oCqip87mG7Bf7hLincDX5VDEEFNEZ/xPnW+DMTVqiC20RqkQ==}
 
   '@fireproof/core-gateways-file-node@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-E3N9In+kDLqUuQT3wkOM9k5YKmRTvXt3IZcRmBUX6JS3hoZeFpjl9xTggvdB0XxZyOFBVquzSNhJNLB7/j6dlA==}
 
-  '@fireproof/core-gateways-file@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-pQUoSiJExAJzaO/gBqAYG1T9d73g1tHGC05Qfl2w2wqnRF+D2zKQ9QIBTJr2NGLQRv/DeViBb03QG691NMK7mg==}
-
   '@fireproof/core-gateways-file@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-Rg5yBE/ES29kpoLAd8/5bNHkLN9gTOaW+9LYoJyxIBOVwqAU9ZrEib6QcIdQFekivYHQqVsxaGv/MOAe/kJQ6g==}
-
-  '@fireproof/core-gateways-indexeddb@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-W/BeQ1vVUQM79gwbvgOFi/gEt9djcZT336wKuXlx5uZdMGwAh/CqyWf7SJdr/E8jhJnbUeupczGTXtGKWkzNcA==}
 
   '@fireproof/core-gateways-indexeddb@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-xUzVWDnC6YDRxU0ISLagFt+iJEULNgKJtYldiDYVYzQvby06YqXuYzvdhBFNqCNuZmJFzvtr5wdLfLQpdSQcig==}
 
-  '@fireproof/core-gateways-memory@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-Hx+69wr6wKlRCYXhO+Q3mzTAgifOnkmbGt0chNxoaSyHT0rPitDy36wR3BqpxvKmT87DFgGbxXWKJSLiBalshQ==}
-
   '@fireproof/core-gateways-memory@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-/hP6aGJ7vmjmqfBtpLY6ZFIHCrBSGrCflbWdZOY9Suv3hiDpUfpuGVgNVdkVwHud3k+DXBOhfHhTaXRNQ8bCog==}
-
-  '@fireproof/core-keybag@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-Wg35B/1vcrXZCfV5PV2hsJaO3n33uJj/OKChqb0Ukm+fR3f5dqi511o5CWkqrlg/1CTT+2IFWx60TyLjINBjVA==}
 
   '@fireproof/core-keybag@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-4FR2+iQD3ke8AsqoocByckAGGCzJmjHXH1s1/tS5/CNtO/WP5s1DvUXonpf45yPIyvmkqrE48z4Ls3VzxeLmLQ==}
 
-  '@fireproof/core-protocols-cloud@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-Px3YjSDkfGg7u+nbp0GWccQC6+YCCwE1tuMsqWsCcD2qDe9NpOtuwdjl3C12aM+CAUjOhAe+BPLCKra5aZDc8w==}
-
   '@fireproof/core-protocols-cloud@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-Bed3b8DeKMU0DZVz74fGm4EFa72rEP+VMf9tQ9WHDBEH34bd8PwAhiIJz0OrDHAV79Amn2QuGKcS2aWhKR3wsw==}
-
-  '@fireproof/core-protocols-dashboard@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-d4Zz8Ot3vLVJpwqwGqjJ2cuxqnZFsRvzNdj1ba6ihzgbsSv7+Oms4/+5BezojbGip6ApsVvmLOh6LE5RXGDbdQ==}
 
   '@fireproof/core-protocols-dashboard@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-qNCkKY/LORVc8OESZHOOi0OFpsYW8cUIx3sKFyYSjhY2NGJrbHuGSNCrl9aW4R+ByLBf0men1GKoioZqLFG2gw==}
 
-  '@fireproof/core-runtime@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-ll7tKbJg+x70ZtrSCvkS5QJYVGwVKhXZEvhThoOI2ROPDKi0sBodQ/rSjqgeQKHheMngis13zfLVpO0AUbOt1A==}
-
   '@fireproof/core-runtime@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-6wvFXvlq7mYgfuyE+gaXtlxltINnme/I5/AJSr2j/5Iu7PhK2zPtnOHIKWvGL07I41q8Jt3EOrDfgFJljvZgZQ==}
-
-  '@fireproof/core-types-base@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-6Hl2TpKjMs3RVegp8Ro7Sp56pQBJMjE640qJ84McgkALywwfh27a8C5FktnfGi2u2ZhlFoUQrJUuyy/C9mAltQ==}
 
   '@fireproof/core-types-base@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-FG2GCdQHeKo/fmqamjMbgkno4K4fN0FvWt17E8pC92iJUPBdEMZtnRw3vVJL2mruschrNUkbDg5SyOkHoA4E9g==}
 
-  '@fireproof/core-types-blockstore@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-fSyjjrSGa/KCJMHadIh64CeAUVZRPDizOrGD1HRbEB3mjDjYBd+6SALCtLLTqdT9RyEeTZKWUM9L393gx6dp8w==}
-
   '@fireproof/core-types-blockstore@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-HkoXEttmGuDfjObQBFjGU+LjjWEIPTv0Qm+MasiUGYDjfgSGy3iVqvfRgiuiUFRr8NggOIfOJGEpua16zQg9oQ==}
 
-  '@fireproof/core-types-protocols-cloud@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-3IwwhvfIsam8Qx61Ivsvz+nP4GBdVzOUCCGZYzmBOnDAtnJjZa915YTDBBXuVwKLJlAgYyGizxnvPfeiyTNS6A==}
-
   '@fireproof/core-types-protocols-cloud@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-WEFGsrQaglIbAdTTn1ezpfg4fgmQMlbxO2acyLV8gD6MATd6DphKXyPvtuYrUljKUUhUkR2vw7lmP6ADcYHdmg==}
-
-  '@fireproof/core-types-runtime@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-e1uXntuEgTyljkrXOMtQiAfEyuMUEG3rLj6wXDrelurxN4kzFMJXY8vcgIQ+PpQSjudGertvGmxzqRwVQ8ujsw==}
 
   '@fireproof/core-types-runtime@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-pKoBoV9JB8VRrvrg33jyu/2V598RVUujO612EutQxVO/tjayJzcgJUrL49LfSbOQfKAlc+NdUHrviepdPmanag==}
@@ -2375,9 +2355,6 @@ packages:
     resolution: {integrity: sha512-iwaGdLtsDqa0lts780MsTRIyPS1kwEULgPGEVBZkEpPX7zxmV0c1+3vl3clUPR19Hp2YlQ9v4J0T9xMGK2aduA==}
     peerDependencies:
       react: 19.2.1
-
-  '@fireproof/vendor@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-Y4PjBtGuTdKzQ9kTsXyUvHjwepKjw+xtw7O+oP+c0Z0XCQz4JDzKNwq3Y+Ip2RhlfBOl90ZKPqtCpPNVJIRO9Q==}
 
   '@fireproof/vendor@0.24.3-dev-ensure-cloud-token-1':
     resolution: {integrity: sha512-fLuoWEuzfGTafs9/QwhHW3rVmAtFOx+xKrC+MF96VEKJLdk/yEM4e5cNJyfqY4gxYKRIZAfeIuYZQb2MsBUtKw==}
@@ -5692,6 +5669,10 @@ packages:
   degenerator@5.0.1:
     resolution: {integrity: sha512-TllpMR/t0M5sqCXfj85i4XaAzxmS5tVA16dqvdkMwGmzI+dXLXnw3J+3Vdv7VKw+ThlTMboK6i9rnZ6Nntj5CQ==}
     engines: {node: '>= 14'}
+
+  deno@2.6.0:
+    resolution: {integrity: sha512-vm+cRVxePdiOyPbaC30s3BrazMVQ2Q3lZu7TYjvBkyyUqXWaCC7eOfu2YLz4Yf8dvV5UuBJ8zugsHLLde4GpzQ==}
+    hasBin: true
 
   depd@1.1.2:
     resolution: {integrity: sha512-7emPTl6Dpo6JRXOXjLRxck+FlLRX5847cLKEn00PLAgc3g2hTZZgr+e4c2v6QpSmLeFP3n5yUo7ft6avBK/5jQ==}
@@ -9931,12 +9912,6 @@ packages:
   urlpattern-polyfill@8.0.2:
     resolution: {integrity: sha512-Qp95D4TPJl1kC9SKigDcqgyM2VDVO4RiJc2d4qe5GrYm+zbIQCWWKAFaJNQ4BhdFeDGwBmAxqJBwWSJDb9T3BQ==}
 
-  use-fireproof@0.24.2-dev-clerk:
-    resolution: {integrity: sha512-Sie9Mswp5mf7jk/opKlyso/bkv0mwAYvVJSHiOXhyXGDmM7VX3QEbKbv8vheAfxZjXLgKMFlLiv6ZW0MCbhXcw==}
-    peerDependencies:
-      '@adviser/cement': '>=0.4.20'
-      react: 19.2.1
-
   use-fireproof@0.24.3-dev-ensure-cloud-token-1:
     resolution: {integrity: sha512-66InVey+0hIzljVCOBTzsOts6wWuss2R/aWUa1Uy3zjrTVXrAQEI8pZgKOdtbkqs7fZWMoneaX1o25qm+IppCQ==}
     peerDependencies:
@@ -10738,43 +10713,6 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/clerk-js@5.111.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)':
-    dependencies:
-      '@base-org/account': 2.0.1(@types/react@19.2.7)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)
-      '@clerk/localizations': 3.29.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@clerk/shared': 3.36.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@coinbase/wallet-sdk': 4.3.0
-      '@emotion/cache': 11.11.0
-      '@emotion/react': 11.11.1(@types/react@19.2.7)(react@19.2.1)
-      '@floating-ui/react': 0.27.12(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@floating-ui/react-dom': 2.1.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@formkit/auto-animate': 0.8.4
-      '@stripe/stripe-js': 5.6.0
-      '@swc/helpers': 0.5.17
-      '@tanstack/query-core': 5.87.4
-      '@zxcvbn-ts/core': 3.0.4
-      '@zxcvbn-ts/language-common': 3.0.4
-      alien-signals: 2.0.6
-      browser-tabs-lock: 1.3.0
-      copy-to-clipboard: 3.3.3
-      core-js: 3.41.0
-      crypto-js: 4.2.0
-      dequal: 2.0.3
-      input-otp: 1.4.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      qrcode.react: 4.2.0(react@19.2.1)
-      react: 19.2.1
-      react-dom: 19.2.1(react@19.2.1)
-      regenerator-runtime: 0.14.1
-    transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - immer
-      - supports-color
-      - typescript
-      - use-sync-external-store
-      - utf-8-validate
-      - zod
-
   '@clerk/clerk-js@5.113.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)':
     dependencies:
       '@base-org/account': 2.0.1(@types/react@19.2.7)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)
@@ -10944,6 +10882,24 @@ snapshots:
       '@so-ric/colorspace': 1.1.6
       enabled: 2.0.0
       kuler: 2.0.0
+
+  '@deno/darwin-arm64@2.6.0':
+    optional: true
+
+  '@deno/darwin-x64@2.6.0':
+    optional: true
+
+  '@deno/linux-arm64-glibc@2.6.0':
+    optional: true
+
+  '@deno/linux-x64-glibc@2.6.0':
+    optional: true
+
+  '@deno/win32-arm64@2.6.0':
+    optional: true
+
+  '@deno/win32-x64@2.6.0':
+    optional: true
 
   '@dependents/detective-less@5.0.1':
     dependencies:
@@ -11436,25 +11392,6 @@ snapshots:
       fastq: 1.19.1
       glob: 10.5.0
 
-  '@fireproof/core-base@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@ipld/dag-cbor': 9.2.5
-      '@web3-storage/pail': 0.6.2
-      charwise: 3.0.1
-      prolly-trees: 1.0.4
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-
   '@fireproof/core-base@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11469,32 +11406,6 @@ snapshots:
       '@web3-storage/pail': 0.6.2
       charwise: 3.0.1
       prolly-trees: 1.0.4
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-
-  '@fireproof/core-blockstore@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-memory': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@ipld/car': 5.4.2
-      '@ipld/dag-cbor': 9.2.5
-      '@ipld/dag-json': 10.2.5
-      '@web3-storage/pail': 0.6.2
-      multiformats: 13.4.1
-      p-map: 7.0.4
-      p-retry: 7.1.0
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -11554,18 +11465,6 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fireproof/core-device-id@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      jose: 6.1.2
-      multiformats: 13.4.1
-      zod: 4.1.13
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-device-id@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11575,18 +11474,6 @@ snapshots:
       jose: 6.1.3
       multiformats: 13.4.1
       zod: 4.1.13
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-gateways-base@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@ipld/dag-json': 10.2.5
-      '@web3-storage/pail': 0.6.2
     transitivePeerDependencies:
       - typescript
 
@@ -11601,22 +11488,6 @@ snapshots:
       '@web3-storage/pail': 0.6.2
     transitivePeerDependencies:
       - typescript
-
-  '@fireproof/core-gateways-cloud@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      jose: 6.1.2
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
 
   '@fireproof/core-gateways-cloud@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
@@ -11634,16 +11505,6 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-gateways-file-deno@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@types/deno': 2.5.0
-      '@types/node': 24.5.2
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-gateways-file-deno@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11654,32 +11515,11 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file-node@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-gateways-file-node@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-gateways-file@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-file-deno': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-file-node': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
@@ -11696,18 +11536,6 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-indexeddb@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      idb: 8.0.3
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-gateways-indexeddb@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11720,17 +11548,6 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-memory@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-gateways-memory@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11739,20 +11556,6 @@ snapshots:
       '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-keybag@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      jose: 6.1.2
-      multiformats: 13.4.1
-      zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
@@ -11770,20 +11573,6 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-protocols-cloud@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@types/ws': 8.18.1
-      ws: 8.18.3
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-
   '@fireproof/core-protocols-cloud@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11796,27 +11585,6 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - typescript
-      - utf-8-validate
-
-  '@fireproof/core-protocols-dashboard@0.24.2-dev-clerk(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@clerk/clerk-js': 5.111.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)
-      '@fireproof/core-device-id': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      zod: 4.1.13
-    transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - immer
-      - react
-      - react-dom
-      - supports-color
-      - typescript
-      - use-sync-external-store
       - utf-8-validate
 
   '@fireproof/core-protocols-dashboard@0.24.3-dev-ensure-cloud-token-1(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))':
@@ -11840,22 +11608,6 @@ snapshots:
       - use-sync-external-store
       - utf-8-validate
 
-  '@fireproof/core-runtime@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@adviser/ts-xxhash': 1.0.2
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      cborg: 4.3.1
-      jose: 6.1.2
-      multiformats: 13.4.1
-      zod: 4.1.13
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-runtime@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11868,19 +11620,6 @@ snapshots:
       cborg: 4.3.2
       jose: 6.1.3
       multiformats: 13.4.1
-      zod: 4.1.13
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-types-base@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@web3-storage/pail': 0.6.2
-      jose: 6.1.2
-      multiformats: 13.4.1
-      prolly-trees: 1.0.4
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
@@ -11898,17 +11637,6 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-blockstore@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@web3-storage/pail': 0.6.2
-      multiformats: 13.4.1
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-types-blockstore@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11917,18 +11645,6 @@ snapshots:
       '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
       multiformats: 13.4.1
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-types-protocols-cloud@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      jose: 6.1.2
-      multiformats: 13.4.1
-      zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
@@ -11941,14 +11657,6 @@ snapshots:
       jose: 6.1.3
       multiformats: 13.4.1
       zod: 4.1.13
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-types-runtime@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
@@ -11972,13 +11680,6 @@ snapshots:
       - bufferutil
       - typescript
       - utf-8-validate
-
-  '@fireproof/vendor@0.24.2-dev-clerk(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      yocto-queue: 1.2.2
-    transitivePeerDependencies:
-      - typescript
 
   '@fireproof/vendor@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
     dependencies:
@@ -12140,12 +11841,12 @@ snapshots:
 
   '@ipld/dag-cbor@9.2.5':
     dependencies:
-      cborg: 4.3.1
+      cborg: 4.3.2
       multiformats: 13.4.2
 
   '@ipld/dag-json@10.2.5':
     dependencies:
-      cborg: 4.3.1
+      cborg: 4.3.2
       multiformats: 13.4.2
 
   '@isaacs/cliui@8.0.2':
@@ -13636,7 +13337,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -15866,6 +15567,15 @@ snapshots:
       ast-types: 0.13.4
       escodegen: 2.1.0
       esprima: 4.0.1
+
+  deno@2.6.0:
+    optionalDependencies:
+      '@deno/darwin-arm64': 2.6.0
+      '@deno/darwin-x64': 2.6.0
+      '@deno/linux-arm64-glibc': 2.6.0
+      '@deno/linux-x64-glibc': 2.6.0
+      '@deno/win32-arm64': 2.6.0
+      '@deno/win32-x64': 2.6.0
 
   depd@1.1.2: {}
 
@@ -19259,7 +18969,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.0(typescript@5.9.3)(zod@4.1.13)
+      abitype: 1.2.1(typescript@5.9.3)(zod@4.1.13)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.9.3
@@ -21139,32 +20849,6 @@ snapshots:
   urlpattern-polyfill@10.1.0: {}
 
   urlpattern-polyfill@8.0.2: {}
-
-  use-fireproof@0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1)):
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.2-dev-clerk(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      dompurify: 3.3.0
-      jose: 6.1.2
-      react: 19.2.1
-      ts-essentials: 10.1.1(typescript@5.9.3)
-    transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - immer
-      - react-dom
-      - supports-color
-      - typescript
-      - use-sync-external-store
-      - utf-8-validate
 
   use-fireproof@0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1)):
     dependencies:

@@ -62,7 +62,7 @@
     "@tailwindcss/vite": "^4.1.11",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
     "react-dom": "^19.2.1",
-    "use-fireproof": "0.24.2-dev-clerk",
+    "use-fireproof": "0.24.3-dev-ensure-cloud-token-1",
     "use-vibes": "workspace:0.0.0",
     "vite": "^7.2.7",
     "vite-tsconfig-paths": "^5.1.4",

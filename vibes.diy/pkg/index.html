@@ -1,6 +1,7 @@
 <html lang="en">
   <head>
-    <script type="importmap">
+    <script type="importmap" src="http://localhost:8000"></script>
+    <script type="ximportmap">
       {
         "imports": {
           "dequal/lite": "https://esm.sh/dequal@2.0.3/lite",
@@ -44,7 +45,26 @@
           "react-router": "https://esm.sh/react-router?deps=react@19.2.1,react-dom@19.2.1",
           "react-router-dom": "https://esm.sh/react-router-dom?deps=react@19.2.1,react-dom@19.2.1",
           "@fireproof/core-runtime": "https://esm.sh/@fireproof/core-runtime@0.24.3-dev-ensure-cloud-token-1",
-          "call-ai": "https://esm.sh/call-ai@v0.14.5"
+          "call-ai": "https://esm.sh/call-ai@v0.14.5",
+
+          "react-hot-toast": "https://esm.sh/react-hot-toast",
+          "@radix-ui/react-slot": "https://esm.sh/@radix-ui/react-slot",
+          "class-variance-authority": "https://esm.sh/class-variance-authority",
+          "clsx": "https://esm.sh/clsx",
+          "react-markdown": "https://esm.sh/react-markdown",
+
+          "@vibes.diy/prompts": "/dist/prompts/pkg/index.js",
+
+          "tailwind-merge": "https://esm.sh/tailwind-merge",
+          "@monaco-editor/react": "https://esm.sh/@monaco-editor/react",
+          "@shikijs/monaco": "https://esm.sh/@shikijs/monaco",
+          "shiki/core": "https://esm.sh/shiki/core",
+          "shiki/langs/javascript.mjs": "https://esm.sh/shiki/langs/javascript.mjs",
+          "shiki/langs/typescript.mjs": "https://esm.sh/shiki/langs/typescript.mjs",
+          "shiki/langs/jsx.mjs": "https://esm.sh/shiki/langs/jsx.mjs",
+          "shiki/langs/tsx.mjs": "https://esm.sh/shiki/langs/tsx.mjs",
+
+          "use-fireproof": "https://esm.sh/use-fireproof@0.24.3-dev-ensure-cloud-token-1"
         }
       }
     </script>
@@ -57,7 +77,10 @@
 
     <div id="vibes.diy"></div>
 
-    <script src="https://esm.sh/@tailwindcss/browser@4"></script>
-    <script src="https://esm.sh/@babel/standalone/babel.min.js"></script>
+    <script type="module" src="https://esm.sh/@tailwindcss/browser@4"></script>
+    <script
+      type="module"
+      src="https://esm.sh/@babel/standalone/babel.min.js"
+    ></script>
   </body>
 </html>

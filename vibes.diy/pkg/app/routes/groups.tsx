@@ -123,7 +123,7 @@ function GroupsContent() {
 }
 
 // Auth wrapper component - only renders content when authenticated
-export default function GroupsRoute() {
+export function Groups() {
   const { isSignedIn, isLoaded } = useAuth();
 
   if (!isSignedIn) {
