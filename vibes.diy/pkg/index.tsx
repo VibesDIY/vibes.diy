@@ -80,7 +80,8 @@ function ImportMap() {
     "@fireproof/": "FP",
 
     "use-vibes": "/dist/use-vibes/pkg/index.js",
-    "use-fireproof": "/dist/use-vibes/pkg/index.js",
+    // "use-fireproof": "/dist/use-vibes/pkg/index.js",
+    "use-fireproof": `https://esm.sh/use-fireproof@${ver.FP}`,
 
     "@vibes.diy/prompts": "/dist/prompts/pkg/index.js",
     "@vibes.diy/use-vibes-base": "/dist/use-vibes/base/index.js",
