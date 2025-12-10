@@ -44,7 +44,8 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
     const leftCounterBoy = sceneSetup.counterBoyLeftRef.current;
     const rightCounterBoy = sceneSetup.counterBoyRightRef.current;
 
-    const primaryCounterBoy = source === "left" ? leftCounterBoy : rightCounterBoy;
+    const primaryCounterBoy =
+      source === "left" ? leftCounterBoy : rightCounterBoy;
     const syncCounterBoy = source === "left" ? rightCounterBoy : leftCounterBoy;
 
     if (!primaryCounterBoy) return;

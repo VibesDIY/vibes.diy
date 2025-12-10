@@ -1216,33 +1216,32 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <h3 style={getSectionHeadingStyle("#5398c9")}>
                       The Vibe Coding Stack Made for Coding Agents
                     </h3>
-<div style={getContentWrapperStyle()}>
-                    <b style={getSubheadingBoldStyle()}>
-                      It's not for you. It's for them.
-                    </b>
-                    <p>
-                      Vibes DIY is so obsessed with making a better vibe coding
-                      experience that we started by making our own database. The
-                      Vibes DIY web stack is open source, and uses a sync-engine
-                      powered by our database,{" "}
-                      <a style={getLinkOutStyle()}>Fireproof </a>. Because{" "}
-                      <a style={getLinkOutStyle()}>Fireproof</a>{" "}
-                      is local first, your data lives in the browser, and syncs
-                      across your users' browsers automatically. Without a
-                      virtual machine + web server to make everything
-                      complicated.
-                    </p>
-                    <p>Our timing is good.</p>
-                    <p>
-                      Every generation of web tooling promises the same thing:
-                      faster builds, fewer bugs, better DX. APIs got cleaner.
-                      Frameworks got smarter.
-                    </p>
-                    <p>
-                      And yet modern apps are still a maze of clients, servers,
-                      endpoints, retries, caches, and edge cases. So let's ask a
-                      different question...
-                    </p>
+                    <div style={getContentWrapperStyle()}>
+                      <b style={getSubheadingBoldStyle()}>
+                        It's not for you. It's for them.
+                      </b>
+                      <p>
+                        Vibes DIY is so obsessed with making a better vibe
+                        coding experience that we started by making our own
+                        database. The Vibes DIY web stack is open source, and
+                        uses a sync-engine powered by our database,{" "}
+                        <a style={getLinkOutStyle()}>Fireproof </a>. Because{" "}
+                        <a style={getLinkOutStyle()}>Fireproof</a> is local
+                        first, your data lives in the browser, and syncs across
+                        your users' browsers automatically. Without a virtual
+                        machine + web server to make everything complicated.
+                      </p>
+                      <p>Our timing is good.</p>
+                      <p>
+                        Every generation of web tooling promises the same thing:
+                        faster builds, fewer bugs, better DX. APIs got cleaner.
+                        Frameworks got smarter.
+                      </p>
+                      <p>
+                        And yet modern apps are still a maze of clients,
+                        servers, endpoints, retries, caches, and edge cases. So
+                        let's ask a different question...
+                      </p>
                     </div>
                   </DraggableSection>
                 </div>

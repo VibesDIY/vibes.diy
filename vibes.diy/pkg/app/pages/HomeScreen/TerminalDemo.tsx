@@ -245,6 +245,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
         greetings: false,
         prompt: "[[;#888;]Press Enter to continue...] ",
         enabled: true,
+        clickTimeout: null,
         keypress: function (e: KeyboardEvent) {
           // Block all character input (but not special keys like Enter)
           if (e.key.length === 1) {
@@ -255,6 +256,23 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     );
 
     termRef.current = term;
+
+    // Prevent terminal from auto-focusing on external clicks
+    const preventExternalFocus = (e: MouseEvent) => {
+      // If click is outside the terminal container, blur the terminal
+      if (
+        terminalRef.current &&
+        !terminalRef.current.contains(e.target as Node)
+      ) {
+        // Blur any focused element within the terminal
+        const activeElement = document.activeElement;
+        if (activeElement && terminalRef.current.contains(activeElement)) {
+          (activeElement as HTMLElement).blur();
+        }
+      }
+    };
+
+    document.addEventListener("click", preventExternalFocus, true);
 
     // Restore scroll position after terminal initialization
     requestAnimationFrame(() => {
@@ -273,21 +291,33 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     const dimGray = "#555";
 
     // Narrow box (44 chars wide total, 42 inner)
-    term.echo(`[[;${orange};]╭──────────────────────────────────────────╮]`);
-    term.echo(`[[;${orange};]│          [[;${yellow};]Vibes OS v.0.1[[;${orange};]                  │]`,);
-    term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(`[[;${orange};]│        [[;${cream};]Welcome, Vibe Coder![[;${orange};]              │]`,);
-    term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(`[[;${orange};]│                [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                     │]`,);
-    term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(`[[;${orange};]│         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,);
-    term.echo(`[[;${orange};]│        [[;${dimGray};]~/your-brilliant-idea[[;${orange};]             │]`,);
-    term.echo(`[[;${orange};]╰──────────────────────────────────────────╯]`);
+    term.echo(`[[;${orange};]  ╭──────────────────────────────────────────╮]`);
+    term.echo(
+      `[[;${orange};]  │              [[;${yellow};]Vibes OS v.0.1[[;${orange};]              │]`,
+    );
+    term.echo(`[[;${orange};]  │                                          │]`);
+    term.echo(
+      `[[;${orange};]  │           [[;${cream};]Welcome, Vibe Coder![[;${orange};]           │]`,
+    );
+    term.echo(`[[;${orange};]  │                                          │]`);
+    term.echo(
+      `[[;${orange};]  │                  [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                   │]`,
+    );
+    term.echo(`[[;${orange};]  │                                          │]`);
+    term.echo(
+      `[[;${orange};]  │         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,
+    );
+    term.echo(
+      `[[;${orange};]  │          [[;${dimGray};]~/your-brilliant-idea[[;${orange};]           │]`,
+    );
+    term.echo(`[[;${orange};]  ╰──────────────────────────────────────────╯]`);
+    term.echo("");
     term.echo(`[[;${blue};]> What do you actually want to generate?]`);
     term.echo("");
 
     return () => {
       animationActive = false;
+      document.removeEventListener("click", preventExternalFocus, true);
       if (termRef.current) {
         termRef.current.destroy();
         termRef.current = null;
@@ -333,6 +363,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
   const terminalStyle: React.CSSProperties = {
     width: "100%",
     height: "100%",
+    pointerEvents: "auto",
   };
 
   return (
@@ -344,6 +375,13 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
             --background: transparent;
             --size: ${isMobile ? "1" : "1.2"};
             --font: 'Courier New', monospace;
+          }
+          .terminal-demo .terminal .cmd {
+            pointer-events: none;
+          }
+          .terminal-demo .terminal textarea,
+          .terminal-demo .terminal .cmd-cursor-line {
+            pointer-events: none !important;
           }
         `}
       </style>
