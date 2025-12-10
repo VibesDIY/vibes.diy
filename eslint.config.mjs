@@ -47,6 +47,8 @@ const opts = tseslint.config(
       "**/.storybook/**",
       "**/tailwind.config.js",
       "vibes.diy/**/root.*",
+      "vibes.diy/pkg/vibes-diy-srv.ts",
+      "vibes.diy/pkg/lib/render.ts",
       "**/eslint.config.mjs",
       "**/jest.config.mjs",
       "**/src/types.d.ts",
