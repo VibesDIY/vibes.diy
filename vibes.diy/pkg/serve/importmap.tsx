@@ -15,11 +15,11 @@ function enhance(
     let enhancedValue = value;
     for (const [verKey, verValue] of Object.entries(ver)) {
       if (enhancedValue === verKey) {
-        // If key ends with /, value must also end with /
+        // Use the actual package name from the key
         if (key.endsWith("/")) {
-          enhancedValue = `https://esm.sh/@fireproof/core-runtime@${verValue}/`;
+          enhancedValue = `https://esm.sh/${key}${verValue}/`;
         } else {
-          enhancedValue = `https://esm.sh/@fireproof/core-runtime@${verValue}`;
+          enhancedValue = `https://esm.sh/${key}@${verValue}`;
         }
         break;
       }
@@ -106,9 +106,10 @@ export function ImportMap() {
       "https://esm.sh/shiki/themes/github-dark-default.mjs",
     "shiki/themes/github-light-default.mjs":
       "https://esm.sh/shiki/themes/github-light-default.mjs",
-    "shiki/engine/oniguruma": undefined,
-    "shiki/wasm": undefined,
-    "react-cookie-consent": undefined,
+    "shiki/engine/oniguruma": "https://esm.sh/shiki/engine/oniguruma",
+    "shiki/wasm": "https://esm.sh/shiki/wasm",
+    "react-cookie-consent":
+      "https://esm.sh/react-cookie-consent?deps=react@19.2.1,react-dom@19.2.1",
 
     "@fireproof/": "FP",
 
