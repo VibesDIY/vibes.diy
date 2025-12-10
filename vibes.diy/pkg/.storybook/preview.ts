@@ -1,4 +1,6 @@
 import type { Preview } from "@storybook/react-vite";
+// Storybook imports CSS directly (client-side only)
+// Production uses <link> tag in index.tsx for SSR compatibility
 import "../app/app.css";
 
 // Custom viewports for testing your app's breakpoints
