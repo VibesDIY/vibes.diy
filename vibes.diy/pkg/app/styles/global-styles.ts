@@ -1,22 +1,9 @@
-import React from "react";
-
 /**
- * GlobalStyles Component
- *
- * Injects global CSS that was previously in app.css but can't be handled by Tailwind.
- *
- * Includes:
- * - Global resets (html/body margins, fonts, iOS dark mode fixes)
- * - Keyframe animations (fadeIn, bounceIn, buttonGlimmer, etc.)
- * - Utility classes (animate-*, accent-*, decorative-*)
- * - Pseudo-element classes (.bg-glimmer::before, .stripes-overlay::after)
- * - Component-specific classes (.ai-markdown, .vibes-login-button, etc.)
- *
- * This component should be rendered once at the app root level.
+ * Global CSS styles as a string literal
+ * Used for server-side injection in index.tsx
  */
-export function GlobalStyles() {
-  return (
-    <style>{`
+
+export const globalStylesCSS = `
 /* ============================================
    CSS CUSTOM PROPERTIES (from colors.css)
    ============================================ */
@@ -1126,6 +1113,4 @@ body:has(.page-grid-background) {
     border-color: var(--color-dark-primary);
   }
 }
-    `}</style>
-  );
-}
+`;

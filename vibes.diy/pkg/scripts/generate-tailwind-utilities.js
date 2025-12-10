@@ -11,10 +11,10 @@
  * And generates the corresponding CSS rules that can be added to GlobalStyles.tsx
  */
 
-import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,11 +28,12 @@ const LIGHT_DARK_PATTERNS = {
   background: /^(?:dark:)?(bg-(?:light|dark)-(?:background|decorative)-\d{2})$/,
   text: /^(?:dark:)?(text-(?:light|dark)-(?:primary|secondary))$/,
   border: /^(?:dark:)?(border-(?:light|dark)-decorative-\d{2})$/,
-  hover: /^(?:dark:)?(hover:bg-(?:light|dark)-(?:background|decorative)-\d{2})$/,
+  hover:
+    /^(?:dark:)?(hover:bg-(?:light|dark)-(?:background|decorative)-\d{2})$/,
 };
 
 function extractClassesFromFile(filePath) {
-  const content = fs.readFileSync(filePath, 'utf-8');
+  const content = fs.readFileSync(filePath, "utf-8");
   const classes = new Set();
 
   let match;
@@ -53,7 +54,7 @@ function extractClassesFromFile(filePath) {
   return Array.from(classes);
 }
 
-function scanDirectory(dir, extensions = ['.tsx', '.ts', '.jsx', '.js']) {
+function scanDirectory(dir, extensions = [".tsx", ".ts", ".jsx", ".js"]) {
   const allClasses = new Set();
 
   function walk(currentDir) {
@@ -65,12 +66,12 @@ function scanDirectory(dir, extensions = ['.tsx', '.ts', '.jsx', '.js']) {
 
       if (stat.isDirectory()) {
         // Skip node_modules and other build directories
-        if (!['node_modules', 'dist', 'build', '.next'].includes(file)) {
+        if (!["node_modules", "dist", "build", ".next"].includes(file)) {
           walk(filePath);
         }
-      } else if (extensions.some(ext => file.endsWith(ext))) {
+      } else if (extensions.some((ext) => file.endsWith(ext))) {
         const classes = extractClassesFromFile(filePath);
-        classes.forEach(cls => allClasses.add(cls));
+        classes.forEach((cls) => allClasses.add(cls));
       }
     }
   }
@@ -81,12 +82,12 @@ function scanDirectory(dir, extensions = ['.tsx', '.ts', '.jsx', '.js']) {
 
 function parseClass(cls) {
   // Remove dark: and hover: prefixes
-  const isDark = cls.startsWith('dark:');
-  const isHover = cls.includes('hover:');
-  const baseClass = cls.replace(/^dark:/, '').replace(/^hover:/, '');
+  const isDark = cls.startsWith("dark:");
+  const isHover = cls.includes("hover:");
+  const baseClass = cls.replace(/^dark:/, "").replace(/^hover:/, "");
 
   // Parse the base class
-  const parts = baseClass.split('-');
+  const parts = baseClass.split("-");
   const property = parts[0]; // bg, text, border
   const mode = parts[1]; // light or dark
   const category = parts[2]; // background, decorative, primary, secondary
@@ -105,7 +106,7 @@ function parseClass(cls) {
     number,
     varName,
     isDark,
-    isHover
+    isHover,
   };
 }
 
@@ -113,7 +114,7 @@ function generateCSS(classes) {
   const cssMap = {
     light: [],
     dark: [],
-    hover: []
+    hover: [],
   };
 
   for (const cls of classes) {
@@ -121,14 +122,14 @@ function generateCSS(classes) {
 
     let cssProperty;
     switch (parsed.property) {
-      case 'bg':
-        cssProperty = 'background-color';
+      case "bg":
+        cssProperty = "background-color";
         break;
-      case 'text':
-        cssProperty = 'color';
+      case "text":
+        cssProperty = "color";
         break;
-      case 'border':
-        cssProperty = 'border-color';
+      case "border":
+        cssProperty = "border-color";
         break;
       default:
         continue;
@@ -138,27 +139,27 @@ function generateCSS(classes) {
 
     if (parsed.isHover) {
       // Hover variants need special handling
-      if (parsed.isDark || parsed.mode === 'dark') {
-        const selector = `.dark\\\\:${parsed.baseClass.replace(':', '\\\\:')}:is(.dark *):hover`;
-        const mediaSelector = `.dark\\\\:${parsed.baseClass.replace(':', '\\\\:')}:hover`;
+      if (parsed.isDark || parsed.mode === "dark") {
+        const selector = `.dark\\\\:${parsed.baseClass.replace(":", "\\\\:")}:is(.dark *):hover`;
+        const mediaSelector = `.dark\\\\:${parsed.baseClass.replace(":", "\\\\:")}:hover`;
         cssMap.hover.push({
           selector: selector,
           mediaSelector: mediaSelector,
           property: cssProperty,
           value: cssValue,
-          mode: 'dark'
+          mode: "dark",
         });
       } else {
         cssMap.hover.push({
-          selector: `.${parsed.baseClass.replace(':', '\\\\:')}:hover`,
+          selector: `.${parsed.baseClass.replace(":", "\\\\:")}:hover`,
           property: cssProperty,
           value: cssValue,
-          mode: 'light'
+          mode: "light",
         });
       }
-    } else if (parsed.isDark || parsed.mode === 'dark') {
+    } else if (parsed.isDark || parsed.mode === "dark") {
       // Dark mode classes
-      const escapedClass = parsed.baseClass.replace(':', '\\\\:');
+      const escapedClass = parsed.baseClass.replace(":", "\\\\:");
       const selector = `.dark\\\\:${escapedClass}:is(.dark *)`;
       const mediaSelector = `.dark\\\\:${escapedClass}`;
       cssMap.dark.push({
@@ -166,7 +167,7 @@ function generateCSS(classes) {
         selector: selector,
         mediaSelector: mediaSelector,
         property: cssProperty,
-        value: cssValue
+        value: cssValue,
       });
     } else {
       // Light mode classes
@@ -174,7 +175,7 @@ function generateCSS(classes) {
         original: parsed.original,
         selector: `.${parsed.baseClass}`,
         property: cssProperty,
-        value: cssValue
+        value: cssValue,
       });
     }
   }
@@ -183,11 +184,11 @@ function generateCSS(classes) {
 }
 
 function formatCSS(cssMap) {
-  let output = '';
+  let output = "";
 
   // Light mode classes
   if (cssMap.light.length > 0) {
-    output += '/* Tailwind utility classes for light/dark backgrounds */\n';
+    output += "/* Tailwind utility classes for light/dark backgrounds */\n";
     for (const rule of cssMap.light) {
       output += `${rule.selector} {\n`;
       output += `  ${rule.property}: ${rule.value};\n`;
@@ -197,7 +198,7 @@ function formatCSS(cssMap) {
 
   // Dark mode classes
   if (cssMap.dark.length > 0) {
-    output += '/* Dark mode variants */\n';
+    output += "/* Dark mode variants */\n";
     for (const rule of cssMap.dark) {
       output += `${rule.selector},\n`;
       output += `@media (prefers-color-scheme: dark) {\n`;
@@ -210,9 +211,9 @@ function formatCSS(cssMap) {
 
   // Hover variants
   if (cssMap.hover.length > 0) {
-    output += '/* Hover variants */\n';
-    const lightHovers = cssMap.hover.filter(r => r.mode === 'light');
-    const darkHovers = cssMap.hover.filter(r => r.mode === 'dark');
+    output += "/* Hover variants */\n";
+    const lightHovers = cssMap.hover.filter((r) => r.mode === "light");
+    const darkHovers = cssMap.hover.filter((r) => r.mode === "dark");
 
     for (const rule of lightHovers) {
       output += `${rule.selector} {\n`;
@@ -234,26 +235,31 @@ function formatCSS(cssMap) {
 }
 
 function main() {
-  const appDir = path.join(__dirname, '../app');
+  const appDir = path.join(__dirname, "../app");
 
-  console.log('Scanning for Tailwind utility classes...');
+  console.log("Scanning for Tailwind utility classes...");
   const classes = scanDirectory(appDir);
 
   console.log(`Found ${classes.length} unique classes:`);
-  classes.forEach(cls => console.log(`  - ${cls}`));
+  classes.forEach((cls) => console.log(`  - ${cls}`));
 
-  console.log('\nGenerating CSS...\n');
+  console.log("\nGenerating CSS...\n");
   const cssMap = generateCSS(classes);
   const css = formatCSS(cssMap);
 
-  console.log('='.repeat(80));
-  console.log('Generated CSS (copy this into GlobalStyles.tsx):');
-  console.log('='.repeat(80));
+  console.log("=".repeat(80));
+  console.log(
+    "Generated CSS (copy this into index.tsx GlobalStyles function):",
+  );
+  console.log("=".repeat(80));
   console.log(css);
-  console.log('='.repeat(80));
+  console.log("=".repeat(80));
 
   // Optionally write to a file
-  const outputFile = path.join(__dirname, '../generated-tailwind-utilities.css');
+  const outputFile = path.join(
+    __dirname,
+    "../generated-tailwind-utilities.css",
+  );
   fs.writeFileSync(outputFile, css);
   console.log(`\nCSS also written to: ${outputFile}`);
 }
