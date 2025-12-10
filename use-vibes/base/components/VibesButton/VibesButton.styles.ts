@@ -52,7 +52,7 @@ export function getButtonStyle(
   return {
     width: !hasIcon ? 'auto' : isMobile ? '100%' : '150px',
     height: !hasIcon ? 'auto' : isMobile ? 'auto' : '150px',
-    minHeight: isMobile ? (buttonType ? 'none' : '60px') : undefined,
+    minHeight: isMobile ? '60px' : undefined,
     padding: isMobile ? (buttonType ? 'none' : '0.75rem 1.5rem') : '1rem 2rem',
     borderRadius: '12px',
     fontSize: '1rem',

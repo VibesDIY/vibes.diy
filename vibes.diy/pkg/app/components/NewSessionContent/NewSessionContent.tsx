@@ -6,6 +6,7 @@ import {
 } from "@vibes.diy/use-vibes-base";
 import type { NewSessionChatState } from "@vibes.diy/prompts";
 import { quickSuggestions } from "../../data/quick-suggestions-data.js";
+import { useIsMobile } from "../../hooks/useIsMobile.js";
 import VibeGallery from "./VibeGallery.js";
 import {
   getContainerStyle,
@@ -35,6 +36,7 @@ export default function NewSessionContent({
   chatState,
   handleSelectSuggestion,
 }: NewSessionContentProps) {
+  const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [animationOffset, setAnimationOffset] = useState(0);
@@ -43,44 +45,50 @@ export default function NewSessionContent({
   const containerRef = React.useRef<HTMLDivElement>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
 
-  // Calculate button width so that exactly 3 buttons fill the container
+  // Calculate button width based on mobile/desktop: 1 button on mobile, 3 on desktop
   useEffect(() => {
     const calculateDimensions = () => {
       if (viewportRef.current) {
         const viewportWidth = viewportRef.current.offsetWidth;
-        const gap = 20; // Increased gap to accommodate box-shadow
-        const horizontalPadding = 12; // Padding to accommodate box-shadow and prevent edge clipping
-        // Calculate button width: (container width - 2 gaps - 2 * horizontal padding) / 3
-        const calculatedButtonWidth =
-          (viewportWidth - gap * 2 - horizontalPadding * 2) / 3;
-        setButtonWidth(calculatedButtonWidth);
-        setSlideDistance(calculatedButtonWidth + gap);
+        // Only calculate if we have a valid width
+        if (viewportWidth > 0) {
+          const gap = 20; // Increased gap to accommodate box-shadow
+          const horizontalPadding = 12; // Padding to accommodate box-shadow and prevent edge clipping
+          const visibleButtons = isMobile ? 1 : 3;
+          const totalGaps = isMobile ? 0 : 2; // 1 button = 0 gaps, 3 buttons = 2 gaps
+          // Calculate button width
+          const calculatedButtonWidth =
+            (viewportWidth - gap * totalGaps - horizontalPadding * 2) /
+            visibleButtons;
+          setButtonWidth(calculatedButtonWidth);
+          setSlideDistance(calculatedButtonWidth + gap);
+        }
       }
     };
 
-    // Small delay to ensure container is rendered
-    const timer = setTimeout(calculateDimensions, 50);
+    // Use ResizeObserver to detect when viewport gets its dimensions
+    let resizeObserver: ResizeObserver | null = null;
 
-    // Recalculate on window resize
+    if (viewportRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        calculateDimensions();
+      });
+      resizeObserver.observe(viewportRef.current);
+    }
+
+    // Also calculate immediately in case dimensions are already available
+    calculateDimensions();
+
+    // Fallback: also listen to window resize for viewport size changes
     window.addEventListener("resize", calculateDimensions);
+
     return () => {
-      clearTimeout(timer);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       window.removeEventListener("resize", calculateDimensions);
     };
-  }, []);
-
-  // Recalculate when dimensions might change
-  useEffect(() => {
-    if (viewportRef.current && buttonWidth === 0) {
-      const viewportWidth = viewportRef.current.offsetWidth;
-      const gap = 20; // Increased gap to accommodate box-shadow
-      const horizontalPadding = 12; // Padding to accommodate box-shadow and prevent edge clipping
-      const calculatedButtonWidth =
-        (viewportWidth - gap * 2 - horizontalPadding * 2) / 3;
-      setButtonWidth(calculatedButtonWidth);
-      setSlideDistance(calculatedButtonWidth + gap);
-    }
-  }, [buttonWidth]);
+  }, [isMobile]);
 
   // Navigation handlers for infinite carousel
   const handlePrevious = () => {
@@ -113,10 +121,34 @@ export default function NewSessionContent({
     }, 400); // Match transition duration
   };
 
-  // Get 5 suggestions for sliding window with their original indices
-  // [hidden left] [visible 1] [visible 2] [visible 3] [hidden right]
+  // Get suggestions for sliding window with their original indices
+  // Mobile: [hidden left] [visible 1] [hidden right]
+  // Desktop: [hidden left] [visible 1] [visible 2] [visible 3] [hidden right]
   const getSlidingWindow = () => {
     const totalSuggestions = quickSuggestions.length;
+
+    if (isMobile) {
+      return [
+        {
+          suggestion:
+            quickSuggestions[
+              (currentIndex - 1 + totalSuggestions) % totalSuggestions
+            ], // hidden left
+          originalIndex:
+            (currentIndex - 1 + totalSuggestions) % totalSuggestions,
+        },
+        {
+          suggestion: quickSuggestions[currentIndex], // visible 1
+          originalIndex: currentIndex,
+        },
+        {
+          suggestion: quickSuggestions[(currentIndex + 1) % totalSuggestions], // hidden right
+          originalIndex: (currentIndex + 1) % totalSuggestions,
+        },
+      ];
+    }
+
+    // Desktop: 5 items
     return [
       {
         suggestion:
@@ -157,15 +189,15 @@ export default function NewSessionContent({
   const buttonVariants = ["blue", "red", "yellow"] as const;
 
   return (
-    <div style={getContainerStyle()}>
-      <h1 style={getTitle()}>
+    <div style={getContainerStyle(isMobile)}>
+      <h1 style={getTitle(isMobile)}>
         What's the&nbsp;
         <span style={{ textDecoration: "underline" }}>vibe</span>? Try it.
       </h1>
 
       {/* Chat input form */}
-      <div style={getChatInputContainerStyle()}>
-        <div style={getChatInputLabelStyle()}>Prompt</div>
+      <div style={getChatInputContainerStyle(isMobile)}>
+        <div style={getChatInputLabelStyle(isMobile)}>Prompt</div>
         <div style={getTextareaWrapperStyle()}>
           <textarea
             ref={chatState.inputRef}
@@ -197,15 +229,15 @@ export default function NewSessionContent({
       </div>
 
       {/* Carousel with navigation */}
-      <div style={getCarouselWrapperStyle()}>
+      <div style={getCarouselWrapperStyle(isMobile)}>
         <button
-          style={getCarouselNavButtonStyle()}
+          style={getCarouselNavButtonStyle(isMobile)}
           onClick={handlePrevious}
           aria-label="Previous suggestions"
         >
           <ArrowRightIcon
-            width={24}
-            height={24}
+            width={isMobile ? 20 : 24}
+            height={isMobile ? 20 : 24}
             fill="var(--vibes-near-black)"
           />
         </button>
@@ -237,23 +269,23 @@ export default function NewSessionContent({
         </div>
 
         <button
-          style={getCarouselNavButtonStyle()}
+          style={getCarouselNavButtonStyle(isMobile)}
           onClick={handleNext}
           aria-label="Next suggestions"
         >
           <ArrowLeftIcon
-            width={24}
-            height={24}
+            width={isMobile ? 20 : 24}
+            height={isMobile ? 20 : 24}
             fill="var(--vibes-near-black)"
           />
         </button>
       </div>
 
       {/* Featured vibes section */}
-      <div style={getGalleryContainerStyle()}>
-        <div style={getGalleryLabelStyle()}>Gallery</div>
+      <div style={getGalleryContainerStyle(isMobile)}>
+        <div style={getGalleryLabelStyle(isMobile)}>Gallery</div>
         <div style={getGalleryContentStyle()}>
-          <VibeGallery count={4} />
+          <VibeGallery count={4} isMobile={isMobile} />
           <p style={getGalleryDescriptionStyle()}>
             The vibes are strong with these four top picks.
           </p>

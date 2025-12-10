@@ -1180,19 +1180,13 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
-                paddingTop: isMobile ? "200px" : "100px",
+                paddingTop: isMobile ? "0px" : "100px",
               }}
             >
-              <div
-                style={{
-                  padding: isMobile ? "0 20px" : "0 40px",
-                }}
-              >
-                <NewSessionContent
-                  chatState={chatState}
-                  handleSelectSuggestion={handleSelectSuggestion}
-                />
-              </div>
+              <NewSessionContent
+                chatState={chatState}
+                handleSelectSuggestion={handleSelectSuggestion}
+              />
             </section>
 
             {/* Section 1: First part of content */}
@@ -1222,7 +1216,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <h3 style={getSectionHeadingStyle("#5398c9")}>
                       The Vibe Coding Stack Made for Coding Agents
                     </h3>
-
+<div style={getContentWrapperStyle()}>
                     <b style={getSubheadingBoldStyle()}>
                       It's not for you. It's for them.
                     </b>
@@ -1231,29 +1225,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       experience that we started by making our own database. The
                       Vibes DIY web stack is open source, and uses a sync-engine
                       powered by our database,{" "}
-                      <a
-                        href="https://fireproof.storage/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: "#FEDD00",
-                          textDecoration: "underline",
-                        }}
-                      >
-                        Fireproof
-                      </a>
-                      . Because{" "}
-                      <a
-                        href="https://fireproof.storage/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: "#FEDD00",
-                          textDecoration: "underline",
-                        }}
-                      >
-                        Fireproof
-                      </a>{" "}
+                      <a style={getLinkOutStyle()}>Fireproof </a>. Because{" "}
+                      <a style={getLinkOutStyle()}>Fireproof</a>{" "}
                       is local first, your data lives in the browser, and syncs
                       across your users' browsers automatically. Without a
                       virtual machine + web server to make everything
@@ -1270,6 +1243,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       endpoints, retries, caches, and edge cases. So let's ask a
                       different question...
                     </p>
+                    </div>
                   </DraggableSection>
                 </div>
                 <div style={get1of3Column(isMobile)}>

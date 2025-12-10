@@ -1,39 +1,46 @@
 import { CSSProperties } from "react";
 
-// Main container style
-export const getContainerStyle = (): CSSProperties => ({
+// Main container style - responsive
+export const getContainerStyle = (isMobile: boolean): CSSProperties => ({
   maxWidth: "800px",
   width: "100%",
   display: "flex",
   flexDirection: "column",
-  gap: "24px",
-  margin: "0 auto",
+  gap: isMobile ? "16px" : "24px",
+  margin: isMobile ? "40px" : "0 auto",
   justifyContent: "center",
-  alignItems: "center",
+  alignItems: isMobile ? "stretch" : "center",
+  padding: isMobile ? "0" : "0",
 });
 
-// Carousel wrapper style
-export const getCarouselWrapperStyle = (): CSSProperties => ({
+// Carousel wrapper style - responsive
+export const getCarouselWrapperStyle = (isMobile: boolean): CSSProperties => ({
   display: "flex",
   alignItems: "center",
-  gap: "12px",
+  gap: isMobile ? "8px" : "12px",
   width: "100%",
+  boxSizing: "border-box",
+  padding: isMobile ? "0 16px" : "0",
 });
 
-// Carousel navigation button style
-export const getCarouselNavButtonStyle = (): CSSProperties => ({
-  width: "40px",
-  height: "40px",
-  minWidth: "40px",
+// Carousel navigation button style - responsive
+export const getCarouselNavButtonStyle = (
+  isMobile: boolean,
+): CSSProperties => ({
+  width: isMobile ? "32px" : "40px",
+  height: isMobile ? "32px" : "40px",
+  minWidth: isMobile ? "32px" : "40px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "40px",
+  fontSize: isMobile ? "32px" : "40px",
   cursor: "pointer",
   backgroundColor: "transparent",
   color: "var(--vibes-near-black)",
   transition: "all 0.2s ease",
   userSelect: "none",
+  border: "none",
+  padding: "0",
 });
 
 // Suggestions buttons container style (viewport - shows exactly 3 buttons)
@@ -59,13 +66,17 @@ export const getSuggestionsInnerStyle = (
     : "none",
 });
 
-// Title style
-export const getTitle = (): CSSProperties => ({
-  fontSize: "65px",
+// Title style - responsive
+export const getTitle = (isMobile: boolean): CSSProperties => ({
+  fontSize: isMobile ? "36px" : "65px",
   fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
   color: "var(--vibes-near-black)",
   display: "flex",
   justifyContent: "center",
+  textAlign: "center",
+  width: isMobile ? "100%" : "auto",
+  padding: isMobile ? "0 16px" : "0",
+  boxSizing: "border-box",
 });
 
 // Button style - fixed width calculated dynamically
@@ -75,33 +86,71 @@ export const getButtonStyle = (): CSSProperties => ({
   minWidth: 0,
 });
 
-// Chat input container style
-export const getChatInputContainerStyle = (): CSSProperties => ({
-  width: "100%",
-  maxWidth: "600px",
-  position: "relative",
-  display: "flex",
-  border: "2px solid var(--vibes-near-black)",
-  backgroundColor: "#FFFEF0",
-  minHeight: "200px",
-  borderRadius: "8px",
-});
+// Chat input container style - responsive
+export const getChatInputContainerStyle = (
+  isMobile: boolean,
+): CSSProperties => {
+  if (isMobile) {
+    return {
+      width: "calc(100% - 32px)",
+      margin: "0 16px",
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      border: "2px solid var(--vibes-near-black)",
+      backgroundColor: "#FFFEF0",
+      minHeight: "200px",
+      borderRadius: "8px",
+      boxSizing: "border-box",
+    };
+  }
+  return {
+    width: "100%",
+    maxWidth: "600px",
+    position: "relative",
+    display: "flex",
+    flexDirection: "row",
+    border: "2px solid var(--vibes-near-black)",
+    backgroundColor: "#FFFEF0",
+    minHeight: "200px",
+    borderRadius: "8px",
+    boxSizing: "border-box",
+  };
+};
 
-// Chat input label style (rotated "Prompt" on the left)
-export const getChatInputLabelStyle = (): CSSProperties => ({
-  writingMode: "vertical-rl",
-  transform: "rotate(180deg)",
-  padding: "20px 8px",
-  fontSize: "36px",
-  color: "var(--vibes-near-black)",
-  borderLeft: "2px solid var(--vibes-near-black)",
-  backgroundColor: "#FFFEF0",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderBottomRightRadius: "8px",
-  borderTopRightRadius: "8px",
-});
+// Chat input label style - responsive (rotated "Prompt" on the left/top)
+export const getChatInputLabelStyle = (isMobile: boolean): CSSProperties => {
+  if (isMobile) {
+    return {
+      writingMode: "horizontal-tb",
+      transform: "none",
+      padding: "8px 12px",
+      fontSize: "24px",
+      color: "var(--vibes-near-black)",
+      borderBottom: "2px solid var(--vibes-near-black)",
+      backgroundColor: "#FFFEF0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      borderTopLeftRadius: "8px",
+      borderTopRightRadius: "8px",
+    };
+  }
+  return {
+    writingMode: "vertical-rl",
+    transform: "rotate(180deg)",
+    padding: "20px 8px",
+    fontSize: "36px",
+    color: "var(--vibes-near-black)",
+    borderLeft: "2px solid var(--vibes-near-black)",
+    backgroundColor: "#FFFEF0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomRightRadius: "8px",
+    borderTopRightRadius: "8px",
+  };
+};
 
 // Textarea wrapper style
 export const getTextareaWrapperStyle = (): CSSProperties => ({
@@ -145,32 +194,67 @@ export const getSubmitButtonStyle = (): CSSProperties => ({
   transition: "transform 0.2s ease",
 });
 
-// Gallery container style
-export const getGalleryContainerStyle = (): CSSProperties => ({
-  width: "100%",
-  maxWidth: "600px",
-  position: "relative",
-  display: "flex",
-  border: "2px solid var(--vibes-near-black)",
-  backgroundColor: "#D3D3D3",
-  borderRadius: "8px",
-});
+// Gallery container style - responsive
+export const getGalleryContainerStyle = (isMobile: boolean): CSSProperties => {
+  if (isMobile) {
+    return {
+      width: "calc(100% - 32px)",
+      margin: "0 16px",
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      border: "2px solid var(--vibes-near-black)",
+      backgroundColor: "#D3D3D3",
+      borderRadius: "8px",
+      boxSizing: "border-box",
+    };
+  }
+  return {
+    width: "100%",
+    maxWidth: "600px",
+    position: "relative",
+    display: "flex",
+    flexDirection: "row",
+    border: "2px solid var(--vibes-near-black)",
+    backgroundColor: "#D3D3D3",
+    borderRadius: "8px",
+    boxSizing: "border-box",
+  };
+};
 
-// Gallery label style (rotated "Gallery" on the left)
-export const getGalleryLabelStyle = (): CSSProperties => ({
-  writingMode: "vertical-rl",
-  transform: "rotate(180deg)",
-  padding: "20px 8px",
-  fontSize: "36px",
-  color: "var(--vibes-near-black)",
-  borderLeft: "2px solid var(--vibes-near-black)",
-  backgroundColor: "#D3D3D3",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderBottomRightRadius: "8px",
-  borderTopRightRadius: "8px",
-});
+// Gallery label style - responsive (rotated "Gallery" on the left/top)
+export const getGalleryLabelStyle = (isMobile: boolean): CSSProperties => {
+  if (isMobile) {
+    return {
+      writingMode: "horizontal-tb",
+      transform: "none",
+      padding: "8px 12px",
+      fontSize: "24px",
+      color: "var(--vibes-near-black)",
+      borderBottom: "2px solid var(--vibes-near-black)",
+      backgroundColor: "#D3D3D3",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      borderTopLeftRadius: "8px",
+      borderTopRightRadius: "8px",
+    };
+  }
+  return {
+    writingMode: "vertical-rl",
+    transform: "rotate(180deg)",
+    padding: "20px 8px",
+    fontSize: "36px",
+    color: "var(--vibes-near-black)",
+    borderLeft: "2px solid var(--vibes-near-black)",
+    backgroundColor: "#D3D3D3",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomRightRadius: "8px",
+    borderTopRightRadius: "8px",
+  };
+};
 
 // Gallery content wrapper style
 export const getGalleryContentStyle = (): CSSProperties => ({
@@ -189,14 +273,17 @@ export const getGalleryDescriptionStyle = (): CSSProperties => ({
   padding: "5px 24px",
 });
 
-// VibeGallery styles
-export const getVibeGalleryWrapperStyle = (): CSSProperties => ({
+// VibeGallery styles - responsive
+export const getVibeGalleryWrapperStyle = (
+  isMobile: boolean,
+): CSSProperties => ({
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "24px",
+  padding: isMobile ? "16px" : "24px",
   width: "100%",
-  gap: "10px",
+  gap: isMobile ? "8px" : "10px",
+  flexWrap: isMobile ? "wrap" : "nowrap",
 });
 
 // VibeGalleryCard styles
@@ -211,44 +298,55 @@ export const getVibeCardWrapperStyle = (): CSSProperties => ({
   gap: "12px",
 });
 
-export const getVibeCardIconContainerStyle = (): CSSProperties => ({
+export const getVibeCardIconContainerStyle = (
+  isMobile: boolean,
+): CSSProperties => ({
   position: "relative",
-  width: "100px",
-  height: "100px",
+  width: isMobile ? "80px" : "100px",
+  height: isMobile ? "80px" : "100px",
 });
 
 export const getVibeCardTexturedShadowStyle = (
   isHovered: boolean,
-): CSSProperties => ({
-  position: "absolute",
-  top: "8px",
-  left: isHovered ? "10px" : "8px",
-  width: "100px",
-  height: "100px",
-  borderRadius: "24px",
-  overflow: "hidden",
-  transition: "top 0.2s ease, left 0.2s ease",
-  zIndex: 0,
-});
+  isMobile: boolean,
+): CSSProperties => {
+  const size = isMobile ? "80px" : "100px";
+  return {
+    position: "absolute",
+    top: "8px",
+    left: isHovered ? "10px" : "8px",
+    width: size,
+    height: size,
+    borderRadius: isMobile ? "20px" : "24px",
+    overflow: "hidden",
+    transition: "top 0.2s ease, left 0.2s ease",
+    zIndex: 0,
+  };
+};
 
 export const getVibeCardMainIconContainerStyle = (
   isHovered: boolean,
-): CSSProperties => ({
-  position: "relative",
-  width: "100px",
-  height: "100px",
-  borderRadius: "24px",
-  backgroundColor: "rgb(255, 254, 240)",
-  border: "2px solid var(--vibes-near-black)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "16px",
-  transition: "transform 0.2s ease",
-  cursor: "pointer",
-  transform: isHovered ? "translate(-2px, -2px)" : "translate(0, 0)",
-  zIndex: 1,
-});
+  isMobile: boolean,
+): CSSProperties => {
+  const size = isMobile ? "80px" : "100px";
+  const padding = isMobile ? "12px" : "16px";
+  return {
+    position: "relative",
+    width: size,
+    height: size,
+    borderRadius: isMobile ? "20px" : "24px",
+    backgroundColor: "rgb(255, 254, 240)",
+    border: "2px solid var(--vibes-near-black)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding,
+    transition: "transform 0.2s ease",
+    cursor: "pointer",
+    transform: isHovered ? "translate(-2px, -2px)" : "translate(0, 0)",
+    zIndex: 1,
+  };
+};
 
 export const getVibeCardIconImageStyle = (): CSSProperties => ({
   maxWidth: "100%",

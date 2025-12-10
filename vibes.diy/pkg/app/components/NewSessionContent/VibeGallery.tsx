@@ -46,9 +46,13 @@ const publishedVibes = [
 
 interface VibeGalleryProps {
   count?: number;
+  isMobile?: boolean;
 }
 
-export default function VibeGallery({ count = 4 }: VibeGalleryProps) {
+export default function VibeGallery({
+  count = 4,
+  isMobile = false,
+}: VibeGalleryProps) {
   const selectedVibes = useMemo(() => {
     // Get random vibes from the publishedVibes array
     const shuffled = [...publishedVibes].sort(() => 0.5 - Math.random());
@@ -59,13 +63,14 @@ export default function VibeGallery({ count = 4 }: VibeGalleryProps) {
   const faceIcons = [FaceIcon1, FaceIcon2, FaceIcon3, FaceIcon4];
 
   return (
-    <div style={getVibeGalleryWrapperStyle()}>
+    <div style={getVibeGalleryWrapperStyle(isMobile)}>
       {selectedVibes.map((vibe, index) => (
         <VibeGalleryCard
           key={vibe.slug}
           slug={vibe.slug}
           name={vibe.name}
           IconComponent={faceIcons[index % faceIcons.length]}
+          isMobile={isMobile}
         />
       ))}
     </div>

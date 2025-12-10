@@ -23,12 +23,14 @@ interface VibeGalleryCardProps {
     height?: number;
     fill?: string;
   }>;
+  isMobile?: boolean;
 }
 
 export default function VibeGalleryCard({
   slug,
   name,
   IconComponent,
+  isMobile = false,
 }: VibeGalleryCardProps): ReactElement {
   // Construct asset URLs
   const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug), [slug]);
@@ -58,26 +60,34 @@ export default function VibeGalleryCard({
 
   const [isHovered, setIsHovered] = useState(false);
 
+  const iconSize = isMobile ? 80 : 100;
+  const iconInnerSize = isMobile ? 54 : 68;
+  const borderRadius = isMobile ? 20 : 24;
+
   return (
     <Link to={linkUrl} style={getVibeCardLinkStyle()}>
       <div style={getVibeCardWrapperStyle()}>
         {/* Icon container with textured shadow */}
         <div
-          style={getVibeCardIconContainerStyle()}
+          style={getVibeCardIconContainerStyle(isMobile)}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Textured shadow background */}
-          <div style={getVibeCardTexturedShadowStyle(isHovered)}>
-            <TexturedPattern width={100} height={100} borderRadius={24} />
+          <div style={getVibeCardTexturedShadowStyle(isHovered, isMobile)}>
+            <TexturedPattern
+              width={iconSize}
+              height={iconSize}
+              borderRadius={borderRadius}
+            />
           </div>
 
           {/* Main icon container */}
-          <div style={getVibeCardMainIconContainerStyle(isHovered)}>
+          <div style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}>
             {IconComponent ? (
               <IconComponent
-                width={68}
-                height={68}
+                width={iconInnerSize}
+                height={iconInnerSize}
                 fill="var(--vibes-near-black)"
               />
             ) : (
