@@ -1,4 +1,5 @@
 import React from "react";
+import { globalStylesCSS } from "./app/styles/global-styles.js";
 
 function ImportMap() {
   const ver = {
@@ -114,6 +115,23 @@ function ImportMap() {
       {JSON.stringify({ imports: enhance(importMap, ver) }, null, 2)}
     </script>
   );
+}
+
+/**
+ * GlobalStyles Component
+ *
+ * Injects global CSS that was previously in app.css but can't be handled by Tailwind.
+ * This runs server-side before React loads to avoid circular dependency.
+ *
+ * Includes:
+ * - Global resets (html/body margins, fonts, iOS dark mode fixes)
+ * - Keyframe animations (fadeIn, bounceIn, buttonGlimmer, etc.)
+ * - Utility classes (animate-*, accent-*, decorative-*)
+ * - Pseudo-element classes (.bg-glimmer::before, .stripes-overlay::after)
+ * - Component-specific classes (.ai-markdown, .vibes-login-button, etc.)
+ */
+function GlobalStyles() {
+  return <style>{globalStylesCSS}</style>;
 }
 
 function addReact(key: string, inUrl: string) {
@@ -248,6 +266,7 @@ export default function Index() {
     <html lang="en">
       <head>
         <ImportMap />
+        <GlobalStyles />
         <script
           type="module"
           src="https://esm.sh/@tailwindcss/browser@4"

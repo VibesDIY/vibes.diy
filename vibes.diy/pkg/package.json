@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "tsc": "core-cli tsc",
+    "typecheck": "core-cli tsc --noEmit",
     "build": "echo",
     "dev": "deno run --allow-env --allow-run --allow-net --allow-read vibes-diy-srv.ts",
     "dev:netlify": "netlify dev",
