@@ -7,7 +7,7 @@ declare global {
       fn: {
         terminal: (
           interpreter: (() => void) | Record<string, unknown>,
-          options: Record<string, unknown>
+          options: Record<string, unknown>,
         ) => JQueryTerminal;
       };
     };
@@ -22,7 +22,7 @@ interface JQueryStatic {
 interface JQueryElement {
   terminal: (
     interpreter: (() => void) | Record<string, unknown>,
-    options: Record<string, unknown>
+    options: Record<string, unknown>,
   ) => JQueryTerminal;
 }
 
@@ -32,7 +32,7 @@ interface JQueryTerminal {
     method: string,
     delay: number,
     text: string,
-    callback?: () => void
+    callback?: () => void,
   ) => void;
   clear: () => void;
   destroy: () => void;
@@ -55,7 +55,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       return new Promise((resolve, reject) => {
         // Check if script tag already exists
         const existingScript = document.querySelector(
-          `script[src="${src}"]`
+          `script[src="${src}"]`,
         ) as HTMLScriptElement | null;
         if (existingScript) {
           // If script exists, wait for it to load if not already
@@ -64,7 +64,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
           } else {
             existingScript.addEventListener("load", () => resolve());
             existingScript.addEventListener("error", () =>
-              reject(new Error(`Failed to load ${src}`))
+              reject(new Error(`Failed to load ${src}`)),
             );
           }
           return;
@@ -112,7 +112,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       try {
         // Load styles first
         loadStyles(
-          "https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"
+          "https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css",
         );
 
         // Load jQuery first
@@ -120,7 +120,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
 
         // Then jQuery Terminal
         await loadScript(
-          "https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"
+          "https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js",
         );
 
         // Wait for jQuery Terminal plugin to be available
@@ -157,7 +157,10 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     let hasSubmitted = false;
 
     const responseLines = [
-      { text: "A simple target. Let me mutate your local app state", delay: 25 },
+      {
+        text: "A simple target. Let me mutate your local app state",
+        delay: 25,
+      },
       { text: "and let the library worry about the network.", delay: 25 },
       { text: "", delay: 400 },
       { text: "LLMs are great at local JavaScript state.", delay: 25 },
@@ -166,7 +169,10 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       { text: "Why?", delay: 30 },
       { text: "", delay: 400 },
       { text: "I reason inside language, not across networks.", delay: 25 },
-      { text: "Code and local state are expressed directly in text,", delay: 25 },
+      {
+        text: "Code and local state are expressed directly in text,",
+        delay: 25,
+      },
       { text: "inside a single context.", delay: 25 },
       { text: "", delay: 300 },
       { text: "Network calls, servers, retries, timeouts, and", delay: 25 },
@@ -212,7 +218,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     let element = terminalRef.current?.parentElement;
     while (element) {
       const style = window.getComputedStyle(element);
-      if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+      if (style.overflowY === "auto" || style.overflowY === "scroll") {
         scrollContainer = element;
         break;
       }
@@ -245,7 +251,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
             return false;
           }
         },
-      }
+      },
     );
 
     termRef.current = term;
@@ -268,17 +274,31 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
 
     // Narrow box (44 chars wide total, 42 inner)
     term.echo(`[[;${orange};]╭──────────────────────────────────────────╮]`);
-    term.echo(`[[;${orange};]│          [[;${yellow};]Vibes OS v.0.1[[;${orange};]                  │]`);
+    term.echo(
+      `[[;${orange};]│          [[;${yellow};]Vibes OS v.0.1[[;${orange};]                  │]`,
+    );
     term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(`[[;${orange};]│        [[;${cream};]Welcome, Vibe Coder![[;${orange};]              │]`);
+    term.echo(
+      `[[;${orange};]│        [[;${cream};]Welcome, Vibe Coder![[;${orange};]              │]`,
+    );
     term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(`[[;${orange};]│            [[;${yellow};]✨[[;${orange};] [[;${blue};]^__^[[;${orange};] [[;${yellow};]✨[[;${orange};]                    │]`);
+    term.echo(
+      `[[;${orange};]│            [[;${yellow};]✨[[;${orange};] [[;${blue};]^__^[[;${orange};] [[;${yellow};]✨[[;${orange};]                    │]`,
+    );
     term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(`[[;${orange};]│  [[;${dimGray};]Just describe what you want. That's it.[[;${orange};] │]`);
-    term.echo(`[[;${orange};]│  [[;${dimGray};]No config. No deploy. No backend.[[;${orange};]       │]`);
+    term.echo(
+      `[[;${orange};]│  [[;${dimGray};]Just describe what you want. That's it.[[;${orange};] │]`,
+    );
+    term.echo(
+      `[[;${orange};]│  [[;${dimGray};]No config. No deploy. No backend.[[;${orange};]       │]`,
+    );
     term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(`[[;${orange};]│         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`);
-    term.echo(`[[;${orange};]│        [[;${dimGray};]~/your-brilliant-idea[[;${orange};]             │]`);
+    term.echo(
+      `[[;${orange};]│         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,
+    );
+    term.echo(
+      `[[;${orange};]│        [[;${dimGray};]~/your-brilliant-idea[[;${orange};]             │]`,
+    );
     term.echo(`[[;${orange};]╰──────────────────────────────────────────╯]`);
 
     term.echo("");
@@ -346,11 +366,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
         `}
       </style>
       <div style={overlayStyle} />
-      <div
-        ref={terminalRef}
-        className="terminal-demo"
-        style={terminalStyle}
-      />
+      <div ref={terminalRef} className="terminal-demo" style={terminalStyle} />
     </div>
   );
 };

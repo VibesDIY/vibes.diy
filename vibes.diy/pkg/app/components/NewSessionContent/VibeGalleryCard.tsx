@@ -18,7 +18,11 @@ import {
 interface VibeGalleryCardProps {
   slug: string;
   name?: string;
-  IconComponent?: React.ComponentType<{ width?: number; height?: number; fill?: string }>;
+  IconComponent?: React.ComponentType<{
+    width?: number;
+    height?: number;
+    fill?: string;
+  }>;
 }
 
 export default function VibeGalleryCard({
@@ -71,7 +75,11 @@ export default function VibeGalleryCard({
           {/* Main icon container */}
           <div style={getVibeCardMainIconContainerStyle(isHovered)}>
             {IconComponent ? (
-              <IconComponent width={68} height={68} fill="var(--vibes-near-black)" />
+              <IconComponent
+                width={68}
+                height={68}
+                fill="var(--vibes-near-black)"
+              />
             ) : (
               <img
                 src={imageSrc}
@@ -84,9 +92,7 @@ export default function VibeGalleryCard({
           </div>
         </div>
         {/* Vibe name */}
-        <div style={getVibeCardNameStyle()}>
-          {vibeName}
-        </div>
+        <div style={getVibeCardNameStyle()}>{vibeName}</div>
       </div>
     </Link>
   );

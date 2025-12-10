@@ -78,13 +78,13 @@ export const getButtonStyle = (): CSSProperties => ({
 // Chat input container style
 export const getChatInputContainerStyle = (): CSSProperties => ({
   width: "100%",
-  maxWidth: '600px',
+  maxWidth: "600px",
   position: "relative",
   display: "flex",
   border: "2px solid var(--vibes-near-black)",
   backgroundColor: "#FFFEF0",
   minHeight: "200px",
-  borderRadius: '8px',
+  borderRadius: "8px",
 });
 
 // Chat input label style (rotated "Prompt" on the left)
@@ -99,8 +99,8 @@ export const getChatInputLabelStyle = (): CSSProperties => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  borderBottomRightRadius: '8px',
-  borderTopRightRadius: '8px',
+  borderBottomRightRadius: "8px",
+  borderTopRightRadius: "8px",
 });
 
 // Textarea wrapper style
@@ -185,8 +185,8 @@ export const getGalleryDescriptionStyle = (): CSSProperties => ({
   fontWeight: 500,
   color: "var(--vibes-near-black)",
   textAlign: "left",
-  borderTop: '2px solid',
-  padding: '5px 24px',
+  borderTop: "2px solid",
+  padding: "5px 24px",
 });
 
 // VibeGallery styles
@@ -196,7 +196,7 @@ export const getVibeGalleryWrapperStyle = (): CSSProperties => ({
   alignItems: "center",
   padding: "24px",
   width: "100%",
-  gap: '10px',
+  gap: "10px",
 });
 
 // VibeGalleryCard styles
@@ -217,7 +217,9 @@ export const getVibeCardIconContainerStyle = (): CSSProperties => ({
   height: "100px",
 });
 
-export const getVibeCardTexturedShadowStyle = (isHovered: boolean): CSSProperties => ({
+export const getVibeCardTexturedShadowStyle = (
+  isHovered: boolean,
+): CSSProperties => ({
   position: "absolute",
   top: "8px",
   left: isHovered ? "10px" : "8px",
@@ -229,7 +231,9 @@ export const getVibeCardTexturedShadowStyle = (isHovered: boolean): CSSPropertie
   zIndex: 0,
 });
 
-export const getVibeCardMainIconContainerStyle = (isHovered: boolean): CSSProperties => ({
+export const getVibeCardMainIconContainerStyle = (
+  isHovered: boolean,
+): CSSProperties => ({
   position: "relative",
   width: "100px",
   height: "100px",

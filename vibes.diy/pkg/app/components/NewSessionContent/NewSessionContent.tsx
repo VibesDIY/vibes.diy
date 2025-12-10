@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { VibesButton, ArrowLeftIcon, ArrowRightIcon } from "@vibes.diy/use-vibes-base";
+import {
+  VibesButton,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+} from "@vibes.diy/use-vibes-base";
 import type { NewSessionChatState } from "@vibes.diy/prompts";
 import { quickSuggestions } from "../../data/quick-suggestions-data.js";
 import VibeGallery from "./VibeGallery.js";
@@ -47,7 +51,8 @@ export default function NewSessionContent({
         const gap = 20; // Increased gap to accommodate box-shadow
         const horizontalPadding = 12; // Padding to accommodate box-shadow and prevent edge clipping
         // Calculate button width: (container width - 2 gaps - 2 * horizontal padding) / 3
-        const calculatedButtonWidth = (viewportWidth - gap * 2 - horizontalPadding * 2) / 3;
+        const calculatedButtonWidth =
+          (viewportWidth - gap * 2 - horizontalPadding * 2) / 3;
         setButtonWidth(calculatedButtonWidth);
         setSlideDistance(calculatedButtonWidth + gap);
       }
@@ -70,7 +75,8 @@ export default function NewSessionContent({
       const viewportWidth = viewportRef.current.offsetWidth;
       const gap = 20; // Increased gap to accommodate box-shadow
       const horizontalPadding = 12; // Padding to accommodate box-shadow and prevent edge clipping
-      const calculatedButtonWidth = (viewportWidth - gap * 2 - horizontalPadding * 2) / 3;
+      const calculatedButtonWidth =
+        (viewportWidth - gap * 2 - horizontalPadding * 2) / 3;
       setButtonWidth(calculatedButtonWidth);
       setSlideDistance(calculatedButtonWidth + gap);
     }
@@ -113,9 +119,10 @@ export default function NewSessionContent({
     const totalSuggestions = quickSuggestions.length;
     return [
       {
-        suggestion: quickSuggestions[
-          (currentIndex - 1 + totalSuggestions) % totalSuggestions
-        ], // hidden left
+        suggestion:
+          quickSuggestions[
+            (currentIndex - 1 + totalSuggestions) % totalSuggestions
+          ], // hidden left
         originalIndex: (currentIndex - 1 + totalSuggestions) % totalSuggestions,
       },
       {
@@ -151,7 +158,10 @@ export default function NewSessionContent({
 
   return (
     <div style={getContainerStyle()}>
-      <h1 style={getTitle()}>What's the&nbsp;<span style={{textDecoration: 'underline'}}>vibe</span>? Try it.</h1>
+      <h1 style={getTitle()}>
+        What's the&nbsp;
+        <span style={{ textDecoration: "underline" }}>vibe</span>? Try it.
+      </h1>
 
       {/* Chat input form */}
       <div style={getChatInputContainerStyle()}>
@@ -193,7 +203,11 @@ export default function NewSessionContent({
           onClick={handlePrevious}
           aria-label="Previous suggestions"
         >
-          <ArrowRightIcon width={24} height={24} fill="var(--vibes-near-black)" />
+          <ArrowRightIcon
+            width={24}
+            height={24}
+            fill="var(--vibes-near-black)"
+          />
         </button>
 
         <div ref={viewportRef} style={getSuggestionsContainerStyle()}>
@@ -227,7 +241,11 @@ export default function NewSessionContent({
           onClick={handleNext}
           aria-label="Next suggestions"
         >
-          <ArrowLeftIcon width={24} height={24} fill="var(--vibes-near-black)" />
+          <ArrowLeftIcon
+            width={24}
+            height={24}
+            fill="var(--vibes-near-black)"
+          />
         </button>
       </div>
 

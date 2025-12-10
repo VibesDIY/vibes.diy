@@ -8,12 +8,7 @@ interface FaceIcon1Props {
 
 export function FaceIcon1({ width = 48.06, height = 44.18, fill = '#231f20' }: FaceIcon1Props) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 48.06 44.18"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={width} height={height} viewBox="0 0 48.06 44.18" xmlns="http://www.w3.org/2000/svg">
       <g>
         <path
           fill={fill}

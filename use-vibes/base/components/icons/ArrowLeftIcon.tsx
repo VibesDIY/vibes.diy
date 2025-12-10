@@ -8,12 +8,7 @@ interface ArrowLeftIconProps {
 
 export function ArrowLeftIcon({ width = 19, height = 20, fill = '#231f20' }: ArrowLeftIconProps) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 19 20"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={width} height={height} viewBox="0 0 19 20" xmlns="http://www.w3.org/2000/svg">
       <g>
         <path
           fill={fill}

@@ -1070,8 +1070,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             <DraggableCard color="red" x={860} y={180} isText>
               <p style={getCardTextStyle("270px", isMobile)}>
-                Our {" "}
-                <a href="http://fireproof.storage/">vibe coding database</a>{" "}
+                Our <a href="http://fireproof.storage/">vibe coding database</a>{" "}
                 encrypts all your data. Which means the group chat's stays
                 local, portable, and safe.
               </p>
@@ -1223,33 +1222,55 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <h3 style={getSectionHeadingStyle("#5398c9")}>
                       The Vibe Coding Stack Made for Coding Agents
                     </h3>
-                    
-                      <b style={getSubheadingBoldStyle()}>
-                        It's not for you. It's for them.
-                      </b>
-                      <p>
-                        Vibes DIY is so obsessed with making a better vibe coding experience 
-                        that we started by making our own database. The Vibes DIY web stack
-                         is open source, and uses a sync-engine powered by our database, <a href="https://fireproof.storage/" target="_blank" rel="noopener noreferrer" style={{ color: "#FEDD00", textDecoration: "underline" }}>Fireproof</a>.
-                         Because <a href="https://fireproof.storage/" target="_blank" rel="noopener noreferrer" style={{ color: "#FEDD00", textDecoration: "underline" }}>Fireproof</a> is local first, your data lives in the browser, and syncs 
-                         across your users' browsers automatically. Without a virtual machine + 
-                         web server to make everything complicated.
-                      </p>
-                      <p>
-                        Our timing is good.
-                      </p>
-                      <p>
-                       Every generation of web tooling promises the same thing: faster builds, 
-                       fewer bugs, better DX. APIs got cleaner. Frameworks got smarter.
-                     </p>
-                      <p>
-                        And yet modern apps are still a maze of clients, servers, endpoints, retries, 
-                        caches, and edge cases. So let's ask a different question...
-                      </p>
-                      
-                      
-                  </DraggableSection>
 
+                    <b style={getSubheadingBoldStyle()}>
+                      It's not for you. It's for them.
+                    </b>
+                    <p>
+                      Vibes DIY is so obsessed with making a better vibe coding
+                      experience that we started by making our own database. The
+                      Vibes DIY web stack is open source, and uses a sync-engine
+                      powered by our database,{" "}
+                      <a
+                        href="https://fireproof.storage/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: "#FEDD00",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        Fireproof
+                      </a>
+                      . Because{" "}
+                      <a
+                        href="https://fireproof.storage/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: "#FEDD00",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        Fireproof
+                      </a>{" "}
+                      is local first, your data lives in the browser, and syncs
+                      across your users' browsers automatically. Without a
+                      virtual machine + web server to make everything
+                      complicated.
+                    </p>
+                    <p>Our timing is good.</p>
+                    <p>
+                      Every generation of web tooling promises the same thing:
+                      faster builds, fewer bugs, better DX. APIs got cleaner.
+                      Frameworks got smarter.
+                    </p>
+                    <p>
+                      And yet modern apps are still a maze of clients, servers,
+                      endpoints, retries, caches, and edge cases. So let's ask a
+                      different question...
+                    </p>
+                  </DraggableSection>
                 </div>
                 <div style={get1of3Column(isMobile)}>
                   <DraggableSection color="blue" static removeMargin>
@@ -1262,8 +1283,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       </b>
                       <TerminalDemo isMobile={isMobile} />
                       <p>
-                        If your developer is an LLM... why are <i>you</i> still using a web stack 
-                        made for human devs?
+                        If your developer is an LLM... why are <i>you</i> still
+                        using a web stack made for human devs?
                       </p>
                     </div>
                   </DraggableSection>
@@ -1352,7 +1373,13 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       }}
                     />
                   )}
-                  <b style={{ ...getSubheadingBoldStyle(), display: "block", marginBottom: "18px" }}>
+                  <b
+                    style={{
+                      ...getSubheadingBoldStyle(),
+                      display: "block",
+                      marginBottom: "18px",
+                    }}
+                  >
                     You're about to leave the Vibe Zone
                   </b>
                   <p style={{ marginBottom: "18px" }}>
@@ -1383,8 +1410,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     A slightly off assumption.
                     <br />
                     A fix that mostly works.
-                    <br />
-                    A new edge case layered on top of the last one.
+                    <br />A new edge case layered on top of the last one.
                   </p>
                   <p style={{ marginBottom: "18px" }}>
                     You correct it.
@@ -1402,13 +1428,13 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     You've just drifted out of the vibe zone.
                   </p>
                   <p style={{ marginBottom: "18px" }}>
-                    Vibe coding works when state is simple and visible. 
-                    It breaks when complexity crosses a threshold the model 
-                    can't intuit or unwind.
+                    Vibe coding works when state is simple and visible. It
+                    breaks when complexity crosses a threshold the model can't
+                    intuit or unwind.
                   </p>
                   <p style={{ marginBottom: "18px" }}>
-                    Vibes DIY keeps things simple enough that you and your coding 
-                    agent stay where you want to be. In the vibe zone.
+                    Vibes DIY keeps things simple enough that you and your
+                    coding agent stay where you want to be. In the vibe zone.
                   </p>
                   <div style={{ clear: "both" }} />
                 </div>
