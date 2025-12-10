@@ -1056,9 +1056,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             <DraggableCard color="red" x={860} y={180} isText>
               <p style={getCardTextStyle("270px", isMobile)}>
-                Our unhackable{" "}
+                Our {" "}
                 <a href="http://fireproof.storage/">vibe coding database</a>{" "}
-                encrypts all your data. Which means the group chat's lore stays
+                encrypts all your data. Which means the group chat's stays
                 local, portable, and safe.
               </p>
             </DraggableCard>
@@ -1199,39 +1199,56 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   flexDirection: isMobile ? "column" : "row",
                 }}
               >
-                <div style={get1of3Column(isMobile)}>
+                {/* <div style={get1of3Column(isMobile)}>
                   <DraggableSection color="blue" static removeMargin>
                     <img src={vibesStack} style={{ flex: "100%" }} />
                   </DraggableSection>
+                </div> */}
+                <div style={get1of3Column(isMobile)}>
+                  <DraggableSection color="blue" static removeMargin>
+                    <h3 style={getSectionHeadingStyle("#5398c9")}>
+                      The Vibe Coding Stack Made for Coding Agents
+                    </h3>
+                    
+                      <b style={getSubheadingBoldStyle()}>
+                        It's not for you. It's for them.
+                      </b>
+                      <p>
+                       Every generation of web tooling promises the same thing: faster builds, 
+                       fewer bugs, better DX. APIs got cleaner. Frameworks got smarter.
+                     </p>
+                      <p>
+                        And yet modern apps are still a maze of clients, servers, endpoints, retries, 
+                        caches, and edge cases. So let's ask a different question:
+                      </p>
+                      <p>
+                        <strong>If your developer is an LLM... why are <i>you</i> still using a web stack 
+                        made for human devs?</strong>
+                      </p>
+                  </DraggableSection>
+                  
                 </div>
                 <div style={get2of3Column(isMobile)}>
                   <DraggableSection color="blue" static removeMargin>
                     <h3 style={getSectionHeadingStyle("#5398c9")}>
-                      The Vibe Coding Stack That Fits In Your Pocket
+                      Let's Ask the AI.
                     </h3>
                     <div style={getContentWrapperStyle()}>
                       <b style={getSubheadingBoldStyle()}>
-                        Vibes is an open source web stack was designed for vibe
-                        coding - easy, fast, secure, and portable
+                        What do you actually want to generate?
                       </b>
-                      <span>
-                        <b>Easy</b> because it uses Fireproof, a database that
-                        lives in your web browser and syncs without a web
-                        server.
-                      </span>
-                      <span>
-                        <b>Fast</b> because the data is local, so you don't need
-                        to ask a server for it.
-                      </span>
-                      <span>
-                        <b>Secure</b> because all data is encrypted by default.
-                        No .env variables to accidentally check into Github!
-                      </span>
-                      <span>
-                        <b>Portable</b>, because you don't have to host these
-                        apps with us. It's all open source - Vibes work anywhere
-                        the web works.
-                      </span>
+                      <p>
+                       Every generation of web tooling promises the same thing: faster builds, 
+                       fewer bugs, better DX. APIs got cleaner. Frameworks got smarter.
+                     </p>
+                      <p>
+                        And yet modern apps are still a maze of clients, servers, endpoints, retries, 
+                        caches, and edge cases. So let's ask a different question:
+                      </p>
+                      <p>
+                        <strong>If your developer is an LLM... why are <i>you</i> still using a web stack 
+                        made for human devs?</strong>
+                      </p>
                     </div>
                   </DraggableSection>
                 </div>
