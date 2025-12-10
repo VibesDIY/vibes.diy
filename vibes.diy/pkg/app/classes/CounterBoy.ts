@@ -148,7 +148,7 @@ export class CounterBoy {
 
   // Block animation methods
   public animateBlockEncryption(
-    preset: { hexPair: string; textureOffsetX: number; textureOffsetY: number },
+    preset: { hexPair: string; blockColor: number },
     onComplete?: () => void,
     skipUnencrypted = false,
   ) {
@@ -197,16 +197,14 @@ export class CounterBoy {
 
   private createNewBlockSituation(preset: {
     hexPair: string;
-    textureOffsetX: number;
-    textureOffsetY: number;
+    blockColor: number;
   }): BlockSituationObjects | null {
     if (!this.scene) return null;
 
     const blockSituation = makeBlockSituation(
       preset.hexPair,
       {
-        textureOffsetX: preset.textureOffsetX,
-        textureOffsetY: preset.textureOffsetY,
+        blockColor: preset.blockColor,
       },
       this.fontLoadAbortController
         ? { signal: this.fontLoadAbortController.signal }

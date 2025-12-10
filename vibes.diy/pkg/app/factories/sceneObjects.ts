@@ -16,38 +16,28 @@ import {
   TEXT_CONTENT,
   ANIMATION_DURATIONS,
 } from "../constants/scene.js";
-import noise3Url from "../assets/noise3.png";
 
-// Deterministic pseudo-random generator for block presets
-// Uses a simple hash function to generate random-looking values from an index
+// Static list of blocks - same sequence every time
+// Colors cycle: Blue, Yellow, Red, Ivory, Gray
+const BLOCK_SEQUENCE = [
+  { hexPair: "01", blockColor: 0x009ace }, // Blue
+  { hexPair: "4f", blockColor: 0xfedd00 }, // Yellow
+  { hexPair: "7c", blockColor: 0xda291c }, // Red
+  { hexPair: "a3", blockColor: 0xfffff0 }, // Ivory
+  { hexPair: "d8", blockColor: 0x7a7a7a }, // Gray
+  { hexPair: "2b", blockColor: 0x009ace }, // Blue
+  { hexPair: "6e", blockColor: 0xfedd00 }, // Yellow
+  { hexPair: "91", blockColor: 0xda291c }, // Red
+  { hexPair: "c4", blockColor: 0xfffff0 }, // Ivory
+  { hexPair: "f7", blockColor: 0x7a7a7a }, // Gray
+];
+
+// Get block preset by index - cycles through static list
 export function generateBlockPreset(index: number): {
   hexPair: string;
-  textureOffsetX: number;
-  textureOffsetY: number;
+  blockColor: number;
 } {
-  // Simple hash function for pseudo-random values
-  const hash = (seed: number) => {
-    let x = seed;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = (x >> 16) ^ x;
-    return x >>> 0; // Convert to unsigned 32-bit integer
-  };
-
-  // Generate three different pseudo-random values
-  const h1 = hash(index * 2654435761 + 2); // Large prime for better distribution
-  const h2 = hash(index * 2654435761 + 3);
-  const h3 = hash(index * 2654435761 + 4);
-
-  // Generate hex pair (00-ff)
-  const hexValue = h1 % 256;
-  const hexPair = hexValue.toString(16).padStart(2, "0");
-
-  // Generate offsets (0.0-0.99) with better distribution
-  const textureOffsetX = (h2 % 10000) / 10000;
-  const textureOffsetY = (h3 % 10000) / 10000;
-
-  return { hexPair, textureOffsetX, textureOffsetY };
+  return BLOCK_SEQUENCE[index % BLOCK_SEQUENCE.length];
 }
 
 export function makeGridGroup() {
@@ -100,38 +90,27 @@ export function makeGridGroup() {
   return { gridGroup };
 }
 
-export function makeUnencryptedBlock() {
-  // Block (as child of enclosure)
+export function makeUnencryptedBlock(blockColor: number = 0x009ace) {
+  // Block (as child of enclosure) - uses same color as encrypted block
   const blockGeometry = new THREE.BoxGeometry(
     SCENE_DIMENSIONS.BLOCK.WIDTH,
     SCENE_DIMENSIONS.BLOCK.HEIGHT,
     SCENE_DIMENSIONS.BLOCK.DEPTH,
   );
-  const blockMaterial = new THREE.MeshToonMaterial({ color: 0xda291c });
+  const blockMaterial = new THREE.MeshToonMaterial({ color: blockColor });
   const block = new THREE.Mesh(blockGeometry, blockMaterial);
   return block;
 }
 
-export function makeEncryptedBlock(textureOffsetX = 0, textureOffsetY = 0) {
-  // Block (as child of enclosure)
+export function makeEncryptedBlock(blockColor: number = 0x009ace) {
+  // Block (as child of enclosure) - cylinder with solid color from palette
   const blockGeometry = new THREE.CylinderGeometry(
     SCENE_DIMENSIONS.BLOCK.WIDTH / 2, // top radius (half width for cylinder)
     SCENE_DIMENSIONS.BLOCK.WIDTH / 2, // bottom radius (half width for cylinder)
     SCENE_DIMENSIONS.BLOCK.HEIGHT, // height
     SCENE_DIMENSIONS.BLOCK.SEGMENTS,
   );
-  const textureLoader = new THREE.TextureLoader();
-  const noiseTexture = textureLoader.load(noise3Url);
-  // Stretch the texture by scaling it down
-  noiseTexture.repeat.set(0.08, 0.1);
-  // Move texture to use a different part of the image (deterministic)
-  noiseTexture.offset.set(textureOffsetX, textureOffsetY);
-  noiseTexture.minFilter = THREE.NearestFilter;
-  noiseTexture.magFilter = THREE.NearestFilter;
-  noiseTexture.needsUpdate = true;
-  noiseTexture.wrapS = THREE.RepeatWrapping;
-  noiseTexture.wrapT = THREE.RepeatWrapping;
-  const blockMaterial = new THREE.MeshToonMaterial({ map: noiseTexture });
+  const blockMaterial = new THREE.MeshToonMaterial({ color: blockColor });
   const block = new THREE.Mesh(blockGeometry, blockMaterial);
   return block;
 }
@@ -139,8 +118,7 @@ export function makeEncryptedBlock(textureOffsetX = 0, textureOffsetY = 0) {
 interface BlockSituationParams {
   speed?: number;
   startPosition?: number;
-  textureOffsetX?: number;
-  textureOffsetY?: number;
+  blockColor?: number;
 }
 
 export function makeCid(hexPair: string, options?: { signal?: AbortSignal }) {
@@ -185,13 +163,12 @@ export function makeBlockSituation(
   const {
     speed = ANIMATION_DURATIONS.BLOCK_SPEED,
     startPosition = 4,
-    textureOffsetX = 0,
-    textureOffsetY = 0,
+    blockColor = 0x009ace,
   } = params;
   const group = new THREE.Group();
-  // Add encrypted block
-  const unencryptedBlock = makeUnencryptedBlock();
-  const encryptedBlock = makeEncryptedBlock(textureOffsetX, textureOffsetY);
+  // Add blocks - both use same color for consistency
+  const unencryptedBlock = makeUnencryptedBlock(blockColor);
+  const encryptedBlock = makeEncryptedBlock(blockColor);
 
   // Rotate blocks to lie flat on the grid
   encryptedBlock.rotation.x = Math.PI / 2;

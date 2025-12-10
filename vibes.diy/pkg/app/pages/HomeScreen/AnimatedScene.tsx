@@ -39,52 +39,42 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
   const blockIndexRef = useRef<number>(0);
   const showRightCounterBoyRef = useRef(false);
 
-  // Boom handlers - simplified version without context
-  const handleLeftBoom = () => {
-    const counterBoy = sceneSetup.counterBoyLeftRef.current;
-    if (!counterBoy) return;
+  // Unified boom handler - always applies same block to BOTH CounterBoys
+  const handleBoom = (source: "left" | "right") => {
+    const leftCounterBoy = sceneSetup.counterBoyLeftRef.current;
+    const rightCounterBoy = sceneSetup.counterBoyRightRef.current;
 
-    // Press button
-    counterBoy.pressButton();
+    const primaryCounterBoy = source === "left" ? leftCounterBoy : rightCounterBoy;
+    const syncCounterBoy = source === "left" ? rightCounterBoy : leftCounterBoy;
 
-    // Release button and trigger block animation after short delay
-    setTimeout(() => {
-      counterBoy.releaseButton();
+    if (!primaryCounterBoy) return;
 
-      // Trigger block animation
-      const preset = generateBlockPreset(blockIndexRef.current);
-      blockIndexRef.current++;
-
-      if (!counterBoy.getIsBlockAnimating()) {
-        counterBoy.animateBlockEncryption(preset, () => {
-          // Animation complete
-        });
-      }
-    }, 100);
-  };
-
-  const handleRightBoom = () => {
-    const counterBoy = sceneSetup.counterBoyRightRef.current;
-    if (!counterBoy) return;
-
-    // Press button
-    counterBoy.pressButton();
+    // Press button on primary
+    primaryCounterBoy.pressButton();
 
     // Release button and trigger block animation after short delay
     setTimeout(() => {
-      counterBoy.releaseButton();
+      primaryCounterBoy.releaseButton();
 
-      // Trigger block animation
+      // Generate ONE preset for BOTH CounterBoys
       const preset = generateBlockPreset(blockIndexRef.current);
       blockIndexRef.current++;
 
-      if (!counterBoy.getIsBlockAnimating()) {
-        counterBoy.animateBlockEncryption(preset, () => {
-          // Animation complete
-        });
-      }
+      // Trigger primary CounterBoy with full animation
+      primaryCounterBoy.animateBlockEncryption(preset, () => {});
+
+      // Sync to other CounterBoy after delay (instant appearance, same preset)
+      setTimeout(() => {
+        if (syncCounterBoy) {
+          syncCounterBoy.animateBlockEncryption(preset, () => {}, true);
+        }
+      }, ANIMATION_DURATIONS.SYNC_DELAY);
     }, 100);
   };
+
+  // Wrapper functions for timeline triggers
+  const handleLeftBoom = () => handleBoom("left");
+  const handleRightBoom = () => handleBoom("right");
 
   // Create master timeline score
   const makeScore = (): TimelineEntry[] => {

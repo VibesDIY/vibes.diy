@@ -1,6 +1,6 @@
 // Scene dimensions and positioning
-
-const frustum = 20;
+// Frustum size controls camera zoom - larger values = more zoomed out
+const frustum = 26;
 
 export const SCENE_DIMENSIONS = {
   CONTAINER: {

@@ -203,10 +203,20 @@ export function useSceneSetup(
         const aspect = width / height;
         const frustumHalfWidth = SCENE_DIMENSIONS.FRUSTUM.WIDTH / 2;
         const frustumHalfHeight = SCENE_DIMENSIONS.FRUSTUM.HEIGHT / 2;
-        camera.left = -frustumHalfWidth * aspect;
-        camera.right = frustumHalfWidth * aspect;
-        camera.top = frustumHalfHeight;
-        camera.bottom = -frustumHalfHeight;
+
+        if (aspect >= 1) {
+          // Wide viewport: scale horizontally
+          camera.left = -frustumHalfWidth * aspect;
+          camera.right = frustumHalfWidth * aspect;
+          camera.top = frustumHalfHeight;
+          camera.bottom = -frustumHalfHeight;
+        } else {
+          // Narrow viewport: scale vertically to prevent clipping
+          camera.left = -frustumHalfWidth;
+          camera.right = frustumHalfWidth;
+          camera.top = frustumHalfHeight / aspect;
+          camera.bottom = -frustumHalfHeight / aspect;
+        }
         camera.updateProjectionMatrix();
       }
     };
