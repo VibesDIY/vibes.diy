@@ -85,12 +85,345 @@ import mouth from "../../assets/mouth.gif";
 import rainbowComputer from "../../assets/rainbow-computer.gif";
 import vibesStack from "../../assets/vibes-stack.png";
 import fireproofLogo from "../../assets/fireproof-logo.png";
+import vibeZoneChart from "../../assets/vibe-zone.JPG";
 import {
   LoginIcon,
   SettingsIcon,
   MoonIcon,
   SunIcon,
 } from "../../../../../use-vibes/base/components/icons/index.js";
+
+// jQuery Terminal type declarations
+declare global {
+  interface Window {
+    $?: JQueryStatic & {
+      fn: {
+        terminal: (
+          interpreter: (() => void) | Record<string, unknown>,
+          options: Record<string, unknown>
+        ) => JQueryTerminal;
+      };
+    };
+    jQuery?: unknown;
+  }
+}
+
+interface JQueryStatic {
+  (selector: HTMLElement | null): JQueryElement;
+}
+
+interface JQueryElement {
+  terminal: (
+    interpreter: (() => void) | Record<string, unknown>,
+    options: Record<string, unknown>
+  ) => JQueryTerminal;
+}
+
+interface JQueryTerminal {
+  echo: (text: string) => void;
+  typing: (
+    method: string,
+    delay: number,
+    text: string,
+    callback?: () => void
+  ) => void;
+  clear: () => void;
+  destroy: () => void;
+  set_prompt: (prompt: string) => void;
+  disable: () => void;
+  enable: () => void;
+}
+
+// Terminal Demo component with CRT effect and typing animation
+const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const termRef = useRef<JQueryTerminal | null>(null);
+  const [scriptsLoaded, setScriptsLoaded] = useState(false);
+
+  // Dynamically load jQuery and jQuery Terminal scripts
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadScript = (src: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        // Check if script tag already exists
+        const existingScript = document.querySelector(
+          `script[src="${src}"]`
+        ) as HTMLScriptElement | null;
+        if (existingScript) {
+          // If script exists, wait for it to load if not already
+          if (existingScript.dataset.loaded === "true") {
+            resolve();
+          } else {
+            existingScript.addEventListener("load", () => resolve());
+            existingScript.addEventListener("error", () =>
+              reject(new Error(`Failed to load ${src}`))
+            );
+          }
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = src;
+        script.async = false; // Load synchronously to ensure order
+        script.onload = () => {
+          script.dataset.loaded = "true";
+          resolve();
+        };
+        script.onerror = () => reject(new Error(`Failed to load ${src}`));
+        document.head.appendChild(script);
+      });
+    };
+
+    const loadStyles = (href: string): void => {
+      if (document.querySelector(`link[href="${href}"]`)) return;
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href;
+      document.head.appendChild(link);
+    };
+
+    const waitForJQueryTerminal = (): Promise<void> => {
+      return new Promise((resolve) => {
+        const check = () => {
+          if (
+            window.$ &&
+            typeof window.$ === "function" &&
+            window.$.fn &&
+            typeof window.$.fn.terminal === "function"
+          ) {
+            resolve();
+          } else {
+            setTimeout(check, 50);
+          }
+        };
+        check();
+      });
+    };
+
+    const loadDependencies = async () => {
+      try {
+        // Load styles first
+        loadStyles(
+          "https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"
+        );
+
+        // Load jQuery first
+        await loadScript("https://cdn.jsdelivr.net/npm/jquery");
+
+        // Then jQuery Terminal
+        await loadScript(
+          "https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"
+        );
+
+        // Wait for jQuery Terminal plugin to be available
+        await waitForJQueryTerminal();
+
+        if (!cancelled) {
+          setScriptsLoaded(true);
+        }
+      } catch (error) {
+        console.error("Failed to load terminal dependencies:", error);
+      }
+    };
+
+    loadDependencies();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Initialize terminal once scripts are loaded
+  useEffect(() => {
+    if (
+      !scriptsLoaded ||
+      !terminalRef.current ||
+      !window.$ ||
+      typeof window.$.fn?.terminal !== "function"
+    ) {
+      return;
+    }
+
+    const $ = window.$;
+    let animationActive = true;
+    let hasSubmitted = false;
+
+    const responseLines = [
+      { text: "A simple target. Let me mutate your local app state", delay: 25 },
+      { text: "and let the library worry about the network.", delay: 25 },
+      { text: "", delay: 400 },
+      { text: "LLMs are great at local JavaScript state.", delay: 25 },
+      { text: "They're bad at distributed systems.", delay: 25 },
+      { text: "", delay: 300 },
+      { text: "Why?", delay: 30 },
+      { text: "", delay: 400 },
+      { text: "I reason inside language, not across networks.", delay: 25 },
+      { text: "Code and local state are expressed directly in text,", delay: 25 },
+      { text: "inside a single context.", delay: 25 },
+      { text: "", delay: 300 },
+      { text: "Network calls, servers, retries, timeouts, and", delay: 25 },
+      { text: "eventual consistency exist outside that context.", delay: 25 },
+      { text: "", delay: 300 },
+      { text: "When you ask me to generate a traditional web app,", delay: 25 },
+      { text: "you're asking me to reason about:", delay: 25 },
+      { text: "  • things happening later,", delay: 20 },
+      { text: "  • somewhere else,", delay: 20 },
+      { text: "  • possibly not at all.", delay: 20 },
+      { text: "", delay: 300 },
+      { text: "That's friction.", delay: 30 },
+      { text: "", delay: 400 },
+      { text: "The local-first Vibes DIY web stack removes it.", delay: 25 },
+    ];
+
+    let lineIndex = 0;
+
+    const typeResponseLines = (term: JQueryTerminal) => {
+      if (!animationActive) return;
+
+      if (lineIndex >= responseLines.length) {
+        // Done - don't loop
+        return;
+      }
+
+      const line = responseLines[lineIndex];
+      if (line.text === "") {
+        term.echo("");
+        lineIndex++;
+        setTimeout(() => typeResponseLines(term), line.delay);
+      } else {
+        term.typing("echo", line.delay, line.text, () => {
+          lineIndex++;
+          setTimeout(() => typeResponseLines(term), 200);
+        });
+      }
+    };
+
+    // Create terminal with command handler for Enter key
+    const term = $(terminalRef.current).terminal(
+      function () {
+        // When user presses Enter (submits anything)
+        if (hasSubmitted) return;
+        hasSubmitted = true;
+
+        // Disable further input
+        this.set_prompt("");
+        this.disable();
+
+        // Show response
+        this.echo("");
+        typeResponseLines(this);
+      },
+      {
+        greetings: false,
+        prompt: "[[;#888;]Press Enter to continue...] ",
+        enabled: true,
+        keypress: function (e: KeyboardEvent) {
+          // Block all character input (but not special keys like Enter)
+          if (e.key.length === 1) {
+            return false;
+          }
+        },
+      }
+    );
+
+    termRef.current = term;
+
+    // Claude Code CLI parody - Vibes DIY style (narrow version ~45 chars)
+    const orange = "#DA291C";
+    const yellow = "#FEDD00";
+    const blue = "#009ACE";
+    const cream = "#FFFFF0";
+    const dimGray = "#555";
+
+    // Narrow box (44 chars wide total, 42 inner)
+    term.echo(`[[;${orange};]╭──────────────────────────────────────────╮]`);
+    term.echo(`[[;${orange};]│          [[;${yellow};]Vibes OS v.0.1[[;${orange};]                  │]`);
+    term.echo(`[[;${orange};]│                                          │]`);
+    term.echo(`[[;${orange};]│        [[;${cream};]Welcome, Vibe Coder![[;${orange};]              │]`);
+    term.echo(`[[;${orange};]│                                          │]`);
+    term.echo(`[[;${orange};]│            [[;${yellow};]✨[[;${orange};] [[;${blue};]^__^[[;${orange};] [[;${yellow};]✨[[;${orange};]                    │]`);
+    term.echo(`[[;${orange};]│                                          │]`);
+    term.echo(`[[;${orange};]│  [[;${dimGray};]Just describe what you want. That's it.[[;${orange};] │]`);
+    term.echo(`[[;${orange};]│  [[;${dimGray};]No config. No deploy. No backend.[[;${orange};]       │]`);
+    term.echo(`[[;${orange};]│                                          │]`);
+    term.echo(`[[;${orange};]│         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`);
+    term.echo(`[[;${orange};]│        [[;${dimGray};]~/your-brilliant-idea[[;${orange};]             │]`);
+    term.echo(`[[;${orange};]╰──────────────────────────────────────────╯]`);
+
+    term.echo("");
+    term.echo(`[[;${blue};]> What do you actually want to generate?]`);
+    term.echo("");
+
+    return () => {
+      animationActive = false;
+      if (termRef.current) {
+        termRef.current.destroy();
+        termRef.current = null;
+      }
+    };
+  }, [scriptsLoaded]);
+
+  // CRT container styles
+  const containerStyle: React.CSSProperties = {
+    position: "relative",
+    width: "100%",
+    maxWidth: isMobile ? "100%" : "600px",
+    height: isMobile ? "380px" : "420px",
+    marginTop: "24px",
+    borderRadius: "8px",
+    overflow: "hidden",
+    backgroundColor: "#0a0a0a",
+    boxShadow:
+      "0 0 20px rgba(0, 255, 0, 0.2), inset 0 0 60px rgba(0, 0, 0, 0.5)",
+    border: "2px solid #333",
+  };
+
+  // Scanline/noise overlay
+  const overlayStyle: React.CSSProperties = {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    opacity: 0.15,
+    zIndex: 1,
+    pointerEvents: "none",
+    backgroundImage: `
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.1) 2px, rgba(255, 255, 255, 0.1) 4px),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")
+    `,
+    backgroundSize: "100% 4px, 100px 100px",
+    animation: "staticNoise 0.3s steps(1) infinite",
+  };
+
+  // Terminal div styles
+  const terminalStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+  };
+
+  return (
+    <div style={containerStyle}>
+      <style>
+        {`
+          .terminal-demo .terminal {
+            --color: rgba(0, 255, 0, 0.9);
+            --background: transparent;
+            --size: ${isMobile ? "1" : "1.2"};
+            --font: 'Courier New', monospace;
+          }
+        `}
+      </style>
+      <div style={overlayStyle} />
+      <div
+        ref={terminalRef}
+        className="terminal-demo"
+        style={terminalStyle}
+      />
+    </div>
+  );
+};
 
 // Helper function to convert URLs in text to clickable links
 const renderMessageWithLinks = (text: string) => {
@@ -344,6 +677,19 @@ export const HomeScreen = (_props: HomeScreenProps) => {
           75% {
             transform: translateX(3px);
           }
+        }
+
+        @keyframes staticNoise {
+          0%, 100% { background-position: 0 0; }
+          10% { background-position: -5% -5%; }
+          20% { background-position: -10% 5%; }
+          30% { background-position: 5% -10%; }
+          40% { background-position: -5% 15%; }
+          50% { background-position: -10% 5%; }
+          60% { background-position: 15% 0; }
+          70% { background-position: 0 10%; }
+          80% { background-position: -15% 0; }
+          90% { background-position: 10% 5%; }
         }
 
         .navbar-button-wrapper button {
@@ -1204,7 +1550,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <img src={vibesStack} style={{ flex: "100%" }} />
                   </DraggableSection>
                 </div> */}
-                <div style={get1of3Column(isMobile)}>
+                <div style={get2of3Column(isMobile)}>
                   <DraggableSection color="blue" static removeMargin>
                     <h3 style={getSectionHeadingStyle("#5398c9")}>
                       The Vibe Coding Stack Made for Coding Agents
@@ -1214,21 +1560,30 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                         It's not for you. It's for them.
                       </b>
                       <p>
+                        Vibes DIY is so obsessed with making a better vibe coding experience 
+                        that we started by making our own database. The Vibes DIY web stack
+                         is open source, and uses a sync-engine powered by our database, <a href="https://fireproof.storage/" target="_blank" rel="noopener noreferrer" style={{ color: "#FEDD00", textDecoration: "underline" }}>Fireproof</a>.
+                         Because <a href="https://fireproof.storage/" target="_blank" rel="noopener noreferrer" style={{ color: "#FEDD00", textDecoration: "underline" }}>Fireproof</a> is local first, your data lives in the browser, and syncs 
+                         across your users' browsers automatically. Without a virtual machine + 
+                         web server to make everything complicated.
+                      </p>
+                      <p>
+                        Our timing is good.
+                      </p>
+                      <p>
                        Every generation of web tooling promises the same thing: faster builds, 
                        fewer bugs, better DX. APIs got cleaner. Frameworks got smarter.
                      </p>
                       <p>
                         And yet modern apps are still a maze of clients, servers, endpoints, retries, 
-                        caches, and edge cases. So let's ask a different question:
+                        caches, and edge cases. So let's ask a different question...
                       </p>
-                      <p>
-                        <strong>If your developer is an LLM... why are <i>you</i> still using a web stack 
-                        made for human devs?</strong>
-                      </p>
+                      
+                      
                   </DraggableSection>
-                  
+
                 </div>
-                <div style={get2of3Column(isMobile)}>
+                <div style={get1of3Column(isMobile)}>
                   <DraggableSection color="blue" static removeMargin>
                     <h3 style={getSectionHeadingStyle("#5398c9")}>
                       Let's Ask the AI.
@@ -1237,17 +1592,10 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       <b style={getSubheadingBoldStyle()}>
                         What do you actually want to generate?
                       </b>
+                      <TerminalDemo isMobile={isMobile} />
                       <p>
-                       Every generation of web tooling promises the same thing: faster builds, 
-                       fewer bugs, better DX. APIs got cleaner. Frameworks got smarter.
-                     </p>
-                      <p>
-                        And yet modern apps are still a maze of clients, servers, endpoints, retries, 
-                        caches, and edge cases. So let's ask a different question:
-                      </p>
-                      <p>
-                        <strong>If your developer is an LLM... why are <i>you</i> still using a web stack 
-                        made for human devs?</strong>
+                        If your developer is an LLM... why are <i>you</i> still using a web stack 
+                        made for human devs?
                       </p>
                     </div>
                   </DraggableSection>
@@ -1322,55 +1670,79 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 <h3 style={getSectionHeadingStyle("#FEDD00")}>
                   Now comes the hard part
                 </h3>
-                <div style={getContentWrapperStyle()}>
-                  <b style={getSubheadingBoldStyle()}>
-                    Multiplayer features need a backend
+                <div style={{ marginTop: "12px" }}>
+                  {!isMobile && (
+                    <img
+                      src={vibeZoneChart}
+                      alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
+                      style={{
+                        float: "right",
+                        maxWidth: "420px",
+                        marginLeft: "24px",
+                        marginBottom: "16px",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  )}
+                  <b style={{ ...getSubheadingBoldStyle(), display: "block", marginBottom: "18px" }}>
+                    You're about to leave the Vibe Zone
                   </b>
-                  <span>
-                    And backends are hard. You're a vibe coder, not a "DevOps"
-                    expert. Messing this part up is how vibe coded apps get
-                    hacked. You can either try to connect to something like
-                    Supabase, which is complicated and expensive. Or let someone
-                    build you a backend that you'll be stuck with forever.
-                  </span>
-                  <b style={getSubheadingBoldStyle()}>Here's the problem</b>
-                  <span>
-                    You're trying to vibe code using a web stack that was made
-                    for a different problem: building a huge startup with giant
-                    teams of <i>actual</i> programmers using millions in venture
-                    capital.
-                  </span>
-                  <b style={getSubheadingBoldStyle()}>
-                    Your web stack wasn't made for vibe coding
-                  </b>
-                  <span>
-                    Most web stacks are built for mass-market software: big
-                    schemas, strict permissions, endless backend plumbing. Tools
-                    like Supabase and row-level auth policies work fine for
-                    enterprise apps — but they slow down small, personal,
-                    shareable ones.
-                  </span>
-                  <span>
-                    Vibes DIY takes a different approach. It treats data as part
-                    of your creative surface, not a distant backend. None of
-                    this would be possible if you still needed a backend to sync
-                    data between users. But, doesn't everybody need a backend
-                    for multiplayer data?
-                  </span>
-                  <h3 style={getSectionHeadingStyle("#FEDD00")}>
-                    We made a database designed for vibe coding
-                  </h3>
-                  <b style={getSubheadingBoldStyle()}>
-                    Fireproof makes the web server into a horseless carriage
-                  </b>
-                  <span>
-                    Vibes DIY runs on Fireproof, an open source embedded
-                    database that syncs without a web server. It treats data as
-                    part of your creative surface, not a corporate cloud
-                    service. Fireproof uses distributed data structures, CRDTs,
-                    content-addressed storage, and document-style records to
-                    give every app its own lightweight ledger.
-                  </span>
+                  <p style={{ marginBottom: "18px" }}>
+                    Every vibe-coded project starts in the vibe zone.
+                  </p>
+                  {isMobile && (
+                    <img
+                      src={vibeZoneChart}
+                      alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
+                      style={{
+                        width: "100%",
+                        marginBottom: "18px",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  )}
+                  <p style={{ marginBottom: "18px" }}>
+                    The model understands you.
+                    <br />
+                    Progress is fast.
+                    <br />
+                    Each change moves the app forward.
+                  </p>
+                  <p style={{ marginBottom: "18px" }}>
+                    Then something small goes wrong.
+                  </p>
+                  <p style={{ marginBottom: "18px" }}>
+                    A slightly off assumption.
+                    <br />
+                    A fix that mostly works.
+                    <br />
+                    A new edge case layered on top of the last one.
+                  </p>
+                  <p style={{ marginBottom: "18px" }}>
+                    You correct it.
+                    <br />
+                    Then correct the correction.
+                    <br />
+                    And suddenly progress slows to a crawl.
+                  </p>
+                  <p style={{ marginBottom: "18px" }}>
+                    You're not prompting wrong.
+                    <br />
+                    The model isn't failing.
+                  </p>
+                  <p style={{ marginBottom: "18px" }}>
+                    You've just drifted out of the vibe zone.
+                  </p>
+                  <p style={{ marginBottom: "18px" }}>
+                    Vibe coding works when state is simple and visible. 
+                    It breaks when complexity crosses a threshold the model 
+                    can't intuit or unwind.
+                  </p>
+                  <p style={{ marginBottom: "18px" }}>
+                    Vibes DIY keeps things simple enough that you and your coding 
+                    agent stay where you want to be. In the vibe zone.
+                  </p>
+                  <div style={{ clear: "both" }} />
                 </div>
               </DraggableSection>
             </section>
