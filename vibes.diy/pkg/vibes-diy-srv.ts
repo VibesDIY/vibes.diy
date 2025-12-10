@@ -1,65 +1,65 @@
-import { renderToString } from "react-dom/server";
-import React from "react";
+import { loadAndRenderTSX, loadAndRenderJSX } from "./lib/render.js";
 import { contentType } from "mime-types";
 
-// Simple in-memory module cache
-const moduleCache = new Map();
+async function fetchVibeCode(appSlug: string): Promise<string> {
+  // Fetch vibe code from hosting subdomain App.jsx endpoint
+  const response = await fetch(`https://${appSlug}.vibesdiy.app/App.jsx`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch vibe: ${response.statusText}`);
+  }
+  return await response.text();
+}
 
-async function loadAndRenderTSX(filePath: string): Promise<string> {
+async function handleVibeRequest(
+  requestedPath: string,
+): Promise<Response | null> {
+  // Handle /vibe/{appSlug} or /vibe/{appSlug}/{groupId} routes
+  const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)(?:\/([^/]+))?/);
+  if (!vibeMatch) {
+    return null; // Not a vibe route
+  }
+
+  const appSlug = vibeMatch[1];
+  const groupId = vibeMatch[2];
+
   try {
-    // Read the TSX file
-    const code = await Deno.readTextFile(filePath);
+    const vibeCode = await fetchVibeCode(appSlug);
 
-    // Check cache
-    const cacheKey = `${filePath}:${code}`;
-    if (moduleCache.has(cacheKey)) {
-      const Component = moduleCache.get(cacheKey);
-      return renderToString(React.createElement(Component));
-    }
+    // Transform JSX → JS (externalized imports)
+    const transformedJS = await loadAndRenderJSX(vibeCode);
 
-    // Transform TSX to JS using esbuild
-    const { build } = await import("esbuild");
-
-    const result = await build({
-      stdin: {
-        contents: code,
-        loader: "tsx",
-        resolveDir: Deno.cwd(),
-      },
-      bundle: true,
-      format: "esm",
-      jsx: "automatic",
-      write: false,
-      platform: "neutral",
+    // Render vibe.tsx template with transformed JS
+    const vibePath = `${Deno.cwd()}/vibe.tsx`;
+    const html = await loadAndRenderTSX(vibePath, {
+      appSlug,
+      groupId,
+      transformedJS,
     });
 
-    const transformed = new TextDecoder().decode(
-      result.outputFiles[0].contents,
-    );
-    // console.log(transformed);
-
-    // Create a data URL module
-    const dataUrl = `data:text/javascript;base64,${btoa(transformed)}`;
-    const module = await import(dataUrl);
-
-    // Get the default export (should be the component)
-    const Component = module.default;
-
-    // Cache it
-    moduleCache.set(cacheKey, Component);
-
-    // Render to HTML string
-    const html = renderToString(React.createElement(Component));
-
-    return html;
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   } catch (error) {
-    throw new Error(`Failed to render TSX: ${(error as Error).message}`);
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 
 Deno.serve({ port: 8001 }, async (req) => {
   const url = new URL(req.url);
   const requestedPath = url.pathname;
+
+  // Check if this is a vibe route
+  const vibeResponse = await handleVibeRequest(requestedPath);
+  if (vibeResponse) {
+    return vibeResponse;
+  }
 
   // Map request path to local filesystem
   const cwd = Deno.cwd();

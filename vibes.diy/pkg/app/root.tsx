@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { PostHogProvider } from "posthog-js/react";
 import { VibesDiyEnv } from "./config/env.js";
 // import type { Route } from "./+types/root";
-// import "./app.css";
+// CSS loaded via <link> tag in index.tsx for SSR compatibility
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
 import { ClerkProvider } from "@clerk/clerk-react";
