@@ -1336,7 +1336,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
                       style={{
                         float: "right",
-                        maxWidth: "420px",
+                        maxWidth: "525px",
                         marginLeft: "24px",
                         marginBottom: "16px",
                         borderRadius: "8px",
