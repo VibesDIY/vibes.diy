@@ -274,34 +274,15 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
 
     // Narrow box (44 chars wide total, 42 inner)
     term.echo(`[[;${orange};]╭──────────────────────────────────────────╮]`);
-    term.echo(
-      `[[;${orange};]│          [[;${yellow};]Vibes OS v.0.1[[;${orange};]                  │]`,
-    );
+    term.echo(`[[;${orange};]│          [[;${yellow};]Vibes OS v.0.1[[;${orange};]                  │]`,);
     term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(
-      `[[;${orange};]│        [[;${cream};]Welcome, Vibe Coder![[;${orange};]              │]`,
-    );
+    term.echo(`[[;${orange};]│        [[;${cream};]Welcome, Vibe Coder![[;${orange};]              │]`,);
     term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(
-      `[[;${orange};]│            [[;${yellow};]✨[[;${orange};] [[;${blue};]^__^[[;${orange};] [[;${yellow};]✨[[;${orange};]                    │]`,
-    );
+    term.echo(`[[;${orange};]│                [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                     │]`,);
     term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(
-      `[[;${orange};]│  [[;${dimGray};]Just describe what you want. That's it.[[;${orange};] │]`,
-    );
-    term.echo(
-      `[[;${orange};]│  [[;${dimGray};]No config. No deploy. No backend.[[;${orange};]       │]`,
-    );
-    term.echo(`[[;${orange};]│                                          │]`);
-    term.echo(
-      `[[;${orange};]│         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,
-    );
-    term.echo(
-      `[[;${orange};]│        [[;${dimGray};]~/your-brilliant-idea[[;${orange};]             │]`,
-    );
+    term.echo(`[[;${orange};]│         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,);
+    term.echo(`[[;${orange};]│        [[;${dimGray};]~/your-brilliant-idea[[;${orange};]             │]`,);
     term.echo(`[[;${orange};]╰──────────────────────────────────────────╯]`);
-
-    term.echo("");
     term.echo(`[[;${blue};]> What do you actually want to generate?]`);
     term.echo("");
 
@@ -318,8 +299,9 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
   const containerStyle: React.CSSProperties = {
     position: "relative",
     width: "100%",
+    minWidth: "350px",
     maxWidth: isMobile ? "100%" : "600px",
-    height: isMobile ? "380px" : "420px",
+    height: isMobile ? "380px" : "283px",
     marginTop: "24px",
     borderRadius: "8px",
     overflow: "hidden",

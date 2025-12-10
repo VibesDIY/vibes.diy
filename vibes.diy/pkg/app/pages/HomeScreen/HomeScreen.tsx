@@ -1256,10 +1256,6 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                         What do you actually want to generate?
                       </b>
                       <TerminalDemo isMobile={isMobile} />
-                      <p>
-                        If your developer is an LLM... why are <i>you</i> still
-                        using a web stack made for human devs?
-                      </p>
                     </div>
                   </DraggableSection>
                 </div>
