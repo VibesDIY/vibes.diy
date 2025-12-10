@@ -1,4 +1,4 @@
-import { loadAndRenderTSX, loadAndRenderJSX } from "./lib/render.js";
+import { loadAndRenderTSX, loadAndRenderJSX } from "./lib/render.ts";
 import { contentType } from "mime-types";
 
 async function fetchVibeCode(appSlug: string): Promise<string> {
