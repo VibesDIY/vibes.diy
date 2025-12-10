@@ -170,7 +170,6 @@ export const getGalleryLabelStyle = (): CSSProperties => ({
   justifyContent: "center",
   borderBottomRightRadius: "8px",
   borderTopRightRadius: "8px",
-  marginRight: "24px",
 });
 
 // Gallery content wrapper style
@@ -178,7 +177,6 @@ export const getGalleryContentStyle = (): CSSProperties => ({
   flex: 1,
   display: "flex",
   flexDirection: "column",
-  gap: "24px",
 });
 
 // Gallery description style
@@ -187,4 +185,80 @@ export const getGalleryDescriptionStyle = (): CSSProperties => ({
   fontWeight: 500,
   color: "var(--vibes-near-black)",
   textAlign: "left",
+  borderTop: '2px solid',
+  padding: '5px 24px',
+});
+
+// VibeGallery styles
+export const getVibeGalleryWrapperStyle = (): CSSProperties => ({
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: "24px",
+  width: "100%",
+  gap: '10px',
+});
+
+// VibeGalleryCard styles
+export const getVibeCardLinkStyle = (): CSSProperties => ({
+  textDecoration: "none",
+});
+
+export const getVibeCardWrapperStyle = (): CSSProperties => ({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "12px",
+});
+
+export const getVibeCardIconContainerStyle = (): CSSProperties => ({
+  position: "relative",
+  width: "100px",
+  height: "100px",
+});
+
+export const getVibeCardTexturedShadowStyle = (isHovered: boolean): CSSProperties => ({
+  position: "absolute",
+  top: "8px",
+  left: isHovered ? "10px" : "8px",
+  width: "100px",
+  height: "100px",
+  borderRadius: "24px",
+  overflow: "hidden",
+  transition: "top 0.2s ease, left 0.2s ease",
+  zIndex: 0,
+});
+
+export const getVibeCardMainIconContainerStyle = (isHovered: boolean): CSSProperties => ({
+  position: "relative",
+  width: "100px",
+  height: "100px",
+  borderRadius: "24px",
+  backgroundColor: "rgb(255, 254, 240)",
+  border: "2px solid var(--vibes-near-black)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "16px",
+  transition: "transform 0.2s ease",
+  cursor: "pointer",
+  transform: isHovered ? "translate(-2px, -2px)" : "translate(0, 0)",
+  zIndex: 1,
+});
+
+export const getVibeCardIconImageStyle = (): CSSProperties => ({
+  maxWidth: "100%",
+  maxHeight: "100%",
+  objectFit: "contain",
+});
+
+export const getVibeCardNameStyle = (): CSSProperties => ({
+  fontSize: "16px",
+  fontWeight: 500,
+  color: "var(--vibes-near-black)",
+  textAlign: "center",
+  width: "110px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
 });

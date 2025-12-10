@@ -1,5 +1,12 @@
 import React, { useMemo } from "react";
 import VibeGalleryCard from "./VibeGalleryCard.js";
+import {
+  FaceIcon1,
+  FaceIcon2,
+  FaceIcon3,
+  FaceIcon4,
+} from "@vibes.diy/use-vibes-base";
+import { getVibeGalleryWrapperStyle } from "./NewSessionContent.styles.js";
 
 // Featured vibes data (imported from FeaturedVibes)
 const publishedVibes = [
@@ -48,18 +55,18 @@ export default function VibeGallery({ count = 4 }: VibeGalleryProps) {
     return shuffled.slice(0, count);
   }, [count]);
 
+  // Array of face icons to cycle through
+  const faceIcons = [FaceIcon1, FaceIcon2, FaceIcon3, FaceIcon4];
+
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: 'center',
-        alignItems: "center",
-        padding: "20px 0px",
-        width: "100%",
-      }}
-    >
-      {selectedVibes.map((vibe) => (
-        <VibeGalleryCard key={vibe.slug} slug={vibe.slug} name={vibe.name} />
+    <div style={getVibeGalleryWrapperStyle()}>
+      {selectedVibes.map((vibe, index) => (
+        <VibeGalleryCard
+          key={vibe.slug}
+          slug={vibe.slug}
+          name={vibe.name}
+          IconComponent={faceIcons[index % faceIcons.length]}
+        />
       ))}
     </div>
   );

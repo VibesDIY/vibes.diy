@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { VibesButton } from "@vibes.diy/use-vibes-base";
+import { VibesButton, ArrowLeftIcon, ArrowRightIcon } from "@vibes.diy/use-vibes-base";
 import type { NewSessionChatState } from "@vibes.diy/prompts";
 import { quickSuggestions } from "../../data/quick-suggestions-data.js";
 import VibeGallery from "./VibeGallery.js";
@@ -193,7 +193,7 @@ export default function NewSessionContent({
           onClick={handlePrevious}
           aria-label="Previous suggestions"
         >
-          &lt;
+          <ArrowRightIcon width={24} height={24} fill="var(--vibes-near-black)" />
         </button>
 
         <div ref={viewportRef} style={getSuggestionsContainerStyle()}>
@@ -227,7 +227,7 @@ export default function NewSessionContent({
           onClick={handleNext}
           aria-label="Next suggestions"
         >
-          &gt;
+          <ArrowLeftIcon width={24} height={24} fill="var(--vibes-near-black)" />
         </button>
       </div>
 

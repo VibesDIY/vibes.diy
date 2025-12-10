@@ -85,7 +85,7 @@ import mouth from "../../assets/mouth.gif";
 import rainbowComputer from "../../assets/rainbow-computer.gif";
 import vibesStack from "../../assets/vibes-stack.png";
 import fireproofLogo from "../../assets/fireproof-logo.png";
-import vibeZoneChart from "../../assets/vibe-zone.JPG";
+import vibeZoneChart from "../../assets/vibe-zone.jpg";
 import {
   LoginIcon,
   SettingsIcon,
@@ -333,7 +333,7 @@ const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     const orange = "#DA291C";
     const yellow = "#FEDD00";
     const blue = "#009ACE";
-    const cream = "#FFFFF0";
+    const cream = "var(--vibes-cream)";
     const dimGray = "#555";
 
     // Narrow box (44 chars wide total, 42 inner)
@@ -1240,7 +1240,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   style={getNavbarButtonIconWrapper()}
                 >
                   <SettingsIcon
-                    fill="#fffff0"
+                    fill="var(--vibes-cream)"
                     bgFill="#231F20"
                     width={35}
                     height={35}
@@ -1265,14 +1265,14 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 >
                   {isDarkMode ? (
                     <SunIcon
-                      fill="#fffff0"
+                      fill="var(--vibes-cream)"
                       bgFill="#231F20"
                       width={35}
                       height={35}
                     />
                   ) : (
                     <MoonIcon
-                      fill="#fffff0"
+                      fill="var(--vibes-cream)"
                       bgFill="#231F20"
                       width={35}
                       height={35}
@@ -1294,7 +1294,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   style={getNavbarButtonIconWrapper()}
                 >
                   <LoginIcon
-                    fill="#fffff0"
+                    fill="var(--vibes-cream)"
                     bgFill="#231F20"
                     width={35}
                     height={35}

@@ -4,15 +4,27 @@ import {
   constructVibeIconUrl,
   constructVibeScreenshotUrl,
 } from "../../utils/vibeUrls.js";
+import { TexturedPattern } from "@vibes.diy/use-vibes-base";
+import {
+  getVibeCardLinkStyle,
+  getVibeCardWrapperStyle,
+  getVibeCardIconContainerStyle,
+  getVibeCardTexturedShadowStyle,
+  getVibeCardMainIconContainerStyle,
+  getVibeCardIconImageStyle,
+  getVibeCardNameStyle,
+} from "./NewSessionContent.styles.js";
 
 interface VibeGalleryCardProps {
   slug: string;
   name?: string;
+  IconComponent?: React.ComponentType<{ width?: number; height?: number; fill?: string }>;
 }
 
 export default function VibeGalleryCard({
   slug,
   name,
+  IconComponent,
 }: VibeGalleryCardProps): ReactElement {
   // Construct asset URLs
   const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug), [slug]);
@@ -40,67 +52,39 @@ export default function VibeGalleryCard({
   const linkUrl = `/vibe/${slug}`;
   const vibeName = name || slug || "Vibe";
 
-  return (
-    <Link to={linkUrl} style={{ textDecoration: "none" }}>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "12px",
-        }}
-      >
-        {/* Icon container with 3D shadow */}
-        <div
-          style={{
-            width: "100px",
-            height: "100px",
-            borderRadius: "24px",
-            backgroundColor: "#FFFEFF",
-            border: "2px solid var(--vibes-near-black)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-            boxShadow: "8px 8px 0 rgba(0, 0, 0, 0.8)",
-            transition: "transform 0.2s ease, box-shadow 0.2s ease",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translate(-2px, -2px)";
-            e.currentTarget.style.boxShadow = "10px 10px 0 rgba(0, 0, 0, 0.8)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translate(0, 0)";
-            e.currentTarget.style.boxShadow = "8px 8px 0 rgba(0, 0, 0, 0.8)";
-          }}
-        >
-          <img
-            src={imageSrc}
-            alt={`Icon for ${vibeName}`}
-            style={{
-              maxWidth: "100%",
-              maxHeight: "100%",
-              objectFit: "contain",
-            }}
-            loading="lazy"
-            onError={handleImageError}
-          />
-        </div>
+  const [isHovered, setIsHovered] = useState(false);
 
-        {/* Vibe name */}
+  return (
+    <Link to={linkUrl} style={getVibeCardLinkStyle()}>
+      <div style={getVibeCardWrapperStyle()}>
+        {/* Icon container with textured shadow */}
         <div
-          style={{
-            fontSize: "16px",
-            fontWeight: 500,
-            color: "var(--vibes-near-black)",
-            textAlign: "center",
-            maxWidth: "140px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
+          style={getVibeCardIconContainerStyle()}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
+          {/* Textured shadow background */}
+          <div style={getVibeCardTexturedShadowStyle(isHovered)}>
+            <TexturedPattern width={100} height={100} borderRadius={24} />
+          </div>
+
+          {/* Main icon container */}
+          <div style={getVibeCardMainIconContainerStyle(isHovered)}>
+            {IconComponent ? (
+              <IconComponent width={68} height={68} fill="var(--vibes-near-black)" />
+            ) : (
+              <img
+                src={imageSrc}
+                alt={`Icon for ${vibeName}`}
+                style={getVibeCardIconImageStyle()}
+                loading="lazy"
+                onError={handleImageError}
+              />
+            )}
+          </div>
+        </div>
+        {/* Vibe name */}
+        <div style={getVibeCardNameStyle()}>
           {vibeName}
         </div>
       </div>

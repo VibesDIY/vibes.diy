@@ -377,6 +377,9 @@ export { useVibes } from './hooks/vibes-gen/index.js';
 export { VibeControl } from './components/VibeControl.js';
 export type { VibeControlProps } from './components/VibeControl.js';
 
+// Export icons
+export * from './components/icons/index.js';
+
 // Export HiddenMenuWrapper component and utilities
 export { HiddenMenuWrapper } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';
 export type { HiddenMenuWrapperProps } from './components/HiddenMenuWrapper/HiddenMenuWrapper.js';

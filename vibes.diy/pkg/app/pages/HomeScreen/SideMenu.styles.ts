@@ -22,7 +22,7 @@ export const getSideMenuContainer = (isClosing = false): CSSProperties => ({
   bottom: 0,
   width: "400px",
   maxWidth: "90vw",
-  backgroundColor: "#fefff2",
+  backgroundColor: "var(--vibes-cream)",
   zIndex: 9999,
   display: "flex",
   flexDirection: "column",
@@ -34,6 +34,7 @@ export const getSideMenuContainer = (isClosing = false): CSSProperties => ({
     ? "slideOutRight 0.5s cubic-bezier(0.64, 0, 0.66, 0) forwards"
     : "slideInRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
   fontFamily: "'Alte Haas Grotesk', 'Inter', sans-serif",
+  backgroundClip: "var(--vibes-cream)",
 });
 
 // Header section with title and close button
@@ -42,7 +43,7 @@ export const getSideMenuHeader = (): CSSProperties => ({
   alignItems: "center",
   justifyContent: "space-between",
   padding: "14px",
-  backgroundColor: "#fefff2",
+  backgroundColor: "var(--vibes-cream)",
   position: "relative",
 });
 
@@ -77,7 +78,7 @@ export const getSideMenuNav = (): CSSProperties => ({
   flex: 1,
   padding: "40px 24px",
   overflowY: "auto",
-  backgroundColor: "#fefff2",
+  backgroundColor: "var(--vibes-cream)",
 });
 
 // Menu list
@@ -106,7 +107,7 @@ export const getSideMenuItemAnimation = (
 // Footer section
 export const getSideMenuFooter = (): CSSProperties => ({
   padding: "24px",
-  backgroundColor: "#fefff2",
+  backgroundColor: "var(--vibes-cream)",
 });
 
 // Login button

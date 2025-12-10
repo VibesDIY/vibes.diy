@@ -5,7 +5,7 @@ export const HomeScreenTheme = {
     menuText: "white",
     contentBg: "#1e1e1e",
     shadow: "rgba(0, 0, 0, 0.3)",
-    gridLineColor: "#fffff0",
+    gridLineColor: "var(--vibes-cream)",
   },
   dimensions: {
     padding: "20px",
@@ -90,7 +90,7 @@ export const getMenuStyle = (): CSSProperties => ({
   left: 0,
   right: 0,
   height: "64px",
-  backgroundColor: "#fefff2",
+  backgroundColor: "var(--vibes-cream)",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -100,7 +100,7 @@ export const getMenuStyle = (): CSSProperties => ({
   fontFamily: HomeScreenTheme.fonts.primary,
   borderTopLeftRadius: "10px",
   borderTopRightRadius: "10px",
-  boxShadow: `0px 1px 0px 0px "#fefff2"`,
+  boxShadow: `0px 1px 0px 0px var(--vibes-cream)`,
 });
 
 // Buttons wrapper
@@ -137,7 +137,7 @@ export const getNavbarButtonIconWrapper = (): CSSProperties => ({
 
 // Navbar button label (neo-brutalist style)
 export const getNavbarButtonLabel = (): CSSProperties => ({
-  color: "#fefff2",
+  color: "var(--vibes-cream)",
   fontSize: "14px",
   fontWeight: "bold",
   whiteSpace: "nowrap",
@@ -310,7 +310,7 @@ export const getMessageBubbleStyle = (
 ): CSSProperties => ({
   padding: "16px 20px",
   borderRadius: isCurrentUser ? "20px 20px 4px 20px" : "20px 20px 20px 4px",
-  background: isCurrentUser ? "#fefff1" : "#5298c8",
+  background: isCurrentUser ? "var(--vibes-cream)" : "#5298c8",
   color: isCurrentUser ? "#000000" : "#ffffff",
   wordWrap: "break-word",
   fontSize: "15px",
@@ -355,7 +355,7 @@ export const getChatContainerTopBar = (): CSSProperties => ({
 
 export const getChatContainerBottomCard = (): CSSProperties => ({
   padding: "16px",
-  backgroundColor: "#FFFFF0",
+  backgroundColor: "var(--vibes-cream)",
   color: "#221f20",
   border: "1px solid black",
   boxShadow: "0 0 0 1px white",
