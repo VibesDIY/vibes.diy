@@ -33,7 +33,7 @@ function enhance(
 
 export function ImportMap() {
   const ver = {
-    FP: "0.24.3-dev-ensure-cloud-token-1",
+    FP: "0.24.3-dev-ensure-cloud-token-7",
   };
   const importMap = {
     "dequal/lite": "https://esm.sh/dequal@2.0.3/lite",
@@ -110,8 +110,6 @@ export function ImportMap() {
     "shiki/wasm": "https://esm.sh/shiki/wasm",
     "react-cookie-consent":
       "https://esm.sh/react-cookie-consent?deps=react@19.2.1,react-dom@19.2.1",
-
-    "@fireproof/": "FP",
 
     "use-vibes": "/dist/use-vibes/pkg/index.js",
     "use-fireproof": `https://esm.sh/use-fireproof@${ver.FP}`,
