@@ -69,11 +69,32 @@ openapi.use("/api/*", async (c, next) => {
 // Add Clerk authentication middleware
 openapi.use("/api/*", clerkMiddleware());
 
+// Blocked users list
+const BLOCKED_USER_IDS = [
+  "user_36Awou64ehhLseaItAZE5thsuWD", // Heavy API usage
+];
+
 // Extract user from Clerk auth and set on context
 openapi.use("/api/*", async (c, next) => {
   const auth = getAuth(c);
 
   if (auth?.userId) {
+    // Check if user is blocked
+    if (BLOCKED_USER_IDS.includes(auth.userId)) {
+      console.log("🚫 Blocked user attempt:", auth.userId);
+      return c.json(
+        {
+          error: {
+            message:
+              "Your account has exceeded usage limits. Please reach out about payment at help@vibes.diy",
+            type: "access_denied",
+            code: 403,
+          },
+        },
+        403,
+      );
+    }
+
     // Set user on context for endpoints to access
     c.set("user", {
       userId: auth.userId,
