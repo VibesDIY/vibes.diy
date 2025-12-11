@@ -9,7 +9,6 @@
  * @see ../colors.css
  */
 
-export const cssVariables = `
 /* ============================================
    CSS CUSTOM PROPERTIES
    Source: colors.css - Vibes Design System Color Tokens
@@ -229,4 +228,3 @@ export const cssVariables = `
     --imggen-button-bg: rgba(0, 0, 0, 0.7);
   }
 }
-`.trim();

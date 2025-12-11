@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
 import { ImgGenModal, ImgGenModalProps } from '@vibes.diy/use-vibes-base';
-import type { DocFileMeta } from 'use-fireproof';
+import type { DocFileMeta } from '@fireproof/use-fireproof';
 
 // Mock AsyncImg component
 vi.mock('../base/components/ImgGenUtils/AsyncImg.js', () => ({

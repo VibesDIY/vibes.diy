@@ -50,7 +50,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
 }));
 
 // Mock Fireproof
-vi.mock("use-fireproof", () => ({
+vi.mock("@fireproof/use-fireproof", () => ({
   useFireproof: () => mocks.mockUseFireproof(),
   ImgFile: vi.fn(),
   fireproof: vi.fn(),

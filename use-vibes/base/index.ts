@@ -10,7 +10,7 @@ import {
   useFireproof as originalUseFireproof,
   type Database,
   type UseFpToCloudParam,
-} from 'use-fireproof';
+} from '@fireproof/use-fireproof';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
 
@@ -49,7 +49,7 @@ const sthis = Lazy(() => ensureSuperThis());
 export { fireproof, ImgFile };
 
 // Re-export all types under a namespace
-export type * as Fireproof from 'use-fireproof';
+export type * as Fireproof from '@fireproof/use-fireproof';
 
 // Helper to check if JWT token is expired
 export async function isJWTExpired(token: string): Promise<boolean> {

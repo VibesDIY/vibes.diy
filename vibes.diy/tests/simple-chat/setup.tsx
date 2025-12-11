@@ -8,7 +8,7 @@ import type {
   ChatMessage,
   UserChatMessage,
 } from "@vibes.diy/prompts";
-import type { DocResponse } from "use-fireproof";
+import type { DocResponse } from "@fireproof/use-fireproof";
 
 type MockDoc = AiChatMessage | UserChatMessage;
 type AnyChatMessage = AiChatMessage | UserChatMessage;
@@ -174,9 +174,9 @@ VibesDiyEnv.env().sets({
 });
 
 // Mock Fireproof to prevent CRDT errors
-vi.mock("use-fireproof", async (original) => {
+vi.mock("@fireproof/use-fireproof", async (original) => {
   const { vi } = await import("vitest");
-  const all = (await original()) as typeof import("use-fireproof");
+  const all = (await original()) as typeof import("@fireproof/use-fireproof");
   return {
     ...all,
     useFireproof: () => ({

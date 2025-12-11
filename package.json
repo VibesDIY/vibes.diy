@@ -56,7 +56,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-1",
+    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-7",
     "@playwright/test": "^1.57.0",
     "@types/deno": "^2.5.0",
     "@types/node": "^24.9.1",
@@ -77,5 +77,13 @@
     "vitest": "^4.0.15",
     "wrangler": "^4.54.0",
     "zx": "^8.8.5"
+  },
+  "dependencies": {
+    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-7"
   }
 }

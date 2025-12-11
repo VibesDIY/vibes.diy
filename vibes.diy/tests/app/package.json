@@ -17,6 +17,12 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.5",
+    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-7",
     "@monaco-editor/react": "^4.7.0",
     "@react-router/node": "^7.10.1",
     "@react-router/serve": "^7.10.1",
@@ -37,12 +43,11 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.9.6",
     "react-router-dom": "^7.9.6",
-    "use-fireproof": "0.24.3-dev-ensure-cloud-token-1",
     "use-vibes": "workspace:*",
     "vibes-diy": "workspace:*"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-1",
+    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-7",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/react": "~19.2.7",

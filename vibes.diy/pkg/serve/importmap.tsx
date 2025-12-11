@@ -27,15 +27,23 @@ function enhance(
 
     enhancedMap[key] = enhancedValue;
   }
-
   return enhancedMap;
 }
 
-export function ImportMap() {
-  const ver = {
-    FP: "0.24.3-dev-ensure-cloud-token-7",
+export interface ImportMapProp {
+  versions: {
+    FP: string;
   };
+}
+
+export function ImportMap(prop?: Partial<ImportMapProp>) {
+  if (!(prop && prop.versions)) {
+    throw "WE need the Fireproof Version to be set";
+  }
+  const { versions } = prop;
+
   const importMap = {
+    tailwindcss: "https://esm.sh/tailwindcss",
     "dequal/lite": "https://esm.sh/dequal@2.0.3/lite",
     "use-sync-external-store": "https://esm.sh/use-sync-external-store@1.6.0",
     "@adviser/cement": "https://esm.sh/@adviser/cement@0.5.5",
@@ -57,6 +65,7 @@ export function ImportMap() {
       "https://esm.sh/posthog-js/react?deps=react@19.2.1,react-dom@19.2.1",
 
     react: "https://esm.sh/react@19.2.1",
+
     "/react": "https://esm.sh/react@19.2.1",
 
     "react?target=es2022": "https://esm.sh/react@19.2.1",
@@ -113,7 +122,7 @@ export function ImportMap() {
       "https://esm.sh/react-cookie-consent?deps=react@19.2.1,react-dom@19.2.1",
 
     "use-vibes": "/dist/use-vibes/pkg/index.js",
-    "use-fireproof": `https://esm.sh/use-fireproof@${ver.FP}`,
+    "use-fireproof": "/dist/use-vibes/pkg/index.js",
 
     "@vibes.diy/prompts": "/dist/prompts/pkg/index.js",
     "@vibes.diy/use-vibes-base": "/dist/use-vibes/base/index.js",
@@ -139,11 +148,12 @@ export function ImportMap() {
     "@fireproof/core-types-runtime": "FP",
     "@fireproof/core": "FP",
     "@fireproof/vendor": "FP",
+    "@fireproof/use-fireproof": "FP",
   };
 
   return (
     <script type="importmap">
-      {JSON.stringify({ imports: enhance(importMap, ver) }, null, 2)}
+      {JSON.stringify({ imports: enhance(importMap, versions) }, null, 2)}
     </script>
   );
 }

@@ -5,7 +5,6 @@
  * Extracted from global-styles.ts lines 323-435
  */
 
-export const keyframeAnimations = `
 /* ============================================
    KEYFRAME ANIMATIONS
    ============================================ */
@@ -119,4 +118,3 @@ export const keyframeAnimations = `
     background-position: 40px 0;
   }
 }
-`.trim();

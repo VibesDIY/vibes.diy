@@ -11,7 +11,12 @@ import {
   getLlmCatalog,
 } from "@vibes.diy/prompts";
 import { getSessionDatabaseName } from "../utils/databaseManager.js";
-import { Database, DocResponse, DocWithId, useFireproof } from "use-fireproof";
+import {
+  Database,
+  DocResponse,
+  DocWithId,
+  useFireproof,
+} from "@fireproof/use-fireproof";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { VibesDiyEnv } from "../config/env.js";
 

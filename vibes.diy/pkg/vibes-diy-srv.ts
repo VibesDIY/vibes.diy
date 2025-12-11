@@ -1,6 +1,11 @@
-import { loadAndRenderTSX, loadAndRenderJSX } from "./lib/render.ts";
+import {
+  loadAndRenderTSX,
+  loadAndRenderJSX,
+  renderScript,
+} from "./lib/render.ts";
 import { contentType } from "mime-types";
 import { getClerkKeyForHostname } from "./clerk-env.ts";
+import { Lazy } from "@adviser/cement";
 
 async function fetchVibeCode(appSlug: string): Promise<string> {
   // Fetch vibe code from hosting subdomain App.jsx endpoint
@@ -14,6 +19,7 @@ async function fetchVibeCode(appSlug: string): Promise<string> {
 async function handleVibeRequest(
   requestedPath: string,
   req: Request,
+  globalProps: Record<string, unknown>,
 ): Promise<Response | null> {
   // Handle /vibe/{appSlug} or /vibe/{appSlug}/{groupId} routes
   const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)(?:\/([^/]+))?/);
@@ -37,6 +43,7 @@ async function handleVibeRequest(
     // Render vibe.tsx template with transformed JS
     const vibePath = `${Deno.cwd()}/vibe.tsx`;
     const html = await loadAndRenderTSX(vibePath, {
+      ...globalProps,
       appSlug,
       groupId,
       transformedJS,
@@ -58,12 +65,77 @@ async function handleVibeRequest(
   }
 }
 
+const globalProps = Lazy(async () => {
+  const packageJsonStr = await Deno.readTextFile(`package.json`);
+  const packageJson = JSON.parse(packageJsonStr);
+  const FP = (
+    packageJson.dependencies["@fireproof/core-cli"] ??
+    packageJson.devDependencies["@fireproof/core-cli"]
+  ).replace(/^[^0-9]*/, "");
+  console.log("Fireproof-Version:", FP);
+  return { versions: { FP } };
+});
+
 Deno.serve({ port: 8001 }, async (req) => {
   const url = new URL(req.url);
   const requestedPath = url.pathname;
 
+  if (url.pathname === "/vibe-mount") {
+    const appSlug = url.searchParams.get("appSlug");
+    if (!appSlug) {
+      return new Response(
+        JSON.stringify({ error: "Missing appSlug parameter" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+    // const x = await loadAndRenderJSX(`<MountVibe appSlug="${appSlug}" />`)
+    // console.log(x)
+    return new Response(
+      `
+        import { mountVibe } from '/dist/vibes.diy/pkg/serve/mount-vibe.js';
+        import vibe from '/vibe-script?appSlug=${appSlug}';
+        mountVibe(vibe, { appSlug: '${appSlug}' });
+        `,
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/javascript",
+          "Access-Control-Allow-Origin": "*",
+        },
+      },
+    );
+  }
+  if (url.pathname === "/vibe-script") {
+    const appSlug = url.searchParams.get("appSlug");
+    if (!appSlug) {
+      return new Response(
+        JSON.stringify({ error: "Missing appSlug parameter" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+    const vibeCode = await fetchVibeCode(appSlug);
+    const transformedJS = await loadAndRenderJSX(vibeCode);
+    return new Response(transformedJS, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/javascript",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }
+
   // Check if this is a vibe route
-  const vibeResponse = await handleVibeRequest(requestedPath, req);
+  const vibeResponse = await handleVibeRequest(
+    requestedPath,
+    req,
+    await globalProps(),
+  );
   if (vibeResponse) {
     return vibeResponse;
   }
@@ -96,7 +168,7 @@ Deno.serve({ port: 8001 }, async (req) => {
   // If no static file found, render index.tsx
   try {
     const indexPath = `${cwd}/index.tsx`;
-    const html = await loadAndRenderTSX(indexPath);
+    const html = await loadAndRenderTSX(indexPath, await globalProps());
 
     return new Response(html, {
       status: 200,

@@ -12,13 +12,32 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
         version: 9.39.1
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.57.0
         version: 1.57.0
@@ -85,13 +104,28 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@types/node':
         specifier: ^24.9.1
         version: 24.10.1
@@ -104,13 +138,31 @@ importers:
 
   call-ai/tests/integration:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       call-ai:
         specifier: workspace:0.0.0
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.57.0
         version: 1.57.0
@@ -135,6 +187,24 @@ importers:
 
   call-ai/tests/unit:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       call-ai:
         specifier: workspace:0.0.0
         version: link:../../pkg
@@ -175,9 +245,24 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -201,8 +286,8 @@ importers:
         version: 3.25.76
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
         version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
@@ -221,6 +306,24 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20251205.0
         version: 4.20251205.0
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@hono/clerk-auth':
         specifier: ^3.0.3
         version: 3.0.3(hono@4.10.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -264,6 +367,24 @@ importers:
 
   hosting/tests/unit:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@vibes.diy/hosting':
         specifier: workspace:*
         version: link:../../pkg
@@ -310,9 +431,24 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -324,8 +460,8 @@ importers:
         version: 19.2.1
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
         version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
@@ -341,6 +477,24 @@ importers:
 
   prompts/tests:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@vibes.diy/prompts':
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -402,18 +556,24 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
       '@fireproof/core-keybag':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -432,9 +592,6 @@ importers:
       react-dom:
         specifier: 19.2.1
         version: 19.2.1(react@19.2.1)
-      use-fireproof:
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       zod:
         specifier: ^4.1.12
         version: 4.1.13
@@ -443,14 +600,14 @@ importers:
         specifier: ^4.1.3
         version: 4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@storybook/addon-a11y':
         specifier: ^10.1.7
         version: 10.1.7(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
       '@storybook/addon-docs':
         specifier: ^10.0.0
-        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.4(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/react':
         specifier: ^10.0.8
         version: 10.1.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
@@ -484,6 +641,24 @@ importers:
 
   use-vibes/examples/hosted-dev:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       call-ai:
         specifier: workspace:*
         version: link:../../../call-ai/pkg
@@ -527,6 +702,24 @@ importers:
 
   use-vibes/examples/react-example:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       react:
         specifier: 19.2.1
         version: 19.2.1
@@ -579,6 +772,24 @@ importers:
 
   use-vibes/pkg:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
@@ -587,8 +798,8 @@ importers:
         version: 19.2.1
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
         version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
@@ -598,6 +809,24 @@ importers:
 
   use-vibes/tests:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@improvements/vite-plugin-devtools-json':
         specifier: ^0.0.3
         version: 0.0.3(vite@7.2.7(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
@@ -613,9 +842,6 @@ importers:
       react-dom:
         specifier: 19.2.1
         version: 19.2.1(react@19.2.1)
-      use-fireproof:
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -683,19 +909,34 @@ importers:
 
   use-vibes/types:
     dependencies:
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       react:
         specifier: 19.2.1
         version: 19.2.1
-      use-fireproof:
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@types/react':
         specifier: ~19.2.7
         version: 19.2.7
@@ -711,6 +952,9 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
+      '@clerk/clerk-js':
+        specifier: ^5.114.1
+        version: 5.114.1(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)
       '@clerk/clerk-react':
         specifier: ^5.57.0
         version: 5.57.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -718,11 +962,23 @@ importers:
         specifier: ^4.20251205.0
         version: 4.20251205.0
       '@fireproof/core':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(react@19.2.1)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -804,13 +1060,19 @@ importers:
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
-      use-fireproof:
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
     devDependencies:
+      '@babel/parser':
+        specifier: ^7.28.5
+        version: 7.28.5
+      '@babel/traverse':
+        specifier: ^7.28.5
+        version: 7.28.5
+      '@babel/types':
+        specifier: ^7.28.5
+        version: 7.28.5
       '@chromatic-com/storybook':
         specifier: ^4.1.3
         version: 4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
@@ -818,8 +1080,11 @@ importers:
         specifier: ^1.17.1
         version: 1.17.1(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
+      '@pnpm/lockfile-file':
+        specifier: ^9.1.3
+        version: 9.1.3(@pnpm/logger@5.2.0)
       '@react-router/dev':
         specifier: ^7.9.6
         version: 7.9.6(@react-router/serve@7.10.1(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3))(@types/node@25.0.1)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))(yaml@2.8.2)
@@ -844,6 +1109,9 @@ importers:
       '@types/babel__standalone':
         specifier: ^7.1.9
         version: 7.1.9
+      '@types/babel__traverse':
+        specifier: ^7.28.0
+        version: 7.28.0
       '@types/mime-types':
         specifier: ^3.0.1
         version: 3.0.1
@@ -856,6 +1124,9 @@ importers:
       '@vitest/browser-playwright':
         specifier: ^4.0.15
         version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+      cmd-ts:
+        specifier: ^0.14.3
+        version: 0.14.3
       concurrently:
         specifier: ^9.1.2
         version: 9.2.1
@@ -865,6 +1136,9 @@ importers:
       deno:
         specifier: ^2.5.6
         version: 2.6.0
+      find-up:
+        specifier: ^8.0.0
+        version: 8.0.0
       mime-types:
         specifier: ^3.0.2
         version: 3.0.2
@@ -904,12 +1178,36 @@ importers:
       vitest:
         specifier: ^4.0.15
         version: 4.0.15(@opentelemetry/api@1.8.0)(@types/node@25.0.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      yaml:
+        specifier: ^2.8.2
+        version: 2.8.2
+      zx:
+        specifier: ^8.8.5
+        version: 8.8.5
 
   vibes.diy/tests/app:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -970,9 +1268,6 @@ importers:
       react-router-dom:
         specifier: ^7.9.6
         version: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      use-fireproof:
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -981,8 +1276,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -1016,6 +1311,24 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
+      '@fireproof/core':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -1070,9 +1383,6 @@ importers:
       react-router:
         specifier: ^7.9.6
         version: 7.9.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      use-fireproof:
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -1081,8 +1391,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.3-dev-ensure-cloud-token-1
-        version: 0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-ensure-cloud-token-7
+        version: 0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -1398,6 +1708,13 @@ packages:
       react: 19.2.1
       react-dom: 19.2.1
 
+  '@clerk/clerk-js@5.114.1':
+    resolution: {integrity: sha512-l3A9UZKWOI7rCz/P9o2bS4hSTRLzPqr9eAPxhBFsfUsGgzlxQjVeyRQ2XgOXfvwsgekmulVHzlbvGZidT7JF6A==}
+    engines: {node: '>=18.17.0'}
+    peerDependencies:
+      react: 19.2.1
+      react-dom: 19.2.1
+
   '@clerk/clerk-react@5.57.0':
     resolution: {integrity: sha512-GCBFF03HjEWvx58myjauJ7NrwTqhxHdetjWWxVM3YJGPOsAVXg4WuquL/hyn8KDuduCYSkRin4Hg6+QVP1NXAg==}
     engines: {node: '>=18.17.0'}
@@ -1405,8 +1722,8 @@ packages:
       react: 19.2.1
       react-dom: 19.2.1
 
-  '@clerk/localizations@3.29.1':
-    resolution: {integrity: sha512-edAZI+EVWpywe+Pn+mOhPoLFzCQZwKqOkZ5HB0TxsEP2BtbCmZbw8uQq7OXK3BVsbcYc19praGpChexrx9zKlw==}
+  '@clerk/localizations@3.30.1':
+    resolution: {integrity: sha512-CHatnmQsGggsBMOO3k82oEh9E7j8Xs/vjFtx+hwGwM/qcJ6CEPmP69QKeRBfAXY5PcJinAuyYmFEqMEFvbyjSw==}
     engines: {node: '>=18.17.0'}
 
   '@clerk/shared@3.36.0':
@@ -1433,12 +1750,24 @@ packages:
       react-dom:
         optional: true
 
+  '@clerk/shared@3.39.0':
+    resolution: {integrity: sha512-9kqqXGMPAdMQ7SXo5ZwUhbzbLLQeLp/1jdb8FQS5qlhmL0S0bAYKcyDjcmMB8xZPXNc7vZJRT72QHsGSlUAJxw==}
+    engines: {node: '>=18.17.0'}
+    peerDependencies:
+      react: 19.2.1
+      react-dom: 19.2.1
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   '@clerk/types@4.101.3':
     resolution: {integrity: sha512-QkYSiR8EDjLhQ3K9aCZ323knzZQggzhi3qxSdFrtI/C8Osyytua3Bu4TOGGRgYSSD4VO3s8WUz3wQf4Qe0ps/g==}
     engines: {node: '>=18.17.0'}
 
-  '@clerk/types@4.101.5':
-    resolution: {integrity: sha512-LEfEizGRM0hN/8GHaia8EIf7kcTHKh2R/Ebj7n1zETB88HrCrM6mvTVv/fqpf5203F1GsCR/UU2l18EOClfWGA==}
+  '@clerk/types@4.101.6':
+    resolution: {integrity: sha512-Ah6R65loy5Aq1jBpWo3x01IOlYJfgVn4LVAkSXKVQDtehn8w1bT2uJ7BTa2zH72A8F4K2HivkmMQa+v/37tLFA==}
     engines: {node: '>=18.17.0'}
 
   '@cloudflare/kv-asset-handler@0.4.1':
@@ -2298,72 +2627,78 @@ packages:
   '@fastify/static@7.0.4':
     resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
 
-  '@fireproof/core-base@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-70XfkRAowgZhYFIUs89Mm+DmlrxVkeKTQzzQ8Al9FsOuaTo/6VO0g3/flrOdLAV8PpyqAgDcKVij7aiev1i9EA==}
+  '@fireproof/core-base@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-eKx4J1XFewvRRJMOEEGugWknZxJweQsZmyEa2+n7FwfEDkeaeTfyjM34eVcQSLnYQxhEDNkM6DCKJa6I9u+Pjw==}
 
-  '@fireproof/core-blockstore@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-FyguY4TyTEE2keRKPjol8LHjH3Mnq6iIbgWbbBnLM7NMJuxxNxugrjTINQOi91KP1RfYO4OiqbD8fL4MR1VCUQ==}
+  '@fireproof/core-blockstore@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-ect50MKJUJB8kfFOW8IJqAbZr4OBaNJAu9gP4pSn7f0EHDh/GrZ3MnNI5PP+VtwEpgOf9ci0lfeSRlmdZHBDRg==}
 
-  '@fireproof/core-cli@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-UBWJu0BJiqusd4KCwUVVrsNP+77IdeUUNxmpRADJzkJhK7xfAWdgdV3wVsOmtF1hFsT5gnC+1jfmos7Ojx8HRA==}
+  '@fireproof/core-cli@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-LD2jdcKwGh1uCeLjWygeKXkXmg9J1PC2hm6esUpWU91u5jRKCjyPoS3EbVyZTrGMhT10cWyawt3Lrdc24aKX7A==}
     hasBin: true
 
-  '@fireproof/core-device-id@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-CvT2oC1IQI2eBNJUVqj57JO9PaYenGCtSK9E3VpX8D9oIVrgNEO0pmXJdOg3FpuFTxJBrqjvjtp+0b718jtWEg==}
+  '@fireproof/core-device-id@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-7vWGHPmFEoGOdPlwie5c+CVbaFbXyB5HX1Vv32R8FHnegTLLiQ6YQARqF5qe2/jX0TCxChWXveR7f6b4xVi6nQ==}
     engines: {node: '>=20'}
 
-  '@fireproof/core-gateways-base@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-s5Y9l4cMQrVFdod6/7CZNgvegvAJExB+fGGAmUFx4gEaCLruOu69XcxigOKenbRe04OqXiSlXEgUULVLHgWcIw==}
+  '@fireproof/core-gateways-base@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-fUFeMCQNMtdg+Hn2oyyUAq9GY8aslVQ+4DRzz4RqyenvIEAMfIjWjn3QMD5fzBFXBZahno9OHi36gY3CDDVYwQ==}
 
-  '@fireproof/core-gateways-cloud@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-valKl0KW4ta7E1YPPJkXpeqo+ZP1LcbeQ15T0/0tYmrZU8M/wUX2CJnWZbfDbKVQ8zS5a4KDGuzukudgTQqmJQ==}
+  '@fireproof/core-gateways-cloud@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-/xifmNyReoEsGBjuqXPCJl9Cuj79p8x7MufraYyiGWmo4noucIZKT61lcCiBhQm8YpnfvHIHRJZh6UeUDpZU0g==}
 
-  '@fireproof/core-gateways-file-deno@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-2QsvBAi4NSPCONh9fH4LqYH/NwOICR7PGEWr8U8X3TpUD0K8okJAXHvmDMVfJ/vmRg1O8qkIkbuuXvyw+QGyTg==}
+  '@fireproof/core-gateways-file-deno@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-rwJHnVVmjfmZYo/IY5MIiV3fkaGQO5svXzLuzmnO0d2r705SqyaysvY+nUSAcHNiycsq+5F9YNe0FBpHFcvvRA==}
 
-  '@fireproof/core-gateways-file-node@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-E3N9In+kDLqUuQT3wkOM9k5YKmRTvXt3IZcRmBUX6JS3hoZeFpjl9xTggvdB0XxZyOFBVquzSNhJNLB7/j6dlA==}
+  '@fireproof/core-gateways-file-node@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-kNr0uDAIvvbrRE2KPTtj0LHvRVPEV6dppBXbtj0zfvhwIXs05zMUP/W4r17nkP6ewSjJiK+MD1ceaBaIaDTbOQ==}
 
-  '@fireproof/core-gateways-file@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-Rg5yBE/ES29kpoLAd8/5bNHkLN9gTOaW+9LYoJyxIBOVwqAU9ZrEib6QcIdQFekivYHQqVsxaGv/MOAe/kJQ6g==}
+  '@fireproof/core-gateways-file@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-pZeDGUOA4dWvDiPyMj4ZKji93DGxD+2dzWcpSKnP60q14auInUuSpS44RnXl4tKFTcMmdat/Tcppzh5chpbocw==}
 
-  '@fireproof/core-gateways-indexeddb@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-xUzVWDnC6YDRxU0ISLagFt+iJEULNgKJtYldiDYVYzQvby06YqXuYzvdhBFNqCNuZmJFzvtr5wdLfLQpdSQcig==}
+  '@fireproof/core-gateways-indexeddb@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-PhAoi5/mdw5XOl+MWZyMEvMHAuUo2vq/wVK93s/JxOPoXuhS///yU5gL9rkm3zGtrRPCuSGA2kbouVa3ere+Ww==}
 
-  '@fireproof/core-gateways-memory@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-/hP6aGJ7vmjmqfBtpLY6ZFIHCrBSGrCflbWdZOY9Suv3hiDpUfpuGVgNVdkVwHud3k+DXBOhfHhTaXRNQ8bCog==}
+  '@fireproof/core-gateways-memory@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-JbfIFBBxRsv4W01S6Dnci2v0XBeKNQ4CPvqGI3gYgpl7BwXycdCKkLg9Gv1gGhhBDdoWi8tH/8gJLYesCS0Rzg==}
 
-  '@fireproof/core-keybag@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-4FR2+iQD3ke8AsqoocByckAGGCzJmjHXH1s1/tS5/CNtO/WP5s1DvUXonpf45yPIyvmkqrE48z4Ls3VzxeLmLQ==}
+  '@fireproof/core-keybag@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-HIfl+HGwbfKVYpt4jQ0+Vu4lT5b+x4v8PBF3ad5vnTg1ULu/V283ZxvBFOZfRx6mU2CN5P0zvoQ5GhPNLSxOwA==}
 
-  '@fireproof/core-protocols-cloud@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-Bed3b8DeKMU0DZVz74fGm4EFa72rEP+VMf9tQ9WHDBEH34bd8PwAhiIJz0OrDHAV79Amn2QuGKcS2aWhKR3wsw==}
+  '@fireproof/core-protocols-cloud@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-J+kAmrNvlXWTMzCxdE2UVMTH0Fs+KWJzOjJ970ZJ3BpFQhDj7+7Xxvr4rkE1Rlt++j5h0tu+iT521g+b327QAQ==}
 
-  '@fireproof/core-protocols-dashboard@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-qNCkKY/LORVc8OESZHOOi0OFpsYW8cUIx3sKFyYSjhY2NGJrbHuGSNCrl9aW4R+ByLBf0men1GKoioZqLFG2gw==}
+  '@fireproof/core-protocols-dashboard@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-A91qmkcYSneTSIuHF7V7n4prSqcewtKqOQEHhiSaVQGmGUl0ywWA1Etw/7Os10N7L3Obpppbkrnh+Rwyp3DhaA==}
 
-  '@fireproof/core-runtime@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-6wvFXvlq7mYgfuyE+gaXtlxltINnme/I5/AJSr2j/5Iu7PhK2zPtnOHIKWvGL07I41q8Jt3EOrDfgFJljvZgZQ==}
+  '@fireproof/core-runtime@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-0jAnf49yi7DHkEIVMBREIZD9uKcZNYdP8tQ37Dir9xgq8EzeYqNfsYWIlsiXzsqH7fRJNTUyQ3c9VaGtdLni/Q==}
 
-  '@fireproof/core-types-base@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-FG2GCdQHeKo/fmqamjMbgkno4K4fN0FvWt17E8pC92iJUPBdEMZtnRw3vVJL2mruschrNUkbDg5SyOkHoA4E9g==}
+  '@fireproof/core-types-base@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-Wq0FfwCmZwI5m+9OoRZ7B/UVsWHY13iGwQeLhPywH8r6okyes0te7ehGDHa9CQ9Gy1dBYQDUqjTJx5BwJUba+w==}
 
-  '@fireproof/core-types-blockstore@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-HkoXEttmGuDfjObQBFjGU+LjjWEIPTv0Qm+MasiUGYDjfgSGy3iVqvfRgiuiUFRr8NggOIfOJGEpua16zQg9oQ==}
+  '@fireproof/core-types-blockstore@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-r+3I5RNL1cPnFgEuiWA3akSuTC4u1+sgU6OBQ6LdjYDjpXFoauVZlc0rFd0VRKf0jXnf5ACxUVZ5JytnYOSTLw==}
 
-  '@fireproof/core-types-protocols-cloud@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-WEFGsrQaglIbAdTTn1ezpfg4fgmQMlbxO2acyLV8gD6MATd6DphKXyPvtuYrUljKUUhUkR2vw7lmP6ADcYHdmg==}
+  '@fireproof/core-types-protocols-cloud@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-eQ/iUL8UQtz7RwbQqHWN/tW4gnAPyutxgzj+JypI1QwRpkN4XowM7ratQbLYNLB2TwRC2cAf8XOWYqVx3GLl9w==}
 
-  '@fireproof/core-types-runtime@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-pKoBoV9JB8VRrvrg33jyu/2V598RVUujO612EutQxVO/tjayJzcgJUrL49LfSbOQfKAlc+NdUHrviepdPmanag==}
+  '@fireproof/core-types-runtime@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-jwjGeC1c6wsIGyC+A0Vvhb4sJiXqvTk7l6xlQDf8545PGdd85r0Z26Fc95B0HMdrTlfcXXSDNjlHrIjUMRWhXA==}
 
-  '@fireproof/core@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-iwaGdLtsDqa0lts780MsTRIyPS1kwEULgPGEVBZkEpPX7zxmV0c1+3vl3clUPR19Hp2YlQ9v4J0T9xMGK2aduA==}
+  '@fireproof/core@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-XQZMYOqGMgIz0Mm32Y9we3JFSjEjOI4uwxQmRHBm7fh+Dv0jRHwLLMS7rZhr/DvWoEC387xAUMPaLxahsX3ihA==}
     peerDependencies:
       react: 19.2.1
 
-  '@fireproof/vendor@0.24.3-dev-ensure-cloud-token-1':
-    resolution: {integrity: sha512-fLuoWEuzfGTafs9/QwhHW3rVmAtFOx+xKrC+MF96VEKJLdk/yEM4e5cNJyfqY4gxYKRIZAfeIuYZQb2MsBUtKw==}
+  '@fireproof/use-fireproof@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-Oj0NuKztQ4cWQS4wAtpsR1VZNpyMk94k56rS7/gyafTHEkx/BhxMuII94mk+CZydWpQuS6EMcvCANzApq7F5Ig==}
+    peerDependencies:
+      '@adviser/cement': '>=0.4.20'
+      react: 19.2.1
+
+  '@fireproof/vendor@0.24.3-dev-ensure-cloud-token-7':
+    resolution: {integrity: sha512-yqkJimMwPQYYaUBluD4sIeDabx1iafrzMFN5P12VsQK3DL1W43zYfv2DilbYqVAzZTwLE+IFuuWJ1SY/rXdWTw==}
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -3745,6 +4080,11 @@ packages:
     peerDependencies:
       storybook: ^10.1.2
 
+  '@storybook/addon-docs@10.1.4':
+    resolution: {integrity: sha512-TWLDJNLS/S3AUyTf9x0Hb8k7d+VWMJCH9dWAS0QenvJG8ga9VaehO6r+e+3YyIDbO1ev3UST3GCjh9SY8tzwRA==}
+    peerDependencies:
+      storybook: ^10.1.4
+
   '@storybook/addon-onboarding@10.1.7':
     resolution: {integrity: sha512-xUgrFTeMfmBXtt2sv6zR6eklfyqcsnz79c8q8tLuwGXuF03S8vIaZm/PkKqR/NqQTTx3BAgooRX9uayhLvLNHQ==}
     peerDependencies:
@@ -3762,6 +4102,24 @@ packages:
       esbuild: '*'
       rollup: '*'
       storybook: ^10.1.2
+      vite: '*'
+      webpack: '*'
+    peerDependenciesMeta:
+      esbuild:
+        optional: true
+      rollup:
+        optional: true
+      vite:
+        optional: true
+      webpack:
+        optional: true
+
+  '@storybook/csf-plugin@10.1.4':
+    resolution: {integrity: sha512-nudIBYx8fBz+1j2Xn1pdfGcgMJ78N/1NFB4MYAxI3YEzxGnQwUjihOO1x3siAXPbjFGmnVHoBx7+6IpO3F70GA==}
+    peerDependencies:
+      esbuild: '*'
+      rollup: '*'
+      storybook: ^10.1.4
       vite: '*'
       webpack: '*'
     peerDependenciesMeta:
@@ -3807,6 +4165,13 @@ packages:
       react: 19.2.1
       react-dom: 19.2.1
       storybook: ^10.1.2
+
+  '@storybook/react-dom-shim@10.1.4':
+    resolution: {integrity: sha512-PARu2HA5nYU1AkioNJNc430pz0oyaHFSSAdN3NEaWwkoGrCOo9ZpAXP9V7wlJANCi1pndbC84gSuHVnBXJBG6g==}
+    peerDependencies:
+      react: 19.2.1
+      react-dom: 19.2.1
+      storybook: ^10.1.4
 
   '@storybook/react-dom-shim@10.1.7':
     resolution: {integrity: sha512-cjIoNbWnGiet3vRjswnnh3ioN+X2ZEqDBIV6b+WN8RpGSUs3vg6V2s7G8IzgSfxFDahIqQ6D7yot3aOOlN+qBw==}
@@ -4090,6 +4455,9 @@ packages:
 
   '@types/node@24.5.2':
     resolution: {integrity: sha512-FYxk1I7wPv3K2XBaoyH2cTnocQEu8AOZ60hPbsyukMPLv5/5qr7V1i8PLHdl6Zf87I+xZXFvPCXYjiTFq+YSDQ==}
+
+  '@types/node@25.0.0':
+    resolution: {integrity: sha512-rl78HwuZlaDIUSeUKkmogkhebA+8K1Hy7tddZuJ3D0xV8pZSfsYGTsliGUol1JPzu9EKnTxPC4L1fiWouStRew==}
 
   '@types/node@25.0.1':
     resolution: {integrity: sha512-czWPzKIAXucn9PtsttxmumiQ9N0ok9FrBwgRWrwmVLlp86BrMExzvXRLFYRJ+Ex3g6yqj+KuaxfX1JTgV2lpfg==}
@@ -4618,8 +4986,8 @@ packages:
       zod:
         optional: true
 
-  abitype@1.2.1:
-    resolution: {integrity: sha512-AhkAWBE5QqzSuaPi6B9w5scl5739iBknQdFFAbY/CybASOBVWtVmPavUYW1OrDRX/iZWB/Je80xhJMZz2G4G1Q==}
+  abitype@1.2.2:
+    resolution: {integrity: sha512-4DOIMWscIB3j8hboLAUjLZCE8TMLdgecBpHFumfU4PdO/C1SBCVx4Nu1wPYXaL2iK8B0Jk3tiwnDLCpUtm3fZg==}
     peerDependencies:
       typescript: '>=5.0.4'
       zod: ^3.22.0 || ^4.0.0
@@ -9925,12 +10293,6 @@ packages:
   urlpattern-polyfill@8.0.2:
     resolution: {integrity: sha512-Qp95D4TPJl1kC9SKigDcqgyM2VDVO4RiJc2d4qe5GrYm+zbIQCWWKAFaJNQ4BhdFeDGwBmAxqJBwWSJDb9T3BQ==}
 
-  use-fireproof@0.24.3-dev-ensure-cloud-token-1:
-    resolution: {integrity: sha512-66InVey+0hIzljVCOBTzsOts6wWuss2R/aWUa1Uy3zjrTVXrAQEI8pZgKOdtbkqs7fZWMoneaX1o25qm+IppCQ==}
-    peerDependencies:
-      '@adviser/cement': '>=0.4.20'
-      react: 19.2.1
-
   use-sync-external-store@1.6.0:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
     peerDependencies:
@@ -10729,8 +11091,45 @@ snapshots:
   '@clerk/clerk-js@5.113.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)':
     dependencies:
       '@base-org/account': 2.0.1(@types/react@19.2.7)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)
-      '@clerk/localizations': 3.29.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@clerk/localizations': 3.30.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@clerk/shared': 3.38.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@coinbase/wallet-sdk': 4.3.0
+      '@emotion/cache': 11.11.0
+      '@emotion/react': 11.11.1(@types/react@19.2.7)(react@19.2.1)
+      '@floating-ui/react': 0.27.12(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@floating-ui/react-dom': 2.1.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@formkit/auto-animate': 0.8.4
+      '@stripe/stripe-js': 5.6.0
+      '@swc/helpers': 0.5.17
+      '@tanstack/query-core': 5.87.4
+      '@zxcvbn-ts/core': 3.0.4
+      '@zxcvbn-ts/language-common': 3.0.4
+      alien-signals: 2.0.6
+      browser-tabs-lock: 1.3.0
+      copy-to-clipboard: 3.3.3
+      core-js: 3.41.0
+      crypto-js: 4.2.0
+      dequal: 2.0.3
+      input-otp: 1.4.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      qrcode.react: 4.2.0(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      regenerator-runtime: 0.14.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - bufferutil
+      - immer
+      - supports-color
+      - typescript
+      - use-sync-external-store
+      - utf-8-validate
+      - zod
+
+  '@clerk/clerk-js@5.114.1(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)':
+    dependencies:
+      '@base-org/account': 2.0.1(@types/react@19.2.7)(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)
+      '@clerk/localizations': 3.30.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@clerk/shared': 3.39.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@coinbase/wallet-sdk': 4.3.0
       '@emotion/cache': 11.11.0
       '@emotion/react': 11.11.1(@types/react@19.2.7)(react@19.2.1)
@@ -10770,9 +11169,9 @@ snapshots:
       react-dom: 19.2.1(react@19.2.1)
       tslib: 2.8.1
 
-  '@clerk/localizations@3.29.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+  '@clerk/localizations@3.30.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
-      '@clerk/types': 4.101.5(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@clerk/types': 4.101.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
     transitivePeerDependencies:
       - react
       - react-dom
@@ -10801,6 +11200,18 @@ snapshots:
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
 
+  '@clerk/shared@3.39.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      csstype: 3.1.3
+      dequal: 2.0.3
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.5
+      std-env: 3.10.0
+      swr: 2.3.4(react@19.2.1)
+    optionalDependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+
   '@clerk/types@4.101.3(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
       '@clerk/shared': 3.36.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -10808,9 +11219,9 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/types@4.101.5(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+  '@clerk/types@4.101.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
-      '@clerk/shared': 3.38.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@clerk/shared': 3.39.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
     transitivePeerDependencies:
       - react
       - react-dom
@@ -11405,16 +11816,16 @@ snapshots:
       fastq: 1.19.1
       glob: 10.5.0
 
-  '@fireproof/core-base@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-base@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@ipld/dag-cbor': 9.2.5
       '@web3-storage/pail': 0.6.2
       charwise: 3.0.1
@@ -11424,20 +11835,20 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-blockstore@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-blockstore@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-gateways-memory': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-gateways-file': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-gateways-indexeddb': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-gateways-memory': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@ipld/car': 5.4.2
       '@ipld/dag-cbor': 9.2.5
       '@ipld/dag-json': 10.2.5
@@ -11450,14 +11861,14 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-cli@0.24.3-dev-ensure-cloud-token-1(@pnpm/logger@5.2.0)(typescript@5.9.3)':
+  '@fireproof/core-cli@0.24.3-dev-ensure-cloud-token-7(@pnpm/logger@5.2.0)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-device-id': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-device-id': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@hono/node-server': 1.19.6(hono@4.10.7)
       '@pnpm/lockfile-file': 9.1.3(@pnpm/logger@5.2.0)
       '@typescript/native-preview': 7.0.0-dev.20251207.1
@@ -11478,121 +11889,121 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fireproof/core-device-id@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-device-id@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       jose: 6.1.3
       multiformats: 13.4.1
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-base@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-gateways-base@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@ipld/dag-json': 10.2.5
       '@web3-storage/pail': 0.6.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-cloud@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-gateways-cloud@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-protocols-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-protocols-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       jose: 6.1.3
     transitivePeerDependencies:
       - bufferutil
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-gateways-file-deno@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-gateways-file-deno@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@types/deno': 2.5.0
       '@types/node': 24.5.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file-node@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-gateways-file-node@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-gateways-file@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-gateways-file-deno': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-gateways-file-node': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-gateways-file-deno': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-gateways-file-node': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-indexeddb@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-gateways-indexeddb@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       idb: 8.0.3
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-memory@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-gateways-memory@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-keybag@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-keybag@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-gateways-file': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-gateways-indexeddb': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       jose: 6.1.3
       multiformats: 13.4.1
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-protocols-cloud@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-protocols-cloud@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@types/ws': 8.18.1
       ws: 8.18.3
     transitivePeerDependencies:
@@ -11600,15 +12011,15 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-protocols-dashboard@0.24.3-dev-ensure-cloud-token-1(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))':
+  '@fireproof/core-protocols-dashboard@0.24.3-dev-ensure-cloud-token-7(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
       '@clerk/clerk-js': 5.113.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))(zod@4.1.13)
-      '@fireproof/core-device-id': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-device-id': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       zod: 4.1.13
     transitivePeerDependencies:
       - '@types/react'
@@ -11621,15 +12032,15 @@ snapshots:
       - use-sync-external-store
       - utf-8-validate
 
-  '@fireproof/core-runtime@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-runtime@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
       '@adviser/ts-xxhash': 1.0.2
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       cborg: 4.3.2
       jose: 6.1.3
       multiformats: 13.4.1
@@ -11637,11 +12048,11 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-base@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-types-base@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
       jose: 6.1.3
       multiformats: 13.4.1
@@ -11650,43 +12061,43 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-blockstore@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-types-blockstore@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
       multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-protocols-cloud@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-types-protocols-cloud@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       jose: 6.1.3
       multiformats: 13.4.1
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-runtime@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/core-types-runtime@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       multiformats: 13.4.1
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core@0.24.3-dev-ensure-cloud-token-1(react@19.2.1)(typescript@5.9.3)':
+  '@fireproof/core@0.24.3-dev-ensure-cloud-token-7(react@19.2.1)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
       '@types/node': 24.5.2
       react: 19.2.1
     transitivePeerDependencies:
@@ -11694,7 +12105,33 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/vendor@0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)':
+  '@fireproof/use-fireproof@0.24.3-dev-ensure-cloud-token-7(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.3-dev-ensure-cloud-token-7(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
+      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)
+      dompurify: 3.3.0
+      jose: 6.1.3
+      react: 19.2.1
+      ts-essentials: 10.1.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - '@types/react'
+      - bufferutil
+      - immer
+      - react-dom
+      - supports-color
+      - typescript
+      - use-sync-external-store
+      - utf-8-validate
+
+  '@fireproof/vendor@0.24.3-dev-ensure-cloud-token-7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
       yocto-queue: 1.2.2
@@ -13459,6 +13896,23 @@ snapshots:
       - vite
       - webpack
 
+  '@storybook/addon-docs@10.1.4(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+    dependencies:
+      '@mdx-js/react': 3.1.1(@types/react@19.2.7)(react@19.2.1)
+      '@storybook/csf-plugin': 10.1.4(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@storybook/icons': 2.0.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@storybook/react-dom-shim': 10.1.4(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      ts-dedent: 2.2.0
+    transitivePeerDependencies:
+      - '@types/react'
+      - esbuild
+      - rollup
+      - vite
+      - webpack
+
   '@storybook/addon-onboarding@10.1.7(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))':
     dependencies:
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -13485,6 +13939,15 @@ snapshots:
       rollup: 4.53.3
       vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
+  '@storybook/csf-plugin@10.1.4(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+    dependencies:
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      unplugin: 2.3.11
+    optionalDependencies:
+      esbuild: 0.27.1
+      rollup: 4.53.3
+      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+
   '@storybook/csf-plugin@10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -13502,6 +13965,12 @@ snapshots:
       react-dom: 19.2.1(react@19.2.1)
 
   '@storybook/react-dom-shim@10.1.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))':
+    dependencies:
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+
+  '@storybook/react-dom-shim@10.1.4(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))':
     dependencies:
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
@@ -13809,6 +14278,11 @@ snapshots:
     dependencies:
       undici-types: 7.12.0
 
+  '@types/node@25.0.0':
+    dependencies:
+      undici-types: 7.16.0
+    optional: true
+
   '@types/node@25.0.1':
     dependencies:
       undici-types: 7.16.0
@@ -13852,7 +14326,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 24.10.3
+      '@types/node': 25.0.0
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.48.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
@@ -14509,7 +14983,7 @@ snapshots:
       typescript: 5.9.3
       zod: 4.1.13
 
-  abitype@1.2.1(typescript@5.9.3)(zod@4.1.13):
+  abitype@1.2.2(typescript@5.9.3)(zod@4.1.13):
     optionalDependencies:
       typescript: 5.9.3
       zod: 4.1.13
@@ -18973,7 +19447,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.1(typescript@5.9.3)(zod@4.1.13)
+      abitype: 1.2.2(typescript@5.9.3)(zod@4.1.13)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.9.3
@@ -18988,7 +19462,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.1(typescript@5.9.3)(zod@4.1.13)
+      abitype: 1.2.2(typescript@5.9.3)(zod@4.1.13)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.9.3
@@ -20868,32 +21342,6 @@ snapshots:
   urlpattern-polyfill@10.1.0: {}
 
   urlpattern-polyfill@8.0.2: {}
-
-  use-fireproof@0.24.3-dev-ensure-cloud-token-1(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1)):
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.3-dev-ensure-cloud-token-1(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.1))
-      '@fireproof/core-runtime': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-ensure-cloud-token-1(typescript@5.9.3)
-      dompurify: 3.3.0
-      jose: 6.1.3
-      react: 19.2.1
-      ts-essentials: 10.1.1(typescript@5.9.3)
-    transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - immer
-      - react-dom
-      - supports-color
-      - typescript
-      - use-sync-external-store
-      - utf-8-validate
 
   use-sync-external-store@1.6.0(react@19.2.1):
     dependencies:
