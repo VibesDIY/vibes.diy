@@ -72,6 +72,14 @@ class vibesDiyEnv {
       : "pk_test_c2luY2VyZS1jaGVldGFoLTMwLmNsZXJrLmFjY291bnRzLmRldiQ";
   });
 
+  // Helper for server-side Clerk key selection based on hostname
+  static getClerkKeyForHostname(hostname: string): string {
+    const isProduction = hostname === "vibes.diy";
+    return isProduction
+      ? "pk_live_Y2xlcmsudmliZXMuZGl5JA"
+      : "pk_test_c2luY2VyZS1jaGVldGFoLTMwLmNsZXJrLmFjY291bnRzLmRldiQ";
+  }
+
   // Vibes Service API
   readonly API_BASE_URL = Lazy(() => {
     const envUrl = this.env().get("VITE_API_BASE_URL");

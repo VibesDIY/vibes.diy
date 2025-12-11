@@ -41,6 +41,7 @@ export function ImportMap() {
     "@adviser/cement": "https://esm.sh/@adviser/cement@0.5.5",
     "@clerk/clerk-react":
       "https://esm.sh/@clerk/clerk-react?deps=react@19.2.1,react-dom@19.2.1",
+    "@clerk/clerk-js": "https://esm.sh/@clerk/clerk-js@5",
     multiformats: "https://esm.sh/multiformats",
     cborg: "https://esm.sh/cborg",
     "cborg/json": "https://esm.sh/cborg/json",

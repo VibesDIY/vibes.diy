@@ -1,5 +1,6 @@
 import { loadAndRenderTSX, loadAndRenderJSX } from "./lib/render.ts";
 import { contentType } from "mime-types";
+import { getClerkKeyForHostname } from "./clerk-env.ts";
 
 async function fetchVibeCode(appSlug: string): Promise<string> {
   // Fetch vibe code from hosting subdomain App.jsx endpoint
@@ -12,6 +13,7 @@ async function fetchVibeCode(appSlug: string): Promise<string> {
 
 async function handleVibeRequest(
   requestedPath: string,
+  req: Request,
 ): Promise<Response | null> {
   // Handle /vibe/{appSlug} or /vibe/{appSlug}/{groupId} routes
   const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)(?:\/([^/]+))?/);
@@ -28,12 +30,17 @@ async function handleVibeRequest(
     // Transform JSX → JS (externalized imports)
     const transformedJS = await loadAndRenderJSX(vibeCode);
 
+    // Get Clerk key for this hostname
+    const hostname = new URL(req.url).hostname;
+    const clerkPublishableKey = getClerkKeyForHostname(hostname);
+
     // Render vibe.tsx template with transformed JS
     const vibePath = `${Deno.cwd()}/vibe.tsx`;
     const html = await loadAndRenderTSX(vibePath, {
       appSlug,
       groupId,
       transformedJS,
+      clerkPublishableKey,
     });
 
     return new Response(html, {
@@ -56,7 +63,7 @@ Deno.serve({ port: 8001 }, async (req) => {
   const requestedPath = url.pathname;
 
   // Check if this is a vibe route
-  const vibeResponse = await handleVibeRequest(requestedPath);
+  const vibeResponse = await handleVibeRequest(requestedPath, req);
   if (vibeResponse) {
     return vibeResponse;
   }

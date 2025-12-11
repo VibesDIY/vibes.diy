@@ -1,5 +1,4 @@
 import React, { ReactElement, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { BrutalistCard } from "./vibes/BrutalistCard.js";
 import { DocFileMeta } from "use-fireproof";
 import { ImgFile } from "./SessionSidebar/ImgFile.js";
@@ -165,9 +164,9 @@ export default function PublishedVibeCard({
           {children}
         </div>
       ) : (
-        <Link to={linkUrl} className="block h-full w-full">
+        <a href={linkUrl} className="block h-full w-full">
           {cardContent}
-        </Link>
+        </a>
       )}
       {!disableLink && children}
     </BrutalistCard>
