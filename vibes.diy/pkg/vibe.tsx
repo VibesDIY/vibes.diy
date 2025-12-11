@@ -3,17 +3,21 @@ import { ImportMap } from "./serve/importmap.js";
 import { GlobalStyles } from "./serve/global-styles.js";
 import { Links } from "./serve/links.js";
 import { Meta } from "./serve/meta.js";
+import { clerkAuthScript } from "./serve/clerk-auth-script.js";
+import VibeControls from "./serve/vibe-controls.js";
 
 interface VibePageProps {
   appSlug: string;
   groupId?: string;
   transformedJS: string;
+  clerkPublishableKey: string;
 }
 
 export default function VibePage({
   appSlug,
   groupId: _groupId,
   transformedJS,
+  clerkPublishableKey,
 }: VibePageProps) {
   return (
     <html lang="en">
@@ -26,31 +30,15 @@ export default function VibePage({
         <Links />
         <GlobalStyles />
       </head>
-      <body>
-        <div id="vibes.diy"></div>
+      <body className="grid-background">
+        <div id="vibes.diy" className="min-h-screen"></div>
 
-        {/* Inject transformed JS - imports resolved by importmap */}
+        {/* Server-side rendered vibe controls (no React at runtime) */}
+        <VibeControls />
+
+        {/* Auth check and vibe mounting - combined to prevent flash */}
         <script type="module">
-          {`
-// Create Blob URL from transformed vibe code
-const vibeCode = \`${transformedJS.replace(/`/g, "\\`").replace(/\$/g, "\\$")}\`;
-const blob = new Blob([vibeCode], { type: 'application/javascript' });
-const moduleURL = URL.createObjectURL(blob);
-
-// Dynamically import to get default export
-import(moduleURL).then(async (module) => {
-  const AppComponent = module.default;
-
-  // Import ReactDOM and mount
-  const ReactDOM = await import('react-dom/client');
-  const root = ReactDOM.createRoot(document.getElementById('vibes.diy'));
-  const React = await import('react');
-  root.render(React.createElement(AppComponent));
-}).catch(err => {
-  console.error('Failed to mount vibe:', err);
-  document.getElementById('vibes.diy').innerHTML = '<pre>Error loading vibe: ' + err.message + '</pre>';
-});
-`}
+          {clerkAuthScript(clerkPublishableKey, transformedJS)}
         </script>
 
         {/* Tailwind Browser for runtime CSS */}

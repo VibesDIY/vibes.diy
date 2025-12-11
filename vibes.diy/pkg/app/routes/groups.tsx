@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router";
 import { useAllGroups } from "../hooks/useAllGroups.js";
 import PublishedVibeCard from "../components/PublishedVibeCard.js";
 import { BrutalistCard } from "../components/vibes/BrutalistCard.js";
@@ -33,12 +32,11 @@ function parseInstanceId(fullId: string): {
 }
 
 function GroupsContent() {
-  const navigate = useNavigate();
   const { groups, isLoading } = useAllGroups();
 
   const handleGroupClick = (fullId: string) => {
     const { titleId, installId } = parseInstanceId(fullId);
-    navigate(`/vibe/${titleId}/${installId}`);
+    window.location.href = `/vibe/${titleId}/${installId}`;
   };
 
   return (

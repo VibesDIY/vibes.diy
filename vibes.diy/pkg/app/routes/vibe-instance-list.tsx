@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "@clerk/clerk-react";
 // import LoggedOutView from "../components/LoggedOutView.js";
@@ -28,7 +28,6 @@ function extractInstallId(fullId: string, titleId: string): string {
 
 function VibeInstancesListContent() {
   const { titleId } = useParams<{ titleId: string }>();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newDescription, setNewDescription] = useState("");
@@ -76,20 +75,20 @@ function VibeInstancesListContent() {
         hasAutoNavigated.current = true;
         createInstance("Begin").then((fullId) => {
           const installId = extractInstallId(fullId, titleId);
-          navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
+          window.location.href = `/vibe/${titleId}/${installId}${searchSuffix}`;
         });
       } else if (instances.length === 1) {
         // Exactly 1 instance: navigate directly to it
         hasAutoNavigated.current = true;
         const instance = instances[0];
         const installId = extractInstallId(instance._id || "", titleId);
-        navigate(`/vibe/${titleId}/${installId}${searchSuffix}`);
+        window.location.href = `/vibe/${titleId}/${installId}${searchSuffix}`;
       }
       // If 2+ instances: do nothing, show the list
     }, 200);
 
     return () => clearTimeout(timeoutId);
-  }, [instances, isCreating, titleId, navigate, searchParams, createInstance]);
+  }, [instances, isCreating, titleId, searchParams, createInstance]);
 
   const handleCreate = async () => {
     if (!newDescription.trim()) return;
@@ -100,7 +99,7 @@ function VibeInstancesListContent() {
     // Navigate to the new instance (extract short ID and preserve query params)
     const installId = extractInstallId(fullId, titleId);
     const search = searchParams.toString();
-    navigate(`/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`);
+    window.location.href = `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`;
   };
 
   const handleUpdate = async (fullId: string) => {
@@ -243,9 +242,7 @@ function VibeInstancesListContent() {
                           titleId,
                         );
                         const search = searchParams.toString();
-                        navigate(
-                          `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`,
-                        );
+                        window.location.href = `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`;
                       }}
                     >
                       <h3 className="text-2xl font-bold mb-2">
@@ -286,9 +283,7 @@ function VibeInstancesListContent() {
                             titleId,
                           );
                           const search = searchParams.toString();
-                          navigate(
-                            `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`,
-                          );
+                          window.location.href = `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`;
                         }}
                         className="px-3 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded transition-colors font-medium"
                       >
