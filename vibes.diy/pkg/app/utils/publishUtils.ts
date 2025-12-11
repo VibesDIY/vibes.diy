@@ -2,7 +2,7 @@
  * Utilities for publishing apps to the server
  */
 
-import { DocFileMeta, fireproof } from "use-fireproof";
+import { DocFileMeta, fireproof } from "@fireproof/use-fireproof";
 import { VibesDiyEnv } from "../config/env.js";
 import {
   getSessionDatabaseName,

@@ -11,9 +11,10 @@ import { mockChatStateProps } from "./mockData.js";
  */
 
 // Mock the useFireproof hook
-vi.mock("use-fireproof", async () => {
-  const actual =
-    await vi.importActual<typeof import("use-fireproof")>("use-fireproof");
+vi.mock("@fireproof/use-fireproof", async () => {
+  const actual = await vi.importActual<
+    typeof import("@fireproof/use-fireproof")
+  >("@fireproof/use-fireproof");
   return {
     ...actual,
     useFireproof: () => ({

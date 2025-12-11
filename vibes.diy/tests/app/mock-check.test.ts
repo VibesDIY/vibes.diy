@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fireproof } from "use-fireproof";
+import { fireproof } from "@fireproof/use-fireproof";
 
 describe("use-fireproof mock", () => {
   it("should have fireproof export available", () => {

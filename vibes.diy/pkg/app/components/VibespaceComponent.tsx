@@ -7,7 +7,7 @@ import Wild from "./vibespace/Wild.js";
 import ExplodingBrain from "./vibespace/ExplodingBrain.js";
 import Cyberpunk from "./vibespace/Cyberpunk.js";
 import type { ReactElement } from "react";
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 
 // Define the structure of our vibe documents
 interface VibeDocument {

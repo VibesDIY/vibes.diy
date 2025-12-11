@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useMemo, useState } from "react";
 import { BrutalistCard } from "./vibes/BrutalistCard.js";
-import { DocFileMeta } from "use-fireproof";
+import { DocFileMeta } from "@fireproof/use-fireproof";
 import { ImgFile } from "./SessionSidebar/ImgFile.js";
 import {
   constructVibeIconUrl,

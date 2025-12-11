@@ -48,6 +48,12 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-7",
     "call-ai": "workspace:0.0.0"
   }
 }

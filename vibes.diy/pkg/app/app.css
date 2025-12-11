@@ -1,5 +1,7 @@
-@import "tailwindcss";
+@import "https://esm.sh/tailwindcss/index.css";
+/* @import "tailwindcss"; */
 @import "./styles/colors.css";
+@import "./styles/global-styles.css";
 
 @theme {
   /* Color definitions - these will be available as bg-midnight, text-tahiti, etc. */

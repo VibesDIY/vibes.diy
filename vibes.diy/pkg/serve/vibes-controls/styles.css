@@ -11,12 +11,6 @@
  * - BrutalistCard.styles.ts → Card borders, shadows, sizing
  */
 
-export const vibeControlsCSS = `
-/* ============================================
-   VIBE CONTROLS - SERVER-SIDE RENDERED STYLES
-   ============================================ */
-
-/* Grid background on body when panel is open (matches .grid-background) */
 body:has([data-vibe-controls-container] [data-vibe-switch].active) {
   background-color: #d4d4d4;
   background-image:
@@ -24,7 +18,9 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) {
     linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
   background-size: 40px 40px;
   background-attachment: scroll;
-  transition: background-color 0.3s ease, background-image 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    background-image 0.3s ease;
 }
 
 @media (min-width: 768px) {
@@ -43,15 +39,20 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) {
 }
 
 /* App mount blur and shift when panel is open */
-body:has([data-vibe-controls-container] [data-vibe-switch].active) #vibes\\.diy {
+body:has([data-vibe-controls-container] [data-vibe-switch].active)
+  #vibes\\.diy {
   filter: blur(4px);
   transform: translateY(-400px);
-  transition: filter 0.3s ease, transform 0.3s ease;
+  transition:
+    filter 0.3s ease,
+    transform 0.3s ease;
   pointer-events: none;
 }
 
 #vibes\\.diy {
-  transition: filter 0.3s ease, transform 0.3s ease;
+  transition:
+    filter 0.3s ease,
+    transform 0.3s ease;
 }
 
 /* Container - Fixed position lower right */
@@ -91,7 +92,10 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) #vibes\\.diy 
 
 /* SVG paths with transitions */
 [data-vibe-switch] svg path {
-  transition: d 0.3s ease, transform 0.8s ease, fill 2s ease;
+  transition:
+    d 0.3s ease,
+    transform 0.8s ease,
+    fill 2s ease;
 }
 
 /* Morphing path - changes shape when active */
@@ -210,29 +214,34 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) #vibes\\.diy 
 
 /* Default button shadow */
 [data-vibe-panel] button {
-  box-shadow: 8px 10px 0px 0px var(--vibes-variant-blue),
-              8px 10px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    8px 10px 0px 0px var(--vibes-variant-blue),
+    8px 10px 0px 2px var(--vibes-button-border);
 }
 
 /* Button variants */
 [data-vibe-panel] button[data-variant="blue"] {
-  box-shadow: 8px 10px 0px 0px var(--vibes-variant-blue),
-              8px 10px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    8px 10px 0px 0px var(--vibes-variant-blue),
+    8px 10px 0px 2px var(--vibes-button-border);
 }
 
 [data-vibe-panel] button[data-variant="red"] {
-  box-shadow: 8px 10px 0px 0px var(--vibes-variant-red),
-              8px 10px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    8px 10px 0px 0px var(--vibes-variant-red),
+    8px 10px 0px 2px var(--vibes-button-border);
 }
 
 [data-vibe-panel] button[data-variant="yellow"] {
-  box-shadow: 8px 10px 0px 0px var(--vibes-variant-yellow),
-              8px 10px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    8px 10px 0px 0px var(--vibes-variant-yellow),
+    8px 10px 0px 2px var(--vibes-button-border);
 }
 
 [data-vibe-panel] button[data-variant="gray"] {
-  box-shadow: 8px 10px 0px 0px var(--vibes-variant-gray),
-              8px 10px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    8px 10px 0px 0px var(--vibes-variant-gray),
+    8px 10px 0px 2px var(--vibes-button-border);
 }
 
 /* Button hover states */
@@ -241,23 +250,27 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) #vibes\\.diy 
 }
 
 [data-vibe-panel] button[data-variant="blue"]:hover {
-  box-shadow: 2px 3px 0px 0px var(--vibes-variant-blue),
-              2px 3px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    2px 3px 0px 0px var(--vibes-variant-blue),
+    2px 3px 0px 2px var(--vibes-button-border);
 }
 
 [data-vibe-panel] button[data-variant="red"]:hover {
-  box-shadow: 2px 3px 0px 0px var(--vibes-variant-red),
-              2px 3px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    2px 3px 0px 0px var(--vibes-variant-red),
+    2px 3px 0px 2px var(--vibes-button-border);
 }
 
 [data-vibe-panel] button[data-variant="yellow"]:hover {
-  box-shadow: 2px 3px 0px 0px var(--vibes-variant-yellow),
-              2px 3px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    2px 3px 0px 0px var(--vibes-variant-yellow),
+    2px 3px 0px 2px var(--vibes-button-border);
 }
 
 [data-vibe-panel] button[data-variant="gray"]:hover {
-  box-shadow: 2px 3px 0px 0px var(--vibes-variant-gray),
-              2px 3px 0px 2px var(--vibes-button-border);
+  box-shadow:
+    2px 3px 0px 0px var(--vibes-variant-gray),
+    2px 3px 0px 2px var(--vibes-button-border);
 }
 
 /* Button active (pressed) states */
@@ -379,4 +392,3 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) #vibes\\.diy 
   /* CSS variables will handle dark mode automatically */
   /* No explicit overrides needed here */
 }
-`.trim();

@@ -6,7 +6,6 @@
  * Extracted from global-styles.ts lines 437-732
  */
 
-export const tailwindUtilities = `
 /* ============================================
    UTILITY CLASSES
    ============================================ */
@@ -303,4 +302,3 @@ export const tailwindUtilities = `
     background-color: var(--color-dark-decorative-01);
   }
 }
-`.trim();

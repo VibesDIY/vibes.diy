@@ -5,7 +5,6 @@
  * Extracted from global-styles.ts lines 940-1116
  */
 
-export const componentStyles = `
 /* ============================================
    COMPONENT-SPECIFIC CLASSES
    ============================================ */
@@ -182,4 +181,3 @@ body:has(.page-grid-background) {
     border-color: var(--color-dark-primary);
   }
 }
-`.trim();

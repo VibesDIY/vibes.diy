@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import DynamicTable from "./DynamicTable.js";
 import { headersForDocs } from "./dynamicTableHelpers.js";
 // Import Fireproof for database access
-import { DocBase, useFireproof } from "use-fireproof";
+import { DocBase, useFireproof } from "@fireproof/use-fireproof";
 
 // Component for displaying database data
 const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({

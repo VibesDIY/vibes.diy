@@ -6,7 +6,6 @@
  * Extracted from global-styles.ts lines 734-939
  */
 
-export const pseudoElements = `
 /* ============================================
    PSEUDO-ELEMENT CLASSES
    ============================================ */
@@ -213,4 +212,3 @@ button:hover .bg-glimmer,
     );
   }
 }
-`.trim();

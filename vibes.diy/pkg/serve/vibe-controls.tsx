@@ -12,8 +12,8 @@
  */
 
 import React from "react";
-import { vibeControlsCSS } from "./vibe-controls-styles.js";
-import { vibeControlsScripts } from "./vibe-controls-scripts.js";
+// import { vibeControlsCSS } from "./vibes-controls/vibe-controls-styles.js";
+// import { vibeControlsScripts } from "./vibes-controls/scripts.js";
 
 export default function VibeControls() {
   return (
@@ -188,10 +188,12 @@ export default function VibeControls() {
       </div>
 
       {/* Inline styles for self-contained component */}
-      <style>{vibeControlsCSS}</style>
 
       {/* Vanilla JavaScript for interactivity */}
-      <script type="module">{vibeControlsScripts}</script>
+      <script
+        type="module"
+        src="/dist/vibes.diy/pkg/serve/vibes-controls/scripts.js"
+      />
     </>
   );
 }

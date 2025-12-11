@@ -2,7 +2,7 @@ import React from "react";
 import { StarIcon } from "./SessionSidebar/StarIcon.js";
 import PublishedVibeCard from "./PublishedVibeCard.js";
 import type { LocalVibe } from "../utils/vibeUtils.js";
-import { DocFileMeta } from "use-fireproof";
+import { DocFileMeta } from "@fireproof/use-fireproof";
 
 interface MyVibeCardProps {
   vibe: LocalVibe;

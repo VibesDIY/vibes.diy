@@ -5,7 +5,6 @@
  * Extracted from global-styles.ts lines 215-321
  */
 
-export const globalResets = `
 /* ============================================
    GLOBAL RESETS
    ============================================ */
@@ -113,4 +112,3 @@ a,
 .light {
   --sp-layout-height: 100vh !important;
 }
-`.trim();

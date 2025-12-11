@@ -4,7 +4,6 @@ import { renderToString } from "react-dom/server";
 import { Meta } from "~/vibes.diy/serve/meta.js";
 import { Links } from "~/vibes.diy/serve/links.js";
 import { ImportMap } from "~/vibes.diy/serve/importmap.js";
-import { GlobalStyles } from "~/vibes.diy/serve/global-styles.js";
 
 describe("serve/ module components", () => {
   describe("Meta component", () => {
@@ -125,26 +124,26 @@ describe("serve/ module components", () => {
     });
   });
 
-  describe("GlobalStyles component", () => {
-    it("should render style tag", () => {
-      // Act
-      const html = renderToString(<GlobalStyles />);
+  // describe("GlobalStyles component", () => {
+  //   it("should render style tag", () => {
+  //     // Act
+  //     // const html = renderToString(<GlobalStyles />);
 
-      // Assert
-      expect(html).toContain("<style>");
-      expect(html).toContain("</style>");
-    });
+  //     // Assert
+  //     expect(html).toContain("<style>");
+  //     expect(html).toContain("</style>");
+  //   });
 
-    it("should contain CSS content", () => {
-      // Act
-      const html = renderToString(<GlobalStyles />);
+  //   it("should contain CSS content", () => {
+  //     // Act
+  //     const html = renderToString(<GlobalStyles />);
 
-      // Assert
-      expect(html.length).toBeGreaterThan(20); // Should have meaningful content
-      // Should contain some CSS-like content
-      expect(html).toMatch(/[{};:]/); // Basic CSS syntax characters
-    });
-  });
+  //     // Assert
+  //     expect(html.length).toBeGreaterThan(20); // Should have meaningful content
+  //     // Should contain some CSS-like content
+  //     expect(html).toMatch(/[{};:]/); // Basic CSS syntax characters
+  //   });
+  // });
 
   describe("enhance helper function (from importmap.tsx)", () => {
     // Helper function to test the enhance logic
