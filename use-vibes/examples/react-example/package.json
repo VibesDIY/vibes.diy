@@ -16,8 +16,8 @@
     "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-9",
     "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-9",
     "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-9",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "use-vibes": "workspace:*"
   },
   "devDependencies": {
