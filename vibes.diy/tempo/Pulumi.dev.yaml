@@ -1,0 +1,7 @@
+config:
+  tempo:githubOrg: VibesDIY
+  tempo:githubRepo: vibes.diy
+  tempo:serverType: cpx21
+  tempo:location: hil
+  tempo:domain: vibesdiy.net
+  tempo:clusterName: tempo

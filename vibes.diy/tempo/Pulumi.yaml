@@ -1,0 +1,10 @@
+name: tempo
+description: Hetzner K3s cluster for GitHub Actions
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: typescript

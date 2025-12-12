@@ -66,15 +66,15 @@
     "chanfana": "^2.8.2",
     "hono": "^4.10.7",
     "jose": "^6.1.1",
-    "multiformats": "^13.4.0",
+    "multiformats": "^13.4.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.14",
+    "@vitest/browser-playwright": "^4.0.15",
     "prettier": "^3.7.4",
     "typescript": "^5.9.3",
-    "wrangler": "^4.45.1"
+    "wrangler": "^4.54.0"
   },
   "engines": {
     "node": ">=20.0.0"

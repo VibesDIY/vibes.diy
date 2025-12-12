@@ -1,0 +1,76 @@
+name: Deploy to K3s
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get OIDC Token
+        id: oidc
+        run: |
+          OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://kubernetes.default.svc.cluster.local" \
+            | jq -r '.value')
+          echo "::add-mask::$OIDC_TOKEN"
+          echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
+      
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          cat > ~/.kube/config <<KUBE_EOF
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              server: ${{ secrets.K8S_API_SERVER }}
+              certificate-authority-data: ${{ secrets.K8S_CA_CERT }}
+            name: k3s
+          contexts:
+          - context:
+              cluster: k3s
+              user: github-actions
+              namespace: apps
+            name: k3s
+          current-context: k3s
+          users:
+          - name: github-actions
+            user:
+              token: ${{ steps.oidc.outputs.token }}
+          KUBE_EOF
+      
+      - name: Test connection
+        run: |
+          kubectl version
+          kubectl get nodes
+      
+      - name: Deploy application
+        run: |
+          kubectl apply -f k8s/ -n apps
+          
+          # Wait for rollout
+          kubectl rollout status deployment/myapp -n apps --timeout=5m
+      
+      - name: Get deployment status
+        run: |
+          echo "Services:"
+          kubectl get svc -n apps
+          
+          echo ""
+          echo "Ingresses:"
+          kubectl get ingress -n apps
+          
+          echo ""
+          echo "Certificates:"
+          kubectl get certificate -n apps
+          
+          echo ""
+          echo "Your app should be available at:"
+          kubectl get ingress -n apps -o jsonpath='{.items[0].spec.rules[0].host}' | xargs -I {} echo "https://{}"
