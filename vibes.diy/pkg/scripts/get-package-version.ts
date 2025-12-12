@@ -11,7 +11,10 @@ import { findUp } from "find-up";
  * @param startDir - Directory to start searching from (defaults to cwd)
  * @returns Path to the directory containing the lockfile, or null if not found
  */
-async function findLockfileDir(lockfileName: string, startDir?: string): Promise<string | null> {
+async function findLockfileDir(
+  lockfileName: string,
+  startDir?: string,
+): Promise<string | null> {
   const lockfilePath = await findUp(lockfileName, {
     cwd: startDir || process.cwd(),
   });
@@ -31,7 +34,7 @@ async function findLockfileDir(lockfileName: string, startDir?: string): Promise
  */
 export function getVersionFromLockfile(
   lockfile: Lockfile,
-  packageName: string
+  packageName: string,
 ): string | null {
   // First check if it's a workspace package in importers
   if (lockfile.importers) {
@@ -42,7 +45,11 @@ export function getVersionFromLockfile(
       };
 
       for (const [pkgName, version] of Object.entries(allDeps)) {
-        if (pkgName === packageName && typeof version === "string" && version.startsWith("link:")) {
+        if (
+          pkgName === packageName &&
+          typeof version === "string" &&
+          version.startsWith("link:")
+        ) {
           return version; // Return the link path
         }
       }
@@ -94,7 +101,7 @@ export function getVersionFromLockfile(
  */
 export async function getPackageVersion(
   packageName: string,
-  lockfileName: string
+  lockfileName: string,
 ): Promise<string | null> {
   const lockfileDir = await findLockfileDir(lockfileName);
   if (!lockfileDir) {
@@ -134,7 +141,7 @@ export interface DependencyNode {
 export function getDependencyTree(
   lockfile: Lockfile,
   packageName: string,
-  maxDepth: number = 10
+  maxDepth: number = 10,
 ): DependencyNode | null {
   // First check if it's a workspace package in importers
   if (lockfile.importers) {
@@ -145,7 +152,11 @@ export function getDependencyTree(
       };
 
       for (const [pkgName, version] of Object.entries(allDeps)) {
-        if (pkgName === packageName && typeof version === "string" && version.startsWith("link:")) {
+        if (
+          pkgName === packageName &&
+          typeof version === "string" &&
+          version.startsWith("link:")
+        ) {
           // For workspace packages, return tree with dependencies from importer
           const node: DependencyNode = {
             name: packageName,
@@ -162,7 +173,11 @@ export function getDependencyTree(
               // Check if this importer path ends with the package name structure
               // For @vibes.diy/prompts, look for paths like "prompts/pkg"
               // For call-ai, look for paths like "call-ai/pkg"
-              if (path.includes(packageName.replace("@vibes.diy/", "").replace("@", ""))) {
+              if (
+                path.includes(
+                  packageName.replace("@vibes.diy/", "").replace("@", ""),
+                )
+              ) {
                 workspaceImporter = imp;
                 break;
               }
@@ -243,7 +258,7 @@ export function getDependencyTree(
     pkgKey: string,
     pkgName: string,
     pkgVersion: string,
-    depth: number
+    depth: number,
   ): DependencyNode {
     const node: DependencyNode = {
       name: pkgName,
@@ -304,7 +319,12 @@ export function getDependencyTree(
         }
 
         if (keyPkgName === depName) {
-          const childNode = buildTree(key, keyPkgName, keyPkgVersion, depth + 1);
+          const childNode = buildTree(
+            key,
+            keyPkgName,
+            keyPkgVersion,
+            depth + 1,
+          );
           node.dependencies.push(childNode);
           break;
         }
@@ -327,7 +347,7 @@ export function getDependencyTree(
 export async function getPackageDependencyTree(
   packageName: string,
   lockfileName: string,
-  maxDepth: number = 10
+  maxDepth: number = 10,
 ): Promise<DependencyNode | null> {
   const lockfileDir = await findLockfileDir(lockfileName);
   if (!lockfileDir) {
@@ -397,7 +417,7 @@ export function flattenDependencyTree(tree: DependencyNode): FlatDependency[] {
  */
 export async function getAllDependenciesFromPackageJson(
   lockfile: Lockfile,
-  packageJsonPath: string
+  packageJsonPath: string,
 ): Promise<FlatDependency[]> {
   const fs = await import("fs/promises");
   const { resolve } = await import("path");
@@ -442,7 +462,7 @@ export async function getAllDependenciesFromPackageJson(
  */
 export async function getPackageJsonDependencies(
   packageJsonPath: string,
-  lockfileName: string
+  lockfileName: string,
 ): Promise<FlatDependency[]> {
   const lockfileDir = await findLockfileDir(lockfileName);
   if (!lockfileDir) {
@@ -467,7 +487,11 @@ export async function getPackageJsonDependencies(
 }
 
 // Helper function to print dependency tree
-function printTree(node: DependencyNode, prefix: string = "", isLast: boolean = true) {
+function printTree(
+  node: DependencyNode,
+  prefix: string = "",
+  isLast: boolean = true,
+) {
   const connector = isLast ? "└─" : "├─";
   console.log(`${prefix}${connector} ${node.name}@${node.version}`);
 
@@ -481,7 +505,8 @@ function printTree(node: DependencyNode, prefix: string = "", isLast: boolean = 
 
 // CLI usage with cmd-ts
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const { run, subcommands, command, string, option, positional, flag } = await import("cmd-ts");
+  const { run, subcommands, command, string, option, positional, flag } =
+    await import("cmd-ts");
 
   const pnpmLockOption = option({
     type: string,
