@@ -1,4 +1,8 @@
-import { loadAndRenderTSX, loadAndRenderJSX, VibesDiyServCtx } from "./render.js";
+import {
+  loadAndRenderTSX,
+  loadAndRenderJSX,
+  VibesDiyServCtx,
+} from "./render.js";
 import { contentType } from "mime-types";
 import { getClerkKeyForHostname } from "../clerk-env.js";
 
@@ -16,9 +20,8 @@ async function handleVibeRequest(
   ctx: VibesDiyServCtx & {
     appSlug: string;
     groupId: string;
-  }
+  },
 ): Promise<Response | null> {
-
   const { appSlug } = ctx;
   try {
     const vibeCode = await fetchVibeCode(appSlug);
@@ -53,9 +56,9 @@ async function handleVibeRequest(
   }
 }
 
-
-
-export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Request) => Promise<Response|null> {
+export function vibesDiyHandler(
+  ctx: () => Promise<VibesDiyServCtx>,
+): (req: Request) => Promise<Response | null> {
   return async (req: Request) => {
     const url = new URL(req.url);
     const requestedPath = url.pathname;
@@ -68,7 +71,7 @@ export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Requ
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
       // const x = await loadAndRenderJSX(`<MountVibe appSlug="${appSlug}" />`)
@@ -85,7 +88,7 @@ export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Requ
             "Content-Type": "application/javascript",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
     if (url.pathname === "/vibe-script") {
@@ -96,7 +99,7 @@ export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Requ
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
       const vibeCode = await fetchVibeCode(appSlug);
@@ -113,14 +116,11 @@ export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Requ
     // Handle /vibe/{appSlug}/{groupId} routes (both required)
     const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)\/([^/]+)/);
     if (vibeMatch) {
-      const vibeResponse = handleVibeRequest(
-        req,
-        {
-            appSlug: vibeMatch[1],
-            groupId: vibeMatch[2],
-            ...(await ctx()),
-        }
-      );
+      const vibeResponse = handleVibeRequest(req, {
+        appSlug: vibeMatch[1],
+        groupId: vibeMatch[2],
+        ...(await ctx()),
+      });
       return vibeResponse;
     }
 
@@ -130,7 +130,7 @@ export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Requ
 
     // First, try to serve static file from disk
     try {
-      const content = await ctx().then(ctx => ctx.loadFile(localPath))
+      const content = await ctx().then((ctx) => ctx.loadFile(localPath));
       if (content) {
         const ext = requestedPath.substring(requestedPath.lastIndexOf("."));
         const mimeType = contentType(ext) || "application/octet-stream";

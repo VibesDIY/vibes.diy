@@ -4,14 +4,14 @@ import { build } from "esbuild";
 
 export interface VibesDiyServCtx {
   readonly versions: { readonly FP: string };
-  loadFile(file: string): Promise<string|undefined>;
+  loadFile(file: string): Promise<string | undefined>;
   basePath: string;
   [key: string]: unknown;
 }
 
 export async function loadAndRenderTSX(
   filePath: string,
-  ctx: VibesDiyServCtx, 
+  ctx: VibesDiyServCtx,
 ): Promise<string> {
   try {
     // Read the TSX file

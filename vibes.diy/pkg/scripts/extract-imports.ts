@@ -19,7 +19,9 @@ export interface ImportInfo {
  * @param filePath - Path to the file to parse
  * @returns Array of import sources found in the file
  */
-export async function extractImportsFromFile(filePath: string): Promise<ImportInfo[]> {
+export async function extractImportsFromFile(
+  filePath: string,
+): Promise<ImportInfo[]> {
   try {
     const content = await readFile(filePath, "utf-8");
     const imports: ImportInfo[] = [];
@@ -76,7 +78,10 @@ export async function extractImportsFromFile(filePath: string): Promise<ImportIn
 
     return imports;
   } catch (error) {
-    console.error(`Error parsing ${filePath}:`, error instanceof Error ? error.message : error);
+    console.error(
+      `Error parsing ${filePath}:`,
+      error instanceof Error ? error.message : error,
+    );
     return [];
   }
 }
@@ -89,10 +94,12 @@ export async function extractImportsFromFile(filePath: string): Promise<ImportIn
  */
 export async function extractImportsFromGlob(
   baseDir: string,
-  pattern: string
+  pattern: string,
 ): Promise<ImportInfo[]> {
   const fullPattern = join(baseDir, pattern);
-  const files = await glob(fullPattern, { ignore: ["**/node_modules/**", "**/dist/**", "**/build/**"] });
+  const files = await glob(fullPattern, {
+    ignore: ["**/node_modules/**", "**/dist/**", "**/build/**"],
+  });
 
   const allImports: ImportInfo[] = [];
 
@@ -119,7 +126,9 @@ export function getUniqueImportSources(imports: ImportInfo[]): string[] {
  * @param imports - Array of import info
  * @returns Map of source to array of files that import it
  */
-export function groupImportsBySource(imports: ImportInfo[]): Map<string, string[]> {
+export function groupImportsBySource(
+  imports: ImportInfo[],
+): Map<string, string[]> {
   const grouped = new Map<string, string[]>();
 
   for (const imp of imports) {
@@ -138,7 +147,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const app = command({
     name: "extract-imports",
-    description: "Extract all import statements from TypeScript/JavaScript files",
+    description:
+      "Extract all import statements from TypeScript/JavaScript files",
     args: {
       baseDir: option({
         type: string,
@@ -181,7 +191,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
       // Filter out relative imports unless requested
       if (!relatives) {
-        imports = imports.filter((imp) => !imp.source.startsWith("./") && !imp.source.startsWith("../"));
+        imports = imports.filter(
+          (imp) =>
+            !imp.source.startsWith("./") && !imp.source.startsWith("../"),
+        );
       }
 
       if (grouped) {

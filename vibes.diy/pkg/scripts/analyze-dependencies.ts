@@ -1,6 +1,9 @@
 #!/usr/bin/env tsx
 
-import { extractImportsFromGlob, getUniqueImportSources } from "./extract-imports.js";
+import {
+  extractImportsFromGlob,
+  getUniqueImportSources,
+} from "./extract-imports.js";
 import {
   getDependencyTree,
   flattenDependencyTree,
@@ -30,7 +33,9 @@ async function findLockfileDir(lockfileName: string): Promise<string | null> {
  * @param lockfileDir - Directory containing pnpm-workspace.yaml
  * @returns Map of relative path -> package.json content
  */
-async function loadWorkspacePackageJsons(lockfileDir: string): Promise<Map<string, any>> {
+async function loadWorkspacePackageJsons(
+  lockfileDir: string,
+): Promise<Map<string, any>> {
   const workspacePackageJsons = new Map<string, any>();
 
   try {
@@ -41,7 +46,11 @@ async function loadWorkspacePackageJsons(lockfileDir: string): Promise<Map<strin
     if (workspaceConfig && workspaceConfig.packages) {
       for (const pkgPattern of workspaceConfig.packages) {
         // Expand glob pattern to find package.json files
-        const packageJsonPattern = join(lockfileDir, pkgPattern, "package.json");
+        const packageJsonPattern = join(
+          lockfileDir,
+          pkgPattern,
+          "package.json",
+        );
         const packageJsonFiles = await glob(packageJsonPattern);
 
         for (const pkgJsonPath of packageJsonFiles) {
@@ -69,7 +78,10 @@ async function loadWorkspacePackageJsons(lockfileDir: string): Promise<Map<strin
  * @param importPath - The import path (e.g., "shiki/core", "@fp/shiki/core")
  * @returns Object with packageName and subpath
  */
-function parseImportPath(importPath: string): { packageName: string; subpath: string } {
+function parseImportPath(importPath: string): {
+  packageName: string;
+  subpath: string;
+} {
   let packageName: string;
   let subpath: string = "";
 
@@ -105,7 +117,11 @@ function parseImportPath(importPath: string): { packageName: string; subpath: st
  * @param version - Package version (or null if not found)
  * @returns Formatted URL
  */
-function buildImportUrl(importPath: string, prefix: string, version: string | null): string {
+function buildImportUrl(
+  importPath: string,
+  prefix: string,
+  version: string | null,
+): string {
   if (!version) {
     return `${prefix}${importPath}`;
   }
@@ -132,7 +148,7 @@ export async function createImportMap(
   globPrefix: string,
   localPrefix: string,
   localSuffix: string,
-  includeRelatives: boolean = false
+  includeRelatives: boolean = false,
 ): Promise<Record<string, string>> {
   // Step 1: Extract imports from source files
   const imports = await extractImportsFromGlob(baseDir, pattern);
@@ -267,7 +283,7 @@ export async function analyzeDependencies(
   baseDir: string,
   pattern: string,
   lockfileName: string,
-  includeRelatives: boolean = false
+  includeRelatives: boolean = false,
 ): Promise<FlatDependency[]> {
   // Step 1: Extract imports from source files
   const imports = await extractImportsFromGlob(baseDir, pattern);
@@ -276,7 +292,7 @@ export async function analyzeDependencies(
   let filteredImports = imports;
   if (!includeRelatives) {
     filteredImports = imports.filter(
-      (imp) => !imp.source.startsWith("./") && !imp.source.startsWith("../")
+      (imp) => !imp.source.startsWith("./") && !imp.source.startsWith("../"),
     );
   }
 
@@ -325,7 +341,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const app = command({
     name: "analyze-dependencies",
-    description: "Analyze all dependencies used in source files by examining imports and building full dependency trees",
+    description:
+      "Analyze all dependencies used in source files by examining imports and building full dependency trees",
     args: {
       baseDir: option({
         type: string,
@@ -374,7 +391,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       localPrefix: option({
         type: string,
         long: "local-prefix",
-        description: "Prefix for local (relative) imports and workspace packages",
+        description:
+          "Prefix for local (relative) imports and workspace packages",
         defaultValue: () => "/dist",
       }),
       localSuffix: option({
@@ -384,12 +402,30 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         defaultValue: () => "/index.js",
       }),
     },
-    handler: async ({ baseDir, pattern, pnpmLock, relatives, importsOnly, importMap, globPrefix, localPrefix, localSuffix }) => {
+    handler: async ({
+      baseDir,
+      pattern,
+      pnpmLock,
+      relatives,
+      importsOnly,
+      importMap,
+      globPrefix,
+      localPrefix,
+      localSuffix,
+    }) => {
       console.error(`Analyzing dependencies from: ${baseDir}${pattern}`);
 
       if (importMap) {
         // Generate import map
-        const map = await createImportMap(baseDir, pattern, pnpmLock, globPrefix, localPrefix, localSuffix, relatives);
+        const map = await createImportMap(
+          baseDir,
+          pattern,
+          pnpmLock,
+          globPrefix,
+          localPrefix,
+          localSuffix,
+          relatives,
+        );
         console.log(JSON.stringify(map, null, 2));
         console.error(`\nTotal imports mapped: ${Object.keys(map).length}`);
       } else if (importsOnly) {
@@ -398,7 +434,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         let filteredImports = imports;
         if (!relatives) {
           filteredImports = imports.filter(
-            (imp) => !imp.source.startsWith("./") && !imp.source.startsWith("../")
+            (imp) =>
+              !imp.source.startsWith("./") && !imp.source.startsWith("../"),
           );
         }
         const uniqueSources = getUniqueImportSources(filteredImports);
@@ -406,7 +443,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.error(`\nTotal unique imports: ${uniqueSources.length}`);
       } else {
         // Full dependency analysis
-        const deps = await analyzeDependencies(baseDir, pattern, pnpmLock, relatives);
+        const deps = await analyzeDependencies(
+          baseDir,
+          pattern,
+          pnpmLock,
+          relatives,
+        );
         deps.forEach((dep) => console.log(`${dep.name}@${dep.version}`));
         console.error(`\nTotal unique dependencies: ${deps.length}`);
       }

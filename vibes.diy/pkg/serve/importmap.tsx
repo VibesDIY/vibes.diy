@@ -98,7 +98,8 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
       "https://esm.sh/react-router-dom?deps=react@19.2.1,react-dom@19.2.1",
     "call-ai": "https://esm.sh/call-ai@v0.14.5",
 
-    "react-hot-toast": "https://esm.sh/react-hot-toast",
+    "react-hot-toast":
+      "https://esm.sh/react-hot-toast?deps=react@19.2.1,react-dom@19.2.1",
     "@radix-ui/react-slot": "https://esm.sh/@radix-ui/react-slot",
     "class-variance-authority": "https://esm.sh/class-variance-authority",
     clsx: "https://esm.sh/clsx",
