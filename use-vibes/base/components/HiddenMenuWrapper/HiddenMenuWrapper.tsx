@@ -7,6 +7,7 @@ import {
   getToggleButtonStyle,
   getInnerContentWrapperStyle,
   getMenuStyleWrapper,
+  getMenuStyleWrapperGray,
 } from './HiddenMenuWrapper.styles.js';
 import { VibesSwitch } from '../VibesSwitch/VibesSwitch.js';
 
@@ -247,7 +248,11 @@ export function HiddenMenuWrapper({
         ref={menuRef}
         style={getMenuStyleWrapper()}
       >
+      <div
+        style={getMenuStyleWrapperGray()}
+      >
         <div style={getMenuStyle()}>{menuContent}</div>
+      </div>
       </div>
 
       {/* Content */}

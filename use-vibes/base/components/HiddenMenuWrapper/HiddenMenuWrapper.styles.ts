@@ -83,14 +83,12 @@ export const getMenuStyle = (): CSSProperties => ({
   zIndex: hiddenMenuTheme.zIndex.menu,
   color: hiddenMenuTheme.colors.menuText,
   padding: hiddenMenuTheme.dimensions.padding,
-  boxShadow: `inset 0 5px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.menuBg,
   backgroundImage: `
     linear-gradient(${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px),
     linear-gradient(90deg, ${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px)
   `,
-  borderBottomRightRadius: '20px',
-  borderBottomLeftRadius: '20px',
+  border: `2px solid ${hiddenMenuTheme.colors.gridLineColor}`,
   backgroundSize: hiddenMenuTheme.dimensions.gridSize + ' ' + hiddenMenuTheme.dimensions.gridSize,
 });
 
@@ -101,6 +99,14 @@ export const getMenuStyleWrapper = (): CSSProperties => ({
   right: 0,
   padding: '0px 15px 15px 15px',
   backgroundColor: 'black',
+  backgroundSize: hiddenMenuTheme.dimensions.gridSize + ' ' + hiddenMenuTheme.dimensions.gridSize,
+});
+
+export const getMenuStyleWrapperGray = (): CSSProperties => ({
+  padding: '0px 15px 15px 15px',
+  borderBottomRightRadius: '20px',
+  borderBottomLeftRadius: '20px',
+  backgroundColor: hiddenMenuTheme.colors.menuBg,
   backgroundSize: hiddenMenuTheme.dimensions.gridSize + ' ' + hiddenMenuTheme.dimensions.gridSize,
 });
 
