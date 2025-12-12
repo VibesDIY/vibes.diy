@@ -28,7 +28,7 @@
     "call-ai": "workspace:*",
     "jose": "^6.1.1",
     "react-dom": "^19.2.0",
-    "use-fireproof": "0.24.2-dev-clerk",
+    "use-fireproof": "0.24.2-dev-cloud-api",
     "zod": "^4.1.12"
   },
   "peerDependencies": {
