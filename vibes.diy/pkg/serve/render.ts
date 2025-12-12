@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import React from "react";
-import { build } from "esbuild";
+import { build } from "esbuild-wasm";
 
 export interface VibesDiyServCtx {
   readonly versions: { readonly FP: string };
@@ -15,6 +15,7 @@ export async function loadAndRenderTSX(
 ): Promise<string> {
   try {
     // Read the TSX file
+    console.log("loadAndRenderTSX filePath:", filePath);
     const code = await ctx.loadFile(filePath);
     if (!code) {
       throw new Error(`File not found: ${filePath}`);
