@@ -1,0 +1,24 @@
+{
+  "name": "dns-verification-tool",
+  "version": "1.0.0",
+  "description": "A tool to verify DNS records from a CSV file against specified nameservers",
+  "main": "verify-dns.ts",
+  "type": "module",
+  "scripts": {
+    "start": "tsx verify-dns.ts \"vibes.diy (DNS Records).csv\"",
+    "verify": "tsx verify-dns.ts"
+  },
+  "keywords": [
+    "dns",
+    "verification",
+    "nameserver",
+    "csv"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

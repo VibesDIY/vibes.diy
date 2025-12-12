@@ -1,9 +1,6 @@
-import {
-  loadAndRenderTSX,
-  loadAndRenderJSX,
-  VibesDiyServCtx,
-} from "./render.js";
-import { contentType } from "mime-types";
+import { loadAndRenderTSX, loadAndRenderJSX, VibesDiyServCtx } from "./render.js";
+// import { contentType } from "mime-types";
+import mime from 'mime/lite'
 import { getClerkKeyForHostname } from "../clerk-env.js";
 
 async function fetchVibeCode(appSlug: string): Promise<string> {
@@ -130,10 +127,11 @@ export function vibesDiyHandler(
 
     // First, try to serve static file from disk
     try {
-      const content = await ctx().then((ctx) => ctx.loadFile(localPath));
+      console.log("vibesDiyHandler req.url:", req.url);
+      const content = await ctx().then(ctx => ctx.loadFile(localPath))
       if (content) {
         const ext = requestedPath.substring(requestedPath.lastIndexOf("."));
-        const mimeType = contentType(ext) || "application/octet-stream";
+        const mimeType = mime.getType(ext) || "application/octet-stream";
 
         return new Response(content, {
           status: 200,
@@ -150,7 +148,9 @@ export function vibesDiyHandler(
     // If no static file found, render index.tsx
     try {
       const indexPath = `./index.tsx`;
+      console.log("vibesDiyHandler-index req.url:", req.url, indexPath, ctx);
       const html = await loadAndRenderTSX(indexPath, await ctx());
+      console.log("vibesDiyHandler-done req.url:", req.url);
 
       return new Response(html, {
         status: 200,
