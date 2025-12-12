@@ -2,19 +2,7 @@ import React, { createContext, useContext, ReactNode } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
 import type { DashboardApiImpl } from "@fireproof/core-protocols-dashboard";
-import type { Clerk } from "@clerk/shared/types";
 import { VibesDiyEnv } from "../config/env.js";
-
-// Minimal Clerk interface matching the contract required by clerkDashApi
-interface ClerkWithListener {
-  addListener: (
-    callback: (resources: {
-      session: {
-        getToken: (options?: unknown) => Promise<string | null>;
-      } | null;
-    }) => void,
-  ) => () => void;
-}
 
 interface DashboardContextType {
   dashApi: DashboardApiImpl<unknown>;
@@ -25,11 +13,11 @@ const DashboardContext = createContext<DashboardContextType | undefined>(
 );
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  // Type assertion chain: first to our minimal contract (ClerkWithListener), then to
-  // the Clerk type expected by clerkDashApi. This bridges version differences between
-  // @clerk/clerk-react and @clerk/shared/types while documenting the actual contract.
-  const clerk = useClerk() as ClerkWithListener as Clerk;
+  const clerk = useClerk();
 
+  // Type assertion needed due to version mismatch between @clerk/clerk-react and
+  // @clerk/clerk-js in @fireproof/core-protocols-dashboard transitive dependency.
+  // Runtime: Both have compatible addListener interface that clerkDashApi requires.
   const dashApi = clerkDashApi(clerk, {
     apiUrl: VibesDiyEnv.CONNECT_API_URL(),
   });
