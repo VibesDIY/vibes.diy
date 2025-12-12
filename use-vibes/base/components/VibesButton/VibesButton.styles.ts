@@ -25,6 +25,26 @@ export const bounceKeyframes = `
   }
 `;
 
+// Form button style - simple flat style with rounded corners
+export function getFormButtonStyle(variant: string): React.CSSProperties {
+  const cssColor = getVariantColor(variant);
+
+  return {
+    width: '100%',
+    padding: '3px',
+    backgroundColor: cssColor,
+    border: '1px solid var(--vibes-button-border)',
+    color: 'var(--vibes-button-text)',
+    fontSize: '24px',
+    fontWeight: 'bold',
+    letterSpacing: '2px',
+    cursor: 'pointer',
+    transition: '0.2s',
+    borderRadius: '20px',
+    textTransform: 'none' as const,
+  };
+}
+
 export function getButtonStyle(
   variant: string,
   isHovered: boolean,
@@ -33,6 +53,10 @@ export function getButtonStyle(
   hasIcon: boolean,
   buttonType: string
 ): React.CSSProperties {
+  // Use form style for form button type
+  if (buttonType === 'form') {
+    return getFormButtonStyle(variant);
+  }
   const cssColor = getVariantColor(variant);
   let transform = 'translate(0px, 0px)';
   let boxShadow = buttonType
@@ -71,8 +95,16 @@ export function getMergedButtonStyle(
   baseStyle: React.CSSProperties,
   ignoreDarkMode: boolean,
   customStyle?: React.CSSProperties,
-  buttonType?: 'square' | 'flat' | 'flat-rounded'
+  buttonType?: 'square' | 'flat' | 'flat-rounded' | 'form'
 ): React.CSSProperties {
+  // Form buttons already have their complete styling, just merge custom styles
+  if (buttonType === 'form') {
+    return {
+      ...baseStyle,
+      ...customStyle,
+    };
+  }
+
   const style: React.CSSProperties = {
     ...baseStyle,
     background: ignoreDarkMode ? 'var(--vibes-button-bg)' : 'var(--vibes-button-bg-dark-aware)',

@@ -28,7 +28,7 @@ if (typeof document !== 'undefined') {
         --hm-menu-bg: var(--vibes-gray-lightest);
         --hm-menu-text: var(--vibes-white);
         --hm-content-bg: #1e1e1e;
-        --hm-shadow: rgba(0, 0, 0, 0.3);
+        --hm-shadow: rgba(0, 0, 0, 1);
         --hm-grid-line: rgba(255, 255, 255, 0.5);
       }
 
@@ -51,7 +51,7 @@ export const hiddenMenuTheme = {
     menuBg: 'var(--hm-menu-bg, var(--vibes-gray-lightest))',
     menuText: 'var(--hm-menu-text, var(--vibes-white))',
     contentBg: 'var(--hm-content-bg, #1e1e1e)',
-    shadow: 'var(--hm-shadow, rgba(0, 0, 0, 0.3))',
+    shadow: 'var(--hm-shadow, rgba(0, 0, 0, 1))',
     gridLineColor: 'var(--hm-grid-line, rgba(255, 255, 255, 0.5))',
   },
 
@@ -80,19 +80,27 @@ export const getWrapperStyle = (): CSSProperties => ({
 });
 
 export const getMenuStyle = (): CSSProperties => ({
-  position: 'fixed',
-  bottom: 0,
-  left: 0,
-  right: 0,
   zIndex: hiddenMenuTheme.zIndex.menu,
   color: hiddenMenuTheme.colors.menuText,
   padding: hiddenMenuTheme.dimensions.padding,
-  boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
+  boxShadow: `inset 0 5px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.menuBg,
   backgroundImage: `
     linear-gradient(${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px),
     linear-gradient(90deg, ${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px)
   `,
+  borderBottomRightRadius: '20px',
+  borderBottomLeftRadius: '20px',
+  backgroundSize: hiddenMenuTheme.dimensions.gridSize + ' ' + hiddenMenuTheme.dimensions.gridSize,
+});
+
+export const getMenuStyleWrapper = (): CSSProperties => ({
+ position: 'fixed',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  padding: '0px 15px 15px 15px',
+  backgroundColor: "black",
   backgroundSize: hiddenMenuTheme.dimensions.gridSize + ' ' + hiddenMenuTheme.dimensions.gridSize,
 });
 

@@ -118,6 +118,7 @@
   --vibes-variant-gray: var(--vibes-gray);
 
   --vibes-card-bg: var(--vibes-gray-pale);
+  --vibes-card-bg-transparent: #14141433;
   --vibes-card-text: var(--vibes-near-black);
   --vibes-card-border: var(--vibes-near-black);
 
@@ -171,6 +172,7 @@
 
     /* Component-Specific Dark Mode Adjustments */
     --vibes-card-bg: var(--vibes-near-black);
+    --vibes-card-bg-transparent: #1a1a1aba;
     --vibes-card-text: var(--vibes-white);
     --vibes-card-border: var(--vibes-gray-mid);
 

@@ -3,6 +3,7 @@ import {
   getResponsiveContainerStyle,
   getResponsiveLabelStyle,
   getResponsiveButtonWrapperStyle,
+  getLabelStyle,
 } from './LabelContainer.styles.js';
 import { useMobile } from '../../hooks/useMobile.js';
 
@@ -17,6 +18,7 @@ export interface LabelContainerProps {
   className?: string;
   /** If true, label disappears on mobile. If false, label moves to top on mobile. Default: false */
   disappear?: boolean;
+  colorVariant?: 'blue' | 'red' | 'yellow' | 'gray';
 }
 
 /**
@@ -31,12 +33,13 @@ export function LabelContainer({
   style,
   className,
   disappear = false,
+  colorVariant= 'gray',
 }: LabelContainerProps) {
   const isMobile = useMobile();
 
   return (
     <div style={{ ...getResponsiveContainerStyle(isMobile), ...style }} className={className}>
-      {label && <div style={getResponsiveLabelStyle(isMobile, disappear)}>{label}</div>}
+      {label && <div style={getResponsiveLabelStyle(isMobile, disappear)}><div style={getLabelStyle(colorVariant, isMobile)}>{label}</div></div>}
       <div style={getResponsiveButtonWrapperStyle(isMobile, disappear)}>{children}</div>
     </div>
   );

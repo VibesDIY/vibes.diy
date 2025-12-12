@@ -59,24 +59,28 @@ export function getButtonWrapperStyle(): React.CSSProperties {
   };
 }
 
-export function getButtonContainerStyle(): React.CSSProperties {
+export function getButtonContainerStyle(isMobile:boolean): React.CSSProperties {
   return {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: '24px',
+    gap: isMobile ? '24px' : '55px',
     flexWrap: 'wrap',
     maxWidth: '100%',
+    width: isMobile ? '100%': 'auto',
   };
 }
 
-export function getInviteFormStyle(): React.CSSProperties {
+export function getInviteFormStyle(isMobile:boolean): React.CSSProperties {
   return {
-    width: '100%',
+    width: isMobile ? 'calc(100% - 40px)' : '300px',
     display: 'flex',
+    padding: '20px',
     flexDirection: 'column',
     gap: '12px',
+    borderRadius: '20px',
+    background: 'var(--vibes-button-bg)',
   };
 }
 
@@ -88,36 +92,18 @@ export function getInviteLabelStyle(): React.CSSProperties {
   };
 }
 
-export function getInviteInputWrapperStyle(): React.CSSProperties {
-  return {
-    width: '100%',
-  };
-}
-
-export function getComingSoonLabelStyle(): React.CSSProperties {
-  return {
-    backgroundColor: 'rgb(255 253 222)',
-    border: '5px solid rgb(255 0 0)',
-    boxShadow: 'rgb(51, 51, 51) 0px 0px 0px 2px',
-    padding: '10px 20px',
-    display: 'inline-block',
-    color: 'rgb(86 31 12)',
-    textTransform: 'uppercase',
-    borderRadius: '8px',
-    fontWeight: '800',
-  };
-}
-
 export function getInviteInputStyle(): React.CSSProperties {
   return {
-    width: '100%',
-    border: 'none',
+    width: 'calc(100% - 20px)',
     background: 'transparent',
     color: 'inherit',
     fontSize: 'inherit',
     fontWeight: 'inherit',
     letterSpacing: 'inherit',
-    padding: 0,
+    padding: '8px 10px',
+    border: '2px solid var(--vibes-card-border)',
+    borderRadius: '20px'
+
   };
 }
 
@@ -163,4 +149,49 @@ export function getResponsiveContainerStyle(isMobile: boolean): React.CSSPropert
     };
   }
   return getContainerStyle();
+}
+
+// Animation styles for invite mode transitions
+export function getButtonAnimationStyle(
+  isVisible: boolean,
+  delay: number = 0
+): React.CSSProperties {
+  return {
+    opacity: isVisible ? 1 : 0,
+    visibility: isVisible ? 'visible' : 'hidden',
+    transition: `opacity 0.3s ease-in-out ${delay}ms, visibility 0s ${isVisible ? '0ms' : '300ms'}`,
+    pointerEvents: isVisible ? 'auto' : 'none',
+  };
+}
+
+export function getInviteFormContainerStyle(isVisible: boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '12px',
+    gridColumn: '1 / -1',
+    opacity: isVisible ? 1 : 0,
+    transform: isVisible ? 'translateX(0)' : 'translateX(-20px)',
+    transition: 'opacity 0.4s ease-out 0.2s, transform 0.4s ease-out 0.2s',
+    pointerEvents: isVisible ? 'auto' : 'none',
+  };
+}
+
+export function getInviteRowStyle(isMobile:boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: isMobile ? 'column' : 'row',
+    gap: isMobile ? '24px' : '55px',
+    width: isMobile ? '100%' : 'auto',
+  };
+}
+
+export function getAnimatedButtonContainerStyle(): React.CSSProperties {
+  return {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '24px',
+    width: '100%',
+    position: 'relative',
+  };
 }

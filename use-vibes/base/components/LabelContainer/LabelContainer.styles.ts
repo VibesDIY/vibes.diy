@@ -1,5 +1,17 @@
 import type React from 'react';
 
+const variantColors: Record<string, string> = {
+  blue: 'var(--vibes-variant-blue)',
+  red: 'var(--vibes-variant-red)',
+  yellow: 'var(--vibes-variant-yellow)',
+  gray: 'var(--vibes-variant-gray)',
+};
+
+// Get the appropriate color based on variant
+function getVariantColor(variant: string): string {
+  return variantColors[variant] || variant;
+}
+
 export function getContainerStyle(): React.CSSProperties {
   return {
     position: 'relative',
@@ -10,33 +22,9 @@ export function getContainerStyle(): React.CSSProperties {
   };
 }
 
-export function getLabelStyle(): React.CSSProperties {
-  return {
-    background: 'var(--vibes-card-bg)',
-    border: '2px solid var(--vibes-card-border)',
-    borderLeft: 'none',
-    borderTopRightRadius: '8px',
-    borderBottomRightRadius: '8px',
-    padding: '12px 8px',
-    fontWeight: 700,
-    fontSize: '14px',
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
-    whiteSpace: 'nowrap',
-    color: 'var(--vibes-card-text)',
-    writingMode: 'vertical-rl',
-    transform: 'rotate(180deg)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    margin: '32px 0px',
-  };
-}
-
 export function getButtonWrapperStyle(): React.CSSProperties {
   return {
-    background: 'var(--vibes-card-bg)',
+    background: 'var(--vibes-card-bg-transparent)',
     border: '2px solid var(--vibes-card-border)',
     borderRadius: '8px',
     padding: '24px 24px 32px 24px',
@@ -44,6 +32,16 @@ export function getButtonWrapperStyle(): React.CSSProperties {
     alignItems: 'center',
     justifyContent: 'center',
     width: 'auto',
+  };
+}
+
+export function getLabelStyle(colorVariant: string, isMobile: boolean): React.CSSProperties {
+  return {
+    background: getVariantColor(colorVariant),
+    height: '100%',
+    padding: isMobile ? '8px 15px 8px 15px' : '15px 8px 15px 8px',
+    borderRadius: isMobile ? '8px 8px 0px 0px' :'0px 8px 8px 0px',
+    width: isMobile ? '100%' : 'auto',
   };
 }
 
@@ -57,14 +55,14 @@ export function getResponsiveLabelStyle(isMobile: boolean, disappear = false): R
     }
     // When not disappearing on mobile, show label at top (horizontal)
     return {
-      background: 'var(--vibes-card-bg)',
+      background: 'var(--vibes-card-bg-transparent)',
       border: '2px solid var(--vibes-card-border)',
       borderLeft: '2px solid var(--vibes-card-border)', // Explicitly set to override desktop style
       borderBottom: 'none',
       borderTopLeftRadius: '8px',
       borderTopRightRadius: '8px',
       borderBottomRightRadius: '0', // Explicitly reset desktop radius
-      padding: '8px 12px',
+      padding: '8px 8px 0px 8px',
       fontWeight: 700,
       fontSize: '14px',
       textTransform: 'uppercase',
@@ -83,14 +81,14 @@ export function getResponsiveLabelStyle(isMobile: boolean, disappear = false): R
   }
   // Desktop style - explicitly set all properties
   return {
-    background: 'var(--vibes-card-bg)',
+    background: 'var(--vibes-card-bg-transparent)',
     border: '2px solid var(--vibes-card-border)',
     borderLeft: 'none',
     borderBottom: '2px solid var(--vibes-card-border)', // Explicitly set for desktop
     borderTopRightRadius: '8px',
     borderBottomRightRadius: '8px',
     borderTopLeftRadius: '0', // Explicitly set for desktop
-    padding: '12px 8px',
+    padding: '12px 8px 12px 0px',
     fontWeight: 700,
     fontSize: '14px',
     textTransform: 'uppercase',
@@ -128,7 +126,7 @@ export function getResponsiveButtonWrapperStyle(
   if (isMobile && !disappear) {
     // When not disappearing, keep the card styling but adjust for mobile
     return {
-      background: 'var(--vibes-card-bg)',
+      background: 'var(--vibes-card-bg-transparent)',
       border: '2px solid var(--vibes-card-border)',
       borderRadius: '8px',
       padding: '24px 24px 32px 24px',
@@ -140,7 +138,7 @@ export function getResponsiveButtonWrapperStyle(
   }
   // Desktop style - explicitly set all properties
   return {
-    background: 'var(--vibes-card-bg)',
+    background: 'var(--vibes-card-bg-transparent)',
     border: '2px solid var(--vibes-card-border)',
     borderRadius: '8px',
     padding: '24px 24px 32px 24px',

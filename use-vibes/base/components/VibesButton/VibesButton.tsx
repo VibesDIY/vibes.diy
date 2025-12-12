@@ -12,12 +12,12 @@ import {
   RemixIcon,
   InviteIcon,
   SettingsIcon,
-  BackIcon,
   MyVibesIcon,
   GroupsIcon,
   HomeIconCircle,
   FirehoseIcon,
   AboutIcon,
+  ArrowRightIcon
 } from '../icons/index.js';
 import { useMobile } from '../../hooks/useMobile.js';
 import '../../styles/colors.css';
@@ -29,7 +29,7 @@ export const YELLOW = 'yellow' as const;
 export const GRAY = 'gray' as const;
 
 type ButtonVariant = 'blue' | 'red' | 'yellow' | 'gray';
-type ButtonType = 'square' | 'flat' | 'flat-rounded';
+type ButtonType = 'square' | 'flat' | 'flat-rounded' | 'form';
 type IconName =
   | 'login'
   | 'remix'
@@ -45,13 +45,19 @@ type IconName =
 // Icon map - maps icon names to React components
 const iconMap: Record<
   IconName,
-  React.ComponentType<{ bgFill?: string; fill?: string; width?: number; height?: number }>
+  React.ComponentType<{
+    bgFill?: string;
+    fill?: string;
+    width?: number;
+    height?: number;
+    withCircle?: boolean;
+  }>
 > = {
   login: LoginIcon,
   remix: RemixIcon,
   invite: InviteIcon,
   settings: SettingsIcon,
-  back: BackIcon,
+  back: ArrowRightIcon,
   myvibes: MyVibesIcon,
   groups: GroupsIcon,
   home: HomeIconCircle,
@@ -116,23 +122,26 @@ export function VibesButton({
   // Determine if we should use mobile layout based on buttonType or actual mobile state
   const useMobileLayout = buttonType === 'flat' || buttonType === 'flat-rounded' || isMobile;
 
+  // Form buttons don't render icons
+  const shouldRenderIcon = IconComponent && buttonType !== 'form';
+
   const baseStyle = getButtonStyle(
     buttonVariant,
     isHovered,
     isActive,
     useMobileLayout,
-    !!IconComponent,
+    !!shouldRenderIcon,
     buttonType
   );
   const mergedStyle = getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle, buttonType);
   const iconContainerStyle = getIconContainerStyle(
     buttonVariant,
     useMobileLayout,
-    !!IconComponent,
+    !!shouldRenderIcon,
     buttonType
   );
   const iconStyle = getIconStyle(useMobileLayout, isHovered, isActive);
-  const contentWrapperStyle = getContentWrapperStyle(useMobileLayout, !!IconComponent);
+  const contentWrapperStyle = getContentWrapperStyle(useMobileLayout, !!shouldRenderIcon);
 
   return (
     <>
@@ -149,7 +158,7 @@ export function VibesButton({
         onMouseUp={() => setActive(false)}
         style={mergedStyle}
       >
-        {IconComponent ? (
+        {shouldRenderIcon ? (
           <div style={contentWrapperStyle}>
             <div style={iconContainerStyle}>
               <div style={iconStyle}>
@@ -158,6 +167,7 @@ export function VibesButton({
                   fill="var(--vibes-button-icon-fill)"
                   width={isMobile ? 28 : 50}
                   height={isMobile ? 28 : 50}
+                  withCircle={icon === 'back'}
                 />
               </div>
             </div>

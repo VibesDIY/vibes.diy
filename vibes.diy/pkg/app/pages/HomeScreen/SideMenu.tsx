@@ -10,7 +10,6 @@ import {
   getSideMenuList,
   getSideMenuSwitchWrapper,
   getSideMenuFooter,
-  getSideMenuLoginButton,
   getSideMenuItemAnimation,
 } from "./SideMenu.styles.js";
 
@@ -180,9 +179,9 @@ export const SideMenu: React.FC<SideMenuProps> = ({
 
         {/* Footer with Login Button */}
         <div style={getSideMenuFooter()}>
-          <button style={getSideMenuLoginButton()} onClick={onLogin}>
+          <VibesButton variant="blue" buttonType="form" onClick={onLogin}>
             Log In
-          </button>
+          </VibesButton>
         </div>
       </div>
     </>

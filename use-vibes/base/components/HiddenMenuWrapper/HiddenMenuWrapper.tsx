@@ -6,6 +6,7 @@ import {
   getContentStyle,
   getToggleButtonStyle,
   getInnerContentWrapperStyle,
+  getMenuStyleWrapper,
 } from './HiddenMenuWrapper.styles.js';
 import { VibesSwitch } from '../VibesSwitch/VibesSwitch.js';
 
@@ -244,9 +245,13 @@ export function HiddenMenuWrapper({
         aria-label="Hidden menu"
         aria-hidden={!menuOpen}
         ref={menuRef}
+        style={getMenuStyleWrapper()}
+      >
+      <div
         style={getMenuStyle()}
       >
         {menuContent}
+      </div>
       </div>
 
       {/* Content */}

@@ -109,18 +109,3 @@ export const getSideMenuFooter = (): CSSProperties => ({
   padding: "24px",
   backgroundColor: "var(--vibes-cream)",
 });
-
-// Login button
-export const getSideMenuLoginButton = (): CSSProperties => ({
-  width: "100%",
-  padding: "3px",
-  backgroundColor: "rgb(55, 154, 206)",
-  border: "1px solid rgb(35, 31, 32)",
-  color: "rgb(254, 255, 242)",
-  fontSize: "24px",
-  fontWeight: "bold",
-  letterSpacing: "2px",
-  cursor: "pointer",
-  transition: "0.2s",
-  borderRadius: "20px",
-});
