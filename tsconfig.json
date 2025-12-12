@@ -35,7 +35,7 @@
   "exclude": [
     "vibes.diy/**/root.*",
     "vibes.diy/**/root.test.*",
-    "vibes.diy/pkg/vibes-diy-srv.ts",
+    "vibes.diy/pkg/serve/vibes-diy-srv.ts",
     "vibes.diy/pkg/lib/render.ts",
     "**/dist/**",
     "**/node_modules/**",
