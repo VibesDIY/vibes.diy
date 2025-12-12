@@ -1,4 +1,3 @@
-import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
 import { getKeyBag } from '@fireproof/core-keybag';
 import { Lazy } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
@@ -16,11 +15,11 @@ import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
 
 // Interface for share API response
 interface ShareApiResponse {
-  success: boolean;
-  email: string;
-  role: string;
-  right: string;
-  message?: string;
+  readonly success: boolean;
+  readonly email: string;
+  readonly role: string;
+  readonly right: string;
+  readonly message?: string;
 }
 
 // Track sync status by database name and instance ID
@@ -70,7 +69,7 @@ export async function isJWTExpired(token: string): Promise<boolean> {
 }
 
 // Helper function to create toCloud configuration
-export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+export function toCloud(opts?: UseFpToCloudParam): ReturnType<typeof originalToCloud> {
   const attachable = originalToCloud({
     ...opts,
     dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
@@ -124,14 +123,15 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
 
   // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
 
   // Use original useFireproof with augmented database name
   // This ensures each titleId + installId combination gets its own database
-  const result = originalUseFireproof(
-    augmentedDbName,
-    attachConfig ? { attach: attachConfig } : {}
-  );
+  const result = originalUseFireproof(augmentedDbName);
+  useEffect(() => {
+    if (wasSyncEnabled) {
+      result.database.attach(toCloud());
+    }
+  }, []); // Empty dependency array to run only once on mount
 
   // TODO: Enable sync with Clerk token
   const enableSync = useCallback(() => {

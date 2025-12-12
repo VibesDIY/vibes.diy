@@ -37,7 +37,7 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.9.6",
     "react-router-dom": "^7.9.6",
-    "use-fireproof": "0.24.2-dev-clerk",
+    "use-fireproof": "0.24.2-dev-cloud-api",
     "use-vibes": "workspace:*",
     "vibes-diy": "workspace:*"
   },

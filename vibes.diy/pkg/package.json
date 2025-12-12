@@ -59,7 +59,7 @@
     "react-router": "^7.9.6",
     "react-router-dom": "^7.9.6",
     "tailwind-merge": "^3.4.0",
-    "use-fireproof": "0.24.2-dev-clerk",
+    "use-fireproof": "0.24.2-dev-cloud-api",
     "use-vibes": "workspace:*"
   },
   "devDependencies": {
