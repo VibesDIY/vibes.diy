@@ -36,7 +36,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-router/node": "^7.10.1",
-    "@react-router/serve": "^7.9.6",
+    "@react-router/serve": "^7.10.1",
     "@shikijs/monaco": "^3.17.1",
     "@tailwindcss/typography": "^0.5.19",
     "@vibes.diy/hosting-base": "workspace:*",
