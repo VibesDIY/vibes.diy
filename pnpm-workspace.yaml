@@ -9,6 +9,7 @@ packages:
   - "use-vibes/examples/react-example"
   - "use-vibes/examples/hosted-dev"
   - "vibes.diy/pkg"
+  - "vibes.diy/stable-entry"
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"
   - "prompts/pkg"
