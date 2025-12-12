@@ -22,7 +22,7 @@
     "@fireproof/core-keybag": "0.24.2-dev-clerk",
     "@fireproof/core-runtime": "0.24.2-dev-clerk",
     "@fireproof/core-types-base": "0.24.2-dev-clerk",
-    "@fireproof/core-types-protocols-cloud": "0.24.2-dev-clerk",
+    "@fireproof/core-types-protocols-cloud": "0.24.2-dev-cloud-api",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*",
