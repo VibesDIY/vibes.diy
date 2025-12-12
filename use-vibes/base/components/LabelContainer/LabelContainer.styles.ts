@@ -40,7 +40,7 @@ export function getLabelStyle(colorVariant: string, isMobile: boolean): React.CS
     background: getVariantColor(colorVariant),
     height: '100%',
     padding: isMobile ? '8px 15px 8px 15px' : '15px 8px 15px 8px',
-    borderRadius: isMobile ? '8px 8px 0px 0px' :'0px 8px 8px 0px',
+    borderRadius: isMobile ? '8px 8px 0px 0px' : '0px 8px 8px 0px',
     width: isMobile ? '100%' : 'auto',
   };
 }

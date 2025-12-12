@@ -247,11 +247,7 @@ export function HiddenMenuWrapper({
         ref={menuRef}
         style={getMenuStyleWrapper()}
       >
-      <div
-        style={getMenuStyle()}
-      >
-        {menuContent}
-      </div>
+        <div style={getMenuStyle()}>{menuContent}</div>
       </div>
 
       {/* Content */}

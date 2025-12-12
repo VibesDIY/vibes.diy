@@ -17,7 +17,7 @@ import {
   HomeIconCircle,
   FirehoseIcon,
   AboutIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
 } from '../icons/index.js';
 import { useMobile } from '../../hooks/useMobile.js';
 import '../../styles/colors.css';

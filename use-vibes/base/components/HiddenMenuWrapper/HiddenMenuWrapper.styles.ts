@@ -95,12 +95,12 @@ export const getMenuStyle = (): CSSProperties => ({
 });
 
 export const getMenuStyleWrapper = (): CSSProperties => ({
- position: 'fixed',
+  position: 'fixed',
   bottom: 0,
   left: 0,
   right: 0,
   padding: '0px 15px 15px 15px',
-  backgroundColor: "black",
+  backgroundColor: 'black',
   backgroundSize: hiddenMenuTheme.dimensions.gridSize + ' ' + hiddenMenuTheme.dimensions.gridSize,
 });
 

@@ -59,7 +59,7 @@ export function getButtonWrapperStyle(): React.CSSProperties {
   };
 }
 
-export function getButtonContainerStyle(isMobile:boolean): React.CSSProperties {
+export function getButtonContainerStyle(isMobile: boolean): React.CSSProperties {
   return {
     display: 'flex',
     flexDirection: 'row',
@@ -68,11 +68,11 @@ export function getButtonContainerStyle(isMobile:boolean): React.CSSProperties {
     gap: isMobile ? '24px' : '55px',
     flexWrap: 'wrap',
     maxWidth: '100%',
-    width: isMobile ? '100%': 'auto',
+    width: isMobile ? '100%' : 'auto',
   };
 }
 
-export function getInviteFormStyle(isMobile:boolean): React.CSSProperties {
+export function getInviteFormStyle(isMobile: boolean): React.CSSProperties {
   return {
     width: isMobile ? 'calc(100% - 40px)' : '300px',
     display: 'flex',
@@ -102,8 +102,7 @@ export function getInviteInputStyle(): React.CSSProperties {
     letterSpacing: 'inherit',
     padding: '8px 10px',
     border: '2px solid var(--vibes-card-border)',
-    borderRadius: '20px'
-
+    borderRadius: '20px',
   };
 }
 
@@ -177,7 +176,7 @@ export function getInviteFormContainerStyle(isVisible: boolean): React.CSSProper
   };
 }
 
-export function getInviteRowStyle(isMobile:boolean): React.CSSProperties {
+export function getInviteRowStyle(isMobile: boolean): React.CSSProperties {
   return {
     display: 'flex',
     flexDirection: isMobile ? 'column' : 'row',

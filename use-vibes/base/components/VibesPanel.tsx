@@ -14,7 +14,7 @@ import {
   getInviteRowStyle,
 } from './VibesPanel.styles.js';
 import '../styles/colors.css';
-import { useMobile } from "../hooks/useMobile.js";
+import { useMobile } from '../hooks/useMobile.js';
 
 export interface VibesPanelProps {
   /** Optional custom styling for the panel container */
@@ -123,7 +123,11 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
 
   return (
     <div style={getOuterContainerStyle(style)} className={className}>
-      <LabelContainer label="Launcher" disappear colorVariant={mode === 'invite' ? 'yellow' : 'gray'}>
+      <LabelContainer
+        label="Launcher"
+        disappear
+        colorVariant={mode === 'invite' ? 'yellow' : 'gray'}
+      >
         <div style={getButtonContainerStyle(isMobile)}>
           {mode === 'invite' ? (
             // Invite mode form
@@ -137,16 +141,16 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
                   <label htmlFor={emailId} style={getInviteLabelStyle()}>
                     Invite by email
                   </label>
-                    <input
-                      id={emailId}
-                      type="email"
-                      placeholder="friend@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      style={getInviteInputStyle()}
-                      autoComplete="email"
-                      required
-                    /> 
+                  <input
+                    id={emailId}
+                    type="email"
+                    placeholder="friend@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={getInviteInputStyle()}
+                    autoComplete="email"
+                    required
+                  />
                   <VibesButton
                     variant={YELLOW}
                     buttonType="form"

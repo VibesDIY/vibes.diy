@@ -33,13 +33,17 @@ export function LabelContainer({
   style,
   className,
   disappear = false,
-  colorVariant= 'gray',
+  colorVariant = 'gray',
 }: LabelContainerProps) {
   const isMobile = useMobile();
 
   return (
     <div style={{ ...getResponsiveContainerStyle(isMobile), ...style }} className={className}>
-      {label && <div style={getResponsiveLabelStyle(isMobile, disappear)}><div style={getLabelStyle(colorVariant, isMobile)}>{label}</div></div>}
+      {label && (
+        <div style={getResponsiveLabelStyle(isMobile, disappear)}>
+          <div style={getLabelStyle(colorVariant, isMobile)}>{label}</div>
+        </div>
+      )}
       <div style={getResponsiveButtonWrapperStyle(isMobile, disappear)}>{children}</div>
     </div>
   );
