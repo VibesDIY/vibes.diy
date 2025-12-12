@@ -1,0 +1,14 @@
+{
+  "name": "@vibes.diy/stable-entry",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev"
+  },
+  "devDependencies": {
+    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-9",
+    "wrangler": "^4.54.0"
+  }
+}

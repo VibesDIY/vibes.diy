@@ -10,6 +10,7 @@ packages:
   - "use-vibes/examples/hosted-dev"
   - "vibes.diy/pkg"
   - "vibes.diy/tempo"
+  - "vibes.diy/stable-entry"
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"
   - "prompts/pkg"

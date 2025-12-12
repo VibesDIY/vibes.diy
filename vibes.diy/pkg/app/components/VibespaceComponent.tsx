@@ -363,6 +363,7 @@ export default function VibespaceComponent({
   }
 
   // Use Fireproof with the user-specific database
+  console.log("VibespaceComponent->", userId);
   const { useAllDocs } = useFireproof(`vu-${userId}`);
 
   // Query all documents in the database

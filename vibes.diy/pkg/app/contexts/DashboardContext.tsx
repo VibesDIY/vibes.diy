@@ -18,9 +18,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   // Type assertion needed due to version mismatch between @clerk/clerk-react and
   // @clerk/clerk-js in @fireproof/core-protocols-dashboard transitive dependency.
   // Runtime: Both have compatible addListener interface that clerkDashApi requires.
-  const dashApi = clerkDashApi(clerk as Parameters<typeof clerkDashApi>[0], {
+  const dashApi = clerkDashApi(clerk, {
     apiUrl: VibesDiyEnv.CONNECT_API_URL(),
-    template: "with-email", // Default Clerk JWT template
   });
 
   return (

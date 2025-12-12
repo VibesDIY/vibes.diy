@@ -2,8 +2,7 @@
  * Clerk authentication and vibe mounting script
  * This is injected into vibe.tsx as inline JavaScript
  */
-
-import React from "react";
+import React, { FunctionComponent } from "react";
 import { createRoot } from "react-dom/client";
 import { VibeContextProvider } from "@vibes.diy/use-vibes-base";
 
@@ -22,8 +21,11 @@ function extractVibeMetadata(): { titleId: string; installId: string } | null {
   return null;
 }
 
-export function mountVibe(vibe: never, props: { appSlug: string }) {
-  console.log("mountVibe", vibe, props);
+export function mountVibe(
+  Vibe: FunctionComponent,
+  props: { appSlug: string; clerkPublishableKey: string },
+) {
+  console.log("mountVibe", Vibe, props);
   const element = document.getElementById(props.appSlug);
   if (!element) {
     throw new Error(`Can't find the dom element ${props.appSlug}`);
@@ -37,7 +39,7 @@ export function mountVibe(vibe: never, props: { appSlug: string }) {
   // Wrap in VibeContextProvider if we have metadata
   if (vibeMetadata) {
     console.log("[mount-vibe] Mounting with vibeMetadata:", vibeMetadata);
-    const vibeElement = React.createElement(vibe);
+    const vibeElement = React.createElement(Vibe);
     const providerElement = React.createElement(VibeContextProvider, {
       metadata: vibeMetadata,
       children: vibeElement,
@@ -47,7 +49,7 @@ export function mountVibe(vibe: never, props: { appSlug: string }) {
     console.warn(
       "[mount-vibe] No vibeMetadata found in URL - mounting without context",
     );
-    root.render(React.createElement(vibe));
+    root.render(React.createElement(Vibe));
   }
 }
 

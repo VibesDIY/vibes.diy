@@ -64,6 +64,7 @@
     "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-7",
     "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-7",
     "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-7",
     "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-7",
     "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-7",
     "@hono/clerk-auth": "^3.0.3",

@@ -5,10 +5,14 @@ import { headersForDocs } from "./dynamicTableHelpers.js";
 import { DocBase, useFireproof } from "@fireproof/use-fireproof";
 
 // Component for displaying database data
-const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({
+function DatabaseData({
   dbName,
   sessionId,
-}) => {
+}: {
+  dbName: string;
+  sessionId: string;
+}) {
+  console.log("DatabaseData", dbName);
   if (!dbName) {
     throw new Error("No valid database name provided");
   }
@@ -155,6 +159,6 @@ const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({
       />
     </div>
   );
-};
+}
 
 export default DatabaseData;

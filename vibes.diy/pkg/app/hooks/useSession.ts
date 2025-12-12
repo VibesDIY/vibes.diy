@@ -15,10 +15,12 @@ import {
   Database,
   DocResponse,
   DocWithId,
+  UseFireproof,
   useFireproof,
 } from "@fireproof/use-fireproof";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { VibesDiyEnv } from "../config/env.js";
+import { Lazy } from "@adviser/cement";
 
 interface SessionView {
   _id: string;
@@ -26,6 +28,20 @@ interface SessionView {
   publishedUrl?: string;
   firehoseShared?: boolean;
 }
+
+const debounce = Lazy(
+  (useSessionLiveQuery: UseFireproof["useLiveQuery"], sessionId: string) => {
+    console.log("Debounced useSessionLiveQuery pre:", sessionId);
+    const { docs } = useSessionLiveQuery<ChatMessageDocument>("session_id", {
+      key: sessionId,
+    });
+    console.log("Debounced useSessionLiveQuery post:", sessionId, docs);
+    return { docs: docs ?? [] };
+  },
+  {
+    resetAfter: 1000,
+  },
+);
 
 export interface UseSession {
   // // Session information
@@ -69,6 +85,7 @@ export function useSession(sessionId: string): UseSession {
     throw new Error("useSession requires a valid sessionId");
   }
   const sessionDbName = getSessionDatabaseName(sessionId);
+  // console.log("useSession initialized with sessionId:", sessionDbName);
   const {
     database: sessionDatabase,
     useDocument: useSessionDocument,
@@ -111,15 +128,23 @@ export function useSession(sessionId: string): UseSession {
     });
 
   // Query messages from the session-specific database
-  const { docs } = useSessionLiveQuery("session_id", { key: sessionId }) as {
-    docs: ChatMessageDocument[];
-  };
+
+  //    const { docs } = useSessionLiveQuery<ChatMessageDocument>("session_id", { key: sessionId })
+  const deb = debounce(useSessionLiveQuery, sessionId);
+  console.log("useSession messages deb:", deb, "for sessionId:", sessionId);
+  const { docs } = deb;
 
   // Stabilize merge function and vibe document with refs to avoid recreating callbacks
+  console.log("useSession mergeRef set pre:", vibeDoc, mergeVibeDoc);
   const mergeRef = useRef(mergeVibeDoc);
+  console.log("useSession mergeRef set post:", mergeRef, vibeDoc, mergeVibeDoc);
   useEffect(() => {
-    mergeRef.current = mergeVibeDoc;
+    console.log("useSession mergeRef updated:", mergeRef, mergeVibeDoc);
+    if (mergeRef) {
+      mergeRef.current = mergeVibeDoc;
+    }
   }, [mergeVibeDoc]);
+  console.log("useSession vibeRef set pre:", vibeDoc);
 
   const vibeRef = useRef(vibeDoc);
   useEffect(() => {
