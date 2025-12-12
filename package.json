@@ -59,7 +59,7 @@
     "@playwright/test": "^1.57.0",
     "@types/deno": "^2.5.0",
     "@types/node": "^24.9.1",
-    "@typescript/native-preview": "7.0.0-dev.20251201.1",
+    "@typescript/native-preview": "7.0.0-dev.20251212.1",
     "@vitest/browser-playwright": "^4.0.14",
     "@vitest/coverage-v8": "4.0.14",
     "cross-env": "^10.0.0",
