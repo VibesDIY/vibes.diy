@@ -5,7 +5,8 @@ import * as esbuild from 'esbuild-wasm';
 
 const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
   console.log("Initializing VibesDiyServCtx...");
-  const bundle = await import("../bundle.js");
+  const bundleJs = "../bundle.js"
+  const bundle = await import(bundleJs);
   console.log("Initializing VibesDiyServCtx...0");
     await esbuild.initialize({
       wasmURL: 'https://esm.sh/esbuild-wasm/esbuild.wasm',
