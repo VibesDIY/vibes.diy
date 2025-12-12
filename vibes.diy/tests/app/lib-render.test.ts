@@ -6,7 +6,7 @@ vi.mock("~/vibes.diy/lib/render.js", () => ({
   loadAndRenderJSX: vi.fn(),
 }));
 
-import { loadAndRenderTSX, loadAndRenderJSX } from "~/vibes.diy/lib/render.js";
+import { loadAndRenderTSX, loadAndRenderJSX } from "~/vibes.diy/serve/render.js";
 
 describe("lib/render utilities", () => {
   beforeEach(() => {

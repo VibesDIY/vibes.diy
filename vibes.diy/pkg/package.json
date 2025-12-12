@@ -7,7 +7,7 @@
     "tsc": "core-cli tsc",
     "typecheck": "core-cli tsc --noEmit",
     "build": "echo",
-    "dev": "deno run --allow-env --allow-run --allow-net --allow-read vibes-diy-srv.ts",
+    "dev": "deno run --allow-env --allow-run --allow-net --allow-read --sloppy-imports serve/deno-vibes-diy-srv.ts",
     "dev:netlify": "netlify dev",
     "start": "serve -s build/client",
     "file-issues": "scripts/create-issues.sh",
