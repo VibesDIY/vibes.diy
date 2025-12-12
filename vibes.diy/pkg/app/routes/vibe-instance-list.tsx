@@ -54,6 +54,7 @@ function VibeInstancesListContent() {
   // Auto-navigate based on instance count
   const hasAutoNavigated = useRef(false);
   const lastTitleId = useRef(titleId);
+  const [showUI, setShowUI] = useState(false);
 
   // Reset auto-navigation flag when titleId changes
   if (lastTitleId.current !== titleId) {
@@ -70,7 +71,20 @@ function VibeInstancesListContent() {
       const search = searchParams.toString();
       const searchSuffix = search ? `?${search}` : "";
 
-      if (instances.length === 0) {
+      // Check if ?new parameter is present - if so, create new instance regardless of count
+      if (searchParams.has("new")) {
+        hasAutoNavigated.current = true;
+        createInstance("Fresh Start").then((fullId) => {
+          const installId = extractInstallId(fullId, titleId);
+          // Remove ?new from search params before redirecting
+          const newSearchParams = new URLSearchParams(searchParams);
+          newSearchParams.delete("new");
+          const cleanSearchSuffix = newSearchParams.toString()
+            ? `?${newSearchParams.toString()}`
+            : "";
+          window.location.href = `/vibe/${titleId}/${installId}${cleanSearchSuffix}`;
+        });
+      } else if (instances.length === 0) {
         // No instances: create one called "Begin" and navigate to it
         hasAutoNavigated.current = true;
         createInstance("Begin").then((fullId) => {
@@ -79,16 +93,19 @@ function VibeInstancesListContent() {
         });
       } else if (instances.length === 1) {
         // Exactly 1 instance: navigate directly to it
-        hasAutoNavigated.current = true;
         const instance = instances[0];
         const installId = extractInstallId(instance._id || "", titleId);
+        hasAutoNavigated.current = true;
         window.location.href = `/vibe/${titleId}/${installId}${searchSuffix}`;
+      } else {
+        // Show UI when we have multiple instances (no redirect)
+        setShowUI(true);
       }
       // If 2+ instances: do nothing, show the list
     }, 200);
 
     return () => clearTimeout(timeoutId);
-  }, [instances, isCreating, titleId, searchParams, createInstance]);
+  }, [instances.length, isCreating, titleId, searchParams, createInstance]);
 
   const handleCreate = async () => {
     if (!newDescription.trim()) return;
@@ -120,6 +137,13 @@ function VibeInstancesListContent() {
     setEditingId(fullId);
     setEditDescription(currentDescription);
   };
+
+  // Show grid loading screen until redirect decision is made
+  if (!showUI) {
+    return (
+      <div className="grid-background flex h-screen w-screen items-center justify-center" />
+    );
+  }
 
   return (
     <BrutalistLayout title={titleId} subtitle="Manage your instances">

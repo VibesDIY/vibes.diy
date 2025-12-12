@@ -40,7 +40,7 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) {
 
 /* App mount blur and shift when panel is open */
 body:has([data-vibe-controls-container] [data-vibe-switch].active)
-  #vibes\\.diy {
+  .vibe-app-container {
   filter: blur(4px);
   transform: translateY(-400px);
   transition:
@@ -49,7 +49,7 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active)
   pointer-events: none;
 }
 
-#vibes\\.diy {
+.vibe-app-container {
   transition:
     filter 0.3s ease,
     transform 0.3s ease;

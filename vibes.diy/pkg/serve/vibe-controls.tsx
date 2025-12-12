@@ -161,7 +161,11 @@ export default function VibeControls() {
 
           {/* Invite mode - Email form, status, Back (hidden by default) */}
           <div data-panel-mode="invite" data-mode-hidden>
-            <form data-invite-form>
+            <form data-invite-form action="/invite" method="GET">
+              <input type="hidden" name="db" id="vibe-db" value="" />
+              <input type="hidden" name="vibe" id="vibe-vibe" value="" />
+              <input type="hidden" name="group" id="vibe-group" value="" />
+
               <label htmlFor="vibe-invite-email">Invite by email</label>
               <input
                 id="vibe-invite-email"
