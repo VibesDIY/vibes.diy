@@ -38,15 +38,15 @@ pnpm bundle-fs \
 
 ## CLI Options
 
-| Option | Short | Description | Default |
-|--------|-------|-------------|---------|
-| `--path` | `-p` | Path to directory or file (can be used multiple times) | *required* |
-| `--output` | `-o` | Output file path | *required* |
-| `--ext` | `-e` | Comma-separated file extensions to include | `js,jsx,ts,tsx` |
-| `--minify` | `-m` | Minify the output bundle | `false` |
-| `--format` | `-f` | Output format: `esm`, `cjs`, or `iife` | `esm` |
-| `--platform` | | Target platform: `browser`, `node`, or `neutral` | `neutral` |
-| `--sourcemap` | `-s` | Generate sourcemap | `false` |
+| Option        | Short | Description                                            | Default         |
+| ------------- | ----- | ------------------------------------------------------ | --------------- |
+| `--path`      | `-p`  | Path to directory or file (can be used multiple times) | _required_      |
+| `--output`    | `-o`  | Output file path                                       | _required_      |
+| `--ext`       | `-e`  | Comma-separated file extensions to include             | `js,jsx,ts,tsx` |
+| `--minify`    | `-m`  | Minify the output bundle                               | `false`         |
+| `--format`    | `-f`  | Output format: `esm`, `cjs`, or `iife`                 | `esm`           |
+| `--platform`  |       | Target platform: `browser`, `node`, or `neutral`       | `neutral`       |
+| `--sourcemap` | `-s`  | Generate sourcemap                                     | `false`         |
 
 ## Examples
 
@@ -87,24 +87,24 @@ After generating the bundle, import and use it:
 
 ```javascript
 // ESM import
-import bundle from './dist/bundle.js';
+import bundle from "./dist/bundle.js";
 
 // List all files in the bundle
 const files = bundle.listFiles();
-console.log('Available files:', files);
+console.log("Available files:", files);
 // Output: ['./Component.jsx', './utils/helper.js', ...]
 
 // Read a file's content
-const content = bundle.readFile('/Component.jsx');
+const content = bundle.readFile("/Component.jsx");
 console.log(content);
 
 // Check if a file exists
-if (bundle.hasFile('/Component.jsx')) {
-  console.log('Component exists!');
+if (bundle.hasFile("/Component.jsx")) {
+  console.log("Component exists!");
 }
 
 // Get file count
-console.log('Total files:', bundle.getFileCount());
+console.log("Total files:", bundle.getFileCount());
 
 // Access the raw files object
 console.log(bundle.files);
@@ -114,14 +114,14 @@ console.log(bundle.files);
 
 ```javascript
 // Named imports
-import { readFile, listFiles, hasFile } from './dist/bundle.js';
+import { readFile, listFiles, hasFile } from "./dist/bundle.js";
 
-const code = readFile('/MyComponent.jsx');
+const code = readFile("/MyComponent.jsx");
 const allFiles = listFiles();
 
 // CommonJS (if bundled with --format cjs)
-const bundle = require('./dist/bundle.js');
-const content = bundle.readFile('/file.js');
+const bundle = require("./dist/bundle.js");
+const content = bundle.readFile("/file.js");
 ```
 
 ## API Reference

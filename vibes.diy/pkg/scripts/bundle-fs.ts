@@ -30,7 +30,7 @@ async function collectFilesFromDirectory(
   files: Record<string, string>,
   extensions: string[],
   excludePatterns: RegExp[],
-  basePath: string
+  basePath: string,
 ): Promise<void> {
   try {
     const entries = await readdir(dirPath, { withFileTypes: true });
@@ -38,16 +38,23 @@ async function collectFilesFromDirectory(
     for (const entry of entries) {
       const fullPath = join(dirPath, entry.name);
       const relativePath = relative(baseDir, fullPath);
-      const normalizedPath = join(basePath, relativePath).replace(/\\/g, '/');
+      const normalizedPath = join(basePath, relativePath).replace(/\\/g, "/");
 
       // Check if path matches any exclude pattern
-      if (excludePatterns.some(pattern => pattern.test(normalizedPath))) {
+      if (excludePatterns.some((pattern) => pattern.test(normalizedPath))) {
         console.error(`  ⊘ Excluded: ${normalizedPath}`);
         continue;
       }
 
       if (entry.isDirectory()) {
-        await collectFilesFromDirectory(fullPath, baseDir, files, extensions, excludePatterns, basePath);
+        await collectFilesFromDirectory(
+          fullPath,
+          baseDir,
+          files,
+          extensions,
+          excludePatterns,
+          basePath,
+        );
       } else {
         const ext = entry.name.split(".").pop()?.toLowerCase();
         if (ext && extensions.includes(ext)) {
@@ -60,7 +67,7 @@ async function collectFilesFromDirectory(
   } catch (error) {
     console.error(
       `Error reading directory ${dirPath}:`,
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : error,
     );
   }
 }
@@ -76,9 +83,13 @@ async function minifyFile(content: string, filePath: string): Promise<string> {
   }
 
   try {
-    const loader = filePath.endsWith(".tsx") ? "tsx" :
-                   filePath.endsWith(".ts") ? "ts" :
-                   filePath.endsWith(".jsx") ? "jsx" : "js";
+    const loader = filePath.endsWith(".tsx")
+      ? "tsx"
+      : filePath.endsWith(".ts")
+        ? "ts"
+        : filePath.endsWith(".jsx")
+          ? "jsx"
+          : "js";
 
     const result = await esbuild.transform(content, {
       loader,
@@ -105,7 +116,9 @@ function compressFile(content: string): string {
  * Compress all files
  */
 function compressFiles(files: Record<string, string>): Record<string, string> {
-  console.error(`\nCompressing ${Object.keys(files).length} files with gzip...`);
+  console.error(
+    `\nCompressing ${Object.keys(files).length} files with gzip...`,
+  );
   const compressed: Record<string, string> = {};
   let totalOriginal = 0;
   let totalCompressed = 0;
@@ -137,7 +150,7 @@ async function collectFilesFromPaths(
   shouldMinifyFiles: boolean,
   excludePatterns: RegExp[],
   shouldCompress: boolean,
-  basePath: string
+  basePath: string,
 ): Promise<Record<string, string>> {
   const files: Record<string, string> = {};
 
@@ -147,9 +160,16 @@ async function collectFilesFromPaths(
 
       if (stats.isDirectory()) {
         console.error(`Collecting from directory: ${path}`);
-        await collectFilesFromDirectory(path, path, files, extensions, excludePatterns, basePath);
+        await collectFilesFromDirectory(
+          path,
+          path,
+          files,
+          extensions,
+          excludePatterns,
+          basePath,
+        );
       } else if (stats.isFile()) {
-        const key = join(basePath, basename(path)).replace(/\\/g, '/');
+        const key = join(basePath, basename(path)).replace(/\\/g, "/");
 
         // Explicitly added files bypass exclude patterns
         const ext = basename(path).split(".").pop()?.toLowerCase();
@@ -164,7 +184,7 @@ async function collectFilesFromPaths(
     } catch (error) {
       console.error(
         `Error processing path ${path}:`,
-        error instanceof Error ? error.message : error
+        error instanceof Error ? error.message : error,
       );
     }
   }
@@ -194,7 +214,7 @@ export async function bundleFilesToReadable(
     exclude?: string[];
     compress?: boolean;
     basePath?: string;
-  } = {}
+  } = {},
 ): Promise<void> {
   const {
     extensions = ["js", "jsx", "ts", "tsx", "json", "css"],
@@ -207,16 +227,25 @@ export async function bundleFilesToReadable(
   const normalizedBasePath = normalizeBasePath(basePath);
 
   // Compile regex patterns
-  const excludePatterns: RegExp[] = exclude.map(pattern => new RegExp(pattern));
+  const excludePatterns: RegExp[] = exclude.map(
+    (pattern) => new RegExp(pattern),
+  );
 
   if (excludePatterns.length > 0) {
     console.error(`\nExclude patterns:`);
-    exclude.forEach(p => console.error(`  - ${p}`));
+    exclude.forEach((p) => console.error(`  - ${p}`));
   }
 
   console.error(`\nBase path: ${normalizedBasePath || "/"}`);
   console.error(`Collecting files with extensions: ${extensions.join(", ")}`);
-  const files = await collectFilesFromPaths(paths, extensions, minify, excludePatterns, compress, normalizedBasePath);
+  const files = await collectFilesFromPaths(
+    paths,
+    extensions,
+    minify,
+    excludePatterns,
+    compress,
+    normalizedBasePath,
+  );
 
   const fileCount = Object.keys(files).length;
   if (fileCount === 0) {
@@ -227,7 +256,8 @@ export async function bundleFilesToReadable(
   console.error(`\nFound ${fileCount} files to bundle`);
 
   // Create the entry file content
-  const entryContent = compress ? `
+  const entryContent = compress
+    ? `
 // Auto-generated filesystem bundle (gzip compressed)
 // Created: ${new Date().toISOString()}
 // Files: ${fileCount}
@@ -288,7 +318,8 @@ export default {
   getFileCount,
   files,
 };
-` : `
+`
+    : `
 // Auto-generated filesystem bundle
 // Created: ${new Date().toISOString()}
 // Files: ${fileCount}
@@ -342,7 +373,6 @@ export default {
 
 // CLI usage
 if (import.meta.url === `file://${process.argv[1]}`) {
-
   const app = command({
     name: "bundle-fs",
     description:
@@ -352,7 +382,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         type: array(string),
         long: "path",
         short: "p",
-        description: "Path to directory or file to include (can be specified multiple times)",
+        description:
+          "Path to directory or file to include (can be specified multiple times)",
       }),
       output: option({
         type: string,
@@ -371,7 +402,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         type: array(string),
         long: "exclude",
         short: "x",
-        description: "Regex patterns to exclude files/directories (can be specified multiple times)",
+        description:
+          "Regex patterns to exclude files/directories (can be specified multiple times)",
         defaultValue: () => [],
       }),
       minify: flag({
@@ -383,7 +415,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       compress: flag({
         long: "compress",
         short: "c",
-        description: "Compress files with gzip (uses DecompressionStream in browser)",
+        description:
+          "Compress files with gzip (uses DecompressionStream in browser)",
         defaultValue: () => false,
       }),
       basePath: option({
@@ -394,15 +427,33 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         defaultValue: () => "/",
       }),
     },
-    handler: async ({ paths, output, extensions, exclude, minify, compress, basePath }) => {
+    handler: async ({
+      paths,
+      output,
+      extensions,
+      exclude,
+      minify,
+      compress,
+      basePath,
+    }) => {
       if (!paths || paths.length === 0) {
         console.error("❌ Error: At least one --path must be specified");
         console.error("\nUsage examples:");
-        console.error("  tsx scripts/bundle-fs.ts -p ./src/components -o bundle.js");
-        console.error("  tsx scripts/bundle-fs.ts -p ./dist -o bundle.js --minify --compress");
-        console.error("  tsx scripts/bundle-fs.ts -p ./dist -o bundle.js --base-path /my-app");
-        console.error("  tsx scripts/bundle-fs.ts -p ./dist -o bundle.js --exclude '\\.ts$' --exclude '/tests/'");
-        console.error("  tsx scripts/bundle-fs.ts -p ./file.js -p ./other.js -o bundle.js");
+        console.error(
+          "  tsx scripts/bundle-fs.ts -p ./src/components -o bundle.js",
+        );
+        console.error(
+          "  tsx scripts/bundle-fs.ts -p ./dist -o bundle.js --minify --compress",
+        );
+        console.error(
+          "  tsx scripts/bundle-fs.ts -p ./dist -o bundle.js --base-path /my-app",
+        );
+        console.error(
+          "  tsx scripts/bundle-fs.ts -p ./dist -o bundle.js --exclude '\\.ts$' --exclude '/tests/'",
+        );
+        console.error(
+          "  tsx scripts/bundle-fs.ts -p ./file.js -p ./other.js -o bundle.js",
+        );
         process.exit(1);
       }
 

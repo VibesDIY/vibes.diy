@@ -1,7 +1,12 @@
-import { loadAndRenderTSX, loadAndRenderJSX, VibesDiyServCtx } from "./render.js";
+import {
+  loadAndRenderTSX,
+  loadAndRenderJSX,
+  VibesDiyServCtx,
+} from "./render.js";
 // import { contentType } from "mime-types";
-import mime from 'mime/lite'
+import mime from "mime";
 import { getClerkKeyForHostname } from "../clerk-env.js";
+import { uint8array2stream } from "@adviser/cement";
 
 async function fetchVibeCode(appSlug: string): Promise<string> {
   // Fetch vibe code from hosting subdomain App.jsx endpoint
@@ -127,19 +132,33 @@ export function vibesDiyHandler(
 
     // First, try to serve static file from disk
     try {
-      console.log("vibesDiyHandler req.url:", req.url);
-      const content = await ctx().then(ctx => ctx.loadFile(localPath))
-      if (content) {
-        const ext = requestedPath.substring(requestedPath.lastIndexOf("."));
-        const mimeType = mime.getType(ext) || "application/octet-stream";
+      // console.log("vibesDiyHandler req.url:", req.url);
+      for (const testDir of ["", "public"]) {
+        let testPath = localPath;
+        if (testDir) {
+          testPath = `./${testDir}/${requestedPath}`;
+        }
+        const content = await ctx().then((ctx) => ctx.loadFileBinary(testPath));
+        if (content) {
+          const ext = requestedPath.substring(requestedPath.lastIndexOf("."));
+          const mimeType = mime.getType(ext) || "application/octet-stream";
+          console.log(
+            "Serving static file:",
+            testPath,
+            "with ext:",
+            ext,
+            "mimeType:",
+            mimeType,
+          );
 
-        return new Response(content, {
-          status: 200,
-          headers: {
-            "Content-Type": mimeType,
-            "Access-Control-Allow-Origin": "*",
-          },
-        });
+          return new Response(uint8array2stream(content), {
+            status: 200,
+            headers: {
+              "Content-Type": mimeType,
+              "Access-Control-Allow-Origin": "*",
+            },
+          });
+        }
       }
     } catch (_error) {
       // File not found, continue to TSX rendering
@@ -148,7 +167,6 @@ export function vibesDiyHandler(
     // If no static file found, render index.tsx
     try {
       const indexPath = `./index.tsx`;
-      console.log("vibesDiyHandler-index req.url:", req.url, indexPath, ctx);
       const html = await loadAndRenderTSX(indexPath, await ctx());
       console.log("vibesDiyHandler-done req.url:", req.url);
 
