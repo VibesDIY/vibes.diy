@@ -11,6 +11,7 @@ import CookieBanner from "./components/CookieBanner.js";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
+import { DashboardProvider } from "./contexts/DashboardContext.js";
 import { ErrorBoundary } from "./ErrorBoundary.js";
 
 import { Home } from "./routes/home.js";
@@ -21,33 +22,36 @@ import { Groups } from "./routes/groups.js";
 import { MyVibes } from "./routes/my-vibes.js";
 import { Remix } from "./routes/remix.js";
 import { SsoCallback } from "./routes/sso-callback.js";
+import { Logout } from "./routes/logout.js";
 import { VibeInstanceList } from "./routes/vibe-instance-list.js";
 import { VibeViewer } from "./routes/vibe-viewer.js";
-import { VibeContainer } from "./routes/vibe-container.js";
 import { Legal_Privacy } from "./routes/legal/privacy.js";
 import { Legal_Tos } from "./routes/legal/tos.js";
+import { Invite } from "./routes/invite.js";
 import { CatchAll } from "./routes/catch-all.js";
 
 function RawApp({ children }: { children?: React.ReactNode }) {
   return (
     <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
-      <ThemeProvider>
-        <PostHogProvider
-          apiKey={VibesDiyEnv.POSTHOG_KEY()}
-          options={{
-            api_host: VibesDiyEnv.POSTHOG_HOST(),
-            opt_out_capturing_by_default: true,
-          }}
-        >
-          <CookieConsentProvider>
-            {children}
-            <Outlet />
-            <ClientOnly>
-              <CookieBanner />
-            </ClientOnly>
-          </CookieConsentProvider>
-        </PostHogProvider>
-      </ThemeProvider>
+      <DashboardProvider>
+        <ThemeProvider>
+          <PostHogProvider
+            apiKey={VibesDiyEnv.POSTHOG_KEY()}
+            options={{
+              api_host: VibesDiyEnv.POSTHOG_HOST(),
+              opt_out_capturing_by_default: true,
+            }}
+          >
+            <CookieConsentProvider>
+              {children}
+              <Outlet />
+              <ClientOnly>
+                <CookieBanner />
+              </ClientOnly>
+            </CookieConsentProvider>
+          </PostHogProvider>
+        </ThemeProvider>
+      </DashboardProvider>
     </ClerkProvider>
   );
 }
@@ -76,17 +80,15 @@ export function App() {
 
               {/* Vibe routes */}
               <Route path="vibes/mine" element={<MyVibes />} />
-              <Route
-                path="vibe/:titleId/:installId"
-                element={<VibeContainer />}
-              />
-              <Route path="vibe/:titleId" element={<VibeContainer />} />
+              <Route path="vibe/:titleId" element={<VibeInstanceList />} />
 
               {/* Other routes */}
               <Route path="groups" element={<Groups />} />
               <Route path="settings" element={<Settings />} />
               <Route path="about" element={<About />} />
+              <Route path="invite" element={<Invite />} />
               <Route path="sso-callback" element={<SsoCallback />} />
+              <Route path="logout" element={<Logout />} />
               <Route path="remix/:vibeSlug?" element={<Remix />} />
               <Route path="firehose" element={<Firehose />} />
 

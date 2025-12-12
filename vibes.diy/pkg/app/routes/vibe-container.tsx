@@ -1,5 +1,4 @@
-import { useParams } from "react-router-dom";
-import React, { useEffect } from "react";
+import React from "react";
 import { VibesDiyEnv } from "../config/env.js";
 
 function getHostnameFromUrl(url: string): string {
@@ -27,32 +26,4 @@ export function VibeIframeContainerComponent({
       allowFullScreen
     />
   );
-}
-
-function callReplace(replaceFn?: (url: string) => void) {
-  return replaceFn
-    ? replaceFn
-    : (url: string) => globalThis.window.location.replace(url);
-}
-
-export function VibeContainer({
-  replace,
-}: {
-  replace?: (url: string) => void;
-}) {
-  const { vibeSlug } = useParams<{ vibeSlug: string }>();
-
-  useEffect(() => {
-    if (vibeSlug) {
-      const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
-      const redirectUrl = `https://${vibeSlug}.${hostname}/${location.search}`;
-      callReplace(replace)(redirectUrl);
-    }
-  }, [vibeSlug]);
-
-  if (!vibeSlug) {
-    return <div>No vibe slug provided</div>;
-  }
-
-  return <div>Redirecting...</div>;
 }

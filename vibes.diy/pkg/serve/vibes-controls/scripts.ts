@@ -1,4 +1,3 @@
-import type { Clerk } from "@clerk/clerk-js";
 /**
  * Vibe Controls Scripts - Vanilla JavaScript for Interactivity
  *
@@ -10,7 +9,7 @@ import type { Clerk } from "@clerk/clerk-js";
  * - Mode switching (default ↔ mutate ↔ invite)
  * - Navigation buttons (Fresh Start, Remix Code)
  * - Invite form with CustomEvents
- * - Clerk logout integration
+ * - Logout via redirect to main app /logout route
  */
 
 // DOM element references
@@ -27,16 +26,6 @@ const inviteMode = document.querySelector('[data-panel-mode="invite"]');
 let panelOpen = false;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let currentMode = "default";
-
-// Clerk instance reference (received via CustomEvent)
-let clerkInstance: Clerk | null = null;
-
-// Listen for Clerk instance to be ready
-window.addEventListener("clerk-instance-ready", (ei) => {
-  const e = ei as CustomEvent<{ clerk: Clerk }>;
-  clerkInstance = e.detail.clerk;
-  console.log("✅ Clerk instance ready for vibe controls");
-});
 
 // SVG path definitions for morphing animation
 const originalD =
@@ -62,20 +51,11 @@ function getAppSlug() {
   throw new Error("Unable to determine app slug from URL");
 }
 
-function generateRandomInstanceId() {
-  // Simple random ID generator (12 chars alphanumeric)
-  return Array.from(
-    { length: 12 },
-    () =>
-      "0123456789abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 36)],
-  ).join("");
-}
-
 function generateFreshDataUrl() {
   const slug = getAppSlug();
-  const instanceId = generateRandomInstanceId();
   const { protocol, host } = window.location;
-  return `${protocol}//${host}/vibe/${slug}/${instanceId}`;
+  // Use ?new parameter to trigger creation of new instance in React app
+  return `${protocol}//${host}/vibe/${slug}?new`;
 }
 
 function generateRemixUrl() {
@@ -140,19 +120,11 @@ switchBtn?.addEventListener("pointerdown", (e) => {
 // Default mode buttons
 document
   .querySelector('[data-action="logout"]')
-  ?.addEventListener("click", async () => {
+  ?.addEventListener("click", () => {
     // Dispatch sync disable event
     document.dispatchEvent(new CustomEvent("vibes-sync-disable"));
-
-    // Call Clerk signOut using the event-received instance
-    if (clerkInstance) {
-      await clerkInstance.signOut();
-      // Clerk handles redirect automatically
-    } else {
-      console.error("Clerk instance not available for logout");
-      // Fallback: redirect to home
-      window.location.href = "/";
-    }
+    // Redirect to main app's logout route (Clerk handles sign-out there)
+    window.location.href = "/logout";
   });
 
 document
@@ -199,93 +171,88 @@ document.querySelectorAll('[data-action="back"]').forEach((btn) => {
 // Invite Form Handling
 // ============================================
 
+// Populate hidden fields from URL when form is shown
+const dbInput = document.getElementById("vibe-db") as HTMLInputElement | null;
+const vibeInput = document.getElementById(
+  "vibe-vibe",
+) as HTMLInputElement | null;
+const groupInput = document.getElementById(
+  "vibe-group",
+) as HTMLInputElement | null;
+
+// Extract components from URL path and global vibe database
+// Format: /vibe/:titleId/:installId (both required - no default fallback)
+function extractVibeComponentsFromUrl(): {
+  db: string;
+  vibe: string;
+  group: string;
+} {
+  const pathParts = window.location.pathname.split("/").filter(Boolean);
+  const vibeIndex = pathParts.indexOf("vibe");
+
+  if (vibeIndex !== -1 && pathParts.length > vibeIndex + 2) {
+    const titleId = pathParts[vibeIndex + 1];
+    const installId = pathParts[vibeIndex + 2]; // No "|| 'default'" fallback
+
+    // Get database name from first useFireproof call (exposed globally by use-vibes)
+    interface WindowWithVibeDB extends Window {
+      __VIBE_DB__?: {
+        get: () => string;
+      };
+    }
+    const dbName = (window as WindowWithVibeDB).__VIBE_DB__?.get() || titleId;
+
+    return {
+      db: dbName, // This is the name passed to useFireproof (e.g., "tiny-todos")
+      vibe: titleId,
+      group: installId,
+    };
+  }
+
+  // This should never happen on vibe pages since routing requires both vibe and group
+  return { db: "default", vibe: "default", group: "default" };
+}
+
+// Populate hidden fields when invite panel is shown
+// FIX: Use correct selector - button has data-action="invite", not "show-invite"
+const showInviteButton = document.querySelector('[data-action="invite"]');
+showInviteButton?.addEventListener("click", () => {
+  const components = extractVibeComponentsFromUrl();
+  console.log("[vibe-controls] Extracted vibe components:", components);
+  console.log("[vibe-controls] Input elements:", {
+    dbInput,
+    vibeInput,
+    groupInput,
+  });
+
+  if (dbInput) {
+    dbInput.value = components.db;
+    console.log("[vibe-controls] Set db input value:", dbInput.value);
+  }
+  if (vibeInput) {
+    vibeInput.value = components.vibe;
+    console.log("[vibe-controls] Set vibe input value:", vibeInput.value);
+  }
+  if (groupInput) {
+    groupInput.value = components.group;
+    console.log("[vibe-controls] Set group input value:", groupInput.value);
+  }
+});
+
+// Also populate on form submit to ensure values are fresh
 const inviteForm = document.querySelector(
   "[data-invite-form]",
 ) as HTMLFormElement | null;
-const inviteStatus = document.querySelector(
-  "[data-invite-status]",
-) as HTMLElement | null;
-const inviteInput = inviteForm?.querySelector(
-  'input[type="email"]',
-) as HTMLInputElement | null;
-
-inviteForm?.addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  // Get form data
-  const formData = new FormData(inviteForm);
-  const email = formData.get("email");
-
-  if (!email) {
-    console.error("Email is required");
-    return;
-  }
-
-  // Show loading state
-  if (inviteStatus) {
-    inviteStatus.textContent = "Inviting...";
-    inviteStatus.style.display = "block";
-    inviteStatus.className = "";
-  }
-
-  // Dispatch custom event to trigger share
-  document.dispatchEvent(
-    new CustomEvent("vibes-share-request", {
-      detail: {
-        email: email,
-        role: "member",
-        right: "read",
-      },
-    }),
+inviteForm?.addEventListener("submit", () => {
+  const components = extractVibeComponentsFromUrl();
+  console.log(
+    "[vibe-controls] Form submit - extracting fresh components:",
+    components,
   );
-});
 
-// Listen for share success
-document.addEventListener("vibes-share-success", () => {
-  // const e = ei as Event | {detail: unknown};
-  // console.log('Share successful:', e.detail);
-
-  if (inviteInput) {
-    // Show success feedback
-    inviteInput.style.backgroundColor = "rgba(220, 255, 220, 0.8)";
-    inviteInput.value = "";
-    inviteInput.placeholder = "Invited! Add another?";
-
-    setTimeout(() => {
-      inviteInput.style.backgroundColor = "";
-      inviteInput.placeholder = "friend@example.com";
-    }, 3000);
-  }
-
-  if (inviteStatus) {
-    inviteStatus.textContent = "Invitation sent!";
-    inviteStatus.className = "success";
-
-    setTimeout(() => {
-      inviteStatus.style.display = "none";
-    }, 3000);
-  }
-});
-
-// Listen for share error
-document.addEventListener("vibes-share-error", () => {
-  // console.error('Share failed:', e.detail.error);
-
-  if (inviteInput) {
-    // Show error feedback
-    inviteInput.style.backgroundColor = "rgba(255, 220, 220, 0.8)";
-    inviteInput.placeholder = "Error - try again";
-
-    setTimeout(() => {
-      inviteInput.style.backgroundColor = "";
-      inviteInput.placeholder = "friend@example.com";
-    }, 3000);
-  }
-
-  if (inviteStatus) {
-    inviteStatus.textContent = `Error: \${e.detail.error || 'Failed to send invitation'}`;
-    inviteStatus.className = "error";
-  }
+  if (dbInput) dbInput.value = components.db;
+  if (vibeInput) vibeInput.value = components.vibe;
+  if (groupInput) groupInput.value = components.group;
 });
 
 // ============================================

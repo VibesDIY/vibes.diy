@@ -21,8 +21,8 @@ async function handleVibeRequest(
   req: Request,
   globalProps: Record<string, unknown>,
 ): Promise<Response | null> {
-  // Handle /vibe/{appSlug} or /vibe/{appSlug}/{groupId} routes
-  const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)(?:\/([^/]+))?/);
+  // Handle /vibe/{appSlug}/{groupId} routes (both required)
+  const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)\/([^/]+)/);
   if (!vibeMatch) {
     return null; // Not a vibe route
   }

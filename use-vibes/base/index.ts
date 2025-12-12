@@ -29,6 +29,21 @@ const syncEnabledInstances = new Map<string, Set<string>>();
 // Simple counter for generating unique instance IDs (avoids React.useId conflicts)
 let instanceCounter = 0;
 
+// Track all database names used in this page load (for invite functionality)
+const usedDatabaseNames = new Set<string>();
+
+// Expose first database name globally for vibe-controls to access
+if (typeof window !== 'undefined') {
+  interface WindowWithVibeDB extends Window {
+    __VIBE_DB__?: {
+      get: () => string;
+    };
+  }
+  (window as WindowWithVibeDB).__VIBE_DB__ = {
+    get: () => Array.from(usedDatabaseNames)[0] || 'default',
+  };
+}
+
 // Helper to update body class based on global sync status
 function updateBodyClass() {
   if (typeof window === 'undefined' || !document?.body) return;
@@ -117,6 +132,12 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Get database name for tracking purposes (use augmented name)
   const dbName =
     typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
+
+  // Track this database name for global access
+  if (typeof nameOrDatabase === 'string') {
+    usedDatabaseNames.add(nameOrDatabase);
+  }
+
   // Use global sync key - all databases share the same auth token and sync state
   const syncKey = 'fireproof-sync-enabled';
 

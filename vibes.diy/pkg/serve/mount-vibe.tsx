@@ -5,18 +5,22 @@
 
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { VibeContextProvider } from "@vibes.diy/use-vibes-base";
 
-// import React from "react";
+// Extract titleId and installId from URL path
+// Format: /vibe/:titleId/:installId
+function extractVibeMetadata(): { titleId: string; installId: string } | null {
+  const pathParts = window.location.pathname.split("/").filter(Boolean);
+  const vibeIndex = pathParts.indexOf("vibe");
 
-// export function MountVibe({ appSlug }: { appSlug: string }) {
-//   return <script type="module"  dangerouslySetInnerHTML={{
-//                 __html: `
-//     import { mountVibe } from '/dist/vibes.diy/pkg/serve/mount-vibe.js';
-//     mountVibe({ appSlug: '${appSlug}' });
-//             `
-//   }}>
-//   </script>
-// }
+  if (vibeIndex !== -1 && pathParts.length > vibeIndex + 2) {
+    const titleId = pathParts[vibeIndex + 1];
+    const installId = pathParts[vibeIndex + 2];
+    return { titleId, installId };
+  }
+
+  return null;
+}
 
 export function mountVibe(vibe: never, props: { appSlug: string }) {
   console.log("mountVibe", vibe, props);
@@ -24,8 +28,27 @@ export function mountVibe(vibe: never, props: { appSlug: string }) {
   if (!element) {
     throw new Error(`Can't find the dom element ${props.appSlug}`);
   }
+
+  // Extract vibe metadata from URL
+  const vibeMetadata = extractVibeMetadata();
+
   const root = createRoot(element);
-  root.render(React.createElement(vibe));
+
+  // Wrap in VibeContextProvider if we have metadata
+  if (vibeMetadata) {
+    console.log("[mount-vibe] Mounting with vibeMetadata:", vibeMetadata);
+    const vibeElement = React.createElement(vibe);
+    const providerElement = React.createElement(VibeContextProvider, {
+      metadata: vibeMetadata,
+      children: vibeElement,
+    });
+    root.render(providerElement);
+  } else {
+    console.warn(
+      "[mount-vibe] No vibeMetadata found in URL - mounting without context",
+    );
+    root.render(React.createElement(vibe));
+  }
 }
 
 // export const clerkAuthScript = (
