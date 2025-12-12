@@ -10,10 +10,6 @@
     "dev": "deno run --allow-env --allow-run --allow-net --allow-read vibes-diy-srv.ts",
     "dev:netlify": "netlify dev",
     "start": "serve -s build/client",
-    "test:router": "vitest run",
-    "test": "cross-env DISABLE_REACT_ROUTER=true vitest run",
-    "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage --watch",
-    "test:watch": "vitest",
     "file-issues": "scripts/create-issues.sh",
     "test:file-issues": "scripts/test-issues.sh",
     "test:api-key": "node scripts/test-api-key.js",
@@ -84,7 +80,6 @@
     "@types/mime-types": "^3.0.1",
     "@types/react": "~19.2.7",
     "@types/react-dom": "~19.2.2",
-    "@vitest/browser-playwright": "^4.0.15",
     "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
     "deno": "^2.5.6",
@@ -101,6 +96,8 @@
     "typescript": "^5.9.3",
     "vite": "^7.2.7",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.15",
+    "yaml": "^2.8.2",
+    "zx": "^8.8.5"
   }
 }

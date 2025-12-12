@@ -63,6 +63,7 @@
     "@typescript/native-preview": "7.0.0-dev.20251222.1",
     "@vitest/browser-playwright": "^4.0.16",
     "@vitest/coverage-v8": "4.0.16",
+    "cmd-ts": "^0.14.3",
     "cross-env": "^10.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
