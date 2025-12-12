@@ -719,8 +719,8 @@ importers:
         specifier: ^7.10.1
         version: 7.10.1(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@shikijs/monaco':
-        specifier: ^3.17.1
-        version: 3.17.1
+        specifier: ^3.20.0
+        version: 3.20.0
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.1.17)
@@ -885,8 +885,8 @@ importers:
         specifier: ^7.10.1
         version: 7.10.1(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@shikijs/monaco':
-        specifier: ^3.17.1
-        version: 3.17.1
+        specifier: ^3.20.0
+        version: 3.20.0
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.1.17)
@@ -991,8 +991,8 @@ importers:
         specifier: ^7.10.1
         version: 7.10.1(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@shikijs/monaco':
-        specifier: ^3.17.1
-        version: 3.17.1
+        specifier: ^3.20.0
+        version: 3.20.0
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.1.17)
@@ -3794,9 +3794,6 @@ packages:
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
 
-  '@shikijs/core@3.17.1':
-    resolution: {integrity: sha512-VWsduykcibGU0WMi66PflThDWyqEeTOiWdCRa3wmsZuishh+1PDSOh5gGxHdSrOtS+v1pmYaxodk/JNzwusElA==}
-
   '@shikijs/core@3.20.0':
     resolution: {integrity: sha512-f2ED7HYV4JEk827mtMDwe/yQ25pRiXZmtHjWF8uzZKuKiEsJR7Ce1nuQ+HhV9FzDcbIo4ObBCD9GPTzNuy9S1g==}
 
@@ -3809,14 +3806,11 @@ packages:
   '@shikijs/langs@3.20.0':
     resolution: {integrity: sha512-le+bssCxcSHrygCWuOrYJHvjus6zhQ2K7q/0mgjiffRbkhM4o1EWu2m+29l0yEsHDbWaWPNnDUTRVVBvBBeKaA==}
 
-  '@shikijs/monaco@3.17.1':
-    resolution: {integrity: sha512-A/vwsSAL6FIfEfFt5cC5RDb0i4fo+0c/uOJNhxclTUQntx6UvLubsusUQ4T6bVZwCEuo27hCU3qYLFiabCiERw==}
+  '@shikijs/monaco@3.20.0':
+    resolution: {integrity: sha512-p2sUd6j/kxSzerL/rYpOgLOg+ssfFPeUjKxxKhK2SiMMKJTkw+Y84BmXMwNqFsdXr/4q3OMEjQ8ptRXHWpzdKQ==}
 
   '@shikijs/themes@3.20.0':
     resolution: {integrity: sha512-U1NSU7Sl26Q7ErRvJUouArxfM2euWqq1xaSrbqMu2iqa+tSp0D1Yah8216sDYbdDHw4C8b75UpE65eWorm2erQ==}
-
-  '@shikijs/types@3.17.1':
-    resolution: {integrity: sha512-yUFLiCnZHHJ16KbVbt3B1EzBUadU3OVpq0PEyb301m5BbuFKApQYBzJGhrK48hH/tYWSjzwcj7BSmYbBc0zntQ==}
 
   '@shikijs/types@3.20.0':
     resolution: {integrity: sha512-lhYAATn10nkZcBQ0BlzSbJA3wcmL5MXUUF8d2Zzon6saZDlToKaiRX60n2+ZaHJCmXEcZRWNzn+k9vplr8Jhsw==}
@@ -13587,13 +13581,6 @@ snapshots:
 
   '@sec-ant/readable-stream@0.4.1': {}
 
-  '@shikijs/core@3.17.1':
-    dependencies:
-      '@shikijs/types': 3.17.1
-      '@shikijs/vscode-textmate': 10.0.2
-      '@types/hast': 3.0.4
-      hast-util-to-html: 9.0.5
-
   '@shikijs/core@3.20.0':
     dependencies:
       '@shikijs/types': 3.20.0
@@ -13616,20 +13603,15 @@ snapshots:
     dependencies:
       '@shikijs/types': 3.20.0
 
-  '@shikijs/monaco@3.17.1':
+  '@shikijs/monaco@3.20.0':
     dependencies:
-      '@shikijs/core': 3.17.1
-      '@shikijs/types': 3.17.1
+      '@shikijs/core': 3.20.0
+      '@shikijs/types': 3.20.0
       '@shikijs/vscode-textmate': 10.0.2
 
   '@shikijs/themes@3.20.0':
     dependencies:
       '@shikijs/types': 3.20.0
-
-  '@shikijs/types@3.17.1':
-    dependencies:
-      '@shikijs/vscode-textmate': 10.0.2
-      '@types/hast': 3.0.4
 
   '@shikijs/types@3.20.0':
     dependencies:
