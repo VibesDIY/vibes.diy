@@ -8,7 +8,7 @@
   "main": "./serve/cf-vibes-diy-srv.ts",
   "compatibility_date": "2025-12-12",
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   /**
    * Smart Placement

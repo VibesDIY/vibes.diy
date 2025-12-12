@@ -28,10 +28,18 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
     }
     return undefined;
   };
+  const loadFileBinary = async (
+    file: string,
+  ): Promise<Uint8Array | undefined> => {
+    const path = `${Deno.cwd()}/${file}`;
+    const ret = await Deno.readFile(path).catch(() => undefined);
+    return ret;
+  };
   return Promise.resolve({
     versions: { FP },
     basePath: Deno.cwd(),
     loadFile,
+    loadFileBinary,
   });
 });
 

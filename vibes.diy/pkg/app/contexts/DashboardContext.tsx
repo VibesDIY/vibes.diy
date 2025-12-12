@@ -13,7 +13,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(
 );
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  const clerk = useClerk() 
+  const clerk = useClerk();
   const dashApi = clerkDashApi(clerk, {
     apiUrl: VibesDiyEnv.CONNECT_API_URL(),
   });

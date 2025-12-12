@@ -5,6 +5,7 @@ import { build } from "esbuild-wasm";
 export interface VibesDiyServCtx {
   readonly versions: { readonly FP: string };
   loadFile(file: string): Promise<string | undefined>;
+  loadFileBinary(file: string): Promise<Uint8Array | undefined>;
   basePath: string;
   [key: string]: unknown;
 }
