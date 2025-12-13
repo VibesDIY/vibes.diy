@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { App, PublishEvent } from "./types.js";
 import { callAI, imageGen } from "call-ai";
+import { fetchAndRecordUsage } from "@vibes.diy/hosting-base";
+
+// Usage tracking message schema
+const UsageTrackingMessage = z.object({
+  userId: z.string(),
+  generationId: z.string(),
+});
 
 interface AtProtoBlobResponse {
   blob: {
@@ -22,6 +29,7 @@ export interface QueueEnv {
   OPENROUTER_API_KEY?: string;
   SERVER_OPENROUTER_API_KEY?: string;
   OPENAI_API_KEY?: string;
+  USAGE_QUEUE?: Queue<{ userId: string; generationId: string }>;
 }
 
 const AI_API_KEY_ENV_VARS = [
@@ -140,27 +148,78 @@ async function generateAppIcon(
 
 export default {
   async queue(batch: MessageBatch, env: QueueEnv) {
-    for (const message of batch.messages) {
-      const result = PublishEvent.safeParse(message.body);
-
-      if (!result.success) {
-        console.error(`❌ Invalid message format:`, result.error);
-        message.retry();
-        continue;
-      }
-
-      const event = result.data;
-
-      try {
-        await processAppEvent(event, env);
-        message.ack();
-      } catch (error) {
-        console.error(`❌ Error processing message ${message.id}:`, error);
-        message.retry();
-      }
+    // Route based on queue name
+    switch (batch.queue) {
+      case "usage-tracking":
+        await processUsageTrackingBatch(batch, env);
+        break;
+      case "publish-events-v2":
+        await processPublishEventsBatch(batch, env);
+        break;
+      default:
+        console.error(`❌ Unknown queue: ${batch.queue}`);
+        // Ack all messages to avoid infinite retries
+        for (const message of batch.messages) {
+          message.ack();
+        }
     }
   },
 };
+
+async function processUsageTrackingBatch(batch: MessageBatch, env: QueueEnv) {
+  for (const message of batch.messages) {
+    const result = UsageTrackingMessage.safeParse(message.body);
+    if (!result.success) {
+      console.error(`❌ Invalid usage tracking message:`, result.error);
+      message.ack();
+      continue;
+    }
+
+    try {
+      await processUsageTracking(result.data, env);
+      message.ack();
+    } catch (error) {
+      console.error(`❌ Error processing usage tracking:`, error);
+      message.retry();
+    }
+  }
+}
+
+async function processPublishEventsBatch(batch: MessageBatch, env: QueueEnv) {
+  for (const message of batch.messages) {
+    const result = PublishEvent.safeParse(message.body);
+    if (!result.success) {
+      console.error(`❌ Invalid publish event:`, result.error);
+      message.retry();
+      continue;
+    }
+
+    try {
+      await processAppEvent(result.data, env);
+      message.ack();
+    } catch (error) {
+      console.error(`❌ Error processing message ${message.id}:`, error);
+      message.retry();
+    }
+  }
+}
+
+async function processUsageTracking(
+  data: z.infer<typeof UsageTrackingMessage>,
+  env: QueueEnv,
+) {
+  const apiKey = env.SERVER_OPENROUTER_API_KEY;
+  if (!apiKey) {
+    console.error(`❌ SERVER_OPENROUTER_API_KEY not set - cannot track usage`);
+    return;
+  }
+
+  console.log(
+    `📊 Tracking usage for user=${data.userId} gen=${data.generationId}`,
+  );
+  await fetchAndRecordUsage(env.KV, data.userId, data.generationId, apiKey);
+  console.log(`✅ Usage tracked for ${data.generationId}`);
+}
 
 async function processAppEvent(
   event: z.infer<typeof PublishEvent>,

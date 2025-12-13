@@ -19,6 +19,18 @@
     },
   ],
   /**
+   * Rate Limiting
+   * Burst protection for API endpoints (~60 requests per minute per user)
+   * https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
+   */
+  "rate_limits": [
+    {
+      "binding": "BURST_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 200, "period": 60 },
+    },
+  ],
+  /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
    */
@@ -63,6 +75,11 @@
         "binding": "PUBLISH_QUEUE",
         "delivery_delay": 0,
       },
+      {
+        "queue": "usage-tracking",
+        "binding": "USAGE_QUEUE",
+        "delivery_delay": 2,
+      },
     ],
     "consumers": [
       {
@@ -71,6 +88,12 @@
         "max_batch_timeout": 30,
         "max_retries": 3,
         "dead_letter_queue": "publish-events-v2-dlq",
+      },
+      {
+        "queue": "usage-tracking",
+        "max_batch_size": 10,
+        "max_batch_timeout": 10,
+        "max_retries": 3,
       },
     ],
   },

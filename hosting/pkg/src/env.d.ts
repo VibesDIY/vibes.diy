@@ -21,5 +21,17 @@ declare namespace Cloudflare {
     // Integration secrets (optional)
     DISCORD_WEBHOOK_URL?: string;
     BLUESKY_APP_PASSWORD?: string;
+
+    // Rate limiting - burst protection for API endpoints
+    BURST_LIMITER: RateLimiter;
+
+    // Usage tracking queue
+    USAGE_QUEUE: Queue<UsageTrackingMessage>;
   }
+}
+
+// Usage tracking message format
+interface UsageTrackingMessage {
+  userId: string;
+  generationId: string;
 }

@@ -13,5 +13,8 @@ export * from "./utils/domainUtils.js";
 export * from "./utils/slugGenerator.js";
 export * from "./utils/subdomainParser.js";
 
+// Services
+export { fetchAndRecordUsage } from "./services/rate-limiter.js";
+
 // Types
 export * from "./types.js";
