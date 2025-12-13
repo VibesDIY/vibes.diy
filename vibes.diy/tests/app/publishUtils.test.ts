@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { publishApp } from "~/vibes.diy/app/utils/publishUtils.js";
 
 // Mock dependencies
-vi.mock("use-fireproof");
+vi.mock("@fireproof/use-fireproof");
 vi.mock("~/vibes.diy/app/utils/databaseManager.js");
 vi.mock("@vibes.diy/prompts", () => ({
   normalizeComponentExports: vi.fn().mockImplementation((code: string) => code),
 }));
 
 // Import mocked modules
-import { fireproof } from "use-fireproof";
+import { fireproof } from "@fireproof/use-fireproof";
 import { getSessionDatabaseName } from "~/vibes.diy/app/utils/databaseManager.js";
 
 // We need to mock the import.meta.env

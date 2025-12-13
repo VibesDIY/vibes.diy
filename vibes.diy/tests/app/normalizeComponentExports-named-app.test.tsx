@@ -6,7 +6,7 @@ describe("normalizeComponentExports edge cases", () => {
   it("should handle components already named App correctly", () => {
     const input = `
 import React, { useRef, useEffect } from "react";
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 import { callAI } from "call-ai";
 
 const App = () => {
@@ -41,7 +41,7 @@ export default App;
     // Simplified version of app1.jsx that reproduces the error
     const input = `
 import React, { useRef, useEffect } from "react";
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 import { callAI } from "call-ai";
 
 const App = () => {

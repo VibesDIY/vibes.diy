@@ -1,4 +1,4 @@
-import { Database } from "use-fireproof";
+import { Database } from "@fireproof/use-fireproof";
 import type { ErrorCategory } from "./useRuntimeErrors.js";
 import { RuntimeError } from "@vibes.diy/use-vibes-types";
 

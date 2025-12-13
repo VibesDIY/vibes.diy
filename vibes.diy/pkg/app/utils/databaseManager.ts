@@ -1,4 +1,4 @@
-import { DocResponse, fireproof } from "use-fireproof";
+import { DocResponse, fireproof } from "@fireproof/use-fireproof";
 
 /**
  * Get the database name for a session

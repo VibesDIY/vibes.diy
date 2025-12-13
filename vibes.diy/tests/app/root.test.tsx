@@ -95,7 +95,7 @@ vi.mock("~/vibes.diy/app/components/CookieBanner", () => ({
 }));
 
 // Mock the useFireproof hook
-vi.mock("use-fireproof", async () => {
+vi.mock("@fireproof/use-fireproof", async () => {
   const { vi } = await import("vitest");
   return {
     useFireproof: () => ({

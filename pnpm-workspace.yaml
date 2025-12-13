@@ -9,6 +9,7 @@ packages:
   - "use-vibes/examples/react-example"
   - "use-vibes/examples/hosted-dev"
   - "vibes.diy/pkg"
+  - "vibes.diy/stable-entry"
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"
   - "prompts/pkg"
@@ -20,8 +21,11 @@ packages:
   - "utils/tests"
 
 # Override sharp version to avoid build failures with 0.34.x
+# Force React 19.2.1 to avoid version mismatches between workspaces
 overrides:
   sharp: 0.33.5
+  react: 19.2.1
+  react-dom: 19.2.1
 
 # Avoid needing to interactively run 'pnpm approve-build' step during quickstart
 onlyBuiltDependencies:

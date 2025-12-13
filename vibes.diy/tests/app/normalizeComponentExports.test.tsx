@@ -176,7 +176,7 @@ export default {
   it("properly normalizes export default function with multiple imports", () => {
     const input = `
 import React, { useState } from 'react';
-import { useFireproof } from 'use-fireproof';
+import { useFireproof } from '@fireproof/use-fireproof';
 import { callAI } from 'call-ai';
 
 export default function SymbioticCreatureGenerator() {
@@ -197,7 +197,7 @@ export default function SymbioticCreatureGenerator() {
     expect(normalized).toContain("symbiotic-creatures");
     expect(normalized).toContain("Symbiotic Creature Lab");
     expect(normalized).toContain(
-      "import { useFireproof } from 'use-fireproof'",
+      "import { useFireproof } from '@fireproof/use-fireproof'",
     );
   });
 });

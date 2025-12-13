@@ -49,7 +49,8 @@ export function useNewSessionChat(
 
         // Delay navigation slightly to allow analytics event to flush
         setTimeout(() => {
-          window.location.href = targetUrl;
+          navigate(targetUrl);
+          // window.location.href = targetUrl;
         }, 20);
       } catch (error) {
         setIsStreaming(false);

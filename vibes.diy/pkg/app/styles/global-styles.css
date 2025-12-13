@@ -1,0 +1,23 @@
+/**
+ * Global CSS Styles - Orchestrator
+ *
+ * Combines all CSS modules for server-side injection via <style> tag in index.tsx
+ * This ensures CSS loads BEFORE app.css, providing base styles for SSR.
+ *
+ * Architecture:
+ * 1. CSS Variables - from colors.css (single source of truth)
+ * 2. Global Resets - HTML/body base styles
+ * 3. Keyframe Animations - @keyframes for UI animations
+ * 4. Tailwind Utilities - Generated utility classes
+ * 5. Pseudo Elements - Complex ::before/::after classes
+ * 6. Component Styles - Component-specific CSS
+ *
+ * @see ./modules/ for individual CSS module implementations
+ */
+
+@import "./modules/css-variables.css";
+@import "./modules/global-resets.css";
+@import "./modules/keyframe-animations.css";
+@import "./modules/tailwind-utilities.css";
+@import "./modules/pseudo-element.css";
+@import "./modules/component-styles.css";

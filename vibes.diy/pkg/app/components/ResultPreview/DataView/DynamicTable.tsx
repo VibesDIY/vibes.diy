@@ -1,5 +1,5 @@
 import React from "react";
-import { DocBase } from "use-fireproof";
+import { DocBase } from "@fireproof/use-fireproof";
 
 interface DynamicTableProps {
   dbName: string;

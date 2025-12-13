@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { DocFileMeta } from "use-fireproof";
+import { DocFileMeta } from "@fireproof/use-fireproof";
 
 interface ImgFileProps {
   file: DocFileMeta;
