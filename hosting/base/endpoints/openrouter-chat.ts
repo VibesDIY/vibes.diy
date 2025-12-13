@@ -7,7 +7,10 @@ import {
   getUserUsage,
   TIER_LIMITS,
 } from "../services/rate-limiter.js";
-import { createIdExtractorStream } from "../utils/streaming-id-extractor.js";
+import {
+  createUsageExtractorStream,
+  StreamingUsageData,
+} from "../utils/streaming-id-extractor.js";
 
 // OpenRouter chat completion endpoint
 export class OpenRouterChat extends OpenAPIRoute {
@@ -229,6 +232,7 @@ export class OpenRouterChat extends OpenAPIRoute {
       const currentUsage = await getUserUsage(c.env.KV, userId);
 
       // Helper to add rate limit headers
+      // Note: These reflect pre-request usage; actual usage tracked async via queue
       const rateLimitHeaders = {
         "X-RateLimit-Daily-Limit": limits.daily.toString(),
         "X-RateLimit-Daily-Used": currentUsage.daily.toFixed(4),
@@ -242,6 +246,10 @@ export class OpenRouterChat extends OpenAPIRoute {
           0,
           limits.monthly - currentUsage.monthly,
         ).toFixed(4),
+        "X-RateLimit-Tracking-Mode": "async",
+        "X-RateLimit-Updated-At": new Date(
+          currentUsage.lastUpdated,
+        ).toISOString(),
       };
 
       // Send request to OpenRouter API with user tracking
@@ -276,32 +284,33 @@ export class OpenRouterChat extends OpenAPIRoute {
           );
         }
 
-        // Create ID extractor stream to capture generation ID for usage tracking
-        const idExtractorStream = createIdExtractorStream((id: string) => {
-          // Queue usage tracking message
-          if (c.env.USAGE_QUEUE) {
-            c.env.USAGE_QUEUE.send({ userId, generationId: id }).catch(
-              (err: unknown) =>
+        // Create usage extractor stream to capture generation ID and cost data
+        // The extractor passes through all chunks unchanged while extracting usage
+        const usageExtractorStream = createUsageExtractorStream(
+          (data: StreamingUsageData) => {
+            // Queue usage tracking message with complete data
+            if (c.env.USAGE_QUEUE) {
+              c.env.USAGE_QUEUE.send({
+                userId,
+                generationId: data.id,
+                model: data.model,
+                cost: data.cost,
+                tokensPrompt: data.tokensPrompt,
+                tokensCompletion: data.tokensCompletion,
+                hasUsageData: data.hasUsageData,
+              }).catch((err: unknown) =>
                 console.error(`Failed to queue usage tracking:`, err),
-            );
-          }
-        });
+              );
+            }
+          },
+        );
 
-        // Clone the response to avoid locking the body
-        const clonedResponse = response.clone();
+        // Pipe response through usage extractor (no tee needed - chunks pass through unchanged)
+        const clientStream = response.body!.pipeThrough(usageExtractorStream);
 
-        // Pipe through the ID extractor stream
-        if (clonedResponse.body) {
-          clonedResponse.body
-            .pipeThrough(idExtractorStream)
-            .pipeTo(new WritableStream())
-            .catch((err) => {
-              console.error(`OpenRouter Chat: ID extraction error:`, err);
-            });
-        }
-
-        // Return the original response stream (ID extractor runs in parallel)
-        return new Response(response.body, {
+        // Return the stream with upstream status preserved
+        return new Response(clientStream, {
+          status: response.status,
           headers: {
             "Content-Type": "text/event-stream",
             "Access-Control-Allow-Origin": "*",
@@ -333,18 +342,34 @@ export class OpenRouterChat extends OpenAPIRoute {
       }
 
       // For non-streaming responses, pass through the original response
-      const responseData = (await response.json()) as { id?: string };
+      const responseData = (await response.json()) as {
+        id?: string;
+        model?: string;
+        usage?: {
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          cost?: number;
+        };
+      };
 
-      // Queue usage tracking for non-streaming responses
+      // Queue usage tracking for non-streaming responses with complete data
       if (responseData.id && c.env.USAGE_QUEUE) {
+        const hasUsageData =
+          responseData.usage && typeof responseData.usage.cost === "number";
         await c.env.USAGE_QUEUE.send({
           userId,
           generationId: responseData.id,
+          model: responseData.model || "unknown",
+          cost: responseData.usage?.cost || 0,
+          tokensPrompt: responseData.usage?.prompt_tokens || 0,
+          tokensCompletion: responseData.usage?.completion_tokens || 0,
+          hasUsageData: !!hasUsageData,
         });
       }
 
-      // Add rate limit headers to the response
+      // Add rate limit headers to the response with upstream status preserved
       return new Response(JSON.stringify(responseData), {
+        status: response.status,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",

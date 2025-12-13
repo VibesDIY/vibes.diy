@@ -1,0 +1,25 @@
+{
+  "name": "@vibes.diy/hosting-workers-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Workers-based tests for rate limiting using real Miniflare bindings",
+  "scripts": {
+    "test": "vitest --config vitest.config.ts run",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:do": "vitest --config vitest.do.config.ts run",
+    "test:do:watch": "vitest --config vitest.do.config.ts",
+    "test:all": "pnpm test && pnpm test:do"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.10.15",
+    "@cloudflare/workers-types": "^4.20251205.0",
+    "typescript": "^5.9.3",
+    "vitest": "~3.2.3",
+    "wrangler": "^4.54.0"
+  },
+  "dependencies": {
+    "@vibes.diy/hosting": "workspace:*",
+    "@vibes.diy/hosting-base": "workspace:*"
+  }
+}

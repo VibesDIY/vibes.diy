@@ -31,6 +31,22 @@
     },
   ],
   /**
+   * Durable Objects
+   * Per-user SQLite databases for usage tracking
+   * https://developers.cloudflare.com/durable-objects/
+   */
+  "durable_objects": {
+    "bindings": [
+      { "name": "DURABLE_DATABASE", "class_name": "DurableDatabase" },
+    ],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DurableDatabase"] }],
+  /**
+   * Rules for bundling SQL migration files
+   * https://developers.cloudflare.com/workers/wrangler/bundling/
+   */
+  "rules": [{ "type": "Text", "globs": ["**/*.sql"], "fallthrough": true }],
+  /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
    */

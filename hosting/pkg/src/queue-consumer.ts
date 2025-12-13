@@ -1,12 +1,19 @@
 import { z } from "zod";
 import { App, PublishEvent } from "./types.js";
 import { callAI, imageGen } from "call-ai";
-import { fetchAndRecordUsage } from "@vibes.diy/hosting-base";
+import type { DurableDatabase, UsageAggregates } from "./durable-database.js";
 
 // Usage tracking message schema
+// Includes optional inline usage data extracted from streaming response
 const UsageTrackingMessage = z.object({
   userId: z.string(),
   generationId: z.string(),
+  // Inline usage data (from streaming/non-streaming response)
+  model: z.string().optional(),
+  cost: z.number().optional(),
+  tokensPrompt: z.number().optional(),
+  tokensCompletion: z.number().optional(),
+  hasUsageData: z.boolean().optional(), // true if data was extracted from response
 });
 
 interface AtProtoBlobResponse {
@@ -30,6 +37,7 @@ export interface QueueEnv {
   SERVER_OPENROUTER_API_KEY?: string;
   OPENAI_API_KEY?: string;
   USAGE_QUEUE?: Queue<{ userId: string; generationId: string }>;
+  DURABLE_DATABASE?: DurableObjectNamespace<DurableDatabase>;
 }
 
 const AI_API_KEY_ENV_VARS = [
@@ -204,21 +212,167 @@ async function processPublishEventsBatch(batch: MessageBatch, env: QueueEnv) {
   }
 }
 
+// OpenRouter generation response type
+interface OpenRouterGenerationResponse {
+  data?: {
+    model?: string;
+    usage?: number;
+    upstream_inference_cost?: number;
+    tokens_prompt?: number;
+    tokens_completion?: number;
+  };
+}
+
+// TTL values in seconds
+const DAILY_TTL = 48 * 60 * 60; // 48 hours
+const MONTHLY_TTL = 35 * 24 * 60 * 60; // 35 days
+
 async function processUsageTracking(
   data: z.infer<typeof UsageTrackingMessage>,
   env: QueueEnv,
 ) {
-  const apiKey = env.SERVER_OPENROUTER_API_KEY;
-  if (!apiKey) {
-    console.error(`❌ SERVER_OPENROUTER_API_KEY not set - cannot track usage`);
+  if (!env.DURABLE_DATABASE) {
+    console.error(`DURABLE_DATABASE not bound - cannot track usage`);
     return;
   }
 
   console.log(
-    `📊 Tracking usage for user=${data.userId} gen=${data.generationId}`,
+    `Tracking usage for user=${data.userId} gen=${data.generationId}`,
   );
-  await fetchAndRecordUsage(env.KV, data.userId, data.generationId, apiKey);
-  console.log(`✅ Usage tracked for ${data.generationId}`);
+
+  // Use inline data if available, otherwise fetch from API (fallback)
+  let model: string;
+  let cost: number;
+  let tokensPrompt: number;
+  let tokensCompletion: number;
+
+  if (data.hasUsageData) {
+    // Use inline data from streaming/non-streaming response
+    model = data.model || "unknown";
+    cost = data.cost || 0;
+    tokensPrompt = data.tokensPrompt || 0;
+    tokensCompletion = data.tokensCompletion || 0;
+    console.log(`Using inline usage data: $${cost.toFixed(4)}`);
+  } else {
+    // Fallback: fetch from OpenRouter API
+    const apiKey = env.SERVER_OPENROUTER_API_KEY;
+    if (!apiKey) {
+      console.error(`SERVER_OPENROUTER_API_KEY not set - cannot track usage`);
+      return;
+    }
+
+    const genData = await fetchGenerationFromOpenRouter(
+      data.generationId,
+      apiKey,
+    );
+    if (!genData) {
+      console.error(`Failed to fetch generation ${data.generationId}`);
+      return;
+    }
+
+    model = genData.model;
+    cost = genData.cost;
+    tokensPrompt = genData.tokensPrompt;
+    tokensCompletion = genData.tokensCompletion;
+    console.log(`Fetched usage from API: $${cost.toFixed(4)}`);
+  }
+
+  // Get user's Durable Object
+  const doId = env.DURABLE_DATABASE.idFromName(data.userId);
+  const userDB = env.DURABLE_DATABASE.get(doId);
+
+  // Record generation and get aggregates (single RPC call)
+  const aggregates = await userDB.recordGeneration({
+    id: data.generationId,
+    model,
+    cost,
+    tokensPrompt,
+    tokensCompletion,
+    createdAt: Math.floor(Date.now() / 1000),
+  });
+
+  // Write aggregates to KV for fast budget checks
+  await writeAggregatesToKV(env.KV, data.userId, aggregates);
+
+  console.log(
+    `Usage tracked: $${cost.toFixed(4)} (daily: $${aggregates.daily.cost.toFixed(4)}, monthly: $${aggregates.monthly.cost.toFixed(4)})`,
+  );
+}
+
+async function fetchGenerationFromOpenRouter(
+  generationId: string,
+  apiKey: string,
+): Promise<{
+  model: string;
+  cost: number;
+  tokensPrompt: number;
+  tokensCompletion: number;
+} | null> {
+  try {
+    const url = new URL("https://openrouter.ai/api/v1/generation");
+    url.searchParams.set("id", generationId);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error(
+        `Failed to fetch generation ${generationId}: ${response.status}`,
+      );
+      return null;
+    }
+
+    const data = (await response.json()) as OpenRouterGenerationResponse;
+
+    // Extract cost: use "usage" for non-BYOK, "upstream_inference_cost" for BYOK
+    const cost = data.data?.usage || data.data?.upstream_inference_cost || 0;
+
+    return {
+      model: data.data?.model || "unknown",
+      cost,
+      tokensPrompt: data.data?.tokens_prompt || 0,
+      tokensCompletion: data.data?.tokens_completion || 0,
+    };
+  } catch (error) {
+    console.error(`Error fetching generation ${generationId}:`, error);
+    return null;
+  }
+}
+
+async function writeAggregatesToKV(
+  kv: KVNamespace,
+  userId: string,
+  aggregates: UsageAggregates,
+): Promise<void> {
+  const today = new Date().toISOString().split("T")[0];
+  const month = new Date().toISOString().slice(0, 7);
+  const now = Date.now();
+
+  await Promise.all([
+    kv.put(
+      `cost:daily:${userId}:${today}`,
+      JSON.stringify({
+        cost: aggregates.daily.cost,
+        tokensPrompt: aggregates.daily.tokensPrompt,
+        tokensCompletion: aggregates.daily.tokensCompletion,
+        lastUpdated: now,
+      }),
+      { expirationTtl: DAILY_TTL },
+    ),
+    kv.put(
+      `cost:monthly:${userId}:${month}`,
+      JSON.stringify({
+        cost: aggregates.monthly.cost,
+        tokensPrompt: aggregates.monthly.tokensPrompt,
+        tokensCompletion: aggregates.monthly.tokensCompletion,
+        lastUpdated: now,
+      }),
+      { expirationTtl: MONTHLY_TTL },
+    ),
+  ]);
 }
 
 async function processAppEvent(

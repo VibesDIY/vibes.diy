@@ -14,6 +14,7 @@ import { cors } from "hono/cors";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import queueConsumer from "./queue-consumer.js";
 import renderApp from "./renderApp.js";
+import testRoutes from "./test-routes.js";
 
 // Variables type for context
 interface Variables {
@@ -44,6 +45,9 @@ app.use(
     maxAge: 86400,
   }),
 );
+
+// Mount test routes (for DO integration testing via unstable_dev)
+app.route("/", testRoutes);
 
 // Mount the renderApp router
 app.route("/", renderApp);
@@ -143,3 +147,6 @@ export { PublishEvent } from "./types.js"; // same as above, its tests only, imp
 export type { PublishEvent as PublishEventType } from "./types.js"; // reconcile this with the real PublishEventType in hosting/base/types
 export { default as renderApp } from "./renderApp.js";
 export { default as queueConsumer } from "./queue-consumer.js";
+
+// Durable Objects - must be exported for Cloudflare Workers runtime
+export { DurableDatabase } from "./durable-database.js";
