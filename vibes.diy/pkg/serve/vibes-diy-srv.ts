@@ -76,13 +76,15 @@ export function vibesDiyHandler(
           },
         );
       }
-      // const x = await loadAndRenderJSX(`<MountVibe appSlug="${appSlug}" />`)
-      // console.log(x)
+      // Get Clerk key for this hostname (dev vs prod)
+      const hostname = url.hostname;
+      const clerkPublishableKey = getClerkKeyForHostname(hostname);
+
       return new Response(
         `
         import { mountVibe } from '/dist/vibes.diy/pkg/serve/mount-vibe.js';
         import vibe from '/vibe-script?appSlug=${appSlug}';
-        mountVibe(vibe, { appSlug: '${appSlug}' });
+        mountVibe(vibe, { appSlug: '${appSlug}', clerkPublishableKey: '${clerkPublishableKey}' });
         `,
         {
           status: 200,

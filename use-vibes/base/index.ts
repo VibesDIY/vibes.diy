@@ -1,8 +1,9 @@
-import type { ToCloudAttachable } from '@fireproof/core-types-protocols-cloud';
+import type { ToCloudAttachable, TokenAndClaims } from '@fireproof/core-types-protocols-cloud';
 import { getKeyBag } from '@fireproof/core-keybag';
-import { Lazy } from '@adviser/cement';
+import { Lazy, Result } from '@adviser/cement';
 import { ensureSuperThis } from '@fireproof/core-runtime';
 import { useCallback, useEffect } from 'react';
+import { decodeJwt, type JWTPayload } from 'jose';
 import {
   fireproof,
   ImgFile,
@@ -11,16 +12,176 @@ import {
   type Database,
   type UseFpToCloudParam,
 } from '@fireproof/use-fireproof';
+import { DashboardApiImpl } from '@fireproof/core-protocols-dashboard';
+import type { DashAuthType } from '@fireproof/core-protocols-dashboard';
 import { VIBES_SYNC_ENABLED_CLASS } from './constants.js';
 import { useVibeContext, type VibeMetadata } from './contexts/VibeContext.js';
+import { constructVibesDatabaseName } from './utils/databaseName.js';
 
-// Interface for share API response
-interface ShareApiResponse {
-  success: boolean;
-  email: string;
-  role: string;
-  right: string;
-  message?: string;
+// Cloud connection URLs - same as used by vibes.diy app via DashboardContext
+const DASHBOARD_API_URL = 'https://connect.fireproof.direct/api';
+const DASHBOARD_URI = 'https://connect.fireproof.direct/fp/cloud/api/token-auto';
+const CLOUD_BASE_URL = 'fpcloud://cloud.fireproof.direct';
+
+// Declare Clerk on window for dynamic import
+declare global {
+  interface Window {
+    Clerk?: {
+      session?: {
+        getToken: (opts?: { template?: string }) => Promise<string | null>;
+      };
+      user?: unknown;
+      addListener?: (
+        callback: (resources: {
+          session?: { getToken: (opts?: { template?: string }) => Promise<string | null> };
+        }) => void
+      ) => () => void;
+    };
+  }
+}
+
+// Clerk instance promise (singleton per publishable key)
+const clerkPromises = new Map<string, Promise<typeof window.Clerk>>();
+
+/**
+ * Get or initialize Clerk instance.
+ * Uses dynamic import to load Clerk JS SDK.
+ * @param clerkPublishableKey - The Clerk publishable key to use for initialization
+ */
+async function getClerk(clerkPublishableKey: string): Promise<typeof window.Clerk> {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  // If Clerk is already loaded on window, use it
+  if (window.Clerk) {
+    return window.Clerk;
+  }
+
+  // Otherwise, dynamically import and initialize
+  if (!clerkPromises.has(clerkPublishableKey)) {
+    const promise = (async () => {
+      try {
+        // Dynamic import - clerk-js is available via import map in serve context
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ClerkModule = await import('@clerk/clerk-js' as any);
+        const Clerk = ClerkModule.Clerk || ClerkModule.default;
+
+        const clerk = new Clerk(clerkPublishableKey);
+        await clerk.load();
+
+        return clerk as unknown as typeof window.Clerk;
+      } catch {
+        return undefined;
+      }
+    })();
+    clerkPromises.set(clerkPublishableKey, promise);
+  }
+
+  // We just set it above, so we know it exists
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return clerkPromises.get(clerkPublishableKey)!;
+}
+
+// Singleton DashboardApiImpl instances keyed by clerkPublishableKey
+const dashApiInstances = new Map<string, DashboardApiImpl<unknown>>();
+
+/**
+ * Get or create a DashboardApiImpl instance for the given Clerk publishable key.
+ * Creates the dashApi with a token getter that uses the dynamically loaded Clerk instance.
+ */
+function getDashApi(clerkPublishableKey: string): DashboardApiImpl<unknown> {
+  let dashApi = dashApiInstances.get(clerkPublishableKey);
+  if (!dashApi) {
+    dashApi = new DashboardApiImpl({
+      apiUrl: DASHBOARD_API_URL,
+      gracePeriodMs: 5000,
+      fetch: fetch.bind(globalThis),
+      getToken: async (): Promise<Result<DashAuthType>> => {
+        const clerk = await getClerk(clerkPublishableKey);
+        if (!clerk?.session) {
+          return Result.Err(new Error('No Clerk session available'));
+        }
+        try {
+          const token = await clerk.session.getToken({ template: 'with-email' });
+          if (!token) {
+            return Result.Err(new Error('No token from Clerk session'));
+          }
+          return Result.Ok({ type: 'clerk', token });
+        } catch (error) {
+          return Result.Err(error instanceof Error ? error : new Error(String(error)));
+        }
+      },
+    });
+    dashApiInstances.set(clerkPublishableKey, dashApi);
+  }
+  return dashApi;
+}
+
+// Cache for cloud tokens by appId
+const cloudTokenCache = new Map<string, { token: TokenAndClaims; expiresAt: number }>();
+
+/**
+ * Create a token getter function for Clerk that exchanges the Clerk JWT
+ * for a Fireproof cloud token via the ensureCloudToken API.
+ *
+ * @param clerkPublishableKey - The Clerk publishable key to use for initialization
+ * @param appId - The app identifier (typically the database name)
+ */
+function createClerkTokenGetter(
+  clerkPublishableKey: string,
+  appId: string
+): () => Promise<TokenAndClaims | undefined> {
+  return async () => {
+    // Check cache first
+    const cached = cloudTokenCache.get(appId);
+    if (cached && Date.now() < cached.expiresAt - 60000) {
+      // Use cached token if not expiring within 60 seconds
+      return cached.token;
+    }
+
+    // Get Clerk instance to verify we have a session
+    const clerk = await getClerk(clerkPublishableKey);
+    if (!clerk?.session) {
+      return undefined;
+    }
+
+    try {
+      // Get DashboardApiImpl for this Clerk key
+      const dashApi = getDashApi(clerkPublishableKey);
+
+      // First ensure the user exists in Fireproof (creates user if needed)
+      const ensureUserResult = await dashApi.ensureUser({});
+      if (ensureUserResult.isErr()) {
+        return undefined;
+      }
+
+      // Exchange Clerk JWT for Fireproof cloud token
+      const tokenResult = await dashApi.ensureCloudToken({ appId, env: 'prod' });
+      if (tokenResult.isErr()) {
+        return undefined;
+      }
+
+      const result = tokenResult.Ok();
+
+      // Decode claims from cloud token
+      const claims = decodeJwt(result.cloudToken) as JWTPayload;
+      const tokenAndClaims: TokenAndClaims = {
+        token: result.cloudToken,
+        claims: claims as TokenAndClaims['claims'],
+      };
+
+      // Cache the token
+      cloudTokenCache.set(appId, {
+        token: tokenAndClaims,
+        expiresAt: Date.now() + result.expiresInSec * 1000,
+      });
+
+      return tokenAndClaims;
+    } catch {
+      return undefined;
+    }
+  };
 }
 
 // Track sync status by database name and instance ID
@@ -84,13 +245,42 @@ export async function isJWTExpired(token: string): Promise<boolean> {
   }
 }
 
+// Extended options for toCloud with Clerk token support
+interface ToCloudWithClerkOpts extends UseFpToCloudParam {
+  clerkPublishableKey?: string;
+  appId?: string; // App identifier for ensureCloudToken (typically the database name)
+}
+
 // Helper function to create toCloud configuration
-export function toCloud(opts?: UseFpToCloudParam): ToCloudAttachable {
+export function toCloud(opts?: ToCloudWithClerkOpts): ToCloudAttachable {
+  const { clerkPublishableKey, appId, ...restOpts } = opts || {};
+
+  console.log('[toCloud] Creating cloud config with opts:', {
+    hasClerkKey: !!clerkPublishableKey,
+    appId,
+    dashboardURI: DASHBOARD_URI,
+    tokenApiURI: DASHBOARD_API_URL,
+  });
+
+  // If using Clerk token, create a token getter that exchanges for Fireproof cloud token
+  const tokenOpts =
+    clerkPublishableKey && appId
+      ? {
+          token: createClerkTokenGetter(clerkPublishableKey, appId),
+        }
+      : {};
+
   const attachable = originalToCloud({
-    ...opts,
-    dashboardURI: 'https://connect.fireproof.direct/fp/cloud/api/token-auto',
-    tokenApiURI: 'https://connect.fireproof.direct/api',
-    urls: { base: 'fpcloud://cloud.fireproof.direct' },
+    ...restOpts,
+    ...tokenOpts,
+    dashboardURI: DASHBOARD_URI,
+    tokenApiURI: DASHBOARD_API_URL,
+    urls: { base: CLOUD_BASE_URL },
+  });
+
+  console.log('[toCloud] Created attachable:', {
+    hasToken: !!attachable.token,
+    hasClerkKey: !!clerkPublishableKey,
   });
 
   return attachable;
@@ -115,7 +305,7 @@ function constructDatabaseName(
   }
 
   // Otherwise, augment the baseName with vibeMetadata
-  return `vf-${baseName}-${vibeMetadata.titleId}-${vibeMetadata.installId}`;
+  return constructVibesDatabaseName(vibeMetadata.titleId, vibeMetadata.installId, baseName);
 }
 
 // Custom useFireproof hook with implicit cloud sync and button integration
@@ -144,8 +334,41 @@ export function useFireproof(nameOrDatabase?: string | Database) {
   // Check if sync was previously enabled (persists across refreshes)
   const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
 
-  // Create attach config only if sync was previously enabled, passing vibeMetadata
-  const attachConfig = wasSyncEnabled ? toCloud() : undefined;
+  // User vibes (with vibeMetadata from VibeContextProvider) always sync automatically.
+  // The vibes.diy app itself uses localStorage opt-in for its databases.
+  const isUserVibe = vibeMetadata !== undefined;
+  const shouldSync = isUserVibe || wasSyncEnabled;
+
+  // Log sync decision for debugging
+  console.log('[useFireproof] Sync decision:', {
+    isUserVibe,
+    wasSyncEnabled,
+    shouldSync,
+    dbName,
+    vibeMetadata: vibeMetadata
+      ? {
+          titleId: vibeMetadata.titleId,
+          installId: vibeMetadata.installId,
+          hasClerkKey: !!vibeMetadata.clerkPublishableKey,
+        }
+      : null,
+  });
+
+  // Create attach config if sync should be enabled
+  // User vibes use Clerk token that is exchanged for Fireproof cloud token via ensureCloudToken API
+  const attachConfig = shouldSync
+    ? toCloud({
+        clerkPublishableKey: vibeMetadata?.clerkPublishableKey,
+        appId: dbName, // Use database name as app identifier for ensureCloudToken
+      })
+    : undefined;
+
+  if (attachConfig) {
+    console.log('[useFireproof] Created attachConfig for sync:', {
+      hasClerkKey: !!vibeMetadata?.clerkPublishableKey,
+      appId: dbName,
+    });
+  }
 
   // Use original useFireproof with augmented database name
   // This ensures each titleId + installId combination gets its own database
@@ -153,6 +376,13 @@ export function useFireproof(nameOrDatabase?: string | Database) {
     augmentedDbName,
     attachConfig ? { attach: attachConfig } : {}
   );
+
+  // Log attachment state for debugging
+  console.log('[useFireproof] Result attach state:', {
+    attachState: result.attach?.state,
+    hasAttach: !!result.attach,
+    dbName,
+  });
 
   // TODO: Enable sync with Clerk token
   const enableSync = useCallback(() => {
@@ -166,72 +396,62 @@ export function useFireproof(nameOrDatabase?: string | Database) {
 
   // Determine sync status - check for actual attachment state
   const syncEnabled =
-    wasSyncEnabled && (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
+    shouldSync && (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
 
   // Share function that immediately adds a user to the ledger by email
   const share = useCallback(
-    async (options: {
-      email: string;
-      role?: 'admin' | 'member';
-      right?: 'read' | 'write';
-      token?: string;
-    }) => {
-      const token = options.token;
-
-      if (!token) {
-        throw new Error('Authentication token required for sharing.');
+    async (options: { email: string; role?: 'admin' | 'member'; right?: 'read' | 'write' }) => {
+      const clerkPublishableKey = vibeMetadata?.clerkPublishableKey;
+      if (!clerkPublishableKey) {
+        throw new Error('Clerk publishable key required for sharing (vibeMetadata not available).');
       }
 
-      // Create auth object matching AuthType interface: { type: "clerk", token: string }
-      const auth = {
-        type: 'clerk' as const,
-        token,
-      };
+      // Get dashApi instance for this Clerk key
+      const dashApi = getDashApi(clerkPublishableKey);
 
-      // Call the dashboard API (same pattern as other Fireproof dashboard requests)
-      // Uses PUT method with auth in body, not headers
-      const apiUrl = 'https://connect.fireproof.direct/api'; // Replace with your actual API URL
+      // Get ledger info from ensureCloudToken
+      const tokenResult = await dashApi.ensureCloudToken({ appId: dbName });
+      if (tokenResult.isErr()) {
+        const error = tokenResult.Err();
+        throw new Error(`Failed to get cloud token: ${error.message || error}`);
+      }
 
-      const response = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+      const tokenData = tokenResult.Ok();
+      const ledgerId = tokenData.ledger;
+
+      // Invite user to ledger using dashApi
+      const inviteResult = await dashApi.inviteUser({
+        ticket: {
+          query: { byEmail: options.email },
+          invitedParams: {
+            ledger: {
+              id: ledgerId,
+              role: options.role || 'member',
+              right: options.right || 'read',
+            },
+          },
         },
-        body: JSON.stringify({
-          // todo, after fireproof dashboard API imported, use that instead of raw fetch
-          type: 'reqShareWithUser',
-          auth: auth,
-          email: options.email,
-          role: options.role || 'member',
-          right: options.right || 'read',
-        }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Share failed: HTTP ${response.status} ${response.statusText}: ${errorText}`
-        );
+      if (inviteResult.isErr()) {
+        const error = inviteResult.Err();
+        throw new Error(`Share failed: ${error.message || error}`);
       }
-
-      const shareData = (await response.json()) as ShareApiResponse;
 
       // Return share result
       return {
-        success: shareData.success,
-        email: shareData.email,
-        role: shareData.role,
-        right: shareData.right,
-        message: shareData.message || 'User added to ledger successfully',
+        success: true,
+        email: options.email,
+        role: options.role || 'member',
+        right: options.right || 'read',
+        message: 'User added to ledger successfully',
       };
     },
-    [dbName, result.attach]
+    [dbName, vibeMetadata?.clerkPublishableKey]
   );
 
   // Listen for custom 'vibes-share-request' events on document
   // Any element can dispatch this event to trigger share
-  // does this event chaining make sense? identify callers and listeners, are there othere other dispatchers?
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -240,10 +460,9 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         email: string;
         role?: 'admin' | 'member';
         right?: 'read' | 'write';
-        token?: string;
       }>;
 
-      const { email, role = 'member', right = 'read', token } = customEvent.detail || {};
+      const { email, role = 'member', right = 'read' } = customEvent.detail || {};
 
       if (!email) {
         const error = new Error('vibes-share-request requires email in event detail');
@@ -256,19 +475,8 @@ export function useFireproof(nameOrDatabase?: string | Database) {
         return;
       }
 
-      if (!token) {
-        const error = new Error('vibes-share-request requires token in event detail');
-        document.dispatchEvent(
-          new CustomEvent('vibes-share-error', {
-            detail: { error, originalEvent: event },
-            bubbles: true,
-          })
-        );
-        return;
-      }
-
       try {
-        const result = await share({ email, role, right, token });
+        const result = await share({ email, role, right });
 
         // Dispatch success event
         document.dispatchEvent(
@@ -368,6 +576,7 @@ export type { ImgGenClasses } from '@vibes.diy/use-vibes-types';
 
 // Export utility functions
 export { base64ToFile } from './utils/base64.js';
+export { constructVibesDatabaseName } from './utils/databaseName.js';
 
 // Export ImgGen sub-components
 export { ImgGenDisplay } from './components/ImgGenUtils/ImgGenDisplay.js';
