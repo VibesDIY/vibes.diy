@@ -8,14 +8,18 @@ import { VibeContextProvider } from "@vibes.diy/use-vibes-base";
 
 // Extract titleId and installId from URL path
 // Format: /vibe/:titleId/:installId
-function extractVibeMetadata(): { titleId: string; installId: string } | null {
+function extractVibeMetadata(clerkPublishableKey: string): {
+  titleId: string;
+  installId: string;
+  clerkPublishableKey: string;
+} | null {
   const pathParts = window.location.pathname.split("/").filter(Boolean);
   const vibeIndex = pathParts.indexOf("vibe");
 
   if (vibeIndex !== -1 && pathParts.length > vibeIndex + 2) {
     const titleId = pathParts[vibeIndex + 1];
     const installId = pathParts[vibeIndex + 2];
-    return { titleId, installId };
+    return { titleId, installId, clerkPublishableKey };
   }
 
   return null;
@@ -31,8 +35,8 @@ export function mountVibe(
     throw new Error(`Can't find the dom element ${props.appSlug}`);
   }
 
-  // Extract vibe metadata from URL
-  const vibeMetadata = extractVibeMetadata();
+  // Extract vibe metadata from URL (includes clerkPublishableKey for sync auth)
+  const vibeMetadata = extractVibeMetadata(props.clerkPublishableKey);
 
   const root = createRoot(element);
 

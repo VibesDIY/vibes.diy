@@ -547,6 +547,9 @@ importers:
       '@fireproof/core-keybag':
         specifier: 0.24.3-dev-ensure-cloud-token-9
         version: 0.24.3-dev-ensure-cloud-token-9(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard':
+        specifier: 0.24.3-dev-ensure-cloud-token-9
+        version: 0.24.3-dev-ensure-cloud-token-9(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.3-dev-ensure-cloud-token-9
         version: 0.24.3-dev-ensure-cloud-token-9(typescript@5.9.3)

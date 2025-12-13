@@ -48,6 +48,10 @@ const VibeMetadataSchema = z.object({
       /^[a-z0-9-]+$/i,
       'VibeMetadata.installId must contain only alphanumeric characters and hyphens'
     ),
+  clerkPublishableKey: z
+    .string()
+    .min(1, 'VibeMetadata.clerkPublishableKey must be a non-empty string')
+    .startsWith('pk_', 'VibeMetadata.clerkPublishableKey must start with pk_'),
 });
 
 /**

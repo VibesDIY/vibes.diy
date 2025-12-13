@@ -4,7 +4,10 @@ import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useDashboard } from "../contexts/DashboardContext.js";
 import LoggedOutView from "../components/LoggedOutView.js";
 import { LabelContainer } from "../components/vibes/LabelContainer/index.js";
-import { useMobile } from "@vibes.diy/use-vibes-base";
+import {
+  useMobile,
+  constructVibesDatabaseName,
+} from "@vibes.diy/use-vibes-base";
 import {
   getButtonStyle,
   getMergedButtonStyle,
@@ -115,8 +118,8 @@ function InviteContent() {
 
     setStatus("processing");
 
-    // Construct full database name: vf-{db}-{vibe}-{group}
-    const fullDbName = `vf-${db}-${vibe}-${group}`;
+    // Construct full database name using shared helper
+    const fullDbName = constructVibesDatabaseName(vibe, group, db);
 
     // Get ledger info from database name
     const tokenResult = await dashApi.ensureCloudToken({
