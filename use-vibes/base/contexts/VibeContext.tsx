@@ -1,5 +1,6 @@
 import React, { createContext, useContext, type ReactNode } from 'react';
-import { z } from 'zod';
+import { VibesEnv } from '../index.js';
+import { FPApiInterface } from '@fireproof/core-protocols-dashboard';
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -26,87 +27,54 @@ export class VibeMetadataValidationError extends Error {
   }
 }
 
-/**
- * Zod schema for VibeMetadata validation.
- * Enforces alphanumeric characters and hyphens only to prevent heavy mangling
- * during ledger name generation.
- */
-const VibeMetadataSchema = z.object({
-  titleId: z
-    .string()
-    .trim()
-    .min(1, 'VibeMetadata.titleId must be a non-empty string')
-    .regex(
-      /^[a-z0-9-]+$/i,
-      'VibeMetadata.titleId must contain only alphanumeric characters and hyphens'
-    ),
-  installId: z
-    .string()
-    .trim()
-    .min(1, 'VibeMetadata.installId must be a non-empty string')
-    .regex(
-      /^[a-z0-9-]+$/i,
-      'VibeMetadata.installId must contain only alphanumeric characters and hyphens'
-    ),
-  clerkPublishableKey: z
-    .string()
-    .min(1, 'VibeMetadata.clerkPublishableKey must be a non-empty string')
-    .startsWith('pk_', 'VibeMetadata.clerkPublishableKey must start with pk_'),
-});
+export interface MountVibeParams {
+  readonly appSlug: string;
+  readonly titleId: string;
+  readonly installId: string;
+  readonly env: VibesEnv;
+}
 
-/**
- * Type inference from Zod schema
- */
-export type VibeMetadata = z.infer<typeof VibeMetadataSchema>;
+export interface Vibe extends MountVibeParams {
+  readonly dashApi: FPApiInterface
+}
 
-/**
- * Validates that VibeMetadata contains non-empty titleId and installId with valid characters.
- * Uses Zod for validation but preserves backward-compatible error codes.
- *
- * @param metadata - The VibeMetadata object to validate
- * @throws {VibeMetadataValidationError} If titleId or installId are missing, empty, or contain invalid characters
- */
-export function validateVibeMetadata(metadata: unknown): asserts metadata is VibeMetadata {
-  try {
-    VibeMetadataSchema.parse(metadata);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      // Map Zod errors to our custom error codes for backward compatibility
-      const firstIssue = error.issues[0];
-      let code: string;
-      const message: string = firstIssue.message;
+class DefVibe implements Vibe {
+  notReady<R>(action: string): R {
+    throw new Error(`Vibe Provider is not Ready: ${action}`)
+  }
 
-      if (firstIssue.path[0] === 'titleId') {
-        code =
-          firstIssue.code === 'too_small'
-            ? VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY
-            : VIBE_METADATA_ERROR_CODES.TITLEID_INVALID_CHARS;
-      } else if (firstIssue.path[0] === 'installId') {
-        code =
-          firstIssue.code === 'too_small'
-            ? VIBE_METADATA_ERROR_CODES.INSTALLID_EMPTY
-            : VIBE_METADATA_ERROR_CODES.INSTALLID_INVALID_CHARS;
-      } else {
-        code = 'UNKNOWN_ERROR';
-      }
+  get dashApi(): FPApiInterface {
+    return this.notReady("dashApi")
+  }
 
-      throw new VibeMetadataValidationError(message, code);
-    }
-    throw error;
+  get appSlug(): string { 
+    return this.notReady("appSlug") 
+  }
+
+  get titleId(): string {
+    return this.notReady("titleId")
+  }
+  get installId(): string {
+    return this.notReady("installId");
+  }
+  get env(): VibesEnv {
+    return this.notReady("env")
   }
 }
 
-const VibeContext = createContext<VibeMetadata | undefined>(undefined);
+const VibeContext = createContext<Vibe>(new DefVibe);
+
+
 
 export interface VibeContextProviderProps {
-  readonly metadata: VibeMetadata;
+  readonly mountParams: MountVibeParams;
   readonly children: ReactNode;
 }
 
-export function VibeContextProvider({ metadata, children }: VibeContextProviderProps) {
-  return <VibeContext.Provider value={metadata}>{children}</VibeContext.Provider>;
+export function VibeContextProvider({ mountParams, children }: VibeContextProviderProps) {
+  return <VibeContext.Provider value={mountParams}>{children}</VibeContext.Provider>;
 }
 
-export function useVibeContext(): VibeMetadata | undefined {
+export function useVibeContext(): Vibe {
   return useContext(VibeContext);
 }

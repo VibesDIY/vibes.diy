@@ -2,6 +2,7 @@ import { Lazy } from "@adviser/cement";
 import { vibesDiyHandler } from "./vibes-diy-srv.js";
 import { VibesDiyServCtx } from "./render.js";
 import * as esbuild from "esbuild-wasm";
+import { VibesCtx } from "@vibes.diy/use-vibes-base";
 
 const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
   console.log("Initializing VibesDiyServCtx...");
@@ -57,6 +58,7 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
   };
   return Promise.resolve({
     versions: { FP },
+    vibesCtx: {} as VibesCtx,
     basePath: ".",
     loadFile,
     loadFileBinary,

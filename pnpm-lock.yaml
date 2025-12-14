@@ -1057,6 +1057,9 @@ importers:
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
+      zod:
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@babel/parser':
         specifier: ^7.28.5

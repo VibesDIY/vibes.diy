@@ -3,12 +3,6 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Core components and utilities for use-vibes (internal workspace package)",
-  "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "import": "./index.js"
-    }
-  },
   "scripts": {
     "build": "core-cli tsc",
     "pack": "core-cli build -x '^' --doPack",

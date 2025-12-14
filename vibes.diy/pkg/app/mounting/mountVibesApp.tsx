@@ -4,16 +4,16 @@ import { HiddenMenuWrapper } from "../components/vibes/HiddenMenuWrapper/HiddenM
 import { VibesPanel } from "../components/vibes/VibesPanel.js";
 import {
   VibeContextProvider,
-  type VibeMetadata,
   validateVibeMetadata,
   VibeMetadataValidationError,
 } from "@vibes.diy/use-vibes-base";
+import { MountVibeParams } from "@vibes.diy/use-vibes-base/contexts/VibeContext.js";
 
 export interface MountVibesAppOptions {
   readonly container: HTMLElement;
   readonly appComponent?: React.ComponentType;
-  readonly showVibesSwitch?: boolean;
-  readonly vibeMetadata?: VibeMetadata;
+  readonly showVibesSwitch: boolean;
+  readonly mountParams: MountVibeParams;
 }
 
 export interface MountVibesAppResult {
@@ -27,12 +27,12 @@ export interface MountVibesAppResult {
  * @internal
  */
 function VibesApp({
-  showVibesSwitch = true,
-  vibeMetadata,
+  showVibesSwitch,
+  mountParams,
   children,
 }: {
-  showVibesSwitch?: boolean;
-  vibeMetadata?: VibeMetadata;
+  showVibesSwitch: boolean;
+  mountParams: MountVibeParams;
   children?: React.ReactNode;
 }) {
   // Conditional rendering based on showVibesSwitch:
@@ -47,31 +47,29 @@ function VibesApp({
   );
 
   // Wrap in VibeContextProvider if vibeMetadata is provided
-  if (vibeMetadata) {
     return (
-      <VibeContextProvider metadata={vibeMetadata}>
+      <VibeContextProvider mountParams={mountParams}>
         {content}
       </VibeContextProvider>
     );
-  }
 
-  return content;
+  // return content;
 }
 
 export function mountVibesApp(
   options: MountVibesAppOptions,
 ): MountVibesAppResult {
-  const { container, appComponent, showVibesSwitch, vibeMetadata } = options;
+  const { container, appComponent, showVibesSwitch, mountParams } = options;
 
   // Validate vibeMetadata if provided to prevent malformed ledger names
-  if (vibeMetadata) {
+  if (mountParams) {
     try {
-      validateVibeMetadata(vibeMetadata);
+      validateVibeMetadata(mountParams);
     } catch (error) {
       if (error instanceof VibeMetadataValidationError) {
         throw new Error(
           `Failed to mount Vibes app: ${error.message} (code: ${error.code}). ` +
-            `Received vibeMetadata: ${JSON.stringify(vibeMetadata)}`,
+            `Received vibeMetadata: ${JSON.stringify(mountParams)}`,
         );
       }
       throw error;
@@ -83,10 +81,7 @@ export function mountVibesApp(
   const AppComponent = appComponent;
 
   root.render(
-    <VibesApp
-      {...(showVibesSwitch !== undefined && { showVibesSwitch })}
-      {...(vibeMetadata !== undefined && { vibeMetadata })}
-    >
+    <VibesApp showVibesSwitch={showVibesSwitch} mountParams={mountParams}>
       {AppComponent && <AppComponent />}
     </VibesApp>,
   );
