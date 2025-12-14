@@ -6,8 +6,8 @@
   "scripts": {
     "tsc": "core-cli tsc",
     "typecheck": "core-cli tsc --noEmit",
-    "build": "echo",
-    "dev": "deno run --allow-env --allow-run --allow-net --allow-read --sloppy-imports serve/deno-vibes-diy-srv.ts",
+    "build": "core-cli tsc",
+    "dev": "deno run --allow-sys --allow-env --allow-run --allow-net --allow-read --sloppy-imports serve/deno-vibes-diy-srv.ts",
     "dev:netlify": "netlify dev",
     "start": "serve -s build/client",
     "file-issues": "scripts/create-issues.sh",
@@ -62,7 +62,8 @@
     "react-router-dom": "^7.11.0",
     "tailwind-merge": "^3.4.0",
     "use-fireproof": "0.24.3-dev-ensure-cloud-token-1",
-    "use-vibes": "workspace:*"
+    "use-vibes": "workspace:*",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@babel/parser": "^7.28.5",

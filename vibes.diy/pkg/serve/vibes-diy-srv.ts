@@ -58,6 +58,16 @@ async function handleVibeRequest(
   }
 }
 
+function respInit(status: number, contentType = "application/json"): ResponseInit {
+  return {
+    status,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": contentType,
+    },
+  };
+}
+
 export function vibesDiyHandler(
   ctx: () => Promise<VibesDiyServCtx>,
 ): (req: Request) => Promise<Response | null> {
@@ -68,31 +78,16 @@ export function vibesDiyHandler(
     if (url.pathname === "/vibe-mount") {
       const appSlug = url.searchParams.get("appSlug");
       if (!appSlug) {
-        return new Response(
-          JSON.stringify({ error: "Missing appSlug parameter" }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
-        );
+        return new Response(JSON.stringify({ error: "Missing appSlug parameter" }), respInit(400));
       }
-      // Get Clerk key for this hostname (dev vs prod)
-      const hostname = url.hostname;
-      const clerkPublishableKey = getClerkKeyForHostname(hostname);
+      const env = await ctx().then((c) => c.vibesCtx.env);
 
+      const ctxStr = JSON.stringify({ appSlug, env });
       return new Response(
-        `
-        import { mountVibe } from '/dist/vibes.diy/pkg/serve/mount-vibe.js';
-        import vibe from '/vibe-script?appSlug=${appSlug}';
-        mountVibe(vibe, { appSlug: '${appSlug}', clerkPublishableKey: '${clerkPublishableKey}' });
-        `,
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/javascript",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
+        `import { mountVibe } from '/dist/vibes.diy/pkg/serve/mount-vibe.js';
+         import vibe from '/vibe-script?appSlug=${appSlug}';
+         mountVibe(vibe, ${ctxStr});
+        `, respInit(200, "text/javascript")
       );
     }
     if (url.pathname === "/vibe-script") {
@@ -100,21 +95,12 @@ export function vibesDiyHandler(
       if (!appSlug) {
         return new Response(
           JSON.stringify({ error: "Missing appSlug parameter" }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
+          respInit(400),
         );
       }
       const vibeCode = await fetchVibeCode(appSlug);
       const transformedJS = await loadAndRenderJSX(vibeCode);
-      return new Response(transformedJS, {
-        status: 200,
-        headers: {
-          "Content-Type": "application/javascript",
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
+      return new Response(transformedJS, respInit(200, "text/javascript"));
     }
 
     // Handle /vibe/{appSlug}/{groupId} routes (both required)
@@ -153,13 +139,7 @@ export function vibesDiyHandler(
             mimeType,
           );
 
-          return new Response(uint8array2stream(content), {
-            status: 200,
-            headers: {
-              "Content-Type": mimeType,
-              "Access-Control-Allow-Origin": "*",
-            },
-          });
+          return new Response(uint8array2stream(content), respInit(200, mimeType));
         }
       }
     } catch (_error) {
@@ -171,19 +151,9 @@ export function vibesDiyHandler(
       const indexPath = `./index.tsx`;
       const html = await loadAndRenderTSX(indexPath, await ctx());
       console.log("vibesDiyHandler-done req.url:", req.url);
-
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html",
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
+      return new Response(html, respInit(200, "text/html"));
     } catch (error) {
-      return new Response(JSON.stringify({ error: (error as Error).message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ error: (error as Error).message }), respInit(500));
     }
   };
 }

@@ -1,6 +1,8 @@
-import { Lazy } from "@adviser/cement";
+import { exception2Result, Lazy } from "@adviser/cement";
 import { vibesDiyHandler } from "./vibes-diy-srv.js";
 import { VibesDiyServCtx } from "./render.js";
+import { dotenv } from "zx";
+import { VibesCtx, VibesEnvSchema } from "@vibes.diy/use-vibes-base";
 
 const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
   const packageJsonStr = await Deno.readTextFile(`package.json`);
@@ -35,8 +37,24 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
     const ret = await Deno.readFile(path).catch(() => undefined);
     return ret;
   };
+  const rDotEnv = exception2Result(() => dotenv.load('.env'));
+  const dotEnvVars = {};
+  if (rDotEnv.isErr()) {
+    console.warn("No .env file found or error loading it.");
+  } else {
+    console.log("Loaded env vars .env file");
+    Object.assign(dotEnvVars, rDotEnv.unwrap());
+  }
+  const clientEnv = VibesEnvSchema.parse({
+    ...process.env,
+    ...dotEnvVars,
+  })
+  console.log("VibesDiyServCtx clientEnv:", JSON.stringify(clientEnv, null, 2));
   return Promise.resolve({
     versions: { FP },
+    vibesCtx: {
+      env: clientEnv,
+    } as VibesCtx,
     basePath: Deno.cwd(),
     loadFile,
     loadFileBinary,
