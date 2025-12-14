@@ -10,6 +10,9 @@ import type { DurableDatabase } from "./durable-database.js";
 declare global {
   namespace Cloudflare {
     interface Env {
+      // Environment identifier
+      ENVIRONMENT?: string;
+
       // AI API Keys (set as secrets)
       SERVER_OPENROUTER_API_KEY?: string;
       OPENAI_API_KEY?: string;

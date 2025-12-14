@@ -15,6 +15,8 @@
 export interface StreamingUsageData {
   id: string;
   model: string;
+  /** Unix timestamp (seconds) when generation was created */
+  createdAt: number;
   cost: number;
   tokensPrompt: number;
   tokensCompletion: number;
@@ -35,6 +37,7 @@ export function createUsageExtractorStream(
   let callbackCalled = false;
   let extractedId: string | null = null;
   let extractedModel: string | null = null;
+  let extractedCreatedAt: number | null = null;
   let buffer = "";
 
   return new TransformStream({
@@ -78,6 +81,11 @@ export function createUsageExtractorStream(
             extractedModel = data.model;
           }
 
+          // Track created timestamp if present
+          if (data.created && !extractedCreatedAt) {
+            extractedCreatedAt = data.created;
+          }
+
           // Check for usage data (in final chunk)
           // OpenRouter includes cost directly in usage object
           if (data.usage && typeof data.usage.cost === "number") {
@@ -85,9 +93,11 @@ export function createUsageExtractorStream(
             onUsageExtracted({
               id: data.id || extractedId || "unknown",
               model: data.model || extractedModel || "unknown",
+              createdAt:
+                data.created || extractedCreatedAt || Math.floor(Date.now() / 1000),
               cost: data.usage.cost,
-              tokensPrompt: data.usage.prompt_tokens || 0,
-              tokensCompletion: data.usage.completion_tokens || 0,
+              tokensPrompt: data.usage.prompt_tokens ?? 0,
+              tokensCompletion: data.usage.completion_tokens ?? 0,
               hasUsageData: true,
             });
             buffer = "";
@@ -113,6 +123,7 @@ export function createUsageExtractorStream(
         onUsageExtracted({
           id: extractedId,
           model: extractedModel || "unknown",
+          createdAt: extractedCreatedAt || Math.floor(Date.now() / 1000),
           cost: 0,
           tokensPrompt: 0,
           tokensCompletion: 0,

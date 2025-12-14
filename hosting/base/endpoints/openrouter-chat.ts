@@ -231,21 +231,23 @@ export class OpenRouterChat extends OpenAPIRoute {
       // Get current usage for response headers
       const currentUsage = await getUserUsage(c.env.KV, userId);
 
+      // Helper to format rate limit values, handling unlimited tiers gracefully
+      const formatLimit = (value: number): string =>
+        Number.isFinite(value) ? value.toFixed(4) : "unlimited";
+
       // Helper to add rate limit headers
       // Note: These reflect pre-request usage; actual usage tracked async via queue
       const rateLimitHeaders = {
-        "X-RateLimit-Daily-Limit": limits.daily.toString(),
+        "X-RateLimit-Daily-Limit": formatLimit(limits.daily),
         "X-RateLimit-Daily-Used": currentUsage.daily.toFixed(4),
-        "X-RateLimit-Daily-Remaining": Math.max(
-          0,
-          limits.daily - currentUsage.daily,
-        ).toFixed(4),
-        "X-RateLimit-Monthly-Limit": limits.monthly.toString(),
+        "X-RateLimit-Daily-Remaining": Number.isFinite(limits.daily)
+          ? Math.max(0, limits.daily - currentUsage.daily).toFixed(4)
+          : "unlimited",
+        "X-RateLimit-Monthly-Limit": formatLimit(limits.monthly),
         "X-RateLimit-Monthly-Used": currentUsage.monthly.toFixed(4),
-        "X-RateLimit-Monthly-Remaining": Math.max(
-          0,
-          limits.monthly - currentUsage.monthly,
-        ).toFixed(4),
+        "X-RateLimit-Monthly-Remaining": Number.isFinite(limits.monthly)
+          ? Math.max(0, limits.monthly - currentUsage.monthly).toFixed(4)
+          : "unlimited",
         "X-RateLimit-Tracking-Mode": "async",
         "X-RateLimit-Updated-At": new Date(
           currentUsage.lastUpdated,
@@ -293,6 +295,7 @@ export class OpenRouterChat extends OpenAPIRoute {
               c.env.USAGE_QUEUE.send({
                 userId,
                 generationId: data.id,
+                createdAt: data.createdAt,
                 model: data.model,
                 cost: data.cost,
                 tokensPrompt: data.tokensPrompt,
@@ -345,6 +348,7 @@ export class OpenRouterChat extends OpenAPIRoute {
       const responseData = (await response.json()) as {
         id?: string;
         model?: string;
+        created?: number;
         usage?: {
           prompt_tokens?: number;
           completion_tokens?: number;
@@ -359,10 +363,11 @@ export class OpenRouterChat extends OpenAPIRoute {
         await c.env.USAGE_QUEUE.send({
           userId,
           generationId: responseData.id,
-          model: responseData.model || "unknown",
-          cost: responseData.usage?.cost || 0,
-          tokensPrompt: responseData.usage?.prompt_tokens || 0,
-          tokensCompletion: responseData.usage?.completion_tokens || 0,
+          createdAt: responseData.created ?? Math.floor(Date.now() / 1000),
+          model: responseData.model ?? "unknown",
+          cost: responseData.usage?.cost ?? 0,
+          tokensPrompt: responseData.usage?.prompt_tokens ?? 0,
+          tokensCompletion: responseData.usage?.completion_tokens ?? 0,
           hasUsageData: !!hasUsageData,
         });
       }

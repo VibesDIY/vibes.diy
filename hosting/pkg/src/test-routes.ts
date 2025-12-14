@@ -1,10 +1,19 @@
 /**
  * Test routes for Durable Object integration testing
- * Only included when running in test mode via unstable_dev
+ * Only available in non-production environments (via unstable_dev or local dev)
+ * Blocked in production for security
  */
 import { Hono } from "hono";
 
 const testRoutes = new Hono<{ Bindings: Env }>();
+
+// Security gate: Block test routes in production
+testRoutes.use("/__test/*", async (c, next) => {
+  if (c.env.ENVIRONMENT === "production") {
+    return c.json({ error: "Test routes disabled in production" }, 404);
+  }
+  await next();
+});
 
 // Test endpoint to interact with DurableDatabase
 testRoutes.all("/__test/do/:userId/:method", async (c) => {

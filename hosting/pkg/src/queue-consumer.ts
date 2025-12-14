@@ -8,6 +8,8 @@ import type { DurableDatabase, UsageAggregates } from "./durable-database.js";
 const UsageTrackingMessage = z.object({
   userId: z.string(),
   generationId: z.string(),
+  // Timestamp when request was made (seconds since epoch)
+  createdAt: z.number(),
   // Inline usage data (from streaming/non-streaming response)
   model: z.string().optional(),
   cost: z.number().optional(),
@@ -282,13 +284,14 @@ async function processUsageTracking(
   const userDB = env.DURABLE_DATABASE.get(doId);
 
   // Record generation and get aggregates (single RPC call)
+  // Use the request timestamp (not processing time) for correct day/month attribution
   const aggregates = await userDB.recordGeneration({
     id: data.generationId,
     model,
     cost,
     tokensPrompt,
     tokensCompletion,
-    createdAt: Math.floor(Date.now() / 1000),
+    createdAt: data.createdAt,
   });
 
   // Write aggregates to KV for fast budget checks
