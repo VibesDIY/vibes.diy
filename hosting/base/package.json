@@ -11,6 +11,10 @@
     "./config/library-import-map": {
       "types": "./config/library-import-map.ts",
       "import": "./config/library-import-map.ts"
+    },
+    "./services/rate-limiter": {
+      "types": "./services/rate-limiter.ts",
+      "import": "./services/rate-limiter.ts"
     }
   },
   "scripts": {

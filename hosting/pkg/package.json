@@ -64,6 +64,7 @@
     "@vibes.diy/hosting-base": "workspace:*",
     "call-ai": "workspace:*",
     "chanfana": "^2.8.2",
+    "drizzle-orm": "^0.45.1",
     "hono": "^4.10.7",
     "jose": "^6.1.1",
     "multiformats": "^13.4.1",
@@ -72,6 +73,7 @@
   "devDependencies": {
     "@types/node": "^24.9.1",
     "@vitest/browser-playwright": "^4.0.15",
+    "drizzle-kit": "^0.31.8",
     "prettier": "^3.7.4",
     "typescript": "^5.9.3",
     "wrangler": "^4.54.0"

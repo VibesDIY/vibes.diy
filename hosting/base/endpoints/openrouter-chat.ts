@@ -1,6 +1,16 @@
 import { OpenAPIRoute, contentJson } from "chanfana";
 import { Context } from "hono";
 import { z } from "zod";
+import {
+  checkBudget,
+  getUserTier,
+  getUserUsage,
+  TIER_LIMITS,
+} from "../services/rate-limiter.js";
+import {
+  createUsageExtractorStream,
+  StreamingUsageData,
+} from "../utils/streaming-id-extractor.js";
 
 // OpenRouter chat completion endpoint
 export class OpenRouterChat extends OpenAPIRoute {
@@ -131,6 +141,70 @@ export class OpenRouterChat extends OpenAPIRoute {
         );
       }
 
+      const userId = user.userId;
+
+      // Check burst rate limit (200 requests per minute per user)
+      if (c.env.BURST_LIMITER) {
+        const { success } = await c.env.BURST_LIMITER.limit({ key: userId });
+        if (!success) {
+          return c.json(
+            {
+              error: {
+                message: "Too many requests. Please slow down.",
+                type: "rate_limit_error",
+                code: 429,
+              },
+            },
+            429,
+          );
+        }
+      }
+
+      // Check budget limits based on user tier
+      const tier = getUserTier(user);
+      const limits = TIER_LIMITS[tier] || TIER_LIMITS.free;
+      const budgetResult = await checkBudget(c.env.KV, userId, limits);
+
+      if (!budgetResult.allowed) {
+        const resetTime =
+          budgetResult.reason === "daily_exceeded"
+            ? "midnight UTC"
+            : "the start of next month";
+        const limitType =
+          budgetResult.reason === "daily_exceeded" ? "Daily" : "Monthly";
+        const limitAmount =
+          budgetResult.reason === "daily_exceeded"
+            ? limits.daily
+            : limits.monthly;
+        const usedAmount =
+          budgetResult.reason === "daily_exceeded"
+            ? budgetResult.usage.daily
+            : budgetResult.usage.monthly;
+
+        return c.json(
+          {
+            error: {
+              message: `${limitType} budget exceeded. Budget: $${limitAmount.toFixed(2)}, Used: $${usedAmount.toFixed(2)}. Resets at ${resetTime}.`,
+              type: "rate_limit_error",
+              code: 429,
+              usage: {
+                daily: {
+                  limit: limits.daily,
+                  used: budgetResult.usage.daily,
+                  currency: "USD",
+                },
+                monthly: {
+                  limit: limits.monthly,
+                  used: budgetResult.usage.monthly,
+                  currency: "USD",
+                },
+              },
+            },
+          },
+          429,
+        );
+      }
+
       // Always use server's OpenRouter API key
       const apiKey = c.env.SERVER_OPENROUTER_API_KEY;
       if (!apiKey) {
@@ -154,13 +228,40 @@ export class OpenRouterChat extends OpenAPIRoute {
         "X-Title": "Vibes DIY",
       };
 
-      // Send request to OpenRouter API
+      // Get current usage for response headers
+      const currentUsage = await getUserUsage(c.env.KV, userId);
+
+      // Helper to format rate limit values, handling unlimited tiers gracefully
+      const formatLimit = (value: number): string =>
+        Number.isFinite(value) ? value.toFixed(4) : "unlimited";
+
+      // Helper to add rate limit headers
+      // Note: These reflect pre-request usage; actual usage tracked async via queue
+      const rateLimitHeaders = {
+        "X-RateLimit-Daily-Limit": formatLimit(limits.daily),
+        "X-RateLimit-Daily-Used": currentUsage.daily.toFixed(4),
+        "X-RateLimit-Daily-Remaining": Number.isFinite(limits.daily)
+          ? Math.max(0, limits.daily - currentUsage.daily).toFixed(4)
+          : "unlimited",
+        "X-RateLimit-Monthly-Limit": formatLimit(limits.monthly),
+        "X-RateLimit-Monthly-Used": currentUsage.monthly.toFixed(4),
+        "X-RateLimit-Monthly-Remaining": Number.isFinite(limits.monthly)
+          ? Math.max(0, limits.monthly - currentUsage.monthly).toFixed(4)
+          : "unlimited",
+        "X-RateLimit-Tracking-Mode": "async",
+        "X-RateLimit-Updated-At": new Date(
+          currentUsage.lastUpdated,
+        ).toISOString(),
+      };
+
+      // Send request to OpenRouter API with user tracking
+      // See: https://openrouter.ai/docs/guides/guides/user-tracking
       const response = await fetch(
         "https://openrouter.ai/api/v1/chat/completions",
         {
           method: "POST",
           headers,
-          body: JSON.stringify(data),
+          body: JSON.stringify({ ...data, user: userId }),
         },
       );
 
@@ -168,7 +269,7 @@ export class OpenRouterChat extends OpenAPIRoute {
       if (data.stream) {
         if (!response.ok) {
           const errorData = await response.json();
-          console.error(`❌ OpenRouter Chat: Error:`, errorData);
+          console.error(`OpenRouter Chat: Error:`, errorData);
           return new Response(
             JSON.stringify({
               error: "Failed to get chat completion",
@@ -179,29 +280,46 @@ export class OpenRouterChat extends OpenAPIRoute {
               headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
+                ...rateLimitHeaders,
               },
             },
           );
         }
 
-        // Create a stream for the response
-        const { readable, writable } = new TransformStream();
+        // Create usage extractor stream to capture generation ID and cost data
+        // The extractor passes through all chunks unchanged while extracting usage
+        const usageExtractorStream = createUsageExtractorStream(
+          (data: StreamingUsageData) => {
+            // Queue usage tracking message with complete data
+            if (c.env.USAGE_QUEUE) {
+              c.env.USAGE_QUEUE.send({
+                userId,
+                generationId: data.id,
+                createdAt: data.createdAt,
+                model: data.model,
+                cost: data.cost,
+                tokensPrompt: data.tokensPrompt,
+                tokensCompletion: data.tokensCompletion,
+                hasUsageData: data.hasUsageData,
+              }).catch((err: unknown) =>
+                console.error(`Failed to queue usage tracking:`, err),
+              );
+            }
+          },
+        );
 
-        // Clone the response to avoid locking the body
-        const clonedResponse = response.clone();
+        // Pipe response through usage extractor (no tee needed - chunks pass through unchanged)
+        const clientStream = response.body!.pipeThrough(usageExtractorStream);
 
-        // Pipe the response body to our writable stream without awaiting
-        clonedResponse.body?.pipeTo(writable).catch((err) => {
-          console.error(`❌ OpenRouter Chat: Pipe error:`, err);
-        });
-
-        // Return the stream immediately
-        return new Response(readable, {
+        // Return the stream with upstream status preserved
+        return new Response(clientStream, {
+          status: response.status,
           headers: {
             "Content-Type": "text/event-stream",
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "no-cache",
             Connection: "keep-alive",
+            ...rateLimitHeaders,
           },
         });
       }
@@ -209,7 +327,7 @@ export class OpenRouterChat extends OpenAPIRoute {
       // Handle API errors
       if (!response.ok) {
         const errorData = await response.json();
-        console.error(`❌ OpenRouter Chat: Error:`, errorData);
+        console.error(`OpenRouter Chat: Error:`, errorData);
         return new Response(
           JSON.stringify({
             error: "Failed to get chat completion",
@@ -220,15 +338,49 @@ export class OpenRouterChat extends OpenAPIRoute {
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
+              ...rateLimitHeaders,
             },
           },
         );
       }
 
       // For non-streaming responses, pass through the original response
-      const responseData = await response.json();
+      const responseData = (await response.json()) as {
+        id?: string;
+        model?: string;
+        created?: number;
+        usage?: {
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          cost?: number;
+        };
+      };
 
-      return c.json(responseData);
+      // Queue usage tracking for non-streaming responses with complete data
+      if (responseData.id && c.env.USAGE_QUEUE) {
+        const hasUsageData =
+          responseData.usage && typeof responseData.usage.cost === "number";
+        await c.env.USAGE_QUEUE.send({
+          userId,
+          generationId: responseData.id,
+          createdAt: responseData.created ?? Math.floor(Date.now() / 1000),
+          model: responseData.model ?? "unknown",
+          cost: responseData.usage?.cost ?? 0,
+          tokensPrompt: responseData.usage?.prompt_tokens ?? 0,
+          tokensCompletion: responseData.usage?.completion_tokens ?? 0,
+          hasUsageData: !!hasUsageData,
+        });
+      }
+
+      // Add rate limit headers to the response with upstream status preserved
+      return new Response(JSON.stringify(responseData), {
+        status: response.status,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          ...rateLimitHeaders,
+        },
+      });
     } catch (error: unknown) {
       console.error("Error in OpenRouterChat handler:", error);
       return c.json(

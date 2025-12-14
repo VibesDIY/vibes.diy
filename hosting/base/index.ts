@@ -12,6 +12,7 @@ export {
 export * from "./utils/domainUtils.js";
 export * from "./utils/slugGenerator.js";
 export * from "./utils/subdomainParser.js";
+export * from "./utils/streaming-id-extractor.js";
 
 // Types
 export * from "./types.js";
