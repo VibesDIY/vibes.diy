@@ -78,6 +78,55 @@ export function vibesDiyHandler(
     const url = new URL(req.url);
     const requestedPath = url.pathname;
 
+    // Handle POST /render-preview for inline preview
+    if (req.method === "POST" && url.pathname === "/render-preview") {
+      try {
+        const body = (await req.json()) as { code?: string };
+        if (!body.code) {
+          return new Response(
+            JSON.stringify({ error: "Missing code in request body" }),
+            respInit(400),
+          );
+        }
+
+        const transformedJS = await loadAndRenderJSX(body.code);
+        const context = await ctx();
+
+        // Render preview.tsx template (reuses ImportMap from importmap.tsx)
+        const previewPath = `./preview.tsx`;
+        const html = await loadAndRenderTSX(previewPath, {
+          ...context,
+          transformedJS,
+        });
+
+        return new Response(html, {
+          status: 200,
+          headers: {
+            "Content-Type": "text/html",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: (error as Error).message }),
+          respInit(500),
+        );
+      }
+    }
+
+    // Handle OPTIONS for CORS preflight on /render-preview
+    if (req.method === "OPTIONS" && url.pathname === "/render-preview") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Max-Age": "86400",
+        },
+      });
+    }
+
     if (url.pathname === "/vibe-mount") {
       const appSlug = url.searchParams.get("appSlug");
       if (!appSlug) {

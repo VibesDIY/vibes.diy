@@ -1,12 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Lazy } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
-// import { mountVibeWithCleanup as _mountVibeWithCleanup } from "../../mounting/index.js";
-import { transformImports as _transformImports } from "@vibes.diy/prompts";
-import { useAuth } from "@clerk/clerk-react";
-import { VibesDiyEnv } from "../../config/env.js";
-
-const sthis = Lazy(() => ensureSuperThis());
+import React, { useState, useEffect } from "react";
 
 interface InlinePreviewProps {
   code: string;
@@ -14,108 +6,68 @@ interface InlinePreviewProps {
   codeReady: boolean;
 }
 
+// Get from env or config
+const PREVIEW_SERVER_URL = "http://localhost:8001";
+
+// Uses the code without publishing, but with relaxed iframe sandboxing
+// If data is throw away here, why do we need to publish?? Or vibe controls??
+
 export function InlinePreview({
   code,
-  sessionId,
+  sessionId: _sessionId,
   codeReady,
 }: InlinePreviewProps) {
-  const { getToken } = useAuth();
-  const [containerId] = useState(
-    () => `preview-container-${sthis().nextId().str}`,
-  );
+  const [srcdoc, setSrcdoc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const unmountVibeRef = useRef<(() => void) | null>(null);
-
-  // Keep window.CALLAI_API_KEY fresh by periodically refreshing the Clerk token
-  // useEffect(() => {
-  //   // const refreshToken = async () => {
-  //   //   const freshToken = await getToken();
-  //   //   if (freshToken && typeof window !== "undefined") {
-  //   //     window.CALLAI_API_KEY = freshToken;
-  //   //   }
-  //   // };
-
-  //   // // Refresh token every 30 seconds (half of Clerk's 60-second token lifetime)
-  //   // const interval = setInterval(refreshToken, 30000);
-
-  //   // return () => clearInterval(interval);
-  // }, [getToken]);
 
   useEffect(() => {
-    if (!codeReady || !code) return;
+    if (!codeReady || !code) {
+      setSrcdoc(null);
+      return;
+    }
 
-    let active = true;
-
-    const loadAndMountVibe = async () => {
+    const fetchPreview = async () => {
       try {
-        // Clean up previous mount if exists
-        if (unmountVibeRef.current) {
-          unmountVibeRef.current();
-          unmountVibeRef.current = null;
+        setError(null);
+        const response = await fetch(`${PREVIEW_SERVER_URL}/render-preview`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code }),
+        });
+
+        if (!response.ok) {
+          const errorData = (await response.json()) as { error?: string };
+          throw new Error(errorData.error || "Failed to render preview");
         }
 
-        // Get Clerk token for API authentication
-        const _clerkToken = await getToken();
-
-        // Get configured API endpoint (respects preview mode via env)
-        const _callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
-
-        console.log("want to mount");
-        // // Mount the vibe code and capture the unmount callback via event
-        // const unmount = await mountVibeWithCleanup(
-        //   code,
-        //   containerId,
-        //   sessionId, // Use session ID as titleId
-        //   "preview", // Use "preview" as installId for result preview context
-        //   transformImports,
-        //   false, // Hide vibes switch in result preview mode
-        //   clerkToken || undefined, // Pass Clerk token as apiKey
-        //   callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
-        //   callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
-        // );
-
-        // if (active) {
-        //   unmountVibeRef.current = unmount;
-        //   setError(null);
-        // } else {
-        //   // Component was unmounted while mounting, clean up immediately
-        //   unmount();
-        // }
+        const html = await response.text();
+        setSrcdoc(html);
       } catch (err) {
-        // Error handled by setting error state
-        if (active) {
-          setError(err instanceof Error ? err.message : String(err));
-        }
+        setError((err as Error).message);
+        setSrcdoc(null);
       }
     };
 
-    // Reset error state when code changes
-    setError(null);
+    fetchPreview();
+  }, [code, codeReady]);
 
-    loadAndMountVibe();
+  if (error) {
+    return (
+      <div className="relative w-full h-full bg-gray-900 flex items-center justify-center">
+        <p className="text-red-400">Error: {error}</p>
+      </div>
+    );
+  }
 
-    // Cleanup function
-    return () => {
-      active = false;
-
-      // Call the unmount callback to properly cleanup the React root
-      if (unmountVibeRef.current) {
-        unmountVibeRef.current();
-        unmountVibeRef.current = null;
-      }
-
-      // Clean up the script tag
-      const script = document.getElementById(`vibe-script-${containerId}`);
-      if (script) {
-        script.remove();
-      }
-    };
-  }, [code, codeReady, containerId, sessionId]);
-
-  /*
-    publish the session to that we will be able to retrieve it https://appslug.vibes.diy/App.jsx
-    and if this is done -> generate the url for the iframe
-   */
+  if (!srcdoc) {
+    return (
+      <div className="relative w-full h-full bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-400">Loading preview...</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -123,23 +75,11 @@ export function InlinePreview({
       style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
     >
       <iframe
-        src={`http://localhost:8001/vibe/coltrane-theremin-4277/00d336ad`}
-        className="relative w-full h-full bg-gray-900 overflow-auto"
+        srcDoc={srcdoc}
+        sandbox="allow-scripts allow-same-origin allow-forms"
+        className="relative w-full h-full"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
     </div>
   );
 }
-
-// {/* Error Overlay */}
-// {error && (
-//   <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
-//     <div className="text-center max-w-md">
-//       <p className="text-red-400 text-lg mb-4">Error loading preview:</p>
-//       <p className="text-white mb-4">{error}</p>
-//     </div>
-//   </div>
-// )}
-
-// {/* Container for vibe module to mount into */}
-// <div id={containerId} className="w-full h-full" />
