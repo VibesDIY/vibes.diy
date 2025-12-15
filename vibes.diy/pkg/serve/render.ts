@@ -1,11 +1,11 @@
 import { renderToString } from "react-dom/server";
 import React from "react";
 import { build } from "esbuild-wasm";
-import type { VibesCtx } from "@vibes.diy/use-vibes-base";
+import type { MountVibeParams } from "@vibes.diy/use-vibes-base";
 
 export interface VibesDiyServCtx {
   readonly versions: { readonly FP: string };
-  readonly vibesCtx: VibesCtx;
+  readonly vibesCtx: MountVibeParams;
   loadFile(file: string): Promise<string | undefined>;
   loadFileBinary(file: string): Promise<Uint8Array | undefined>;
   basePath: string;
