@@ -1,344 +1,190 @@
 import type { ToCloudAttachable, TokenStrategie } from '@fireproof/core-types-protocols-cloud';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
+  Attached,
   fireproof,
   ImgFile,
   isDatabase,
   toCloud as originalToCloud,
   useFireproof as originalUseFireproof,
+  UseFireproof,
+  UseFPConfig,
   type Database,
   type UseFpToCloudParam,
 } from '@fireproof/use-fireproof';
-import { MountVibeParams, useVibeContext } from './contexts/VibeContext.js';
-import { constructVibesDatabaseName } from './utils/databaseName.js';
+import { useVibeContext, Vibe } from './contexts/VibeContext.js';
 import { callAI } from 'call-ai';
 import z from 'zod';
+import { ResolveOnce } from '@adviser/cement';
 
-// Cloud connection URLs - same as used by vibes.diy app via DashboardContext
-// const DASHBOARD_API_URL = 'https://connect.fireproof.direct/api';
-// const DASHBOARD_URI = 'https://connect.fireproof.direct/fp/cloud/api/token-auto';
-// const CLOUD_BASE_URL = 'fpcloud://cloud.fireproof.direct';
-
-// Track sync status by database name and instance ID
-const syncEnabledInstances = new Map<string, Set<string>>();
-
-// Simple counter for generating unique instance IDs (avoids React.useId conflicts)
-let instanceCounter = 0;
+export * from './contexts/VibeContext.js';
 
 export { fireproof, ImgFile };
 
 // Re-export all types under a namespace
 export type * as Fireproof from '@fireproof/use-fireproof';
 
-
 export const VibesEnvSchema = z.object({
   FPCLOUD_URL: z.string(),
   DASHBOARD_URL: z.string(),
-  CLERK_PUBLISHABLE_KEY: z.string()
+  CLERK_PUBLISHABLE_KEY: z.string(),
+  CALLAI_API_KEY: z.string(),
+  CALLAI_CHAT_URL: z.string(),
+  CALLAI_IMG_URL: z.string(),
 });
 
 export type VibesEnv = z.infer<typeof VibesEnvSchema>;
 
-
 // Extended options for toCloud with Clerk token support
 interface ToCloudWithClerkOpts extends UseFpToCloudParam {
-  readonly env: VibesEnv
-}
-
-export interface VibesCtx {
   readonly env: VibesEnv;
-  strategy: TokenStrategie
-  onDatabaseOpen(database: Database): void; 
+  readonly fpCloudStrategie?: TokenStrategie;
 }
 
-let injectedVibesCtx: VibesCtx | undefined = undefined;
+let injectedVibesCtx: Vibe | undefined = undefined;
 
-function defVibesCtx(): VibesCtx {
+function defVibesCtx(): Vibe {
   if (!injectedVibesCtx) {
     throw new Error('VibesCtx not injected. Please call injectDefaultVibes');
   }
   return injectedVibesCtx;
 }
 
-export function injectDefaultVibesCtx(ctx: VibesCtx) {
+export function injectDefaultVibesCtx(ctx: Vibe) {
   injectedVibesCtx = ctx;
 }
-
 
 // Helper function to create toCloud configuration
 export function toCloud(iopts?: ToCloudWithClerkOpts): ToCloudAttachable {
   const defCtx = defVibesCtx();
   const opts = {
-    ...defCtx.env,
+    ...defCtx,
     ...iopts,
-  }
-  console.log('[toCloud] Creating cloud config with opts:', opts);
+  };
+  // console.log('[toCloud] Creating cloud config with opts:', opts);
 
   const attachable = originalToCloud({
-    // ...restOpts,
-    // ...tokenOpts,
-    strategy: opts.strategy, 
-    dashboardURI: defCtx.env.DASHBOARD_URL,
-    urls: { base: defCtx.env.FPCLOUD_URL },
+    strategy: opts.strategy,
+    dashboardURI: opts.env.DASHBOARD_URL,
+    urls: { base: opts.env.FPCLOUD_URL },
   });
   return attachable;
 }
 
-// Helper function to construct database name with vibe metadata
-function constructDatabaseName(
-  nameOrDatabase: string | Database,
-  mountParams: MountVibeParams
-): string | Database {
-  if (isDatabase(nameOrDatabase)) {
-    return nameOrDatabase;
-  }
+export interface AttachState {
+  readonly state: 'detached' | 'attaching' | 'attached' | 'detaching' | 'error';
+  readonly error?: Error;
+  readonly attach?: Attached;
+}
 
-  // Determine the base name. If nameOrDatabase is undefined or an empty string, use 'default'.
-  const baseName: string = (nameOrDatabase as string | undefined) || 'default';
-
-  // // If no vibeMetadata, return the baseName as is
-  // if (!mountParams) {
-  //   return baseName;
-  // }
-
-  // Otherwise, augment the baseName with vibeMetadata
-  return constructVibesDatabaseName(mountParams.titleId, mountParams.installId, baseName);
+export interface UseVibesFireproof extends UseFireproof {
+  readonly doAttach: () => void;
+  readonly doDetach: () => void;
+  readonly attachState: AttachState;
 }
 
 // Custom useFireproof hook with implicit cloud sync and button integration
-export function useFireproof(nameOrDatabase?: string | Database) {
-
+export function useFireproof(
+  nameOrDatabase: string | Database,
+  config?: UseFPConfig
+): UseVibesFireproof {
   // Read vibe context if available (for inline rendering with proper ledger naming)
-  const vibeMetadata = useVibeContext();
+  const vibeCtx = useVibeContext();
 
-  if (!nameOrDatabase) {
-    nameOrDatabase = vibeMetadata.appSlug;
+  let dbName = nameOrDatabase;
+  if (isDatabase(nameOrDatabase)) {
+    dbName = nameOrDatabase.ledger.ctx.get('UseVibes.AppId') || nameOrDatabase.name;
+  }
+  if (!dbName) {
+    dbName = `db-${vibeCtx.appSlug}`;
   }
 
-  // Construct augmented database name with vibe metadata (titleId + installId)
-  const augmentedDbName = constructDatabaseName(nameOrDatabase, vibeMetadata);
-
-  // Generate unique instance ID for this hook instance (no React dependency)
-  const instanceId = `instance-${++instanceCounter}`;
-
-  // Get database name for tracking purposes (use augmented name)
-  const dbName =
-    typeof augmentedDbName === 'string' ? augmentedDbName : augmentedDbName?.name || 'default';
-
-  // // Track this database name for global access
-  // if (typeof nameOrDatabase === 'string') {
-  //   usedDatabaseNames.add(nameOrDatabase);
-  // }
-
-  // Use global sync key - all databases share the same auth token and sync state
-  const syncKey = 'fireproof-sync-enabled';
-
-  // Check if sync was previously enabled (persists across refreshes)
-  const wasSyncEnabled = typeof window !== 'undefined' && localStorage.getItem(syncKey) === 'true';
-
-  // User vibes (with vibeMetadata from VibeContextProvider) always sync automatically.
-  // The vibes.diy app itself uses localStorage opt-in for its databases.
-  const isUserVibe = vibeMetadata !== undefined;
-  const shouldSync = isUserVibe || wasSyncEnabled;
-
-  // Log sync decision for debugging
-  console.log('[useFireproof] Sync decision:', {
-    isUserVibe,
-    wasSyncEnabled,
-    shouldSync,
-    dbName,
-    vibeMetadata: vibeMetadata
-      ? {
-          titleId: vibeMetadata.titleId,
-          installId: vibeMetadata.installId,
-        }
-      : null,
-  });
-
-  // Create attach config if sync should be enabled
-  // User vibes use Clerk token that is exchanged for Fireproof cloud token via ensureCloudToken API
-  const attachConfig = shouldSync ? toCloud() : undefined;
-
-  if (attachConfig) {
-    console.log('[useFireproof] Created attachConfig for sync:', {
-      appId: dbName,
-    });
+  let fpRet: UseFireproof;
+  if (isDatabase(nameOrDatabase)) {
+    fpRet = originalUseFireproof(nameOrDatabase, config);
+  } else {
+    fpRet = originalUseFireproof(dbName, config);
+  }
+  if (!fpRet.database.ledger.ctx.get('UseVibes.AppId')) {
+    fpRet.database.ledger.ctx.set('UseVibes.AppId', dbName as string);
+  }
+  if (!fpRet.database.ledger.ctx.get('UseVibes.Mutex')) {
+    fpRet.database.ledger.ctx.set('UseVibes.Mutex', new ResolveOnce());
   }
 
-  // Use original useFireproof with augmented database name
-  // This ensures each titleId + installId combination gets its own database
-  const result = originalUseFireproof(
-    augmentedDbName,
-    attachConfig ? { attach: attachConfig } : {}
+  const mutexAttachState = fpRet.database.ledger.ctx.get('UseVibes.Mutex') as ResolveOnce<void>;
+  const [attachState, setAttachState] = useState<AttachState>({ state: 'detached' });
+  const doAttach = useCallback(
+    (/* in future we will be able to override defVibesCtx */) => {
+      if (!vibeCtx.sessionReady()) {
+        console.error('Session not ready for attach');
+        setAttachState({ state: 'error', error: new Error('Session not ready for attach') });
+      }
+      setAttachState({ state: 'attaching' });
+      mutexAttachState.once(() => {
+        vibeCtx.dashApi.ensureUser({}).then((rUser) => {
+          if (rUser.isErr()) {
+            console.error('Failed to ensure user for attach:', rUser);
+            setAttachState({ state: 'error', error: rUser.Err() });
+            return;
+          }
+          const user = rUser.unwrap();
+          console.log('Ensured user for attach:', user);
+        });
+
+        console.log('attach invoked', defVibesCtx());
+        fpRet.database
+          .attach(
+            toCloud({
+              env: defVibesCtx().env,
+              strategy: defVibesCtx().fpCloudStrategie(),
+            })
+          )
+          .then((at) => {
+            console.log('Database attached');
+            setAttachState({ state: 'attached', attach: at });
+          })
+          .catch((err) => {
+            console.error('Database attach failed:', err);
+            setAttachState({ state: 'error', error: err });
+          });
+      });
+    },
+    []
   );
 
-  result.database.ledger.ctx.set("vibesAppId", augmentedDbName);
-
-  // Log attachment state for debugging
-  console.log('[useFireproof] Result attach state:', {
-    attachState: result.attach?.state,
-    hasAttach: !!result.attach,
-    dbName,
-  });
-
-  // TODO: Enable sync with Clerk token
-  const enableSync = useCallback(() => {
-    console.log('enableSync() not implemented - TODO: Enable sync with Clerk token');
+  const doDetach = useCallback(() => {
+    if (attachState.state !== 'attached') {
+      return;
+    }
+    console.log('doDetach invoked');
+    setAttachState({ ...attachState, state: 'detaching' });
+    mutexAttachState.reset(() => {
+      attachState.attach
+        ?.detach()
+        .then(() => {
+          console.log('Database detached');
+          setAttachState({ state: 'detached' });
+        })
+        .catch((err) => {
+          console.error('Database detach failed:', err);
+          setAttachState({ state: 'error', error: err });
+        });
+    });
   }, []);
 
-  // TODO: Disable sync with Clerk token
-  const disableSync = useCallback(() => {
-    console.log('disableSync() not implemented - TODO: Disable sync with Clerk token');
-  }, []);
-
-  // Determine sync status - check for actual attachment state
-  const syncEnabled =
-    shouldSync && (result.attach?.state === 'attached' || result.attach?.state === 'attaching');
-
-  // Share function that immediately adds a user to the ledger by email
-  // const share = useCallback(
-  //   async (options: { email: string; role?: 'admin' | 'member'; right?: 'read' | 'write' }) => {
-  //     // Get dashApi instance for this Clerk key
-  //     const dashApi = clerkDashApi()
-  //     getDashApi(clerkPublishableKey);
-
-  //     // Get ledger info from ensureCloudToken
-  //     const tokenResult = await dashApi.ensureCloudToken({ appId: dbName });
-  //     if (tokenResult.isErr()) {
-  //       const error = tokenResult.Err();
-  //       throw new Error(`Failed to get cloud token: ${error.message || error}`);
-  //     }
-
-  //     const tokenData = tokenResult.Ok();
-  //     const ledgerId = tokenData.ledger;
-
-  //     // Invite user to ledger using dashApi
-  //     const inviteResult = await dashApi.inviteUser({
-  //       ticket: {
-  //         query: { byEmail: options.email },
-  //         invitedParams: {
-  //           ledger: {
-  //             id: ledgerId,
-  //             role: options.role || 'member',
-  //             right: options.right || 'read',
-  //           },
-  //         },
-  //       },
-  //     });
-
-  //     if (inviteResult.isErr()) {
-  //       const error = inviteResult.Err();
-  //       throw new Error(`Share failed: ${error.message || error}`);
-  //     }
-
-  //     // Return share result
-  //     return {
-  //       success: true,
-  //       email: options.email,
-  //       role: options.role || 'member',
-  //       right: options.right || 'read',
-  //       message: 'User added to ledger successfully',
-  //     };
-  //   },
-  //   [dbName, vibeMetadata?.clerkPublishableKey]
-  // );
-
-  // Listen for custom 'vibes-share-request' events on document
-  // Any element can dispatch this event to trigger share
-  // useEffect(() => {
-  //   if (typeof window === 'undefined') return;
-
-  //   const handleShareRequest = async (event: Event) => {
-  //     const customEvent = event as CustomEvent<{
-  //       email: string;
-  //       role?: 'admin' | 'member';
-  //       right?: 'read' | 'write';
-  //     }>;
-
-  //     const { email, role = 'member', right = 'read' } = customEvent.detail || {};
-
-  //     if (!email) {
-  //       const error = new Error('vibes-share-request requires email in event detail');
-  //       document.dispatchEvent(
-  //         new CustomEvent('vibes-share-error', {
-  //           detail: { error, originalEvent: event },
-  //           bubbles: true,
-  //         })
-  //       );
-  //       return;
-  //     }
-
-  //     try {
-  //       const result = await share({ email, role, right });
-
-  //       // Dispatch success event
-  //       document.dispatchEvent(
-  //         new CustomEvent('vibes-share-success', {
-  //           detail: { ...result, originalEvent: event },
-  //           bubbles: true,
-  //         })
-  //       );
-  //     } catch (error) {
-  //       // Dispatch error event
-  //       document.dispatchEvent(
-  //         new CustomEvent('vibes-share-error', {
-  //           detail: { error, originalEvent: event },
-  //           bubbles: true,
-  //         })
-  //       );
-  //     }
-  //   };
-
-  //   document.addEventListener('vibes-share-request', handleShareRequest);
-
-  //   return () => {
-  //     document.removeEventListener('vibes-share-request', handleShareRequest);
-  //   };
-  // }, [share]);
-
-  // Manage global sync status tracking and body class
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Ensure database entry exists in Map
-    if (!syncEnabledInstances.has(dbName)) {
-      syncEnabledInstances.set(dbName, new Set());
-    }
-    const instanceSet = syncEnabledInstances.get(dbName);
-    if (!instanceSet) return;
-
-    if (syncEnabled) {
-      // Add this instance to the sync-enabled set
-      instanceSet.add(instanceId);
+    if (vibeCtx.sessionReady()) {
+      doAttach();
     } else {
-      // Remove this instance from the sync-enabled set
-      instanceSet.delete(instanceId);
+      doDetach();
     }
-
-    // Update body class based on global sync status
-    // updateBodyClass();
-
-    // Cleanup on unmount - remove this instance
-    return () => {
-      const currentInstanceSet = syncEnabledInstances.get(dbName);
-      if (currentInstanceSet) {
-        currentInstanceSet.delete(instanceId);
-        // Clean up empty sets
-        if (currentInstanceSet.size === 0) {
-          syncEnabledInstances.delete(dbName);
-        }
-        // updateBodyClass();
-      }
-    };
-  }, [syncEnabled, dbName, instanceId]);
-
-  // Return combined result with stub sync functions
+  });
   return {
-    ...result,
-    enableSync,
-    disableSync,
-    syncEnabled,
-    // share,
+    ...fpRet,
+    doAttach,
+    doDetach,
+    attachState,
   };
 }
 
@@ -412,9 +258,8 @@ export {
   VibeContextProvider,
   useVibeContext,
   VibeMetadataValidationError,
-  VIBE_METADATA_ERROR_CODES,
-  validateVibeMetadata,
 } from './contexts/VibeContext.js';
-export type { VibeMetadata } from './contexts/VibeContext.js';
+
+// export type { VibeMetadata } from './contexts/VibeContext.js';
 
 // Mounting utilities moved to vibes.diy/pkg/app - no longer exported

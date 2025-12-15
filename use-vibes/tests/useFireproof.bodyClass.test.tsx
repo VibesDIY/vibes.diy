@@ -20,8 +20,8 @@ vi.mock('use-fireproof', () => ({
 
 // Test component that uses our enhanced useFireproof
 function TestComponent({ dbName = 'test-db' }: { dbName?: string }) {
-  const { syncEnabled } = useFireproof(dbName);
-  return <div data-testid="sync-status">{syncEnabled ? 'connected' : 'disconnected'}</div>;
+  const { attachState } = useFireproof(dbName);
+  return <div data-testid="sync-status">{attachState.state}</div>;
 }
 
 describe('useFireproof body class management', () => {
