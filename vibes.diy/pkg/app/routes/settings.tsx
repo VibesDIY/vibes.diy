@@ -1,7 +1,7 @@
 import type { ChangeEvent } from "react";
 import React, { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 import { useAuth as useClerkAuth, useClerk } from "@clerk/clerk-react";
 import { BrutalistCard } from "../components/vibes/BrutalistCard.js";
 import { VibesButton } from "../components/vibes/VibesButton/index.js";
@@ -332,7 +332,7 @@ function SettingsContent() {
 }
 
 // Auth wrapper component
-export default function Settings() {
+export function Settings() {
   const { isSignedIn, isLoaded } = useClerkAuth();
 
   if (!isSignedIn) {

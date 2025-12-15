@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import SimpleAppLayout from "../../components/SimpleAppLayout.js";
 import { HomeIcon } from "../../components/SessionSidebar/HomeIcon.js";
 import VibesDIYLogo from "../../components/VibesDIYLogo.js";
 import ReactMarkdown from "react-markdown";
-import tosContent from "./tos-notes.md?raw";
+import { loadAsset } from "@adviser/cement";
 
 export function meta() {
   return [
@@ -12,7 +12,15 @@ export function meta() {
   ];
 }
 
-export default function TermsOfService() {
+export function Legal_Tos() {
+  const [tosContent, setTosContent] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadAsset("/app/routes/legal/tos-notes.md", {
+      basePath: () => window.location.origin,
+    }).then((tos) => setTosContent(tos.Ok()));
+  }, [tosContent]);
+
   return (
     <SimpleAppLayout
       headerLeft={

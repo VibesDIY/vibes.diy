@@ -17,20 +17,26 @@
     "serve": "serve -s dist"
   },
   "dependencies": {
+    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-9",
     "call-ai": "workspace:*",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "use-vibes": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/browser-playwright": "^4.0.14",
-    "prettier": "^3.7.3",
+    "@vitest/browser-playwright": "^4.0.15",
+    "prettier": "^3.7.4",
     "serve": "^14.2.5",
     "typescript": "~5.9.3",
-    "vite": "^7.2.6",
-    "vitest": "^4.0.14"
+    "vite": "^7.2.7",
+    "vitest": "^4.0.15"
   }
 }

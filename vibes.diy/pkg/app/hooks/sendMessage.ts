@@ -1,4 +1,4 @@
-import { Database } from "use-fireproof";
+import { Database } from "@fireproof/use-fireproof";
 import {
   resolveEffectiveModel,
   type AiChatMessageDocument,

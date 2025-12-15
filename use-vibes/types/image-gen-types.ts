@@ -1,4 +1,4 @@
-import type { Database, DocWithId } from 'use-fireproof';
+import type { Database, DocWithId } from '@fireproof/use-fireproof';
 import { ImageGenOptions, ImageResponse } from 'call-ai';
 
 // Interface for our image documents in Fireproof

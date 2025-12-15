@@ -1,4 +1,5 @@
-import { useFireproof } from "use-fireproof";
+import { useMemo } from "react";
+import { useFireproof } from "@fireproof/use-fireproof";
 import { useAuth } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
 
@@ -12,13 +13,14 @@ export function useAllGroups() {
   // userId is included in the query filter instead
   const { useLiveQuery } = useFireproof("vibes-groups");
 
-  // Query ALL groups for this user (no titleId filter)
-  const groupsResult = useLiveQuery<VibeInstanceDocument>(
-    (doc) =>
-      doc.userId === userId || (userId && doc.sharedWith?.includes(userId)),
-  );
+  // Stabilize query object to prevent infinite re-subscription loops
+  const query = useMemo(() => ({ key: userId }), [userId]);
 
-  const groups = groupsResult.docs || [];
+  // Query ALL groups for this user by userId index
+  const groupsResult = useLiveQuery<VibeInstanceDocument>("userId", query);
+
+  // Stabilize the array reference to prevent re-render loops
+  const groups = useMemo(() => groupsResult.docs || [], [groupsResult.docs]);
 
   return {
     groups,

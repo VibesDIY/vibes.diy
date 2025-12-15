@@ -4,7 +4,7 @@ import { MyVibeCard } from "./MyVibeCard.js";
 import { loadVibeDocument, loadVibeScreenshot } from "../utils/vibeUtils.js";
 import type { LocalVibe } from "../utils/vibeUtils.js";
 import { useVibes } from "../hooks/useVibes.js";
-import { DocFileMeta } from "use-fireproof";
+import { DocFileMeta } from "@fireproof/use-fireproof";
 
 interface VibeCardDataProps {
   vibeId: string;

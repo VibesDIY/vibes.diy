@@ -1,0 +1,6 @@
+to run vibes.diy locally you need two components running locally in the
+vibes.diy/pkg directory meaning you have to start them and leave them running:
+
+cd vibes.diy/pkg
+pnpm run tsc --watch
+pnpm run dev

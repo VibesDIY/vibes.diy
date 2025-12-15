@@ -36,7 +36,8 @@
     "publish": "echo skip publish",
     "check": "pnpm format && pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test",
     "storybook": "cd vibes.diy/pkg && cross-env DISABLE_REACT_ROUTER=true pnpm run storybook",
-    "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook"
+    "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook",
+    "update-fireproof": "cd scripts && pnpm update-deps -C .."
   },
   "keywords": [
     "ai",
@@ -55,24 +56,35 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@fireproof/core-cli": "0.24.2-dev-clerk",
+    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-9",
     "@playwright/test": "^1.57.0",
     "@types/deno": "^2.5.0",
     "@types/node": "^24.9.1",
-    "@typescript/native-preview": "7.0.0-dev.20251201.1",
-    "@vitest/browser-playwright": "^4.0.14",
-    "@vitest/coverage-v8": "4.0.14",
+    "@typescript/native-preview": "7.0.0-dev.20251212.1",
+    "cmd-ts": "^0.14.3",
     "cross-env": "^10.0.0",
     "eslint": "^9.38.0",
     "eslint-plugin-import": "^2.32.0",
     "knip": "^5.71.0",
     "playwright": "^1.57.0",
-    "prettier": "^3.7.3",
+    "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "puppeteer": "^24.31.0",
-    "serve": "^14.2.5",
     "typescript-eslint": "^8.48.0",
-    "vitest": "^4.0.14",
-    "wrangler": "^4.45.1"
+    "wrangler": "^4.54.0",
+    "zx": "^8.8.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "hono": "4.10.8"
+    }
+  },
+  "dependencies": {
+    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-9"
   }
 }

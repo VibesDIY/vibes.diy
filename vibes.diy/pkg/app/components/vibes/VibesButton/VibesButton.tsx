@@ -12,7 +12,12 @@ import {
   RemixIcon,
   InviteIcon,
   SettingsIcon,
-  BackIcon,
+  AboutIcon,
+  ArrowRightIcon,
+  FirehoseIcon,
+  GroupsIcon,
+  HomeIconCircle,
+  MyVibesIcon,
 } from "../icons/index.js";
 import { useMobile } from "@vibes.diy/use-vibes-base";
 
@@ -23,7 +28,18 @@ export const YELLOW = "yellow" as const;
 export const GRAY = "gray" as const;
 
 type ButtonVariant = "blue" | "red" | "yellow" | "gray";
-type IconName = "login" | "remix" | "invite" | "settings" | "back";
+type ButtonType = "square" | "flat" | "flat-rounded" | "form";
+type IconName =
+  | "login"
+  | "remix"
+  | "invite"
+  | "settings"
+  | "back"
+  | "about"
+  | "firehose"
+  | "groups"
+  | "home"
+  | "myvibes";
 
 // Icon map - maps icon names to React components
 const iconMap: Record<
@@ -33,13 +49,19 @@ const iconMap: Record<
     fill?: string;
     width?: number;
     height?: number;
+    withCircle?: boolean;
   }>
 > = {
   login: LoginIcon,
   remix: RemixIcon,
   invite: InviteIcon,
   settings: SettingsIcon,
-  back: BackIcon,
+  back: ArrowRightIcon,
+  about: AboutIcon,
+  firehose: FirehoseIcon,
+  groups: GroupsIcon,
+  home: HomeIconCircle,
+  myvibes: MyVibesIcon,
 };
 
 export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -49,6 +71,15 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
    * @default 'blue'
    */
   variant?: ButtonVariant;
+  /**
+   * Layout type of the button.
+   * - 'square': Default desktop layout (square with vertical icon/text)
+   * - 'flat': Always uses mobile layout (horizontal, full width)
+   * - 'flat-rounded': Mobile layout with 50% border radius
+   * - 'form': Simple form button without icon
+   * @default 'square'
+   */
+  buttonType?: ButtonType;
   children: React.ReactNode;
   onHover?: () => void;
   onUnhover?: () => void;
@@ -63,6 +94,7 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 export function VibesButton({
   variant = "blue",
+  buttonType = "square",
   children,
   onHover,
   onUnhover,
@@ -87,25 +119,48 @@ export function VibesButton({
 
   const IconComponent = icon ? iconMap[icon] : undefined;
 
+  // Determine if we should use mobile layout based on buttonType or actual mobile state
+  const useMobileLayout =
+    buttonType === "flat" || buttonType === "flat-rounded" || isMobile;
+
+  // Form buttons don't render icons
+  const shouldRenderIcon = IconComponent && buttonType !== "form";
+
   const baseStyle = getButtonStyle(
     buttonVariant,
     isHovered,
     isActive,
-    isMobile,
-    !!IconComponent,
+    useMobileLayout,
+    !!shouldRenderIcon,
   );
+
+  // Apply additional styles based on buttonType
+  let buttonTypeStyle: React.CSSProperties = {};
+  if (buttonType === "flat-rounded") {
+    buttonTypeStyle = { borderRadius: "50px" };
+  } else if (buttonType === "form") {
+    buttonTypeStyle = {
+      padding: "12px 24px",
+      minWidth: "auto",
+      width: "auto",
+    };
+  }
+
   const mergedStyle = getMergedButtonStyle(
-    baseStyle,
+    { ...baseStyle, ...buttonTypeStyle },
     ignoreDarkMode,
     customStyle,
   );
   const iconContainerStyle = getIconContainerStyle(
     buttonVariant,
-    isMobile,
-    !!IconComponent,
+    useMobileLayout,
+    !!shouldRenderIcon,
   );
-  const iconStyle = getIconStyle(isMobile, isHovered, isActive);
-  const contentWrapperStyle = getContentWrapperStyle(isMobile, !!IconComponent);
+  const iconStyle = getIconStyle(useMobileLayout, isHovered, isActive);
+  const contentWrapperStyle = getContentWrapperStyle(
+    useMobileLayout,
+    !!shouldRenderIcon,
+  );
 
   return (
     <>
@@ -122,15 +177,16 @@ export function VibesButton({
         onMouseUp={() => setActive(false)}
         style={mergedStyle}
       >
-        {IconComponent ? (
+        {shouldRenderIcon ? (
           <div style={contentWrapperStyle}>
             <div style={iconContainerStyle}>
               <div style={iconStyle}>
                 <IconComponent
                   bgFill="var(--vibes-button-icon-bg)"
                   fill="var(--vibes-button-icon-fill)"
-                  width={isMobile ? 28 : 50}
-                  height={isMobile ? 28 : 50}
+                  width={useMobileLayout ? 28 : 50}
+                  height={useMobileLayout ? 28 : 50}
+                  withCircle={icon === "back"}
                 />
               </div>
             </div>

@@ -20,6 +20,7 @@ interface ChatInputProps {
   models?: ModelOption[];
   globalModel?: string;
   showModelPickerInChat?: boolean;
+  hideSubmitButton?: boolean;
 }
 
 export interface ChatInputRef extends HTMLTextAreaElement {
@@ -36,6 +37,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       models,
       globalModel,
       showModelPickerInChat,
+      hideSubmitButton,
     },
     ref,
   ) => {
@@ -66,6 +68,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
         onSend(); // Call onSend for side effects only
       }
     }, [chatState, onSend]);
+
     // Auto-resize textarea function
     const autoResizeTextarea = useCallback(() => {
       const textarea = chatState.inputRef.current;
@@ -146,17 +149,21 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             ) : (
               <span aria-hidden="true" />
             )}
-            <Button
-              ref={submitButtonRef}
-              type="button"
-              onClick={handleSendMessage}
-              disabled={chatState.isStreaming}
-              variant="blue"
-              size="fixed"
-              aria-label={chatState.isStreaming ? "Generating" : "Send message"}
-            >
-              {chatState.isStreaming ? "•••" : "Code"}
-            </Button>
+            {!hideSubmitButton && (
+              <Button
+                ref={submitButtonRef}
+                type="button"
+                onClick={handleSendMessage}
+                disabled={chatState.isStreaming}
+                variant="blue"
+                size="fixed"
+                aria-label={
+                  chatState.isStreaming ? "Generating" : "Send message"
+                }
+              >
+                {chatState.isStreaming ? "•••" : "Code"}
+              </Button>
+            )}
           </div>
         </div>
       </div>

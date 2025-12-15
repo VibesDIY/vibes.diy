@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import VibespaceComponent from "~/vibes.diy/app/components/VibespaceComponent.js";
 
 // Mock the Fireproof hook
-vi.mock("use-fireproof", () => ({
+vi.mock("@fireproof/use-fireproof", () => ({
   useFireproof: vi.fn(() => ({
     useAllDocs: vi.fn(() => ({ docs: [] })),
   })),

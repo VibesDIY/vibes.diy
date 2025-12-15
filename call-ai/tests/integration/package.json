@@ -35,19 +35,25 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.2-dev-clerk",
+    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-9",
     "@playwright/test": "^1.57.0",
     "@types/node": "^24.9.1",
-    "@vitest/browser-playwright": "^4.0.14",
+    "@vitest/browser-playwright": "^4.0.15",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.14",
+    "vitest": "^4.0.15",
     "zx": "^8.8.4"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-9",
     "call-ai": "workspace:0.0.0"
   }
 }

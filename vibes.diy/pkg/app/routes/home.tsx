@@ -1,13 +1,10 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import {
-  useParams,
-  useLocation,
-  useNavigate,
-  useLoaderData,
-} from "react-router";
+import { useParams, useLocation, useNavigate } from "react-router";
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
+import { HomeScreen } from "../pages/HomeScreen/HomeScreen.js";
+import { useAuth } from "@clerk/clerk-react";
 
 export function meta() {
   return [
@@ -28,11 +25,19 @@ export async function clientLoader({ request }: { request: Request }) {
   };
 }
 
-export default function SessionWrapper() {
-  const loaderData = useLoaderData<typeof clientLoader>();
+export function Home() {
+  // Check authentication state - need isLoaded to wait for Clerk to initialize
+  const { isSignedIn, isLoaded } = useAuth();
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();
   const originalNavigate = useNavigate();
+
+  // Extract loader data from URL search params
+  const searchParams = new URLSearchParams(location.search);
+  const loaderData = {
+    urlPrompt: searchParams.get("prompt") || null,
+    urlModel: searchParams.get("model") || null,
+  };
 
   // Extract all location properties as stable strings to prevent useEffect dependency issues
   const pathname = useMemo(
@@ -70,6 +75,9 @@ export default function SessionWrapper() {
 
   // Handle prompt query parameter forwarding for root page
   useEffect(() => {
+    // Skip if not signed in
+    if (!isSignedIn) return;
+
     // Only handle forwarding when on root page (no sessionId) and there's a prompt query
     // Guard against duplicate navigations by checking local sessionId state
     if (!urlSessionId && !sessionId && search) {
@@ -103,7 +111,12 @@ export default function SessionWrapper() {
         navigate(targetUrl);
       }
     }
-  }, [urlSessionId, search, navigate]);
+  }, [isSignedIn, urlSessionId, search, navigate, sessionId]);
+
+  // If Clerk is loaded, user is not signed in, AND URL is empty, show HomeScreen
+  if (isLoaded && !isSignedIn && !urlSessionId && !search) {
+    return <HomeScreen />;
+  }
 
   // Conditional rendering - true deferred session creation
   // Use either the URL param or local state during the initial transition

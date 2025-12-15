@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 import { DEFAULT_CODING_MODEL, type UserSettings } from "@vibes.diy/prompts";
 import { VibesDiyEnv } from "../config/env.js";
 

@@ -3,7 +3,7 @@ import { describe, it, vi } from "vitest";
 import { createWrapper, formatAsSSE, sharedSessionDatabase } from "./setup.js";
 import { useSimpleChat } from "~/vibes.diy/app/hooks/useSimpleChat.js";
 import { useSession } from "~/vibes.diy/app/hooks/useSession.js";
-import { DocResponse } from "use-fireproof";
+import { DocResponse } from "@fireproof/use-fireproof";
 
 describe("useSimpleChat", () => {
   it("handles pending AI message state correctly", async () => {

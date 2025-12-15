@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Lazy } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
-import { mountVibeWithCleanup } from "../../mounting/index.js";
-import { transformImports } from "@vibes.diy/prompts";
+// import { mountVibeWithCleanup as _mountVibeWithCleanup } from "../../mounting/index.js";
+import { transformImports as _transformImports } from "@vibes.diy/prompts";
 import { useAuth } from "@clerk/clerk-react";
 import { VibesDiyEnv } from "../../config/env.js";
 
@@ -27,19 +27,19 @@ export function InlinePreview({
   const unmountVibeRef = useRef<(() => void) | null>(null);
 
   // Keep window.CALLAI_API_KEY fresh by periodically refreshing the Clerk token
-  useEffect(() => {
-    const refreshToken = async () => {
-      const freshToken = await getToken();
-      if (freshToken && typeof window !== "undefined") {
-        window.CALLAI_API_KEY = freshToken;
-      }
-    };
+  // useEffect(() => {
+  //   // const refreshToken = async () => {
+  //   //   const freshToken = await getToken();
+  //   //   if (freshToken && typeof window !== "undefined") {
+  //   //     window.CALLAI_API_KEY = freshToken;
+  //   //   }
+  //   // };
 
-    // Refresh token every 30 seconds (half of Clerk's 60-second token lifetime)
-    const interval = setInterval(refreshToken, 30000);
+  //   // // Refresh token every 30 seconds (half of Clerk's 60-second token lifetime)
+  //   // const interval = setInterval(refreshToken, 30000);
 
-    return () => clearInterval(interval);
-  }, [getToken]);
+  //   // return () => clearInterval(interval);
+  // }, [getToken]);
 
   useEffect(() => {
     if (!codeReady || !code) return;
@@ -55,31 +55,32 @@ export function InlinePreview({
         }
 
         // Get Clerk token for API authentication
-        const clerkToken = await getToken();
+        const _clerkToken = await getToken();
 
         // Get configured API endpoint (respects preview mode via env)
-        const callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
+        const _callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
 
-        // Mount the vibe code and capture the unmount callback via event
-        const unmount = await mountVibeWithCleanup(
-          code,
-          containerId,
-          sessionId, // Use session ID as titleId
-          "preview", // Use "preview" as installId for result preview context
-          transformImports,
-          false, // Hide vibes switch in result preview mode
-          clerkToken || undefined, // Pass Clerk token as apiKey
-          callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
-          callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
-        );
+        console.log("want to mount");
+        // // Mount the vibe code and capture the unmount callback via event
+        // const unmount = await mountVibeWithCleanup(
+        //   code,
+        //   containerId,
+        //   sessionId, // Use session ID as titleId
+        //   "preview", // Use "preview" as installId for result preview context
+        //   transformImports,
+        //   false, // Hide vibes switch in result preview mode
+        //   clerkToken || undefined, // Pass Clerk token as apiKey
+        //   callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
+        //   callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
+        // );
 
-        if (active) {
-          unmountVibeRef.current = unmount;
-          setError(null);
-        } else {
-          // Component was unmounted while mounting, clean up immediately
-          unmount();
-        }
+        // if (active) {
+        //   unmountVibeRef.current = unmount;
+        //   setError(null);
+        // } else {
+        //   // Component was unmounted while mounting, clean up immediately
+        //   unmount();
+        // }
       } catch (err) {
         // Error handled by setting error state
         if (active) {

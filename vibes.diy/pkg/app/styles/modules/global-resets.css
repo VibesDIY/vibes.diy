@@ -1,0 +1,114 @@
+/**
+ * Global Resets and Base Styles
+ * HTML/body resets, font smoothing, iOS fixes, mobile Safari tweaks
+ *
+ * Extracted from global-styles.ts lines 215-321
+ */
+
+/* ============================================
+   GLOBAL RESETS
+   ============================================ */
+
+html {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Roboto",
+    "Oxygen",
+    "Ubuntu",
+    "Cantarell",
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-light-background-00);
+  color: var(--color-light-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color-scheme: dark;
+    background-color: var(--color-dark-background-00);
+    color: var(--color-dark-primary);
+  }
+}
+
+hr {
+  opacity: 0.5;
+}
+
+/* Force dark mode based on system preference, regardless of class strategy */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    background-color: var(--color-dark-background-00);
+    color: var(--color-dark-primary);
+  }
+
+  /* This adds all the standard dark mode styles that would normally require the 'dark' class */
+  .text-accent-02 {
+    color: var(--color-dark-secondary);
+  }
+
+  .text-accent-00 {
+    color: var(--color-dark-accent-01);
+  }
+}
+
+/* iOS-specific fix for dark mode */
+@supports (-webkit-touch-callout: none) {
+  @media (prefers-color-scheme: dark) {
+    html,
+    body {
+      /* Force background color on iOS Safari */
+      background-color: var(--color-dark-background-00);
+      color: var(--color-dark-primary);
+    }
+  }
+}
+
+#root {
+  height: 100%;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Prevent auto-zoom on input focus in mobile Safari */
+input,
+textarea,
+select {
+  font-size: 16px; /* prevents auto-zoom */
+}
+
+/* Ensure all buttons and links show pointer cursor on hover */
+button,
+a,
+[role="button"],
+[type="button"],
+[type="submit"],
+[type="reset"] {
+  cursor: pointer;
+}
+
+.light {
+  --sp-layout-height: 100vh !important;
+}
