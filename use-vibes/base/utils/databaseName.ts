@@ -5,7 +5,7 @@
 export function constructVibesDatabaseName(
   titleId: string,
   installId: string,
-  baseName = 'default'
+  baseName: string
 ): string {
   return `vf-${titleId}-${installId}-${baseName}`;
 }
