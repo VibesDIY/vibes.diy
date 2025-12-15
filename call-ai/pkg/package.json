@@ -31,7 +31,7 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.2-dev-clerk",
+    "@fireproof/core-cli": "0.24.2-dev-cloud-api",
     "@types/node": "^24.9.1",
     "@vitest/browser-playwright": "^4.0.15",
     "typescript": "^5.9.3"

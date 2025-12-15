@@ -23,7 +23,7 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.2-dev-clerk",
+    "@fireproof/core-cli": "0.24.2-dev-cloud-api",
     "@types/react": "~19.2.7",
     "@vitest/browser-playwright": "^4.0.15",
     "typescript": "^5.9.3"

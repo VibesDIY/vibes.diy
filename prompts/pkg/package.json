@@ -33,7 +33,7 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.2-dev-clerk",
+    "@fireproof/core-cli": "0.24.2-dev-cloud-api",
     "@vitest/browser-playwright": "^4.0.15",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.0"
