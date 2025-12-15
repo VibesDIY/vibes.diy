@@ -130,63 +130,347 @@ export default function VibeControls() {
 
         {/* VibesPanel - Settings Panel (initially hidden) */}
         <div data-vibe-panel data-panel-hidden>
-          {/* Default mode - 4 buttons */}
+          {/* Default mode - 4 buttons with LabelContainer */}
           <div data-panel-mode="default">
-            <button data-action="logout" data-variant="blue" type="button">
-              Logout
-            </button>
-            <button data-action="remix" data-variant="red" type="button">
-              Remix
-            </button>
-            <button data-action="invite" data-variant="yellow" type="button">
-              Invite
-            </button>
-            <button data-action="home" data-variant="gray" type="button">
-              Home
-            </button>
+            <div data-label-container>
+              <div data-label data-disappear>
+                <span>Launcher</span>
+              </div>
+              <div data-button-wrapper>
+                {/* Logout Button */}
+                <button
+                  data-action="logout"
+                  data-variant="blue"
+                  data-has-icon
+                  type="button"
+                >
+                  <div data-content-wrapper>
+                    <div data-icon-container>
+                      <div data-icon>
+                        <svg
+                          width="45"
+                          height="45"
+                          viewBox="0 0 44 44"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="22"
+                            fill="var(--vibes-button-icon-bg)"
+                          />
+                          <path
+                            d="M21.895 25.562C23.266 25.562 24.581 25.0176 25.5506 24.048C26.5202 23.0784 27.0646 21.7635 27.0646 20.3922C27.0646 19.021 26.5202 17.7061 25.5506 16.7365C24.581 15.7669 23.266 15.2225 21.895 15.2225C20.524 15.2225 19.2089 15.7669 18.2393 16.7365C17.2697 17.7061 16.7253 19.021 16.7253 20.3922C16.7253 21.7635 17.2697 23.0784 18.2393 24.048C19.2089 25.0176 20.524 25.562 21.895 25.562ZM30.1624 31.7676C30.1624 33.8395 30.1624 33.8395 21.895 33.8395C13.6277 33.8395 13.6277 33.8395 13.6277 31.7676C13.6277 29.1817 17.3309 27.078 21.895 27.078C26.4591 27.078 30.1624 29.1817 30.1624 31.7676Z"
+                            fill="var(--vibes-button-icon-fill)"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span>Logout</span>
+                  </div>
+                </button>
+
+                {/* Remix Button */}
+                <button
+                  data-action="remix"
+                  data-variant="red"
+                  data-has-icon
+                  type="button"
+                >
+                  <div data-content-wrapper>
+                    <div data-icon-container>
+                      <div data-icon>
+                        <svg
+                          width="45"
+                          height="45"
+                          viewBox="0 0 44 44"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="22"
+                            fill="var(--vibes-button-icon-bg)"
+                          />
+                          <path
+                            d="M27.3889 13.2222L30.7778 16.6111M30.7778 16.6111L27.3889 20M30.7778 16.6111H18.5556C17.6558 16.6111 16.7929 16.9686 16.1552 17.6063C15.5175 18.244 15.1601 19.1069 15.1601 20.0067V21.7044M16.6111 30.7778L13.2222 27.3889M13.2222 27.3889L16.6111 24M13.2222 27.3889L25.4445 27.3889C26.3442 27.3889 27.2071 27.0314 27.8448 26.3937C28.4825 25.756 28.84 24.8931 28.84 23.9933L28.84 22.2956"
+                            stroke="var(--vibes-button-icon-fill)"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span>Remix</span>
+                  </div>
+                </button>
+
+                {/* Invite Button */}
+                <button
+                  data-action="invite"
+                  data-variant="yellow"
+                  data-has-icon
+                  type="button"
+                >
+                  <div data-content-wrapper>
+                    <div data-icon-container>
+                      <div data-icon>
+                        <svg
+                          width="45"
+                          height="45"
+                          viewBox="0 0 44 44"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="22"
+                            fill="var(--vibes-button-icon-bg)"
+                          />
+                          <path
+                            d="M19.1262 23.3156C20.2853 23.3156 21.3969 22.8551 22.2166 22.0354C23.0362 21.2157 23.4967 20.1041 23.4967 18.9451C23.4967 17.786 23.0362 16.6744 22.2166 15.8547C21.3969 15.0351 20.2853 14.5745 19.1262 14.5745C17.9672 14.5745 16.8556 15.0351 16.0359 15.8547C15.2162 16.6744 14.7557 17.786 14.7557 18.9451C14.7557 20.1041 15.2162 21.2157 16.0359 22.0354C16.8556 22.8551 17.9672 23.3156 19.1262 23.3156ZM26.1148 23.3156C26.9589 23.3156 27.7685 22.9804 28.3651 22.3838C28.9617 21.7872 29.2968 20.9776 29.2968 20.1335C29.2968 19.2895 28.9617 18.4799 28.3651 17.8832C27.7685 17.2866 26.9589 16.9515 26.1148 16.9515M11.9328 30.3042C11.9328 27.3327 15.1575 24.9222 19.1262 24.9222C23.095 24.9222 26.3197 27.3327 26.3197 30.3042M29.2968 25.7255C31.2891 26.2717 32.8082 27.7629 32.8082 29.5009"
+                            stroke="var(--vibes-button-icon-fill)"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span>Invite</span>
+                  </div>
+                </button>
+
+                {/* Home Button */}
+                <button
+                  data-action="home"
+                  data-variant="gray"
+                  data-has-icon
+                  type="button"
+                >
+                  <div data-content-wrapper>
+                    <div data-icon-container>
+                      <div data-icon>
+                        <svg
+                          width="45"
+                          height="45"
+                          viewBox="0 0 44 44"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="22"
+                            fill="var(--vibes-button-icon-bg)"
+                          />
+                          <path
+                            d="M22.6107 12.5279C22.4369 12.3756 22.2139 12.2915 21.9831 12.2915C21.7523 12.2915 21.5293 12.3756 21.3555 12.5279L12.3887 20.3792C12.2947 20.4616 12.2189 20.563 12.166 20.6768C12.1131 20.7906 12.0843 20.9143 12.0815 21.0399C12.0787 21.1655 12.1019 21.2904 12.1497 21.4064C12.1974 21.5224 12.2686 21.627 12.3588 21.7135C12.449 21.8 12.5564 21.8666 12.6743 21.9093C12.7922 21.9521 12.9179 21.9699 13.0432 21.9618C13.1686 21.9537 13.2909 21.9197 13.4024 21.862C13.5138 21.8043 13.612 21.7242 13.6905 21.6266L14.0788 21.2869V29.6111C14.0788 29.9844 14.2271 30.3424 14.4911 30.6064C14.7551 30.8704 15.1131 31.0186 15.4863 31.0186H18.6527C18.9065 31.0186 19.1499 30.9178 19.3294 30.7382C19.509 30.5587 19.6098 30.3152 19.6098 30.0615V25.8379C19.6098 25.5842 19.7106 25.3408 19.8901 25.1612C20.0697 24.9817 20.3131 24.8809 20.5669 24.8809H23.3992C23.6529 24.8809 23.8964 24.9817 24.0759 25.1612C24.2555 25.3408 24.3563 25.5842 24.3563 25.8379V30.0615C24.3563 30.3152 24.4571 30.5587 24.6366 30.7382C24.8162 30.9178 25.0596 31.0186 25.3133 31.0186H28.4798C28.8531 31.0186 29.211 30.8704 29.4751 30.6064C29.7391 30.3424 29.8873 29.9844 29.8873 29.6111V21.2869L30.2756 21.6266C30.4406 21.7631 30.6507 21.8305 30.8631 21.8155C31.0755 21.8004 31.2737 21.7041 31.4177 21.5459C31.5616 21.3877 31.6397 21.1803 31.6356 20.9674C31.6315 20.7545 31.5455 20.5503 31.3954 20.3978L22.6107 12.5279Z"
+                            fill="var(--vibes-button-icon-fill)"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span>Home</span>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Mutate mode - Fresh Start, Remix Code, Back (hidden by default) */}
           <div data-panel-mode="mutate" data-mode-hidden>
-            <button data-action="fresh-start" data-variant="blue" type="button">
-              Fresh Start
-            </button>
-            <button data-action="remix-code" data-variant="red" type="button">
-              Remix Code
-            </button>
-            <button data-action="back" data-variant="yellow" type="button">
-              Back
-            </button>
+            <div data-label-container>
+              <div data-label data-disappear>
+                <span>Remix</span>
+              </div>
+              <div data-button-wrapper>
+                {/* Fresh Start Button */}
+                <button
+                  data-action="fresh-start"
+                  data-variant="blue"
+                  data-has-icon
+                  type="button"
+                >
+                  <div data-content-wrapper>
+                    <div data-icon-container>
+                      <div data-icon>
+                        <svg
+                          width="45"
+                          height="45"
+                          viewBox="0 0 44 44"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="22"
+                            fill="var(--vibes-button-icon-bg)"
+                          />
+                          <path
+                            d="M27.3889 13.2222L30.7778 16.6111M30.7778 16.6111L27.3889 20M30.7778 16.6111H18.5556C17.6558 16.6111 16.7929 16.9686 16.1552 17.6063C15.5175 18.244 15.1601 19.1069 15.1601 20.0067V21.7044M16.6111 30.7778L13.2222 27.3889M13.2222 27.3889L16.6111 24M13.2222 27.3889L25.4445 27.3889C26.3442 27.3889 27.2071 27.0314 27.8448 26.3937C28.4825 25.756 28.84 24.8931 28.84 23.9933L28.84 22.2956"
+                            stroke="var(--vibes-button-icon-fill)"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span>Fresh Start</span>
+                  </div>
+                </button>
+
+                {/* Remix Code Button */}
+                <button
+                  data-action="remix-code"
+                  data-variant="red"
+                  data-has-icon
+                  type="button"
+                >
+                  <div data-content-wrapper>
+                    <div data-icon-container>
+                      <div data-icon>
+                        <svg
+                          width="45"
+                          height="45"
+                          viewBox="0 0 44 44"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="22"
+                            fill="var(--vibes-button-icon-bg)"
+                          />
+                          <path
+                            d="M27.3889 13.2222L30.7778 16.6111M30.7778 16.6111L27.3889 20M30.7778 16.6111H18.5556C17.6558 16.6111 16.7929 16.9686 16.1552 17.6063C15.5175 18.244 15.1601 19.1069 15.1601 20.0067V21.7044M16.6111 30.7778L13.2222 27.3889M13.2222 27.3889L16.6111 24M13.2222 27.3889L25.4445 27.3889C26.3442 27.3889 27.2071 27.0314 27.8448 26.3937C28.4825 25.756 28.84 24.8931 28.84 23.9933L28.84 22.2956"
+                            stroke="var(--vibes-button-icon-fill)"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span>Remix Code</span>
+                  </div>
+                </button>
+
+                {/* Back Button */}
+                <button
+                  data-action="back"
+                  data-variant="yellow"
+                  data-has-icon
+                  type="button"
+                >
+                  <div data-content-wrapper>
+                    <div data-icon-container>
+                      <div data-icon>
+                        <svg
+                          width="45"
+                          height="45"
+                          viewBox="0 0 44 44"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="22"
+                            fill="var(--vibes-button-icon-bg)"
+                          />
+                          <path
+                            d="M25.5 14L17.5 22L25.5 30"
+                            stroke="var(--vibes-button-icon-fill)"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span>Back</span>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Invite mode - Email form, status, Back (hidden by default) */}
           <div data-panel-mode="invite" data-mode-hidden>
-            <form data-invite-form action="/invite" method="GET">
-              <input type="hidden" name="db" id="vibe-db" value="" />
-              <input type="hidden" name="vibe" id="vibe-vibe" value="" />
-              <input type="hidden" name="group" id="vibe-group" value="" />
+            <div data-label-container data-label-yellow>
+              <div data-label data-disappear>
+                <span>Invite</span>
+              </div>
+              <div data-button-wrapper>
+                <form data-invite-form action="/invite" method="GET">
+                  <input type="hidden" name="db" id="vibe-db" value="" />
+                  <input type="hidden" name="vibe" id="vibe-vibe" value="" />
+                  <input type="hidden" name="group" id="vibe-group" value="" />
 
-              <label htmlFor="vibe-invite-email">Invite by email</label>
-              <input
-                id="vibe-invite-email"
-                type="email"
-                name="email"
-                placeholder="friend@example.com"
-                autoComplete="email"
-                required
-              />
-              <button type="submit" data-variant="blue">
-                Send Invite
-              </button>
-            </form>
+                  <label htmlFor="vibe-invite-email">Invite by email</label>
+                  <input
+                    id="vibe-invite-email"
+                    type="email"
+                    name="email"
+                    placeholder="friend@example.com"
+                    autoComplete="email"
+                    required
+                  />
+                  <button type="submit" data-variant="blue">
+                    Send Invite
+                  </button>
+                </form>
 
-            <div data-invite-status style={{ display: "none" }}>
-              {/* Status text updated by JavaScript */}
+                <div data-invite-status style={{ display: "none" }}>
+                  {/* Status text updated by JavaScript */}
+                </div>
+
+                {/* Back Button */}
+                <button
+                  data-action="back"
+                  data-variant="yellow"
+                  data-has-icon
+                  type="button"
+                >
+                  <div data-content-wrapper>
+                    <div data-icon-container>
+                      <div data-icon>
+                        <svg
+                          width="45"
+                          height="45"
+                          viewBox="0 0 44 44"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="22"
+                            fill="var(--vibes-button-icon-bg)"
+                          />
+                          <path
+                            d="M25.5 14L17.5 22L25.5 30"
+                            stroke="var(--vibes-button-icon-fill)"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span>Back</span>
+                  </div>
+                </button>
+              </div>
             </div>
-
-            <button data-action="back" data-variant="yellow" type="button">
-              Back
-            </button>
           </div>
         </div>
       </div>

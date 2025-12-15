@@ -101,7 +101,7 @@ function VibeInstanceViewerContent() {
     const refreshToken = async () => {
       const freshToken = await getToken();
       if (freshToken && typeof window !== "undefined") {
-        throw new Error("here something is needed")
+        throw new Error("here something is needed");
         // window.CALLAI_API_KEY = freshToken;
       }
     };

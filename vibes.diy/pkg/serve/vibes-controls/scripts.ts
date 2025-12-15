@@ -130,7 +130,8 @@ document
 document
   .querySelector('[data-action="remix"]')
   ?.addEventListener("click", () => {
-    switchToMode("mutate");
+    const remixUrl = generateRemixUrl();
+    window.open(remixUrl, "_top");
   });
 
 document
@@ -142,7 +143,7 @@ document
 document
   .querySelector('[data-action="home"]')
   ?.addEventListener("click", () => {
-    window.location.href = "/";
+    window.location.href = "https://vibes.diy/";
   });
 
 // Mutate mode buttons

@@ -5,11 +5,83 @@
  * This CSS is injected inline via <style> tag for self-contained styling.
  *
  * Sources:
+ * - colors.css → All CSS variables (single source of truth)
  * - VibesSwitch.styles.ts → Switch colors, SVG transitions
  * - VibesButton.styles.ts → Button variants, hover states, bounce animation
  * - VibesPanel.styles.ts → Panel layout, button containers
  * - BrutalistCard.styles.ts → Card borders, shadows, sizing
+ * - LabelContainer.styles.ts → Vertical label, responsive behavior
  */
+
+/* ============================================
+   CSS VARIABLES - Full design system colors
+   Source: colors.css (vibes.diy/pkg/app/styles/colors.css)
+   ============================================ */
+
+:root {
+  /* Primary Palette */
+  --vibes-blue: #3b82f6;
+  --vibes-red: #ef4444;
+  --vibes-yellow: #eab308;
+  --vibes-gray: #6b7280;
+  --vibes-green: #51cf66;
+
+  /* Neon/Phosphorescent colors for dark mode */
+  --vibes-purple-neon: #c084fc;
+  --vibes-pink-neon: #f472b6;
+  --vibes-orange-neon: #fb923c;
+  --vibes-cyan-neon: #22d3ee;
+
+  /* Neutrals */
+  --vibes-black: #000000;
+  --vibes-near-black: #1a1a1a;
+  --vibes-gray-mid: #555555;
+  --vibes-gray-pale: #e5e5e5;
+  --vibes-white: #ffffff;
+  --vibes-cream: #fffff0;
+
+  /* Button colors */
+  --vibes-button-bg: var(--vibes-cream);
+  --vibes-button-text: var(--vibes-near-black);
+  --vibes-button-border: var(--vibes-near-black);
+  --vibes-button-icon-bg: #2a2a2a;
+  --vibes-button-icon-fill: var(--vibes-white);
+
+  /* Button variant colors - Light mode */
+  --vibes-variant-blue: var(--vibes-blue);
+  --vibes-variant-red: var(--vibes-red);
+  --vibes-variant-yellow: var(--vibes-yellow);
+  --vibes-variant-gray: var(--vibes-gray);
+
+  /* Card colors */
+  --vibes-card-bg: var(--vibes-gray-pale);
+  --vibes-card-bg-transparent: #14141433;
+  --vibes-card-text: var(--vibes-near-black);
+  --vibes-card-border: var(--vibes-near-black);
+
+  /* Shadow */
+  --vibes-shadow-color: var(--vibes-near-black);
+}
+
+/* Dark mode - neon variant colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Button icon colors swap */
+    --vibes-button-icon-bg: var(--vibes-white);
+    --vibes-button-icon-fill: #2a2a2a;
+
+    /* Card colors */
+    --vibes-card-bg: var(--vibes-near-black);
+    --vibes-card-text: var(--vibes-white);
+    --vibes-card-border: var(--vibes-gray-mid);
+
+    /* Button variant colors - Dark mode (neon/phosphorescent) */
+    --vibes-variant-blue: var(--vibes-purple-neon);
+    --vibes-variant-red: var(--vibes-pink-neon);
+    --vibes-variant-yellow: var(--vibes-orange-neon);
+    --vibes-variant-gray: var(--vibes-cyan-neon);
+  }
+}
 
 body:has([data-vibe-controls-container] [data-vibe-switch].active) {
   background-color: #d4d4d4;
@@ -137,16 +209,9 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active)
    ============================================ */
 
 [data-vibe-panel] {
-  background: var(--vibes-card-bg);
-  border: 3px solid var(--vibes-card-border);
-  border-radius: 12px;
-  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  box-shadow: 8px 10px 0px 0px var(--vibes-shadow-color);
-  max-width: 500px;
-  min-width: 300px;
   color: var(--vibes-card-text);
 }
 
@@ -287,6 +352,157 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active)
 }
 
 /* ============================================
+   ICON BUTTONS (Square with icon + text)
+   ============================================ */
+
+/* Icon buttons - 130x135px desktop squares */
+[data-vibe-panel] button[data-has-icon] {
+  width: 130px;
+  height: 135px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-content-wrapper] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+}
+
+[data-icon-container] {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  border: 2px solid var(--vibes-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+[data-icon] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-icon] svg {
+  width: 45px;
+  height: 45px;
+}
+
+/* Variant colors for icon container background */
+[data-variant="blue"] [data-icon-container] {
+  background: var(--vibes-variant-blue);
+}
+
+[data-variant="red"] [data-icon-container] {
+  background: var(--vibes-variant-red);
+}
+
+[data-variant="yellow"] [data-icon-container] {
+  background: var(--vibes-variant-yellow);
+}
+
+[data-variant="gray"] [data-icon-container] {
+  background: var(--vibes-variant-gray);
+}
+
+/* Button text styling */
+[data-vibe-panel] button[data-has-icon] span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Icon bounce animation on hover */
+@keyframes vibes-button-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+[data-vibe-panel] button:hover [data-icon] {
+  animation: vibes-button-bounce 0.8s ease-in-out infinite;
+}
+
+/* ============================================
+   LABEL CONTAINER (Vertical label on desktop)
+   ============================================ */
+
+[data-label-container] {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  flex-direction: row;
+  width: auto;
+}
+
+/* Label outer wrapper - matches Amber's getResponsiveLabelStyle */
+[data-label] {
+  background: var(--vibes-card-bg-transparent, transparent);
+  border: 2px solid var(--vibes-card-border);
+  border-left: none;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 12px 8px 12px 0px;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  color: var(--vibes-card-text);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin: 32px 0px;
+}
+
+/* Inner colored label box - matches Amber's getLabelStyle */
+[data-label] span {
+  background: var(--vibes-variant-gray);
+  height: 100%;
+  padding: 15px 8px;
+  border-radius: 0px 8px 8px 0px;
+  display: block;
+}
+
+/* Yellow label variant for invite mode */
+[data-label-yellow] [data-label] span {
+  background: var(--vibes-variant-yellow);
+}
+
+/* Button wrapper - matches Amber's getResponsiveButtonWrapperStyle */
+[data-button-wrapper] {
+  background: var(--vibes-card-bg-transparent, var(--vibes-card-bg));
+  border: 2px solid var(--vibes-card-border);
+  border-radius: 8px;
+  padding: 24px 24px 32px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ============================================
    INVITE FORM
    ============================================ */
 
@@ -369,18 +585,56 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active)
     align-self: flex-end;
   }
 
-  [data-vibe-panel] {
-    padding: 16px;
-    max-width: 100%;
-    min-width: unset;
-  }
-
-  [data-panel-mode] > div {
+  /* LabelContainer mobile - label disappears */
+  [data-label-container] {
     flex-direction: column;
-    gap: 12px;
+    width: 100%;
   }
 
-  [data-vibe-panel] button {
+  [data-label][data-disappear] {
+    display: none;
+  }
+
+  [data-button-wrapper] {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    padding-bottom: 24px;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  /* Icon buttons - horizontal on mobile */
+  [data-vibe-panel] button[data-has-icon] {
+    width: 100%;
+    height: auto;
+    min-height: 70px;
+    padding: 12px 16px;
+  }
+
+  [data-content-wrapper] {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
+  [data-icon-container] {
+    width: 48px;
+    height: 48px;
+  }
+
+  [data-icon] svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  [data-vibe-panel] button[data-has-icon] span {
+    font-size: 0.875rem;
+  }
+
+  /* Non-icon buttons on mobile */
+  [data-vibe-panel] button:not([data-has-icon]) {
     width: 100%;
     padding: 0.75rem 1.5rem;
     min-height: 60px;
