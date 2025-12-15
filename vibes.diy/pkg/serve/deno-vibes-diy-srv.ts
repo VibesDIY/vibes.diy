@@ -2,8 +2,7 @@ import { exception2Result, Lazy } from "@adviser/cement";
 import { vibesDiyHandler } from "./vibes-diy-srv.js";
 import { VibesDiyServCtx } from "./render.js";
 import { dotenv } from "zx";
-import { VibesEnvSchema } from "@vibes.diy/use-vibes-base";
-import { MountVibeParams } from "@vibes.diy/use-vibes-base/contexts/VibeContext.js";
+import { MountVibeParams, VibesEnvSchema } from "@vibes.diy/use-vibes-base";
 
 const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
   const packageJsonStr = await Deno.readTextFile(`package.json`);
