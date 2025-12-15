@@ -116,7 +116,7 @@ class vibesDiyEnv {
   readonly VibesEnv = Lazy(() => {
     return {
       FPCLOUD_URL: this.CONNECT_API_URL(),
-      DASHBOARD_URL: this.API_BASE_URL(),
+      DASHBOARD_URL: this.CONNECT_API_URL(),
       CLERK_PUBLISHABLE_KEY: this.CLERK_PUBLISHABLE_KEY(),
       CALLAI_API_KEY: this.env().get("VITE_CALLAI_API_KEY") ?? "",
       CALLAI_CHAT_URL: this.CALLAI_ENDPOINT(),
