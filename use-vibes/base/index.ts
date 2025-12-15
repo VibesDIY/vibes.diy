@@ -13,6 +13,7 @@ import {
   type UseFpToCloudParam,
 } from '@fireproof/use-fireproof';
 import { useVibeContext, Vibe } from './contexts/VibeContext.js';
+import { constructVibesDatabaseName } from './utils/databaseName.js';
 import { callAI } from 'call-ai';
 import z from 'zod';
 import { ResolveOnce } from '@adviser/cement';
@@ -91,12 +92,15 @@ export function useFireproof(
   // Read vibe context if available (for inline rendering with proper ledger naming)
   const vibeCtx = useVibeContext();
 
-  let dbName = nameOrDatabase;
+  // Construct the full database name with vibe metadata
+  // Format: vf-{titleId}-{installId}-{baseName}
+  let dbName: string;
   if (isDatabase(nameOrDatabase)) {
+    // If passed an existing database, use its stored AppId or name
     dbName = nameOrDatabase.ledger.ctx.get('UseVibes.AppId') || nameOrDatabase.name;
-  }
-  if (!dbName) {
-    dbName = `db-${vibeCtx.appSlug}`;
+  } else {
+    // Construct augmented database name with vibe metadata (titleId + installId)
+    dbName = constructVibesDatabaseName(vibeCtx.titleId, vibeCtx.installId, nameOrDatabase);
   }
 
   let fpRet: UseFireproof;
