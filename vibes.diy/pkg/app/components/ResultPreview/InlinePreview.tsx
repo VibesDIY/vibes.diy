@@ -112,23 +112,34 @@ export function InlinePreview({
     };
   }, [code, codeReady, containerId, sessionId]);
 
+  /*
+    publish the session to that we will be able to retrieve it https://appslug.vibes.diy/App.jsx
+    and if this is done -> generate the url for the iframe
+   */
+
   return (
     <div
       className="relative w-full h-full bg-gray-900 overflow-auto"
       style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
     >
-      {/* Error Overlay */}
-      {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
-          <div className="text-center max-w-md">
-            <p className="text-red-400 text-lg mb-4">Error loading preview:</p>
-            <p className="text-white mb-4">{error}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Container for vibe module to mount into */}
-      <div id={containerId} className="w-full h-full" />
+      <iframe
+        src={`http://localhost:8001/vibe/coltrane-theremin-4277/00d336ad`}
+        className="relative w-full h-full bg-gray-900 overflow-auto"
+        style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
+      />
     </div>
   );
 }
+
+// {/* Error Overlay */}
+// {error && (
+//   <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+//     <div className="text-center max-w-md">
+//       <p className="text-red-400 text-lg mb-4">Error loading preview:</p>
+//       <p className="text-white mb-4">{error}</p>
+//     </div>
+//   </div>
+// )}
+
+// {/* Container for vibe module to mount into */}
+// <div id={containerId} className="w-full h-full" />

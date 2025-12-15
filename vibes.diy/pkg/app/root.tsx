@@ -29,30 +29,36 @@ import { Legal_Privacy } from "./routes/legal/privacy.js";
 import { Legal_Tos } from "./routes/legal/tos.js";
 import { Invite } from "./routes/invite.js";
 import { CatchAll } from "./routes/catch-all.js";
+import { VibeContextProvider } from "@vibes.diy/use-vibes-base";
 
 function RawApp({ children }: { children?: React.ReactNode }) {
   return (
-    <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
-      <DashboardProvider>
-        <ThemeProvider>
-          <PostHogProvider
-            apiKey={VibesDiyEnv.POSTHOG_KEY()}
-            options={{
-              api_host: VibesDiyEnv.POSTHOG_HOST(),
-              opt_out_capturing_by_default: true,
-            }}
-          >
-            <CookieConsentProvider>
-              {children}
-              <Outlet />
-              <ClientOnly>
-                <CookieBanner />
-              </ClientOnly>
-            </CookieConsentProvider>
-          </PostHogProvider>
-        </ThemeProvider>
-      </DashboardProvider>
-    </ClerkProvider>
+    <VibeContextProvider
+      mountParams={{
+        appSlug: "vibes-diy",
+        titleId: "vibes-diy",
+        installId: "vibes-diy",
+        env: VibesDiyEnv.VibesEnv(),
+      }}
+    >
+      <ThemeProvider>
+        <PostHogProvider
+          apiKey={VibesDiyEnv.POSTHOG_KEY()}
+          options={{
+            api_host: VibesDiyEnv.POSTHOG_HOST(),
+            opt_out_capturing_by_default: true,
+          }}
+        >
+          <CookieConsentProvider>
+            {children}
+            <Outlet />
+            <ClientOnly>
+              <CookieBanner />
+            </ClientOnly>
+          </CookieConsentProvider>
+        </PostHogProvider>
+      </ThemeProvider>
+    </VibeContextProvider>
   );
 }
 

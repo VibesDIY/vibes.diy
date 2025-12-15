@@ -128,6 +128,7 @@ class UseVibesStrategie implements TokenStrategie {
     const res = rRes.Ok();
     return {
       token: res.cloudToken,
+      ...res,
     };
   }
   stop(): void {
