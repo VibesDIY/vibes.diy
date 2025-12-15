@@ -60,7 +60,7 @@ export function getButtonStyle(
   const cssColor = getVariantColor(variant);
   let transform = 'translate(0px, 0px)';
   let boxShadow = buttonType
-    ? `4px 5px 0px 0px ${cssColor}, 4px 5px 0px 1px var(--vibes-button-border)`
+    ? `7px 8px 0px 0px ${cssColor}, 7px 8px 0px 2px var(--vibes-button-border)`
     : `8px 10px 0px 0px ${cssColor}, 8px 10px 0px 2px var(--vibes-button-border)`;
 
   if (isHovered && !isActive) {
