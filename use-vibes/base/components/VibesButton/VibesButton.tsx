@@ -165,8 +165,8 @@ export function VibesButton({
                 <IconComponent
                   bgFill="var(--vibes-button-icon-bg)"
                   fill="var(--vibes-button-icon-fill)"
-                  width={isMobile ? 28 : 50}
-                  height={isMobile ? 28 : 50}
+                  width={isMobile ? 28 : 45}
+                  height={isMobile ? 28 : 45}
                   withCircle={icon === 'back'}
                 />
               </div>

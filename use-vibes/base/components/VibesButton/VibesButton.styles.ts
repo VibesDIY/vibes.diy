@@ -74,8 +74,8 @@ export function getButtonStyle(
   }
 
   return {
-    width: !hasIcon ? 'auto' : isMobile ? '100%' : '150px',
-    height: !hasIcon ? 'auto' : isMobile ? 'auto' : '150px',
+    width: !hasIcon ? 'auto' : isMobile ? '100%' : '130px',
+    height: !hasIcon ? 'auto' : isMobile ? 'auto' : '135px',
     minHeight: isMobile ? '60px' : undefined,
     padding: isMobile ? (buttonType ? 'none' : '0.75rem 1.5rem') : '1rem 2rem',
     borderRadius: '12px',

@@ -65,7 +65,7 @@ export function getButtonContainerStyle(isMobile: boolean): React.CSSProperties 
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: isMobile ? '24px' : '55px',
+    gap: isMobile ? '24px' : '65px',
     flexWrap: 'wrap',
     maxWidth: '100%',
     width: isMobile ? '100%' : 'auto',
@@ -180,7 +180,7 @@ export function getInviteRowStyle(isMobile: boolean): React.CSSProperties {
   return {
     display: 'flex',
     flexDirection: isMobile ? 'column' : 'row',
-    gap: isMobile ? '24px' : '55px',
+    gap: isMobile ? '24px' : '65px',
     width: isMobile ? '100%' : 'auto',
   };
 }
