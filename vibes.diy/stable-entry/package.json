@@ -8,7 +8,7 @@
     "start": "wrangler dev"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core-cli": "0.24.3-dev-use-livequery",
     "wrangler": "^4.54.0"
   }
 }

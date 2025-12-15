@@ -40,7 +40,11 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
   if (!(prop && prop.versions)) {
     throw "WE need the Fireproof Version to be set";
   }
-  const { versions } = prop;
+  const { versions } = {
+    versions: {
+      FP: `${prop.versions.FP}?deps=react@19.2.1,react-dom@19.2.1`,
+    },
+  };
 
   const importMap = {
     tailwindcss: "https://esm.sh/tailwindcss",
@@ -56,6 +60,8 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
     "cborg/length": "https://esm.sh/cborg/length",
     zod: "https://esm.sh/zod",
     jose: "https://esm.sh/jose",
+    "jose/jwt/decode": "https://esm.sh/jose/jwt/decode",
+    dompurify: "https://esm.sh/dompurify",
     yaml: "https://esm.sh/yaml",
     "posthog-js":
       "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
@@ -106,7 +112,8 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
     "react-markdown": "https://esm.sh/react-markdown",
 
     "tailwind-merge": "https://esm.sh/tailwind-merge",
-    "@monaco-editor/react": "https://esm.sh/@monaco-editor/react",
+    "@monaco-editor/react":
+      "https://esm.sh/@monaco-editor/react?deps=react@19.2.1,react-dom@19.2.1",
     "@shikijs/monaco": "https://esm.sh/@shikijs/monaco",
     "shiki/core": "https://esm.sh/shiki/core",
     "shiki/langs/javascript.mjs": "https://esm.sh/shiki/langs/javascript.mjs",

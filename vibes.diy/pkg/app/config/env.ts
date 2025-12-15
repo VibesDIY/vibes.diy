@@ -112,6 +112,17 @@ class vibesDiyEnv {
   readonly SETTINGS_DBNAME = Lazy(
     () => this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats",
   );
+
+  readonly VibesEnv = Lazy(() => {
+    return {
+      FPCLOUD_URL: this.CONNECT_API_URL(),
+      DASHBOARD_URL: this.API_BASE_URL(),
+      CLERK_PUBLISHABLE_KEY: this.CLERK_PUBLISHABLE_KEY(),
+      CALLAI_API_KEY: this.env().get("VITE_CALLAI_API_KEY") ?? "",
+      CALLAI_CHAT_URL: this.CALLAI_ENDPOINT(),
+      CALLAI_IMG_URL: this.CALLAI_ENDPOINT(),
+    };
+  });
 }
 
 export const VibesDiyEnv = new vibesDiyEnv();

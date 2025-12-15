@@ -10,12 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-9",
-    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-9",
-    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-9",
-    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-9",
-    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-9",
-    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-9",
+    "@fireproof/core": "0.24.3-dev-use-livequery",
+    "@fireproof/core-keybag": "0.24.3-dev-use-livequery",
+    "@fireproof/core-runtime": "0.24.3-dev-use-livequery",
+    "@fireproof/core-types-base": "0.24.3-dev-use-livequery",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-use-livequery",
+    "@fireproof/use-fireproof": "0.24.3-dev-use-livequery",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "use-vibes": "workspace:*"
