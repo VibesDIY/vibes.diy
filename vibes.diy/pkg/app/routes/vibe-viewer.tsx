@@ -5,7 +5,7 @@ import { useParams } from "react-router";
 import { VibesDiyEnv } from "../config/env.js";
 import { useVibeInstances } from "../hooks/useVibeInstances.js";
 import { useAuth } from "@clerk/clerk-react";
-import { mountVibeWithCleanup as _mountVibeWithCleanup } from "../mounting/index.js";
+// import { mountVibeWithCleanup as _mountVibeWithCleanup } from "../mounting/index.js";
 import { transformImports as _transformImports } from "@vibes.diy/prompts";
 import LoggedOutView from "../components/LoggedOutView.js";
 
@@ -101,7 +101,8 @@ function VibeInstanceViewerContent() {
     const refreshToken = async () => {
       const freshToken = await getToken();
       if (freshToken && typeof window !== "undefined") {
-        window.CALLAI_API_KEY = freshToken;
+        throw new Error("here something is needed")
+        // window.CALLAI_API_KEY = freshToken;
       }
     };
 
