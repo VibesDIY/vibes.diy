@@ -126,6 +126,7 @@ class UseVibesStrategie implements TokenStrategie {
       return undefined;
     }
     const res = rRes.Ok();
+    console.log('[VibeContext] waitForToken result:', { ledgerId: res.ledger, tenant: res.tenant, appId: opts.context.get('UseVibes.AppId') || deviceId });
     return {
       token: res.cloudToken,
       ...res,
