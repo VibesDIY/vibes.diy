@@ -25,7 +25,6 @@ if (typeof document !== 'undefined') {
     style.id = styleId;
     style.textContent = `
       :root {
-        --hm-menu-bg: var(--vibes-gray-lightest);
         --hm-menu-text: var(--vibes-white);
         --hm-content-bg: #1e1e1e;
         --hm-shadow: rgba(0, 0, 0, 1);
@@ -34,7 +33,6 @@ if (typeof document !== 'undefined') {
 
       @media (prefers-color-scheme: dark) {
         :root {
-          --hm-menu-bg: #2a2a2a;
           --hm-menu-text: var(--vibes-gray-ultralight);
           --hm-content-bg: var(--vibes-near-black);
           --hm-shadow: rgba(255, 255, 255, 0.1);
@@ -48,7 +46,7 @@ if (typeof document !== 'undefined') {
 // CSS Custom Properties (Variables) as JavaScript constants with fallbacks
 export const hiddenMenuTheme = {
   colors: {
-    menuBg: 'var(--hm-menu-bg, var(--vibes-gray-lightest))',
+    menuBg: 'var(--vibes-bg-primary)',
     menuText: 'var(--hm-menu-text, var(--vibes-white))',
     contentBg: 'var(--hm-content-bg, #1e1e1e)',
     shadow: 'var(--hm-shadow, rgba(0, 0, 0, 1))',
@@ -63,8 +61,8 @@ export const hiddenMenuTheme = {
 
   dimensions: {
     gridSize: '40px',
-    padding: '24px',
-    bottomOffset: '16px',
+    padding: '10px',
+    bottomOffset: '26px',
   },
 
   animation: {
@@ -152,7 +150,7 @@ export const getInnerContentWrapperStyle = (menuOpen: boolean): CSSProperties =>
 export const getToggleButtonStyle = (): CSSProperties => ({
   position: 'fixed',
   bottom: hiddenMenuTheme.dimensions.bottomOffset,
-  right: 0,
+  right: '5px',
   zIndex: hiddenMenuTheme.zIndex.toggle,
   backgroundColor: 'transparent',
   border: 'none',

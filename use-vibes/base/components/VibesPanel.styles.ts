@@ -69,6 +69,7 @@ export function getButtonContainerStyle(isMobile: boolean): React.CSSProperties 
     flexWrap: 'wrap',
     maxWidth: '100%',
     width: isMobile ? '100%' : 'auto',
+    padding: isMobile ? '0px' : '0px 65px'
   };
 }
 
