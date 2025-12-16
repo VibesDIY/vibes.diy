@@ -8,6 +8,7 @@ packages:
   - "use-vibes/tests"
   - "use-vibes/examples/react-example"
   - "use-vibes/examples/hosted-dev"
+  - "vibes.diy/tempo"
   - "vibes.diy/pkg"
   - "vibes.diy/tempo"
   - "vibes.diy/stable-entry"

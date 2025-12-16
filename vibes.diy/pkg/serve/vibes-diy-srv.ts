@@ -127,7 +127,7 @@ export function vibesDiyHandler(
     // }
 
     // Handle /vibe/{appSlug}/{groupId} routes (both required)
-    const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)\/([^/]+)/);
+    const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)\/*([^/]*)/);
     if (vibeMatch) {
       const vibeResponse = handleVibeRequest(req, {
         ...(await ctx()),
@@ -136,7 +136,7 @@ export function vibesDiyHandler(
           appSlug: vibeMatch[1],
           titleId: vibeMatch[1],
           installId: vibeMatch[2],
-          groupId: vibeMatch[2],
+          groupId: vibeMatch[2]
         },
       });
       return vibeResponse;
@@ -189,8 +189,6 @@ export function vibesDiyHandler(
           mountVibesDiyApp(${JSON.stringify(vibeCtx)});
         `,
       );
-      console.log("TransformedJS:", transformedJS);
-
       const html = await loadAndRenderTSX(indexPath, {
         ...(await ctx()),
         isSession: false,
