@@ -164,6 +164,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({
                     onClose();
                   }}
                   buttonType="flat-rounded"
+                  ignoreDarkMode={true}
                   style={{
                     width: "100%",
                     marginBottom: "12px",

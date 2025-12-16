@@ -93,7 +93,7 @@ const htmlpng = "/dist/vibes.diy/pkg/app/assets/html.png";
 const mouth = "/dist/vibes.diy/pkg/app/assets/mouth.gif";
 const rainbowComputer = "/dist/vibes.diy/pkg/app/assets/rainbow-computer.gif";
 const fireproofLogo = "/dist/vibes.diy/pkg/app/assets/fireproof-logo.png";
-const vibeZoneChart = "/dist/vibes.diy/pkg/app/assets/vibe-zone.jpg";
+const vibeZoneChart = "/dist/vibes.diy/pkg/app/assets/vibe-zone.png";
 
 // Helper function to convert URLs in text to clickable links
 const renderMessageWithLinks = (text: string) => {
