@@ -35,6 +35,7 @@ export interface MountVibeParams {
   readonly appSlug: string;
   readonly titleId: string;
   readonly installId: string;
+  readonly groupId?: string;
   readonly env: VibesEnv;
 }
 
@@ -126,7 +127,11 @@ class UseVibesStrategie implements TokenStrategie {
       return undefined;
     }
     const res = rRes.Ok();
-    console.log('[VibeContext] waitForToken result:', { ledgerId: res.ledger, tenant: res.tenant, appId: opts.context.get('UseVibes.AppId') || deviceId });
+    console.log('[VibeContext] waitForToken result:', {
+      ledgerId: res.ledger,
+      tenant: res.tenant,
+      appId: opts.context.get('UseVibes.AppId') || deviceId,
+    });
     return {
       token: res.cloudToken,
       ...res,

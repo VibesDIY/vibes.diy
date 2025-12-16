@@ -1,3 +1,4 @@
+import { hashStringAsync } from "@fireproof/core-runtime";
 import React, { useState, useEffect } from "react";
 
 interface InlinePreviewProps {
@@ -5,9 +6,6 @@ interface InlinePreviewProps {
   sessionId: string;
   codeReady: boolean;
 }
-
-// Get from env or config
-const PREVIEW_SERVER_URL = "http://localhost:8001";
 
 // Uses the code without publishing, but with relaxed iframe sandboxing
 // If data is throw away here, why do we need to publish?? Or vibe controls??
@@ -29,7 +27,8 @@ export function InlinePreview({
     const fetchPreview = async () => {
       try {
         setError(null);
-        const response = await fetch(`${PREVIEW_SERVER_URL}/render-preview`, {
+        const url = `/vibe/ses-${_sessionId}/${await hashStringAsync(code)}`;
+        const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -42,8 +41,7 @@ export function InlinePreview({
           throw new Error(errorData.error || "Failed to render preview");
         }
 
-        const html = await response.text();
-        setSrcdoc(html);
+        setSrcdoc(url);
       } catch (err) {
         setError((err as Error).message);
         setSrcdoc(null);
@@ -75,9 +73,9 @@ export function InlinePreview({
       style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
     >
       <iframe
-        srcDoc={srcdoc}
-        sandbox="allow-scripts allow-same-origin allow-forms"
+        src={srcdoc}
         className="relative w-full h-full"
+        sandbox="allow-scripts allow-same-origin allow-forms"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
     </div>

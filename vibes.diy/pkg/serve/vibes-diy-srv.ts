@@ -1,62 +1,11 @@
 import {
   loadAndRenderTSX,
-  loadAndRenderJSX,
   VibesDiyServCtx,
+  buildMountedApp,
 } from "./render.js";
 // import { contentType } from "mime-types";
 import mime from "mime";
-import { getClerkKeyForHostname } from "../clerk-env.js";
-import { uint8array2stream } from "@adviser/cement";
-
-async function fetchVibeCode(appSlug: string): Promise<string> {
-  // Fetch vibe code from hosting subdomain App.jsx endpoint
-  const response = await fetch(`https://${appSlug}.vibesdiy.app/App.jsx`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch vibe: ${response.statusText}`);
-  }
-  return await response.text();
-}
-
-async function handleVibeRequest(
-  req: Request,
-  ctx: VibesDiyServCtx & {
-    appSlug: string;
-    groupId: string;
-  },
-): Promise<Response | null> {
-  const { appSlug } = ctx;
-  try {
-    const vibeCode = await fetchVibeCode(appSlug);
-
-    // Transform JSX → JS (externalized imports)
-    const transformedJS = await loadAndRenderJSX(vibeCode);
-
-    // Get Clerk key for this hostname
-    const hostname = new URL(req.url).hostname;
-    const clerkPublishableKey = getClerkKeyForHostname(hostname);
-
-    // Render vibe.tsx template with transformed JS
-    const vibePath = `./vibe.tsx`;
-    const html = await loadAndRenderTSX(vibePath, {
-      ...ctx,
-      transformedJS,
-      clerkPublishableKey,
-    });
-
-    return new Response(html, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/html",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-}
+import { LRUMap, uint8array2stream } from "@adviser/cement";
 
 function respInit(
   status: number,
@@ -66,9 +15,72 @@ function respInit(
     status,
     headers: {
       "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Max-Age": "86400",
       "Content-Type": contentType,
     },
   };
+}
+
+async function fetchVibeCode(
+  req: Request,
+  appSlug: string,
+): Promise<{
+  origin: "POST" | "FETCH";
+  code: string;
+}> {
+  if (req.method === "POST") {
+    const body = (await req.json()) as { code?: string };
+    if (!body.code) {
+      throw new Error("Missing code in request body");
+    }
+    return { origin: "POST", code: body.code };
+  }
+  // Fetch vibe code from hosting subdomain App.jsx endpoint
+  const response = await fetch(`https://${appSlug}.vibesdiy.app/App.jsx`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch vibe: ${response.statusText}`);
+  }
+  return { origin: "FETCH", code: await response.text() };
+}
+
+const sessionVibes = new LRUMap<string, string>({
+  maxEntries: 100,
+  maxAge: 1000 * 60 * 10,
+});
+
+async function handleVibeRequest(
+  req: Request,
+  ctx: VibesDiyServCtx,
+): Promise<Response | null> {
+  try {
+    const key = `${ctx.vibesCtx.appSlug}-${ctx.vibesCtx.groupId}`;
+    if (req.method !== "POST" && sessionVibes.has(key)) {
+      const cachedHTML = sessionVibes.get(key);
+      console.log("Serving cached vibe for key:", key);
+      return new Response(cachedHTML, respInit(200, "text/html"));
+    }
+    console.log("handleVibeRequest for appSlug:", ctx.vibesCtx);
+    const vibeCode = await fetchVibeCode(req, ctx.vibesCtx.appSlug);
+
+    // Transform JSX → JS (externalized imports)
+    const transformedJS = await buildMountedApp(ctx.vibesCtx, vibeCode.code);
+    // Render vibe.tsx template with transformed JS
+    const vibePath = `./vibe.tsx`;
+    const html = await loadAndRenderTSX(vibePath, {
+      ...ctx,
+      isSession: vibeCode.origin === "POST",
+      transformedJS,
+    });
+    sessionVibes.set(key, html);
+    return new Response(html, respInit(200, "text/html"));
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: (error as Error).message }),
+      respInit(500, "application/json"),
+    );
+  }
 }
 
 export function vibesDiyHandler(
@@ -78,94 +90,54 @@ export function vibesDiyHandler(
     const url = new URL(req.url);
     const requestedPath = url.pathname;
 
-    // Handle POST /render-preview for inline preview
-    if (req.method === "POST" && url.pathname === "/render-preview") {
-      try {
-        const body = (await req.json()) as { code?: string };
-        if (!body.code) {
-          return new Response(
-            JSON.stringify({ error: "Missing code in request body" }),
-            respInit(400),
-          );
-        }
-
-        const transformedJS = await loadAndRenderJSX(body.code);
-        const context = await ctx();
-
-        // Render preview.tsx template (reuses ImportMap from importmap.tsx)
-        const previewPath = `./preview.tsx`;
-        const html = await loadAndRenderTSX(previewPath, {
-          ...context,
-          transformedJS,
-        });
-
-        return new Response(html, {
-          status: 200,
-          headers: {
-            "Content-Type": "text/html",
-            "Access-Control-Allow-Origin": "*",
-          },
-        });
-      } catch (error) {
-        return new Response(
-          JSON.stringify({ error: (error as Error).message }),
-          respInit(500),
-        );
-      }
+    if (req.method === "OPTIONS") {
+      return new Response(null, respInit(204));
     }
 
-    // Handle OPTIONS for CORS preflight on /render-preview
-    if (req.method === "OPTIONS" && url.pathname === "/render-preview") {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Max-Age": "86400",
-        },
-      });
-    }
+    // if (url.pathname === "/vibe-mount") {
+    //   const appSlug = url.searchParams.get("appSlug");
+    //   if (!appSlug) {
+    //     return new Response(
+    //       JSON.stringify({ error: "Missing appSlug parameter" }),
+    //       respInit(400)
+    //     );
+    //   }
+    //   const env = await ctx().then((c) => c.vibesCtx.env);
 
-    if (url.pathname === "/vibe-mount") {
-      const appSlug = url.searchParams.get("appSlug");
-      if (!appSlug) {
-        return new Response(
-          JSON.stringify({ error: "Missing appSlug parameter" }),
-          respInit(400),
-        );
-      }
-      const env = await ctx().then((c) => c.vibesCtx.env);
-
-      const ctxStr = JSON.stringify({ appSlug, env });
-      return new Response(
-        `import { mountVibe } from '/dist/vibes.diy/pkg/serve/mount-vibe.js';
-         import vibe from '/vibe-script?appSlug=${appSlug}';
-         mountVibe(vibe, ${ctxStr});
-        `,
-        respInit(200, "text/javascript"),
-      );
-    }
-    if (url.pathname === "/vibe-script") {
-      const appSlug = url.searchParams.get("appSlug");
-      if (!appSlug) {
-        return new Response(
-          JSON.stringify({ error: "Missing appSlug parameter" }),
-          respInit(400),
-        );
-      }
-      const vibeCode = await fetchVibeCode(appSlug);
-      const transformedJS = await loadAndRenderJSX(vibeCode);
-      return new Response(transformedJS, respInit(200, "text/javascript"));
-    }
+    //   const ctxStr = JSON.stringify({ appSlug, env });
+    //   return new Response(
+    //     `import { mountVibe } from '/dist/vibes.diy/pkg/serve/mount-vibe.js';
+    //      import vibe from '/vibe-script?appSlug=${appSlug}';
+    //      mountVibe(vibe, ${ctxStr});
+    //     `,
+    //     respInit(200, "text/javascript")
+    //   );
+    // }
+    // if (url.pathname === "/vibe-script") {
+    //   const appSlug = url.searchParams.get("appSlug");
+    //   if (!appSlug) {
+    //     return new Response(
+    //       JSON.stringify({ error: "Missing appSlug parameter" }),
+    //       respInit(400)
+    //     );
+    //   }
+    //   const vibeCode = await fetchVibeCode(req, appSlug);
+    //   const transformedJS = await loadAndRenderJSX(vibeCode);
+    //   return new Response(transformedJS, respInit(200, "text/javascript"));
+    // }
 
     // Handle /vibe/{appSlug}/{groupId} routes (both required)
     const vibeMatch = requestedPath.match(/^\/vibe\/([^/]+)\/([^/]+)/);
     if (vibeMatch) {
       const vibeResponse = handleVibeRequest(req, {
-        appSlug: vibeMatch[1],
-        groupId: vibeMatch[2],
         ...(await ctx()),
+        vibesCtx: {
+          ...(await ctx()).vibesCtx,
+          appSlug: vibeMatch[1],
+          titleId: vibeMatch[1],
+          installId: vibeMatch[2],
+          groupId: vibeMatch[2],
+        },
       });
       return vibeResponse;
     }
@@ -209,7 +181,7 @@ export function vibesDiyHandler(
     try {
       const indexPath = `./index.tsx`;
       const html = await loadAndRenderTSX(indexPath, await ctx());
-      console.log("vibesDiyHandler-done req.url:", req.url);
+      console.log("render req.url:", req.url);
       return new Response(html, respInit(200, "text/html"));
     } catch (error) {
       return new Response(

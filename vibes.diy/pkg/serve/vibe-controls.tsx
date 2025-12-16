@@ -12,10 +12,14 @@
  */
 
 import React from "react";
+import { VibesDiyServCtx } from "./render.js";
 // import { vibeControlsCSS } from "./vibes-controls/vibe-controls-styles.js";
 // import { vibeControlsScripts } from "./vibes-controls/scripts.js";
 
-export default function VibeControls() {
+export default function VibeControls(props: VibesDiyServCtx) {
+  if (props.isSession) {
+    return <></>;
+  }
   return (
     <>
       <div data-vibe-controls-container>

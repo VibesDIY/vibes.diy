@@ -2,7 +2,7 @@ import { exception2Result, Lazy } from "@adviser/cement";
 import { vibesDiyHandler } from "./vibes-diy-srv.js";
 import { VibesDiyServCtx } from "./render.js";
 import { dotenv } from "zx";
-import { MountVibeParams, VibesEnvSchema } from "@vibes.diy/use-vibes-base";
+import { VibesEnvSchema } from "@vibes.diy/use-vibes-base";
 
 const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
   const packageJsonStr = await Deno.readTextFile(`package.json`);
@@ -54,10 +54,16 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
     versions: { FP },
     vibesCtx: {
       env: clientEnv,
-    } as MountVibeParams,
+      appSlug: "vibes.diy-appSlug",
+      titleId: "vibes.diy-titleId",
+      installId: "vibes.diy-installId",
+      groupId: "vibes.diy-groupId",
+    },
     basePath: Deno.cwd(),
     loadFile,
     loadFileBinary,
+    isSession: false,
+    transformedJS: "initialized-value",
   });
 });
 

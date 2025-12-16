@@ -1,8 +1,11 @@
 import React from "react";
+import { VibesDiyServCtx } from "./render.js";
+import { BuildURI } from "@adviser/cement";
 
 function enhance(
   importMap: Record<string, string | undefined>,
   ver: Record<string, string>,
+  localServe?: string,
 ): Record<string, string> {
   const enhancedMap: Record<string, string> = {};
 
@@ -24,19 +27,24 @@ function enhance(
         break;
       }
     }
-
+    if (localServe && enhancedValue.startsWith("/")) {
+      const buri = BuildURI.from(localServe);
+      buri.appendRelative(enhancedValue);
+      enhancedValue = buri.toString();
+    }
     enhancedMap[key] = enhancedValue;
   }
   return enhancedMap;
 }
 
-export interface ImportMapProp {
-  versions: {
-    FP: string;
-  };
-}
+// export interface ImportMapProp {
+//   readonly localServe?: string;
+//   readonly versions: {
+//     readonly FP: string;
+//   };
+// }
 
-export function ImportMap(prop?: Partial<ImportMapProp>) {
+export function ImportMap(prop?: Partial<VibesDiyServCtx>) {
   if (!(prop && prop.versions)) {
     throw "WE need the Fireproof Version to be set";
   }
@@ -158,10 +166,15 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
     "@fireproof/vendor": "FP",
     "@fireproof/use-fireproof": "FP",
   };
-
   return (
     <script type="importmap">
-      {JSON.stringify({ imports: enhance(importMap, versions) }, null, 2)}
+      {JSON.stringify(
+        {
+          imports: enhance(importMap, versions, prop.vibesCtx?.env.LOCAL_SERVE),
+        },
+        null,
+        2,
+      )}
     </script>
   );
 }

@@ -32,6 +32,7 @@ export const VibesEnvSchema = z.object({
   CALLAI_API_KEY: z.string(),
   CALLAI_CHAT_URL: z.string(),
   CALLAI_IMG_URL: z.string(),
+  LOCAL_SERVE: z.string().optional(),
 });
 
 export type VibesEnv = z.infer<typeof VibesEnvSchema>;

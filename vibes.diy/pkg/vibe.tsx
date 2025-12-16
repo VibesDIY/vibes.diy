@@ -1,16 +1,28 @@
 import React from "react";
-import { ImportMap, ImportMapProp } from "./serve/importmap.js";
+import { ImportMap } from "./serve/importmap.js";
 import { Links } from "./serve/links.js";
 import { Meta } from "./serve/meta.js";
 import VibeControls from "./serve/vibe-controls.js";
+import { VibesDiyServCtx } from "./serve/render.js";
 
-interface VibePageProps extends ImportMapProp {
-  appSlug: string;
-  groupId?: string;
+// export interface VibePageProps extends ImportMapProp {
+//   readonly appSlug: string;
+//   readonly groupId?: string;
+//   readonly transformedJS?: string;
+// }
+
+function MountVibe(props: VibesDiyServCtx) {
+  return (
+    <script
+      type="module"
+      dangerouslySetInnerHTML={{ __html: props.transformedJS }}
+    />
+  );
+  // return <script type="module" src={`/vibe-mount?appSlug=${props.vibesCtx.appSlug}`} />
 }
 
-export default function VibePage(props: VibePageProps) {
-  const { appSlug } = props;
+export default function VibePage(props: VibesDiyServCtx) {
+  const { appSlug } = props.vibesCtx;
   return (
     <html lang="en">
       <head>
@@ -26,8 +38,8 @@ export default function VibePage(props: VibePageProps) {
       </head>
       <body className="grid-background">
         <div id={appSlug} className="vibe-app-container" />
-        <script type="module" src={`/vibe-mount?appSlug=${appSlug}`} />
-        <VibeControls />
+        <MountVibe {...props} />
+        <VibeControls {...props} />
       </body>
     </html>
   );

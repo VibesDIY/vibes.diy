@@ -62,6 +62,8 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
     basePath: ".",
     loadFile,
     loadFileBinary,
+    isSession: false,
+    transformedJS: "initialized-value",
   });
 });
 
