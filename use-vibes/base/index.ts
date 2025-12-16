@@ -29,6 +29,7 @@ export const VibesEnvSchema = z.object({
   FPCLOUD_URL: z.string(),
   DASHBOARD_URL: z.string(),
   CLERK_PUBLISHABLE_KEY: z.string(),
+  API_BASE_URL: z.string(),
   CALLAI_API_KEY: z.string(),
   CALLAI_CHAT_URL: z.string(),
   CALLAI_IMG_URL: z.string(),

@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Get OIDC Token
         id: oidc
         run: |
@@ -80,7 +80,7 @@ jobs:
             | jq -r '.value')
           echo "::add-mask::$OIDC_TOKEN"
           echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
-      
+
       - name: Configure kubectl
         run: |
           mkdir -p ~/.kube
@@ -104,7 +104,7 @@ jobs:
             user:
               token: ${{ steps.oidc.outputs.token }}
           EOF
-      
+
       - name: Deploy
         run: kubectl apply -f k8s/ -n apps
 ```
@@ -123,20 +123,20 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: myapp.vibesdiy.net
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: myapp
-            port:
-              number: 80
+    - host: myapp.vibesdiy.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp
+                port:
+                  number: 80
   tls:
-  - hosts:
-    - myapp.vibesdiy.net
-    secretName: myapp-tls
+    - hosts:
+        - myapp.vibesdiy.net
+      secretName: myapp-tls
 ```
 
 Push to GitHub → Automatic deployment! 🎉

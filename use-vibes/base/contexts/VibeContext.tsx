@@ -5,6 +5,7 @@ import { ClerkProvider, useClerk } from '@clerk/clerk-react';
 import { ToCloudOpts, TokenAndClaims, TokenStrategie } from '@fireproof/core-types-protocols-cloud';
 import { Database, SuperThis } from '@fireproof/use-fireproof';
 import { Lazy, Logger, OnFunc, OnFuncReturn, ReturnOnFunc } from '@adviser/cement';
+import { ensureSuperThis } from '@fireproof/core-runtime';
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -152,6 +153,11 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
   const dashApi = clerkDashApi(clerk, {
     apiUrl: mountParams.env.DASHBOARD_URL,
   });
+
+  const sthis = ensureSuperThis();
+  for (const [key, val] of Object.entries(mountParams.env)) {
+    sthis.env.set(key, val);
+  }
 
   const fpCloudStrategie = lazyFpCloudStrategie({
     ...mountParams,

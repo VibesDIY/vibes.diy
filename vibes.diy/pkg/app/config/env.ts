@@ -3,8 +3,8 @@
  * Central configuration file for environment variables
  * Provides fallback values for required environment variables
  */
-import { Lazy } from "@adviser/cement";
-import { ensureSuperThis, runtimeFn } from "@fireproof/core-runtime";
+import { Lazy, runtimeFn } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { callAiEnv } from "call-ai";
 
 // --- Vite Environment Variables ---
@@ -118,7 +118,7 @@ class vibesDiyEnv {
     }
     // Use production worker ONLY for vibes.diy, preview worker for everything else
     const isProduction =
-      runtimeFn().isBrowser && window.location.hostname === "vibes.diy";
+      runtimeFn().isBrowser && window.location.hostname.endsWith("vibes.diy");
     const defaultUrl = isProduction
       ? "https://vibes-diy-api.com"
       : "https://vibes-hosting-v2-preview.jchris.workers.dev";
@@ -162,6 +162,7 @@ class vibesDiyEnv {
       FPCLOUD_URL: fpCloudUrl,
       DASHBOARD_URL: dashboardUrl,
       CLERK_PUBLISHABLE_KEY: this.CLERK_PUBLISHABLE_KEY(),
+      API_BASE_URL: this.API_BASE_URL(),
       CALLAI_API_KEY: this.env().get("VITE_CALLAI_API_KEY") ?? "",
       CALLAI_CHAT_URL: this.CALLAI_ENDPOINT(),
       CALLAI_IMG_URL: this.CALLAI_ENDPOINT(),

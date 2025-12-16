@@ -136,7 +136,7 @@ export function vibesDiyHandler(
           appSlug: vibeMatch[1],
           titleId: vibeMatch[1],
           installId: vibeMatch[2],
-          groupId: vibeMatch[2]
+          groupId: vibeMatch[2],
         },
       });
       return vibeResponse;
