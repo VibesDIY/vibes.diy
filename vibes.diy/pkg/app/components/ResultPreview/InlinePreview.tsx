@@ -23,7 +23,7 @@ export function InlinePreview({
   const [containerId] = useState(
     () => `preview-container-${sthis().nextId().str}`,
   );
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const unmountVibeRef = useRef<(() => void) | null>(null);
 
   // Keep window.CALLAI_API_KEY fresh by periodically refreshing the Clerk token

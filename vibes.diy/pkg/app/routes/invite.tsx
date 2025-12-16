@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useDashboard } from "../contexts/DashboardContext.js";
+import LoggedOutView from "../components/LoggedOutView.js";
+import { LabelContainer } from "../components/vibes/LabelContainer/index.js";
 import {
-  useVibeContext,
   useMobile,
   constructVibesDatabaseName,
 } from "@vibes.diy/use-vibes-base";
-import LoggedOutView from "../components/LoggedOutView.js";
-import { LabelContainer } from "../components/vibes/LabelContainer/index.js";
 import {
   getButtonStyle,
   getMergedButtonStyle,
@@ -58,7 +59,7 @@ function InviteIcon({
 
 function InviteContent() {
   const [searchParams] = useSearchParams();
-  const { dashApi } = useVibeContext();
+  const { dashApi } = useDashboard();
   const [status, setStatus] = useState<
     "idle" | "processing" | "success" | "error"
   >("idle");
@@ -366,9 +367,7 @@ function InviteContent() {
 
 // Auth wrapper component (same pattern as Settings)
 export function Invite() {
-  const { clerk } = useVibeContext();
-  const isSignedIn = clerk.session?.status === "active";
-  const isLoaded = clerk.loaded;
+  const { isSignedIn, isLoaded } = useClerkAuth();
 
   if (!isSignedIn) {
     return <LoggedOutView isLoaded={isLoaded} />;

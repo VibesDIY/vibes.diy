@@ -6,6 +6,8 @@ import React, { FunctionComponent } from "react";
 import { createRoot } from "react-dom/client";
 import { VibeContextProvider } from "@vibes.diy/use-vibes-base";
 import { MountVibeParams } from "@vibes.diy/use-vibes-base/contexts/VibeContext.js";
+import { HiddenMenuWrapper } from "../app/components/vibes/HiddenMenuWrapper/HiddenMenuWrapper.js";
+import { VibesPanel } from "../app/components/vibes/VibesPanel.js";
 
 // Extract titleId and installId from URL path
 // Format: /vibe/:titleId/:installId
@@ -45,16 +47,27 @@ export function mountVibe(
     console.log("[mount-vibe] Mounting with vibeMetadata:", mountParams);
 
     const vibeElement = React.createElement(Vibe);
+    const wrappedVibe = React.createElement(HiddenMenuWrapper, {
+      menuContent: React.createElement(VibesPanel),
+      showVibesSwitch: true,
+      children: vibeElement,
+    });
     const providerElement = React.createElement(VibeContextProvider, {
       mountParams: { ...props, ...titleAndInstallId },
-      children: vibeElement,
+      children: wrappedVibe,
     });
     root.render(providerElement);
   } else {
     console.warn(
       "[mount-vibe] No vibeMetadata found in URL - mounting without context",
     );
-    root.render(React.createElement(Vibe));
+    const vibeElement = React.createElement(Vibe);
+    const wrappedVibe = React.createElement(HiddenMenuWrapper, {
+      menuContent: React.createElement(VibesPanel),
+      showVibesSwitch: true,
+      children: vibeElement,
+    });
+    root.render(wrappedVibe);
   }
 }
 
