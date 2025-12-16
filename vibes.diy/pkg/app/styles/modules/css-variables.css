@@ -1,18 +1,11 @@
 /**
- * CSS Custom Properties
- * Copied from colors.css for server-side injection
+ * Vibes Design System - Color Tokens
  *
- * NOTE: colors.css remains the single source of truth.
- * This file is a duplicate for SSR performance - future enhancement
- * could read colors.css dynamically at build time.
- *
- * @see ../colors.css
+ * Structure:
+ * 1. Base Colors - Static colors that never change with theme
+ * 2. Semantic Colors - Theme-aware colors that adapt to light/dark mode
+ * 3. Component-Specific Tokens - Colors for specific component needs
  */
-
-/* ============================================
-   CSS CUSTOM PROPERTIES
-   Source: colors.css - Vibes Design System Color Tokens
-   ============================================ */
 
 :root {
   /* ============================================
@@ -52,6 +45,7 @@
   /* Neutrals */
   --vibes-black: #000000;
   --vibes-near-black: #1a1a1a;
+  --vibes-near-gray: #cccdc8;
   --vibes-dark-gray: #222222;
   --vibes-gray-dark: #333333;
   --vibes-gray-mid: #555555;
@@ -75,7 +69,7 @@
      ============================================ */
 
   /* Backgrounds */
-  --vibes-bg-primary: var(--vibes-white);
+  --vibes-bg-primary: var(--vibes-near-gray);
   --vibes-bg-secondary: var(--vibes-gray-whisper);
   --vibes-bg-tertiary: var(--vibes-gray-pale);
   --vibes-bg-overlay: rgba(255, 255, 255, 0.5);
@@ -124,6 +118,7 @@
   --vibes-variant-gray: var(--vibes-gray);
 
   --vibes-card-bg: var(--vibes-gray-pale);
+  --vibes-card-bg-transparent: #14141433;
   --vibes-card-text: var(--vibes-near-black);
   --vibes-card-border: var(--vibes-near-black);
 
@@ -206,9 +201,14 @@
 
     /* Component-Specific Dark Mode Adjustments */
     --vibes-card-bg: var(--vibes-near-black);
+    --vibes-card-bg-transparent: #1a1a1aba;
     --vibes-card-text: var(--vibes-white);
     --vibes-card-border: var(--vibes-gray-mid);
 
+    /* Note: Default button colors remain cream/light in dark mode for contrast */
+    /* --vibes-button-bg: var(--vibes-cream); (unchanged) */
+    /* --vibes-button-text: var(--vibes-near-black); (unchanged) */
+    /* --vibes-button-border: var(--vibes-near-black); (unchanged) */
     --vibes-button-icon-bg: var(--vibes-white);
     --vibes-button-icon-fill: #2a2a2a;
 
