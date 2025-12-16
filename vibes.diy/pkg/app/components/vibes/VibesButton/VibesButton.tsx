@@ -12,7 +12,12 @@ import {
   RemixIcon,
   InviteIcon,
   SettingsIcon,
-  BackIcon,
+  MyVibesIcon,
+  GroupsIcon,
+  HomeIconCircle,
+  FirehoseIcon,
+  AboutIcon,
+  ArrowRightIcon,
 } from "../icons/index.js";
 import { useMobile } from "@vibes.diy/use-vibes-base";
 
@@ -24,7 +29,17 @@ export const GRAY = "gray" as const;
 
 type ButtonVariant = "blue" | "red" | "yellow" | "gray";
 type ButtonType = "square" | "flat" | "flat-rounded" | "form";
-type IconName = "login" | "remix" | "invite" | "settings" | "back";
+type IconName =
+  | "login"
+  | "remix"
+  | "invite"
+  | "settings"
+  | "back"
+  | "about"
+  | "firehose"
+  | "groups"
+  | "home"
+  | "myvibes";
 
 // Icon map - maps icon names to React components
 const iconMap: Record<
@@ -34,13 +49,19 @@ const iconMap: Record<
     fill?: string;
     width?: number;
     height?: number;
+    withCircle?: boolean;
   }>
 > = {
   login: LoginIcon,
   remix: RemixIcon,
   invite: InviteIcon,
   settings: SettingsIcon,
-  back: BackIcon,
+  back: ArrowRightIcon,
+  about: AboutIcon,
+  firehose: FirehoseIcon,
+  groups: GroupsIcon,
+  home: HomeIconCircle,
+  myvibes: MyVibesIcon,
 };
 
 export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -139,8 +160,9 @@ export function VibesButton({
                 <IconComponent
                   bgFill="var(--vibes-button-icon-bg)"
                   fill="var(--vibes-button-icon-fill)"
-                  width={isMobile ? 28 : 50}
-                  height={isMobile ? 28 : 50}
+                  width={isMobile ? 28 : 45}
+                  height={isMobile ? 28 : 45}
+                  withCircle={icon === "back"}
                 />
               </div>
             </div>
