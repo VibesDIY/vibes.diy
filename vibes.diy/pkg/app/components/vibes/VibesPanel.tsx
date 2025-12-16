@@ -2,17 +2,18 @@ import React, { useState, useEffect, useId } from "react";
 import { VibesButton, BLUE, RED, YELLOW, GRAY } from "./VibesButton/index.js";
 import { runtimeFn } from "@fireproof/core-runtime";
 import { BrutalistCard } from "./BrutalistCard.js";
-import { generateFreshDataUrl, generateRemixUrl } from "../../utils/appSlug.js";
+import { generateRemixUrl } from "../../utils/appSlug.js";
 import { LabelContainer } from "./LabelContainer/index.js";
 import {
   getOuterContainerStyle,
   getButtonContainerStyle,
   getInviteFormStyle,
   getInviteLabelStyle,
-  getInviteInputWrapperStyle,
   getInviteInputStyle,
   getInviteStatusStyle,
+  getInviteRowStyle,
 } from "./VibesPanel.styles.js";
+import { useIsMobile } from "../../hooks/useIsMobile.js";
 
 export interface VibesPanelProps {
   /** Optional custom styling for the panel container */
@@ -31,7 +32,7 @@ export interface VibesPanelProps {
  * This component provides the standard three-button layout used
  * throughout the Vibes DIY platform for authentication and actions.
  */
-type PanelMode = "default" | "mutate" | "invite";
+type PanelMode = "default" | "invite";
 
 export function VibesPanel({
   style,
@@ -40,6 +41,7 @@ export function VibesPanel({
   token,
 }: VibesPanelProps = {}) {
   const emailId = useId();
+  const isMobile = useIsMobile();
   const [mode, setMode] = useState<PanelMode>("default");
   const [email, setEmail] = useState("");
   const [inviteStatus, setInviteStatus] = useState<
@@ -53,12 +55,6 @@ export function VibesPanel({
     : "https://vibes.diy";
   const effectiveBaseURL = baseURL ?? defaultBaseURL;
 
-  const handleMutateClick = () => {
-    if (mode === "default") {
-      setMode("mutate");
-    }
-  };
-
   const handleInviteClick = () => {
     if (mode === "default") {
       setMode("invite");
@@ -70,10 +66,6 @@ export function VibesPanel({
 
   const handleBackClick = () => {
     setMode("default");
-  };
-
-  const handleFreshDataClick = () => {
-    window.open(generateFreshDataUrl(effectiveBaseURL), "_top");
   };
 
   const handleChangeCodeClick = () => {
@@ -139,59 +131,50 @@ export function VibesPanel({
 
   return (
     <div style={getOuterContainerStyle(style)} className={className}>
-      <LabelContainer label="Settings" disappear>
-        <div style={getButtonContainerStyle()}>
-          {mode === "mutate" ? (
-            // Mutate mode buttons
-            <>
-              <VibesButton variant={BLUE} onClick={handleFreshDataClick}>
-                Fresh Start
-              </VibesButton>
-              <VibesButton
-                variant={RED}
-                onClick={handleChangeCodeClick}
-                icon="remix"
-              >
-                Remix Code
-              </VibesButton>
+      <LabelContainer
+        label="Launcher"
+        disappear
+        colorVariant={mode === "invite" ? "yellow" : "gray"}
+      >
+        <div style={getButtonContainerStyle(isMobile)}>
+          {mode === "invite" ? (
+            // Invite mode form
+            <div style={getInviteRowStyle(isMobile)}>
               <VibesButton
                 variant={YELLOW}
-                onClick={handleBackClick}
-                icon="back"
+                onClick={() => {
+                  /* No-op: visual indicator for invite mode */
+                }}
+                icon="invite"
               >
-                Back
+                Invite
               </VibesButton>
-            </>
-          ) : mode === "invite" ? (
-            // Invite mode form
-            <>
               {inviteStatus === "idle" ? (
                 // Show form when idle
                 <form
                   onSubmit={handleInviteSubmit}
-                  style={getInviteFormStyle()}
+                  style={getInviteFormStyle(isMobile)}
                 >
                   <label htmlFor={emailId} style={getInviteLabelStyle()}>
                     Invite by email
                   </label>
-                  <BrutalistCard size="md" style={getInviteInputWrapperStyle()}>
-                    <input
-                      id={emailId}
-                      type="email"
-                      placeholder="friend@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      style={getInviteInputStyle()}
-                      autoComplete="email"
-                      required
-                    />
-                  </BrutalistCard>
+                  <input
+                    id={emailId}
+                    type="email"
+                    placeholder="friend@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={getInviteInputStyle()}
+                    autoComplete="email"
+                    required
+                  />
                   <VibesButton
-                    variant={BLUE}
+                    variant={YELLOW}
+                    buttonType="form"
                     type="submit"
                     disabled={!email.trim()}
                   >
-                    Send Invite
+                    Submit
                   </VibesButton>
                 </form>
               ) : (
@@ -213,14 +196,10 @@ export function VibesPanel({
                   {inviteStatus === "sending" ? "Inviting..." : inviteMessage}
                 </BrutalistCard>
               )}
-              <VibesButton
-                variant={YELLOW}
-                onClick={handleBackClick}
-                icon="back"
-              >
+              <VibesButton variant={GRAY} onClick={handleBackClick} icon="back">
                 Back
               </VibesButton>
-            </>
+            </div>
           ) : (
             // Default buttons
             <>
@@ -233,7 +212,7 @@ export function VibesPanel({
               </VibesButton>
               <VibesButton
                 variant={RED}
-                onClick={handleMutateClick}
+                onClick={handleChangeCodeClick}
                 icon="remix"
               >
                 Remix
@@ -245,8 +224,12 @@ export function VibesPanel({
               >
                 Invite
               </VibesButton>
-              <VibesButton variant={GRAY} icon="settings">
-                Settings
+              <VibesButton
+                variant={GRAY}
+                icon="settings"
+                onClick={() => (window.location.href = "https://vibes.diy/")}
+              >
+                Home
               </VibesButton>
             </>
           )}

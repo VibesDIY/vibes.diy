@@ -1,5 +1,17 @@
 import type React from "react";
 
+const variantColors: Record<string, string> = {
+  blue: "var(--vibes-variant-blue)",
+  red: "var(--vibes-variant-red)",
+  yellow: "var(--vibes-variant-yellow)",
+  gray: "var(--vibes-variant-gray)",
+};
+
+// Get the appropriate color based on variant
+function getVariantColor(variant: string): string {
+  return variantColors[variant] || variant;
+}
+
 export function getContainerStyle(): React.CSSProperties {
   return {
     position: "relative",
@@ -10,33 +22,9 @@ export function getContainerStyle(): React.CSSProperties {
   };
 }
 
-export function getLabelStyle(): React.CSSProperties {
-  return {
-    background: "var(--vibes-card-bg)",
-    border: "2px solid var(--vibes-card-border)",
-    borderLeft: "none",
-    borderTopRightRadius: "8px",
-    borderBottomRightRadius: "8px",
-    padding: "12px 8px",
-    fontWeight: 700,
-    fontSize: "14px",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-    whiteSpace: "nowrap",
-    color: "var(--vibes-card-text)",
-    writingMode: "vertical-rl",
-    transform: "rotate(180deg)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    margin: "32px 0px",
-  };
-}
-
 export function getButtonWrapperStyle(): React.CSSProperties {
   return {
-    background: "var(--vibes-card-bg)",
+    background: "rgba(255, 255, 255, 0.1)",
     border: "2px solid var(--vibes-card-border)",
     borderRadius: "8px",
     padding: "24px 24px 32px 24px",
@@ -44,6 +32,31 @@ export function getButtonWrapperStyle(): React.CSSProperties {
     alignItems: "center",
     justifyContent: "center",
     width: "auto",
+  };
+}
+
+export function getLabelStyle(
+  colorVariant: string,
+  isMobile: boolean,
+): React.CSSProperties {
+  return {
+    background: getVariantColor(colorVariant),
+    padding: isMobile ? "8px 15px 8px 15px" : "15px 8px 15px 8px",
+    borderRadius: isMobile ? "8px 8px 0px 0px" : "0px 8px 8px 0px",
+    width: isMobile ? "100%" : "auto",
+    fontWeight: 700,
+    fontSize: "14px",
+    textTransform: "uppercase" as const,
+    letterSpacing: "1px",
+    whiteSpace: "nowrap" as const,
+    color: "var(--vibes-card-text)",
+    writingMode: isMobile
+      ? ("horizontal-tb" as const)
+      : ("vertical-rl" as const),
+    transform: isMobile ? "none" : "rotate(180deg)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 }
 
@@ -60,48 +73,32 @@ export function getResponsiveLabelStyle(
     }
     // When not disappearing on mobile, show label at top (horizontal)
     return {
-      background: "var(--vibes-card-bg)",
+      background: "rgba(20, 20, 20, 0.2)",
       border: "2px solid var(--vibes-card-border)",
       borderLeft: "2px solid var(--vibes-card-border)", // Explicitly set to override desktop style
       borderBottom: "none",
       borderTopLeftRadius: "8px",
       borderTopRightRadius: "8px",
       borderBottomRightRadius: "0", // Explicitly reset desktop radius
-      padding: "8px 12px",
-      fontWeight: 700,
-      fontSize: "14px",
-      textTransform: "uppercase",
-      letterSpacing: "1px",
-      whiteSpace: "nowrap",
-      color: "var(--vibes-card-text)",
-      writingMode: "horizontal-tb", // Explicitly reset from vertical-rl
-      transform: "none", // Explicitly reset rotation
+      padding: "8px 8px 0px 8px",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,
-      width: "calc(100% - 64px)",
+      width: "auto",
       margin: "0px 32px",
     };
   }
   // Desktop style - explicitly set all properties
   return {
-    background: "var(--vibes-card-bg)",
+    background: "rgba(20, 20, 20, 0.2)",
     border: "2px solid var(--vibes-card-border)",
-    borderLeft: "none",
-    borderBottom: "2px solid var(--vibes-card-border)", // Explicitly set for desktop
-    borderTopRightRadius: "8px",
-    borderBottomRightRadius: "8px",
-    borderTopLeftRadius: "0", // Explicitly set for desktop
-    padding: "12px 8px",
-    fontWeight: 700,
-    fontSize: "14px",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-    whiteSpace: "nowrap",
-    color: "var(--vibes-card-text)",
-    writingMode: "vertical-rl",
-    transform: "rotate(180deg)",
+    borderRight: "none",
+    borderTopLeftRadius: "8px",
+    borderBottomLeftRadius: "8px",
+    borderTopRightRadius: "0", // Explicitly set for desktop
+    borderBottomRightRadius: "0", // Explicitly set for desktop
+    padding: "12px 0px 12px 8px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -131,7 +128,7 @@ export function getResponsiveButtonWrapperStyle(
   if (isMobile && !disappear) {
     // When not disappearing, keep the card styling but adjust for mobile
     return {
-      background: "var(--vibes-card-bg)",
+      background: "rgba(20, 20, 20, 0.2)",
       border: "2px solid var(--vibes-card-border)",
       borderRadius: "8px",
       padding: "24px 24px 32px 24px",
@@ -143,7 +140,7 @@ export function getResponsiveButtonWrapperStyle(
   }
   // Desktop style - explicitly set all properties
   return {
-    background: "var(--vibes-card-bg)",
+    background: "rgba(20, 20, 20, 0.2)",
     border: "2px solid var(--vibes-card-border)",
     borderRadius: "8px",
     padding: "24px 24px 32px 24px",
@@ -171,7 +168,7 @@ export function getResponsiveContainerStyle(
   return {
     position: "relative",
     display: "inline-flex",
-    alignItems: "stretch",
+    alignItems: "center",
     flexDirection: "row", // Explicitly set to override mobile column
     width: "auto",
     marginBottom: "40px",

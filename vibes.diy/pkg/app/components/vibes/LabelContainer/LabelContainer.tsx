@@ -3,8 +3,9 @@ import {
   getResponsiveContainerStyle,
   getResponsiveLabelStyle,
   getResponsiveButtonWrapperStyle,
+  getLabelStyle,
 } from "./LabelContainer.styles.js";
-import { useMobile } from "@vibes.diy/use-vibes-base";
+import { useIsMobile } from "../../../hooks/useIsMobile.js";
 
 export interface LabelContainerProps {
   /** The label text to display on the side of the container */
@@ -17,6 +18,7 @@ export interface LabelContainerProps {
   className?: string;
   /** If true, label disappears on mobile. If false, label moves to top on mobile. Default: false */
   disappear?: boolean;
+  colorVariant?: "blue" | "red" | "yellow" | "gray";
 }
 
 /**
@@ -31,8 +33,9 @@ export function LabelContainer({
   style,
   className,
   disappear = false,
+  colorVariant = "gray",
 }: LabelContainerProps) {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   return (
     <div
@@ -40,7 +43,9 @@ export function LabelContainer({
       className={className}
     >
       {label && (
-        <div style={getResponsiveLabelStyle(isMobile, disappear)}>{label}</div>
+        <div style={getResponsiveLabelStyle(isMobile, disappear)}>
+          <div style={getLabelStyle(colorVariant, isMobile)}>{label}</div>
+        </div>
       )}
       <div style={getResponsiveButtonWrapperStyle(isMobile, disappear)}>
         {children}
