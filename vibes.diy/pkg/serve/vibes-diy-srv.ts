@@ -180,7 +180,22 @@ export function vibesDiyHandler(
     // If no static file found, render index.tsx
     try {
       const indexPath = `./index.tsx`;
-      const html = await loadAndRenderTSX(indexPath, await ctx());
+      const vibeCtx = (await ctx()).vibesCtx;
+      const transformedJS = await buildMountedApp(
+        vibeCtx,
+        "",
+        () => `
+          import { mountVibesDiyApp } from "./dist/vibes.diy/pkg/app/mount-vibes-diy-app.js";
+          mountVibesDiyApp(${JSON.stringify(vibeCtx)});
+        `,
+      );
+      console.log("TransformedJS:", transformedJS);
+
+      const html = await loadAndRenderTSX(indexPath, {
+        ...(await ctx()),
+        isSession: false,
+        transformedJS,
+      });
       console.log("render req.url:", req.url);
       return new Response(html, respInit(200, "text/html"));
     } catch (error) {

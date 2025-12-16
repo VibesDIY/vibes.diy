@@ -8,10 +8,8 @@ import { VibesDiyEnv } from "./config/env.js";
 // CSS loaded via <link> tag in index.tsx for SSR compatibility
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
-import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
-import { DashboardProvider } from "./contexts/DashboardContext.js";
 import { ErrorBoundary } from "./ErrorBoundary.js";
 
 import { Home } from "./routes/home.js";
@@ -33,32 +31,32 @@ import { VibeContextProvider } from "@vibes.diy/use-vibes-base";
 
 function RawApp({ children }: { children?: React.ReactNode }) {
   return (
-    <VibeContextProvider
-      mountParams={{
-        appSlug: "vibes-diy",
-        titleId: "vibes-diy",
-        installId: "vibes-diy",
-        env: VibesDiyEnv.VibesEnv(),
-      }}
-    >
-      <ThemeProvider>
-        <PostHogProvider
-          apiKey={VibesDiyEnv.POSTHOG_KEY()}
-          options={{
-            api_host: VibesDiyEnv.POSTHOG_HOST(),
-            opt_out_capturing_by_default: true,
-          }}
-        >
-          <CookieConsentProvider>
-            {children}
-            <Outlet />
-            <ClientOnly>
-              <CookieBanner />
-            </ClientOnly>
-          </CookieConsentProvider>
-        </PostHogProvider>
-      </ThemeProvider>
-    </VibeContextProvider>
+    // <VibeContextProvider
+    //   mountParams={{
+    //     appSlug: "vibes-diy",
+    //     titleId: "vibes-diy",
+    //     installId: "vibes-diy",
+    //     env: VibesDiyEnv.VibesEnv(),
+    //   }}
+    // >
+    <ThemeProvider>
+      <PostHogProvider
+        apiKey={VibesDiyEnv.POSTHOG_KEY()}
+        options={{
+          api_host: VibesDiyEnv.POSTHOG_HOST(),
+          opt_out_capturing_by_default: true,
+        }}
+      >
+        <CookieConsentProvider>
+          {children}
+          <Outlet />
+          <ClientOnly>
+            <CookieBanner />
+          </ClientOnly>
+        </CookieConsentProvider>
+      </PostHogProvider>
+    </ThemeProvider>
+    // </VibeContextProvider>
   );
 }
 

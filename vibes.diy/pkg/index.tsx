@@ -2,9 +2,19 @@ import React from "react";
 import { ImportMap } from "./serve/importmap.js";
 import { Links } from "./serve/links.js";
 import { Meta } from "./serve/meta.js";
+import { VibesDiyServCtx } from "./serve/render.js";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function Index(props: any) {
+function MountVibe(props: VibesDiyServCtx) {
+  return (
+    <script
+      type="module"
+      dangerouslySetInnerHTML={{ __html: props.transformedJS }}
+    />
+  );
+  // return <script type="module" src={`/vibe-mount?appSlug=${props.vibesCtx.appSlug}`} />
+}
+
+export default function Index(props: VibesDiyServCtx) {
   return (
     <html lang="en">
       <head>
@@ -22,13 +32,17 @@ export default function Index(props: any) {
         <Links />
       </head>
       <body>
-        <script
-          type="module"
-          src="/dist/vibes.diy/pkg/app/vibes.diy.js"
-        ></script>
+        <MountVibe {...props} />
 
         <div id="vibes.diy"></div>
       </body>
     </html>
   );
 }
+
+/*
+        <script
+          type="module"
+          src="/dist/vibes.diy/pkg/app/vibes.diy.js"
+        ></script>
+*/

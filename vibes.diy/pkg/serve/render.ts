@@ -18,6 +18,7 @@ export interface VibesDiyServCtx {
 export async function buildMountedApp(
   ctx: MountVibeParams,
   code: string,
+  wrapperFn?: () => string,
 ): Promise<string> {
   let mountVibeImport = "/dist/vibes.diy/pkg/serve/mount-vibe.js";
   if (ctx.env.LOCAL_SERVE) {
@@ -25,7 +26,9 @@ export async function buildMountedApp(
   }
   const result = await build({
     stdin: {
-      contents: `
+      contents:
+        wrapperFn?.() ??
+        `
         import { mountVibe } from '${mountVibeImport}';
         import vibe from '~transform-with-esbuild-use-code-provided';
         mountVibe(vibe, ${JSON.stringify(ctx)});
