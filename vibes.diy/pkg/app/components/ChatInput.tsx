@@ -20,6 +20,7 @@ interface ChatInputProps {
   models?: ModelOption[];
   globalModel?: string;
   showModelPickerInChat?: boolean;
+  hideSubmitButton?: boolean;
 }
 
 export interface ChatInputRef extends HTMLTextAreaElement {
@@ -36,6 +37,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       models,
       globalModel,
       showModelPickerInChat,
+      hideSubmitButton,
     },
     ref,
   ) => {
@@ -147,17 +149,19 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             ) : (
               <span aria-hidden="true" />
             )}
-            <Button
-              ref={submitButtonRef}
-              type="button"
-              onClick={handleSendMessage}
-              disabled={chatState.isStreaming}
-              variant="blue"
-              size="fixed"
-              aria-label={chatState.isStreaming ? "Generating" : "Send message"}
-            >
-              {chatState.isStreaming ? "•••" : "Code"}
-            </Button>
+            {!hideSubmitButton && (
+              <Button
+                ref={submitButtonRef}
+                type="button"
+                onClick={handleSendMessage}
+                disabled={chatState.isStreaming}
+                variant="blue"
+                size="fixed"
+                aria-label={chatState.isStreaming ? "Generating" : "Send message"}
+              >
+                {chatState.isStreaming ? "•••" : "Code"}
+              </Button>
+            )}
           </div>
         </div>
       </div>
