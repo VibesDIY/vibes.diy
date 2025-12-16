@@ -25,16 +25,43 @@ export const bounceKeyframes = `
   }
 `;
 
+// Form button style - simple flat style with rounded corners
+export function getFormButtonStyle(variant: string): React.CSSProperties {
+  const cssColor = getVariantColor(variant);
+
+  return {
+    width: "100%",
+    padding: "3px",
+    backgroundColor: cssColor,
+    border: "1px solid var(--vibes-button-border)",
+    color: "var(--vibes-button-text)",
+    fontSize: "24px",
+    fontWeight: "bold",
+    letterSpacing: "2px",
+    cursor: "pointer",
+    transition: "0.2s",
+    borderRadius: "20px",
+    textTransform: "none" as const,
+  };
+}
+
 export function getButtonStyle(
   variant: string,
   isHovered: boolean,
   isActive: boolean,
   isMobile = false,
   hasIcon: boolean,
+  buttonType: string,
 ): React.CSSProperties {
+  // Use form style for form button type
+  if (buttonType === "form") {
+    return getFormButtonStyle(variant);
+  }
   const cssColor = getVariantColor(variant);
   let transform = "translate(0px, 0px)";
-  let boxShadow = `8px 10px 0px 0px ${cssColor}, 8px 10px 0px 2px var(--vibes-button-border)`;
+  let boxShadow = buttonType
+    ? `7px 8px 0px 0px ${cssColor}, 7px 8px 0px 2px var(--vibes-button-border)`
+    : `8px 10px 0px 0px ${cssColor}, 8px 10px 0px 2px var(--vibes-button-border)`;
 
   if (isHovered && !isActive) {
     transform = "translate(2px, 2px)";
@@ -47,10 +74,10 @@ export function getButtonStyle(
   }
 
   return {
-    width: !hasIcon ? "auto" : isMobile ? "100%" : "150px",
-    height: !hasIcon ? "auto" : isMobile ? "auto" : "150px",
+    width: !hasIcon ? "auto" : isMobile ? "100%" : "130px",
+    height: !hasIcon ? "auto" : isMobile ? "auto" : "135px",
     minHeight: isMobile ? "60px" : undefined,
-    padding: isMobile ? "0.75rem 1.5rem" : "1rem 2rem",
+    padding: isMobile ? (buttonType ? "none" : "0.75rem 1.5rem") : "1rem 2rem",
     borderRadius: "12px",
     fontSize: "1rem",
     fontWeight: 700,
@@ -68,8 +95,17 @@ export function getMergedButtonStyle(
   baseStyle: React.CSSProperties,
   ignoreDarkMode: boolean,
   customStyle?: React.CSSProperties,
+  buttonType?: "square" | "flat" | "flat-rounded" | "form",
 ): React.CSSProperties {
-  return {
+  // Form buttons already have their complete styling, just merge custom styles
+  if (buttonType === "form") {
+    return {
+      ...baseStyle,
+      ...customStyle,
+    };
+  }
+
+  const style: React.CSSProperties = {
     ...baseStyle,
     background: ignoreDarkMode
       ? "var(--vibes-button-bg)"
@@ -80,6 +116,15 @@ export function getMergedButtonStyle(
     border: ignoreDarkMode
       ? "2px solid var(--vibes-button-border)"
       : "2px solid var(--vibes-button-border-dark-aware)",
+  };
+
+  // Apply 50% border radius for flat-rounded type
+  if (buttonType === "flat-rounded") {
+    style.borderRadius = "50px";
+  }
+
+  return {
+    ...style,
     ...customStyle,
   };
 }
@@ -88,6 +133,7 @@ export function getIconContainerStyle(
   variant: string,
   isMobile: boolean,
   hasIcon: boolean,
+  buttonType: string,
 ): React.CSSProperties {
   if (!hasIcon) return {};
 
@@ -96,13 +142,14 @@ export function getIconContainerStyle(
   return {
     width: isMobile ? "48px" : "80px",
     height: isMobile ? "48px" : "80px",
-    backgroundColor: cssColor,
-    borderRadius: "8px",
+    backgroundColor: buttonType === "flat-rounded" ? "none" : cssColor,
+    borderRadius: buttonType === "flat-rounded" ? "none" : "8px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    border: "2px solid var(--vibes-black)",
+    border:
+      buttonType === "flat-rounded" ? "none" : "2px solid var(--vibes-black)",
   };
 }
 

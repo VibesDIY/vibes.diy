@@ -200,15 +200,16 @@ function InviteContent() {
               <div
                 style={{
                   ...getMergedButtonStyle(
-                    getButtonStyle(buttonVariant, false, false, isMobile, true),
+                    getButtonStyle(buttonVariant, false, false, isMobile, true, "square"),
                     false,
                     { cursor: "default", pointerEvents: "none" },
+                    "square",
                   ),
                 }}
               >
                 <div style={getContentWrapperStyle(isMobile, true)}>
                   <div
-                    style={getIconContainerStyle(buttonVariant, isMobile, true)}
+                    style={getIconContainerStyle(buttonVariant, isMobile, true, "square")}
                   >
                     <div style={getIconStyle(isMobile, false, false)}>
                       <InviteIcon

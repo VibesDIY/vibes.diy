@@ -114,14 +114,29 @@ export function Logout() {
             <div
               style={{
                 ...getMergedButtonStyle(
-                  getButtonStyle("gray", false, false, isMobile, true),
+                  getButtonStyle(
+                    "gray",
+                    false,
+                    false,
+                    isMobile,
+                    true,
+                    "square",
+                  ),
                   false,
                   { cursor: "default", pointerEvents: "none" },
+                  "square",
                 ),
               }}
             >
               <div style={getContentWrapperStyle(isMobile, true)}>
-                <div style={getIconContainerStyle("gray", isMobile, true)}>
+                <div
+                  style={getIconContainerStyle(
+                    "gray",
+                    isMobile,
+                    true,
+                    "square",
+                  )}
+                >
                   <div style={getIconStyle(isMobile, false, false)}>
                     <LogoutIcon
                       bgFill="var(--vibes-button-icon-bg)"

@@ -23,6 +23,7 @@ export const YELLOW = "yellow" as const;
 export const GRAY = "gray" as const;
 
 type ButtonVariant = "blue" | "red" | "yellow" | "gray";
+type ButtonType = "square" | "flat" | "flat-rounded" | "form";
 type IconName = "login" | "remix" | "invite" | "settings" | "back";
 
 // Icon map - maps icon names to React components
@@ -49,6 +50,11 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
    * @default 'blue'
    */
   variant?: ButtonVariant;
+  /**
+   * Button type affects styling and behavior
+   * @default 'square'
+   */
+  buttonType?: ButtonType;
   children: React.ReactNode;
   onHover?: () => void;
   onUnhover?: () => void;
@@ -63,6 +69,7 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 export function VibesButton({
   variant = "blue",
+  buttonType = "square",
   children,
   onHover,
   onUnhover,
@@ -93,16 +100,19 @@ export function VibesButton({
     isActive,
     isMobile,
     !!IconComponent,
+    buttonType,
   );
   const mergedStyle = getMergedButtonStyle(
     baseStyle,
     ignoreDarkMode,
     customStyle,
+    buttonType,
   );
   const iconContainerStyle = getIconContainerStyle(
     buttonVariant,
     isMobile,
     !!IconComponent,
+    buttonType,
   );
   const iconStyle = getIconStyle(isMobile, isHovered, isActive);
   const contentWrapperStyle = getContentWrapperStyle(isMobile, !!IconComponent);
