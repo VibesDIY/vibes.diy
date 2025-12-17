@@ -154,13 +154,19 @@ export class OpenRouterChat extends OpenAPIRoute {
         "X-Title": "Vibes DIY",
       };
 
+      // Add user identifier for OpenRouter tracking
+      const requestBody = {
+        ...data,
+        user: user.userId,
+      };
+
       // Send request to OpenRouter API
       const response = await fetch(
         "https://openrouter.ai/api/v1/chat/completions",
         {
           method: "POST",
           headers,
-          body: JSON.stringify(data),
+          body: JSON.stringify(requestBody),
         },
       );
 
