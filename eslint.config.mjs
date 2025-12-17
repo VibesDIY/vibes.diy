@@ -33,6 +33,7 @@ const opts = tseslint.config(
       "src/missingTypes/lib.deno.d.ts",
       "**/notes/**",
       "vibesbox/**",
+      "vibes.diy/tempo/**",
       "hosting/**",
       "**/.cache/**",
       "**/.esm-cache/**",

@@ -15,8 +15,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.57.0
         version: 1.57.0
@@ -78,12 +78,12 @@ importers:
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@types/node':
         specifier: ^24.9.1
         version: 24.10.1
@@ -101,8 +101,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.57.0
         version: 1.57.0
@@ -168,8 +168,8 @@ importers:
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -193,11 +193,11 @@ importers:
         version: 3.25.76
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -300,8 +300,8 @@ importers:
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -313,11 +313,11 @@ importers:
         version: 19.2.0
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -389,17 +389,17 @@ importers:
         specifier: ^0.5.5
         version: 0.5.5(typescript@5.9.3)
       '@fireproof/core-keybag':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.2-dev-cloud-api
-        version: 0.24.2-dev-cloud-api(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -419,8 +419,8 @@ importers:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
       use-fireproof:
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
       zod:
         specifier: ^4.1.12
         version: 4.1.13
@@ -429,20 +429,20 @@ importers:
         specifier: ^4.1.3
         version: 4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@storybook/addon-a11y':
         specifier: ^10.1.7
         version: 10.1.7(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@storybook/addon-docs':
         specifier: ^10.0.0
-        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/react':
         specifier: ^10.0.8
         version: 10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@storybook/react-vite':
         specifier: ^10.1.7
-        version: 10.1.7(esbuild@0.27.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.7(esbuild@0.27.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@types/babel__standalone':
         specifier: ^7.1.9
         version: 7.1.9
@@ -454,7 +454,7 @@ importers:
         version: 19.2.3(@types/react@19.2.7)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       storybook:
         specifier: ^10.1.2
         version: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -463,7 +463,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.2.7
-        version: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   use-vibes/examples/hosted-dev:
     dependencies:
@@ -488,10 +488,10 @@ importers:
         version: 19.2.3(@types/react@19.2.7)
       '@vitejs/plugin-react':
         specifier: ^5.0.4
-        version: 5.1.1(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 5.1.1(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       prettier:
         specifier: ^3.7.4
         version: 3.7.4
@@ -503,10 +503,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.2.7
-        version: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       vitest:
         specifier: ^4.0.15
-        version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.2)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   use-vibes/examples/react-example:
     dependencies:
@@ -531,10 +531,10 @@ importers:
         version: 19.2.3(@types/react@19.2.7)
       '@vitejs/plugin-react':
         specifier: ^5.0.4
-        version: 5.1.1(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 5.1.1(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       eslint:
         specifier: ^9.38.0
         version: 9.39.1(jiti@2.6.1)
@@ -555,10 +555,10 @@ importers:
         version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
       vite:
         specifier: ^7.2.7
-        version: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
 
   use-vibes/pkg:
     dependencies:
@@ -573,11 +573,11 @@ importers:
         version: 19.2.0(react@19.2.0)
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
 
   use-vibes/tests:
     dependencies:
@@ -597,8 +597,8 @@ importers:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
       use-fireproof:
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -673,18 +673,18 @@ importers:
         specifier: '>=19.1.0'
         version: 19.2.0
       use-fireproof:
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@types/react':
         specifier: ~19.2.7
         version: 19.2.7
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -701,11 +701,11 @@ importers:
         specifier: ^4.20251205.0
         version: 4.20251205.0
       '@fireproof/core':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(react@19.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(react@19.2.0)(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -785,8 +785,8 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0
       use-fireproof:
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
@@ -796,19 +796,19 @@ importers:
         version: 4.1.3(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@cloudflare/vite-plugin':
         specifier: ^1.17.1
-        version: 1.17.1(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))
+        version: 1.17.1(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@react-router/dev':
         specifier: ^7.9.6
-        version: 7.9.6(@react-router/serve@7.10.1(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@25.0.1)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))(yaml@2.8.2)
+        version: 7.9.6(@react-router/serve@7.10.1(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@25.0.2)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))(yaml@2.8.2)
       '@storybook/addon-a11y':
         specifier: ^10.1.7
         version: 10.1.7(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@storybook/addon-docs':
         specifier: ^10.0.0
-        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.2(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/addon-onboarding':
         specifier: ^10.1.7
         version: 10.1.7(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
@@ -817,10 +817,10 @@ importers:
         version: 10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       '@storybook/react-vite':
         specifier: ^10.1.7
-        version: 10.1.7(esbuild@0.27.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 10.1.7(esbuild@0.27.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@tailwindcss/vite':
         specifier: ^4.1.2
-        version: 4.1.17(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.1.17(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@types/babel__standalone':
         specifier: ^7.1.9
         version: 7.1.9
@@ -832,7 +832,7 @@ importers:
         version: 19.2.3(@types/react@19.2.7)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       concurrently:
         specifier: ^9.1.2
         version: 9.2.1
@@ -841,10 +841,10 @@ importers:
         version: 10.1.0
       netlify:
         specifier: ^23.12.3
-        version: 23.12.3(@types/node@25.0.1)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3)
+        version: 23.12.3(@types/node@25.0.2)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3)
       netlify-cli:
         specifier: ^23.12.2
-        version: 23.12.2(@types/node@25.0.1)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3)
+        version: 23.12.2(@types/node@25.0.2)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3)
       prettier:
         specifier: ^3.7.4
         version: 3.7.4
@@ -865,10 +865,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.2.7
-        version: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
 
   vibes.diy/tests/app:
     dependencies:
@@ -936,8 +936,8 @@ importers:
         specifier: ^7.9.6
         version: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       use-fireproof:
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -946,8 +946,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -962,19 +962,19 @@ importers:
         version: 19.2.3(@types/react@19.2.7)
       '@vitest/browser':
         specifier: ^4.0.15
-        version: 4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       vite:
         specifier: 7.2.7
-        version: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: ^4.0.15
-        version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.2)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   vibes.diy/tests/simple-chat:
     dependencies:
@@ -1036,8 +1036,8 @@ importers:
         specifier: ^7.9.6
         version: 7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       use-fireproof:
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
       use-vibes:
         specifier: workspace:*
         version: link:../../../use-vibes/pkg
@@ -1046,8 +1046,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.2-dev-clerk
-        version: 0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.3-dev-use-livequery
+        version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1059,32 +1059,24 @@ importers:
         version: 19.2.3(@types/react@19.2.7)
       '@vitest/browser':
         specifier: ^4.0.15
-        version: 4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       '@vitest/browser-playwright':
         specifier: ^4.0.15
-        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+        version: 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
       vite:
         specifier: 7.2.7
-        version: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       vitest:
         specifier: ^4.0.15
-        version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.2)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
 packages:
 
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
-
-  '@adraffy/ens-normalize@1.11.1':
-    resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
-
-  '@adviser/cement@0.4.81':
-    resolution: {integrity: sha512-hOXMev9PQfdU5cLfApn8AqG4xqDhAt70rcK7ieaJevjXXsB5w1kFuN6k/JuvM/6mgL/DdDB6jem62ywYryoNlg==}
-    engines: {node: '>=20.19.0'}
-    hasBin: true
 
   '@adviser/cement@0.5.5':
     resolution: {integrity: sha512-dVHdT5JtkPzmguN7snZDFbb962ufJOFJfDe8dZ5LqoISEGBCdcGhejr8XK+CWYoi3SckDgAzgFkOqMJAmiuP4Q==}
@@ -1323,9 +1315,6 @@ packages:
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
 
-  '@base-org/account@2.0.1':
-    resolution: {integrity: sha512-tySVNx+vd6XEynZL0uvB10uKiwnAfThr8AbKTwILVG86mPbLAhEOInQIk+uDnvpTvfdUhC1Bi5T/46JvFoLZQQ==}
-
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
@@ -1361,23 +1350,12 @@ packages:
     resolution: {integrity: sha512-6If+zmUiNEWVt5MoTjCl+0xiAq+uRR5kj+6HBXDG75KwRrG0eW3gH43QntQYBQU/SqhGwY2UbogEplM8ndF7Fg==}
     engines: {node: '>=18.17.0'}
 
-  '@clerk/clerk-js@5.111.0':
-    resolution: {integrity: sha512-8a+Fc6f/KJArP2TENYQh/iMQtaovW0dBt7Yjhnr0EGZkMVOJnq/ZoKwEJcEXMBGsh66veugYtn6E6APCgINkUQ==}
-    engines: {node: '>=18.17.0'}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-
   '@clerk/clerk-react@5.57.0':
     resolution: {integrity: sha512-GCBFF03HjEWvx58myjauJ7NrwTqhxHdetjWWxVM3YJGPOsAVXg4WuquL/hyn8KDuduCYSkRin4Hg6+QVP1NXAg==}
     engines: {node: '>=18.17.0'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
       react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-
-  '@clerk/localizations@3.29.1':
-    resolution: {integrity: sha512-edAZI+EVWpywe+Pn+mOhPoLFzCQZwKqOkZ5HB0TxsEP2BtbCmZbw8uQq7OXK3BVsbcYc19praGpChexrx9zKlw==}
-    engines: {node: '>=18.17.0'}
 
   '@clerk/shared@3.36.0':
     resolution: {integrity: sha512-Yp4tL/x/iVft40DnxBjT/g/kQilZ+i9mYrqC1Lk6fUnfZV8t7E54GX19JtJSSONzjHsH6sCv3BmJaF1f7Eomkw==}
@@ -1391,8 +1369,8 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/shared@3.38.0':
-    resolution: {integrity: sha512-9R63kyHXq4DntdQXWxwpFZSq04AR8rby0cqAnUfTsAddyxQOmyjgHZADKkrMYUbhGiJnLBysUmZBPyVizjaopg==}
+  '@clerk/shared@3.39.0':
+    resolution: {integrity: sha512-9kqqXGMPAdMQ7SXo5ZwUhbzbLLQeLp/1jdb8FQS5qlhmL0S0bAYKcyDjcmMB8xZPXNc7vZJRT72QHsGSlUAJxw==}
     engines: {node: '>=18.17.0'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
@@ -1405,10 +1383,6 @@ packages:
 
   '@clerk/types@4.101.3':
     resolution: {integrity: sha512-QkYSiR8EDjLhQ3K9aCZ323knzZQggzhi3qxSdFrtI/C8Osyytua3Bu4TOGGRgYSSD4VO3s8WUz3wQf4Qe0ps/g==}
-    engines: {node: '>=18.17.0'}
-
-  '@clerk/types@4.101.5':
-    resolution: {integrity: sha512-LEfEizGRM0hN/8GHaia8EIf7kcTHKh2R/Ebj7n1zETB88HrCrM6mvTVv/fqpf5203F1GsCR/UU2l18EOClfWGA==}
     engines: {node: '>=18.17.0'}
 
   '@cloudflare/kv-asset-handler@0.4.1':
@@ -1470,9 +1444,6 @@ packages:
   '@cloudflare/workers-types@4.20251205.0':
     resolution: {integrity: sha512-7pup7fYkuQW5XD8RUS/vkxF9SXlrGyCXuZ4ro3uVQvca/GTeSa+8bZ8T4wbq1Aea5lmLIGSlKbhl2msME7bRBA==}
 
-  '@coinbase/wallet-sdk@4.3.0':
-    resolution: {integrity: sha512-T3+SNmiCw4HzDm4we9wCHCxlP0pqCiwKe4sOwPH3YAK2KSKjxPRydKu6UQJrdONFVLG7ujXvbd/6ZqmvJb8rkw==}
-
   '@colors/colors@1.6.0':
     resolution: {integrity: sha512-Ir+AOibqzrIsL6ajt3Rz3LskB7OiMVHqltZmspbW/TJuTVuyOMirVqAkjfY6JISiLHgyNqicAC8AyHHGzNd/dA==}
     engines: {node: '>=0.1.90'}
@@ -1496,50 +1467,6 @@ packages:
 
   '@emnapi/wasi-threads@1.1.0':
     resolution: {integrity: sha512-WI0DdZ8xFSbgMjR1sFsKABJ/C5OnRrjT06JXbZKexJGrDuPTzZdDYfFlsgcCXCyf+suG5QU2e/y1Wo2V/OapLQ==}
-
-  '@emotion/babel-plugin@11.13.5':
-    resolution: {integrity: sha512-pxHCpT2ex+0q+HH91/zsdHkw/lXd468DIN2zvfvLtPKLLMo6gQj7oLObq8PhkrxOZb/gGCq03S3Z7PDhS8pduQ==}
-
-  '@emotion/cache@11.11.0':
-    resolution: {integrity: sha512-P34z9ssTCBi3e9EI1ZsWpNHcfY1r09ZO0rZbRO2ob3ZQMnFI35jB536qoXbkdesr5EUhYi22anuEJuyxifaqAQ==}
-
-  '@emotion/hash@0.9.2':
-    resolution: {integrity: sha512-MyqliTZGuOm3+5ZRSaaBGP3USLw6+EGykkwZns2EPC5g8jJ4z9OrdZY9apkl3+UP9+sdz76YYkwCKP5gh8iY3g==}
-
-  '@emotion/memoize@0.8.1':
-    resolution: {integrity: sha512-W2P2c/VRW1/1tLox0mVUalvnWXxavmv/Oum2aPsRcoDJuob75FC3Y8FbpfLwUegRcxINtGUMPq0tFCvYNTBXNA==}
-
-  '@emotion/memoize@0.9.0':
-    resolution: {integrity: sha512-30FAj7/EoJ5mwVPOWhAyCX+FPfMDrVecJAM+Iw9NRoSl4BBAQeqj4cApHHUXOVvIPgLVDsCFoz/hGD+5QQD1GQ==}
-
-  '@emotion/react@11.11.1':
-    resolution: {integrity: sha512-5mlW1DquU5HaxjLkfkGN1GA/fvVGdyHURRiX/0FHl2cfIfRxSOfmxEH5YS43edp0OldZrZ+dkBKbngxcNCdZvA==}
-    peerDependencies:
-      '@types/react': '*'
-      react: '>=16.8.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
-  '@emotion/serialize@1.3.3':
-    resolution: {integrity: sha512-EISGqt7sSNWHGI76hC7x1CksiXPahbxEOrC5RjmFRJTqLyEK9/9hZvBbiYn70dw4wuwMKiEMCUlR6ZXTSWQqxA==}
-
-  '@emotion/sheet@1.4.0':
-    resolution: {integrity: sha512-fTBW9/8r2w3dXWYM4HCB1Rdp8NLibOw2+XELH5m5+AkWiL/KqYX6dc0kKYlaYyKjrQ6ds33MCdMPEwgs2z1rqg==}
-
-  '@emotion/unitless@0.10.0':
-    resolution: {integrity: sha512-dFoMUuQA20zvtVTuxZww6OHoJYgrzfKM1t52mVySDJnMSEa08ruEvdYQbhvyu6soU+NeLVd3yKfTfT0NeV6qGg==}
-
-  '@emotion/use-insertion-effect-with-fallbacks@1.2.0':
-    resolution: {integrity: sha512-yJMtVdH59sxi/aVJBpk9FQq+OR8ll5GT8oWd57UpeaKEVGab41JWaCFA7FRLoMLloOZF/c/wsPoe+bfGmRKgDg==}
-    peerDependencies:
-      react: '>=16.8.0'
-
-  '@emotion/utils@1.4.2':
-    resolution: {integrity: sha512-3vLclRofFziIa3J2wDh9jjbkUz9qk5Vi3IZ/FSTKViB0k+ef0fPV7dYrUIugbgupYDx7v9ud/SjrtEP8Y4xLoA==}
-
-  '@emotion/weak-memoize@0.3.1':
-    resolution: {integrity: sha512-EsBwpc7hBUJWAsNPBmJy4hxWx12v6bshQsldrVmjxJoc3isbxhOrF2IcCpaXxfvq03NwkI7sbsOLXbYuqF/8Ww==}
 
   '@envelop/instrumentation@1.0.0':
     resolution: {integrity: sha512-cxgkB66RQB95H3X27jlnxCRNTmPuSTgmBAq6/4n2Dtv4hsk4yz8FadA1ggmd0uZzvKqWD6CR+WFgTjhDqg7eyw==}
@@ -2238,111 +2165,78 @@ packages:
   '@fastify/static@7.0.4':
     resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
 
-  '@fireproof/core-base@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-JklwDeY8G5+2cokYLBe621gG1ik0tOPjv9XFc7vguIgIEhVJtu6kClzTxZ7V5jjClDfNdR8q2kk/FJRxnNAPig==}
+  '@fireproof/core-base@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-hWtBPrIZxG/e+u72XLvrrimEUzHFbUpNZx3tUDIisYg28TQ5hQk6cvrcD1Rc0sDHXKMMJq2ou0LLGskRgpxPeA==}
 
-  '@fireproof/core-blockstore@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-bcnhbUgipnILRB49jvrbJ65Mm6Wg9TcaBbceFWLIxKKDeNrcf53+trKwI4deNEbBHkrTi6VfzaNzEkkawYWKgA==}
+  '@fireproof/core-blockstore@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-5vNlj4TAON1c+S276DTg8tqy/q/fzK6kdRfQXmCMwAVtk70NOsGs08DNGwPA0whbSXRZraQ6HhUOo5tIXivZwg==}
 
-  '@fireproof/core-cli@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-nt1Zmq4uIbzgQiTi/nSJ5Yu4ml32Nf+SwZzo6eESjBh8EszrjjkFCItBPRhIfZKDzg39IEXuuyGt+DWYcap/UA==}
+  '@fireproof/core-cli@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-hOrydwdFDckKs06hoLntq7vECw1rbrr261hyXi+4MqxOoggG29q+iY2ZN/4hgA23eZ8Rzzv/J4303kUSDq9ZlA==}
     hasBin: true
 
-  '@fireproof/core-device-id@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-zF7lyKJbErN40QmJUGQeaEtoYhvekDbvsWRxgtDqXE2CcrLVvzI/uz0fp/FpIqtfBhtiPBu0XHc5srxU6IEBrw==}
+  '@fireproof/core-device-id@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-wBXtepkjj+3cRm6aHeRf2p/SDu2VzaqGG7w5PNjhr49lmkF4J2dpvqRup9o7UYb1X+WTSGp2pZFLDP8hCNPyzg==}
     engines: {node: '>=20'}
 
-  '@fireproof/core-gateways-base@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-o6sx9cmF1+9J5Kd0ZUo8Yjk8SYZpZWj+a0moguOeRC6dIMzU+c3cqE5YiWlinwENj87btNPsoNtTzkoEeKJ9Gw==}
+  '@fireproof/core-gateways-base@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-73QrO1du8qvDzyfk8a+g8CaWvRpeKCI+faUwAX11KbndbJSzvBhnGpmrJbUAtzed0ek2ocsb9ihNS3VwUoIQJw==}
 
-  '@fireproof/core-gateways-cloud@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-5TLhv9Hxg43Vof63n1Ohu8qt95D+LE2IM3k1jnA4SvKC8wMlSn8knJCYywVCpSKGDaN5miB/fDRCUHZUEWP19A==}
+  '@fireproof/core-gateways-cloud@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-ydT95tIx7wfv6qoO9CUSv6K48f9jvE5vomlwsbkIsTWFaZSyIg9QkPX+sLYfoTLL7AJOHuSoHrWv6J7ZVI7LrQ==}
 
-  '@fireproof/core-gateways-file-deno@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-eahgCVHN5X4DRZ9n0q5yiDqGD83uq+RcNLqTInhxkQgW8TkOd6ZpAC7FvDvK90aJlHa09juFO0k+0HG6018ujA==}
+  '@fireproof/core-gateways-file-deno@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-gB3sGFdPgVob1OoFVLFcDi7+ADQkETqi7mjoIq7SNWF9o6RN+AG888q23zwEUBVNy7TltP5qzZqYUAMBxy0KwA==}
 
-  '@fireproof/core-gateways-file-node@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-dDWeQt37T1rU4rTAFZKRLShJPhBDp9FkuJG6Z4oCqip87mG7Bf7hLincDX5VDEEFNEZ/xPnW+DMTVqiC20RqkQ==}
+  '@fireproof/core-gateways-file-node@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-RexGDd8bkJKL3sxyuOuMzHGlWhjgsZzlnnN4p9ruMfjQlkaMc7tFIodCKWoxycbubGz16hnS12BwVK8uKXlrSw==}
 
-  '@fireproof/core-gateways-file@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-pQUoSiJExAJzaO/gBqAYG1T9d73g1tHGC05Qfl2w2wqnRF+D2zKQ9QIBTJr2NGLQRv/DeViBb03QG691NMK7mg==}
+  '@fireproof/core-gateways-file@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-3OErpPbzBkCFSUFkg5bWKQP1Dj+ZJicaDZdlCOnyyhhc6Mw19Hh396IyibI1sia58QgZHw/VwbunEnWse2sr1w==}
 
-  '@fireproof/core-gateways-indexeddb@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-W/BeQ1vVUQM79gwbvgOFi/gEt9djcZT336wKuXlx5uZdMGwAh/CqyWf7SJdr/E8jhJnbUeupczGTXtGKWkzNcA==}
+  '@fireproof/core-gateways-indexeddb@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-3C4qNKR/tozgmjUT5ppXxhF3axHyHLTVmxNzUynDu3+kpjCM0EjOSetMW/756SP11EfqLSLBm5fsR1hnelXIeQ==}
 
-  '@fireproof/core-gateways-memory@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-Hx+69wr6wKlRCYXhO+Q3mzTAgifOnkmbGt0chNxoaSyHT0rPitDy36wR3BqpxvKmT87DFgGbxXWKJSLiBalshQ==}
+  '@fireproof/core-gateways-memory@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-a9Defz8OZVlqEtUviueeauo1Pit8XdhIP37TkCg+R/hucdXOSo9Y/vQvVA4Haxbed45ME+i5R7jIKP4L6XQTeg==}
 
-  '@fireproof/core-keybag@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-Wg35B/1vcrXZCfV5PV2hsJaO3n33uJj/OKChqb0Ukm+fR3f5dqi511o5CWkqrlg/1CTT+2IFWx60TyLjINBjVA==}
+  '@fireproof/core-keybag@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-s0BsdDz4tBqsZc5RpQRx+zN2KRqSEfpzEBbtZIl/Pi8jS/LFubpqPNiUcmLZdKcg2LJzh3XBz7dhdKOCaQ0pMg==}
 
-  '@fireproof/core-protocols-cloud@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-Px3YjSDkfGg7u+nbp0GWccQC6+YCCwE1tuMsqWsCcD2qDe9NpOtuwdjl3C12aM+CAUjOhAe+BPLCKra5aZDc8w==}
+  '@fireproof/core-protocols-cloud@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-OEuKxxmbPz6LczD9Xp5wRNWx3eplYRdNHTPfS70XE4fuOttPjvizqoOdUFUsVAaTDJm1khfZ51nJ0bJV+4xtyw==}
 
-  '@fireproof/core-protocols-dashboard@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-d4Zz8Ot3vLVJpwqwGqjJ2cuxqnZFsRvzNdj1ba6ihzgbsSv7+Oms4/+5BezojbGip6ApsVvmLOh6LE5RXGDbdQ==}
+  '@fireproof/core-protocols-dashboard@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-JVr5UlpZeZv8DbRVpVL8xHN5LCLlVv8Fq5Wwd7YwtY5NcLmQn03NaVbX8FD+2QHnyOGA0XrW2cF58SCPpXyXfQ==}
 
-  '@fireproof/core-runtime@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-ll7tKbJg+x70ZtrSCvkS5QJYVGwVKhXZEvhThoOI2ROPDKi0sBodQ/rSjqgeQKHheMngis13zfLVpO0AUbOt1A==}
+  '@fireproof/core-runtime@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-JJaCZE03svOimKk9icHay5Zif+3n7M5GOnhBEJ4AhCmmDS3LL67n8Zr3NGpQo4se+3Rg+4ZqANETmsRi6ZQujA==}
 
-  '@fireproof/core-types-base@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-6Hl2TpKjMs3RVegp8Ro7Sp56pQBJMjE640qJ84McgkALywwfh27a8C5FktnfGi2u2ZhlFoUQrJUuyy/C9mAltQ==}
+  '@fireproof/core-types-base@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-j9WvTKHpa96/VJAXQXVD4tJl+TVuVXh8m2S5CBqXjZbsgZp2puTkBtZjd3i2tTWCM2bmtl6ab2z82vl1gSgOOQ==}
 
-  '@fireproof/core-types-base@0.24.2-dev-cloud-api':
-    resolution: {integrity: sha512-a68dinioWPBCphzVJ38TTE9K645cKQYDZGc1AnudHaUY0LxL3BATfYY8LG7tIeQWr2djVdibDn5nCkzUaXNIvw==}
+  '@fireproof/core-types-blockstore@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-qI0T2caGPtRJAqC/ipMa7x3pMeyTjBU6n8eJud1DJjdDTd6B3noE9Kqnjx0gdPKPy2mt+drr2ZjLIIbcHky4qA==}
 
-  '@fireproof/core-types-blockstore@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-fSyjjrSGa/KCJMHadIh64CeAUVZRPDizOrGD1HRbEB3mjDjYBd+6SALCtLLTqdT9RyEeTZKWUM9L393gx6dp8w==}
+  '@fireproof/core-types-protocols-cloud@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-X9etoMT8ehQRTpOtnFMl4vuootfcgJGTWtEkYO1JfGaWKmEdHl2zYAODSkgrOZs8oVbHBE/PA9saZyNcHFEz9w==}
 
-  '@fireproof/core-types-blockstore@0.24.2-dev-cloud-api':
-    resolution: {integrity: sha512-1qkqz8ur0dilDFig4+Qd0s04CXIMsjpC/12Ym9rg1pTXmbWEpLKY/AJr7Y8dfIkjBNnlzh+v6wL/rhkwxkDlHA==}
+  '@fireproof/core-types-runtime@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-Qr09T17y01fXFybNZAhllOVKA69hfP27qi2AoDl6HOXeXtz9tOC5VcoVH8k6xqKsGuP3xAkNkC0qUL6oqJwrlg==}
 
-  '@fireproof/core-types-protocols-cloud@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-3IwwhvfIsam8Qx61Ivsvz+nP4GBdVzOUCCGZYzmBOnDAtnJjZa915YTDBBXuVwKLJlAgYyGizxnvPfeiyTNS6A==}
-
-  '@fireproof/core-types-protocols-cloud@0.24.2-dev-cloud-api':
-    resolution: {integrity: sha512-YB9aXYWKmE+KDXEHeE0cyedEzYwjr/AIFhl/hECnFzzV8cLB2XrYgT/aTT3YIqcoFSc+7IhzdHvCqOO0HH1zSg==}
-
-  '@fireproof/core-types-runtime@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-e1uXntuEgTyljkrXOMtQiAfEyuMUEG3rLj6wXDrelurxN4kzFMJXY8vcgIQ+PpQSjudGertvGmxzqRwVQ8ujsw==}
-
-  '@fireproof/core-types-runtime@0.24.2-dev-cloud-api':
-    resolution: {integrity: sha512-KuqefqPWmsHFD37YufDyNAr1CKSTetox3aOThi+OeVyOKkNQgtRiEqVT1mEwK4+71VdTt46aXMKXQfJvgLdzpA==}
-
-  '@fireproof/core@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-BRxTcIYKvWlTGJfAflpn+9Tr6XXXxkPXAIYFqvx/7i+eZG2xDyYmccGRjZj49xvnS/fOYyVSc7N9wECv1azQZg==}
+  '@fireproof/core@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-s+FGCMZzItCBjQi0BHe4DjG0T4mxnG1FIWGzGZmr3qKx1VQjLpcJAamACNUfnmvi/7O4m/+q3NHVx57muaR7Bg==}
     peerDependencies:
       react: '>=18.0.0'
 
-  '@fireproof/vendor@0.24.2-dev-clerk':
-    resolution: {integrity: sha512-Y4PjBtGuTdKzQ9kTsXyUvHjwepKjw+xtw7O+oP+c0Z0XCQz4JDzKNwq3Y+Ip2RhlfBOl90ZKPqtCpPNVJIRO9Q==}
-
-  '@fireproof/vendor@0.24.2-dev-cloud-api':
-    resolution: {integrity: sha512-PgUDy3amtoYQM5zjJoZJZA2PZFJa68zomrdHfI9C3pgVPuj2w8fvLiAkas4bKnfc/JbyjHOo0Q9JFaBOTzcZBg==}
-
-  '@floating-ui/core@1.7.3':
-    resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
-
-  '@floating-ui/dom@1.7.4':
-    resolution: {integrity: sha512-OOchDgh4F2CchOX94cRVqhvy7b3AFb+/rQXyswmzmGakRfkMgoWVjfnLWkRirfLEfuD4ysVW16eXzwt3jHIzKA==}
-
-  '@floating-ui/react-dom@2.1.6':
-    resolution: {integrity: sha512-4JX6rEatQEvlmgU80wZyq9RT96HZJa88q8hp0pBd+LrczeDI4o6uA2M+uvxngVHo4Ihr8uibXxH6+70zhAFrVw==}
+  '@fireproof/use-fireproof@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-fhi4n6QoVitRBGu64vwQ+z8jOpEQJYruXbaWs7V3clF3djeIQzounX5NxKAeEoY5bLbNxHN9xQV5J/Qe2rmFrg==}
     peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
+      '@adviser/cement': '>=0.4.20'
+      react: '>=18.0.0'
 
-  '@floating-ui/react@0.27.12':
-    resolution: {integrity: sha512-kKlWNrpIQxF1B/a2MZvE0/uyKby4960yjO91W7nVyNKmmfNi62xU9HCjL1M1eWzx/LFj/VPSwJVbwQk9Pq/68A==}
-    peerDependencies:
-      react: '>=17.0.0'
-      react-dom: '>=17.0.0'
-
-  '@floating-ui/utils@0.2.10':
-    resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
-
-  '@formkit/auto-animate@0.8.4':
-    resolution: {integrity: sha512-DHHC01EJ1p70Q0z/ZFRBIY8NDnmfKccQoyoM84Tgb6omLMat6jivCdf272Y8k3nf4Lzdin/Y4R9q8uFtU0GbnA==}
+  '@fireproof/vendor@0.24.3-dev-use-livequery':
+    resolution: {integrity: sha512-eyBfdf92CJCajbgGsHPGX4cbxI4WTVO1Wuf2sMXfWmBvuOxWNRRo3bN43JhJALtvCh80uBKnmkN6MdK1ElgvCw==}
 
   '@hono/clerk-auth@3.0.3':
     resolution: {integrity: sha512-N671mw3ulvxqxY8ou8D8ojVT7EKljXE6RjdC2egWExMcrQAglMSTvqvU096MbOT5zvWtc8QMo3SKiyTXn30BrQ==}
@@ -2350,8 +2244,8 @@ packages:
     peerDependencies:
       hono: '>=3.0.0'
 
-  '@hono/node-server@1.19.6':
-    resolution: {integrity: sha512-Shz/KjlIeAhfiuE93NDKVdZ7HdBVLQAfdbaXEaoAVO3ic9ibRSLGIQGkcBbFyuLr+7/1D5ZCINM8B+6IvXeMtw==}
+  '@hono/node-server@1.19.7':
+    resolution: {integrity: sha512-vUcD0uauS7EU2caukW8z5lJKtoGMokxNbJtBiwHgpqxEXokaHCBkQUmCHhjFB1VUTWdqj25QoMkMKzgjq+uhrw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
@@ -2890,26 +2784,6 @@ packages:
     resolution: {integrity: sha512-oUliNza9Tab3hHpIaHDAuT6ApN/c3SPJDUUenFGujpJm6IKZPdmnAGuKM2N2zb+XxHzApLdOogqv0kr7nY0avQ==}
     engines: {node: '>=18.14.0'}
     hasBin: true
-
-  '@noble/ciphers@1.3.0':
-    resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
-    engines: {node: ^14.21.3 || >=16}
-
-  '@noble/curves@1.9.1':
-    resolution: {integrity: sha512-k11yZxZg+t+gWvBbIswW0yoJlu8cHOC7dhunwOzoWH/mXGBiYyR4YY6hAEK/3EUs4UpB8la1RfdRpeGsFHkWsA==}
-    engines: {node: ^14.21.3 || >=16}
-
-  '@noble/curves@1.9.7':
-    resolution: {integrity: sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw==}
-    engines: {node: ^14.21.3 || >=16}
-
-  '@noble/hashes@1.4.0':
-    resolution: {integrity: sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==}
-    engines: {node: '>= 16'}
-
-  '@noble/hashes@1.8.0':
-    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
-    engines: {node: ^14.21.3 || >=16}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3613,15 +3487,6 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@scure/base@1.2.6':
-    resolution: {integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==}
-
-  '@scure/bip32@1.7.0':
-    resolution: {integrity: sha512-E4FFX/N3f4B80AKWp5dP6ow+flD1LQZo/w8UnLGYZO674jS6YnYeepycOOksv+vLPSpgN35wgKgy+ybfTb2SMw==}
-
-  '@scure/bip39@1.6.0':
-    resolution: {integrity: sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A==}
-
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
 
@@ -3800,13 +3665,6 @@ packages:
       typescript:
         optional: true
 
-  '@stripe/stripe-js@5.6.0':
-    resolution: {integrity: sha512-w8CEY73X/7tw2KKlL3iOk679V9bWseE4GzNz3zlaYxcTjmcmWOathRb0emgo/QQ3eoNzmq68+2Y2gxluAv3xGw==}
-    engines: {node: '>=12.16'}
-
-  '@swc/helpers@0.5.17':
-    resolution: {integrity: sha512-5IKx/Y13RsYd+sauPb2x+U/xZikHjolzfuDgTAl/Tdf3Q8rslRvC19NKDLgAJQ6wsqADk10ntlv08nPFw/gO/A==}
-
   '@szmarczak/http-timer@5.0.1':
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
     engines: {node: '>=14.16'}
@@ -3905,9 +3763,6 @@ packages:
     resolution: {integrity: sha512-4+9w8ZHOiGnpcGI6z1TVVfWaX/koK7fKeSYF3qlYg2xpBtbteP2ddBxiarL+HVgfSJGeK5RIxRQmKm4rTJJAwA==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
-
-  '@tanstack/query-core@5.87.4':
-    resolution: {integrity: sha512-uNsg6zMxraEPDVO2Bn+F3/ctHi+Zsk+MMpcN8h6P7ozqD088F6mFY5TfGM7zuyIrL7HKpDyu6QHfLWiDxh3cuw==}
 
   '@testing-library/dom@10.4.1':
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
@@ -4040,11 +3895,8 @@ packages:
   '@types/node@24.10.3':
     resolution: {integrity: sha512-gqkrWUsS8hcm0r44yn7/xZeV1ERva/nLgrLxFRUGb7aoNMIJfZJ3AC261zDQuOAKC7MiXai1WCpYc48jAHoShQ==}
 
-  '@types/node@24.5.2':
-    resolution: {integrity: sha512-FYxk1I7wPv3K2XBaoyH2cTnocQEu8AOZ60hPbsyukMPLv5/5qr7V1i8PLHdl6Zf87I+xZXFvPCXYjiTFq+YSDQ==}
-
-  '@types/node@25.0.1':
-    resolution: {integrity: sha512-czWPzKIAXucn9PtsttxmumiQ9N0ok9FrBwgRWrwmVLlp86BrMExzvXRLFYRJ+Ex3g6yqj+KuaxfX1JTgV2lpfg==}
+  '@types/node@25.0.2':
+    resolution: {integrity: sha512-gWEkeiyYE4vqjON/+Obqcoeffmk0NF15WSBwSs7zwVA2bAbTaE0SJ7P0WNGoJn8uE7fiaV5a7dKYIJriEqOrmA==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -4178,8 +4030,8 @@ packages:
     resolution: {integrity: sha512-LlKaciDe3GmZFphXIc79THF/YYBugZ7FS1pO581E/edlVVNbZKDy93evqmrfQ9/Y4uN0vVhX4iuchq26mK/iiA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251201.1':
-    resolution: {integrity: sha512-PY0BrlRF3YCZEMxzuk79IFSgpGqUErkdrW7Aq+/mF8DEET5uaDypTMb8Vz4CLYJ7Xvvxz8eZsLimPbv6hYDIvA==}
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251207.1':
+    resolution: {integrity: sha512-waWJnuuvkXh4WdpbTjYf7pyahJzx0ycesV2BylyHrE9OxU9FSKcD/cRLQYvbq3YcBSdF7sZwRLDBer7qTeLsYA==}
     cpu: [arm64]
     os: [darwin]
 
@@ -4188,8 +4040,8 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20251201.1':
-    resolution: {integrity: sha512-YeDrjnsvXwm/MNG8aURT3J+cmHQIhpiElBKOVOy/H6ky4S2Ro9ufG+Bj9CqS3etbTCLhV5btk+QNh86DZ4VDkQ==}
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20251207.1':
+    resolution: {integrity: sha512-3bkD9QuIjxETtp6J1l5X2oKgudJ8z+8fwUq0izCjK1JrIs2vW1aQnbzxhynErSyHWH7URGhHHzcsXHbikckAsg==}
     cpu: [x64]
     os: [darwin]
 
@@ -4198,8 +4050,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20251201.1':
-    resolution: {integrity: sha512-HbEn+SBTDZEtwN/VUxA2To+6vEr7x++SCRc6yGp5y4onpBL2xnH17UoxWiqN9J4Bu1DbQ9jZv3D5CzwBlofPQA==}
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20251207.1':
+    resolution: {integrity: sha512-Qhp06OObkwy5B+PlAhAmq+Ls3GVt4LHAovrTRcpLB3Mk3yJ0h9DnIQwPQiayp16TdvTsGHI3jdIX4MGm5L/ghA==}
     cpu: [arm64]
     os: [linux]
 
@@ -4208,8 +4060,8 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20251201.1':
-    resolution: {integrity: sha512-gr2EQYK888YdGROMc7l3N3MeKY1V3QVImKIQZNgqprV+N2rXaFnxGAZ+gql3LqZgRGel4a12vCUJeP7Pjl2gww==}
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20251207.1':
+    resolution: {integrity: sha512-OjrZBq8XJkB7uCQvT1AZ1FPsp+lT0cHxY5SisE+ZTAU6V0IHAZMwJ7J/mnwlGsBcCKRLBT+lX3hgEuOTSwHr9w==}
     cpu: [arm]
     os: [linux]
 
@@ -4218,8 +4070,8 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20251201.1':
-    resolution: {integrity: sha512-q94K/LZ3Ab/SbUBMBsf37VdsumeZ1dZmymJYlhGBqk/fdXBayL0diLR3RdzyeQWbCXAxWL5KFKLIiIc3cI/fcA==}
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20251207.1':
+    resolution: {integrity: sha512-fPRw0zfTBeVmrkgi5Le+sSwoeAz6pIdvcsa1OYZcrspueS9hn3qSC5bLEc5yX4NJP1vItadBqyGLUQ7u8FJjow==}
     cpu: [x64]
     os: [linux]
 
@@ -4228,8 +4080,8 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20251201.1':
-    resolution: {integrity: sha512-/AFwpsX/G05bBsfVURfg4+/JC6gfvqj9jfFe/7oe1Y1J42koN5C8TH+eSmMOOEcPYpFjR1e+NWckqBJKaCXJ4A==}
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20251207.1':
+    resolution: {integrity: sha512-KxY1i+HxeSFfzZ+HVsKwMGBM79laTRZv1ibFqHu22CEsfSPDt4yiV1QFis8Nw7OBXswNqJG/UGqY47VP8FeTvw==}
     cpu: [arm64]
     os: [win32]
 
@@ -4238,8 +4090,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20251201.1':
-    resolution: {integrity: sha512-vTUCDEuSP4ifLHqb8aljuj44v6+M1HDKo1WLnboTDpwU7IIrTux/0jzkPfEHd9xd5FU4EhSA8ZrYDwKI0BcRcg==}
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20251207.1':
+    resolution: {integrity: sha512-5l51HlXjX7lXwo65DEl1IaCFLjmkMtL6K3NrSEamPNeNTtTQwZRa3pQ9V65dCglnnCQ0M3+VF1RqzC7FU0iDKg==}
     cpu: [x64]
     os: [win32]
 
@@ -4248,8 +4100,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@typescript/native-preview@7.0.0-dev.20251201.1':
-    resolution: {integrity: sha512-EiPEgGwNa2uHyyKgeoWTL6wWHKUBmF3xsfZ3OHofk7TxUuxb2mpLG5igEuaBe8iUwkCUl9uZgJvOu6o0wE5NSA==}
+  '@typescript/native-preview@7.0.0-dev.20251207.1':
+    resolution: {integrity: sha512-4QcRnzB0pi9rS0AOvg8kWbmuwHv5X7B2EXHbgcms9+56hsZ8SZrZjNgBJb2rUIodJ4kU5mrkj/xlTTT4r9VcpQ==}
     hasBin: true
 
   '@typescript/native-preview@7.0.0-dev.20251212.1':
@@ -4549,37 +4401,9 @@ packages:
     engines: {node: '>= 8'}
     hasBin: true
 
-  '@zxcvbn-ts/core@3.0.4':
-    resolution: {integrity: sha512-aQeiT0F09FuJaAqNrxynlAwZ2mW/1MdXakKWNmGM1Qp/VaY6CnB/GfnMS2T8gB2231Esp1/maCWd8vTG4OuShw==}
-
-  '@zxcvbn-ts/language-common@3.0.4':
-    resolution: {integrity: sha512-viSNNnRYtc7ULXzxrQIVUNwHAPSXRtoIwy/Tq4XQQdIknBzw4vz36lQLF6mvhMlTIlpjoN/Z1GFu/fwiAlUSsw==}
-
   abbrev@3.0.1:
     resolution: {integrity: sha512-AO2ac6pjRB3SJmGJo+v5/aK6Omggp6fsLrs6wN9bd35ulu4cCwaAU9+7ZhXjeqHVkaHThLuzH0nZr0YpCDhygg==}
     engines: {node: ^18.17.0 || >=20.5.0}
-
-  abitype@1.1.0:
-    resolution: {integrity: sha512-6Vh4HcRxNMLA0puzPjM5GBgT4aAcFGKZzSgAXvuZ27shJP6NEpielTuqbBmZILR5/xd0PizkBGy5hReKz9jl5A==}
-    peerDependencies:
-      typescript: '>=5.0.4'
-      zod: ^3.22.0 || ^4.0.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-      zod:
-        optional: true
-
-  abitype@1.2.1:
-    resolution: {integrity: sha512-AhkAWBE5QqzSuaPi6B9w5scl5739iBknQdFFAbY/CybASOBVWtVmPavUYW1OrDRX/iZWB/Je80xhJMZz2G4G1Q==}
-    peerDependencies:
-      typescript: '>=5.0.4'
-      zod: ^3.22.0 || ^4.0.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-      zod:
-        optional: true
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -4657,9 +4481,6 @@ packages:
 
   ajv@8.17.1:
     resolution: {integrity: sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==}
-
-  alien-signals@2.0.6:
-    resolution: {integrity: sha512-P3TxJSe31bUHBiblg59oU1PpaWPtmxF9GhJ/cB7OkgJ0qN/ifFSKUI25/v8ZhsT+lIG6ac8DpTOplXxORX6F3Q==}
 
   ansi-align@3.0.1:
     resolution: {integrity: sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w==}
@@ -4985,9 +4806,6 @@ packages:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
-  browser-tabs-lock@1.3.0:
-    resolution: {integrity: sha512-g6nHaobTiT0eMZ7jh16YpD2kcjAp+PInbiVq3M1x6KKaEIVhT4v9oURNIpZLOZ3LQbQ3XYfNhMAb/9hzNLIWrw==}
-
   browserslist@4.28.0:
     resolution: {integrity: sha512-tbydkR/CxfMwelN0vwdP/pLkDwyAASZ+VfWm4EOwlB6SWhx1sYnWLqo8N5j0rAzPfzfRaxt0mM/4wPU/Su84RQ==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -5090,6 +4908,10 @@ packages:
 
   cborg@4.3.1:
     resolution: {integrity: sha512-zLyEPKHqdX08yiyMzm3A/QdurLDB1XVGB3RWJa8PykCXNpLxhlyWToM4g+0Vo+6Q6txrdvAOfdC0ZBaxG0qw2g==}
+    hasBin: true
+
+  cborg@4.3.2:
+    resolution: {integrity: sha512-l+QzebEAG0vb09YKkaOrMi2zmm80UNjmbvocMIeW5hO7JOXWdrQ/H49yOKfYX0MBgrj/KWgatBnEgRXyNyKD+A==}
     hasBin: true
 
   ccount@2.0.1:
@@ -5242,10 +5064,6 @@ packages:
     resolution: {integrity: sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==}
     engines: {node: '>=0.8'}
 
-  clsx@1.2.1:
-    resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
-    engines: {node: '>=6'}
-
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
@@ -5369,9 +5187,6 @@ packages:
     resolution: {integrity: sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==}
     engines: {node: '>= 0.6'}
 
-  convert-source-map@1.9.0:
-    resolution: {integrity: sha512-ASFBup0Mz1uyiIjANan1jzLQami9z1PoYSZCiiYW2FczPbenXc45FZdBZLzOT+r6+iciuEModtmCti+hjaAk0A==}
-
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
@@ -5403,12 +5218,6 @@ packages:
   copy-file@11.1.0:
     resolution: {integrity: sha512-X8XDzyvYaA6msMyAM575CUoygY5b44QzLcGRKsK3MFmXcOvQa518dNPLsKYwkYsn72g3EiW+LE0ytd/FlqWmyw==}
     engines: {node: '>=18'}
-
-  copy-to-clipboard@3.3.3:
-    resolution: {integrity: sha512-2KV8NhB5JqC3ky0r9PMCAZKbUHSwtEo4CwCs0KXgruG43gX5PMqDEBbVU4OUzw2MuAWUfsuFmWvEKG5QRfSnJA==}
-
-  core-js@3.41.0:
-    resolution: {integrity: sha512-SJ4/EHwS36QMJd6h/Rg+GyR4A5xE0FSI3eZ+iBVpfqf1x0eTSg1smWLHrA+2jQThZSh97fmSgFSU8B61nxosxA==}
 
   core-js@3.47.0:
     resolution: {integrity: sha512-c3Q2VVkGAUyupsjRnaNX6u8Dq2vAdzm9iuPj5FW0fRxzlxgq9Q39MDq10IvmQSpLgHQNyQzQmOo6bgGHmH3NNg==}
@@ -5460,9 +5269,6 @@ packages:
 
   crossws@0.3.5:
     resolution: {integrity: sha512-ojKiDvcmByhwa8YYqbQI/hg7MEU0NC03+pSdEq4ZUnZR9xXpwk7E43SMNGkn+JxJGPFtNvQ48+vV2p+P1ml5PA==}
-
-  crypto-js@4.2.0:
-    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
 
   css-select@5.2.2:
     resolution: {integrity: sha512-TizTzUddG/xYLA3NXodFM0fSbNizXjOKhqiQQwvhlspadZokn1KDy0NZFS0wuEubIYAV5/c1/lAr0TaaFXEXzw==}
@@ -5748,8 +5554,8 @@ packages:
   dompurify@3.2.7:
     resolution: {integrity: sha512-WhL/YuveyGXJaerVlMYGWhvQswa7myDG17P7Vu65EWC05o8vfeNbvNf4d/BOvH99+ZW+LlQsc1GDKMa1vNK6dw==}
 
-  dompurify@3.3.0:
-    resolution: {integrity: sha512-r+f6MYR1gGN1eJv0TVQbhA7if/U7P87cdPl3HN5rikqaBSBxLiCb/b9O+2eG0cxz0ghyU+mU1QkbsOwERMYlWQ==}
+  dompurify@3.3.1:
+    resolution: {integrity: sha512-qkdCKzLNtrgPFP1Vo+98FRzJnBRGe4ffyCea9IwHB1fyxPOeNTHpLKYGd4Uk9xvNoH0ZoOjwZxNptyMwqrId1Q==}
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
@@ -6073,9 +5879,6 @@ packages:
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
 
-  eventemitter3@5.0.1:
-    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
-
   events-universal@1.0.1:
     resolution: {integrity: sha512-LUd5euvbMLpwOF8m6ivPCbhQeSiYVNb8Vs0fQ8QjXo0JTkEHpz8pxdQf0gStltaPpw0Cca8b39KxvK9cfKRiAw==}
 
@@ -6284,9 +6087,6 @@ packages:
   find-my-way@8.2.2:
     resolution: {integrity: sha512-Dobi7gcTEq8yszimcfp/R7+owiT4WncAJ7VTTgFH1jYJ5GaG1FbhjwDG820hptN0QDFvzVY3RfCzdInvGPGzjA==}
     engines: {node: '>=14'}
-
-  find-root@1.1.0:
-    resolution: {integrity: sha512-NKfW6bec6GfKc0SGx1e07QZY9PE99u0Bft/0rzSD5k3sO/vwkVUpDUKVm5Gpp5Ue3YfShPFTX2070tDs5kB9Ng==}
 
   find-up-simple@1.0.1:
     resolution: {integrity: sha512-afd4O7zpqHeRyg4PfDQsXmlDe2PfdHtJt6Akt8jOWaApLOZk5JXs6VMR29lz03pRe9mpykrRCYIYxaJYcfpncQ==}
@@ -6601,11 +6401,12 @@ packages:
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
-  hoist-non-react-statics@3.3.2:
-    resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
-
   hono@4.10.7:
     resolution: {integrity: sha512-icXIITfw/07Q88nLSkB9aiUrd8rYzSweK681Kjo/TSggaGbOX4RRyxxm71v+3PC8C/j+4rlxGeoTRxQDkaJkUw==}
+    engines: {node: '>=16.9.0'}
+
+  hono@4.11.1:
+    resolution: {integrity: sha512-KsFcH0xxHes0J4zaQgWbYwmz3UPOOskdqZmItstUG93+Wk1ePBLkLGwbP9zlmh1BFUiL8Qp+Xfu9P7feJWpGNg==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@6.1.3:
@@ -6772,12 +6573,6 @@ packages:
 
   inline-style-parser@0.2.7:
     resolution: {integrity: sha512-Nb2ctOyNR8DqQoR0OwRG95uNWIC0C1lCgf5Naz5H6Ji72KZ8OcFZLz2P5sNgwlyoJ8Yif11oMuYs5pBQa86csA==}
-
-  input-otp@1.4.2:
-    resolution: {integrity: sha512-l3jWwYNvrEa6NTCt7BECfCm48GvwuZzkoeG3gBL2w4CHeOXW3eKFmf9UNYkNfYc3mxMrthMnxjIE07MT0zLBQA==}
-    peerDependencies:
-      react: ^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc
-      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc
 
   inquirer-autocomplete-prompt@1.4.0:
     resolution: {integrity: sha512-qHgHyJmbULt4hI+kCmwX92MnSxDs/Yhdt4wPA30qnoa01OF6uTXV8yvH4hKXgdaTNmkZ9D01MHjqKYEuJN+ONw==}
@@ -7067,11 +6862,6 @@ packages:
     resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
     engines: {node: '>=16'}
 
-  isows@1.0.7:
-    resolution: {integrity: sha512-I1fSfDCZL5P0v33sVqeTDSpcstAg/N+wF5HS033mogOVIp4B+oHC7oOCsA3axAbBSGTJ8QubbNmnIRN/h8U7hg==}
-    peerDependencies:
-      ws: '*'
-
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}
     engines: {node: '>=8'}
@@ -7229,6 +7019,9 @@ packages:
 
   jose@6.1.2:
     resolution: {integrity: sha512-MpcPtHLE5EmztuFIqB0vzHAWJPpmN1E6L4oo+kze56LIs3MyXIj9ZHMDxqOvkP38gBR7K1v3jqd4WU2+nrfONQ==}
+
+  jose@6.1.3:
+    resolution: {integrity: sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==}
 
   jpeg-js@0.4.4:
     resolution: {integrity: sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==}
@@ -8128,22 +7921,6 @@ packages:
     resolution: {integrity: sha512-qFOyK5PjiWZd+QQIh+1jhdb9LpxTF0qs7Pm8o5QHYZ0M3vKqSqzsZaEB6oWlxZ+q2sJBMI/Ktgd2N5ZwQoRHfg==}
     engines: {node: '>= 0.4'}
 
-  ox@0.6.9:
-    resolution: {integrity: sha512-wi5ShvzE4eOcTwQVsIPdFr+8ycyX+5le/96iAJutaZAvCes1J0+RvpEPg5QDPDiaR0XQQAvZVl7AwqQcINuUug==}
-    peerDependencies:
-      typescript: '>=5.4.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  ox@0.9.6:
-    resolution: {integrity: sha512-8SuCbHPvv2eZLYXrNmC0EC12rdzXQLdhnOMlHDW2wiCPLxBrOOJwX5L5E61by+UjTPOryqQiRSnjIKCI+GykKg==}
-    peerDependencies:
-      typescript: '>=5.4.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   oxc-resolver@11.14.0:
     resolution: {integrity: sha512-i4wNrqhOd+4YdHJfHglHtFiqqSxXuzFA+RUqmmWN1aMD3r1HqUSrIhw17tSO4jwKfhLs9uw1wzFPmvMsWacStg==}
 
@@ -8427,9 +8204,6 @@ packages:
   posthog-js@1.306.0:
     resolution: {integrity: sha512-sjsy0El4HL6PgbyWiUF0CaKb2d1Q8okbSeT4eajan3QSvkWus6ygHQuW2l4lfvp6NLRQrIZKH/0sUanhASptUQ==}
 
-  preact@10.24.2:
-    resolution: {integrity: sha512-1cSoF0aCC8uaARATfrlz4VCBqE8LwZwRfLgkxJOQwAlQt6ayTmi0D9OF7nXid1POI5SZidFuG9CnlXbDfLqY/Q==}
-
   preact@10.28.0:
     resolution: {integrity: sha512-rytDAoiXr3+t6OIP3WGlDd0ouCUG1iCWzkcY3++Nreuoi17y6T5i/zRhe6uYfoVcxq6YU+sBtJouuRDsq8vvqA==}
 
@@ -8605,11 +8379,6 @@ packages:
   pure-rand@7.0.1:
     resolution: {integrity: sha512-oTUZM/NAZS8p7ANR3SHh30kXB+zK2r2BPcEn/awJIbOvq82WoMN4p62AWWp3Hhw50G0xMsw1mhIBLqHw64EcNQ==}
 
-  qrcode.react@4.2.0:
-    resolution: {integrity: sha512-QpgqWi8rD9DsS9EP3z7BT+5lY5SFhsqGjpgW5DY/i3mK4M9DTBNz3ErMi8BWYEfI3L0d8GIbGmcdFAS1uIRGjA==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   qs@6.13.0:
     resolution: {integrity: sha512-+38qI9SOr8tfZ4QmJNplMUxqjbe7LKvvZgWdExBOmd+egZTtjLB67Gu0HRX3u/XOq7UU2Nx6nsjvS16Z9uwfpg==}
     engines: {node: '>=0.6'}
@@ -8691,9 +8460,6 @@ packages:
     peerDependencies:
       react: '>=16'
       react-dom: '>=16'
-
-  react-is@16.13.1:
-    resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
@@ -8781,9 +8547,6 @@ packages:
   reflect.getprototypeof@1.0.10:
     resolution: {integrity: sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw==}
     engines: {node: '>= 0.4'}
-
-  regenerator-runtime@0.14.1:
-    resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
 
   regex-recursion@6.0.2:
     resolution: {integrity: sha512-0YCaSCq2VRIebiaUviZNs0cBz1kg5kVS2UKUfNIx8YVs1cN3AV7NTctO5FOKBA+UT2BPJIWZauYHPqJODG50cg==}
@@ -9144,10 +8907,6 @@ packages:
   source-map-support@0.5.21:
     resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
 
-  source-map@0.5.7:
-    resolution: {integrity: sha512-LbrmJOMUSdEVxIKvdcJzQC+nQhe8FUZQTXQy6+I75skNgn3OoQ0DZA8YnFa7gp8tqtL3KPf1kmo0R5DoApeSGQ==}
-    engines: {node: '>=0.10.0'}
-
   source-map@0.6.1:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
@@ -9341,9 +9100,6 @@ packages:
   style-to-object@1.0.14:
     resolution: {integrity: sha512-LIN7rULI0jBscWQYaSswptyderlarFkjQ+t79nzty8tcIAceVomEVlLzH5VP4Cmsv6MtKhs7qaAiwlcp+Mgaxw==}
 
-  stylis@4.2.0:
-    resolution: {integrity: sha512-Orov6g6BB1sDfYgzWfTHDOxamtX1bE/zo104Dh9e6fqJ3PooipYyfJ0pUmrZO2wAvO8YbEyeFrkV91XTsGMSrw==}
-
   supports-color@10.2.2:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
     engines: {node: '>=18'}
@@ -9381,9 +9137,6 @@ packages:
   system-architecture@0.1.0:
     resolution: {integrity: sha512-ulAk51I9UVUyJgxlv9M6lFot2WP3e7t8Kz9+IS6D4rVba1tR9kON+Ey69f+1R4Q8cd45Lod6a4IcJIxnzGc/zA==}
     engines: {node: '>=18'}
-
-  tabbable@6.3.0:
-    resolution: {integrity: sha512-EIHvdY5bPLuWForiR/AN2Bxngzpuwn1is4asboytXtpTgsArc+WmSJKVLlhdh71u7jFcryDqB2A8lQvj78MkyQ==}
 
   tailwind-merge@3.4.0:
     resolution: {integrity: sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==}
@@ -9478,9 +9231,6 @@ packages:
   toad-cache@3.7.0:
     resolution: {integrity: sha512-/m8M+2BJUpoJdgAHoG+baCwBT+tf2VraSfkBgl0Y00qIWt41DJ8R5B8nsEw0I58YwF5IZH6z24/2TobDKnqSWw==}
     engines: {node: '>=12'}
-
-  toggle-selection@1.0.6:
-    resolution: {integrity: sha512-BiZS+C1OS8g/q2RRbJmy59xpyghNBqrr6k5L/uKBGRsTfxmu3ffiRnd8mlGPUVayg8pvfi5urfnu8TU7DVOkLQ==}
 
   toidentifier@1.0.1:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
@@ -9698,9 +9448,6 @@ packages:
   uncrypto@0.1.3:
     resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
 
-  undici-types@7.12.0:
-    resolution: {integrity: sha512-goOacqME2GYyOZZfb5Lgtu+1IDmAlAEu5xnD3+xTzS10hT0vzpf0SPjkXwAw9Jm+4n/mQGDP3LO8CPbYROeBfQ==}
-
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
@@ -9862,11 +9609,8 @@ packages:
   urlpattern-polyfill@8.0.2:
     resolution: {integrity: sha512-Qp95D4TPJl1kC9SKigDcqgyM2VDVO4RiJc2d4qe5GrYm+zbIQCWWKAFaJNQ4BhdFeDGwBmAxqJBwWSJDb9T3BQ==}
 
-  use-fireproof@0.24.2-dev-clerk:
-    resolution: {integrity: sha512-Sie9Mswp5mf7jk/opKlyso/bkv0mwAYvVJSHiOXhyXGDmM7VX3QEbKbv8vheAfxZjXLgKMFlLiv6ZW0MCbhXcw==}
-    peerDependencies:
-      '@adviser/cement': '>=0.4.20'
-      react: '>=18.0.0'
+  use-fireproof@0.24.3-dev-use-livequery:
+    resolution: {integrity: sha512-5s1C9zmJwzBppCxOgVA6+OILZh/SX8jRzBc2umIeQ/MzAcJ6kCPNTR+z8RuA07GQg0ZXoRiDjxhpMUuDCpjEEQ==}
 
   use-sync-external-store@1.6.0:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
@@ -9922,14 +9666,6 @@ packages:
 
   vfile@6.0.3:
     resolution: {integrity: sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q==}
-
-  viem@2.41.2:
-    resolution: {integrity: sha512-LYliajglBe1FU6+EH9mSWozp+gRA/QcHfxeD9Odf83AdH5fwUS7DroH4gHvlv6Sshqi1uXrYFA2B/EOczxd15g==}
-    peerDependencies:
-      typescript: '>=5.0.4'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
 
   vite-node@3.2.4:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
@@ -10267,24 +10003,6 @@ packages:
   zod@4.1.13:
     resolution: {integrity: sha512-AvvthqfqrAhNH9dnfmrfKzX5upOdjUVJYFqNSlkmGf64gRaTzlPwz99IHYnVs28qYAybvAlBV+H7pn0saFY4Ig==}
 
-  zustand@5.0.3:
-    resolution: {integrity: sha512-14fwWQtU3pH4dE0dOpdMiWjddcH+QzKIgk1cl8epwSE7yag43k/AD/m4L6+K7DytAOr9gGBe3/EXj9g7cdostg==}
-    engines: {node: '>=12.20.0'}
-    peerDependencies:
-      '@types/react': '>=18.0.0'
-      immer: '>=9.0.6'
-      react: '>=18.0.0'
-      use-sync-external-store: '>=1.2.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      immer:
-        optional: true
-      react:
-        optional: true
-      use-sync-external-store:
-        optional: true
-
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -10296,15 +10014,6 @@ packages:
 snapshots:
 
   '@adobe/css-tools@4.4.4': {}
-
-  '@adraffy/ens-normalize@1.11.1': {}
-
-  '@adviser/cement@0.4.81(typescript@5.9.3)':
-    dependencies:
-      ts-essentials: 10.1.1(typescript@5.9.3)
-      yaml: 2.8.2
-    transitivePeerDependencies:
-      - typescript
 
   '@adviser/cement@0.5.5(typescript@5.9.3)':
     dependencies:
@@ -10593,26 +10302,6 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@base-org/account@2.0.1(@types/react@19.2.7)(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))(zod@4.1.13)':
-    dependencies:
-      '@noble/hashes': 1.4.0
-      clsx: 1.2.1
-      eventemitter3: 5.0.1
-      idb-keyval: 6.2.1
-      ox: 0.6.9(typescript@5.9.3)(zod@4.1.13)
-      preact: 10.24.2
-      viem: 2.41.2(typescript@5.9.3)(zod@4.1.13)
-      zustand: 5.0.3(@types/react@19.2.7)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
-    transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - immer
-      - react
-      - typescript
-      - use-sync-external-store
-      - utf-8-validate
-      - zod
-
   '@bcoe/v8-coverage@0.2.3': {}
 
   '@bcoe/v8-coverage@1.0.2': {}
@@ -10670,56 +10359,12 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/clerk-js@5.111.0(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))(zod@4.1.13)':
-    dependencies:
-      '@base-org/account': 2.0.1(@types/react@19.2.7)(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))(zod@4.1.13)
-      '@clerk/localizations': 3.29.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@clerk/shared': 3.36.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@coinbase/wallet-sdk': 4.3.0
-      '@emotion/cache': 11.11.0
-      '@emotion/react': 11.11.1(@types/react@19.2.7)(react@19.2.0)
-      '@floating-ui/react': 0.27.12(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@floating-ui/react-dom': 2.1.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@formkit/auto-animate': 0.8.4
-      '@stripe/stripe-js': 5.6.0
-      '@swc/helpers': 0.5.17
-      '@tanstack/query-core': 5.87.4
-      '@zxcvbn-ts/core': 3.0.4
-      '@zxcvbn-ts/language-common': 3.0.4
-      alien-signals: 2.0.6
-      browser-tabs-lock: 1.3.0
-      copy-to-clipboard: 3.3.3
-      core-js: 3.41.0
-      crypto-js: 4.2.0
-      dequal: 2.0.3
-      input-otp: 1.4.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      qrcode.react: 4.2.0(react@19.2.0)
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-      regenerator-runtime: 0.14.1
-    transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - immer
-      - supports-color
-      - typescript
-      - use-sync-external-store
-      - utf-8-validate
-      - zod
-
   '@clerk/clerk-react@5.57.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@clerk/shared': 3.36.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
       tslib: 2.8.1
-
-  '@clerk/localizations@3.29.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
-    dependencies:
-      '@clerk/types': 4.101.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-    transitivePeerDependencies:
-      - react
-      - react-dom
 
   '@clerk/shared@3.36.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -10733,7 +10378,7 @@ snapshots:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
-  '@clerk/shared@3.38.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@clerk/shared@3.39.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       csstype: 3.1.3
       dequal: 2.0.3
@@ -10752,13 +10397,6 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/types@4.101.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
-    dependencies:
-      '@clerk/shared': 3.38.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-    transitivePeerDependencies:
-      - react
-      - react-dom
-
   '@cloudflare/kv-asset-handler@0.4.1':
     dependencies:
       mime: 3.0.0
@@ -10769,7 +10407,7 @@ snapshots:
     optionalDependencies:
       workerd: 1.20251210.0
 
-  '@cloudflare/vite-plugin@1.17.1(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))':
+  '@cloudflare/vite-plugin@1.17.1(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))':
     dependencies:
       '@cloudflare/unenv-preset': 2.7.13(unenv@2.0.0-rc.24)(workerd@1.20251210.0)
       '@remix-run/node-fetch-server': 0.8.1
@@ -10779,7 +10417,7 @@ snapshots:
       picocolors: 1.1.1
       tinyglobby: 0.2.15
       unenv: 2.0.0-rc.24
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       wrangler: 4.54.0(@cloudflare/workers-types@4.20251205.0)
       ws: 8.18.0
     transitivePeerDependencies:
@@ -10821,13 +10459,6 @@ snapshots:
 
   '@cloudflare/workers-types@4.20251205.0': {}
 
-  '@coinbase/wallet-sdk@4.3.0':
-    dependencies:
-      '@noble/hashes': 1.8.0
-      clsx: 1.2.1
-      eventemitter3: 5.0.1
-      preact: 10.28.0
-
   '@colors/colors@1.6.0': {}
 
   '@cspotcode/source-map-support@0.8.1':
@@ -10860,72 +10491,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
-
-  '@emotion/babel-plugin@11.13.5':
-    dependencies:
-      '@babel/helper-module-imports': 7.27.1
-      '@babel/runtime': 7.28.4
-      '@emotion/hash': 0.9.2
-      '@emotion/memoize': 0.9.0
-      '@emotion/serialize': 1.3.3
-      babel-plugin-macros: 3.1.0
-      convert-source-map: 1.9.0
-      escape-string-regexp: 4.0.0
-      find-root: 1.1.0
-      source-map: 0.5.7
-      stylis: 4.2.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@emotion/cache@11.11.0':
-    dependencies:
-      '@emotion/memoize': 0.8.1
-      '@emotion/sheet': 1.4.0
-      '@emotion/utils': 1.4.2
-      '@emotion/weak-memoize': 0.3.1
-      stylis: 4.2.0
-
-  '@emotion/hash@0.9.2': {}
-
-  '@emotion/memoize@0.8.1': {}
-
-  '@emotion/memoize@0.9.0': {}
-
-  '@emotion/react@11.11.1(@types/react@19.2.7)(react@19.2.0)':
-    dependencies:
-      '@babel/runtime': 7.28.4
-      '@emotion/babel-plugin': 11.13.5
-      '@emotion/cache': 11.11.0
-      '@emotion/serialize': 1.3.3
-      '@emotion/use-insertion-effect-with-fallbacks': 1.2.0(react@19.2.0)
-      '@emotion/utils': 1.4.2
-      '@emotion/weak-memoize': 0.3.1
-      hoist-non-react-statics: 3.3.2
-      react: 19.2.0
-    optionalDependencies:
-      '@types/react': 19.2.7
-    transitivePeerDependencies:
-      - supports-color
-
-  '@emotion/serialize@1.3.3':
-    dependencies:
-      '@emotion/hash': 0.9.2
-      '@emotion/memoize': 0.9.0
-      '@emotion/unitless': 0.10.0
-      '@emotion/utils': 1.4.2
-      csstype: 3.2.3
-
-  '@emotion/sheet@1.4.0': {}
-
-  '@emotion/unitless@0.10.0': {}
-
-  '@emotion/use-insertion-effect-with-fallbacks@1.2.0(react@19.2.0)':
-    dependencies:
-      react: 19.2.0
-
-  '@emotion/utils@1.4.2': {}
-
-  '@emotion/weak-memoize@0.3.1': {}
 
   '@envelop/instrumentation@1.0.0':
     dependencies:
@@ -11331,16 +10896,16 @@ snapshots:
       fastq: 1.19.1
       glob: 10.5.0
 
-  '@fireproof/core-base@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-base@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@ipld/dag-cbor': 9.2.5
       '@web3-storage/pail': 0.6.2
       charwise: 3.0.1
@@ -11350,25 +10915,25 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-blockstore@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-blockstore@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-memory': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-gateways-file': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-gateways-indexeddb': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-gateways-memory': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@ipld/car': 5.4.2
       '@ipld/dag-cbor': 9.2.5
       '@ipld/dag-json': 10.2.5
       '@web3-storage/pail': 0.6.2
-      multiformats: 13.4.1
+      multiformats: 13.4.2
       p-map: 7.0.4
       p-retry: 7.1.0
     transitivePeerDependencies:
@@ -11376,24 +10941,24 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-cli@0.24.2-dev-clerk(@pnpm/logger@5.2.0)(typescript@5.9.3)':
+  '@fireproof/core-cli@0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-device-id': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@hono/node-server': 1.19.6(hono@4.10.7)
+      '@fireproof/core-device-id': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@hono/node-server': 1.19.7(hono@4.11.1)
       '@pnpm/lockfile-file': 9.1.3(@pnpm/logger@5.2.0)
-      '@typescript/native-preview': 7.0.0-dev.20251201.1
+      '@typescript/native-preview': 7.0.0-dev.20251207.1
       aws4fetch: 1.0.20
       cmd-ts: 0.14.3
       find-up: 8.0.0
       fs-extra: 11.3.2
-      hono: 4.10.7
-      jose: 6.1.2
-      multiformats: 13.4.1
+      hono: 4.11.1
+      jose: 6.1.3
+      multiformats: 13.4.2
       open: 8.4.2
       semver: 7.7.3
       zod: 4.1.13
@@ -11404,121 +10969,121 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fireproof/core-device-id@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-device-id@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      jose: 6.1.2
-      multiformats: 13.4.1
+      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      jose: 6.1.3
+      multiformats: 13.4.2
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-base@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-gateways-base@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@ipld/dag-json': 10.2.5
       '@web3-storage/pail': 0.6.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-cloud@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-gateways-cloud@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      jose: 6.1.2
+      '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      jose: 6.1.3
     transitivePeerDependencies:
       - bufferutil
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-gateways-file-deno@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-gateways-file-deno@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@types/deno': 2.5.0
-      '@types/node': 24.5.2
+      '@types/node': 25.0.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file-node@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-gateways-file-node@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-gateways-file@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-file-deno': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-file-node': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-gateways-file-deno': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-gateways-file-node': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-indexeddb@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-gateways-indexeddb@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       idb: 8.0.3
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-memory@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-gateways-memory@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-keybag@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-keybag@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      jose: 6.1.2
-      multiformats: 13.4.1
+      '@fireproof/core-gateways-file': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-gateways-indexeddb': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      jose: 6.1.3
+      multiformats: 13.4.2
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-protocols-cloud@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-protocols-cloud@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@types/ws': 8.18.1
       ws: 8.18.3
     transitivePeerDependencies:
@@ -11526,184 +11091,122 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-protocols-dashboard@0.24.2-dev-clerk(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))':
+  '@fireproof/core-protocols-dashboard@0.24.3-dev-use-livequery(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@clerk/clerk-js': 5.111.0(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))(zod@4.1.13)
-      '@fireproof/core-device-id': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@clerk/shared': 3.39.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@fireproof/core-device-id': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       zod: 4.1.13
     transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - immer
       - react
       - react-dom
-      - supports-color
       - typescript
-      - use-sync-external-store
-      - utf-8-validate
 
-  '@fireproof/core-runtime@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-runtime@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
       '@adviser/ts-xxhash': 1.0.2
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      cborg: 4.3.1
-      jose: 6.1.2
-      multiformats: 13.4.1
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      cborg: 4.3.2
+      jose: 6.1.3
+      multiformats: 13.4.2
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-base@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-types-base@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
-      jose: 6.1.2
-      multiformats: 13.4.1
-      prolly-trees: 1.0.4
-      zod: 4.1.13
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-types-base@0.24.2-dev-cloud-api(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.4.81(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-cloud-api(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-cloud-api(typescript@5.9.3)
-      '@web3-storage/pail': 0.6.2
-      jose: 6.1.2
+      jose: 6.1.3
       multiformats: 13.4.2
       prolly-trees: 1.0.4
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-blockstore@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-types-blockstore@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@web3-storage/pail': 0.6.2
-      multiformats: 13.4.1
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-types-blockstore@0.24.2-dev-cloud-api(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.4.81(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-cloud-api(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.2-dev-cloud-api(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-cloud-api(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
       multiformats: 13.4.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-protocols-cloud@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-types-protocols-cloud@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      jose: 6.1.2
-      multiformats: 13.4.1
-      zod: 4.1.13
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-types-protocols-cloud@0.24.2-dev-cloud-api(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.4.81(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-cloud-api(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-cloud-api(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-cloud-api(typescript@5.9.3)
-      jose: 6.1.2
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      jose: 6.1.3
       multiformats: 13.4.2
       zod: 4.1.13
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-runtime@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/core-types-runtime@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      multiformats: 13.4.1
-    transitivePeerDependencies:
-      - typescript
-
-  '@fireproof/core-types-runtime@0.24.2-dev-cloud-api(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.4.81(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-cloud-api(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       multiformats: 13.4.2
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core@0.24.2-dev-clerk(react@19.2.0)(typescript@5.9.3)':
+  '@fireproof/core@0.24.3-dev-use-livequery(react@19.2.0)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@types/node': 24.5.2
+      '@fireproof/core-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@types/node': 25.0.2
       react: 19.2.0
     transitivePeerDependencies:
       - bufferutil
       - typescript
       - utf-8-validate
 
-  '@fireproof/vendor@0.24.2-dev-clerk(typescript@5.9.3)':
+  '@fireproof/use-fireproof@0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-gateways-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.3-dev-use-livequery(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      dompurify: 3.3.1
+      jose: 6.1.3
+      react: 19.2.0
+      ts-essentials: 10.1.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - react-dom
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/vendor@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
-
-  '@fireproof/vendor@0.24.2-dev-cloud-api(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.4.81(typescript@5.9.3)
-      yocto-queue: 1.2.2
-    transitivePeerDependencies:
-      - typescript
-
-  '@floating-ui/core@1.7.3':
-    dependencies:
-      '@floating-ui/utils': 0.2.10
-
-  '@floating-ui/dom@1.7.4':
-    dependencies:
-      '@floating-ui/core': 1.7.3
-      '@floating-ui/utils': 0.2.10
-
-  '@floating-ui/react-dom@2.1.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
-    dependencies:
-      '@floating-ui/dom': 1.7.4
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-
-  '@floating-ui/react@0.27.12(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
-    dependencies:
-      '@floating-ui/react-dom': 2.1.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@floating-ui/utils': 0.2.10
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-      tabbable: 6.3.0
-
-  '@floating-ui/utils@0.2.10': {}
-
-  '@formkit/auto-animate@0.8.4': {}
 
   '@hono/clerk-auth@3.0.3(hono@4.10.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -11714,9 +11217,9 @@ snapshots:
       - react
       - react-dom
 
-  '@hono/node-server@1.19.6(hono@4.10.7)':
+  '@hono/node-server@1.19.7(hono@4.11.1)':
     dependencies:
-      hono: 4.10.7
+      hono: 4.11.1
 
   '@humanfs/core@0.19.1': {}
 
@@ -11815,12 +11318,12 @@ snapshots:
       uuid: 11.1.0
       vite: 7.2.7(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
-  '@inquirer/external-editor@1.0.3(@types/node@25.0.1)':
+  '@inquirer/external-editor@1.0.3(@types/node@25.0.2)':
     dependencies:
       chardet: 2.1.1
       iconv-lite: 0.7.1
     optionalDependencies:
-      '@types/node': 25.0.1
+      '@types/node': 25.0.2
 
   '@ipld/car@5.4.2':
     dependencies:
@@ -12041,12 +11544,12 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
-  '@joshwooding/vite-plugin-react-docgen-typescript@0.6.1(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.6.1(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       glob: 10.5.0
       magic-string: 0.30.21
       react-docgen-typescript: 2.4.0(typescript@5.9.3)
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     optionalDependencies:
       typescript: 5.9.3
 
@@ -12166,7 +11669,7 @@ snapshots:
       yaml: 2.8.2
       yargs: 17.7.2
 
-  '@netlify/build@35.5.2(@opentelemetry/api@1.8.0)(@types/node@25.0.1)(picomatch@4.0.3)(rollup@4.53.3)':
+  '@netlify/build@35.5.2(@opentelemetry/api@1.8.0)(@types/node@25.0.2)(picomatch@4.0.3)(rollup@4.53.3)':
     dependencies:
       '@bugsnag/js': 8.6.0
       '@netlify/blobs': 10.4.3(supports-color@10.2.2)
@@ -12214,7 +11717,7 @@ snapshots:
       string-width: 7.2.0
       supports-color: 10.2.2
       terminal-link: 4.0.0
-      ts-node: 10.9.2(@types/node@25.0.1)(typescript@5.9.3)
+      ts-node: 10.9.2(@types/node@25.0.2)(typescript@5.9.3)
       typescript: 5.9.3
       uuid: 11.1.0
       yaml: 2.8.2
@@ -12549,20 +12052,6 @@ snapshots:
       - react-native-b4a
       - rollup
       - supports-color
-
-  '@noble/ciphers@1.3.0': {}
-
-  '@noble/curves@1.9.1':
-    dependencies:
-      '@noble/hashes': 1.8.0
-
-  '@noble/curves@1.9.7':
-    dependencies:
-      '@noble/hashes': 1.8.0
-
-  '@noble/hashes@1.4.0': {}
-
-  '@noble/hashes@1.8.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -13152,7 +12641,7 @@ snapshots:
       - tsx
       - yaml
 
-  '@react-router/dev@7.9.6(@react-router/serve@7.10.1(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@25.0.1)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))(yaml@2.8.2)':
+  '@react-router/dev@7.9.6(@react-router/serve@7.10.1(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3))(@types/node@25.0.2)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tsx@4.21.0)(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.54.0(@cloudflare/workers-types@4.20251205.0))(yaml@2.8.2)':
     dependencies:
       '@babel/core': 7.28.5
       '@babel/generator': 7.28.5
@@ -13182,8 +12671,8 @@ snapshots:
       semver: 7.7.3
       tinyglobby: 0.2.15
       valibot: 1.2.0(typescript@5.9.3)
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
-      vite-node: 3.2.4(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite-node: 3.2.4(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     optionalDependencies:
       '@react-router/serve': 7.10.1(react-router@7.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       typescript: 5.9.3
@@ -13323,19 +12812,6 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@scure/base@1.2.6': {}
-
-  '@scure/bip32@1.7.0':
-    dependencies:
-      '@noble/curves': 1.9.1
-      '@noble/hashes': 1.8.0
-      '@scure/base': 1.2.6
-
-  '@scure/bip39@1.6.0':
-    dependencies:
-      '@noble/hashes': 1.8.0
-      '@scure/base': 1.2.6
-
   '@sec-ant/readable-stream@0.4.1': {}
 
   '@shikijs/core@3.20.0':
@@ -13419,10 +12895,10 @@ snapshots:
       axe-core: 4.11.0
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
-  '@storybook/addon-docs@10.1.2(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/addon-docs@10.1.2(@types/react@19.2.7)(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@mdx-js/react': 3.1.1(@types/react@19.2.7)(react@19.2.0)
-      '@storybook/csf-plugin': 10.1.2(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@storybook/csf-plugin': 10.1.2(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/icons': 2.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@storybook/react-dom-shim': 10.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       react: 19.2.0
@@ -13440,36 +12916,36 @@ snapshots:
     dependencies:
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
-  '@storybook/builder-vite@10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/builder-vite@10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
-      '@storybook/csf-plugin': 10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
-      '@vitest/mocker': 3.2.4(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@storybook/csf-plugin': 10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@vitest/mocker': 3.2.4(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       ts-dedent: 2.2.0
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - esbuild
       - msw
       - rollup
       - webpack
 
-  '@storybook/csf-plugin@10.1.2(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/csf-plugin@10.1.2(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       unplugin: 2.3.11
     optionalDependencies:
       esbuild: 0.27.1
       rollup: 4.53.3
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
-  '@storybook/csf-plugin@10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/csf-plugin@10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       unplugin: 2.3.11
     optionalDependencies:
       esbuild: 0.27.1
       rollup: 4.53.3
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   '@storybook/global@5.0.0': {}
 
@@ -13490,11 +12966,11 @@ snapshots:
       react-dom: 19.2.0(react@19.2.0)
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
-  '@storybook/react-vite@10.1.7(esbuild@0.27.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@storybook/react-vite@10.1.7(esbuild@0.27.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.1(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.1(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@rollup/pluginutils': 5.3.0(rollup@4.53.3)
-      '@storybook/builder-vite': 10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@storybook/builder-vite': 10.1.7(esbuild@0.27.1)(rollup@4.53.3)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/react': 10.1.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(storybook@10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(typescript@5.9.3)
       empathic: 2.0.0
       magic-string: 0.30.21
@@ -13504,7 +12980,7 @@ snapshots:
       resolve: 1.22.11
       storybook: 10.1.2(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       tsconfig-paths: 4.2.0
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - esbuild
       - msw
@@ -13538,12 +13014,6 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
-
-  '@stripe/stripe-js@5.6.0': {}
-
-  '@swc/helpers@0.5.17':
-    dependencies:
-      tslib: 2.8.1
 
   '@szmarczak/http-timer@5.0.1':
     dependencies:
@@ -13622,14 +13092,12 @@ snapshots:
       tailwindcss: 4.1.17
       vite: 7.2.7(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
-  '@tailwindcss/vite@4.1.17(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@tailwindcss/vite@4.1.17(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@tailwindcss/node': 4.1.17
       '@tailwindcss/oxide': 4.1.17
       tailwindcss: 4.1.17
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
-
-  '@tanstack/query-core@5.87.4': {}
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   '@testing-library/dom@10.4.1':
     dependencies:
@@ -13780,17 +13248,14 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
-  '@types/node@24.5.2':
-    dependencies:
-      undici-types: 7.12.0
-
-  '@types/node@25.0.1':
+  '@types/node@25.0.2':
     dependencies:
       undici-types: 7.16.0
 
   '@types/normalize-package-data@2.4.4': {}
 
-  '@types/parse-json@4.0.2': {}
+  '@types/parse-json@4.0.2':
+    optional: true
 
   '@types/react-dom@19.2.3(@types/react@19.2.7)':
     dependencies:
@@ -13817,7 +13282,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 24.10.3
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -13957,57 +13422,57 @@ snapshots:
       '@typescript-eslint/types': 8.49.0
       eslint-visitor-keys: 4.2.1
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251201.1':
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251207.1':
     optional: true
 
   '@typescript/native-preview-darwin-arm64@7.0.0-dev.20251212.1':
     optional: true
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20251201.1':
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20251207.1':
     optional: true
 
   '@typescript/native-preview-darwin-x64@7.0.0-dev.20251212.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20251201.1':
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20251207.1':
     optional: true
 
   '@typescript/native-preview-linux-arm64@7.0.0-dev.20251212.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20251201.1':
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20251207.1':
     optional: true
 
   '@typescript/native-preview-linux-arm@7.0.0-dev.20251212.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20251201.1':
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20251207.1':
     optional: true
 
   '@typescript/native-preview-linux-x64@7.0.0-dev.20251212.1':
     optional: true
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20251201.1':
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20251207.1':
     optional: true
 
   '@typescript/native-preview-win32-arm64@7.0.0-dev.20251212.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20251201.1':
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20251207.1':
     optional: true
 
   '@typescript/native-preview-win32-x64@7.0.0-dev.20251212.1':
     optional: true
 
-  '@typescript/native-preview@7.0.0-dev.20251201.1':
+  '@typescript/native-preview@7.0.0-dev.20251207.1':
     optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20251201.1
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20251201.1
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20251201.1
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20251201.1
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20251201.1
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20251201.1
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20251201.1
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20251207.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20251207.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20251207.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20251207.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20251207.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20251207.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20251207.1
 
   '@typescript/native-preview@7.0.0-dev.20251212.1':
     optionalDependencies:
@@ -14111,7 +13576,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitejs/plugin-react@5.1.1(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@vitejs/plugin-react@5.1.1(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@babel/core': 7.28.5
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.5)
@@ -14119,7 +13584,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.47
       '@types/babel__core': 7.20.5
       react-refresh: 0.18.0
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -14136,13 +13601,13 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@vitest/browser-playwright@4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)':
+  '@vitest/browser-playwright@4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)':
     dependencies:
-      '@vitest/browser': 4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
-      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@vitest/browser': 4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       playwright: 1.57.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vitest: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.2)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -14184,16 +13649,16 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@vitest/browser@4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)':
+  '@vitest/browser@4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)':
     dependencies:
-      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@vitest/utils': 4.0.15
       magic-string: 0.30.21
       pixelmatch: 7.1.0
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.0.3
-      vitest: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vitest: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.2)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
@@ -14237,13 +13702,13 @@ snapshots:
       chai: 6.2.1
       tinyrainbow: 3.0.3
 
-  '@vitest/mocker@3.2.4(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@vitest/mocker@3.2.4(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@vitest/spy': 3.2.4
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   '@vitest/mocker@4.0.14(vite@7.2.7(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
@@ -14262,13 +13727,13 @@ snapshots:
     optionalDependencies:
       vite: 7.2.7(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
-  '@vitest/mocker@4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
+  '@vitest/mocker@4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@vitest/spy': 4.0.15
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -14357,7 +13822,7 @@ snapshots:
       archy: 1.0.0
       carstream: 2.3.0
       cli-color: 2.0.4
-      multiformats: 13.4.1
+      multiformats: 13.4.2
       sade: 1.8.1
 
   '@whatwg-node/disposablestack@0.0.6':
@@ -14471,23 +13936,7 @@ snapshots:
     dependencies:
       isexe: 2.0.0
 
-  '@zxcvbn-ts/core@3.0.4':
-    dependencies:
-      fastest-levenshtein: 1.0.16
-
-  '@zxcvbn-ts/language-common@3.0.4': {}
-
   abbrev@3.0.1: {}
-
-  abitype@1.1.0(typescript@5.9.3)(zod@4.1.13):
-    optionalDependencies:
-      typescript: 5.9.3
-      zod: 4.1.13
-
-  abitype@1.2.1(typescript@5.9.3)(zod@4.1.13):
-    optionalDependencies:
-      typescript: 5.9.3
-      zod: 4.1.13
 
   abort-controller@3.0.0:
     dependencies:
@@ -14556,8 +14005,6 @@ snapshots:
       fast-uri: 3.1.0
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
-
-  alien-signals@2.0.6: {}
 
   ansi-align@3.0.1:
     dependencies:
@@ -14782,6 +14229,7 @@ snapshots:
       '@babel/runtime': 7.28.4
       cosmiconfig: 7.1.0
       resolve: 1.22.11
+    optional: true
 
   babel-preset-current-node-syntax@1.2.0(@babel/core@7.28.5):
     dependencies:
@@ -14966,10 +14414,6 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
-  browser-tabs-lock@1.3.0:
-    dependencies:
-      lodash: 4.17.21
-
   browserslist@4.28.0:
     dependencies:
       baseline-browser-mapping: 2.8.32
@@ -15066,6 +14510,8 @@ snapshots:
       uint8arraylist: 2.4.8
 
   cborg@4.3.1: {}
+
+  cborg@4.3.2: {}
 
   ccount@2.0.1: {}
 
@@ -15198,8 +14644,6 @@ snapshots:
 
   clone@1.0.4: {}
 
-  clsx@1.2.1: {}
-
   clsx@2.1.1: {}
 
   cmd-ts@0.14.3:
@@ -15327,8 +14771,6 @@ snapshots:
 
   content-type@1.0.5: {}
 
-  convert-source-map@1.9.0: {}
-
   convert-source-map@2.0.0: {}
 
   cookie-es@1.2.2: {}
@@ -15350,12 +14792,6 @@ snapshots:
       graceful-fs: 4.2.11
       p-event: 6.0.1
 
-  copy-to-clipboard@3.3.3:
-    dependencies:
-      toggle-selection: 1.0.6
-
-  core-js@3.41.0: {}
-
   core-js@3.47.0: {}
 
   core-util-is@1.0.3: {}
@@ -15367,6 +14803,7 @@ snapshots:
       parse-json: 5.2.0
       path-type: 4.0.0
       yaml: 1.10.2
+    optional: true
 
   cosmiconfig@9.0.0(typescript@5.9.3):
     dependencies:
@@ -15413,8 +14850,6 @@ snapshots:
   crossws@0.3.5:
     dependencies:
       uncrypto: 0.1.3
-
-  crypto-js@4.2.0: {}
 
   css-select@5.2.2:
     dependencies:
@@ -15670,7 +15105,7 @@ snapshots:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
-  dompurify@3.3.0:
+  dompurify@3.3.1:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -16163,8 +15598,6 @@ snapshots:
 
   eventemitter3@4.0.7: {}
 
-  eventemitter3@5.0.1: {}
-
   events-universal@1.0.1:
     dependencies:
       bare-events: 2.8.2
@@ -16478,8 +15911,6 @@ snapshots:
       fast-deep-equal: 3.1.3
       fast-querystring: 1.1.2
       safe-regex2: 3.1.0
-
-  find-root@1.1.0: {}
 
   find-up-simple@1.0.1: {}
 
@@ -16839,11 +16270,9 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
-  hoist-non-react-statics@3.3.2:
-    dependencies:
-      react-is: 16.13.1
-
   hono@4.10.7: {}
+
+  hono@4.11.1: {}
 
   hosted-git-info@6.1.3:
     dependencies:
@@ -16952,7 +16381,8 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
-  idb-keyval@6.2.1: {}
+  idb-keyval@6.2.1:
+    optional: true
 
   idb@8.0.3: {}
 
@@ -17006,23 +16436,18 @@ snapshots:
 
   inline-style-parser@0.2.7: {}
 
-  input-otp@1.4.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
-    dependencies:
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-
-  inquirer-autocomplete-prompt@1.4.0(inquirer@8.2.7(@types/node@25.0.1)):
+  inquirer-autocomplete-prompt@1.4.0(inquirer@8.2.7(@types/node@25.0.2)):
     dependencies:
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       figures: 3.2.0
-      inquirer: 8.2.7(@types/node@25.0.1)
+      inquirer: 8.2.7(@types/node@25.0.2)
       run-async: 2.4.1
       rxjs: 6.6.7
 
-  inquirer@8.2.7(@types/node@25.0.1):
+  inquirer@8.2.7(@types/node@25.0.2):
     dependencies:
-      '@inquirer/external-editor': 1.0.3(@types/node@25.0.1)
+      '@inquirer/external-editor': 1.0.3(@types/node@25.0.2)
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       cli-cursor: 3.1.0
@@ -17300,10 +16725,6 @@ snapshots:
   isexe@2.0.0: {}
 
   isexe@3.1.1: {}
-
-  isows@1.0.7(ws@8.18.3):
-    dependencies:
-      ws: 8.18.3
 
   istanbul-lib-coverage@3.2.2: {}
 
@@ -17657,6 +17078,8 @@ snapshots:
   jiti@2.6.1: {}
 
   jose@6.1.2: {}
+
+  jose@6.1.3: {}
 
   jpeg-js@0.4.4: {}
 
@@ -18422,13 +17845,13 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  netlify-cli@23.12.2(@types/node@25.0.1)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3):
+  netlify-cli@23.12.2(@types/node@25.0.2)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3):
     dependencies:
       '@fastify/static': 7.0.4
       '@netlify/ai': 0.3.3(@netlify/api@14.0.11)
       '@netlify/api': 14.0.11
       '@netlify/blobs': 10.1.0
-      '@netlify/build': 35.5.2(@opentelemetry/api@1.8.0)(@types/node@25.0.1)(picomatch@4.0.3)(rollup@4.53.3)
+      '@netlify/build': 35.5.2(@opentelemetry/api@1.8.0)(@types/node@25.0.2)(picomatch@4.0.3)(rollup@4.53.3)
       '@netlify/build-info': 10.0.10
       '@netlify/config': 24.1.1
       '@netlify/dev-utils': 4.3.2
@@ -18479,8 +17902,8 @@ snapshots:
       http-proxy: 1.18.1(debug@4.4.3)
       http-proxy-middleware: 2.0.9(debug@4.4.3)
       https-proxy-agent: 7.0.6(supports-color@10.2.2)
-      inquirer: 8.2.7(@types/node@25.0.1)
-      inquirer-autocomplete-prompt: 1.4.0(inquirer@8.2.7(@types/node@25.0.1))
+      inquirer: 8.2.7(@types/node@25.0.2)
+      inquirer-autocomplete-prompt: 1.4.0(inquirer@8.2.7(@types/node@25.0.2))
       ipx: 3.1.1(@netlify/blobs@10.1.0)(aws4fetch@1.0.20)(idb-keyval@6.2.1)
       is-docker: 3.0.0
       is-stream: 4.0.1
@@ -18554,13 +17977,13 @@ snapshots:
 
   netlify-redirector@0.5.0: {}
 
-  netlify@23.12.3(@types/node@25.0.1)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3):
+  netlify@23.12.3(@types/node@25.0.2)(aws4fetch@1.0.20)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.53.3):
     dependencies:
       '@fastify/static': 7.0.4
       '@netlify/ai': 0.3.4(@netlify/api@14.0.11)
       '@netlify/api': 14.0.11
       '@netlify/blobs': 10.1.0
-      '@netlify/build': 35.5.2(@opentelemetry/api@1.8.0)(@types/node@25.0.1)(picomatch@4.0.3)(rollup@4.53.3)
+      '@netlify/build': 35.5.2(@opentelemetry/api@1.8.0)(@types/node@25.0.2)(picomatch@4.0.3)(rollup@4.53.3)
       '@netlify/build-info': 10.0.10
       '@netlify/config': 24.1.1
       '@netlify/dev-utils': 4.3.2
@@ -18611,8 +18034,8 @@ snapshots:
       http-proxy: 1.18.1(debug@4.4.3)
       http-proxy-middleware: 2.0.9(debug@4.4.3)
       https-proxy-agent: 7.0.6(supports-color@10.2.2)
-      inquirer: 8.2.7(@types/node@25.0.1)
-      inquirer-autocomplete-prompt: 1.4.0(inquirer@8.2.7(@types/node@25.0.1))
+      inquirer: 8.2.7(@types/node@25.0.2)
+      inquirer-autocomplete-prompt: 1.4.0(inquirer@8.2.7(@types/node@25.0.2))
       ipx: 3.1.1(@netlify/blobs@10.1.0)(aws4fetch@1.0.20)(idb-keyval@6.2.1)
       is-docker: 3.0.0
       is-stream: 4.0.1
@@ -18924,35 +18347,6 @@ snapshots:
       object-keys: 1.1.1
       safe-push-apply: 1.0.0
 
-  ox@0.6.9(typescript@5.9.3)(zod@4.1.13):
-    dependencies:
-      '@adraffy/ens-normalize': 1.11.1
-      '@noble/curves': 1.9.7
-      '@noble/hashes': 1.8.0
-      '@scure/bip32': 1.7.0
-      '@scure/bip39': 1.6.0
-      abitype: 1.2.1(typescript@5.9.3)(zod@4.1.13)
-      eventemitter3: 5.0.1
-    optionalDependencies:
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - zod
-
-  ox@0.9.6(typescript@5.9.3)(zod@4.1.13):
-    dependencies:
-      '@adraffy/ens-normalize': 1.11.1
-      '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.1
-      '@noble/hashes': 1.8.0
-      '@scure/bip32': 1.7.0
-      '@scure/bip39': 1.6.0
-      abitype: 1.1.0(typescript@5.9.3)(zod@4.1.13)
-      eventemitter3: 5.0.1
-    optionalDependencies:
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - zod
-
   oxc-resolver@11.14.0:
     optionalDependencies:
       '@oxc-resolver/binding-android-arm-eabi': 11.14.0
@@ -19143,7 +18537,8 @@ snapshots:
 
   path-to-regexp@6.3.0: {}
 
-  path-type@4.0.0: {}
+  path-type@4.0.0:
+    optional: true
 
   path-type@6.0.0: {}
 
@@ -19242,8 +18637,6 @@ snapshots:
       fflate: 0.4.8
       preact: 10.28.0
       web-vitals: 4.2.4
-
-  preact@10.24.2: {}
 
   preact@10.28.0: {}
 
@@ -19400,10 +18793,6 @@ snapshots:
 
   pure-rand@7.0.1: {}
 
-  qrcode.react@4.2.0(react@19.2.0):
-    dependencies:
-      react: 19.2.0
-
   qs@6.13.0:
     dependencies:
       side-channel: 1.1.0
@@ -19493,8 +18882,6 @@ snapshots:
       goober: 2.1.18(csstype@3.2.3)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
-
-  react-is@16.13.1: {}
 
   react-is@17.0.2: {}
 
@@ -19611,8 +18998,6 @@ snapshots:
       get-intrinsic: 1.3.0
       get-proto: 1.0.1
       which-builtin-type: 1.2.1
-
-  regenerator-runtime@0.14.1: {}
 
   regex-recursion@6.0.2:
     dependencies:
@@ -20090,8 +19475,6 @@ snapshots:
       buffer-from: 1.1.2
       source-map: 0.6.1
 
-  source-map@0.5.7: {}
-
   source-map@0.6.1: {}
 
   space-separated-tokens@2.0.2: {}
@@ -20302,8 +19685,6 @@ snapshots:
     dependencies:
       inline-style-parser: 0.2.7
 
-  stylis@4.2.0: {}
-
   supports-color@10.2.2: {}
 
   supports-color@7.2.0:
@@ -20342,8 +19723,6 @@ snapshots:
       '@pkgr/core': 0.2.9
 
   system-architecture@0.1.0: {}
-
-  tabbable@6.3.0: {}
 
   tailwind-merge@3.4.0: {}
 
@@ -20450,8 +19829,6 @@ snapshots:
 
   toad-cache@3.7.0: {}
 
-  toggle-selection@1.0.6: {}
-
   toidentifier@1.0.1: {}
 
   token-types@5.0.1:
@@ -20528,14 +19905,14 @@ snapshots:
       yn: 3.1.1
     optional: true
 
-  ts-node@10.9.2(@types/node@25.0.1)(typescript@5.9.3):
+  ts-node@10.9.2(@types/node@25.0.2)(typescript@5.9.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.12
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 25.0.1
+      '@types/node': 25.0.2
       acorn: 8.15.0
       acorn-walk: 8.3.4
       arg: 4.1.3
@@ -20673,8 +20050,6 @@ snapshots:
       through: 2.3.8
 
   uncrypto@0.1.3: {}
-
-  undici-types@7.12.0: {}
 
   undici-types@7.16.0: {}
 
@@ -20827,30 +20202,15 @@ snapshots:
 
   urlpattern-polyfill@8.0.2: {}
 
-  use-fireproof@0.24.2-dev-clerk(@adviser/cement@0.5.5(typescript@5.9.3))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0)):
+  use-fireproof@0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3):
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.2-dev-clerk(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))
-      '@fireproof/core-runtime': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.2-dev-clerk(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.2-dev-clerk(typescript@5.9.3)
-      dompurify: 3.3.0
-      jose: 6.1.2
-      react: 19.2.0
-      ts-essentials: 10.1.1(typescript@5.9.3)
+      '@fireproof/use-fireproof': 0.24.3-dev-use-livequery(@adviser/cement@0.5.5(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
     transitivePeerDependencies:
-      - '@types/react'
+      - '@adviser/cement'
       - bufferutil
-      - immer
+      - react
       - react-dom
-      - supports-color
       - typescript
-      - use-sync-external-store
       - utf-8-validate
 
   use-sync-external-store@1.6.0(react@19.2.0):
@@ -20898,23 +20258,6 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  viem@2.41.2(typescript@5.9.3)(zod@4.1.13):
-    dependencies:
-      '@noble/curves': 1.9.1
-      '@noble/hashes': 1.8.0
-      '@scure/bip32': 1.7.0
-      '@scure/bip39': 1.6.0
-      abitype: 1.1.0(typescript@5.9.3)(zod@4.1.13)
-      isows: 1.0.7(ws@8.18.3)
-      ox: 0.9.6(typescript@5.9.3)(zod@4.1.13)
-      ws: 8.18.3
-    optionalDependencies:
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-      - zod
-
   vite-node@3.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       cac: 6.7.14
@@ -20936,13 +20279,13 @@ snapshots:
       - tsx
       - yaml
 
-  vite-node@3.2.4(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2):
+  vite-node@3.2.4(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3(supports-color@10.2.2)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -20973,13 +20316,13 @@ snapshots:
       - supports-color
       - typescript
 
-  vite-tsconfig-paths@5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)):
+  vite-tsconfig-paths@5.1.4(typescript@5.9.3)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
       globrex: 0.1.2
       tsconfck: 3.1.6(typescript@5.9.3)
     optionalDependencies:
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -21000,7 +20343,7 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.8.2
 
-  vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2):
+  vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.3)
@@ -21009,7 +20352,7 @@ snapshots:
       rollup: 4.53.3
       tinyglobby: 0.2.15
     optionalDependencies:
-      '@types/node': 25.0.1
+      '@types/node': 25.0.2
       fsevents: 2.3.3
       jiti: 2.6.1
       lightningcss: 1.30.2
@@ -21055,10 +20398,10 @@ snapshots:
       - tsx
       - yaml
 
-  vitest@4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2):
+  vitest@4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.2)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       '@vitest/expect': 4.0.15
-      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@vitest/pretty-format': 4.0.15
       '@vitest/runner': 4.0.15
       '@vitest/snapshot': 4.0.15
@@ -21075,12 +20418,12 @@ snapshots:
       tinyexec: 1.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
-      vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vite: 7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
-      '@types/node': 25.0.1
-      '@vitest/browser-playwright': 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
+      '@types/node': 25.0.2
+      '@vitest/browser-playwright': 4.0.15(playwright@1.57.0)(vite@7.2.7(@types/node@25.0.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)
     transitivePeerDependencies:
       - jiti
       - less
@@ -21292,7 +20635,8 @@ snapshots:
 
   yallist@5.0.0: {}
 
-  yaml@1.10.2: {}
+  yaml@1.10.2:
+    optional: true
 
   yaml@2.8.2: {}
 
@@ -21349,12 +20693,6 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.1.13: {}
-
-  zustand@5.0.3(@types/react@19.2.7)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0)):
-    optionalDependencies:
-      '@types/react': 19.2.7
-      react: 19.2.0
-      use-sync-external-store: 1.6.0(react@19.2.0)
 
   zwitch@2.0.4: {}
 
