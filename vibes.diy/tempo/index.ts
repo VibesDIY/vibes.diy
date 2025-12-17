@@ -14,44 +14,44 @@ const clusterName = config.get("clusterName") || "tempo";
 
 // Network configuration
 const network = new hcloud.Network("k3s-network", {
-    ipRange: "10.0.0.0/16",
+  ipRange: "10.0.0.0/16",
 });
 
 const subnet = new hcloud.NetworkSubnet("k3s-subnet", {
-    networkId: network.id.apply(id => parseInt(id)),
-    type: "cloud",
-    networkZone: "us-west",
-    ipRange: "10.0.1.0/24",
+  networkId: network.id.apply((id) => parseInt(id)),
+  type: "cloud",
+  networkZone: "us-west",
+  ipRange: "10.0.1.0/24",
 });
 
 // Firewall rules
 const firewall = new hcloud.Firewall("k3s-firewall", {
-    rules: [
-        {
-            direction: "in",
-            protocol: "tcp",
-            port: "22",
-            sourceIps: ["0.0.0.0/0", "::/0"],
-        },
-        {
-            direction: "in",
-            protocol: "tcp",
-            port: "6443",
-            sourceIps: ["0.0.0.0/0", "::/0"],
-        },
-        {
-            direction: "in",
-            protocol: "tcp",
-            port: "80",
-            sourceIps: ["0.0.0.0/0", "::/0"],
-        },
-        {
-            direction: "in",
-            protocol: "tcp",
-            port: "443",
-            sourceIps: ["0.0.0.0/0", "::/0"],
-        },
-    ],
+  rules: [
+    {
+      direction: "in",
+      protocol: "tcp",
+      port: "22",
+      sourceIps: ["0.0.0.0/0", "::/0"],
+    },
+    {
+      direction: "in",
+      protocol: "tcp",
+      port: "6443",
+      sourceIps: ["0.0.0.0/0", "::/0"],
+    },
+    {
+      direction: "in",
+      protocol: "tcp",
+      port: "80",
+      sourceIps: ["0.0.0.0/0", "::/0"],
+    },
+    {
+      direction: "in",
+      protocol: "tcp",
+      port: "443",
+      sourceIps: ["0.0.0.0/0", "::/0"],
+    },
+  ],
 });
 
 // Complete K3s installation script with all add-ons
@@ -283,21 +283,29 @@ echo "Cluster: ${clusterName}"
 `;
 
 // K3s server
-const server = new hcloud.Server("k3s-server", {
+const server = new hcloud.Server(
+  "k3s-server",
+  {
     serverType: serverType,
     image: "ubuntu-22.04",
     location: location,
     sshKeys: [sshKeyName],
-    networks: [{
-        networkId: network.id.apply(id => parseInt(id)),
-    }],
-    firewallIds: [firewall.id.apply(id => parseInt(id))],
+    networks: [
+      {
+        networkId: network.id.apply((id) => parseInt(id)),
+      },
+    ],
+    firewallIds: [firewall.id.apply((id) => parseInt(id))],
     userData: k3sInstallScript,
-    publicNets: [{
+    publicNets: [
+      {
         ipv4Enabled: true,
         ipv6Enabled: true,
-    }],
-}, { dependsOn: [subnet] });
+      },
+    ],
+  },
+  { dependsOn: [subnet] },
+);
 
 // Exports
 export const serverIp = server.ipv4Address;

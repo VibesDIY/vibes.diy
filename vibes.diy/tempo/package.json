@@ -1,9 +1,9 @@
 {
-    "name": "@vibes.diy/tempo",
-    "main": "index.ts",
-    "dependencies": {
-        "@pulumi/hcloud": "^1.29.0",
-        "@pulumi/kubernetes": "^4.24.1",
-        "@pulumi/pulumi": "^3.113.0"
-    }
+  "name": "@vibes.diy/tempo",
+  "main": "index.ts",
+  "dependencies": {
+    "@pulumi/hcloud": "^1.29.0",
+    "@pulumi/kubernetes": "^4.24.1",
+    "@pulumi/pulumi": "^3.113.0"
+  }
 }
