@@ -33,6 +33,7 @@
     "hosting/**/*"
   ],
   "exclude": [
+    "vibes.diy/tempo/**",
     "vibes.diy/**/root.*",
     "vibes.diy/**/root.test.*",
     "**/dist/**",
