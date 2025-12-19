@@ -1339,6 +1339,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                         float: "right",
                         maxWidth: "525px",
                         marginLeft: "24px",
+                        marginRight: "14px",
                         marginBottom: "16px",
                         borderRadius: "8px",
                       }}
@@ -1356,8 +1357,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   <p style={{ marginBottom: "18px" }}>
                     Every vibe-coded project starts in the vibe zone.
                   </p>
-                  {isMobile && (
-                    <img
+                  {isMobile && (<div style={{display: "flex", justifyContent: 'center', alignItems: 'center'}}>
+<img
                       src={vibeZoneChart}
                       alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
                       style={{
@@ -1366,6 +1367,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                         borderRadius: "8px",
                       }}
                     />
+                  </div>
+                  
+                    
                   )}
                   <p style={{ marginBottom: "18px" }}>
                     The model understands you.
