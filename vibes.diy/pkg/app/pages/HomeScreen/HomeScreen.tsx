@@ -85,7 +85,7 @@ import htmlpng from "../../assets/html.png";
 import mouth from "../../assets/mouth.gif";
 import rainbowComputer from "../../assets/rainbow-computer.gif";
 import fireproofLogo from "../../assets/fireproof-logo.png";
-import vibeZoneChart from "../../assets/vibe-zone.jpg";
+import vibeZoneChart from "../../assets/vibezone.png";
 import {
   LoginIcon,
   SettingsIcon,
@@ -1332,13 +1332,15 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   {!isMobile && (
                     <img
                       src={vibeZoneChart}
-                      alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
+                      alt="Vibe Zone chart showing Complexity and Happiness over Time"
                       style={{
                         float: "right",
-                        maxWidth: "525px",
-                        marginLeft: "24px",
+                        maxWidth: "500px",
+                        marginLeft: "32px",
+                        marginRight: "24px",
                         marginBottom: "16px",
-                        borderRadius: "8px",
+                        borderRadius: "12px",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
                       }}
                     />
                   )}
@@ -1357,11 +1359,13 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   {isMobile && (
                     <img
                       src={vibeZoneChart}
-                      alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
+                      alt="Vibe Zone chart showing Complexity and Happiness over Time"
                       style={{
                         width: "100%",
+                        maxWidth: "350px",
                         marginBottom: "18px",
-                        borderRadius: "8px",
+                        borderRadius: "12px",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
                       }}
                     />
                   )}
