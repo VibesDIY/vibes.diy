@@ -14,7 +14,7 @@ import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { DashboardProvider } from "./contexts/DashboardContext.js";
 import { ErrorBoundary } from "./ErrorBoundary.js";
 
-import { Home } from "./routes/home.js";
+import Home from "./routes/home.js";
 import { About } from "./routes/about.js";
 import { Settings } from "./routes/settings.js";
 import { Firehose } from "./routes/firehose.js";

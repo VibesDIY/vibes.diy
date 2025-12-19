@@ -1,17 +1,8 @@
 import React, { useCallback, useState } from "react";
 import { useNewSessionChat } from "../hooks/useNewSessionChat.js";
-import ChatInput from "./ChatInput.js";
-import FeaturedVibes from "./FeaturedVibes.js";
+import NewSessionContent from "./NewSessionContent/index.js";
 import SessionSidebar from "./SessionSidebar.js";
-import { BrutalistCard } from "./vibes/BrutalistCard.js";
-import { VibesButton } from "./vibes/VibesButton/index.js";
-import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
-import {
-  partyPlannerPrompt,
-  progressTrackerPrompt,
-  jamSessionPrompt,
-} from "../data/quick-suggestions-data.js";
-import { featuredModels } from "../data/models.js";
+import { MenuIcon } from "./ChatHeaderIcons.js";
 import { Toaster } from "react-hot-toast";
 
 interface NewSessionViewProps {
@@ -26,7 +17,11 @@ export default function NewSessionView({
   // Sidebar state
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
-  // Sidebar handler
+  // Sidebar handlers
+  const openSidebar = useCallback(() => {
+    setIsSidebarVisible(true);
+  }, []);
+
   const closeSidebar = useCallback(() => {
     setIsSidebarVisible(false);
   }, []);
@@ -55,97 +50,25 @@ export default function NewSessionView({
         <Toaster />
       </div>
       <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
-        <div className="px-8 pb-8 pt-0">
-          {/* Hamburger menu button - top left in normal flow with z-index */}
-          <div className="mb-8 ml-6 relative z-20">
-            <VibesSwitch
-              size={75}
-              isActive={isSidebarVisible}
-              onToggle={setIsSidebarVisible}
-              className="cursor-pointer"
-            />
-          </div>
-          <div
-            style={{
-              maxWidth: "800px",
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
-              margin: "0 auto",
-            }}
+        {/* Header with menu button */}
+        <div className="flex items-center justify-between p-4">
+          <button
+            type="button"
+            onClick={openSidebar}
+            className="mr-3 px-2 py-4 text-light-primary hover:text-accent-02-light dark:text-dark-primary dark:hover:text-accent-02-dark"
+            aria-label="Open menu"
           >
-            <BrutalistCard size="lg">
-              <h1 className="text-4xl font-bold">Code is easy, now</h1>
-            </BrutalistCard>
+            <MenuIcon />
+          </button>
+          <div className="flex-1" />
+        </div>
 
-            {/* Prompt suggestions section */}
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <VibesButton
-                variant="blue"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(partyPlannerPrompt)}
-              >
-                Party Planner
-              </VibesButton>
-              <VibesButton
-                variant="red"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(progressTrackerPrompt)}
-              >
-                Random App
-              </VibesButton>
-              <VibesButton
-                variant="yellow"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(jamSessionPrompt)}
-              >
-                Jam Session
-              </VibesButton>
-            </div>
-
-            {/* Chat input form */}
-            <BrutalistCard
-              size="md"
-              style={{
-                width: "100%",
-                background: "var(--vibes-gray-lighter)",
-              }}
-            >
-              <div
-                style={{
-                  marginBottom: "12px",
-                  fontWeight: 700,
-                  fontSize: "1.125rem",
-                }}
-              >
-                Vibe code apps instantly
-              </div>
-              <ChatInput
-                chatState={chatState}
-                showModelPickerInChat={chatState.showModelPickerInChat}
-                currentModel={chatState.effectiveModel}
-                onModelChange={async (modelId: string) => {
-                  if (chatState.updateSelectedModel) {
-                    await chatState.updateSelectedModel(modelId);
-                  }
-                }}
-                models={featuredModels}
-                globalModel={chatState.globalModel}
-                onSend={() => {
-                  // Session creation is handled in chatState.sendMessage
-                }}
-              />
-            </BrutalistCard>
-
-            {/* Featured vibes section */}
-            <BrutalistCard size="lg">
-              <p>Enjoy our</p>
-              <h2 className="text-2xl font-bold">Featured vibes</h2>
-            </BrutalistCard>
-
-            <FeaturedVibes count={3} />
-          </div>
+        {/* Main content section */}
+        <div className="flex-1 px-8 pb-8">
+          <NewSessionContent
+            chatState={chatState}
+            handleSelectSuggestion={handleSelectSuggestion}
+          />
         </div>
       </div>
       <SessionSidebar

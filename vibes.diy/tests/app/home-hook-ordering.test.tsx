@@ -89,7 +89,7 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
 }));
 
 // Import the component under test after mocks
-import { Home } from "../../pkg/app/routes/home.js";
+import Home from "../../pkg/app/routes/home.js";
 
 describe("SessionWrapper Hook Ordering", () => {
   let consoleErrorSpy: ReturnType<typeof vi.fn>;

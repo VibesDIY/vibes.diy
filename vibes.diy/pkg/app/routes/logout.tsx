@@ -128,7 +128,7 @@ export function Logout() {
                 ),
               }}
             >
-              <div style={getContentWrapperStyle(isMobile, true)}>
+              <div style={getContentWrapperStyle(isMobile, true, "square")}>
                 <div
                   style={getIconContainerStyle(
                     "gray",

@@ -129,11 +129,27 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
     "react-cookie-consent":
       "https://esm.sh/react-cookie-consent?deps=react@19.2.1,react-dom@19.2.1",
 
+    three: "https://esm.sh/three@0.182.0",
+    "three/examples/jsm/lines/Line2.js":
+      "https://esm.sh/three@0.182.0/examples/jsm/lines/Line2.js",
+    "three/examples/jsm/lines/LineGeometry.js":
+      "https://esm.sh/three@0.182.0/examples/jsm/lines/LineGeometry.js",
+    "three/examples/jsm/lines/LineMaterial.js":
+      "https://esm.sh/three@0.182.0/examples/jsm/lines/LineMaterial.js",
+    "three/examples/jsm/geometries/TextGeometry.js":
+      "https://esm.sh/three@0.182.0/examples/jsm/geometries/TextGeometry.js",
+    "three/examples/jsm/loaders/FontLoader.js":
+      "https://esm.sh/three@0.182.0/examples/jsm/loaders/FontLoader.js",
+    animejs: "https://esm.sh/animejs@4.2.2",
+    "monaco-editor": "https://esm.sh/monaco-editor@0.55.1",
+    shiki: "https://esm.sh/shiki@3.20.0",
+
     "use-vibes": "/dist/use-vibes/pkg/index.js",
     "use-fireproof": "/dist/use-vibes/pkg/index.js",
 
     "@vibes.diy/prompts": "/dist/prompts/pkg/index.js",
     "@vibes.diy/use-vibes-base": "/dist/use-vibes/base/index.js",
+    "@vibes.diy/use-vibes-types": "/dist/use-vibes/types/index.js",
 
     "@fireproof/core-base": "FP",
     "@fireproof/core-blockstore": "FP",

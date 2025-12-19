@@ -214,7 +214,7 @@ function InviteContent() {
                   ),
                 }}
               >
-                <div style={getContentWrapperStyle(isMobile, true)}>
+                <div style={getContentWrapperStyle(isMobile, true, "square")}>
                   <div
                     style={getIconContainerStyle(
                       buttonVariant,

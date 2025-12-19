@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Home } from "~/vibes.diy/app/routes/home.js";
+import Home from "~/vibes.diy/app/routes/home.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 const mocks = vi.hoisted(() => {

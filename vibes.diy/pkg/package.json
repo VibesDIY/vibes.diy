@@ -43,6 +43,7 @@
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
+    "animejs": "^4.2.2",
     "call-ai": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -62,6 +63,7 @@
     "react-router": "^7.10.1",
     "react-router-dom": "^7.10.1",
     "tailwind-merge": "^3.4.0",
+    "three": "^0.182.0",
     "use-vibes": "workspace:*",
     "zod": "^4.1.13"
   },
@@ -85,6 +87,7 @@
     "@types/mime-types": "^3.0.1",
     "@types/react": "~19.2.7",
     "@types/react-dom": "~19.2.2",
+    "@types/three": "^0.182.0",
     "cmd-ts": "^0.14.3",
     "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
