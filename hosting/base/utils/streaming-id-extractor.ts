@@ -49,23 +49,23 @@ export function createUsageExtractorStream(
     }
   }
 
-  function processSseLine(line: string) {
+  function processSseLine(line: string): boolean {
     const trimmed = line.trimEnd();
-    if (!trimmed.startsWith("data:")) return;
+    if (!trimmed.startsWith("data:")) return false;
 
     let payload = trimmed.slice("data:".length);
     if (payload.startsWith(" ")) payload = payload.slice(1);
     const jsonStr = payload.trim();
-    if (jsonStr === "[DONE]") return;
+    if (jsonStr === "[DONE]") return false;
 
     let parsed: unknown;
     try {
       parsed = JSON.parse(jsonStr) as unknown;
     } catch {
-      return;
+      return false;
     }
 
-    if (!parsed || typeof parsed !== "object") return;
+    if (!parsed || typeof parsed !== "object") return false;
     const data = parsed as Record<string, unknown>;
 
     const id = typeof data.id === "string" ? data.id : undefined;
@@ -78,10 +78,10 @@ export function createUsageExtractorStream(
     if (created && !extractedCreatedAt) extractedCreatedAt = created;
 
     const usageValue = data.usage;
-    if (!usageValue || typeof usageValue !== "object") return;
+    if (!usageValue || typeof usageValue !== "object") return false;
     const usage = usageValue as Record<string, unknown>;
     const cost = usage.cost;
-    if (typeof cost !== "number") return;
+    if (typeof cost !== "number") return false;
 
     callbackCalled = true;
     safelyCallOnUsageExtracted({
@@ -97,7 +97,7 @@ export function createUsageExtractorStream(
           : 0,
       hasUsageData: true,
     });
-    buffer = "";
+    return true;
   }
 
   return new TransformStream({
@@ -129,8 +129,10 @@ export function createUsageExtractorStream(
       buffer = buffer.slice(lastNewlineIndex + 1);
 
       for (const line of completeLines.split("\n")) {
-        processSseLine(line);
-        if (callbackCalled) return;
+        if (processSseLine(line)) {
+          buffer = "";
+          return;
+        }
       }
 
       // Keep remainder bounded in case a single line is extremely large.
@@ -147,8 +149,7 @@ export function createUsageExtractorStream(
 
       // Process any remaining lines (even if the stream didn't end in a newline)
       for (const line of buffer.split("\n")) {
-        processSseLine(line);
-        if (callbackCalled) {
+        if (processSseLine(line)) {
           buffer = "";
           return;
         }
