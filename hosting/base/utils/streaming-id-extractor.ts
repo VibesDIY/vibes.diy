@@ -34,11 +34,71 @@ export interface StreamingUsageData {
 export function createUsageExtractorStream(
   onUsageExtracted: (data: StreamingUsageData) => void,
 ): TransformStream<Uint8Array, Uint8Array> {
+  const decoder = new TextDecoder();
   let callbackCalled = false;
   let extractedId: string | null = null;
   let extractedModel: string | null = null;
   let extractedCreatedAt: number | null = null;
   let buffer = "";
+
+  function safelyCallOnUsageExtracted(data: StreamingUsageData) {
+    try {
+      onUsageExtracted(data);
+    } catch (error) {
+      console.error("Usage extractor callback failed:", error);
+    }
+  }
+
+  function processSseLine(line: string) {
+    const trimmed = line.trimEnd();
+    if (!trimmed.startsWith("data:")) return;
+
+    let payload = trimmed.slice("data:".length);
+    if (payload.startsWith(" ")) payload = payload.slice(1);
+    const jsonStr = payload.trim();
+    if (jsonStr === "[DONE]") return;
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonStr) as unknown;
+    } catch {
+      return;
+    }
+
+    if (!parsed || typeof parsed !== "object") return;
+    const data = parsed as Record<string, unknown>;
+
+    const id = typeof data.id === "string" ? data.id : undefined;
+    const model = typeof data.model === "string" ? data.model : undefined;
+    const created = typeof data.created === "number" ? data.created : undefined;
+
+    // Track ID/model/created if present (typically in early chunks)
+    if (id && !extractedId) extractedId = id;
+    if (model && !extractedModel) extractedModel = model;
+    if (created && !extractedCreatedAt) extractedCreatedAt = created;
+
+    const usageValue = data.usage;
+    if (!usageValue || typeof usageValue !== "object") return;
+    const usage = usageValue as Record<string, unknown>;
+    const cost = usage.cost;
+    if (typeof cost !== "number") return;
+
+    callbackCalled = true;
+    safelyCallOnUsageExtracted({
+      id: id ?? extractedId ?? "unknown",
+      model: model ?? extractedModel ?? "unknown",
+      createdAt: created ?? extractedCreatedAt ?? Math.floor(Date.now() / 1000),
+      cost,
+      tokensPrompt:
+        typeof usage.prompt_tokens === "number" ? usage.prompt_tokens : 0,
+      tokensCompletion:
+        typeof usage.completion_tokens === "number"
+          ? usage.completion_tokens
+          : 0,
+      hasUsageData: true,
+    });
+    buffer = "";
+  }
 
   return new TransformStream({
     transform(chunk, controller) {
@@ -56,71 +116,47 @@ export function createUsageExtractorStream(
       }
 
       // Decode and add to buffer (handles split chunks)
-      const text = new TextDecoder().decode(chunk);
-      buffer += text;
+      buffer += decoder.decode(chunk, { stream: true });
 
-      // Process complete SSE lines in buffer
-      const lines = buffer.split("\n");
-
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr === "[DONE]") continue;
-
-        try {
-          const data = JSON.parse(jsonStr);
-
-          // Track ID if present (usually in first chunk)
-          if (data.id && !extractedId) {
-            extractedId = data.id;
-          }
-
-          // Track model if present
-          if (data.model && !extractedModel) {
-            extractedModel = data.model;
-          }
-
-          // Track created timestamp if present
-          if (data.created && !extractedCreatedAt) {
-            extractedCreatedAt = data.created;
-          }
-
-          // Check for usage data (in final chunk)
-          // OpenRouter includes cost directly in usage object
-          if (data.usage && typeof data.usage.cost === "number") {
-            callbackCalled = true;
-            onUsageExtracted({
-              id: data.id || extractedId || "unknown",
-              model: data.model || extractedModel || "unknown",
-              createdAt:
-                data.created || extractedCreatedAt || Math.floor(Date.now() / 1000),
-              cost: data.usage.cost,
-              tokensPrompt: data.usage.prompt_tokens ?? 0,
-              tokensCompletion: data.usage.completion_tokens ?? 0,
-              hasUsageData: true,
-            });
-            buffer = "";
-            return;
-          }
-        } catch {
-          // Ignore parse errors, might be partial JSON
-        }
+      const lastNewlineIndex = buffer.lastIndexOf("\n");
+      if (lastNewlineIndex === -1) {
+        // No complete lines yet. Keep buffer bounded.
+        if (buffer.length > 10000) buffer = buffer.slice(-10000);
+        return;
       }
 
-      // Prevent buffer from growing too large
-      if (buffer.length > 10000) {
-        const lastNewlines = buffer.lastIndexOf("\n\n");
-        if (lastNewlines !== -1) {
-          buffer = buffer.slice(lastNewlines + 2);
-        }
+      const completeLines = buffer.slice(0, lastNewlineIndex);
+      buffer = buffer.slice(lastNewlineIndex + 1);
+
+      for (const line of completeLines.split("\n")) {
+        processSseLine(line);
+        if (callbackCalled) return;
       }
+
+      // Keep remainder bounded in case a single line is extremely large.
+      if (buffer.length > 10000) buffer = buffer.slice(-10000);
     },
 
     flush() {
+      if (callbackCalled) {
+        buffer = "";
+        return;
+      }
+
+      buffer += decoder.decode();
+
+      // Process any remaining lines (even if the stream didn't end in a newline)
+      for (const line of buffer.split("\n")) {
+        processSseLine(line);
+        if (callbackCalled) {
+          buffer = "";
+          return;
+        }
+      }
+
       // Stream ended - call back with whatever we have
       if (!callbackCalled && extractedId) {
-        onUsageExtracted({
+        safelyCallOnUsageExtracted({
           id: extractedId,
           model: extractedModel || "unknown",
           createdAt: extractedCreatedAt || Math.floor(Date.now() / 1000),

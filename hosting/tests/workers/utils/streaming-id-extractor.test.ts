@@ -330,4 +330,109 @@ describe("Usage Extractor Stream", () => {
     expect(extractedData!.cost).toBe(0);
     expect(extractedData!.hasUsageData).toBe(true); // Even with 0 cost, we have usage data
   });
+
+  it("should extract usage when an SSE line is split across chunks", async () => {
+    let extractedData: StreamingUsageData | null = null;
+    const onUsageExtracted = (data: StreamingUsageData) => {
+      extractedData = data;
+    };
+
+    const stream = createUsageExtractorStream(onUsageExtracted);
+
+    const encoder = new TextEncoder();
+    const input = encoder.encode(
+      'data: {"id":"gen-split","model":"split-model","usage":{"cost":0.01,"prompt_tokens":1,"completion_tokens":2}}\n\n',
+    );
+
+    const splitIndex = Math.floor(input.length / 2);
+    const output = await processStream(stream, [
+      input.slice(0, splitIndex),
+      input.slice(splitIndex),
+    ]);
+
+    // Verify chunks passed through unchanged
+    const combined = new Uint8Array(
+      output.reduce((acc, chunk) => acc + chunk.length, 0),
+    );
+    let offset = 0;
+    for (const chunk of output) {
+      combined.set(chunk, offset);
+      offset += chunk.length;
+    }
+    expect(combined).toEqual(input);
+
+    expect(extractedData).not.toBeNull();
+    expect(extractedData!.id).toBe("gen-split");
+    expect(extractedData!.model).toBe("split-model");
+    expect(extractedData!.cost).toBe(0.01);
+    expect(extractedData!.tokensPrompt).toBe(1);
+    expect(extractedData!.tokensCompletion).toBe(2);
+  });
+
+  it("should decode UTF-8 across chunk boundaries", async () => {
+    let extractedData: StreamingUsageData | null = null;
+    const onUsageExtracted = (data: StreamingUsageData) => {
+      extractedData = data;
+    };
+
+    const stream = createUsageExtractorStream(onUsageExtracted);
+
+    const encoder = new TextEncoder();
+    const input = encoder.encode(
+      'data: {"id":"gen-utf8","model":"m€","usage":{"cost":0.01,"prompt_tokens":1,"completion_tokens":1}}\n\n',
+    );
+
+    // Split in the middle of the UTF-8 encoding of "€" (0xE2 0x82 0xAC)
+    const euroBytes = [0xe2, 0x82, 0xac];
+    let euroIndex = -1;
+    for (let i = 0; i < input.length - euroBytes.length; i++) {
+      if (
+        input[i] === euroBytes[0] &&
+        input[i + 1] === euroBytes[1] &&
+        input[i + 2] === euroBytes[2]
+      ) {
+        euroIndex = i;
+        break;
+      }
+    }
+
+    expect(euroIndex).not.toBe(-1);
+    const splitIndex = euroIndex + 1;
+    await processStream(stream, [
+      input.slice(0, splitIndex),
+      input.slice(splitIndex),
+    ]);
+
+    expect(extractedData).not.toBeNull();
+    expect(extractedData!.model).toBe("m€");
+  });
+
+  it("should not break streaming when callback throws", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    try {
+      const stream = createUsageExtractorStream(() => {
+        throw new Error("boom");
+      });
+
+      const input = new TextEncoder().encode(
+        'data: {"id":"gen-throw","model":"m1","usage":{"cost":0.01,"prompt_tokens":1,"completion_tokens":1}}\n\n',
+      );
+      const output = await processStream(stream, [input]);
+
+      const combined = new Uint8Array(
+        output.reduce((acc, chunk) => acc + chunk.length, 0),
+      );
+      let offset = 0;
+      for (const chunk of output) {
+        combined.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      expect(combined).toEqual(input);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
 });
