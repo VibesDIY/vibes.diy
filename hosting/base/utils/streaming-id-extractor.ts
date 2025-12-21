@@ -50,7 +50,7 @@ export function createUsageExtractorStream(
   }
 
   function processSseLine(line: string): boolean {
-    const trimmed = line.trimEnd();
+    const trimmed = line.trim();
     if (!trimmed.startsWith("data:")) return false;
 
     let payload = trimmed.slice("data:".length);
