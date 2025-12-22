@@ -37,7 +37,7 @@
   "devDependencies": {
     "@fireproof/core-cli": "0.24.3-dev-use-livequery",
     "@playwright/test": "^1.57.0",
-    "@types/node": "^24.9.1",
+    "@types/node": "^25.0.3",
     "@vitest/browser-playwright": "^4.0.15",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
