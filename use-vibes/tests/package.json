@@ -41,7 +41,7 @@
     "@types/node": "^24.9.1",
     "@types/react": "~19.2.7",
     "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@vitejs/plugin-react": "^5.1.2",
     "@vitest/browser": "^4.0.15",
     "@vitest/browser-playwright": "^4.0.15",
     "call-ai": "workspace:*",

@@ -41,7 +41,7 @@
     "@testing-library/react": "^16.3.1",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.7",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@vitejs/plugin-react": "^5.1.2",
     "@vitest/browser": "^4.0.15",
     "@vitest/browser-playwright": "^4.0.15",
     "playwright": "^1.57.0",
