@@ -44,7 +44,7 @@
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.7",
     "@types/react-dom": "~19.2.2",
-    "@vitest/browser-playwright": "^4.0.15",
+    "@vitest/browser-playwright": "^4.0.16",
     "storybook": "^10.1.10",
     "typescript": "^5.9.3",
     "vite": "^7.3.0"

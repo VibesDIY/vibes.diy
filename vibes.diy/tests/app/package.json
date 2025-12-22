@@ -48,7 +48,7 @@
     "@types/react": "~19.2.7",
     "@types/react-dom": "^19.2.2",
     "@vitest/browser": "^4.0.16",
-    "@vitest/browser-playwright": "^4.0.15",
+    "@vitest/browser-playwright": "^4.0.16",
     "vite": "7.3.0",
     "vite-tsconfig-paths": "^6.0.3",
     "vitest": "^4.0.16"
