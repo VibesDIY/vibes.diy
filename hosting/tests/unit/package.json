@@ -44,7 +44,7 @@
     "typescript": "^5.9.3",
     "vite": "^7.2.7",
     "vitest": "^4.0.15",
-    "wrangler": "^4.54.0"
+    "wrangler": "^4.56.0"
   },
   "dependencies": {
     "@vibes.diy/hosting": "workspace:*",
