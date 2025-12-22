@@ -50,7 +50,7 @@
     "jose": "^6.1.3",
     "monaco-editor": "^0.55.1",
     "multiformats": "^13.4.2",
-    "posthog-js": "^1.309.1",
+    "posthog-js": "^1.310.0",
     "react": "^19.2.3",
     "react-cookie-consent": "^9.0.0",
     "react-dom": "^19.2.3",
