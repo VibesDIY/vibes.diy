@@ -44,7 +44,7 @@
   "devDependencies": {
     "@fireproof/core-cli": "0.24.3-dev-use-livequery",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.1",
     "@types/react": "~19.2.7",
     "@types/react-dom": "^19.2.2",
     "@vitest/browser": "^4.0.15",
