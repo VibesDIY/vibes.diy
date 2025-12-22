@@ -69,7 +69,7 @@
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.1",
-    "puppeteer": "^24.31.0",
+    "puppeteer": "^24.34.0",
     "serve": "^14.2.5",
     "typescript-eslint": "^8.50.0",
     "vitest": "^4.0.15",
