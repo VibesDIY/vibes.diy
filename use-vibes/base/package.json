@@ -26,7 +26,7 @@
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*",
-    "jose": "^6.1.1",
+    "jose": "^6.1.3",
     "react-dom": "^19.2.0",
     "use-fireproof": "0.24.3-dev-use-livequery",
     "zod": "^4.1.12"
