@@ -58,7 +58,7 @@
   },
   "dependencies": {
     "@improvements/vite-plugin-devtools-json": "^0.0.3",
-    "@react-router/dev": "^7.9.6",
+    "@react-router/dev": "^7.11.0",
     "@tailwindcss/vite": "^4.1.18",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
     "react-dom": "^19.2.3",
