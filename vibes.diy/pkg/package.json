@@ -76,7 +76,7 @@
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.7",
     "@types/react-dom": "~19.2.2",
-    "@vitest/browser-playwright": "^4.0.15",
+    "@vitest/browser-playwright": "^4.0.16",
     "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
     "netlify": "^23.13.0",
