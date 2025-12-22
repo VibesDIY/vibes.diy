@@ -67,7 +67,7 @@
     "@cloudflare/vite-plugin": "^1.19.0",
     "@fireproof/core-cli": "0.24.3-dev-use-livequery",
     "@react-router/dev": "^7.9.6",
-    "@storybook/addon-a11y": "^10.1.7",
+    "@storybook/addon-a11y": "^10.1.10",
     "@storybook/addon-docs": "^10.1.10",
     "@storybook/addon-onboarding": "^10.1.10",
     "@storybook/react": "^10.1.10",
