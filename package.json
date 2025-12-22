@@ -54,7 +54,7 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^9.39.2",
     "@fireproof/core-cli": "0.24.3-dev-use-livequery",
     "@playwright/test": "^1.57.0",
     "@types/deno": "^2.5.0",

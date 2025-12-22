@@ -12,8 +12,8 @@ importers:
   .:
     devDependencies:
       '@eslint/js':
-        specifier: ^9.39.1
-        version: 9.39.1
+        specifier: ^9.39.2
+        version: 9.39.2
       '@fireproof/core-cli':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)
@@ -521,8 +521,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@eslint/js':
-        specifier: ^9.39.1
-        version: 9.39.1
+        specifier: ^9.39.2
+        version: 9.39.2
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
