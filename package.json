@@ -72,7 +72,7 @@
     "puppeteer": "^24.34.0",
     "serve": "^14.2.5",
     "typescript-eslint": "^8.50.0",
-    "vitest": "^4.0.15",
+    "vitest": "^4.0.16",
     "wrangler": "^4.56.0"
   }
 }
