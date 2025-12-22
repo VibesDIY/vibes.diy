@@ -65,7 +65,7 @@
     "call-ai": "workspace:*",
     "chanfana": "^2.8.2",
     "hono": "^4.10.7",
-    "jose": "^6.1.1",
+    "jose": "^6.1.3",
     "multiformats": "^13.4.2",
     "zod": "^3.25.76"
   },
