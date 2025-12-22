@@ -51,7 +51,7 @@
     "monaco-editor": "^0.55.1",
     "multiformats": "^13.4.2",
     "posthog-js": "^1.309.1",
-    "react": "^19.2.0",
+    "react": "^19.2.3",
     "react-cookie-consent": "^9.0.0",
     "react-dom": "^19.2.3",
     "react-hot-toast": "^2.6.0",
