@@ -50,7 +50,7 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite-plugin-devtools-json": "^1.0.0",
-    "vitest": "^4.0.15",
+    "vitest": "^4.0.16",
     "zx": "^8.8.4"
   },
   "engines": {
