@@ -1,4 +1,4 @@
-import { DocFileMeta, fireproof } from "use-fireproof";
+import { DocFileMeta, fireproof } from "@fireproof/use-fireproof";
 import { updateUserVibespaceDoc } from "./databaseManager.js";
 import type { VibeDocument } from "@vibes.diy/prompts";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";

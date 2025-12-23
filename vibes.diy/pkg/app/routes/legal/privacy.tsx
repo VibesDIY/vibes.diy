@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import SimpleAppLayout from "../../components/SimpleAppLayout.js";
 import { HomeIcon } from "../../components/SessionSidebar/HomeIcon.js";
 import VibesDIYLogo from "../../components/VibesDIYLogo.js";
 import ReactMarkdown from "react-markdown";
-import privacyContent from "./privacy-notes.md?raw";
+import { loadAsset } from "@adviser/cement";
 
 export function meta() {
   return [
@@ -12,7 +12,15 @@ export function meta() {
   ];
 }
 
-export default function Privacy() {
+export function Legal_Privacy() {
+  const [privContent, setPrivContent] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadAsset("/app/routes/legal/privacy-notes.md", {
+      basePath: () => window.location.origin,
+    }).then((tos) => setPrivContent(tos.Ok()));
+  }, [privContent]);
+
   return (
     <SimpleAppLayout
       headerLeft={
@@ -35,7 +43,7 @@ export default function Privacy() {
           <h1 className="pb-4 text-2xl font-bold">Privacy Policy</h1>
 
           <div className="prose dark:prose-invert space-y-4">
-            <ReactMarkdown>{privacyContent}</ReactMarkdown>
+            <ReactMarkdown>{privContent}</ReactMarkdown>
           </div>
         </div>
         <p className="text-light-secondary dark:text-dark-secondary text-center text-xs">

@@ -9,6 +9,7 @@
 ## Cluster Details
 
 Get current cluster details:
+
 ```bash
 cd /Users/menabe/Software/fproof/vibes.diy/vibes.diy/tempo
 pulumi stack output serverIp
@@ -59,12 +60,14 @@ Add these secrets to your GitHub repository:
 `VibesDIY/vibes.diy` → Settings → Secrets and variables → Actions
 
 Use the automated script:
+
 ```bash
 cd /Users/menabe/Software/fproof/vibes.diy/vibes.diy/tempo
 bash scripts/setup-github-secrets-auto.sh
 ```
 
 This will automatically set:
+
 - `K8S_API_SERVER`
 - `K8S_CA_CERT`
 
@@ -89,10 +92,10 @@ spec:
         app: myapp
     spec:
       containers:
-      - name: myapp
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
+        - name: myapp
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
@@ -103,7 +106,7 @@ spec:
   selector:
     app: myapp
   ports:
-  - port: 80
+    - port: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -116,23 +119,24 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: myapp.vibesdiy.net
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: myapp
-            port:
-              number: 80
+    - host: myapp.vibesdiy.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp
+                port:
+                  number: 80
   tls:
-  - hosts:
-    - myapp.vibesdiy.net
-    secretName: myapp-tls
+    - hosts:
+        - myapp.vibesdiy.net
+      secretName: myapp-tls
 ```
 
 When you deploy this:
+
 1. **external-dns** creates `myapp.vibesdiy.net` DNS record → your server IP
 2. **cert-manager** requests SSL certificate from Let's Encrypt
 3. **Traefik** serves your app with HTTPS
@@ -148,6 +152,7 @@ When you deploy this:
 ## Configuration
 
 All configuration is in Pulumi:
+
 ```bash
 cd /Users/menabe/Software/fproof/vibes.diy/vibes.diy/tempo
 pulumi config
@@ -156,6 +161,7 @@ pulumi config
 ## Next Deployment
 
 For future deployments, just run:
+
 ```bash
 pulumi up
 ```

@@ -3,18 +3,23 @@
 ## Files Created
 
 ### Workflow
+
 📄 `.github/workflows/test-hetzner-cluster.yaml`
+
 - Triggers on push to main (when hello-world files change)
 - Can be manually triggered
 - Uses OIDC authentication (no stored credentials!)
 - Deploys hello-world app to K3s cluster
 
 ### Hello World Example
+
 📁 `tempo/examples/hello-world/`
+
 - `deployment.yaml` - Complete K8s manifest
 - `README.md` - Documentation
 
 ### Setup Guide
+
 📄 `GITHUB_ACTIONS_SETUP.md` - Instructions for adding GitHub secrets
 
 ## Quick Start
@@ -29,17 +34,20 @@ bash scripts/setup-github-secrets-auto.sh
 ```
 
 This will automatically set:
+
 - **K8S_API_SERVER**: Your cluster API URL
 - **K8S_CA_CERT**: Base64-encoded CA certificate
 
 ### 2. Test the Workflow
 
 **Manual trigger**:
+
 1. Go to: https://github.com/VibesDIY/vibes.diy/actions
 2. Select "Deploy Hello World to Hetzner K3s"
 3. Click "Run workflow"
 
 **Or push changes**:
+
 ```bash
 # Make changes to hello-world deployment
 # Commit and push to main branch
@@ -48,6 +56,7 @@ This will automatically set:
 ### 3. Verify Deployment
 
 After ~1-2 minutes:
+
 - ✅ Workflow should complete successfully
 - ✅ DNS: `dig hello.vibesdiy.net` → your server IP
 - ✅ App: https://hello.vibesdiy.net (wait ~2 min for SSL)
@@ -71,6 +80,7 @@ Traefik serves with HTTPS
 ```
 
 **Timeline**:
+
 - Deployment: ~30 seconds
 - DNS propagation: ~30 seconds
 - SSL certificate: ~1 minute

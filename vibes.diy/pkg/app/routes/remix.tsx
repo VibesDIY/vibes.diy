@@ -16,7 +16,7 @@ interface RemixProps {
   onNavigate?: (url: string) => void;
 }
 
-export default function Remix({
+export function Remix({
   onNavigate = (url) => (window.location.href = url),
 }: RemixProps) {
   const navigate = useNavigate();

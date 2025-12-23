@@ -14,17 +14,17 @@ spec:
         app: myapp
     spec:
       containers:
-      - name: myapp
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "50m"
-          limits:
-            memory: "128Mi"
-            cpu: "100m"
+        - name: myapp
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
 ---
 apiVersion: v1
 kind: Service
@@ -35,8 +35,8 @@ spec:
   selector:
     app: myapp
   ports:
-  - port: 80
-    targetPort: 80
+    - port: 80
+      targetPort: 80
   type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
@@ -51,17 +51,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: myapp.vibesdiy.net
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: myapp
-            port:
-              number: 80
+    - host: myapp.vibesdiy.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp
+                port:
+                  number: 80
   tls:
-  - hosts:
-    - myapp.vibesdiy.net
-    secretName: myapp-tls
+    - hosts:
+        - myapp.vibesdiy.net
+      secretName: myapp-tls

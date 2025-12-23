@@ -18,6 +18,7 @@ A simple hello world application deployed to the Hetzner K3s cluster.
 ### Via GitHub Actions
 
 The workflow `.github/workflows/test-hetzner-cluster.yaml` automatically deploys this when:
+
 - You push changes to `vibes.diy/tempo/examples/hello-world/**`
 - You push changes to the workflow file itself
 - You manually trigger it via GitHub Actions UI

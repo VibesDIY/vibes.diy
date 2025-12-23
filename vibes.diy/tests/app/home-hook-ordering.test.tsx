@@ -89,7 +89,7 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
 }));
 
 // Import the component under test after mocks
-import SessionWrapper from "../../pkg/app/routes/home.js";
+import { Home } from "../../pkg/app/routes/home.js";
 
 describe("SessionWrapper Hook Ordering", () => {
   let consoleErrorSpy: ReturnType<typeof vi.fn>;
@@ -128,7 +128,7 @@ describe("SessionWrapper Hook Ordering", () => {
     // Initial render with ?prompt parameter (no sessionId)
     render(
       <MemoryRouter initialEntries={["/?prompt=Image+auto-tagger"]}>
-        <SessionWrapper />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -168,7 +168,7 @@ describe("SessionWrapper Hook Ordering", () => {
 
     const { unmount } = render(
       <MemoryRouter initialEntries={["/"]}>
-        <SessionWrapper />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -193,7 +193,7 @@ describe("SessionWrapper Hook Ordering", () => {
     // Render with new sessionId
     render(
       <MemoryRouter initialEntries={["/chat/session-123456"]}>
-        <SessionWrapper />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -237,7 +237,7 @@ describe("SessionWrapper Hook Ordering", () => {
           "/?prompt=Image+tagger&model=anthropic/claude-sonnet-4.5",
         ]}
       >
-        <SessionWrapper />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -280,7 +280,7 @@ describe("SessionWrapper Hook Ordering", () => {
 
     render(
       <MemoryRouter initialEntries={["/?prompt=Test"]}>
-        <SessionWrapper />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -310,7 +310,7 @@ describe("SessionWrapper Hook Ordering", () => {
 
     const { rerender } = render(
       <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
-        <SessionWrapper />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -322,12 +322,12 @@ describe("SessionWrapper Hook Ordering", () => {
     // Force multiple re-renders (simulating what might happen during state transitions)
     rerender(
       <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
-        <SessionWrapper />
+        <Home />
       </MemoryRouter>,
     );
     rerender(
       <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
-        <SessionWrapper />
+        <Home />
       </MemoryRouter>,
     );
 

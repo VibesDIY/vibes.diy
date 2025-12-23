@@ -9,7 +9,7 @@ export function meta() {
   ];
 }
 
-export default function About() {
+export function About() {
   return (
     <BrutalistLayout title="About" subtitle="AI-powered app builder">
       {/* What is Vibes DIY */}

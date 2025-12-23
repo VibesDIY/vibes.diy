@@ -5,16 +5,19 @@
 All files in this directory are now safe for a public repository:
 
 ### Configuration Files
+
 - ✅ `Pulumi.dev.yaml` - Secrets are encrypted by Pulumi
 - ✅ `.gitignore` - Excludes sensitive files
 
 ### Scripts
+
 - ✅ `scripts/setup-k8s-addons.sh` - Uses Pulumi config (no hardcoded tokens)
 - ✅ `scripts/setup-github-secrets.sh` - Fetches data at runtime
 - ✅ `scripts/setup-github-secrets-auto.sh` - Uses gh CLI securely
 - ✅ `scripts/check-status.sh` - No sensitive data
 
 ### Documentation
+
 - ✅ `README.md` - Generic instructions only
 - ✅ `QUICKSTART.md` - Generic instructions only
 - ✅ `DEPLOYMENT_SUMMARY.md` - Uses Pulumi stack output (no hardcoded IPs)
@@ -23,31 +26,37 @@ All files in this directory are now safe for a public repository:
 - ✅ `SETUP_COMPLETE.md` - No sensitive data
 
 ### Infrastructure Code
+
 - ✅ `index.ts` - Uses Pulumi secrets from config
 - ✅ `types.ts` - TypeScript definitions only
 
 ### Examples
+
 - ✅ `examples/hello-world/` - Generic Kubernetes manifests
 - ✅ `examples/deploy-workflow.yaml` - Generic workflow
 
 ## How Secrets Are Handled
 
 ### At Rest (Pulumi State)
+
 - **Hetzner API Token**: Encrypted in `Pulumi.dev.yaml` as `hcloud:token`
 - **Cloudflare API Token**: Encrypted in `Pulumi.dev.yaml` as `cloudflareApiToken`
 - **Pulumi backend**: Stores encrypted state (never in git)
 
 ### At Runtime (Scripts)
+
 - **Scripts fetch secrets** from Pulumi config: `pulumi config get cloudflareApiToken`
 - **Never hardcoded** in scripts or documentation
 
 ### In GitHub (Actions)
+
 - **GitHub Secrets**: Set via `gh secret set` (encrypted by GitHub)
 - **OIDC Tokens**: Generated at runtime (temporary, no storage)
 
 ## Non-Sensitive Data
 
 These are OK to be public:
+
 - ✅ Domain: `vibesdiy.net` (public DNS)
 - ✅ Cloudflare Zone ID (public identifier, not sensitive)
 - ✅ Cloudflare Account ID (public identifier, not sensitive)
@@ -57,6 +66,7 @@ These are OK to be public:
 ## What's Excluded from Git
 
 `.gitignore` prevents committing:
+
 - `kubeconfig.yaml` - Contains cluster credentials
 - `.env` - Environment variables
 - `*.swp` - Editor temp files
@@ -66,6 +76,7 @@ These are OK to be public:
 ## Verification
 
 Before committing, verify no secrets exist:
+
 ```bash
 # Check for common secret patterns
 grep -r "sk-\|api_key\|api_token\|password\|secret_key" . \
@@ -85,6 +96,7 @@ cat .gitignore
 All files in this directory are now safe to commit to a public repository!
 
 The only secrets are:
+
 - Encrypted in `Pulumi.dev.yaml` (safe)
 - Stored in Pulumi backend (not in git)
 - Stored in GitHub Secrets (not in git)

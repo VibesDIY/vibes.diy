@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Remix from "~/vibes.diy/app/routes/remix.js";
+import { Remix } from "~/vibes.diy/app/routes/remix.js";
 
 // Mock variables for React Router using vi.hoisted
 const mocks = vi.hoisted(() => {
