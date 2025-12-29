@@ -23,7 +23,7 @@ export function meta({ location }: { location: { pathname: string } }) {
   ];
 }
 
-export default function CatchAllDispatcher() {
+export function CatchAll() {
   const location = useLocation();
   const path = location.pathname;
 

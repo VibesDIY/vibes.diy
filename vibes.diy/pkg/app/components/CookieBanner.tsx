@@ -1,6 +1,6 @@
 import { usePostHog } from "posthog-js/react";
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "react-router-dom";
 import { VibesDiyEnv } from "../config/env.js";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useTheme } from "../contexts/ThemeContext.js";

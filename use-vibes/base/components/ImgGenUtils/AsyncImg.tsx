@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DocFileMeta } from 'use-fireproof';
+import { DocFileMeta } from '@fireproof/use-fireproof';
 
 interface AsyncImgProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   file: DocFileMeta | File | null | undefined;

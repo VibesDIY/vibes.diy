@@ -2,10 +2,13 @@ import React, { useMemo } from "react";
 import DatabaseData from "./DatabaseData.js";
 
 // Component to find and display database names from app code
-const DatabaseListView: React.FC<{ appCode: string; sessionId: string }> = ({
+function DatabaseListView({
   appCode,
   sessionId,
-}) => {
+}: {
+  appCode: string;
+  sessionId: string;
+}) {
   // Extract first 50 lines using memoization
   const firstFiftyLines = useMemo(() => {
     if (!appCode) return "";
@@ -47,6 +50,6 @@ const DatabaseListView: React.FC<{ appCode: string; sessionId: string }> = ({
       )}
     </div>
   );
-};
+}
 
 export default DatabaseListView;

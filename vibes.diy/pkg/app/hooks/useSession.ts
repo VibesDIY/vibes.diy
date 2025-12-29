@@ -11,7 +11,12 @@ import {
   getLlmCatalog,
 } from "@vibes.diy/prompts";
 import { getSessionDatabaseName } from "../utils/databaseManager.js";
-import { Database, DocResponse, DocWithId, useFireproof } from "use-fireproof";
+import {
+  Database,
+  DocResponse,
+  DocWithId,
+  useFireproof,
+} from "@fireproof/use-fireproof";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { VibesDiyEnv } from "../config/env.js";
 
@@ -60,9 +65,6 @@ export interface UseSession {
 }
 
 export function useSession(sessionId: string): UseSession {
-  if (!sessionId) {
-    throw new Error("useSession requires a valid sessionId");
-  }
   const sessionDbName = getSessionDatabaseName(sessionId);
   const {
     database: sessionDatabase,
@@ -75,12 +77,12 @@ export function useSession(sessionId: string): UseSession {
     doc: userMessage,
     merge: mergeUserMessage,
     submit: submitUserMessage,
-  } = useSessionDocument<UserChatMessageDocument>({
+  } = useSessionDocument<UserChatMessageDocument>(() => ({
     type: "user",
     session_id: sessionId,
     text: "",
     created_at: Date.now(),
-  });
+  }));
 
   // AI message is stored in the session-specific database
   const {
@@ -88,32 +90,35 @@ export function useSession(sessionId: string): UseSession {
     merge: mergeAiMessage,
     save: saveAiMessage,
     submit: submitAiMessage,
-  } = useSessionDocument<AiChatMessageDocument>({
+  } = useSessionDocument<AiChatMessageDocument>(() => ({
     type: "ai",
     session_id: sessionId,
     text: "",
     created_at: Date.now(),
-  });
+  }));
 
   // Vibe document is stored in the session-specific database
   const { doc: vibeDoc, merge: mergeVibeDoc } =
-    useSessionDocument<VibeDocument>({
+    useSessionDocument<VibeDocument>(() => ({
       _id: "vibe",
       title: "",
       encodedTitle: "",
       created_at: Date.now(),
       remixOf: "",
-    });
+    }));
 
   // Query messages from the session-specific database
-  const { docs } = useSessionLiveQuery("session_id", { key: sessionId }) as {
-    docs: ChatMessageDocument[];
-  };
+
+  const { docs } = useSessionLiveQuery<ChatMessageDocument>("session_id", {
+    key: sessionId,
+  });
 
   // Stabilize merge function and vibe document with refs to avoid recreating callbacks
   const mergeRef = useRef(mergeVibeDoc);
   useEffect(() => {
-    mergeRef.current = mergeVibeDoc;
+    if (mergeRef) {
+      mergeRef.current = mergeVibeDoc;
+    }
   }, [mergeVibeDoc]);
 
   const vibeRef = useRef(vibeDoc);

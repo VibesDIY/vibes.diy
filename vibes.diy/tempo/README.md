@@ -1,6 +1,7 @@
 # Hetzner K3s Cluster with GitHub Actions OIDC
 
 Pulumi project that deploys a K3s cluster on Hetzner Cloud with:
+
 - **Traefik** as ingress controller (K3s default)
 - **cert-manager** for automatic SSL certificates via Let's Encrypt
 - **external-dns** for automatic DNS management via Cloudflare
@@ -40,12 +41,14 @@ pulumi config set cloudflareAccountId "your-account-id"
 ### 3. Configure SSH Key
 
 First, check your available SSH keys in Hetzner:
+
 ```bash
 curl -H "Authorization: Bearer $HCLOUD_TOKEN" \
   https://api.hetzner.cloud/v1/ssh_keys
 ```
 
 Then set the key name:
+
 ```bash
 pulumi config set sshKeyName "your-key-name"
 ```
@@ -92,6 +95,7 @@ After deployment, fetch the kubeconfig:
 ```
 
 This will:
+
 - Fetch the kubeconfig and save it locally
 - Get the CA certificate for GitHub Actions
 - Show you the secrets to add to GitHub
@@ -125,6 +129,7 @@ kubectl get clusterrolebinding github-actions-deployer
 Go to: `Settings → Secrets and variables → Actions`
 
 Add these secrets (provided by setup-github-secrets.sh):
+
 - `K8S_API_SERVER`: The API server URL
 - `K8S_CA_CERT`: Base64 encoded CA certificate
 
@@ -147,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Get OIDC Token
         id: oidc
         run: |
@@ -156,7 +161,7 @@ jobs:
             | jq -r '.value')
           echo "::add-mask::$OIDC_TOKEN"
           echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
-      
+
       - name: Configure kubectl
         run: |
           mkdir -p ~/.kube
@@ -180,7 +185,7 @@ jobs:
             user:
               token: ${{ steps.oidc.outputs.token }}
           EOF
-      
+
       - name: Deploy
         run: |
           kubectl apply -f k8s/ -n apps
@@ -208,10 +213,10 @@ spec:
         app: myapp
     spec:
       containers:
-      - name: myapp
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
+        - name: myapp
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
@@ -222,8 +227,8 @@ spec:
   selector:
     app: myapp
   ports:
-  - port: 80
-    targetPort: 80
+    - port: 80
+      targetPort: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -236,20 +241,20 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: myapp.vibesdiy.net
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: myapp
-            port:
-              number: 80
+    - host: myapp.vibesdiy.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp
+                port:
+                  number: 80
   tls:
-  - hosts:
-    - myapp.vibesdiy.net
-    secretName: myapp-tls
+    - hosts:
+        - myapp.vibesdiy.net
+      secretName: myapp-tls
 ```
 
 ## How It Works
@@ -260,6 +265,7 @@ spec:
 4. **Let's Encrypt**: Uses Cloudflare DNS-01 challenge for certificate validation
 
 When you create an Ingress:
+
 1. external-dns creates the DNS A record pointing to your server
 2. cert-manager requests a certificate from Let's Encrypt
 3. Let's Encrypt validates via Cloudflare DNS-01 challenge
@@ -274,16 +280,19 @@ When you create an Ingress:
 ## Troubleshooting
 
 ### SSH into the server
+
 ```bash
 ssh root@$(pulumi stack output serverIp)
 ```
 
 ### Check K3s status
+
 ```bash
 ssh root@$(pulumi stack output serverIp) "systemctl status k3s"
 ```
 
 ### View logs
+
 ```bash
 # K3s logs
 ssh root@$(pulumi stack output serverIp) "journalctl -u k3s -f"
@@ -299,6 +308,7 @@ kubectl logs -l app.kubernetes.io/name=external-dns
 ```
 
 ### Test certificate issuance
+
 ```bash
 # Check ClusterIssuer
 kubectl get clusterissuer letsencrypt-prod
@@ -314,6 +324,7 @@ kubectl describe certificate myapp-tls -n apps
 ```
 
 ### Test DNS updates
+
 ```bash
 # Check external-dns logs
 kubectl logs -l app.kubernetes.io/name=external-dns --tail=50
@@ -329,6 +340,7 @@ pulumi destroy
 ```
 
 This will delete:
+
 - The Hetzner server
 - The network and firewall
 - All DNS records created by external-dns (with txt-owner-id matching cluster name)

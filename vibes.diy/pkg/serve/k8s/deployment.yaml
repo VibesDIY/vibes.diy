@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vibes-diy
+  namespace: apps
+  labels:
+    app: vibes-diy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vibes-diy
+  template:
+    metadata:
+      labels:
+        app: vibes-diy
+    spec:
+      containers:
+        - name: vibes-diy
+          # Image is built by .github/workflows/test-hetzner-cluster.yaml
+          image: ghcr.io/vibesdiy/vibes.diy:latest
+          ports:
+            - containerPort: 8001
+              name: http
+          env:
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vibes-diy
+  namespace: apps
+spec:
+  selector:
+    app: vibes-diy
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vibes-diy
+  namespace: apps
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: app.vibesdiy.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vibes-diy
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - app.vibesdiy.net
+      secretName: vibes-diy-tls

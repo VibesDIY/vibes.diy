@@ -6,10 +6,9 @@ import {
   simulateIframeMessage,
   cleanupIframeMocks,
 } from './utils/iframe-mocks.js';
-
 // Direct import of the component
-import IframeVibesComponentActual from '../base/hooks/vibes-gen/IframeVibesComponent.js';
-const IframeVibesComponent = IframeVibesComponentActual;
+import { IframeVibesComponent } from '../base/hooks/vibes-gen/IframeVibesComponent.js';
+// const IframeVibesComponent = IframeVibesComponentActual;
 
 describe('IframeVibesComponent', () => {
   let mockIframe: ReturnType<typeof createMockIframe>;

@@ -7,7 +7,7 @@ import {
   waitFor,
   act,
 } from "@testing-library/react";
-import Settings from "~/vibes.diy/app/routes/settings.js";
+import { Settings } from "~/vibes.diy/app/routes/settings.js";
 
 // Create mock objects outside the mock function to access them in tests
 const mocks = vi.hoisted(() => {
@@ -50,8 +50,11 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
 }));
 
 // Mock Fireproof
-vi.mock("use-fireproof", () => ({
+vi.mock("@fireproof/use-fireproof", () => ({
   useFireproof: () => mocks.mockUseFireproof(),
+  isDatabase: () => {
+    /* */
+  },
   ImgFile: vi.fn(),
   fireproof: vi.fn(),
   toCloud: vi.fn(),
@@ -104,6 +107,9 @@ vi.mock("@clerk/clerk-react", () => ({
     redirectToSignIn: vi.fn(),
     signOut: vi.fn(),
   }),
+  ClerkProvider: () => {
+    /* */
+  },
   useUser: () => ({
     user: {
       primaryEmailAddress: { emailAddress: "test@example.com" },

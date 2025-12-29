@@ -10,14 +10,14 @@ interface IframeVibesComponentProps {
   authToken?: string;
 }
 
-const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
+export function IframeVibesComponent({
   code,
   sessionId,
   baseUrl,
   onReady,
   onError,
   authToken,
-}) => {
+}: IframeVibesComponentProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -92,6 +92,6 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
       {!isReady && <div>Loading component...</div>}
     </div>
   );
-};
+}
 
-export default IframeVibesComponent;
+// export default IframeVibesComponent;

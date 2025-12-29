@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DocFileMeta } from 'use-fireproof';
+import { DocFileMeta } from '@fireproof/use-fireproof';
 import { AsyncImg } from './AsyncImg.js';
 import { createPortal } from 'react-dom';
 import { ImageOverlay } from './overlays/ImageOverlay.js';

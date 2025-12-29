@@ -1,14 +1,14 @@
-import { DocResponse, fireproof } from "use-fireproof";
+import { DocResponse, fireproof } from "@fireproof/use-fireproof";
 
 /**
  * Get the database name for a session
  * @param sessionId The session ID to get the database name for
  * @returns The database name for the session
  */
-export const getSessionDatabaseName = (sessionId: string) => {
-  if (!sessionId) throw new Error("Session ID is required");
+export function getSessionDatabaseName(sessionId?: string) {
+  if (!sessionId) throw new Error("useSession Session ID is required");
   return `vibe-${sessionId}`;
-};
+}
 
 /**
  * Update a document in the user's vibespace database

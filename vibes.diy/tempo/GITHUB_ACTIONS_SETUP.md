@@ -18,6 +18,7 @@ bash scripts/setup-github-secrets-auto.sh
 ```
 
 This will automatically:
+
 - Get server IP from Pulumi
 - Fetch CA cert from the server
 - Set both secrets using `gh` CLI
@@ -69,6 +70,7 @@ After the workflow runs successfully:
 ### OIDC Token Issues
 
 If you get authentication errors:
+
 - Check that the workflow has `permissions: id-token: write`
 - Verify the cluster is configured for OIDC (already done)
 - Check that the RBAC binding exists: `kubectl get clusterrolebinding github-actions-deployer`
@@ -76,6 +78,7 @@ If you get authentication errors:
 ### Connection Issues
 
 If kubectl can't connect:
+
 - Verify secrets are set correctly in GitHub
 - Verify `K8S_CA_CERT` is base64-encoded (no newlines)
 - Check cluster is accessible: `curl -k $(pulumi stack output apiServer)/version`
@@ -83,6 +86,7 @@ If kubectl can't connect:
 ### Deployment Issues
 
 Check logs on the server:
+
 ```bash
 SERVER_IP=$(pulumi stack output serverIp)
 ssh root@$SERVER_IP
@@ -123,6 +127,7 @@ The whole process takes ~30-60 seconds!
 ## Next Steps
 
 Once the hello-world example works, you can:
+
 1. Copy the workflow for your own apps
 2. Modify the deployment manifests
 3. Add more environments (staging, production)

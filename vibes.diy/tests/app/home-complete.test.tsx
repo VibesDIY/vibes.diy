@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 // import * as useSimpleChatModule from "~/vibes.diy/app/hooks/useSimpleChat.js";
-import UnifiedSession from "~/vibes.diy/app/routes/home.js";
+import { Home } from "~/vibes.diy/app/routes/home.js";
 import type {
   AiChatMessage,
   ChatMessage,
@@ -262,7 +262,7 @@ describe("Home Route in completed state", () => {
 
     render(
       <MemoryRouter initialEntries={["/chat/test-session-123"]}>
-        <UnifiedSession />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -284,7 +284,7 @@ describe("Home Route in completed state", () => {
 
     render(
       <MemoryRouter initialEntries={["/chat/test-session-123"]}>
-        <UnifiedSession />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -315,7 +315,7 @@ describe("Home Route in completed state", () => {
 
     render(
       <MemoryRouter>
-        <UnifiedSession />
+        <Home />
       </MemoryRouter>,
     );
 
@@ -354,7 +354,7 @@ describe("Home Route in completed state", () => {
 
     render(
       <MemoryRouter initialEntries={["/"]}>
-        <UnifiedSession />
+        <Home />
       </MemoryRouter>,
     );
 

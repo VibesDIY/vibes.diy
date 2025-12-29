@@ -3,10 +3,11 @@
  * Used by: root.tsx, eject-template.ts, hosting packages
  */
 
-const VIBES_VERSION = "0.19.4-dev-vibes-refactor";
+const VIBES_VERSION = "0.19.8-dev";
 
 export function getLibraryImportMap() {
   return {
+    cborg: "https://esm.sh/cborg@4.3.2",
     react: "https://esm.sh/react@19.2.1",
     "react-dom": "https://esm.sh/react-dom@19.2.1",
     "react-dom/client": "https://esm.sh/react-dom@19.2.1/client",

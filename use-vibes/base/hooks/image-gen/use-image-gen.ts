@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Database, useFireproof } from 'use-fireproof';
+import { Database, useFireproof } from '@fireproof/use-fireproof';
 import { ImageGenOptions, ImageResponse } from 'call-ai';
 import type {
   UseImageGenOptions,

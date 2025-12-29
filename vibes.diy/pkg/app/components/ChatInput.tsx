@@ -66,6 +66,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
         onSend(); // Call onSend for side effects only
       }
     }, [chatState, onSend]);
+
     // Auto-resize textarea function
     const autoResizeTextarea = useCallback(() => {
       const textarea = chatState.inputRef.current;

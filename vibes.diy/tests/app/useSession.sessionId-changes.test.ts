@@ -8,8 +8,9 @@ VibesDiyEnv.env().sets({
   SETTINGS_DBNAME: "test-chat-history",
 });
 
-vi.mock("use-fireproof", async (original) => {
-  const originalModule = (await original()) as typeof import("use-fireproof");
+vi.mock("@fireproof/use-fireproof", async (original) => {
+  const originalModule =
+    (await original()) as typeof import("@fireproof/use-fireproof");
   // const mockFireproof = vi.fn().mockImplementation(() => {
   //   console.log("Mock fireproof called");
   // });
@@ -46,7 +47,7 @@ vi.mock("use-fireproof", async (original) => {
 //     .mockImplementation((id) => `vibe-${id || "default"}`),
 // }));
 
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 
 // Tests focused on eager database initialization behavior
 describe("useSession", () => {
