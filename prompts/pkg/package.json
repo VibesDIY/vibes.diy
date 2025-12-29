@@ -25,7 +25,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.5.5",
-    "@fireproof/core-types-base": "0.24.3-dev-use-livequery",
+    "@fireproof/core-types-base": "0.24.3-dev-20261224",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*"
   },
