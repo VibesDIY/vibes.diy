@@ -24,8 +24,8 @@
     "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
     "@fireproof/use-fireproof": "0.24.3-dev-20261224",
     "call-ai": "workspace:*",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "use-vibes": "workspace:*"
   },
   "devDependencies": {

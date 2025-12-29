@@ -23,12 +23,10 @@
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*",
     "jose": "^6.1.3",
-    "react-dom": "^19.2.3",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "use-fireproof": "0.24.3-dev-20261224",
     "zod": "^4.1.12"
-  },
-  "peerDependencies": {
-    "react": ">=19.1.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",

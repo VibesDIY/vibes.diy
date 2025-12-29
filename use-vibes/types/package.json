@@ -22,10 +22,8 @@
     "@fireproof/core-types-base": "0.24.3-dev-20261224",
     "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
     "@fireproof/use-fireproof": "0.24.3-dev-20261224",
-    "call-ai": "workspace:*"
-  },
-  "peerDependencies": {
-    "react": ">=19.1.0"
+    "call-ai": "workspace:*",
+    "react": "19.2.1"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.3-dev-20261224",
