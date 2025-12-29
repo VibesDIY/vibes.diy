@@ -31,7 +31,7 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.3-dev-use-livequery",
+    "@fireproof/core-cli": "0.24.3-dev-20261224",
     "@types/node": "^25.0.3",
     "@vitest/browser-playwright": "^4.0.16",
     "typescript": "^5.9.3"
@@ -41,6 +41,6 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.5",
-    "@fireproof/core-runtime": "0.24.3-dev-use-livequery"
+    "@fireproof/core-runtime": "0.24.3-dev-20261224"
   }
 }
