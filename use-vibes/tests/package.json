@@ -62,7 +62,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
     "react-dom": "^19.2.3",
-    "use-fireproof": "0.24.3-dev-use-livequery",
+    "use-fireproof": "0.24.3-dev-20261224",
     "use-vibes": "workspace:0.0.0",
     "vite": "^7.3.0",
     "vite-tsconfig-paths": "^6.0.3",
