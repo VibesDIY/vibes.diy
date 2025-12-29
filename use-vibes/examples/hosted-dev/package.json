@@ -17,12 +17,12 @@
     "serve": "serve -s dist"
   },
   "dependencies": {
-    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core": "0.24.3-dev-20261224",
+    "@fireproof/core-keybag": "0.24.3-dev-20261224",
+    "@fireproof/core-runtime": "0.24.3-dev-20261224",
+    "@fireproof/core-types-base": "0.24.3-dev-20261224",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
+    "@fireproof/use-fireproof": "0.24.3-dev-20261224",
     "call-ai": "workspace:*",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
@@ -32,11 +32,11 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/browser-playwright": "^4.0.14",
     "prettier": "^3.7.4",
     "serve": "^14.2.5",
     "typescript": "~5.9.3",
     "vite": "^7.3.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.14"
   }
 }

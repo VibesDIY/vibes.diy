@@ -42,8 +42,8 @@
     "@types/react": "~19.2.7",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/browser": "^4.0.16",
-    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/browser": "^4.0.14",
+    "@vitest/browser-playwright": "^4.0.14",
     "call-ai": "workspace:*",
     "playwright": "^1.57.0",
     "playwright-chromium": "^1.57.0",
@@ -57,21 +57,21 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core": "0.24.3-dev-20261224",
+    "@fireproof/core-keybag": "0.24.3-dev-20261224",
+    "@fireproof/core-runtime": "0.24.3-dev-20261224",
+    "@fireproof/core-types-base": "0.24.3-dev-20261224",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
+    "@fireproof/use-fireproof": "0.24.3-dev-20261224",
     "@improvements/vite-plugin-devtools-json": "^0.0.3",
     "@react-router/dev": "^7.11.0",
     "@tailwindcss/vite": "^4.1.18",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
     "react-dom": "^19.2.3",
-    "use-fireproof": "0.24.3-dev-use-livequery",
+    "use-fireproof": "0.24.3-dev-20261224",
     "use-vibes": "workspace:0.0.0",
     "vite": "^7.3.0",
     "vite-tsconfig-paths": "^6.0.3",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.14"
   }
 }

@@ -56,12 +56,12 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@fireproof/core-cli": "0.24.3-dev-use-livequery",
+    "@fireproof/core-cli": "0.24.3-dev-20261224",
     "@playwright/test": "^1.57.0",
     "@types/deno": "^2.5.0",
     "@types/node": "^25.0.3",
     "@typescript/native-preview": "7.0.0-dev.20251222.1",
-    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/browser-playwright": "^4.0.14",
     "@vitest/coverage-v8": "4.0.16",
     "cmd-ts": "^0.14.3",
     "cross-env": "^10.0.0",
@@ -74,16 +74,16 @@
     "puppeteer": "^24.34.0",
     "serve": "^14.2.5",
     "typescript-eslint": "^8.50.1",
-    "vitest": "^4.0.16",
+    "vitest": "^4.0.14",
     "wrangler": "^4.56.0",
     "zx": "^8.8.5"
   },
   "dependencies": {
-    "@fireproof/core": "0.24.3-dev-use-livequery",
-    "@fireproof/core-keybag": "0.24.3-dev-use-livequery",
-    "@fireproof/core-runtime": "0.24.3-dev-use-livequery",
-    "@fireproof/core-types-base": "0.24.3-dev-use-livequery",
-    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-use-livequery",
-    "@fireproof/use-fireproof": "0.24.3-dev-use-livequery"
+    "@fireproof/core": "0.24.3-dev-20261224",
+    "@fireproof/core-keybag": "0.24.3-dev-20261224",
+    "@fireproof/core-runtime": "0.24.3-dev-20261224",
+    "@fireproof/core-types-base": "0.24.3-dev-20261224",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
+    "@fireproof/use-fireproof": "0.24.3-dev-20261224"
   }
 }

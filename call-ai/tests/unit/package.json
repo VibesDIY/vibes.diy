@@ -38,23 +38,23 @@
     "@playwright/test": "^1.57.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
-    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/browser-playwright": "^4.0.14",
     "jest": "^30.0.5",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.16",
+    "vitest": "^4.0.14",
     "zx": "^8.8.4"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@fireproof/core": "0.24.3-dev-use-livequery",
-    "@fireproof/core-keybag": "0.24.3-dev-use-livequery",
-    "@fireproof/core-runtime": "0.24.3-dev-use-livequery",
-    "@fireproof/core-types-base": "0.24.3-dev-use-livequery",
-    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-use-livequery",
-    "@fireproof/use-fireproof": "0.24.3-dev-use-livequery",
+    "@fireproof/core": "0.24.3-dev-20261224",
+    "@fireproof/core-keybag": "0.24.3-dev-20261224",
+    "@fireproof/core-runtime": "0.24.3-dev-20261224",
+    "@fireproof/core-types-base": "0.24.3-dev-20261224",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
+    "@fireproof/use-fireproof": "0.24.3-dev-20261224",
     "call-ai": "workspace:0.0.0",
     "ts-jest": "^29.4.5"
   }

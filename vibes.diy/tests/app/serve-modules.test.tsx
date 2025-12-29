@@ -71,7 +71,7 @@ describe("serve/ module components", () => {
   describe("ImportMap component", () => {
     it("should render script tag with type='importmap'", () => {
       // Act
-      const html = renderToString(<ImportMap />);
+      const html = renderToString(<ImportMap versions={{ FP: "test" }} />);
 
       // Assert
       expect(html).toContain('type="importmap"');
@@ -79,7 +79,7 @@ describe("serve/ module components", () => {
 
     it("should contain valid JSON structure", () => {
       // Act
-      const html = renderToString(<ImportMap />);
+      const html = renderToString(<ImportMap versions={{ FP: "test" }} />);
 
       // Assert
       // Extract JSON from script tag
@@ -95,7 +95,7 @@ describe("serve/ module components", () => {
 
     it("should include key dependencies", () => {
       // Act
-      const html = renderToString(<ImportMap />);
+      const html = renderToString(<ImportMap versions={{ FP: "test" }} />);
 
       // Assert
       expect(html).toContain('"react"');
@@ -107,7 +107,7 @@ describe("serve/ module components", () => {
 
     it("should replace FP version placeholders", () => {
       // Act
-      const html = renderToString(<ImportMap />);
+      const html = renderToString(<ImportMap versions={{ FP: "test" }} />);
 
       // Assert
       const jsonMatch = html.match(/>([^<]+)<\/script>/);
@@ -115,9 +115,11 @@ describe("serve/ module components", () => {
       const parsed = JSON.parse(content);
 
       // Check that use-fireproof has a versioned URL (not "FP" placeholder)
-      expect(parsed.imports["use-fireproof"]).toContain("use-fireproof@");
-      expect(parsed.imports["use-fireproof"]).toContain("esm.sh");
-      expect(parsed.imports["use-fireproof"]).not.toBe("FP");
+      expect(parsed.imports["@fireproof/use-fireproof"]).toContain(
+        "use-fireproof@",
+      );
+      expect(parsed.imports["@fireproof/use-fireproof"]).toContain("esm.sh");
+      expect(parsed.imports["@fireproof/use-fireproof"]).not.toBe("FP");
 
       // Should not contain undefined values
       expect(Object.values(parsed.imports)).not.toContain(undefined);

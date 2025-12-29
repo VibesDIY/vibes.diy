@@ -1,8 +1,9 @@
-import React from "react";
+import React, { ReactElement } from "react";
 import { render } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ErrorBoundary, Layout } from "~/vibes.diy/app/root.js";
+import { RawApp } from "~/vibes.diy/app/root.js";
+import { ErrorBoundary } from "~/vibes.diy/app/ErrorBoundary.js";
 import { VibesDiyEnv } from "~/vibes.diy/app/config/env.js";
 
 // Ensure required Clerk configuration is present for tests
@@ -28,6 +29,15 @@ vi.mock("react-router", async () => {
     }) => <div data-testid={testId} />,
     isRouteErrorResponse: vi.fn(),
     useLocation: () => ({ pathname: "/", search: "" }),
+    useParams: () => {
+      /* */
+    },
+    useNavigate: () => {
+      /* */
+    },
+    useSearchParams: () => {
+      /* */
+    },
     Outlet: () => <div data-testid="outlet" />,
   };
 });
@@ -94,16 +104,16 @@ vi.mock("~/vibes.diy/app/components/CookieBanner", () => ({
   default: () => <div data-testid="cookie-banner">Cookie Banner</div>,
 }));
 
-// Mock the useFireproof hook
-vi.mock("@fireproof/use-fireproof", async () => {
-  const { vi } = await import("vitest");
-  return {
-    useFireproof: () => ({
-      useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
-      useLiveQuery: () => [[]],
-    }),
-  };
-});
+// // Mock the useFireproof hook
+// vi.mock("@fireproof/use-fireproof", async () => {
+//   const { vi } = await import("vitest");
+//   return {
+//     useFireproof: () => ({
+//       useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
+//       useLiveQuery: () => [[]],
+//     }),
+//   };
+// });
 
 // Mock the useSimpleChat hook
 vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async () => {
@@ -128,16 +138,16 @@ vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async () => {
 });
 
 // Mock @clerk/clerk-react
-vi.mock("@clerk/clerk-react", () => ({
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  useAuth: () => ({
-    userId: "test-user-id",
-    isLoaded: true,
-    isSignedIn: true,
-  }),
-}));
+// vi.mock("@clerk/clerk-react", () => ({
+//   ClerkProvider: ({ children }: { children: React.ReactNode }) => (
+//     <>{children}</>
+//   ),
+//   useAuth: () => ({
+//     userId: "test-user-id",
+//     isLoaded: true,
+//     isSignedIn: true,
+//   }),
+// }));
 
 describe("Root Component", () => {
   beforeEach(() => {
@@ -151,19 +161,28 @@ describe("Root Component", () => {
   // while still verifying that the root layout and core providers compose.
   it("statically renders Layout with children and core providers", () => {
     const html = renderToStaticMarkup(
-      <Layout>
+      <RawApp>
         <div data-testid="test-content">Test Child Content</div>
-      </Layout>,
+      </RawApp>,
     );
 
     expect(html).toContain("Test Child Content");
     expect(html).toContain('data-testid="cookie-banner"');
   });
 
-  it("renders the ErrorBoundary component with an error", () => {
+  function ThrowError({ error }: { error: Error }): ReactElement {
+    throw error;
+  }
+
+  it("renders ld throw an error when sessionId is not provi", () => {
     const testError = new Error("Test error");
 
-    const res = render(<ErrorBoundary error={testError} params={{}} />);
+    const res = render(
+      <ErrorBoundary>
+        <ThrowError error={testError} />
+      </ErrorBoundary>,
+    );
+    console.log(res);
 
     // Check that the error message is displayed
     expect(res.getByText("Oops!")).toBeDefined();

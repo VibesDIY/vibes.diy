@@ -16,21 +16,21 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@fireproof/core": "0.24.3-dev-use-livequery",
-    "@fireproof/core-keybag": "0.24.3-dev-use-livequery",
-    "@fireproof/core-runtime": "0.24.3-dev-use-livequery",
-    "@fireproof/core-types-base": "0.24.3-dev-use-livequery",
-    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-use-livequery",
-    "@fireproof/use-fireproof": "0.24.3-dev-use-livequery",
+    "@fireproof/core": "0.24.3-dev-20261224",
+    "@fireproof/core-keybag": "0.24.3-dev-20261224",
+    "@fireproof/core-runtime": "0.24.3-dev-20261224",
+    "@fireproof/core-types-base": "0.24.3-dev-20261224",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
+    "@fireproof/use-fireproof": "0.24.3-dev-20261224",
     "call-ai": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.3-dev-use-livequery",
+    "@fireproof/core-cli": "0.24.3-dev-20261224",
     "@types/react": "~19.2.7",
-    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/browser-playwright": "^4.0.14",
     "typescript": "^5.9.3"
   }
 }

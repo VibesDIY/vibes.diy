@@ -5,8 +5,8 @@ import { DocResponse, fireproof } from "@fireproof/use-fireproof";
  * @param sessionId The session ID to get the database name for
  * @returns The database name for the session
  */
-export function getSessionDatabaseName(sessionId: string) {
-  // if (!sessionId) throw new Error("Session ID is required");
+export function getSessionDatabaseName(sessionId?: string) {
+  if (!sessionId) throw new Error("useSession Session ID is required");
   return `vibe-${sessionId}`;
 }
 

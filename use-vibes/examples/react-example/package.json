@@ -10,12 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fireproof/core-keybag": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-runtime": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-types-base": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/use-fireproof": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-ensure-cloud-token-7",
-    "@fireproof/core": "0.24.3-dev-ensure-cloud-token-7",
+    "@fireproof/core": "0.24.3-dev-20261224",
+    "@fireproof/core-keybag": "0.24.3-dev-20261224",
+    "@fireproof/core-runtime": "0.24.3-dev-20261224",
+    "@fireproof/core-types-base": "0.24.3-dev-20261224",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
+    "@fireproof/use-fireproof": "0.24.3-dev-20261224",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "use-vibes": "workspace:*"
@@ -25,7 +25,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/browser-playwright": "^4.0.14",
     "eslint": "^9.39.2",
     "eslint-plugin-react-hooks": "^7.0.0",
     "eslint-plugin-react-refresh": "^0.4.26",

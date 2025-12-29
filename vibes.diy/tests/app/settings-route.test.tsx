@@ -52,6 +52,9 @@ vi.mock("~/vibes.diy/app/hooks/useSession", () => ({
 // Mock Fireproof
 vi.mock("@fireproof/use-fireproof", () => ({
   useFireproof: () => mocks.mockUseFireproof(),
+  isDatabase: () => {
+    /* */
+  },
   ImgFile: vi.fn(),
   fireproof: vi.fn(),
   toCloud: vi.fn(),
@@ -104,6 +107,9 @@ vi.mock("@clerk/clerk-react", () => ({
     redirectToSignIn: vi.fn(),
     signOut: vi.fn(),
   }),
+  ClerkProvider: () => {
+    /* */
+  },
   useUser: () => ({
     user: {
       primaryEmailAddress: { emailAddress: "test@example.com" },

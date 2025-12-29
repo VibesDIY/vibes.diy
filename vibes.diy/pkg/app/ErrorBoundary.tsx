@@ -15,10 +15,12 @@ export class ErrorBoundary extends React.Component<
 > {
   constructor(props: ErrorBoundaryProps) {
     super(props);
+    console.log("ttitititii", props);
     this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    console.log("getDerivedStateFromError", error);
     return { hasError: true, error };
   }
 
@@ -27,6 +29,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   render() {
+    console.log(">>>>>>>", this.state);
     if (this.state.hasError && this.state.error) {
       const error = this.state.error;
       const message = "Oops!";

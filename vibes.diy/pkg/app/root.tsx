@@ -1,11 +1,8 @@
 import React, { StrictMode } from "react";
-import type { MetaFunction } from "react-router-dom";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 
 import { PostHogProvider } from "posthog-js/react";
 import { VibesDiyEnv } from "./config/env.js";
-// import type { Route } from "./+types/root";
-// CSS loaded via <link> tag in index.tsx for SSR compatibility
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
@@ -27,18 +24,9 @@ import { Legal_Privacy } from "./routes/legal/privacy.js";
 import { Legal_Tos } from "./routes/legal/tos.js";
 import { Invite } from "./routes/invite.js";
 import { CatchAll } from "./routes/catch-all.js";
-import { VibeContextProvider } from "@vibes.diy/use-vibes-base";
 
-function RawApp({ children }: { children?: React.ReactNode }) {
+export function RawApp({ children }: { children?: React.ReactNode }) {
   return (
-    // <VibeContextProvider
-    //   mountParams={{
-    //     appSlug: "vibes-diy",
-    //     titleId: "vibes-diy",
-    //     installId: "vibes-diy",
-    //     env: VibesDiyEnv.VibesEnv(),
-    //   }}
-    // >
     <ThemeProvider>
       <PostHogProvider
         apiKey={VibesDiyEnv.POSTHOG_KEY()}
