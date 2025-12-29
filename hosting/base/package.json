@@ -31,7 +31,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.3-dev-use-livequery",
+    "@fireproof/core-cli": "0.24.3-dev-20261224",
     "@vitest/browser-playwright": "^4.0.16",
     "typescript": "^5.9.3"
   }

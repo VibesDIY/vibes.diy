@@ -23,7 +23,7 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.3-dev-use-livequery",
+    "@fireproof/core-cli": "0.24.3-dev-20261224",
     "@types/react": "~19.2.7",
     "@vitest/browser-playwright": "^4.0.16",
     "typescript": "^5.9.3"
