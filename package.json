@@ -65,7 +65,7 @@
     "cross-env": "^10.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
-    "knip": "^5.76.3",
+    "knip": "^5.78.0",
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.1",
