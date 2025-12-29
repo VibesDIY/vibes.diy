@@ -758,8 +758,8 @@ importers:
         specifier: ^13.4.2
         version: 13.4.2
       posthog-js:
-        specifier: ^1.310.1
-        version: 1.310.1
+        specifier: ^1.311.0
+        version: 1.311.0
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -921,8 +921,8 @@ importers:
         specifier: ^13.4.2
         version: 13.4.2
       posthog-js:
-        specifier: ^1.310.1
-        version: 1.310.1
+        specifier: ^1.311.0
+        version: 1.311.0
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -1024,8 +1024,8 @@ importers:
         specifier: ^13.4.2
         version: 13.4.2
       posthog-js:
-        specifier: ^1.310.1
-        version: 1.310.1
+        specifier: ^1.311.0
+        version: 1.311.0
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -8405,8 +8405,8 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.310.1:
-    resolution: {integrity: sha512-UkR6zzlWNtqHDXHJl2Yk062DOmZyVKTPL5mX4j4V+u3RiYbMHJe47+PpMMUsvK1R2e1r/m9uSlHaJMJRzyUjGg==}
+  posthog-js@1.311.0:
+    resolution: {integrity: sha512-P1dWYNFr1dlfa5sAOFj4uq2jJuGfNce3ctYl565t0Fm/i4ZJZq4D2hmKyTMjKu5f9wyZVlTeRdxdmTIGDjCegw==}
 
   preact@10.28.1:
     resolution: {integrity: sha512-u1/ixq/lVQI0CakKNvLDEcW5zfCjUQfZdK9qqWuIJtsezuyG6pk9TWj75GMuI/EzRSZB/VAE43sNWWZfiy8psw==}
@@ -19177,7 +19177,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  posthog-js@1.310.1:
+  posthog-js@1.311.0:
     dependencies:
       '@posthog/core': 1.9.0
       core-js: 3.47.0
