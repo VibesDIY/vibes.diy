@@ -22,7 +22,7 @@
     "@fireproof/core-keybag": "0.24.3-dev-use-livequery",
     "@fireproof/core-runtime": "0.24.3-dev-use-livequery",
     "@fireproof/core-types-base": "0.24.3-dev-use-livequery",
-    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-use-livequery",
+    "@fireproof/core-types-protocols-cloud": "0.24.3-dev-20261224",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*",

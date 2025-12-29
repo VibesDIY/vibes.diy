@@ -398,8 +398,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.3-dev-20261224
+        version: 0.24.3-dev-20261224(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -2080,14 +2080,26 @@ packages:
   '@fireproof/core-runtime@0.24.3-dev-use-livequery':
     resolution: {integrity: sha512-JJaCZE03svOimKk9icHay5Zif+3n7M5GOnhBEJ4AhCmmDS3LL67n8Zr3NGpQo4se+3Rg+4ZqANETmsRi6ZQujA==}
 
+  '@fireproof/core-types-base@0.24.3-dev-20261224':
+    resolution: {integrity: sha512-OuYHhKcua1+u95XRj/ewfqiNus1kRJPwxbP/MqQiMNVXveKm6mjiOBVL1SNbxvk6gByMic+/CECOugQQxS83hg==}
+
   '@fireproof/core-types-base@0.24.3-dev-use-livequery':
     resolution: {integrity: sha512-j9WvTKHpa96/VJAXQXVD4tJl+TVuVXh8m2S5CBqXjZbsgZp2puTkBtZjd3i2tTWCM2bmtl6ab2z82vl1gSgOOQ==}
+
+  '@fireproof/core-types-blockstore@0.24.3-dev-20261224':
+    resolution: {integrity: sha512-PW1SYBscuzKK4RCDE2KPh44KGLKccIIYVEO1enKyhOeOlcVea0+pdfmDXtm8oorbn4lBuJXIuOoHRUtXW+wJsw==}
 
   '@fireproof/core-types-blockstore@0.24.3-dev-use-livequery':
     resolution: {integrity: sha512-qI0T2caGPtRJAqC/ipMa7x3pMeyTjBU6n8eJud1DJjdDTd6B3noE9Kqnjx0gdPKPy2mt+drr2ZjLIIbcHky4qA==}
 
+  '@fireproof/core-types-protocols-cloud@0.24.3-dev-20261224':
+    resolution: {integrity: sha512-4hpA/Sk2qYPe2AYij2dF5FGzOnAbHdRtkvf+IXUsPQ7YvwvrtXmb4OvFzycaLZz97NEhvminDiZApsT4UoF8tw==}
+
   '@fireproof/core-types-protocols-cloud@0.24.3-dev-use-livequery':
     resolution: {integrity: sha512-X9etoMT8ehQRTpOtnFMl4vuootfcgJGTWtEkYO1JfGaWKmEdHl2zYAODSkgrOZs8oVbHBE/PA9saZyNcHFEz9w==}
+
+  '@fireproof/core-types-runtime@0.24.3-dev-20261224':
+    resolution: {integrity: sha512-Xq1oNlHryFg5SMXpncq/WBgXraXxJ57aNuDqsHxlEIrLzXuj1ZUAMaI+hzAXkSzQyvDEVOGh5fCDZL2BNXaxdA==}
 
   '@fireproof/core-types-runtime@0.24.3-dev-use-livequery':
     resolution: {integrity: sha512-Qr09T17y01fXFybNZAhllOVKA69hfP27qi2AoDl6HOXeXtz9tOC5VcoVH8k6xqKsGuP3xAkNkC0qUL6oqJwrlg==}
@@ -2102,6 +2114,9 @@ packages:
     peerDependencies:
       '@adviser/cement': '>=0.4.20'
       react: '>=18.0.0'
+
+  '@fireproof/vendor@0.24.3-dev-20261224':
+    resolution: {integrity: sha512-QgP29T22flkhSjdnyvY0VY+i7j8lj5pa7oLS44bf6NkCm4hJiEkmhvjLzwM8ODrbRuItmWDgHWuXZYjP8MS5Cg==}
 
   '@fireproof/vendor@0.24.3-dev-use-livequery':
     resolution: {integrity: sha512-eyBfdf92CJCajbgGsHPGX4cbxI4WTVO1Wuf2sMXfWmBvuOxWNRRo3bN43JhJALtvCh80uBKnmkN6MdK1ElgvCw==}
@@ -10119,6 +10134,7 @@ packages:
   wrangler@4.56.0:
     resolution: {integrity: sha512-Nqi8duQeRbA+31QrD6QlWHW3IZVnuuRxMy7DEg46deUzywivmaRV/euBN5KKXDPtA24VyhYsK7I0tkb7P5DM2w==}
     engines: {node: '>=20.0.0'}
+    deprecated: Version 4.55.0 and 4.56.0 can incorrectly automatically delegate 'wrangler deploy' to 'opennextjs-cloudflare'. Use an older or newer version.
     hasBin: true
     peerDependencies:
       '@cloudflare/workers-types': ^4.20251217.0
@@ -11322,6 +11338,19 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
+  '@fireproof/core-types-base@0.24.3-dev-20261224(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@web3-storage/pail': 0.6.2
+      jose: 6.1.3
+      multiformats: 13.4.2
+      prolly-trees: 1.0.4
+      zod: 4.2.1
+    transitivePeerDependencies:
+      - typescript
+
   '@fireproof/core-types-base@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11332,6 +11361,17 @@ snapshots:
       multiformats: 13.4.2
       prolly-trees: 1.0.4
       zod: 4.1.13
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-types-blockstore@0.24.3-dev-20261224(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@web3-storage/pail': 0.6.2
+      multiformats: 13.4.2
     transitivePeerDependencies:
       - typescript
 
@@ -11346,6 +11386,18 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
+  '@fireproof/core-types-protocols-cloud@0.24.3-dev-20261224(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
+      jose: 6.1.3
+      multiformats: 13.4.2
+      zod: 4.2.1
+    transitivePeerDependencies:
+      - typescript
+
   '@fireproof/core-types-protocols-cloud@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -11355,6 +11407,14 @@ snapshots:
       jose: 6.1.3
       multiformats: 13.4.2
       zod: 4.1.13
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-types-runtime@0.24.3-dev-20261224(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
+      multiformats: 13.4.2
     transitivePeerDependencies:
       - typescript
 
@@ -11400,6 +11460,13 @@ snapshots:
       - react-dom
       - typescript
       - utf-8-validate
+
+  '@fireproof/vendor@0.24.3-dev-20261224(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      yocto-queue: 1.2.2
+    transitivePeerDependencies:
+      - typescript
 
   '@fireproof/vendor@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
