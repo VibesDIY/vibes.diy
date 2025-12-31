@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "fs";
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import {
   StreamMessageSchema,
   StreamTypes,
@@ -14,8 +15,10 @@ import {
 // Fixture Helpers
 // =============================================================================
 
+const FIXTURE_DIR = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
+
 function loadFixture(name: string): string {
-  return readFileSync(join(__dirname, "fixtures", name), "utf-8");
+  return readFileSync(join(FIXTURE_DIR, name), "utf-8");
 }
 
 function string2stream(data: string): ReadableStream<Uint8Array> {
@@ -139,6 +142,16 @@ describe("StreamMessage Schemas", () => {
 
     const result = StreamMessageSchema.safeParse(msg);
     expect(result.success).toBe(true);
+  });
+
+  it("rejects img message without url or base64", () => {
+    const msg = createMessage(StreamTypes.IMG, "openai/gpt-4o", "conn_1", {
+      streamId: 1,
+      revisedPrompt: "Still life",
+    } as any);
+
+    const result = StreamMessageSchema.safeParse(msg);
+    expect(result.success).toBe(false);
   });
 
   it("rejects invalid message type", () => {

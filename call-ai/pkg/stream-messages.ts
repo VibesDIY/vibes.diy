@@ -162,12 +162,17 @@ export type CodeEditPayload = z.infer<typeof CodeEditPayloadSchema>;
 // Image Events
 // =============================================================================
 
-export const ImgPayloadSchema = z.object({
-  streamId: z.number(),
-  url: z.string().optional(),
-  base64: z.string().optional(),
-  revisedPrompt: z.string().optional(),
-});
+export const ImgPayloadSchema = z
+  .object({
+    streamId: z.number(),
+    url: z.string().url().optional(),
+    base64: z.string().optional(),
+    revisedPrompt: z.string().optional(),
+  })
+  .refine((payload) => Boolean(payload.url) || Boolean(payload.base64), {
+    message: "img payload requires url or base64",
+    path: ["url"],
+  });
 export type ImgPayload = z.infer<typeof ImgPayloadSchema>;
 
 // =============================================================================
