@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.5",
+    "zod": "^4.1.12",
     "@fireproof/core": "0.24.3-dev-20261224",
     "@fireproof/core-keybag": "0.24.3-dev-20261224",
     "@fireproof/core-runtime": "0.24.3-dev-20261224",
