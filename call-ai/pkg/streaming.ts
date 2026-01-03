@@ -2,24 +2,91 @@
  * Streaming response handling for call-ai
  */
 
-import { CallAIError, CallAIOptions, Message, ResponseMeta, SchemaAIMessageRequest, SchemaStrategy } from "./types.js";
+import { CallAIError, CallAIOptions, Message, ResponseMeta, SchemaAIMessageRequest, SchemaStrategy, StreamResponse, ThenableStreamResponse } from "./types.js";
 import { globalDebug } from "./key-management.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
 import { checkForInvalidModelError } from "./error-handling.js";
 import { PACKAGE_VERSION, FALLBACK_MODEL } from "./non-streaming.js";
+import { CodeBlockDetector } from "./code-block-detector.js";
+import { StreamMessage, StreamTypes, nextStreamId } from "./stream-messages.js";
 
-// Generator factory function for streaming API calls
-// This is called after the fetch is made and response is validated
-//
-// Note: Even though we checked response.ok before creating this generator,
-// we need to be prepared for errors that may occur during streaming. Some APIs
-// return a 200 OK initially but then deliver error information in the stream.
-async function* createStreamingGenerator(
+// Adapter to accumulate text from semantic stream (for default stream: true)
+async function* accumulateTextFromSemantic(
+  semanticGen: AsyncGenerator<StreamMessage, void, unknown>,
+  schemaStrategy: SchemaStrategy,
+): AsyncGenerator<string, string, unknown> {
+  let accumulated = "";
+  for await (const msg of semanticGen) {
+    if (msg.type === StreamTypes.TEXT_FRAGMENT || msg.type === StreamTypes.CODE_FRAGMENT) {
+      accumulated += (msg.payload as { frag: string }).frag;
+      yield schemaStrategy.processResponse(accumulated);
+    }
+  }
+  return accumulated;
+}
+
+/**
+ * Create a proxy that acts both as a Promise and an AsyncGenerator for backward compatibility
+ * Moved from api-core.ts
+ */
+export function createBackwardCompatStreamingProxy<T>(promise: Promise<StreamResponse<T>>): ThenableStreamResponse<T> {
+  // Create a proxy that forwards methods to the Promise or AsyncGenerator as appropriate
+  return new Proxy({} as ThenableStreamResponse<T>, {
+    get(_target, prop) {
+      // First check if it's an AsyncGenerator method (needed for for-await)
+      if (prop === "next" || prop === "throw" || prop === "return" || prop === Symbol.asyncIterator) {
+        // Create wrapper functions that await the Promise first
+        if (prop === Symbol.asyncIterator) {
+          return function () {
+            return {
+              // Implement async iterator that gets the generator first
+              async next(value: unknown) {
+                try {
+                  const generator = await promise;
+                  return generator.next(value);
+                } catch (error) {
+                  // Turn Promise rejection into iterator result with error thrown
+                  return Promise.reject(error);
+                }
+              },
+            };
+          };
+        }
+
+        // Methods like next, throw, return
+        return async function (value: unknown) {
+          const generator = await promise;
+          switch (prop) {
+            case "next":
+              return generator.next(value);
+            case "throw":
+              return generator.throw(value);
+            case "return":
+              return generator.return(value as string);
+            default:
+              throw new Error(`Unknown method: ${String(prop)}`);
+          }
+        };
+      }
+
+      // Then check if it's a Promise method
+      if (prop === "then" || prop === "catch" || prop === "finally") {
+        return promise[prop].bind(promise);
+      }
+
+      return undefined;
+    },
+  });
+}
+
+// Internal generator that ALWAYS yields StreamMessage events
+// This is the core implementation that processes the raw API response
+async function* createSemanticGenerator(
   response: Response,
   options: CallAIOptions,
   schemaStrategy: SchemaStrategy,
   model: string,
-): AsyncGenerator<string, string, unknown> {
+): AsyncGenerator<StreamMessage, void, unknown> {
   // Create a metadata object for this streaming response
   const meta: ResponseMeta = {
     model,
@@ -36,8 +103,36 @@ async function* createStreamingGenerator(
   let completeText = "";
   let chunkCount = 0;
 
+  // Code block detector for semantic parsing
+  const detector = new CodeBlockDetector(model);
+  const streamId = nextStreamId();
+  let seqCounter = 0;
+
+  // Helper to process content through detector and yield appropriately
+  const processAndYield = function* (content: string, isToolCallResult = false): Generator<StreamMessage, void, unknown> {
+    if (!content) return;
+
+    // Tool call results bypass detector (they're JSON, not markdown)
+    if (isToolCallResult) {
+      yield {
+        type: StreamTypes.TEXT_FRAGMENT,
+        src: model,
+        dst: "client",
+        ttl: 1,
+        payload: { streamId, seq: String(seqCounter++), frag: content },
+      } as StreamMessage;
+      return;
+    }
+
+    // Route through CodeBlockDetector for semantic parsing
+    const events = detector.feed(content, streamId, seqCounter++);
+    for (const event of events) {
+      yield event;
+    }
+  };
+
   if (options.debug || globalDebug) {
-    console.log(`[callAi:${PACKAGE_VERSION}] Starting streaming generator with model: ${model}`);
+    console.log(`[callAi:${PACKAGE_VERSION}] Starting semantic generator with model: ${model}`);
   }
 
   try {
@@ -198,9 +293,9 @@ async function* createStreamingGenerator(
                     }
                   }
 
-                  // Return the assembled tool call
+                  // Return the assembled tool call (bypasses detector - it's JSON, not markdown)
                   completeText = toolCallsAssembled;
-                  yield completeText;
+                  yield* processAndYield(completeText, true);
                   continue;
                 } catch (e) {
                   console.error("[callAIStreaming] Error handling assembled tool call:", e);
@@ -221,12 +316,12 @@ async function* createStreamingGenerator(
             }
           }
 
-          // Handle tool use response - old format
+          // Handle tool use response - old format (bypasses detector - it's JSON, not markdown)
           if (isClaudeWithSchema && (json.stop_reason === "tool_use" || json.type === "tool_use")) {
             // First try direct tool use object format
             if (json.type === "tool_use") {
               completeText = schemaStrategy.processResponse(json);
-              yield completeText;
+              yield* processAndYield(completeText, true);
               continue;
             }
 
@@ -235,7 +330,7 @@ async function* createStreamingGenerator(
               const toolUseBlock = json.content.find((block: { type: string }) => block.type === "tool_use");
               if (toolUseBlock) {
                 completeText = schemaStrategy.processResponse(toolUseBlock);
-                yield completeText;
+                yield* processAndYield(completeText, true);
                 continue;
               }
             }
@@ -247,7 +342,7 @@ async function* createStreamingGenerator(
                 const toolUseBlock = choice.message.content.find((block: { type: string }) => block.type === "tool_use");
                 if (toolUseBlock) {
                   completeText = schemaStrategy.processResponse(toolUseBlock);
-                  yield completeText;
+                  yield* processAndYield(completeText, true);
                   continue;
                 }
               }
@@ -257,7 +352,7 @@ async function* createStreamingGenerator(
                 const toolUseBlock = choice.delta.content.find((block: { type: string }) => block.type === "tool_use");
                 if (toolUseBlock) {
                   completeText = schemaStrategy.processResponse(toolUseBlock);
-                  yield completeText;
+                  yield* processAndYield(completeText, true);
                   continue;
                 }
               }
@@ -270,29 +365,34 @@ async function* createStreamingGenerator(
 
             // Treat all models the same - yield as content arrives
             completeText += content;
-            // console.log("completeText", completeText);
-            yield schemaStrategy.processResponse(completeText);
+            // Route through CodeBlockDetector for semantic parsing
+            yield* processAndYield(content);
           }
           // Handle message content format (non-streaming deltas)
           else if (json.choices?.[0]?.message?.content !== undefined) {
             const content = json.choices[0].message.content || "";
             completeText += content;
-            yield schemaStrategy.processResponse(completeText);
+            // Route through CodeBlockDetector for semantic parsing
+            yield* processAndYield(content);
           }
           // Handle content blocks for Claude/Anthropic response format
           else if (json.choices?.[0]?.message?.content && Array.isArray(json.choices[0].message.content)) {
             const contentBlocks = json.choices[0].message.content;
             // Find text or tool_use blocks
+            let blockDelta = "";
             for (const block of contentBlocks) {
               if (block.type === "text") {
-                completeText += block.text || "";
+                const text = block.text || "";
+                completeText += text;
+                blockDelta += text;
               } else if (isClaudeWithSchema && block.type === "tool_use") {
                 completeText = schemaStrategy.processResponse(block);
                 break; // We found what we need
               }
             }
 
-            yield schemaStrategy.processResponse(completeText);
+            // Route through CodeBlockDetector for semantic parsing
+            yield* processAndYield(blockDelta);
           }
 
           // Find text delta for content blocks (Claude format)
@@ -300,11 +400,13 @@ async function* createStreamingGenerator(
             if (options.debug) {
               console.log(`[callAi:${PACKAGE_VERSION}] Received text delta:`, json.delta.text);
             }
-            completeText += json.delta.text;
+            const textDelta = json.delta.text;
+            completeText += textDelta;
             // In some models like Claude, don't yield partial results as they can be malformed JSON
             // Only yield what we've seen so far if it's not a Claude model with schema
             if (!isClaudeWithSchema) {
-              yield schemaStrategy.processResponse(completeText);
+              // Route through CodeBlockDetector for semantic parsing
+              yield* processAndYield(textDelta);
             }
           }
         } catch (e) {
@@ -314,10 +416,6 @@ async function* createStreamingGenerator(
         }
       }
     }
-
-    // We no longer need special error handling here as errors are thrown immediately
-
-    // No extra error handling needed here - errors are thrown immediately
 
     // If we have assembled tool calls but haven't yielded them yet
     if (toolCallsAssembled && (!completeText || completeText.length === 0)) {
@@ -386,7 +484,14 @@ async function* createStreamingGenerator(
         }
       }
 
-      yield completeText;
+      // Tool call result bypasses detector - it's JSON, not markdown
+      yield* processAndYield(completeText, true);
+    }
+
+    // Finalize the detector to flush any remaining buffered content
+    const finalEvents = detector.finalize(streamId);
+    for (const event of finalEvents) {
+      yield event;
     }
 
     // Record streaming completion in metadata
@@ -402,8 +507,7 @@ async function* createStreamingGenerator(
     const boxed = boxString(completeText);
     responseMetadata.set(boxed, meta);
 
-    // Return the complete text as the final value
-    return completeText;
+    // Return (void in generator, but helpful for types)
   } catch (error) {
     // Streaming generators must properly handle errors
     if (options.debug || globalDebug) {
@@ -415,10 +519,37 @@ async function* createStreamingGenerator(
   }
 }
 
+// Wrapper function that selects the right output format based on options
+// This replaces the old createStreamingGenerator
+async function* createStreamingGenerator(
+  response: Response,
+  options: CallAIOptions,
+  schemaStrategy: SchemaStrategy,
+  model: string,
+): AsyncGenerator<string | StreamMessage, string, unknown> {
+  const semanticMode = (options as { _semanticMode?: boolean })._semanticMode ?? false;
+
+  // Always create the semantic generator
+  const semanticGen = createSemanticGenerator(response, options, schemaStrategy, model);
+
+  if (semanticMode) {
+    // Return events directly
+    yield* semanticGen;
+  } else {
+    // Default: accumulate text
+    yield* accumulateTextFromSemantic(semanticGen, schemaStrategy);
+  }
+  return "";
+}
+
 // Simplified generator for accessing streaming results
 // Returns an async generator that yields blocks of text
 // This is a higher-level function that prepares the request
 // and handles model fallback
+//
+// Note: When _semanticMode is true, this actually yields StreamMessage objects
+// but we keep the return type as string for public API compatibility.
+// Internal callers (callAIStreamingSemantic) cast appropriately.
 async function* callAIStreaming(
   prompt: string | Message[],
   options: CallAIOptions = {},
@@ -501,6 +632,7 @@ async function* callAIStreaming(
         "headers",
         "skipRefresh",
         "debug",
+        "_semanticMode", // Internal option, not sent to API
       ].includes(key)
     ) {
       requestBody[key] = (options as Record<string, unknown>)[key];
@@ -554,7 +686,13 @@ async function* callAIStreaming(
     }
 
     // Yield streaming results through the generator
-    yield* createStreamingGenerator(response, options, schemaStrategy, model);
+    // Cast is safe: in normal mode yields strings, in _semanticMode yields StreamMessage
+    // but callAIStreamingSemantic handles the casting on its end
+    yield* createStreamingGenerator(response, options, schemaStrategy, model) as AsyncGenerator<
+      string,
+      string,
+      unknown
+    >;
 
     // The createStreamingGenerator will return the final assembled string
     return ""; // This is never reached due to yield*
@@ -569,4 +707,29 @@ async function* callAIStreaming(
   }
 }
 
-export { createStreamingGenerator, callAIStreaming };
+/**
+ * Internal function that wraps callAIStreaming and yields StreamMessage events.
+ * Used by parseAIStream to get semantic events directly without double-processing.
+ * This is not part of the public API.
+ *
+ * Uses _semanticMode to get StreamMessage events directly from createStreamingGenerator,
+ * which has a single CodeBlockDetector that processes all content.
+ */
+async function* callAIStreamingSemantic(
+  prompt: string | Message[],
+  options: CallAIOptions,
+): AsyncGenerator<StreamMessage, void, unknown> {
+  // Use _semanticMode to get StreamMessage events directly from the single detector
+  // Cast is necessary because callAIStreaming's public type is string, but in _semanticMode
+  // it actually yields StreamMessage objects
+  const semanticStream = callAIStreaming(prompt, {
+    ...options,
+    _semanticMode: true,
+  } as CallAIOptions & { _semanticMode: boolean }) as unknown as AsyncGenerator<StreamMessage, string, unknown>;
+
+  for await (const event of semanticStream) {
+    yield event;
+  }
+}
+
+export { createStreamingGenerator, callAIStreaming, callAIStreamingSemantic };

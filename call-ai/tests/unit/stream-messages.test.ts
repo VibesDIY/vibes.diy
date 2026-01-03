@@ -2,14 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import {
-  StreamMessageSchema,
-  StreamTypes,
-  createMessage,
-  isMessageType,
-  nextId,
-  nextStreamId,
-} from "../../pkg/stream-messages.js";
+import { StreamMessageSchema, StreamTypes, createMessage, isMessageType, nextId, nextStreamId } from "../../pkg/stream-messages.js";
 
 // =============================================================================
 // Fixture Helpers
@@ -148,7 +141,7 @@ describe("StreamMessage Schemas", () => {
     const msg = createMessage(StreamTypes.IMG, "openai/gpt-4o", "conn_1", {
       streamId: 1,
       revisedPrompt: "Still life",
-    } as any);
+    } as unknown as Parameters<typeof createMessage>[3]);
 
     const result = StreamMessageSchema.safeParse(msg);
     expect(result.success).toBe(false);

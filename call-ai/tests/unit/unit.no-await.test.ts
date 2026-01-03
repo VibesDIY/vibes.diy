@@ -1,4 +1,6 @@
 import { callAi, Message, Schema } from "call-ai";
+import { StreamTypes, StreamMessage } from "../../pkg/stream-messages.js";
+import { ThenableStreamResponse } from "../../pkg/types.js";
 import { dotenv } from "zx";
 import { describe, expect, it, beforeEach, vi, Mock } from "vitest";
 import { fail } from "assert";
@@ -123,6 +125,50 @@ describe("callAi", () => {
     expect(body.messages).toEqual([{ role: "user", content: "Hello, AI" }]);
     expect(body.temperature).toBe(0.7);
     expect(body.stream).toBe(true);
+  });
+
+  it("supports semantic streaming mode and yields StreamMessages", async () => {
+    const options = {
+      apiKey: "test-api-key",
+      model: "openai/gpt-4o",
+      stream: "semantic" as const,
+    };
+
+    const semanticReader = {
+      read: vi
+        .fn<() => Promise<{ done: boolean; value?: Uint8Array }>>()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode(`data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n`),
+        })
+        .mockResolvedValueOnce({ done: true }),
+    };
+
+    const semanticResponse = {
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      headers: new Headers({ "content-type": "text/event-stream" }),
+      body: {
+        getReader: vi.fn().mockReturnValue(semanticReader),
+      },
+      clone: () => semanticResponse,
+      text: () => Promise.resolve(""),
+    } as unknown as Response & { headers: Headers };
+
+    globalFetch.mockResolvedValueOnce(semanticResponse);
+
+    const generatorPromise = callAi("Hello", options) as unknown as ThenableStreamResponse<StreamMessage>;
+    const generator = (await generatorPromise) as AsyncGenerator<StreamMessage, string, unknown>;
+
+    const firstChunk = await generator.next();
+    expect(firstChunk.value?.type).toBe(StreamTypes.TEXT_FRAGMENT);
+    expect(firstChunk.value?.payload.frag).toBe("Hello");
+
+    const body = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    expect(body.stream).toBe(true);
+
+    await generator.next();
   });
 
   it("should handle message array for prompt", async () => {
@@ -567,5 +613,84 @@ describe("callAi", () => {
     expect(finalValue).toContain("22");
     expect(finalValue).toContain("conditions");
     expect(finalValue).toContain("Sunny");
+  });
+
+  it("should accumulate text via semantic adapter for legacy streaming", async () => {
+    const options = {
+      apiKey: "test-api-key",
+      model: "openai/gpt-4o",
+      stream: true,
+    };
+
+    const reader = {
+      read: vi
+        .fn<() => Promise<{ done: boolean; value?: Uint8Array }>>()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode(`data: {"choices":[{"delta":{"content":"He"}}]}\n\n`),
+        })
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode(`data: {"choices":[{"delta":{"content":"llo"}}]}\n\n`),
+        })
+        .mockResolvedValueOnce({ done: true }),
+    };
+
+    const response = {
+      ok: true,
+      status: 200,
+      body: {
+        getReader: vi.fn().mockReturnValue(reader),
+      },
+    } as unknown as Response;
+
+    globalFetch.mockResolvedValueOnce(response);
+
+    const generator = (await callAi("Hello", options)) as AsyncGenerator<string, string, unknown>;
+
+    const first = await generator.next();
+    expect(first.value).toBe("He");
+    const second = await generator.next();
+    expect(second.value).toBe("Hello");
+  });
+
+  it("buffers semantic stream when schema forces streaming", async () => {
+    const schema: Schema = {
+      properties: {
+        foo: { type: "string" },
+      },
+    };
+
+    const options = {
+      apiKey: "test-api-key",
+      model: "anthropic/claude-3-haiku",
+      schema,
+    };
+
+    const reader = {
+      read: vi
+        .fn<() => Promise<{ done: boolean; value?: Uint8Array }>>()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode(`data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n`),
+        })
+        .mockResolvedValueOnce({ done: true }),
+    };
+
+    const response = {
+      ok: true,
+      status: 200,
+      headers: new Headers({ "content-type": "text/event-stream" }),
+      body: {
+        getReader: vi.fn().mockReturnValue(reader),
+      },
+      clone: () => response,
+      text: () => Promise.resolve(""),
+    } as unknown as Response & { headers: Headers };
+
+    globalFetch.mockResolvedValueOnce(response);
+
+    const result = await callAi("Hello", options);
+    expect(result).toBe("Hello");
   });
 });

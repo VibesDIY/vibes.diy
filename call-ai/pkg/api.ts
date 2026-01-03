@@ -8,15 +8,17 @@ import {
   ResponseMeta,
   SchemaStrategy,
   StreamResponse,
+  ThenableStreamResponse,
   APIResponse,
   ModelId,
   AIResult,
 } from "./types.js";
+import { StreamMessage } from "./stream-messages.js";
 import { chooseSchemaStrategy } from "./strategies/index.js";
 import { responseMetadata, boxString, getMeta } from "./response-metadata.js";
 import { keyStore, globalDebug } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
-import { createBackwardCompatStreamingProxy } from "./api-core.js";
+import { createBackwardCompatStreamingProxy } from "./streaming.js";
 import { extractContent, extractClaudeResponse, PACKAGE_VERSION } from "./non-streaming.js";
 import { createStreamingGenerator } from "./streaming.js";
 import { callAiFetch, joinUrlParts } from "./utils.js";
@@ -54,21 +56,26 @@ const FALLBACK_MODEL = "openrouter/auto";
  *          or a Promise that resolves to an AsyncGenerator when streaming is enabled.
  *          The AsyncGenerator yields partial responses as they arrive.
  */
-export function callAi(prompt: string | Message[], options: CallAIOptions = {}): Promise<string | StreamResponse> {
+export function callAi(
+  prompt: string | Message[],
+  options: CallAIOptions = {},
+): Promise<string> | ThenableStreamResponse | ThenableStreamResponse<StreamMessage> {
   // Check if we need to force streaming based on model strategy
   const schemaStrategy = chooseSchemaStrategy(options.model, options.schema || null);
+  const semanticStream = options.stream === "semantic";
+  const isStreaming = options.stream === true || semanticStream;
 
   // We no longer set a default maxTokens
   // Will only include max_tokens in the request if explicitly set by the user
 
   // Handle special case: Claude with tools requires streaming
-  if (!options.stream && schemaStrategy.shouldForceStream) {
+  if (!isStreaming && schemaStrategy.shouldForceStream) {
     // Buffer streaming results into a single response
     return bufferStreamingResults(prompt, options);
   }
 
   // Handle normal non-streaming mode
-  if (options.stream !== true) {
+  if (!isStreaming) {
     return callAINonStreaming(prompt, options);
   }
 
@@ -274,7 +281,14 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
     if (options.debug) {
       console.log(`[callAi:${PACKAGE_VERSION}] Response OK, creating streaming generator`);
     }
-    return createStreamingGenerator(response, options, schemaStrategy, model);
+    const streamingOptions = {
+      ...options,
+      stream: true,
+    } as CallAIOptions & { _semanticMode?: boolean };
+    if (semanticStream) {
+      streamingOptions._semanticMode = true;
+    }
+    return createStreamingGenerator(response, streamingOptions, schemaStrategy, model) as StreamResponse;
   })();
 
   // For backward compatibility with v0.6.x where users didn't await the result
@@ -287,6 +301,9 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
   }
 
   // Create a proxy object that acts both as a Promise and an AsyncGenerator for backward compatibility
+  if (semanticStream) {
+    return createBackwardCompatStreamingProxy<StreamMessage>(streamPromise as Promise<StreamResponse<StreamMessage>>);
+  }
   return createBackwardCompatStreamingProxy(streamPromise);
 }
 
@@ -351,7 +368,7 @@ async function bufferStreamingResults(prompt: string | Message[], options: CallA
 /**
  * Standardized API error handler
  */
-// createBackwardCompatStreamingProxy is imported from api-core.ts
+// createBackwardCompatStreamingProxy is imported from streaming.ts
 
 // handleApiError is imported from error-handling.ts
 

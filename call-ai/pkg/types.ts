@@ -294,14 +294,14 @@ export interface SchemaStrategy {
 /**
  * Return type for streaming API calls
  */
-export type StreamResponse = AsyncGenerator<string, string, unknown>;
+export type StreamResponse<T = string> = AsyncGenerator<T, string, unknown>;
 
 /**
  * @internal
  * Internal type for backward compatibility with v0.6.x
  * This type is not exposed in public API documentation
  */
-export type ThenableStreamResponse = AsyncGenerator<string, string, unknown> & Promise<StreamResponse>;
+export type ThenableStreamResponse<T = string> = AsyncGenerator<T, string, unknown> & Promise<StreamResponse<T>>;
 
 export interface CallAIOptions {
   /**
@@ -326,9 +326,12 @@ export interface CallAIOptions {
   readonly chatUrl?: string;
 
   /**
-   * Whether to stream the response
+   * Whether to stream the response.
+   * - `false`/`undefined`: Return a single string (default)
+   * - `true`: Return an AsyncGenerator<string> (legacy streaming)
+   * - `"semantic"`: Return an AsyncGenerator<StreamMessage> (structured events)
    */
-  stream?: boolean;
+  stream?: boolean | "semantic";
 
   /**
    * Authentication token for key refresh service
