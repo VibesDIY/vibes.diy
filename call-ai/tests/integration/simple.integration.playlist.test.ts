@@ -126,7 +126,7 @@ describe("Simple callAi integration tests", () => {
           );
 
           // Get the metadata
-          const resultMeta = getMeta(result);
+          const resultMeta = getMeta(result as string);
 
           // Verify response
           expectOrWarn(modelId, typeof result === "string", `Result is not a string but ${typeof result} in ${modelName} model`);

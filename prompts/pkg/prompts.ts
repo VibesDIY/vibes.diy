@@ -219,7 +219,7 @@ async function selectLlmsAndOptions(
       ]);
 
     const raw = (await withTimeout(
-      (options.mock?.callAI || callAI)(messages, options),
+      (options.mock?.callAI || callAI)(messages, options) as Promise<string>,
     )) as string;
 
     if (raw === undefined || raw === null) {

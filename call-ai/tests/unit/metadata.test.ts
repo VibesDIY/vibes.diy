@@ -1,5 +1,5 @@
 import { callAi, getMeta, ModelId, ResponseMeta } from "call-ai";
-import { describe, expect, it, beforeEach, vi, Mock, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, vi, Mock } from "vitest";
 
 // Mock global fetch
 const globalFetch = vi.fn<typeof fetch>();
@@ -68,7 +68,7 @@ describe("getMeta", () => {
     const result = await callAi("Hello", options);
 
     // Get the metadata
-    const meta = getMeta(result);
+    const meta = getMeta(result as string);
 
     // Verify metadata content
     expect(meta).toBeDefined();
@@ -166,8 +166,8 @@ describe("getMeta", () => {
     });
 
     // Get metadata for both responses
-    const firstMeta = getMeta(firstResponse);
-    const secondMeta = getMeta(secondResponse);
+    const firstMeta = getMeta(firstResponse as string);
+    const secondMeta = getMeta(secondResponse as string);
 
     // Each response should have its own metadata
     expect(firstMeta?.model).toBe("openai/gpt-4");
@@ -256,7 +256,7 @@ describe("getMeta", () => {
       expect(finalResult).toBe("Hello world!");
 
       // Now test getMeta on the final result
-      const meta = getMeta(finalResult);
+      const meta = getMeta(finalResult as string);
 
       // This is what should work but currently fails due to the bug
       expect(meta).toBeDefined();

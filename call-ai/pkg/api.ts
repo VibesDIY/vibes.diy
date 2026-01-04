@@ -18,9 +18,8 @@ import { chooseSchemaStrategy } from "./strategies/index.js";
 import { responseMetadata, boxString, getMeta } from "./response-metadata.js";
 import { keyStore, globalDebug } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
-import { createBackwardCompatStreamingProxy } from "./streaming.js";
 import { extractContent, extractClaudeResponse, PACKAGE_VERSION } from "./non-streaming.js";
-import { createStreamingGenerator } from "./streaming.js";
+import { createBackwardCompatStreamingProxy, createStreamingGenerator } from "./streaming.js";
 import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 

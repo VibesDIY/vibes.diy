@@ -118,7 +118,7 @@ describe("Simple callAi integration tests", () => {
           );
 
           // Get the metadata
-          // const resultMeta = getMeta(result);
+          // const resultMeta = getMeta(result as string);
 
           // Verify response
           expectOrWarn(modelId, typeof result === "string", `Result is not a string but a ${typeof result} in ${modelName} model`);
@@ -131,7 +131,7 @@ describe("Simple callAi integration tests", () => {
 
               // Log parsed data for debugging
               // Verify actual API call timing
-              const meta = getMeta(result);
+              const meta = getMeta(result as string);
               // Ensure the call took at least 5ms (to detect mocks or cached responses)
               if (meta?.timing?.duration !== undefined) {
                 expectOrWarn(

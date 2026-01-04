@@ -22,6 +22,16 @@ export { callAiEnv } from "./env.js";
 export { parseAIStream, collectStreamMessages } from "./stream-parser.js";
 export { detectCodeBlocks } from "./code-block-detector.js";
 export {
+  // Functions
+  createAccumulatorState,
+  accumulateIncremental,
+  accumulateCodeBlocks,
+  accumulateText,
+  // Types
+  CodeBlock,
+  AccumulatorState,
+} from "./stream-accumulators.js";
+export {
   StreamMessage,
   StreamType,
   StreamTypes,

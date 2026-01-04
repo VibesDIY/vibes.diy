@@ -96,7 +96,7 @@ describe("Simple callAi integration tests", () => {
           });
 
           // Get the metadata
-          const resultMeta = getMeta(result);
+          const resultMeta = getMeta(result as string);
 
           // Verify response
           expectOrWarn(modelId, !!result, `should generate text with ${modelName} model without streaming`);

@@ -2,7 +2,16 @@
  * Streaming response handling for call-ai
  */
 
-import { CallAIError, CallAIOptions, Message, ResponseMeta, SchemaAIMessageRequest, SchemaStrategy, StreamResponse, ThenableStreamResponse } from "./types.js";
+import {
+  CallAIError,
+  CallAIOptions,
+  Message,
+  ResponseMeta,
+  SchemaAIMessageRequest,
+  SchemaStrategy,
+  StreamResponse,
+  ThenableStreamResponse,
+} from "./types.js";
 import { globalDebug } from "./key-management.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
 import { checkForInvalidModelError } from "./error-handling.js";
@@ -94,8 +103,7 @@ async function* parseSSE(
       json.type === "error" ||
       (json.choices && json.choices.length > 0 && json.choices[0].finish_reason === "error")
     ) {
-      const errorMessage =
-        json.error?.message || json.error || json.choices?.[0]?.message?.content || "Unknown streaming error";
+      const errorMessage = json.error?.message || json.error || json.choices?.[0]?.message?.content || "Unknown streaming error";
 
       const detailedError = new CallAIError({
         message: `API streaming error: ${errorMessage}`,
@@ -137,7 +145,7 @@ async function* parseSSE(
                 const openBrackets = (fixedJson.match(/\[/g) || []).length;
                 const closeBrackets = (fixedJson.match(/\]/g) || []).length;
                 if (openBrackets > closeBrackets) fixedJson += "]".repeat(openBrackets - closeBrackets);
-                
+
                 toolCallsAssembled = fixedJson;
               }
               // Return the assembled tool call
@@ -161,7 +169,7 @@ async function* parseSSE(
     // Handle tool use response - old format
     if (isClaudeWithSchema && (json.stop_reason === "tool_use" || json.type === "tool_use")) {
       if (json.type === "tool_use") return schemaStrategy.processResponse(json);
-      
+
       if (json.content && Array.isArray(json.content)) {
         const toolUseBlock = json.content.find((block: { type: string }) => block.type === "tool_use");
         if (toolUseBlock) return schemaStrategy.processResponse(toolUseBlock);
@@ -273,12 +281,11 @@ async function* parseSSE(
         const openBrackets = (result.match(/\[/g) || []).length;
         const closeBrackets = (result.match(/\]/g) || []).length;
         if (openBrackets > closeBrackets) result += "]".repeat(openBrackets - closeBrackets);
-        
+
         toolCallsAssembled = result;
       }
       yield toolCallsAssembled;
     }
-
   } catch (error) {
     if (options.debug || globalDebug) {
       console.error(`[callAi:${PACKAGE_VERSION}] Streaming error:`, error);
@@ -499,11 +506,7 @@ async function* callAIStreaming(
     // Yield streaming results through the generator
     // Cast is safe: in normal mode yields strings, in _semanticMode yields StreamMessage
     // but callAIStreamingSemantic handles the casting on its end
-    yield* createStreamingGenerator(response, options, schemaStrategy, model) as AsyncGenerator<
-      string,
-      string,
-      unknown
-    >;
+    yield* createStreamingGenerator(response, options, schemaStrategy, model) as AsyncGenerator<string, string, unknown>;
 
     // The createStreamingGenerator will return the final assembled string
     return ""; // This is never reached due to yield*

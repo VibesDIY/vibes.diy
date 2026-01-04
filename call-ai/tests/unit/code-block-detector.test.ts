@@ -14,7 +14,7 @@ async function* toAsyncIterable(input: string | string[]) {
 async function collectEvents(input: string | string[], streamId = 1) {
   const events: StreamMessage[] = [];
   const generator = detectCodeBlocks(toAsyncIterable(input), streamId, "test-model");
-  
+
   for await (const event of generator) {
     events.push(event);
   }
@@ -90,12 +90,12 @@ describe("detectCodeBlocks Generator", () => {
       const events = await collectEvents(chunks);
 
       // CODE_START should appear only after the fence is complete
-      // We can't verify exact timing easily with full collection, 
+      // We can't verify exact timing easily with full collection,
       // but we can verify correct final parsing.
-      // To verify buffering, we rely on the fact that TEXT_FRAGMENTs 
+      // To verify buffering, we rely on the fact that TEXT_FRAGMENTs
       // for buffered backticks appear before CODE_START if fence fails,
       // or disappear into fence if it succeeds.
-      
+
       const starts = events.filter((e) => e.type === StreamTypes.CODE_START);
       expect(starts.length).toBe(1);
       expect(starts[0].payload.language).toBe("ts");
@@ -220,7 +220,7 @@ describe("detectCodeBlocks Generator", () => {
 
       // Should emit ``x as text (likely in one or two fragments depending on implementation)
       const textFrags = events.filter((e) => e.type === StreamTypes.TEXT_FRAGMENT);
-      const fullText = textFrags.map(e => e.payload.frag).join("");
+      const fullText = textFrags.map((e) => e.payload.frag).join("");
       expect(fullText).toBe("``x");
     });
   });

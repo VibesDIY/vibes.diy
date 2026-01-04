@@ -162,8 +162,9 @@ describe("callAi", () => {
     const generator = (await generatorPromise) as AsyncGenerator<StreamMessage, string, unknown>;
 
     const firstChunk = await generator.next();
-    expect(firstChunk.value?.type).toBe(StreamTypes.TEXT_FRAGMENT);
-    expect(firstChunk.value?.payload.frag).toBe("Hello");
+    const msg = firstChunk.value as StreamMessage;
+    expect(msg?.type).toBe(StreamTypes.TEXT_FRAGMENT);
+    expect(msg?.type === StreamTypes.TEXT_FRAGMENT ? msg.payload.frag : "").toBe("Hello");
 
     const body = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
     expect(body.stream).toBe(true);
