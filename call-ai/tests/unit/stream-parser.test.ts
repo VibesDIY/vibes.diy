@@ -1,17 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { StreamTypes, StreamMessage, createMessage, nextStreamId } from "../../pkg/stream-messages.js";
-import { CodeBlockDetector } from "../../pkg/code-block-detector.js";
+import { detectCodeBlocks } from "../../pkg/code-block-detector.js";
 
 /**
  * Since vitest's module mocking has issues in browser environment,
  * we simulate the parseAIStream behavior by creating a helper that
- * mimics its core logic: feeding deltas to CodeBlockDetector and
+ * mimics its core logic: feeding deltas to detectCodeBlocks and
  * wrapping with STREAM_START/STREAM_END messages.
  */
-function simulateParseAIStream(deltas: string[], model = "test-model"): StreamMessage[] {
+async function simulateParseAIStream(deltas: string[], model = "test-model"): Promise<StreamMessage[]> {
   const streamId = nextStreamId();
   const messages: StreamMessage[] = [];
-  const detector = new CodeBlockDetector(model);
 
   // Emit STREAM_START
   messages.push(
@@ -22,18 +21,17 @@ function simulateParseAIStream(deltas: string[], model = "test-model"): StreamMe
     }),
   );
 
-  // Feed deltas to detector
-  let seq = 0;
-  for (const delta of deltas) {
-    if (delta) {
-      const events = detector.feed(delta, streamId, seq++);
-      messages.push(...events);
+  async function* chunkGenerator() {
+    for (const delta of deltas) {
+      if (delta) {
+        yield delta;
+      }
     }
   }
 
-  // Finalize detector
-  const finalEvents = detector.finalize(streamId);
-  messages.push(...finalEvents);
+  for await (const event of detectCodeBlocks(chunkGenerator(), streamId, model)) {
+    messages.push(event);
+  }
 
   // Emit STREAM_END
   messages.push(
@@ -50,15 +48,14 @@ function simulateParseAIStream(deltas: string[], model = "test-model"): StreamMe
 /**
  * Simulate parseAIStream with an error occurring mid-stream
  */
-function simulateParseAIStreamWithError(
+async function simulateParseAIStreamWithError(
   deltas: string[],
   errorMessage: string,
   errorAfterIndex: number,
   model = "test-model",
-): StreamMessage[] {
+): Promise<StreamMessage[]> {
   const streamId = nextStreamId();
   const messages: StreamMessage[] = [];
-  const detector = new CodeBlockDetector(model);
 
   // Emit STREAM_START
   messages.push(
@@ -69,35 +66,40 @@ function simulateParseAIStreamWithError(
     }),
   );
 
-  // Feed deltas until error
-  let seq = 0;
-  for (let i = 0; i < deltas.length; i++) {
-    if (i === errorAfterIndex) {
-      // Emit error
-      messages.push(
-        createMessage(StreamTypes.STREAM_ERROR, model, "client", {
-          streamId,
-          message: errorMessage,
-          recoverable: false,
-          timestamp: Date.now(),
-        }),
-      );
-      break;
-    }
-    const delta = deltas[i];
-    if (delta) {
-      const events = detector.feed(delta, streamId, seq++);
-      messages.push(...events);
+  async function* chunkGenerator() {
+    for (let i = 0; i < deltas.length; i++) {
+      if (i === errorAfterIndex) {
+        return;
+      }
+      const delta = deltas[i];
+      if (delta) {
+        yield delta;
+      }
     }
   }
+
+  await (async () => {
+    for await (const event of detectCodeBlocks(chunkGenerator(), streamId, model)) {
+      messages.push(event);
+    }
+  })();
+
+  messages.push(
+    createMessage(StreamTypes.STREAM_ERROR, model, "client", {
+      streamId,
+      message: errorMessage,
+      recoverable: false,
+      timestamp: Date.now(),
+    }),
+  );
 
   return messages;
 }
 
 describe("parseAIStream behavior simulation", () => {
   describe("message sequence", () => {
-    it("emits STREAM_START at beginning", () => {
-      const messages = simulateParseAIStream(["Hello"]);
+    it("emits STREAM_START at beginning", async () => {
+      const messages = await simulateParseAIStream(["Hello"]);
 
       expect(messages[0].type).toBe(StreamTypes.STREAM_START);
       expect(messages[0].payload).toMatchObject({
@@ -105,8 +107,8 @@ describe("parseAIStream behavior simulation", () => {
       });
     });
 
-    it("emits STREAM_END at completion", () => {
-      const messages = simulateParseAIStream(["Hello"]);
+    it("emits STREAM_END at completion", async () => {
+      const messages = await simulateParseAIStream(["Hello"]);
 
       const lastMsg = messages[messages.length - 1];
       expect(lastMsg.type).toBe(StreamTypes.STREAM_END);
@@ -115,8 +117,8 @@ describe("parseAIStream behavior simulation", () => {
       });
     });
 
-    it("emits TEXT_FRAGMENT for plain text", () => {
-      const messages = simulateParseAIStream(["Hello ", "world"]);
+    it("emits TEXT_FRAGMENT for plain text", async () => {
+      const messages = await simulateParseAIStream(["Hello ", "world"]);
 
       const textFrags = messages.filter((m) => m.type === StreamTypes.TEXT_FRAGMENT);
       expect(textFrags.length).toBeGreaterThan(0);
@@ -124,8 +126,8 @@ describe("parseAIStream behavior simulation", () => {
   });
 
   describe("code block detection", () => {
-    it("emits CODE_START when code block opens", () => {
-      const messages = simulateParseAIStream(["Here is code:\n", "```jsx\n", "const x = 1;", "\n```\n"]);
+    it("emits CODE_START when code block opens", async () => {
+      const messages = await simulateParseAIStream(["Here is code:\n", "```jsx\n", "const x = 1;", "\n```\n"]);
 
       const codeStarts = messages.filter((m) => m.type === StreamTypes.CODE_START);
       expect(codeStarts.length).toBe(1);
@@ -134,15 +136,15 @@ describe("parseAIStream behavior simulation", () => {
       });
     });
 
-    it("emits CODE_END when code block closes", () => {
-      const messages = simulateParseAIStream(["```js\n", "code", "\n```\n"]);
+    it("emits CODE_END when code block closes", async () => {
+      const messages = await simulateParseAIStream(["```js\n", "code", "\n```\n"]);
 
       const codeEnds = messages.filter((m) => m.type === StreamTypes.CODE_END);
       expect(codeEnds.length).toBe(1);
     });
 
-    it("emits correct sequence for text + code + text", () => {
-      const messages = simulateParseAIStream(["Hello ", "```jsx\n", "const x = 1;", "\n```", "\nDone!"]);
+    it("emits correct sequence for text + code + text", async () => {
+      const messages = await simulateParseAIStream(["Hello ", "```jsx\n", "const x = 1;", "\n```", "\nDone!"]);
 
       const types = messages.map((m) => m.type);
 
@@ -155,8 +157,8 @@ describe("parseAIStream behavior simulation", () => {
   });
 
   describe("error handling", () => {
-    it("emits STREAM_ERROR when error occurs", () => {
-      const messages = simulateParseAIStreamWithError(["partial", "more"], "Network failure", 1);
+    it("emits STREAM_ERROR when error occurs", async () => {
+      const messages = await simulateParseAIStreamWithError(["partial", "more"], "Network failure", 1);
 
       const errorMsgs = messages.filter((m) => m.type === StreamTypes.STREAM_ERROR);
       expect(errorMsgs.length).toBe(1);
@@ -166,8 +168,8 @@ describe("parseAIStream behavior simulation", () => {
       });
     });
 
-    it("error stops further processing", () => {
-      const messages = simulateParseAIStreamWithError(["```js\n", "code", "\n```\n", "after"], "Test error", 2);
+    it("error stops further processing", async () => {
+      const messages = await simulateParseAIStreamWithError(["```js\n", "code", "\n```\n", "after"], "Test error", 2);
 
       // Should not have STREAM_END since error interrupted
       const endMsgs = messages.filter((m) => m.type === StreamTypes.STREAM_END);
@@ -176,8 +178,8 @@ describe("parseAIStream behavior simulation", () => {
   });
 
   describe("empty responses", () => {
-    it("handles empty generator", () => {
-      const messages = simulateParseAIStream([]);
+    it("handles empty generator", async () => {
+      const messages = await simulateParseAIStream([]);
 
       // Should still have START and END
       expect(messages[0].type).toBe(StreamTypes.STREAM_START);
@@ -186,8 +188,8 @@ describe("parseAIStream behavior simulation", () => {
       });
     });
 
-    it("skips empty deltas", () => {
-      const messages = simulateParseAIStream(["", "hello", ""]);
+    it("skips empty deltas", async () => {
+      const messages = await simulateParseAIStream(["", "hello", ""]);
 
       // Should still work correctly
       expect(messages.length).toBeGreaterThan(2); // START + at least one content + END
@@ -195,16 +197,16 @@ describe("parseAIStream behavior simulation", () => {
   });
 
   describe("streamId", () => {
-    it("uses consistent streamId across all messages", () => {
-      const messages = simulateParseAIStream(["```js\n", "code", "\n```\n"]);
+    it("uses consistent streamId across all messages", async () => {
+      const messages = await simulateParseAIStream(["```js\n", "code", "\n```\n"]);
 
       const streamIds = new Set(messages.map((m) => m.payload.streamId));
       expect(streamIds.size).toBe(1);
     });
 
-    it("increments streamId for subsequent streams", () => {
-      const messages1 = simulateParseAIStream(["test"]);
-      const messages2 = simulateParseAIStream(["test"]);
+    it("increments streamId for subsequent streams", async () => {
+      const messages1 = await simulateParseAIStream(["test"]);
+      const messages2 = await simulateParseAIStream(["test"]);
 
       const streamId1 = messages1[0].payload.streamId;
       const streamId2 = messages2[0].payload.streamId;

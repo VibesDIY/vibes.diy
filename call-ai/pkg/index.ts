@@ -20,7 +20,7 @@ export { callAiEnv } from "./env.js";
 
 // Export stream parsing
 export { parseAIStream, collectStreamMessages } from "./stream-parser.js";
-export { CodeBlockDetector } from "./code-block-detector.js";
+export { detectCodeBlocks } from "./code-block-detector.js";
 export {
   StreamMessage,
   StreamType,

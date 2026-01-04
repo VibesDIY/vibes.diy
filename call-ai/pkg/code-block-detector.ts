@@ -1,5 +1,5 @@
 /**
- * Code Block Detector - State machine for detecting markdown code fences in streaming text
+ * Code Block Detector - Generator for detecting markdown code fences in streaming text
  *
  * This module detects ``` fenced code blocks in streaming text and emits
  * semantic events (CODE_START, CODE_FRAGMENT, CODE_END, TEXT_FRAGMENT).
@@ -16,271 +16,173 @@ interface CodeBlock {
 }
 
 /**
- * State machine for detecting code block boundaries in streaming text.
+ * Generator that consumes a stream of text chunks and emits semantic StreamMessages.
+ * Implements the SubStream pattern (chainable generator).
  *
- * Handles:
- * - Opening fences: ```language
- * - Closing fences: ```
- * - Partial fence detection (buffering)
- * - Language tag extraction
+ * @param input AsyncIterable of text chunks (deltas)
+ * @param streamId The ID of the stream
+ * @param model Optional model name for metadata
  */
-export class CodeBlockDetector {
-  private state: State = "TEXT";
-  private buffer = "";
-  private currentBlock: CodeBlock | null = null;
-  private blockCounter = 0;
-  private model = "unknown";
+export async function* detectCodeBlocks(
+  input: AsyncIterable<string>,
+  streamId: number,
+  model = "unknown",
+): AsyncGenerator<StreamMessage, void, unknown> {
+  let state: State = "TEXT";
+  let buffer = "";
+  let currentBlock: CodeBlock | null = null;
+  let seqCounter = 0;
 
-  constructor(model = "unknown") {
-    this.model = model;
+  // Track content to emit - flushed before transitions and at end of delta
+  let textToEmit = "";
+  let codeToEmit = "";
+
+  // Helper to yield accumulated content
+  function* yieldContent(): Generator<StreamMessage, void, unknown> {
+    if (textToEmit.length > 0) {
+      yield createMessage(StreamTypes.TEXT_FRAGMENT, model, "client", {
+        streamId,
+        seq: String(seqCounter++),
+        frag: textToEmit,
+      });
+      textToEmit = "";
+    }
+    if (codeToEmit.length > 0 && currentBlock) {
+      yield createMessage(StreamTypes.CODE_FRAGMENT, model, "client", {
+        streamId,
+        blockId: currentBlock.blockId,
+        seq: String(seqCounter++),
+        frag: codeToEmit,
+      });
+      codeToEmit = "";
+    }
   }
 
-  /**
-   * Feed a delta (chunk of text) into the detector
-   * @returns Array of StreamMessage events to emit
-   *
-   * Each call to feed() will emit TEXT_FRAGMENT/CODE_FRAGMENT events
-   * for the non-fence content in this delta, enabling true streaming.
-   */
-  feed(delta: string, streamId: number, seq: number): StreamMessage[] {
-    const events: StreamMessage[] = [];
-
-    // Track content to emit - flushed before transitions and at end of delta
-    let textToEmit = "";
-    let codeToEmit = "";
-
-    // Helper to flush accumulated content before transition events
-    const flushContent = () => {
-      if (textToEmit.length > 0) {
-        events.push(
-          createMessage(StreamTypes.TEXT_FRAGMENT, this.model, "client", {
-            streamId,
-            seq: String(seq),
-            frag: textToEmit,
-          }),
-        );
-        textToEmit = "";
-      }
-      if (codeToEmit.length > 0 && this.currentBlock) {
-        events.push(
-          createMessage(StreamTypes.CODE_FRAGMENT, this.model, "client", {
-            streamId,
-            blockId: this.currentBlock.blockId,
-            seq: String(seq),
-            frag: codeToEmit,
-          }),
-        );
-        codeToEmit = "";
-      }
-    };
-
+  for await (const delta of input) {
     for (const char of delta) {
-      // Process char for state transitions and get any transition events
-      const { transitionEvents, emittedText, emittedCode } = this.processCharForDelta(char, streamId, seq);
-
-      // Flush accumulated content BEFORE transition events to maintain order
-      if (transitionEvents.length > 0) {
-        flushContent();
-        events.push(...transitionEvents);
-      }
-
-      // Accumulate content to emit
-      textToEmit += emittedText;
-      codeToEmit += emittedCode;
-    }
-
-    // Emit any remaining accumulated content from this delta
-    flushContent();
-
-    return events;
-  }
-
-  /**
-   * Finalize the detector - call when stream ends
-   * Flushes any remaining buffered content
-   */
-  finalize(streamId: number): StreamMessage[] {
-    const events: StreamMessage[] = [];
-
-    // Flush any remaining buffer
-    if (this.buffer.length > 0) {
-      if (this.state === "IN_CODE" || this.state === "MAYBE_CLOSE") {
-        // We're in a code block - emit remaining as code fragment
-        const block = this.currentBlock;
-        if (block) {
-          events.push(
-            createMessage(StreamTypes.CODE_FRAGMENT, this.model, "client", {
-              streamId,
-              blockId: block.blockId,
-              seq: "final",
-              frag: this.buffer,
-            }),
-          );
-        }
-      } else {
-        // We're in text - emit remaining as text fragment
-        events.push(
-          createMessage(StreamTypes.TEXT_FRAGMENT, this.model, "client", {
-            streamId,
-            seq: "final",
-            frag: this.buffer,
-          }),
-        );
-      }
-      this.buffer = "";
-    }
-
-    // If we're in a code block, emit CODE_END
-    if (this.currentBlock) {
-      events.push(
-        createMessage(StreamTypes.CODE_END, this.model, "client", {
-          streamId,
-          blockId: this.currentBlock.blockId,
-          language: this.currentBlock.language,
-        }),
-      );
-      this.currentBlock = null;
-    }
-
-    this.state = "TEXT";
-    return events;
-  }
-
-  /**
-   * Reset the detector state
-   */
-  reset(): void {
-    this.state = "TEXT";
-    this.buffer = "";
-    this.currentBlock = null;
-    this.blockCounter = 0;
-  }
-
-  /**
-   * Process a single character for per-delta emission.
-   * Returns transition events (CODE_START, CODE_END) and content to emit.
-   * Content is accumulated by feed() and emitted at end of delta.
-   */
-  private processCharForDelta(
-    char: string,
-    streamId: number,
-    seq: number,
-  ): { transitionEvents: StreamMessage[]; emittedText: string; emittedCode: string } {
-    const transitionEvents: StreamMessage[] = [];
-    let emittedText = "";
-    let emittedCode = "";
-
-    switch (this.state) {
-      case "TEXT":
-        if (char === "`") {
-          // Start tracking potential fence - buffer backticks
-          this.buffer += char;
-          if (this.buffer.endsWith("```")) {
-            // We have a complete opening fence marker
-            // Any text before the fence was already emitted per-char
-            this.buffer = "```";
-            this.state = "MAYBE_FENCE";
+      // State machine logic
+      switch (state) {
+        case "TEXT":
+          if (char === "`") {
+            buffer += char;
+            if (buffer === "```") {
+              // Complete opening fence
+              buffer = "```"; // Keep fence marker in buffer for transition
+              state = "MAYBE_FENCE";
+            }
+          } else {
+            // Not a backtick - flush any partial backticks as text
+            if (buffer.length > 0) {
+              textToEmit += buffer;
+              buffer = "";
+            }
+            textToEmit += char;
           }
-        } else {
-          // Non-backtick in TEXT state - emit as text
-          // But first, flush any partial backticks as text (they weren't a fence)
-          if (this.buffer.length > 0) {
-            emittedText += this.buffer;
-            this.buffer = "";
-          }
-          emittedText += char;
-        }
-        break;
+          break;
 
-      case "MAYBE_FENCE":
-        if (char === "\n") {
-          // Fence confirmed - extract language
-          const fenceContent = this.buffer.slice(3); // Remove ```
-          const language = fenceContent.trim() || undefined;
+        case "MAYBE_FENCE":
+          if (char === "\n") {
+            // Fence confirmed
+            const fenceContent = buffer.slice(3); // Remove ```
+            const language = fenceContent.trim() || undefined;
 
-          // Start new code block
-          this.blockCounter++;
-          const blockId = nextId("block");
-          this.currentBlock = {
-            blockId,
-            language,
-            startSeq: String(seq),
-          };
+            // Flush pending text before starting code block
+            yield* yieldContent();
 
-          transitionEvents.push(
-            createMessage(StreamTypes.CODE_START, this.model, "client", {
+            // Start new code block
+            const blockId = nextId("block");
+            currentBlock = {
+              blockId,
+              language,
+              startSeq: String(seqCounter++),
+            };
+
+            yield createMessage(StreamTypes.CODE_START, model, "client", {
               streamId,
               blockId,
               language,
-              seq: String(seq),
-            }),
-          );
+              seq: String(seqCounter), // Note: using seq from startSeq logic or just current? usage suggests unique seq per event
+            });
 
-          this.buffer = "";
-          this.state = "IN_CODE";
-        } else if (char === "`") {
-          // More backticks - could be ````
-          this.buffer += char;
-        } else {
-          // Language identifier character
-          this.buffer += char;
-        }
-        break;
-
-      case "IN_CODE":
-        if (char === "`") {
-          this.buffer += char;
-          if (this.buffer.endsWith("```")) {
-            // Potential closing fence
-            this.state = "MAYBE_CLOSE";
+            buffer = "";
+            state = "IN_CODE";
+          } else if (char === "`") {
+            buffer += char;
+          } else {
+            buffer += char;
           }
-        } else {
-          // Non-backtick in IN_CODE state - emit as code
-          // But first, flush any partial backticks as code (they weren't a fence)
-          if (this.buffer.length > 0) {
-            emittedCode += this.buffer;
-            this.buffer = "";
+          break;
+
+        case "IN_CODE":
+          if (char === "`") {
+            buffer += char;
+            if (buffer === "```") {
+              state = "MAYBE_CLOSE";
+            }
+          } else {
+            // Not a backtick - flush any partial backticks as code
+            if (buffer.length > 0) {
+              codeToEmit += buffer;
+              buffer = "";
+            }
+            codeToEmit += char;
           }
-          emittedCode += char;
-        }
-        break;
+          break;
 
-      case "MAYBE_CLOSE":
-        if (char === "\n" || char === " " || char === "\t") {
-          // Closing fence confirmed
-          // Any code before the fence (excluding the ```) was already emitted per-char
-          // The buffer contains ```  which we discard
-          const block = this.currentBlock;
+        case "MAYBE_CLOSE":
+          if (char === "\n" || char === " " || char === "\t") {
+            // Closing fence confirmed
+            // Flush pending code before ending block
+            yield* yieldContent();
 
-          if (block) {
-            transitionEvents.push(
-              createMessage(StreamTypes.CODE_END, this.model, "client", {
+            if (currentBlock) {
+              yield createMessage(StreamTypes.CODE_END, model, "client", {
                 streamId,
-                blockId: block.blockId,
-                language: block.language,
-              }),
-            );
-          }
+                blockId: currentBlock.blockId,
+                language: currentBlock.language,
+              });
+            }
 
-          this.currentBlock = null;
-          this.buffer = "";
-          this.state = "TEXT";
-          // The newline/space after closing fence goes to text
-          if (char !== "\n") {
-            emittedText += char;
+            currentBlock = null;
+            buffer = "";
+            state = "TEXT";
+            if (char !== "\n") {
+              textToEmit += char;
+            }
+          } else if (char === "`") {
+            buffer += char;
+          } else {
+            // False alarm - emit buffer + char as code
+            codeToEmit += buffer + char;
+            buffer = "";
+            state = "IN_CODE";
           }
-        } else if (char === "`") {
-          // More backticks - could be ```` inside code
-          this.buffer += char;
-        } else {
-          // False alarm - the ``` was inside code, emit it plus this char
-          emittedCode += this.buffer + char;
-          this.buffer = "";
-          this.state = "IN_CODE";
-        }
-        break;
+          break;
+      }
     }
 
-    return { transitionEvents, emittedText, emittedCode };
+    // Flush content at end of delta
+    yield* yieldContent();
+  }
+
+  // Finalize
+  // Flush remaining buffer
+  if (buffer.length > 0) {
+    if (state === "IN_CODE" || state === "MAYBE_CLOSE") {
+      codeToEmit += buffer;
+    } else {
+      textToEmit += buffer;
+    }
+    buffer = "";
+  }
+  yield* yieldContent();
+
+  // Close incomplete block
+  if (currentBlock) {
+    yield createMessage(StreamTypes.CODE_END, model, "client", {
+      streamId,
+      blockId: currentBlock.blockId,
+      language: currentBlock.language,
+    });
   }
 }

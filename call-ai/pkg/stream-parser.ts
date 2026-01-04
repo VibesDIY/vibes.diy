@@ -4,7 +4,7 @@
  * This module wraps callAIStreamingSemantic() and emits semantic StreamMessage events
  * for code blocks, text fragments, and lifecycle events.
  *
- * Uses callAIStreamingSemantic which processes content through CodeBlockDetector
+ * Uses callAIStreamingSemantic which processes content through detectCodeBlocks
  * and yields StreamMessage events directly.
  */
 

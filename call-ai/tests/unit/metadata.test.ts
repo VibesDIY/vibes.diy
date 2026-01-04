@@ -1,5 +1,5 @@
 import { callAi, getMeta, ModelId, ResponseMeta } from "call-ai";
-import { describe, expect, it, beforeEach, vi, Mock } from "vitest";
+import { describe, expect, it, beforeEach, vi, Mock, afterEach } from "vitest";
 
 // Mock global fetch
 const globalFetch = vi.fn<typeof fetch>();
@@ -172,5 +172,99 @@ describe("getMeta", () => {
     // Each response should have its own metadata
     expect(firstMeta?.model).toBe("openai/gpt-4");
     expect(secondMeta?.model).toBe("openai/gpt-3.5-turbo");
+  });
+
+  describe("streaming responses", () => {
+    // Helper to create SSE chunks
+    const encoder = new TextEncoder();
+    function sseChunk(content: string): Uint8Array {
+      const json = JSON.stringify({
+        choices: [{ delta: { content } }],
+      });
+      return encoder.encode(`data: ${json}\n\n`);
+    }
+
+    function sseDone(): Uint8Array {
+      return encoder.encode("data: [DONE]\n\n");
+    }
+
+    // Create a streaming mock response
+    let streamMockReader: {
+      read: Mock<() => Promise<{ done: boolean; value?: Uint8Array }>>;
+    };
+    let streamMockResponse: Response;
+
+    beforeEach(() => {
+      streamMockReader = {
+        read: vi.fn<() => Promise<{ done: boolean; value?: Uint8Array }>>(),
+      };
+
+      streamMockResponse = {
+        json: vi.fn(),
+        text: vi.fn(),
+        arrayBuffer: vi.fn(),
+        blob: vi.fn(),
+        bytes: vi.fn(),
+        formData: vi.fn(),
+        body: {
+          getReader: vi.fn().mockReturnValue(streamMockReader),
+        },
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        redirected: false,
+        type: "basic" as ResponseType,
+        url: "https://test.example.com",
+        headers: {
+          get: vi.fn((name) => {
+            if (name === "content-type") return "text/event-stream";
+            return null;
+          }),
+          forEach: vi.fn(),
+        },
+        clone: vi.fn(),
+      } as unknown as Response;
+    });
+
+    it("should return metadata after consuming streaming response", async () => {
+      // Set up streaming chunks
+      streamMockReader.read
+        .mockResolvedValueOnce({ done: false, value: sseChunk("Hello") })
+        .mockResolvedValueOnce({ done: false, value: sseChunk(" world") })
+        .mockResolvedValueOnce({ done: false, value: sseChunk("!") })
+        .mockResolvedValueOnce({ done: false, value: sseDone() })
+        .mockResolvedValueOnce({ done: true });
+
+      globalFetch.mockResolvedValueOnce(streamMockResponse);
+
+      const options = {
+        apiKey: "test-api-key",
+        model: "openai/gpt-4o",
+        stream: true,
+      };
+
+      // Get the streaming generator
+      const generator = (await callAi("Hello", options)) as AsyncGenerator<string, string, unknown>;
+
+      // Consume the entire stream
+      let finalResult = "";
+      for await (const chunk of generator) {
+        finalResult = chunk; // Each chunk is accumulated text so far
+      }
+
+      // Verify we got the content
+      expect(finalResult).toBe("Hello world!");
+
+      // Now test getMeta on the final result
+      const meta = getMeta(finalResult);
+
+      // This is what should work but currently fails due to the bug
+      expect(meta).toBeDefined();
+      expect(meta?.model).toBe("openai/gpt-4o");
+      expect(meta?.timing).toBeDefined();
+      expect(meta?.timing?.startTime).toBeDefined();
+      expect(meta?.timing?.endTime).toBeDefined();
+      expect(meta?.rawResponse).toBe("Hello world!");
+    });
   });
 });

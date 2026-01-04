@@ -7,23 +7,8 @@ import { globalDebug } from "./key-management.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
 import { checkForInvalidModelError } from "./error-handling.js";
 import { PACKAGE_VERSION, FALLBACK_MODEL } from "./non-streaming.js";
-import { CodeBlockDetector } from "./code-block-detector.js";
+import { detectCodeBlocks } from "./code-block-detector.js";
 import { StreamMessage, StreamTypes, nextStreamId } from "./stream-messages.js";
-
-// Adapter to accumulate text from semantic stream (for default stream: true)
-async function* accumulateTextFromSemantic(
-  semanticGen: AsyncGenerator<StreamMessage, void, unknown>,
-  schemaStrategy: SchemaStrategy,
-): AsyncGenerator<string, string, unknown> {
-  let accumulated = "";
-  for await (const msg of semanticGen) {
-    if (msg.type === StreamTypes.TEXT_FRAGMENT || msg.type === StreamTypes.CODE_FRAGMENT) {
-      accumulated += (msg.payload as { frag: string }).frag;
-      yield schemaStrategy.processResponse(accumulated);
-    }
-  }
-  return accumulated;
-}
 
 /**
  * Create a proxy that acts both as a Promise and an AsyncGenerator for backward compatibility
@@ -79,15 +64,254 @@ export function createBackwardCompatStreamingProxy<T>(promise: Promise<StreamRes
   });
 }
 
-// Internal generator that ALWAYS yields StreamMessage events
-// This is the core implementation that processes the raw API response
+/**
+ * Step 1: Parse SSE stream and yield raw text content chunks.
+ * Handles SSE protocol, JSON parsing, error handling, and tool call assembly.
+ */
+async function* parseSSE(
+  response: Response,
+  options: CallAIOptions,
+  schemaStrategy: SchemaStrategy,
+  model: string,
+): AsyncGenerator<string, void, unknown> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("Response body is undefined - API endpoint may not support streaming");
+  }
+
+  const textDecoder = new TextDecoder();
+  let buffer = "";
+  let chunkCount = 0;
+  let toolCallsAssembled = "";
+
+  // Helper to process JSON payload and yield text
+  // Returns true if content was yielded
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function processJson(json: any): string | null {
+    // Check for error responses in the stream
+    if (
+      json.error ||
+      json.type === "error" ||
+      (json.choices && json.choices.length > 0 && json.choices[0].finish_reason === "error")
+    ) {
+      const errorMessage =
+        json.error?.message || json.error || json.choices?.[0]?.message?.content || "Unknown streaming error";
+
+      const detailedError = new CallAIError({
+        message: `API streaming error: ${errorMessage}`,
+        status: json.error?.status || 400,
+        statusText: json.error?.type || "Bad Request",
+        details: JSON.stringify(json.error || json),
+        contentType: "application/json",
+      });
+      throw detailedError;
+    }
+
+    // Handle tool use response - Claude with schema cases
+    const isClaudeWithSchema = /claude/i.test(model) && schemaStrategy.strategy === "tool_mode";
+
+    if (isClaudeWithSchema) {
+      if (json.choices && json.choices.length > 0) {
+        const choice = json.choices[0];
+
+        // Handle finish reason tool_calls
+        if (choice.finish_reason === "tool_calls") {
+          if (toolCallsAssembled) {
+            try {
+              // Try to fix any malformed JSON from chunking
+              let fixedJson = toolCallsAssembled;
+              try {
+                JSON.parse(toolCallsAssembled);
+              } catch (parseError) {
+                // Apply fixes (same logic as before)
+                // eslint-disable-next-line no-useless-escape
+                fixedJson = fixedJson.replace(/,\s*([\}\]])/, "$1");
+                const openBraces = (fixedJson.match(/\{/g) || []).length;
+                const closeBraces = (fixedJson.match(/\}/g) || []).length;
+                if (openBraces > closeBraces) fixedJson += "}".repeat(openBraces - closeBraces);
+                if (!fixedJson.trim().startsWith("{")) fixedJson = "{" + fixedJson.trim();
+                if (!fixedJson.trim().endsWith("}")) fixedJson += "}";
+                fixedJson = fixedJson.replace(/"(\w+)"\s*:\s*$/g, '"$1":null');
+                fixedJson = fixedJson.replace(/"(\w+)"\s*:\s*,/g, '"$1":null,');
+                fixedJson = fixedJson.replace(/"(\w+)"\s*:\s*"(\w+)/g, '"$1$2"');
+                const openBrackets = (fixedJson.match(/\[/g) || []).length;
+                const closeBrackets = (fixedJson.match(/\]/g) || []).length;
+                if (openBrackets > closeBrackets) fixedJson += "]".repeat(openBrackets - closeBrackets);
+                
+                toolCallsAssembled = fixedJson;
+              }
+              // Return the assembled tool call
+              return toolCallsAssembled;
+            } catch (e) {
+              console.error("[parseSSE] Error handling assembled tool call:", e);
+            }
+          }
+        }
+
+        // Assemble tool_calls arguments from delta
+        if (choice && choice.delta && choice.delta.tool_calls) {
+          const toolCall = choice.delta.tool_calls[0];
+          if (toolCall && toolCall.function && toolCall.function.arguments !== undefined) {
+            toolCallsAssembled += toolCall.function.arguments;
+          }
+        }
+      }
+    }
+
+    // Handle tool use response - old format
+    if (isClaudeWithSchema && (json.stop_reason === "tool_use" || json.type === "tool_use")) {
+      if (json.type === "tool_use") return schemaStrategy.processResponse(json);
+      
+      if (json.content && Array.isArray(json.content)) {
+        const toolUseBlock = json.content.find((block: { type: string }) => block.type === "tool_use");
+        if (toolUseBlock) return schemaStrategy.processResponse(toolUseBlock);
+      }
+
+      if (json.choices && Array.isArray(json.choices)) {
+        const choice = json.choices[0];
+        if (choice.message && Array.isArray(choice.message.content)) {
+          const toolUseBlock = choice.message.content.find((block: { type: string }) => block.type === "tool_use");
+          if (toolUseBlock) return schemaStrategy.processResponse(toolUseBlock);
+        }
+        if (choice.delta && Array.isArray(choice.delta.content)) {
+          const toolUseBlock = choice.delta.content.find((block: { type: string }) => block.type === "tool_use");
+          if (toolUseBlock) return schemaStrategy.processResponse(toolUseBlock);
+        }
+      }
+    }
+
+    // Extract content from delta
+    if (json.choices?.[0]?.delta?.content !== undefined) {
+      const content = json.choices[0].delta.content || "";
+      return content;
+    }
+    // Handle message content format (non-streaming deltas)
+    else if (json.choices?.[0]?.message?.content !== undefined) {
+      const content = json.choices[0].message.content || "";
+      return schemaStrategy.processResponse(content);
+    }
+    // Handle content blocks for Claude/Anthropic response format
+    else if (json.choices?.[0]?.message?.content && Array.isArray(json.choices[0].message.content)) {
+      const contentBlocks = json.choices[0].message.content;
+      let blockDelta = "";
+      for (const block of contentBlocks) {
+        if (block.type === "text") {
+          blockDelta += block.text || "";
+        } else if (isClaudeWithSchema && block.type === "tool_use") {
+          return schemaStrategy.processResponse(block);
+        }
+      }
+      return blockDelta;
+    }
+
+    // Find text delta for content blocks (Claude format)
+    if (json.type === "content_block_delta" && json.delta && json.delta.type === "text_delta" && json.delta.text) {
+      if (options.debug) {
+        console.log(`[callAi:${PACKAGE_VERSION}] Received text delta:`, json.delta.text);
+      }
+      if (!isClaudeWithSchema) {
+        return json.delta.text; // Return text directly
+      }
+    }
+
+    return null;
+  }
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        if (options.debug || globalDebug) {
+          console.log(`[callAi-streaming:complete v${PACKAGE_VERSION}] Stream finished after ${chunkCount} chunks`);
+        }
+        break;
+      }
+
+      const chunk = textDecoder.decode(value, { stream: true });
+      buffer += chunk;
+      const messages = buffer.split(/\n\n/);
+      buffer = messages.pop() || "";
+
+      for (const message of messages) {
+        if (!message.trim() || !message.startsWith("data: ")) continue;
+
+        const jsonStr = message.slice(6);
+        if (jsonStr === "[DONE]") continue;
+
+        chunkCount++;
+
+        try {
+          const json = JSON.parse(jsonStr);
+          const content = processJson(json);
+          if (content !== null && content.length > 0) {
+            yield content;
+          }
+        } catch (e) {
+          if (e instanceof CallAIError) throw e;
+          if (options.debug) console.error(`[callAIStreaming] Error parsing JSON chunk:`, e);
+        }
+      }
+    }
+
+    // Final assembled tool calls
+    if (toolCallsAssembled) {
+      // Fix JSON (simplified for final check)
+      let result = toolCallsAssembled;
+      try {
+        JSON.parse(result);
+      } catch (e) {
+        // Apply robust fixes
+        // eslint-disable-next-line no-useless-escape
+        result = result.replace(/,\s*([\}\]])/, "$1");
+        const openBraces = (result.match(/\{/g) || []).length;
+        const closeBraces = (result.match(/\}/g) || []).length;
+        if (openBraces > closeBraces) result += "}".repeat(openBraces - closeBraces);
+        if (!result.trim().startsWith("{")) result = "{" + result.trim();
+        if (!result.trim().endsWith("}")) result += "}";
+        result = result.replace(/"(\w+)"\s*:\s*$/g, '"$1":null');
+        result = result.replace(/"(\w+)"\s*:\s*,/g, '"$1":null,');
+        const openBrackets = (result.match(/\[/g) || []).length;
+        const closeBrackets = (result.match(/\]/g) || []).length;
+        if (openBrackets > closeBrackets) result += "]".repeat(openBrackets - closeBrackets);
+        
+        toolCallsAssembled = result;
+      }
+      yield toolCallsAssembled;
+    }
+
+  } catch (error) {
+    if (options.debug || globalDebug) {
+      console.error(`[callAi:${PACKAGE_VERSION}] Streaming error:`, error);
+    }
+    throw error;
+  }
+}
+
+// Step 2: Core Semantic Generator
+// Composes parseSSE -> detectCodeBlocks
 async function* createSemanticGenerator(
   response: Response,
   options: CallAIOptions,
   schemaStrategy: SchemaStrategy,
   model: string,
 ): AsyncGenerator<StreamMessage, void, unknown> {
-  // Create a metadata object for this streaming response
+  const streamId = nextStreamId();
+  const sseStream = parseSSE(response, options, schemaStrategy, model);
+
+  // Pipeline: SSE Stream -> Code Block Detector -> Semantic Events
+  yield* detectCodeBlocks(sseStream, streamId, model);
+}
+
+// Wrapper function that selects the right output format based on options
+async function* createStreamingGenerator(
+  response: Response,
+  options: CallAIOptions,
+  schemaStrategy: SchemaStrategy,
+  model: string,
+): AsyncGenerator<string | StreamMessage, string, unknown> {
+  const semanticMode = (options as { _semanticMode?: boolean })._semanticMode ?? false;
+
+  // Create metadata for this streaming response
   const meta: ResponseMeta = {
     model,
     endpoint: options.endpoint || "https://openrouter.ai/api/v1",
@@ -98,446 +322,33 @@ async function* createSemanticGenerator(
     },
   };
 
-  // Tool calls assembly (for Claude/Anthropic)
-  let toolCallsAssembled = "";
-  let completeText = "";
-  let chunkCount = 0;
-
-  // Code block detector for semantic parsing
-  const detector = new CodeBlockDetector(model);
-  const streamId = nextStreamId();
-  let seqCounter = 0;
-
-  // Helper to process content through detector and yield appropriately
-  const processAndYield = function* (content: string, isToolCallResult = false): Generator<StreamMessage, void, unknown> {
-    if (!content) return;
-
-    // Tool call results bypass detector (they're JSON, not markdown)
-    if (isToolCallResult) {
-      yield {
-        type: StreamTypes.TEXT_FRAGMENT,
-        src: model,
-        dst: "client",
-        ttl: 1,
-        payload: { streamId, seq: String(seqCounter++), frag: content },
-      } as StreamMessage;
-      return;
-    }
-
-    // Route through CodeBlockDetector for semantic parsing
-    const events = detector.feed(content, streamId, seqCounter++);
-    for (const event of events) {
-      yield event;
-    }
-  };
-
-  if (options.debug || globalDebug) {
-    console.log(`[callAi:${PACKAGE_VERSION}] Starting semantic generator with model: ${model}`);
-  }
-
-  try {
-    // Handle streaming response
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Response body is undefined - API endpoint may not support streaming");
-    }
-
-    const textDecoder = new TextDecoder();
-    let buffer = ""; // Buffer to accumulate partial SSE messages
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        if (options.debug || globalDebug) {
-          console.log(`[callAi-streaming:complete v${PACKAGE_VERSION}] Stream finished after ${chunkCount} chunks`);
-        }
-        break;
-      }
-
-      // Convert bytes to text
-      const chunk = textDecoder.decode(value, { stream: true });
-      buffer += chunk;
-
-      // Split on double newlines to find complete SSE messages
-      const messages = buffer.split(/\n\n/);
-      buffer = messages.pop() || ""; // Keep the last incomplete chunk in the buffer
-
-      for (const message of messages) {
-        if (!message.trim() || !message.startsWith("data: ")) {
-          continue; // Skip empty lines or non-data messages
-        }
-
-        // Extract the JSON payload
-        const jsonStr = message.slice(6); // Remove 'data: ' prefix
-        if (jsonStr === "[DONE]") {
-          if (options.debug || globalDebug) {
-            console.log(`[callAi:${PACKAGE_VERSION}] Received [DONE] signal`);
-          }
-          continue;
-        }
-
-        chunkCount++;
-
-        // Try to parse the JSON
-        try {
-          const json = JSON.parse(jsonStr);
-
-          // Check for error responses in the stream
-          if (
-            json.error ||
-            json.type === "error" ||
-            (json.choices && json.choices.length > 0 && json.choices[0].finish_reason === "error")
-          ) {
-            // Extract error message
-            const errorMessage =
-              json.error?.message || json.error || json.choices?.[0]?.message?.content || "Unknown streaming error";
-
-            if (options.debug || globalDebug) {
-              console.error(`[callAi:${PACKAGE_VERSION}] Detected error in streaming response:`, json);
-            }
-
-            // Create a detailed error to throw
-            const detailedError = new CallAIError({
-              message: `API streaming error: ${errorMessage}`,
-              status: json.error?.status || 400,
-              statusText: json.error?.type || "Bad Request",
-              details: JSON.stringify(json.error || json),
-              contentType: "application/json",
-            }); // Add error metadata
-
-            console.error(`[callAi:${PACKAGE_VERSION}] Throwing stream error:`, detailedError);
-            throw detailedError;
-          }
-
-          // Handle tool use response - Claude with schema cases
-          const isClaudeWithSchema = /claude/i.test(model) && schemaStrategy.strategy === "tool_mode";
-
-          if (isClaudeWithSchema) {
-            // Claude streaming tool calls - need to assemble arguments
-            if (json.choices && json.choices.length > 0) {
-              const choice = json.choices[0];
-
-              // Handle finish reason tool_calls - this is where we know the tool call is complete
-              if (choice.finish_reason === "tool_calls") {
-                if (options.debug) {
-                  console.log(`[callAi:${PACKAGE_VERSION}] Received tool_calls finish reason. Assembled JSON:`, toolCallsAssembled);
-                }
-
-                // Full JSON collected, construct a proper object with it
-                try {
-                  // Try to fix any malformed JSON that might have resulted from chunking
-                  // This happens when property names get split across chunks
-                  if (toolCallsAssembled) {
-                    try {
-                      // First try parsing as-is
-                      JSON.parse(toolCallsAssembled);
-                    } catch (parseError) {
-                      if (options.debug) {
-                        console.log(
-                          `[callAi:${PACKAGE_VERSION}] Attempting to fix malformed JSON in tool call:`,
-                          toolCallsAssembled,
-                        );
-                      }
-
-                      // Apply comprehensive fixes for Claude's JSON property splitting
-                      let fixedJson = toolCallsAssembled;
-
-                      // 1. Remove trailing commas
-                      // eslint-disable-next-line no-useless-escape
-                      fixedJson = fixedJson.replace(/,\s*([\}\]])/, "$1");
-
-                      // 2. Ensure proper JSON structure
-                      // Add closing braces if missing
-                      const openBraces = (fixedJson.match(/\{/g) || []).length;
-                      const closeBraces = (fixedJson.match(/\}/g) || []).length;
-                      if (openBraces > closeBraces) {
-                        fixedJson += "}".repeat(openBraces - closeBraces);
-                      }
-
-                      // Add opening brace if missing
-                      if (!fixedJson.trim().startsWith("{")) {
-                        fixedJson = "{" + fixedJson.trim();
-                      }
-
-                      // Ensure it ends with a closing brace
-                      if (!fixedJson.trim().endsWith("}")) {
-                        fixedJson += "}";
-                      }
-
-                      // 3. Fix various property name/value split issues
-                      // Fix dangling property names without values
-                      fixedJson = fixedJson.replace(/"(\w+)"\s*:\s*$/g, '"$1":null');
-
-                      // Fix missing property values
-                      fixedJson = fixedJson.replace(/"(\w+)"\s*:\s*,/g, '"$1":null,');
-
-                      // Fix incomplete property names (when split across chunks)
-                      fixedJson = fixedJson.replace(/"(\w+)"\s*:\s*"(\w+)$/g, '"$1$2"');
-
-                      // Balance brackets
-                      const openBrackets = (fixedJson.match(/\[/g) || []).length;
-                      const closeBrackets = (fixedJson.match(/\]/g) || []).length;
-                      if (openBrackets > closeBrackets) {
-                        fixedJson += "]".repeat(openBrackets - closeBrackets);
-                      }
-
-                      if (options.debug) {
-                        console.log(
-                          `[callAi:${PACKAGE_VERSION}] Applied comprehensive JSON fixes:`,
-                          `\nBefore: ${toolCallsAssembled}`,
-                          `\nAfter: ${fixedJson}`,
-                        );
-                      }
-
-                      toolCallsAssembled = fixedJson;
-                    }
-                  }
-
-                  // Return the assembled tool call (bypasses detector - it's JSON, not markdown)
-                  completeText = toolCallsAssembled;
-                  yield* processAndYield(completeText, true);
-                  continue;
-                } catch (e) {
-                  console.error("[callAIStreaming] Error handling assembled tool call:", e);
-                }
-              }
-
-              // Assemble tool_calls arguments from delta
-              // Simply accumulate the raw strings without trying to parse them
-              if (choice && choice.delta && choice.delta.tool_calls) {
-                const toolCall = choice.delta.tool_calls[0];
-                if (toolCall && toolCall.function && toolCall.function.arguments !== undefined) {
-                  toolCallsAssembled += toolCall.function.arguments;
-                  if (options.debug) {
-                    console.log(`[callAi:${PACKAGE_VERSION}] Accumulated tool call chunk:`, toolCall.function.arguments);
-                  }
-                }
-              }
-            }
-          }
-
-          // Handle tool use response - old format (bypasses detector - it's JSON, not markdown)
-          if (isClaudeWithSchema && (json.stop_reason === "tool_use" || json.type === "tool_use")) {
-            // First try direct tool use object format
-            if (json.type === "tool_use") {
-              completeText = schemaStrategy.processResponse(json);
-              yield* processAndYield(completeText, true);
-              continue;
-            }
-
-            // Extract the tool use content
-            if (json.content && Array.isArray(json.content)) {
-              const toolUseBlock = json.content.find((block: { type: string }) => block.type === "tool_use");
-              if (toolUseBlock) {
-                completeText = schemaStrategy.processResponse(toolUseBlock);
-                yield* processAndYield(completeText, true);
-                continue;
-              }
-            }
-
-            // Find tool_use in assistant's content blocks
-            if (json.choices && Array.isArray(json.choices)) {
-              const choice = json.choices[0];
-              if (choice.message && Array.isArray(choice.message.content)) {
-                const toolUseBlock = choice.message.content.find((block: { type: string }) => block.type === "tool_use");
-                if (toolUseBlock) {
-                  completeText = schemaStrategy.processResponse(toolUseBlock);
-                  yield* processAndYield(completeText, true);
-                  continue;
-                }
-              }
-
-              // Handle case where the tool use is in the delta
-              if (choice.delta && Array.isArray(choice.delta.content)) {
-                const toolUseBlock = choice.delta.content.find((block: { type: string }) => block.type === "tool_use");
-                if (toolUseBlock) {
-                  completeText = schemaStrategy.processResponse(toolUseBlock);
-                  yield* processAndYield(completeText, true);
-                  continue;
-                }
-              }
-            }
-          }
-
-          // Extract content from the delta
-          if (json.choices?.[0]?.delta?.content !== undefined) {
-            const content = json.choices[0].delta.content || "";
-
-            // Treat all models the same - yield as content arrives
-            completeText += content;
-            // Route through CodeBlockDetector for semantic parsing
-            yield* processAndYield(content);
-          }
-          // Handle message content format (non-streaming deltas)
-          else if (json.choices?.[0]?.message?.content !== undefined) {
-            const content = json.choices[0].message.content || "";
-            completeText += content;
-            // Route through CodeBlockDetector for semantic parsing
-            yield* processAndYield(content);
-          }
-          // Handle content blocks for Claude/Anthropic response format
-          else if (json.choices?.[0]?.message?.content && Array.isArray(json.choices[0].message.content)) {
-            const contentBlocks = json.choices[0].message.content;
-            // Find text or tool_use blocks
-            let blockDelta = "";
-            for (const block of contentBlocks) {
-              if (block.type === "text") {
-                const text = block.text || "";
-                completeText += text;
-                blockDelta += text;
-              } else if (isClaudeWithSchema && block.type === "tool_use") {
-                completeText = schemaStrategy.processResponse(block);
-                break; // We found what we need
-              }
-            }
-
-            // Route through CodeBlockDetector for semantic parsing
-            yield* processAndYield(blockDelta);
-          }
-
-          // Find text delta for content blocks (Claude format)
-          if (json.type === "content_block_delta" && json.delta && json.delta.type === "text_delta" && json.delta.text) {
-            if (options.debug) {
-              console.log(`[callAi:${PACKAGE_VERSION}] Received text delta:`, json.delta.text);
-            }
-            const textDelta = json.delta.text;
-            completeText += textDelta;
-            // In some models like Claude, don't yield partial results as they can be malformed JSON
-            // Only yield what we've seen so far if it's not a Claude model with schema
-            if (!isClaudeWithSchema) {
-              // Route through CodeBlockDetector for semantic parsing
-              yield* processAndYield(textDelta);
-            }
-          }
-        } catch (e) {
-          if (options.debug) {
-            console.error(`[callAIStreaming] Error parsing JSON chunk:`, e);
-          }
-        }
-      }
-    }
-
-    // If we have assembled tool calls but haven't yielded them yet
-    if (toolCallsAssembled && (!completeText || completeText.length === 0)) {
-      // Try to fix any remaining JSON issues before returning
-      let result = toolCallsAssembled;
-
-      try {
-        // Try to parse as-is first
-        JSON.parse(result);
-      } catch (e) {
-        if (options.debug) {
-          console.log(`[callAi:${PACKAGE_VERSION}] Final JSON validation failed:`, e, `\nAttempting to fix JSON:`, result);
-        }
-
-        // Apply more robust fixes for Claude's streaming JSON issues
-
-        // 1. Remove trailing commas (common in malformed JSON)
-        // eslint-disable-next-line no-useless-escape
-        result = result.replace(/,\s*([\}\]])/, "$1");
-
-        // 2. Ensure we have proper JSON structure
-        // Add closing braces if missing
-        const openBraces = (result.match(/\{/g) || []).length;
-        const closeBraces = (result.match(/\}/g) || []).length;
-        if (openBraces > closeBraces) {
-          result += "}".repeat(openBraces - closeBraces);
-        }
-
-        // Add opening brace if missing
-        if (!result.trim().startsWith("{")) {
-          result = "{" + result.trim();
-        }
-
-        // Ensure it ends with a closing brace
-        if (!result.trim().endsWith("}")) {
-          result += "}";
-        }
-
-        // Fix dangling property names without values
-        result = result.replace(/"(\w+)"\s*:\s*$/g, '"$1":null');
-
-        // Fix missing property values
-        result = result.replace(/"(\w+)"\s*:\s*,/g, '"$1":null,');
-
-        // Balance brackets
-        const openBrackets = (result.match(/\[/g) || []).length;
-        const closeBrackets = (result.match(/\]/g) || []).length;
-        if (openBrackets > closeBrackets) {
-          result += "]".repeat(openBrackets - closeBrackets);
-        }
-
-        if (options.debug) {
-          console.log(`[callAi:${PACKAGE_VERSION}] Applied final JSON fixes:`, result);
-        }
-      }
-
-      // Return the assembled tool call
-      completeText = result;
-
-      // Try one more time to validate
-      try {
-        JSON.parse(completeText);
-      } catch (finalParseError) {
-        if (options.debug) {
-          console.error(`[callAi:${PACKAGE_VERSION}] Final JSON validation still failed:`, finalParseError);
-        }
-      }
-
-      // Tool call result bypasses detector - it's JSON, not markdown
-      yield* processAndYield(completeText, true);
-    }
-
-    // Finalize the detector to flush any remaining buffered content
-    const finalEvents = detector.finalize(streamId);
-    for (const event of finalEvents) {
-      yield event;
-    }
-
-    // Record streaming completion in metadata
-    const endTime = Date.now();
-    meta.timing.endTime = endTime;
-    meta.timing.duration = endTime - meta.timing.startTime;
-
-    // Add the rawResponse field to match non-streaming behavior
-    // For streaming, we use the final complete text as the raw response
-    meta.rawResponse = completeText;
-
-    // Store metadata for this response
-    const boxed = boxString(completeText);
-    responseMetadata.set(boxed, meta);
-
-    // Return (void in generator, but helpful for types)
-  } catch (error) {
-    // Streaming generators must properly handle errors
-    if (options.debug || globalDebug) {
-      console.error(`[callAi:${PACKAGE_VERSION}] Streaming error:`, error);
-    }
-
-    // This error will be caught in the caller's try/catch block
-    throw error;
-  }
-}
-
-// Wrapper function that selects the right output format based on options
-// This replaces the old createStreamingGenerator
-async function* createStreamingGenerator(
-  response: Response,
-  options: CallAIOptions,
-  schemaStrategy: SchemaStrategy,
-  model: string,
-): AsyncGenerator<string | StreamMessage, string, unknown> {
-  const semanticMode = (options as { _semanticMode?: boolean })._semanticMode ?? false;
-
-  // Always create the semantic generator
+  // Create the semantic generator pipeline
   const semanticGen = createSemanticGenerator(response, options, schemaStrategy, model);
 
   if (semanticMode) {
-    // Return events directly
+    // Return events directly (no metadata storage for semantic mode)
     yield* semanticGen;
   } else {
-    // Default: accumulate text
-    yield* accumulateTextFromSemantic(semanticGen, schemaStrategy);
+    // Default: accumulate text (legacy mode) with metadata tracking
+    let accumulated = "";
+    for await (const msg of semanticGen) {
+      if (msg.type === StreamTypes.TEXT_FRAGMENT || msg.type === StreamTypes.CODE_FRAGMENT) {
+        accumulated += (msg.payload as { frag: string }).frag;
+        yield schemaStrategy.processResponse(accumulated);
+      }
+    }
+
+    // Update timing
+    const endTime = Date.now();
+    meta.timing.endTime = endTime;
+    meta.timing.duration = endTime - meta.timing.startTime;
+    meta.rawResponse = accumulated;
+
+    // Store metadata for getMeta() retrieval
+    const boxed = boxString(accumulated);
+    responseMetadata.set(boxed, meta);
+
+    return accumulated;
   }
   return "";
 }
@@ -713,7 +524,7 @@ async function* callAIStreaming(
  * This is not part of the public API.
  *
  * Uses _semanticMode to get StreamMessage events directly from createStreamingGenerator,
- * which has a single CodeBlockDetector that processes all content.
+ * which uses detectCodeBlocks to process all content.
  */
 async function* callAIStreamingSemantic(
   prompt: string | Message[],
