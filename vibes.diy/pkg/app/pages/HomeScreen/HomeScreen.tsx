@@ -900,7 +900,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
         <div style={getMenuStyle()}>
           <VibesSwitch size={64} />
           <div style={getButtonsWrapper()}>
-            <div className="navbar-button-wrapper">
+            {/* <div className="navbar-button-wrapper">
               <button
                 style={getButtonsNavbar("#EDCE02")}
                 onClick={() => setIsSideMenuOpen(true)}
@@ -923,7 +923,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   Settings
                 </div>
               </button>
-            </div>
+            </div> */}
             <div className="navbar-button-wrapper">
               <button
                 style={getButtonsNavbar(isDarkMode ? "#fa5c00ff" : "#5398c9")}
@@ -957,7 +957,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 </div>
               </button>
             </div>
-            <div className="navbar-button-wrapper">
+            {/* <div className="navbar-button-wrapper">
               <button style={getButtonsNavbar("#D92A1C")} onClick={handleLogin}>
                 <div
                   className="navbar-button-icon"
@@ -977,7 +977,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   Log In
                 </div>
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -1185,10 +1185,10 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 paddingTop: isMobile ? "0px" : "100px",
               }}
             >
-              <NewSessionContent
+              {/* <NewSessionContent
                 chatState={chatState}
                 handleSelectSuggestion={handleSelectSuggestion}
-              />
+              /> */}
             </section>
 
             {/* Section 1: First part of content */}
