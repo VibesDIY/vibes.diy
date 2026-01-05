@@ -1213,8 +1213,8 @@ importers:
         specifier: ^4.24.1
         version: 4.24.1(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pulumi':
-        specifier: ^3.213.0
-        version: 3.213.0(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: ^3.214.1
+        version: 3.214.1(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)
 
   vibes.diy/tests/app:
     dependencies:
@@ -3752,8 +3752,8 @@ packages:
   '@pulumi/kubernetes@4.24.1':
     resolution: {integrity: sha512-3KC4fsxniS9W1dUo45MzMDByIWc+wGhOYQdbVe/neSmuRFpu3JmiLHSGukcIGNUGSblqRdVzsfiW5WEtCghbcA==}
 
-  '@pulumi/pulumi@3.213.0':
-    resolution: {integrity: sha512-qTAOJXQYjMse2oAwht4iuYA4TiSgUgDfGmlySf2xa4n34+eF1/ytCbF3UJdfOx9+yDD5mYBAi37t0OY/VyVzyQ==}
+  '@pulumi/pulumi@3.214.1':
+    resolution: {integrity: sha512-SgUrYq6tRn8EeZ0PszVVXVfeCms/tUkjLnt9pcRp/f9+5fIDKy8ak3ehlJcdqQCEOsn9lg/q/mZBjqy7CaPB7g==}
     engines: {node: '>=20'}
     peerDependencies:
       ts-node: '>= 7.0.1 < 12'
@@ -4115,8 +4115,8 @@ packages:
     resolution: {integrity: sha512-TV7t8GKYaJWsn00tFDqBw8+Uqmr8A0fRU1tvTQhyZzGv0sJCGRQL3JGMI3ucuKo3XIZdUP+Lx7/gh2t3lewy7g==}
     engines: {node: '>=14.16'}
 
-  '@sindresorhus/is@7.1.1':
-    resolution: {integrity: sha512-rO92VvpgMc3kfiTjGT52LEtJ8Yc5kCWhZjLQ3LwlA4pSgPpQO7bVpYXParOD8Jwf+cVQECJo3yP/4I8aZtUQTQ==}
+  '@sindresorhus/is@7.2.0':
+    resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
     engines: {node: '>=18'}
 
   '@sindresorhus/merge-streams@2.3.0':
@@ -15079,7 +15079,7 @@ snapshots:
   '@poppinss/dumper@0.6.5':
     dependencies:
       '@poppinss/colors': 4.1.6
-      '@sindresorhus/is': 7.1.1
+      '@sindresorhus/is': 7.2.0
       supports-color: 10.2.2
 
   '@poppinss/exception@1.2.3': {}
@@ -15115,7 +15115,7 @@ snapshots:
 
   '@pulumi/hcloud@1.29.0(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.213.0(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.214.1(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -15124,7 +15124,7 @@ snapshots:
 
   '@pulumi/kubernetes@4.24.1(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.213.0(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.214.1(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)
       glob: 10.5.0
       shell-quote: 1.8.3
     transitivePeerDependencies:
@@ -15133,7 +15133,7 @@ snapshots:
       - ts-node
       - typescript
 
-  '@pulumi/pulumi@3.213.0(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/pulumi@3.214.1(ts-node@10.9.2(@types/node@25.0.3)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@grpc/grpc-js': 1.14.3
       '@logdna/tail-file': 2.2.0
@@ -15644,7 +15644,7 @@ snapshots:
 
   '@sindresorhus/is@5.6.0': {}
 
-  '@sindresorhus/is@7.1.1': {}
+  '@sindresorhus/is@7.2.0': {}
 
   '@sindresorhus/merge-streams@2.3.0': {}
 
