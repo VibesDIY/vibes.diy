@@ -16,7 +16,6 @@ import {
   getMenuStyle,
   getInnerContainerStyle,
   getSectionsContainerStyle,
-  getSecondCardStyle,
   getSectionWrapperStyle,
   getBlackBorderWrapper,
   getBlackBorderInnerWrapper,
@@ -28,14 +27,13 @@ import {
   getChatContainerStyleOut,
   getChatContainerTopBar,
   getChatContainerBottomCard,
+  getSection0BackgroundStyle,
   getSection1BackgroundStyle,
-  getSection2BackgroundStyle,
   getSection3BackgroundStyle,
-  getSection4BackgroundStyle,
   getSection5BackgroundStyle,
-  getSection6BackgroundStyle,
   getSection8BackgroundStyle,
   getLinkStyle,
+  getSecondCardStyle,
   getHeroHeadingStyle,
   getHeroSubheadingStyle,
   getCardTextStyle,
@@ -49,11 +47,7 @@ import {
   getImageCardStyleSmall,
   getSectionWithAnimatedSceneStyle,
   getAnimatedSectionTextColumnStyle,
-  getStaticAnimatedSceneMobileContainerStyle,
   getAnimatedSceneDesktopPlaceholderStyle,
-  getStaticAnimatedSceneDesktopOverlayStyle,
-  getAnimatedSceneDesktopLeftSpacerStyle,
-  getAnimatedSceneDesktopRightContainerStyle,
   getScrollableAnimatedSceneMobileContainerStyle,
   getScrollableAnimatedSceneWrapperStyle,
   getScrollableAnimatedSceneInnerStyle,
@@ -88,12 +82,12 @@ import {
 } from "../../components/vibes/icons/index.js";
 
 // Asset paths (referenced as strings for non-bundled builds)
-const computerAnimGif = "/dist/vibes.diy/pkg/app/assets/computer-anim.gif";
-const htmlpng = "/dist/vibes.diy/pkg/app/assets/html.png";
-const mouth = "/dist/vibes.diy/pkg/app/assets/mouth.gif";
-const rainbowComputer = "/dist/vibes.diy/pkg/app/assets/rainbow-computer.gif";
-const fireproofLogo = "/dist/vibes.diy/pkg/app/assets/fireproof-logo.png";
-const vibeZoneChart = "/dist/vibes.diy/pkg/app/assets/vibe-zone.png";
+const computerAnimGif = "/app/assets/computer-anim.gif";
+const htmlpng = "/app/assets/html.png";
+const mouth = "/app/assets/mouth.gif";
+const rainbowComputer = "/app/assets/rainbow-computer.gif";
+const fireproofLogo = "/app/assets/fireproof-logo.png";
+const vibeZoneChart = "/app/assets/vibe-zone.png";
 
 // Helper function to convert URLs in text to clickable links
 const renderMessageWithLinks = (text: string) => {
@@ -126,12 +120,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
   const animatedSceneContainerRef = useRef<HTMLDivElement>(null);
-  const animatedSceneSection4Ref = useRef<HTMLDivElement>(null);
-  const animatedSceneSection6Ref = useRef<HTMLDivElement>(null);
-  const animatedSceneSection4MobileRef = useRef<HTMLDivElement>(null);
-  const animatedSceneSection6MobileRef = useRef<HTMLDivElement>(null);
-  const animatedSceneContainer4MobileRef = useRef<HTMLDivElement>(null);
-  const animatedSceneContainer6MobileRef = useRef<HTMLDivElement>(null);
+  const animatedSceneSection0Ref = useRef<HTMLDivElement>(null);
+  const animatedSceneSection0MobileRef = useRef<HTMLDivElement>(null);
+  const animatedSceneContainer0MobileRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
@@ -194,13 +185,11 @@ export const HomeScreen = (_props: HomeScreenProps) => {
     }
   }, [isDarkMode]);
 
-  // References for the 8 sections to calculate dynamic backgrounds
+  // References for the sections to calculate dynamic backgrounds
+  const section0Ref = useRef<HTMLDivElement>(null);
   const section1Ref = useRef<HTMLDivElement>(null);
-  const section2Ref = useRef<HTMLDivElement>(null);
   const section3Ref = useRef<HTMLDivElement>(null);
-  const section4Ref = useRef<HTMLDivElement>(null);
   const section5Ref = useRef<HTMLDivElement>(null);
-  const section6Ref = useRef<HTMLDivElement>(null);
   const section8Ref = useRef<HTMLDivElement>(null);
   const sectionsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -513,12 +502,10 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   // Force re-render after refs are mounted to calculate background positions
   useEffect(() => {
     if (
+      section0Ref.current &&
       section1Ref.current &&
-      section2Ref.current &&
       section3Ref.current &&
-      section4Ref.current &&
       section5Ref.current &&
-      section6Ref.current &&
       section8Ref.current &&
       sectionsContainerRef.current
     ) {
@@ -553,27 +540,21 @@ export const HomeScreen = (_props: HomeScreenProps) => {
     const innerContainer = innerContainerRef.current;
     const chatContainer = chatContainerRef.current;
     const animatedContainer = animatedSceneContainerRef.current;
-    const animatedSection4Container = animatedSceneSection4Ref.current;
-    const animatedSection6Container = animatedSceneSection6Ref.current;
+    const animatedSection0Container = animatedSceneSection0Ref.current;
     if (!innerContainer || !chatContainer) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // Check if the scroll event is happening inside the Section 2 animated scene container
-      const isInsideSection2AnimatedScene =
-        animatedSection4Container &&
-        animatedSection4Container.contains(e.target as Node);
-
-      // Check if the scroll event is happening inside the Section 4 animated scene container
-      const isInsideSection4AnimatedScene =
-        animatedSection6Container &&
-        animatedSection6Container.contains(e.target as Node);
+      // Check if the scroll event is happening inside the Section 0 animated scene container
+      const isInsideSection0AnimatedScene =
+        animatedSection0Container &&
+        animatedSection0Container.contains(e.target as Node);
 
       // Check if the scroll event is happening inside the animated scene container
       const isInsideAnimatedScene =
         animatedContainer && animatedContainer.contains(e.target as Node);
 
-      // For Section 2 and 4, let them scroll naturally - the scroll event listener will handle progress updates
-      if (isInsideSection2AnimatedScene || isInsideSection4AnimatedScene) {
+      // For Section 0, let them scroll naturally - the scroll event listener will handle progress updates
+      if (isInsideSection0AnimatedScene) {
         // Don't prevent default, let the native scroll happen
         return;
       } else if (isInsideAnimatedScene && animatedContainer) {
@@ -644,137 +625,73 @@ export const HomeScreen = (_props: HomeScreenProps) => {
     };
   }, [isMobile]);
 
-  // Desktop: Direct scroll listener for Section 4 AnimatedScene (0-50)
+  // Desktop: Direct scroll listener for Section 0 AnimatedScene (0-100)
   useEffect(() => {
     if (isMobile) return; // Only run on desktop
 
-    const animatedSection4Container = animatedSceneSection4Ref.current;
-    if (!animatedSection4Container) {
+    const animatedSection0Container = animatedSceneSection0Ref.current;
+    if (!animatedSection0Container) {
       return;
     }
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } =
-        animatedSection4Container;
+        animatedSection0Container;
       const scrollProgress =
         scrollHeight > clientHeight
-          ? (scrollTop / (scrollHeight - clientHeight)) * 50
+          ? (scrollTop / (scrollHeight - clientHeight)) * 100
           : 0;
-      setAnimationProgress(Math.max(0, Math.min(50, scrollProgress)));
+      setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
     };
 
-    animatedSection4Container.addEventListener("scroll", handleScroll, {
+    animatedSection0Container.addEventListener("scroll", handleScroll, {
       passive: true,
     });
     return () => {
-      animatedSection4Container.removeEventListener("scroll", handleScroll);
+      animatedSection0Container.removeEventListener("scroll", handleScroll);
     };
   }, [isMobile]);
 
-  // Desktop: Direct scroll listener for Section 6 AnimatedScene (50-100)
-  useEffect(() => {
-    if (isMobile) return; // Only run on desktop
-
-    const animatedSection6Container = animatedSceneSection6Ref.current;
-    if (!animatedSection6Container) {
-      return;
-    }
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } =
-        animatedSection6Container;
-      const scrollProgress =
-        scrollHeight > clientHeight
-          ? 50 + (scrollTop / (scrollHeight - clientHeight)) * 50
-          : 50;
-      setAnimationProgress(Math.max(50, Math.min(100, scrollProgress)));
-    };
-
-    animatedSection6Container.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-    return () => {
-      animatedSection6Container.removeEventListener("scroll", handleScroll);
-    };
-  }, [isMobile]);
-
-  // Mobile: Direct scroll listener for Section 4 AnimatedScene (0-50)
+  // Mobile: Direct scroll listener for Section 0 AnimatedScene (0-100)
   useEffect(() => {
     if (!isMobile) return;
 
-    const animatedSection4MobileContainer =
-      animatedSceneSection4MobileRef.current;
-    if (!animatedSection4MobileContainer) {
+    const animatedSection0MobileContainer =
+      animatedSceneSection0MobileRef.current;
+    if (!animatedSection0MobileContainer) {
       return;
     }
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } =
-        animatedSection4MobileContainer;
+        animatedSection0MobileContainer;
       const scrollProgress =
         scrollHeight > clientHeight
-          ? (scrollTop / (scrollHeight - clientHeight)) * 50
+          ? (scrollTop / (scrollHeight - clientHeight)) * 100
           : 0;
-      setAnimationProgress(Math.max(0, Math.min(50, scrollProgress)));
+      setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
     };
 
-    animatedSection4MobileContainer.addEventListener("scroll", handleScroll, {
+    animatedSection0MobileContainer.addEventListener("scroll", handleScroll, {
       passive: true,
     });
     return () => {
-      animatedSection4MobileContainer.removeEventListener(
+      animatedSection0MobileContainer.removeEventListener(
         "scroll",
         handleScroll,
       );
     };
   }, [isMobile]);
 
-  // Mobile: Direct scroll listener for Section 6 AnimatedScene (50-100)
-  useEffect(() => {
-    if (!isMobile) return;
-
-    const animatedSection6MobileContainer =
-      animatedSceneSection6MobileRef.current;
-    if (!animatedSection6MobileContainer) {
-      return;
-    }
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } =
-        animatedSection6MobileContainer;
-      const scrollProgress =
-        scrollHeight > clientHeight
-          ? 50 + (scrollTop / (scrollHeight - clientHeight)) * 50
-          : 50;
-      setAnimationProgress(Math.max(50, Math.min(100, scrollProgress)));
-    };
-
-    animatedSection6MobileContainer.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-    return () => {
-      animatedSection6MobileContainer.removeEventListener(
-        "scroll",
-        handleScroll,
-      );
-    };
-  }, [isMobile]);
-
-  // Auto-center AnimatedScene sections when user starts interacting
+  // Auto-center AnimatedScene section when user starts interacting
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    const section4 = section4Ref.current;
-    const section6 = section6Ref.current;
-    const animatedSection4Container = isMobile
-      ? animatedSceneSection4MobileRef.current
-      : animatedSceneSection4Ref.current;
-    const animatedSection6Container = isMobile
-      ? animatedSceneSection6MobileRef.current
-      : animatedSceneSection6Ref.current;
-    const container4Mobile = animatedSceneContainer4MobileRef.current;
-    const container6Mobile = animatedSceneContainer6MobileRef.current;
+    const animatedSection0Container = isMobile
+      ? animatedSceneSection0MobileRef.current
+      : animatedSceneSection0Ref.current;
+    const container0Mobile = animatedSceneContainer0MobileRef.current;
 
-    if (!scrollContainer) return;
+    if (!scrollContainer || !animatedSection0Container) return;
 
     const centerElement = (element: HTMLElement) => {
       const elementRect = element.getBoundingClientRect();
@@ -801,94 +718,47 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       });
     };
 
-    const handleSection4Interaction = (
+    const handleSection0Interaction = (
       e: WheelEvent | MouseEvent | TouchEvent,
     ) => {
-      if (animatedSection4Container?.contains(e.target as Node)) {
+      if (animatedSection0Container?.contains(e.target as Node)) {
         // On mobile, center the container; on desktop, center the section
         const targetElement =
-          isMobile && container4Mobile ? container4Mobile : section4;
-        if (targetElement) centerElement(targetElement);
-      }
-    };
-
-    const handleSection6Interaction = (
-      e: WheelEvent | MouseEvent | TouchEvent,
-    ) => {
-      if (animatedSection6Container?.contains(e.target as Node)) {
-        // On mobile, center the container; on desktop, center the section
-        const targetElement =
-          isMobile && container6Mobile ? container6Mobile : section6;
+          isMobile && container0Mobile ? container0Mobile : animatedSection0Container;
         if (targetElement) centerElement(targetElement);
       }
     };
 
     // Add event listeners to detect scroll/touch start
-    if (animatedSection4Container) {
-      animatedSection4Container.addEventListener(
-        "wheel",
-        handleSection4Interaction as EventListener,
-        { passive: true, once: true },
-      );
-      animatedSection4Container.addEventListener(
-        "mouseenter",
-        handleSection4Interaction as EventListener,
-        { passive: true },
-      );
-      animatedSection4Container.addEventListener(
-        "touchstart",
-        handleSection4Interaction as EventListener,
-        { passive: true, once: true },
-      );
-    }
-
-    if (animatedSection6Container) {
-      animatedSection6Container.addEventListener(
-        "wheel",
-        handleSection6Interaction as EventListener,
-        { passive: true, once: true },
-      );
-      animatedSection6Container.addEventListener(
-        "mouseenter",
-        handleSection6Interaction as EventListener,
-        { passive: true },
-      );
-      animatedSection6Container.addEventListener(
-        "touchstart",
-        handleSection6Interaction as EventListener,
-        { passive: true, once: true },
-      );
-    }
+    animatedSection0Container.addEventListener(
+      "wheel",
+      handleSection0Interaction as EventListener,
+      { passive: true, once: true },
+    );
+    animatedSection0Container.addEventListener(
+      "mouseenter",
+      handleSection0Interaction as EventListener,
+      { passive: true },
+    );
+    animatedSection0Container.addEventListener(
+      "touchstart",
+      handleSection0Interaction as EventListener,
+      { passive: true, once: true },
+    );
 
     return () => {
-      if (animatedSection4Container) {
-        animatedSection4Container.removeEventListener(
-          "wheel",
-          handleSection4Interaction as EventListener,
-        );
-        animatedSection4Container.removeEventListener(
-          "mouseenter",
-          handleSection4Interaction as EventListener,
-        );
-        animatedSection4Container.removeEventListener(
-          "touchstart",
-          handleSection4Interaction as EventListener,
-        );
-      }
-      if (animatedSection6Container) {
-        animatedSection6Container.removeEventListener(
-          "wheel",
-          handleSection6Interaction as EventListener,
-        );
-        animatedSection6Container.removeEventListener(
-          "mouseenter",
-          handleSection6Interaction as EventListener,
-        );
-        animatedSection6Container.removeEventListener(
-          "touchstart",
-          handleSection6Interaction as EventListener,
-        );
-      }
+      animatedSection0Container.removeEventListener(
+        "wheel",
+        handleSection0Interaction as EventListener,
+      );
+      animatedSection0Container.removeEventListener(
+        "mouseenter",
+        handleSection0Interaction as EventListener,
+      );
+      animatedSection0Container.removeEventListener(
+        "touchstart",
+        handleSection0Interaction as EventListener,
+      );
     };
   }, [isMobile]);
 
@@ -990,17 +860,17 @@ export const HomeScreen = (_props: HomeScreenProps) => {
           {refsReady && (
             <>
               <div
-                key={`bg1-${recalcCounter}`}
-                style={getSection1BackgroundStyle(
-                  section1Ref,
+                key={`bg0-${recalcCounter}`}
+                style={getSection0BackgroundStyle(
+                  section0Ref,
                   sectionsContainerRef,
                   isMobile,
                 )}
               />
-              <div
-                key={`bg2-${recalcCounter}`}
-                style={getSection2BackgroundStyle(
-                  section2Ref,
+                            <div
+                key={`bg1-${recalcCounter}`}
+                style={getSection1BackgroundStyle(
+                  section1Ref,
                   sectionsContainerRef,
                   isMobile,
                 )}
@@ -1014,25 +884,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 )}
               />
               <div
-                key={`bg4-${recalcCounter}`}
-                style={getSection4BackgroundStyle(
-                  section4Ref,
-                  sectionsContainerRef,
-                  isMobile,
-                )}
-              />
-              <div
                 key={`bg5-${recalcCounter}`}
                 style={getSection5BackgroundStyle(
                   section5Ref,
-                  sectionsContainerRef,
-                  isMobile,
-                )}
-              />
-              <div
-                key={`bg6-${recalcCounter}`}
-                style={getSection6BackgroundStyle(
-                  section6Ref,
                   sectionsContainerRef,
                   isMobile,
                 )}
@@ -1098,7 +952,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             {!isMobile && (
               <>
                 {" "}
-                <DraggableCard color="yellow" x={1000} y={1700}>
+                <DraggableCard color="yellow" x={250} y={1450}>
                   <p style={getImageCardStyle()}>
                     <img
                       src={rainbowComputer}
@@ -1111,12 +965,12 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <img src={fireproofLogo} style={getFullSizeImageStyle()} />
                   </p>
                 </DraggableCard>
-                <DraggableCard color="yellow" x={830} y={5240}>
+                <DraggableCard color="yellow" x={830} y={4040}>
                   <p style={getImageCardStyleSmall("140px")}>
                     <img src={htmlpng} style={getFullSizeImageStyle()} />
                   </p>
                 </DraggableCard>
-                <DraggableCard color="yellow" x={700} y={7000}>
+                <DraggableCard color="yellow" x={900} y={5300}>
                   <img style={getImageCardStyleSmall("340px")} src={mouth} />
                 </DraggableCard>
               </>
@@ -1178,17 +1032,137 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             style={getSectionsContainerStyle(isMobile)}
             ref={sectionsContainerRef}
           >
-            {/* Section 0: Create Section */}
+            {/* Section 0: Create Section with Animated Scene */}
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
+                ...getSectionWithAnimatedSceneStyle(isMobile),
                 paddingTop: isMobile ? "0px" : "100px",
               }}
+              ref={section0Ref}
             >
-              {/* <NewSessionContent
-                chatState={chatState}
-                handleSelectSuggestion={handleSelectSuggestion}
-              /> */}
+              {/* Left column: Text sections that change based on progress (1/3 width) */}
+              <div style={getAnimatedSectionTextColumnStyle(isMobile)}>
+                {/* Section 1: 0-33% */}
+                {animationProgress < 33 && (
+                  <DraggableSection color="blue" static>
+                    <h3 style={getSectionHeadingStyle("#5398c9")}>
+                      You're about to make an app
+                    </h3>
+                    <div style={getContentWrapperStyle()}>
+                      <b style={getSubheadingBoldStyle()}>
+                        The front-end is the fun part
+                      </b>
+                      <p>
+                        Let's start there. Let's say you want to make a simple
+                        counter that keeps track of the number of times a group of
+                        people click a red button.
+                      </p>
+                      <p>
+                        Most AI models will give you something cool right away.
+                      </p>
+                    </div>
+                  </DraggableSection>
+                )}
+
+                {/* Section 2: 33-66% */}
+                {animationProgress >= 33 && animationProgress < 66 && (
+                  <DraggableSection color="yellow" static>
+                    <h3 style={getSectionHeadingStyle("#FEDD00")}>
+                      Back to your counter app...
+                    </h3>
+                    <div style={getContentWrapperStyle()}>
+                      <b style={getSubheadingBoldStyle()}>
+                        Now you're using Fireproof + Vibes DIY
+                      </b>
+                      <span>
+                        Your data lives locally inside your component, syncing
+                        when and where you choose. Conflicts resolve sensibly.
+                        State just... persists.
+                      </span>
+                      <span>
+                        You can build offline, share instantly, and grow without
+                        rewriting your stack. Even if you have no idea what any of
+                        that means and just want to spell out an idea and get an
+                        app. We got you.
+                      </span>
+                    </div>
+                  </DraggableSection>
+                )}
+
+                {/* Section 3: 66-100% */}
+                {animationProgress >= 66 && (
+                  <DraggableSection color="red" static>
+                    <h3 style={getSectionHeadingStyle("#D94827")}>
+                      Build together, instantly
+                    </h3>
+                    <div style={getContentWrapperStyle()}>
+                      <b style={getSubheadingBoldStyle()}>
+                        No setup, no friction
+                      </b>
+                      <span>
+                        Share your creations with a simple link. Your friends can
+                        jump in immediately — no downloads, no waiting.
+                      </span>
+                      <span>
+                        Everyone's changes sync in real-time, and your data stays
+                        safe and encrypted locally. And the entire community of
+                        Vibes is like a community-run app store with no monopolist
+                        gatekeeper (shots fired).
+                      </span>
+                    </div>
+                  </DraggableSection>
+                )}
+              </div>
+
+              {/* Right column: AnimatedScene */}
+              {isMobile ? (
+                // Mobile: Container with placeholder and overlay
+                <div
+                  ref={animatedSceneContainer0MobileRef}
+                  style={getScrollableAnimatedSceneMobileContainerStyle()}
+                >
+                  {/* Mobile: Scrollable AnimatedScene overlay centered in container */}
+                  <div
+                    className="animated-scene-wrapper"
+                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
+                    ref={animatedSceneSection0MobileRef}
+                  >
+                    <div style={getScrollableAnimatedSceneInnerStyle()}>
+                      <div style={getStickyAnimatedSceneMobileStyle()}>
+                        <AnimatedScene progress={animationProgress} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Desktop: Visual placeholder (2/3 width) */}
+                  <div style={getAnimatedSceneDesktopPlaceholderStyle()} />
+
+                  {/* Desktop: Scrollable AnimatedScene overlay covering full section */}
+                  <div
+                    className="animated-scene-wrapper"
+                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
+                    ref={animatedSceneSection0Ref}
+                  >
+                    <div style={getScrollableAnimatedSceneInnerStyle()}>
+                      <div style={getStickyAnimatedSceneDesktopStyle()}>
+                        {/* Empty space for left column (1/3) */}
+                        <div
+                          style={getStickyAnimatedSceneDesktopLeftSpacerStyle()}
+                        />
+                        {/* AnimatedScene in right area (2/3) */}
+                        <div
+                          style={getStickyAnimatedSceneDesktopRightContainerStyle()}
+                        >
+                          <AnimatedScene progress={animationProgress} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
 
             {/* Section 1: First part of content */}
@@ -1263,62 +1237,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </div>
             </section>
 
-            {/* Section 2: AnimatedScene 0-50 */}
-            <section
-              style={{
-                ...getSectionWrapperStyle(isMobile),
-                ...getSectionWithAnimatedSceneStyle(isMobile),
-                paddingTop: isMobile ? "0px" : "100px",
-              }}
-              ref={section2Ref}
-            >
-              {/* Left column: Text (1/3 width) */}
-              <div style={getAnimatedSectionTextColumnStyle(isMobile)}>
-                <DraggableSection color="blue" static>
-                  <h3 style={getSectionHeadingStyle("#5398c9")}>
-                    You're about to make an app
-                  </h3>
-                  <div style={getContentWrapperStyle()}>
-                    <b style={getSubheadingBoldStyle()}>
-                      The front-end is the fun part
-                    </b>
-                    <p>
-                      Let's start there. Let's say you want to make a simple
-                      counter that keeps track of the number of times a group of
-                      people click a red button.
-                    </p>
-                    <p>
-                      Most AI models will give you something cool right away.
-                    </p>
-                  </div>
-                </DraggableSection>
-              </div>
-
-              {/* Right column: AnimatedScene */}
-              {isMobile ? (
-                // Mobile: Container with same size as other animated sections
-                <div style={getStaticAnimatedSceneMobileContainerStyle()}>
-                  <AnimatedScene progress={0} />
-                </div>
-              ) : (
-                <>
-                  {/* Desktop: Visual placeholder (2/3 width) */}
-                  <div style={getAnimatedSceneDesktopPlaceholderStyle()} />
-
-                  {/* Desktop: AnimatedScene overlay covering full section */}
-                  <div style={getStaticAnimatedSceneDesktopOverlayStyle()}>
-                    {/* Empty space for left column (1/3) */}
-                    <div style={getAnimatedSceneDesktopLeftSpacerStyle()} />
-                    {/* AnimatedScene in right area (2/3) */}
-                    <div style={getAnimatedSceneDesktopRightContainerStyle()}>
-                      <AnimatedScene progress={0} />
-                    </div>
-                  </div>
-                </>
-              )}
-            </section>
-
-            {/* Section 3: Second part of content */}
+             {/* Section 3: Second part of content */}
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
@@ -1368,8 +1287,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       }}
                     />
                   </div>
-                  
-                    
+
+
                   )}
                   <p style={{ marginBottom: "18px" }}>
                     The model understands you.
@@ -1414,89 +1333,6 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   <div style={{ clear: "both" }} />
                 </div>
               </DraggableSection>
-            </section>
-
-            {/* Section 4: AnimatedScene 50-100 */}
-            <section
-              style={{
-                ...getSectionWrapperStyle(isMobile),
-                ...getSectionWithAnimatedSceneStyle(isMobile),
-              }}
-              ref={section4Ref}
-            >
-              {/* Left column: Text (1/3 width) */}
-              <div style={getAnimatedSectionTextColumnStyle(isMobile)}>
-                <DraggableSection color="yellow" static>
-                  <h3 style={getSectionHeadingStyle("#FEDD00")}>
-                    Back to your counter app...
-                  </h3>
-                  <div style={getContentWrapperStyle()}>
-                    <b style={getSubheadingBoldStyle()}>
-                      Now you're using Fireproof + Vibes DIY
-                    </b>
-                    <span>
-                      Your data lives locally inside your component, syncing
-                      when and where you choose. Conflicts resolve sensibly.
-                      State just... persists.
-                    </span>
-                    <span>
-                      You can build offline, share instantly, and grow without
-                      rewriting your stack. Even if you have no idea what any of
-                      that means and just want to spell out an idea and get an
-                      app. We got you.
-                    </span>
-                  </div>
-                </DraggableSection>
-              </div>
-
-              {/* Right column: AnimatedScene */}
-              {isMobile ? (
-                // Mobile: Container with placeholder and overlay
-                <div
-                  ref={animatedSceneContainer4MobileRef}
-                  style={getScrollableAnimatedSceneMobileContainerStyle()}
-                >
-                  {/* Mobile: Scrollable AnimatedScene overlay centered in container */}
-                  <div
-                    className="animated-scene-wrapper"
-                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
-                    ref={animatedSceneSection4MobileRef}
-                  >
-                    <div style={getScrollableAnimatedSceneInnerStyle()}>
-                      <div style={getStickyAnimatedSceneMobileStyle()}>
-                        <AnimatedScene progress={animationProgress} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Desktop: Visual placeholder (2/3 width) */}
-                  <div style={getAnimatedSceneDesktopPlaceholderStyle()} />
-
-                  {/* Desktop: Scrollable AnimatedScene overlay covering full section */}
-                  <div
-                    className="animated-scene-wrapper"
-                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
-                    ref={animatedSceneSection4Ref}
-                  >
-                    <div style={getScrollableAnimatedSceneInnerStyle()}>
-                      <div style={getStickyAnimatedSceneDesktopStyle()}>
-                        {/* Empty space for left column (1/3) */}
-                        <div
-                          style={getStickyAnimatedSceneDesktopLeftSpacerStyle()}
-                        />
-                        {/* AnimatedScene in right area (2/3) */}
-                        <div
-                          style={getStickyAnimatedSceneDesktopRightContainerStyle()}
-                        >
-                          <AnimatedScene progress={animationProgress} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </section>
 
             {/* Section 5: Final content */}
@@ -1545,88 +1381,6 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   </div>
                 </div>
               </DraggableSection>
-            </section>
-
-            {/* Section 6: AnimatedScene at 0 (no movement) - Red */}
-            <section
-              style={{
-                ...getSectionWrapperStyle(isMobile),
-                ...getSectionWithAnimatedSceneStyle(isMobile),
-              }}
-              ref={section6Ref}
-            >
-              {/* Left column: Text (1/3 width) */}
-              <div style={getAnimatedSectionTextColumnStyle(isMobile)}>
-                <DraggableSection color="red" static>
-                  <h3 style={getSectionHeadingStyle("#D94827")}>
-                    Build together, instantly
-                  </h3>
-                  <div style={getContentWrapperStyle()}>
-                    <b style={getSubheadingBoldStyle()}>
-                      No setup, no friction
-                    </b>
-                    <span>
-                      Share your creations with a simple link. Your friends can
-                      jump in immediately — no downloads, no waiting.
-                    </span>
-                    <span>
-                      Everyone's changes sync in real-time, and your data stays
-                      safe and encrypted locally. And the entire community of
-                      Vibes is like a community-run app store with no monopolist
-                      gatekeeper (shots fired).
-                    </span>
-                  </div>
-                </DraggableSection>
-              </div>
-
-              {/* Right column: AnimatedScene */}
-              {isMobile ? (
-                // Mobile: Container with placeholder and overlay
-                <div
-                  ref={animatedSceneContainer6MobileRef}
-                  style={getScrollableAnimatedSceneMobileContainerStyle()}
-                >
-                  {/* Mobile: Scrollable AnimatedScene overlay centered in container */}
-                  <div
-                    className="animated-scene-wrapper"
-                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
-                    ref={animatedSceneSection6MobileRef}
-                  >
-                    <div style={getScrollableAnimatedSceneInnerStyle()}>
-                      <div style={getStickyAnimatedSceneMobileStyle()}>
-                        <AnimatedScene progress={animationProgress} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Desktop: Visual placeholder (2/3 width) */}
-                  <div style={getAnimatedSceneDesktopPlaceholderStyle()} />
-
-                  {/* Desktop: Scrollable AnimatedScene overlay covering full section */}
-                  <div
-                    className="animated-scene-wrapper"
-                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
-                    ref={animatedSceneSection6Ref}
-                  >
-                    <div style={getScrollableAnimatedSceneInnerStyle()}>
-                      <div style={getStickyAnimatedSceneDesktopStyle()}>
-                        {/* Empty space for left column (1/3) */}
-                        <div
-                          style={getStickyAnimatedSceneDesktopLeftSpacerStyle()}
-                        />
-                        {/* AnimatedScene in right area (2/3) */}
-                        <div
-                          style={getStickyAnimatedSceneDesktopRightContainerStyle()}
-                        >
-                          <AnimatedScene progress={animationProgress} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </section>
 
             {/* Section 8: Light section */}

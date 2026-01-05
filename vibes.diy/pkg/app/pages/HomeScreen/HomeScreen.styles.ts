@@ -380,6 +380,34 @@ const getAbsoluteTop = (element: HTMLElement): number => {
   return top;
 };
 
+export const getSection0BackgroundStyle = (
+  ref: React.RefObject<HTMLDivElement | null>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isMobile: boolean,
+): CSSProperties => {
+  if (!ref.current || !containerRef.current) return { display: "none" };
+
+  const absoluteTop = getAbsoluteTop(ref.current);
+  const height = ref.current.offsetHeight;
+
+  return {
+    position: "absolute",
+    top: isMobile ? absoluteTop - 200 : absoluteTop,
+    left: 0,
+    right: 0,
+    height: height + (isMobile ? 300 : 30),
+    pointerEvents: "none",
+    zIndex: -1,
+    background: `
+      linear-gradient(
+       oklch(0.8461 0.0069 115.73) 0%,
+        oklch(0.8461 0.0069 115.73) 70%,
+         oklch(0.8461 0.0069 115.73) 100%
+      )
+    `,
+  };
+};
+
 // Dynamic section background styles based on refs
 export const getSection1BackgroundStyle = (
   ref: React.RefObject<HTMLDivElement | null>,
@@ -403,38 +431,9 @@ export const getSection1BackgroundStyle = (
     background: `
       linear-gradient(
         180deg,
-        transparent 0%,
+        oklch(0.8461 0.0069 115.73) 0%,
         oklch(0.6439 0.1304 231.41) 30%,
         oklch(0.6439 0.1304 231.41) 100%
-      )
-    `,
-  };
-};
-
-export const getSection2BackgroundStyle = (
-  ref: React.RefObject<HTMLDivElement | null>,
-  containerRef: React.RefObject<HTMLDivElement | null>,
-  isMobile: boolean,
-): CSSProperties => {
-  if (!ref.current || !containerRef.current) return { display: "none" };
-
-  const absoluteTop = getAbsoluteTop(ref.current);
-  const height = ref.current.offsetHeight;
-
-  return {
-    position: "absolute",
-    top: isMobile ? absoluteTop - 200 : absoluteTop,
-    left: 0,
-    right: 0,
-    height: height + (isMobile ? 300 : 30),
-    pointerEvents: "none",
-    zIndex: -1,
-    background: `
-      linear-gradient(
-        180deg,
-        oklch(0.6439 0.1304 231.41) 0%,
-        oklch(0.6439 0.1304 231.41) 70%,
-        oklch(77.75% 0.195 157.5) 100%
       )
     `,
   };
@@ -461,7 +460,7 @@ export const getSection3BackgroundStyle = (
     background: `
       linear-gradient(
         180deg,
-        oklch(77.75% 0.195 157.5) 0%,
+        oklch(0.6439 0.1304 231.41) 0%,
         oklch(0.8978 0.185652 98.2159) 30%,
         oklch(0.8978 0.185652 98.2159) 100%
       )
@@ -519,7 +518,7 @@ export const getSection5BackgroundStyle = (
     background: `
       linear-gradient(
         180deg,
-        oklch(73.2% 0.24 61.2) 0%,
+        oklch(0.8978 0.185652 98.2159) 0%,
         oklch(0.5746 0.2126 29.55) 30%,
         oklch(0.5746 0.2126 29.55) 100%
       )
@@ -576,7 +575,7 @@ export const getSection8BackgroundStyle = (
     background: `
       linear-gradient(
         180deg,
-        oklch(55.9% 0.26 27.3) 0%,
+        oklch(0.5746 0.2126 29.55) 0%,
         oklch(0.8461 0.0069 115.73) 30%,
         oklch(0.8461 0.0069 115.73) 100%
       )
