@@ -136,7 +136,11 @@ export function VibesButton({
     buttonType,
   );
   const iconStyle = getIconStyle(isMobile, isHovered, isActive);
-  const contentWrapperStyle = getContentWrapperStyle(isMobile, !!IconComponent, buttonType);
+  const contentWrapperStyle = getContentWrapperStyle(
+    isMobile,
+    !!IconComponent,
+    buttonType,
+  );
 
   return (
     <>
@@ -160,8 +164,12 @@ export function VibesButton({
                 <IconComponent
                   bgFill="var(--vibes-button-icon-bg)"
                   fill="var(--vibes-button-icon-fill)"
-                  width={buttonType === 'flat-rounded' ? 28 : isMobile ? 28 : 45}
-                  height={buttonType === 'flat-rounded' ? 28 : isMobile ? 28 : 45}
+                  width={
+                    buttonType === "flat-rounded" ? 28 : isMobile ? 28 : 45
+                  }
+                  height={
+                    buttonType === "flat-rounded" ? 28 : isMobile ? 28 : 45
+                  }
                   withCircle={icon === "back"}
                 />
               </div>

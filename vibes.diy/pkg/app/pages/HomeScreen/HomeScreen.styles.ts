@@ -680,22 +680,27 @@ export const getSectionWithAnimatedSceneStyle = (
   display: "flex",
   alignItems: "stretch",
   justifyContent: "center",
-  gap: isMobile ? "20px" : "0px",
+  gap: isMobile ? "0px" : "0px",
   flexDirection: isMobile ? "column" : "row",
-  minHeight: isMobile ? "200vh" : undefined,
-  ...(isMobile && { padding: "0px" }),
+  minHeight: isMobile ? "100vh" : "100vh",
+  ...(isMobile && { padding: "40px 0px" }),
 });
 
 // Left column for text content in AnimatedScene sections
 export const getAnimatedSectionTextColumnStyle = (
   isMobile: boolean,
 ): CSSProperties => ({
-  flex: isMobile ? "1" : "0 0 33.33%",
+  flex: isMobile ? "0 0 auto" : "0 0 33.33%",
   display: "flex",
   alignItems: "center",
-  zIndex: isMobile ? "auto" : 1,
-  position: "relative",
-  ...(isMobile && { padding: "0px 20px" }),
+  zIndex: isMobile ? 2 : 1,
+  position: isMobile ? "sticky" : "relative",
+  ...(isMobile && {
+    padding: "0px 20px",
+    height: "50vh",
+    top: 0,
+    background: "transparent",
+  }),
 });
 
 // 1/3 column
@@ -764,21 +769,45 @@ export const getAnimatedSceneDesktopRightContainerStyle =
 export const getScrollableAnimatedSceneMobileContainerStyle =
   (): CSSProperties => ({
     width: "100%",
-    height: "100vh",
-    position: "relative",
+    height: "50vh",
+    position: "sticky",
+    bottom: 0,
+    zIndex: 1,
   });
+
+// Mobile: Hidden scrollable div (300vh) for slower animation
+export const getHiddenScrollDivStyle = (): CSSProperties => ({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "50vh",
+  overflowY: "auto",
+  overflowX: "hidden",
+  opacity: 0,
+  pointerEvents: "auto",
+  zIndex: 100,
+  WebkitOverflowScrolling: "touch",
+});
+
+// Mobile: Inner content for hidden scroll div (creates scrollable area)
+export const getHiddenScrollDivInnerStyle = (): CSSProperties => ({
+  width: "100%",
+  height: "300vh",
+  pointerEvents: "none",
+});
 
 // Mobile/Desktop: Scrollable wrapper for AnimatedScene
 export const getScrollableAnimatedSceneWrapperStyle = (
   isMobile: boolean,
 ): CSSProperties => ({
-  position: "absolute",
-  top: "50%",
+  position: isMobile ? "relative" : "absolute",
+  top: isMobile ? 0 : "50%",
   left: 0,
   right: 0,
-  transform: "translateY(-50%)",
-  height: isMobile ? "calc(100vh - 64px)" : "100vh",
-  overflowY: "auto",
+  transform: isMobile ? "none" : "translateY(-50%)",
+  height: isMobile ? "50vh" : "100vh",
+  overflowY: isMobile ? "hidden" : "auto",
   overflowX: "hidden",
   background: "transparent",
   zIndex: 10,
@@ -793,10 +822,10 @@ export const getScrollableAnimatedSceneInnerStyle = (): CSSProperties => ({
 
 // Sticky AnimatedScene container for scroll effect (mobile)
 export const getStickyAnimatedSceneMobileStyle = (): CSSProperties => ({
-  position: "sticky",
+  position: "relative",
   top: 0,
   width: "100%",
-  height: "calc(100vh - 64px)",
+  height: "50vh",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

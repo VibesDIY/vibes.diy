@@ -1,9 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import {
-  useParams,
-  useLocation,
-  useNavigate,
-} from "react-router";
+import { useParams, useLocation, useNavigate } from "react-router";
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";

@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { SideMenu } from "./SideMenu.js";
 import { TerminalDemo } from "./TerminalDemo.js";
@@ -62,6 +56,8 @@ import {
   getLinkOutStyle,
   get1of3Column,
   get2of3Column,
+  getHiddenScrollDivStyle,
+  getHiddenScrollDivInnerStyle,
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
@@ -69,17 +65,10 @@ import {
   DraggableSection,
   VibesSwitch,
 } from "../../components/index.js";
-import NewSessionContent from "../../components/NewSessionContent/index.js";
 import { HomeScreenProps } from "./HomeScreen.types.js";
 import { useIsMobile, usePrefersDarkMode } from "../../hooks/index.js";
-import { useNewSessionChat } from "../../hooks/useNewSessionChat.js";
 import { AnimatedScene } from "./AnimatedScene.js";
-import {
-  LoginIcon,
-  SettingsIcon,
-  MoonIcon,
-  SunIcon,
-} from "../../components/vibes/icons/index.js";
+import { MoonIcon, SunIcon } from "../../components/vibes/icons/index.js";
 
 // Asset paths (referenced as strings for non-bundled builds)
 const computerAnimGif = "/app/assets/computer-anim.gif";
@@ -124,13 +113,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   const animatedSceneSection0MobileRef = useRef<HTMLDivElement>(null);
   const animatedSceneContainer0MobileRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hiddenScrollDivRef = useRef<HTMLDivElement>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
-
-  // New session chat state for create section
-  const chatState = useNewSessionChat(() => {
-    // Session creation handled by useNewSessionChat navigation
-  });
 
   // Dark mode state - initialize from localStorage or browser preference
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -156,24 +141,6 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       redirectUrl: window.location.href,
     });
   };
-
-  // Handle suggestion selection for create section
-  const handleSelectSuggestion = useCallback(
-    (suggestion: string) => {
-      chatState.setInput(suggestion);
-
-      // Focus the input and position cursor at the end
-      setTimeout(() => {
-        if (chatState.inputRef.current) {
-          chatState.inputRef.current.focus();
-          // Move cursor to end of text
-          chatState.inputRef.current.selectionStart =
-            chatState.inputRef.current.selectionEnd = suggestion.length;
-        }
-      }, 0);
-    },
-    [chatState.setInput, chatState.inputRef],
-  );
 
   // Apply dark mode to document root
   useEffect(() => {
@@ -652,19 +619,18 @@ export const HomeScreen = (_props: HomeScreenProps) => {
     };
   }, [isMobile]);
 
-  // Mobile: Direct scroll listener for Section 0 AnimatedScene (0-100)
+  // Mobile: Hidden div scroll tracker for Section 0 (0-100)
   useEffect(() => {
     if (!isMobile) return;
 
-    const animatedSection0MobileContainer =
-      animatedSceneSection0MobileRef.current;
-    if (!animatedSection0MobileContainer) {
+    const hiddenScrollDiv = hiddenScrollDivRef.current;
+
+    if (!hiddenScrollDiv) {
       return;
     }
 
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } =
-        animatedSection0MobileContainer;
+      const { scrollTop, scrollHeight, clientHeight } = hiddenScrollDiv;
       const scrollProgress =
         scrollHeight > clientHeight
           ? (scrollTop / (scrollHeight - clientHeight)) * 100
@@ -672,46 +638,55 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
     };
 
-    animatedSection0MobileContainer.addEventListener("scroll", handleScroll, {
+    hiddenScrollDiv.addEventListener("scroll", handleScroll, {
       passive: true,
     });
+
+    // Initial calculation
+    handleScroll();
+
     return () => {
-      animatedSection0MobileContainer.removeEventListener(
-        "scroll",
-        handleScroll,
-      );
+      hiddenScrollDiv.removeEventListener("scroll", handleScroll);
     };
   }, [isMobile]);
 
-  // Auto-center AnimatedScene section when user starts interacting
+  // Auto-center Section 0 when user starts interacting
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     const animatedSection0Container = isMobile
       ? animatedSceneSection0MobileRef.current
       : animatedSceneSection0Ref.current;
-    const container0Mobile = animatedSceneContainer0MobileRef.current;
+    const section0 = section0Ref.current;
 
-    if (!scrollContainer || !animatedSection0Container) return;
+    if (!scrollContainer || !animatedSection0Container || !section0) return;
 
-    const centerElement = (element: HTMLElement) => {
+    const positionElement = (element: HTMLElement) => {
       const elementRect = element.getBoundingClientRect();
       const scrollContainerRect = scrollContainer.getBoundingClientRect();
 
-      // Calculate the scroll position needed to center the element
-      const elementCenter =
+      // Calculate the absolute top position of the element
+      const elementTop =
         elementRect.top +
         scrollContainer.scrollTop -
-        scrollContainerRect.top +
-        elementRect.height / 2;
+        scrollContainerRect.top;
 
       // On mobile, account for the 64px menu at the top
       const menuHeight = isMobile ? 64 : 0;
       const availableHeight = window.innerHeight - menuHeight;
+
+      // Calculate the center of the section
+      const elementHeight = element.offsetHeight;
+      const elementCenter = elementTop + elementHeight / 2;
+
+      // Calculate the target scroll to show section centered in available viewport
       const viewportCenter = menuHeight + availableHeight / 2;
 
-      const targetScroll = elementCenter - viewportCenter;
+      // On mobile, offset upward to show more of the top content (text + animation)
+      // On desktop, keep perfectly centered
+      const offset = isMobile ? availableHeight * 0.15 : 0;
+      const targetScroll = elementCenter - viewportCenter - offset;
 
-      // Smoothly scroll to center the element
+      // Smoothly scroll to position the element
       scrollContainer.scrollTo({
         top: targetScroll,
         behavior: "smooth",
@@ -722,10 +697,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       e: WheelEvent | MouseEvent | TouchEvent,
     ) => {
       if (animatedSection0Container?.contains(e.target as Node)) {
-        // On mobile, center the container; on desktop, center the section
-        const targetElement =
-          isMobile && container0Mobile ? container0Mobile : animatedSection0Container;
-        if (targetElement) centerElement(targetElement);
+        // Position section 0 at the top of viewport (below menu)
+        if (section0) positionElement(section0);
       }
     };
 
@@ -867,7 +840,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   isMobile,
                 )}
               />
-                            <div
+              <div
                 key={`bg1-${recalcCounter}`}
                 style={getSection1BackgroundStyle(
                   section1Ref,
@@ -1055,8 +1028,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       </b>
                       <p>
                         Let's start there. Let's say you want to make a simple
-                        counter that keeps track of the number of times a group of
-                        people click a red button.
+                        counter that keeps track of the number of times a group
+                        of people click a red button.
                       </p>
                       <p>
                         Most AI models will give you something cool right away.
@@ -1082,9 +1055,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                       </span>
                       <span>
                         You can build offline, share instantly, and grow without
-                        rewriting your stack. Even if you have no idea what any of
-                        that means and just want to spell out an idea and get an
-                        app. We got you.
+                        rewriting your stack. Even if you have no idea what any
+                        of that means and just want to spell out an idea and get
+                        an app. We got you.
                       </span>
                     </div>
                   </DraggableSection>
@@ -1101,14 +1074,14 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                         No setup, no friction
                       </b>
                       <span>
-                        Share your creations with a simple link. Your friends can
-                        jump in immediately — no downloads, no waiting.
+                        Share your creations with a simple link. Your friends
+                        can jump in immediately — no downloads, no waiting.
                       </span>
                       <span>
-                        Everyone's changes sync in real-time, and your data stays
-                        safe and encrypted locally. And the entire community of
-                        Vibes is like a community-run app store with no monopolist
-                        gatekeeper (shots fired).
+                        Everyone's changes sync in real-time, and your data
+                        stays safe and encrypted locally. And the entire
+                        community of Vibes is like a community-run app store
+                        with no monopolist gatekeeper (shots fired).
                       </span>
                     </div>
                   </DraggableSection>
@@ -1122,6 +1095,14 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   ref={animatedSceneContainer0MobileRef}
                   style={getScrollableAnimatedSceneMobileContainerStyle()}
                 >
+                  {/* Hidden scrollable div for slower animation */}
+                  <div
+                    ref={hiddenScrollDivRef}
+                    style={getHiddenScrollDivStyle()}
+                  >
+                    <div style={getHiddenScrollDivInnerStyle()} />
+                  </div>
+
                   {/* Mobile: Scrollable AnimatedScene overlay centered in container */}
                   <div
                     className="animated-scene-wrapper"
@@ -1237,7 +1218,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </div>
             </section>
 
-             {/* Section 3: Second part of content */}
+            {/* Section 3: Second part of content */}
             <section
               style={{
                 ...getSectionWrapperStyle(isMobile),
@@ -1276,19 +1257,24 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   <p style={{ marginBottom: "18px" }}>
                     Every vibe-coded project starts in the vibe zone.
                   </p>
-                  {isMobile && (<div style={{display: "flex", justifyContent: 'center', alignItems: 'center'}}>
-<img
-                      src={vibeZoneChart}
-                      alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
+                  {isMobile && (
+                    <div
                       style={{
-                        width: "100%",
-                        marginBottom: "18px",
-                        borderRadius: "8px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
                       }}
-                    />
-                  </div>
-
-
+                    >
+                      <img
+                        src={vibeZoneChart}
+                        alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
+                        style={{
+                          width: "100%",
+                          marginBottom: "18px",
+                          borderRadius: "8px",
+                        }}
+                      />
+                    </div>
                   )}
                   <p style={{ marginBottom: "18px" }}>
                     The model understands you.

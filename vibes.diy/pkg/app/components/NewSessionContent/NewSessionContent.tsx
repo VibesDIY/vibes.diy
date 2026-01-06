@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { VibesButton } from "../vibes/VibesButton/index.js";
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-} from "../vibes/icons/index.js";
+import { ArrowLeftIcon, ArrowRightIcon } from "../vibes/icons/index.js";
 import type { NewSessionChatState } from "@vibes.diy/prompts";
 import { quickSuggestions } from "../../data/quick-suggestions-data.js";
 import { useIsMobile } from "../../hooks/useIsMobile.js";

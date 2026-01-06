@@ -21,7 +21,7 @@ async function baseVerifyToken(
   // TODO: Implement JWT verification with publicKey
   // For now, return a basic decoded payload
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) return null;
     const payload = JSON.parse(atob(parts[1]));
     return { payload };
