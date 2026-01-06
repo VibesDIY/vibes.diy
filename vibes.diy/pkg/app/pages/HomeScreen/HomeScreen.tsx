@@ -925,7 +925,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             {!isMobile && (
               <>
                 {" "}
-                <DraggableCard color="yellow" x={250} y={1450}>
+                <DraggableCard color="yellow" x={200} y={1600}>
                   <p style={getImageCardStyle()}>
                     <img
                       src={rainbowComputer}
@@ -938,7 +938,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <img src={fireproofLogo} style={getFullSizeImageStyle()} />
                   </p>
                 </DraggableCard>
-                <DraggableCard color="yellow" x={830} y={4040}>
+                <DraggableCard color="yellow" x={830} y={4100}>
                   <p style={getImageCardStyleSmall("140px")}>
                     <img src={htmlpng} style={getFullSizeImageStyle()} />
                   </p>
@@ -1403,7 +1403,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     You and your friends aren't users anymore. You're makers.
                   </span>
                   <span>
-                    Curious? Try a prompt using our open source web builder.
+                    Curious? Try a prompt using our open source web builder.{' '}
                     <a
                       style={getLinkOutStyle()}
                       href="https://discord.gg/vnpWycj4Ta"
@@ -1417,7 +1417,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     >
                       read our Substack
                     </a>
-                    , and follow us on
+                    , and follow us on{' '}
                     <a
                       style={getLinkOutStyle()}
                       href="https://www.youtube.com/@VibesDIY"
