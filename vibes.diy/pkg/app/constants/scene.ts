@@ -114,7 +114,7 @@ export const SCENE_DIMENSIONS = {
 
 // Colors
 export const COLORS = {
-  GRID: 0xcdcccb,
+  GRID: 0xa7a7a7,
   BLOCK_UNENCRYPTED: 0xda291c,
   BLOCK_ENCRYPTED: 0xfedd00,
   BLOCK_DEFAULT: 0xcdcccb,
