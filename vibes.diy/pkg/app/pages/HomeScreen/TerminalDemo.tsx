@@ -43,12 +43,44 @@ interface JQueryTerminal {
 
 // Terminal Demo component with CRT effect and typing animation
 export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<JQueryTerminal | null>(null);
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
+  const [shouldInitialize, setShouldInitialize] = useState(false);
+
+  // Use Intersection Observer to only initialize when near viewport
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // Only initialize when the element is approaching the viewport
+          if (entry.isIntersecting || entry.intersectionRatio > 0) {
+            setShouldInitialize(true);
+            observer.disconnect(); // Stop observing once initialized
+          }
+        });
+      },
+      {
+        // Start loading when element is within 500px of viewport
+        rootMargin: "500px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   // Dynamically load jQuery and jQuery Terminal scripts
   useEffect(() => {
+    if (!shouldInitialize) return; // Don't load scripts until near viewport
+
     let cancelled = false;
 
     const loadScript = (src: string): Promise<void> => {
@@ -139,7 +171,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [shouldInitialize]);
 
   // Initialize terminal once scripts are loaded
   useEffect(() => {
@@ -212,20 +244,6 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       }
     };
 
-    // Save scroll position before terminal initialization to prevent auto-scroll
-    // Find the main scroll container (look for parent with overflow-y: auto or scroll)
-    let scrollContainer: HTMLElement | null = null;
-    let element = terminalRef.current?.parentElement;
-    while (element) {
-      const style = window.getComputedStyle(element);
-      if (style.overflowY === "auto" || style.overflowY === "scroll") {
-        scrollContainer = element;
-        break;
-      }
-      element = element.parentElement;
-    }
-    const savedScrollTop = scrollContainer?.scrollTop || window.scrollY;
-
     // Create terminal with command handler for Enter key
     const term = $(terminalRef.current).terminal(
       function (this: JQueryTerminal) {
@@ -244,8 +262,13 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       {
         greetings: false,
         prompt: "[[;#888;]Press Enter to continue...] ",
-        enabled: true,
+        enabled: false, // Start disabled to prevent auto-focus on load
         clickTimeout: null,
+        scrollOnEcho: false, // Prevent automatic scrolling when echoing text
+        scrollBottomOffset: 0, // Prevent scroll offset calculations
+        wrap: true,
+        checkArity: false,
+        completion: false,
         keypress: function (e: KeyboardEvent) {
           // Block all character input (but not special keys like Enter)
           if (e.key.length === 1) {
@@ -254,6 +277,11 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
         },
       },
     );
+
+    // Enable terminal after initialization to prevent scroll on load
+    setTimeout(() => {
+      term.enable();
+    }, 100);
 
     termRef.current = term;
 
@@ -273,15 +301,6 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     };
 
     document.addEventListener("click", preventExternalFocus, true);
-
-    // Restore scroll position after terminal initialization
-    requestAnimationFrame(() => {
-      if (scrollContainer) {
-        scrollContainer.scrollTop = savedScrollTop;
-      } else {
-        window.scrollTo(0, savedScrollTop);
-      }
-    });
 
     // Claude Code CLI parody - Vibes DIY style (narrow version ~45 chars)
     const orange = "#DA291C";
@@ -364,10 +383,11 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     width: "100%",
     height: "100%",
     pointerEvents: "auto",
+    overflow: "hidden", // Prevent terminal from causing page scroll
   };
 
   return (
-    <div style={containerStyle}>
+    <div ref={containerRef} style={containerStyle}>
       <style>
         {`
           .terminal-demo .terminal {
@@ -383,10 +403,36 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
           .terminal-demo .terminal .cmd-cursor-line {
             pointer-events: none !important;
           }
+          .terminal-demo .terminal * {
+            scroll-margin: 0 !important;
+            scroll-padding: 0 !important;
+          }
         `}
       </style>
       <div style={overlayStyle} />
-      <div ref={terminalRef} className="terminal-demo" style={terminalStyle} />
+      {shouldInitialize ? (
+        <div
+          ref={terminalRef}
+          className="terminal-demo"
+          style={terminalStyle}
+          tabIndex={-1}
+        />
+      ) : (
+        // Placeholder when terminal hasn't initialized yet
+        <div
+          style={{
+            ...terminalStyle,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "rgba(0, 255, 0, 0.5)",
+            fontFamily: "'Courier New', monospace",
+            fontSize: "14px",
+          }}
+        >
+          Loading terminal...
+        </div>
+      )}
     </div>
   );
 };
