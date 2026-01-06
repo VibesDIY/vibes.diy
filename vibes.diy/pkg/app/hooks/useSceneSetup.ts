@@ -10,12 +10,12 @@ import {
 import { CounterBoy } from "../classes/CounterBoy.js";
 import { ScreenshotBoy } from "../classes/ScreenshotBoy.js";
 
-// Screenshot paths (referenced as strings for non-bundled builds)
-const bonsaiImg = "/dist/vibes.diy/pkg/app/assets/screenshots/bonsai.png";
-const deasImg = "/dist/vibes.diy/pkg/app/assets/screenshots/deas.png";
-const encryptImg = "/dist/vibes.diy/pkg/app/assets/screenshots/encrypt.png";
-const pickathonImg = "/dist/vibes.diy/pkg/app/assets/screenshots/pickathon.png";
-const puzzleImg = "/dist/vibes.diy/pkg/app/assets/screenshots/puzzle.png";
+// Screenshot paths (served from public directory)
+const bonsaiImg = "/screenshots/bonsai.png";
+const deasImg = "/screenshots/deas.png";
+const encryptImg = "/screenshots/encrypt.png";
+const pickathonImg = "/screenshots/pickathon.png";
+const puzzleImg = "/screenshots/puzzle.png";
 
 export function useSceneSetup(
   mountRef: React.RefObject<HTMLDivElement | null>,
