@@ -1202,7 +1202,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     </div>
                   </DraggableSection>
                 </div>
-                <div style={get1of3Column(isMobile)}>
+                <div style={{...get1of3Column(isMobile), display: isMobile ? "none" : undefined,}}>
                   <DraggableSection color="blue" static removeMargin>
                     <h3 style={getSectionHeadingStyle("#5398c9")}>
                       Let's Ask the AI.

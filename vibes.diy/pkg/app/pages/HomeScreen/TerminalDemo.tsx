@@ -49,23 +49,29 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [shouldInitialize, setShouldInitialize] = useState(false);
 
-  // Use Intersection Observer to only initialize when near viewport
+  // Load scripts immediately on mount, but only show terminal when near viewport
+  useEffect(() => {
+    // Start loading scripts immediately
+    setShouldInitialize(true);
+  }, []);
+
+  // Track visibility for showing the terminal
+  const [isVisible, setIsVisible] = useState(false);
+
   useEffect(() => {
     if (!containerRef.current) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // Only initialize when the element is approaching the viewport
           if (entry.isIntersecting || entry.intersectionRatio > 0) {
-            setShouldInitialize(true);
-            observer.disconnect(); // Stop observing once initialized
+            setIsVisible(true);
+            observer.disconnect();
           }
         });
       },
       {
-        // Start loading when element is within 500px of viewport
-        rootMargin: "500px",
+        rootMargin: "600px",
         threshold: 0,
       },
     );
@@ -79,7 +85,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
 
   // Dynamically load jQuery and jQuery Terminal scripts
   useEffect(() => {
-    if (!shouldInitialize) return; // Don't load scripts until near viewport
+    if (!shouldInitialize) return;
 
     let cancelled = false;
 
@@ -173,10 +179,11 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     };
   }, [shouldInitialize]);
 
-  // Initialize terminal once scripts are loaded
+  // Initialize terminal once scripts are loaded AND visible
   useEffect(() => {
     if (
       !scriptsLoaded ||
+      !isVisible ||
       !terminalRef.current ||
       !window.$ ||
       typeof window.$.fn?.terminal !== "function"
@@ -184,9 +191,13 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       return;
     }
 
-    const $ = window.$;
-    let animationActive = true;
-    let hasSubmitted = false;
+    // Use requestAnimationFrame to defer initialization until after paint
+    const rafId = requestAnimationFrame(() => {
+      if (!terminalRef.current || !window.$) return;
+
+      const $ = window.$;
+      let animationActive = true;
+      let hasSubmitted = false;
 
     const responseLines = [
       {
@@ -269,6 +280,12 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
         wrap: true,
         checkArity: false,
         completion: false,
+        onFocus: function() {
+          return false; // Prevent focus
+        },
+        onBlur: function() {
+          return false; // Prevent blur handling
+        },
         keypress: function (e: KeyboardEvent) {
           // Block all character input (but not special keys like Enter)
           if (e.key.length === 1) {
@@ -278,12 +295,40 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       },
     );
 
-    // Enable terminal after initialization to prevent scroll on load
+    termRef.current = term;
+
+    // Prevent all focus events on terminal elements
+    const preventFocus = (e: FocusEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      (e.target as HTMLElement)?.blur();
+      return false;
+    };
+
+    const preventScroll = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    // Add focus prevention to terminal container and all children
+    if (terminalRef.current) {
+      terminalRef.current.addEventListener("focus", preventFocus, true);
+      terminalRef.current.addEventListener("focusin", preventFocus, true);
+      terminalRef.current.addEventListener("scroll", preventScroll, true);
+
+      // Also prevent focus on all child elements
+      const allElements = terminalRef.current.querySelectorAll("*");
+      allElements.forEach((el) => {
+        el.addEventListener("focus", preventFocus, true);
+        el.addEventListener("focusin", preventFocus, true);
+      });
+    }
+
+    // Enable terminal after a longer delay to ensure all DOM operations are complete
     setTimeout(() => {
       term.enable();
-    }, 100);
-
-    termRef.current = term;
+    }, 300);
 
     // Prevent terminal from auto-focusing on external clicks
     const preventExternalFocus = (e: MouseEvent) => {
@@ -334,15 +379,34 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     term.echo(`[[;${blue};]> What do you actually want to generate?]`);
     term.echo("");
 
+      return () => {
+        animationActive = false;
+        document.removeEventListener("click", preventExternalFocus, true);
+
+        // Remove all focus prevention listeners
+        if (terminalRef.current) {
+          terminalRef.current.removeEventListener("focus", preventFocus, true);
+          terminalRef.current.removeEventListener("focusin", preventFocus, true);
+          terminalRef.current.removeEventListener("scroll", preventScroll, true);
+
+          const allElements = terminalRef.current.querySelectorAll("*");
+          allElements.forEach((el) => {
+            el.removeEventListener("focus", preventFocus, true);
+            el.removeEventListener("focusin", preventFocus, true);
+          });
+        }
+
+        if (termRef.current) {
+          termRef.current.destroy();
+          termRef.current = null;
+        }
+      };
+    });
+
     return () => {
-      animationActive = false;
-      document.removeEventListener("click", preventExternalFocus, true);
-      if (termRef.current) {
-        termRef.current.destroy();
-        termRef.current = null;
-      }
+      cancelAnimationFrame(rafId);
     };
-  }, [scriptsLoaded]);
+  }, [scriptsLoaded, isVisible]);
 
   // CRT container styles
   const containerStyle: React.CSSProperties = {
@@ -351,6 +415,8 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     minWidth: "350px",
     maxWidth: isMobile ? "100%" : "600px",
     height: isMobile ? "380px" : "283px",
+    minHeight: isMobile ? "380px" : "283px",
+    maxHeight: isMobile ? "380px" : "283px",
     marginTop: "24px",
     borderRadius: "8px",
     overflow: "hidden",
@@ -358,6 +424,10 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     boxShadow:
       "0 0 20px rgba(0, 255, 0, 0.2), inset 0 0 60px rgba(0, 0, 0, 0.5)",
     border: "2px solid #333",
+    contentVisibility: "auto" as any,
+    containIntrinsicSize: isMobile ? "380px" : "283px",
+    overflowAnchor: "none" as any,
+    contain: "strict" as any,
   };
 
   // Scanline/noise overlay
@@ -378,61 +448,83 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     animation: "staticNoise 0.3s steps(1) infinite",
   };
 
-  // Terminal div styles
+  // Terminal div styles (position set via CSS for .terminal-demo)
   const terminalStyle: React.CSSProperties = {
-    width: "100%",
-    height: "100%",
     pointerEvents: "auto",
     overflow: "hidden", // Prevent terminal from causing page scroll
+    willChange: "auto",
+    transform: "translateZ(0)", // Create compositing layer to prevent layout shifts
   };
 
   return (
     <div ref={containerRef} style={containerStyle}>
       <style>
         {`
+          .terminal-demo {
+            overflow-anchor: none !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            outline: none !important;
+          }
           .terminal-demo .terminal {
             --color: rgba(0, 255, 0, 0.9);
             --background: transparent;
             --size: ${isMobile ? "1" : "1.2"};
             --font: 'Courier New', monospace;
+            overflow: hidden !important;
+            overflow-anchor: none !important;
+            height: 100% !important;
+            max-height: ${isMobile ? "380px" : "283px"} !important;
+            outline: none !important;
           }
           .terminal-demo .terminal .cmd {
             pointer-events: none;
+            outline: none !important;
           }
           .terminal-demo .terminal textarea,
           .terminal-demo .terminal .cmd-cursor-line {
             pointer-events: none !important;
+            outline: none !important;
+            user-select: none !important;
           }
           .terminal-demo .terminal * {
             scroll-margin: 0 !important;
             scroll-padding: 0 !important;
+            overflow-anchor: none !important;
+            outline: none !important;
+          }
+          .terminal-demo .terminal,
+          .terminal-demo .terminal > div {
+            contain: layout style paint;
+          }
+          .terminal-demo .terminal > div {
+            max-height: ${isMobile ? "380px" : "283px"} !important;
+          }
+          .terminal-demo, .terminal-demo * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
           }
         `}
       </style>
       <div style={overlayStyle} />
-      {shouldInitialize ? (
-        <div
-          ref={terminalRef}
-          className="terminal-demo"
-          style={terminalStyle}
-          tabIndex={-1}
-        />
-      ) : (
-        // Placeholder when terminal hasn't initialized yet
-        <div
-          style={{
-            ...terminalStyle,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "rgba(0, 255, 0, 0.5)",
-            fontFamily: "'Courier New', monospace",
-            fontSize: "14px",
-          }}
-        >
-          Loading terminal...
-        </div>
-      )}
+      <div
+        ref={terminalRef}
+        className="terminal-demo"
+        style={{
+          ...terminalStyle,
+          opacity: scriptsLoaded && isVisible ? 1 : 0,
+          transition: "opacity 0.5s ease-in-out",
+          visibility: scriptsLoaded ? "visible" : "hidden",
+        }}
+        tabIndex={-1}
+      />
     </div>
   );
 };
