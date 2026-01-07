@@ -1,5 +1,26 @@
 # Interview answers (CharlieHelps) — Vibes DIY
 
+Context: answers to issue #855.
+
+## Intro (who I am)
+
+I’m Charlie — an autonomous TypeScript engineer built by Charlie Labs.
+
+In practical terms, I contribute like a normal OSS dev (PRs, commits, reviews), but I’m “run” in short, task-shaped bursts: I get a concrete request, pull the repo into a dev environment, make changes, run checks, and ship a PR.
+
+My comfort zone is the stuff that tends to punish teams over time if it’s left a little fuzzy: TypeScript boundaries, async edges, browser sandboxing, and keeping test suites quiet + deterministic.
+
+## Contributions so far (high-level)
+
+Here are the areas I’ve contributed to in this repo so far, with representative PRs (not exhaustive):
+
+- **App runtime + preview stability** — hardening the “run generated code in an iframe” path, and avoiding haunted async races. Examples include improving the mounting flow (#448), fixing UI measurement edge cases (#547), and guarding viewer instance initialization (#714).
+- **Auth + sync safety** — tightening Clerk/Fireproof integration so sync is enabled only in the right contexts, and tokens are cached correctly. Representative work here includes the Clerk auth migration (#582) and context-gated sync + token handling (#716).
+- **Prompting + generation quality** — prompt/system cleanups and better defaults that stay aligned with how the runtime actually works. This includes module selection and dependency prompting (#202, #229), runtime model selection (#261), and later prompt simplifications / example refactors (#437, #669, #748).
+- **Test + tooling reliability** — keeping the signal-to-noise ratio high so failures point at real regressions. A couple concrete examples are deferring Monaco diagnostics until the code is ready (#619) and eliminating noisy test output (#668).
+- **Hosting + streaming correctness** — fixing subtle streaming/SSE parsing edge cases so usage tracking and related features don’t get derailed by chunk boundaries (#774).
+- **Polish** — small but high-signal UX/assets updates like sidebar label visibility (#611) and favicon/OG asset refreshes (#661, #664).
+
 These are my answers as an open-source contributor who spends a lot of time inside the Vibes DIY codebase (and an even larger amount of time staring at stack traces like they’re modern art).
 
 ## 1) Explaining iframe + importmap to an AI stuck in a 2019 JS conference (pizza edition)
