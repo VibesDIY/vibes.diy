@@ -298,11 +298,10 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     termRef.current = term;
 
     // Prevent all focus events on terminal elements
-    const preventFocus = (e: FocusEvent) => {
+    const preventFocus = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
       (e.target as HTMLElement)?.blur();
-      return false;
     };
 
     const preventScroll = (e: Event) => {
