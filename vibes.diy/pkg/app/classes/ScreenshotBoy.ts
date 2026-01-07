@@ -22,7 +22,8 @@ export class ScreenshotBoy {
 
   constructor(config: ScreenshotBoyConfig = {}) {
     this.id =
-      config.id || `screenshotboy-${Math.random().toString(36).substring(2, 11)}`;
+      config.id ||
+      `screenshotboy-${Math.random().toString(36).substring(2, 11)}`;
     this.color = config.color ?? 0xffff00; // Default to yellow
     this.screenshotPath = config.screenshotPath;
     this.group = new THREE.Group();

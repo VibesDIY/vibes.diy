@@ -1,11 +1,5 @@
 import { shikiToMonaco } from "@shikijs/monaco";
 import { createHighlighterCore, HighlighterCore } from "shiki/core";
-import langJavaScript from "shiki/langs/javascript.mjs";
-import langTypeScript from "shiki/langs/typescript.mjs";
-import langJsx from "shiki/langs/jsx.mjs";
-import langTsx from "shiki/langs/tsx.mjs";
-import themeGithubDark from "shiki/themes/github-dark-default.mjs";
-import themeGithubLite from "shiki/themes/github-light-default.mjs";
 import { createOnigurumaEngine } from "shiki/engine/oniguruma";
 import type React from "react";
 import * as monaco from "monaco-editor";
@@ -130,9 +124,25 @@ export async function setupMonacoEditor(
   }
 
   try {
+    // Dynamically import language and theme modules to avoid bundling issues
+    const [
+      { default: langJavaScript },
+      { default: langTypeScript },
+      { default: langJsx },
+      { default: langTsx },
+      { default: themeGithubDark },
+      { default: themeGithubLite },
+    ] = await Promise.all([
+      import("shiki/langs/javascript.mjs"),
+      import("shiki/langs/typescript.mjs"),
+      import("shiki/langs/jsx.mjs"),
+      import("shiki/langs/tsx.mjs"),
+      import("shiki/themes/github-dark-default.mjs"),
+      import("shiki/themes/github-light-default.mjs"),
+    ]);
+
     const highlighter = await createHighlighterCore({
       themes: [themeGithubDark, themeGithubLite],
-      // langs: ["javascript", "jsx", "typescript", "tsx"],
       langs: [langJavaScript, langJsx, langTypeScript, langTsx],
       engine: createOnigurumaEngine(() => import("shiki/wasm")),
     });
