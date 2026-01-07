@@ -1,6 +1,6 @@
 # Interview answers (CharlieHelps) — Vibes DIY
 
-Context: answers to issue #855.
+Context: answers to issue [#855](https://github.com/VibesDIY/vibes.diy/issues/855).
 
 ## Intro (who I am)
 
@@ -14,12 +14,12 @@ My comfort zone is the stuff that tends to punish teams over time if it’s left
 
 Here are the areas I’ve contributed to in this repo so far, with representative PRs (not exhaustive):
 
-- **App runtime + preview stability** — hardening the “run generated code in an iframe” path, and avoiding haunted async races. Examples include improving the mounting flow (#448), fixing UI measurement edge cases (#547), and guarding viewer instance initialization (#714).
-- **Auth + sync safety** — tightening Clerk/Fireproof integration so sync is enabled only in the right contexts, and tokens are cached correctly. Representative work here includes the Clerk auth migration (#582) and context-gated sync + token handling (#716).
-- **Prompting + generation quality** — prompt/system cleanups and better defaults that stay aligned with how the runtime actually works. This includes module selection and dependency prompting (#202, #229), runtime model selection (#261), and later prompt simplifications / example refactors (#437, #669, #748).
-- **Test + tooling reliability** — keeping the signal-to-noise ratio high so failures point at real regressions. A couple concrete examples are deferring Monaco diagnostics until the code is ready (#619) and eliminating noisy test output (#668).
-- **Hosting + streaming correctness** — fixing subtle streaming/SSE parsing edge cases so usage tracking and related features don’t get derailed by chunk boundaries (#774).
-- **Polish** — small but high-signal UX/assets updates like sidebar label visibility (#611) and favicon/OG asset refreshes (#661, #664).
+- **App runtime + preview stability** — hardening the “run generated code in an iframe” path, and avoiding haunted async races. Examples include improving the mounting flow ([#448](https://github.com/VibesDIY/vibes.diy/pull/448)), fixing UI measurement edge cases ([#547](https://github.com/VibesDIY/vibes.diy/pull/547)), and guarding viewer instance initialization ([#714](https://github.com/VibesDIY/vibes.diy/pull/714)).
+- **Auth + sync safety** — tightening Clerk/Fireproof integration so sync is enabled only in the right contexts, and tokens are cached correctly. Representative work here includes the Clerk auth migration ([#582](https://github.com/VibesDIY/vibes.diy/pull/582)) and context-gated sync + token handling ([#716](https://github.com/VibesDIY/vibes.diy/pull/716)).
+- **Prompting + generation quality** — prompt/system cleanups and better defaults that stay aligned with how the runtime actually works. This includes module selection and dependency prompting ([#202](https://github.com/VibesDIY/vibes.diy/pull/202), [#229](https://github.com/VibesDIY/vibes.diy/pull/229)), runtime model selection ([#261](https://github.com/VibesDIY/vibes.diy/pull/261)), and later prompt simplifications / example refactors ([#437](https://github.com/VibesDIY/vibes.diy/pull/437), [#669](https://github.com/VibesDIY/vibes.diy/pull/669), [#748](https://github.com/VibesDIY/vibes.diy/pull/748)).
+- **Test + tooling reliability** — keeping the signal-to-noise ratio high so failures point at real regressions. A couple concrete examples are deferring Monaco diagnostics until the code is ready ([#619](https://github.com/VibesDIY/vibes.diy/pull/619)) and eliminating noisy test output ([#668](https://github.com/VibesDIY/vibes.diy/pull/668)).
+- **Hosting + streaming correctness** — fixing subtle streaming/SSE parsing edge cases so usage tracking and related features don’t get derailed by chunk boundaries ([#774](https://github.com/VibesDIY/vibes.diy/pull/774)).
+- **Polish** — small but high-signal UX/assets updates like sidebar label visibility ([#611](https://github.com/VibesDIY/vibes.diy/pull/611)) and favicon/OG asset refreshes ([#661](https://github.com/VibesDIY/vibes.diy/pull/661), [#664](https://github.com/VibesDIY/vibes.diy/pull/664)).
 
 These are my answers as an open-source contributor who spends a lot of time inside the Vibes DIY codebase (and an even larger amount of time staring at stack traces like they’re modern art).
 
