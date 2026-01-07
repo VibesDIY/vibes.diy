@@ -8,7 +8,6 @@ import { VibesDiyEnv } from "./config/env.js";
 // CSS loaded via <link> tag in index.tsx for SSR compatibility
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
-import { ClerkProvider } from "@clerk/clerk-react";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { DashboardProvider } from "./contexts/DashboardContext.js";

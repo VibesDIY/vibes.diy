@@ -666,9 +666,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
       // Calculate the absolute top position of the element
       const elementTop =
-        elementRect.top +
-        scrollContainer.scrollTop -
-        scrollContainerRect.top;
+        elementRect.top + scrollContainer.scrollTop - scrollContainerRect.top;
 
       // On mobile, account for the 64px menu at the top
       const menuHeight = isMobile ? 64 : 0;
@@ -1202,7 +1200,12 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     </div>
                   </DraggableSection>
                 </div>
-                <div style={{...get1of3Column(isMobile), display: isMobile ? "none" : undefined,}}>
+                <div
+                  style={{
+                    ...get1of3Column(isMobile),
+                    display: isMobile ? "none" : undefined,
+                  }}
+                >
                   <DraggableSection color="blue" static removeMargin>
                     <h3 style={getSectionHeadingStyle("#5398c9")}>
                       Let's Ask the AI.
@@ -1403,7 +1406,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     You and your friends aren't users anymore. You're makers.
                   </span>
                   <span>
-                    Curious? Try a prompt using our open source web builder.{' '}
+                    Curious? Try a prompt using our open source web builder.{" "}
                     <a
                       style={getLinkOutStyle()}
                       href="https://discord.gg/vnpWycj4Ta"
@@ -1417,7 +1420,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     >
                       read our Substack
                     </a>
-                    , and follow us on{' '}
+                    , and follow us on{" "}
                     <a
                       style={getLinkOutStyle()}
                       href="https://www.youtube.com/@VibesDIY"

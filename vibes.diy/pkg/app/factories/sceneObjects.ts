@@ -90,7 +90,7 @@ export function makeGridGroup() {
   return { gridGroup };
 }
 
-export function makeUnencryptedBlock(blockColor: number = 0x009ace) {
+export function makeUnencryptedBlock(blockColor = 0x009ace) {
   // Block (as child of enclosure) - uses same color as encrypted block
   const blockGeometry = new THREE.BoxGeometry(
     SCENE_DIMENSIONS.BLOCK.WIDTH,
@@ -102,7 +102,7 @@ export function makeUnencryptedBlock(blockColor: number = 0x009ace) {
   return block;
 }
 
-export function makeEncryptedBlock(blockColor: number = 0x009ace) {
+export function makeEncryptedBlock(blockColor = 0x009ace) {
   // Block (as child of enclosure) - cylinder with solid color from palette
   const blockGeometry = new THREE.CylinderGeometry(
     SCENE_DIMENSIONS.BLOCK.WIDTH / 2, // top radius (half width for cylinder)

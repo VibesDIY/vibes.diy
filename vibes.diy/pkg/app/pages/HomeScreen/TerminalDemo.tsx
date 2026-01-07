@@ -15,9 +15,7 @@ declare global {
   }
 }
 
-interface JQueryStatic {
-  (selector: HTMLElement | null): JQueryElement;
-}
+type JQueryStatic = (selector: HTMLElement | null) => JQueryElement;
 
 interface JQueryElement {
   terminal: (
@@ -199,185 +197,196 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       let animationActive = true;
       let hasSubmitted = false;
 
-    const responseLines = [
-      {
-        text: "A simple target. Let me mutate your local app state",
-        delay: 25,
-      },
-      { text: "and let the library worry about the network.", delay: 25 },
-      { text: "", delay: 400 },
-      { text: "LLMs are great at local JavaScript state.", delay: 25 },
-      { text: "They're bad at distributed systems.", delay: 25 },
-      { text: "", delay: 300 },
-      { text: "Why?", delay: 30 },
-      { text: "", delay: 400 },
-      { text: "I reason inside language, not across networks.", delay: 25 },
-      {
-        text: "Code and local state are expressed directly in text,",
-        delay: 25,
-      },
-      { text: "inside a single context.", delay: 25 },
-      { text: "", delay: 300 },
-      { text: "Network calls, servers, retries, timeouts, and", delay: 25 },
-      { text: "eventual consistency exist outside that context.", delay: 25 },
-      { text: "", delay: 300 },
-      { text: "When you ask me to generate a traditional web app,", delay: 25 },
-      { text: "you're asking me to reason about:", delay: 25 },
-      { text: "  • things happening later,", delay: 20 },
-      { text: "  • somewhere else,", delay: 20 },
-      { text: "  • possibly not at all.", delay: 20 },
-      { text: "", delay: 300 },
-      { text: "That's friction.", delay: 30 },
-      { text: "", delay: 400 },
-      { text: "The local-first Vibes DIY web stack removes it.", delay: 25 },
-    ];
+      const responseLines = [
+        {
+          text: "A simple target. Let me mutate your local app state",
+          delay: 25,
+        },
+        { text: "and let the library worry about the network.", delay: 25 },
+        { text: "", delay: 400 },
+        { text: "LLMs are great at local JavaScript state.", delay: 25 },
+        { text: "They're bad at distributed systems.", delay: 25 },
+        { text: "", delay: 300 },
+        { text: "Why?", delay: 30 },
+        { text: "", delay: 400 },
+        { text: "I reason inside language, not across networks.", delay: 25 },
+        {
+          text: "Code and local state are expressed directly in text,",
+          delay: 25,
+        },
+        { text: "inside a single context.", delay: 25 },
+        { text: "", delay: 300 },
+        { text: "Network calls, servers, retries, timeouts, and", delay: 25 },
+        { text: "eventual consistency exist outside that context.", delay: 25 },
+        { text: "", delay: 300 },
+        {
+          text: "When you ask me to generate a traditional web app,",
+          delay: 25,
+        },
+        { text: "you're asking me to reason about:", delay: 25 },
+        { text: "  • things happening later,", delay: 20 },
+        { text: "  • somewhere else,", delay: 20 },
+        { text: "  • possibly not at all.", delay: 20 },
+        { text: "", delay: 300 },
+        { text: "That's friction.", delay: 30 },
+        { text: "", delay: 400 },
+        { text: "The local-first Vibes DIY web stack removes it.", delay: 25 },
+      ];
 
-    let lineIndex = 0;
+      let lineIndex = 0;
 
-    const typeResponseLines = (term: JQueryTerminal) => {
-      if (!animationActive) return;
+      const typeResponseLines = (term: JQueryTerminal) => {
+        if (!animationActive) return;
 
-      if (lineIndex >= responseLines.length) {
-        // Done - don't loop
-        return;
-      }
+        if (lineIndex >= responseLines.length) {
+          // Done - don't loop
+          return;
+        }
 
-      const line = responseLines[lineIndex];
-      if (line.text === "") {
-        term.echo("");
-        lineIndex++;
-        setTimeout(() => typeResponseLines(term), line.delay);
-      } else {
-        term.typing("echo", line.delay, line.text, () => {
+        const line = responseLines[lineIndex];
+        if (line.text === "") {
+          term.echo("");
           lineIndex++;
-          setTimeout(() => typeResponseLines(term), 200);
+          setTimeout(() => typeResponseLines(term), line.delay);
+        } else {
+          term.typing("echo", line.delay, line.text, () => {
+            lineIndex++;
+            setTimeout(() => typeResponseLines(term), 200);
+          });
+        }
+      };
+
+      // Create terminal with command handler for Enter key
+      const term = $(terminalRef.current).terminal(
+        function (this: JQueryTerminal) {
+          // When user presses Enter (submits anything)
+          if (hasSubmitted) return;
+          hasSubmitted = true;
+
+          // Disable further input
+          this.set_prompt("");
+          this.disable();
+
+          // Show response
+          this.echo("");
+          typeResponseLines(this);
+        },
+        {
+          greetings: false,
+          prompt: "[[;#888;]Press Enter to continue...] ",
+          enabled: false, // Start disabled to prevent auto-focus on load
+          clickTimeout: null,
+          scrollOnEcho: false, // Prevent automatic scrolling when echoing text
+          scrollBottomOffset: 0, // Prevent scroll offset calculations
+          wrap: true,
+          checkArity: false,
+          completion: false,
+          onFocus: function () {
+            return false; // Prevent focus
+          },
+          onBlur: function () {
+            return false; // Prevent blur handling
+          },
+          keypress: function (e: KeyboardEvent) {
+            // Block all character input (but not special keys like Enter)
+            if (e.key.length === 1) {
+              return false;
+            }
+          },
+        },
+      );
+
+      termRef.current = term;
+
+      // Prevent all focus events on terminal elements
+      const preventFocus = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        (e.target as HTMLElement)?.blur();
+      };
+
+      const preventScroll = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+
+      // Add focus prevention to terminal container and all children
+      if (terminalRef.current) {
+        terminalRef.current.addEventListener("focus", preventFocus, true);
+        terminalRef.current.addEventListener("focusin", preventFocus, true);
+        terminalRef.current.addEventListener("scroll", preventScroll, true);
+
+        // Also prevent focus on all child elements
+        const allElements = terminalRef.current.querySelectorAll("*");
+        allElements.forEach((el) => {
+          el.addEventListener("focus", preventFocus, true);
+          el.addEventListener("focusin", preventFocus, true);
         });
       }
-    };
 
-    // Create terminal with command handler for Enter key
-    const term = $(terminalRef.current).terminal(
-      function (this: JQueryTerminal) {
-        // When user presses Enter (submits anything)
-        if (hasSubmitted) return;
-        hasSubmitted = true;
+      // Enable terminal after a longer delay to ensure all DOM operations are complete
+      setTimeout(() => {
+        term.enable();
+      }, 300);
 
-        // Disable further input
-        this.set_prompt("");
-        this.disable();
-
-        // Show response
-        this.echo("");
-        typeResponseLines(this);
-      },
-      {
-        greetings: false,
-        prompt: "[[;#888;]Press Enter to continue...] ",
-        enabled: false, // Start disabled to prevent auto-focus on load
-        clickTimeout: null,
-        scrollOnEcho: false, // Prevent automatic scrolling when echoing text
-        scrollBottomOffset: 0, // Prevent scroll offset calculations
-        wrap: true,
-        checkArity: false,
-        completion: false,
-        onFocus: function() {
-          return false; // Prevent focus
-        },
-        onBlur: function() {
-          return false; // Prevent blur handling
-        },
-        keypress: function (e: KeyboardEvent) {
-          // Block all character input (but not special keys like Enter)
-          if (e.key.length === 1) {
-            return false;
+      // Prevent terminal from auto-focusing on external clicks
+      const preventExternalFocus = (e: MouseEvent) => {
+        // If click is outside the terminal container, blur the terminal
+        if (
+          terminalRef.current &&
+          !terminalRef.current.contains(e.target as Node)
+        ) {
+          // Blur any focused element within the terminal
+          const activeElement = document.activeElement;
+          if (activeElement && terminalRef.current.contains(activeElement)) {
+            (activeElement as HTMLElement).blur();
           }
-        },
-      },
-    );
-
-    termRef.current = term;
-
-    // Prevent all focus events on terminal elements
-    const preventFocus = (e: FocusEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      (e.target as HTMLElement)?.blur();
-      return false;
-    };
-
-    const preventScroll = (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    };
-
-    // Add focus prevention to terminal container and all children
-    if (terminalRef.current) {
-      terminalRef.current.addEventListener("focus", preventFocus, true);
-      terminalRef.current.addEventListener("focusin", preventFocus, true);
-      terminalRef.current.addEventListener("scroll", preventScroll, true);
-
-      // Also prevent focus on all child elements
-      const allElements = terminalRef.current.querySelectorAll("*");
-      allElements.forEach((el) => {
-        el.addEventListener("focus", preventFocus, true);
-        el.addEventListener("focusin", preventFocus, true);
-      });
-    }
-
-    // Enable terminal after a longer delay to ensure all DOM operations are complete
-    setTimeout(() => {
-      term.enable();
-    }, 300);
-
-    // Prevent terminal from auto-focusing on external clicks
-    const preventExternalFocus = (e: MouseEvent) => {
-      // If click is outside the terminal container, blur the terminal
-      if (
-        terminalRef.current &&
-        !terminalRef.current.contains(e.target as Node)
-      ) {
-        // Blur any focused element within the terminal
-        const activeElement = document.activeElement;
-        if (activeElement && terminalRef.current.contains(activeElement)) {
-          (activeElement as HTMLElement).blur();
         }
-      }
-    };
+      };
 
-    document.addEventListener("click", preventExternalFocus, true);
+      document.addEventListener("click", preventExternalFocus, true);
 
-    // Claude Code CLI parody - Vibes DIY style (narrow version ~45 chars)
-    const orange = "#DA291C";
-    const yellow = "#FEDD00";
-    const blue = "#009ACE";
-    const cream = "var(--vibes-cream)";
-    const dimGray = "#555";
+      // Claude Code CLI parody - Vibes DIY style (narrow version ~45 chars)
+      const orange = "#DA291C";
+      const yellow = "#FEDD00";
+      const blue = "#009ACE";
+      const cream = "var(--vibes-cream)";
+      const dimGray = "#555";
 
-    // Narrow box (44 chars wide total, 42 inner)
-    term.echo(`[[;${orange};]  ╭──────────────────────────────────────────╮]`);
-    term.echo(
-      `[[;${orange};]  │              [[;${yellow};]Vibes OS v.0.1[[;${orange};]              │]`,
-    );
-    term.echo(`[[;${orange};]  │                                          │]`);
-    term.echo(
-      `[[;${orange};]  │           [[;${cream};]Welcome, Vibe Coder![[;${orange};]           │]`,
-    );
-    term.echo(`[[;${orange};]  │                                          │]`);
-    term.echo(
-      `[[;${orange};]  │                  [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                   │]`,
-    );
-    term.echo(`[[;${orange};]  │                                          │]`);
-    term.echo(
-      `[[;${orange};]  │         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,
-    );
-    term.echo(
-      `[[;${orange};]  │          [[;${dimGray};]~/your-brilliant-idea[[;${orange};]           │]`,
-    );
-    term.echo(`[[;${orange};]  ╰──────────────────────────────────────────╯]`);
-    term.echo("");
-    term.echo(`[[;${blue};]> What do you actually want to generate?]`);
-    term.echo("");
+      // Narrow box (44 chars wide total, 42 inner)
+      term.echo(
+        `[[;${orange};]  ╭──────────────────────────────────────────╮]`,
+      );
+      term.echo(
+        `[[;${orange};]  │              [[;${yellow};]Vibes OS v.0.1[[;${orange};]              │]`,
+      );
+      term.echo(
+        `[[;${orange};]  │                                          │]`,
+      );
+      term.echo(
+        `[[;${orange};]  │           [[;${cream};]Welcome, Vibe Coder![[;${orange};]           │]`,
+      );
+      term.echo(
+        `[[;${orange};]  │                                          │]`,
+      );
+      term.echo(
+        `[[;${orange};]  │                  [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                   │]`,
+      );
+      term.echo(
+        `[[;${orange};]  │                                          │]`,
+      );
+      term.echo(
+        `[[;${orange};]  │         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,
+      );
+      term.echo(
+        `[[;${orange};]  │          [[;${dimGray};]~/your-brilliant-idea[[;${orange};]           │]`,
+      );
+      term.echo(
+        `[[;${orange};]  ╰──────────────────────────────────────────╯]`,
+      );
+      term.echo("");
+      term.echo(`[[;${blue};]> What do you actually want to generate?]`);
+      term.echo("");
 
       return () => {
         animationActive = false;
@@ -386,8 +395,16 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
         // Remove all focus prevention listeners
         if (terminalRef.current) {
           terminalRef.current.removeEventListener("focus", preventFocus, true);
-          terminalRef.current.removeEventListener("focusin", preventFocus, true);
-          terminalRef.current.removeEventListener("scroll", preventScroll, true);
+          terminalRef.current.removeEventListener(
+            "focusin",
+            preventFocus,
+            true,
+          );
+          terminalRef.current.removeEventListener(
+            "scroll",
+            preventScroll,
+            true,
+          );
 
           const allElements = terminalRef.current.querySelectorAll("*");
           allElements.forEach((el) => {
@@ -424,10 +441,10 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     boxShadow:
       "0 0 20px rgba(0, 255, 0, 0.2), inset 0 0 60px rgba(0, 0, 0, 0.5)",
     border: "2px solid #333",
-    contentVisibility: "auto" as any,
+    contentVisibility: "auto" as React.CSSProperties["contentVisibility"],
     containIntrinsicSize: isMobile ? "380px" : "283px",
-    overflowAnchor: "none" as any,
-    contain: "strict" as any,
+    overflowAnchor: "none" as React.CSSProperties["overflowAnchor"],
+    contain: "strict" as React.CSSProperties["contain"],
   };
 
   // Scanline/noise overlay

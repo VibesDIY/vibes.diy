@@ -62,12 +62,12 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
       blockIndexRef.current++;
 
       // Trigger primary CounterBoy with full animation
-      primaryCounterBoy.animateBlockEncryption(preset, () => {});
+      primaryCounterBoy.animateBlockEncryption(preset, undefined);
 
       // Sync to other CounterBoy after delay (instant appearance, same preset)
       setTimeout(() => {
         if (syncCounterBoy) {
-          syncCounterBoy.animateBlockEncryption(preset, () => {}, true);
+          syncCounterBoy.animateBlockEncryption(preset, undefined, true);
         }
       }, ANIMATION_DURATIONS.SYNC_DELAY);
     }, 100);

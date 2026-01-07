@@ -16,7 +16,7 @@ export interface TokenPayload {
 // Stub implementation of base verifyToken
 async function baseVerifyToken(
   token: string,
-  publicKey: string,
+  _publicKey: string,
 ): Promise<{ payload: TokenPayload } | null> {
   // TODO: Implement JWT verification with publicKey
   // For now, return a basic decoded payload
@@ -31,16 +31,16 @@ async function baseVerifyToken(
 }
 
 // Stub implementation of isTokenAboutToExpire
-function isTokenAboutToExpire(payload: TokenPayload): boolean {
+function isTokenAboutToExpire(_payload: TokenPayload): boolean {
   // TODO: Implement expiration check
   return false;
 }
 
 // Stub implementation of extendToken
 async function baseExtendToken(
-  token: string,
-  connectApiUrl: string,
-  fetchFn: typeof fetch,
+  _token: string,
+  _connectApiUrl: string,
+  _fetchFn: typeof fetch,
 ): Promise<string | null> {
   // TODO: Implement token extension
   return null;
