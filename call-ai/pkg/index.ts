@@ -53,3 +53,4 @@ export {
   CodeEditPayload,
   ImgPayload,
 } from "./stream-messages.js";
+export { LineStreamParser, LineStreamState } from "./line-stream.js";

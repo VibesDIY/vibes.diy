@@ -1,121 +1,8 @@
-import { OnFunc } from "@adviser/cement";
+import { LineStreamParser, LineStreamState } from "call-ai";
 import { expect, vi, it } from "vitest";
 
-// make this us XState
-// then implement Nesting { { }}
-// them optional implement []
-// string " { ", " \"  } "
-// emit events allow the reassembly of the json
-enum State {
-  WaitForOpeningCurlyBracket,
-  WaitingForClosingCurlyBracket,
-  WaitingForEOL,
-}
-
-class StateObject {
-  readonly onFragment =
-    OnFunc<(f: { type: "fragment"; lineNr: number; fragment: string; seq: number; lineComplete: boolean }) => void>();
-
-  readonly onBracket = OnFunc<
-    (
-      b:
-        | {
-            type: "inBracket";
-            seqStyle: "first" | "last" | "middle";
-            // level: number; // 0, 1, 2, ...
-            block: number;
-            seq: number;
-            content: string;
-          }
-        | { type: "bracket"; bracket: "open" | "close" },
-    ) => void
-  >();
-
-  state: State;
-  constructor(initialState: State) {
-    this.state = initialState;
-  }
-
-  seq = 0;
-  lineNr = 0;
-
-  rest = "";
-  blockId = 0;
-
-  processChunk(chunk: string) {
-    chunk = this.rest + chunk;
-    while (true) {
-      if (this.state === State.WaitForOpeningCurlyBracket) {
-        const eolIndex = chunk.indexOf("{");
-        if (eolIndex >= 0) {
-          chunk = this.rest = chunk.slice(eolIndex + 1);
-          this.onBracket.invoke({ type: "bracket", bracket: "open" });
-          this.state = State.WaitingForClosingCurlyBracket;
-        } else {
-          this.rest = chunk;
-          return;
-        }
-      }
-      if (this.state === State.WaitingForClosingCurlyBracket) {
-        const eolIndex = chunk.indexOf("}");
-        const openEolIndex = chunk.indexOf("{");
-        if (eolIndex >= openEolIndex && openEolIndex >= 0) {
-          this.state = State.WaitForOpeningCurlyBracket;
-          continue;
-        }
-        if (eolIndex >= 0) {
-          this.onBracket.invoke({
-            type: "inBracket",
-            seqStyle: "last",
-            block: this.blockId,
-            seq: this.seq++,
-            content: chunk.slice(0, eolIndex),
-          });
-          this.rest = chunk.slice(eolIndex + 1);
-          this.blockId++;
-          this.seq = 0;
-          this.onBracket.invoke({ type: "bracket", bracket: "close" });
-          this.state = State.WaitForOpeningCurlyBracket;
-        } else {
-          this.rest = "";
-          this.onBracket.invoke({
-            seqStyle: this.seq === 0 ? "first" : "middle",
-            type: "inBracket",
-            block: this.blockId,
-            seq: this.seq++,
-            content: chunk,
-          });
-        }
-        return;
-      } else if (this.state === State.WaitingForEOL) {
-        const eolIndex = chunk.indexOf("\n");
-        if (eolIndex >= 0) {
-          this.onFragment.invoke({
-            type: "fragment",
-            lineNr: this.lineNr,
-            fragment: chunk.slice(0, eolIndex),
-            seq: this.seq,
-            lineComplete: true,
-          });
-          this.seq = 0;
-          this.lineNr++;
-          chunk = chunk.slice(eolIndex + 1);
-        } else {
-          this.onFragment.invoke({
-            type: "fragment",
-            lineNr: this.lineNr,
-            fragment: chunk,
-            seq: this.seq++,
-            lineComplete: false,
-          });
-          return;
-        }
-      }
-    }
-  }
-}
 it("Bracket-Test", async () => {
-  const so = new StateObject(State.WaitForOpeningCurlyBracket);
+  const so = new LineStreamParser(LineStreamState.WaitForOpeningCurlyBracket);
   const lines = new ReadableStream<string>({
     async start(controller) {
       for (let i = 0; i < 2; i++) {
@@ -220,7 +107,7 @@ it("Bracket-Test", async () => {
 });
 
 it("EOL-Test", async () => {
-  const so = new StateObject(State.WaitingForEOL);
+  const so = new LineStreamParser(LineStreamState.WaitingForEOL);
   const lines = new ReadableStream<string>({
     async start(controller) {
       for (let i = 0; i < 10; i++) {

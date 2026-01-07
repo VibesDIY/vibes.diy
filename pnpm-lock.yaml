@@ -190,9 +190,6 @@ importers:
 
   call-ai/tests/unit:
     dependencies:
-      '@adviser/cement':
-        specifier: ^0.5.5
-        version: 0.5.5(typescript@5.9.3)
       '@fireproof/core':
         specifier: 0.24.3-dev-20261224
         version: 0.24.3-dev-20261224(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
