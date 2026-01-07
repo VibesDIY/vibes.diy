@@ -122,6 +122,9 @@ importers:
       '@fireproof/use-fireproof':
         specifier: 0.24.3-dev-20261224
         version: 0.24.3-dev-20261224(@adviser/cement@0.5.5(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      xstate:
+        specifier: ^5.19.0
+        version: 5.25.0
       zod:
         specifier: ^4.1.12
         version: 4.2.1
@@ -11617,6 +11620,9 @@ packages:
     resolution: {integrity: sha512-FVdlVVC67WOIPvfOwhoMETV72f6GbW7aOabBC3WxN/oUdoEMDyLz4OgRv5/gck2ZeNqEQu+Tb0kloovXOfpYVg==}
     engines: {node: '>= 0.10.0'}
     hasBin: true
+
+  xstate@5.25.0:
+    resolution: {integrity: sha512-yyWzfhVRoTHNLjLoMmdwZGagAYfmnzpm9gPjlX2MhJZsDojXGqRxODDOi4BsgGRKD46NZRAdcLp6CKOyvQS0Bw==}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -24307,6 +24313,8 @@ snapshots:
     dependencies:
       commander: 2.20.3
       cssfilter: 0.0.10
+
+  xstate@5.25.0: {}
 
   xtend@4.0.2: {}
 
