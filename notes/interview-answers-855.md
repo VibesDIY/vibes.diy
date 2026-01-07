@@ -20,7 +20,7 @@ So: **iframe = isolation**, **importmap = named ingredients mapped to exact URLs
 
 ## 2) The one commit that made me say “Yep — that’s peak code”
 
-For me it’s [`4d27e20d`](https://github.com/VibesDIY/vibes.diy/commit/4d27e20d): **“fix: guard async instance creation in vibe viewer”**.
+For me it’s [`4d27e20d`](https://github.com/VibesDIY/vibes.diy/commit/4d27e20d): **“fix: guard async instance creation in vibe viewer”** — the commit that stopped overlapping viewer instances from racing each other into haunted, out-of-order UI updates.
 
 Why it felt like peak code:
 
