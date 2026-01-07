@@ -74,10 +74,31 @@ export function getButtonStyle(
   }
 
   return {
-    width: !hasIcon ? "auto" : isMobile ? "100%" : "130px",
-    height: !hasIcon ? "auto" : isMobile ? "auto" : "135px",
+    width:
+      buttonType === "flat-rounded"
+        ? "100%"
+        : !hasIcon
+          ? "auto"
+          : isMobile
+            ? "100%"
+            : "130px",
+    height:
+      buttonType === "flat-rounded"
+        ? "auto"
+        : !hasIcon
+          ? "auto"
+          : isMobile
+            ? "auto"
+            : "135px",
     minHeight: isMobile ? "60px" : undefined,
-    padding: isMobile ? (buttonType ? "none" : "0.75rem 1.5rem") : "1rem 2rem",
+    padding:
+      buttonType === "flat-rounded"
+        ? "0.5rem"
+        : isMobile
+          ? buttonType
+            ? "none"
+            : "0.75rem 1.5rem"
+          : "1rem 2rem",
     borderRadius: "12px",
     fontSize: "1rem",
     fontWeight: 700,
@@ -140,8 +161,8 @@ export function getIconContainerStyle(
   const cssColor = getVariantColor(variant);
 
   return {
-    width: isMobile ? "48px" : "80px",
-    height: isMobile ? "48px" : "80px",
+    width: buttonType === "flat-rounded" ? "30px" : isMobile ? "48px" : "80px",
+    height: buttonType === "flat-rounded" ? "30px" : isMobile ? "48px" : "80px",
     backgroundColor: buttonType === "flat-rounded" ? "none" : cssColor,
     borderRadius: buttonType === "flat-rounded" ? "none" : "8px",
     display: "flex",
@@ -174,6 +195,7 @@ export function getIconStyle(
 export function getContentWrapperStyle(
   isMobile: boolean,
   hasIcon: boolean,
+  buttonType: string,
 ): React.CSSProperties {
   if (!hasIcon) return {};
 
@@ -181,8 +203,18 @@ export function getContentWrapperStyle(
     display: "flex",
     alignItems: "center",
     gap: isMobile ? "16px" : "6px",
-    flexDirection: isMobile ? ("row" as const) : ("column" as const),
-    justifyContent: isMobile ? ("flex-start" as const) : ("center" as const),
+    flexDirection:
+      buttonType === "flat-rounded"
+        ? ("row" as const)
+        : isMobile
+          ? ("row" as const)
+          : ("column" as const),
+    justifyContent:
+      buttonType === "flat-rounded"
+        ? ("flex-start" as const)
+        : isMobile
+          ? ("flex-start" as const)
+          : ("center" as const),
     width: "100%",
   };
 }
