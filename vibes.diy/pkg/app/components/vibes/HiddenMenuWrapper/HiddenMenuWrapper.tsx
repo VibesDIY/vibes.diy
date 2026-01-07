@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect } from "react";
 import {
   getWrapperStyle,
   getMenuStyle,
@@ -8,8 +8,8 @@ import {
   getInnerContentWrapperStyle,
   getMenuStyleWrapper,
   getMenuStyleWrapperGray,
-} from './HiddenMenuWrapper.styles.js';
-import { VibesSwitch } from '../VibesSwitch/VibesSwitch.js';
+} from "./HiddenMenuWrapper.styles.js";
+import { VibesSwitch } from "../VibesSwitch/VibesSwitch.js";
 
 export interface HiddenMenuWrapperProps {
   children: React.ReactNode;
@@ -41,7 +41,8 @@ export function HiddenMenuWrapper({
     if (!hasBouncedOnMount && !menuOpen) {
       // Check for reduced motion preference (with fallback for test environments)
       const prefersReducedMotion =
-        window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false;
+        window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
+        false;
       if (!prefersReducedMotion) {
         setIsBouncing(true);
         setTimeout(() => setIsBouncing(false), 800);
@@ -52,11 +53,11 @@ export function HiddenMenuWrapper({
 
   // Inject keyframes for bounce animation
   useEffect(() => {
-    const styleId = 'vibes-drop-to-close-keyframes';
+    const styleId = "vibes-drop-to-close-keyframes";
     const existingStyle = document.getElementById(styleId);
 
     if (!existingStyle) {
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.id = styleId;
       style.textContent = `
         @keyframes vibes-drop-to-close {
@@ -99,15 +100,16 @@ export function HiddenMenuWrapper({
   // Escape key handling + focus trap
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && menuOpen) {
+      if (e.key === "Escape" && menuOpen) {
         setMenuOpen(false);
         buttonRef.current?.focus();
       }
 
-      if (menuOpen && e.key === 'Tab' && menuContainerRef.current) {
-        const focusableElements = menuContainerRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
+      if (menuOpen && e.key === "Tab" && menuContainerRef.current) {
+        const focusableElements =
+          menuContainerRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          );
 
         const first = focusableElements[0];
         const last = focusableElements[focusableElements.length - 1];
@@ -128,22 +130,23 @@ export function HiddenMenuWrapper({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [menuOpen]);
 
   // Focus menu on open
   useEffect(() => {
     if (menuOpen) {
       const firstFocusable = menuRef.current?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       firstFocusable?.focus();
     }
   }, [menuOpen]);
 
   // Recalculate when children change size, with feature detection and rAF scheduling
-  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+  const useIsomorphicLayoutEffect =
+    typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
   useIsomorphicLayoutEffect(() => {
     const menuEl = menuRef.current;
@@ -158,10 +161,11 @@ export function HiddenMenuWrapper({
 
       const run = () => setMenuHeight((prev) => (prev !== h ? h : prev));
 
-      if (typeof requestAnimationFrame !== 'undefined') {
+      if (typeof requestAnimationFrame !== "undefined") {
         const id = requestAnimationFrame(() => run());
         rafIdRef.current = id;
-        cancelRef.current = (cancelId: TimerId) => cancelAnimationFrame(cancelId as number);
+        cancelRef.current = (cancelId: TimerId) =>
+          cancelAnimationFrame(cancelId as number);
       } else {
         const id = setTimeout(run, 0);
         rafIdRef.current = id;
@@ -175,10 +179,12 @@ export function HiddenMenuWrapper({
 
     // Prefer ResizeObserver when available
     if (
-      typeof (window as unknown as { ResizeObserver?: typeof ResizeObserver }).ResizeObserver !==
-      'undefined'
+      typeof (window as unknown as { ResizeObserver?: typeof ResizeObserver })
+        .ResizeObserver !== "undefined"
     ) {
-      const RO = (window as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver;
+      const RO = (
+        window as unknown as { ResizeObserver: typeof ResizeObserver }
+      ).ResizeObserver;
       const resizeObserver = new RO(() => {
         scheduleSetHeight(menuEl.offsetHeight);
       });
@@ -201,13 +207,13 @@ export function HiddenMenuWrapper({
     mutationObserver.observe(menuEl, { childList: true, subtree: true });
 
     const onResize = () => scheduleSetHeight(menuEl.offsetHeight);
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
 
     return () => {
       mutationObserver.disconnect();
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('orientationchange', onResize);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
       if (rafIdRef.current != null && cancelRef.current) {
         cancelRef.current(rafIdRef.current);
         rafIdRef.current = null;
@@ -221,9 +227,9 @@ export function HiddenMenuWrapper({
     if (!menuEl) return;
     // Defer measurement to allow layout to settle, with a portable fallback
     const defer = (cb: () => void) => {
-      if (typeof queueMicrotask === 'function') {
+      if (typeof queueMicrotask === "function") {
         queueMicrotask(cb);
-      } else if (typeof requestAnimationFrame !== 'undefined') {
+      } else if (typeof requestAnimationFrame !== "undefined") {
         requestAnimationFrame(cb);
       } else {
         setTimeout(cb, 0);
@@ -248,15 +254,16 @@ export function HiddenMenuWrapper({
         ref={menuRef}
         style={getMenuStyleWrapper()}
       >
-      <div
-        style={getMenuStyleWrapperGray()}
-      >
-        <div style={getMenuStyle()}>{menuContent}</div>
-      </div>
+        <div style={getMenuStyleWrapperGray()}>
+          <div style={getMenuStyle()}>{menuContent}</div>
+        </div>
       </div>
 
       {/* Content */}
-      <div style={getContentWrapperStyle(menuHeight, menuOpen, isBouncing)} ref={menuContainerRef}>
+      <div
+        style={getContentWrapperStyle(menuHeight, menuOpen, isBouncing)}
+        ref={menuContainerRef}
+      >
         <div style={getInnerContentWrapperStyle(menuOpen)}>
           <div style={getContentStyle()}>{children}</div>
         </div>
