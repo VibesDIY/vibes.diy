@@ -1,8 +1,25 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "outDir": "./dist",
     "sourceMap": true,
-    "noEmit": false
-  }
+    "paths": {
+      "~/*": ["./app/*"],
+      "*": ["./*"]
+    }
+  },
+  "include": ["app/**/*", "serve/**/*", "*.tsx", "*.ts"],
+  "exclude": ["node_modules", "dist", "build"]
 }

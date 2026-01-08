@@ -66,7 +66,7 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
 });
 
 export default {
-  async fetch(request: Request, _env: Env): Promise<Response> {
+  async fetch(request: Request, _env: unknown): Promise<Response> {
     return vibesDiyHandler(ctx)(request) as Promise<Response>;
   },
 };

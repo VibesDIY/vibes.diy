@@ -143,7 +143,8 @@ const lazyFpCloudStrategie = Lazy(
 function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProviderProps) {
   console.log('LiveCycleVibeContextProvider', mountParams);
   const clerk = useClerk();
-  const dashApi = clerkDashApi(clerk, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dashApi = clerkDashApi(clerk as any, {
     apiUrl: mountParams.env.DASHBOARD_URL,
   });
 

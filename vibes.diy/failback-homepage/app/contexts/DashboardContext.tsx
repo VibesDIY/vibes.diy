@@ -14,7 +14,8 @@ const DashboardContext = createContext<DashboardContextType | undefined>(
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const clerk = useClerk();
-  const dashApi = clerkDashApi(clerk, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dashApi = clerkDashApi(clerk as any, {
     apiUrl: VibesDiyEnv.CONNECT_API_URL(),
   });
 

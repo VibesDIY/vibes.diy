@@ -24,7 +24,7 @@ export default function Index(props: any) {
       <body>
         <script
           type="module"
-          src="/dist/vibes.diy/pkg/app/vibes.diy.js"
+          src="/dist/vibes.diy/failback-homepage/app/vibes.diy.js"
         ></script>
 
         <div id="vibes.diy"></div>
