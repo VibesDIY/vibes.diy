@@ -20,7 +20,7 @@ runs:
     - name: lint
       shell: bash
       run: |
-        pnpm run lint
+        NODE_OPTIONS=--max-old-space-size=4096 pnpm run lint
 
     - name: build
       shell: bash
