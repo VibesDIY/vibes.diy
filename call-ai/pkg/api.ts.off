@@ -6,7 +6,7 @@ import { chooseSchemaStrategy } from "./strategies/index.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
 import { keyStore, globalDebug } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
-import { createBackwardCompatStreamingProxy } from "./api-core.js";
+import { createBackwardCompatStreamingProxy } from "./streaming.js";
 import { extractContent, extractClaudeResponse } from "./non-streaming.js";
 import { createStreamingGenerator } from "./streaming.js";
 import { PACKAGE_VERSION } from "./version.js";

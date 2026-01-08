@@ -17,3 +17,47 @@ export { imageGen } from "./image.js";
 
 export { entriesHeaders, joinUrlParts } from "./utils.js";
 export { callAiEnv } from "./env.js";
+
+// Export stream parsing
+export { parseAIStream, collectStreamMessages } from "./stream-parser.js";
+export { detectCodeBlocks } from "./code-block-detector.js";
+export {
+  // Functions
+  createAccumulatorState,
+  accumulateIncremental,
+  accumulateCodeBlocks,
+  accumulateText,
+  // Types
+  CodeBlock,
+  AccumulatorState,
+} from "./stream-accumulators.js";
+export {
+  StreamMessage,
+  StreamType,
+  StreamTypes,
+  StreamMessageSchema,
+  createMessage,
+  isMessageType,
+  nextId,
+  nextStreamId,
+  // Payload types
+  StreamStartPayload,
+  StreamEndPayload,
+  StreamErrorPayload,
+  TextFragmentPayload,
+  TextCompletePayload,
+  CodeStartPayload,
+  CodeFragmentPayload,
+  CodeEndPayload,
+  CodeFullPayload,
+  CodeEditPayload,
+  ImgPayload,
+} from "./stream-messages.js";
+export {
+  LineStreamParser,
+  LineStreamState,
+  FragmentEvent,
+  BracketEvent,
+  BracketOpenCloseEvent,
+  InBracketEvent,
+} from "./line-stream.js";
