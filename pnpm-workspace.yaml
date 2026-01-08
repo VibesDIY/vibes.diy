@@ -12,6 +12,7 @@ packages:
   - "vibes.diy/tempo"
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"
+  - "vibes.diy/failback-homepage"
   - "prompts/pkg"
   - "prompts/tests"
   - "hosting/base"
