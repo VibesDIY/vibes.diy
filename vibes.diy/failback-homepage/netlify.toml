@@ -1,0 +1,84 @@
+[build]
+  publish = "build/client"
+  base = "./vibes.diy/pkg"
+  command = "pnpm run build"
+
+[dev]
+  base = "./vibes.diy/pkg"
+  command = "pnpm run dev:router --port 5174"
+  targetPort = 5174
+  framework = "#custom"
+  port = 8888
+
+[[edge_functions]]
+  function = "vibe-meta"
+  path = "/vibe/*"
+
+[[edge_functions]]
+  function = "vibe-meta"
+  path = "/firehose"
+
+[[redirects]]
+  from = "/ai/*"
+  to = "https://bit.ly/:splat"
+  status = 301
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# CORS headers for openai-image edge function
+[[headers]]
+  for = "/api/openai-image/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    Access-Control-Max-Age = "86400"
+
+# No caching for Netlify system files
+[[headers]]
+  for = "/.netlify/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache"
+
+# HTML files - revalidate but allow serving stale during revalidation
+# This applies to all route paths in your SPA
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# JavaScript files with content hashes - immutable and long cache
+[[headers]]
+  for = "/assets/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# CSS files with content hashes - immutable and long cache
+[[headers]]
+  for = "/assets/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Image files - immutable and long cache
+[[headers]]
+  for = "/assets/*.(png|jpg|jpeg|gif|webp|svg|ico)"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Fonts - immutable and long cache
+[[headers]]
+  for = "/assets/*.(woff|woff2|ttf|otf|eot)"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# CORS headers for vibes.diy resources
+[[headers]]
+  for = "https://vibes.diy/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS"
+    Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept"
+    Access-Control-Max-Age = "86400"

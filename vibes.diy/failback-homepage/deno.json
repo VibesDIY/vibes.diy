@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "@vibes.diy/use-vibes-base": "../../use-vibes/base/index.ts",
+    "@vibes.diy/prompts": "../../prompts/pkg/index.ts",
+    "@vibes.diy/use-vibes-types": "../../use-vibes/types/index.ts",
+    "call-ai": "../../call-ai/pkg/index.ts"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}

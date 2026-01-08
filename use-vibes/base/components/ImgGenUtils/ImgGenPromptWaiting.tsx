@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { combineClasses, defaultClasses, ImgGenClasses } from '../../utils/style-utils.js';
 import { ImgGenFileDrop } from './ImgGenFileDrop.js';
-import { useFireproof } from 'use-fireproof';
+import { useFireproof } from '@fireproof/use-fireproof';
 
 interface ImgGenPromptWaitingProps {
   /** Classname(s) to apply to the container */
