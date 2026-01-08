@@ -94,7 +94,7 @@ export default function About() {
       {/* Footer */}
       <BrutalistCard size="sm">
         <p className="text-center text-xs">
-          Copyright © 2025{" "}
+          Copyright © 2026{" "}
           <a
             href="https://fireproof.storage"
             target="_blank"
