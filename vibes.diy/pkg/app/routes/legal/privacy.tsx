@@ -39,7 +39,7 @@ export default function Privacy() {
           </div>
         </div>
         <p className="text-light-secondary dark:text-dark-secondary text-center text-xs">
-          Copyright © 2025{" "}
+          Copyright © 2026{" "}
           <a
             href="https://fireproof.storage"
             target="_blank"
