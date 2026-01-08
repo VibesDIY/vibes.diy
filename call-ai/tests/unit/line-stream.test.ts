@@ -284,3 +284,35 @@ it("Nesting-Test", async () => {
     [{ type: "bracket", bracket: "close" }],
   ]);
 });
+
+it("Empty-Content-Test - should emit empty middle events", async () => {
+  const so = new LineStreamParser(LineStreamState.WaitForOpeningCurlyBracket);
+  const lines = new ReadableStream<string>({
+    async start(controller) {
+      // Simple case: { content } where we send chunks that create empty middle
+      controller.enqueue("{ a");    // open + first with "a"
+      controller.enqueue("");       // empty chunk - should emit empty middle with seq 1
+      controller.enqueue(" b }");   // last with " b"
+      controller.close();
+    },
+  });
+  const reader = lines.getReader();
+  const fnBracket = vi.fn();
+  so.onBracket(fnBracket);
+  while (true) {
+    const { done, value: chunk } = await reader.read();
+    if (done) {
+      break;
+    }
+    so.processChunk(chunk);
+  }
+  // Empty middle events should NOT be filtered out
+  // Expected: open, first(" a"), middle(""), last(" b "), close
+  expect(fnBracket.mock.calls).toEqual([
+    [{ type: "bracket", bracket: "open" }],
+    [{ type: "inBracket", seqStyle: "first", block: 0, seq: 0, content: " a" }],
+    [{ type: "inBracket", seqStyle: "middle", block: 0, seq: 1, content: "" }],
+    [{ type: "inBracket", seqStyle: "last", block: 0, seq: 2, content: " b " }],
+    [{ type: "bracket", bracket: "close" }],
+  ]);
+});
