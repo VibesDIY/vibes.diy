@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { ImageGenOptions } from 'call-ai';
 import { useImageGen as defaultUseImageGen } from '../hooks/image-gen/use-image-gen.js';
-import { useFireproof, Database } from 'use-fireproof';
+import { useFireproof, Database } from '@fireproof/use-fireproof';
 import { ensureSuperThis } from '@fireproof/core-runtime';
 import {
   ImgGenPromptWaiting,
