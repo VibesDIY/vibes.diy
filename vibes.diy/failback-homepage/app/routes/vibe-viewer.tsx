@@ -1,0 +1,249 @@
+import React, { useEffect, useState } from "react";
+import { Lazy } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import { useParams } from "react-router";
+import { VibesDiyEnv } from "../config/env.js";
+import { useVibeInstances } from "../hooks/useVibeInstances.js";
+import { useAuth } from "@clerk/clerk-react";
+// import { mountVibeWithCleanup as _mountVibeWithCleanup } from "../mounting/index.js";
+import { transformImports as _transformImports } from "@vibes.diy/prompts";
+import LoggedOutView from "../components/LoggedOutView.js";
+
+const sthis = Lazy(() => ensureSuperThis());
+
+export function meta({
+  params,
+}: {
+  params: { titleId: string; installId: string };
+}) {
+  return [
+    { title: `${params.titleId} | Vibes DIY` },
+    { name: "description", content: `Running instance of ${params.titleId}` },
+  ];
+}
+
+function getHostnameFromUrl(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "vibesdiy.app";
+  }
+}
+
+function VibeInstanceViewerContent() {
+  const { getToken, signOut } = useAuth();
+  const { titleId, installId } = useParams<{
+    titleId: string;
+    installId: string;
+  }>();
+  const [error, setError] = useState<string | null>(null);
+  // Generate unique container ID using crypto.randomUUID
+  // Regenerate on each navigation to make debugging easier
+  const [containerId, setContainerId] = useState(
+    () => `vibe-container-${sthis().nextId().str}`,
+  );
+
+  // Lazy instance creation: ensure instance exists in database
+  const { instances, createInstance, isCreating } = useVibeInstances(
+    titleId || "",
+  );
+
+  useEffect(() => {
+    if (!titleId || !installId || isCreating) return;
+
+    // Check if instance exists
+    const fullId = `${titleId}-${installId}`;
+    const instanceExists = instances.some((inst) => inst._id === fullId);
+
+    // Create instance if it doesn't exist - fetch real title from hosting API
+    if (!instanceExists) {
+      let cancelled = false;
+
+      const fetchAndCreateInstance = async () => {
+        try {
+          // Fetch app metadata from hosting API
+          const apiBaseUrl =
+            import.meta.env.VITE_API_BASE_URL ||
+            "https://vibes-hosting-v2-preview.jchris.workers.dev";
+          const response = await fetch(`${apiBaseUrl}/api/apps/${titleId}`);
+
+          let title = titleId; // Fallback to slug if fetch fails
+          if (response.ok) {
+            const data = (await response.json()) as {
+              app?: { title?: string };
+            };
+            title = data.app?.title || titleId;
+          }
+
+          if (!cancelled) {
+            // Create instance with real title
+            await createInstance(title, {}, installId);
+          }
+        } catch (error) {
+          // If fetch fails, use slug as title
+          console.warn("Failed to fetch app metadata, using slug:", error);
+          if (!cancelled) {
+            await createInstance(titleId, {}, installId);
+          }
+        }
+      };
+
+      void fetchAndCreateInstance();
+
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [titleId, installId, instances, createInstance, isCreating]);
+
+  // Keep window.CALLAI_API_KEY fresh by periodically refreshing the Clerk token
+  useEffect(() => {
+    const refreshToken = async () => {
+      const freshToken = await getToken();
+      if (freshToken && typeof window !== "undefined") {
+        throw new Error("here something is needed");
+        // window.CALLAI_API_KEY = freshToken;
+      }
+    };
+
+    // Refresh token every 30 seconds (half of Clerk's 60-second token lifetime)
+    const interval = setInterval(refreshToken, 30000);
+
+    return () => clearInterval(interval);
+  }, [getToken]);
+
+  // Handle logout requests from VibesPanel
+  useEffect(() => {
+    const handleLogout = async () => {
+      await signOut();
+    };
+
+    document.addEventListener("vibes-logout-request", handleLogout);
+    return () =>
+      document.removeEventListener("vibes-logout-request", handleLogout);
+  }, [signOut]);
+
+  useEffect(() => {
+    if (!titleId || !installId) return;
+
+    // Generate new container ID for this navigation
+    const newContainerId = `vibe-container-${sthis().nextId().str}`;
+    setContainerId(newContainerId);
+
+    let active = true;
+    let unmountVibe: (() => void) | undefined = undefined;
+
+    const loadAndMountVibe = async () => {
+      try {
+        // Fetch the published vibe code from hosting
+        const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
+        const vibeUrl = `https://${titleId}.${hostname}/App.jsx`;
+
+        const response = await fetch(vibeUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch vibe code: ${response.statusText}`);
+        }
+
+        const vibeCode = await response.text();
+
+        if (!active) return;
+
+        // Get Clerk token for API authentication
+        const _clerkToken = await getToken();
+
+        // Get configured API endpoint (respects preview mode via env)
+        const _callaiEndpoint = VibesDiyEnv.CALLAI_ENDPOINT();
+
+        console.log("loadAndMountVibe", vibeCode);
+
+        unmountVibe = () => {
+          // Empty cleanup function placeholder
+        };
+
+        // Mount the vibe code and capture the unmount callback via event
+        // unmountVibe = await mountVibeWithCleanup(
+        //   vibeCode,
+        //   newContainerId,
+        //   titleId,
+        //   installId,
+        //   transformImports,
+        //   true, // showVibesSwitch
+        //   clerkToken || undefined, // Pass Clerk token as apiKey
+        //   callaiEndpoint, // Pass chat API endpoint so vibe uses same endpoint as host
+        //   callaiEndpoint, // Pass image API endpoint (same as chat endpoint)
+        // );
+      } catch (err) {
+        console.error("Error loading vibe:", err);
+        if (active) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
+      }
+    };
+
+    // Reset error state when navigating to a new vibe
+    setError(null);
+
+    loadAndMountVibe();
+
+    // Cleanup function
+    return () => {
+      active = false;
+
+      // Call the unmount callback to properly cleanup the React root
+      if (typeof unmountVibe === "function") {
+        unmountVibe();
+      }
+
+      // Clean up the script tag
+      const script = document.getElementById(`vibe-script-${newContainerId}`);
+      if (script) {
+        script.remove();
+      }
+    };
+  }, [titleId, installId]);
+
+  if (!titleId || !installId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <p className="text-red-600 text-lg">Missing title ID or install ID</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-screen bg-gray-900">
+      {/* Error Overlay */}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+          <div className="text-center max-w-md">
+            <p className="text-red-400 text-lg mb-4">Error loading vibe:</p>
+            <p className="text-white mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Container for vibe module to mount into */}
+      <div id={containerId} className="w-full h-full" />
+    </div>
+  );
+}
+
+// Auth wrapper component - only renders content when authenticated
+export function VibeViewer() {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (!isSignedIn) {
+    return <LoggedOutView isLoaded={isLoaded} />;
+  }
+
+  // Only render the actual component (which calls useFireproof) when authenticated
+  return <VibeInstanceViewerContent />;
+}

@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.test.json",
+  "compilerOptions": {
+    "paths": {
+      "~/vibes.diy/*": ["../pkg/*"]
+    },
+    "outDir": "./dist"
+  }
+}
