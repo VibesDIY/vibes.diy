@@ -20,34 +20,34 @@ import { setup, assign, emit, raise, createActor } from "xstate";
 // emit events allow the reassembly of the json
 
 export enum LineStreamState {
-  WaitForOpeningCurlyBracket,
-  WaitingForClosingCurlyBracket,
-  WaitingForEOL,
+  WaitForOpeningCurlyBracket = "waitForOpeningCurlyBracket",
+  WaitingForClosingCurlyBracket = "waitingForClosingCurlyBracket",
+  WaitingForEOL = "waitingForEOL",
 }
 
 // Event types for external callbacks
-interface FragmentEvent {
-  type: "fragment";
-  lineNr: number;
-  fragment: string;
-  seq: number;
-  lineComplete: boolean;
+export interface FragmentEvent {
+  readonly type: "fragment";
+  readonly lineNr: number;
+  readonly fragment: string;
+  readonly seq: number;
+  readonly lineComplete: boolean;
 }
 
-interface BracketOpenCloseEvent {
-  type: "bracket";
-  bracket: "open" | "close";
+export interface BracketOpenCloseEvent {
+  readonly type: "bracket";
+  readonly bracket: "open" | "close";
 }
 
-interface InBracketEvent {
-  type: "inBracket";
-  seqStyle: "first" | "last" | "middle";
-  block: number;
-  seq: number;
-  content: string;
+export interface InBracketEvent {
+  readonly type: "inBracket";
+  readonly seqStyle: "first" | "last" | "middle";
+  readonly block: number;
+  readonly seq: number;
+  readonly content: string;
 }
 
-type BracketEvent = BracketOpenCloseEvent | InBracketEvent;
+export type BracketEvent = BracketOpenCloseEvent | InBracketEvent;
 
 // XState machine context
 interface LineStreamContext {
@@ -61,8 +61,16 @@ interface LineStreamContext {
 }
 
 // XState machine events
-// TODO: we do interfaces first
-type MachineEvents = { type: "PROCESS_CHUNK"; chunk: string } | { type: "CONSUME" };
+interface ProcessChunkEvent {
+  readonly type: "PROCESS_CHUNK";
+  readonly chunk: string;
+}
+
+interface ConsumeEvent {
+  readonly type: "CONSUME";
+}
+
+type MachineEvents = ProcessChunkEvent | ConsumeEvent;
 
 // Helper to find the next significant character
 function scanForNextEvent(chunk: string, searchingFor: "open" | "both" | "eol"): number {
@@ -399,60 +407,22 @@ function createLineStreamMachine(initialStateName: string) {
   });
 }
 
-// Map LineStreamState enum to XState state names
-// TODO: that is a enum to string nobody needs
-function getInitialStateName(state: LineStreamState): string {
-  switch (state) {
-    case LineStreamState.WaitForOpeningCurlyBracket:
-      return "waitForOpeningCurlyBracket";
-    case LineStreamState.WaitingForClosingCurlyBracket:
-      return "waitingForClosingCurlyBracket";
-    case LineStreamState.WaitingForEOL:
-      return "waitingForEOL";
-  }
-}
-
-// TODO: this is only a reminder of the old code structure?
 export class LineStreamParser {
-  readonly onFragment =
-    OnFunc<(f: { type: "fragment"; lineNr: number; fragment: string; seq: number; lineComplete: boolean }) => void>();
+  readonly onFragment = OnFunc<(event: FragmentEvent) => void>();
+  readonly onBracket = OnFunc<(event: BracketEvent) => void>();
 
-  readonly onBracket = OnFunc<
-    (
-      b:
-        | {
-            type: "inBracket";
-            seqStyle: "first" | "last" | "middle";
-            block: number;
-            seq: number;
-            content: string;
-          }
-        | { type: "bracket"; bracket: "open" | "close" },
-    ) => void
-  >();
-
-  private actor: ReturnType<typeof createActor<ReturnType<typeof createLineStreamMachine>>>;
+  private readonly actor: ReturnType<typeof createActor<ReturnType<typeof createLineStreamMachine>>>;
 
   constructor(initialState: LineStreamState) {
-    const stateName = getInitialStateName(initialState);
-    const machine = createLineStreamMachine(stateName);
-
+    const machine = createLineStreamMachine(initialState);
     this.actor = createActor(machine);
 
-    // Subscribe to emitted events and forward to callbacks
     this.actor.on("bracket", (event: BracketOpenCloseEvent) => {
       this.onBracket.invoke(event);
     });
 
     this.actor.on("inBracket", (event: InBracketEvent) => {
-      // Filter out empty content events unless they are significant?
-      // Original logic often emitted partials.
-      // We will emit if it has content OR if it's 'last' (to signal end of content).
-      // Actually, let's just forward everything and let the receiver decide, 
-      // but purely empty 'middle' events are noise.
-      if (event.content.length > 0 || event.seqStyle === 'last' || event.seqStyle === 'first') {
-         this.onBracket.invoke(event);
-      }
+      this.onBracket.invoke(event);
     });
 
     this.actor.on("fragment", (event: FragmentEvent) => {
@@ -462,7 +432,7 @@ export class LineStreamParser {
     this.actor.start();
   }
 
-  processChunk(chunk: string) {
+  processChunk(chunk: string): void {
     this.actor.send({ type: "PROCESS_CHUNK", chunk });
   }
 }
