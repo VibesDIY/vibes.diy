@@ -1,7 +1,6 @@
 import { OnFunc } from "@adviser/cement";
 import { setup, assign, emit, raise, createActor } from "xstate";
 
-// TODO: implement Nesting { { }}
 // TODO: optional implement []
 // TODO: string " { ", " \"  } "
 // emit events allow the reassembly of the json
@@ -40,13 +39,32 @@ type BracketEvent = BracketOpenCloseEvent | InBracketEvent;
 interface LineStreamContext {
   seq: number;
   lineNr: number;
-  rest: string;
+  rest: string; // The accumulator for incoming chunks not yet fully processed
   blockId: number;
-  chunk: string;
+  chunk: string; // The current working string being processed
+  depth: number; // Nesting depth for curly brackets
+  scanIndex: number; // Index of the next significant character found by scanner
 }
 
 // XState machine events
 type MachineEvents = { type: "PROCESS_CHUNK"; chunk: string } | { type: "CONSUME" };
+
+// Helper to find the next significant character
+function scanForNextEvent(chunk: string, searchingFor: "open" | "both" | "eol"): number {
+  if (searchingFor === "eol") {
+    return chunk.indexOf("\n");
+  }
+  if (searchingFor === "open") {
+    return chunk.indexOf("{");
+  }
+  // Searching for both { and }
+  const openIdx = chunk.indexOf("{");
+  const closeIdx = chunk.indexOf("}");
+
+  if (openIdx === -1) return closeIdx;
+  if (closeIdx === -1) return openIdx;
+  return Math.min(openIdx, closeIdx);
+}
 
 // Create machine factory with configurable initial state
 function createLineStreamMachine(initialStateName: string) {
@@ -57,37 +75,47 @@ function createLineStreamMachine(initialStateName: string) {
       emitted: {} as FragmentEvent | BracketEvent,
     },
     actions: {
-      // Emission actions
+      // --- Emitters ---
       emitBracketOpen: emit({ type: "bracket", bracket: "open" } as const),
       emitBracketClose: emit({ type: "bracket", bracket: "close" } as const),
-      emitInBracketFirst: emit(({ context }) => ({
-        type: "inBracket" as const,
-        seqStyle: "first" as const,
-        block: context.blockId,
-        seq: context.seq,
-        content: context.chunk,
-      })),
-      emitInBracketMiddle: emit(({ context }) => ({
-        type: "inBracket" as const,
-        seqStyle: "middle" as const,
-        block: context.blockId,
-        seq: context.seq,
-        content: context.chunk,
-      })),
+
+      emitInBracketContent: emit(({ context }) => {
+        // Determine style based on sequence
+        let style: "first" | "last" | "middle" = "middle";
+        if (context.seq === 0) style = "first";
+        // Note: 'last' is tough to know for sure in a stream until we hit the closing bracket
+        // but the original logic emitted 'last' right before closing.
+        // We will mimic original logic: if we are about to close a block (depth 1 -> 0), current content is 'last'.
+        // However, if we are just flushing a chunk, it's 'middle' or 'first'.
+        
+        // This helper is for content *between* brackets or generic chunks.
+        // Logic for 'last' is handled specifically in the close-bracket transition.
+        
+        return {
+          type: "inBracket" as const,
+          seqStyle: style,
+          block: context.blockId,
+          seq: context.seq,
+          content: context.chunk.slice(0, context.scanIndex === -1 ? undefined : context.scanIndex),
+        };
+      }),
+
       emitInBracketLast: emit(({ context }) => ({
         type: "inBracket" as const,
         seqStyle: "last" as const,
         block: context.blockId,
         seq: context.seq,
-        content: context.chunk.slice(0, context.chunk.indexOf("}")),
+        content: context.chunk.slice(0, context.scanIndex),
       })),
+
       emitFragmentComplete: emit(({ context }) => ({
         type: "fragment" as const,
         lineNr: context.lineNr,
-        fragment: context.chunk.slice(0, context.chunk.indexOf("\n")),
+        fragment: context.chunk.slice(0, context.scanIndex),
         seq: context.seq,
         lineComplete: true,
       })),
+
       emitFragmentIncomplete: emit(({ context }) => ({
         type: "fragment" as const,
         lineNr: context.lineNr,
@@ -96,49 +124,91 @@ function createLineStreamMachine(initialStateName: string) {
         lineComplete: false,
       })),
 
-      // Context update actions
-      loadChunk: assign({
+      // --- State Updates ---
+      appendChunk: assign({
         chunk: ({ context, event }) => (event.type === "PROCESS_CHUNK" ? context.rest + event.chunk : context.chunk),
+        rest: "", // Clear rest as it's now in chunk
       }),
-      consumeOpenBracket: assign({
-        rest: ({ context }) => context.chunk.slice(context.chunk.indexOf("{") + 1),
-        chunk: ({ context }) => context.chunk.slice(context.chunk.indexOf("{") + 1),
+
+      // Scan actions update the scanIndex context
+      scanForOpen: assign({
+        scanIndex: ({ context }) => scanForNextEvent(context.chunk, "open"),
       }),
-      consumeCloseBracket: assign({
-        rest: ({ context }) => context.chunk.slice(context.chunk.indexOf("}") + 1),
-        chunk: ({ context }) => context.chunk.slice(context.chunk.indexOf("}") + 1),
-        blockId: ({ context }) => context.blockId + 1,
-        seq: 0,
+      scanForBoth: assign({
+        scanIndex: ({ context }) => scanForNextEvent(context.chunk, "both"),
       }),
-      consumeEOL: assign({
-        seq: 0,
-        lineNr: ({ context }) => context.lineNr + 1,
-        chunk: ({ context }) => context.chunk.slice(context.chunk.indexOf("\n") + 1),
+      scanForEOL: assign({
+        scanIndex: ({ context }) => scanForNextEvent(context.chunk, "eol"),
       }),
-      saveRest: assign({
-        rest: ({ context }) => context.chunk,
+
+      // Consumption actions slice the chunk and update counters
+      consumeToOpen: assign({
+        // Slice up to scanIndex (exclusive), skip the '{' (+1)
+        chunk: ({ context }) => context.chunk.slice(context.scanIndex + 1),
+        depth: ({ context }) => context.depth + 1,
       }),
-      clearRestAndIncrementSeq: assign({
-        rest: "",
-        seq: ({ context }) => context.seq + 1,
+
+      consumeToNext: assign({
+        // Consumes content up to the found bracket, ready to process the bracket itself next
+        // Actually, simpler to consume the content AND the bracket if we know what it is.
+        // But we need to check *which* bracket it was.
+        // So we will just slice off the content *before* the bracket, and let the loop handle the bracket?
+        // No, let's do it in one go if we can.
+        
+        // If we found a '{' at scanIndex:
+        //   We might have content before it.
+        //   We consume content + '{'.
+        
+        chunk: ({ context }) => context.chunk.slice(context.scanIndex + 1),
       }),
+      
       incrementSeq: assign({
         seq: ({ context }) => context.seq + 1,
       }),
+      
+      incrementBlock: assign({
+        blockId: ({ context }) => context.blockId + 1,
+        seq: 0,
+        depth: 0, // Should be 0 anyway, but reset to be safe
+      }),
 
-      // Internal event triggers
+      decrementDepth: assign({
+        depth: ({ context }) => context.depth - 1,
+      }),
+
+      consumeEOL: assign({
+        chunk: ({ context }) => context.chunk.slice(context.scanIndex + 1),
+        lineNr: ({ context }) => context.lineNr + 1,
+        seq: 0,
+      }),
+
+      saveRest: assign({
+        rest: ({ context }) => context.chunk,
+        chunk: "",
+      }),
+
+      consumeAll: assign({
+        chunk: "",
+        rest: "",
+      }),
+
+      // --- Internal Control ---
       raiseConsume: raise({ type: "CONSUME" }),
     },
     guards: {
-      hasOpenBracket: ({ context }) => context.chunk.indexOf("{") >= 0,
-      hasCloseBracket: ({ context }) => context.chunk.indexOf("}") >= 0,
-      hasNestedOpenBeforeClose: ({ context }) => {
-        const closeIdx = context.chunk.indexOf("}");
-        const openIdx = context.chunk.indexOf("{");
-        return closeIdx >= openIdx && openIdx >= 0;
-      },
-      hasEOL: ({ context }) => context.chunk.indexOf("\n") >= 0,
-      isFirstSeq: ({ context }) => context.seq === 0,
+      foundSomething: ({ context }) => context.scanIndex !== -1,
+      
+      foundOpenBracket: ({ context }) => 
+        context.scanIndex !== -1 && context.chunk[context.scanIndex] === "{",
+      
+      foundCloseBracket: ({ context }) => 
+        context.scanIndex !== -1 && context.chunk[context.scanIndex] === "}",
+      
+      isDepthZero: ({ context }) => context.depth === 0,
+      
+      isDepthOne: ({ context }) => context.depth === 1,
+      
+      hasContentBeforeScan: ({ context }) => context.scanIndex > 0,
     },
   }).createMachine({
     id: "lineStream",
@@ -148,129 +218,166 @@ function createLineStreamMachine(initialStateName: string) {
       rest: "",
       blockId: 0,
       chunk: "",
+      depth: 0,
+      scanIndex: -1,
     },
     initial: initialStateName,
     states: {
-      // State: Looking for opening curly bracket
+      // ========================================================================
+      // 1. Wait For Opening {
+      // ========================================================================
       waitForOpeningCurlyBracket: {
         initial: "idle",
         states: {
           idle: {
             on: {
               PROCESS_CHUNK: {
-                actions: ["loadChunk", "raiseConsume"],
+                actions: ["appendChunk", "raiseConsume"],
               },
             },
           },
-          foundOpen: {
-            // Entry: emit bracket open, then transition to closing bracket state
-            entry: ["emitBracketOpen"],
-            always: {
-              target: "#lineStream.waitingForClosingCurlyBracket.consuming",
-            },
+          scanning: {
+            entry: ["scanForOpen"], // only look for {
+            always: [
+              {
+                guard: "foundSomething",
+                actions: ["consumeToOpen", "emitBracketOpen"], // Consumes content (ignored) and {
+                target: "#lineStream.waitingForClosingCurlyBracket.scanning",
+              },
+              {
+                // Nothing found, save rest and wait for more
+                actions: ["saveRest"],
+                target: "idle",
+              },
+            ],
           },
         },
         on: {
-          CONSUME: [
-            {
-              guard: "hasOpenBracket",
-              actions: ["consumeOpenBracket"],
-              target: ".foundOpen",
-            },
-            {
-              actions: ["saveRest"],
-              target: ".idle",
-            },
-          ],
+          CONSUME: ".scanning",
         },
       },
 
-      // State: Looking for closing curly bracket
+      // ========================================================================
+      // 2. Wait For Closing } (Handles Nesting)
+      // ========================================================================
       waitingForClosingCurlyBracket: {
         initial: "idle",
         states: {
           idle: {
             on: {
               PROCESS_CHUNK: {
-                actions: ["loadChunk", "raiseConsume"],
+                actions: ["appendChunk", "raiseConsume"],
               },
             },
           },
-          consuming: {
-            // Transient state that immediately processes via CONSUME
-            entry: ["raiseConsume"],
+          scanning: {
+            entry: ["scanForBoth"], // look for { or }
+            always: [
+              // --- Case A: Found Open Bracket '{' (Nesting) ---
+              {
+                guard: "foundOpenBracket",
+                actions: [
+                  "emitInBracketContent", // Emit anything before the {
+                  "incrementSeq",
+                  "consumeToNext",       // Eat the content and the {
+                ],
+                target: "handlingNestedOpen",
+              },
+              
+              // --- Case B: Found Close Bracket '}' ---
+              {
+                guard: "foundCloseBracket",
+                // Check if this closes the whole block (depth == 1)
+                target: "checkCloseDepth",
+              },
+              
+              // --- Case C: Found Nothing (End of Chunk) ---
+              {
+                actions: [
+                  "emitInBracketContent", // Emit everything we have so far
+                  "incrementSeq",
+                  "consumeAll",           // Consumed it all
+                ],
+                target: "idle",
+              },
+            ],
           },
-          yieldingFirst: {
-            entry: ["emitInBracketFirst", "clearRestAndIncrementSeq"],
-            always: { target: "idle" },
+          
+          handlingNestedOpen: {
+            // We found a nested {, we need to increment depth. 
+            // The transition above used 'consumeToNext' which just slices.
+            entry: assign({ depth: ({ context }) => context.depth + 1 }),
+            always: { target: "scanning" }
           },
-          yieldingMiddle: {
-            entry: ["emitInBracketMiddle", "clearRestAndIncrementSeq"],
-            always: { target: "idle" },
-          },
-          foundClose: {
-            entry: ["emitInBracketLast", "consumeCloseBracket", "emitBracketClose"],
-            always: {
-              target: "#lineStream.waitForOpeningCurlyBracket",
-              actions: ["raiseConsume"],
-            },
+
+          checkCloseDepth: {
+            always: [
+              {
+                guard: "isDepthOne", // This is the final closing bracket
+                actions: [
+                  "emitInBracketLast", // Emit content up to }
+                  "consumeToNext",     // Eat content and }
+                  "decrementDepth",    // depth becomes 0
+                  "emitBracketClose",
+                  "incrementBlock",    // blockId++, seq=0
+                ],
+                target: "#lineStream.waitForOpeningCurlyBracket.scanning", // Look for next block
+              },
+              {
+                // Just a nested closing bracket
+                actions: [
+                  "emitInBracketContent",
+                  "incrementSeq",
+                  "consumeToNext",
+                  "decrementDepth",
+                ],
+                target: "scanning",
+              },
+            ],
           },
         },
         on: {
-          CONSUME: [
-            // Nested open bracket before close - delegate back to opening state
-            {
-              guard: "hasNestedOpenBeforeClose",
-              target: "#lineStream.waitForOpeningCurlyBracket",
-              actions: ["raiseConsume"],
-            },
-            // Found closing bracket
-            {
-              guard: "hasCloseBracket",
-              target: ".foundClose",
-            },
-            // No closing bracket - yield content
-            {
-              guard: "isFirstSeq",
-              target: ".yieldingFirst",
-            },
-            {
-              target: ".yieldingMiddle",
-            },
-          ],
+          CONSUME: ".scanning",
         },
       },
 
-      // State: Looking for end of line
+      // ========================================================================
+      // 3. Wait For EOL (Standard Line Processing)
+      // ========================================================================
       waitingForEOL: {
         initial: "idle",
         states: {
           idle: {
             on: {
               PROCESS_CHUNK: {
-                actions: ["loadChunk", "raiseConsume"],
+                actions: ["appendChunk", "raiseConsume"],
               },
             },
           },
-          yieldingComplete: {
-            entry: ["emitFragmentComplete", "consumeEOL", "raiseConsume"],
-            // Will transition based on next CONSUME event
+          scanning: {
+            entry: ["scanForEOL"],
+            always: [
+              {
+                guard: "foundSomething",
+                target: "processing",
+              },
+              {
+                actions: [
+                  "emitFragmentIncomplete",
+                  "incrementSeq",
+                  "consumeAll",
+                ],
+                target: "idle",
+              },
+            ],
           },
-          yieldingIncomplete: {
-            entry: ["emitFragmentIncomplete", "incrementSeq"],
-            always: { target: "idle" },
+          processing: {
+            entry: ["emitFragmentComplete", "consumeEOL"],
+            always: { target: "scanning" },
           },
         },
         on: {
-          CONSUME: [
-            {
-              guard: "hasEOL",
-              target: ".yieldingComplete",
-            },
-            {
-              target: ".yieldingIncomplete",
-            },
-          ],
+          CONSUME: ".scanning",
         },
       },
     },
@@ -321,7 +428,14 @@ export class LineStreamParser {
     });
 
     this.actor.on("inBracket", (event: InBracketEvent) => {
-      this.onBracket.invoke(event);
+      // Filter out empty content events unless they are significant?
+      // Original logic often emitted partials.
+      // We will emit if it has content OR if it's 'last' (to signal end of content).
+      // Actually, let's just forward everything and let the receiver decide, 
+      // but purely empty 'middle' events are noise.
+      if (event.content.length > 0 || event.seqStyle === 'last' || event.seqStyle === 'first') {
+         this.onBracket.invoke(event);
+      }
     });
 
     this.actor.on("fragment", (event: FragmentEvent) => {
