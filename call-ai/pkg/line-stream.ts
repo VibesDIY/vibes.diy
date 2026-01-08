@@ -1,6 +1,20 @@
 import { OnFunc } from "@adviser/cement";
 import { setup, assign, emit, raise, createActor } from "xstate";
 
+/* 
+   Not bad for now, but before we continue i would like to have a 
+   fixure of a duplex stream of a full generated app from vibes diy?
+   like this https://github.com/VibesDIY/vibes.diy/blob/6eb30ed780979e7612ddcd89170011558c9d8ff2/call-ai/tests/integration/fixtures/openai-weather-response.json 
+   but more.
+   do we have a possiblity to get the wire format of the full app generation?
+   do we need to make hosting local work for this?
+
+   I drop some TODOs in the code below for future improvements.
+   Where are the readonly's
+*/
+
+
+
 // TODO: optional implement []
 // TODO: string " { ", " \"  } "
 // emit events allow the reassembly of the json
@@ -47,6 +61,7 @@ interface LineStreamContext {
 }
 
 // XState machine events
+// TODO: we do interfaces first
 type MachineEvents = { type: "PROCESS_CHUNK"; chunk: string } | { type: "CONSUME" };
 
 // Helper to find the next significant character
@@ -385,6 +400,7 @@ function createLineStreamMachine(initialStateName: string) {
 }
 
 // Map LineStreamState enum to XState state names
+// TODO: that is a enum to string nobody needs
 function getInitialStateName(state: LineStreamState): string {
   switch (state) {
     case LineStreamState.WaitForOpeningCurlyBracket:
@@ -396,6 +412,7 @@ function getInitialStateName(state: LineStreamState): string {
   }
 }
 
+// TODO: this is only a reminder of the old code structure?
 export class LineStreamParser {
   readonly onFragment =
     OnFunc<(f: { type: "fragment"; lineNr: number; fragment: string; seq: number; lineComplete: boolean }) => void>();
