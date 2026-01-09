@@ -35,7 +35,7 @@
     "@fireproof/use-fireproof": "0.24.3-dev-use-livequery",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.4",
-    "@react-router/node": "^7.10.1",
+    "@react-router/node": "^7.12.0",
     "@react-router/serve": "^7.10.1",
     "@shikijs/monaco": "^3.21.0",
     "@tailwindcss/typography": "^0.5.19",
