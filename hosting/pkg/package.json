@@ -63,7 +63,7 @@
     "@hono/clerk-auth": "^3.0.3",
     "@vibes.diy/hosting-base": "workspace:*",
     "call-ai": "workspace:*",
-    "chanfana": "^2.8.2",
+    "chanfana": "^3.0.0",
     "hono": "^4.11.3",
     "jose": "^6.1.3",
     "multiformats": "^13.4.2",
