@@ -7,29 +7,32 @@
    CSS Variables (Light Mode Only)
    ========================================================================== */
 :root {
-  --vibes-cream: #F5F5DC;
+  --vibes-cream: #f5f5dc;
   --vibes-near-black: #1a1a1a;
   --vibes-near-gray: #e8e8e0;
   --vibes-blue: #5398c9;
-  --vibes-red: #DA291C;
-  --vibes-yellow: #EDCE02;
-  --vibes-gray: #231F20;
+  --vibes-red: #da291c;
+  --vibes-yellow: #edce02;
+  --vibes-gray: #231f20;
 
   --grid-size: 40px;
   --menu-height: 64px;
   --animation-duration: 0.4s;
   --animation-easing: ease;
-  --font-primary: 'Alte Haas Grotesk', 'Inter', system-ui, sans-serif;
+  --font-primary: "Alte Haas Grotesk", "Inter", system-ui, sans-serif;
 }
 
 /* ==========================================================================
    Reset & Base Styles
    ========================================================================== */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   font-family: var(--font-primary);
@@ -76,7 +79,8 @@ img {
 }
 
 @keyframes bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -85,7 +89,8 @@ img {
 }
 
 @keyframes wiggle {
-  0%, 100% {
+  0%,
+  100% {
     transform: rotate(0deg);
   }
   25% {
@@ -97,7 +102,8 @@ img {
 }
 
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
   25% {
@@ -109,36 +115,73 @@ img {
 }
 
 @keyframes staticNoise {
-  0%, 100% { background-position: 0 0; }
-  10% { background-position: -5% -5%; }
-  20% { background-position: -10% 5%; }
-  30% { background-position: 5% -10%; }
-  40% { background-position: -5% 15%; }
-  50% { background-position: -10% 5%; }
-  60% { background-position: 15% 0; }
-  70% { background-position: 0 10%; }
-  80% { background-position: -15% 0; }
-  90% { background-position: 10% 5%; }
+  0%,
+  100% {
+    background-position: 0 0;
+  }
+  10% {
+    background-position: -5% -5%;
+  }
+  20% {
+    background-position: -10% 5%;
+  }
+  30% {
+    background-position: 5% -10%;
+  }
+  40% {
+    background-position: -5% 15%;
+  }
+  50% {
+    background-position: -10% 5%;
+  }
+  60% {
+    background-position: 15% 0;
+  }
+  70% {
+    background-position: 0 10%;
+  }
+  80% {
+    background-position: -15% 0;
+  }
+  90% {
+    background-position: 10% 5%;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideOutRight {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes slideInItem {
@@ -527,7 +570,7 @@ img {
   box-shadow: 6px 6px 0px black;
   z-index: 10;
   font-family: var(--font-primary);
-  color: #231F20;
+  color: #231f20;
 }
 
 .draggable-section {
@@ -627,7 +670,7 @@ img {
 }
 
 .link-out {
-  color: #D92A1C;
+  color: #d92a1c;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -710,7 +753,7 @@ img {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: "Segoe UI", system-ui, sans-serif;
   position: sticky;
   top: 100px;
 }
@@ -919,20 +962,19 @@ img {
 }
 
 .terminal-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.15),
-      rgba(0, 0, 0, 0.15) 1px,
-      transparent 1px,
-      transparent 2px
-    );
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
   pointer-events: none;
   z-index: 1;
 }
@@ -1021,7 +1063,9 @@ img {
   font-weight: bold;
   font-size: 18px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .side-menu-item:hover {

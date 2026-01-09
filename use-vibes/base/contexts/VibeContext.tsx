@@ -5,7 +5,7 @@ import { ClerkProvider, useClerk } from '@clerk/clerk-react';
 import { ToCloudOpts, TokenAndClaims, TokenStrategie } from '@fireproof/core-types-protocols-cloud';
 import { Database, SuperThis } from '@fireproof/use-fireproof';
 import { Lazy, Logger, OnFunc, OnFuncReturn, ReturnOnFunc } from '@adviser/cement';
-import z from 'zod/v4';
+import z from 'zod';
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -183,7 +183,6 @@ export function useVibeContext(): Vibe {
   return useContext(VibeContext);
 }
 
-
 /**
  * Zod schema for VibeMetadata validation.
  * Enforces alphanumeric characters and hyphens only to prevent heavy mangling
@@ -212,7 +211,6 @@ const VibeMetadataSchema = z.object({
  * Type inference from Zod schema
  */
 export type VibeMetadata = z.infer<typeof VibeMetadataSchema>;
-
 
 /**
  * Validates that VibeMetadata contains non-empty titleId and installId with valid characters.

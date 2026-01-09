@@ -85,8 +85,6 @@ export interface UseVibesFireproof extends UseFireproof {
   readonly syncEnabled?: boolean;
 }
 
-
-
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(
   nameOrDatabase: string | Database,

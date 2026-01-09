@@ -5,23 +5,27 @@ Your Tempo K3s cluster infrastructure is ready to deploy!
 ## What's Configured
 
 ### Infrastructure (Hetzner Cloud)
+
 - **Location**: US West (Hillsboro - hil)
 - **Server**: cpx21 (~$7/month)
 - **Domain**: vibesdiy.net
 - **Firewall**: SSH (22), K8s API (6443), HTTP (80), HTTPS (443)
 
 ### Kubernetes Components
+
 - **K3s**: Lightweight Kubernetes with OIDC support
 - **Traefik**: Default ingress controller (K3s built-in)
 - **cert-manager**: Automatic SSL certificates from Let's Encrypt
 - **external-dns**: Automatic Cloudflare DNS management
 
 ### Cloudflare Integration
+
 - **Domain**: vibesdiy.net
 - **DNS Challenge**: DNS-01 for wildcard support
 - **API Token**: Configured via Pulumi secrets
 
 ### GitHub Actions OIDC
+
 - **Issuer**: https://token.actions.githubusercontent.com
 - **Audience**: https://kubernetes.default.svc.cluster.local
 - **RBAC**: ClusterRole with deployment permissions
@@ -58,24 +62,29 @@ GitHub Repo: vibes.diy
 ## Next Steps
 
 ### 1. Verify Configuration
+
 ```bash
 cd /Users/menabe/Software/fproof/vibes.diy/vibes.diy/tempo
 pulumi config
 ```
 
 ### 2. Deploy Infrastructure
+
 ```bash
 pulumi up
 ```
 
 ### 3. Install Add-ons (if needed)
+
 The cloud-init script should install everything automatically.
 If you need to run manually:
+
 ```bash
 ./scripts/setup-k8s-addons.sh
 ```
 
 ### 4. Set up GitHub Actions
+
 ```bash
 ./scripts/setup-github-secrets-auto.sh
 ```
@@ -106,23 +115,24 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: myapp.vibesdiy.net
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: myapp
-            port:
-              number: 80
+    - host: myapp.vibesdiy.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp
+                port:
+                  number: 80
   tls:
-  - hosts:
-    - myapp.vibesdiy.net
-    secretName: myapp-tls
+    - hosts:
+        - myapp.vibesdiy.net
+      secretName: myapp-tls
 ```
 
 This will automatically:
+
 - Create DNS record: myapp.vibesdiy.net → server IP
 - Request SSL certificate from Let's Encrypt
 - Configure Traefik to serve with HTTPS
@@ -174,11 +184,13 @@ Check the following if you encounter issues:
 ## Cleanup
 
 To destroy everything:
+
 ```bash
 pulumi destroy
 ```
 
 This will:
+
 - Delete the Hetzner server
 - Remove DNS records (with txt-owner-id=tempo)
 - Clean up the network and firewall

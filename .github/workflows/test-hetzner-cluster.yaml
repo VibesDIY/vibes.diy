@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'vibes.diy/tempo/examples/hello-world/**'
-      - '.github/workflows/test-hetzner-cluster.yaml'
+      - "vibes.diy/tempo/examples/hello-world/**"
+      - ".github/workflows/test-hetzner-cluster.yaml"
   workflow_dispatch:
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Get OIDC Token
         id: oidc
         run: |
@@ -28,7 +28,7 @@ jobs:
             | jq -r '.value')
           echo "::add-mask::$OIDC_TOKEN"
           echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
-      
+
       - name: Configure kubectl
         run: |
           mkdir -p ~/.kube
@@ -52,44 +52,44 @@ jobs:
             user:
               token: ${{ steps.oidc.outputs.token }}
           KUBE_EOF
-      
+
       - name: Test connection
         run: |
           kubectl version --client
           kubectl get nodes
           echo "Connected to cluster successfully!"
-      
+
       - name: Create apps namespace
         run: |
           kubectl create namespace apps --dry-run=client -o yaml | kubectl apply -f -
-      
+
       - name: Deploy Hello World
         run: |
           kubectl apply -f vibes.diy/tempo/examples/hello-world/deployment.yaml -n apps
-      
+
       - name: Wait for deployment
         run: |
           kubectl rollout status deployment/hello-world -n apps --timeout=5m
-      
+
       - name: Get deployment status
         run: |
           echo "================================"
           echo "Deployment Status"
           echo "================================"
           kubectl get all -n apps -l app=hello-world
-          
+
           echo ""
           echo "================================"
           echo "Ingress"
           echo "================================"
           kubectl get ingress hello-world -n apps
-          
+
           echo ""
           echo "================================"
           echo "Certificate"
           echo "================================"
           kubectl get certificate hello-world-tls -n apps 2>/dev/null || echo "Certificate not yet created (will be created automatically)"
-          
+
           echo ""
           echo "================================"
           echo "🎉 Deployment Complete!"

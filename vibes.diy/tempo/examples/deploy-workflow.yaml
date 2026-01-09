@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Get OIDC Token
         id: oidc
         run: |
@@ -21,7 +21,7 @@ jobs:
             | jq -r '.value')
           echo "::add-mask::$OIDC_TOKEN"
           echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
-      
+
       - name: Configure kubectl
         run: |
           mkdir -p ~/.kube
@@ -45,32 +45,32 @@ jobs:
             user:
               token: ${{ steps.oidc.outputs.token }}
           KUBE_EOF
-      
+
       - name: Test connection
         run: |
           kubectl version
           kubectl get nodes
-      
+
       - name: Deploy application
         run: |
           kubectl apply -f k8s/ -n apps
-          
+
           # Wait for rollout
           kubectl rollout status deployment/myapp -n apps --timeout=5m
-      
+
       - name: Get deployment status
         run: |
           echo "Services:"
           kubectl get svc -n apps
-          
+
           echo ""
           echo "Ingresses:"
           kubectl get ingress -n apps
-          
+
           echo ""
           echo "Certificates:"
           kubectl get certificate -n apps
-          
+
           echo ""
           echo "Your app should be available at:"
           kubectl get ingress -n apps -o jsonpath='{.items[0].spec.rules[0].host}' | xargs -I {} echo "https://{}"

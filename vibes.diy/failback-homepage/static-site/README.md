@@ -61,23 +61,28 @@ Then visit `http://localhost:8000`
 ## Notes
 
 ### THREE.js Scene
+
 The 3D animated scene is a simplified version. The original React app uses custom `CounterBoy` and `ScreenshotBoy` classes with complex explosion/collapse animations. The static version includes a simpler representation that demonstrates the scroll-driven animation concept.
 
 To fully replicate the original animation, you would need to port:
+
 - `CounterBoy.ts` class
 - `ScreenshotBoy.ts` class
 - `useSceneSetup.ts` hook
 - `sceneObjects.ts` factories
 
 ### Chat Messages
+
 The chat demo shows the "Friendsgiving" scenario. The original app randomly selects from 3 scenarios on each load.
 
 ### Dark Mode
+
 This static version is light-mode only. The original supports both light and dark themes via CSS custom properties and localStorage.
 
 ## Source
 
 Extracted from the vibes.diy React application:
+
 - `pkg/app/pages/HomeScreen/HomeScreen.tsx`
 - `pkg/app/pages/HomeScreen/HomeScreen.styles.ts`
 - `pkg/app/pages/HomeScreen/AnimatedScene.tsx`

@@ -45,7 +45,7 @@ function VibesApp({
   );
 
   // // Wrap in VibeContextProvider if vibeMetadata is provided
-  throw new Error("I destroyed to make it compile VibesApp")
+  throw new Error("I destroyed to make it compile VibesApp");
   // if (vibeMetadata) {
   //   return (
   //     <VibeContextProvider metadata={vibeMetadata}>
