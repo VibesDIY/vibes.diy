@@ -8,6 +8,11 @@ on:
     branches:
       - main
 
+  # Preview deployment on PRs
+  pull_request:
+    paths:
+      - "vibes.diy/failback-homepage/**/*"
+
   # Manual trigger for controlled deployments
   workflow_dispatch:
     inputs:
