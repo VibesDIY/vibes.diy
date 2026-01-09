@@ -6,7 +6,7 @@
   "scripts": {
     "tsc": "core-cli tsc",
     "typecheck": "core-cli tsc --noEmit",
-    "build": "core-cli tsc",
+    "build": "react-router build && rm -rf dist && cp -r build/client dist",
     "dev": "deno run --allow-sys --allow-env --allow-run --allow-net --allow-read --sloppy-imports serve/deno-vibes-diy-srv.ts",
     "dev:netlify": "netlify dev",
     "start": "serve -s build/client",
@@ -75,6 +75,7 @@
     "@fireproof/core-cli": "0.24.3-dev-use-livequery",
     "@pnpm/lockfile-file": "^9.1.3",
     "@react-router/dev": "^7.9.6",
+    "@react-router/fs-routes": "^7.12.0",
     "@storybook/addon-a11y": "^10.1.7",
     "@storybook/addon-docs": "^10.0.0",
     "@storybook/addon-onboarding": "^10.1.7",
