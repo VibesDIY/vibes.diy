@@ -3,12 +3,12 @@ import { OnFunc } from "@adviser/cement";
 import { LineStreamParser, FragmentEvent } from "./line-stream.js";
 
 /**
- * SSEDataEvent - Emitted for each complete SSE data: line
+ * DataEvent - Emitted for each complete data payload
  */
-export interface SSEDataEvent {
-  readonly type: "sseData";
+export interface DataEvent {
+  readonly type: "data";
   readonly lineNr: number; // Line number from underlying fragment
-  readonly payload: string; // Full payload (without "data: " prefix)
+  readonly payload: string; // Full payload (without "data: " prefix for SSE)
   readonly isDone: boolean; // True if payload is "[DONE]"
 }
 
@@ -24,7 +24,7 @@ export interface SSEDataEvent {
  * const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
  * const sseParser = new SSEDataParser(lineParser);
  *
- * sseParser.onSSEData(evt => {
+ * sseParser.onData(evt => {
  *   if (evt.isDone) {
  *     console.log("Stream complete");
  *   } else {
@@ -40,7 +40,7 @@ export interface SSEDataEvent {
  * ```
  */
 export class SSEDataParser {
-  readonly onSSEData = OnFunc<(event: SSEDataEvent) => void>();
+  readonly onData = OnFunc<(event: DataEvent) => void>();
 
   private readonly parser: LineStreamParser;
   private lineBuffer = "";
@@ -61,8 +61,8 @@ export class SSEDataParser {
 
       if (line.startsWith("data:")) {
         const payload = line.slice(5).trimStart(); // Remove "data:" and optional space
-        this.onSSEData.invoke({
-          type: "sseData",
+        this.onData.invoke({
+          type: "data",
           lineNr: this.currentLineNr,
           payload,
           isDone: payload === "[DONE]",

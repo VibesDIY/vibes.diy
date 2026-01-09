@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { LineStreamParser, LineStreamState, SSEDataParser, SSEDataEvent } from "call-ai";
+import { LineStreamParser, LineStreamState, SSEDataParser, DataEvent } from "call-ai";
 import { describe, it, expect } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
@@ -21,11 +21,11 @@ const fireproofStreamFixture = readFileSync(
 );
 
 describe("SSEDataParser", () => {
-  it("emits SSEDataEvent for data: lines", () => {
+  it("emits DataEvent for data: lines", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: SSEDataEvent[] = [];
-    sseParser.onSSEData((evt) => events.push(evt));
+    const events: DataEvent[] = [];
+    sseParser.onData((evt) => events.push(evt));
 
     sseParser.processChunk("data: hello world\n");
 
@@ -37,8 +37,8 @@ describe("SSEDataParser", () => {
   it("handles payload split across chunks", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: SSEDataEvent[] = [];
-    sseParser.onSSEData((evt) => events.push(evt));
+    const events: DataEvent[] = [];
+    sseParser.onData((evt) => events.push(evt));
 
     sseParser.processChunk("data: hel");
     sseParser.processChunk("lo wor");
@@ -51,8 +51,8 @@ describe("SSEDataParser", () => {
   it("handles data: prefix split across chunks", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: SSEDataEvent[] = [];
-    sseParser.onSSEData((evt) => events.push(evt));
+    const events: DataEvent[] = [];
+    sseParser.onData((evt) => events.push(evt));
 
     sseParser.processChunk("dat");
     sseParser.processChunk("a: hello\n");
@@ -64,8 +64,8 @@ describe("SSEDataParser", () => {
   it("does not emit for comment lines", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: SSEDataEvent[] = [];
-    sseParser.onSSEData((evt) => events.push(evt));
+    const events: DataEvent[] = [];
+    sseParser.onData((evt) => events.push(evt));
 
     sseParser.processChunk(": OPENROUTER PROCESSING\n");
 
@@ -75,8 +75,8 @@ describe("SSEDataParser", () => {
   it("does not emit for empty lines", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: SSEDataEvent[] = [];
-    sseParser.onSSEData((evt) => events.push(evt));
+    const events: DataEvent[] = [];
+    sseParser.onData((evt) => events.push(evt));
 
     sseParser.processChunk("\n\n\n");
 
@@ -86,8 +86,8 @@ describe("SSEDataParser", () => {
   it("identifies [DONE] terminator", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: SSEDataEvent[] = [];
-    sseParser.onSSEData((evt) => events.push(evt));
+    const events: DataEvent[] = [];
+    sseParser.onData((evt) => events.push(evt));
 
     sseParser.processChunk("data: [DONE]\n");
 
@@ -99,8 +99,8 @@ describe("SSEDataParser", () => {
   it("handles multiple data lines in one chunk", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: SSEDataEvent[] = [];
-    sseParser.onSSEData((evt) => events.push(evt));
+    const events: DataEvent[] = [];
+    sseParser.onData((evt) => events.push(evt));
 
     sseParser.processChunk("data: first\n\ndata: second\n");
 
@@ -112,8 +112,8 @@ describe("SSEDataParser", () => {
   it("handles data line without space after colon", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: SSEDataEvent[] = [];
-    sseParser.onSSEData((evt) => events.push(evt));
+    const events: DataEvent[] = [];
+    sseParser.onData((evt) => events.push(evt));
 
     sseParser.processChunk("data:no-space\n");
 
@@ -125,8 +125,8 @@ describe("SSEDataParser", () => {
     it("extracts all data payloads from openai-stream fixture", () => {
       const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
       const sseParser = new SSEDataParser(lineParser);
-      const events: SSEDataEvent[] = [];
-      sseParser.onSSEData((evt) => events.push(evt));
+      const events: DataEvent[] = [];
+      sseParser.onData((evt) => events.push(evt));
 
       feedFixtureRandomly(sseParser, openAiStreamFixture, { seed: 12345 });
 
@@ -145,8 +145,8 @@ describe("SSEDataParser", () => {
     it("extracts all data payloads from fireproof fixture", () => {
       const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
       const sseParser = new SSEDataParser(lineParser);
-      const events: SSEDataEvent[] = [];
-      sseParser.onSSEData((evt) => events.push(evt));
+      const events: DataEvent[] = [];
+      sseParser.onData((evt) => events.push(evt));
 
       feedFixtureRandomly(sseParser, fireproofStreamFixture, { seed: 67890 });
 
@@ -160,8 +160,8 @@ describe("SSEDataParser", () => {
     it("extracts all data payloads from weather fixture", () => {
       const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
       const sseParser = new SSEDataParser(lineParser);
-      const events: SSEDataEvent[] = [];
-      sseParser.onSSEData((evt) => events.push(evt));
+      const events: DataEvent[] = [];
+      sseParser.onData((evt) => events.push(evt));
 
       feedFixtureRandomly(sseParser, openAiWeatherStreamFixture, { seed: 11111 });
 
