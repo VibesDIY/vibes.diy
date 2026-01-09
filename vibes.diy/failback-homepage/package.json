@@ -99,7 +99,7 @@
     "prettier": "^3.7.4",
     "serve": "^14.2.5",
     "shiki": "^3.20.0",
-    "storybook": "^10.1.7",
+    "storybook": "^10.1.11",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
