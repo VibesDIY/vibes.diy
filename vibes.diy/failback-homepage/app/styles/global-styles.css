@@ -19,5 +19,5 @@
 @import "./modules/global-resets.css";
 @import "./modules/keyframe-animations.css";
 @import "./modules/tailwind-utilities.css";
-@import "./modules/pseudo-element.css";
+@import "./modules/pseudo-elements.css";
 @import "./modules/component-styles.css";

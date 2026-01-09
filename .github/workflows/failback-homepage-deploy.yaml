@@ -5,8 +5,8 @@ on:
   push:
     paths:
       - "vibes.diy/failback-homepage/**/*"
-    branches:
-      - main
+  #    branches:
+  #      - main
 
   # Manual trigger for controlled deployments
   workflow_dispatch:
@@ -42,27 +42,23 @@ jobs:
           cd vibes.diy/failback-homepage
           pnpm build
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           cd vibes.diy/failback-homepage
 
-          # Determine project name based on environment
+          # Determine environment for deployment
           if [[ "${{ github.event_name }}" == "push" ]] || [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
-            PROJECT_NAME="failback-homepage"
             echo "🚀 Deploying to production..."
+            npx wrangler deploy
           else
-            PROJECT_NAME="failback-homepage-preview"
-            echo "🚀 Deploying to preview..."
+            echo "🚀 Deploying to preview environment..."
+            npx wrangler deploy --env preview
           fi
 
-          # Deploy to Cloudflare Pages
-          npx wrangler pages deploy dist --project-name=${PROJECT_NAME}
-
           echo "✅ Deployment complete!"
-          echo "🌐 Site URL: https://${PROJECT_NAME}.pages.dev"
 
       - name: Deployment summary
         run: |
@@ -70,11 +66,11 @@ jobs:
           echo "🎉 Failback Homepage Deployment Summary"
           echo "========================================"
           echo "✅ Build completed successfully"
-          echo "✅ Deployed to Cloudflare Pages"
+          echo "✅ Deployed to Cloudflare Workers"
           echo ""
           if [[ "${{ github.event_name }}" == "push" ]] || [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
-            echo "🌐 Production URL: https://failback-homepage.pages.dev"
+            echo "🌐 Production: Check Cloudflare dashboard for worker URL"
           else
-            echo "🌐 Preview URL: https://failback-homepage-preview.pages.dev"
+            echo "🌐 Preview: Check Cloudflare dashboard for preview worker URL"
           fi
           echo ""
