@@ -2,6 +2,7 @@ import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import VibesDIYLogo from "../components/VibesDIYLogo.js";
 import VibespaceComponent from "../components/VibespaceComponent.js";
+import { HomeScreen } from "../pages/HomeScreen/HomeScreen.js";
 
 export function meta({ location }: { location: { pathname: string } }) {
   const path = location.pathname;
@@ -15,11 +16,8 @@ export function meta({ location }: { location: { pathname: string } }) {
   }
 
   return [
-    { title: "Page Not Found - Vibes DIY" },
-    {
-      name: "description",
-      content: "The page you are looking for could not be found.",
-    },
+    { title: "Vibes DIY - AI App Builder" },
+    { name: "description", content: "Generate apps in one prompt" },
   ];
 }
 
@@ -40,6 +38,8 @@ export function CatchAll() {
     }
   }
 
+  // Redirect all other routes to HomeScreen
+  return <HomeScreen />;
   // Otherwise, render the 404 page
   return <NotFoundPage />;
 }

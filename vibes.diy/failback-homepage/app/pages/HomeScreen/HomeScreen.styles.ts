@@ -184,7 +184,7 @@ export const getSectionsContainerStyle = (
   gap: isMobile ? "300px" : "30px",
   display: "flex",
   flexDirection: "column",
-  marginTop: isMobile ? "400px" : "0px",
+  marginTop: "0px",
 });
 
 export const getSecondCardStyle = (): CSSProperties => ({
