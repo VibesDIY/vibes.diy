@@ -1,11 +1,7 @@
 import React from "react";
-import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-} from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+
+import "./app.css";
 
 import { ClerkProvider } from "@clerk/clerk-react";
 import { PostHogProvider } from "posthog-js/react";

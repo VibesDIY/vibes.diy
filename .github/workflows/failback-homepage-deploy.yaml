@@ -5,8 +5,8 @@ on:
   push:
     paths:
       - "vibes.diy/failback-homepage/**/*"
-#    branches:
-#      - main
+  #    branches:
+  #      - main
 
   # Manual trigger for controlled deployments
   workflow_dispatch:
