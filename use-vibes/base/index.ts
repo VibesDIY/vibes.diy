@@ -82,7 +82,10 @@ export interface UseVibesFireproof extends UseFireproof {
   readonly doAttach: () => void;
   readonly doDetach: () => void;
   readonly attachState: AttachState;
+  readonly syncEnabled?: boolean;
 }
+
+
 
 // Custom useFireproof hook with implicit cloud sync and button integration
 export function useFireproof(

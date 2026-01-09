@@ -3,7 +3,6 @@ import * as ReactDOM from "react-dom/client";
 import { HiddenMenuWrapper } from "../components/vibes/HiddenMenuWrapper/HiddenMenuWrapper.js";
 import { VibesPanel } from "../components/vibes/VibesPanel.js";
 import {
-  VibeContextProvider,
   type VibeMetadata,
   validateVibeMetadata,
   VibeMetadataValidationError,
@@ -28,7 +27,6 @@ export interface MountVibesAppResult {
  */
 function VibesApp({
   showVibesSwitch = true,
-  vibeMetadata,
   children,
 }: {
   showVibesSwitch?: boolean;
@@ -46,14 +44,15 @@ function VibesApp({
     <>{children}</>
   );
 
-  // Wrap in VibeContextProvider if vibeMetadata is provided
-  if (vibeMetadata) {
-    return (
-      <VibeContextProvider metadata={vibeMetadata}>
-        {content}
-      </VibeContextProvider>
-    );
-  }
+  // // Wrap in VibeContextProvider if vibeMetadata is provided
+  throw new Error("I destroyed to make it compile VibesApp")
+  // if (vibeMetadata) {
+  //   return (
+  //     <VibeContextProvider metadata={vibeMetadata}>
+  //       {content}
+  //     </VibeContextProvider>
+  //   );
+  // }
 
   return content;
 }
