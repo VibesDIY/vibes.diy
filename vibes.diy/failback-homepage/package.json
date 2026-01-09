@@ -32,7 +32,7 @@
     "@fireproof/core-runtime": "0.24.3-dev-use-livequery",
     "@fireproof/core-types-base": "0.24.3-dev-use-livequery",
     "@fireproof/core-types-protocols-cloud": "0.24.3-dev-use-livequery",
-    "@fireproof/use-fireproof": "0.24.3-dev-use-livequery",
+    "@fireproof/use-fireproof": "0.24.3-dev-20261224",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-router/node": "^7.10.1",

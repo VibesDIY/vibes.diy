@@ -93,8 +93,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/use-fireproof':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: 0.24.3-dev-20261224
+        version: 0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.3-dev-use-livequery
@@ -330,8 +330,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/use-fireproof':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: 0.24.3-dev-20261224
+        version: 0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -443,8 +443,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/use-fireproof':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: 0.24.3-dev-20261224
+        version: 0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -626,8 +626,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/use-fireproof':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: 0.24.3-dev-20261224
+        version: 0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
@@ -748,8 +748,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/use-fireproof':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: 0.24.3-dev-20261224
+        version: 0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -803,8 +803,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/use-fireproof':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: 0.24.3-dev-20261224
+        version: 0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -2507,12 +2507,6 @@ packages:
 
   '@fireproof/use-fireproof@0.24.3-dev-20261224':
     resolution: {integrity: sha512-oeJtZAj2zh2hKwu0nvLFxamK8vUHMcrSTL4FVNg+9/CRkP/WhPr6OP4h0zFwq2dLsi3lFMVZGSmIoWYWe83vpA==}
-    peerDependencies:
-      '@adviser/cement': '>=0.4.20'
-      react: '>=18.0.0'
-
-  '@fireproof/use-fireproof@0.24.3-dev-use-livequery':
-    resolution: {integrity: sha512-fhi4n6QoVitRBGu64vwQ+z8jOpEQJYruXbaWs7V3clF3djeIQzounX5NxKAeEoY5bLbNxHN9xQV5J/Qe2rmFrg==}
     peerDependencies:
       '@adviser/cement': '>=0.4.20'
       react: '>=18.0.0'
@@ -13217,6 +13211,36 @@ snapshots:
       - typescript
       - utf-8-validate
 
+  '@fireproof/core-protocols-dashboard@0.24.3-dev-20261224(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@clerk/shared': 3.41.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@fireproof/core-device-id': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
+      zod: 4.2.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
+      - typescript
+
+  '@fireproof/core-protocols-dashboard@0.24.3-dev-20261224(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@clerk/shared': 3.41.1(react-dom@19.2.1(react@19.2.3))(react@19.2.3)
+      '@fireproof/core-device-id': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
+      zod: 4.2.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
+      - typescript
+
   '@fireproof/core-protocols-dashboard@0.24.3-dev-20261224(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.5(typescript@5.9.3)
@@ -13421,13 +13445,35 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/use-fireproof@0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@fireproof/use-fireproof@0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-base': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-gateways-cloud': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag': 0.24.3-dev-20261224(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.3-dev-20261224(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.3-dev-20261224(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
+      dompurify: 3.3.1
+      jose: 6.1.3
+      react: 19.2.1
+      ts-essentials: 10.1.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - react-dom
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/use-fireproof@0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@fireproof/core-gateways-cloud': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@fireproof/core-keybag': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.3-dev-20261224(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13443,40 +13489,18 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/use-fireproof@0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@fireproof/use-fireproof@0.24.3-dev-20261224(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@adviser/cement': 0.5.15(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-gateways-cloud': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.3-dev-use-livequery(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      dompurify: 3.3.1
-      jose: 6.1.3
-      react: 19.2.1
-      ts-essentials: 10.1.1(typescript@5.9.3)
-    transitivePeerDependencies:
-      - bufferutil
-      - react-dom
-      - typescript
-      - utf-8-validate
-
-  '@fireproof/use-fireproof@0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@adviser/cement': 0.5.15(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-gateways-cloud': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.3-dev-use-livequery(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
+      '@fireproof/core-base': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@fireproof/core-gateways-cloud': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@fireproof/core-keybag': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard': 0.24.3-dev-20261224(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.3-dev-20261224(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
       dompurify: 3.3.1
       jose: 6.1.3
       react: 19.2.3
