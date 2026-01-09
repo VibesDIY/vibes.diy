@@ -1,17 +1,18 @@
 import { OnFunc } from "@adviser/cement";
 import { setup, assign, emit, raise, createActor } from "xstate";
 
-/* 
-   Not bad for now, but before we continue i would like to have a 
-   fixure of a duplex stream of a full generated app from vibes diy?
-   like this https://github.com/VibesDIY/vibes.diy/blob/6eb30ed780979e7612ddcd89170011558c9d8ff2/call-ai/tests/integration/fixtures/openai-weather-response.json 
-   but more.
-   do we have a possiblity to get the wire format of the full app generation?
-   do we need to make hosting local work for this?
-
-   I drop some TODOs in the code below for future improvements.
-   Where are the readonly's
-*/
+/**
+ * LineStreamParser
+ * -----------------
+ * Rapid iteration warning: this parser is under active development. Expect
+ * behaviour and APIs (onFragment/onLineEnd) to evolve without semver warnings
+ * until we lock in the final SSE story.
+ *
+ * Today it exposes two complementary signals:
+ * - `onFragment`: chunk-level events (non-accumulating) suitable for incremental UIs.
+ * - `onLineEnd`: deterministic line-level events (one per newline or bracket EOL)
+ *   that emit fully accumulated content.
+ */
 
 // TODO: optional implement []
 // TODO: string " { ", " \"  } "
@@ -56,6 +57,7 @@ interface LineStreamContext {
   chunk: string; // The current working string being processed
   depth: number; // Nesting depth for curly brackets
   scanIndex: number; // Index of the next significant character found by scanner
+  lastChunk: string; // Tracks the raw chunk provided by the caller
 }
 
 // XState machine events
@@ -129,18 +131,25 @@ function createLineStreamMachine(initialStateName: string) {
         content: context.chunk.slice(0, context.scanIndex),
       })),
 
-      emitFragmentComplete: emit(({ context }) => ({
-        type: "fragment" as const,
-        lineNr: context.lineNr,
-        fragment: context.chunk.slice(0, context.scanIndex),
-        seq: context.seq,
-        lineComplete: true,
-      })),
+      emitFragmentComplete: emit(({ context }) => {
+        // Non-accumulating: emit only the portion of lastChunk before the newline
+        // scanIndex is position in chunk (which = rest + lastChunk)
+        // restLen is how much of chunk came from rest (previous chunks)
+        const restLen = context.chunk.length - context.lastChunk.length;
+        const lastChunkNewlinePos = context.scanIndex - restLen;
+        return {
+          type: "fragment" as const,
+          lineNr: context.lineNr,
+          fragment: lastChunkNewlinePos > 0 ? context.lastChunk.slice(0, lastChunkNewlinePos) : "",
+          seq: context.seq,
+          lineComplete: true,
+        };
+      }),
 
       emitFragmentIncomplete: emit(({ context }) => ({
         type: "fragment" as const,
         lineNr: context.lineNr,
-        fragment: context.chunk,
+        fragment: context.lastChunk || context.chunk,
         seq: context.seq,
         lineComplete: false,
       })),
@@ -149,6 +158,7 @@ function createLineStreamMachine(initialStateName: string) {
       appendChunk: assign({
         chunk: ({ context, event }) => (event.type === "PROCESS_CHUNK" ? context.rest + event.chunk : context.chunk),
         rest: "", // Clear rest as it's now in chunk
+        lastChunk: ({ event }) => (event.type === "PROCESS_CHUNK" ? event.chunk : ""),
       }),
 
       // Scan actions update the scanIndex context
@@ -201,16 +211,20 @@ function createLineStreamMachine(initialStateName: string) {
         chunk: ({ context }) => context.chunk.slice(context.scanIndex + 1),
         lineNr: ({ context }) => context.lineNr + 1,
         seq: 0,
+        // Non-accumulating: keep lastChunk as remaining chunk content for multi-line chunks
+        lastChunk: ({ context }) => context.chunk.slice(context.scanIndex + 1),
       }),
 
       saveRest: assign({
         rest: ({ context }) => context.chunk,
         chunk: "",
+        lastChunk: "",
       }),
 
       consumeAll: assign({
         chunk: "",
         rest: "",
+        lastChunk: "",
       }),
 
       // --- Internal Control ---
@@ -239,6 +253,7 @@ function createLineStreamMachine(initialStateName: string) {
       chunk: "",
       depth: 0,
       scanIndex: -1,
+      lastChunk: "",
     },
     initial: initialStateName,
     states: {
@@ -376,7 +391,9 @@ function createLineStreamMachine(initialStateName: string) {
                 target: "processing",
               },
               {
-                actions: ["emitFragmentIncomplete", "incrementSeq", "consumeAll"],
+                // Still save rest internally to find newlines across chunk boundaries
+                // But emitFragmentIncomplete only emits lastChunk (non-accumulating)
+                actions: ["emitFragmentIncomplete", "incrementSeq", "saveRest"],
                 target: "idle",
               },
             ],
