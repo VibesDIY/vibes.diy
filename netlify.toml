@@ -1,4 +1,4 @@
-[build]
-  publish = "build/client"
-  base = "./vibes.diy/pkg"
+#[build]
+#  publish = "build/client"
+#  base = "./vibes.diy/pkg"
 
