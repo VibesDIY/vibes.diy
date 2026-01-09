@@ -276,19 +276,13 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
         {
           greetings: false,
           prompt: "[[;#888;]Press Enter to continue...] ",
-          enabled: false, // Start disabled to prevent auto-focus on load
+          enabled: true,
           clickTimeout: null,
-          scrollOnEcho: false, // Prevent automatic scrolling when echoing text
-          scrollBottomOffset: 0, // Prevent scroll offset calculations
+          scrollOnEcho: false,
+          scrollBottomOffset: 0,
           wrap: true,
           checkArity: false,
           completion: false,
-          onFocus: function () {
-            return false; // Prevent focus
-          },
-          onBlur: function () {
-            return false; // Prevent blur handling
-          },
           keypress: function (e: KeyboardEvent) {
             // Block all character input (but not special keys like Enter)
             if (e.key.length === 1) {
@@ -307,17 +301,10 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
         (e.target as HTMLElement)?.blur();
       };
 
-      const preventScroll = (e: Event) => {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      };
-
       // Add focus prevention to terminal container and all children
       if (terminalRef.current) {
         terminalRef.current.addEventListener("focus", preventFocus, true);
         terminalRef.current.addEventListener("focusin", preventFocus, true);
-        terminalRef.current.addEventListener("scroll", preventScroll, true);
 
         // Also prevent focus on all child elements
         const allElements = terminalRef.current.querySelectorAll("*");
@@ -326,28 +313,6 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
           el.addEventListener("focusin", preventFocus, true);
         });
       }
-
-      // Enable terminal after a longer delay to ensure all DOM operations are complete
-      setTimeout(() => {
-        term.enable();
-      }, 300);
-
-      // Prevent terminal from auto-focusing on external clicks
-      const preventExternalFocus = (e: MouseEvent) => {
-        // If click is outside the terminal container, blur the terminal
-        if (
-          terminalRef.current &&
-          !terminalRef.current.contains(e.target as Node)
-        ) {
-          // Blur any focused element within the terminal
-          const activeElement = document.activeElement;
-          if (activeElement && terminalRef.current.contains(activeElement)) {
-            (activeElement as HTMLElement).blur();
-          }
-        }
-      };
-
-      document.addEventListener("click", preventExternalFocus, true);
 
       // Claude Code CLI parody - Vibes DIY style (narrow version ~45 chars)
       const orange = "#DA291C";
@@ -393,7 +358,6 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
 
       return () => {
         animationActive = false;
-        document.removeEventListener("click", preventExternalFocus, true);
 
         // Remove all focus prevention listeners
         if (terminalRef.current) {
@@ -401,11 +365,6 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
           terminalRef.current.removeEventListener(
             "focusin",
             preventFocus,
-            true,
-          );
-          terminalRef.current.removeEventListener(
-            "scroll",
-            preventScroll,
             true,
           );
 
@@ -444,10 +403,6 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     boxShadow:
       "0 0 20px rgba(0, 255, 0, 0.2), inset 0 0 60px rgba(0, 0, 0, 0.5)",
     border: "2px solid #333",
-    contentVisibility: "auto" as any,
-    containIntrinsicSize: isMobile ? "380px" : "283px",
-    overflowAnchor: "none" as any,
-    contain: "strict" as any,
   };
 
   // Scanline/noise overlay
@@ -471,9 +426,6 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
   // Terminal div styles (position set via CSS for .terminal-demo)
   const terminalStyle: React.CSSProperties = {
     pointerEvents: "auto",
-    overflow: "hidden", // Prevent terminal from causing page scroll
-    willChange: "auto",
-    transform: "translateZ(0)", // Create compositing layer to prevent layout shifts
   };
 
   return (
@@ -481,47 +433,38 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       <style>
         {`
           .terminal-demo {
-            overflow-anchor: none !important;
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             outline: none !important;
+            pointer-events: none !important;
           }
           .terminal-demo .terminal {
             --color: rgba(0, 255, 0, 0.9);
             --background: transparent;
             --size: ${isMobile ? "1" : "1.2"};
             --font: 'Courier New', monospace;
-            overflow: hidden !important;
-            overflow-anchor: none !important;
             height: 100% !important;
             max-height: ${isMobile ? "380px" : "283px"} !important;
             outline: none !important;
+            pointer-events: auto !important;
           }
           .terminal-demo .terminal .cmd {
-            pointer-events: none;
+            pointer-events: none !important;
             outline: none !important;
           }
           .terminal-demo .terminal textarea,
-          .terminal-demo .terminal .cmd-cursor-line {
+          .terminal-demo .terminal .cmd-cursor-line,
+          .terminal-demo .terminal input {
             pointer-events: none !important;
             outline: none !important;
             user-select: none !important;
+            caret-color: transparent !important;
           }
           .terminal-demo .terminal * {
-            scroll-margin: 0 !important;
-            scroll-padding: 0 !important;
-            overflow-anchor: none !important;
             outline: none !important;
-          }
-          .terminal-demo .terminal,
-          .terminal-demo .terminal > div {
-            contain: layout style paint;
-          }
-          .terminal-demo .terminal > div {
-            max-height: ${isMobile ? "380px" : "283px"} !important;
           }
           .terminal-demo, .terminal-demo * {
             -webkit-tap-highlight-color: transparent;

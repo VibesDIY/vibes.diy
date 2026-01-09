@@ -113,6 +113,7 @@ class UseVibesStrategie implements TokenStrategie {
     return Promise.resolve(undefined);
   }
 
+  // waitForToken(sthis: SuperThis, logger: Logger, deviceId: string, opts: ToCloudOpts): Promise<TokenAndClaims | undefined>;
   async waitForToken(
     sthis: SuperThis,
     logger: Logger,

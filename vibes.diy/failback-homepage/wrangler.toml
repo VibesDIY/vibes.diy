@@ -1,0 +1,10 @@
+name = "vibes-diy-failback"
+compatibility_date = "2024-01-01"
+main = "worker.ts"
+
+[assets]
+directory = "./build/client"
+binding = "ASSETS"
+
+[observability]
+enabled = true

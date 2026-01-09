@@ -1,6 +1,5 @@
 @import "https://esm.sh/tailwindcss/index.css";
 /* @import "tailwindcss"; */
-@import "./styles/colors.css";
 @import "./styles/global-styles.css";
 
 @font-face {

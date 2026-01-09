@@ -45,7 +45,6 @@ import {
   getScrollableAnimatedSceneMobileContainerStyle,
   getScrollableAnimatedSceneWrapperStyle,
   getScrollableAnimatedSceneInnerStyle,
-  getStickyAnimatedSceneMobileStyle,
   getStickyAnimatedSceneDesktopStyle,
   getStickyAnimatedSceneDesktopLeftSpacerStyle,
   getStickyAnimatedSceneDesktopRightContainerStyle,
@@ -56,8 +55,6 @@ import {
   getLinkOutStyle,
   get1of3Column,
   get2of3Column,
-  getHiddenScrollDivStyle,
-  getHiddenScrollDivInnerStyle,
 } from "./HomeScreen.styles.js";
 import {
   ChatAnimation,
@@ -66,17 +63,21 @@ import {
   VibesSwitch,
 } from "../../components/index.js";
 import { HomeScreenProps } from "./HomeScreen.types.js";
-import { useIsMobile, usePrefersDarkMode } from "../../hooks/index.js";
+import {
+  useIsMobile,
+  usePrefersDarkMode,
+  useAutoProgressAnimation,
+} from "../../hooks/index.js";
 import { AnimatedScene } from "./AnimatedScene.js";
 import { MoonIcon, SunIcon } from "../../components/vibes/icons/index.js";
 
 // Asset paths (referenced as strings for non-bundled builds)
-const computerAnimGif = "/app/assets/computer-anim.gif";
-const htmlpng = "/app/assets/html.png";
-const mouth = "/app/assets/mouth.gif";
-const rainbowComputer = "/app/assets/rainbow-computer.gif";
-const fireproofLogo = "/app/assets/fireproof-logo.png";
-const vibeZoneChart = "/app/assets/vibe-zone.png";
+const computerAnimGif = "/computer-anim.gif";
+const htmlpng = "/html.png";
+const mouth = "/mouth.gif";
+const rainbowComputer = "/rainbow-computer.gif";
+const fireproofLogo = "/fireproof-logo.png";
+const vibeZoneChart = "/vibe-zone.png";
 
 // Helper function to convert URLs in text to clickable links
 const renderMessageWithLinks = (text: string) => {
@@ -110,12 +111,24 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   const innerContainerRef = useRef<HTMLDivElement>(null);
   const animatedSceneContainerRef = useRef<HTMLDivElement>(null);
   const animatedSceneSection0Ref = useRef<HTMLDivElement>(null);
-  const animatedSceneSection0MobileRef = useRef<HTMLDivElement>(null);
   const animatedSceneContainer0MobileRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const hiddenScrollDivRef = useRef<HTMLDivElement>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
+
+  // Auto-progress animation for mobile (loops continuously)
+  const autoProgress = useAutoProgressAnimation({
+    enabled: isMobile,
+    durationMs: 10000, // 15 seconds for full cycle (0-100) - faster animation
+    pauseBeforeRestartMs: 1000, // 1 second pause before restarting to avoid visual glitches
+  });
+
+  // Sync auto-progress to animationProgress state on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setAnimationProgress(autoProgress);
+    }
+  }, [isMobile, autoProgress]);
 
   // Dark mode state - initialize from localStorage or browser preference
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -619,43 +632,15 @@ export const HomeScreen = (_props: HomeScreenProps) => {
     };
   }, [isMobile]);
 
-  // Mobile: Hidden div scroll tracker for Section 0 (0-100)
+
+
+  // Auto-center Section 0 when user starts interacting (DESKTOP ONLY)
   useEffect(() => {
-    if (!isMobile) return;
+    // Skip on mobile - auto-progress doesn't need user interaction
+    if (isMobile) return;
 
-    const hiddenScrollDiv = hiddenScrollDivRef.current;
-
-    if (!hiddenScrollDiv) {
-      return;
-    }
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = hiddenScrollDiv;
-      const scrollProgress =
-        scrollHeight > clientHeight
-          ? (scrollTop / (scrollHeight - clientHeight)) * 100
-          : 0;
-      setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
-    };
-
-    hiddenScrollDiv.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-
-    // Initial calculation
-    handleScroll();
-
-    return () => {
-      hiddenScrollDiv.removeEventListener("scroll", handleScroll);
-    };
-  }, [isMobile]);
-
-  // Auto-center Section 0 when user starts interacting
-  useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    const animatedSection0Container = isMobile
-      ? animatedSceneSection0MobileRef.current
-      : animatedSceneSection0Ref.current;
+    const animatedSection0Container = animatedSceneSection0Ref.current;
     const section0 = section0Ref.current;
 
     if (!scrollContainer || !animatedSection0Container || !section0) return;
@@ -1088,30 +1073,23 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
               {/* Right column: AnimatedScene */}
               {isMobile ? (
-                // Mobile: Container with placeholder and overlay
+                // Mobile: Auto-animated scene (no scroll control)
                 <div
                   ref={animatedSceneContainer0MobileRef}
                   style={getScrollableAnimatedSceneMobileContainerStyle()}
                 >
-                  {/* Hidden scrollable div for slower animation */}
+                  {/* Mobile: Auto-playing AnimatedScene */}
                   <div
-                    ref={hiddenScrollDivRef}
-                    style={getHiddenScrollDivStyle()}
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
-                    <div style={getHiddenScrollDivInnerStyle()} />
-                  </div>
-
-                  {/* Mobile: Scrollable AnimatedScene overlay centered in container */}
-                  <div
-                    className="animated-scene-wrapper"
-                    style={getScrollableAnimatedSceneWrapperStyle(isMobile)}
-                    ref={animatedSceneSection0MobileRef}
-                  >
-                    <div style={getScrollableAnimatedSceneInnerStyle()}>
-                      <div style={getStickyAnimatedSceneMobileStyle()}>
-                        <AnimatedScene progress={animationProgress} />
-                      </div>
-                    </div>
+                    <AnimatedScene progress={animationProgress} />
                   </div>
                 </div>
               ) : (
@@ -1180,7 +1158,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                         coding experience that we started by making our own
                         database. The Vibes DIY web stack is open source, and
                         uses a sync-engine powered by our database,{" "}
-                        <a style={getLinkOutStyle()}>Fireproof </a>. Because{" "}
+                        <a style={getLinkOutStyle()}>Fireproof</a>. Because{" "}
                         <a style={getLinkOutStyle()}>Fireproof</a> is local
                         first, your data lives in the browser, and syncs across
                         your users' browsers automatically. Without a virtual

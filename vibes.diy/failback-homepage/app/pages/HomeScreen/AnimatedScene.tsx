@@ -323,6 +323,41 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
 
     const lastPosition = lastPositionRef.current;
 
+    // Detect loop restart (position jumped back to 0)
+    if (position < 10 && lastPosition > 90) {
+      // Reset block index to avoid accumulation
+      blockIndexRef.current = 0;
+
+      // Reset all animated elements to initial state
+      const counterBoyRight = sceneSetup.counterBoyRightRef.current;
+      const screenshotBoys = sceneSetup.screenshotBoysRef.current;
+
+      // Hide and reset ScreenshotBoys
+      if (screenshotBoys) {
+        screenshotBoys.forEach((boy) => {
+          boy.group.visible = false;
+          boy.group.position.y = -20;
+          boy.group.traverse((child) => {
+            const mesh = child as THREE.Mesh;
+            if (mesh.material) {
+              const materials = Array.isArray(mesh.material)
+                ? mesh.material
+                : [mesh.material];
+              materials.forEach((mat) => {
+                mat.opacity = 0;
+              });
+            }
+          });
+        });
+      }
+
+      // Reset right CounterBoy visibility
+      if (counterBoyRight) {
+        counterBoyRight.group.visible = false;
+      }
+      showRightCounterBoyRef.current = false;
+    }
+
     // Seek each segment based on its timing
     masterTimelineSegmentsRef.current.forEach((entry) => {
       // Handle trigger points
