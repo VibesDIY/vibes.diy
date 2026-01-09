@@ -195,8 +195,8 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       chanfana:
-        specifier: ^2.1.4
-        version: 2.8.3
+        specifier: ^3.0.0
+        version: 3.0.0
       hono:
         specifier: ^4.11.3
         version: 4.11.3
@@ -235,8 +235,8 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       chanfana:
-        specifier: ^2.8.2
-        version: 2.8.3
+        specifier: ^3.0.0
+        version: 3.0.0
       hono:
         specifier: ^4.11.3
         version: 4.11.3
@@ -288,8 +288,8 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(bufferutil@4.1.0)(playwright@1.57.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.16)
       chanfana:
-        specifier: ^2.8.2
-        version: 2.8.3
+        specifier: ^3.0.0
+        version: 3.0.0
       hono:
         specifier: ^4.11.3
         version: 4.11.3
@@ -1440,10 +1440,10 @@ packages:
   '@adviser/ts-xxhash@1.0.2':
     resolution: {integrity: sha512-WSryk539sIKc1tYAJ+05Fc7HnH+IPOjoGhtmZSXHHibPH1970EvGah0OG7wnPUn/a0gfG51cwQUtMwNosA+kCA==}
 
-  '@asteasolutions/zod-to-openapi@7.3.4':
-    resolution: {integrity: sha512-/2rThQ5zPi9OzVwes6U7lK1+Yvug0iXu25olp7S0XsYmOqnyMfxH7gdSQjn/+DSOHRg7wnotwGJSyL+fBKdnEA==}
+  '@asteasolutions/zod-to-openapi@8.4.0':
+    resolution: {integrity: sha512-Ckp971tmTw4pnv+o7iK85ldBHBKk6gxMaoNyLn3c2Th/fKoTG8G3jdYuOanpdGqwlDB0z01FOjry2d32lfTqrA==}
     peerDependencies:
-      zod: ^3.20.2
+      zod: ^4.0.0
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -5902,8 +5902,8 @@ packages:
     resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
-  chanfana@2.8.3:
-    resolution: {integrity: sha512-OBefbT8n+CeRYkC6lUoRgySTFbth+3LetxiNrCe0t+WgpQhhoIxPlo+lDYvNrLJgtsQr7XuPazm8yyxR8zwB7g==}
+  chanfana@3.0.0:
+    resolution: {integrity: sha512-O143r9g6HlFeIdk05hEQyRIQEXTV+tjjF8fmOvByNT6zqKIzFbrs+IqnZ6reC/2s3j0XHzYZ38FE9qfTlR1PMw==}
     hasBin: true
 
   char-regex@1.0.2:
@@ -11795,10 +11795,10 @@ snapshots:
 
   '@adviser/ts-xxhash@1.0.2': {}
 
-  '@asteasolutions/zod-to-openapi@7.3.4(zod@3.25.76)':
+  '@asteasolutions/zod-to-openapi@8.4.0(zod@4.3.5)':
     dependencies:
       openapi3-ts: 4.5.0
-      zod: 3.25.76
+      zod: 4.3.5
 
   '@babel/code-frame@7.27.1':
     dependencies:
@@ -18179,13 +18179,13 @@ snapshots:
 
   chalk@5.6.2: {}
 
-  chanfana@2.8.3:
+  chanfana@3.0.0:
     dependencies:
-      '@asteasolutions/zod-to-openapi': 7.3.4(zod@3.25.76)
+      '@asteasolutions/zod-to-openapi': 8.4.0(zod@4.3.5)
       js-yaml: 4.1.1
       openapi3-ts: 4.5.0
       yargs-parser: 22.0.0
-      zod: 3.25.76
+      zod: 4.3.5
 
   char-regex@1.0.2: {}
 
