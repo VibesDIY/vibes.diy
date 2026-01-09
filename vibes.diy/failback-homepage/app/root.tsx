@@ -30,23 +30,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function Root() {
+  const postHogKey = VibesDiyEnv.POSTHOG_KEY();
+
+  const content = (
+    <CookieConsentProvider>
+      <Outlet />
+      <ClientOnly>
+        <CookieBanner />
+      </ClientOnly>
+    </CookieConsentProvider>
+  );
+
   return (
     <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
       <ThemeProvider>
-        <PostHogProvider
-          apiKey={VibesDiyEnv.POSTHOG_KEY()}
-          options={{
-            api_host: VibesDiyEnv.POSTHOG_HOST(),
-            opt_out_capturing_by_default: true,
-          }}
-        >
-          <CookieConsentProvider>
-            <Outlet />
-            <ClientOnly>
-              <CookieBanner />
-            </ClientOnly>
-          </CookieConsentProvider>
-        </PostHogProvider>
+        {postHogKey ? (
+          <PostHogProvider
+            apiKey={postHogKey}
+            options={{
+              api_host: VibesDiyEnv.POSTHOG_HOST(),
+              opt_out_capturing_by_default: true,
+            }}
+          >
+            {content}
+          </PostHogProvider>
+        ) : (
+          content
+        )}
       </ThemeProvider>
     </ClerkProvider>
   );

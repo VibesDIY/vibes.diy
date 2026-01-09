@@ -26,7 +26,7 @@ export async function clientLoader({ request }: { request: Request }) {
 }
 
 export default function SessionWrapper() {
-  return <HomeScreen />; // Remove when the site work again 
+  return <HomeScreen />;
   // Check authentication state
   const { isSignedIn } = useAuth();
 
