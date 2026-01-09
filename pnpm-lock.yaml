@@ -872,8 +872,8 @@ importers:
         specifier: 19.2.1
         version: 19.2.1
       react-cookie-consent:
-        specifier: ^9.0.0
-        version: 9.0.0(react@19.2.1)
+        specifier: ^10.0.0
+        version: 10.0.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react-dom:
         specifier: 19.2.1
         version: 19.2.1(react@19.2.1)
@@ -1098,8 +1098,8 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3
       react-cookie-consent:
-        specifier: ^9.0.0
-        version: 9.0.0(react@19.2.3)
+        specifier: ^10.0.0
+        version: 10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
@@ -1261,8 +1261,8 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3
       react-cookie-consent:
-        specifier: ^9.0.0
-        version: 9.0.0(react@19.2.3)
+        specifier: ^10.0.0
+        version: 10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
@@ -1364,8 +1364,8 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3
       react-cookie-consent:
-        specifier: ^9.0.0
-        version: 9.0.0(react@19.2.3)
+        specifier: ^10.0.0
+        version: 10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
@@ -8380,9 +8380,6 @@ packages:
   js-base64@3.7.8:
     resolution: {integrity: sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow==}
 
-  js-cookie@2.2.1:
-    resolution: {integrity: sha512-HvdH2LzI/EAZcUwA8+0nKNtWHqS+ZmijLA30RwZA0bo7ToCckjK5MkGhjED9KoRcXO6BaGI3I9UIzSA1FKFPOQ==}
-
   js-cookie@3.0.5:
     resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
     engines: {node: '>=14'}
@@ -10084,11 +10081,12 @@ packages:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
 
-  react-cookie-consent@9.0.0:
-    resolution: {integrity: sha512-Blyj+m+Zz7SFHYqT18p16EANgnSg2sIyU6Yp3vk83AnOnSW7qnehPkUe4+8+qxztJrNmCH5GP+VHsWzAKVOoZA==}
-    engines: {node: '>=10'}
+  react-cookie-consent@10.0.0:
+    resolution: {integrity: sha512-VHbS1phMZ+r898KH7aJY/CfWKOXsHYr9W7Z+GuksH90K72iY9HJBMMYPcNNo32BwPOQBJV/dj34bPy2oBlfQWA==}
+    engines: {node: '>=20.16'}
     peerDependencies:
-      react: '>=16'
+      react: '>=18'
+      react-dom: '>=18'
 
   react-devtools-core@6.1.5:
     resolution: {integrity: sha512-ePrwPfxAnB+7hgnEr8vpKxL9cmnp7F322t8oqcPshbIQQhDKgFDW4tjhF2wjVbdXF9O/nyuy3sQWd9JGpiLPvA==}
@@ -21385,8 +21383,6 @@ snapshots:
 
   js-base64@3.7.8: {}
 
-  js-cookie@2.2.1: {}
-
   js-cookie@3.0.5: {}
 
   js-image-generator@1.0.4:
@@ -23679,15 +23675,17 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-cookie-consent@9.0.0(react@19.2.1):
+  react-cookie-consent@10.0.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
-      js-cookie: 2.2.1
+      js-cookie: 3.0.5
       react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
 
-  react-cookie-consent@9.0.0(react@19.2.3):
+  react-cookie-consent@10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
-      js-cookie: 2.2.1
+      js-cookie: 3.0.5
       react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
 
   react-devtools-core@6.1.5(bufferutil@4.1.0)(utf-8-validate@5.0.10):
     dependencies:
