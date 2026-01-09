@@ -1,5 +1,22 @@
+import { readFileSync } from "node:fs";
+
 import { LineStreamParser, LineStreamState } from "call-ai";
-import { expect, vi, it } from "vitest";
+import { expect, vi, it, describe } from "vitest";
+
+const openAiStreamFixture = readFileSync(
+  new URL("./fixtures/openai-stream-response.json", import.meta.url),
+  "utf8",
+);
+
+const openAiWeatherStreamFixture = readFileSync(
+  new URL("./fixtures/openai-weather-response.json", import.meta.url),
+  "utf8",
+);
+
+const openAiFireproofStreamFixture = readFileSync(
+  new URL("../integration/fixtures/openai-fireproof-stream-response.txt", import.meta.url),
+  "utf8",
+);
 
 it("Bracket-Test", async () => {
   const so = new LineStreamParser(LineStreamState.WaitForOpeningCurlyBracket);
@@ -237,6 +254,23 @@ it("EOL-Test", async () => {
       },
     ],
   ]);
+});
+
+describe("line stream fixtures", () => {
+  it("openai stream fixture retains SSE data chunks", () => {
+    const matches = openAiStreamFixture.match(/^data:/gm) ?? [];
+    expect(matches).toHaveLength(33);
+  });
+
+  it("openai weather stream fixture retains SSE data chunks", () => {
+    const matches = openAiWeatherStreamFixture.match(/^data:/gm) ?? [];
+    expect(matches).toHaveLength(39);
+  });
+
+  it("openai fireproof stream fixture retains SSE data chunks", () => {
+    const matches = openAiFireproofStreamFixture.match(/^data:/gm) ?? [];
+    expect(matches).toHaveLength(232);
+  });
 });
 
 it("Nesting-Test", async () => {
