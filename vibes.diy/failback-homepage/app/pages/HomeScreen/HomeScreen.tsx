@@ -71,12 +71,12 @@ import { AnimatedScene } from "./AnimatedScene.js";
 import { MoonIcon, SunIcon } from "../../components/vibes/icons/index.js";
 
 // Asset paths (referenced as strings for non-bundled builds)
-const computerAnimGif = "/app/assets/computer-anim.gif";
-const htmlpng = "/app/assets/html.png";
-const mouth = "/app/assets/mouth.gif";
-const rainbowComputer = "/app/assets/rainbow-computer.gif";
-const fireproofLogo = "/app/assets/fireproof-logo.png";
-const vibeZoneChart = "/app/assets/vibe-zone.png";
+const computerAnimGif = "/computer-anim.gif";
+const htmlpng = "/html.png";
+const mouth = "/mouth.gif";
+const rainbowComputer = "/rainbow-computer.gif";
+const fireproofLogo = "/fireproof-logo.png";
+const vibeZoneChart = "/vibe-zone.png";
 
 // Helper function to convert URLs in text to clickable links
 const renderMessageWithLinks = (text: string) => {

@@ -5,6 +5,7 @@ import { VibesPanel } from "../components/vibes/VibesPanel.js";
 import {
   type VibeMetadata,
   validateVibeMetadata,
+  VibeContextProvider,
   VibeMetadataValidationError,
 } from "@vibes.diy/use-vibes-base";
 
