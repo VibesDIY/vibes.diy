@@ -1,10 +1,10 @@
-import { LineStreamParser } from "call-ai";
+import { LineStreamParser, SSEDataParser } from "call-ai";
 
 /**
- * Feeds raw fixture data to a LineStreamParser with random chunk sizes.
+ * Feeds raw fixture data to a parser with random chunk sizes.
  * This simulates real network conditions where data may be split at arbitrary points.
  *
- * @param parser - The LineStreamParser instance to feed
+ * @param parser - The parser instance to feed (LineStreamParser or SSEDataParser)
  * @param fixture - The raw fixture string
  * @param options - Optional configuration
  * @param options.minChunkSize - Minimum chunk size (default: 1)
@@ -12,7 +12,7 @@ import { LineStreamParser } from "call-ai";
  * @param options.seed - Random seed for reproducibility (default: uses Math.random)
  */
 export function feedFixtureRandomly(
-  parser: LineStreamParser,
+  parser: LineStreamParser | SSEDataParser,
   fixture: string,
   options: {
     minChunkSize?: number;

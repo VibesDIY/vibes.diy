@@ -61,3 +61,4 @@ export {
   BracketOpenCloseEvent,
   InBracketEvent,
 } from "./line-stream.js";
+export { SSEDataParser, SSEDataEvent } from "./sse-data-parser.js";
