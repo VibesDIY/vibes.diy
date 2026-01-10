@@ -82,4 +82,5 @@ export {
   CodeBlockEvent,
   SegmentAccumulator,
   Segment,
+  createVibesParser,
 } from "./parser/index.js";

@@ -34,3 +34,5 @@ export {
 } from "./code-block-parser.js";
 
 export { SegmentAccumulator, Segment } from "./segment-accumulator.js";
+
+export { createVibesParser } from "./create-vibes-parser.js";
