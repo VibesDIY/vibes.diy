@@ -32,3 +32,5 @@ export {
   CodeEndEvent,
   CodeBlockEvent,
 } from "./code-block-parser.js";
+
+export { SegmentAccumulator, Segment } from "./segment-accumulator.js";
