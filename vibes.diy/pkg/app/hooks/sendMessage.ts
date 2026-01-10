@@ -8,7 +8,7 @@ import {
 } from "@vibes.diy/prompts";
 import { trackChatInputClick, trackEvent } from "../utils/analytics.js";
 import { parseContent } from "@vibes.diy/prompts";
-import { streamAI } from "../utils/streamHandler.js";
+import { streamVibes } from "../utils/streamVibes.js";
 import { generateTitle } from "../utils/titleGenerator.js";
 import { AUTH_REQUIRED_ERROR } from "../utils/authErrors.js";
 
@@ -116,16 +116,16 @@ export async function sendChatMessage(
     vibeDoc,
   );
 
-  return streamAI(
+  return streamVibes(
     modelToUse,
     currentSystemPrompt,
     messageHistory,
     promptText,
-    (content) => throttledMergeAiMessage(content),
+    ({ text }) => throttledMergeAiMessage(text),
     currentApiKey,
     setNeedsLogin,
   )
-    .then(async (finalContent) => {
+    .then(async ({ text: finalContent }) => {
       isProcessingRef.current = true;
 
       try {
