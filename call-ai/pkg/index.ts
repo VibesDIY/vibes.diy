@@ -80,4 +80,6 @@ export {
   CodeFragmentEvent,
   CodeEndEvent,
   CodeBlockEvent,
+  SegmentAccumulator,
+  Segment,
 } from "./parser/index.js";

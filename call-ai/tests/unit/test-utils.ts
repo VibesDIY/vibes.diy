@@ -1,4 +1,4 @@
-import { LineStreamParser, SSEDataParser, JsonParser, OpenRouterParser, CodeBlockParser } from "call-ai";
+import { LineStreamParser, SSEDataParser, JsonParser, OpenRouterParser, CodeBlockParser, SegmentAccumulator } from "call-ai";
 
 /**
  * Feeds raw fixture data to a parser with random chunk sizes.
@@ -12,7 +12,7 @@ import { LineStreamParser, SSEDataParser, JsonParser, OpenRouterParser, CodeBloc
  * @param options.seed - Random seed for reproducibility (default: uses Math.random)
  */
 export function feedFixtureRandomly(
-  parser: LineStreamParser | SSEDataParser | JsonParser | OpenRouterParser | CodeBlockParser,
+  parser: LineStreamParser | SSEDataParser | JsonParser | OpenRouterParser | CodeBlockParser | SegmentAccumulator,
   fixture: string,
   options: {
     minChunkSize?: number;
