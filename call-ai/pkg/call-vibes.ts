@@ -174,6 +174,14 @@ export async function* callVibes(
             }
           })
           .join("");
+
+        // Yield final state so for-await consumers see it
+        // (for-await doesn't capture generator return values)
+        yield {
+          text: accumulatedText,
+          segments: parser.segments,
+        };
+
         break;
       }
 
