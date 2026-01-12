@@ -1,6 +1,20 @@
 import { LineStreamParser, SSEDataParser, JsonParser, OpenRouterParser, CodeBlockParser, SegmentAccumulator } from "call-ai";
 
 /**
+ * Creates a random number generator, optionally seeded for reproducibility.
+ */
+function createRandom(seed?: number): () => number {
+  if (seed === undefined) {
+    return Math.random;
+  }
+  let s = seed;
+  return () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    return s / 0x7fffffff;
+  };
+}
+
+/**
  * Feeds raw fixture data to a parser with random chunk sizes.
  * This simulates real network conditions where data may be split at arbitrary points.
  *
@@ -21,18 +35,7 @@ export function feedFixtureRandomly(
   } = {},
 ): void {
   const { minChunkSize = 1, maxChunkSize = 50, seed } = options;
-
-  // Simple seeded random for reproducibility
-  let random: () => number;
-  if (seed !== undefined) {
-    let s = seed;
-    random = () => {
-      s = (s * 1103515245 + 12345) & 0x7fffffff;
-      return s / 0x7fffffff;
-    };
-  } else {
-    random = Math.random;
-  }
+  const random = createRandom(seed);
 
   let pos = 0;
   while (pos < fixture.length) {
@@ -56,17 +59,7 @@ export function randomChunks(
   } = {},
 ): string[] {
   const { minChunkSize = 1, maxChunkSize = 50, seed } = options;
-
-  let random: () => number;
-  if (seed !== undefined) {
-    let s = seed;
-    random = () => {
-      s = (s * 1103515245 + 12345) & 0x7fffffff;
-      return s / 0x7fffffff;
-    };
-  } else {
-    random = Math.random;
-  }
+  const random = createRandom(seed);
 
   const chunks: string[] = [];
   let pos = 0;
