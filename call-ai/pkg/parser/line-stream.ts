@@ -237,11 +237,7 @@ function createLineStreamMachine(initialStateName: string) {
 
       foundCloseBracket: ({ context }) => context.scanIndex !== -1 && context.chunk[context.scanIndex] === "}",
 
-      isDepthZero: ({ context }) => context.depth === 0,
-
       isDepthOne: ({ context }) => context.depth === 1,
-
-      hasContentBeforeScan: ({ context }) => context.scanIndex > 0,
     },
   }).createMachine({
     id: "lineStream",

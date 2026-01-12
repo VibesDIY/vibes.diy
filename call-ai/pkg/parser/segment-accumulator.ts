@@ -76,4 +76,11 @@ export class SegmentAccumulator {
   processChunk(chunk: string): void {
     this.codeParser.processChunk(chunk);
   }
+
+  /**
+   * Finalize parsing - call when stream ends to close any open code blocks
+   */
+  finalize(): void {
+    this.codeParser.finalize();
+  }
 }

@@ -157,6 +157,23 @@ export async function* callVibes(
       const { done, value } = await reader.read();
 
       if (done) {
+        // Flush decoder and finalize parser
+        const finalChunk = decoder.decode(undefined, { stream: false });
+        if (finalChunk) {
+          parser.processChunk(finalChunk);
+        }
+        parser.finalize();
+
+        // Rebuild final text after finalize
+        accumulatedText = parser.segments
+          .map((s) => {
+            if (s.type === "markdown") {
+              return s.content;
+            } else {
+              return "```\n" + s.content + "\n```";
+            }
+          })
+          .join("");
         break;
       }
 
@@ -183,7 +200,6 @@ export async function* callVibes(
     reader.releaseLock();
   }
 
-  // Final yield
   return {
     text: accumulatedText,
     segments: parser.segments,

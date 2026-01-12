@@ -16,8 +16,6 @@ import { globalDebug } from "./key-management.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
 import { checkForInvalidModelError } from "./error-handling.js";
 import { PACKAGE_VERSION, FALLBACK_MODEL } from "./non-streaming.js";
-import { detectCodeBlocks } from "./code-block-detector.js";
-import { StreamMessage, StreamTypes, nextStreamId } from "./stream-messages.js";
 
 /**
  * Create a proxy that acts both as a Promise and an AsyncGenerator for backward compatibility
@@ -294,30 +292,13 @@ async function* parseSSE(
   }
 }
 
-// Step 2: Core Semantic Generator
-// Composes parseSSE -> detectCodeBlocks
-async function* createSemanticGenerator(
-  response: Response,
-  options: CallAIOptions,
-  schemaStrategy: SchemaStrategy,
-  model: string,
-): AsyncGenerator<StreamMessage, void, unknown> {
-  const streamId = nextStreamId();
-  const sseStream = parseSSE(response, options, schemaStrategy, model);
-
-  // Pipeline: SSE Stream -> Code Block Detector -> Semantic Events
-  yield* detectCodeBlocks(sseStream, streamId, model);
-}
-
-// Wrapper function that selects the right output format based on options
+// Wrapper function that yields accumulated text chunks
 async function* createStreamingGenerator(
   response: Response,
   options: CallAIOptions,
   schemaStrategy: SchemaStrategy,
   model: string,
-): AsyncGenerator<string | StreamMessage, string, unknown> {
-  const semanticMode = (options as { _semanticMode?: boolean })._semanticMode ?? false;
-
+): AsyncGenerator<string, string, unknown> {
   // Create metadata for this streaming response
   const meta: ResponseMeta = {
     model,
@@ -329,45 +310,30 @@ async function* createStreamingGenerator(
     },
   };
 
-  // Create the semantic generator pipeline
-  const semanticGen = createSemanticGenerator(response, options, schemaStrategy, model);
-
-  if (semanticMode) {
-    // Return events directly (no metadata storage for semantic mode)
-    yield* semanticGen;
-  } else {
-    // Default: accumulate text (legacy mode) with metadata tracking
-    let accumulated = "";
-    for await (const msg of semanticGen) {
-      if (msg.type === StreamTypes.TEXT_FRAGMENT || msg.type === StreamTypes.CODE_FRAGMENT) {
-        accumulated += (msg.payload as { frag: string }).frag;
-        yield schemaStrategy.processResponse(accumulated);
-      }
-    }
-
-    // Update timing
-    const endTime = Date.now();
-    meta.timing.endTime = endTime;
-    meta.timing.duration = endTime - meta.timing.startTime;
-    meta.rawResponse = accumulated;
-
-    // Store metadata for getMeta() retrieval
-    const boxed = boxString(accumulated);
-    responseMetadata.set(boxed, meta);
-
-    return accumulated;
+  // Accumulate text from SSE stream
+  let accumulated = "";
+  for await (const chunk of parseSSE(response, options, schemaStrategy, model)) {
+    accumulated += chunk;
+    yield schemaStrategy.processResponse(accumulated);
   }
-  return "";
+
+  // Update timing
+  const endTime = Date.now();
+  meta.timing.endTime = endTime;
+  meta.timing.duration = endTime - meta.timing.startTime;
+  meta.rawResponse = accumulated;
+
+  // Store metadata for getMeta() retrieval
+  const boxed = boxString(accumulated);
+  responseMetadata.set(boxed, meta);
+
+  return accumulated;
 }
 
 // Simplified generator for accessing streaming results
 // Returns an async generator that yields blocks of text
 // This is a higher-level function that prepares the request
 // and handles model fallback
-//
-// Note: When _semanticMode is true, this actually yields StreamMessage objects
-// but we keep the return type as string for public API compatibility.
-// Internal callers (callAIStreamingSemantic) cast appropriately.
 async function* callAIStreaming(
   prompt: string | Message[],
   options: CallAIOptions = {},
@@ -450,7 +416,6 @@ async function* callAIStreaming(
         "headers",
         "skipRefresh",
         "debug",
-        "_semanticMode", // Internal option, not sent to API
       ].includes(key)
     ) {
       requestBody[key] = (options as Record<string, unknown>)[key];
@@ -504,9 +469,7 @@ async function* callAIStreaming(
     }
 
     // Yield streaming results through the generator
-    // Cast is safe: in normal mode yields strings, in _semanticMode yields StreamMessage
-    // but callAIStreamingSemantic handles the casting on its end
-    yield* createStreamingGenerator(response, options, schemaStrategy, model) as AsyncGenerator<string, string, unknown>;
+    yield* createStreamingGenerator(response, options, schemaStrategy, model);
 
     // The createStreamingGenerator will return the final assembled string
     return ""; // This is never reached due to yield*
@@ -521,29 +484,4 @@ async function* callAIStreaming(
   }
 }
 
-/**
- * Internal function that wraps callAIStreaming and yields StreamMessage events.
- * Used by parseAIStream to get semantic events directly without double-processing.
- * This is not part of the public API.
- *
- * Uses _semanticMode to get StreamMessage events directly from createStreamingGenerator,
- * which uses detectCodeBlocks to process all content.
- */
-async function* callAIStreamingSemantic(
-  prompt: string | Message[],
-  options: CallAIOptions,
-): AsyncGenerator<StreamMessage, void, unknown> {
-  // Use _semanticMode to get StreamMessage events directly from the single detector
-  // Cast is necessary because callAIStreaming's public type is string, but in _semanticMode
-  // it actually yields StreamMessage objects
-  const semanticStream = callAIStreaming(prompt, {
-    ...options,
-    _semanticMode: true,
-  } as CallAIOptions & { _semanticMode: boolean }) as unknown as AsyncGenerator<StreamMessage, string, unknown>;
-
-  for await (const event of semanticStream) {
-    yield event;
-  }
-}
-
-export { createStreamingGenerator, callAIStreaming, callAIStreamingSemantic };
+export { createStreamingGenerator, callAIStreaming };

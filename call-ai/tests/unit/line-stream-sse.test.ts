@@ -5,15 +5,9 @@ import { describe, it, expect, vi } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 
-const openAiStreamFixture = readFileSync(
-  new URL("./fixtures/openai-stream-response.json", import.meta.url),
-  "utf8",
-);
+const openAiStreamFixture = readFileSync(new URL("./fixtures/openai-stream-response.json", import.meta.url), "utf8");
 
-const openAiWeatherStreamFixture = readFileSync(
-  new URL("./fixtures/openai-weather-response.json", import.meta.url),
-  "utf8",
-);
+const openAiWeatherStreamFixture = readFileSync(new URL("./fixtures/openai-weather-response.json", import.meta.url), "utf8");
 
 const fireproofStreamFixture = readFileSync(
   new URL("../integration/fixtures/openai-fireproof-stream-response.txt", import.meta.url),
@@ -50,7 +44,8 @@ describe("LineStreamParser SSE fixtures", () => {
     let currentLine = "";
     const completedLines: string[] = [];
 
-    fragmentSpy.mock.calls.forEach(([evt]: [FragmentEvent]) => {
+    fragmentSpy.mock.calls.forEach((call) => {
+      const [evt] = call as [FragmentEvent];
       currentLine += evt.fragment;
       if (evt.lineComplete) {
         if (currentLine.startsWith("data: ") && !currentLine.includes("[DONE]")) {

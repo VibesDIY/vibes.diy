@@ -179,6 +179,7 @@ async function selectLlmsAndOptions(
       : undefined,
     apiKey: (await opts.getAuthToken?.()) || "",
     model,
+    stream: false,
     schema: {
       name: "module_and_options_selection",
       properties: {
@@ -219,7 +220,7 @@ async function selectLlmsAndOptions(
       ]);
 
     const raw = (await withTimeout(
-      (options.mock?.callAI || callAI)(messages, options),
+      (options.mock?.callAI || callAI)(messages, options) as Promise<string>,
     )) as string;
 
     if (raw === undefined || raw === null) {

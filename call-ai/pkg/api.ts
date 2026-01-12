@@ -13,7 +13,6 @@ import {
   ModelId,
   AIResult,
 } from "./types.js";
-import { StreamMessage } from "./stream-messages.js";
 import { chooseSchemaStrategy } from "./strategies/index.js";
 import { responseMetadata, boxString, getMeta } from "./response-metadata.js";
 import { keyStore, globalDebug } from "./key-management.js";
@@ -55,14 +54,10 @@ const FALLBACK_MODEL = "openrouter/auto";
  *          or a Promise that resolves to an AsyncGenerator when streaming is enabled.
  *          The AsyncGenerator yields partial responses as they arrive.
  */
-export function callAi(
-  prompt: string | Message[],
-  options: CallAIOptions = {},
-): Promise<string> | ThenableStreamResponse | ThenableStreamResponse<StreamMessage> {
+export function callAi(prompt: string | Message[], options: CallAIOptions = {}): Promise<string> | ThenableStreamResponse {
   // Check if we need to force streaming based on model strategy
   const schemaStrategy = chooseSchemaStrategy(options.model, options.schema || null);
-  const semanticStream = options.stream === "semantic";
-  const isStreaming = options.stream === true || semanticStream;
+  const isStreaming = options.stream === true;
 
   // We no longer set a default maxTokens
   // Will only include max_tokens in the request if explicitly set by the user
@@ -283,10 +278,7 @@ export function callAi(
     const streamingOptions = {
       ...options,
       stream: true,
-    } as CallAIOptions & { _semanticMode?: boolean };
-    if (semanticStream) {
-      streamingOptions._semanticMode = true;
-    }
+    };
     return createStreamingGenerator(response, streamingOptions, schemaStrategy, model) as StreamResponse;
   })();
 
@@ -300,9 +292,6 @@ export function callAi(
   }
 
   // Create a proxy object that acts both as a Promise and an AsyncGenerator for backward compatibility
-  if (semanticStream) {
-    return createBackwardCompatStreamingProxy<StreamMessage>(streamPromise as Promise<StreamResponse<StreamMessage>>);
-  }
   return createBackwardCompatStreamingProxy(streamPromise);
 }
 

@@ -328,10 +328,9 @@ export interface CallAIOptions {
   /**
    * Whether to stream the response.
    * - `false`/`undefined`: Return a single string (default)
-   * - `true`: Return an AsyncGenerator<string> (legacy streaming)
-   * - `"semantic"`: Return an AsyncGenerator<StreamMessage> (structured events)
+   * - `true`: Return an AsyncGenerator<string> (streaming)
    */
-  stream?: boolean | "semantic";
+  stream?: boolean;
 
   /**
    * Authentication token for key refresh service

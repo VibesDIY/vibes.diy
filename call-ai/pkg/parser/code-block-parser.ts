@@ -189,9 +189,8 @@ export class CodeBlockParser {
 
             this.buffer = "";
             this.state = "IN_CODE";
-          } else if (char === "`") {
-            this.buffer += char;
           } else {
+            // Accumulate language tag (e.g., ```jsx)
             this.buffer += char;
           }
           break;
@@ -213,7 +212,7 @@ export class CodeBlockParser {
           break;
 
         case "MAYBE_CLOSE":
-          if (char === "\n" || char === " " || char === "\t") {
+          if (char === "\n") {
             // Closing fence confirmed
             this.flushContent();
 
@@ -225,11 +224,8 @@ export class CodeBlockParser {
             this.currentLanguage = undefined;
             this.buffer = "";
             this.state = "TEXT";
-            // Don't emit the newline that closes the fence
-          } else if (char === "`") {
-            this.buffer += char;
           } else {
-            // False alarm - emit buffer + char as code
+            // Not a newline - false alarm, emit buffer + char as code
             this.codeToEmit += this.buffer + char;
             this.buffer = "";
             this.state = "IN_CODE";
