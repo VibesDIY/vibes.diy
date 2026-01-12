@@ -56,11 +56,16 @@ export async function streamVibes(
   };
 
   try {
-    let finalResult = { text: "", segments: [] as readonly Segment[] };
+    let finalResult: { text: string; segments: readonly Segment[] } | null =
+      null;
 
     for await (const result of callVibes(messages, options)) {
       finalResult = result;
       onUpdate(result);
+    }
+
+    if (!finalResult) {
+      throw new Error("Stream completed without yielding any results");
     }
 
     return finalResult;
