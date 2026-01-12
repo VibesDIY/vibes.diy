@@ -79,10 +79,7 @@ export async function streamVibes(
       throw new Error(AUTH_REQUIRED_ERROR);
     }
 
-    // Return error as text
-    return {
-      text: `Error: ${errorMsg}. If using proxy, ensure it's running at ${VibesDiyEnv.CALLAI_ENDPOINT()}`,
-      segments: [],
-    };
+    // Re-throw all errors so callers can handle them properly
+    throw error;
   }
 }
