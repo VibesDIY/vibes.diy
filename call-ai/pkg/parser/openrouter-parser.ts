@@ -74,6 +74,7 @@ export class OpenRouterParser {
   readonly onUsage = OnFunc<(event: OpenRouterUsageEvent) => void>();
   readonly onDone = OnFunc<(event: OpenRouterDoneEvent) => void>();
   readonly onMeta = OnFunc<(meta: OpenRouterMeta) => void>();
+  readonly onJson = OnFunc<(event: { json: unknown }) => void>();
   readonly onStreamEnd = OnFunc<() => void>(); // Fires on [DONE] from SSE
 
   private readonly jsonParser: JsonParser;
@@ -88,6 +89,9 @@ export class OpenRouterParser {
 
   private handleJson(evt: JsonEvent): void {
     const chunk = evt.json as Record<string, unknown>;
+
+    // Emit raw JSON for downstream consumers (like ToolSchemaParser)
+    this.onJson.invoke({ json: chunk });
 
     // Emit metadata on first chunk
     if (!this.metaEmitted && chunk.id) {

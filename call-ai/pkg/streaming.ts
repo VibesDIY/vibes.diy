@@ -147,7 +147,9 @@ async function* parseSSE(
                 toolCallsAssembled = fixedJson;
               }
               // Return the assembled tool call
-              return toolCallsAssembled;
+              const result = toolCallsAssembled;
+              toolCallsAssembled = ""; // Clear to prevent double yield
+              return result;
             } catch (e) {
               console.error("[parseSSE] Error handling assembled tool call:", e);
             }

@@ -36,3 +36,14 @@ export {
 export { SegmentAccumulator, Segment } from "./segment-accumulator.js";
 
 export { createVibesParser } from "./create-vibes-parser.js";
+
+export {
+  ToolSchemaParser,
+  ToolCallStartEvent,
+  ToolCallArgumentsEvent,
+  ToolCallCompleteEvent,
+} from "./tool-schema-parser.js";
+
+export { ToolSchemaAccumulator } from "./tool-schema-accumulator.js";
+
+export { createSchemaParser } from "./create-schema-parser.js";
