@@ -46,7 +46,6 @@ export function getLabelStyle(
     width: isMobile ? "100%" : "auto",
     fontWeight: 700,
     fontSize: "14px",
-    textTransform: "uppercase" as const,
     letterSpacing: "1px",
     whiteSpace: "nowrap" as const,
     color: "var(--vibes-card-text)",

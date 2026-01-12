@@ -9,7 +9,7 @@ export const HomeScreenTheme = {
   },
   dimensions: {
     padding: "20px",
-    gridSize: "40px",
+    gridSize: "32px",
   },
   animation: {
     duration: "0.4s",

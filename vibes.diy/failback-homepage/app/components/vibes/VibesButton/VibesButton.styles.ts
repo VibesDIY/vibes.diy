@@ -102,7 +102,6 @@ export function getButtonStyle(
     borderRadius: "12px",
     fontSize: "1rem",
     fontWeight: 700,
-    textTransform: "uppercase" as const,
     letterSpacing: "0.05em",
     cursor: "pointer",
     transition: "all 0.15s ease",

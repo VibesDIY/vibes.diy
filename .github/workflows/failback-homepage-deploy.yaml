@@ -1,12 +1,12 @@
 name: Deploy Failback Homepage
 
 on:
-  # Production deployment on main only
-  push:
-    paths:
-      - "vibes.diy/failback-homepage/**/*"
-  #    branches:
-  #      - main
+  # Production deployment on main only - TEMPORARILY DISABLED
+  # push:
+  #   paths:
+  #     - "vibes.diy/failback-homepage/**/*"
+  #   branches:
+  #     - main
 
   # Manual trigger for controlled deployments
   workflow_dispatch:

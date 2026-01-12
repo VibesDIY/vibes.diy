@@ -15,7 +15,7 @@
 
   /* Primary Palette */
   --vibes-blue: #3b82f6;
-  --vibes-blue-accent: #0066cc;
+  --vibes-blue-accent: #009ace;
   --vibes-blue-bright: #0074d9;
   --vibes-blue-dark: #357abd;
   --vibes-blue-darker: #4a90e2;
@@ -31,7 +31,7 @@
   --vibes-yellow-accent: #fedd00;
   --vibes-yellow-bright: #fe0;
 
-  --vibes-gray: #6b7280;
+  --vibes-gray: #7A7A7A;
   --vibes-green: #51cf66;
 
   /* Neon/Phosphorescent colors for dark mode */
@@ -112,9 +112,9 @@
   --vibes-button-icon-bg-dark-aware: var(--vibes-white);
 
   /* Button variant colors - Light mode */
-  --vibes-variant-blue: var(--vibes-blue);
-  --vibes-variant-red: var(--vibes-red);
-  --vibes-variant-yellow: var(--vibes-yellow);
+  --vibes-variant-blue: var(--vibes-blue-accent);
+  --vibes-variant-red: var(--vibes-red-accent);
+  --vibes-variant-yellow: var(--vibes-yellow-accent);
   --vibes-variant-gray: var(--vibes-gray);
 
   --vibes-card-bg: var(--vibes-gray-pale);

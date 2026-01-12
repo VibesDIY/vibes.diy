@@ -62,7 +62,7 @@ export const hiddenMenuTheme = {
   },
 
   dimensions: {
-    gridSize: "40px",
+    gridSize: "32px",
     padding: "24px",
     bottomOffset: "16px",
   },
