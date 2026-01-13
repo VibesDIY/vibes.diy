@@ -55,6 +55,7 @@ export {
 export type { JsonEvent as SSEJsonEvent } from "./json-events.js";
 
 export { OpenRouterParser } from "./openrouter-parser.js";
+export { NonStreamingOpenRouterParser } from "./non-streaming-openrouter-parser.js";
 export {
   orMeta,
   orDelta,
