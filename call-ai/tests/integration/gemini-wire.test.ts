@@ -1,50 +1,32 @@
 import fs from "fs";
 import path from "path";
 import { callAi, Schema, Message } from "call-ai";
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-// Mock fetch to use our fixture files
-// Mock global fetch
-const globalFetch = vi.fn<typeof fetch>();
-global.fetch = globalFetch as typeof fetch;
+/**
+ * Gemini Wire Protocol Tests
+ *
+ * Tests request formatting for Gemini models.
+ * Uses mock.fetch injection instead of global stubbing.
+ */
 
-describe("Gemini Wire Protocol Tests", () => {
-  // Read fixtures
-  // const geminiSystemRequestFixture = JSON.parse(
-  //   fs.readFileSync(
-  //     path.join(__dirname, "fixtures/gemini-system-request.json"),
-  //     "utf8",
-  //   ),
-  // );
-
+describe("Gemini Wire Protocol Tests (injected mock)", () => {
   const geminiSystemResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/gemini-system-response.json"), "utf8");
-
-  // const geminiRequestFixture = JSON.parse(
-  //   fs.readFileSync(
-  //     path.join(__dirname, "fixtures/gemini-request.json"),
-  //     "utf8",
-  //   ),
-  // );
 
   const geminiResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/gemini-response.json"), "utf8");
 
-  beforeEach(() => {
-    // Reset mocks
-    globalFetch.mockClear();
-
-    // Mock successful response
-    globalFetch.mockImplementation(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => geminiSystemResponseFixture,
-        json: async () => JSON.parse(geminiSystemResponseFixture),
-      } as Response;
-    });
-  });
+  function createMockFetch(fixtureContent: string = geminiSystemResponseFixture) {
+    return vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => fixtureContent,
+      json: async () => JSON.parse(fixtureContent),
+    } as Response);
+  }
 
   it("should use the JSON schema format by default for Gemini with schema", async () => {
-    // Define schema
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -56,18 +38,16 @@ describe("Gemini Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library function with the schema
     await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "google/gemini-2.0-flash-001",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Verify fetch was called
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    // Get the request body that was passed to fetch
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     // Check that we're using JSON Schema format since Gemini is not Claude
     expect(actualRequestBody.response_format).toBeTruthy();
@@ -87,17 +67,8 @@ describe("Gemini Wire Protocol Tests", () => {
   });
 
   it("should correctly handle Gemini response with schema", async () => {
-    // Update mock to return proper response
-    globalFetch.mockImplementationOnce(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => geminiResponseFixture,
-        json: async () => JSON.parse(geminiResponseFixture),
-      } as Response;
-    });
+    const mockFetch = createMockFetch(geminiResponseFixture);
 
-    // Define the schema
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -109,18 +80,13 @@ describe("Gemini Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library with Gemini model
     const result = await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "google/gemini-2.0-flash-001",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Parse the Gemini response fixture to get expected content
-    // const responseObj = JSON.parse(geminiResponseFixture);
-    // const responseContent = responseObj.choices[0].message.content;
-
-    // Verify the result
     expect(result).toBeTruthy();
 
     // Gemini might return content with code blocks
@@ -146,7 +112,8 @@ describe("Gemini Wire Protocol Tests", () => {
   });
 
   it("should pass through system messages directly", async () => {
-    // Call the library with messages array including system message
+    const mockFetch = createMockFetch();
+
     const messages: Message[] = [
       {
         role: "system",
@@ -162,20 +129,20 @@ describe("Gemini Wire Protocol Tests", () => {
     await callAi(messages, {
       apiKey: "test-api-key",
       model: "google/gemini-2.0-flash-001",
+      mock: { fetch: mockFetch },
     });
 
-    // Verify fetch was called
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    // Get the request body that was passed to fetch
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     // Verify messages are passed through correctly
     expect(actualRequestBody.messages).toEqual(messages);
   });
 
   it("should correctly handle Gemini response with system message", async () => {
-    // Call the library with messages array including system message
+    const mockFetch = createMockFetch();
+
     const result = await callAi(
       [
         {
@@ -191,10 +158,10 @@ describe("Gemini Wire Protocol Tests", () => {
       {
         apiKey: "test-api-key",
         model: "google/gemini-2.0-flash-001",
+        mock: { fetch: mockFetch },
       },
     );
 
-    // Verify the result
     expect(result).toBeTruthy();
 
     if (typeof result === "string") {
@@ -222,17 +189,8 @@ describe("Gemini Wire Protocol Tests", () => {
   });
 
   it("should handle schema when response_format schema is supported", async () => {
-    // Override the mock for this specific test
-    globalFetch.mockImplementationOnce(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => geminiResponseFixture,
-        json: async () => JSON.parse(geminiResponseFixture),
-      } as Response;
-    });
+    const mockFetch = createMockFetch(geminiResponseFixture);
 
-    // Define schema
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -244,18 +202,16 @@ describe("Gemini Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library function with schema format set to true to test fallback
     await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "google/gemini-2.0-flash-001",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Verify fetch was called
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    // Get the request body that was passed to fetch
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     // Check that we're using response_format.json_schema approach instead
     expect(actualRequestBody.response_format).toBeTruthy();

@@ -1,41 +1,30 @@
 import fs from "fs";
 import path from "path";
 import { callAi, Schema, Message } from "call-ai";
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-// Mock fetch to use our fixture files
-const global = globalThis;
-const globalFetch = vi.fn<typeof fetch>();
-global.fetch = globalFetch;
+/**
+ * GPT-4 Turbo Wire Protocol Tests
+ *
+ * Tests request formatting for GPT-4 Turbo models.
+ * Uses mock.fetch injection instead of global stubbing.
+ */
 
-describe("GPT-4 Turbo Wire Protocol Tests", () => {
-  // Read fixtures
-  // const gpt4turboSystemRequestFixture = JSON.parse(
-  //   fs.readFileSync(
-  //     path.join(__dirname, "fixtures/gpt4turbo-system-request.json"),
-  //     "utf8",
-  //   ),
-  // );
-
+describe("GPT-4 Turbo Wire Protocol Tests (injected mock)", () => {
   const gpt4turboSystemResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/gpt4turbo-system-response.json"), "utf8");
 
-  beforeEach(() => {
-    // Reset mocks
-    globalFetch.mockClear();
-
-    // Mock successful response
-    globalFetch.mockImplementation(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => gpt4turboSystemResponseFixture,
-        json: async () => JSON.parse(gpt4turboSystemResponseFixture),
-      } as Response;
-    });
-  });
+  function createMockFetch(fixtureContent: string = gpt4turboSystemResponseFixture) {
+    return vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => fixtureContent,
+      json: async () => JSON.parse(fixtureContent),
+    } as Response);
+  }
 
   it("should handle system message approach with GPT-4 Turbo", async () => {
-    // Define schema
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -47,19 +36,17 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library function with the schema using system message approach
     await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "openai/gpt-4-turbo",
       schema: schema,
       forceSystemMessage: true,
+      mock: { fetch: mockFetch },
     });
 
-    // Verify fetch was called
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    // Get the request body that was passed to fetch
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     // Check that we're using system messages
     expect(actualRequestBody.messages).toBeTruthy();
@@ -80,7 +67,8 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
   });
 
   it("should correctly handle GPT-4 Turbo response with system message", async () => {
-    // Call the library with system messages
+    const mockFetch = createMockFetch();
+
     const result = await callAi(
       [
         {
@@ -96,10 +84,10 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
       {
         apiKey: "test-api-key",
         model: "openai/gpt-4-turbo",
+        mock: { fetch: mockFetch },
       },
     );
 
-    // Verify the result
     expect(result).toBeTruthy();
 
     if (typeof result === "string") {
@@ -119,7 +107,8 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
   });
 
   it("should use system message approach when schema is provided to GPT-4 Turbo", async () => {
-    // Define schema
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -131,14 +120,13 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library function with the schema
     const result = await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "openai/gpt-4-turbo",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Verify the result
     expect(result).toBeTruthy();
 
     // Parse the response and verify structure
@@ -159,7 +147,8 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
   });
 
   it("should handle schema requests with GPT-4 Turbo", async () => {
-    // Define schema
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -171,18 +160,16 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library function with the schema
     await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "openai/gpt-4-turbo",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Verify fetch was called
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    // Get the request body that was passed to fetch
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     // Check that we're sending messages
     expect(actualRequestBody.messages).toBeTruthy();

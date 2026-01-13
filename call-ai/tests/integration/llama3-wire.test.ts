@@ -1,50 +1,32 @@
 import fs from "fs";
 import path from "path";
 import { callAi, Schema, Message } from "call-ai";
-import { describe, beforeEach, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
-// Mock fetch to use our fixture files
-const global = globalThis;
-const globalFetch = vi.fn<typeof fetch>();
-global.fetch = globalFetch as typeof fetch;
+/**
+ * Llama3 Wire Protocol Tests
+ *
+ * Tests request formatting for Llama3 models.
+ * Uses mock.fetch injection instead of global stubbing.
+ */
 
-describe("Llama3 Wire Protocol Tests", () => {
-  // Read fixtures
-  // const llama3RequestFixture = JSON.parse(
-  //   fs.readFileSync(
-  //     path.join(__dirname, "fixtures/llama3-request.json"),
-  //     "utf8",
-  //   ),
-  // );
-
+describe("Llama3 Wire Protocol Tests (injected mock)", () => {
   const llama3ResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/llama3-response.json"), "utf8");
-
-  // const llama3SystemRequestFixture = JSON.parse(
-  //   fs.readFileSync(
-  //     path.join(__dirname, "fixtures/llama3-system-request.json"),
-  //     "utf8",
-  //   ),
-  // );
 
   const llama3SystemResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/llama3-system-response.json"), "utf8");
 
-  beforeEach(() => {
-    // Reset mocks
-    globalFetch.mockClear();
-
-    // Mock successful response
-    globalFetch.mockImplementation(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => llama3ResponseFixture,
-        json: async () => JSON.parse(llama3ResponseFixture),
-      } as Response;
-    });
-  });
+  function createMockFetch(fixtureContent: string = llama3ResponseFixture) {
+    return vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => fixtureContent,
+      json: async () => JSON.parse(fixtureContent),
+    } as Response);
+  }
 
   it("should use the system message approach for Llama3 with schema", async () => {
-    // Define schema
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -56,18 +38,16 @@ describe("Llama3 Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library function with the schema
     await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "meta-llama/llama-3.3-70b-instruct",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Verify fetch was called
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    // Get the request body that was passed to fetch
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     // Check that we're using system message approach rather than JSON schema format
     expect(actualRequestBody.messages).toBeTruthy();
@@ -92,17 +72,8 @@ describe("Llama3 Wire Protocol Tests", () => {
   });
 
   it("should correctly handle Llama3 response with schema", async () => {
-    // Update mock to return proper response
-    globalFetch.mockImplementationOnce(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => llama3ResponseFixture,
-        json: async () => JSON.parse(llama3ResponseFixture),
-      } as Response;
-    });
+    const mockFetch = createMockFetch();
 
-    // Define the schema
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -114,18 +85,13 @@ describe("Llama3 Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library with Llama3 model
     const result = await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "meta-llama/llama-3.3-70b-instruct",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Parse the Llama3 response fixture to get expected content
-    // const responseObj = JSON.parse(llama3ResponseFixture);
-    // const responseContent = responseObj.choices[0].message.content;
-
-    // Verify the result
     expect(result).toBeTruthy();
 
     // Based on the actual response we got, Llama3 returns markdown-formatted text
@@ -138,17 +104,8 @@ describe("Llama3 Wire Protocol Tests", () => {
   });
 
   it("should handle system message approach with Llama3", async () => {
-    // Update mock to return system message response
-    globalFetch.mockImplementationOnce(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => llama3SystemResponseFixture,
-        json: async () => JSON.parse(llama3SystemResponseFixture),
-      } as Response;
-    });
+    const mockFetch = createMockFetch(llama3SystemResponseFixture);
 
-    // Call the library with messages array including system message
     const result = await callAi(
       [
         {
@@ -164,10 +121,10 @@ describe("Llama3 Wire Protocol Tests", () => {
       {
         apiKey: "test-api-key",
         model: "meta-llama/llama-3.3-70b-instruct",
+        mock: { fetch: mockFetch },
       },
     );
 
-    // Verify the result
     expect(result).toBeTruthy();
 
     // Based on the actual response, Llama3 can return proper JSON with system messages

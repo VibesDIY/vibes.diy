@@ -1,50 +1,32 @@
 import fs from "fs";
 import path from "path";
 import { callAi, Schema, Message } from "call-ai";
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-// Mock fetch to use our fixture files
-// Mock global fetch
-const globalFetch = vi.fn<typeof fetch>();
-global.fetch = globalFetch as typeof fetch;
+/**
+ * DeepSeek Wire Protocol Tests
+ *
+ * Tests request formatting for DeepSeek models.
+ * Uses mock.fetch injection instead of global stubbing.
+ */
 
-describe("DeepSeek Wire Protocol Tests", () => {
-  // Read fixtures
-  // const deepseekRequestFixture = JSON.parse(
-  //   fs.readFileSync(
-  //     path.join(__dirname, "fixtures/deepseek-request.json"),
-  //     "utf8",
-  //   ),
-  // );
-
+describe("DeepSeek Wire Protocol Tests (injected mock)", () => {
   const deepseekResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/deepseek-response.json"), "utf8");
-
-  // const deepseekSystemRequestFixture = JSON.parse(
-  //   fs.readFileSync(
-  //     path.join(__dirname, "fixtures/deepseek-system-request.json"),
-  //     "utf8",
-  //   ),
-  // );
 
   const deepseekSystemResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/deepseek-system-response.json"), "utf8");
 
-  beforeEach(() => {
-    // Reset mocks
-    globalFetch.mockClear();
-
-    // Mock successful response
-    globalFetch.mockImplementation(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => deepseekResponseFixture,
-        json: async () => JSON.parse(deepseekResponseFixture),
-      } as Response;
-    });
-  });
+  function createMockFetch(fixtureContent: string = deepseekResponseFixture) {
+    return vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => fixtureContent,
+      json: async () => JSON.parse(fixtureContent),
+    } as Response);
+  }
 
   it("should use the system message approach for DeepSeek with schema", async () => {
-    // Define schema
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -56,18 +38,16 @@ describe("DeepSeek Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library function with the schema
     await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "deepseek/deepseek-chat",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Verify fetch was called
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    // Get the request body that was passed to fetch
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     // Check that we're using system message approach rather than JSON schema format
     expect(actualRequestBody.messages).toBeTruthy();
@@ -92,17 +72,8 @@ describe("DeepSeek Wire Protocol Tests", () => {
   });
 
   it("should correctly handle DeepSeek response with schema", async () => {
-    // Update mock to return proper response
-    globalFetch.mockImplementationOnce(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => deepseekResponseFixture,
-        json: async () => JSON.parse(deepseekResponseFixture),
-      } as Response;
-    });
+    const mockFetch = createMockFetch();
 
-    // Define the schema
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -114,18 +85,13 @@ describe("DeepSeek Wire Protocol Tests", () => {
       },
     };
 
-    // Call the library with DeepSeek model
     const result = await callAi("Give me a short book recommendation in the requested format.", {
       apiKey: "test-api-key",
       model: "deepseek/deepseek-chat",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    // Parse the DeepSeek response fixture to get expected content
-    // const responseObj = JSON.parse(deepseekResponseFixture);
-    // const responseContent = responseObj.choices[0].message.content;
-
-    // Verify the result
     expect(result).toBeTruthy();
 
     // Based on the actual response we got, DeepSeek returns markdown-formatted text
@@ -138,17 +104,8 @@ describe("DeepSeek Wire Protocol Tests", () => {
   });
 
   it("should handle system message approach with DeepSeek", async () => {
-    // Update mock to return system message response
-    globalFetch.mockImplementationOnce(async (_url, _options) => {
-      return {
-        ok: true,
-        status: 200,
-        text: async () => deepseekSystemResponseFixture,
-        json: async () => JSON.parse(deepseekSystemResponseFixture),
-      } as Response;
-    });
+    const mockFetch = createMockFetch(deepseekSystemResponseFixture);
 
-    // Call the library with messages array including system message
     const result = await callAi(
       [
         {
@@ -164,10 +121,10 @@ describe("DeepSeek Wire Protocol Tests", () => {
       {
         apiKey: "test-api-key",
         model: "deepseek/deepseek-chat",
+        mock: { fetch: mockFetch },
       },
     );
 
-    // Verify the result
     expect(result).toBeTruthy();
 
     // Based on the actual response, DeepSeek can return proper JSON with system messages

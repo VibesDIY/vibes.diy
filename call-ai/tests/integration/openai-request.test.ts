@@ -1,21 +1,16 @@
 import fs from "fs";
 import path from "path";
 import { callAi, Schema } from "call-ai";
-import { describe, beforeEach, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 /**
  * OpenAI Request Formatting Tests
  *
  * Tests that callAi builds correct request body for OpenAI models.
- * These require fetch mocking to verify request construction.
+ * Uses mock.fetch injection instead of global stubbing.
  */
 
-// Mock fetch to verify request body
-const global = globalThis;
-const globalFetch = vi.fn<typeof fetch>();
-global.fetch = globalFetch;
-
-describe("OpenAI Request Formatting (fetch mock)", () => {
+describe("OpenAI Request Formatting (injected mock)", () => {
   const openaiRequestFixture = JSON.parse(
     fs.readFileSync(path.join(__dirname, "fixtures/openai-request.json"), "utf8"),
   );
@@ -25,17 +20,18 @@ describe("OpenAI Request Formatting (fetch mock)", () => {
     "utf8",
   );
 
-  beforeEach(() => {
-    globalFetch.mockClear();
-    globalFetch.mockResolvedValue({
+  function createMockFetch() {
+    return vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       text: async () => openaiResponseFixture,
       json: async () => JSON.parse(openaiResponseFixture),
     } as Response);
-  });
+  }
 
   it("should correctly format OpenAI JSON schema request", async () => {
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -51,11 +47,12 @@ describe("OpenAI Request Formatting (fetch mock)", () => {
       apiKey: "test-api-key",
       model: "openai/gpt-4o",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     expect(actualRequestBody.model).toEqual(openaiRequestFixture.model);
     expect(actualRequestBody.messages).toEqual(openaiRequestFixture.messages);
@@ -69,6 +66,8 @@ describe("OpenAI Request Formatting (fetch mock)", () => {
   });
 
   it("should use JSON schema format for GPT-4o with schema handling", async () => {
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -84,11 +83,12 @@ describe("OpenAI Request Formatting (fetch mock)", () => {
       apiKey: "test-api-key",
       model: "openai/gpt-4o",
       schema: schema,
+      mock: { fetch: mockFetch },
     });
 
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     expect(actualRequestBody.response_format).toBeTruthy();
     expect(actualRequestBody.response_format.type).toBe("json_schema");
@@ -100,6 +100,8 @@ describe("OpenAI Request Formatting (fetch mock)", () => {
   });
 
   it("should support tool mode for OpenAI models when enabled", async () => {
+    const mockFetch = createMockFetch();
+
     const schema: Schema = {
       name: "book_recommendation",
       properties: {
@@ -116,11 +118,12 @@ describe("OpenAI Request Formatting (fetch mock)", () => {
       model: "openai/gpt-4o",
       schema: schema,
       useToolMode: true,
+      mock: { fetch: mockFetch },
     });
 
-    expect(global.fetch).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalled();
 
-    const actualRequestBody = JSON.parse(globalFetch.mock.calls[0][1]?.body as string);
+    const actualRequestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 
     if (actualRequestBody.tools) {
       expect(actualRequestBody.tools).toBeTruthy();
