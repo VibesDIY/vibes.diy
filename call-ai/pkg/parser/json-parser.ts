@@ -1,28 +1,19 @@
 import { OnFunc } from "@adviser/cement";
 
-import { DataEvent } from "./sse-data-parser.js";
+import { JsonEvent } from "./json-events.js";
 
 /**
- * DataSource - Interface for any source that provides data events
+ * DataSource - Interface for any source that provides SSE events
  */
 export interface DataSource {
-  onData: (callback: (event: DataEvent) => void) => void;
+  onEvent: (callback: (event: { type: string; lineNr?: number; payload?: string }) => void) => void;
   processChunk: (chunk: string) => void;
-}
-
-/**
- * JsonEvent - Emitted for each data payload parsed as JSON
- */
-export interface JsonEvent {
-  readonly type: "json";
-  readonly lineNr: number;
-  readonly json: unknown; // The parsed JSON payload
 }
 
 /**
  * JsonParser - Parses JSON from any DataSource.
  *
- * This class listens to onData events, parses the payload as JSON,
+ * This class listens to onEvent events, parses the payload as JSON,
  * and emits JsonEvent for valid JSON. Invalid JSON is silently skipped.
  *
  * Works with SSEDataParser or any source implementing DataSource interface.
@@ -33,12 +24,11 @@ export interface JsonEvent {
  * const sseParser = new SSEDataParser(lineParser);
  * const jsonParser = new JsonParser(sseParser);
  *
- * jsonParser.onJson(evt => {
- *   console.log("Parsed JSON:", evt.json);
- * });
- *
- * jsonParser.onDone(() => {
- *   console.log("Stream complete");
+ * jsonParser.onEvent(evt => {
+ *   switch (evt.type) {
+ *     case "json.payload": console.log("Parsed JSON:", evt.json); break;
+ *     case "json.done": console.log("Stream complete"); break;
+ *   }
  * });
  *
  * // Feed chunks from network
@@ -48,29 +38,37 @@ export interface JsonEvent {
  * ```
  */
 export class JsonParser {
-  readonly onJson = OnFunc<(event: JsonEvent) => void>();
-  readonly onDone = OnFunc<() => void>(); // When [DONE] received
+  // Unified arktype event callback
+  readonly onEvent = OnFunc<(event: JsonEvent) => void>();
 
   private readonly dataSource: DataSource;
 
   constructor(dataSource: DataSource) {
     this.dataSource = dataSource;
-    this.dataSource.onData(this.handleData.bind(this));
+    this.dataSource.onEvent((evt) => {
+      switch (evt.type) {
+        case "sse.data":
+          this.handlePayload(evt.lineNr!, evt.payload!);
+          break;
+        case "sse.done":
+          this.emitDone();
+          break;
+      }
+    });
   }
 
-  private handleData(evt: DataEvent): void {
-    if (evt.isDone) {
-      this.onDone.invoke();
-      return;
-    }
+  private emitPayload(lineNr: number, json: unknown): void {
+    this.onEvent.invoke({ type: "json.payload", lineNr, json });
+  }
 
+  private emitDone(): void {
+    this.onEvent.invoke({ type: "json.done" });
+  }
+
+  private handlePayload(lineNr: number, payload: string): void {
     try {
-      const json = JSON.parse(evt.payload);
-      this.onJson.invoke({
-        type: "json",
-        lineNr: evt.lineNr,
-        json,
-      });
+      const json = JSON.parse(payload);
+      this.emitPayload(lineNr, json);
     } catch {
       // Invalid JSON, skip
     }
@@ -83,4 +81,3 @@ export class JsonParser {
 
 // Backward compatibility aliases
 export { JsonParser as SSEJsonParser };
-export type { JsonEvent as SSEJsonEvent };

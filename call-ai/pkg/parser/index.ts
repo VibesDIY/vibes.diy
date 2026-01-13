@@ -5,15 +5,54 @@
 export {
   LineStreamParser,
   LineStreamState,
+  // Legacy types still exported for internal xstate use
   FragmentEvent,
   BracketEvent,
   BracketOpenCloseEvent,
   InBracketEvent,
 } from "./line-stream.js";
 
-export { SSEDataParser, DataEvent } from "./sse-data-parser.js";
+// Line parser arktype events
+export {
+  lineFragment,
+  lineBracketOpen,
+  lineBracketClose,
+  lineContent,
+  lineEvent,
+  LineFragment,
+  LineBracketOpen,
+  LineBracketClose,
+  LineContent,
+  LineEvent,
+  isLineEventError,
+} from "./line-events.js";
 
-export { JsonParser, JsonEvent, DataSource, SSEJsonParser, SSEJsonEvent } from "./json-parser.js";
+export { SSEDataParser } from "./sse-data-parser.js";
+
+// SSE parser arktype events
+export {
+  sseData,
+  sseDone,
+  sseEvent,
+  SseData,
+  SseDone,
+  SseEvent,
+  isSseEventError,
+} from "./sse-events.js";
+
+export { JsonParser, DataSource, SSEJsonParser } from "./json-parser.js";
+export {
+  jsonPayload,
+  jsonDone,
+  jsonEvent,
+  JsonPayload,
+  JsonDone,
+  JsonEvent,
+  isJsonEventError,
+} from "./json-events.js";
+
+// Backward compatibility alias
+export type { JsonEvent as SSEJsonEvent } from "./json-events.js";
 
 export { OpenRouterParser } from "./openrouter-parser.js";
 export {

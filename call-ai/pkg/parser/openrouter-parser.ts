@@ -1,6 +1,6 @@
 import { OnFunc } from "@adviser/cement";
 
-import { JsonParser, JsonEvent } from "./json-parser.js";
+import { JsonParser } from "./json-parser.js";
 import { OrEvent, OrMeta } from "./openrouter-events.js";
 
 /**
@@ -41,8 +41,16 @@ export class OpenRouterParser {
 
   constructor(jsonParser: JsonParser) {
     this.jsonParser = jsonParser;
-    this.jsonParser.onJson(this.handleJson.bind(this));
-    this.jsonParser.onDone(() => this.emitStreamEnd());
+    this.jsonParser.onEvent((evt) => {
+      switch (evt.type) {
+        case "json.payload":
+          this.handleJson(evt.json);
+          break;
+        case "json.done":
+          this.emitStreamEnd();
+          break;
+      }
+    });
   }
 
   private emitMeta(meta: Omit<OrMeta, "type">): void {
@@ -73,8 +81,8 @@ export class OpenRouterParser {
     this.onEvent.invoke({ type: "or.json", json });
   }
 
-  private handleJson(evt: JsonEvent): void {
-    const chunk = evt.json as Record<string, unknown>;
+  private handleJson(json: unknown): void {
+    const chunk = json as Record<string, unknown>;
 
     // Emit raw JSON for downstream consumers (like ToolSchemaParser)
     this.emitJson(chunk);

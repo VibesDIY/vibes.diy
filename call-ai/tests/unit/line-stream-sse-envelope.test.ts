@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
-import { LineStreamParser, LineStreamState, FragmentEvent } from "call-ai";
-import { describe, it, expect, vi } from "vitest";
+import { LineStreamParser, LineStreamState, LineEvent } from "call-ai";
+import { describe, it, expect } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 
@@ -148,14 +148,16 @@ describe("SSE envelope parsing", () => {
     const WEATHER_EXPECTED = { dataLines: 39, commentLines: 1 };
 
     // Helper to accumulate fragments into complete lines (consumer-side accumulation)
-    function accumulateLines(calls: [FragmentEvent][]): string[] {
+    function accumulateLines(events: LineEvent[]): string[] {
       let currentLine = "";
       const lines: string[] = [];
-      calls.forEach(([evt]) => {
-        currentLine += evt.fragment;
-        if (evt.lineComplete) {
-          lines.push(currentLine);
-          currentLine = "";
+      events.forEach((evt) => {
+        if (evt.type === "line.fragment") {
+          currentLine += evt.fragment;
+          if (evt.lineComplete) {
+            lines.push(currentLine);
+            currentLine = "";
+          }
         }
       });
       return lines;
@@ -163,14 +165,14 @@ describe("SSE envelope parsing", () => {
 
     it("parses SSE lines from openai-stream fixture with random chunks", () => {
       const so = new LineStreamParser(LineStreamState.WaitingForEOL);
-      const fragmentSpy = vi.fn();
-      so.onFragment(fragmentSpy);
+      const events: LineEvent[] = [];
+      so.onEvent((evt) => events.push(evt));
 
       // Feed raw fixture with random chunk boundaries (seeded for reproducibility)
       feedFixtureRandomly(so, openAiStreamFixture, { seed: 12345 });
 
       // Consumer accumulates fragments into complete lines
-      const completedLines = accumulateLines(fragmentSpy.mock.calls as [FragmentEvent][]);
+      const completedLines = accumulateLines(events);
 
       // Count data lines
       const dataLineCount = completedLines.filter((line: string) => line.startsWith("data:")).length;
@@ -183,14 +185,14 @@ describe("SSE envelope parsing", () => {
 
     it("parses SSE lines from fireproof fixture with random chunks", () => {
       const so = new LineStreamParser(LineStreamState.WaitingForEOL);
-      const fragmentSpy = vi.fn();
-      so.onFragment(fragmentSpy);
+      const events: LineEvent[] = [];
+      so.onEvent((evt) => events.push(evt));
 
       // Feed raw fixture with random chunk boundaries
       feedFixtureRandomly(so, fireproofStreamFixture, { seed: 67890 });
 
       // Consumer accumulates fragments into complete lines
-      const completedLines = accumulateLines(fragmentSpy.mock.calls as [FragmentEvent][]);
+      const completedLines = accumulateLines(events);
 
       const dataLineCount = completedLines.filter((line: string) => line.startsWith("data:")).length;
       expect(dataLineCount).toBe(FIREPROOF_EXPECTED.dataLines);
@@ -198,13 +200,13 @@ describe("SSE envelope parsing", () => {
 
     it("parses SSE lines from weather fixture with random chunks", () => {
       const so = new LineStreamParser(LineStreamState.WaitingForEOL);
-      const fragmentSpy = vi.fn();
-      so.onFragment(fragmentSpy);
+      const events: LineEvent[] = [];
+      so.onEvent((evt) => events.push(evt));
 
       feedFixtureRandomly(so, openAiWeatherStreamFixture, { seed: 11111 });
 
       // Consumer accumulates fragments into complete lines
-      const completedLines = accumulateLines(fragmentSpy.mock.calls as [FragmentEvent][]);
+      const completedLines = accumulateLines(events);
 
       const dataLineCount = completedLines.filter((line: string) => line.startsWith("data:")).length;
       expect(dataLineCount).toBe(WEATHER_EXPECTED.dataLines);

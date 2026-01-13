@@ -1,5 +1,6 @@
 import { OnFunc } from "@adviser/cement";
 import { setup, assign, emit, raise, createActor } from "xstate";
+import { LineEvent } from "./line-events.js";
 
 /**
  * LineStreamParser
@@ -408,8 +409,7 @@ function createLineStreamMachine(initialStateName: string) {
 }
 
 export class LineStreamParser {
-  readonly onFragment = OnFunc<(event: FragmentEvent) => void>();
-  readonly onBracket = OnFunc<(event: BracketEvent) => void>();
+  readonly onEvent = OnFunc<(event: LineEvent) => void>();
 
   private readonly actor: ReturnType<typeof createActor<ReturnType<typeof createLineStreamMachine>>>;
 
@@ -418,15 +418,31 @@ export class LineStreamParser {
     this.actor = createActor(machine);
 
     this.actor.on("bracket", (event: BracketOpenCloseEvent) => {
-      this.onBracket.invoke(event);
+      if (event.bracket === "open") {
+        this.onEvent.invoke({ type: "line.bracket.open" });
+      } else {
+        this.onEvent.invoke({ type: "line.bracket.close" });
+      }
     });
 
     this.actor.on("inBracket", (event: InBracketEvent) => {
-      this.onBracket.invoke(event);
+      this.onEvent.invoke({
+        type: "line.content",
+        block: event.block,
+        seq: event.seq,
+        seqStyle: event.seqStyle,
+        content: event.content,
+      });
     });
 
     this.actor.on("fragment", (event: FragmentEvent) => {
-      this.onFragment.invoke(event);
+      this.onEvent.invoke({
+        type: "line.fragment",
+        lineNr: event.lineNr,
+        seq: event.seq,
+        fragment: event.fragment,
+        lineComplete: event.lineComplete,
+      });
     });
 
     this.actor.start();

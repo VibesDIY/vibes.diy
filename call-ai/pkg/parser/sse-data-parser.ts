@@ -1,35 +1,34 @@
 import { OnFunc } from "@adviser/cement";
 
-import { LineStreamParser, FragmentEvent } from "./line-stream.js";
-
-/**
- * DataEvent - Emitted for each complete data payload
- */
-export interface DataEvent {
-  readonly type: "data";
-  readonly lineNr: number; // Line number from underlying fragment
-  readonly payload: string; // Full payload (without "data: " prefix for SSE)
-  readonly isDone: boolean; // True if payload is "[DONE]"
-}
+import { LineStreamParser } from "./line-stream.js";
+import { SseEvent } from "./sse-events.js";
+import { LineFragment } from "./line-events.js";
 
 /**
  * SSEDataParser - A wrapper around LineStreamParser that extracts SSE data payloads.
  *
- * This class accumulates line fragments internally and emits SSEDataEvent when
+ * This class accumulates line fragments internally and emits events when
  * a complete `data:` line is received. Non-data lines (comments, empty lines)
  * are ignored.
+ *
+ * Events:
+ * - `sse.data` - Emitted for each data line (except [DONE])
+ * - `sse.done` - Emitted when [DONE] marker is received
  *
  * Usage:
  * ```typescript
  * const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
  * const sseParser = new SSEDataParser(lineParser);
  *
- * sseParser.onData(evt => {
- *   if (evt.isDone) {
- *     console.log("Stream complete");
- *   } else {
- *     const json = JSON.parse(evt.payload);
- *     console.log(json.choices[0].delta.content);
+ * sseParser.onEvent(evt => {
+ *   switch (evt.type) {
+ *     case "sse.data":
+ *       const json = JSON.parse(evt.payload);
+ *       console.log(json.choices[0].delta.content);
+ *       break;
+ *     case "sse.done":
+ *       console.log("Stream complete");
+ *       break;
  *   }
  * });
  *
@@ -40,7 +39,7 @@ export interface DataEvent {
  * ```
  */
 export class SSEDataParser {
-  readonly onData = OnFunc<(event: DataEvent) => void>();
+  readonly onEvent = OnFunc<(event: SseEvent) => void>();
 
   private readonly parser: LineStreamParser;
   private lineBuffer = "";
@@ -48,10 +47,14 @@ export class SSEDataParser {
 
   constructor(parser: LineStreamParser) {
     this.parser = parser;
-    this.parser.onFragment(this.handleFragment.bind(this));
+    this.parser.onEvent((evt) => {
+      if (evt.type === "line.fragment") {
+        this.handleFragment(evt);
+      }
+    });
   }
 
-  private handleFragment(evt: FragmentEvent): void {
+  private handleFragment(evt: LineFragment): void {
     this.lineBuffer += evt.fragment;
     this.currentLineNr = evt.lineNr;
 
@@ -61,12 +64,18 @@ export class SSEDataParser {
 
       if (line.startsWith("data:")) {
         const payload = line.slice(5).trimStart(); // Remove "data:" and optional space
-        this.onData.invoke({
-          type: "data",
-          lineNr: this.currentLineNr,
-          payload,
-          isDone: payload === "[DONE]",
-        });
+        if (payload === "[DONE]") {
+          this.onEvent.invoke({
+            type: "sse.done",
+            lineNr: this.currentLineNr,
+          });
+        } else {
+          this.onEvent.invoke({
+            type: "sse.data",
+            lineNr: this.currentLineNr,
+            payload,
+          });
+        }
       }
       // Ignore comment lines (starting with :) and empty lines
     }

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
-import { LineStreamParser, LineStreamState, FragmentEvent } from "call-ai";
-import { describe, it, expect, vi } from "vitest";
+import { LineStreamParser, LineStreamState, LineEvent } from "call-ai";
+import { describe, it, expect } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 
@@ -35,8 +35,8 @@ describe("LineStreamParser SSE fixtures", () => {
   it("extracts OpenRouter delta content from raw SSE stream with random chunking", () => {
     // Feed raw fixture through LineStreamParser with random chunk boundaries
     const so = new LineStreamParser(LineStreamState.WaitingForEOL);
-    const fragmentSpy = vi.fn();
-    so.onFragment(fragmentSpy);
+    const events: LineEvent[] = [];
+    so.onEvent((evt) => events.push(evt));
 
     feedFixtureRandomly(so, fireproofStreamFixture, { seed: 99999 });
 
@@ -44,14 +44,15 @@ describe("LineStreamParser SSE fixtures", () => {
     let currentLine = "";
     const completedLines: string[] = [];
 
-    fragmentSpy.mock.calls.forEach((call) => {
-      const [evt] = call as [FragmentEvent];
-      currentLine += evt.fragment;
-      if (evt.lineComplete) {
-        if (currentLine.startsWith("data: ") && !currentLine.includes("[DONE]")) {
-          completedLines.push(currentLine);
+    events.forEach((evt) => {
+      if (evt.type === "line.fragment") {
+        currentLine += evt.fragment;
+        if (evt.lineComplete) {
+          if (currentLine.startsWith("data: ") && !currentLine.includes("[DONE]")) {
+            completedLines.push(currentLine);
+          }
+          currentLine = "";
         }
-        currentLine = "";
       }
     });
 

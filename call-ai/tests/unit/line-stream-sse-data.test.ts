@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { LineStreamParser, LineStreamState, SSEDataParser, DataEvent } from "call-ai";
+import { LineStreamParser, LineStreamState, SSEDataParser, SseEvent, SseData } from "call-ai";
 import { describe, it, expect } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
@@ -21,51 +21,51 @@ const fireproofStreamFixture = readFileSync(
 );
 
 describe("SSEDataParser", () => {
-  it("emits DataEvent for data: lines", () => {
+  it("emits sse.data event for data: lines", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: DataEvent[] = [];
-    sseParser.onData((evt) => events.push(evt));
+    const events: SseEvent[] = [];
+    sseParser.onEvent((evt) => events.push(evt));
 
     sseParser.processChunk("data: hello world\n");
 
     expect(events).toHaveLength(1);
-    expect(events[0].payload).toBe("hello world");
-    expect(events[0].isDone).toBe(false);
+    expect(events[0].type).toBe("sse.data");
+    expect((events[0] as SseData).payload).toBe("hello world");
   });
 
   it("handles payload split across chunks", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: DataEvent[] = [];
-    sseParser.onData((evt) => events.push(evt));
+    const events: SseEvent[] = [];
+    sseParser.onEvent((evt) => events.push(evt));
 
     sseParser.processChunk("data: hel");
     sseParser.processChunk("lo wor");
     sseParser.processChunk("ld\n");
 
     expect(events).toHaveLength(1);
-    expect(events[0].payload).toBe("hello world");
+    expect((events[0] as SseData).payload).toBe("hello world");
   });
 
   it("handles data: prefix split across chunks", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: DataEvent[] = [];
-    sseParser.onData((evt) => events.push(evt));
+    const events: SseEvent[] = [];
+    sseParser.onEvent((evt) => events.push(evt));
 
     sseParser.processChunk("dat");
     sseParser.processChunk("a: hello\n");
 
     expect(events).toHaveLength(1);
-    expect(events[0].payload).toBe("hello");
+    expect((events[0] as SseData).payload).toBe("hello");
   });
 
   it("does not emit for comment lines", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: DataEvent[] = [];
-    sseParser.onData((evt) => events.push(evt));
+    const events: SseEvent[] = [];
+    sseParser.onEvent((evt) => events.push(evt));
 
     sseParser.processChunk(": OPENROUTER PROCESSING\n");
 
@@ -75,69 +75,69 @@ describe("SSEDataParser", () => {
   it("does not emit for empty lines", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: DataEvent[] = [];
-    sseParser.onData((evt) => events.push(evt));
+    const events: SseEvent[] = [];
+    sseParser.onEvent((evt) => events.push(evt));
 
     sseParser.processChunk("\n\n\n");
 
     expect(events).toHaveLength(0);
   });
 
-  it("identifies [DONE] terminator", () => {
+  it("identifies [DONE] terminator with sse.done event", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: DataEvent[] = [];
-    sseParser.onData((evt) => events.push(evt));
+    const events: SseEvent[] = [];
+    sseParser.onEvent((evt) => events.push(evt));
 
     sseParser.processChunk("data: [DONE]\n");
 
     expect(events).toHaveLength(1);
-    expect(events[0].isDone).toBe(true);
-    expect(events[0].payload).toBe("[DONE]");
+    expect(events[0].type).toBe("sse.done");
   });
 
   it("handles multiple data lines in one chunk", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: DataEvent[] = [];
-    sseParser.onData((evt) => events.push(evt));
+    const events: SseEvent[] = [];
+    sseParser.onEvent((evt) => events.push(evt));
 
     sseParser.processChunk("data: first\n\ndata: second\n");
 
     expect(events).toHaveLength(2);
-    expect(events[0].payload).toBe("first");
-    expect(events[1].payload).toBe("second");
+    expect((events[0] as SseData).payload).toBe("first");
+    expect((events[1] as SseData).payload).toBe("second");
   });
 
   it("handles data line without space after colon", () => {
     const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
     const sseParser = new SSEDataParser(lineParser);
-    const events: DataEvent[] = [];
-    sseParser.onData((evt) => events.push(evt));
+    const events: SseEvent[] = [];
+    sseParser.onEvent((evt) => events.push(evt));
 
     sseParser.processChunk("data:no-space\n");
 
     expect(events).toHaveLength(1);
-    expect(events[0].payload).toBe("no-space");
+    expect((events[0] as SseData).payload).toBe("no-space");
   });
 
   describe("with random chunking", () => {
     it("extracts all data payloads from openai-stream fixture", () => {
       const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
       const sseParser = new SSEDataParser(lineParser);
-      const events: DataEvent[] = [];
-      sseParser.onData((evt) => events.push(evt));
+      const events: SseEvent[] = [];
+      sseParser.onEvent((evt) => events.push(evt));
 
       feedFixtureRandomly(sseParser, openAiStreamFixture, { seed: 12345 });
 
       // 33 data lines total (including [DONE])
       expect(events).toHaveLength(33);
 
-      // Last one is [DONE]
-      expect(events[events.length - 1].isDone).toBe(true);
+      // Last one is sse.done
+      expect(events[events.length - 1].type).toBe("sse.done");
 
       // Others are valid JSON
-      events.slice(0, -1).forEach((evt) => {
+      const dataEvents = events.filter((e) => e.type === "sse.data") as SseData[];
+      dataEvents.forEach((evt) => {
         expect(() => JSON.parse(evt.payload)).not.toThrow();
       });
     });
@@ -145,35 +145,35 @@ describe("SSEDataParser", () => {
     it("extracts all data payloads from fireproof fixture", () => {
       const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
       const sseParser = new SSEDataParser(lineParser);
-      const events: DataEvent[] = [];
-      sseParser.onData((evt) => events.push(evt));
+      const events: SseEvent[] = [];
+      sseParser.onEvent((evt) => events.push(evt));
 
       feedFixtureRandomly(sseParser, fireproofStreamFixture, { seed: 67890 });
 
       // 232 data lines total (including [DONE])
       expect(events).toHaveLength(232);
 
-      // Last one is [DONE]
-      expect(events[events.length - 1].isDone).toBe(true);
+      // Last one is sse.done
+      expect(events[events.length - 1].type).toBe("sse.done");
     });
 
     it("extracts all data payloads from weather fixture", () => {
       const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
       const sseParser = new SSEDataParser(lineParser);
-      const events: DataEvent[] = [];
-      sseParser.onData((evt) => events.push(evt));
+      const events: SseEvent[] = [];
+      sseParser.onEvent((evt) => events.push(evt));
 
       feedFixtureRandomly(sseParser, openAiWeatherStreamFixture, { seed: 11111 });
 
       // 39 data lines total (including [DONE])
       expect(events).toHaveLength(39);
 
-      // Last one is [DONE]
-      expect(events[events.length - 1].isDone).toBe(true);
+      // Last one is sse.done
+      expect(events[events.length - 1].type).toBe("sse.done");
 
       // Can extract weather data from payloads
-      const contentParts = events
-        .filter((evt) => !evt.isDone)
+      const dataEvents = events.filter((e) => e.type === "sse.data") as SseData[];
+      const contentParts = dataEvents
         .map((evt) => {
           try {
             const parsed = JSON.parse(evt.payload);

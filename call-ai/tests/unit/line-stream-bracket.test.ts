@@ -1,5 +1,5 @@
-import { LineStreamParser, LineStreamState } from "call-ai";
-import { expect, vi, it } from "vitest";
+import { LineStreamParser, LineStreamState, LineEvent } from "call-ai";
+import { expect, it } from "vitest";
 
 it("Bracket-Test", async () => {
   const so = new LineStreamParser(LineStreamState.WaitForOpeningCurlyBracket);
@@ -15,8 +15,8 @@ it("Bracket-Test", async () => {
     },
   });
   const reader = lines.getReader();
-  const fnBracket = vi.fn();
-  so.onBracket(fnBracket);
+  const events: LineEvent[] = [];
+  so.onEvent((evt) => events.push(evt));
   while (true) {
     const { done, value: chunk } = await reader.read();
     if (done) {
@@ -24,85 +24,17 @@ it("Bracket-Test", async () => {
     }
     so.processChunk(chunk);
   }
-  expect(fnBracket.mock.calls).toEqual([
-    [
-      {
-        bracket: "open",
-        type: "bracket",
-      },
-    ],
-    [
-      {
-        block: 0,
-        content: " Begin 0",
-        seq: 0,
-        seqStyle: "first",
-        type: "inBracket",
-      },
-    ],
-    [
-      {
-        block: 0,
-        content: "  Middle 0",
-        seq: 1,
-        seqStyle: "middle",
-        type: "inBracket",
-      },
-    ],
-    [
-      {
-        block: 0,
-        content: "  End 0 ",
-        seq: 2,
-        seqStyle: "last",
-        type: "inBracket",
-      },
-    ],
-    [
-      {
-        bracket: "close",
-        type: "bracket",
-      },
-    ],
-    [
-      {
-        bracket: "open",
-        type: "bracket",
-      },
-    ],
-    [
-      {
-        block: 1,
-        content: " Begin 1",
-        seq: 0,
-        seqStyle: "first",
-        type: "inBracket",
-      },
-    ],
-    [
-      {
-        block: 1,
-        content: "  Middle 1",
-        seq: 1,
-        seqStyle: "middle",
-        type: "inBracket",
-      },
-    ],
-    [
-      {
-        block: 1,
-        content: "  End 1 ",
-        seq: 2,
-        seqStyle: "last",
-        type: "inBracket",
-      },
-    ],
-    [
-      {
-        bracket: "close",
-        type: "bracket",
-      },
-    ],
+  expect(events).toEqual([
+    { type: "line.bracket.open" },
+    { type: "line.content", block: 0, content: " Begin 0", seq: 0, seqStyle: "first" },
+    { type: "line.content", block: 0, content: "  Middle 0", seq: 1, seqStyle: "middle" },
+    { type: "line.content", block: 0, content: "  End 0 ", seq: 2, seqStyle: "last" },
+    { type: "line.bracket.close" },
+    { type: "line.bracket.open" },
+    { type: "line.content", block: 1, content: " Begin 1", seq: 0, seqStyle: "first" },
+    { type: "line.content", block: 1, content: "  Middle 1", seq: 1, seqStyle: "middle" },
+    { type: "line.content", block: 1, content: "  End 1 ", seq: 2, seqStyle: "last" },
+    { type: "line.bracket.close" },
   ]);
 });
 
@@ -118,8 +50,8 @@ it("Empty-Content-Test - should emit empty middle events", async () => {
     },
   });
   const reader = lines.getReader();
-  const fnBracket = vi.fn();
-  so.onBracket(fnBracket);
+  const events: LineEvent[] = [];
+  so.onEvent((evt) => events.push(evt));
   while (true) {
     const { done, value: chunk } = await reader.read();
     if (done) {
@@ -129,11 +61,11 @@ it("Empty-Content-Test - should emit empty middle events", async () => {
   }
   // Empty middle events should NOT be filtered out
   // Expected: open, first(" a"), middle(""), last(" b "), close
-  expect(fnBracket.mock.calls).toEqual([
-    [{ type: "bracket", bracket: "open" }],
-    [{ type: "inBracket", seqStyle: "first", block: 0, seq: 0, content: " a" }],
-    [{ type: "inBracket", seqStyle: "middle", block: 0, seq: 1, content: "" }],
-    [{ type: "inBracket", seqStyle: "last", block: 0, seq: 2, content: " b " }],
-    [{ type: "bracket", bracket: "close" }],
+  expect(events).toEqual([
+    { type: "line.bracket.open" },
+    { type: "line.content", seqStyle: "first", block: 0, seq: 0, content: " a" },
+    { type: "line.content", seqStyle: "middle", block: 0, seq: 1, content: "" },
+    { type: "line.content", seqStyle: "last", block: 0, seq: 2, content: " b " },
+    { type: "line.bracket.close" },
   ]);
 });

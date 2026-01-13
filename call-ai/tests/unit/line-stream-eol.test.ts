@@ -1,5 +1,5 @@
-import { LineStreamParser, LineStreamState } from "call-ai";
-import { expect, vi, it } from "vitest";
+import { LineStreamParser, LineStreamState, LineEvent, LineFragment } from "call-ai";
+import { expect, it } from "vitest";
 
 it("EOL-Test", async () => {
   const so = new LineStreamParser(LineStreamState.WaitingForEOL);
@@ -13,8 +13,8 @@ it("EOL-Test", async () => {
     },
   });
   const reader = lines.getReader();
-  const fn = vi.fn();
-  so.onFragment(fn);
+  const events: LineEvent[] = [];
+  so.onEvent((evt) => events.push(evt));
   while (true) {
     const { done, value: chunk } = await reader.read();
     if (done) {
@@ -22,9 +22,12 @@ it("EOL-Test", async () => {
     }
     so.processChunk(chunk);
   }
-  const incompleteFragments = fn.mock.calls
-    .filter(([evt]) => !evt.lineComplete)
-    .map(([evt]) => evt.fragment);
+
+  const fragmentEvents = events.filter((e) => e.type === "line.fragment") as LineFragment[];
+
+  const incompleteFragments = fragmentEvents
+    .filter((evt) => !evt.lineComplete)
+    .map((evt) => evt.fragment);
   expect(incompleteFragments).toEqual([
     "Line 0",
     "Line 1",
@@ -41,9 +44,9 @@ it("EOL-Test", async () => {
 
   // Non-accumulating: complete fragment contains only the portion of the
   // final chunk before the newline, NOT the accumulated line
-  const completeFragments = fn.mock.calls
-    .filter(([evt]) => evt.lineComplete)
-    .map(([evt]) => evt.fragment);
+  const completeFragments = fragmentEvents
+    .filter((evt) => evt.lineComplete)
+    .map((evt) => evt.fragment);
   expect(completeFragments).toEqual([
     "FragmentLine 1", // Only the chunk portion before \n, not accumulated
   ]);
@@ -51,7 +54,7 @@ it("EOL-Test", async () => {
   // Consumer accumulation example: if you need full lines, accumulate yourself
   let buffer = "";
   const fullLines: string[] = [];
-  fn.mock.calls.forEach(([evt]) => {
+  fragmentEvents.forEach((evt) => {
     buffer += evt.fragment;
     if (evt.lineComplete) {
       fullLines.push(buffer);
