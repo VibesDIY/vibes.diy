@@ -210,12 +210,12 @@ export interface SchemaAIJsonSchemaRequest {
   };
 }
 
-interface SchemaAIToolRequest {
+export interface SchemaAIToolRequest {
   tools: OpenAIFunctionCall[];
   tool_choice: OpenAIFunctionCall;
 }
 
-interface SchemaAISimpleMsg {
+export interface SchemaAISimpleMsg {
   readonly messages: Message[];
 }
 

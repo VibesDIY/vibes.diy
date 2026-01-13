@@ -6,7 +6,12 @@ import {
   systemMessageStrategy,
   defaultStrategy,
 } from "../../pkg/strategies/model-strategies.js";
-import type { Message } from "call-ai";
+import type {
+  Message,
+  SchemaAIJsonSchemaRequest,
+  SchemaAIToolRequest,
+  SchemaAISimpleMsg,
+} from "../../pkg/types.js";
 
 const testSchema = {
   name: "test_result",
@@ -20,7 +25,7 @@ const testSchema = {
 describe("Model Strategies", () => {
   describe("openAIStrategy", () => {
     it("should prepare request with json_schema response format", () => {
-      const result = openAIStrategy.prepareRequest(testSchema, []);
+      const result = openAIStrategy.prepareRequest(testSchema, []) as SchemaAIJsonSchemaRequest;
 
       expect(result).toHaveProperty("response_format");
       expect(result.response_format).toHaveProperty("type", "json_schema");
@@ -30,14 +35,14 @@ describe("Model Strategies", () => {
     });
 
     it("should add additionalProperties: false to schema", () => {
-      const result = openAIStrategy.prepareRequest(testSchema, []);
+      const result = openAIStrategy.prepareRequest(testSchema, []) as SchemaAIJsonSchemaRequest;
 
       expect(result.response_format.json_schema.schema).toHaveProperty("additionalProperties", false);
     });
 
     it("should use 'result' as default name if not provided", () => {
       const schemaWithoutName = { properties: { foo: { type: "string" } } };
-      const result = openAIStrategy.prepareRequest(schemaWithoutName, []);
+      const result = openAIStrategy.prepareRequest(schemaWithoutName, []) as SchemaAIJsonSchemaRequest;
 
       expect(result.response_format.json_schema.name).toBe("result");
     });
@@ -48,14 +53,14 @@ describe("Model Strategies", () => {
     });
 
     it("should stringify non-string content", () => {
-      const content = { capital: "Paris" };
+      const content = { capital: "Paris" } as any;
       expect(openAIStrategy.processResponse(content)).toBe('{"capital":"Paris"}');
     });
   });
 
   describe("geminiStrategy", () => {
     it("should use same prepareRequest as openAI", () => {
-      const result = geminiStrategy.prepareRequest(testSchema, []);
+      const result = geminiStrategy.prepareRequest(testSchema, []) as SchemaAIJsonSchemaRequest;
 
       expect(result).toHaveProperty("response_format");
       expect(result.response_format).toHaveProperty("type", "json_schema");
@@ -79,7 +84,7 @@ describe("Model Strategies", () => {
 
   describe("claudeStrategy", () => {
     it("should prepare request with tools array", () => {
-      const result = claudeStrategy.prepareRequest(testSchema, []);
+      const result = claudeStrategy.prepareRequest(testSchema, []) as SchemaAIToolRequest;
 
       expect(result).toHaveProperty("tools");
       expect(Array.isArray(result.tools)).toBe(true);
@@ -88,7 +93,7 @@ describe("Model Strategies", () => {
     });
 
     it("should include tool_choice", () => {
-      const result = claudeStrategy.prepareRequest(testSchema, []);
+      const result = claudeStrategy.prepareRequest(testSchema, []) as SchemaAIToolRequest;
 
       expect(result).toHaveProperty("tool_choice");
       expect(result.tool_choice).toHaveProperty("type", "function");
@@ -97,7 +102,7 @@ describe("Model Strategies", () => {
 
     it("should use default function name if not provided", () => {
       const schemaWithoutName = { properties: { foo: { type: "string" } } };
-      const result = claudeStrategy.prepareRequest(schemaWithoutName, []);
+      const result = claudeStrategy.prepareRequest(schemaWithoutName, []) as SchemaAIToolRequest;
 
       expect(result.tools[0].function.name).toBe("generate_structured_data");
     });
@@ -105,8 +110,8 @@ describe("Model Strategies", () => {
     it("should process tool_use response type", () => {
       const toolUseContent = {
         type: "tool_use",
-        input: { capital: "Paris" },
-      };
+        input: '{"capital":"Paris"}',
+      } as any;
       const result = claudeStrategy.processResponse(toolUseContent);
       expect(result).toBe('{"capital":"Paris"}');
     });
@@ -120,7 +125,7 @@ describe("Model Strategies", () => {
   describe("systemMessageStrategy", () => {
     it("should prepend system message with schema instructions", () => {
       const messages: Message[] = [{ role: "user", content: "Get info about France" }];
-      const result = systemMessageStrategy.prepareRequest(testSchema, messages);
+      const result = systemMessageStrategy.prepareRequest(testSchema, messages) as SchemaAISimpleMsg;
 
       expect(result).toHaveProperty("messages");
       expect(result.messages).toHaveLength(2);
@@ -134,7 +139,7 @@ describe("Model Strategies", () => {
         { role: "system", content: "You are helpful" },
         { role: "user", content: "Get info" },
       ];
-      const result = systemMessageStrategy.prepareRequest(testSchema, messages);
+      const result = systemMessageStrategy.prepareRequest(testSchema, messages) as SchemaAISimpleMsg;
 
       expect(result.messages).toHaveLength(2);
       expect(result.messages[0].content).toBe("You are helpful");
@@ -170,7 +175,7 @@ describe("Model Strategies", () => {
     });
 
     it("should stringify non-string content", () => {
-      expect(defaultStrategy.processResponse({ foo: "bar" })).toBe('{"foo":"bar"}');
+      expect(defaultStrategy.processResponse({ foo: "bar" } as any)).toBe('{"foo":"bar"}');
     });
   });
 });
