@@ -1,55 +1,25 @@
 import { callAi, getMeta, ModelId, ResponseMeta } from "call-ai";
-import { describe, expect, it, beforeEach, vi, Mock } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-// Mock global fetch
-const globalFetch = vi.fn<typeof fetch>();
-global.fetch = globalFetch as typeof fetch;
+/**
+ * Metadata Integration Tests
+ *
+ * Tests getMeta functionality for retrieving response metadata.
+ * Uses mock.fetch injection instead of global stubbing.
+ */
 
-// Mock ReadableStream
-const mockReader = {
-  read: vi.fn(),
-};
-
-// Create a mock response with headers
-const mockResponse = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  json: vi.fn<() => Promise<any>>(),
-  text: vi.fn(),
-  arrayBuffer: vi.fn(),
-  blob: vi.fn(),
-  bytes: vi.fn(),
-  formData: vi.fn(),
-  body: {
-    getReader: vi.fn().mockReturnValue(mockReader),
-  },
-  ok: true,
-  status: 200,
-  statusText: "OK",
-  redirected: false,
-  type: "basic" as ResponseType,
-  url: "https://test.example.com",
-  headers: {
-    get: vi.fn((name) => {
-      if (name === "content-type") return "application/json";
-      return null;
-    }) as Mock,
-    forEach: vi.fn(),
-  },
-  clone: vi.fn(function (this: typeof mockResponse): Response {
-    return { ...this } as unknown as Response;
-  }),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as unknown as Response & { json: Mock<() => Promise<any>> };
-
-describe("getMeta", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    globalFetch.mockResolvedValue(mockResponse);
-  });
+describe("getMeta (injected mock)", () => {
+  function createMockFetch(jsonResponse: object) {
+    return vi.fn().mockResolvedValue({
+      json: vi.fn().mockResolvedValue(jsonResponse),
+      ok: true,
+      status: 200,
+      statusText: "OK",
+    } as unknown as Response);
+  }
 
   it("should return metadata for non-streaming responses", async () => {
-    // Set up mock response with usage data
-    mockResponse.json.mockResolvedValue({
+    const mockFetch = createMockFetch({
       choices: [{ message: { content: "Hello, I am an AI" } }],
       usage: {
         prompt_tokens: 10,
@@ -62,6 +32,7 @@ describe("getMeta", () => {
     const options = {
       apiKey: "test-api-key",
       model: "openai/gpt-4o",
+      mock: { fetch: mockFetch },
     };
 
     // Call the API
@@ -119,7 +90,6 @@ describe("getMeta", () => {
     testMap.set(generator, mockMeta);
 
     // Mock the getMeta function for this test to use our test map
-    // const originalGetMeta = getMeta;
     const mockedGetMeta = vi.fn((resp: AsyncGenerator<string, string, unknown>) => testMap.get(resp));
 
     // Check that we can get metadata from our mocked streaming response
@@ -139,30 +109,28 @@ describe("getMeta", () => {
   });
 
   it("should handle multiple string responses separately", async () => {
-    // Set up first mock response
-    mockResponse.json.mockResolvedValueOnce(
-      Promise.resolve({
-        choices: [{ message: { content: "First response" } }],
-        model: "openai/gpt-4",
-      }),
-    );
-
     // First API call
-    const firstResponse = await callAi("First prompt", {
-      apiKey: "test-api-key",
+    const mockFetch1 = createMockFetch({
+      choices: [{ message: { content: "First response" } }],
       model: "openai/gpt-4",
     });
 
-    // Set up second mock response
-    mockResponse.json.mockResolvedValueOnce({
+    const firstResponse = await callAi("First prompt", {
+      apiKey: "test-api-key",
+      model: "openai/gpt-4",
+      mock: { fetch: mockFetch1 },
+    });
+
+    // Second API call with different model
+    const mockFetch2 = createMockFetch({
       choices: [{ message: { content: "Second response" } }],
       model: "openai/gpt-3.5-turbo",
     });
 
-    // Second API call with different model
     const secondResponse = await callAi("Second prompt", {
       apiKey: "test-api-key",
       model: "openai/gpt-3.5-turbo",
+      mock: { fetch: mockFetch2 },
     });
 
     // Get metadata for both responses
