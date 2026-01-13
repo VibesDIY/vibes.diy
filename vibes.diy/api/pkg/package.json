@@ -1,0 +1,19 @@
+{
+  "name": "vibes-diy-api-pkg",
+  "version": "0.0.0",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "build": "core-cli build",
+    "pack": "core-cli build --doPack",
+    "publish": "core-cli build"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.15",
+    "arktype": "^2.1.29",
+    "mime": "^4.1.0"
+  },
+  "devDependencies": {
+    "@fireproof/core-cli": "0.24.8-dev-test-device-id"
+  }
+}
