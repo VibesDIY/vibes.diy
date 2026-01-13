@@ -6,14 +6,11 @@ import {
   SSEDataParser,
   SSEJsonParser,
   OpenRouterParser,
-  OpenRouterMeta,
-  OpenRouterDeltaEvent,
-  OpenRouterUsageEvent,
-  OpenRouterDoneEvent,
 } from "call-ai";
 import { describe, it, expect, vi } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
+import { OrDelta, OrDone, OrMeta, OrUsage } from "../../pkg/parser/openrouter-events.js";
 
 const openAiStreamFixture = readFileSync(
   new URL("./fixtures/openai-stream-response.json", import.meta.url),
@@ -37,8 +34,10 @@ function createOpenRouterParser() {
 describe("OpenRouterParser", () => {
   it("emits delta events for content", () => {
     const parser = createOpenRouterParser();
-    const deltas: OpenRouterDeltaEvent[] = [];
-    parser.onDelta((evt) => deltas.push(evt));
+    const deltas: OrDelta[] = [];
+    parser.onEvent((evt) => {
+      if (evt.type === "or.delta") deltas.push(evt);
+    });
 
     parser.processChunk(
       'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"index":0,"delta":{"role":"assistant","content":"Hello"}}]}\n',
@@ -51,15 +50,18 @@ describe("OpenRouterParser", () => {
 
   it("emits meta on first chunk", () => {
     const parser = createOpenRouterParser();
-    const metaSpy = vi.fn();
-    parser.onMeta(metaSpy);
+    const metas: OrMeta[] = [];
+    parser.onEvent((evt) => {
+      if (evt.type === "or.meta") metas.push(evt);
+    });
 
     parser.processChunk(
       'data: {"id":"gen-123","provider":"OpenAI","model":"openai/gpt-4o","created":1742583676,"system_fingerprint":"fp_test","choices":[{"index":0,"delta":{"role":"assistant","content":""}}]}\n',
     );
 
-    expect(metaSpy).toHaveBeenCalledTimes(1);
-    expect(metaSpy).toHaveBeenCalledWith({
+    expect(metas).toHaveLength(1);
+    expect(metas[0]).toMatchObject({
+      type: "or.meta",
       id: "gen-123",
       provider: "OpenAI",
       model: "openai/gpt-4o",
@@ -70,8 +72,10 @@ describe("OpenRouterParser", () => {
 
   it("emits meta only once", () => {
     const parser = createOpenRouterParser();
-    const metaSpy = vi.fn();
-    parser.onMeta(metaSpy);
+    const metas: OrMeta[] = [];
+    parser.onEvent((evt) => {
+      if (evt.type === "or.meta") metas.push(evt);
+    });
 
     parser.processChunk(
       'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"A"}}]}\n',
@@ -80,21 +84,23 @@ describe("OpenRouterParser", () => {
       'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"B"}}]}\n',
     );
 
-    expect(metaSpy).toHaveBeenCalledTimes(1);
+    expect(metas).toHaveLength(1);
   });
 
   it("emits usage on final chunk", () => {
     const parser = createOpenRouterParser();
-    const usageSpy = vi.fn();
-    parser.onUsage(usageSpy);
+    const usages: OrUsage[] = [];
+    parser.onEvent((evt) => {
+      if (evt.type === "or.usage") usages.push(evt);
+    });
 
     parser.processChunk(
       'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":""}}],"usage":{"prompt_tokens":10,"completion_tokens":20,"total_tokens":30,"cost":0.001}}\n',
     );
 
-    expect(usageSpy).toHaveBeenCalledTimes(1);
-    expect(usageSpy).toHaveBeenCalledWith({
-      type: "usage",
+    expect(usages).toHaveLength(1);
+    expect(usages[0]).toMatchObject({
+      type: "or.usage",
       promptTokens: 10,
       completionTokens: 20,
       totalTokens: 30,
@@ -104,24 +110,28 @@ describe("OpenRouterParser", () => {
 
   it("emits done with finish_reason", () => {
     const parser = createOpenRouterParser();
-    const doneSpy = vi.fn();
-    parser.onDone(doneSpy);
+    const dones: OrDone[] = [];
+    parser.onEvent((evt) => {
+      if (evt.type === "or.done") dones.push(evt);
+    });
 
     parser.processChunk(
       'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":""},"finish_reason":"stop"}]}\n',
     );
 
-    expect(doneSpy).toHaveBeenCalledTimes(1);
-    expect(doneSpy).toHaveBeenCalledWith({
-      type: "done",
+    expect(dones).toHaveLength(1);
+    expect(dones[0]).toMatchObject({
+      type: "or.done",
       finishReason: "stop",
     });
   });
 
   it("handles empty content deltas (no event)", () => {
     const parser = createOpenRouterParser();
-    const deltas: OpenRouterDeltaEvent[] = [];
-    parser.onDelta((evt) => deltas.push(evt));
+    const deltas: OrDelta[] = [];
+    parser.onEvent((evt) => {
+      if (evt.type === "or.delta") deltas.push(evt);
+    });
 
     parser.processChunk(
       'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"role":"assistant","content":""}}]}\n',
@@ -132,8 +142,10 @@ describe("OpenRouterParser", () => {
 
   it("increments seq for each delta", () => {
     const parser = createOpenRouterParser();
-    const deltas: OpenRouterDeltaEvent[] = [];
-    parser.onDelta((evt) => deltas.push(evt));
+    const deltas: OrDelta[] = [];
+    parser.onEvent((evt) => {
+      if (evt.type === "or.delta") deltas.push(evt);
+    });
 
     parser.processChunk(
       'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"A"}}]}\n',
@@ -152,15 +164,19 @@ describe("OpenRouterParser", () => {
   describe("with fixtures (random chunking)", () => {
     it("extracts all deltas from openai-stream fixture", () => {
       const parser = createOpenRouterParser();
-      const deltas: OpenRouterDeltaEvent[] = [];
-      const metas: OpenRouterMeta[] = [];
-      const usages: OpenRouterUsageEvent[] = [];
-      const dones: OpenRouterDoneEvent[] = [];
+      const deltas: OrDelta[] = [];
+      const metas: OrMeta[] = [];
+      const usages: OrUsage[] = [];
+      const dones: OrDone[] = [];
 
-      parser.onDelta((evt) => deltas.push(evt));
-      parser.onMeta((meta) => metas.push(meta));
-      parser.onUsage((evt) => usages.push(evt));
-      parser.onDone((evt) => dones.push(evt));
+      parser.onEvent((evt) => {
+        switch (evt.type) {
+          case "or.delta": deltas.push(evt); break;
+          case "or.meta": metas.push(evt); break;
+          case "or.usage": usages.push(evt); break;
+          case "or.done": dones.push(evt); break;
+        }
+      });
 
       feedFixtureRandomly(parser, openAiStreamFixture, { seed: 12345 });
 
@@ -190,11 +206,13 @@ describe("OpenRouterParser", () => {
 
     it("extracts all deltas from fireproof fixture", () => {
       const parser = createOpenRouterParser();
-      const deltas: OpenRouterDeltaEvent[] = [];
-      const usages: OpenRouterUsageEvent[] = [];
+      const deltas: OrDelta[] = [];
+      const usages: OrUsage[] = [];
 
-      parser.onDelta((evt) => deltas.push(evt));
-      parser.onUsage((evt) => usages.push(evt));
+      parser.onEvent((evt) => {
+        if (evt.type === "or.delta") deltas.push(evt);
+        if (evt.type === "or.usage") usages.push(evt);
+      });
 
       feedFixtureRandomly(parser, fireproofStreamFixture, { seed: 67890 });
 

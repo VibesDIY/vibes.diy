@@ -90,11 +90,13 @@ async function* parseSchemaSSE(response: Response, schemaStrategy: SchemaStrateg
     finalResult = evt.arguments;
   });
 
-  // Handle old Claude format via OpenRouterParser's onJson
-  orParser.onJson((evt) => {
-    const oldFormatResult = extractOldFormatToolUse(evt.json, schemaStrategy);
-    if (oldFormatResult) {
-      finalResult = oldFormatResult;
+  // Handle old Claude format via OpenRouterParser's onEvent
+  orParser.onEvent((evt) => {
+    if (evt.type === "or.json") {
+      const oldFormatResult = extractOldFormatToolUse(evt.json, schemaStrategy);
+      if (oldFormatResult) {
+        finalResult = oldFormatResult;
+      }
     }
   });
 

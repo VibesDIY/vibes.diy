@@ -22,8 +22,12 @@ describe("OpenRouterParser arktype events", () => {
       expect(isOrEventError(result)).toBe(false);
     }
 
-    // First event is or.meta
-    expect(events.mock.calls[0][0]).toMatchObject({
+    // First event is or.json (raw chunk)
+    expect(events.mock.calls[0][0].type).toBe("or.json");
+
+    // or.meta follows once identified in the chunk
+    const metaEvent = events.mock.calls.find(c => c[0].type === "or.meta")?.[0];
+    expect(metaEvent).toMatchObject({
       type: "or.meta",
       model: "openai/gpt-4o",
       provider: "OpenAI",
@@ -74,25 +78,5 @@ describe("OpenRouterParser arktype events", () => {
     // Should not throw
     parser.processChunk(loadFixture("openai-fireproof-stream-response.txt"));
     expect(events.length).toBeGreaterThan(100);
-  });
-
-  it("should still emit legacy callbacks for backward compat", () => {
-    const parser = createBaseParser();
-    const onMeta = vi.fn();
-    const onDelta = vi.fn();
-    const onUsage = vi.fn();
-    const onDone = vi.fn();
-
-    parser.onMeta(onMeta);
-    parser.onDelta(onDelta);
-    parser.onUsage(onUsage);
-    parser.onDone(onDone);
-
-    parser.processChunk(loadFixture("openai-fireproof-stream-response.txt"));
-
-    expect(onMeta).toHaveBeenCalledTimes(1);
-    expect(onDelta.mock.calls.length).toBeGreaterThan(100);
-    expect(onUsage).toHaveBeenCalledTimes(1);
-    expect(onDone).toHaveBeenCalledTimes(1);
   });
 });

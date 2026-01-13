@@ -1,6 +1,7 @@
 import { OnFunc } from "@adviser/cement";
 
-import { OpenRouterParser, OpenRouterDeltaEvent } from "./openrouter-parser.js";
+import { OpenRouterParser } from "./openrouter-parser.js";
+import { OrDelta } from "./openrouter-events.js";
 
 /**
  * TextFragmentEvent - Text content outside code blocks
@@ -94,8 +95,16 @@ export class CodeBlockParser {
 
   constructor(orParser: OpenRouterParser) {
     this.orParser = orParser;
-    this.orParser.onDelta(this.handleDelta.bind(this));
-    this.orParser.onStreamEnd(() => this.finalize());
+    this.orParser.onEvent((evt) => {
+      switch (evt.type) {
+        case "or.delta":
+          this.handleDelta(evt);
+          break;
+        case "or.stream-end":
+          this.finalize();
+          break;
+      }
+    });
   }
 
   private emitText(fragment: string): void {
@@ -153,7 +162,7 @@ export class CodeBlockParser {
     }
   }
 
-  private handleDelta(evt: OpenRouterDeltaEvent): void {
+  private handleDelta(evt: OrDelta): void {
     for (const char of evt.content) {
       switch (this.state) {
         case "TEXT":

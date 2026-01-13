@@ -47,6 +47,10 @@ function toStreamEvent(evt: OrEvent, streamId: string, prompt: string): StreamEv
       };
     case "or.stream-end":
       return null; // Internal event, don't forward
+    case "or.json":
+      return null; // Raw JSON, don't forward
+    default:
+      return null;
   }
 }
 

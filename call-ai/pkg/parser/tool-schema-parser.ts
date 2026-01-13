@@ -1,5 +1,6 @@
 import { OnFunc } from "@adviser/cement";
 import { OpenRouterParser } from "./openrouter-parser.js";
+import { OrDone } from "./openrouter-events.js";
 
 // Events
 export interface ToolCallStartEvent {
@@ -42,14 +43,22 @@ export class ToolSchemaParser {
 
   constructor(orParser: OpenRouterParser) {
     this.orParser = orParser;
-    this.orParser.onJson(this.handleJson.bind(this));
-    this.orParser.onDone(this.handleDone.bind(this));
+    this.orParser.onEvent((evt) => {
+      switch (evt.type) {
+        case "or.json":
+          this.handleJson(evt.json);
+          break;
+        case "or.done":
+          this.handleDone(evt);
+          break;
+      }
+    });
   }
 
-  private handleJson(evt: { json: unknown }): void {
-    const json = evt.json as Record<string, unknown>;
+  private handleJson(json: unknown): void {
+    const chunk = json as Record<string, unknown>;
     // Extract tool_calls from choices[0].delta.tool_calls
-    const choices = json.choices as Array<{delta?: {tool_calls?: Array<{index?: number; id?: string; function?: {name?: string; arguments?: string}}>}}>;
+    const choices = chunk.choices as Array<{delta?: {tool_calls?: Array<{index?: number; id?: string; function?: {name?: string; arguments?: string}}>}}>;
     const toolCalls = choices?.[0]?.delta?.tool_calls;
 
     if (toolCalls) {
@@ -92,7 +101,7 @@ export class ToolSchemaParser {
     }
   }
 
-  private handleDone(evt: { finishReason: string }): void {
+  private handleDone(evt: OrDone): void {
     if (evt.finishReason === "tool_calls") {
       // Emit complete for all accumulated tool calls
       for (const [, state] of this.toolCalls) {

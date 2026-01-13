@@ -15,14 +15,23 @@ export { SSEDataParser, DataEvent } from "./sse-data-parser.js";
 
 export { JsonParser, JsonEvent, DataSource, SSEJsonParser, SSEJsonEvent } from "./json-parser.js";
 
+export { OpenRouterParser } from "./openrouter-parser.js";
 export {
-  OpenRouterParser,
-  OpenRouterMeta,
-  OpenRouterDeltaEvent,
-  OpenRouterUsageEvent,
-  OpenRouterDoneEvent,
-  OpenRouterEvent,
-} from "./openrouter-parser.js";
+  orMeta,
+  orDelta,
+  orUsage,
+  orDone,
+  orStreamEnd,
+  orJson,
+  orEvent,
+  OrMeta,
+  OrDelta,
+  OrUsage,
+  OrDone,
+  OrStreamEnd,
+  OrJson,
+  OrEvent,
+} from "./openrouter-events.js";
 
 export {
   CodeBlockParser,

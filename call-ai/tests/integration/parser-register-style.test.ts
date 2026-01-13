@@ -17,9 +17,13 @@ describe("Parser register style tests", () => {
     const events = vi.fn();
 
     // Upstream events
-    orParser.onMeta((meta) => events({ type: "meta", payload: meta }));
-    orParser.onUsage((usage) => events({ type: "usage", payload: usage }));
-    orParser.onDone((done) => events({ type: "done", payload: done }));
+    orParser.onEvent((evt) => {
+      switch (evt.type) {
+        case "or.meta": events({ type: "meta", payload: evt }); break;
+        case "or.usage": events({ type: "usage", payload: evt }); break;
+        case "or.done": events({ type: "done", payload: evt }); break;
+      }
+    });
 
     // Code block events
     codeParser.onEvent((evt) => events(evt));
@@ -29,7 +33,7 @@ describe("Parser register style tests", () => {
     // Assert meta comes first
     expect(events.mock.calls[0][0]).toMatchObject({
       type: "meta",
-      payload: { model: "openai/gpt-4o", provider: "OpenAI" },
+      payload: { type: "or.meta", model: "openai/gpt-4o", provider: "OpenAI" },
     });
 
     // Assert text fragment events for markdown before code
@@ -59,7 +63,7 @@ describe("Parser register style tests", () => {
     const doneEvents = events.mock.calls.filter((c) => c[0].type === "done");
     expect(doneEvents.length).toBe(1);
     expect(doneEvents[0][0].payload).toMatchObject({
-      type: "done",
+      type: "or.done",
       finishReason: "stop",
     });
 
@@ -67,6 +71,7 @@ describe("Parser register style tests", () => {
     const usageEvents = events.mock.calls.filter((c) => c[0].type === "usage");
     expect(usageEvents.length).toBe(1);
     expect(usageEvents[0][0].payload).toMatchObject({
+      type: "or.usage",
       promptTokens: 89,
       completionTokens: 228,
       totalTokens: 317,
@@ -79,13 +84,16 @@ describe("Parser register style tests", () => {
 
     const eventTypes: string[] = [];
 
-    orParser.onMeta(() => eventTypes.push("meta"));
-    orParser.onUsage(() => eventTypes.push("usage"));
-    orParser.onDone(() => eventTypes.push("done"));
-    codeParser.onTextFragment(() => eventTypes.push("textFragment"));
-    codeParser.onCodeStart(() => eventTypes.push("codeStart"));
-    codeParser.onCodeFragment(() => eventTypes.push("codeFragment"));
-    codeParser.onCodeEnd(() => eventTypes.push("codeEnd"));
+    orParser.onEvent((evt) => {
+      switch (evt.type) {
+        case "or.meta": eventTypes.push("meta"); break;
+        case "or.usage": eventTypes.push("usage"); break;
+        case "or.done": eventTypes.push("done"); break;
+      }
+    });
+    codeParser.onEvent((evt) => {
+      eventTypes.push(evt.type);
+    });
 
     codeParser.processChunk(fixture);
 

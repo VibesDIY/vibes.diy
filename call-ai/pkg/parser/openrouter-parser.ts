@@ -1,69 +1,30 @@
 import { OnFunc } from "@adviser/cement";
 
 import { JsonParser, JsonEvent } from "./json-parser.js";
-import { OrEvent } from "./openrouter-events.js";
-
-/**
- * OpenRouterMeta - Metadata from the first chunk
- */
-export interface OpenRouterMeta {
-  readonly id: string;
-  readonly provider: string;
-  readonly model: string;
-  readonly created: number;
-  readonly systemFingerprint: string;
-}
-
-/**
- * OpenRouterDeltaEvent - Text content delta
- */
-export interface OpenRouterDeltaEvent {
-  readonly type: "delta";
-  readonly content: string;
-  readonly seq: number;
-}
-
-/**
- * OpenRouterUsageEvent - Usage statistics from final chunk
- */
-export interface OpenRouterUsageEvent {
-  readonly type: "usage";
-  readonly promptTokens: number;
-  readonly completionTokens: number;
-  readonly totalTokens: number;
-  readonly cost?: number;
-}
-
-/**
- * OpenRouterDoneEvent - Stream completion
- */
-export interface OpenRouterDoneEvent {
-  readonly type: "done";
-  readonly finishReason: string;
-}
-
-export type OpenRouterEvent = OpenRouterDeltaEvent | OpenRouterUsageEvent | OpenRouterDoneEvent;
+import { OrEvent, OrMeta } from "./openrouter-events.js";
 
 /**
  * OpenRouterParser - Interprets OpenRouter-specific JSON structure.
  *
- * This class listens to SSEJsonParser events and extracts:
- * - Text content deltas (onDelta)
- * - Stream metadata like model, provider (onMeta)
- * - Usage statistics from final chunk (onUsage)
- * - Finish reason (onDone)
+ * This class listens to JsonParser events and extracts:
+ * - Text content deltas (or.delta)
+ * - Stream metadata like model, provider (or.meta)
+ * - Usage statistics from final chunk (or.usage)
+ * - Finish reason (or.done)
+ * - Raw JSON chunks (or.json)
+ * - Stream completion (or.stream-end)
  *
  * Usage:
  * ```typescript
- * const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
- * const sseParser = new SSEDataParser(lineParser);
- * const jsonParser = new JsonParser(sseParser);
  * const orParser = new OpenRouterParser(jsonParser);
  *
- * orParser.onMeta(meta => console.log("Model:", meta.model));
- * orParser.onDelta(evt => process.stdout.write(evt.content));
- * orParser.onUsage(evt => console.log("Tokens:", evt.totalTokens));
- * orParser.onDone(evt => console.log("Finished:", evt.finishReason));
+ * orParser.onEvent(evt => {
+ *   switch (evt.type) {
+ *     case "or.meta": console.log("Model:", evt.model); break;
+ *     case "or.delta": process.stdout.write(evt.content); break;
+ *     // ...
+ *   }
+ * });
  *
  * for await (const chunk of response.body) {
  *   orParser.processChunk(chunk);
@@ -71,14 +32,6 @@ export type OpenRouterEvent = OpenRouterDeltaEvent | OpenRouterUsageEvent | Open
  * ```
  */
 export class OpenRouterParser {
-  // Legacy callbacks (kept for backward compatibility)
-  readonly onDelta = OnFunc<(event: OpenRouterDeltaEvent) => void>();
-  readonly onUsage = OnFunc<(event: OpenRouterUsageEvent) => void>();
-  readonly onDone = OnFunc<(event: OpenRouterDoneEvent) => void>();
-  readonly onMeta = OnFunc<(meta: OpenRouterMeta) => void>();
-  readonly onJson = OnFunc<(event: { json: unknown }) => void>();
-  readonly onStreamEnd = OnFunc<() => void>(); // Fires on [DONE] from SSE
-
   // Unified arktype event callback
   readonly onEvent = OnFunc<(event: OrEvent) => void>();
 
@@ -92,44 +45,39 @@ export class OpenRouterParser {
     this.jsonParser.onDone(() => this.emitStreamEnd());
   }
 
-  private emitMeta(meta: OpenRouterMeta): void {
-    this.onMeta.invoke(meta);
+  private emitMeta(meta: Omit<OrMeta, "type">): void {
     this.onEvent.invoke({
       type: "or.meta",
-      id: meta.id,
-      provider: meta.provider,
-      model: meta.model,
-      created: meta.created,
-      systemFingerprint: meta.systemFingerprint,
+      ...meta,
     });
   }
 
   private emitDelta(content: string): void {
     const seq = this.seq++;
-    this.onDelta.invoke({ type: "delta", content, seq });
     this.onEvent.invoke({ type: "or.delta", content, seq });
   }
 
   private emitUsage(promptTokens: number, completionTokens: number, totalTokens: number, cost?: number): void {
-    this.onUsage.invoke({ type: "usage", promptTokens, completionTokens, totalTokens, cost });
     this.onEvent.invoke({ type: "or.usage", promptTokens, completionTokens, totalTokens, cost });
   }
 
   private emitDone(finishReason: string): void {
-    this.onDone.invoke({ type: "done", finishReason });
     this.onEvent.invoke({ type: "or.done", finishReason });
   }
 
   private emitStreamEnd(): void {
-    this.onStreamEnd.invoke();
     this.onEvent.invoke({ type: "or.stream-end" });
+  }
+
+  private emitJson(json: unknown): void {
+    this.onEvent.invoke({ type: "or.json", json });
   }
 
   private handleJson(evt: JsonEvent): void {
     const chunk = evt.json as Record<string, unknown>;
 
     // Emit raw JSON for downstream consumers (like ToolSchemaParser)
-    this.onJson.invoke({ json: chunk });
+    this.emitJson(chunk);
 
     // Emit metadata on first chunk
     if (!this.metaEmitted && chunk.id) {
@@ -138,7 +86,7 @@ export class OpenRouterParser {
         provider: chunk.provider as string,
         model: chunk.model as string,
         created: chunk.created as number,
-        systemFingerprint: chunk.system_fingerprint as string,
+        systemFingerprint: chunk.system_fingerprint as string ?? "",
       });
       this.metaEmitted = true;
     }

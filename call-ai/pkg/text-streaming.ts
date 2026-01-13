@@ -22,26 +22,28 @@ async function* parseTextSSE(
   let pendingChunks: string[] = [];
   let pendingError: Error | null = null;
 
-  // Collect text deltas
-  orParser.onDelta((evt) => {
-    if (evt.content) {
-      pendingChunks.push(evt.content);
-    }
-  });
-
-  // Handle errors in stream - store for throwing in generator
-  orParser.onJson((evt) => {
-    const json = evt.json as Record<string, unknown>;
-    if (json.error || json.type === "error") {
-      const errorMessage =
-        (json.error as { message?: string })?.message || "Unknown streaming error";
-      pendingError = new CallAIError({
-        message: `API streaming error: ${errorMessage}`,
-        status: (json.error as { status?: number })?.status || 400,
-        statusText: (json.error as { type?: string })?.type || "Bad Request",
-        details: JSON.stringify(json.error || json),
-        contentType: "application/json",
-      });
+  // Wire up parser events
+  orParser.onEvent((evt) => {
+    switch (evt.type) {
+      case "or.delta":
+        if (evt.content) {
+          pendingChunks.push(evt.content);
+        }
+        break;
+      case "or.json": {
+        const json = evt.json as Record<string, unknown>;
+        if (json.error || json.type === "error") {
+          const errorMessage = (json.error as { message?: string })?.message || "Unknown streaming error";
+          pendingError = new CallAIError({
+            message: `API streaming error: ${errorMessage}`,
+            status: (json.error as { status?: number })?.status || 400,
+            statusText: (json.error as { type?: string })?.type || "Bad Request",
+            details: JSON.stringify(json.error || json),
+            contentType: "application/json",
+          });
+        }
+        break;
+      }
     }
   });
 

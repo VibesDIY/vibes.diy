@@ -33,12 +33,18 @@ export const orStreamEnd = type({
   type: "'or.stream-end'",
 });
 
+export const orJson = type({
+  type: "'or.json'",
+  json: "unknown",
+});
+
 // Union of all OpenRouter events
 export const orEvent = orMeta
   .or(orDelta)
   .or(orUsage)
   .or(orDone)
-  .or(orStreamEnd);
+  .or(orStreamEnd)
+  .or(orJson);
 
 export type OrEvent = typeof orEvent.infer;
 export type OrMeta = typeof orMeta.infer;
@@ -46,6 +52,7 @@ export type OrDelta = typeof orDelta.infer;
 export type OrUsage = typeof orUsage.infer;
 export type OrDone = typeof orDone.infer;
 export type OrStreamEnd = typeof orStreamEnd.infer;
+export type OrJson = typeof orJson.infer;
 
 // Helper to check if arktype validation failed
 export function isOrEventError(result: unknown): boolean {
