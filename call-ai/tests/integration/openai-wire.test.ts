@@ -59,6 +59,7 @@ describe("OpenAI Wire Protocol Tests", () => {
                     return { done: true, value: undefined };
                   }
                 },
+                releaseLock: () => {},
               };
             },
           },

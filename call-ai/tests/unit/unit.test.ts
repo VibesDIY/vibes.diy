@@ -13,6 +13,7 @@ global.fetch = globalFetch as typeof fetch;
 // Mock ReadableStream
 const mockReader = {
   read: vi.fn<() => Promise<{ done: boolean; value?: Uint8Array }>>(),
+  releaseLock: vi.fn(),
 };
 
 const mockResponse = {
@@ -526,6 +527,7 @@ describe("callAi", () => {
             .mockResolvedValueOnce({
               done: true,
             }),
+          releaseLock: vi.fn(),
         }),
       },
     } as unknown as Response;
