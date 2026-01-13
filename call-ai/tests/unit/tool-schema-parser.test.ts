@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createSchemaParser, ToolCallCompleteEvent, ToolCallStartEvent, ToolCallArgumentsEvent } from "../../pkg/parser/index.js";
+import { createSchemaParser, ToolCallCompleteEvent, ToolCallStartEvent, ToolCallArgumentsEvent, ToolSchemaAccumulator } from "../../pkg/parser/index.js";
 
 describe("ToolSchemaParser", () => {
   it("should assemble tool call from multiple chunks", () => {
@@ -215,5 +215,57 @@ describe("ToolSchemaParser", () => {
 
     expect(completed).toHaveLength(1);
     expect(completed[0].arguments).toBe('{"key": "val"}');
+  });
+
+  it("should not emit duplicates when finalize follows finish_reason", () => {
+    const parser = createSchemaParser();
+    const completed: ToolCallCompleteEvent[] = [];
+    parser.onToolCallComplete((evt) => completed.push(evt));
+
+    const chunk = JSON.stringify({
+      choices: [{
+        delta: {
+          tool_calls: [{
+            index: 0,
+            id: "call_nodup",
+            function: { arguments: '{"foo": "bar"}' }
+          }]
+        }
+      }]
+    });
+    parser.processChunk(`data: ${chunk}\n\n`);
+
+    const finish = JSON.stringify({ choices: [{ finish_reason: "tool_calls" }] });
+    parser.processChunk(`data: ${finish}\n\n`);
+
+    parser.finalize();
+
+    expect(completed).toHaveLength(1);
+    expect(completed[0].callId).toBe("call_nodup");
+  });
+});
+
+describe("ToolSchemaAccumulator", () => {
+  it("should capture tool schema JSON via delegated parser", () => {
+    const parser = createSchemaParser();
+    const accumulator = new ToolSchemaAccumulator(parser);
+
+    const chunk = JSON.stringify({
+      choices: [{
+        delta: {
+          tool_calls: [{
+            index: 0,
+            id: "acc_1",
+            function: { arguments: '{"alpha": 1}' }
+          }]
+        }
+      }]
+    });
+    accumulator.processChunk(`data: ${chunk}\n\n`);
+
+    const finish = JSON.stringify({ choices: [{ finish_reason: "tool_calls" }] });
+    accumulator.processChunk(`data: ${finish}\n\n`);
+
+    expect(accumulator.result).toBe('{"alpha": 1}');
   });
 });

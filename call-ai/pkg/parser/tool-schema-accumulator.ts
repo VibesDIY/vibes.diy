@@ -3,8 +3,10 @@ import { fixMalformedJson } from "../utils.js";
 
 export class ToolSchemaAccumulator {
   result: string | null = null;
+  private readonly parser: ToolSchemaParser;
 
   constructor(parser: ToolSchemaParser) {
+    this.parser = parser;
     parser.onToolCallComplete((evt) => {
       // Fix potential malformed JSON before storing
       this.result = fixMalformedJson(evt.arguments);
@@ -12,6 +14,6 @@ export class ToolSchemaAccumulator {
   }
 
   processChunk(chunk: string): void {
-    // Delegate to upstream (handled by parser stack wiring)
+    this.parser.processChunk(chunk);
   }
 }

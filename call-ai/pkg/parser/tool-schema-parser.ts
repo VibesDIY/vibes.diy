@@ -37,11 +37,11 @@ export class ToolSchemaParser {
     name?: string;
     arguments: string;
     started: boolean;
+    completed: boolean;
   }> = new Map();
 
   constructor(orParser: OpenRouterParser) {
     this.orParser = orParser;
-    // @ts-ignore - onJson will be added to OpenRouterParser in the next step
     this.orParser.onJson(this.handleJson.bind(this));
     this.orParser.onDone(this.handleDone.bind(this));
   }
@@ -59,7 +59,7 @@ export class ToolSchemaParser {
         // Get or create tool call state
         let state = this.toolCalls.get(index);
         if (!state) {
-          state = { id: tc.id || `tool-${index}`, arguments: "", started: false };
+          state = { id: tc.id || `tool-${index}`, arguments: "", started: false, completed: false };
           this.toolCalls.set(index, state);
         }
 
@@ -96,14 +96,7 @@ export class ToolSchemaParser {
     if (evt.finishReason === "tool_calls") {
       // Emit complete for all accumulated tool calls
       for (const [, state] of this.toolCalls) {
-        if (state.arguments) {
-          this.onToolCallComplete.invoke({
-            type: "toolCallComplete",
-            seq: this.seq++,
-            callId: state.id,
-            arguments: state.arguments,
-          });
-        }
+        this.emitCompletion(state);
       }
     }
   }
@@ -115,15 +108,21 @@ export class ToolSchemaParser {
   finalize(): void {
     // Emit complete for any remaining tool calls not yet emitted
     for (const [, state] of this.toolCalls) {
-      if (state.arguments && state.started) {
-        this.onToolCallComplete.invoke({
-          type: "toolCallComplete",
-          seq: this.seq++,
-          callId: state.id,
-          arguments: state.arguments,
-        });
-      }
+      this.emitCompletion(state);
     }
     this.toolCalls.clear();
+  }
+
+  private emitCompletion(state: { id: string; arguments: string; started: boolean; completed: boolean }): void {
+    if (!state.started || !state.arguments || state.completed) {
+      return;
+    }
+    state.completed = true;
+    this.onToolCallComplete.invoke({
+      type: "toolCallComplete",
+      seq: this.seq++,
+      callId: state.id,
+      arguments: state.arguments,
+    });
   }
 }
