@@ -105,7 +105,7 @@ export class OpenRouterParser {
       this.metaEmitted = true;
     }
 
-    // Extract content delta
+    // Extract content delta - OpenAI format: choices[0].delta.content
     const choices = chunk.choices as Array<{ delta?: { content?: string }; finish_reason?: string | null }> | undefined;
     const content = choices?.[0]?.delta?.content;
     if (content) {
@@ -114,6 +114,18 @@ export class OpenRouterParser {
         content,
         seq: this.seq++,
       });
+    }
+
+    // Extract content delta - Claude format: content_block_delta with text_delta
+    if (chunk.type === "content_block_delta") {
+      const delta = chunk.delta as { type?: string; text?: string } | undefined;
+      if (delta?.type === "text_delta" && delta.text) {
+        this.onDelta.invoke({
+          type: "delta",
+          content: delta.text,
+          seq: this.seq++,
+        });
+      }
     }
 
     // Check for finish_reason

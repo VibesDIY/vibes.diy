@@ -17,6 +17,7 @@ import { responseMetadata, boxString } from "./response-metadata.js";
 import { checkForInvalidModelError } from "./error-handling.js";
 import { PACKAGE_VERSION, FALLBACK_MODEL } from "./non-streaming.js";
 import { createSchemaStreamingGenerator } from "./schema-streaming.js";
+import { createTextStreamingGenerator } from "./text-streaming.js";
 
 /**
  * Create a proxy that acts both as a Promise and an AsyncGenerator for backward compatibility
@@ -471,12 +472,11 @@ async function* callAIStreaming(
       throw new Error("Schema strategy is required for streaming");
     }
 
-    // Use parser-based streaming for tool_mode (Claude schema responses)
-    // Otherwise use legacy parseSSE approach
+    // Use parser-based streaming for all responses
     if (schemaStrategy.strategy === "tool_mode") {
       yield* createSchemaStreamingGenerator(response, options, schemaStrategy, model);
     } else {
-      yield* createStreamingGenerator(response, options, schemaStrategy, model);
+      yield* createTextStreamingGenerator(response, options, schemaStrategy, model);
     }
 
     // The generators will return the final assembled string
