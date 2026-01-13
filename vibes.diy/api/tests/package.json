@@ -1,0 +1,29 @@
+{
+  "name": "vibes-diy-api-test",
+  "version": "0.0.0",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "build": "core-cli tsc",
+    "test": "vitest --run",
+    "pack": "core-cli build --doPack",
+    "publish": "core-cli build"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.15",
+    "@fireproof/core-device-id": "0.24.8-dev-test-device-id",
+    "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
+    "@fireproof/core-types-device-id": "0.24.8-dev-test-device-id",
+    "@libsql/client": "^0.17.0",
+    "drizzle-kit": "^0.31.8",
+    "drizzle-orm": "^0.45.1",
+    "vibes-diy-api-impl": "workspace:*",
+    "vibes-diy-api-pkg": "workspace:*",
+    "vibes-diy-api-svc": "workspace:*"
+  },
+  "devDependencies": {
+    "@fireproof/core-cli": "0.24.8-dev-test-device-id",
+    "vitest": "^4.0.16",
+    "zx": "^8.8.5"
+  }
+}
