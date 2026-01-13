@@ -53,6 +53,7 @@ describe("OpenAI Weather Streaming Tests", () => {
                     return { done: true, value: undefined };
                   }
                 },
+                releaseLock: () => {},
               };
             },
           },

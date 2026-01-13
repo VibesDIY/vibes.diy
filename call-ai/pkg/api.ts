@@ -18,7 +18,9 @@ import { responseMetadata, boxString, getMeta } from "./response-metadata.js";
 import { keyStore, globalDebug } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
 import { extractContent, extractClaudeResponse, PACKAGE_VERSION } from "./non-streaming.js";
-import { createBackwardCompatStreamingProxy, createStreamingGenerator } from "./streaming.js";
+import { createBackwardCompatStreamingProxy } from "./streaming.js";
+import { createSchemaStreamingGenerator } from "./schema-streaming.js";
+import { createTextStreamingGenerator } from "./text-streaming.js";
 import { callAiFetch, joinUrlParts } from "./utils.js";
 import { callAiEnv } from "./env.js";
 
@@ -279,7 +281,12 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
       ...options,
       stream: true,
     };
-    return createStreamingGenerator(response, streamingOptions, schemaStrategy, model) as StreamResponse;
+    // Route to appropriate streaming generator based on strategy
+    if (schemaStrategy.strategy === "tool_mode") {
+      return createSchemaStreamingGenerator(response, streamingOptions, schemaStrategy, model) as StreamResponse;
+    } else {
+      return createTextStreamingGenerator(response, streamingOptions, schemaStrategy, model) as StreamResponse;
+    }
   })();
 
   // For backward compatibility with v0.6.x where users didn't await the result

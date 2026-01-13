@@ -4,17 +4,7 @@
 
 import { CallAIError, CallAIOptions, ResponseMeta, SchemaStrategy } from "./types.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
-import { LineStreamParser, LineStreamState } from "./parser/line-stream.js";
-import { SSEDataParser } from "./parser/sse-data-parser.js";
-import { JsonParser } from "./parser/json-parser.js";
-import { OpenRouterParser } from "./parser/openrouter-parser.js";
-
-function createTextParser(): OpenRouterParser {
-  const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
-  const sseParser = new SSEDataParser(lineParser);
-  const jsonParser = new JsonParser(sseParser);
-  return new OpenRouterParser(jsonParser);
-}
+import { createBaseParser } from "./parser/create-base-parser.js";
 
 async function* parseTextSSE(
   response: Response,
@@ -26,7 +16,7 @@ async function* parseTextSSE(
   }
 
   const textDecoder = new TextDecoder();
-  const orParser = createTextParser();
+  const orParser = createBaseParser();
 
   let accumulated = "";
   let pendingChunks: string[] = [];

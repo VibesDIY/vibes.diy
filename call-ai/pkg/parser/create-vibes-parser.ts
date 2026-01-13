@@ -1,7 +1,4 @@
-import { LineStreamParser, LineStreamState } from "./line-stream.js";
-import { SSEDataParser } from "./sse-data-parser.js";
-import { JsonParser } from "./json-parser.js";
-import { OpenRouterParser } from "./openrouter-parser.js";
+import { createBaseParser } from "./create-base-parser.js";
 import { CodeBlockParser } from "./code-block-parser.js";
 import { SegmentAccumulator } from "./segment-accumulator.js";
 
@@ -24,10 +21,7 @@ import { SegmentAccumulator } from "./segment-accumulator.js";
  * ```
  */
 export function createVibesParser(): SegmentAccumulator {
-  const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
-  const sseParser = new SSEDataParser(lineParser);
-  const jsonParser = new JsonParser(sseParser);
-  const orParser = new OpenRouterParser(jsonParser);
+  const orParser = createBaseParser();
   const codeParser = new CodeBlockParser(orParser);
   return new SegmentAccumulator(codeParser);
 }

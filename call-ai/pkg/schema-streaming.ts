@@ -4,9 +4,7 @@
 
 import { CallAIOptions, ResponseMeta, SchemaStrategy } from "./types.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
-import { LineStreamParser, LineStreamState } from "./parser/line-stream.js";
-import { SSEDataParser } from "./parser/sse-data-parser.js";
-import { JsonParser } from "./parser/json-parser.js";
+import { createBaseParser } from "./parser/create-base-parser.js";
 import { OpenRouterParser } from "./parser/openrouter-parser.js";
 import { ToolSchemaParser } from "./parser/tool-schema-parser.js";
 
@@ -51,10 +49,7 @@ function extractOldFormatToolUse(
  * Create parser stack with access to OpenRouterParser for old format handling
  */
 function createSchemaParserWithOrParser(): { toolParser: ToolSchemaParser; orParser: OpenRouterParser } {
-  const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
-  const sseParser = new SSEDataParser(lineParser);
-  const jsonParser = new JsonParser(sseParser);
-  const orParser = new OpenRouterParser(jsonParser);
+  const orParser = createBaseParser();
   const toolParser = new ToolSchemaParser(orParser);
   return { toolParser, orParser };
 }
