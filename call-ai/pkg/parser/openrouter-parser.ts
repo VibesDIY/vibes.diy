@@ -1,6 +1,7 @@
 import { OnFunc } from "@adviser/cement";
 
 import { JsonParser, JsonEvent } from "./json-parser.js";
+import { OrEvent } from "./openrouter-events.js";
 
 /**
  * OpenRouterMeta - Metadata from the first chunk
@@ -70,12 +71,16 @@ export type OpenRouterEvent = OpenRouterDeltaEvent | OpenRouterUsageEvent | Open
  * ```
  */
 export class OpenRouterParser {
+  // Legacy callbacks (kept for backward compatibility)
   readonly onDelta = OnFunc<(event: OpenRouterDeltaEvent) => void>();
   readonly onUsage = OnFunc<(event: OpenRouterUsageEvent) => void>();
   readonly onDone = OnFunc<(event: OpenRouterDoneEvent) => void>();
   readonly onMeta = OnFunc<(meta: OpenRouterMeta) => void>();
   readonly onJson = OnFunc<(event: { json: unknown }) => void>();
   readonly onStreamEnd = OnFunc<() => void>(); // Fires on [DONE] from SSE
+
+  // Unified arktype event callback
+  readonly onEvent = OnFunc<(event: OrEvent) => void>();
 
   private readonly jsonParser: JsonParser;
   private seq = 0;
@@ -84,7 +89,40 @@ export class OpenRouterParser {
   constructor(jsonParser: JsonParser) {
     this.jsonParser = jsonParser;
     this.jsonParser.onJson(this.handleJson.bind(this));
-    this.jsonParser.onDone(() => this.onStreamEnd.invoke());
+    this.jsonParser.onDone(() => this.emitStreamEnd());
+  }
+
+  private emitMeta(meta: OpenRouterMeta): void {
+    this.onMeta.invoke(meta);
+    this.onEvent.invoke({
+      type: "or.meta",
+      id: meta.id,
+      provider: meta.provider,
+      model: meta.model,
+      created: meta.created,
+      systemFingerprint: meta.systemFingerprint,
+    });
+  }
+
+  private emitDelta(content: string): void {
+    const seq = this.seq++;
+    this.onDelta.invoke({ type: "delta", content, seq });
+    this.onEvent.invoke({ type: "or.delta", content, seq });
+  }
+
+  private emitUsage(promptTokens: number, completionTokens: number, totalTokens: number, cost?: number): void {
+    this.onUsage.invoke({ type: "usage", promptTokens, completionTokens, totalTokens, cost });
+    this.onEvent.invoke({ type: "or.usage", promptTokens, completionTokens, totalTokens, cost });
+  }
+
+  private emitDone(finishReason: string): void {
+    this.onDone.invoke({ type: "done", finishReason });
+    this.onEvent.invoke({ type: "or.done", finishReason });
+  }
+
+  private emitStreamEnd(): void {
+    this.onStreamEnd.invoke();
+    this.onEvent.invoke({ type: "or.stream-end" });
   }
 
   private handleJson(evt: JsonEvent): void {
@@ -95,7 +133,7 @@ export class OpenRouterParser {
 
     // Emit metadata on first chunk
     if (!this.metaEmitted && chunk.id) {
-      this.onMeta.invoke({
+      this.emitMeta({
         id: chunk.id as string,
         provider: chunk.provider as string,
         model: chunk.model as string,
@@ -109,32 +147,21 @@ export class OpenRouterParser {
     const choices = chunk.choices as Array<{ delta?: { content?: string }; finish_reason?: string | null }> | undefined;
     const content = choices?.[0]?.delta?.content;
     if (content) {
-      this.onDelta.invoke({
-        type: "delta",
-        content,
-        seq: this.seq++,
-      });
+      this.emitDelta(content);
     }
 
     // Extract content delta - Claude format: content_block_delta with text_delta
     if (chunk.type === "content_block_delta") {
       const delta = chunk.delta as { type?: string; text?: string } | undefined;
       if (delta?.type === "text_delta" && delta.text) {
-        this.onDelta.invoke({
-          type: "delta",
-          content: delta.text,
-          seq: this.seq++,
-        });
+        this.emitDelta(delta.text);
       }
     }
 
     // Check for finish_reason
     const finishReason = choices?.[0]?.finish_reason;
     if (finishReason) {
-      this.onDone.invoke({
-        type: "done",
-        finishReason,
-      });
+      this.emitDone(finishReason);
     }
 
     // Check for usage (final chunk)
@@ -147,13 +174,12 @@ export class OpenRouterParser {
         }
       | undefined;
     if (usage) {
-      this.onUsage.invoke({
-        type: "usage",
-        promptTokens: usage.prompt_tokens ?? 0,
-        completionTokens: usage.completion_tokens ?? 0,
-        totalTokens: usage.total_tokens ?? 0,
-        cost: usage.cost,
-      });
+      this.emitUsage(
+        usage.prompt_tokens ?? 0,
+        usage.completion_tokens ?? 0,
+        usage.total_tokens ?? 0,
+        usage.cost
+      );
     }
   }
 

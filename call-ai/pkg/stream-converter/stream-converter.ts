@@ -1,11 +1,53 @@
 import { OnFunc } from "@adviser/cement";
 import { createBaseParser } from "../parser/create-base-parser.js";
+import { OrEvent } from "../parser/openrouter-events.js";
 import { StreamEvent } from "./events.js";
 
 export interface ProcessPromptParams {
   prompt: string;
   model: string;
   inputStream: ReadableStream<Uint8Array>;
+}
+
+/**
+ * Transform OpenRouter events to StreamConverter events
+ */
+function toStreamEvent(evt: OrEvent, streamId: string, prompt: string): StreamEvent | null {
+  switch (evt.type) {
+    case "or.meta":
+      return {
+        type: "call-ai.stream-begin",
+        streamId,
+        prompt,
+        model: evt.model,
+        provider: evt.provider,
+        created: evt.created,
+      };
+    case "or.delta":
+      return {
+        type: "call-ai.stream-delta",
+        streamId,
+        seq: evt.seq,
+        content: evt.content,
+      };
+    case "or.usage":
+      return {
+        type: "call-ai.stream-usage",
+        streamId,
+        promptTokens: evt.promptTokens,
+        completionTokens: evt.completionTokens,
+        totalTokens: evt.totalTokens,
+        cost: evt.cost,
+      };
+    case "or.done":
+      return {
+        type: "call-ai.stream-end",
+        streamId,
+        finishReason: evt.finishReason,
+      };
+    case "or.stream-end":
+      return null; // Internal event, don't forward
+  }
 }
 
 export class StreamConverter {
@@ -16,44 +58,10 @@ export class StreamConverter {
     const parser = createBaseParser();
     const streamId = crypto.randomUUID();
 
-    // Wire up parser events -> unified register callback
-    parser.onMeta((meta) => {
-      this.register.invoke({
-        type: "call-ai.stream-begin",
-        streamId,
-        prompt,
-        model: meta.model,
-        provider: meta.provider,
-        created: meta.created,
-      });
-    });
-
-    parser.onDelta((delta) => {
-      this.register.invoke({
-        type: "call-ai.stream-delta",
-        streamId,
-        seq: delta.seq,
-        content: delta.content,
-      });
-    });
-
-    parser.onUsage((usage) => {
-      this.register.invoke({
-        type: "call-ai.stream-usage",
-        streamId,
-        promptTokens: usage.promptTokens,
-        completionTokens: usage.completionTokens,
-        totalTokens: usage.totalTokens,
-        cost: usage.cost,
-      });
-    });
-
-    parser.onDone((done) => {
-      this.register.invoke({
-        type: "call-ai.stream-end",
-        streamId,
-        finishReason: done.finishReason,
-      });
+    // Single wiring point - transform and forward
+    parser.onEvent((evt) => {
+      const streamEvt = toStreamEvent(evt, streamId, prompt);
+      if (streamEvt) this.register.invoke(streamEvt);
     });
 
     // Process the input stream
