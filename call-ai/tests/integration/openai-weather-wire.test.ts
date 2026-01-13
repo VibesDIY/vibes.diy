@@ -1,116 +1,41 @@
 import fs from "fs";
 import path from "path";
-import { callAi, Schema } from "call-ai";
-import { describe, beforeEach, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
+import { createBaseParser, OrEvent } from "../../pkg/parser/index.js";
+import { feedFixtureToParser } from "../test-helpers.js";
 
-// Mock fetch to use our fixture files
-const global = globalThis;
-const globalFetch = vi.fn<typeof fetch>();
-global.fetch = globalFetch;
+/**
+ * OpenAI Weather Streaming Tests - Response Parsing
+ *
+ * Tests parser handling of weather schema streaming response.
+ * No fetch mocking - tests parser directly with simulated network fragmentation.
+ */
 
-describe("OpenAI Weather Streaming Tests", () => {
-  // Read fixtures
-  // const weatherRequestFixture = JSON.parse(
-  //   fs.readFileSync(
-  //     path.join(__dirname, "fixtures/openai-weather-request.json"),
-  //     "utf8",
-  //   ),
-  // );
+describe("OpenAI Weather Response Parsing (parser-based)", () => {
+  const weatherResponseFixture = fs.readFileSync(
+    path.join(__dirname, "fixtures/openai-weather-response.json"),
+    "utf8",
+  );
 
-  const weatherResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/openai-weather-response.json"), "utf8");
+  it("should correctly parse OpenAI streaming with weather schema", () => {
+    const parser = createBaseParser();
+    const deltas: string[] = [];
 
-  beforeEach(() => {
-    // Reset mocks
-    globalFetch.mockClear();
-
-    // Mock successful response for streaming request
-    globalFetch.mockImplementation(async (_url, options?: RequestInit) => {
-      const requestBody = JSON.parse(options?.body as string);
-
-      if (requestBody.stream) {
-        // Mock streaming response with our weather fixtures
-        return {
-          ok: true,
-          status: 200,
-          body: {
-            getReader: () => {
-              // Stream reader that returns chunks from our fixture
-              const chunks = weatherResponseFixture
-                .split("data: ")
-                .filter((chunk) => chunk.trim() !== "")
-                .map((chunk) => {
-                  const encoder = new TextEncoder();
-                  return encoder.encode(`data: ${chunk}\n\n`);
-                });
-
-              let chunkIndex = 0;
-
-              return {
-                read: async () => {
-                  if (chunkIndex < chunks.length) {
-                    return { done: false, value: chunks[chunkIndex++] };
-                  } else {
-                    return { done: true, value: undefined };
-                  }
-                },
-                releaseLock: () => {},
-              };
-            },
-          },
-          text: async () => weatherResponseFixture,
-          json: async () => JSON.parse(weatherResponseFixture),
-        } as Response;
-      } else {
-        throw new Error("Non-streaming request not expected in this test");
-      }
+    parser.onEvent((evt: OrEvent) => {
+      if (evt.type === "or.delta") deltas.push(evt.content);
     });
-  });
 
-  it("should correctly handle OpenAI streaming with weather schema", async () => {
-    // Define the weather schema
-    const schema: Schema = {
-      name: "weather_forecast",
-      properties: {
-        location: { type: "string" },
-        current_temp: { type: "number" },
-        conditions: { type: "string" },
-        tomorrow: {
-          type: "object",
-          properties: {
-            high: { type: "number" },
-            low: { type: "number" },
-            conditions: { type: "string" },
-          },
-        },
-      },
-    };
+    feedFixtureToParser(parser, weatherResponseFixture);
 
-    // Call the library with OpenAI model and streaming
-    const generator = (await callAi("Give me a weather forecast for New York in the requested format.", {
-      apiKey: "test-api-key",
-      model: "openai/gpt-4o",
-      schema: schema,
-      stream: true,
-    })) as AsyncGenerator<string, string, unknown>;
+    // Verify deltas were collected
+    expect(deltas.length).toBeGreaterThan(0);
 
-    // Verify that we get a generator back
-    expect(generator).toBeTruthy();
-    expect(generator[Symbol.asyncIterator]).toBeDefined();
-
-    // Collect all chunks
-    const chunks: string[] = [];
-    for await (const chunk of generator) {
-      chunks.push(chunk);
-    }
-
-    // We should get at least one chunk
-    expect(chunks.length).toBeGreaterThan(0);
-
-    // The last chunk should be valid JSON
-    const lastChunk = chunks[chunks.length - 1];
-    const data = JSON.parse(lastChunk);
+    // Accumulated content should be valid JSON
+    const accumulated = deltas.join("");
+    expect(() => JSON.parse(accumulated)).not.toThrow();
 
     // Verify the weather data structure
+    const data = JSON.parse(accumulated);
     expect(data).toHaveProperty("location");
     expect(data).toHaveProperty("current_temp");
     expect(data).toHaveProperty("conditions");
@@ -122,5 +47,65 @@ describe("OpenAI Weather Streaming Tests", () => {
     expect(typeof data.conditions).toBe("string");
     expect(typeof data.tomorrow).toBe("object");
     expect(typeof data.tomorrow.conditions).toBe("string");
+
+    // Verify actual values from fixture
+    expect(data.location).toBe("New York, NY");
+    expect(data.current_temp).toBe(63);
+    expect(data.conditions).toBe("Partly Cloudy");
+    expect(data.tomorrow.high).toBe(68);
+    expect(data.tomorrow.low).toBe(55);
+    expect(data.tomorrow.conditions).toBe("Sunny");
+  });
+
+  it("should emit proper metadata", () => {
+    const parser = createBaseParser();
+    let model: string | null = null;
+
+    parser.onEvent((evt: OrEvent) => {
+      if (evt.type === "or.meta") model = evt.model;
+    });
+
+    feedFixtureToParser(parser, weatherResponseFixture);
+
+    expect(model).toBe("openai/gpt-4o");
+  });
+
+  it("should emit usage stats", () => {
+    const parser = createBaseParser();
+    let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null = null;
+
+    parser.onEvent((evt: OrEvent) => {
+      if (evt.type === "or.usage") {
+        usage = {
+          promptTokens: evt.promptTokens,
+          completionTokens: evt.completionTokens,
+          totalTokens: evt.totalTokens,
+        };
+      }
+    });
+
+    feedFixtureToParser(parser, weatherResponseFixture);
+
+    expect(usage).toEqual({
+      promptTokens: 98,
+      completionTokens: 36,
+      totalTokens: 134,
+    });
+  });
+
+  it("should handle fragmentation with small chunks", () => {
+    const parser = createBaseParser();
+    const deltas: string[] = [];
+
+    parser.onEvent((evt: OrEvent) => {
+      if (evt.type === "or.delta") deltas.push(evt.content);
+    });
+
+    // Use very small chunks
+    feedFixtureToParser(parser, weatherResponseFixture, 3);
+
+    const accumulated = deltas.join("");
+    const data = JSON.parse(accumulated);
+    expect(data.location).toBe("New York, NY");
   });
 });

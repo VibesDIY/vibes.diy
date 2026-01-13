@@ -1,136 +1,231 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { callAIStreaming } from "../../pkg/streaming.js";
-import { chooseSchemaStrategy } from "../../pkg/strategies/strategy-selector.js";
+import { describe, it, expect } from "vitest";
+import { createSchemaParser } from "../../pkg/parser/index.js";
+import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
-// Helper to create SSE encoded chunks
-function toSSE(data: any): string {
-  return `data: ${JSON.stringify(data)}
+describe("ToolSchemaParser - Legacy Tool Call Parity", () => {
+  it("should assemble tool call from multiple chunks", () => {
+    const parser = createSchemaParser();
+    const fragments: string[] = [];
+    let completeArgs: string | null = null;
+    let startEvent: { callId: string; functionName?: string } | null = null;
 
-`;
-}
+    parser.onToolCallStart((evt) => {
+      startEvent = { callId: evt.callId, functionName: evt.functionName };
+    });
 
-// Helper to create a mock Response with a ReadableStream
-function createSSEResponse(chunks: string[]): Response {
-  const stream = new ReadableStream({
-    async start(controller) {
-      for (const chunk of chunks) {
-        controller.enqueue(new TextEncoder().encode(chunk));
-        // Add a small delay to simulate network
-        await new Promise(resolve => setTimeout(resolve, 1));
-      }
-      controller.close();
-    }
+    parser.onToolCallArguments((evt) => {
+      fragments.push(evt.fragment);
+    });
+
+    parser.onToolCallComplete((evt) => {
+      completeArgs = evt.arguments;
+    });
+
+    const fixture =
+      toSSE({
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  id: "call_123",
+                  function: { name: "test_func", arguments: '{"foo":' },
+                },
+              ],
+            },
+          },
+        ],
+      }) +
+      toSSE({
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  function: { arguments: '"bar"}' },
+                },
+              ],
+            },
+          },
+        ],
+      }) +
+      toSSE({
+        choices: [
+          {
+            finish_reason: "tool_calls",
+          },
+        ],
+      }) +
+      "data: [DONE]\n\n";
+
+    feedFixtureToParser(parser, fixture);
+
+    // Verify start event
+    expect(startEvent).toEqual({ callId: "call_123", functionName: "test_func" });
+
+    // Verify argument fragments
+    expect(fragments).toEqual(['{"foo":', '"bar"}']);
+
+    // Verify complete assembled arguments
+    expect(completeArgs).toBe('{"foo":"bar"}');
+    expect(JSON.parse(completeArgs!)).toEqual({ foo: "bar" });
   });
 
-  return new Response(stream, {
-    status: 200,
-    headers: { "Content-Type": "text/event-stream" }
-  });
-}
+  it("should handle tool call arguments split mid-token", () => {
+    const parser = createSchemaParser();
+    let completeArgs: string | null = null;
 
-describe("Legacy Tool Call Parity", () => {
-  const apiKey = "test-api-key";
-  
-  beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn());
-  });
+    parser.onToolCallComplete((evt) => {
+      completeArgs = evt.arguments;
+    });
 
-  it("should assemble tool call from multiple chunks", async () => {
-    const chunks = [
+    const fixture =
       toSSE({
-        choices: [{
-          delta: {
-            tool_calls: [{
-              index: 0,
-              id: "call_123",
-              function: { name: "test_func", arguments: '{"foo":' }
-            }]
-          }
-        }]
-      }),
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  id: "call_456",
+                  function: { name: "test", arguments: '{"message": "Hello ' },
+                },
+              ],
+            },
+          },
+        ],
+      }) +
       toSSE({
-        choices: [{
-          delta: {
-            tool_calls: [{
-              index: 0,
-              function: { arguments: '"bar"}' }
-            }]
-          }
-        }]
-      }),
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  function: { arguments: 'World"}' },
+                },
+              ],
+            },
+          },
+        ],
+      }) +
       toSSE({
-        choices: [{
-          finish_reason: "tool_calls"
-        }]
-      }),
-      "data: [DONE]\n\n"
-    ];
+        choices: [
+          {
+            finish_reason: "tool_calls",
+          },
+        ],
+      }) +
+      "data: [DONE]\n\n";
 
-    vi.mocked(fetch).mockResolvedValue(createSSEResponse(chunks));
+    feedFixtureToParser(parser, fixture);
 
-    const schema = { properties: { foo: { type: "string" } } };
-    const model = "anthropic/claude-3-sonnet"; // Triggers tool_mode
-    const strategy = chooseSchemaStrategy(model, schema);
-    
-    const generator = callAIStreaming("Hi", { apiKey, model, schemaStrategy: strategy, schema });
-    
-    const results = [];
-    for await (const chunk of generator) {
-      console.log("Got chunk:", chunk);
-      results.push(chunk);
-    }
-
-    // The legacy implementation yields the assembled JSON string once on finish_reason
-    // It should handle the split JSON correctly
-    expect(results).toHaveLength(1);
-    expect(JSON.parse(results[0])).toEqual({ foo: "bar" });
+    expect(completeArgs).toBe('{"message": "Hello World"}');
+    expect(JSON.parse(completeArgs!)).toEqual({ message: "Hello World" });
   });
 
-  it("should handle tool call arguments split mid-token", async () => {
-    // This tests the JSON repair/accumulation logic
-    const chunks = [
-      toSSE({
-        choices: [{
-          delta: {
-            tool_calls: [{
-              index: 0,
-              function: { arguments: '{"message": "Hello ' }
-            }]
-          }
-        }]
-      }),
-      toSSE({
-        choices: [{
-          delta: {
-            tool_calls: [{
-              index: 0,
-              function: { arguments: 'World"}' }
-            }]
-          }
-        }]
-      }),
-      toSSE({
-        choices: [{
-          finish_reason: "tool_calls"
-        }]
-      }),
-      "data: [DONE]\n\n"
-    ];
+  it("should handle multiple parallel tool calls", () => {
+    const parser = createSchemaParser();
+    const completedCalls: Array<{ callId: string; arguments: string }> = [];
 
-    vi.mocked(fetch).mockResolvedValue(createSSEResponse(chunks));
+    parser.onToolCallComplete((evt) => {
+      completedCalls.push({ callId: evt.callId, arguments: evt.arguments });
+    });
 
-    const schema = { properties: { message: { type: "string" } } };
-    const model = "anthropic/claude-3-sonnet";
-    const strategy = chooseSchemaStrategy(model, schema);
-    
-    const generator = callAIStreaming("Hi", { apiKey, model, schemaStrategy: strategy, schema });
-    
-    const results = [];
-    for await (const chunk of generator) {
-      results.push(chunk);
-    }
+    const fixture =
+      toSSE({
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  id: "call_a",
+                  function: { name: "func_a", arguments: '{"a":' },
+                },
+                {
+                  index: 1,
+                  id: "call_b",
+                  function: { name: "func_b", arguments: '{"b":' },
+                },
+              ],
+            },
+          },
+        ],
+      }) +
+      toSSE({
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  function: { arguments: "1}" },
+                },
+                {
+                  index: 1,
+                  function: { arguments: "2}" },
+                },
+              ],
+            },
+          },
+        ],
+      }) +
+      toSSE({
+        choices: [
+          {
+            finish_reason: "tool_calls",
+          },
+        ],
+      }) +
+      "data: [DONE]\n\n";
 
-    expect(results).toHaveLength(1);
-    expect(JSON.parse(results[0])).toEqual({ message: "Hello World" });
+    feedFixtureToParser(parser, fixture);
+
+    expect(completedCalls).toHaveLength(2);
+    expect(completedCalls[0]).toEqual({ callId: "call_a", arguments: '{"a":1}' });
+    expect(completedCalls[1]).toEqual({ callId: "call_b", arguments: '{"b":2}' });
+  });
+
+  it("should handle fragmented SSE with random chunk sizes", () => {
+    const parser = createSchemaParser();
+    let completeArgs: string | null = null;
+
+    parser.onToolCallComplete((evt) => {
+      completeArgs = evt.arguments;
+    });
+
+    const fixture =
+      toSSE({
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  id: "call_789",
+                  function: { name: "get_weather", arguments: '{"city":"San Francisco","unit":"celsius"}' },
+                },
+              ],
+            },
+          },
+        ],
+      }) +
+      toSSE({
+        choices: [
+          {
+            finish_reason: "tool_calls",
+          },
+        ],
+      }) +
+      "data: [DONE]\n\n";
+
+    // Use very small chunks to stress test buffering
+    feedFixtureToParser(parser, fixture, 3);
+
+    expect(completeArgs).toBe('{"city":"San Francisco","unit":"celsius"}');
+    expect(JSON.parse(completeArgs!)).toEqual({ city: "San Francisco", unit: "celsius" });
   });
 });

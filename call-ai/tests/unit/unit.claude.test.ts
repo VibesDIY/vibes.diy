@@ -1,302 +1,176 @@
-/* eslint-disable no-useless-escape */
-import { callAi } from "call-ai";
-import { describe, it, expect, beforeEach, vi } from "vitest";
+/**
+ * Claude-specific parser tests
+ *
+ * Tests OpenRouterParser handling of Claude's content_block_delta format.
+ * These test the parser layer - JSON accumulation from text deltas
+ * is handled at a higher level (streaming.ts or application code).
+ */
+import { describe, it, expect } from "vitest";
+import { createBaseParser, OrEvent } from "../../pkg/parser/index.js";
+import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
-// Mock global fetch
-const global = globalThis;
-const globalFetch = vi.fn<typeof fetch>();
-global.fetch = globalFetch;
+describe("Claude format parser tests", () => {
+  describe("content_block_delta handling", () => {
+    it("should emit or.delta for text_delta events", () => {
+      const parser = createBaseParser();
+      const deltas: string[] = [];
 
-// Simple mock for TextDecoder
-// global.TextDecoder = vi.fn().mockImplementation(() => ({
-//   decode: vi.fn((value: Uint8Array) => {
-//     // Basic mock implementation without recursion
-//     if (value instanceof Uint8Array) {
-//       // Convert the Uint8Array to a simple string
-//       return Array.from(value)
-//         .map((byte) => String.fromCharCode(byte))
-//         .join("");
-//     }
-//     return "";
-//   }),
-// })) as typeof global.TextDecoder;
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.delta") deltas.push(evt.content);
+      });
 
-describe("Claude Streaming JSON Property Splitting Test", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+      const fixture =
+        toSSE({
+          id: "123",
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: '{"capital"' },
+        }) +
+        toSSE({
+          id: "123",
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: ':"Paris", "popul' },
+        }) +
+        toSSE({
+          id: "123",
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: 'ation":67.5}' },
+        }) +
+        "data: [DONE]\n\n";
+
+      feedFixtureToParser(parser, fixture);
+
+      // Parser emits raw text deltas - accumulation happens at higher level
+      expect(deltas).toEqual(['{"capital"', ':"Paris", "popul', 'ation":67.5}']);
+
+      // Verify accumulation would produce valid JSON
+      const accumulated = deltas.join("");
+      expect(() => JSON.parse(accumulated)).not.toThrow();
+      expect(JSON.parse(accumulated)).toEqual({
+        capital: "Paris",
+        population: 67.5,
+      });
+    });
+
+    it("should handle fragmented chunks splitting mid-SSE", () => {
+      const parser = createBaseParser();
+      const deltas: string[] = [];
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.delta") deltas.push(evt.content);
+      });
+
+      const fixture =
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: "Hello" },
+        }) +
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: " world" },
+        }) +
+        "data: [DONE]\n\n";
+
+      // Small chunks to test buffering
+      feedFixtureToParser(parser, fixture, 5);
+
+      expect(deltas).toEqual(["Hello", " world"]);
+    });
+
+    it("should emit or.json for content_block_stop events", () => {
+      const parser = createBaseParser();
+      const jsonPayloads: unknown[] = [];
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.json") jsonPayloads.push(evt.json);
+      });
+
+      const fixture =
+        toSSE({
+          id: "123",
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: "test" },
+        }) +
+        toSSE({
+          id: "123",
+          type: "content_block_stop",
+          stop_reason: "end_turn",
+        }) +
+        "data: [DONE]\n\n";
+
+      feedFixtureToParser(parser, fixture);
+
+      // All JSON payloads pass through as or.json
+      expect(jsonPayloads).toHaveLength(2);
+      expect(jsonPayloads[1]).toEqual({
+        id: "123",
+        type: "content_block_stop",
+        stop_reason: "end_turn",
+      });
+    });
   });
 
-  it.skip("should handle Claude property splitting in streaming responses", async () => {
-    // This test simulates Claude's behavior where property names and values
-    // can be split across multiple chunks
-    const options = {
-      apiKey: "test-api-key",
-      model: "anthropic/claude-3-sonnet", // Claude model
-      stream: true,
-      schema: {
-        type: "object",
-        properties: {
-          capital: { type: "string" },
-          population: { type: "number" },
-          languages: { type: "array", items: { type: "string" } },
-        },
-      },
-    };
+  describe("Claude property splitting scenarios", () => {
+    it("should handle property names split across chunks", () => {
+      const parser = createBaseParser();
+      const deltas: string[] = [];
 
-    // Create a simpler mock that just simulates a single property name split
-    const mockResponse = {
-      ok: true,
-      status: 200,
-      body: {
-        getReader: vi.fn().mockReturnValue({
-          read: vi
-            .fn<() => Promise<{ done: boolean; value?: Uint8Array }>>()
-            // First chunk: starts with {"capital"
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\""}}\n\n`,
-              ),
-            })
-            // Second chunk: continues with : "Paris", then partial "popul"
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":":\\\"Paris\\\", \\\"popul"}}\n\n`,
-              ),
-            })
-            // Third chunk: finishes "ation": 67.5
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"ation\\\":67.5"}}\n\n`,
-              ),
-            })
-            // Fourth chunk: starts with "lang"
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"lang"}}\n\n`,
-              ),
-            })
-            // Fifth chunk: finishes "uages":["French"]}
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"uages\\\":[\\\"French\\\"]}"}}\n\n`,
-              ),
-            })
-            // Final chunk with finish reason "tool_calls"
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(`data: {"id":"123","type":"content_block_stop","stop_reason":"tool_calls"}\n\n`),
-            })
-            .mockResolvedValueOnce({
-              done: true,
-            }),
-        }),
-      },
-    } as unknown as Response;
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.delta") deltas.push(evt.content);
+      });
 
-    // Override the global.fetch mock for this test
-    globalFetch.mockResolvedValueOnce(mockResponse);
+      // Simulate Claude splitting "population" across chunks
+      const fixture =
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: '{"capital":"Paris","popul' },
+        }) +
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: 'ation":67.5,"lang' },
+        }) +
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: 'uages":["French"]}' },
+        }) +
+        "data: [DONE]\n\n";
 
-    const generator = (await callAi("Provide information about France.", options)) as AsyncGenerator<string, string, unknown>;
+      feedFixtureToParser(parser, fixture);
 
-    // Collect all chunks to simulate what would happen in the actual application
-    const chunks: string[] = [];
-    let lastValue = "";
-    for await (const chunk of generator) {
-      chunks.push(chunk);
-      lastValue = chunk;
-    }
+      const accumulated = deltas.join("");
+      const parsed = JSON.parse(accumulated);
 
-    // Test that the final result is valid JSON despite the property name splits
-    expect(() => JSON.parse(lastValue)).not.toThrow();
+      expect(parsed.capital).toBe("Paris");
+      expect(parsed.population).toBe(67.5);
+      expect(parsed.languages).toEqual(["French"]);
+    });
 
-    // Verify the parsed content contains all expected values
-    const parsedResult = JSON.parse(lastValue);
-    expect(parsedResult.capital).toBe("Paris");
-    expect(parsedResult.population).toBe(67.5);
-    expect(parsedResult.languages).toEqual(["French"]);
+    it("should handle property values split across chunks", () => {
+      const parser = createBaseParser();
+      const deltas: string[] = [];
 
-    // We should have gotten 1 chunk (the final complete JSON)
-    expect(chunks.length).toBe(1);
-  });
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.delta") deltas.push(evt.content);
+      });
 
-  // Add more tests when the first one passes
-  it.skip("should handle Claude property value splitting", async () => {
-    // This test simulates Claude's behavior where property values
-    // can be split in the middle
-    const options = {
-      apiKey: "test-api-key",
-      model: "anthropic/claude-3-sonnet", // Claude model
-      stream: true,
-      schema: {
-        type: "object",
-        properties: {
-          capital: { type: "string" },
-          population: { type: "number" },
-          languages: { type: "array", items: { type: "string" } },
-        },
-      },
-    };
+      // Simulate Claude splitting "Paris" across chunks
+      const fixture =
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: '{"capital":"Par' },
+        }) +
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: 'is","population":67.5}' },
+        }) +
+        "data: [DONE]\n\n";
 
-    // Set up the mock to simulate Claude's streaming behavior
-    // with property values split across chunks
-    const mockResponseWithSplitValues = {
-      ok: true,
-      status: 200,
-      body: {
-        getReader: vi.fn().mockReturnValue({
-          read: vi
-            .fn<() => Promise<{ done: boolean; value?: Uint8Array }>>()
-            // First chunk: starts with {"capital": "Par
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\": \\\"Par"}}\n\n`,
-              ),
-            })
-            // Second chunk: continues with "is", "population": 67
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"is\\\", \\\"population\\\": 67"}}\n\n`,
-              ),
-            })
-            // Third chunk: completes with .5 and languages
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":".5, \\\"languages\\\": [\\\"Fren"}}\n\n`,
-              ),
-            })
-            // Fourth chunk: completes with "ch"]}
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"ch\\\"]}"}}\n\n`,
-              ),
-            })
-            // Final chunk with finish reason "tool_calls"
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(`data: {"id":"123","type":"content_block_stop","stop_reason":"tool_calls"}\n\n`),
-            })
-            .mockResolvedValueOnce({
-              done: true,
-            }),
-        }),
-      },
-    } as unknown as Response;
+      feedFixtureToParser(parser, fixture);
 
-    // Override the global.fetch mock for this test
-    globalFetch.mockResolvedValueOnce(mockResponseWithSplitValues);
+      const accumulated = deltas.join("");
+      const parsed = JSON.parse(accumulated);
 
-    const generator = (await callAi("Provide information about France.", options)) as AsyncGenerator<string, string, unknown>;
-
-    // Collect all chunks to simulate what would happen in the actual application
-    const chunks: string[] = [];
-    let lastValue = "";
-    for await (const chunk of generator) {
-      chunks.push(chunk);
-      lastValue = chunk;
-    }
-
-    // Test that the final result is valid JSON despite the property value splits
-    expect(() => JSON.parse(lastValue)).not.toThrow();
-
-    // Verify the parsed content contains all expected values
-    const parsedResult = JSON.parse(lastValue);
-    expect(parsedResult.capital).toBe("Paris");
-    expect(parsedResult.population).toBe(67.5);
-    expect(parsedResult.languages).toEqual(["French"]);
-
-    // We should have gotten one final chunk as per our implementation
-    expect(chunks.length).toBe(1);
-  });
-
-  // Additional test case for future implementation
-  it.skip("should handle missing values", async () => {
-    // This test simulates Claude's error case where a property value is completely missing
-    const options = {
-      apiKey: "test-api-key",
-      model: "anthropic/claude-3-sonnet", // Claude model
-      stream: true,
-      schema: {
-        type: "object",
-        properties: {
-          capital: { type: "string" },
-          population: { type: "number" },
-          languages: { type: "array", items: { type: "string" } },
-        },
-      },
-    };
-
-    // Set up the mock to simulate Claude's error case
-    const mockResponseWithMissingValue = {
-      ok: true,
-      status: 200,
-      body: {
-        getReader: vi.fn().mockReturnValue({
-          read: vi
-            .fn<() => Promise<{ done: boolean; value?: Uint8Array }>>()
-            // First chunk: starts with {"capital":
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\": "}}\n\n`,
-              ),
-            })
-            // Second chunk: continues with , "population": 67.5
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"population\\\": 67.5"}}\n\n`,
-              ),
-            })
-            // Third chunk: completes with languages
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"languages\\\": [\\\"French\\\"]}"}}\n\n`,
-              ),
-            })
-            // Final chunk with finish reason "tool_calls"
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(`data: {"id":"123","type":"content_block_stop","stop_reason":"tool_calls"}\n\n`),
-            })
-            .mockResolvedValueOnce({
-              done: true,
-            }),
-        }),
-      },
-    } as unknown as Response;
-
-    // Override the global.fetch mock for this test
-    globalFetch.mockResolvedValueOnce(mockResponseWithMissingValue);
-
-    const generator = (await callAi("Provide information about France.", options)) as AsyncGenerator<string, string, unknown>;
-
-    // Collect all chunks to simulate what would happen in the actual application
-    const chunks: string[] = [];
-    let lastValue = "";
-    for await (const chunk of generator) {
-      chunks.push(chunk);
-      lastValue = chunk;
-    }
-
-    // Test that the final result is valid JSON despite the missing property value
-    expect(() => JSON.parse(lastValue)).not.toThrow();
-
-    // Verify the parsed content contains all expected values except capital
-    const parsedResult = JSON.parse(lastValue);
-    expect(parsedResult.population).toBe(67.5);
-    expect(parsedResult.languages).toEqual(["French"]);
-
-    // We should have gotten one final chunk as per our implementation
-    expect(chunks.length).toBe(1);
+      expect(parsed.capital).toBe("Paris");
+      expect(parsed.population).toBe(67.5);
+    });
   });
 });

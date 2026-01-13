@@ -1,233 +1,254 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { callAIStreaming } from "../../pkg/streaming.js";
-import { chooseSchemaStrategy } from "../../pkg/strategies/strategy-selector.js";
-import { CallAIError } from "../../pkg/types.js";
+import { describe, it, expect } from "vitest";
+import { createBaseParser, createSchemaParser, OrEvent } from "../../pkg/parser/index.js";
+import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
-// Helper to create SSE encoded chunks
-function toSSE(data: any): string {
-  return `data: ${JSON.stringify(data)}\n\n`;
-}
+describe("Parser-based streaming tests", () => {
+  describe("createBaseParser - OpenRouter format", () => {
+    it("should handle basic text streaming with or.delta events", () => {
+      const parser = createBaseParser();
+      const deltas: string[] = [];
 
-// Helper to create a mock Response with a ReadableStream
-function createSSEResponse(chunks: string[]): Response {
-  const stream = new ReadableStream({
-    async start(controller) {
-      for (const chunk of chunks) {
-        controller.enqueue(new TextEncoder().encode(chunk));
-        // Add a small delay to simulate network
-        await new Promise((resolve) => setTimeout(resolve, 1));
-      }
-      controller.close();
-    },
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.delta") deltas.push(evt.content);
+      });
+
+      const fixture =
+        toSSE({ choices: [{ delta: { content: "Hello" } }] }) +
+        toSSE({ choices: [{ delta: { content: " world" } }] }) +
+        "data: [DONE]\n\n";
+
+      feedFixtureToParser(parser, fixture);
+
+      expect(deltas).toEqual(["Hello", " world"]);
+    });
+
+    it("should handle content_block_delta format (Claude format)", () => {
+      const parser = createBaseParser();
+      const deltas: string[] = [];
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.delta") deltas.push(evt.content);
+      });
+
+      const fixture =
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: "Streaming" },
+        }) +
+        toSSE({
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: " content" },
+        }) +
+        "data: [DONE]\n\n";
+
+      feedFixtureToParser(parser, fixture);
+
+      expect(deltas).toEqual(["Streaming", " content"]);
+    });
+
+    it("should emit or.json for all JSON payloads including errors", () => {
+      const parser = createBaseParser();
+      const jsonPayloads: unknown[] = [];
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.json") jsonPayloads.push(evt.json);
+      });
+
+      const fixture = toSSE({ error: { message: "Rate limit exceeded", status: 429 } });
+
+      feedFixtureToParser(parser, fixture);
+
+      expect(jsonPayloads).toHaveLength(1);
+      expect(jsonPayloads[0]).toEqual({
+        error: { message: "Rate limit exceeded", status: 429 },
+      });
+    });
+
+    it("should emit or.done with finish_reason", () => {
+      const parser = createBaseParser();
+      const doneEvents: string[] = [];
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.done") doneEvents.push(evt.finishReason);
+      });
+
+      const fixture =
+        toSSE({ choices: [{ delta: { content: "Hi" } }] }) +
+        toSSE({ choices: [{ finish_reason: "stop" }] }) +
+        "data: [DONE]\n\n";
+
+      feedFixtureToParser(parser, fixture);
+
+      expect(doneEvents).toEqual(["stop"]);
+    });
+
+    it("should emit or.meta on first chunk with id", () => {
+      const parser = createBaseParser();
+      let meta: { id?: string; model?: string } | null = null;
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.meta") meta = { id: evt.id, model: evt.model };
+      });
+
+      const fixture =
+        toSSE({
+          id: "chatcmpl-123",
+          model: "gpt-4",
+          choices: [{ delta: { content: "Hi" } }],
+        }) +
+        "data: [DONE]\n\n";
+
+      feedFixtureToParser(parser, fixture);
+
+      expect(meta).toEqual({ id: "chatcmpl-123", model: "gpt-4" });
+    });
+
+    it("should emit or.stream-end on [DONE]", () => {
+      const parser = createBaseParser();
+      let streamEnded = false;
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.stream-end") streamEnded = true;
+      });
+
+      const fixture =
+        toSSE({ choices: [{ delta: { content: "Hi" } }] }) +
+        "data: [DONE]\n\n";
+
+      feedFixtureToParser(parser, fixture);
+
+      expect(streamEnded).toBe(true);
+    });
   });
 
-  return new Response(stream, {
-    status: 200,
-    headers: { "Content-Type": "text/event-stream" },
-  });
-}
+  describe("createSchemaParser - Tool calls", () => {
+    it("should handle tool_use streaming with chunked arguments", () => {
+      const parser = createSchemaParser();
+      const fragments: string[] = [];
+      let completeArgs: string | null = null;
 
-describe("callAIStreaming complex scenarios", () => {
-  const apiKey = "test-api-key";
+      parser.onToolCallArguments((evt) => {
+        fragments.push(evt.fragment);
+      });
 
-  beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn());
-  });
+      parser.onToolCallComplete((evt) => {
+        completeArgs = evt.arguments;
+      });
 
-  it("should handle basic text streaming", async () => {
-    const chunks = [
-      toSSE({ choices: [{ delta: { content: "Hello" } }] }),
-      toSSE({ choices: [{ delta: { content: " world" } }] }),
-      "data: [DONE]\n\n",
-    ];
-
-    vi.mocked(fetch).mockResolvedValue(createSSEResponse(chunks));
-
-    const strategy = chooseSchemaStrategy("openai/gpt-4o", null);
-    const generator = callAIStreaming("Hi", { apiKey, schemaStrategy: strategy });
-
-    const results = [];
-    for await (const chunk of generator) {
-      results.push(chunk);
-    }
-
-    expect(results).toEqual(["Hello", "Hello world"]);
-  });
-
-  it("should handle Claude tool_use streaming with chunked arguments", async () => {
-    const chunks = [
-      toSSE({
-        choices: [
-          {
-            delta: {
-              tool_calls: [
-                {
-                  index: 0,
-                  function: { name: "test", arguments: '{"foo":' },
-                },
-              ],
+      const fixture =
+        toSSE({
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call_123",
+                    function: { name: "test", arguments: '{"foo":' },
+                  },
+                ],
+              },
             },
-          },
-        ],
-      }),
-      toSSE({
-        choices: [
-          {
-            delta: {
-              tool_calls: [
-                {
-                  index: 0,
-                  function: { arguments: '"bar"}' },
-                },
-              ],
+          ],
+        }) +
+        toSSE({
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    function: { arguments: '"bar"}' },
+                  },
+                ],
+              },
             },
-          },
-        ],
-      }),
-      toSSE({
-        choices: [
-          {
-            finish_reason: "tool_calls",
-          },
-        ],
-      }),
-      "data: [DONE]\n\n",
-    ];
-
-    vi.mocked(fetch).mockResolvedValue(createSSEResponse(chunks));
-
-    const schema = { properties: { foo: { type: "string" } } };
-    const model = "anthropic/claude-3-sonnet";
-    const strategy = chooseSchemaStrategy(model, schema);
-    const generator = callAIStreaming("Hi", { apiKey, model, schemaStrategy: strategy, schema, debug: true });
-
-    const results = [];
-    for await (const chunk of generator) {
-      results.push(chunk);
-    }
-
-    // The current implementation yields after tool_calls finish_reason or at the end
-    expect(results).toContain('{"foo":"bar"}');
-  });
-
-  it("should handle API error in the stream", async () => {
-    const chunks = [toSSE({ error: { message: "Rate limit exceeded", status: 429 } })];
-
-    vi.mocked(fetch).mockResolvedValue(createSSEResponse(chunks));
-
-    const strategy = chooseSchemaStrategy("openai/gpt-4o", null);
-    const generator = callAIStreaming("Hi", { apiKey, schemaStrategy: strategy });
-
-    await expect(async () => {
-      for await (const _ of generator) {
-      }
-    }).rejects.toThrow(/Rate limit exceeded/);
-  });
-
-  it("should handle Claude old format tool_use (type: tool_use)", async () => {
-    const chunks = [
-      toSSE({
-        type: "tool_use",
-        input: { result: "success" },
-      }),
-      "data: [DONE]\n\n",
-    ];
-
-    vi.mocked(fetch).mockResolvedValue(createSSEResponse(chunks));
-
-    const schema = { properties: { result: { type: "string" } } };
-    const model = "anthropic/claude-3-sonnet";
-    const strategy = chooseSchemaStrategy(model, schema);
-    const generator = callAIStreaming("Hi", { apiKey, model, schemaStrategy: strategy, schema });
-
-    const results = [];
-    for await (const chunk of generator) {
-      results.push(chunk);
-    }
-
-    expect(results).toContain('{"result":"success"}');
-  });
-
-  it("should handle content_block_delta format (Claude format)", async () => {
-    const chunks = [
-      toSSE({
-        type: "content_block_delta",
-        delta: { type: "text_delta", text: "Streaming" },
-      }),
-      toSSE({
-        type: "content_block_delta",
-        delta: { type: "text_delta", text: " content" },
-      }),
-      "data: [DONE]\n\n",
-    ];
-
-    vi.mocked(fetch).mockResolvedValue(createSSEResponse(chunks));
-
-    const strategy = chooseSchemaStrategy("anthropic/claude-3-sonnet", null);
-    const generator = callAIStreaming("Hi", { apiKey, schemaStrategy: strategy });
-
-    const results = [];
-    for await (const chunk of generator) {
-      results.push(chunk);
-    }
-
-    expect(results).toEqual(["Streaming", "Streaming content"]);
-  });
-
-  it("should throw error if response body is undefined", async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response(null));
-
-    const strategy = chooseSchemaStrategy("openai/gpt-4o", null);
-    const generator = callAIStreaming("Hi", { apiKey, schemaStrategy: strategy });
-
-    await expect(async () => {
-      for await (const _ of generator) {
-      }
-    }).rejects.toThrow("Response body is undefined");
-  });
-
-  it("should handle malformed JSON in tool_calls and attempt to fix it", async () => {
-    // This tests the robust fix logic in parseSSE
-    const chunks = [
-      toSSE({
-        choices: [
-          {
-            delta: {
-              tool_calls: [
-                {
-                  function: { arguments: '{"truncated": "json' }, // Missing closing quote and brace
-                },
-              ],
+          ],
+        }) +
+        toSSE({
+          choices: [
+            {
+              finish_reason: "tool_calls",
             },
-          },
-        ],
-      }),
-      toSSE({
-        choices: [
-          {
-            finish_reason: "tool_calls",
-          },
-        ],
-      }),
-    ];
+          ],
+        }) +
+        "data: [DONE]\n\n";
 
-    vi.mocked(fetch).mockResolvedValue(createSSEResponse(chunks));
+      feedFixtureToParser(parser, fixture);
 
-    const schema = { properties: { truncated: { type: "string" } } };
-    const model = "anthropic/claude-3-sonnet";
-    const strategy = chooseSchemaStrategy(model, schema);
-    const generator = callAIStreaming("Hi", { apiKey, model, schemaStrategy: strategy, schema });
+      expect(fragments).toEqual(['{"foo":', '"bar"}']);
+      expect(completeArgs).toBe('{"foo":"bar"}');
+    });
 
-    const results = [];
-    for await (const chunk of generator) {
-      results.push(chunk);
-    }
+    it("should emit toolCallStart with function name", () => {
+      const parser = createSchemaParser();
+      let startEvent: { callId: string; functionName?: string } | null = null;
 
-    // The fix logic should have added missing braces/quotes if possible,
-    // or at least yielded the best-effort string.
-    // Based on streaming.ts: result = "{" + result.trim(); if (!result.trim().endsWith("}")) result += "}";
-    expect(results.length).toBeGreaterThan(0);
-    const lastResult = results[results.length - 1];
-    expect(lastResult).toContain("truncated");
+      parser.onToolCallStart((evt) => {
+        startEvent = { callId: evt.callId, functionName: evt.functionName };
+      });
+
+      const fixture =
+        toSSE({
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call_456",
+                    function: { name: "get_weather", arguments: "{}" },
+                  },
+                ],
+              },
+            },
+          ],
+        }) +
+        toSSE({ choices: [{ finish_reason: "tool_calls" }] }) +
+        "data: [DONE]\n\n";
+
+      feedFixtureToParser(parser, fixture);
+
+      expect(startEvent).toEqual({ callId: "call_456", functionName: "get_weather" });
+    });
+  });
+
+  describe("Edge cases - fragmentation resilience", () => {
+    it("should handle chunks split mid-JSON", () => {
+      const parser = createBaseParser();
+      const deltas: string[] = [];
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.delta") deltas.push(evt.content);
+      });
+
+      const fixture =
+        toSSE({ choices: [{ delta: { content: "Hello" } }] }) +
+        toSSE({ choices: [{ delta: { content: " world" } }] }) +
+        "data: [DONE]\n\n";
+
+      // Use very small chunks to test buffering (3 bytes at a time)
+      feedFixtureToParser(parser, fixture, 3);
+
+      expect(deltas).toEqual(["Hello", " world"]);
+    });
+
+    it("should handle single-byte chunks", () => {
+      const parser = createBaseParser();
+      const deltas: string[] = [];
+
+      parser.onEvent((evt: OrEvent) => {
+        if (evt.type === "or.delta") deltas.push(evt.content);
+      });
+
+      const fixture =
+        toSSE({ choices: [{ delta: { content: "A" } }] }) +
+        "data: [DONE]\n\n";
+
+      // Feed one byte at a time
+      feedFixtureToParser(parser, fixture, 1);
+
+      expect(deltas).toEqual(["A"]);
+    });
   });
 });
