@@ -85,7 +85,9 @@ describe("CodeBlockParser", () => {
     it("extracts language from fence", () => {
       const { codeParser, orParser } = createCodeBlockParser();
       const events: CodeBlockEvent[] = [];
-      codeParser.onCodeStart((evt) => events.push(evt));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "codeStart") events.push(evt);
+      });
 
       simulateDelta(orParser, "```typescript\ncode\n```\n");
 
@@ -96,7 +98,9 @@ describe("CodeBlockParser", () => {
     it("handles fence without language", () => {
       const { codeParser, orParser } = createCodeBlockParser();
       const events: CodeBlockEvent[] = [];
-      codeParser.onCodeStart((evt) => events.push(evt));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "codeStart") events.push(evt);
+      });
 
       simulateDelta(orParser, "```\ncode\n```\n");
 
@@ -123,7 +127,9 @@ describe("CodeBlockParser", () => {
     it("handles code content split across deltas", () => {
       const { codeParser, orParser } = createCodeBlockParser();
       const codeFragments: string[] = [];
-      codeParser.onCodeFragment((evt) => codeFragments.push(evt.fragment));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "codeFragment") codeFragments.push(evt.fragment);
+      });
 
       simulateDelta(orParser, "```js\nfunc");
       simulateDelta(orParser, "tion foo() {\n");
@@ -155,8 +161,10 @@ describe("CodeBlockParser", () => {
       const { codeParser, orParser } = createCodeBlockParser();
       const codeStarts: CodeStartEvent[] = [];
       const codeEnds: CodeEndEvent[] = [];
-      codeParser.onCodeStart((evt) => codeStarts.push(evt));
-      codeParser.onCodeEnd((evt) => codeEnds.push(evt));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "codeStart") codeStarts.push(evt);
+        if (evt.type === "codeEnd") codeEnds.push(evt);
+      });
 
       simulateDelta(orParser, "```js\nfirst\n```\nText\n```py\nsecond\n```\n");
 
@@ -173,7 +181,9 @@ describe("CodeBlockParser", () => {
     it("handles backticks in text (not fences)", () => {
       const { codeParser, orParser } = createCodeBlockParser();
       const textFragments: string[] = [];
-      codeParser.onTextFragment((evt) => textFragments.push(evt.fragment));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "textFragment") textFragments.push(evt.fragment);
+      });
 
       simulateDelta(orParser, "Use `code` inline");
 
@@ -184,7 +194,9 @@ describe("CodeBlockParser", () => {
     it("handles double backticks", () => {
       const { codeParser, orParser } = createCodeBlockParser();
       const textFragments: string[] = [];
-      codeParser.onTextFragment((evt) => textFragments.push(evt.fragment));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "textFragment") textFragments.push(evt.fragment);
+      });
 
       simulateDelta(orParser, "Not a fence: ``");
       codeParser.finalize(); // Flush buffered backticks
@@ -196,7 +208,9 @@ describe("CodeBlockParser", () => {
     it("handles backticks inside code block", () => {
       const { codeParser, orParser } = createCodeBlockParser();
       const codeFragments: string[] = [];
-      codeParser.onCodeFragment((evt) => codeFragments.push(evt.fragment));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "codeFragment") codeFragments.push(evt.fragment);
+      });
 
       simulateDelta(orParser, "```js\nconst s = `template`;\n```\n");
 
@@ -219,7 +233,9 @@ describe("CodeBlockParser", () => {
     it("auto-finalizes block when stream ends", () => {
       const { codeParser, orParser } = createCodeBlockParser();
       const ends: CodeEndEvent[] = [];
-      codeParser.onCodeEnd((evt) => ends.push(evt));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "codeEnd") ends.push(evt);
+      });
 
       // Start a fence but do not close it in the payload
       simulateDelta(orParser, "```js\nconsole.log('hi');");
@@ -251,8 +267,10 @@ describe("CodeBlockParser", () => {
       const { codeParser } = createCodeBlockParser();
       const codeStarts: CodeStartEvent[] = [];
       const codeEnds: CodeEndEvent[] = [];
-      codeParser.onCodeStart((evt) => codeStarts.push(evt));
-      codeParser.onCodeEnd((evt) => codeEnds.push(evt));
+      codeParser.onEvent((evt) => {
+        if (evt.type === "codeStart") codeStarts.push(evt);
+        if (evt.type === "codeEnd") codeEnds.push(evt);
+      });
 
       feedFixtureRandomly(codeParser, fireproofStreamFixture, { seed: 12345 });
       codeParser.finalize();

@@ -59,16 +59,16 @@ function nextBlockId(): string {
  *
  * Usage:
  * ```typescript
- * const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
- * const sseParser = new SSEDataParser(lineParser);
- * const jsonParser = new JsonParser(sseParser);
- * const orParser = new OpenRouterParser(jsonParser);
  * const codeParser = new CodeBlockParser(orParser);
  *
- * codeParser.onTextFragment(evt => console.log("Text:", evt.fragment));
- * codeParser.onCodeStart(evt => console.log("Code block:", evt.language));
- * codeParser.onCodeFragment(evt => console.log("Code:", evt.fragment));
- * codeParser.onCodeEnd(evt => console.log("End block"));
+ * codeParser.onEvent(evt => {
+ *   switch (evt.type) {
+ *     case "textFragment": console.log("Text:", evt.fragment); break;
+ *     case "codeStart": console.log("Code block:", evt.language); break;
+ *     case "codeFragment": console.log("Code:", evt.fragment); break;
+ *     case "codeEnd": console.log("End block"); break;
+ *   }
+ * });
  *
  * for await (const chunk of response.body) {
  *   codeParser.processChunk(chunk);
@@ -76,10 +76,6 @@ function nextBlockId(): string {
  * ```
  */
 export class CodeBlockParser {
-  readonly onTextFragment = OnFunc<(event: TextFragmentEvent) => void>();
-  readonly onCodeStart = OnFunc<(event: CodeStartEvent) => void>();
-  readonly onCodeFragment = OnFunc<(event: CodeFragmentEvent) => void>();
-  readonly onCodeEnd = OnFunc<(event: CodeEndEvent) => void>();
   readonly onEvent = OnFunc<(event: CodeBlockEvent) => void>();
 
   private readonly orParser: OpenRouterParser;
@@ -114,7 +110,6 @@ export class CodeBlockParser {
       seq: this.seq++,
       fragment,
     };
-    this.onTextFragment.invoke(event);
     this.onEvent.invoke(event);
   }
 
@@ -125,7 +120,6 @@ export class CodeBlockParser {
       blockId,
       language,
     };
-    this.onCodeStart.invoke(event);
     this.onEvent.invoke(event);
   }
 
@@ -137,7 +131,6 @@ export class CodeBlockParser {
       blockId,
       fragment,
     };
-    this.onCodeFragment.invoke(event);
     this.onEvent.invoke(event);
   }
 
@@ -147,7 +140,6 @@ export class CodeBlockParser {
       seq: this.seq++,
       blockId,
     };
-    this.onCodeEnd.invoke(event);
     this.onEvent.invoke(event);
   }
 

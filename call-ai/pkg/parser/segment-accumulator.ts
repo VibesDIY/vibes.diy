@@ -42,10 +42,22 @@ export class SegmentAccumulator {
 
   constructor(codeParser: CodeBlockParser) {
     this.codeParser = codeParser;
-    codeParser.onTextFragment((evt) => this.appendMarkdown(evt.fragment));
-    codeParser.onCodeStart(() => this.startCode());
-    codeParser.onCodeFragment((evt) => this.appendCode(evt.fragment));
-    codeParser.onCodeEnd(() => this.endCode());
+    codeParser.onEvent((evt) => {
+      switch (evt.type) {
+        case "textFragment":
+          this.appendMarkdown(evt.fragment);
+          break;
+        case "codeStart":
+          this.startCode();
+          break;
+        case "codeFragment":
+          this.appendCode(evt.fragment);
+          break;
+        case "codeEnd":
+          this.endCode();
+          break;
+      }
+    });
   }
 
   private appendMarkdown(fragment: string): void {
