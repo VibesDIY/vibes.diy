@@ -10,8 +10,21 @@ export { callAi } from "./api.js";
 // Backward compatibility for callAI (uppercase AI)
 export { callAi as callAI } from "./api.js";
 
-// Vibes-specific streaming API
-export { callVibes, VibesStreamResult } from "./call-vibes.js";
+// Event-based vibes streaming
+export { VibesStream, VibesStreamOptions } from "./vibes-stream.js";
+export {
+  vibesBegin,
+  vibesUpdate,
+  vibesEnd,
+  vibesError,
+  vibesEvent,
+  VibesBegin,
+  VibesUpdate,
+  VibesEnd,
+  VibesError,
+  VibesEvent,
+  isVibesEventError,
+} from "./vibes-events.js";
 
 export { getMeta } from "./response-metadata.js";
 

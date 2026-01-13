@@ -1,12 +1,12 @@
 /**
- * Streaming handler using callVibes for live segment parsing
+ * Streaming handler using VibesStream for live segment parsing
  */
 
 import {
-  type CallAIOptions,
   type Message,
-  callVibes,
   type Segment,
+  VibesStream,
+  type VibesEvent,
 } from "call-ai";
 import { VibesDiyEnv } from "../config/env.js";
 import { AUTH_REQUIRED_ERROR, isAuthErrorMessage } from "./authErrors.js";
@@ -44,24 +44,45 @@ export async function streamVibes(
 
   // Configure call-ai options
   const defaultMaxTokens = 150000;
-  const options: CallAIOptions = {
-    chatUrl: VibesDiyEnv.CALLAI_ENDPOINT().replace(/\/+$/, ""),
-    apiKey: apiKey,
-    model: model,
-    maxTokens: defaultMaxTokens,
-    headers: {
-      "HTTP-Referer": "https://vibes.diy",
-      "X-Title": "Vibes DIY",
-    },
-  };
+
+  // Track final result from vibes.end event
+  let finalResult: { text: string; segments: readonly Segment[] } | null = null;
+  let streamError: Error | null = null;
+
+  const stream = new VibesStream();
+
+  stream.onEvent((evt: VibesEvent) => {
+    switch (evt.type) {
+      case "vibes.update":
+        onUpdate({ text: evt.text, segments: evt.segments as Segment[] });
+        break;
+      case "vibes.end":
+        finalResult = { text: evt.text, segments: evt.segments as Segment[] };
+        break;
+      case "vibes.error":
+        streamError = new Error(evt.message);
+        if (evt.status) {
+          (streamError as Error & { status?: number }).status = evt.status;
+        }
+        break;
+    }
+  });
 
   try {
-    let finalResult: { text: string; segments: readonly Segment[] } | null =
-      null;
+    await stream.process({
+      prompt: messages,
+      chatUrl: VibesDiyEnv.CALLAI_ENDPOINT().replace(/\/+$/, ""),
+      apiKey: apiKey,
+      model: model,
+      maxTokens: defaultMaxTokens,
+      headers: {
+        "HTTP-Referer": "https://vibes.diy",
+        "X-Title": "Vibes DIY",
+      },
+    });
 
-    for await (const result of callVibes(messages, options)) {
-      finalResult = result;
-      onUpdate(result);
+    if (streamError) {
+      throw streamError;
     }
 
     if (!finalResult) {
