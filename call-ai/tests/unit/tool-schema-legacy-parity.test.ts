@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createSchemaParser } from "../../pkg/parser/index.js";
+import { createTestSchemaParser as createSchemaParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
 describe("ToolSchemaParser - Legacy Tool Call Parity", () => {

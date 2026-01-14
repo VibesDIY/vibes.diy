@@ -6,7 +6,8 @@
  * is handled at a higher level (streaming.ts or application code).
  */
 import { describe, it, expect } from "vitest";
-import { createBaseParser, OrEvent } from "../../pkg/parser/index.js";
+import { OrEvent } from "../../pkg/parser/index.js";
+import { createBaseParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
 describe("Claude format parser tests", () => {

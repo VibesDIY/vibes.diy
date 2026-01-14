@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect } from "vitest";
-import { createBaseParser, OrEvent } from "../../pkg/parser/index.js";
+import { OrEvent } from "../../pkg/parser/index.js";
+import { createBaseParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser } from "../test-helpers.js";
 
 /**

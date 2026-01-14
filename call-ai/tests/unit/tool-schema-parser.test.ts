@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { createSchemaParser, ToolCallCompleteEvent, ToolCallStartEvent, ToolCallArgumentsEvent, ToolSchemaAccumulator } from "../../pkg/parser/index.js";
+import { ToolCallCompleteEvent, ToolCallStartEvent, ToolCallArgumentsEvent } from "../../pkg/parser/index.js";
+import { createTestSchemaParser as createSchemaParser } from "../helpers/parser-test-utils.js";
 
 describe("ToolSchemaParser", () => {
   it("should assemble tool call from multiple chunks", () => {
@@ -245,27 +246,3 @@ describe("ToolSchemaParser", () => {
   });
 });
 
-describe("ToolSchemaAccumulator", () => {
-  it("should capture tool schema JSON via delegated parser", () => {
-    const parser = createSchemaParser();
-    const accumulator = new ToolSchemaAccumulator(parser);
-
-    const chunk = JSON.stringify({
-      choices: [{
-        delta: {
-          tool_calls: [{
-            index: 0,
-            id: "acc_1",
-            function: { arguments: '{"alpha": 1}' }
-          }]
-        }
-      }]
-    });
-    accumulator.processChunk(`data: ${chunk}\n\n`);
-
-    const finish = JSON.stringify({ choices: [{ finish_reason: "tool_calls" }] });
-    accumulator.processChunk(`data: ${finish}\n\n`);
-
-    expect(accumulator.result).toBe('{"alpha": 1}');
-  });
-});

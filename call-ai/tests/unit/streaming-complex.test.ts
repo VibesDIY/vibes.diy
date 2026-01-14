@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { createBaseParser, createSchemaParser, OrEvent } from "../../pkg/parser/index.js";
+import { OrEvent } from "../../pkg/parser/index.js";
+import { createBaseParser, createTestSchemaParser as createSchemaParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
 describe("Parser-based streaming tests", () => {
