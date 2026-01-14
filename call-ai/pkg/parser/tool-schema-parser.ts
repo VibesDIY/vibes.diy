@@ -1,6 +1,5 @@
 import { OnFunc } from "@adviser/cement";
-import { OpenRouterParser } from "./openrouter-parser.js";
-import { OrDone } from "./openrouter-events.js";
+import { OrDone, OrEventSource } from "./openrouter-events.js";
 
 // Events
 export interface ToolCallStartEvent {
@@ -29,7 +28,7 @@ export class ToolSchemaParser {
   readonly onToolCallArguments = OnFunc<(event: ToolCallArgumentsEvent) => void>();
   readonly onToolCallComplete = OnFunc<(event: ToolCallCompleteEvent) => void>();
 
-  private readonly orParser: OpenRouterParser;
+  private readonly orParser: OrEventSource;
   private seq = 0;
 
   // Support multiple parallel tool calls via index-keyed maps
@@ -41,7 +40,7 @@ export class ToolSchemaParser {
     completed: boolean;
   }> = new Map();
 
-  constructor(orParser: OpenRouterParser) {
+  constructor(orParser: OrEventSource) {
     this.orParser = orParser;
     this.orParser.onEvent((evt) => {
       switch (evt.type) {
@@ -110,8 +109,15 @@ export class ToolSchemaParser {
     }
   }
 
+  /**
+   * Process a chunk of streaming data.
+   * Only available when constructed with a parser that supports processChunk (like OpenRouterParser).
+   */
   processChunk(chunk: string): void {
-    this.orParser.processChunk(chunk);
+    const parser = this.orParser as { processChunk?: (chunk: string) => void };
+    if (parser.processChunk) {
+      parser.processChunk(chunk);
+    }
   }
 
   finalize(): void {

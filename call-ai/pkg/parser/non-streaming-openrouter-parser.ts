@@ -5,16 +5,17 @@ import { OrEvent, OrMeta } from "./openrouter-events.js";
 /**
  * NonStreamingOpenRouterParser - Interprets non-streaming OpenRouter JSON responses.
  *
- * This class takes a complete JSON response and emits the same OrEvent types
- * as the streaming OpenRouterParser, providing a consistent interface for testing
- * and processing both streaming and non-streaming responses.
+ * This class takes a complete JSON response, transforms it to streaming format
+ * (message → delta), and emits the same OrEvent types as the streaming OpenRouterParser.
+ * This provides a consistent interface for downstream consumers like ToolSchemaParser.
  *
  * Events emitted:
+ * - or.json: Raw JSON (transformed to streaming format)
  * - or.meta: Response metadata (id, provider, model, created)
  * - or.delta: Content (single event with full content, seq=0)
  * - or.done: Finish reason
  * - or.usage: Token usage statistics
- * - or.json: Raw JSON response
+ * - or.image: Image data (b64_json or url)
  *
  * Usage:
  * ```typescript
@@ -36,10 +37,7 @@ export class NonStreamingOpenRouterParser {
   readonly onEvent = OnFunc<(event: OrEvent) => void>();
 
   private emitMeta(meta: Omit<OrMeta, "type">): void {
-    this.onEvent.invoke({
-      type: "or.meta",
-      ...meta,
-    });
+    this.onEvent.invoke({ type: "or.meta", ...meta });
   }
 
   private emitDelta(content: string): void {
@@ -63,6 +61,30 @@ export class NonStreamingOpenRouterParser {
   }
 
   /**
+   * Transform non-streaming response to streaming format.
+   * Converts choices[].message → choices[].delta
+   */
+  private transformToStreamingFormat(json: Record<string, unknown>): Record<string, unknown> {
+    const choices = json.choices as Array<Record<string, unknown>> | undefined;
+    if (!choices?.[0]?.message) {
+      return json;
+    }
+
+    // Deep clone to avoid mutating input
+    const transformed = JSON.parse(JSON.stringify(json)) as Record<string, unknown>;
+    const transformedChoices = transformed.choices as Array<Record<string, unknown>>;
+
+    for (const choice of transformedChoices) {
+      if (choice.message) {
+        choice.delta = choice.message;
+        delete choice.message;
+      }
+    }
+
+    return transformed;
+  }
+
+  /**
    * Extract base64 from a data URL, or return undefined if not a data URL
    */
   private extractBase64(dataUrl: string): string | undefined {
@@ -75,95 +97,119 @@ export class NonStreamingOpenRouterParser {
    * @param json - The parsed JSON response object
    */
   parse(json: unknown): void {
-    // Handle null/undefined input
     if (json == null) {
       return;
     }
 
     const response = json as Record<string, unknown>;
 
-    // Emit raw JSON first
-    this.emitJson(response);
+    // Check for Format B (transformed/OpenAI-compatible: { data: [] })
+    // This doesn't have choices, so handle it separately
+    const data = response.data as Array<{ b64_json?: string; url?: string }> | undefined;
+    if (data && Array.isArray(data)) {
+      this.emitJson(response);
+      data.forEach((item, index) => {
+        if (item.b64_json || item.url) {
+          this.emitImage(index, item.b64_json, item.url);
+        }
+      });
+      return;
+    }
+
+    // Transform to streaming format (message → delta)
+    const transformed = this.transformToStreamingFormat(response);
+
+    // Emit transformed JSON for downstream parsers (like ToolSchemaParser)
+    this.emitJson(transformed);
 
     // Emit metadata
-    if (response.id) {
+    if (transformed.id) {
       this.emitMeta({
-        id: response.id as string,
-        provider: (response.provider as string) ?? "",
-        model: response.model as string,
-        created: (response.created as number) ?? 0,
-        systemFingerprint: (response.system_fingerprint as string) ?? "",
+        id: transformed.id as string,
+        provider: (transformed.provider as string) ?? "",
+        model: transformed.model as string,
+        created: (transformed.created as number) ?? 0,
+        systemFingerprint: (transformed.system_fingerprint as string) ?? "",
       });
     }
 
-    // Extract content from choices
-    const choices = response.choices as Array<{
-      message?: {
-        content?: string | Array<{ type: string; text?: string }>;
-        tool_calls?: unknown[];
-        function_call?: unknown;
+    // Extract from transformed format (now uses delta like streaming)
+    const choices = transformed.choices as Array<{
+      delta?: {
+        content?: string | Array<{ type: string; text?: string; input?: unknown }>;
+        tool_calls?: Array<{ function?: { arguments?: string } }>;
+        function_call?: { arguments?: string };
+        images?: Array<{ type: string; image_url?: { url: string } }>;
       };
       finish_reason?: string | null;
     }> | undefined;
 
     if (choices && choices.length > 0) {
       const choice = choices[0];
+      const delta = choice.delta;
 
-      // Extract content - priority order matches what models actually return
-      if (choice.message) {
-        const content = choice.message.content;
+      if (delta) {
+        const content = delta.content;
 
-        // 1. String content (most common - OpenAI, Gemini, etc.)
+        // String content (most common)
         if (typeof content === "string" && content) {
           this.emitDelta(content);
         }
-        // 2. tool_calls (OpenAI function calling)
-        else if (choice.message.tool_calls && Array.isArray(choice.message.tool_calls) && choice.message.tool_calls.length > 0) {
-          const toolCall = choice.message.tool_calls[0] as { function?: { arguments?: string } };
-          if (toolCall.function?.arguments) {
-            this.emitDelta(toolCall.function.arguments);
+        // Tool calls
+        else if (delta.tool_calls?.length) {
+          const args = delta.tool_calls[0]?.function?.arguments;
+          if (args) {
+            this.emitDelta(args);
           }
         }
-        // 3. function_call (legacy OpenAI format)
-        else if (choice.message.function_call) {
-          const funcCall = choice.message.function_call as { arguments?: string };
-          if (funcCall.arguments) {
-            this.emitDelta(funcCall.arguments);
-          }
+        // Legacy function_call
+        else if (delta.function_call?.arguments) {
+          this.emitDelta(delta.function_call.arguments);
         }
-        // 4. Content array (Claude-style content blocks)
+        // Content array (Claude-style)
         else if (Array.isArray(content)) {
-          // Check for tool_use blocks first (Claude tool calling)
-          const toolUse = content.find((block: { type: string }) => block.type === "tool_use") as { input?: unknown } | undefined;
+          const toolUse = content.find((b) => b.type === "tool_use") as { input?: unknown } | undefined;
           if (toolUse?.input) {
             this.emitDelta(JSON.stringify(toolUse.input));
           } else {
-            // Fall back to concatenating text blocks
-            let textContent = "";
-            for (const block of content) {
-              if (block.type === "text" && block.text) {
-                textContent += block.text;
-              }
-            }
-            if (textContent) {
-              this.emitDelta(textContent);
+            const text = content
+              .filter((b) => b.type === "text" && b.text)
+              .map((b) => b.text)
+              .join("");
+            if (text) {
+              this.emitDelta(text);
             }
           }
         }
-      }
-      // 5. choice.text fallback (older API formats)
-      else if ((choice as { text?: string }).text) {
-        this.emitDelta((choice as { text: string }).text);
+
+        // Images in delta (Format A: raw OpenRouter)
+        if (delta.images && Array.isArray(delta.images)) {
+          delta.images.forEach((img, index) => {
+            if (img.type === "image_url" && img.image_url?.url) {
+              const dataUrl = img.image_url.url;
+              const b64 = this.extractBase64(dataUrl);
+              this.emitImage(index, b64, b64 ? undefined : dataUrl);
+            }
+          });
+        }
       }
 
-      // Emit finish reason
+      // Finish reason
       if (choice.finish_reason) {
         this.emitDone(choice.finish_reason);
       }
+
+      // Legacy choice.text fallback (older API formats)
+      if (!delta) {
+        const legacyText = (choice as { text?: string }).text;
+        if (legacyText) {
+          this.emitDelta(legacyText);
+        }
+      }
     }
 
-    // Emit usage statistics
-    const usage = response.usage as {
+    // Usage statistics
+    const usage = transformed.usage as {
       prompt_tokens?: number;
       completion_tokens?: number;
       total_tokens?: number;
@@ -177,41 +223,6 @@ export class NonStreamingOpenRouterParser {
         usage.total_tokens ?? 0,
         usage.cost
       );
-    }
-
-    // Check for images in both formats
-    // Format A: Raw OpenRouter - choices[].message.images[]
-    if (choices && choices.length > 0) {
-      const message = choices[0].message as {
-        images?: Array<{
-          type: string;
-          image_url?: { url: string };
-        }>;
-      } | undefined;
-
-      if (message?.images && Array.isArray(message.images)) {
-        message.images.forEach((img, index) => {
-          if (img.type === "image_url" && img.image_url?.url) {
-            const dataUrl = img.image_url.url;
-            const b64 = this.extractBase64(dataUrl);
-            this.emitImage(index, b64, b64 ? undefined : dataUrl);
-          }
-        });
-      }
-    }
-
-    // Format B: Transformed/OpenAI-compatible - data[]
-    const data = response.data as Array<{
-      b64_json?: string;
-      url?: string;
-    }> | undefined;
-
-    if (data && Array.isArray(data)) {
-      data.forEach((item, index) => {
-        if (item.b64_json || item.url) {
-          this.emitImage(index, item.b64_json, item.url);
-        }
-      });
     }
   }
 }

@@ -67,3 +67,14 @@ export type OrImage = typeof orImage.infer;
 export function isOrEventError(result: unknown): boolean {
   return result instanceof type.errors;
 }
+
+/**
+ * Interface for parsers that emit OrEvents.
+ * Both OpenRouterParser (streaming) and NonStreamingOpenRouterParser implement this.
+ */
+export interface OrEventSource {
+  readonly onEvent: {
+    (callback: (event: OrEvent) => void): void;
+    invoke(event: OrEvent): void;
+  };
+}
