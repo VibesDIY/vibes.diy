@@ -53,6 +53,8 @@ export class StreamingAdapter {
     this.jsonParser.onEvent((evt) => {
       if (evt.type === "json.payload") {
         this.dispatchChunk(evt.json as ChunkData);
+      } else if (evt.type === "json.done") {
+        this.evento.trigger({ type: "or.stream-end" });
       }
     });
   }

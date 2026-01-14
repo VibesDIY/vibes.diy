@@ -71,7 +71,7 @@ describe("NonStreamingAdapter", () => {
     return { metas, deltas, usages, dones, all };
   }
 
-  it("emits or.json with the original response", () => {
+  it("emits or.json with response transformed to streaming format", () => {
     const evento = new ParserEvento();
     const adapter = new NonStreamingAdapter(evento);
     const { all } = collectEvents(evento);
@@ -80,7 +80,10 @@ describe("NonStreamingAdapter", () => {
 
     const jsonEvents = all.filter(e => e.type === "or.json");
     expect(jsonEvents).toHaveLength(1);
-    expect((jsonEvents[0] as { json: unknown }).json).toEqual(standardResponse);
+    // Response is transformed: message → delta
+    const json = (jsonEvents[0] as { json: { choices: Array<{ delta?: unknown; message?: unknown }> } }).json;
+    expect(json.choices[0].delta).toBeDefined();
+    expect(json.choices[0].message).toBeUndefined();
   });
 
   it("emits or.meta from response metadata", () => {

@@ -2,14 +2,27 @@
  * NonStreamingAdapter - Parses non-streaming OpenRouter responses.
  *
  * Takes a complete JSON response and triggers appropriate events into ParserEvento.
- * Transforms message → delta format and emits standard or.* events.
+ * Extracts content from various formats: message.content, tool_calls, function_call, choice.text
  */
 
 import { ParserEvento } from "../parser-evento.js";
 
-type ContentBlock = { type?: string; text?: string };
-type Message = { content?: string | ContentBlock[]; role?: string };
-type Choice = { message?: Message; finish_reason?: string | null };
+type ContentBlock = { type?: string; text?: string; input?: unknown };
+type ToolCall = { function?: { arguments?: string } };
+type FunctionCall = { arguments?: string };
+type Message = {
+  content?: string | ContentBlock[];
+  role?: string;
+  tool_calls?: ToolCall[];
+  function_call?: FunctionCall;
+  images?: Array<{ type: string; image_url?: { url: string } }>;
+};
+type Choice = {
+  message?: Message;
+  delta?: Message;
+  text?: string;
+  finish_reason?: string | null;
+};
 type Usage = { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number; cost?: number };
 
 interface Response {
@@ -20,6 +33,7 @@ interface Response {
   system_fingerprint?: string;
   choices?: Choice[];
   usage?: Usage;
+  data?: Array<{ b64_json?: string; url?: string }>;
 }
 
 export class NonStreamingAdapter {
@@ -32,8 +46,9 @@ export class NonStreamingAdapter {
 
     const response = json as Response;
 
-    // Emit or.json with the original response
-    this.evento.trigger({ type: "or.json", json: response });
+    // Transform to streaming format for or.json event (message → delta)
+    const transformed = this.transformToStreamingFormat(response);
+    this.evento.trigger({ type: "or.json", json: transformed });
 
     // Emit or.meta
     if (response.id) {
@@ -50,17 +65,13 @@ export class NonStreamingAdapter {
     // Process choices
     const choice = response.choices?.[0];
     if (choice) {
-      // Emit or.delta from message content
-      const message = choice.message;
-      if (message?.content) {
-        const content = this.extractContent(message.content);
-        if (content) {
-          this.evento.trigger({
-            type: "or.delta",
-            seq: this.seq++,
-            content,
-          });
-        }
+      const content = this.extractContentFromChoice(choice);
+      if (content) {
+        this.evento.trigger({
+          type: "or.delta",
+          seq: this.seq++,
+          content,
+        });
       }
 
       // Emit or.done
@@ -85,15 +96,73 @@ export class NonStreamingAdapter {
     }
   }
 
-  private extractContent(content: string | ContentBlock[]): string {
+  /**
+   * Transform non-streaming response to streaming format.
+   * Converts choices[].message → choices[].delta
+   */
+  private transformToStreamingFormat(response: Response): Response {
+    const choices = response.choices;
+    if (!choices?.[0]?.message) {
+      return response;
+    }
+
+    // Deep clone to avoid mutating input
+    const transformed = JSON.parse(JSON.stringify(response)) as Response;
+    const transformedChoices = transformed.choices as Array<{ message?: Message; delta?: Message }>;
+
+    for (const choice of transformedChoices) {
+      if (choice.message) {
+        choice.delta = choice.message;
+        delete choice.message;
+      }
+    }
+
+    return transformed;
+  }
+
+  private extractContentFromChoice(choice: Choice): string {
+    const message = choice.message;
+    if (!message) {
+      // Fallback to choice.text
+      return choice.text ?? "";
+    }
+
+    // 1. Check for tool_calls
+    if (message.tool_calls?.length) {
+      const args = message.tool_calls[0]?.function?.arguments;
+      if (args) return args;
+    }
+
+    // 2. Check for legacy function_call
+    if (message.function_call?.arguments) {
+      return message.function_call.arguments;
+    }
+
+    // 3. Handle content
+    const content = message.content;
+    if (content == null) {
+      return "";
+    }
+
     if (typeof content === "string") {
       return content;
     }
 
-    // Claude format: array of content blocks
-    return content
-      .filter((block) => block.type === "text" && typeof block.text === "string")
-      .map((block) => block.text as string)
-      .join("");
+    // Array content blocks
+    if (Array.isArray(content)) {
+      // Check for tool_use blocks first
+      const toolUse = content.find((block) => block.type === "tool_use");
+      if (toolUse?.input != null) {
+        return JSON.stringify(toolUse.input);
+      }
+
+      // Concatenate text blocks
+      return content
+        .filter((block) => block.type === "text" && typeof block.text === "string")
+        .map((block) => block.text as string)
+        .join("");
+    }
+
+    return "";
   }
 }

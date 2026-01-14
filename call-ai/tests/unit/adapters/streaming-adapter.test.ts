@@ -6,6 +6,7 @@ import {
   OrDelta,
   OrUsage,
   OrDone,
+  OrStreamEnd,
 } from "../../../pkg/parser/parser-evento.js";
 import { StreamingAdapter } from "../../../pkg/parser/adapters/streaming-adapter.js";
 
@@ -15,6 +16,7 @@ describe("StreamingAdapter", () => {
     const deltas: OrDelta[] = [];
     const usages: OrUsage[] = [];
     const dones: OrDone[] = [];
+    const streamEnds: OrStreamEnd[] = [];
 
     evento.onEvent((event) => {
       switch (event.type) {
@@ -22,10 +24,11 @@ describe("StreamingAdapter", () => {
         case "or.delta": deltas.push(event); break;
         case "or.usage": usages.push(event); break;
         case "or.done": dones.push(event); break;
+        case "or.stream-end": streamEnds.push(event); break;
       }
     });
 
-    return { metas, deltas, usages, dones };
+    return { metas, deltas, usages, dones, streamEnds };
   }
 
   it("emits or.delta for content chunks", () => {
@@ -154,5 +157,19 @@ describe("StreamingAdapter", () => {
 
     expect(deltas).toHaveLength(1);
     expect(deltas[0].content).toBe("Hello");
+  });
+
+  it("emits or.stream-end on [DONE]", () => {
+    const evento = new ParserEvento();
+    const adapter = new StreamingAdapter(evento);
+    const { streamEnds } = collectEvents(evento);
+
+    adapter.processChunk(
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"Hi"}}]}\n'
+    );
+    adapter.processChunk("data: [DONE]\n");
+
+    expect(streamEnds).toHaveLength(1);
+    expect(streamEnds[0]).toMatchObject({ type: "or.stream-end" });
   });
 });

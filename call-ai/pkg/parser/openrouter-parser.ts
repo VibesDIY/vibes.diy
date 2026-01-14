@@ -1,61 +1,32 @@
-import { JsonParser } from "./json-parser.js";
-import { BaseOpenRouterParser } from "./base-openrouter-parser.js";
-
 /**
- * OpenRouterParser - Interprets OpenRouter-specific JSON structure.
+ * OpenRouterParser - Streaming parser for OpenRouter SSE responses.
  *
- * This class listens to JsonParser events and extracts:
- * - Text content deltas (or.delta)
- * - Stream metadata like model, provider (or.meta)
- * - Usage statistics from final chunk (or.usage)
- * - Finish reason (or.done)
- * - Raw JSON chunks (or.json)
- * - Stream completion (or.stream-end)
- *
- * Usage:
- * ```typescript
- * const orParser = new OpenRouterParser(jsonParser);
- *
- * orParser.onEvent(evt => {
- *   switch (evt.type) {
- *     case "or.meta": console.log("Model:", evt.model); break;
- *     case "or.delta": process.stdout.write(evt.content); break;
- *     // ...
- *   }
- * });
- *
- * for await (const chunk of response.body) {
- *   orParser.processChunk(chunk);
- * }
- * ```
+ * Wraps StreamingAdapter with the same API for compatibility.
  */
-export class OpenRouterParser extends BaseOpenRouterParser {
-  private readonly jsonParser: JsonParser;
 
-  constructor(jsonParser: JsonParser) {
-    super();
-    this.jsonParser = jsonParser;
-    this.jsonParser.onEvent((evt) => {
-      switch (evt.type) {
-        case "json.payload":
-          this.handleJson(evt.json);
-          break;
-        case "json.done":
-          this.emitStreamEnd();
-          break;
-      }
+import { OnFunc } from "@adviser/cement";
+import { ParserEvento, ParserEvent } from "./parser-evento.js";
+import { StreamingAdapter } from "./adapters/streaming-adapter.js";
+import { OrEventSource } from "./openrouter-events.js";
+import { DataSource } from "./json-parser.js";
+
+export class OpenRouterParser implements OrEventSource {
+  readonly onEvent = OnFunc<(event: ParserEvent) => void>();
+  private evento: ParserEvento;
+  private adapter: StreamingAdapter;
+
+  constructor(_jsonParser: DataSource) {
+    // StreamingAdapter creates its own parser chain internally
+    this.evento = new ParserEvento();
+    this.adapter = new StreamingAdapter(this.evento);
+
+    // Forward all events from ParserEvento to onEvent
+    this.evento.onEvent((event) => {
+      this.onEvent.invoke(event);
     });
   }
 
-  private emitStreamEnd(): void {
-    this.onEvent.invoke({ type: "or.stream-end" });
-  }
-
-  private handleJson(json: unknown): void {
-    this.dispatchOpenRouterChunk(json as Record<string, unknown>);
-  }
-
   processChunk(chunk: string): void {
-    this.jsonParser.processChunk(chunk);
+    this.adapter.processChunk(chunk);
   }
 }

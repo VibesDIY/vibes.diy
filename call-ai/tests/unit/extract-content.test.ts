@@ -236,7 +236,7 @@ describe("extractContent() integration via callAi()", () => {
         mock: { fetch: mockFetch },
       });
 
-      const parsed = JSON.parse(result);
+      const parsed = JSON.parse(result as string);
       expect(parsed.city).toBe("Paris");
       expect(parsed.country).toBe("France");
     });
@@ -279,7 +279,7 @@ describe("extractContent() integration via callAi()", () => {
       });
 
       // Parser correctly extracts the arguments string
-      const parsed = JSON.parse(result);
+      const parsed = JSON.parse(result as string);
       expect(parsed.city).toBe("Paris");
       expect(parsed.country).toBe("France");
     });
