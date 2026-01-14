@@ -63,6 +63,11 @@ export class NonStreamingOpenRouterParser {
    * @param json - The parsed JSON response object
    */
   parse(json: unknown): void {
+    // Handle null/undefined input
+    if (json == null) {
+      return;
+    }
+
     const response = json as Record<string, unknown>;
 
     // Emit raw JSON first

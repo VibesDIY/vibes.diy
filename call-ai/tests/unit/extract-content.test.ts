@@ -1,56 +1,46 @@
 import { callAi, Schema } from "call-ai";
-import { extractContent } from "../../pkg/non-streaming.js";
+import { NonStreamingOpenRouterParser } from "../../pkg/parser/non-streaming-openrouter-parser.js";
 import { describe, expect, it, vi } from "vitest";
-import { SchemaStrategy } from "../../pkg/types.js";
 
 /**
- * extractContent() Tests
+ * NonStreamingOpenRouterParser Tests
  *
- * Tests the actual behavior of extractContent() and the non-streaming callAi() path.
- *
- * IMPORTANT: These tests document the CURRENT behavior, not ideal behavior.
- * Some response formats have bugs (content[] handling) or are dead code paths
- * (tool_calls for json_schema models). When we swap to NonStreamingOpenRouterParser,
- * we'll fix these issues.
+ * Tests the parser that handles non-streaming OpenRouter JSON responses.
+ * The parser emits or.delta events with extracted content.
  */
 
-// Mock schema strategy that passes content through unchanged
-function createPassthroughStrategy(): SchemaStrategy {
-  return {
-    strategy: "none",
-    model: "test-model",
-    shouldForceStream: false,
-    prepareRequest: () => ({}),
-    processResponse: (content: unknown) => {
-      if (typeof content === "string") return content;
-      return JSON.stringify(content);
-    },
-  };
+// Helper to parse and extract content from or.delta event
+function parseAndExtract(response: unknown): string {
+  const parser = new NonStreamingOpenRouterParser();
+  let content = "";
+  parser.onEvent((evt) => {
+    if (evt.type === "or.delta") {
+      content = evt.content;
+    }
+  });
+  parser.parse(response);
+  return content;
 }
 
-describe("extractContent() direct tests", () => {
-  const strategy = createPassthroughStrategy();
-
-  describe("message.content (string) - WORKS", () => {
+describe("NonStreamingOpenRouterParser direct tests", () => {
+  describe("message.content (string)", () => {
     it("extracts simple string content", () => {
-      const result = extractContent(
+      const result = parseAndExtract(
         { choices: [{ message: { content: "Hello from AI" } }] },
-        strategy,
       );
       expect(result).toBe("Hello from AI");
     });
 
     it("extracts JSON string content", () => {
-      const result = extractContent(
+      const result = parseAndExtract(
         { choices: [{ message: { content: '{"name":"test","value":42}' } }] },
-        strategy,
       );
       expect(result).toBe('{"name":"test","value":42}');
     });
   });
 
-  describe("message.tool_calls - passes to strategy", () => {
-    it("extracts tool_calls and passes to strategy for processing", () => {
+  describe("message.tool_calls", () => {
+    it("extracts tool_calls arguments directly", () => {
       const toolCalls = [
         {
           id: "call_123",
@@ -62,34 +52,33 @@ describe("extractContent() direct tests", () => {
         },
       ];
 
-      const result = extractContent({ choices: [{ message: { tool_calls: toolCalls } }] }, strategy);
+      const result = parseAndExtract({ choices: [{ message: { tool_calls: toolCalls } }] });
 
-      // Strategy receives the tool_calls array and stringifies it
+      // Parser extracts the arguments string directly
       const parsed = JSON.parse(result);
-      expect(parsed[0].function.arguments).toBe('{"city":"Paris","country":"France"}');
+      expect(parsed.city).toBe("Paris");
+      expect(parsed.country).toBe("France");
     });
   });
 
-  describe("message.function_call (legacy format) - passes to strategy", () => {
-    it("extracts function_call and passes to strategy for processing", () => {
+  describe("message.function_call (legacy format)", () => {
+    it("extracts function_call arguments directly", () => {
       const functionCall = {
         name: "get_weather",
         arguments: '{"temperature":72,"unit":"fahrenheit"}',
       };
 
-      const result = extractContent({ choices: [{ message: { function_call: functionCall } }] }, strategy);
+      const result = parseAndExtract({ choices: [{ message: { function_call: functionCall } }] });
 
       const parsed = JSON.parse(result);
-      expect(parsed.arguments).toBe('{"temperature":72,"unit":"fahrenheit"}');
+      expect(parsed.temperature).toBe(72);
+      expect(parsed.unit).toBe("fahrenheit");
     });
   });
 
-  describe("content[] with text blocks - BUG: Array.isArray check is dead code", () => {
-    // BUG: The Array.isArray(choice.message.content) check on line 260 is never reached
-    // because choice.message.content (array) is truthy, so line 245 catches it first.
-    // This means content[] arrays are passed through as-is instead of concatenated.
-    it("DOCUMENTS BUG: arrays are stringified instead of text-extracted", () => {
-      const result = extractContent(
+  describe("content[] with text blocks", () => {
+    it("concatenates text blocks correctly", () => {
+      const result = parseAndExtract(
         {
           choices: [
             {
@@ -102,19 +91,16 @@ describe("extractContent() direct tests", () => {
             },
           ],
         },
-        strategy,
       );
 
-      // Current behavior: array is stringified (BUG)
-      // Expected behavior: "Hello World"
-      expect(result).toBe('[{"type":"text","text":"Hello "},{"type":"text","text":"World"}]');
+      // Parser correctly concatenates text blocks
+      expect(result).toBe("Hello World");
     });
   });
 
-  describe("content[] with tool_use blocks - BUG: never reached", () => {
-    // Same bug as above - the tool_use extraction code is never reached
-    it("DOCUMENTS BUG: tool_use blocks are stringified instead of extracted", () => {
-      const result = extractContent(
+  describe("content[] with tool_use blocks", () => {
+    it("extracts tool_use input correctly", () => {
+      const result = parseAndExtract(
         {
           choices: [
             {
@@ -131,20 +117,18 @@ describe("extractContent() direct tests", () => {
             },
           ],
         },
-        strategy,
       );
 
-      // Current behavior: array is stringified (BUG)
-      // Expected behavior: extract tool_use input
+      // Parser extracts tool_use input as JSON
       const parsed = JSON.parse(result);
-      expect(Array.isArray(parsed)).toBe(true);
-      expect(parsed[0].type).toBe("tool_use");
+      expect(parsed.name).toBe("Alice");
+      expect(parsed.age).toBe(30);
     });
   });
 
-  describe("choice.text fallback - WORKS", () => {
+  describe("choice.text fallback", () => {
     it("extracts from choice.text when message.content is absent", () => {
-      const result = extractContent({ choices: [{ text: "Fallback text response" }] }, strategy);
+      const result = parseAndExtract({ choices: [{ text: "Fallback text response" }] });
 
       expect(result).toBe("Fallback text response");
     });
@@ -152,20 +136,19 @@ describe("extractContent() direct tests", () => {
 
   describe("edge cases", () => {
     it("returns empty string for null result", () => {
-      const result = extractContent(null as any, strategy);
+      const result = parseAndExtract(null as any);
       expect(result).toBe("");
     });
 
-    it("throws for response without extractable content", () => {
-      expect(() => extractContent({ choices: [{ message: {} }] }, strategy)).toThrow(
-        "Failed to extract content",
-      );
+    it("returns empty string for response without extractable content", () => {
+      const result = parseAndExtract({ choices: [{ message: {} }] });
+      expect(result).toBe("");
     });
 
-    it("passes through raw string result unchanged", () => {
-      // Line 293: when result is already a string, return it directly
-      const result = extractContent("raw string response" as any, strategy);
-      expect(result).toBe("raw string response");
+    it("returns empty string for raw string result", () => {
+      // Parser expects object format, strings don't have choices
+      const result = parseAndExtract("raw string response" as any);
+      expect(result).toBe("");
     });
   });
 });
