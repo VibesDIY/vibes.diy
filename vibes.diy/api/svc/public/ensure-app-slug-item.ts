@@ -5,7 +5,6 @@ import {
   EventoResultType,
   HandleTriggerCtx,
   EventoResult,
-  to_uint8,
 } from "@adviser/cement";
 import {
   reqEnsureAppSlug,
@@ -16,13 +15,12 @@ import {
 } from "vibes-diy-api-pkg";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
-import { sha256 } from "multiformats/hashes/sha2";
-import { base58btc } from "multiformats/bases/base58";
 import { VibesApiSQLCtx } from "../api.ts";
 import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
-
+import { calcEntryPointUrl } from "../entry-point-utils.ts";
+import { calcCid } from "../intern/ensure-storage.ts";
 
 export const ensureAppSlugItem: EventoHandler<
   Request,
@@ -45,7 +43,7 @@ export const ensureAppSlugItem: EventoHandler<
         Request,
         ReqWithVerifiedAuth<ReqEnsureAppSlug>,
         ResEnsureAppSlug | VibesDiyError
-      >
+      >,
     ): Promise<Result<EventoResultType>> => {
       // console.log("handle ensureAppSlugItem", ctx.validated);
       const req = ctx.validated;
@@ -71,15 +69,9 @@ export const ensureAppSlugItem: EventoHandler<
           case "str-asset-block":
           case "uint8-asset-block":
             {
-              const uint8Content = to_uint8(fsItem.content);
-              const hash = await sha256.digest(uint8Content);
-              const cid = base58btc.encode(hash.digest);
               writeAppSlugsOp.push({
                 fsItem,
-                assetOp: {
-                  cid,
-                  data: uint8Content,
-                },
+                assetOp: await calcCid(vctx, fsItem.content),
               });
             }
             break;
@@ -89,12 +81,12 @@ export const ensureAppSlugItem: EventoHandler<
           default:
             // needs to rewind content from ref
             return Result.Err(
-              `unsupported file system item type: ${fsItem.type}`
+              `unsupported file system item type: ${fsItem.type}`,
             );
         }
       }
       const rStorageResult = await vctx.ensureStorage(
-        ...writeAppSlugsOp.map((op) => op.assetOp)
+        ...writeAppSlugsOp.map((op) => op.assetOp),
       );
       if (rStorageResult.isErr()) {
         return Result.Err(rStorageResult);
@@ -104,17 +96,33 @@ export const ensureAppSlugItem: EventoHandler<
       }
       const storageResults = rStorageResult.Ok();
       const fullFileSystem = writeAppSlugsOp.map((op, idx) => ({
-        fsItem: op.fsItem,
+        vibeFileItem: op.fsItem,
         storage: storageResults[idx],
       }));
       const res = await ensureApps(
         vctx,
         req,
         rAppSlugBinding.Ok(),
-        fullFileSystem
+        fullFileSystem,
       );
       if (res.isErr()) {
         return Result.Err(res);
+      }
+      let wrapperUrl: string;
+      let entryPointUrl: string;
+
+      if (req.mode === "production") {
+        wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
+        entryPointUrl = calcEntryPointUrl({
+          urlTemplate: vctx.params.entryPointTemplateUrl,
+          fsId: res.Ok().fsId,
+        });
+      } else {
+        wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
+        entryPointUrl = calcEntryPointUrl({
+          urlTemplate: vctx.params.entryPointTemplateUrl,
+          fsId: res.Ok().fsId,
+        });
       }
       // console.log("ensureAppSlugItem res", res.Ok());
       await ctx.send.send(ctx, {
@@ -125,10 +133,10 @@ export const ensureAppSlugItem: EventoHandler<
         fsId: res.Ok().fsId,
         env: req.env ?? {},
         fileSystem: res.Ok().fileSystem,
-        wrapperUrl: "string",
-        entryPointUrl: "string",
+        wrapperUrl,
+        entryPointUrl,
       } satisfies ResEnsureAppSlug);
       return Result.Ok(EventoResult.Continue);
-    }
+    },
   ),
 };

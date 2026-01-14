@@ -1,20 +1,24 @@
-
-import { int, sqliteTable, text, blob, primaryKey, uniqueIndex, index } from "drizzle-orm/sqlite-core";
+import {
+  int,
+  sqliteTable,
+  text,
+  blob,
+  primaryKey,
+  uniqueIndex,
+  index,
+} from "drizzle-orm/sqlite-core";
 
 // could be put on R2
-export const sqlAssets = sqliteTable(
-  "Assets",
-  {
-    assetId: text().primaryKey(), // sql://Assets.assetId (CID of content)
-    content: blob().notNull(), // actual code content
-    created: text().notNull(),
-  }
-);
+export const sqlAssets = sqliteTable("Assets", {
+  assetId: text().primaryKey(), // sql://Assets.assetId (CID of content)
+  content: blob().notNull(), // actual code content
+  created: text().notNull(),
+});
 
 export const sqlUserSlugBinding = sqliteTable(
   "UserSlugBindings",
   {
-    userId: text().notNull(),  // max bindings per userId
+    userId: text().notNull(), // max bindings per userId
     userSlug: text().notNull(),
     created: text().notNull(),
   },
@@ -24,17 +28,16 @@ export const sqlUserSlugBinding = sqliteTable(
   ],
 );
 
-
 export const sqlAppSlugBinding = sqliteTable(
   "AppSlugBindings",
   {
-    userSlug: text().notNull().references(() => sqlUserSlugBinding.userSlug),  // max bindings per userId
+    userSlug: text()
+      .notNull()
+      .references(() => sqlUserSlugBinding.userSlug), // max bindings per userId
     appSlug: text().notNull(), // human friendly app id
     created: text().notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.appSlug, table.userSlug] }),
-  ],
+  (table) => [primaryKey({ columns: [table.appSlug, table.userSlug] })],
 );
 
 export const sqlApps = sqliteTable(
@@ -56,4 +59,3 @@ export const sqlApps = sqliteTable(
     uniqueIndex("Apps_fsId").on(table.fsId, table.userId),
   ],
 );
-

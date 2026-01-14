@@ -28,7 +28,10 @@ interface VibesDiyApiConfig {
   readonly sthis: SuperThis;
 }
 
-export class VibeDiyApi implements VibesDiyApiIface<{ auth?: DashAuthType, type? : string }> {
+export class VibeDiyApi implements VibesDiyApiIface<{
+  auth?: DashAuthType;
+  type?: string;
+}> {
   readonly cfg: VibesDiyApiConfig;
 
   constructor(cfg: VibesDiyApiParam) {
@@ -47,7 +50,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{ auth?: DashAuthType, type?
   }
 
   async request<Q extends { auth?: DashAuthType }, S>(
-    req: Q
+    req: Q,
   ): Promise<ResultVibesDiy<S>> {
     const rDashAuth = await (req.auth
       ? Promise.resolve(Result.Ok(req.auth))
@@ -71,14 +74,16 @@ export class VibeDiyApi implements VibesDiyApiIface<{ auth?: DashAuthType, type?
       },
     });
     // console.log(API_URL, API_URL, reqBody);
-    const rres = await exception2Result(() =>this.cfg.fetch(this.cfg.apiUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: reqBody,
-    }));
+    const rres = await exception2Result(() =>
+      this.cfg.fetch(this.cfg.apiUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: reqBody,
+      }),
+    );
     if (rres.isErr()) {
       const err = rres.Err();
       return Result.Err<S, VibesDiyError>({
@@ -90,7 +95,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{ auth?: DashAuthType, type?
     }
     const res = rres.unwrap();
     if (res.ok) {
-      const jso = await res.json() as MsgBase;
+      const jso = (await res.json()) as MsgBase;
       // console.log("jso", jso);
       return Result.Ok(jso.payload as S);
     }
@@ -104,7 +109,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{ auth?: DashAuthType, type?
   }
 
   async ensureAppSlug(
-    req: Omit<ReqEnsureAppSlug, "type"| "auth"> & { auth?: DashAuthType } 
+    req: Omit<ReqEnsureAppSlug, "type" | "auth"> & { auth?: DashAuthType },
   ): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-ensure-app-slug" });
   }

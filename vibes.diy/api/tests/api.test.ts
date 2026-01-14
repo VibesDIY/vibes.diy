@@ -27,7 +27,7 @@ describe("VibesDiyApi", () => {
       CLERK_PUBLISHABLE_KEY:
         "pk_test_cHJlY2lzZS1jb2x0LTQ5LmNsZXJrLmFjY291bnRzLmRldiQ",
       DEVICE_ID_CA_PRIV_KEY: await sts.jwk2env(
-        await deviceCA.getCAKey().exportPrivateJWK()
+        await deviceCA.getCAKey().exportPrivateJWK(),
       ),
       DEVICE_ID_CA_CERT: await deviceCA
         .caCertificate()
@@ -35,9 +35,26 @@ describe("VibesDiyApi", () => {
 
       CLOUD_SESSION_TOKEN_SECRET:
         "z33KxHvFS3jLz72v9DeyGBqo7H34SCC1RA5LvQFCyDiU4r4YBR4jEZxZwA9TqBgm6VB5QzwjrZJoVYkpmHgH7kKJ6Sasat3jTDaBCkqWWfJAVrBL7XapUstnKW3AEaJJKvAYWrKYF9JGqrHNU8WVjsj3MZNyqqk8iAtTPPoKtPTLo2c657daVMkxibmvtz2egnK5wPeYEUtkbydrtBzteN25U7zmGqhS4BUzLjDiYKMLP8Tayi",
+
+      WRAPPER_BASE_URL: "https://tbd",
+      ENTRY_POINT_TEMPLATE_URL:
+        // "http://{fsId}{.groupid}.localhost.adviser.com/entry-point",
+        "http://{fsId}.localhost.adviser.com/entry-point",
+      FP_VERSION: "0.24.8-dev-test-device-id",
     };
 
-    svc = await createHandler(db, env);
+    svc = await createHandler(
+      db,
+      {
+        put: async (_req: Request, _res: Response) => {
+          /* noop */
+        },
+        match: async (_req: Request) => {
+          return null;
+        },
+      },
+      env,
+    );
     api = new VibeDiyApi({
       fetch: (input, init?) => {
         return svc(new Request(input, init));
@@ -48,7 +65,57 @@ describe("VibesDiyApi", () => {
     });
   });
 
-  it("results from internal binding ensureAppSlug", async () => {
+  it("does defaults", async () => {
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "console.log('hello world');",
+        },
+      ],
+    });
+    expect(res.Ok().appSlug.length).toBeGreaterThan(3);
+    expect(res.Ok().userSlug.length).toBeGreaterThan(3);
+
+    const res1 = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "console.log('hello world');",
+        },
+      ],
+    });
+    expect(res.Ok().fsId).toBe(res1.Ok().fsId);
+    expect(res.Ok().appSlug).not.toBe(res1.Ok().appSlug);
+    expect(res.Ok().userSlug).not.toBe(res1.Ok().userSlug);
+  });
+
+  it("render iframe content page", async () => {
+    // this is the iframe content page
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `console.log('hello world');`,
+        },
+      ],
+    });
+    const resIframe = await api.cfg.fetch(res.Ok().entryPointUrl);
+    expect(resIframe.status).toBe(200);
+    const iframeText = await resIframe.text();
+    expect(iframeText).toContain(`console.log('hello world');`);
+  });
+
+  it("repeatable stable ensureAppSlug", async () => {
     for (let i = 0; i < 2; i++) {
       const res = await api.ensureAppSlug({
         mode: "dev",
@@ -62,32 +129,75 @@ describe("VibesDiyApi", () => {
             type: "code-block",
             lang: "jsx",
             filename: "/App.jsx",
-            content: "console.log('hello world');",
+            content: [
+              "import na from 'find-up';",
+              "function App() {",
+              "  return <div>Hello VibesDiy</div>;",
+              "}",
+              "console.log('hello world');",
+              "App();",
+            ]
+              .map((i) => i.trim())
+              .join("\n"),
           },
         ],
       });
-      console.log("ensureAppSlug res", res);
+      // console.log("ensureAppSlug res", res);
       expect(res.Ok()).toEqual({
         appSlug: "sand-nose-hope",
-        entryPointUrl: "string",
+        entryPointUrl:
+          "http://zgdu8x6kbhpi3uxf7jmzmhutad4vbtrmrwurxtpzxxn7s.localhost.adviser.com/entry-point",
         env: {
           TEST_ENV_VAR: "hello world",
         },
         fileSystem: [
           {
+            assetId: "zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
             assetURI:
-              "sql://Assets/zJ5Xm25YRTgvPVrrVTaR9p23jySFXy7qZg5K1gpT1NbXj",
+              "sql://Assets/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
             fileName: "/App.jsx",
             mimeType: "text/jsx",
-            size: 27,
-            transform: "jsx-to-js",
+            size: expect.any(Number),
+            transform: {
+              type: "jsx-to-js",
+              transformedAssetId:
+                "zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
+            },
+          },
+          {
+            assetId: "zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
+            assetURI:
+              "sql://Assets/zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
+            fileName:
+              "@@transformed@@/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
+            mimeType: "application/javascript",
+            size: 276,
+            transform: {
+              action: "jsx-to-js",
+              transformedAssetId:
+                "zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
+              type: "transformed",
+            },
+          },
+          {
+            assetId: "zAJNo6VUyUnnx6uGXaJSfbvCEi7f1Wag4xhP6mFTp9QGp",
+            assetURI:
+              "sql://Assets/zAJNo6VUyUnnx6uGXaJSfbvCEi7f1Wag4xhP6mFTp9QGp",
+            fileName: "@@calculated@@/import-map.json",
+            mimeType: "application/importmap+json",
+            size: 6835,
+            transform: {
+              fromAssetIds: ["/App.jsx"],
+              type: "import-map",
+            },
           },
         ],
-        fsId: "z4pHQcuf8m2NRERgnFW6uRRD6twRd3fDq9UJC5yV2P3oT",
+        fsId: "zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s",
         mode: "dev",
         type: "vibes.diy.res-ensure-app-slug",
         userSlug: "immediately-steel-four",
-        wrapperUrl: "string",
+        wrapperUrl:
+          "https://tbd/immediately-steel-four/sand-nose-hope/zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s",
       });
     }
   });

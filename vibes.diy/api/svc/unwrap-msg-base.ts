@@ -4,10 +4,10 @@ import { msgBase } from "vibes-diy-api-pkg";
 
 // ValidateTriggerCtx<INREQ, REQ, RES>
 export function unwrapMsgBase<INREQ, REQ, RES>(
-  fn: (payload: unknown) => Promise<Result<Option<REQ>>>
+  fn: (payload: unknown) => Promise<Result<Option<REQ>>>,
 ): (ctx: ValidateTriggerCtx<INREQ, REQ, RES>) => Promise<Result<Option<REQ>>> {
   return (
-    ctx: ValidateTriggerCtx<INREQ, REQ, RES>
+    ctx: ValidateTriggerCtx<INREQ, REQ, RES>,
   ): Promise<Result<Option<REQ>>> => {
     const ret = msgBase(ctx.enRequest);
     //console.log("unwrapMsgBase", ret, ctx.enRequest);
