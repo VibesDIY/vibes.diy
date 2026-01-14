@@ -1,2 +1,1 @@
-
-export * from "./assets-fs.ts"
+export * from "./assets-fs.ts";

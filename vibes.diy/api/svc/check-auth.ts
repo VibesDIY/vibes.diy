@@ -9,11 +9,11 @@ import {
 import { ClerkClaimSchema } from "@fireproof/core-types-base";
 import { VibesApiSQLCtx } from "./api.js";
 
-
-export type ReqWithVerifiedAuth<REQ extends { type: string; auth: DashAuthType }> = Omit<REQ, "auth"> & {
+export type ReqWithVerifiedAuth<
+  REQ extends { type: string; auth: DashAuthType },
+> = Omit<REQ, "auth"> & {
   readonly auth: VerifiedAuthResult;
 };
-
 
 export async function verifyExtractClaims(
   ctx: VibesApiSQLCtx,
@@ -34,7 +34,9 @@ export async function verifyExtractClaims(
   });
 }
 
-export function corercedVerifiedAuthUser(ver: VerifiedClaimsResult): Result<VerifiedAuthResult["verifiedAuth"]> {
+export function corercedVerifiedAuthUser(
+  ver: VerifiedClaimsResult,
+): Result<VerifiedAuthResult["verifiedAuth"]> {
   switch (ver.type) {
     case "device-id":
     case "clerk": {
@@ -90,18 +92,33 @@ export async function verifyAuth(
 }
 
 export function checkAuth<TReq extends WithAuth & { type: string }, TRes>(
-  fn: (ctx: HandleTriggerCtx<Request, ReqWithVerifiedAuth<TReq>, TRes>) => Promise<Result<EventoResultType>>,
-): (ctx: HandleTriggerCtx<Request, TReq, TRes>) => Promise<Result<EventoResultType>> {
+  fn: (
+    ctx: HandleTriggerCtx<Request, ReqWithVerifiedAuth<TReq>, TRes>,
+  ) => Promise<Result<EventoResultType>>,
+): (
+  ctx: HandleTriggerCtx<Request, TReq, TRes>,
+) => Promise<Result<EventoResultType>> {
   return async (ctx: HandleTriggerCtx<Request, TReq, TRes>) => {
-    const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), ctx.validated);
+    const rAuth = await verifyAuth(
+      ctx.ctx.getOrThrow("vibesApiCtx"),
+      ctx.validated,
+    );
     if (rAuth.isErr()) {
       return Result.Err(rAuth.Err());
     }
     if (rAuth.Ok().type !== "VerifiedAuthResult") {
-      return Result.Err(`user not found: ${JSON.stringify(rAuth.Ok().inDashAuth)}`);
+      return Result.Err(
+        `user not found: ${JSON.stringify(rAuth.Ok().inDashAuth)}`,
+      );
     }
     // not nice but ts way of type narrowing is limited
     (ctx.validated as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
-    return fn(ctx as unknown as HandleTriggerCtx<Request, ReqWithVerifiedAuth<TReq>, TRes>);
+    return fn(
+      ctx as unknown as HandleTriggerCtx<
+        Request,
+        ReqWithVerifiedAuth<TReq>,
+        TRes
+      >,
+    );
   };
 }

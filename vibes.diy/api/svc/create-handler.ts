@@ -27,11 +27,22 @@ import { ResultSet } from "@libsql/client";
 // import { FPApiParameters } from "@fireproof/core-types-protocols-dashboard";
 import { ensureAppSlugItem } from "./public/ensure-app-slug-item.js";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
-import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
-import { createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
+import {
+  deviceIdCAFromEnv,
+  getCloudPubkeyFromEnv,
+  tokenApi,
+} from "@fireproof/core-protocols-dashboard";
+import {
+  CfCacheIf,
+  createVibesFPApiSQLCtx,
+  VibesApiSQLCtx,
+  VibesFPApiParameters,
+} from "./api.js";
 import { msgBase, MsgBase } from "vibes-diy-api-pkg";
 import { type } from "arktype";
 import { ensureStorage } from "./intern/ensure-storage.js";
+import { isResponseType, ResponseType } from "./types.ts";
+import { servEntryPoint } from "./public/serv-entry-point.ts";
 
 const defaultHttpHeaders = Lazy(() =>
   HttpHeader.from({
@@ -48,12 +59,15 @@ export function DefaultHttpHeaders(...h: CoercedHeadersInit[]): HeadersInit {
     .AsHeaderInit();
 }
 
-
 export interface VerifyApiToken {
   verify(token: string): Promise<Result<VerifiedClaimsResult>>;
 }
 
-export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Record<string, never>>;
+export type VibesSqlite = BaseSQLiteDatabase<
+  "async",
+  ResultSet | D1Result,
+  Record<string, never>
+>;
 
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
 
@@ -70,22 +84,6 @@ class ReqResEventoEnDecoder implements EventoEnDecoder<Request, string> {
   }
 }
 
-interface ResponseType {
-  type: "Response";
-  payload: {
-    status: number;
-    headers: HeadersInit;
-    body: BodyInit;
-  };
-}
-
-function isResponseType(obj: unknown): obj is ResponseType {
-  if (typeof obj !== "object" || obj === null) {
-    return false;
-  }
-  return (obj as ResponseType).type === "Response";
-}
-
 export const vibesApiEvento = Lazy(() => {
   const evento = new Evento(new ReqResEventoEnDecoder());
   evento.push(
@@ -94,11 +92,15 @@ export const vibesApiEvento = Lazy(() => {
       validate: (ctx: ValidateTriggerCtx<Request, unknown, unknown>) => {
         const { request: req } = ctx;
         if (req && req.method === "OPTIONS") {
-          return Promise.resolve(Result.Ok(Option.Some("Send CORS preflight response")));
+          return Promise.resolve(
+            Result.Ok(Option.Some("Send CORS preflight response")),
+          );
         }
         return Promise.resolve(Result.Ok(Option.None()));
       },
-      handle: async (ctx: HandleTriggerCtx<Request, string, unknown>): Promise<Result<EventoResultType>> => {
+      handle: async (
+        ctx: HandleTriggerCtx<Request, string, unknown>,
+      ): Promise<Result<EventoResultType>> => {
         await ctx.send.send(ctx, {
           type: "Response",
           payload: {
@@ -110,20 +112,31 @@ export const vibesApiEvento = Lazy(() => {
         return Result.Ok(EventoResult.Stop);
       },
     },
+    servEntryPoint,
     {
       hash: "log-request ",
-      validate: async (_ctx: ValidateTriggerCtx<Request, unknown, unknown>): Promise<Result<Option<unknown>>> => {
+      validate: async (
+        _ctx: ValidateTriggerCtx<Request, unknown, unknown>,
+      ): Promise<Result<Option<unknown>>> => {
         return Promise.resolve(Result.Ok(Option.Some("Log request")));
       },
-      handle: async (ctx: HandleTriggerCtx<Request, unknown, unknown>): Promise<Result<EventoResultType>> => {
+      handle: async (
+        ctx: HandleTriggerCtx<Request, unknown, unknown>,
+      ): Promise<Result<EventoResultType>> => {
         const { request: req } = ctx;
         if (!["POST", "PUT"].includes(req.method)) {
           await ctx.send.send(ctx, {
             type: "Response",
             payload: {
               status: 503,
-              headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-              body: JSON.stringify({ type: "error", message: "Only POST and PUT methods are supported", req: ctx.enRequest }),
+              headers: DefaultHttpHeaders({
+                "Content-Type": "application/json",
+              }),
+              body: JSON.stringify({
+                type: "error",
+                message: "Only POST and PUT methods are supported",
+                req: ctx.enRequest,
+              }),
             },
           } satisfies ResponseType);
           return Result.Ok(EventoResult.Stop);
@@ -141,7 +154,9 @@ export const vibesApiEvento = Lazy(() => {
           .Msg("API Request started");
         return Result.Ok(EventoResult.Continue);
       },
-      post: async (ctx: HandleTriggerCtx<Request, unknown, unknown>): Promise<void> => {
+      post: async (
+        ctx: HandleTriggerCtx<Request, unknown, unknown>,
+      ): Promise<void> => {
         // ctx.send.tranfer(ctx);
         ctx.ctx
           .getOrThrow<VibesApiSQLCtx>("vibesApiCtx")
@@ -161,7 +176,11 @@ export const vibesApiEvento = Lazy(() => {
           payload: {
             status: 501,
             headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-            body: JSON.stringify({ type: "error", message: "Not Found", req: ctx.enRequest }),
+            body: JSON.stringify({
+              type: "error",
+              message: "Not Found",
+              req: ctx.enRequest,
+            }),
           },
         } satisfies ResponseType);
         return Result.Ok(EventoResult.Continue);
@@ -176,7 +195,11 @@ export const vibesApiEvento = Lazy(() => {
           payload: {
             status: 500,
             headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-            body: JSON.stringify({ type: "error", message: "Internal Server Error", error: ctx.error?.toString() }),
+            body: JSON.stringify({
+              type: "error",
+              message: "Internal Server Error",
+              error: ctx.error?.toString(),
+            }),
           },
         } satisfies ResponseType);
         return Result.Ok(EventoResult.Continue);
@@ -186,20 +209,30 @@ export const vibesApiEvento = Lazy(() => {
   return evento;
 });
 
-class SendResponseProvider implements EventoSendProvider<Request, unknown, unknown> {
+class SendResponseProvider implements EventoSendProvider<
+  Request,
+  unknown,
+  unknown
+> {
   response?: Response;
   getResponse(): Response {
     if (!this.response) {
-      this.response = new Response(JSON.stringify({ type: "error", message: "Response not set" }), {
-        status: 500,
-        headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-      });
+      this.response = new Response(
+        JSON.stringify({ type: "error", message: "Response not set" }),
+        {
+          status: 500,
+          headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
+        },
+      );
     }
     const res = this.response;
     this.response = undefined;
     return res;
   }
-  async send<T>(ctx: HandleTriggerCtx<Request, unknown, unknown>, res: unknown): Promise<Result<T>> {
+  async send<T>(
+    ctx: HandleTriggerCtx<Request, unknown, unknown>,
+    res: unknown,
+  ): Promise<Result<T>> {
     // noop, handled in createHandler
     if (this.response) {
       return Result.Err("response could only be set once");
@@ -211,25 +244,32 @@ class SendResponseProvider implements EventoSendProvider<Request, unknown, unkno
       });
       return Result.Ok();
     }
-    const msg = msgBase(ctx.enRequest)
+    const msg = msgBase(ctx.enRequest);
     if (msg instanceof type.errors) {
-      this.response = new Response(JSON.stringify({ type: "error", message: "Invalid message base" }), {
-        status: 400,
-        headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-      });
+      this.response = new Response(
+        JSON.stringify({ type: "error", message: "Invalid message base" }),
+        {
+          status: 400,
+          headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
+        },
+      );
       return Result.Err("invalid message base");
-    } 
+    }
     // need to set src / transactionId ... the optionals to real
     const defaultRes: MsgBase = {
       tid: msg.tid,
       src: msg.dst,
       dst: msg.src,
       ttl: 10,
-      payload: res
+      payload: res,
     };
     return ctx.encoder.decode(defaultRes).then((rStr) => {
       if (rStr.isErr()) {
-        const x = { type: "error", message: "Failed to decode response", error: rStr.Err() };
+        const x = {
+          type: "error",
+          message: "Failed to decode response",
+          error: rStr.Err(),
+        };
         this.response = new Response(JSON.stringify(x), {
           status: 500,
           headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
@@ -249,7 +289,11 @@ class SendResponseProvider implements EventoSendProvider<Request, unknown, unkno
 }
 
 // BaseSQLiteDatabase<'async', ResultSet, TSchema>
-export async function createHandler<T extends VibesSqlite>(db: T, env: Record<string, string> | Env) {
+export async function createHandler<T extends VibesSqlite>(
+  db: T,
+  cache: CfCacheIf,
+  env: Record<string, string> | Env,
+) {
   // const stream = new utils.ConsoleWriterStream();
   const sthis = ensureSuperThis({
     logger: new LoggerImpl(),
@@ -260,23 +304,30 @@ export async function createHandler<T extends VibesSqlite>(db: T, env: Record<st
     CLERK_PUBLISHABLE_KEY: param.REQUIRED,
     DEVICE_ID_CA_PRIV_KEY: param.REQUIRED,
     DEVICE_ID_CA_CERT: param.REQUIRED,
+    WRAPPER_BASE_URL: param.REQUIRED,
+    ENTRY_POINT_TEMPLATE_URL: param.REQUIRED,
 
     MAX_APP_SLUG_PER_USER_ID: "10",
     MAX_USER_SLUG_PER_USER_ID: "10",
     MAX_APPS_PER_USER_ID: "50",
+
+    FP_VERSION: param.REQUIRED,
   });
   if (rEnvVals.isErr()) {
     throw rEnvVals.Err();
   }
   const envVals = rEnvVals.Ok();
 
-  const rCloudPublicKey = await getCloudPubkeyFromEnv(envVals.CLOUD_SESSION_TOKEN_PUBLIC, sthis);
+  const rCloudPublicKey = await getCloudPubkeyFromEnv(
+    envVals.CLOUD_SESSION_TOKEN_PUBLIC,
+    sthis,
+  );
   if (rCloudPublicKey.isErr()) {
     throw rCloudPublicKey.Err();
   }
 
   // Create DeviceIdCA from environment variables
-  const rDeviceIdCA = await deviceIdCAFromEnv(sthis)
+  const rDeviceIdCA = await deviceIdCAFromEnv(sthis);
   if (rDeviceIdCA.isErr()) {
     throw rDeviceIdCA.Err();
   }
@@ -286,19 +337,38 @@ export async function createHandler<T extends VibesSqlite>(db: T, env: Record<st
     clerkPublishableKey: envVals.CLERK_PUBLISHABLE_KEY,
     maxAppSlugPerUserId: parseInt(envVals.MAX_APP_SLUG_PER_USER_ID, 10),
     maxUserSlugPerUserId: parseInt(envVals.MAX_USER_SLUG_PER_USER_ID, 10),
-    maxAppsPerUserId: parseInt(envVals.MAX_APPS_PER_USER_ID, 10)
+    maxAppsPerUserId: parseInt(envVals.MAX_APPS_PER_USER_ID, 10),
+    wrapperBaseUrl: envVals.WRAPPER_BASE_URL,
+    entryPointTemplateUrl: envVals.ENTRY_POINT_TEMPLATE_URL,
+    assetCacheUrl: "https://asset-cache.vibes.app/{assetId}",
+    importMapProps: {
+      versions: {
+        FP: envVals.FP_VERSION,
+      },
+    },
   };
- 
+
   const vibesApiCtx = new AppContext().set(
     "vibesApiCtx",
-    createVibesFPApiSQLCtx(sthis, db, await tokenApi(sthis, {
-          clockTolerance: 60,
-          deviceIdCA: rDeviceIdCA.Ok(),
-    }), ensureStorage(db), rDeviceIdCA.Ok(), svcParams),
+    createVibesFPApiSQLCtx({
+      sthis,
+      db,
+      cache,
+      tokenApi: await tokenApi(sthis, {
+        clockTolerance: 60,
+        deviceIdCA: rDeviceIdCA.Ok(),
+      }),
+      ensureStorage: ensureStorage(db),
+      deviceCA: rDeviceIdCA.Ok(),
+      params: svcParams,
+    }),
   );
   const evento = vibesApiEvento();
   const send = new SendResponseProvider();
-  return async (req: Request, bindPromise: BindPromise<Result<unknown>> = (p) => p): Promise<Response> => {
+  return async (
+    req: Request,
+    bindPromise: BindPromise<Result<unknown>> = (p) => p,
+  ): Promise<Response> => {
     const rTrigger = await bindPromise(
       evento.trigger({
         ctx: vibesApiCtx,
@@ -307,7 +377,11 @@ export async function createHandler<T extends VibesSqlite>(db: T, env: Record<st
       }),
     );
     if (rTrigger.isErr()) {
-      vibesApiCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx").logger.Error().Err(rTrigger).Msg("createhandler-Error");
+      vibesApiCtx
+        .getOrThrow<VibesApiSQLCtx>("vibesApiCtx")
+        .logger.Error()
+        .Err(rTrigger)
+        .Msg("createhandler-Error");
       return new Response(
         JSON.stringify({
           type: "error",

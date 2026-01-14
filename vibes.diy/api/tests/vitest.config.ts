@@ -3,8 +3,14 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     name: "api-tests",
-    exclude: ["dist/**", "node_modules/**", "react/**", "examples/**", "gateway/indexeddb"],
+    exclude: [
+      "dist/**",
+      "node_modules/**",
+      "react/**",
+      "examples/**",
+      "gateway/indexeddb",
+    ],
     include: ["**/*test.?(c|m)[jt]s?(x)"],
-    globalSetup: "./globalSetup.libsql.ts"
+    globalSetup: "./globalSetup.libsql.ts",
   },
 });

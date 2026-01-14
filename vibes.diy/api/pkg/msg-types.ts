@@ -6,11 +6,10 @@ import { fileSystemItem } from "../svc/types.js";
 // Base types
 export const dashAuthType = type({
   type: "'clerk'|'device-id'|'ucan'",
-  token: "string"
+  token: "string",
 });
 
 export type DashAuthType = typeof dashAuthType.infer;
-
 
 // Base file properties - used for composition
 const baseFileProps = {
@@ -36,7 +35,7 @@ const codeBlock = type({
   ...baseFileProps,
   type: "'code-block'",
   // currently supported languages
-  lang: "'jsx'",
+  lang: "'jsx'|'js'",
   // the actual code content
   content: "string",
 });
@@ -46,7 +45,7 @@ const codeRef = type({
   type: "'code-ref'",
   // reference id to code stored elsewhere
   // if call-ai will store the result somewhere
-  refId: "string"
+  refId: "string",
 });
 
 // Asset types - string content
@@ -54,14 +53,14 @@ const strAssetBlock = type({
   ...baseFileProps,
   type: "'str-asset-block'",
   // the actual asset content as string
-  content: "string"
+  content: "string",
 });
 
 const strAssetRef = type({
   ...baseFileProps,
   type: "'str-asset-ref'",
   // reference id to asset stored elsewhere
-  refId: "string"
+  refId: "string",
 });
 
 // Asset types - binary content
@@ -69,14 +68,14 @@ const uint8AssetBlock = type({
   ...baseFileProps,
   type: "'uint8-asset-block'",
   // the actual asset content as binary
-  content: type.instanceOf(Uint8Array)
+  content: type.instanceOf(Uint8Array),
 });
 
 const uint8AssetRef = type({
   ...baseFileProps,
   type: "'uint8-asset-ref'",
   // reference id to asset stored elsewhere
-  refId: "string"
+  refId: "string",
 });
 
 // Union of all file types
@@ -86,7 +85,7 @@ export const vibeFile = type(
     .or(strAssetBlock)
     .or(strAssetRef)
     .or(uint8AssetBlock)
-    .or(uint8AssetRef)
+    .or(uint8AssetRef),
 );
 
 // export const vibeFileRes = type({
@@ -103,9 +102,8 @@ export const vibeFile = type(
 
 export type VibeFile = typeof vibeFile.infer;
 
-export const env = type("Record<string, string>");
-export type Env = typeof env.infer;
-
+export const vibeEnv = type("Record<string, string>");
+export type VibeEnv = typeof vibeEnv.infer;
 
 // Request types
 export const reqEnsureAppSlug = type({
@@ -115,8 +113,8 @@ export const reqEnsureAppSlug = type({
   "userSlug?": "string", // desired user slug
   mode: "'production'|'dev'",
   // env passed to the app
-  "env?": env,
-  fileSystem: [vibeFile, "[]"]
+  "env?": vibeEnv,
+  fileSystem: [vibeFile, "[]"],
 });
 
 export type ReqEnsureAppSlug = typeof reqEnsureAppSlug.infer;
@@ -127,7 +125,7 @@ export const resError = type({
   type: "'vibes.diy.error'",
   message: "string",
   "code?": "string",
-  "stack?": "string[]"
+  "stack?": "string[]",
 });
 
 export type ResError = typeof resError.infer;
@@ -137,7 +135,7 @@ export const resEnsureAppSlugError = type({
   type: "'vibes.diy.error'",
   message: "string",
   code: "'require-login'",
-  "stack?": "string[]"
+  "stack?": "string[]",
 });
 
 export type ResEnsureAppSlugError = typeof resEnsureAppSlugError.infer;
@@ -152,12 +150,12 @@ export const resEnsureAppSlug = type({
   appSlug: "string",
   userSlug: "string",
   mode: "'production'|'dev'",
-  env: env,
+  env: vibeEnv,
   fsId: "string",
   fileSystem: [fileSystemItem, "[]"],
   // envRef: "string",
   wrapperUrl: "string",
-  entryPointUrl: "string"
+  entryPointUrl: "string",
 });
 
 export type ResEnsureAppSlug = typeof resEnsureAppSlug.infer;
@@ -176,13 +174,13 @@ export const msgBase = type({
   src: "string",
   dst: "string",
   ttl: "number",
-  payload: "unknown"
+  payload: "unknown",
 });
 
 export type MsgBase = typeof msgBase.infer;
 
-export type MsgBaseCfg = Pick<MsgBase, "src" | "dst" | "ttl">; 
-export type MsgBaseParam = Partial<MsgBaseCfg>
+export type MsgBaseCfg = Pick<MsgBase, "src" | "dst" | "ttl">;
+export type MsgBaseParam = Partial<MsgBaseCfg>;
 
 export type VibesDiyError = (ResError | ResEnsureAppSlugError) & Error;
 
