@@ -105,7 +105,7 @@ describe("Gemini Wire Protocol Tests", () => {
       const events: OrEvent[] = [];
 
       parser.onEvent((evt) => events.push(evt));
-      parser.parseString(geminiResponseFixture);
+      parser.parse(JSON.parse(geminiResponseFixture));
 
       const meta = events.find((e) => e.type === "or.meta");
       const delta = events.find((e) => e.type === "or.delta");
@@ -153,7 +153,7 @@ describe("Gemini Wire Protocol Tests", () => {
         if (evt.type === "or.delta") content = evt.content;
       });
 
-      parser.parseString(geminiSystemResponseFixture);
+      parser.parse(JSON.parse(geminiSystemResponseFixture));
 
       // Gemini with system message may return JSON wrapped in markdown code blocks
       // Strip the code blocks before parsing

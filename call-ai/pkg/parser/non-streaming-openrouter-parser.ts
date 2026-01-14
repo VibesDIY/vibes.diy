@@ -138,12 +138,4 @@ export class NonStreamingOpenRouterParser {
       );
     }
   }
-
-  /**
-   * Convenience method to parse a JSON string.
-   * @param jsonString - The JSON string to parse
-   */
-  parseString(jsonString: string): void {
-    this.parse(JSON.parse(jsonString));
-  }
 }

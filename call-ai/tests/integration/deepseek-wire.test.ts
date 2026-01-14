@@ -81,7 +81,7 @@ describe("DeepSeek Wire Protocol Tests", () => {
       const events: OrEvent[] = [];
 
       parser.onEvent((evt) => events.push(evt));
-      parser.parseString(deepseekResponseFixture);
+      parser.parse(JSON.parse(deepseekResponseFixture));
 
       const meta = events.find((e) => e.type === "or.meta");
       const delta = events.find((e) => e.type === "or.delta");
@@ -125,7 +125,7 @@ describe("DeepSeek Wire Protocol Tests", () => {
         if (evt.type === "or.delta") content = evt.content;
       });
 
-      parser.parseString(deepseekSystemResponseFixture);
+      parser.parse(JSON.parse(deepseekSystemResponseFixture));
 
       // DeepSeek with system message returns proper JSON
       const parsed = JSON.parse(content);

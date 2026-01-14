@@ -141,7 +141,7 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
       const events: OrEvent[] = [];
 
       parser.onEvent((evt) => events.push(evt));
-      parser.parseString(gpt4turboSystemResponseFixture);
+      parser.parse(JSON.parse(gpt4turboSystemResponseFixture));
 
       const meta = events.find((e) => e.type === "or.meta");
       const delta = events.find((e) => e.type === "or.delta");

@@ -81,7 +81,7 @@ describe("Llama3 Wire Protocol Tests", () => {
       const events: OrEvent[] = [];
 
       parser.onEvent((evt) => events.push(evt));
-      parser.parseString(llama3ResponseFixture);
+      parser.parse(JSON.parse(llama3ResponseFixture));
 
       const meta = events.find((e) => e.type === "or.meta");
       const delta = events.find((e) => e.type === "or.delta");
@@ -125,7 +125,7 @@ describe("Llama3 Wire Protocol Tests", () => {
         if (evt.type === "or.delta") content = evt.content;
       });
 
-      parser.parseString(llama3SystemResponseFixture);
+      parser.parse(JSON.parse(llama3SystemResponseFixture));
 
       // Llama3 with system message can return proper JSON
       const parsed = JSON.parse(content);

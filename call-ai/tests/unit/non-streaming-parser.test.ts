@@ -20,7 +20,7 @@ describe("NonStreamingOpenRouterParser", () => {
       const parser = new NonStreamingOpenRouterParser();
       const events: OrEvent[] = [];
       parser.onEvent((evt) => events.push(evt));
-      parser.parseString(fixture);
+      parser.parse(JSON.parse(fixture));
 
       const meta = events.find((e) => e.type === "or.meta") as OrMeta;
       const delta = events.find((e) => e.type === "or.delta") as OrDelta;
@@ -58,7 +58,7 @@ describe("NonStreamingOpenRouterParser", () => {
       const parser = new NonStreamingOpenRouterParser();
       const events: OrEvent[] = [];
       parser.onEvent((evt) => events.push(evt));
-      parser.parseString(fixture);
+      parser.parse(JSON.parse(fixture));
 
       const meta = events.find((e) => e.type === "or.meta") as OrMeta;
       const delta = events.find((e) => e.type === "or.delta") as OrDelta;
@@ -87,7 +87,7 @@ describe("NonStreamingOpenRouterParser", () => {
       const parser = new NonStreamingOpenRouterParser();
       const events: OrEvent[] = [];
       parser.onEvent((evt) => events.push(evt));
-      parser.parseString(fixture);
+      parser.parse(JSON.parse(fixture));
 
       const meta = events.find((e) => e.type === "or.meta") as OrMeta;
       const delta = events.find((e) => e.type === "or.delta") as OrDelta;
@@ -110,7 +110,7 @@ describe("NonStreamingOpenRouterParser", () => {
       const eventTypes: string[] = [];
 
       parser.onEvent((evt) => eventTypes.push(evt.type));
-      parser.parseString(fixture);
+      parser.parse(JSON.parse(fixture));
 
       expect(eventTypes).toEqual(["or.json", "or.meta", "or.delta", "or.done", "or.usage"]);
     });
