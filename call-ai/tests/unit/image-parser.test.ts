@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { NonStreamingOpenRouterParser } from "../../pkg/parser/non-streaming-openrouter-parser.js";
-import { OrEvent } from "../../pkg/parser/openrouter-events.js";
+import { ImageParser } from "../../pkg/parser/image-parser.js";
+import { OrImage } from "../../pkg/parser/openrouter-events.js";
 
-describe("NonStreamingOpenRouterParser - Image Handling", () => {
+describe("ImageParser", () => {
   // Format A: Raw OpenRouter response with choices[].message.images[]
   const rawOpenRouterImageResponse = {
     id: "gen-123",
@@ -83,17 +84,22 @@ describe("NonStreamingOpenRouterParser - Image Handling", () => {
     ],
   };
 
+  function createParserChain() {
+    const orParser = new NonStreamingOpenRouterParser();
+    const imageParser = new ImageParser(orParser);
+    return { orParser, imageParser };
+  }
+
   describe("Format A: Raw OpenRouter response", () => {
     it("should emit or.image event with extracted base64 from data URL", () => {
-      const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
-      parser.onEvent((evt) => events.push(evt));
+      const { orParser, imageParser } = createParserChain();
+      const events: OrImage[] = [];
+      imageParser.onImage((evt) => events.push(evt));
 
-      parser.parse(rawOpenRouterImageResponse);
+      orParser.parse(rawOpenRouterImageResponse);
 
-      const imageEvents = events.filter((e) => e.type === "or.image");
-      expect(imageEvents).toHaveLength(1);
-      expect(imageEvents[0]).toMatchObject({
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
         type: "or.image",
         index: 0,
         b64_json:
@@ -102,48 +108,46 @@ describe("NonStreamingOpenRouterParser - Image Handling", () => {
     });
 
     it("should emit or.image event with URL when not a data URL", () => {
-      const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
-      parser.onEvent((evt) => events.push(evt));
+      const { orParser, imageParser } = createParserChain();
+      const events: OrImage[] = [];
+      imageParser.onImage((evt) => events.push(evt));
 
-      parser.parse(rawOpenRouterImageResponseWithUrl);
+      orParser.parse(rawOpenRouterImageResponseWithUrl);
 
-      const imageEvents = events.filter((e) => e.type === "or.image");
-      expect(imageEvents).toHaveLength(1);
-      expect(imageEvents[0]).toMatchObject({
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
         type: "or.image",
         index: 0,
         url: "https://example.com/image.png",
       });
     });
 
-    it("should also emit text content from message.content", () => {
-      const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
-      parser.onEvent((evt) => events.push(evt));
-
-      parser.parse(rawOpenRouterImageResponse);
-
-      const deltaEvents = events.filter((e) => e.type === "or.delta");
-      expect(deltaEvents).toHaveLength(1);
-      expect(deltaEvents[0]).toMatchObject({
-        type: "or.delta",
-        content: "Here is your generated image",
+    it("should still emit text content from message.content via or.delta", () => {
+      const { orParser } = createParserChain();
+      const deltaContent: string[] = [];
+      orParser.onEvent((evt) => {
+        if (evt.type === "or.delta") {
+          deltaContent.push(evt.content);
+        }
       });
+
+      orParser.parse(rawOpenRouterImageResponse);
+
+      expect(deltaContent).toHaveLength(1);
+      expect(deltaContent[0]).toBe("Here is your generated image");
     });
   });
 
   describe("Format B: Transformed/OpenAI-compatible response", () => {
     it("should emit or.image event with b64_json", () => {
-      const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
-      parser.onEvent((evt) => events.push(evt));
+      const { orParser, imageParser } = createParserChain();
+      const events: OrImage[] = [];
+      imageParser.onImage((evt) => events.push(evt));
 
-      parser.parse(transformedImageResponse);
+      orParser.parse(transformedImageResponse);
 
-      const imageEvents = events.filter((e) => e.type === "or.image");
-      expect(imageEvents).toHaveLength(1);
-      expect(imageEvents[0]).toMatchObject({
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
         type: "or.image",
         index: 0,
         b64_json:
@@ -152,15 +156,14 @@ describe("NonStreamingOpenRouterParser - Image Handling", () => {
     });
 
     it("should emit or.image event with URL", () => {
-      const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
-      parser.onEvent((evt) => events.push(evt));
+      const { orParser, imageParser } = createParserChain();
+      const events: OrImage[] = [];
+      imageParser.onImage((evt) => events.push(evt));
 
-      parser.parse(transformedImageResponseWithUrl);
+      orParser.parse(transformedImageResponseWithUrl);
 
-      const imageEvents = events.filter((e) => e.type === "or.image");
-      expect(imageEvents).toHaveLength(1);
-      expect(imageEvents[0]).toMatchObject({
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
         type: "or.image",
         index: 0,
         url: "https://example.com/image.png",
@@ -170,26 +173,25 @@ describe("NonStreamingOpenRouterParser - Image Handling", () => {
 
   describe("Multiple images", () => {
     it("should emit or.image event for each image with correct index", () => {
-      const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
-      parser.onEvent((evt) => events.push(evt));
+      const { orParser, imageParser } = createParserChain();
+      const events: OrImage[] = [];
+      imageParser.onImage((evt) => events.push(evt));
 
-      parser.parse(multipleImagesResponse);
+      orParser.parse(multipleImagesResponse);
 
-      const imageEvents = events.filter((e) => e.type === "or.image");
-      expect(imageEvents).toHaveLength(3);
+      expect(events).toHaveLength(3);
 
-      expect(imageEvents[0]).toMatchObject({
+      expect(events[0]).toMatchObject({
         type: "or.image",
         index: 0,
         b64_json: "image1base64data",
       });
-      expect(imageEvents[1]).toMatchObject({
+      expect(events[1]).toMatchObject({
         type: "or.image",
         index: 1,
         b64_json: "image2base64data",
       });
-      expect(imageEvents[2]).toMatchObject({
+      expect(events[2]).toMatchObject({
         type: "or.image",
         index: 2,
         url: "https://example.com/image3.png",

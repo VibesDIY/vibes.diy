@@ -15,7 +15,6 @@ import { OrEvent, OrMeta } from "./openrouter-events.js";
  * - or.delta: Content (single event with full content, seq=0)
  * - or.done: Finish reason
  * - or.usage: Token usage statistics
- * - or.image: Image data (b64_json or url)
  *
  * Usage:
  * ```typescript
@@ -56,9 +55,6 @@ export class NonStreamingOpenRouterParser {
     this.onEvent.invoke({ type: "or.json", json });
   }
 
-  private emitImage(index: number, b64_json: string | undefined, url: string | undefined): void {
-    this.onEvent.invoke({ type: "or.image", index, b64_json, url });
-  }
 
   /**
    * Transform non-streaming response to streaming format.
@@ -84,13 +80,6 @@ export class NonStreamingOpenRouterParser {
     return transformed;
   }
 
-  /**
-   * Extract base64 from a data URL, or return undefined if not a data URL
-   */
-  private extractBase64(dataUrl: string): string | undefined {
-    const match = dataUrl.match(/^data:image\/[^;]+;base64,(.+)$/);
-    return match ? match[1] : undefined;
-  }
 
   /**
    * Parse a non-streaming JSON response and emit OrEvents.
@@ -102,19 +91,6 @@ export class NonStreamingOpenRouterParser {
     }
 
     const response = json as Record<string, unknown>;
-
-    // Check for Format B (transformed/OpenAI-compatible: { data: [] })
-    // This doesn't have choices, so handle it separately
-    const data = response.data as Array<{ b64_json?: string; url?: string }> | undefined;
-    if (data && Array.isArray(data)) {
-      this.emitJson(response);
-      data.forEach((item, index) => {
-        if (item.b64_json || item.url) {
-          this.emitImage(index, item.b64_json, item.url);
-        }
-      });
-      return;
-    }
 
     // Transform to streaming format (message → delta)
     const transformed = this.transformToStreamingFormat(response);
@@ -139,7 +115,6 @@ export class NonStreamingOpenRouterParser {
         content?: string | Array<{ type: string; text?: string; input?: unknown }>;
         tool_calls?: Array<{ function?: { arguments?: string } }>;
         function_call?: { arguments?: string };
-        images?: Array<{ type: string; image_url?: { url: string } }>;
       };
       finish_reason?: string | null;
     }> | undefined;
@@ -182,16 +157,6 @@ export class NonStreamingOpenRouterParser {
           }
         }
 
-        // Images in delta (Format A: raw OpenRouter)
-        if (delta.images && Array.isArray(delta.images)) {
-          delta.images.forEach((img, index) => {
-            if (img.type === "image_url" && img.image_url?.url) {
-              const dataUrl = img.image_url.url;
-              const b64 = this.extractBase64(dataUrl);
-              this.emitImage(index, b64, b64 ? undefined : dataUrl);
-            }
-          });
-        }
       }
 
       // Finish reason
