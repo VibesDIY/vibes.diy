@@ -1,6 +1,4 @@
-import { OnFunc } from "@adviser/cement";
-
-import { OrEvent, OrMeta } from "./openrouter-events.js";
+import { BaseOpenRouterParser } from "./base-openrouter-parser.js";
 
 /**
  * NonStreamingOpenRouterParser - Interprets non-streaming OpenRouter JSON responses.
@@ -32,29 +30,7 @@ import { OrEvent, OrMeta } from "./openrouter-events.js";
  * parser.parse(jsonResponse);
  * ```
  */
-export class NonStreamingOpenRouterParser {
-  readonly onEvent = OnFunc<(event: OrEvent) => void>();
-
-  private emitMeta(meta: Omit<OrMeta, "type">): void {
-    this.onEvent.invoke({ type: "or.meta", ...meta });
-  }
-
-  private emitDelta(content: string): void {
-    this.onEvent.invoke({ type: "or.delta", content, seq: 0 });
-  }
-
-  private emitUsage(promptTokens: number, completionTokens: number, totalTokens: number, cost?: number): void {
-    this.onEvent.invoke({ type: "or.usage", promptTokens, completionTokens, totalTokens, cost });
-  }
-
-  private emitDone(finishReason: string): void {
-    this.onEvent.invoke({ type: "or.done", finishReason });
-  }
-
-  private emitJson(json: unknown): void {
-    this.onEvent.invoke({ type: "or.json", json });
-  }
-
+export class NonStreamingOpenRouterParser extends BaseOpenRouterParser {
 
   /**
    * Transform non-streaming response to streaming format.
@@ -90,104 +66,11 @@ export class NonStreamingOpenRouterParser {
       return;
     }
 
-    const response = json as Record<string, unknown>;
+    this.resetStreamState();
 
-    // Transform to streaming format (message → delta)
+    const response = json as Record<string, unknown>;
     const transformed = this.transformToStreamingFormat(response);
 
-    // Emit transformed JSON for downstream parsers (like ToolSchemaParser)
-    this.emitJson(transformed);
-
-    // Emit metadata
-    if (transformed.id) {
-      this.emitMeta({
-        id: transformed.id as string,
-        provider: (transformed.provider as string) ?? "",
-        model: transformed.model as string,
-        created: (transformed.created as number) ?? 0,
-        systemFingerprint: (transformed.system_fingerprint as string) ?? "",
-      });
-    }
-
-    // Extract from transformed format (now uses delta like streaming)
-    const choices = transformed.choices as Array<{
-      delta?: {
-        content?: string | Array<{ type: string; text?: string; input?: unknown }>;
-        tool_calls?: Array<{ function?: { arguments?: string } }>;
-        function_call?: { arguments?: string };
-      };
-      finish_reason?: string | null;
-    }> | undefined;
-
-    if (choices && choices.length > 0) {
-      const choice = choices[0];
-      const delta = choice.delta;
-
-      if (delta) {
-        const content = delta.content;
-
-        // String content (most common)
-        if (typeof content === "string" && content) {
-          this.emitDelta(content);
-        }
-        // Tool calls
-        else if (delta.tool_calls?.length) {
-          const args = delta.tool_calls[0]?.function?.arguments;
-          if (args) {
-            this.emitDelta(args);
-          }
-        }
-        // Legacy function_call
-        else if (delta.function_call?.arguments) {
-          this.emitDelta(delta.function_call.arguments);
-        }
-        // Content array (Claude-style)
-        else if (Array.isArray(content)) {
-          const toolUse = content.find((b) => b.type === "tool_use") as { input?: unknown } | undefined;
-          if (toolUse?.input) {
-            this.emitDelta(JSON.stringify(toolUse.input));
-          } else {
-            const text = content
-              .filter((b) => b.type === "text" && b.text)
-              .map((b) => b.text)
-              .join("");
-            if (text) {
-              this.emitDelta(text);
-            }
-          }
-        }
-
-      }
-
-      // Finish reason
-      if (choice.finish_reason) {
-        this.emitDone(choice.finish_reason);
-      }
-
-      // Legacy choice.text fallback (older API formats)
-      if (!delta) {
-        const legacyText = (choice as { text?: string }).text;
-        if (legacyText) {
-          this.emitDelta(legacyText);
-        }
-      }
-    }
-
-    // Usage statistics
-    const usage = transformed.usage as {
-      prompt_tokens?: number;
-      completion_tokens?: number;
-      total_tokens?: number;
-      cost?: number;
-    } | undefined;
-
-    if (usage) {
-      this.emitUsage(
-        usage.prompt_tokens ?? 0,
-        usage.completion_tokens ?? 0,
-        usage.total_tokens ?? 0,
-        usage.cost
-      );
-    }
+    this.dispatchOpenRouterChunk(transformed);
   }
 }
