@@ -244,6 +244,42 @@ describe("CodeBlockParser", () => {
 
       expect(ends).toHaveLength(1);
     });
+
+    it("handles closing fence with trailing spaces before newline", () => {
+      const { codeParser, orParser } = createCodeBlockParser();
+      const events: CodeBlockEvent[] = [];
+      codeParser.onEvent((evt) => events.push(evt));
+
+      // Closing fence with trailing spaces: ```   \n
+      simulateDelta(orParser, "```js\ncode\n```   \nMore text");
+
+      const types = events.map((e) => e.type);
+      expect(types).toContain("codeStart");
+      expect(types).toContain("codeEnd");
+      // Should have text after code block
+      const textAfter = events.filter(
+        (e) => e.type === "textFragment" && (e as TextFragmentEvent).fragment.includes("More text"),
+      );
+      expect(textAfter.length).toBeGreaterThan(0);
+    });
+
+    it("handles closing fence with CRLF line ending", () => {
+      const { codeParser, orParser } = createCodeBlockParser();
+      const events: CodeBlockEvent[] = [];
+      codeParser.onEvent((evt) => events.push(evt));
+
+      // Closing fence with CRLF: ```\r\n
+      simulateDelta(orParser, "```js\ncode\n```\r\nMore text");
+
+      const types = events.map((e) => e.type);
+      expect(types).toContain("codeStart");
+      expect(types).toContain("codeEnd");
+      // Should have text after code block (may include the \r in "More text")
+      const textAfter = events.filter(
+        (e) => e.type === "textFragment" && (e as TextFragmentEvent).fragment.includes("More text"),
+      );
+      expect(textAfter.length).toBeGreaterThan(0);
+    });
   });
 
   describe("sequence numbers", () => {

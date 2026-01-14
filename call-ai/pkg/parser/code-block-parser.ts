@@ -225,8 +225,12 @@ export class CodeBlockParser {
             this.currentLanguage = undefined;
             this.buffer = "";
             this.state = "TEXT";
+          } else if (char === " " || char === "\t" || char === "\r") {
+            // Trailing whitespace or \r (from CRLF) - valid after closing fence
+            // Accumulate in buffer in case this turns out to be a false alarm
+            this.buffer += char;
           } else {
-            // Not a newline - false alarm, emit buffer + char as code
+            // Not a newline or whitespace - false alarm, emit buffer + char as code
             this.codeToEmit += this.buffer + char;
             this.buffer = "";
             this.state = "IN_CODE";
