@@ -108,9 +108,10 @@ describe("Model Strategies", () => {
     });
 
     it("should process tool_use response type", () => {
+      // Claude API returns input as an object, not a string
       const toolUseContent = {
         type: "tool_use",
-        input: '{"capital":"Paris"}',
+        input: { capital: "Paris" },
       } as any;
       const result = claudeStrategy.processResponse(toolUseContent);
       expect(result).toBe('{"capital":"Paris"}');
