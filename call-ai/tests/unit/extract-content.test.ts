@@ -1,14 +1,176 @@
 import { callAi, Schema } from "call-ai";
+import { extractContent } from "../../pkg/non-streaming.js";
 import { describe, expect, it, vi } from "vitest";
+import { SchemaStrategy } from "../../pkg/types.js";
 
 /**
- * extractContent() Integration Tests
+ * extractContent() Tests
  *
- * Tests the non-streaming callAi() path with all response formats
- * that extractContent() handles. Uses mock.fetch injection.
+ * Tests the actual behavior of extractContent() and the non-streaming callAi() path.
+ *
+ * IMPORTANT: These tests document the CURRENT behavior, not ideal behavior.
+ * Some response formats have bugs (content[] handling) or are dead code paths
+ * (tool_calls for json_schema models). When we swap to NonStreamingOpenRouterParser,
+ * we'll fix these issues.
  */
 
-describe("extractContent() response formats", () => {
+// Mock schema strategy that passes content through unchanged
+function createPassthroughStrategy(): SchemaStrategy {
+  return {
+    strategy: "none",
+    model: "test-model",
+    shouldForceStream: false,
+    prepareRequest: () => ({}),
+    processResponse: (content: unknown) => {
+      if (typeof content === "string") return content;
+      return JSON.stringify(content);
+    },
+  };
+}
+
+describe("extractContent() direct tests", () => {
+  const strategy = createPassthroughStrategy();
+
+  describe("message.content (string) - WORKS", () => {
+    it("extracts simple string content", () => {
+      const result = extractContent(
+        { choices: [{ message: { content: "Hello from AI" } }] },
+        strategy,
+      );
+      expect(result).toBe("Hello from AI");
+    });
+
+    it("extracts JSON string content", () => {
+      const result = extractContent(
+        { choices: [{ message: { content: '{"name":"test","value":42}' } }] },
+        strategy,
+      );
+      expect(result).toBe('{"name":"test","value":42}');
+    });
+  });
+
+  describe("message.tool_calls - passes to strategy", () => {
+    it("extracts tool_calls and passes to strategy for processing", () => {
+      const toolCalls = [
+        {
+          id: "call_123",
+          type: "function",
+          function: {
+            name: "get_data",
+            arguments: '{"city":"Paris","country":"France"}',
+          },
+        },
+      ];
+
+      const result = extractContent({ choices: [{ message: { tool_calls: toolCalls } }] }, strategy);
+
+      // Strategy receives the tool_calls array and stringifies it
+      const parsed = JSON.parse(result);
+      expect(parsed[0].function.arguments).toBe('{"city":"Paris","country":"France"}');
+    });
+  });
+
+  describe("message.function_call (legacy format) - passes to strategy", () => {
+    it("extracts function_call and passes to strategy for processing", () => {
+      const functionCall = {
+        name: "get_weather",
+        arguments: '{"temperature":72,"unit":"fahrenheit"}',
+      };
+
+      const result = extractContent({ choices: [{ message: { function_call: functionCall } }] }, strategy);
+
+      const parsed = JSON.parse(result);
+      expect(parsed.arguments).toBe('{"temperature":72,"unit":"fahrenheit"}');
+    });
+  });
+
+  describe("content[] with text blocks - BUG: Array.isArray check is dead code", () => {
+    // BUG: The Array.isArray(choice.message.content) check on line 260 is never reached
+    // because choice.message.content (array) is truthy, so line 245 catches it first.
+    // This means content[] arrays are passed through as-is instead of concatenated.
+    it("DOCUMENTS BUG: arrays are stringified instead of text-extracted", () => {
+      const result = extractContent(
+        {
+          choices: [
+            {
+              message: {
+                content: [
+                  { type: "text", text: "Hello " },
+                  { type: "text", text: "World" },
+                ],
+              },
+            },
+          ],
+        },
+        strategy,
+      );
+
+      // Current behavior: array is stringified (BUG)
+      // Expected behavior: "Hello World"
+      expect(result).toBe('[{"type":"text","text":"Hello "},{"type":"text","text":"World"}]');
+    });
+  });
+
+  describe("content[] with tool_use blocks - BUG: never reached", () => {
+    // Same bug as above - the tool_use extraction code is never reached
+    it("DOCUMENTS BUG: tool_use blocks are stringified instead of extracted", () => {
+      const result = extractContent(
+        {
+          choices: [
+            {
+              message: {
+                content: [
+                  {
+                    type: "tool_use",
+                    id: "toolu_123",
+                    name: "get_data",
+                    input: { name: "Alice", age: 30 },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        strategy,
+      );
+
+      // Current behavior: array is stringified (BUG)
+      // Expected behavior: extract tool_use input
+      const parsed = JSON.parse(result);
+      expect(Array.isArray(parsed)).toBe(true);
+      expect(parsed[0].type).toBe("tool_use");
+    });
+  });
+
+  describe("choice.text fallback - WORKS", () => {
+    it("extracts from choice.text when message.content is absent", () => {
+      const result = extractContent({ choices: [{ text: "Fallback text response" }] }, strategy);
+
+      expect(result).toBe("Fallback text response");
+    });
+  });
+
+  describe("edge cases", () => {
+    it("returns empty string for null result", () => {
+      const result = extractContent(null as any, strategy);
+      expect(result).toBe("");
+    });
+
+    it("throws for response without extractable content", () => {
+      expect(() => extractContent({ choices: [{ message: {} }] }, strategy)).toThrow(
+        "Failed to extract content",
+      );
+    });
+
+    it("passes through raw string result unchanged", () => {
+      // Line 293: when result is already a string, return it directly
+      const result = extractContent("raw string response" as any, strategy);
+      expect(result).toBe("raw string response");
+    });
+  });
+});
+
+describe("extractContent() integration via callAi()", () => {
   // Helper to create a mock fetch that returns JSON response
   function createJsonMockFetch(jsonResponse: object) {
     return vi.fn().mockResolvedValue({
@@ -19,8 +181,8 @@ describe("extractContent() response formats", () => {
     } as unknown as Response);
   }
 
-  describe("message.content (string)", () => {
-    it("should extract simple string content", async () => {
+  describe("non-streaming text path (no schema) - WORKS", () => {
+    it("extracts simple string content through callAi", async () => {
       const mockFetch = createJsonMockFetch({
         choices: [{ message: { content: "Hello from AI" } }],
       });
@@ -33,7 +195,7 @@ describe("extractContent() response formats", () => {
       expect(result).toBe("Hello from AI");
     });
 
-    it("should extract JSON string content", async () => {
+    it("extracts JSON string content through callAi", async () => {
       const mockFetch = createJsonMockFetch({
         choices: [{ message: { content: '{"name":"test","value":42}' } }],
       });
@@ -45,11 +207,61 @@ describe("extractContent() response formats", () => {
 
       expect(result).toBe('{"name":"test","value":42}');
     });
+
+    it("extracts from choice.text fallback through callAi", async () => {
+      const mockFetch = createJsonMockFetch({
+        choices: [{ text: "Fallback text response" }],
+      });
+
+      const result = await callAi("Hi", {
+        apiKey: "test-key",
+        mock: { fetch: mockFetch },
+      });
+
+      expect(result).toBe("Fallback text response");
+    });
   });
 
-  describe("message.tool_calls", () => {
-    // TODO: Fix when swapping to NonStreamingOpenRouterParser
-    it.todo("should extract tool_calls arguments with schema", async () => {
+  describe("non-streaming schema path (GPT-4o uses json_schema mode)", () => {
+    // GPT-4o with schema uses json_schema response_format, which returns
+    // content as a JSON string in message.content - NOT tool_calls.
+    // This is the actual production code path.
+
+    it("extracts JSON content with schema (actual production path)", async () => {
+      const mockFetch = createJsonMockFetch({
+        choices: [
+          {
+            message: {
+              content: '{"city":"Paris","country":"France"}',
+            },
+          },
+        ],
+      });
+
+      const schema: Schema = {
+        name: "location",
+        properties: {
+          city: { type: "string" },
+          country: { type: "string" },
+        },
+      };
+
+      const result = await callAi("Get location", {
+        apiKey: "test-key",
+        model: "openai/gpt-4o",
+        schema,
+        mock: { fetch: mockFetch },
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.city).toBe("Paris");
+      expect(parsed.country).toBe("France");
+    });
+
+    // NOTE: GPT-4o with schema does NOT receive tool_calls in production.
+    // The following test documents what WOULD happen if it did, but this
+    // code path is not exercised in normal usage.
+    it("DOCUMENTS: tool_calls response would be double-stringified", async () => {
       const mockFetch = createJsonMockFetch({
         choices: [
           {
@@ -84,177 +296,18 @@ describe("extractContent() response formats", () => {
         mock: { fetch: mockFetch },
       });
 
-      // Schema strategy processes tool_calls and returns the arguments
-      const parsed = JSON.parse(result);
-      expect(parsed.city).toBe("Paris");
-      expect(parsed.country).toBe("France");
+      // This documents current behavior: tool_calls array gets double-stringified
+      // because extractContent passes it to strategy, then api.ts calls processResponse again
+      expect(result).toContain("call_123"); // It contains the data, just doubly wrapped
     });
   });
 
-  describe("message.function_call (legacy format)", () => {
-    // TODO: Fix when swapping to NonStreamingOpenRouterParser
-    it.todo("should extract function_call arguments with schema", async () => {
-      const mockFetch = createJsonMockFetch({
-        choices: [
-          {
-            message: {
-              function_call: {
-                name: "get_weather",
-                arguments: '{"temperature":72,"unit":"fahrenheit"}',
-              },
-            },
-          },
-        ],
-      });
-
-      const schema: Schema = {
-        name: "weather",
-        properties: {
-          temperature: { type: "number" },
-          unit: { type: "string" },
-        },
-      };
-
-      const result = await callAi("Get weather", {
-        apiKey: "test-key",
-        model: "openai/gpt-4o",
-        schema,
-        mock: { fetch: mockFetch },
-      });
-
-      const parsed = JSON.parse(result);
-      expect(parsed.temperature).toBe(72);
-      expect(parsed.unit).toBe("fahrenheit");
-    });
-  });
-
-  describe("Claude content[] with text blocks", () => {
-    // TODO: Fix when swapping to NonStreamingOpenRouterParser
-    it.todo("should extract text from content array", async () => {
-      const mockFetch = createJsonMockFetch({
-        choices: [
-          {
-            message: {
-              content: [
-                { type: "text", text: "Hello " },
-                { type: "text", text: "World" },
-              ],
-            },
-          },
-        ],
-      });
-
-      const result = await callAi("Hi", {
-        apiKey: "test-key",
-        mock: { fetch: mockFetch },
-      });
-
-      expect(result).toBe("Hello World");
-    });
-  });
-
-  describe("Claude content[] with tool_use blocks", () => {
-    // TODO: Fix when swapping to NonStreamingOpenRouterParser
-    it.todo("should extract tool_use input with schema", async () => {
-      const mockFetch = createJsonMockFetch({
-        choices: [
-          {
-            message: {
-              content: [
-                {
-                  type: "tool_use",
-                  id: "toolu_123",
-                  name: "get_data",
-                  input: { name: "Alice", age: 30 },
-                },
-              ],
-            },
-          },
-        ],
-      });
-
-      const schema: Schema = {
-        name: "person",
-        properties: {
-          name: { type: "string" },
-          age: { type: "number" },
-        },
-      };
-
-      const result = await callAi("Get person", {
-        apiKey: "test-key",
-        model: "anthropic/claude-3-sonnet",
-        schema,
-        mock: { fetch: mockFetch },
-      });
-
-      const parsed = JSON.parse(result);
-      expect(parsed.name).toBe("Alice");
-      expect(parsed.age).toBe(30);
-    });
-
-    // TODO: Fix when swapping to NonStreamingOpenRouterParser
-    it.todo("should prefer tool_use over text in content array", async () => {
-      const mockFetch = createJsonMockFetch({
-        choices: [
-          {
-            message: {
-              content: [
-                { type: "text", text: "Here is the data:" },
-                {
-                  type: "tool_use",
-                  id: "toolu_456",
-                  name: "output",
-                  input: { result: "from_tool" },
-                },
-              ],
-            },
-          },
-        ],
-      });
-
-      const schema: Schema = {
-        name: "output",
-        properties: {
-          result: { type: "string" },
-        },
-      };
-
-      const result = await callAi("Get data", {
-        apiKey: "test-key",
-        model: "anthropic/claude-3-sonnet",
-        schema,
-        mock: { fetch: mockFetch },
-      });
-
-      const parsed = JSON.parse(result);
-      expect(parsed.result).toBe("from_tool");
-    });
-  });
-
-  describe("choice.text fallback", () => {
-    it("should extract from choice.text when message.content is absent", async () => {
-      const mockFetch = createJsonMockFetch({
-        choices: [{ text: "Fallback text response" }],
-      });
-
-      const result = await callAi("Hi", {
-        apiKey: "test-key",
-        mock: { fetch: mockFetch },
-      });
-
-      expect(result).toBe("Fallback text response");
-    });
-  });
-
-  describe("edge cases", () => {
-    it("should handle empty content gracefully", async () => {
+  describe("edge cases through callAi", () => {
+    it("throws for empty content", async () => {
       const mockFetch = createJsonMockFetch({
         choices: [{ message: { content: "" } }],
       });
 
-      // Empty content should throw or return empty string
-      // Current behavior throws "Failed to extract content"
       await expect(
         callAi("Hi", {
           apiKey: "test-key",
@@ -263,7 +316,7 @@ describe("extractContent() response formats", () => {
       ).rejects.toThrow();
     });
 
-    it("should handle null content gracefully", async () => {
+    it("throws for null content", async () => {
       const mockFetch = createJsonMockFetch({
         choices: [{ message: { content: null } }],
       });
