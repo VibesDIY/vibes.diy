@@ -92,27 +92,51 @@ export class NonStreamingOpenRouterParser {
     if (choices && choices.length > 0) {
       const choice = choices[0];
 
-      // Extract content - handle both string and content blocks format
+      // Extract content - priority order matches what models actually return
       if (choice.message) {
         const content = choice.message.content;
 
+        // 1. String content (most common - OpenAI, Gemini, etc.)
         if (typeof content === "string" && content) {
           this.emitDelta(content);
-        } else if (Array.isArray(content)) {
-          // Handle Claude-style content blocks
-          let textContent = "";
-          for (const block of content) {
-            if (block.type === "text" && block.text) {
-              textContent += block.text;
-            }
-          }
-          if (textContent) {
-            this.emitDelta(textContent);
+        }
+        // 2. tool_calls (OpenAI function calling)
+        else if (choice.message.tool_calls && Array.isArray(choice.message.tool_calls) && choice.message.tool_calls.length > 0) {
+          const toolCall = choice.message.tool_calls[0] as { function?: { arguments?: string } };
+          if (toolCall.function?.arguments) {
+            this.emitDelta(toolCall.function.arguments);
           }
         }
-
-        // Note: tool_calls and function_call are available in the or.json event
-        // Consumers needing tool call data should use the or.json event
+        // 3. function_call (legacy OpenAI format)
+        else if (choice.message.function_call) {
+          const funcCall = choice.message.function_call as { arguments?: string };
+          if (funcCall.arguments) {
+            this.emitDelta(funcCall.arguments);
+          }
+        }
+        // 4. Content array (Claude-style content blocks)
+        else if (Array.isArray(content)) {
+          // Check for tool_use blocks first (Claude tool calling)
+          const toolUse = content.find((block: { type: string }) => block.type === "tool_use") as { input?: unknown } | undefined;
+          if (toolUse?.input) {
+            this.emitDelta(JSON.stringify(toolUse.input));
+          } else {
+            // Fall back to concatenating text blocks
+            let textContent = "";
+            for (const block of content) {
+              if (block.type === "text" && block.text) {
+                textContent += block.text;
+              }
+            }
+            if (textContent) {
+              this.emitDelta(textContent);
+            }
+          }
+        }
+      }
+      // 5. choice.text fallback (older API formats)
+      else if ((choice as { text?: string }).text) {
+        this.emitDelta((choice as { text: string }).text);
       }
 
       // Emit finish reason
