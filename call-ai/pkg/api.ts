@@ -17,7 +17,8 @@ import { chooseSchemaStrategy } from "./strategies/index.js";
 import { responseMetadata, boxString, getMeta } from "./response-metadata.js";
 import { keyStore, globalDebug } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
-import { extractContent, extractClaudeResponse, PACKAGE_VERSION } from "./non-streaming.js";
+import { PACKAGE_VERSION } from "./non-streaming.js";
+import { NonStreamingOpenRouterParser } from "./parser/non-streaming-openrouter-parser.js";
 import { createBackwardCompatStreamingProxy } from "./streaming.js";
 import { createSchemaStreamingGenerator } from "./schema-streaming.js";
 import { createTextStreamingGenerator } from "./text-streaming.js";
@@ -538,19 +539,8 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
       throw error;
     }
 
-    let result: APIResponse;
-
-    // For Claude, use text() instead of json() to avoid potential hanging
-    if (/claude/i.test(model)) {
-      try {
-        result = (await extractClaudeResponse(response)) as APIResponse;
-      } catch (error) {
-        handleApiError(error, "Claude API response processing failed", options.debug);
-        throw error;
-      }
-    } else {
-      result = (await response.json()) as APIResponse;
-    }
+    // Parse JSON response
+    const result = (await response.json()) as APIResponse;
 
     // Debug logging for raw API response
     if (options.debug) {
@@ -576,8 +566,15 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
       });
     }
 
-    // Extract content from the response
-    const content = extractContent(result as AIResult, schemaStrategy);
+    // Extract content using the parser
+    const parser = new NonStreamingOpenRouterParser();
+    let content = "";
+    parser.onEvent((evt) => {
+      if (evt.type === "or.delta") {
+        content = evt.content;
+      }
+    });
+    parser.parse(result);
 
     // Store the raw response data for user access
     if (result) {

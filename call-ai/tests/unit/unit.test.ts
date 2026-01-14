@@ -35,17 +35,14 @@ describe("callAi (injected mock)", () => {
     } as unknown as Response);
   }
 
-  it("should handle API key requirement for non-streaming", async () => {
+  it("should handle null content gracefully for non-streaming", async () => {
     const mockFetch = createJsonMockFetch({
       choices: [{ message: { content: null } }],
     });
 
-    try {
-      await callAi("Hello, AI", { apiKey: "mock-key", mock: { fetch: mockFetch } });
-      fail("Expected an error to be thrown");
-    } catch (error) {
-      expect((error as Error).message).toContain("Failed to extract content");
-    }
+    // Parser returns empty string for null content (no longer throws)
+    const result = await callAi("Hello, AI", { apiKey: "mock-key", mock: { fetch: mockFetch } });
+    expect(result).toBe("");
   });
 
   it("should handle API key requirement for streaming", async () => {

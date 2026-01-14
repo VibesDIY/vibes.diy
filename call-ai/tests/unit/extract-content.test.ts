@@ -259,9 +259,8 @@ describe("extractContent() integration via callAi()", () => {
     });
 
     // NOTE: GPT-4o with schema does NOT receive tool_calls in production.
-    // The following test documents what WOULD happen if it did, but this
-    // code path is not exercised in normal usage.
-    it("DOCUMENTS: tool_calls response would be double-stringified", async () => {
+    // But if it did, the parser correctly extracts the arguments.
+    it("extracts tool_calls arguments correctly", async () => {
       const mockFetch = createJsonMockFetch({
         choices: [
           {
@@ -296,37 +295,38 @@ describe("extractContent() integration via callAi()", () => {
         mock: { fetch: mockFetch },
       });
 
-      // This documents current behavior: tool_calls array gets double-stringified
-      // because extractContent passes it to strategy, then api.ts calls processResponse again
-      expect(result).toContain("call_123"); // It contains the data, just doubly wrapped
+      // Parser correctly extracts the arguments string
+      const parsed = JSON.parse(result);
+      expect(parsed.city).toBe("Paris");
+      expect(parsed.country).toBe("France");
     });
   });
 
   describe("edge cases through callAi", () => {
-    it("throws for empty content", async () => {
+    it("returns empty string for empty content", async () => {
       const mockFetch = createJsonMockFetch({
         choices: [{ message: { content: "" } }],
       });
 
-      await expect(
-        callAi("Hi", {
-          apiKey: "test-key",
-          mock: { fetch: mockFetch },
-        }),
-      ).rejects.toThrow();
+      const result = await callAi("Hi", {
+        apiKey: "test-key",
+        mock: { fetch: mockFetch },
+      });
+
+      expect(result).toBe("");
     });
 
-    it("throws for null content", async () => {
+    it("returns empty string for null content", async () => {
       const mockFetch = createJsonMockFetch({
         choices: [{ message: { content: null } }],
       });
 
-      await expect(
-        callAi("Hi", {
-          apiKey: "test-key",
-          mock: { fetch: mockFetch },
-        }),
-      ).rejects.toThrow();
+      const result = await callAi("Hi", {
+        apiKey: "test-key",
+        mock: { fetch: mockFetch },
+      });
+
+      expect(result).toBe("");
     });
   });
 });
