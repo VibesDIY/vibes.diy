@@ -58,6 +58,18 @@ export class NonStreamingOpenRouterParser {
     this.onEvent.invoke({ type: "or.json", json });
   }
 
+  private emitImage(index: number, b64_json: string | undefined, url: string | undefined): void {
+    this.onEvent.invoke({ type: "or.image", index, b64_json, url });
+  }
+
+  /**
+   * Extract base64 from a data URL, or return undefined if not a data URL
+   */
+  private extractBase64(dataUrl: string): string | undefined {
+    const match = dataUrl.match(/^data:image\/[^;]+;base64,(.+)$/);
+    return match ? match[1] : undefined;
+  }
+
   /**
    * Parse a non-streaming JSON response and emit OrEvents.
    * @param json - The parsed JSON response object
@@ -165,6 +177,41 @@ export class NonStreamingOpenRouterParser {
         usage.total_tokens ?? 0,
         usage.cost
       );
+    }
+
+    // Check for images in both formats
+    // Format A: Raw OpenRouter - choices[].message.images[]
+    if (choices && choices.length > 0) {
+      const message = choices[0].message as {
+        images?: Array<{
+          type: string;
+          image_url?: { url: string };
+        }>;
+      } | undefined;
+
+      if (message?.images && Array.isArray(message.images)) {
+        message.images.forEach((img, index) => {
+          if (img.type === "image_url" && img.image_url?.url) {
+            const dataUrl = img.image_url.url;
+            const b64 = this.extractBase64(dataUrl);
+            this.emitImage(index, b64, b64 ? undefined : dataUrl);
+          }
+        });
+      }
+    }
+
+    // Format B: Transformed/OpenAI-compatible - data[]
+    const data = response.data as Array<{
+      b64_json?: string;
+      url?: string;
+    }> | undefined;
+
+    if (data && Array.isArray(data)) {
+      data.forEach((item, index) => {
+        if (item.b64_json || item.url) {
+          this.emitImage(index, item.b64_json, item.url);
+        }
+      });
     }
   }
 }

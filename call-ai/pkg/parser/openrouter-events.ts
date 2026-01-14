@@ -38,13 +38,21 @@ export const orJson = type({
   json: "unknown",
 });
 
+export const orImage = type({
+  type: "'or.image'",
+  index: "number",
+  b64_json: "string | undefined",
+  url: "string | undefined",
+});
+
 // Union of all OpenRouter events
 export const orEvent = orMeta
   .or(orDelta)
   .or(orUsage)
   .or(orDone)
   .or(orStreamEnd)
-  .or(orJson);
+  .or(orJson)
+  .or(orImage);
 
 export type OrEvent = typeof orEvent.infer;
 export type OrMeta = typeof orMeta.infer;
@@ -53,6 +61,7 @@ export type OrUsage = typeof orUsage.infer;
 export type OrDone = typeof orDone.infer;
 export type OrStreamEnd = typeof orStreamEnd.infer;
 export type OrJson = typeof orJson.infer;
+export type OrImage = typeof orImage.infer;
 
 // Helper to check if arktype validation failed
 export function isOrEventError(result: unknown): boolean {
