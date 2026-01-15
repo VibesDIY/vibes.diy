@@ -5,11 +5,13 @@ import { OpenRouterParser } from "./openrouter-parser.js";
  *
  * This is the shared foundation used by all streaming modules:
  * - text-streaming.ts (uses onDelta directly)
- * - vibes-streaming.ts (wraps with CodeBlockParser)
- * - schema-streaming.ts (wraps with ToolSchemaParser)
+ * - vibes-streaming.ts (registers codeBlockHandler)
+ * - schema-streaming.ts (uses toolHandler for tool.* events)
  *
  * OpenRouterParser internally creates its own parser chain:
  * LineStreamParser → SSEDataParser → JsonParser
+ *
+ * Default handlers (imageHandler, toolHandler) are auto-registered.
  */
 export function createBaseParser(): OpenRouterParser {
   return new OpenRouterParser();

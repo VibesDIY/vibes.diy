@@ -2,7 +2,8 @@ import fs from "fs";
 import path from "path";
 import { describe, it, expect, vi } from "vitest";
 import { createBaseParser } from "../../pkg/parser/create-base-parser.js";
-import { CodeBlockParser } from "../../pkg/parser/code-block-parser.js";
+import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
+import { ParserEvent } from "../../pkg/parser/parser-evento.js";
 
 describe("Parser register style tests", () => {
   const fixture = fs.readFileSync(
@@ -12,23 +13,26 @@ describe("Parser register style tests", () => {
 
   it("should emit code events and upstream usage/meta", () => {
     const orParser = createBaseParser();
-    const codeParser = new CodeBlockParser(orParser);
+    orParser.register(createCodeBlockHandler());
 
     const events = vi.fn();
 
-    // Upstream events
-    orParser.onEvent((evt) => {
+    // All events come through orParser.onEvent now
+    orParser.onEvent((evt: ParserEvent) => {
       switch (evt.type) {
         case "or.meta": events({ type: "meta", payload: evt }); break;
         case "or.usage": events({ type: "usage", payload: evt }); break;
         case "or.done": events({ type: "done", payload: evt }); break;
+        case "textFragment":
+        case "codeStart":
+        case "codeFragment":
+        case "codeEnd":
+          events(evt);
+          break;
       }
     });
 
-    // Code block events
-    codeParser.onEvent((evt) => events(evt));
-
-    codeParser.processChunk(fixture);
+    orParser.processChunk(fixture);
 
     // Assert meta comes first
     expect(events.mock.calls[0][0]).toMatchObject({
@@ -80,22 +84,25 @@ describe("Parser register style tests", () => {
 
   it("should emit events in correct order: meta -> content -> done -> usage", () => {
     const orParser = createBaseParser();
-    const codeParser = new CodeBlockParser(orParser);
+    orParser.register(createCodeBlockHandler());
 
     const eventTypes: string[] = [];
 
-    orParser.onEvent((evt) => {
+    orParser.onEvent((evt: ParserEvent) => {
       switch (evt.type) {
         case "or.meta": eventTypes.push("meta"); break;
         case "or.usage": eventTypes.push("usage"); break;
         case "or.done": eventTypes.push("done"); break;
+        case "textFragment":
+        case "codeStart":
+        case "codeFragment":
+        case "codeEnd":
+          eventTypes.push(evt.type);
+          break;
       }
     });
-    codeParser.onEvent((evt) => {
-      eventTypes.push(evt.type);
-    });
 
-    codeParser.processChunk(fixture);
+    orParser.processChunk(fixture);
 
     // Meta should be first
     expect(eventTypes[0]).toBe("meta");

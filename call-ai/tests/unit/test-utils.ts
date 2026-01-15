@@ -1,4 +1,4 @@
-import { LineStreamParser, SSEDataParser, JsonParser, OpenRouterParser, CodeBlockParser, SegmentAccumulator } from "call-ai";
+import { LineStreamParser, SSEDataParser, JsonParser, OpenRouterParser, SegmentAccumulator } from "call-ai";
 
 /**
  * Creates a random number generator, optionally seeded for reproducibility.
@@ -26,7 +26,7 @@ function createRandom(seed?: number): () => number {
  * @param options.seed - Random seed for reproducibility (default: uses Math.random)
  */
 export function feedFixtureRandomly(
-  parser: LineStreamParser | SSEDataParser | JsonParser | OpenRouterParser | CodeBlockParser | SegmentAccumulator,
+  parser: LineStreamParser | SSEDataParser | JsonParser | OpenRouterParser | SegmentAccumulator,
   fixture: string,
   options: {
     minChunkSize?: number;

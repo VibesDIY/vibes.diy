@@ -99,7 +99,8 @@ export class VibesStream {
       });
     }
 
-    this.parser.finalize();
+    // Signal stream end to flush any buffered content
+    this.parser.processChunk("data: [DONE]\n\n");
 
     // Rebuild text from segments
     const text = this.buildText();

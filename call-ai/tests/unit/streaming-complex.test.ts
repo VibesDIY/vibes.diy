@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { OrEvent } from "../../pkg/parser/index.js";
-import { createBaseParser, createTestSchemaParser as createSchemaParser } from "../helpers/parser-test-utils.js";
+import { createBaseParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
 describe("Parser-based streaming tests", () => {
@@ -119,98 +119,6 @@ describe("Parser-based streaming tests", () => {
       feedFixtureToParser(parser, fixture);
 
       expect(streamEnded).toBe(true);
-    });
-  });
-
-  describe("createSchemaParser - Tool calls", () => {
-    it("should handle tool_use streaming with chunked arguments", () => {
-      const parser = createSchemaParser();
-      const fragments: string[] = [];
-      let completeArgs: string | null = null;
-
-      parser.onToolCallArguments((evt) => {
-        fragments.push(evt.fragment);
-      });
-
-      parser.onToolCallComplete((evt) => {
-        completeArgs = evt.arguments;
-      });
-
-      const fixture =
-        toSSE({
-          choices: [
-            {
-              delta: {
-                tool_calls: [
-                  {
-                    index: 0,
-                    id: "call_123",
-                    function: { name: "test", arguments: '{"foo":' },
-                  },
-                ],
-              },
-            },
-          ],
-        }) +
-        toSSE({
-          choices: [
-            {
-              delta: {
-                tool_calls: [
-                  {
-                    index: 0,
-                    function: { arguments: '"bar"}' },
-                  },
-                ],
-              },
-            },
-          ],
-        }) +
-        toSSE({
-          choices: [
-            {
-              finish_reason: "tool_calls",
-            },
-          ],
-        }) +
-        "data: [DONE]\n\n";
-
-      feedFixtureToParser(parser, fixture);
-
-      expect(fragments).toEqual(['{"foo":', '"bar"}']);
-      expect(completeArgs).toBe('{"foo":"bar"}');
-    });
-
-    it("should emit toolCallStart with function name", () => {
-      const parser = createSchemaParser();
-      let startEvent: { callId: string; functionName?: string } | null = null;
-
-      parser.onToolCallStart((evt) => {
-        startEvent = { callId: evt.callId, functionName: evt.functionName };
-      });
-
-      const fixture =
-        toSSE({
-          choices: [
-            {
-              delta: {
-                tool_calls: [
-                  {
-                    index: 0,
-                    id: "call_456",
-                    function: { name: "get_weather", arguments: "{}" },
-                  },
-                ],
-              },
-            },
-          ],
-        }) +
-        toSSE({ choices: [{ finish_reason: "tool_calls" }] }) +
-        "data: [DONE]\n\n";
-
-      feedFixtureToParser(parser, fixture);
-
-      expect(startEvent).toEqual({ callId: "call_456", functionName: "get_weather" });
     });
   });
 

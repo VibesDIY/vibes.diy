@@ -56,7 +56,6 @@ export type { JsonEvent as SSEJsonEvent } from "./json-events.js";
 
 export { OpenRouterParser } from "./openrouter-parser.js";
 export { NonStreamingOpenRouterParser } from "./non-streaming-openrouter-parser.js";
-export { ImageParser } from "./image-parser.js";
 export {
   orMeta,
   orDelta,
@@ -81,9 +80,25 @@ export { SegmentAccumulator, Segment } from "./segment-accumulator.js";
 
 export { createVibesParser } from "./create-vibes-parser.js";
 
+// Tool event types from parser-evento (replaces ToolSchemaParser)
 export {
-  ToolSchemaParser,
-  ToolCallStartEvent,
-  ToolCallArgumentsEvent,
-  ToolCallCompleteEvent,
-} from "./tool-schema-parser.js";
+  toolStart,
+  toolArguments,
+  toolComplete,
+  ToolStart,
+  ToolArguments,
+  ToolComplete,
+} from "./parser-evento.js";
+
+// Code block event types
+export {
+  textFragment,
+  codeStart,
+  codeFragment,
+  codeEnd,
+  TextFragment,
+  CodeStart,
+  CodeFragment,
+  CodeEnd,
+  CodeBlockEvent,
+} from "./parser-evento.js";

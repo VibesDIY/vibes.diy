@@ -134,6 +134,7 @@ export type TextFragment = typeof textFragment.infer;
 export type CodeStart = typeof codeStart.infer;
 export type CodeFragment = typeof codeFragment.infer;
 export type CodeEnd = typeof codeEnd.infer;
+export type CodeBlockEvent = TextFragment | CodeStart | CodeFragment | CodeEnd;
 export type ParserEvent = typeof parserEvent.infer;
 
 // Helper to check if arktype validation failed

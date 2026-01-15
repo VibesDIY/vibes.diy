@@ -3,11 +3,17 @@ import { readFileSync } from "node:fs";
 import {
   OpenRouterParser,
   CodeBlockEvent,
-  TextFragmentEvent,
-  CodeStartEvent,
-  CodeFragmentEvent,
-  CodeEndEvent,
+  TextFragment,
+  CodeStart,
+  CodeFragment,
+  CodeEnd,
 } from "call-ai";
+
+// Type aliases for backwards compat in tests
+type TextFragmentEvent = TextFragment;
+type CodeStartEvent = CodeStart;
+type CodeFragmentEvent = CodeFragment;
+type CodeEndEvent = CodeEnd;
 import { describe, it, expect } from "vitest";
 import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
 import { ParserEvento } from "../../pkg/parser/parser-evento.js";

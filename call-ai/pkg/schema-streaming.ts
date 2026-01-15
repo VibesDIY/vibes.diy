@@ -1,12 +1,11 @@
 /**
- * Schema streaming - Uses ToolSchemaParser for structured output responses
+ * Schema streaming - Uses toolHandler for structured output responses
  */
 
 import { CallAIOptions, ResponseMeta, SchemaStrategy } from "./types.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
 import { createBaseParser } from "./parser/create-base-parser.js";
 import { OpenRouterParser } from "./parser/openrouter-parser.js";
-import { ToolSchemaParser } from "./parser/tool-schema-parser.js";
 
 /**
  * Helper to check for old Claude tool_use format in JSON
@@ -46,22 +45,20 @@ function extractOldFormatToolUse(
 }
 
 /**
- * Create parser stack with access to OpenRouterParser for old format handling
+ * Create parser with toolHandler already registered for tool.* events
  */
-function createSchemaParserWithOrParser(): { toolParser: ToolSchemaParser; orParser: OpenRouterParser } {
-  const orParser = createBaseParser();
-  const toolParser = new ToolSchemaParser(orParser);
-  return { toolParser, orParser };
+function createSchemaParser(): OpenRouterParser {
+  return createBaseParser();
 }
 
 /**
- * Parse SSE stream using ToolSchemaParser for tool_calls responses.
+ * Parse SSE stream using toolHandler for tool_calls responses.
  *
  * This is the parser-based alternative to the legacy parseSSE function
  * for handling schema/tool_mode responses.
  *
  * Handles both:
- * - OpenAI format: choices[0].delta.tool_calls (via ToolSchemaParser)
+ * - OpenAI format: choices[0].delta.tool_calls (via toolHandler → tool.complete events)
  * - Old Claude format: type: "tool_use" with input field
  *
  * The legacy behavior only yields when finish_reason: "tool_calls" is received,
@@ -80,19 +77,18 @@ async function* parseSchemaSSE(response: Response, schemaStrategy: SchemaStrateg
   }
 
   const textDecoder = new TextDecoder();
-  const { toolParser, orParser } = createSchemaParserWithOrParser();
+  const orParser = createSchemaParser();
 
   // Track final result - only set when tool call completes
   let finalResult: string | null = null;
 
-  // Handle OpenAI format via ToolSchemaParser
-  toolParser.onToolCallComplete((evt) => {
-    finalResult = evt.arguments;
-  });
-
-  // Handle old Claude format via OpenRouterParser's onEvent
+  // Handle both OpenAI format (tool.complete) and old Claude format (or.json)
   orParser.onEvent((evt) => {
-    if (evt.type === "or.json") {
+    if (evt.type === "tool.complete") {
+      // OpenAI format via toolHandler
+      finalResult = evt.arguments;
+    } else if (evt.type === "or.json") {
+      // Old Claude format
       const oldFormatResult = extractOldFormatToolUse(evt.json, schemaStrategy);
       if (oldFormatResult) {
         finalResult = oldFormatResult;
@@ -106,7 +102,7 @@ async function* parseSchemaSSE(response: Response, schemaStrategy: SchemaStrateg
       if (done) break;
 
       const chunk = textDecoder.decode(value, { stream: true });
-      toolParser.processChunk(chunk);
+      orParser.processChunk(chunk);
 
       // Yield only when we have a complete result
       // This matches legacy behavior of yielding on finish_reason: "tool_calls"
@@ -118,10 +114,10 @@ async function* parseSchemaSSE(response: Response, schemaStrategy: SchemaStrateg
       }
     }
 
-    // Finalize to ensure any remaining tool calls are emitted
-    toolParser.finalize();
+    // Signal stream end to flush any buffered content
+    orParser.processChunk("data: [DONE]\n\n");
 
-    // Yield any final result from finalize()
+    // Yield any final result from stream end
     if (finalResult) {
       const processed = schemaStrategy.processResponse(finalResult);
       yield processed;
@@ -138,7 +134,7 @@ async function* parseSchemaSSE(response: Response, schemaStrategy: SchemaStrateg
  * Create a streaming generator for schema responses using the parser stack.
  *
  * This replaces createStreamingGenerator for tool_mode schema responses,
- * using ToolSchemaParser instead of manual parseSSE accumulation.
+ * using toolHandler's tool.complete events instead of manual parseSSE accumulation.
  */
 export async function* createSchemaStreamingGenerator(
   response: Response,
