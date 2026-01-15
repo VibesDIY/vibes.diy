@@ -1,14 +1,14 @@
 import {
-  CodeBlockParser,
   CodeBlockEvent,
   OpenRouterParser,
 } from "call-ai";
 import { describe, it, expect } from "vitest";
+import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
 
-function createCodeBlockParser() {
+function createParserStack() {
   const orParser = new OpenRouterParser();
-  const codeParser = new CodeBlockParser(orParser);
-  return { codeParser, orParser };
+  orParser.register(createCodeBlockHandler());
+  return orParser;
 }
 
 function simulateDelta(orParser: OpenRouterParser, content: string) {
@@ -21,11 +21,15 @@ function simulateDelta(orParser: OpenRouterParser, content: string) {
   orParser.processChunk(sseData);
 }
 
-describe("CodeBlockParser End of Stream", () => {
+describe("CodeBlockHandler End of Stream", () => {
   it("closes block when message ends exactly at closing fence (no newline)", () => {
-    const { codeParser, orParser } = createCodeBlockParser();
+    const orParser = createParserStack();
     const events: CodeBlockEvent[] = [];
-    codeParser.onEvent((evt) => events.push(evt));
+    orParser.onEvent((evt) => {
+        if (["codeStart", "codeEnd", "codeFragment"].includes(evt.type)) {
+            events.push(evt as CodeBlockEvent);
+        }
+    });
 
     simulateDelta(orParser, "```js\nconst x = 1;\n```"); 
     // Signal end of stream

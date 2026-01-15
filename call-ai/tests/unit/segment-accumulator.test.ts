@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs";
 
 import {
   OpenRouterParser,
-  CodeBlockParser,
   SegmentAccumulator,
   Segment,
 } from "call-ai";
 import { describe, it, expect } from "vitest";
+import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 
@@ -18,8 +18,8 @@ const fireproofStreamFixture = readFileSync(
 // Helper to create a full parser stack with accumulator
 function createAccumulator() {
   const orParser = new OpenRouterParser();
-  const codeParser = new CodeBlockParser(orParser);
-  const accumulator = new SegmentAccumulator(codeParser);
+  orParser.register(createCodeBlockHandler());
+  const accumulator = new SegmentAccumulator(orParser);
   return { accumulator, orParser };
 }
 
@@ -145,9 +145,11 @@ describe("SegmentAccumulator", () => {
 
   describe("with fixtures (random chunking)", () => {
     it("accumulates segments from fireproof fixture", () => {
-      const { accumulator } = createAccumulator();
+      const { accumulator, orParser } = createAccumulator();
 
       feedFixtureRandomly(accumulator, fireproofStreamFixture, { seed: 12345 });
+      // Signal end of stream for flushing
+      orParser.processChunk("data: [DONE]\n\n");
 
       // The fireproof fixture should produce markdown and code segments
       expect(accumulator.segments.length).toBeGreaterThan(0);

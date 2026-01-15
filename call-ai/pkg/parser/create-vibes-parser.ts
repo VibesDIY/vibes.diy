@@ -1,5 +1,5 @@
 import { createBaseParser } from "./create-base-parser.js";
-import { CodeBlockParser } from "./code-block-parser.js";
+import { createCodeBlockHandler } from "./handlers/code-block-handler.js";
 import { SegmentAccumulator } from "./segment-accumulator.js";
 
 /**
@@ -22,6 +22,6 @@ import { SegmentAccumulator } from "./segment-accumulator.js";
  */
 export function createVibesParser(): SegmentAccumulator {
   const orParser = createBaseParser();
-  const codeParser = new CodeBlockParser(orParser);
-  return new SegmentAccumulator(codeParser);
+  orParser.register(createCodeBlockHandler());
+  return new SegmentAccumulator(orParser);
 }

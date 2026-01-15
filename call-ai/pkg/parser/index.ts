@@ -77,15 +77,6 @@ export {
   OrEventSource,
 } from "./openrouter-events.js";
 
-export {
-  CodeBlockParser,
-  CodeBlockEvent,
-  TextFragmentEvent,
-  CodeStartEvent,
-  CodeFragmentEvent,
-  CodeEndEvent,
-} from "./code-block-parser.js";
-
 export { SegmentAccumulator, Segment } from "./segment-accumulator.js";
 
 export { createVibesParser } from "./create-vibes-parser.js";

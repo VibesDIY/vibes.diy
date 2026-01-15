@@ -76,6 +76,33 @@ export const toolComplete = type({
   arguments: "string",
 });
 
+// Code block events
+export const textFragment = type({
+  type: "'textFragment'",
+  seq: "number",
+  fragment: "string",
+});
+
+export const codeStart = type({
+  type: "'codeStart'",
+  seq: "number",
+  blockId: "string",
+  "language?": "string",
+});
+
+export const codeFragment = type({
+  type: "'codeFragment'",
+  seq: "number",
+  blockId: "string",
+  fragment: "string",
+});
+
+export const codeEnd = type({
+  type: "'codeEnd'",
+  seq: "number",
+  blockId: "string",
+});
+
 // Union of all parser events
 export const parserEvent = orJson
   .or(orMeta)
@@ -86,7 +113,11 @@ export const parserEvent = orJson
   .or(orImage)
   .or(toolStart)
   .or(toolArguments)
-  .or(toolComplete);
+  .or(toolComplete)
+  .or(textFragment)
+  .or(codeStart)
+  .or(codeFragment)
+  .or(codeEnd);
 
 // Type exports
 export type OrJson = typeof orJson.infer;
@@ -99,6 +130,10 @@ export type OrImage = typeof orImage.infer;
 export type ToolStart = typeof toolStart.infer;
 export type ToolArguments = typeof toolArguments.infer;
 export type ToolComplete = typeof toolComplete.infer;
+export type TextFragment = typeof textFragment.infer;
+export type CodeStart = typeof codeStart.infer;
+export type CodeFragment = typeof codeFragment.infer;
+export type CodeEnd = typeof codeEnd.infer;
 export type ParserEvent = typeof parserEvent.infer;
 
 // Helper to check if arktype validation failed

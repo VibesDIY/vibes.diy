@@ -5,9 +5,11 @@
  */
 
 import { OnFunc } from "@adviser/cement";
-import { ParserEvento, ParserEvent } from "./parser-evento.js";
+import { ParserEvento, ParserEvent, ParserHandler } from "./parser-evento.js";
 import { NonStreamingAdapter } from "./adapters/non-streaming-adapter.js";
 import { OrEventSource } from "./openrouter-events.js";
+import { imageHandler } from "./handlers/image-handler.js";
+import { toolHandler } from "./handlers/tool-handler.js";
 
 export class NonStreamingOpenRouterParser implements OrEventSource {
   readonly onEvent = OnFunc<(event: ParserEvent) => void>();
@@ -16,6 +18,7 @@ export class NonStreamingOpenRouterParser implements OrEventSource {
 
   constructor() {
     this.evento = new ParserEvento();
+    this.evento.push(imageHandler, toolHandler);
     this.adapter = new NonStreamingAdapter(this.evento);
 
     // Forward all events from ParserEvento to onEvent
@@ -30,5 +33,9 @@ export class NonStreamingOpenRouterParser implements OrEventSource {
    */
   parse(json: unknown): void {
     this.adapter.parse(json);
+  }
+
+  register(handler: ParserHandler): void {
+    this.evento.push(handler);
   }
 }

@@ -1,4 +1,5 @@
-import { CodeBlockParser } from "./code-block-parser.js";
+import { OrEventSource } from "./openrouter-events.js";
+import { ParserEvent } from "./parser-evento.js";
 
 /**
  * Segment - A block of content (markdown or code)
@@ -10,21 +11,21 @@ export interface Segment {
 }
 
 /**
- * SegmentAccumulator - Builds growing Segment[] from CodeBlockParser events.
+ * SegmentAccumulator - Builds growing Segment[] from parser events.
  *
- * This class listens to CodeBlockParser events and accumulates them into
- * a segments array that grows as content streams in. The segments array
- * follows the pattern: markdown → code → markdown → code → ...
+ * This class listens to code block events (textFragment, codeStart, etc.)
+ * from an OrEventSource and accumulates them into a segments array
+ * that grows as content streams in.
  *
  * Usage:
  * ```typescript
- * const orParser = new OpenRouterParser();
- * const codeParser = new CodeBlockParser(orParser);
- * const accumulator = new SegmentAccumulator(codeParser);
+ * const parser = new OpenRouterParser();
+ * parser.register(createCodeBlockHandler());
+ * const accumulator = new SegmentAccumulator(parser);
  *
  * // Feed chunks from network
  * for await (const chunk of response.body) {
- *   accumulator.processChunk(chunk);
+ *   parser.processChunk(chunk);
  *   // accumulator.segments grows as content arrives
  *   render(accumulator.segments);
  * }
@@ -32,29 +33,32 @@ export interface Segment {
  */
 export class SegmentAccumulator {
   readonly segments: Segment[] = [];
-
   private currentMarkdown: Segment | null = null;
   private currentCode: Segment | null = null;
-  private readonly codeParser: CodeBlockParser;
+  private readonly parser: OrEventSource;
 
-  constructor(codeParser: CodeBlockParser) {
-    this.codeParser = codeParser;
-    codeParser.onEvent((evt) => {
-      switch (evt.type) {
-        case "textFragment":
-          this.appendMarkdown(evt.fragment);
-          break;
-        case "codeStart":
-          this.startCode();
-          break;
-        case "codeFragment":
-          this.appendCode(evt.fragment);
-          break;
-        case "codeEnd":
-          this.endCode();
-          break;
-      }
+  constructor(parser: OrEventSource) {
+    this.parser = parser;
+    parser.onEvent((evt) => {
+      this.handleEvent(evt);
     });
+  }
+
+  private handleEvent(evt: ParserEvent): void {
+    switch (evt.type) {
+      case "textFragment":
+        this.appendMarkdown(evt.fragment);
+        break;
+      case "codeStart":
+        this.startCode();
+        break;
+      case "codeFragment":
+        this.appendCode(evt.fragment);
+        break;
+      case "codeEnd":
+        this.endCode();
+        break;
+    }
   }
 
   private appendMarkdown(fragment: string): void {
@@ -83,13 +87,10 @@ export class SegmentAccumulator {
   }
 
   processChunk(chunk: string): void {
-    this.codeParser.processChunk(chunk);
-  }
-
-  /**
-   * Finalize parsing - call when stream ends to close any open code blocks
-   */
-  finalize(): void {
-    this.codeParser.finalize();
+    // Forward chunk processing to the parser if it supports it
+    const p = this.parser as { processChunk?: (chunk: string) => void };
+    if (p.processChunk) {
+      p.processChunk(chunk);
+    }
   }
 }

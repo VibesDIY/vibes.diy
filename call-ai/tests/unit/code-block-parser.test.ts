@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 
 import {
   OpenRouterParser,
-  CodeBlockParser,
   CodeBlockEvent,
   TextFragmentEvent,
   CodeStartEvent,
@@ -10,6 +9,8 @@ import {
   CodeEndEvent,
 } from "call-ai";
 import { describe, it, expect } from "vitest";
+import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
+import { ParserEvento } from "../../pkg/parser/parser-evento.js";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 
@@ -19,10 +20,10 @@ const fireproofStreamFixture = readFileSync(
 );
 
 // Helper to create a full parser stack
-function createCodeBlockParser() {
+function createParserStack() {
   const orParser = new OpenRouterParser();
-  const codeParser = new CodeBlockParser(orParser);
-  return { codeParser, orParser };
+  orParser.register(createCodeBlockHandler());
+  return orParser;
 }
 
 // Helper to simulate OpenRouter delta events directly
@@ -39,12 +40,19 @@ function simulateDelta(orParser: OpenRouterParser, content: string) {
   orParser.processChunk(sseData);
 }
 
-describe("CodeBlockParser", () => {
+// Helper to flush buffer by sending stream end
+function finalizeParser(orParser: OpenRouterParser) {
+  orParser.processChunk("data: [DONE]\n\n");
+}
+
+describe("CodeBlockHandler", () => {
   describe("basic functionality", () => {
     it("emits text fragments for plain text", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => events.push(evt));
+      orParser.onEvent((evt) => {
+        if (evt.type === "textFragment") events.push(evt as TextFragmentEvent);
+      });
 
       simulateDelta(orParser, "Hello world");
 
@@ -54,9 +62,13 @@ describe("CodeBlockParser", () => {
     });
 
     it("detects simple code block", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => events.push(evt));
+      orParser.onEvent((evt) => {
+        if (["textFragment", "codeStart", "codeFragment", "codeEnd"].includes(evt.type)) {
+          events.push(evt as CodeBlockEvent);
+        }
+      });
 
       simulateDelta(orParser, "Here is code:\n```js\nconst x = 1;\n```\nDone!");
 
@@ -76,10 +88,10 @@ describe("CodeBlockParser", () => {
     });
 
     it("extracts language from fence", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "codeStart") events.push(evt);
+      orParser.onEvent((evt) => {
+        if (evt.type === "codeStart") events.push(evt as CodeStartEvent);
       });
 
       simulateDelta(orParser, "```typescript\ncode\n```\n");
@@ -89,10 +101,10 @@ describe("CodeBlockParser", () => {
     });
 
     it("handles fence without language", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "codeStart") events.push(evt);
+      orParser.onEvent((evt) => {
+        if (evt.type === "codeStart") events.push(evt as CodeStartEvent);
       });
 
       simulateDelta(orParser, "```\ncode\n```\n");
@@ -104,9 +116,11 @@ describe("CodeBlockParser", () => {
 
   describe("streaming (split across deltas)", () => {
     it("handles fence split across deltas", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => events.push(evt));
+      orParser.onEvent((evt) => {
+         if (["codeStart", "codeEnd"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+      });
 
       simulateDelta(orParser, "Start `");
       simulateDelta(orParser, "``js\nx = 1;\n`");
@@ -118,10 +132,10 @@ describe("CodeBlockParser", () => {
     });
 
     it("handles code content split across deltas", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const codeFragments: string[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "codeFragment") codeFragments.push(evt.fragment);
+      orParser.onEvent((evt) => {
+        if (evt.type === "codeFragment") codeFragments.push((evt as CodeFragmentEvent).fragment);
       });
 
       simulateDelta(orParser, "```js\nfunc");
@@ -133,9 +147,11 @@ describe("CodeBlockParser", () => {
     });
 
     it("handles character-by-character streaming", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => events.push(evt));
+      orParser.onEvent((evt) => {
+         if (["codeStart", "codeFragment", "codeEnd"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+      });
 
       const text = "```js\nx\n```\n";
       for (const char of text) {
@@ -151,12 +167,12 @@ describe("CodeBlockParser", () => {
 
   describe("multiple code blocks", () => {
     it("handles multiple code blocks in sequence", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const codeStarts: CodeStartEvent[] = [];
       const codeEnds: CodeEndEvent[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "codeStart") codeStarts.push(evt);
-        if (evt.type === "codeEnd") codeEnds.push(evt);
+      orParser.onEvent((evt) => {
+        if (evt.type === "codeStart") codeStarts.push(evt as CodeStartEvent);
+        if (evt.type === "codeEnd") codeEnds.push(evt as CodeEndEvent);
       });
 
       simulateDelta(orParser, "```js\nfirst\n```\nText\n```py\nsecond\n```\n");
@@ -172,10 +188,10 @@ describe("CodeBlockParser", () => {
 
   describe("edge cases", () => {
     it("handles backticks in text (not fences)", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const textFragments: string[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "textFragment") textFragments.push(evt.fragment);
+      orParser.onEvent((evt) => {
+        if (evt.type === "textFragment") textFragments.push((evt as TextFragmentEvent).fragment);
       });
 
       simulateDelta(orParser, "Use `code` inline");
@@ -185,24 +201,24 @@ describe("CodeBlockParser", () => {
     });
 
     it("handles double backticks", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const textFragments: string[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "textFragment") textFragments.push(evt.fragment);
+      orParser.onEvent((evt) => {
+        if (evt.type === "textFragment") textFragments.push((evt as TextFragmentEvent).fragment);
       });
 
       simulateDelta(orParser, "Not a fence: ``");
-      codeParser.finalize(); // Flush buffered backticks
+      finalizeParser(orParser); // Flush buffered backticks
 
       const text = textFragments.join("");
       expect(text).toBe("Not a fence: ``");
     });
 
     it("handles backticks inside code block", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const codeFragments: string[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "codeFragment") codeFragments.push(evt.fragment);
+      orParser.onEvent((evt) => {
+        if (evt.type === "codeFragment") codeFragments.push((evt as CodeFragmentEvent).fragment);
       });
 
       simulateDelta(orParser, "```js\nconst s = `template`;\n```\n");
@@ -212,22 +228,24 @@ describe("CodeBlockParser", () => {
     });
 
     it("finalizes incomplete code block on finalize()", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => events.push(evt));
+      orParser.onEvent((evt) => {
+         if (["codeEnd"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+      });
 
       simulateDelta(orParser, "```js\nincomplete code");
-      codeParser.finalize();
+      finalizeParser(orParser);
 
       const codeEnd = events.find((e) => e.type === "codeEnd");
       expect(codeEnd).toBeDefined();
     });
 
     it("auto-finalizes block when stream ends", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const ends: CodeEndEvent[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "codeEnd") ends.push(evt);
+      orParser.onEvent((evt) => {
+        if (evt.type === "codeEnd") ends.push(evt as CodeEndEvent);
       });
 
       // Start a fence but do not close it in the payload
@@ -239,9 +257,11 @@ describe("CodeBlockParser", () => {
     });
 
     it("handles closing fence with trailing spaces before newline", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => events.push(evt));
+      orParser.onEvent((evt) => {
+        if (["codeStart", "codeEnd", "textFragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+      });
 
       // Closing fence with trailing spaces: ```   \n
       simulateDelta(orParser, "```js\ncode\n```   \nMore text");
@@ -257,9 +277,11 @@ describe("CodeBlockParser", () => {
     });
 
     it("handles closing fence with CRLF line ending", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => events.push(evt));
+      orParser.onEvent((evt) => {
+        if (["codeStart", "codeEnd", "textFragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+      });
 
       // Closing fence with CRLF: ```\r\n
       simulateDelta(orParser, "```js\ncode\n```\r\nMore text");
@@ -277,9 +299,11 @@ describe("CodeBlockParser", () => {
 
   describe("sequence numbers", () => {
     it("assigns sequential seq numbers to events", () => {
-      const { codeParser, orParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
-      codeParser.onEvent((evt) => events.push(evt));
+      orParser.onEvent((evt) => {
+         if (["codeStart", "codeFragment", "codeEnd", "textFragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+      });
 
       simulateDelta(orParser, "Text\n```js\ncode\n```\nMore");
 
@@ -293,16 +317,16 @@ describe("CodeBlockParser", () => {
 
   describe("with fixtures (random chunking)", () => {
     it("parses code blocks from fireproof fixture", () => {
-      const { codeParser } = createCodeBlockParser();
+      const orParser = createParserStack();
       const codeStarts: CodeStartEvent[] = [];
       const codeEnds: CodeEndEvent[] = [];
-      codeParser.onEvent((evt) => {
-        if (evt.type === "codeStart") codeStarts.push(evt);
-        if (evt.type === "codeEnd") codeEnds.push(evt);
+      orParser.onEvent((evt) => {
+        if (evt.type === "codeStart") codeStarts.push(evt as CodeStartEvent);
+        if (evt.type === "codeEnd") codeEnds.push(evt as CodeEndEvent);
       });
 
-      feedFixtureRandomly(codeParser, fireproofStreamFixture, { seed: 12345 });
-      codeParser.finalize();
+      feedFixtureRandomly(orParser, fireproofStreamFixture, { seed: 12345 });
+      finalizeParser(orParser);
 
       // The fireproof fixture should contain at least one code block
       expect(codeStarts.length).toBeGreaterThan(0);

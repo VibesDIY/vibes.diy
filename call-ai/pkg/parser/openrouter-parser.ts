@@ -1,21 +1,20 @@
-/**
- * OpenRouterParser - Streaming parser for OpenRouter SSE responses.
- *
- * Wraps StreamingAdapter with the same API for compatibility.
- */
-
 import { OnFunc } from "@adviser/cement";
-import { ParserEvento, ParserEvent } from "./parser-evento.js";
+import { ParserEvento, ParserEvent, ParserHandler } from "./parser-evento.js";
 import { StreamingAdapter } from "./adapters/streaming-adapter.js";
 import { OrEventSource } from "./openrouter-events.js";
+import { DataSource } from "./json-parser.js";
+import { imageHandler } from "./handlers/image-handler.js";
+import { toolHandler } from "./handlers/tool-handler.js";
 
 export class OpenRouterParser implements OrEventSource {
   readonly onEvent = OnFunc<(event: ParserEvent) => void>();
   private evento: ParserEvento;
   private adapter: StreamingAdapter;
 
-  constructor() {
+  constructor(_jsonParser: DataSource) {
+    // StreamingAdapter creates its own parser chain internally
     this.evento = new ParserEvento();
+    this.evento.push(imageHandler, toolHandler);
     this.adapter = new StreamingAdapter(this.evento);
 
     // Forward all events from ParserEvento to onEvent
@@ -26,5 +25,9 @@ export class OpenRouterParser implements OrEventSource {
 
   processChunk(chunk: string): void {
     this.adapter.processChunk(chunk);
+  }
+
+  register(handler: ParserHandler): void {
+    this.evento.push(handler);
   }
 }

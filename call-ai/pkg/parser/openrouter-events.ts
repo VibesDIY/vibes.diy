@@ -25,17 +25,18 @@ export {
 } from "./parser-evento.js";
 
 import { OnFunc } from "@adviser/cement";
-import { ParserEvent } from "./parser-evento.js";
+import { ParserEvent, ParserHandler } from "./parser-evento.js";
 
 /**
  * Interface for parsers that emit OrEvents.
- * Both streaming and non-streaming adapters implement this.
+ * Both OpenRouterParser (streaming) and NonStreamingOpenRouterParser implement this.
  */
 export interface OrEventSource {
   readonly onEvent: {
     (callback: (event: ParserEvent) => void): void;
     invoke(event: ParserEvent): void;
   };
+  register(handler: ParserHandler): void;
 }
 
 /**

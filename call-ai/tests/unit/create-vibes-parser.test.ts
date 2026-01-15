@@ -17,12 +17,10 @@ describe("createVibesParser", () => {
       parser.processChunk(chunk);
     }
 
-    // Without finalize(), the code block stays open
-    // This test documents current behavior - code content may be incomplete
     expect(parser.segments.length).toBeGreaterThan(0);
 
-    // Now finalize and check the code block is properly closed
-    parser.finalize();
+    // Now finalize by sending DONE
+    parser.processChunk("data: [DONE]\n\n");
 
     expect(parser.segments).toHaveLength(2);
     expect(parser.segments[0].type).toBe("markdown");
@@ -42,8 +40,6 @@ describe("createVibesParser", () => {
     for (const chunk of sseChunks) {
       parser.processChunk(chunk);
     }
-
-    parser.finalize();
 
     // Complete code block produces just the code segment
     expect(parser.segments.length).toBeGreaterThanOrEqual(1);
@@ -66,7 +62,7 @@ describe("createVibesParser", () => {
     // Before finalize - content might be buffered
     const beforeFinalize = parser.segments.map((s) => s.content).join("");
 
-    parser.finalize();
+    parser.processChunk("data: [DONE]\n\n");
 
     // After finalize - all content should be flushed
     const afterFinalize = parser.segments.map((s) => s.content).join("");
