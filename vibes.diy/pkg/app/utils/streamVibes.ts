@@ -48,12 +48,16 @@ export async function streamVibes(
   // Track final result from vibes.end event
   let finalResult: { text: string; segments: readonly Segment[] } | null = null;
   let streamError: Error | null = null;
+  let updateCount = 0;
+  let lastTextLength = 0;
 
   const stream = new VibesStream();
 
   stream.onEvent((evt: VibesEvent) => {
     switch (evt.type) {
       case "vibes.update":
+        updateCount++;
+        lastTextLength = evt.text.length;
         onUpdate({ text: evt.text, segments: evt.segments });
         break;
       case "vibes.end":
@@ -81,18 +85,26 @@ export async function streamVibes(
       },
     });
 
+    // Check for errors captured via vibes.error event
     if (streamError) {
       throw streamError;
     }
 
     if (!finalResult) {
-      throw new Error("Stream completed without yielding any results");
+      throw new Error(
+        `Stream completed without vibes.end event (updates: ${updateCount}, lastTextLength: ${lastTextLength})`,
+      );
     }
 
     return finalResult;
   } catch (error) {
-    console.error("streamVibes error:", error);
-    const errorMsg = error instanceof Error ? error.message : String(error);
+    // Prefer streamError if it exists (more specific than process rejection)
+    const effectiveError = streamError || error;
+    console.error("streamVibes error:", effectiveError);
+    const errorMsg =
+      effectiveError instanceof Error
+        ? effectiveError.message
+        : String(effectiveError);
 
     // Check if this is an authentication error
     if (isAuthErrorMessage(errorMsg)) {
