@@ -11,6 +11,7 @@ import {
 } from "./types.js";
 import { globalDebug } from "./key-management.js";
 import { checkForInvalidModelError } from "./error-handling.js";
+import { copyPassthroughOptions } from "./utils.js";
 import { PACKAGE_VERSION, FALLBACK_MODEL } from "./non-streaming.js";
 import { createSchemaStreamingGenerator } from "./schema-streaming.js";
 import { createTextStreamingGenerator } from "./text-streaming.js";
@@ -137,29 +138,8 @@ async function* callAIStreaming(
     Object.assign(headers, options.headers);
   }
 
-  // Copy any other options not explicitly handled above
-  Object.keys(options).forEach((key) => {
-    if (
-      ![
-        "apiKey",
-        "model",
-        "endpoint",
-        "stream",
-        "schema",
-        "maxTokens",
-        "temperature",
-        "topP",
-        "responseFormat",
-        "referer",
-        "title",
-        "headers",
-        "skipRefresh",
-        "debug",
-      ].includes(key)
-    ) {
-      requestBody[key] = (options as Record<string, unknown>)[key];
-    }
-  });
+  // Copy passthrough options (provider-specific params like tools, tool_choice, etc.)
+  copyPassthroughOptions(options as Record<string, unknown>, requestBody);
 
   if (debug) {
     console.log(`[callAi:${PACKAGE_VERSION}] Request headers:`, headers);

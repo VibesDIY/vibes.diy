@@ -13,7 +13,7 @@ import { globalDebug, keyStore, initKeyStore } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
 import { PACKAGE_VERSION } from "./version.js";
-import { callAiFetch } from "./utils.js";
+import { callAiFetch, copyPassthroughOptions } from "./utils.js";
 import { NonStreamingOpenRouterParser } from "./parser/non-streaming-openrouter-parser.js";
 
 // Import package version for debugging
@@ -86,29 +86,8 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
     Object.assign(headers, options.headers);
   }
 
-  // Copy any other options not explicitly handled above
-  Object.keys(options).forEach((key) => {
-    if (
-      ![
-        "apiKey",
-        "model",
-        "endpoint",
-        "stream",
-        "schema",
-        "maxTokens",
-        "temperature",
-        "topP",
-        "responseFormat",
-        "referer",
-        "title",
-        "headers",
-        "skipRefresh",
-        "debug",
-      ].includes(key)
-    ) {
-      requestBody[key] = options[key];
-    }
-  });
+  // Copy passthrough options (provider-specific params like tools, tool_choice, etc.)
+  copyPassthroughOptions(options as Record<string, unknown>, requestBody);
 
   if (debug) {
     console.log(`[callAi:${PACKAGE_VERSION}] Request headers:`, headers);

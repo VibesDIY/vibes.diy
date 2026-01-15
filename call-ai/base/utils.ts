@@ -74,6 +74,48 @@ export function callAiFetch(options: { mock?: { fetch?: typeof fetch } }): typeo
 }
 
 /**
+ * Keys handled by call-ai that should NOT be passed through to the API request body.
+ * Defined once here to avoid duplication between streaming.ts and non-streaming.ts.
+ */
+const HANDLED_OPTION_KEYS = [
+  "apiKey",
+  "model",
+  "endpoint",
+  "stream",
+  "schema",
+  "schemaStrategy",
+  "maxTokens",
+  "temperature",
+  "topP",
+  "responseFormat",
+  "referer",
+  "title",
+  "headers",
+  "skipRefresh",
+  "skipRetry",
+  "debug",
+  "mock",
+  "onChunk",
+  "chatUrl",
+  "refreshToken",
+  "onRefreshToken",
+] as const;
+
+/**
+ * Copy passthrough options (anything not explicitly handled) to request body.
+ */
+export function copyPassthroughOptions(
+  options: Record<string, unknown>,
+  requestBody: Record<string, unknown>,
+): void {
+  for (const key of Object.keys(options)) {
+    if (!HANDLED_OPTION_KEYS.includes(key as (typeof HANDLED_OPTION_KEYS)[number])) {
+      requestBody[key] = options[key];
+    }
+  }
+}
+
+/**
  * Safely joins a base URL with a path, avoiding double slashes
  * Uses cement's URI utilities for proper URL handling
  */
