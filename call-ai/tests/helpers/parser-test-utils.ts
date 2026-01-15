@@ -6,4 +6,4 @@
 /**
  * Re-export OpenRouterParser for tests that need direct access
  */
-export { OpenRouterParser } from "../../pkg/parser/openrouter-parser.js";
+export { OpenRouterParser } from "@vibes.diy/call-ai-base";

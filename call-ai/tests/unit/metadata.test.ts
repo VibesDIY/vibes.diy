@@ -1,4 +1,4 @@
-import { callAi, getMeta, ModelId, ResponseMeta } from "call-ai";
+import { callAi, getMeta, ModelId, ResponseMeta } from "@vibes.diy/call-ai-base";
 import { describe, expect, it, vi } from "vitest";
 
 /**

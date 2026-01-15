@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ParserEvento, ToolComplete, OrJson } from "../../../pkg/parser/parser-evento.js";
-import { toolHandler } from "../../../pkg/parser/handlers/tool-handler.js";
+import { ParserEvento, ToolComplete, OrJson } from "@vibes.diy/call-ai-base";
+import { toolHandler } from "@vibes.diy/call-ai-base";
 
 describe("toolHandler - Legacy Formats", () => {
   function createEvento() {

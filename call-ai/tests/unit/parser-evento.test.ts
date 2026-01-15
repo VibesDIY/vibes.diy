@@ -9,7 +9,7 @@ import {
   orDone,
   orImage,
   isParserEventError,
-} from "../../pkg/parser/parser-evento.js";
+} from "@vibes.diy/call-ai-base";
 
 describe("ParserEvento", () => {
   describe("handler registration and triggering", () => {

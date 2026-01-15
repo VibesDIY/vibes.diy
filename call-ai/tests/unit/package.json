@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "call-ai": "workspace:0.0.0",
+    "@vibes.diy/call-ai-base": "workspace:*",
     "ts-jest": "^29.4.5"
   }
 }

@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect, vi } from "vitest";
-import { OpenRouterParser } from "../../pkg/parser/openrouter-parser.js";
-import { parserEvent, ParserEvent, isParserEventError } from "../../pkg/parser/parser-evento.js";
+import { OpenRouterParser } from "@vibes.diy/call-ai-base";
+import { parserEvent, ParserEvent, isParserEventError } from "@vibes.diy/call-ai-base";
 
 function loadFixture(filename: string): string {
   return fs.readFileSync(path.join(__dirname, "fixtures", filename), "utf8");

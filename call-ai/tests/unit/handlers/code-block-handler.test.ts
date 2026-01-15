@@ -7,8 +7,8 @@ import {
   CodeFragment,
   CodeEnd,
   OrDelta,
-} from "../../../pkg/parser/parser-evento.js";
-import { createCodeBlockHandler } from "../../../pkg/parser/handlers/code-block-handler.js";
+} from "@vibes.diy/call-ai-base";
+import { createCodeBlockHandler } from "@vibes.diy/call-ai-base";
 
 describe("codeBlockHandler", () => {
   function createEvento() {

@@ -1,7 +1,9 @@
 packages:
+  - "call-ai/base"
   - "call-ai/pkg"
   - "call-ai/tests/unit"
   - "call-ai/tests/integration"
+  - "call-ai/tests/helpers"
   - "use-vibes/types"
   - "use-vibes/base"
   - "use-vibes/pkg"

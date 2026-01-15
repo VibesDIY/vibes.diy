@@ -8,8 +8,8 @@ import {
   OrUsage,
   OrDone,
   OrStreamEnd,
-} from "../../../pkg/parser/parser-evento.js";
-import { NonStreamingAdapter } from "../../../pkg/parser/adapters/non-streaming-adapter.js";
+} from "@vibes.diy/call-ai-base";
+import { NonStreamingAdapter } from "@vibes.diy/call-ai-base";
 
 describe("NonStreamingAdapter", () => {
   // Standard non-streaming response with message (not delta)

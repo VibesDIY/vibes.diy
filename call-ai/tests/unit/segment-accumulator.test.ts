@@ -4,9 +4,9 @@ import {
   OpenRouterParser,
   SegmentAccumulator,
   Segment,
-} from "call-ai";
+} from "@vibes.diy/call-ai-base";
 import { describe, it, expect } from "vitest";
-import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
+import { createCodeBlockHandler } from "@vibes.diy/call-ai-base";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 

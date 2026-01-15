@@ -1,5 +1,5 @@
-import { callAi, Schema } from "call-ai";
-import { NonStreamingOpenRouterParser } from "../../pkg/parser/non-streaming-openrouter-parser.js";
+import { callAi, Schema } from "@vibes.diy/call-ai-base";
+import { NonStreamingOpenRouterParser } from "@vibes.diy/call-ai-base";
 import { describe, expect, it, vi } from "vitest";
 
 /**

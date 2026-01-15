@@ -8,7 +8,8 @@
 
     "paths": {
       "~/vibes.diy/*": ["./vibes.diy/pkg/*"],
-      "call-ai": ["./call-ai/pkg/index.ts"]
+      "call-ai": ["./call-ai/pkg/index.ts"],
+      "@vibes.diy/call-ai-base": ["./call-ai/base/index.ts"]
     },
 
     "resolveJsonModule": true,

@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import * as callAi from "call-ai";
+import * as callAi from "@vibes.diy/call-ai-base";
 
 describe("Export Aliases", () => {
   it("should export both callAi and callAI for backward compatibility", () => {

@@ -1,14 +1,14 @@
 import { readFileSync } from "node:fs";
 
 import {
-  SSEDataParser,
-  JsonParser,
-} from "call-ai";
-import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
+} from "@vibes.diy/call-ai-base";
+import { LineStreamParser, LineStreamState } from "@vibes.diy/call-ai-base";
+import { SSEDataParser } from "@vibes.diy/call-ai-base";
+import { JsonParser } from "@vibes.diy/call-ai-base";
 import { describe, it, expect, vi } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
-import { JsonPayload } from "../../pkg/parser/json-events.js";
+import { JsonPayload } from "@vibes.diy/call-ai-base";
 
 const openAiStreamFixture = readFileSync(
   new URL("./fixtures/openai-stream-response.json", import.meta.url),

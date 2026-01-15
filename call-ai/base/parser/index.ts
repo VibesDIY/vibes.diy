@@ -49,6 +49,8 @@ export {
 export { OpenRouterParser } from "./openrouter-parser.js";
 export { NonStreamingOpenRouterParser } from "./non-streaming-openrouter-parser.js";
 export {
+  ParserEvento,
+  ParserHandler,
   orMeta,
   orDelta,
   orUsage,
@@ -66,6 +68,7 @@ export {
   OrImage,
   ParserEvent,
   ParserEventSource,
+  isParserEventError,
 } from "./parser-evento.js";
 
 export { SegmentAccumulator, Segment } from "./segment-accumulator.js";
@@ -94,3 +97,9 @@ export {
 } from "./parser-evento.js";
 
 export { createCodeBlockHandler } from "./handlers/code-block-handler.js";
+export { toolHandler } from "./handlers/tool-handler.js";
+export { imageHandler } from "./handlers/image-handler.js";
+
+// Adapters
+export { StreamingAdapter } from "./adapters/streaming-adapter.js";
+export { NonStreamingAdapter } from "./adapters/non-streaming-adapter.js";

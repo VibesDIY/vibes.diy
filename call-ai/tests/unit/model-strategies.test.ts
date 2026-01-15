@@ -5,13 +5,13 @@ import {
   claudeStrategy,
   systemMessageStrategy,
   defaultStrategy,
-} from "../../pkg/strategies/model-strategies.js";
+} from "@vibes.diy/call-ai-base";
 import type {
   Message,
   SchemaAIJsonSchemaRequest,
   SchemaAIToolRequest,
   SchemaAISimpleMsg,
-} from "../../pkg/types.js";
+} from "@vibes.diy/call-ai-base";
 
 const testSchema = {
   name: "test_result",

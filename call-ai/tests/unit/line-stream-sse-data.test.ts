@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
-import { SSEDataParser, SseEvent, SseData } from "call-ai";
-import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
+import { SSEDataParser, SseEvent, SseData } from "@vibes.diy/call-ai-base";
+import { LineStreamParser, LineStreamState } from "@vibes.diy/call-ai-base";
 import { describe, it, expect } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";

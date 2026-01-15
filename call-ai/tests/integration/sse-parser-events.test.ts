@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
-import { SSEDataParser } from "../../pkg/parser/sse-data-parser.js";
-import { sseEvent, SseEvent, isSseEventError } from "../../pkg/parser/sse-events.js";
+import { LineStreamParser, LineStreamState } from "@vibes.diy/call-ai-base";
+import { SSEDataParser } from "@vibes.diy/call-ai-base";
+import { sseEvent, SseEvent, isSseEventError } from "@vibes.diy/call-ai-base";
 
 function createSSEParser() {
   const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);

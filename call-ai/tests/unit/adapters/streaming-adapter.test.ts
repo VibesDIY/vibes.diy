@@ -7,8 +7,8 @@ import {
   OrUsage,
   OrDone,
   OrStreamEnd,
-} from "../../../pkg/parser/parser-evento.js";
-import { StreamingAdapter } from "../../../pkg/parser/adapters/streaming-adapter.js";
+} from "@vibes.diy/call-ai-base";
+import { StreamingAdapter } from "@vibes.diy/call-ai-base";
 
 describe("StreamingAdapter", () => {
   function collectEvents(evento: ParserEvento) {

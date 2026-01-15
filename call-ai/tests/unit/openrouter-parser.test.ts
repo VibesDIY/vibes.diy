@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 
-import { OpenRouterParser } from "call-ai";
+import { OpenRouterParser } from "@vibes.diy/call-ai-base";
 import { describe, it, expect, vi } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
-import { OrDelta, OrDone, OrMeta, OrUsage } from "../../pkg/parser/parser-evento.js";
+import { OrDelta, OrDone, OrMeta, OrUsage } from "@vibes.diy/call-ai-base";
 
 const openAiStreamFixture = readFileSync(
   new URL("./fixtures/openai-stream-response.json", import.meta.url),

@@ -1,5 +1,7 @@
-import { SSEDataParser, JsonParser, OpenRouterParser, SegmentAccumulator } from "call-ai";
-import { LineStreamParser } from "../../pkg/parser/line-stream.js";
+import { OpenRouterParser, SegmentAccumulator } from "@vibes.diy/call-ai-base";
+import { LineStreamParser } from "@vibes.diy/call-ai-base";
+import { SSEDataParser } from "@vibes.diy/call-ai-base";
+import { JsonParser } from "@vibes.diy/call-ai-base";
 
 /**
  * Creates a random number generator, optionally seeded for reproducibility.

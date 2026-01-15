@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect } from "vitest";
-import { NonStreamingOpenRouterParser, ParserEvent, OrMeta, OrDelta, OrDone, OrUsage, OrJson } from "../../pkg/parser/index.js";
+import { NonStreamingOpenRouterParser, ParserEvent, OrMeta, OrDelta, OrDone, OrUsage, OrJson } from "@vibes.diy/call-ai-base";
 
 /**
  * NonStreamingOpenRouterParser Tests

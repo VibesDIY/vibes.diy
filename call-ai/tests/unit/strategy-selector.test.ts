@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { chooseSchemaStrategy } from "../../pkg/strategies/strategy-selector.js";
+import { chooseSchemaStrategy } from "@vibes.diy/call-ai-base";
 
 const testSchema = {
   type: "object",

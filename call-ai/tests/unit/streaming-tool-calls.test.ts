@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { claudeStrategy } from "../../pkg/strategies/model-strategies.js";
+import { claudeStrategy } from "@vibes.diy/call-ai-base";
 
 /**
  * Tests for Claude tool mode response processing.

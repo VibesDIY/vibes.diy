@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { callAi } from "../../pkg/api.js";
+import { callAi } from "@vibes.diy/call-ai-base";
 
 /**
  * API Error Handling Tests

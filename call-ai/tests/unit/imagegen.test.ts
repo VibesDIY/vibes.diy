@@ -1,5 +1,5 @@
 import { vitest, describe, it, expect, beforeEach, beforeAll, assert } from "vitest";
-import { imageGen } from "call-ai";
+import { imageGen } from "@vibes.diy/call-ai-base";
 
 // Mock fetch
 const mock = {

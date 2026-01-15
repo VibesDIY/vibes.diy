@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
+import { LineStreamParser, LineStreamState } from "@vibes.diy/call-ai-base";
 import {
   lineEvent,
   LineEvent,
@@ -8,7 +8,7 @@ import {
   LineBracketOpen,
   LineBracketClose,
   LineContent,
-} from "../../pkg/parser/line-events.js";
+} from "@vibes.diy/call-ai-base";
 
 describe("LineStreamParser arktype events", () => {
   describe("WaitingForEOL mode (fragment events)", () => {

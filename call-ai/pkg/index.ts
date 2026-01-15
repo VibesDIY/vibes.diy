@@ -2,98 +2,48 @@
  * call-ai: A lightweight library for making AI API calls
  */
 
-// Export public types
-export * from "./types.js";
+// Core API
+export { callAi, callAI, imageGen, getMeta, callAiEnv } from "@vibes.diy/call-ai-base";
 
-// Export API functions
-export { callAi } from "./api.js";
-// Backward compatibility for callAI (uppercase AI)
-export { callAi as callAI } from "./api.js";
-
-// Event-based vibes streaming
-export { VibesStream, VibesStreamOptions } from "./vibes-stream.js";
+// Vibes streaming
 export {
+  VibesStream,
+  type VibesStreamOptions,
   vibesBegin,
   vibesUpdate,
   vibesEnd,
   vibesError,
   vibesEvent,
-  VibesBegin,
-  VibesUpdate,
-  VibesEnd,
-  VibesError,
-  VibesEvent,
+  type VibesBegin,
+  type VibesUpdate,
+  type VibesEnd,
+  type VibesError,
+  type VibesEvent,
   isVibesEventError,
-} from "./vibes-events.js";
+} from "@vibes.diy/call-ai-base";
 
-export { getMeta } from "./response-metadata.js";
+// Types from types.ts (selectively re-exported)
+export type {
+  Message,
+  CallAIOptions,
+  Schema,
+  ImageGenOptions,
+  ImageResponse,
+  ContentItem,
+  AIResponse,
+  ResponseMeta,
+} from "@vibes.diy/call-ai-base";
 
-// Export image generation function
-export { imageGen } from "./image.js";
+export { CallAIError } from "@vibes.diy/call-ai-base";
 
-export { entriesHeaders, joinUrlParts } from "./utils.js";
-export { callAiEnv } from "./env.js";
+// Utils
+export { joinUrlParts, entriesHeaders } from "@vibes.diy/call-ai-base";
 
-// Export parser module
+// Advanced parser (documented in README)
 export {
-  // Line parser arktype events
-  lineFragment,
-  lineBracketOpen,
-  lineBracketClose,
-  lineContent,
-  lineEvent,
-  LineFragment,
-  LineBracketOpen,
-  LineBracketClose,
-  LineContent,
-  LineEvent,
-  isLineEventError,
-  SSEDataParser,
-  // SSE parser arktype events
-  sseData,
-  sseDone,
-  sseEvent,
-  SseData,
-  SseDone,
-  SseEvent,
-  isSseEventError,
-  JsonParser,
-  DataSource,
-  SSEJsonParser,
-  // JSON parser arktype events
-  jsonPayload,
-  jsonDone,
-  jsonEvent,
-  JsonPayload,
-  JsonDone,
-  JsonEvent,
-  isJsonEventError,
   OpenRouterParser,
-  orMeta,
-  orDelta,
-  orUsage,
-  orDone,
-  orStreamEnd,
-  orJson,
-  parserEvent,
-  OrMeta,
-  OrDelta,
-  OrUsage,
-  OrDone,
-  OrStreamEnd,
-  OrJson,
-  ParserEvent,
-  // Code block event types
-  CodeBlockEvent,
-  TextFragment,
-  CodeStart,
-  CodeFragment,
-  CodeEnd,
-  // Tool event types
-  ToolStart,
-  ToolArguments,
-  ToolComplete,
-  SegmentAccumulator,
-  Segment,
   createCodeBlockHandler,
-} from "./parser/index.js";
+  SegmentAccumulator,
+  type Segment,
+  type ParserEvent,
+} from "@vibes.diy/call-ai-base";

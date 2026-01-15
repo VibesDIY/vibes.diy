@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { SSEDataParser } from "../../pkg/parser/sse-data-parser.js";
-import { JsonParser } from "../../pkg/parser/json-parser.js";
-import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
-import { jsonEvent, JsonEvent, isJsonEventError } from "../../pkg/parser/json-events.js";
+import { SSEDataParser } from "@vibes.diy/call-ai-base";
+import { JsonParser } from "@vibes.diy/call-ai-base";
+import { LineStreamParser, LineStreamState } from "@vibes.diy/call-ai-base";
+import { jsonEvent, JsonEvent, isJsonEventError } from "@vibes.diy/call-ai-base";
 
 function createJsonParser() {
   const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);

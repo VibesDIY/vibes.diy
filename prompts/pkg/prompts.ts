@@ -1,4 +1,5 @@
-import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
+import { callAI, type Message, type CallAIOptions } from "call-ai";
+import type { Mocks } from "@vibes.diy/call-ai-base";
 
 import type { HistoryMessage, UserSettings } from "./settings.js";
 import { CoerceURI, Lazy, URI } from "@adviser/cement";

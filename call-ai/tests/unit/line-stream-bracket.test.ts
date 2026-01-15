@@ -1,5 +1,5 @@
-import { LineEvent } from "call-ai";
-import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
+import { LineEvent } from "@vibes.diy/call-ai-base";
+import { LineStreamParser, LineStreamState } from "@vibes.diy/call-ai-base";
 import { expect, it } from "vitest";
 
 it("Bracket-Test", async () => {

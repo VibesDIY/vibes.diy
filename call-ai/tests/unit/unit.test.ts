@@ -1,4 +1,4 @@
-import { callAi, Message, Schema } from "call-ai";
+import { callAi, Message, Schema } from "@vibes.diy/call-ai-base";
 import { dotenv } from "zx";
 import { describe, expect, it, vi } from "vitest";
 import { fail } from "assert";

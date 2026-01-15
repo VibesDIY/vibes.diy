@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { callAi, Schema } from "call-ai";
 import { describe, expect, it, vi } from "vitest";
-import { NonStreamingOpenRouterParser, ParserEvent } from "../../pkg/parser/index.js";
+import { NonStreamingOpenRouterParser, ParserEvent } from "@vibes.diy/call-ai-base";
 
 /**
  * DeepSeek Wire Protocol Tests

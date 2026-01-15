@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect, vi } from "vitest";
-import { OpenRouterParser } from "../../pkg/parser/openrouter-parser.js";
-import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
-import { ParserEvent } from "../../pkg/parser/parser-evento.js";
+import { OpenRouterParser } from "@vibes.diy/call-ai-base";
+import { createCodeBlockHandler } from "@vibes.diy/call-ai-base";
+import { ParserEvent } from "@vibes.diy/call-ai-base";
 
 describe("Parser register style tests", () => {
   const fixture = fs.readFileSync(

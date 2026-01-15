@@ -4,8 +4,8 @@ import {
   ParserEvento,
   ParserEvent,
   OrImage,
-} from "../../../pkg/parser/parser-evento.js";
-import { imageHandler } from "../../../pkg/parser/handlers/image-handler.js";
+} from "@vibes.diy/call-ai-base";
+import { imageHandler } from "@vibes.diy/call-ai-base";
 
 describe("imageHandler", () => {
   // Format A: Raw OpenRouter response with choices[].message.images[]

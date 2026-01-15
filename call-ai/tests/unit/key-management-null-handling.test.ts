@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { initKeyStore, keyStore } from "../../pkg/key-management.js";
+import { initKeyStore, keyStore } from "@vibes.diy/call-ai-base";
 
 describe("key-management null handling", () => {
   beforeEach(() => {

@@ -7,7 +7,7 @@ import {
   CodeStart,
   CodeFragment,
   CodeEnd,
-} from "call-ai";
+} from "@vibes.diy/call-ai-base";
 
 // Type aliases for backwards compat in tests
 type TextFragmentEvent = TextFragment;
@@ -15,8 +15,8 @@ type CodeStartEvent = CodeStart;
 type CodeFragmentEvent = CodeFragment;
 type CodeEndEvent = CodeEnd;
 import { describe, it, expect } from "vitest";
-import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
-import { ParserEvento } from "../../pkg/parser/parser-evento.js";
+import { createCodeBlockHandler } from "@vibes.diy/call-ai-base";
+import { ParserEvento } from "@vibes.diy/call-ai-base";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 

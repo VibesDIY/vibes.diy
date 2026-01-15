@@ -3,8 +3,8 @@ import { describe, it, expect } from "vitest";
 import {
   ParserEvento,
   ParserEvent,
-} from "../../../pkg/parser/parser-evento.js";
-import { toolHandler, ToolStart, ToolArguments, ToolComplete } from "../../../pkg/parser/handlers/tool-handler.js";
+} from "@vibes.diy/call-ai-base";
+import { toolHandler, ToolStart, ToolArguments, ToolComplete } from "@vibes.diy/call-ai-base";
 
 describe("toolHandler", () => {
   function createEvento() {
