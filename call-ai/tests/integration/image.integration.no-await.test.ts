@@ -62,6 +62,6 @@ describe("Vision Model Tests", () => {
         expect(true).toBe(true);
       }
     },
-    TIMEOUT,
+    TIMEOUT
   );
 });

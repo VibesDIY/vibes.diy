@@ -5,10 +5,7 @@ interface MetaProps {
   description?: string;
 }
 
-export function Meta({
-  title = "Vibes DIY",
-  description = "Vibe coding made easy",
-}: MetaProps = {}) {
+export function Meta({ title = "Vibes DIY", description = "Vibe coding made easy" }: MetaProps = {}) {
   return (
     <>
       <meta charSet="utf-8" />

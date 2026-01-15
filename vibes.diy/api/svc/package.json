@@ -1,5 +1,5 @@
 {
-  "name": "vibes-diy-api-svc",
+  "name": "@vibes.diy/api-svc",
   "version": "0.0.0",
   "private": "true",
   "type": "module",
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.15",
+    "@cloudflare/workers-types": "^4.20260109.0",
     "@fireproof/core-device-id": "0.24.8-dev-test-device-id",
     "@fireproof/core-protocols-dashboard": "0.24.8-dev-test-device-id",
     "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
@@ -18,17 +19,22 @@
     "@fireproof/core-types-protocols-cloud": "0.24.8-dev-test-device-id",
     "@fireproof/core-types-protocols-dashboard": "0.24.8-dev-test-device-id",
     "@libsql/client": "^0.17.0",
+    "@vibes.diy/api-pkg": "workspace:*",
+    "@vibes.diy/use-vibes-base": "workspace:*",
     "acorn": "^8.15.0",
     "arktype": "^2.1.29",
     "drizzle-orm": "^0.45.1",
     "jose": "^6.1.3",
     "mime": "^4.1.0",
     "multiformats": "^13.4.2",
+    "preact": "^10.28.2",
+    "preact-render-to-string": "^6.6.5",
     "random-words": "^2.0.1",
-    "sucrase": "^3.35.1",
-    "vibes-diy-api-pkg": "workspace:*"
+    "react": "^19.2.3",
+    "sucrase": "^3.35.1"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.8-dev-test-device-id"
+    "@fireproof/core-cli": "0.24.8-dev-test-device-id",
+    "@types/react": "^19.2.8"
   }
 }

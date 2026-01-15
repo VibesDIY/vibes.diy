@@ -7,9 +7,7 @@ import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 // Mock the Message component
 vi.mock("~/vibes.diy/app/components/Message.js", () => ({
-  default: ({ message }: { message: UserChatMessage | AiChatMessage }) => (
-    <div data-testid="mock-message">{message.text}</div>
-  ),
+  default: ({ message }: { message: UserChatMessage | AiChatMessage }) => <div data-testid="mock-message">{message.text}</div>,
   WelcomeScreen: () => <div data-testid="welcome-screen">Welcome Screen</div>,
 }));
 
@@ -52,7 +50,7 @@ describe("MessageList", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     expect(screen.getAllByTestId("mock-message").length).toBe(2);
@@ -77,7 +75,7 @@ describe("MessageList", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Get the specific element we want to check
@@ -122,7 +120,7 @@ describe("MessageList", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     expect(screen.getAllByTestId("mock-message").length).toBe(2);
@@ -166,7 +164,7 @@ describe("MessageList", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     expect(screen.getByText("Here is a React app")).toBeInTheDocument();
@@ -208,7 +206,7 @@ describe("MessageList", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     expect(screen.getByText("Create a React app")).toBeInTheDocument();

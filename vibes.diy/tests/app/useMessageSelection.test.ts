@@ -33,7 +33,7 @@ describe("useMessageSelection", () => {
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "",
         pendingAiMessage: null,
-      }),
+      })
     );
 
     // Verify that the latest message is selected (highest index in our test data)
@@ -73,7 +73,7 @@ describe("useMessageSelection", () => {
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "",
         pendingAiMessage: null,
-      }),
+      })
     );
 
     // Should select ai-message-2 as it has the highest ID value (based on alphabetical sorting)
@@ -90,7 +90,7 @@ describe("useMessageSelection", () => {
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "ai-message-0", // Explicitly select the oldest
         pendingAiMessage: null,
-      }),
+      })
     );
 
     // Should respect the explicit selection
@@ -130,7 +130,7 @@ describe("useMessageSelection", () => {
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "",
         pendingAiMessage: null,
-      }),
+      })
     );
 
     // Should select the most recent message that has a code block
@@ -139,18 +139,15 @@ describe("useMessageSelection", () => {
 
   it("should handle messages being loaded asynchronously", () => {
     // Start with empty docs
-    const { result, rerender } = renderHook(
-      (props) => useMessageSelection(props),
-      {
-        initialProps: {
-          docs: [] as ChatMessageDocument[],
-          isStreaming: false,
-          aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
-          selectedResponseId: "",
-          pendingAiMessage: null,
-        },
+    const { result, rerender } = renderHook((props) => useMessageSelection(props), {
+      initialProps: {
+        docs: [] as ChatMessageDocument[],
+        isStreaming: false,
+        aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
+        selectedResponseId: "",
+        pendingAiMessage: null,
       },
-    );
+    });
 
     // Initially should not have a selection
     expect(result.current.selectedResponseDoc).toBeUndefined();

@@ -1,16 +1,6 @@
-import {
-  ReqEnsureAppSlug,
-  ResEnsureAppSlug,
-  VibeFile,
-} from "vibes-diy-api-pkg";
-import {
-  exception2Result,
-  Result,
-  to_uint8,
-  toSortedObject,
-} from "@adviser/cement";
-import { StorageResult, VibesApiSQLCtx } from "../api.js";
-import { AppSlugBinding } from "./ensure-slug-binding.js";
+import { ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile } from "vibes-diy-api-pkg";
+import { exception2Result, Result, to_uint8, toSortedObject } from "@adviser/cement";
+import { AppSlugBinding } from "./ensure-slug-binding.ts";
 import { ReqWithVerifiedAuth } from "../check-auth.js";
 import { sqlApps } from "../sql/assets-fs.js";
 import { base58btc } from "multiformats/bases/base58";
@@ -20,70 +10,36 @@ import { FileSystemItem } from "../types.js";
 import mime from "mime";
 import { transform } from "sucrase";
 import { calcCid } from "./ensure-storage.ts";
-import {
-  ExportAllDeclaration,
-  ExportNamedDeclaration,
-  ImportDeclaration,
-  parse,
-} from "acorn";
-import { importMap } from "./import-map.ts";
+import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
+import { StorageResult, VibesApiSQLCtx } from "../api.ts";
+import { svcImportMap } from "./import-map.ts";
 
-async function checkMaxAppsPerUser(
-  ctx: VibesApiSQLCtx,
-  userId: string,
-  appSlug: string,
-): Promise<Result<number>> {
-  const userApps = await ctx.db
-    .select()
-    .from(sqlApps)
-    .where(eq(sqlApps.userId, userId))
-    .orderBy(sqlApps.created)
-    .all();
+async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug: string): Promise<Result<number>> {
+  const userApps = await ctx.db.select().from(sqlApps).where(eq(sqlApps.userId, userId)).orderBy(sqlApps.created).all();
   if (userApps.length >= ctx.params.maxAppSlugPerUserId) {
-    const devApps = userApps
-      .filter((app) => app.mode === "dev")
-      .slice(0, ~~(userApps.length / 10) + 1);
+    const devApps = userApps.filter((app) => app.mode === "dev").slice(0, ~~(userApps.length / 10) + 1);
     if (devApps.length === 0) {
-      return Result.Err(
-        `user has reached max apps limit: ${ctx.params.maxAppSlugPerUserId}`,
-      );
+      return Result.Err(`user has reached max apps limit: ${ctx.params.maxAppSlugPerUserId}`);
     }
     await ctx.db
       .delete(sqlApps)
       .where(
         or(
           ...devApps.map((app) =>
-            and(
-              eq(sqlApps.userId, userId),
-              eq(sqlApps.releaseSeq, app.releaseSeq),
-              eq(sqlApps.appSlug, app.appSlug),
-            ),
-          ),
-        ),
+            and(eq(sqlApps.userId, userId), eq(sqlApps.releaseSeq, app.releaseSeq), eq(sqlApps.appSlug, app.appSlug))
+          )
+        )
       );
   }
-  return Result.Ok(
-    userApps
-      .filter((app) => app.appSlug === appSlug)
-      .reduce((max, app) => Math.max(app.releaseSeq, max), 0),
-  );
+  return Result.Ok(userApps.filter((app) => app.appSlug === appSlug).reduce((max, app) => Math.max(app.releaseSeq, max), 0));
 }
 
-async function computeFsId(
-  env: Record<string, string>,
-  fs: { vibeFileItem: VibeFile; storage: StorageResult }[],
-): Promise<string> {
+async function computeFsId(env: Record<string, string>, fs: { vibeFileItem: VibeFile; storage: StorageResult }[]): Promise<string> {
   // Better don't change this code it's used to generate a stable fsId
   const fsIdStr = [
     fs
-      .sort((a, b) =>
-        a.vibeFileItem.filename.localeCompare(b.vibeFileItem.filename),
-      )
-      .map((fs) => [
-        fs.vibeFileItem.filename,
-        fs.vibeFileItem.mimetype,
-        fs.storage.cid,
-      ]),
+      .sort((a, b) => a.vibeFileItem.filename.localeCompare(b.vibeFileItem.filename))
+      .map((fs) => [fs.vibeFileItem.filename, fs.vibeFileItem.mimetype, fs.storage.cid]),
     JSON.stringify(toSortedObject(env ?? {})),
   ]
     .flat()
@@ -91,9 +47,7 @@ async function computeFsId(
   const uint8Content = to_uint8(fsIdStr);
   const hash = await sha256.digest(uint8Content);
   const fsId = base58btc.encode(hash.digest);
-  return fsId.toLocaleLowerCase(); // this feels stupid but DNS is case insensitive
-  // we increase chance of collision by 2^35 or the significant bits are 256 - 35 = 221 bits
-  // for this use case this is acceptable
+  return fsId;
 }
 
 export function transformJSXToJS(code: string) {
@@ -108,15 +62,10 @@ export function importsFromJS(js: string): string[] {
   const ast = parse(js, { ecmaVersion: "latest", sourceType: "module" });
   const imports = ast.body
     .filter(
-      (
-        n,
-      ): n is
-        | ImportDeclaration
-        | ExportNamedDeclaration
-        | ExportAllDeclaration =>
+      (n): n is ImportDeclaration | ExportNamedDeclaration | ExportAllDeclaration =>
         n.type === "ImportDeclaration" ||
         (n.type === "ExportNamedDeclaration" && n.source !== null) ||
-        n.type === "ExportAllDeclaration",
+        n.type === "ExportAllDeclaration"
     )
     .map((n) => n.source?.value)
     .filter((v): v is string => typeof v === "string");
@@ -130,7 +79,7 @@ interface GivenFsItem {
 
 async function transformJSXAndImports(
   ctx: VibesApiSQLCtx,
-  givenFsItems: GivenFsItem[],
+  givenFsItems: GivenFsItem[]
 ): Promise<
   {
     vibeFileItem: VibeFile;
@@ -144,10 +93,7 @@ async function transformJSXAndImports(
     fsItem: FileSystemItem;
   }[] = [];
   for (const item of givenFsItems) {
-    if (
-      item.fsItem.transform?.type === "jsx-to-js" &&
-      item.vibeFileItem.type == "code-block"
-    ) {
+    if (item.fsItem.transform?.type === "jsx-to-js" && item.vibeFileItem.type == "code-block") {
       const jsStr = transformJSXToJS(item.vibeFileItem.content);
       const dataCid = await calcCid(ctx, jsStr);
       // reference original item to set transformedAssetId
@@ -162,7 +108,7 @@ async function transformJSXAndImports(
       acc.push({
         ...item,
         fsItem: {
-          fileName: `@@transformed@@/${item.fsItem.assetId}`,
+          fileName: `/~~transformed~~/${item.fsItem.assetId}`,
           mimeType: "application/javascript",
           assetId: dataCid.cid,
           assetURI: `unk://${dataCid.cid}`,
@@ -188,7 +134,7 @@ async function createImportMap(
     vibeFileItem: VibeFile;
     prepareStorage?: Awaited<ReturnType<typeof calcCid>>;
     fsItem: FileSystemItem;
-  }[],
+  }[]
 ): Promise<
   {
     vibeFileItem: VibeFile;
@@ -199,10 +145,7 @@ async function createImportMap(
   const importFiles = transformed.reduce(
     (acc, item) => {
       let res: string[];
-      if (
-        item.vibeFileItem.type == "code-block" &&
-        item.vibeFileItem.lang === "js"
-      ) {
+      if (item.vibeFileItem.type == "code-block" && item.vibeFileItem.lang === "js") {
         res = importsFromJS(item.vibeFileItem.content);
       } else if (
         item.prepareStorage &&
@@ -218,28 +161,24 @@ async function createImportMap(
       }
       return acc;
     },
-    { imports: new Set<string>(), files: [] as string[] },
+    { imports: new Set<string>(), files: [] as string[] }
   );
   if (importFiles.imports.size >= 0) {
-    const imap = await importMap(
-      Array.from(importFiles.imports),
-      ctx.params.importMapProps,
-      ctx.fetch,
-    );
-    const imapStr = JSON.stringify({ imports: imap });
+    const imap = await svcImportMap(Array.from(importFiles.imports), ctx.params.importMapProps, ctx.fetchPkgVersion);
+    const imapStr = JSON.stringify(imap);
     const dataCid = await calcCid(ctx, imapStr);
     return [
       {
         vibeFileItem: {
           type: "str-asset-block" as const,
-          filename: `@@calculated@@/import-map.json`,
+          filename: `/~~calculated~~/import-map.json`,
           mimetype: "application/importmap+json",
 
           content: imapStr,
         },
         prepareStorage: dataCid,
         fsItem: {
-          fileName: `@@calculated@@/import-map.json`,
+          fileName: `/~~calculated~~/import-map.json`,
           mimeType: "application/importmap+json",
           assetId: dataCid.cid,
           assetURI: `unk://${dataCid.cid}`,
@@ -256,16 +195,13 @@ async function createImportMap(
 }
 async function toFileSystemItems(
   ctx: VibesApiSQLCtx,
-  fs: { vibeFileItem: VibeFile; storage: StorageResult }[],
+  fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<FileSystemItem[]>> {
   const givenFsItems = fs.map((f) => {
     const ret: FileSystemItem = {
       fileName: f.vibeFileItem.filename,
       assetId: f.storage.cid,
-      mimeType:
-        f.vibeFileItem.mimetype ??
-        mime.getType(f.vibeFileItem.filename) ??
-        "application/octet-stream",
+      mimeType: f.vibeFileItem.mimetype ?? mime.getType(f.vibeFileItem.filename) ?? "application/octet-stream",
       assetURI: f.storage.getURL,
       size: f.storage.size,
     };
@@ -295,7 +231,7 @@ async function toFileSystemItems(
     ...transformed
       .filter((item) => item.prepareStorage)
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      .map((item) => item.prepareStorage!),
+      .map((item) => item.prepareStorage!)
   );
   if (rStore.isErr()) {
     return Result.Err(rStore);
@@ -329,7 +265,7 @@ export async function ensureApps(
   ctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqEnsureAppSlug>,
   binding: AppSlugBinding,
-  fs: { vibeFileItem: VibeFile; storage: StorageResult }[],
+  fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<Omit<ResEnsureAppSlug, "type">>> {
   const fsId = await computeFsId(req.env ?? {}, fs);
   const exist = await ctx.db
@@ -361,11 +297,7 @@ export async function ensureApps(
   }
 
   // transaction start
-  const rMaxSeq = await checkMaxAppsPerUser(
-    ctx,
-    req.auth.verifiedAuth.claims.sub,
-    binding.appSlug,
-  );
+  const rMaxSeq = await checkMaxAppsPerUser(ctx, req.auth.verifiedAuth.claims.sub, binding.appSlug);
   if (rMaxSeq.isErr()) {
     return Result.Err(rMaxSeq);
   }
@@ -387,9 +319,7 @@ export async function ensureApps(
   // console.log("ensureApps sqlVal", sqlVal);
   // console.log("appSlug", await ctx.db.select().from(sqlAppSlugBinding).all());
   // console.log("userSlug", await ctx.db.select().from(sqlUserSlugBinding).all());
-  const rIns = await exception2Result(() =>
-    ctx.db.insert(sqlApps).values(sqlVal),
-  );
+  const rIns = await exception2Result(() => ctx.db.insert(sqlApps).values(sqlVal));
   if (rIns.isErr()) {
     return Result.Err(rIns);
   }

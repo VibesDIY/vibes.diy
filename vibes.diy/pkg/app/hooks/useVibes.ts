@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import type { LocalVibe } from "../utils/vibeUtils.js";
-import {
-  deleteVibeDatabase,
-  listLocalVibeIds,
-  toggleVibeFavorite,
-} from "../utils/vibeUtils.js";
+import { deleteVibeDatabase, listLocalVibeIds, toggleVibeFavorite } from "../utils/vibeUtils.js";
 
 /**
  * Custom hook for managing vibes state
@@ -39,9 +35,7 @@ export function useVibes() {
     async (vibeId: string) => {
       try {
         // Optimistically update UI by removing the vibe from state
-        setVibes((currentVibes) =>
-          currentVibes.filter((vibe) => vibe.id !== vibeId),
-        );
+        setVibes((currentVibes) => currentVibes.filter((vibe) => vibe.id !== vibeId));
 
         // Actually delete the vibe database
         await deleteVibeDatabase(vibeId);
@@ -56,7 +50,7 @@ export function useVibes() {
         await loadVibes();
       }
     },
-    [loadVibes],
+    [loadVibes]
   );
 
   // Load vibes on mount
@@ -69,11 +63,7 @@ export function useVibes() {
     async (vibeId: string) => {
       try {
         // Optimistically update UI by updating the favorite status in state
-        setVibes((currentVibes) =>
-          currentVibes.map((vibe) =>
-            vibe.id === vibeId ? { ...vibe, favorite: !vibe.favorite } : vibe,
-          ),
-        );
+        setVibes((currentVibes) => currentVibes.map((vibe) => (vibe.id === vibeId ? { ...vibe, favorite: !vibe.favorite } : vibe)));
 
         // Update the favorite status in the database
         // Pass the userId to also update the user's vibe space database
@@ -89,7 +79,7 @@ export function useVibes() {
         await loadVibes();
       }
     },
-    [loadVibes, userId], // Add userId to dependencies array
+    [loadVibes, userId] // Add userId to dependencies array
   );
 
   return {

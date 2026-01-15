@@ -4,8 +4,8 @@ on:
   pull_request:
     types: [closed]
     paths:
-      - "hosting/**/*"
-      - ".github/workflows/hosting-pr-preview.yaml"
+      - 'hosting/**/*'
+      - '.github/workflows/hosting-pr-preview.yaml'
 
 jobs:
   cleanup-preview:

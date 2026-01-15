@@ -6,10 +6,7 @@ import ReactMarkdown from "react-markdown";
 import privacyContent from "./privacy-notes.md?raw";
 
 export function meta() {
-  return [
-    { title: "Privacy Policy - Vibes DIY" },
-    { name: "description", content: "Privacy Policy for Vibes DIY" },
-  ];
+  return [{ title: "Privacy Policy - Vibes DIY" }, { name: "description", content: "Privacy Policy for Vibes DIY" }];
 }
 
 export default function Privacy() {
@@ -40,11 +37,7 @@ export default function Privacy() {
         </div>
         <p className="text-light-secondary dark:text-dark-secondary text-center text-xs">
           Copyright © 2026{" "}
-          <a
-            href="https://fireproof.storage"
-            target="_blank"
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
+          <a href="https://fireproof.storage" target="_blank" className="text-blue-600 hover:underline dark:text-blue-400">
             Fireproof
           </a>
         </p>

@@ -1,17 +1,7 @@
 import React, { ReactElement, useState, useEffect, useRef } from "react";
 
 // Cyberpunk color palette and neon effects
-const NEONS = [
-  "#ff00cc",
-  "#00ffff",
-  "#39ff14",
-  "#fffb00",
-  "#ff3131",
-  "#00ffea",
-  "#ff00ff",
-  "#fffb00",
-  "#00ffea",
-];
+const NEONS = ["#ff00cc", "#00ffff", "#39ff14", "#fffb00", "#ff3131", "#00ffea", "#ff00ff", "#fffb00", "#00ffea"];
 
 interface VibeDocument {
   _id: string;
@@ -27,11 +17,7 @@ interface CyberpunkProps {
   isLoading: boolean;
 }
 
-export default function Cyberpunk({
-  userId,
-  vibes,
-  isLoading,
-}: CyberpunkProps): ReactElement {
+export default function Cyberpunk({ userId, vibes, isLoading }: CyberpunkProps): ReactElement {
   const [glitch, setGlitch] = useState(false);
   const [bgIndex, setBgIndex] = useState(0);
   const [scanY, setScanY] = useState(0);
@@ -137,10 +123,7 @@ export default function Cyberpunk({
       <div className="relative z-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {isLoading ? (
           <div className="col-span-full flex h-40 items-center justify-center">
-            <span
-              className="animate-pulse text-4xl"
-              style={{ color: NEONS[bgIndex] }}
-            >
+            <span className="animate-pulse text-4xl" style={{ color: NEONS[bgIndex] }}>
               LOADING…
             </span>
           </div>
@@ -154,9 +137,7 @@ export default function Cyberpunk({
           >
             NO VIBES FOUND
             <br />
-            <span className="text-base opacity-80">
-              (404 CYBERSPACE NOT FOUND)
-            </span>
+            <span className="text-base opacity-80">(404 CYBERSPACE NOT FOUND)</span>
           </div>
         ) : (
           vibes.map((doc, i) => (

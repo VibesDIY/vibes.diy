@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-  OpenRouterChat,
-  ClaudeChat,
-  ImageGenerate,
-  ImageEdit,
-} from "@vibes.diy/hosting-base";
+import { OpenRouterChat, ClaudeChat, ImageGenerate, ImageEdit } from "@vibes.diy/hosting-base";
 
 describe("AI Endpoints Authentication", () => {
   let mockContext: {
@@ -36,11 +31,7 @@ describe("AI Endpoints Authentication", () => {
         formData: vi.fn(),
         header: vi.fn(),
       },
-      json: vi
-        .fn()
-        .mockImplementation(
-          (data, status) => new Response(JSON.stringify(data), { status }),
-        ),
+      json: vi.fn().mockImplementation((data, status) => new Response(JSON.stringify(data), { status })),
     };
   });
 
@@ -67,13 +58,12 @@ describe("AI Endpoints Authentication", () => {
       expect(mockContext.json).toHaveBeenCalledWith(
         {
           error: {
-            message:
-              "Authentication required. Please log in to use AI features.",
+            message: "Authentication required. Please log in to use AI features.",
             type: "authentication_error",
             code: 401,
           },
         },
-        401,
+        401
       );
     });
 
@@ -113,7 +103,7 @@ describe("AI Endpoints Authentication", () => {
             type: "authentication_error",
           }),
         }),
-        401,
+        401
       );
     });
   });
@@ -133,13 +123,12 @@ describe("AI Endpoints Authentication", () => {
       expect(mockContext.json).toHaveBeenCalledWith(
         {
           error: {
-            message:
-              "Authentication required. Please log in to use AI features.",
+            message: "Authentication required. Please log in to use AI features.",
             type: "authentication_error",
             code: 401,
           },
         },
-        401,
+        401
       );
     });
 
@@ -172,7 +161,7 @@ describe("AI Endpoints Authentication", () => {
             type: "authentication_error",
           }),
         }),
-        401,
+        401
       );
     });
   });
@@ -191,13 +180,12 @@ describe("AI Endpoints Authentication", () => {
       expect(mockContext.json).toHaveBeenCalledWith(
         {
           error: {
-            message:
-              "Authentication required. Please log in to use AI features.",
+            message: "Authentication required. Please log in to use AI features.",
             type: "authentication_error",
             code: 401,
           },
         },
-        401,
+        401
       );
     });
 
@@ -228,7 +216,7 @@ describe("AI Endpoints Authentication", () => {
             type: "authentication_error",
           }),
         }),
-        401,
+        401
       );
     });
   });
@@ -248,13 +236,12 @@ describe("AI Endpoints Authentication", () => {
       expect(mockContext.json).toHaveBeenCalledWith(
         {
           error: {
-            message:
-              "Authentication required. Please log in to use AI features.",
+            message: "Authentication required. Please log in to use AI features.",
             type: "authentication_error",
             code: 401,
           },
         },
-        401,
+        401
       );
     });
 
@@ -286,7 +273,7 @@ describe("AI Endpoints Authentication", () => {
             type: "authentication_error",
           }),
         }),
-        401,
+        401
       );
     });
   });

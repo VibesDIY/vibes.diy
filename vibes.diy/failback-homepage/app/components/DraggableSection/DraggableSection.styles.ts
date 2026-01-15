@@ -17,9 +17,7 @@ export const getTitleBarStyle = (color: CardColor): React.CSSProperties => ({
   boxShadow: "#ffffff61 0px 0px 0px 1px",
 });
 
-export const getCardChildrenStyle = (
-  removePaddingTop: boolean,
-): React.CSSProperties => ({
+export const getCardChildrenStyle = (removePaddingTop: boolean): React.CSSProperties => ({
   backgroundColor: "#FFFFF0",
   color: "#221f20",
   border: `1px solid black`,
@@ -37,7 +35,7 @@ export const getCardStyle = (
   isMobile: boolean,
   isDragging: boolean,
   isStatic = false,
-  removeMargin = false,
+  removeMargin = false
 ): React.CSSProperties => {
   const base = getCardBasicStyle();
 

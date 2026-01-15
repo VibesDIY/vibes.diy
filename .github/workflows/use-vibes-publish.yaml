@@ -1,10 +1,10 @@
-name: "use-vibes-publish"
+name: 'use-vibes-publish'
 on:
   push:
     paths:
-      - "use-vibes/**/*"
+      - 'use-vibes/**/*'
     tags:
-      - "use-vibes@*"
+      - 'use-vibes@*'
 
 jobs:
   compile_test:

@@ -4,9 +4,7 @@ import { useNavigate } from "react-router";
 import { trackEvent } from "../utils/analytics.js";
 import { useModelSelection } from "./useModelSelection.js";
 
-export function useNewSessionChat(
-  onSessionCreate: (sessionId: string) => void,
-): NewSessionChatState {
+export function useNewSessionChat(onSessionCreate: (sessionId: string) => void): NewSessionChatState {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -55,13 +53,7 @@ export function useNewSessionChat(
         setIsStreaming(false);
       }
     },
-    [
-      input,
-      modelSelection.selectedModel,
-      modelSelection.effectiveModel,
-      onSessionCreate,
-      navigate,
-    ],
+    [input, modelSelection.selectedModel, modelSelection.effectiveModel, onSessionCreate, navigate]
   );
 
   // Stub functions that are not needed for new session creation
@@ -89,7 +81,7 @@ export function useNewSessionChat(
     async (modelId: string): Promise<void> => {
       modelSelection.setSelectedModel(modelId);
     },
-    [modelSelection],
+    [modelSelection]
   );
 
   return {

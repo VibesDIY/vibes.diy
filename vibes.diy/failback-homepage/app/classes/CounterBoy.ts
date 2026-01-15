@@ -1,11 +1,6 @@
 import * as THREE from "three";
 import { animate } from "animejs";
-import {
-  EXPLOSION,
-  ANIMATION_DURATIONS,
-  SCENE_DIMENSIONS,
-  COLORS,
-} from "../constants/scene.js";
+import { EXPLOSION, ANIMATION_DURATIONS, SCENE_DIMENSIONS, COLORS } from "../constants/scene.js";
 import {
   makeEnclosure,
   makeEnclosureBack,
@@ -69,8 +64,7 @@ export class CounterBoy {
   private currentAnimation: { cancel: () => void } | null = null;
 
   constructor(config: CounterBoyConfig = {}) {
-    this.id =
-      config.id || `counterboy-${Math.random().toString(36).substr(2, 9)}`;
+    this.id = config.id || `counterboy-${Math.random().toString(36).substr(2, 9)}`;
     this.scene = config.scene;
     this.group = new THREE.Group();
     this.group.name = this.id;
@@ -106,8 +100,7 @@ export class CounterBoy {
     this.dataLayer.position.z = EXPLOSION.NORMAL_POSITIONS.DATA_LAYER_Z;
     this.gridGroup.position.z = EXPLOSION.NORMAL_POSITIONS.GRID_GROUP_Z;
     this.enclosureBack.position.z = EXPLOSION.NORMAL_POSITIONS.ENCLOSURE_BACK_Z;
-    this.chrome.position.z =
-      this.enclosureBack.position.z + EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET;
+    this.chrome.position.z = this.enclosureBack.position.z + EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET;
 
     // Grid should be hidden initially (only visible in tension/exploded states)
     this.gridGroup.visible = false;
@@ -147,17 +140,11 @@ export class CounterBoy {
   }
 
   // Block animation methods
-  public animateBlockEncryption(
-    preset: { hexPair: string; blockColor: number },
-    onComplete?: () => void,
-    skipUnencrypted = false,
-  ) {
+  public animateBlockEncryption(preset: { hexPair: string; blockColor: number }, onComplete?: () => void, skipUnencrypted = false) {
     if (this.isBlockAnimating) return;
 
     // Count visible encrypted blocks
-    const visibleEncryptedBlocks = this.blockSituations.filter(
-      (situation) => situation.encryptedBlock.visible,
-    );
+    const visibleEncryptedBlocks = this.blockSituations.filter((situation) => situation.encryptedBlock.visible);
 
     // If there are already 5 visible encrypted blocks, hide the oldest one
     if (visibleEncryptedBlocks.length >= 5) {
@@ -195,10 +182,7 @@ export class CounterBoy {
     }
   }
 
-  private createNewBlockSituation(preset: {
-    hexPair: string;
-    blockColor: number;
-  }): BlockSituationObjects | null {
+  private createNewBlockSituation(preset: { hexPair: string; blockColor: number }): BlockSituationObjects | null {
     if (!this.scene) return null;
 
     const blockSituation = makeBlockSituation(
@@ -206,9 +190,7 @@ export class CounterBoy {
       {
         blockColor: preset.blockColor,
       },
-      this.fontLoadAbortController
-        ? { signal: this.fontLoadAbortController.signal }
-        : undefined,
+      this.fontLoadAbortController ? { signal: this.fontLoadAbortController.signal } : undefined
     );
 
     // Position at origin since it's now a child of this.group
@@ -222,10 +204,7 @@ export class CounterBoy {
     return blockSituation;
   }
 
-  private animateNewBlock(
-    blockSituation: BlockSituationObjects,
-    onComplete?: () => void,
-  ) {
+  private animateNewBlock(blockSituation: BlockSituationObjects, onComplete?: () => void) {
     if (this.isBlockAnimating) return;
 
     this.isBlockAnimating = true;
@@ -237,8 +216,7 @@ export class CounterBoy {
 
     // Calculate animation duration based on distance and speed
     // Use duration of 0 when not exploded and not in tension state (blocks are hidden anyway)
-    const distance =
-      unencryptedBlock.position.z - (SCENE_DIMENSIONS.BLOCK.WIDTH / 2 + 0.1);
+    const distance = unencryptedBlock.position.z - (SCENE_DIMENSIONS.BLOCK.WIDTH / 2 + 0.1);
     const baseDuration = (distance / speed) * 16.67; // Convert to ms (assuming 60fps)
     const duration = this.isExploded || this.isTension ? baseDuration : 0;
 
@@ -326,20 +304,14 @@ export class CounterBoy {
   // Helper method to create enclosure geometry with specific depth
   private createEnclosureGeometry(depth: number): THREE.BoxGeometry {
     return new THREE.BoxGeometry(
-      SCENE_DIMENSIONS.ENCLOSURE.WIDTH +
-        SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
-      SCENE_DIMENSIONS.ENCLOSURE.HEIGHT +
-        SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
-      depth,
+      SCENE_DIMENSIONS.ENCLOSURE.WIDTH + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
+      SCENE_DIMENSIONS.ENCLOSURE.HEIGHT + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
+      depth
     );
   }
 
   // Method to animate enclosure thickness
-  private animateEnclosureThickness(
-    targetThickness: number,
-    _duration = 400,
-    onComplete?: () => void,
-  ) {
+  private animateEnclosureThickness(targetThickness: number, _duration = 400, onComplete?: () => void) {
     if (!this.enclosure.geometry) return;
 
     // Create new geometry with target thickness
@@ -363,8 +335,7 @@ export class CounterBoy {
     progress = Math.max(0, Math.min(1, progress));
 
     // Helper function to lerp between two values
-    const lerp = (start: number, end: number, t: number) =>
-      start + (end - start) * t;
+    const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
 
     let enclosureZ: number;
     let dataLayerZ: number;
@@ -377,70 +348,26 @@ export class CounterBoy {
       // Interpolate from normal to tension (0.0 - 0.5)
       const t = progress * 2; // Map 0-0.5 to 0-1
 
-      enclosureZ = lerp(
-        EXPLOSION.NORMAL_POSITIONS.ENCLOSURE_Z,
-        EXPLOSION.TENSION_POSITIONS.ENCLOSURE_Z,
-        t,
-      );
-      dataLayerZ = lerp(
-        EXPLOSION.NORMAL_POSITIONS.DATA_LAYER_Z,
-        EXPLOSION.TENSION_POSITIONS.DATA_LAYER_Z,
-        t,
-      );
-      gridGroupZ = lerp(
-        EXPLOSION.NORMAL_POSITIONS.GRID_GROUP_Z,
-        EXPLOSION.TENSION_POSITIONS.GRID_GROUP_Z,
-        t,
-      );
-      enclosureBackZ = lerp(
-        EXPLOSION.NORMAL_POSITIONS.ENCLOSURE_BACK_Z,
-        EXPLOSION.TENSION_POSITIONS.ENCLOSURE_BACK_Z,
-        t,
-      );
-      chromeOffset = lerp(
-        EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET,
-        EXPLOSION.TENSION_POSITIONS.CHROME_OFFSET,
-        t,
-      );
-      thickness = lerp(
-        SCENE_DIMENSIONS.ENCLOSURE.DEPTH,
-        EXPLOSION.TENSION_THICKNESSES.ENCLOSURE,
-        t,
-      );
+      enclosureZ = lerp(EXPLOSION.NORMAL_POSITIONS.ENCLOSURE_Z, EXPLOSION.TENSION_POSITIONS.ENCLOSURE_Z, t);
+      dataLayerZ = lerp(EXPLOSION.NORMAL_POSITIONS.DATA_LAYER_Z, EXPLOSION.TENSION_POSITIONS.DATA_LAYER_Z, t);
+      gridGroupZ = lerp(EXPLOSION.NORMAL_POSITIONS.GRID_GROUP_Z, EXPLOSION.TENSION_POSITIONS.GRID_GROUP_Z, t);
+      enclosureBackZ = lerp(EXPLOSION.NORMAL_POSITIONS.ENCLOSURE_BACK_Z, EXPLOSION.TENSION_POSITIONS.ENCLOSURE_BACK_Z, t);
+      chromeOffset = lerp(EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET, EXPLOSION.TENSION_POSITIONS.CHROME_OFFSET, t);
+      thickness = lerp(SCENE_DIMENSIONS.ENCLOSURE.DEPTH, EXPLOSION.TENSION_THICKNESSES.ENCLOSURE, t);
     } else {
       // Interpolate from tension to exploded (0.5 - 1.0)
       const t = (progress - 0.5) * 2; // Map 0.5-1.0 to 0-1
 
-      enclosureZ = lerp(
-        EXPLOSION.TENSION_POSITIONS.ENCLOSURE_Z,
-        EXPLOSION.POSITIONS.ENCLOSURE_Z * EXPLOSION.FACTOR,
-        t,
-      );
-      dataLayerZ = lerp(
-        EXPLOSION.TENSION_POSITIONS.DATA_LAYER_Z,
-        EXPLOSION.POSITIONS.DATA_LAYER_Z,
-        t,
-      );
-      gridGroupZ = lerp(
-        EXPLOSION.TENSION_POSITIONS.GRID_GROUP_Z,
-        EXPLOSION.POSITIONS.GRID_GROUP_Z * EXPLOSION.FACTOR,
-        t,
-      );
+      enclosureZ = lerp(EXPLOSION.TENSION_POSITIONS.ENCLOSURE_Z, EXPLOSION.POSITIONS.ENCLOSURE_Z * EXPLOSION.FACTOR, t);
+      dataLayerZ = lerp(EXPLOSION.TENSION_POSITIONS.DATA_LAYER_Z, EXPLOSION.POSITIONS.DATA_LAYER_Z, t);
+      gridGroupZ = lerp(EXPLOSION.TENSION_POSITIONS.GRID_GROUP_Z, EXPLOSION.POSITIONS.GRID_GROUP_Z * EXPLOSION.FACTOR, t);
       enclosureBackZ = lerp(
         EXPLOSION.TENSION_POSITIONS.ENCLOSURE_BACK_Z,
         EXPLOSION.POSITIONS.ENCLOSURE_BACK_Z * EXPLOSION.FACTOR,
-        t,
+        t
       );
-      chromeOffset = lerp(
-        EXPLOSION.TENSION_POSITIONS.CHROME_OFFSET,
-        EXPLOSION.POSITIONS.CHROME_OFFSET,
-        t,
-      );
-      thickness = lerp(
-        EXPLOSION.TENSION_THICKNESSES.ENCLOSURE,
-        SCENE_DIMENSIONS.ENCLOSURE.DEPTH,
-        t,
-      );
+      chromeOffset = lerp(EXPLOSION.TENSION_POSITIONS.CHROME_OFFSET, EXPLOSION.POSITIONS.CHROME_OFFSET, t);
+      thickness = lerp(EXPLOSION.TENSION_THICKNESSES.ENCLOSURE, SCENE_DIMENSIONS.ENCLOSURE.DEPTH, t);
     }
 
     // Set positions
@@ -462,8 +389,7 @@ export class CounterBoy {
 
     // Update internal state flags
     this.isExploded = progress >= 1.0;
-    this.isTension =
-      progress > EXPLOSION.VISIBILITY_THRESHOLD && progress < 1.0;
+    this.isTension = progress > EXPLOSION.VISIBILITY_THRESHOLD && progress < 1.0;
   }
 
   // Helper to set enclosure thickness instantly
@@ -513,10 +439,7 @@ export class CounterBoy {
     });
 
     // Animate thickness to 0.4
-    this.animateEnclosureThickness(
-      EXPLOSION.TENSION_THICKNESSES.ENCLOSURE,
-      ANIMATION_DURATIONS.EXPLOSION / 2,
-    );
+    this.animateEnclosureThickness(EXPLOSION.TENSION_THICKNESSES.ENCLOSURE, ANIMATION_DURATIONS.EXPLOSION / 2);
 
     // Create animation timeline for tension positions
     const animations = [
@@ -548,9 +471,7 @@ export class CounterBoy {
         ease: "inOutQuad",
         onRender: () => {
           // Update chrome position relative to enclosureBack
-          this.chrome.position.z =
-            this.enclosureBack.position.z +
-            EXPLOSION.TENSION_POSITIONS.CHROME_OFFSET;
+          this.chrome.position.z = this.enclosureBack.position.z + EXPLOSION.TENSION_POSITIONS.CHROME_OFFSET;
         },
         onComplete: () => {
           completedAnimations++;
@@ -564,10 +485,7 @@ export class CounterBoy {
 
   private animateToExploded(onComplete?: () => void) {
     // Animate thickness back to 0.1
-    this.animateEnclosureThickness(
-      SCENE_DIMENSIONS.ENCLOSURE.DEPTH,
-      ANIMATION_DURATIONS.EXPLOSION / 2,
-    );
+    this.animateEnclosureThickness(SCENE_DIMENSIONS.ENCLOSURE.DEPTH, ANIMATION_DURATIONS.EXPLOSION / 2);
 
     // Create animation timeline for exploded positions
     const animations = [
@@ -599,8 +517,7 @@ export class CounterBoy {
         ease: "inOutQuad",
         onRender: () => {
           // Update chrome position relative to enclosureBack
-          this.chrome.position.z =
-            this.enclosureBack.position.z + EXPLOSION.POSITIONS.CHROME_OFFSET;
+          this.chrome.position.z = this.enclosureBack.position.z + EXPLOSION.POSITIONS.CHROME_OFFSET;
         },
         onComplete: () => {
           completedAnimations++;
@@ -620,10 +537,7 @@ export class CounterBoy {
     });
 
     // Animate thickness to normal (should already be 0.1)
-    this.animateEnclosureThickness(
-      SCENE_DIMENSIONS.ENCLOSURE.DEPTH,
-      ANIMATION_DURATIONS.EXPLOSION,
-    );
+    this.animateEnclosureThickness(SCENE_DIMENSIONS.ENCLOSURE.DEPTH, ANIMATION_DURATIONS.EXPLOSION);
 
     // Create animation timeline for normal positions
     const animations = [
@@ -655,9 +569,7 @@ export class CounterBoy {
         ease: "inOutQuad",
         onRender: () => {
           // Update chrome position relative to enclosureBack
-          this.chrome.position.z =
-            this.enclosureBack.position.z +
-            EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET;
+          this.chrome.position.z = this.enclosureBack.position.z + EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET;
         },
         onComplete: () => {
           completedAnimations++;
@@ -721,7 +633,7 @@ export class CounterBoy {
     ctx.fillText(
       this.encryptedBlocksCount.toString(),
       SCENE_DIMENSIONS.DISPLAY.TEXT_X,
-      canvas.height / 2 + SCENE_DIMENSIONS.DISPLAY.FONT_SIZE / 2,
+      canvas.height / 2 + SCENE_DIMENSIONS.DISPLAY.FONT_SIZE / 2
     );
 
     if (!Array.isArray(this.display.material)) return;
@@ -758,20 +670,14 @@ export class CounterBoy {
     }
 
     if (this.currentAnimation) {
-      if (
-        typeof this.currentAnimation === "object" &&
-        "cancel" in this.currentAnimation
-      ) {
+      if (typeof this.currentAnimation === "object" && "cancel" in this.currentAnimation) {
         this.currentAnimation.cancel();
       }
     }
 
     // Cleanup block animations
     if (this.blockAnimationRef) {
-      if (
-        typeof this.blockAnimationRef === "object" &&
-        "cancel" in this.blockAnimationRef
-      ) {
+      if (typeof this.blockAnimationRef === "object" && "cancel" in this.blockAnimationRef) {
         this.blockAnimationRef.cancel();
       }
     }

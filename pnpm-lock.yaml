@@ -451,6 +451,9 @@ importers:
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../types
+      arktype:
+        specifier: ^2.1.29
+        version: 2.1.29
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -463,9 +466,6 @@ importers:
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
-      zod:
-        specifier: ^4.1.12
-        version: 4.3.5
     devDependencies:
       '@chromatic-com/storybook':
         specifier: ^5.0.0
@@ -778,34 +778,18 @@ importers:
       '@fireproof/core-types-base':
         specifier: 0.24.8-dev-test-device-id
         version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@vibes.diy/api-pkg':
+        specifier: workspace:*
+        version: link:../pkg
       arktype:
         specifier: ^2.1.29
         version: 2.1.29
-      vibes-diy-api-pkg:
-        specifier: workspace:*
-        version: link:../pkg
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.8-dev-test-device-id
         version: 0.24.8-dev-test-device-id(@pnpm/logger@5.2.0)(typescript@5.9.3)
 
   vibes.diy/api/pkg:
-    dependencies:
-      '@adviser/cement':
-        specifier: ^0.5.15
-        version: 0.5.15(typescript@5.9.3)
-      arktype:
-        specifier: ^2.1.29
-        version: 2.1.29
-      mime:
-        specifier: ^4.1.0
-        version: 4.1.0
-    devDependencies:
-      '@fireproof/core-cli':
-        specifier: 0.24.8-dev-test-device-id
-        version: 0.24.8-dev-test-device-id(@pnpm/logger@5.2.0)(typescript@5.9.3)
-
-  vibes.diy/api/svc:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.15
@@ -834,6 +818,12 @@ importers:
       '@libsql/client':
         specifier: ^0.17.0
         version: 0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@5.0.10)
+      '@vibes.diy/api-pkg':
+        specifier: workspace:*
+        version: 'link:'
+      '@vibes.diy/use-vibes-base':
+        specifier: workspace:*
+        version: link:../../../use-vibes/base
       acorn:
         specifier: ^8.15.0
         version: 8.15.0
@@ -852,19 +842,107 @@ importers:
       multiformats:
         specifier: ^13.4.2
         version: 13.4.2
+      preact:
+        specifier: ^10.28.2
+        version: 10.28.2
+      preact-render-to-string:
+        specifier: ^6.6.5
+        version: 6.6.5(preact@10.28.2)
       random-words:
         specifier: ^2.0.1
         version: 2.0.1
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
       sucrase:
         specifier: ^3.35.1
         version: 3.35.1
-      vibes-diy-api-pkg:
-        specifier: workspace:*
-        version: link:../pkg
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.8-dev-test-device-id
         version: 0.24.8-dev-test-device-id(@pnpm/logger@5.2.0)(typescript@5.9.3)
+      '@types/react':
+        specifier: ^19.2.8
+        version: 19.2.8
+
+  vibes.diy/api/svc:
+    dependencies:
+      '@adviser/cement':
+        specifier: ^0.5.15
+        version: 0.5.15(typescript@5.9.3)
+      '@cloudflare/workers-types':
+        specifier: ^4.20260109.0
+        version: 4.20260118.0
+      '@fireproof/core-device-id':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@fireproof/core-types-device-id':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@fireproof/core-types-protocols-dashboard':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@libsql/client':
+        specifier: ^0.17.0
+        version: 0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@5.0.10)
+      '@vibes.diy/api-pkg':
+        specifier: workspace:*
+        version: link:../pkg
+      '@vibes.diy/use-vibes-base':
+        specifier: workspace:*
+        version: link:../../../use-vibes/base
+      acorn:
+        specifier: ^8.15.0
+        version: 8.15.0
+      arktype:
+        specifier: ^2.1.29
+        version: 2.1.29
+      drizzle-orm:
+        specifier: ^0.45.1
+        version: 0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@5.0.10))(@opentelemetry/api@1.9.0)(gel@2.2.0)
+      jose:
+        specifier: ^6.1.3
+        version: 6.1.3
+      mime:
+        specifier: ^4.1.0
+        version: 4.1.0
+      multiformats:
+        specifier: ^13.4.2
+        version: 13.4.2
+      preact:
+        specifier: ^10.28.2
+        version: 10.28.2
+      preact-render-to-string:
+        specifier: ^6.6.5
+        version: 6.6.5(preact@10.28.2)
+      random-words:
+        specifier: ^2.0.1
+        version: 2.0.1
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
+      sucrase:
+        specifier: ^3.35.1
+        version: 3.35.1
+    devDependencies:
+      '@fireproof/core-cli':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(@pnpm/logger@5.2.0)(typescript@5.9.3)
+      '@types/react':
+        specifier: ^19.2.8
+        version: 19.2.8
 
   vibes.diy/api/tests:
     dependencies:
@@ -883,25 +961,28 @@ importers:
       '@libsql/client':
         specifier: ^0.17.0
         version: 0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@5.0.10)
+      '@vibes.diy/api-impl':
+        specifier: workspace:*
+        version: link:../impl
+      '@vibes.diy/api-pkg':
+        specifier: workspace:*
+        version: link:../pkg
+      '@vibes.diy/api-svc':
+        specifier: workspace:*
+        version: link:../svc
       drizzle-kit:
         specifier: ^0.31.8
         version: 0.31.8
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@5.0.10))(@opentelemetry/api@1.9.0)(gel@2.2.0)
-      vibes-diy-api-impl:
-        specifier: workspace:*
-        version: link:../impl
-      vibes-diy-api-pkg:
-        specifier: workspace:*
-        version: link:../pkg
-      vibes-diy-api-svc:
-        specifier: workspace:*
-        version: link:../svc
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.8-dev-test-device-id
         version: 0.24.8-dev-test-device-id(@pnpm/logger@5.2.0)(typescript@5.9.3)
+      '@vitest/ui':
+        specifier: 4.0.16
+        version: 4.0.16(vitest@4.0.16)
       vitest:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.9)(@vitest/browser-playwright@4.0.16)(@vitest/ui@4.0.16)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
@@ -1182,6 +1263,9 @@ importers:
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@pnpm/lockfile-file':
+        specifier: ^9.1.3
+        version: 9.1.3(@pnpm/logger@5.2.0)
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.8)(react@19.2.3)
@@ -1218,6 +1302,12 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      cmd-ts:
+        specifier: ^0.14.3
+        version: 0.14.3
+      find-up:
+        specifier: ^8.0.0
+        version: 8.0.0
       isbot:
         specifier: ^5.1.25
         version: 5.1.32
@@ -10251,6 +10341,11 @@ packages:
   posthog-js@1.328.0:
     resolution: {integrity: sha512-1TzO1WOq53vnn+4W7Evda4QyBOcLI1svoMJy1x4CyiR1RgCHh2hhcmCcKeRJh8CAUV8H69qLo6dGvjMY8ENkrg==}
 
+  preact-render-to-string@6.6.5:
+    resolution: {integrity: sha512-O6MHzYNIKYaiSX3bOw0gGZfEbOmlIDtDfWwN1JJdc/T3ihzRT6tGGSEWE088dWrEDGa1u7101q+6fzQnO9XCPA==}
+    peerDependencies:
+      preact: '>=10 || >= 11.0.0-0'
+
   preact@10.24.2:
     resolution: {integrity: sha512-1cSoF0aCC8uaARATfrlz4VCBqE8LwZwRfLgkxJOQwAlQt6ayTmi0D9OF7nXid1POI5SZidFuG9CnlXbDfLqY/Q==}
 
@@ -17459,7 +17554,6 @@ snapshots:
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
       vitest: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.9)(@vitest/browser-playwright@4.0.17)(@vitest/ui@4.0.16)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
-    optional: true
 
   '@vitest/utils@3.2.4':
     dependencies:
@@ -23274,6 +23368,10 @@ snapshots:
       preact: 10.28.2
       query-selector-shadow-dom: 1.0.1
       web-vitals: 4.2.4
+
+  preact-render-to-string@6.6.5(preact@10.28.2):
+    dependencies:
+      preact: 10.28.2
 
   preact@10.24.2: {}
 

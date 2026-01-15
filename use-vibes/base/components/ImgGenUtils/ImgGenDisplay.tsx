@@ -1,12 +1,12 @@
-import * as React from 'react';
-import { DocFileMeta } from '@fireproof/use-fireproof';
-import { AsyncImg } from './AsyncImg.js';
-import { ImgGenError } from './ImgGenError.js';
-import { ImgGenDisplayProps } from './types.js';
-import { combineClasses, defaultClasses } from '../../utils/style-utils.js';
-import { getCurrentFileKey, getPromptInfo, getVersionInfo } from './ImgGenDisplayUtils.js';
-import { ImgGenModal } from './ImgGenModal.js';
-import { logDebug } from '../../utils/debug.js';
+import * as React from "react";
+import { DocFileMeta } from "@fireproof/use-fireproof";
+import { AsyncImg } from "./AsyncImg.js";
+import { ImgGenError } from "./ImgGenError.js";
+import { ImgGenDisplayProps } from "./types.js";
+import { combineClasses, defaultClasses } from "../../utils/style-utils.js";
+import { getCurrentFileKey, getPromptInfo, getVersionInfo } from "./ImgGenDisplayUtils.js";
+import { ImgGenModal } from "./ImgGenModal.js";
+import { logDebug } from "../../utils/debug.js";
 
 // Component for displaying the generated image
 export function ImgGenDisplay({
@@ -40,11 +40,7 @@ export function ImgGenDisplay({
 
   // Calculate the initial version index based on document state
   const initialVersionIndex = React.useMemo(() => {
-    return typeof currentVersion === 'number'
-      ? currentVersion
-      : versions?.length
-        ? versions.length - 1
-        : 0;
+    return typeof currentVersion === "number" ? currentVersion : versions?.length ? versions.length - 1 : 0;
   }, [currentVersion, versions]);
 
   // Track previous version count to detect when new versions are added
@@ -117,31 +113,29 @@ export function ImgGenDisplay({
 
   // Determine which file to use - either the versioned file or the legacy 'image' file
   const currentFile: DocFileMeta | undefined =
-    fileKey && document?._files
-      ? (document._files[fileKey] as DocFileMeta)
-      : (document?._files?.image as DocFileMeta);
+    fileKey && document?._files ? (document._files[fileKey] as DocFileMeta) : (document?._files?.image as DocFileMeta);
 
   // Get prompt text early (moved before portal)
   const promptInfo = getPromptInfo(document, versionIndex);
-  const promptText = promptInfo.currentPrompt || alt || 'Generated image';
+  const promptText = promptInfo.currentPrompt || alt || "Generated image";
 
   // State for delete confirmation is managed directly
 
   // Handle delete confirmation
   function handleDeleteConfirm() {
     if (debug) {
-      logDebug('[ImgGenDisplay] handleDeleteConfirm called, document ID:', document?._id);
+      logDebug("[ImgGenDisplay] handleDeleteConfirm called, document ID:", document?._id);
     }
 
     if (onDelete && document && document._id) {
       if (debug) {
-        logDebug('[ImgGenDisplay] Calling onDelete with ID:', document._id);
+        logDebug("[ImgGenDisplay] Calling onDelete with ID:", document._id);
       }
       onDelete(document._id);
     } else {
-      console.error('[ImgGenDisplay] Cannot delete - missing onDelete handler or document ID');
+      console.error("[ImgGenDisplay] Cannot delete - missing onDelete handler or document ID");
       if (debug) {
-        logDebug('[ImgGenDisplay] Delete details:', {
+        logDebug("[ImgGenDisplay] Delete details:", {
           hasOnDelete: !!onDelete,
           documentId: document?._id,
         });
@@ -180,7 +174,7 @@ export function ImgGenDisplay({
     setUserSelectedIndex(null);
 
     // Save the prompt we're generating with
-    let promptToGenerate = '';
+    let promptToGenerate = "";
     if (editedPrompt !== null) {
       promptToGenerate = editedPrompt.trim();
     } else {
@@ -256,7 +250,7 @@ export function ImgGenDisplay({
 
   // Debug logging for render conditions
   if (debug) {
-    logDebug('[ImgGenDisplay Debug] Render state:', {
+    logDebug("[ImgGenDisplay Debug] Render state:", {
       documentId: document?._id,
       hasFiles: !!document?._files,
       fileKey,
@@ -273,7 +267,7 @@ export function ImgGenDisplay({
 
   if (!document?._files || (!fileKey && !document._files.image)) {
     if (debug) {
-      logDebug('[ImgGenDisplay Debug] Missing image file - showing error', {
+      logDebug("[ImgGenDisplay Debug] Missing image file - showing error", {
         hasFiles: !!document?._files,
         fileKey,
         defaultImageExists: !!document?._files?.image,
@@ -288,29 +282,25 @@ export function ImgGenDisplay({
   // 2. If generating, show the generating prompt
   // 3. Otherwise, show the document's prompt
   const displayPrompt =
-    editedPrompt !== null
-      ? editedPrompt
-      : pendingRegeneration && generatingPrompt !== null
-        ? generatingPrompt
-        : promptText;
+    editedPrompt !== null ? editedPrompt : pendingRegeneration && generatingPrompt !== null ? generatingPrompt : promptText;
 
   return (
-    <div className={combineClasses('imggen-root', className, classes.root)} title={displayPrompt}>
+    <div className={combineClasses("imggen-root", className, classes.root)} title={displayPrompt}>
       <div
         className="imggen-image-container"
-        style={{ position: 'relative', width: '100%' }}
+        style={{ position: "relative", width: "100%" }}
         onMouseEnter={(e) => {
           // Show expand button when hovering over container
-          const expandButton = e.currentTarget.querySelector('button') as HTMLElement;
-          if (expandButton && expandButton.style.opacity === '0') {
-            expandButton.style.opacity = '0.5';
+          const expandButton = e.currentTarget.querySelector("button") as HTMLElement;
+          if (expandButton && expandButton.style.opacity === "0") {
+            expandButton.style.opacity = "0.5";
           }
         }}
         onMouseLeave={(e) => {
           // Hide expand button when leaving container
-          const expandButton = e.currentTarget.querySelector('button') as HTMLElement;
-          if (expandButton && !expandButton.matches(':hover')) {
-            expandButton.style.opacity = '0';
+          const expandButton = e.currentTarget.querySelector("button") as HTMLElement;
+          if (expandButton && !expandButton.matches(":hover")) {
+            expandButton.style.opacity = "0";
           }
         }}
       >
@@ -322,35 +312,35 @@ export function ImgGenDisplay({
           title="Expand image"
           aria-label="Expand image"
           style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
+            position: "absolute",
+            top: "10px",
+            left: "10px",
             zIndex: 20,
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            borderRadius: '50%',
-            width: '28px',
-            height: '28px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: 'none',
-            cursor: 'pointer',
+            backgroundColor: "rgba(255, 255, 255, 0.7)",
+            borderRadius: "50%",
+            width: "28px",
+            height: "28px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "none",
+            cursor: "pointer",
             opacity: 0, // Initially invisible
-            transition: 'opacity 0.2s ease, transform 0.2s ease',
+            transition: "opacity 0.2s ease, transform 0.2s ease",
             padding: 0,
-            color: '#333',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+            color: "#333",
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '1';
-            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.opacity = "1";
+            e.currentTarget.style.transform = "scale(1.1)";
           }}
           onMouseLeave={(e) => {
             // Check if parent container is being hovered
-            const container = e.currentTarget.closest('.imggen-image-container') as HTMLElement;
-            const isContainerHovered = container?.matches(':hover');
-            e.currentTarget.style.opacity = isContainerHovered ? '0.5' : '0';
-            e.currentTarget.style.transform = 'scale(1)';
+            const container = e.currentTarget.closest(".imggen-image-container") as HTMLElement;
+            const isContainerHovered = container?.matches(":hover");
+            e.currentTarget.style.opacity = isContainerHovered ? "0.5" : "0";
+            e.currentTarget.style.transform = "scale(1)";
           }}
         >
           <svg
@@ -372,9 +362,9 @@ export function ImgGenDisplay({
         </button>
         <AsyncImg
           file={currentFile}
-          className={combineClasses('imggen-image', classes.image)}
-          alt={alt || 'Generated image'}
-          style={{ width: '100%' }}
+          className={combineClasses("imggen-image", classes.image)}
+          alt={alt || "Generated image"}
+          style={{ width: "100%" }}
         />
 
         {/* Show progress overlay on the image during regeneration */}
@@ -382,23 +372,23 @@ export function ImgGenDisplay({
           <div
             className="imggen-progress-container"
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
               left: 0,
-              width: '100%',
-              height: '6px',
-              overflow: 'hidden',
-              backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              width: "100%",
+              height: "6px",
+              overflow: "hidden",
+              backgroundColor: "rgba(0, 0, 0, 0.1)",
               zIndex: 10,
             }}
           >
             <div
-              className={combineClasses('imggen-progress', classes.progress)}
+              className={combineClasses("imggen-progress", classes.progress)}
               style={{
                 width: `${effectiveProgress}%`,
-                height: '100%',
-                backgroundColor: 'var(--imggen-accent-color, #0074d9)',
-                transition: 'width 0.5s ease-out',
+                height: "100%",
+                backgroundColor: "var(--imggen-accent-color, #0074d9)",
+                transition: "width 0.5s ease-out",
               }}
               aria-hidden="true"
             />

@@ -43,9 +43,7 @@ export const getTitleBarStyle = (color: CardColor): React.CSSProperties => ({
   borderBottom: `1px solid ${titleBorderColorLiteral[color]}`,
 });
 
-export const getCardChildrenStyle = (
-  color: CardColor,
-): React.CSSProperties => ({
+export const getCardChildrenStyle = (color: CardColor): React.CSSProperties => ({
   padding: "16px 8px",
   backgroundColor: childrensColorBackgroundLiteral[color],
   color: childrensColorLiteral[color],
@@ -56,12 +54,7 @@ export const getCardBasicStyle = (color: CardColor): React.CSSProperties => ({
   boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
 });
 
-export const getCardStyle = (
-  color: CardColor,
-  isMobile: boolean,
-  isDragging: boolean,
-  isText: boolean,
-): React.CSSProperties => {
+export const getCardStyle = (color: CardColor, isMobile: boolean, isDragging: boolean, isText: boolean): React.CSSProperties => {
   const base = getCardBasicStyle(color);
 
   if (isMobile) {

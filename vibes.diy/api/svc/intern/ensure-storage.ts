@@ -1,10 +1,5 @@
-import {
-  CoerceBinaryInput,
-  exception2Result,
-  Result,
-  to_uint8,
-} from "@adviser/cement";
-import { StorageResult } from "../api.js";
+import { CoerceBinaryInput, exception2Result, Result, to_uint8 } from "@adviser/cement";
+import { StorageResult } from "../api.ts";
 import { VibesSqlite } from "../create-handler.js";
 import { sqlAssets } from "../sql/assets-fs.js";
 import { base58btc } from "multiformats/bases/base58";
@@ -16,10 +11,7 @@ export interface CalcCidResult {
   data: Uint8Array;
   dataStr(): string;
 }
-export async function calcCid(
-  { sthis }: { sthis: SuperThis },
-  content: CoerceBinaryInput,
-): Promise<CalcCidResult> {
+export async function calcCid({ sthis }: { sthis: SuperThis }, content: CoerceBinaryInput): Promise<CalcCidResult> {
   const uint8Content = to_uint8(content);
   const hash = await sha256.digest(uint8Content);
   return {
@@ -36,13 +28,9 @@ export async function calcCid(
 }
 
 export function ensureStorage(
-  db: VibesSqlite,
-): (
-  ...items: { cid: string; data: Uint8Array }[]
-) => Promise<Result<StorageResult[]>> {
-  return async (
-    ...items: { cid: string; data: Uint8Array }[]
-  ): Promise<Result<StorageResult[]>> => {
+  db: VibesSqlite
+): (...items: { cid: string; data: Uint8Array }[]) => Promise<Result<StorageResult[]>> {
+  return async (...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>> => {
     const now = new Date();
     const created = now.toISOString();
     const res = await exception2Result(() =>
@@ -53,10 +41,10 @@ export function ensureStorage(
             assetId: item.cid,
             content: item.data,
             created,
-          })),
+          }))
         )
         .onConflictDoNothing()
-        .run(),
+        .run()
     );
     if (res.isErr()) {
       return Result.Err(res);
@@ -68,7 +56,7 @@ export function ensureStorage(
         mode: "existing",
         created: now,
         size: item.data.byteLength,
-      })),
+      }))
     );
   };
 }

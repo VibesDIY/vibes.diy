@@ -8,10 +8,7 @@ import LoggedOutView from "../components/LoggedOutView.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
 
 export function meta() {
-  return [
-    { title: "My Groups | Vibes DIY" },
-    { name: "description", content: "View all your vibe groups" },
-  ];
+  return [{ title: "My Groups | Vibes DIY" }, { name: "description", content: "View all your vibe groups" }];
 }
 
 /**
@@ -55,9 +52,7 @@ function GroupsContent() {
         <div>
           {groups.length === 0 ? (
             <BrutalistCard size="md">
-              <p className="text-center text-lg">
-                No groups yet. Visit a vibe to create your first group!
-              </p>
+              <p className="text-center text-lg">No groups yet. Visit a vibe to create your first group!</p>
             </BrutalistCard>
           ) : (
             <div className="space-y-4">
@@ -74,36 +69,20 @@ function GroupsContent() {
                   const { titleId } = parseInstanceId(group._id || "");
                   return (
                     <BrutalistCard key={group._id} size="md">
-                      <div
-                        className="cursor-pointer"
-                        onClick={() => group._id && handleGroupClick(group._id)}
-                      >
+                      <div className="cursor-pointer" onClick={() => group._id && handleGroupClick(group._id)}>
                         <div className="flex gap-4 items-start">
-                          <div
-                            className="flex-shrink-0"
-                            style={{ width: "200px" }}
-                          >
-                            <PublishedVibeCard
-                              slug={titleId}
-                              name={group.description || titleId}
-                            />
+                          <div className="flex-shrink-0" style={{ width: "200px" }}>
+                            <PublishedVibeCard slug={titleId} name={group.description || titleId} />
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-2xl font-bold mb-2">
-                              {group.description || titleId}
-                            </h3>
+                            <h3 className="text-2xl font-bold mb-2">{group.description || titleId}</h3>
                             <p className="text-sm text-gray-600">
-                              Updated{" "}
-                              {group.updatedAt
-                                ? new Date(group.updatedAt).toLocaleDateString()
-                                : "—"}
+                              Updated {group.updatedAt ? new Date(group.updatedAt).toLocaleDateString() : "—"}
                               {(() => {
-                                const shareCount = (group.sharedWith ?? [])
-                                  .length;
+                                const shareCount = (group.sharedWith ?? []).length;
                                 return shareCount > 0 ? (
                                   <span className="ml-2">
-                                    · Shared with {shareCount}{" "}
-                                    {shareCount === 1 ? "person" : "people"}
+                                    · Shared with {shareCount} {shareCount === 1 ? "person" : "people"}
                                   </span>
                                 ) : null;
                               })()}

@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
-import { act } from '@testing-library/react';
+import { vi } from "vitest";
+import { act } from "@testing-library/react";
 
 export interface MockIframe {
   src: string;
@@ -13,13 +13,13 @@ export interface MockIframe {
 
 export function createMockIframe(postMessage = vi.fn()): MockIframe {
   // Create a proper DOM iframe element and enhance it
-  const actualIframe = document.createElement('iframe');
+  const actualIframe = document.createElement("iframe");
 
   const iframe: MockIframe = {
-    src: '',
+    src: "",
     contentWindow: { postMessage },
     addEventListener: vi.fn((event, handler) => {
-      if (event === 'load') {
+      if (event === "load") {
         iframe.onload = handler as () => void;
       }
     }),
@@ -28,13 +28,13 @@ export function createMockIframe(postMessage = vi.fn()): MockIframe {
   };
 
   // Use property descriptors to properly mock read-only properties
-  Object.defineProperty(actualIframe, 'contentWindow', {
+  Object.defineProperty(actualIframe, "contentWindow", {
     get: () => iframe.contentWindow,
     configurable: true,
   });
 
   // Mock src setter to immediately trigger load event (no network requests)
-  Object.defineProperty(actualIframe, 'src', {
+  Object.defineProperty(actualIframe, "src", {
     set: (value: string) => {
       iframe.src = value;
       // Immediately fire load event to avoid network delays
@@ -43,7 +43,7 @@ export function createMockIframe(postMessage = vi.fn()): MockIframe {
           iframe.onload();
         }
         // Also fire DOM event
-        const loadEvent = new Event('load');
+        const loadEvent = new Event("load");
         actualIframe.dispatchEvent(loadEvent);
       }, 0);
     },
@@ -52,14 +52,13 @@ export function createMockIframe(postMessage = vi.fn()): MockIframe {
   });
 
   // Override methods with mocks
-  actualIframe.addEventListener = iframe.addEventListener as HTMLIFrameElement['addEventListener'];
-  actualIframe.removeEventListener =
-    iframe.removeEventListener as HTMLIFrameElement['removeEventListener'];
+  actualIframe.addEventListener = iframe.addEventListener as HTMLIFrameElement["addEventListener"];
+  actualIframe.removeEventListener = iframe.removeEventListener as HTMLIFrameElement["removeEventListener"];
 
   // Mock document.createElement to return our enhanced iframe when 'iframe' is requested
   const originalCreateElement = document.createElement;
-  vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
-    if (tagName.toLowerCase() === 'iframe') {
+  vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+    if (tagName.toLowerCase() === "iframe") {
       return actualIframe as HTMLIFrameElement;
     }
     return originalCreateElement.call(document, tagName);
@@ -68,10 +67,10 @@ export function createMockIframe(postMessage = vi.fn()): MockIframe {
   return iframe;
 }
 
-export function simulateIframeMessage(data: unknown, origin = 'https://test.vibesbox.dev') {
+export function simulateIframeMessage(data: unknown, origin = "https://test.vibesbox.dev") {
   act(() => {
     window.dispatchEvent(
-      new MessageEvent('message', {
+      new MessageEvent("message", {
         data,
         origin,
       })
@@ -80,12 +79,12 @@ export function simulateIframeMessage(data: unknown, origin = 'https://test.vibe
 }
 
 export function createMockMessageEvent(data: unknown, origin?: string): MessageEvent {
-  return new MessageEvent('message', {
+  return new MessageEvent("message", {
     data,
     origin,
     source: window,
     // Add required MessageEvent properties
-    lastEventId: '',
+    lastEventId: "",
     ports: [],
   });
 }

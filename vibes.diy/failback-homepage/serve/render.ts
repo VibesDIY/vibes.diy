@@ -12,10 +12,7 @@ export interface VibesDiyServCtx {
   [key: string]: unknown;
 }
 
-export async function loadAndRenderTSX(
-  filePath: string,
-  ctx: VibesDiyServCtx,
-): Promise<string> {
+export async function loadAndRenderTSX(filePath: string, ctx: VibesDiyServCtx): Promise<string> {
   try {
     // Read the TSX file
     console.log("loadAndRenderTSX filePath:", filePath);
@@ -39,21 +36,14 @@ export async function loadAndRenderTSX(
       platform: "neutral",
     });
 
-    const transformed = new TextDecoder().decode(
-      result.outputFiles[0].contents,
-    );
+    const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
     return await renderScript(transformed, ctx);
   } catch (error) {
-    throw new Error(
-      `Failed to load and render TSX: ${(error as Error).message}`,
-    );
+    throw new Error(`Failed to load and render TSX: ${(error as Error).message}`);
   }
 }
 
-export async function renderScript(
-  script: string,
-  ctx: VibesDiyServCtx,
-): Promise<string> {
+export async function renderScript(script: string, ctx: VibesDiyServCtx): Promise<string> {
   // Create a data URL module
   const dataUrl = `data:text/javascript;base64,${btoa(script)}`;
   const module = await import(dataUrl);
@@ -85,9 +75,7 @@ export async function loadAndRenderJSX(code: string): Promise<string> {
       platform: "browser",
     });
 
-    const transformed = new TextDecoder().decode(
-      result.outputFiles[0].contents,
-    );
+    const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
 
     return transformed; // Return transformed JS, not rendered HTML
   } catch (error) {

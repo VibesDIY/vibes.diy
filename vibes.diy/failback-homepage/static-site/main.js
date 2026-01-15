@@ -107,22 +107,17 @@
   // ==========================================================================
 
   function setupScrollHandlers() {
-    const animatedSceneWrapper = document.getElementById(
-      "animatedSceneWrapper",
-    );
+    const animatedSceneWrapper = document.getElementById("animatedSceneWrapper");
 
     if (animatedSceneWrapper) {
       animatedSceneWrapper.addEventListener(
         "scroll",
         function () {
           const { scrollTop, scrollHeight, clientHeight } = this;
-          const progress =
-            scrollHeight > clientHeight
-              ? (scrollTop / (scrollHeight - clientHeight)) * 100
-              : 0;
+          const progress = scrollHeight > clientHeight ? (scrollTop / (scrollHeight - clientHeight)) * 100 : 0;
           setAnimationProgress(progress);
         },
-        { passive: true },
+        { passive: true }
       );
     }
   }
@@ -167,11 +162,7 @@
 
   function initTerminalDemo() {
     const terminalContainer = document.getElementById("terminalDemo");
-    if (
-      !terminalContainer ||
-      !window.$ ||
-      typeof window.$.fn.terminal !== "function"
-    ) {
+    if (!terminalContainer || !window.$ || typeof window.$.fn.terminal !== "function") {
       // Retry after a short delay if jQuery Terminal isn't loaded yet
       setTimeout(initTerminalDemo, 100);
       return;
@@ -268,7 +259,7 @@
             return false;
           }
         },
-      },
+      }
     );
 
     terminalInstance = term;
@@ -282,24 +273,18 @@
 
     // Display header
     term.echo(`[[;${orange};]  ╭──────────────────────────────────────────╮]`);
+    term.echo(`[[;${orange};]  │              [[;${yellow};]Vibes OS v.0.1[[;${orange};]              │]`);
+    term.echo(`[[;${orange};]  │                                          │]`);
+    term.echo(`[[;${orange};]  │           [[;${cream};]Welcome, Vibe Coder![[;${orange};]           │]`);
+    term.echo(`[[;${orange};]  │                                          │]`);
     term.echo(
-      `[[;${orange};]  │              [[;${yellow};]Vibes OS v.0.1[[;${orange};]              │]`,
+      `[[;${orange};]  │                  [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                   │]`
     );
     term.echo(`[[;${orange};]  │                                          │]`);
     term.echo(
-      `[[;${orange};]  │           [[;${cream};]Welcome, Vibe Coder![[;${orange};]           │]`,
+      `[[;${orange};]  │         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`
     );
-    term.echo(`[[;${orange};]  │                                          │]`);
-    term.echo(
-      `[[;${orange};]  │                  [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                   │]`,
-    );
-    term.echo(`[[;${orange};]  │                                          │]`);
-    term.echo(
-      `[[;${orange};]  │         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,
-    );
-    term.echo(
-      `[[;${orange};]  │          [[;${dimGray};]~/your-brilliant-idea[[;${orange};]           │]`,
-    );
+    term.echo(`[[;${orange};]  │          [[;${dimGray};]~/your-brilliant-idea[[;${orange};]           │]`);
     term.echo(`[[;${orange};]  ╰──────────────────────────────────────────╯]`);
     term.echo("");
     term.echo(`[[;${blue};]> What do you actually want to generate?]`);
@@ -327,12 +312,7 @@
     scene.background = new THREE.Color(0xf5f5dc); // Cream color
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(
-      50,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      1000,
-    );
+    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
     camera.position.set(0, 0, 15);
     camera.lookAt(0, 0, 0);
 
@@ -363,11 +343,7 @@
       const blockGeo = new THREE.BoxGeometry(0.6, 0.4, 0.6);
       const blockMat = new THREE.MeshLambertMaterial({ color: blockColors[i] });
       const block = new THREE.Mesh(blockGeo, blockMat);
-      block.position.set(
-        (Math.random() - 0.5) * 1.5,
-        2.5 + i * 0.5,
-        (Math.random() - 0.5) * 0.5,
-      );
+      block.position.set((Math.random() - 0.5) * 1.5, 2.5 + i * 0.5, (Math.random() - 0.5) * 0.5);
       scene.add(block);
       blocks.push(block);
     }
@@ -511,7 +487,7 @@
       debounce(() => {
         updateMobileState();
         updateSectionBackgrounds();
-      }, 300),
+      }, 300)
     );
 
     // Initial mobile check

@@ -2,11 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom/client";
 import { HiddenMenuWrapper } from "../components/vibes/HiddenMenuWrapper/HiddenMenuWrapper.js";
 import { VibesPanel } from "../components/vibes/VibesPanel.js";
-import {
-  type VibeMetadata,
-  validateVibeMetadata,
-  VibeMetadataValidationError,
-} from "@vibes.diy/use-vibes-base";
+import { type VibeMetadata, validateVibeMetadata, VibeMetadataValidationError } from "@vibes.diy/use-vibes-base";
 
 export interface MountVibesAppOptions {
   readonly container: HTMLElement;
@@ -57,9 +53,7 @@ function VibesApp({
   return content;
 }
 
-export function mountVibesApp(
-  options: MountVibesAppOptions,
-): MountVibesAppResult {
+export function mountVibesApp(options: MountVibesAppOptions): MountVibesAppResult {
   const { container, appComponent, showVibesSwitch, vibeMetadata } = options;
 
   // Validate vibeMetadata if provided to prevent malformed ledger names
@@ -70,7 +64,7 @@ export function mountVibesApp(
       if (error instanceof VibeMetadataValidationError) {
         throw new Error(
           `Failed to mount Vibes app: ${error.message} (code: ${error.code}). ` +
-            `Received vibeMetadata: ${JSON.stringify(vibeMetadata)}`,
+            `Received vibeMetadata: ${JSON.stringify(vibeMetadata)}`
         );
       }
       throw error;
@@ -82,12 +76,9 @@ export function mountVibesApp(
   const AppComponent = appComponent;
 
   root.render(
-    <VibesApp
-      {...(showVibesSwitch !== undefined && { showVibesSwitch })}
-      {...(vibeMetadata !== undefined && { vibeMetadata })}
-    >
+    <VibesApp {...(showVibesSwitch !== undefined && { showVibesSwitch })} {...(vibeMetadata !== undefined && { vibeMetadata })}>
       {AppComponent && <AppComponent />}
-    </VibesApp>,
+    </VibesApp>
   );
 
   return {

@@ -1,18 +1,5 @@
-import {
-  EventoHandler,
-  Result,
-  Option,
-  EventoResultType,
-  HandleTriggerCtx,
-  EventoResult,
-} from "@adviser/cement";
-import {
-  reqEnsureAppSlug,
-  ReqEnsureAppSlug,
-  ResEnsureAppSlug,
-  VibeFile,
-  VibesDiyError,
-} from "vibes-diy-api-pkg";
+import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import { reqEnsureAppSlug, ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile, VibesDiyError } from "vibes-diy-api-pkg";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../api.ts";
@@ -22,11 +9,7 @@ import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.ts";
 import { calcCid } from "../intern/ensure-storage.ts";
 
-export const ensureAppSlugItem: EventoHandler<
-  Request,
-  ReqEnsureAppSlug,
-  ResEnsureAppSlug | VibesDiyError
-> = {
+export const ensureAppSlugItem: EventoHandler<Request, ReqEnsureAppSlug, ResEnsureAppSlug | VibesDiyError> = {
   hash: "ensure-cloud-token",
   validate: unwrapMsgBase(async (payload: unknown) => {
     // async (ctx): Promise<Result<Option<ReqEnsureAppSlug>>> => {
@@ -39,11 +22,7 @@ export const ensureAppSlugItem: EventoHandler<
   }),
   handle: checkAuth(
     async (
-      ctx: HandleTriggerCtx<
-        Request,
-        ReqWithVerifiedAuth<ReqEnsureAppSlug>,
-        ResEnsureAppSlug | VibesDiyError
-      >,
+      ctx: HandleTriggerCtx<Request, ReqWithVerifiedAuth<ReqEnsureAppSlug>, ResEnsureAppSlug | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
       // console.log("handle ensureAppSlugItem", ctx.validated);
       const req = ctx.validated;
@@ -80,14 +59,10 @@ export const ensureAppSlugItem: EventoHandler<
           case "str-asset-ref":
           default:
             // needs to rewind content from ref
-            return Result.Err(
-              `unsupported file system item type: ${fsItem.type}`,
-            );
+            return Result.Err(`unsupported file system item type: ${fsItem.type}`);
         }
       }
-      const rStorageResult = await vctx.ensureStorage(
-        ...writeAppSlugsOp.map((op) => op.assetOp),
-      );
+      const rStorageResult = await vctx.ensureStorage(...writeAppSlugsOp.map((op) => op.assetOp));
       if (rStorageResult.isErr()) {
         return Result.Err(rStorageResult);
       }
@@ -99,31 +74,24 @@ export const ensureAppSlugItem: EventoHandler<
         vibeFileItem: op.fsItem,
         storage: storageResults[idx],
       }));
-      const res = await ensureApps(
-        vctx,
-        req,
-        rAppSlugBinding.Ok(),
-        fullFileSystem,
-      );
+      const res = await ensureApps(vctx, req, rAppSlugBinding.Ok(), fullFileSystem);
       if (res.isErr()) {
         return Result.Err(res);
       }
       let wrapperUrl: string;
-      let entryPointUrl: string;
-
       if (req.mode === "production") {
         wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
-        entryPointUrl = calcEntryPointUrl({
-          urlTemplate: vctx.params.entryPointTemplateUrl,
-          fsId: res.Ok().fsId,
-        });
       } else {
         wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
-        entryPointUrl = calcEntryPointUrl({
-          urlTemplate: vctx.params.entryPointTemplateUrl,
-          fsId: res.Ok().fsId,
-        });
       }
+      const entryPointUrl = calcEntryPointUrl({
+        ...vctx.params.vibes.svc,
+        bindings: {
+          userSlug: res.Ok().userSlug,
+          appSlug: res.Ok().appSlug,
+          fsId: res.Ok().fsId,
+        },
+      });
       // console.log("ensureAppSlugItem res", res.Ok());
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-ensure-app-slug",
@@ -137,6 +105,6 @@ export const ensureAppSlugItem: EventoHandler<
         entryPointUrl,
       } satisfies ResEnsureAppSlug);
       return Result.Ok(EventoResult.Continue);
-    },
+    }
   ),
 };

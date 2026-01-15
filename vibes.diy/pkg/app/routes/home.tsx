@@ -1,19 +1,11 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import {
-  useParams,
-  useLocation,
-  useNavigate,
-  useLoaderData,
-} from "react-router";
+import { useParams, useLocation, useNavigate, useLoaderData } from "react-router";
 import SessionView from "../components/SessionView.js";
 import NewSessionView from "../components/NewSessionView.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 
 export function meta() {
-  return [
-    { title: "Vibes DIY - AI App Builder" },
-    { name: "description", content: "Generate apps in one prompt" },
-  ];
+  return [{ title: "Vibes DIY - AI App Builder" }, { name: "description", content: "Generate apps in one prompt" }];
 }
 
 // Client loader to extract URL parameters as source of truth
@@ -35,27 +27,19 @@ export default function SessionWrapper() {
   const originalNavigate = useNavigate();
 
   // Extract all location properties as stable strings to prevent useEffect dependency issues
-  const pathname = useMemo(
-    () => location?.pathname || "",
-    [location?.pathname],
-  );
+  const pathname = useMemo(() => location?.pathname || "", [location?.pathname]);
   const search = useMemo(() => location?.search || "", [location?.search]);
-  const locationState = useMemo(
-    () => location?.state || null,
-    [location?.state],
-  );
+  const locationState = useMemo(() => location?.state || null, [location?.state]);
 
   // Create stable navigate function
   const navigate = useCallback(
     (to: string, options?: { replace?: boolean }) => {
       return originalNavigate(to, options);
     },
-    [originalNavigate],
+    [originalNavigate]
   );
 
-  const [sessionId, setSessionId] = useState<string | null>(
-    () => urlSessionId || null,
-  );
+  const [sessionId, setSessionId] = useState<string | null>(() => urlSessionId || null);
 
   // Keep local state in sync with the URL when params change after navigation
   useEffect(() => {

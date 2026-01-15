@@ -13,7 +13,7 @@ export async function mountVibeWithCleanup(
   showVibesSwitch = true,
   apiKey?: string,
   chatUrl?: string,
-  imgUrl?: string,
+  imgUrl?: string
 ): Promise<() => void> {
   return new Promise<() => void>((resolve) => {
     const resolveOnce = new ResolveOnce<void>();
@@ -68,24 +68,16 @@ export async function mountVibeWithCleanup(
     document.addEventListener("vibes-mount-error", handleMountError);
 
     // Mount the vibe
-    mountVibeCode(
-      code,
-      containerId,
-      titleId,
-      installId,
-      transformImports,
-      showVibesSwitch,
-      apiKey,
-      chatUrl,
-      imgUrl,
-    ).catch((_err) => {
-      // Babel/transform errors - caught before module execution
-      resolveOnce.once(() => {
-        cleanup();
-        resolve(() => {
-          // No-op cleanup
+    mountVibeCode(code, containerId, titleId, installId, transformImports, showVibesSwitch, apiKey, chatUrl, imgUrl).catch(
+      (_err) => {
+        // Babel/transform errors - caught before module execution
+        resolveOnce.once(() => {
+          cleanup();
+          resolve(() => {
+            // No-op cleanup
+          });
         });
-      });
-    });
+      }
+    );
   });
 }

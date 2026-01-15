@@ -48,13 +48,9 @@ export interface UseSession {
   mergeAiMessage: (newDoc: Partial<AiChatMessageDocument>) => void;
   updateDependencies: (deps: string[], userOverride?: boolean) => Promise<void>;
   updateDemoDataOverride: (override?: boolean | undefined) => Promise<void>;
-  updateAiSelectedDependencies: (
-    aiSelectedDependencies: string[],
-  ) => Promise<void>;
+  updateAiSelectedDependencies: (aiSelectedDependencies: string[]) => Promise<void>;
   updateSelectedModel: (modelId: string) => Promise<void>;
-  saveAiMessage: (
-    existingDoc?: DocWithId<AiChatMessageDocument> | undefined,
-  ) => Promise<DocResponse>;
+  saveAiMessage: (existingDoc?: DocWithId<AiChatMessageDocument> | undefined) => Promise<DocResponse>;
   // // Vibe document management
   vibeDoc: VibeDocument;
 }
@@ -96,14 +92,13 @@ export function useSession(sessionId: string): UseSession {
   });
 
   // Vibe document is stored in the session-specific database
-  const { doc: vibeDoc, merge: mergeVibeDoc } =
-    useSessionDocument<VibeDocument>({
-      _id: "vibe",
-      title: "",
-      encodedTitle: "",
-      created_at: Date.now(),
-      remixOf: "",
-    });
+  const { doc: vibeDoc, merge: mergeVibeDoc } = useSessionDocument<VibeDocument>({
+    _id: "vibe",
+    title: "",
+    encodedTitle: "",
+    created_at: Date.now(),
+    remixOf: "",
+  });
 
   // Query messages from the session-specific database
   const { docs } = useSessionLiveQuery("session_id", { key: sessionId }) as {
@@ -137,7 +132,7 @@ export function useSession(sessionId: string): UseSession {
       mergeRef.current(updatedDoc);
       await sessionDatabase.put(updatedDoc);
     },
-    [sessionDatabase],
+    [sessionDatabase]
   );
 
   // Update published URL using the vibe document
@@ -148,7 +143,7 @@ export function useSession(sessionId: string): UseSession {
       mergeRef.current(updatedDoc);
       await sessionDatabase.put(updatedDoc);
     },
-    [sessionDatabase],
+    [sessionDatabase]
   );
 
   // Update firehose shared state using the vibe document
@@ -159,25 +154,17 @@ export function useSession(sessionId: string): UseSession {
       mergeRef.current(updatedDoc);
       await sessionDatabase.put(updatedDoc);
     },
-    [sessionDatabase],
+    [sessionDatabase]
   );
 
   // Update per‑vibe dependency selection using the vibe document
   const updateDependencies = useCallback(
     async (deps: string[], userOverride = true) => {
-      const input = Array.isArray(deps)
-        ? deps.filter((n): n is string => typeof n === "string")
-        : [];
+      const input = Array.isArray(deps) ? deps.filter((n): n is string => typeof n === "string") : [];
       // Validate and de‑dupe by catalog names
-      const catalogNames = await getLlmCatalogNames(
-        VibesDiyEnv.PROMPT_FALL_BACKURL(),
-      );
-      const deduped = Array.from(
-        new Set(input.filter((n) => catalogNames.has(n))),
-      );
-      const llmsCatalog = await getLlmCatalog(
-        VibesDiyEnv.PROMPT_FALL_BACKURL(),
-      );
+      const catalogNames = await getLlmCatalogNames(VibesDiyEnv.PROMPT_FALL_BACKURL());
+      const deduped = Array.from(new Set(input.filter((n) => catalogNames.has(n))));
+      const llmsCatalog = await getLlmCatalog(VibesDiyEnv.PROMPT_FALL_BACKURL());
       // Canonicalize order by catalog order
       const order = new Map(llmsCatalog.map((l, i) => [l.name, i] as const));
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -192,7 +179,7 @@ export function useSession(sessionId: string): UseSession {
       mergeRef.current(updatedDoc);
       await sessionDatabase.put(updatedDoc);
     },
-    [sessionDatabase],
+    [sessionDatabase]
   );
 
   // Update per‑vibe demo data override setting
@@ -206,7 +193,7 @@ export function useSession(sessionId: string): UseSession {
       mergeRef.current(updatedDoc);
       await sessionDatabase.put(updatedDoc);
     },
-    [sessionDatabase],
+    [sessionDatabase]
   );
 
   // Update AI-selected dependencies (internal use for displaying in UI)
@@ -220,7 +207,7 @@ export function useSession(sessionId: string): UseSession {
       mergeRef.current(updatedDoc);
       await sessionDatabase.put(updatedDoc);
     },
-    [sessionDatabase],
+    [sessionDatabase]
   );
   // --- Model selection management ---
   const updateSelectedModel = useCallback(
@@ -236,13 +223,11 @@ export function useSession(sessionId: string): UseSession {
       mergeRef.current(updatedDoc);
       await sessionDatabase.put(updatedDoc);
     },
-    [sessionDatabase],
+    [sessionDatabase]
   );
 
   // Access global settings to compute effective model fallback
-  const { useDocument: useSettingsDocument } = useFireproof(
-    VibesDiyEnv.SETTINGS_DBNAME(),
-  );
+  const { useDocument: useSettingsDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
   const { doc: settingsDoc } = useSettingsDocument<UserSettings>({
     _id: "user_settings",
   });
@@ -278,7 +263,7 @@ export function useSession(sessionId: string): UseSession {
         console.error("Failed to process screenshot:", error);
       }
     },
-    [sessionId, sessionDatabase],
+    [sessionId, sessionDatabase]
   );
 
   // Wrap submitUserMessage to ensure database is opened before first write
@@ -300,7 +285,7 @@ export function useSession(sessionId: string): UseSession {
       publishedUrl: vibeDoc.publishedUrl,
       firehoseShared: vibeDoc.firehoseShared,
     }),
-    [sessionId, vibeDoc.title, vibeDoc.publishedUrl, vibeDoc.firehoseShared],
+    [sessionId, vibeDoc.title, vibeDoc.publishedUrl, vibeDoc.firehoseShared]
   );
 
   return useMemo(
@@ -355,6 +340,6 @@ export function useSession(sessionId: string): UseSession {
       updateDemoDataOverride,
       updateAiSelectedDependencies,
       updateSelectedModel,
-    ],
+    ]
   );
 }

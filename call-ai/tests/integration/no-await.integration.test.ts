@@ -60,7 +60,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
                 setTimeout(() => {
                   console.warn(`Timeout for ${modelId.id} (Grade ${modelId.grade}): ${name}`);
                   resolve(undefined);
-                }, timeout || TIMEOUT),
+                }, timeout || TIMEOUT)
               ),
             ]);
             return result;
@@ -71,7 +71,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
             return;
           }
         },
-        timeout,
+        timeout
       );
     };
   }
@@ -97,7 +97,7 @@ describe("Simple callAi integration tests", () => {
           expect(typeof result).toBe("string");
           expect((result as string).length).toBeGreaterThan(10);
         },
-        TIMEOUT,
+        TIMEOUT
       );
 
       // Test with streaming
@@ -125,7 +125,7 @@ describe("Simple callAi integration tests", () => {
           expect(lastChunk).toBeTruthy();
           expect(lastChunk.length).toBeGreaterThan(10);
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });
@@ -149,7 +149,7 @@ describe("Simple callAi integration tests", () => {
             {
               apiKey: process.env.CALLAI_API_KEY,
               model: modelId.id,
-            },
+            }
           );
 
           // Verify response contains the expected answer
@@ -157,7 +157,7 @@ describe("Simple callAi integration tests", () => {
           expect(typeof result).toBe("string");
           expect((result as string).toLowerCase()).toContain("paris");
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });
@@ -206,24 +206,24 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 typeof data.population === "number",
-                `'population' is not a number in ${modelName} model response`,
+                `'population' is not a number in ${modelName} model response`
               );
               expectOrWarn(
                 modelId,
                 data.name.toLowerCase().includes("france"),
-                `'name' should include 'france' in ${modelName} model response`,
+                `'name' should include 'france' in ${modelName} model response`
               );
               expectOrWarn(
                 modelId,
                 data.capital.toLowerCase().includes("paris"),
-                `'capital' should include 'paris' in ${modelName} model response`,
+                `'capital' should include 'paris' in ${modelName} model response`
               );
             }
           } catch (e) {
             expectOrWarn(modelId, false, `JSON parse error in ${modelName} model response: ${e}`);
           }
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });
@@ -299,7 +299,7 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 typeof data.destination === "string",
-                `'destination' is not a string in ${modelName} model response`,
+                `'destination' is not a string in ${modelName} model response`
               );
             if (data.duration)
               expectOrWarn(modelId, typeof data.duration === "number", `'duration' is not a number in ${modelName} model response`);
@@ -311,13 +311,13 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 typeof data.accommodation === "object",
-                `'accommodation' is not an object in ${modelName} model response`,
+                `'accommodation' is not an object in ${modelName} model response`
               );
             if (data.transportation)
               expectOrWarn(
                 modelId,
                 typeof data.transportation === "object",
-                `'transportation' is not an object in ${modelName} model response`,
+                `'transportation' is not an object in ${modelName} model response`
               );
 
             // Array validation
@@ -335,7 +335,7 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 !!data.accommodation.features,
-                `Missing 'accommodation.features' in ${modelName} model response`,
+                `Missing 'accommodation.features' in ${modelName} model response`
               );
               expectOrWarn(modelId, !!data.accommodation.price, `Missing 'accommodation.price' in ${modelName} model response`);
 
@@ -343,25 +343,25 @@ describe("Simple callAi integration tests", () => {
                 expectOrWarn(
                   modelId,
                   typeof data.accommodation.name === "string",
-                  `'accommodation.name' is not a string in ${modelName} model response`,
+                  `'accommodation.name' is not a string in ${modelName} model response`
                 );
               if (data.accommodation.type)
                 expectOrWarn(
                   modelId,
                   typeof data.accommodation.type === "string",
-                  `'accommodation.type' is not a string in ${modelName} model response`,
+                  `'accommodation.type' is not a string in ${modelName} model response`
                 );
               if (data.accommodation.features)
                 expectOrWarn(
                   modelId,
                   Array.isArray(data.accommodation.features),
-                  `'accommodation.features' is not an array in ${modelName} model response`,
+                  `'accommodation.features' is not an array in ${modelName} model response`
                 );
               if (data.accommodation.price)
                 expectOrWarn(
                   modelId,
                   typeof data.accommodation.price === "number",
-                  `'accommodation.price' is not a number in ${modelName} model response`,
+                  `'accommodation.price' is not a number in ${modelName} model response`
                 );
 
               if (Array.isArray(data.accommodation.features)) {
@@ -380,13 +380,13 @@ describe("Simple callAi integration tests", () => {
                 expectOrWarn(
                   modelId,
                   typeof data.transportation.mode === "string",
-                  `'transportation.mode' is not a string in ${modelName} model response`,
+                  `'transportation.mode' is not a string in ${modelName} model response`
                 );
               if (data.transportation.cost)
                 expectOrWarn(
                   modelId,
                   typeof data.transportation.cost === "number",
-                  `'transportation.cost' is not a number in ${modelName} model response`,
+                  `'transportation.cost' is not a number in ${modelName} model response`
                 );
             }
 
@@ -398,19 +398,19 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 data.accommodation.price > 0,
-                `'accommodation.price' is not positive in ${modelName} model response`,
+                `'accommodation.price' is not positive in ${modelName} model response`
               );
             if (data.transportation?.cost)
               expectOrWarn(
                 modelId,
                 data.transportation.cost > 0,
-                `'transportation.cost' is not positive in ${modelName} model response`,
+                `'transportation.cost' is not positive in ${modelName} model response`
               );
           } catch (e) {
             expectOrWarn(modelId, false, `JSON parse error in ${modelName} model response: ${e}`);
           }
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });
@@ -490,13 +490,13 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 typeof data.difficulty === "string",
-                `'difficulty' is not a string in ${modelName} model response`,
+                `'difficulty' is not a string in ${modelName} model response`
               );
             if (data.ingredients)
               expectOrWarn(
                 modelId,
                 Array.isArray(data.ingredients),
-                `'ingredients' is not an array in ${modelName} model response`,
+                `'ingredients' is not an array in ${modelName} model response`
               );
             if (data.steps)
               expectOrWarn(modelId, Array.isArray(data.steps), `'steps' is not an array in ${modelName} model response`);
@@ -518,7 +518,7 @@ describe("Simple callAi integration tests", () => {
             expectOrWarn(modelId, false, `JSON parse error in ${modelName} model response: ${e}`);
           }
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });
@@ -571,7 +571,7 @@ describe("Simple callAi integration tests", () => {
               apiKey: process.env.CALLAI_API_KEY,
               model: modelId.id,
               schema: simpleNestedSchema,
-            },
+            }
           );
 
           // Extract JSON if wrapped in code blocks
@@ -599,24 +599,24 @@ describe("Simple callAi integration tests", () => {
                 expectOrWarn(
                   modelId,
                   typeof data.root.name === "string",
-                  `'root.name' is not a string in ${modelName} model response`,
+                  `'root.name' is not a string in ${modelName} model response`
                 );
               if (data.root.type)
                 expectOrWarn(
                   modelId,
                   typeof data.root.type === "string",
-                  `'root.type' is not a string in ${modelName} model response`,
+                  `'root.type' is not a string in ${modelName} model response`
                 );
               if (data.root.children) {
                 expectOrWarn(
                   modelId,
                   Array.isArray(data.root.children),
-                  `'root.children' is not an array in ${modelName} model response`,
+                  `'root.children' is not an array in ${modelName} model response`
                 );
                 expectOrWarn(
                   modelId,
                   data.root.children.length > 0,
-                  `'root.children' array is empty in ${modelName} model response`,
+                  `'root.children' array is empty in ${modelName} model response`
                 );
 
                 // Check first level of nesting
@@ -633,19 +633,19 @@ describe("Simple callAi integration tests", () => {
                       expectOrWarn(
                         modelId,
                         typeof firstChild.name === "string",
-                        `'firstChild.name' is not a string in ${modelName} model response`,
+                        `'firstChild.name' is not a string in ${modelName} model response`
                       );
                     if (firstChild.type)
                       expectOrWarn(
                         modelId,
                         typeof firstChild.type === "string",
-                        `'firstChild.type' is not a string in ${modelName} model response`,
+                        `'firstChild.type' is not a string in ${modelName} model response`
                       );
                     if (firstChild.children)
                       expectOrWarn(
                         modelId,
                         Array.isArray(firstChild.children),
-                        `'firstChild.children' is not an array in ${modelName} model response`,
+                        `'firstChild.children' is not an array in ${modelName} model response`
                       );
 
                     // Check for at least one file in the second level
@@ -661,13 +661,13 @@ describe("Simple callAi integration tests", () => {
                           expectOrWarn(
                             modelId,
                             typeof secondChild.name === "string",
-                            `'secondChild.name' is not a string in ${modelName} model response`,
+                            `'secondChild.name' is not a string in ${modelName} model response`
                           );
                         if (secondChild.type)
                           expectOrWarn(
                             modelId,
                             typeof secondChild.type === "string",
-                            `'secondChild.type' is not a string in ${modelName} model response`,
+                            `'secondChild.type' is not a string in ${modelName} model response`
                           );
                       }
                     }
@@ -679,7 +679,7 @@ describe("Simple callAi integration tests", () => {
             expectOrWarn(modelId, false, `JSON parse error in ${modelName} model response: ${e}`);
           }
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });

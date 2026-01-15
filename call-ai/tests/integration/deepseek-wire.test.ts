@@ -164,7 +164,7 @@ describe("DeepSeek Wire Protocol Tests", () => {
       {
         apiKey: "test-api-key",
         model: "deepseek/deepseek-chat",
-      },
+      }
     );
 
     // Verify the result

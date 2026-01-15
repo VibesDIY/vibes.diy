@@ -27,10 +27,7 @@ function extractVibeMetadata(): {
 }
 
 // runs on client side
-export function mountVibe(
-  Vibe: FunctionComponent,
-  props: Omit<MountVibeParams, "titleId" | "installId">,
-) {
+export function mountVibe(Vibe: FunctionComponent, props: Omit<MountVibeParams, "titleId" | "installId">) {
   console.log("mountVibe", Vibe, props);
   const element = document.getElementById(props.appSlug);
   if (!element) {
@@ -58,9 +55,7 @@ export function mountVibe(
     });
     root.render(providerElement);
   } else {
-    console.warn(
-      "[mount-vibe] No vibeMetadata found in URL - mounting without context",
-    );
+    console.warn("[mount-vibe] No vibeMetadata found in URL - mounting without context");
     const vibeElement = React.createElement(Vibe);
     const wrappedVibe = React.createElement(HiddenMenuWrapper, {
       menuContent: React.createElement(VibesPanel),

@@ -15,9 +15,7 @@ const StructuredMessageWrapper = ({
   isLatestMessage?: boolean;
   initialSelectedResponseId?: string;
 }) => {
-  const [selectedResponseId, setSelectedResponseId] = useState(
-    initialSelectedResponseId,
-  );
+  const [selectedResponseId, setSelectedResponseId] = useState(initialSelectedResponseId);
   const [mobilePreviewShown, setMobilePreviewShown] = useState(false);
 
   const mockNavigateToView = (view: ViewType) => {
@@ -37,8 +35,7 @@ const StructuredMessageWrapper = ({
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-600 dark:text-gray-400">
-        Selected Response ID: {selectedResponseId} | Mobile Preview:{" "}
-        {mobilePreviewShown.toString()}
+        Selected Response ID: {selectedResponseId} | Mobile Preview: {mobilePreviewShown.toString()}
       </div>
       <StructuredMessage
         segments={segments}
@@ -78,8 +75,7 @@ const meta = {
       control: "boolean",
     },
     isLatestMessage: {
-      description:
-        "Whether this is the latest message (shows streaming indicator)",
+      description: "Whether this is the latest message (shows streaming indicator)",
       control: "boolean",
     },
     initialSelectedResponseId: {
@@ -284,8 +280,7 @@ export const MultipleSegments: Story = {
       codeSegment,
       {
         type: "markdown",
-        content:
-          "This creates a fully functional todo application. You can now:",
+        content: "This creates a fully functional todo application. You can now:",
       },
       {
         type: "markdown",
@@ -330,8 +325,7 @@ export const StreamingComplete: Story = {
       codeSegment,
       {
         type: "markdown",
-        content:
-          "The todo app is now complete! You can copy the code and use it in your project.",
+        content: "The todo app is now complete! You can copy the code and use it in your project.",
       },
     ],
     isStreaming: true,

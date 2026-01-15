@@ -20,24 +20,22 @@ describe("AppCreate endpoint", () => {
     originalFetch = global.fetch;
 
     // Mock fetch to capture Discord webhook calls
-    mockFetch = vi
-      .fn()
-      .mockImplementation((url: string, _options: RequestInit) => {
-        if (url.includes("discord.com/api/webhooks")) {
-          return Promise.resolve({
-            ok: true,
-            status: 200,
-            json: () => Promise.resolve({ success: true }),
-          });
-        }
-
-        // For other fetch calls, return a basic response
+    mockFetch = vi.fn().mockImplementation((url: string, _options: RequestInit) => {
+      if (url.includes("discord.com/api/webhooks")) {
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: () => Promise.resolve({}),
+          json: () => Promise.resolve({ success: true }),
         });
+      }
+
+      // For other fetch calls, return a basic response
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({}),
       });
+    });
 
     global.fetch = mockFetch;
 
@@ -384,9 +382,7 @@ describe("AppCreate endpoint", () => {
       expect(result.app.title).toBe("Updated Title");
 
       // Get the stored app data
-      const storedAppCall = mockKV.put.mock.calls.find(
-        (call) => call[0] === "preserve-code-123",
-      );
+      const storedAppCall = mockKV.put.mock.calls.find((call) => call[0] === "preserve-code-123");
       expect(storedAppCall).toBeDefined();
 
       const storedApp = JSON.parse(storedAppCall[1]);

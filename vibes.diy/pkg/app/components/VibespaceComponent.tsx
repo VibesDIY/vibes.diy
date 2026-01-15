@@ -28,15 +28,7 @@ interface VibespaceComponentProps {
   atId?: string;
 }
 
-function StarfieldEmpty({
-  userId,
-  prefix,
-  userExists,
-}: {
-  userId: string;
-  prefix: string;
-  userExists: boolean;
-}) {
+function StarfieldEmpty({ userId, prefix, userExists }: { userId: string; prefix: string; userExists: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(null);
   const starsRef = useRef<
@@ -88,12 +80,7 @@ function StarfieldEmpty({
     initStars();
 
     // Shape drawing functions
-    const drawTriangle = (
-      ctx: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      size: number,
-    ) => {
+    const drawTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
       ctx.beginPath();
       ctx.moveTo(x, y - size);
       ctx.lineTo(x - size * 0.866, y + size * 0.5);
@@ -102,12 +89,7 @@ function StarfieldEmpty({
       ctx.fill();
     };
 
-    const drawStar = (
-      ctx: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      size: number,
-    ) => {
+    const drawStar = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
       const spikes = 5;
       const outerRadius = size;
       const innerRadius = size * 0.4;
@@ -149,9 +131,7 @@ function StarfieldEmpty({
           star.z = 1500;
           star.color = Math.random() > 0.7 ? "color" : "white";
           star.hue = Math.random() * 360;
-          star.shape = ["circle", "triangle", "star"][
-            Math.floor(Math.random() * 3)
-          ];
+          star.shape = ["circle", "triangle", "star"][Math.floor(Math.random() * 3)];
           star.rotation = Math.random() * Math.PI * 2;
         }
 
@@ -243,10 +223,7 @@ function StarfieldEmpty({
       <div className="absolute inset-0 z-10 animate-[fadeOut_0.5s_ease-out_forwards] bg-white"></div>
 
       {/* Full-screen clickable overlay */}
-      <a
-        href="/vibes/mine"
-        className="absolute inset-0 z-20 block cursor-pointer"
-      ></a>
+      <a href="/vibes/mine" className="absolute inset-0 z-20 block cursor-pointer"></a>
 
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
@@ -273,13 +250,11 @@ function StarfieldEmpty({
             className="font-bold tracking-wider text-white"
             style={{
               fontSize: "clamp(1.5rem, 4vw, 3rem)",
-              textShadow:
-                "0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.5)",
+              textShadow: "0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.5)",
               fontFamily: "Impact, Arial Black, sans-serif",
             }}
           >
-            STAR ANY PUBLISHED VIBE ON{" "}
-            <span className="text-blue-200">/VIBES/MINE</span> TO LIST IT HERE
+            STAR ANY PUBLISHED VIBE ON <span className="text-blue-200">/VIBES/MINE</span> TO LIST IT HERE
           </div>
         </div>
       )}
@@ -343,10 +318,7 @@ function StarfieldEmpty({
   );
 }
 
-export default function VibespaceComponent({
-  tildeId,
-  atId,
-}: VibespaceComponentProps): ReactElement {
+export default function VibespaceComponent({ tildeId, atId }: VibespaceComponentProps): ReactElement {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const theme = searchParams.get("theme");
@@ -371,9 +343,7 @@ export default function VibespaceComponent({
   const isLoading = !allDocsResult.docs; // If docs is undefined, it's still loading
 
   // Type the documents properly
-  const vibes = docs.sort(
-    (b, a) => (a.createdAt || 0) - (b.createdAt || 0),
-  ) as VibeDocument[];
+  const vibes = docs.sort((b, a) => (a.createdAt || 0) - (b.createdAt || 0)) as VibeDocument[];
 
   // If we have a userId from the path, assume the user exists
   // The database will be created when they first create a vibe
@@ -382,9 +352,7 @@ export default function VibespaceComponent({
 
   // If user has no vibes, show starfield
   if (!isLoading && !hasVibes) {
-    return (
-      <StarfieldEmpty userId={userId} prefix={prefix} userExists={userExists} />
-    );
+    return <StarfieldEmpty userId={userId} prefix={prefix} userExists={userExists} />;
   }
 
   // Create URL for theme switching
@@ -402,11 +370,7 @@ export default function VibespaceComponent({
     <SimpleAppLayout
       headerLeft={
         <div className="flex w-full items-center justify-between">
-          <a
-            href="/"
-            className="flex items-center px-2 py-1 hover:opacity-80"
-            title="Home"
-          >
+          <a href="/" className="flex items-center px-2 py-1 hover:opacity-80" title="Home">
             <VibesDIYLogo width={100} className="pointer-events-none" />
           </a>
           <div className="mr-4 flex items-center space-x-2 text-sm">

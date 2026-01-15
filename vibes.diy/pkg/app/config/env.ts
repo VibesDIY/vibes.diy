@@ -16,21 +16,13 @@ class vibesDiyEnv {
   readonly env = Lazy(() => callAiEnv.merge(ensureSuperThis().env));
 
   readonly PROMPT_FALL_BACKURL = Lazy(
-    () =>
-      new URL(
-        this.env().get("PROMPT_FALL_BACKURL") ??
-          "https://esm.sh/@vibes.diy/prompts/llms",
-      ),
+    () => new URL(this.env().get("PROMPT_FALL_BACKURL") ?? "https://esm.sh/@vibes.diy/prompts/llms")
   );
 
-  readonly GA_TRACKING_ID = Lazy(
-    () => this.env().get("VITE_GOOGLE_ANALYTICS_ID") ?? "",
-  );
+  readonly GA_TRACKING_ID = Lazy(() => this.env().get("VITE_GOOGLE_ANALYTICS_ID") ?? "");
 
   // Google Tag Manager
-  readonly GTM_CONTAINER_ID = Lazy(
-    () => this.env().get("VITE_GTM_CONTAINER_ID") ?? "",
-  );
+  readonly GTM_CONTAINER_ID = Lazy(() => this.env().get("VITE_GTM_CONTAINER_ID") ?? "");
 
   // PostHog
   readonly POSTHOG_KEY = Lazy(() => this.env().get("VITE_POSTHOG_KEY") ?? "");
@@ -38,25 +30,15 @@ class vibesDiyEnv {
 
   // Application Behavior
   readonly APP_MODE = Lazy(() => this.env().get("MODE") ?? "production");
-  readonly APP_BASENAME = Lazy(
-    () => this.env().get("VITE_APP_BASENAME") ?? "/",
-  );
+  readonly APP_BASENAME = Lazy(() => this.env().get("VITE_APP_BASENAME") ?? "/");
 
   // Fireproof Connect & Auth
-  readonly CONNECT_URL = Lazy(
-    () =>
-      this.env().get("VITE_CONNECT_URL") ??
-      "https://connect.fireproof.direct/token",
-  );
-  readonly CONNECT_API_URL = Lazy(
-    () =>
-      this.env().get("VITE_CONNECT_API_URL") ??
-      "https://connect.fireproof.direct/api",
-  );
+  readonly CONNECT_URL = Lazy(() => this.env().get("VITE_CONNECT_URL") ?? "https://connect.fireproof.direct/token");
+  readonly CONNECT_API_URL = Lazy(() => this.env().get("VITE_CONNECT_API_URL") ?? "https://connect.fireproof.direct/api");
   readonly CLOUD_SESSION_TOKEN_PUBLIC_KEY = Lazy(
     () =>
       this.env().get("VITE_CLOUD_SESSION_TOKEN_PUBLIC") ??
-      "zeWndr5LEoaySgKSo2aZniYqWtx2vKfVz4dd5GQwAuby3fPKcNyLp6mFpf9nCRFYbUcPiN2YT1ZApJ6f3WipiVjuMvyP1JYgHwkaoxDBpJiLoz1grRYkbao9ntukNNo2TQ4uSznUmNPrr4ZxjihoavHwB1zLhLNp5Qj78fBkjgEMA",
+      "zeWndr5LEoaySgKSo2aZniYqWtx2vKfVz4dd5GQwAuby3fPKcNyLp6mFpf9nCRFYbUcPiN2YT1ZApJ6f3WipiVjuMvyP1JYgHwkaoxDBpJiLoz1grRYkbao9ntukNNo2TQ4uSznUmNPrr4ZxjihoavHwB1zLhLNp5Qj78fBkjgEMA"
   );
 
   readonly CLERK_PUBLISHABLE_KEY = Lazy(() => {
@@ -65,11 +47,8 @@ class vibesDiyEnv {
       return envKey;
     }
     // Use live key ONLY for vibes.diy, test key for everything else
-    const isProduction =
-      runtimeFn().isBrowser && window.location.hostname === "vibes.diy";
-    return isProduction
-      ? "pk_live_Y2xlcmsudmliZXMuZGl5JA"
-      : "pk_test_c2luY2VyZS1jaGVldGFoLTMwLmNsZXJrLmFjY291bnRzLmRldiQ";
+    const isProduction = runtimeFn().isBrowser && window.location.hostname === "vibes.diy";
+    return isProduction ? "pk_live_Y2xlcmsudmliZXMuZGl5JA" : "pk_test_c2luY2VyZS1jaGVldGFoLTMwLmNsZXJrLmFjY291bnRzLmRldiQ";
   });
 
   // Vibes Service API
@@ -79,31 +58,21 @@ class vibesDiyEnv {
       return new URL(envUrl).href;
     }
     // Use production worker ONLY for vibes.diy, preview worker for everything else
-    const isProduction =
-      runtimeFn().isBrowser && window.location.hostname === "vibes.diy";
-    const defaultUrl = isProduction
-      ? "https://vibes-diy-api.com"
-      : "https://vibes-hosting-v2-preview.jchris.workers.dev";
+    const isProduction = runtimeFn().isBrowser && window.location.hostname === "vibes.diy";
+    const defaultUrl = isProduction ? "https://vibes-diy-api.com" : "https://vibes-hosting-v2-preview.jchris.workers.dev";
     return new URL(defaultUrl).href;
   });
   readonly APP_HOST_BASE_URL = Lazy(
-    () =>
-      new URL(
-        this.env().get("VITE_APP_HOST_BASE_URL") ?? "https://vibesdiy.app",
-      ).href, // Keep trailing slash - standardize on YES trailing slash
+    () => new URL(this.env().get("VITE_APP_HOST_BASE_URL") ?? "https://vibesdiy.app").href // Keep trailing slash - standardize on YES trailing slash
   );
 
   // CallAI Endpoint
   readonly CALLAI_ENDPOINT = Lazy(
-    () =>
-      new URL(this.env().get("VITE_CALLAI_ENDPOINT") ?? this.API_BASE_URL())
-        .href, // Keep trailing slash - standardize on YES trailing slash
+    () => new URL(this.env().get("VITE_CALLAI_ENDPOINT") ?? this.API_BASE_URL()).href // Keep trailing slash - standardize on YES trailing slash
   );
 
   // Chat History Database
-  readonly SETTINGS_DBNAME = Lazy(
-    () => this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats",
-  );
+  readonly SETTINGS_DBNAME = Lazy(() => this.env().get("VITE_VIBES_CHAT_HISTORY") ?? "vibes-chats");
 }
 
 export const VibesDiyEnv = new vibesDiyEnv();

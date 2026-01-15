@@ -6,11 +6,7 @@ import SessionSidebar from "./SessionSidebar.js";
 import { BrutalistCard } from "./vibes/BrutalistCard.js";
 import { VibesButton } from "./vibes/VibesButton/index.js";
 import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
-import {
-  partyPlannerPrompt,
-  progressTrackerPrompt,
-  jamSessionPrompt,
-} from "../data/quick-suggestions-data.js";
+import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
 import { featuredModels } from "../data/models.js";
 import { Toaster } from "react-hot-toast";
 
@@ -18,9 +14,7 @@ interface NewSessionViewProps {
   onSessionCreate: (sessionId: string) => void;
 }
 
-export default function NewSessionView({
-  onSessionCreate,
-}: NewSessionViewProps) {
+export default function NewSessionView({ onSessionCreate }: NewSessionViewProps) {
   const chatState = useNewSessionChat(onSessionCreate);
 
   // Sidebar state
@@ -41,12 +35,11 @@ export default function NewSessionView({
         if (chatState.inputRef.current) {
           chatState.inputRef.current.focus();
           // Move cursor to end of text
-          chatState.inputRef.current.selectionStart =
-            chatState.inputRef.current.selectionEnd = suggestion.length;
+          chatState.inputRef.current.selectionStart = chatState.inputRef.current.selectionEnd = suggestion.length;
         }
       }, 0);
     },
-    [chatState.setInput, chatState.inputRef],
+    [chatState.setInput, chatState.inputRef]
   );
 
   return (
@@ -58,12 +51,7 @@ export default function NewSessionView({
         <div className="px-8 pb-8 pt-0">
           {/* Hamburger menu button - top left in normal flow with z-index */}
           <div className="mb-8 ml-6 relative z-20">
-            <VibesSwitch
-              size={75}
-              isActive={isSidebarVisible}
-              onToggle={setIsSidebarVisible}
-              className="cursor-pointer"
-            />
+            <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
           </div>
           <div
             style={{
@@ -81,25 +69,13 @@ export default function NewSessionView({
 
             {/* Prompt suggestions section */}
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <VibesButton
-                variant="blue"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(partyPlannerPrompt)}
-              >
+              <VibesButton variant="blue" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(partyPlannerPrompt)}>
                 Party Planner
               </VibesButton>
-              <VibesButton
-                variant="red"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(progressTrackerPrompt)}
-              >
+              <VibesButton variant="red" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(progressTrackerPrompt)}>
                 Random App
               </VibesButton>
-              <VibesButton
-                variant="yellow"
-                style={{ flex: "1" }}
-                onClick={() => handleSelectSuggestion(jamSessionPrompt)}
-              >
+              <VibesButton variant="yellow" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(jamSessionPrompt)}>
                 Jam Session
               </VibesButton>
             </div>
@@ -148,11 +124,7 @@ export default function NewSessionView({
           </div>
         </div>
       </div>
-      <SessionSidebar
-        isVisible={isSidebarVisible}
-        onClose={closeSidebar}
-        sessionId=""
-      />
+      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
     </>
   );
 }

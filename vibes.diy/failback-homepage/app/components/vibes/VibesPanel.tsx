@@ -34,25 +34,16 @@ export interface VibesPanelProps {
  */
 type PanelMode = "default" | "invite";
 
-export function VibesPanel({
-  style,
-  className,
-  baseURL,
-  token,
-}: VibesPanelProps = {}) {
+export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps = {}) {
   const emailId = useId();
   const isMobile = useIsMobile();
   const [mode, setMode] = useState<PanelMode>("default");
   const [email, setEmail] = useState("");
-  const [inviteStatus, setInviteStatus] = useState<
-    "idle" | "sending" | "success" | "error"
-  >("idle");
+  const [inviteStatus, setInviteStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [inviteMessage, setInviteMessage] = useState("");
 
   // Safe browser check for base URL
-  const defaultBaseURL = runtimeFn().isBrowser
-    ? window.location.origin
-    : "https://vibes.diy";
+  const defaultBaseURL = runtimeFn().isBrowser ? window.location.origin : "https://vibes.diy";
   const effectiveBaseURL = baseURL ?? defaultBaseURL;
 
   const handleInviteClick = () => {
@@ -93,7 +84,7 @@ export function VibesPanel({
           right: "read",
           token,
         },
-      }),
+      })
     );
   };
 
@@ -105,19 +96,13 @@ export function VibesPanel({
         message?: string;
       }>;
       setInviteStatus("success");
-      setInviteMessage(
-        customEvent.detail?.message ||
-          `Invitation sent to ${customEvent.detail?.email}!`,
-      );
+      setInviteMessage(customEvent.detail?.message || `Invitation sent to ${customEvent.detail?.email}!`);
     };
 
     const handleShareError = (event: Event) => {
       const customEvent = event as CustomEvent<{ error: { message: string } }>;
       setInviteStatus("error");
-      setInviteMessage(
-        customEvent.detail?.error?.message ||
-          "Failed to send invitation. Please try again.",
-      );
+      setInviteMessage(customEvent.detail?.error?.message || "Failed to send invitation. Please try again.");
     };
 
     document.addEventListener("vibes-share-success", handleShareSuccess);
@@ -131,11 +116,7 @@ export function VibesPanel({
 
   return (
     <div style={getOuterContainerStyle(style)} className={className}>
-      <LabelContainer
-        label="Launcher"
-        disappear
-        colorVariant={mode === "invite" ? "yellow" : "gray"}
-      >
+      <LabelContainer label="Launcher" disappear colorVariant={mode === "invite" ? "yellow" : "gray"}>
         <div style={getButtonContainerStyle(isMobile)}>
           {mode === "invite" ? (
             // Invite mode form
@@ -151,10 +132,7 @@ export function VibesPanel({
               </VibesButton>
               {inviteStatus === "idle" ? (
                 // Show form when idle
-                <form
-                  onSubmit={handleInviteSubmit}
-                  style={getInviteFormStyle(isMobile)}
-                >
+                <form onSubmit={handleInviteSubmit} style={getInviteFormStyle(isMobile)}>
                   <label htmlFor={emailId} style={getInviteLabelStyle()}>
                     Invite by email
                   </label>
@@ -168,12 +146,7 @@ export function VibesPanel({
                     autoComplete="email"
                     required
                   />
-                  <VibesButton
-                    variant={YELLOW}
-                    buttonType="form"
-                    type="submit"
-                    disabled={!email.trim()}
-                  >
+                  <VibesButton variant={YELLOW} buttonType="form" type="submit" disabled={!email.trim()}>
                     Submit
                   </VibesButton>
                 </form>
@@ -184,13 +157,7 @@ export function VibesPanel({
                   role="status"
                   aria-live="polite"
                   size="sm"
-                  variant={
-                    inviteStatus === "sending"
-                      ? "default"
-                      : inviteStatus === "error"
-                        ? "error"
-                        : "success"
-                  }
+                  variant={inviteStatus === "sending" ? "default" : inviteStatus === "error" ? "error" : "success"}
                   style={getInviteStatusStyle()}
                 >
                   {inviteStatus === "sending" ? "Inviting..." : inviteMessage}
@@ -203,32 +170,16 @@ export function VibesPanel({
           ) : (
             // Default buttons
             <>
-              <VibesButton
-                variant={BLUE}
-                onClick={handleLogoutClick}
-                icon="login"
-              >
+              <VibesButton variant={BLUE} onClick={handleLogoutClick} icon="login">
                 Logout
               </VibesButton>
-              <VibesButton
-                variant={RED}
-                onClick={handleChangeCodeClick}
-                icon="remix"
-              >
+              <VibesButton variant={RED} onClick={handleChangeCodeClick} icon="remix">
                 Remix
               </VibesButton>
-              <VibesButton
-                variant={YELLOW}
-                onClick={handleInviteClick}
-                icon="invite"
-              >
+              <VibesButton variant={YELLOW} onClick={handleInviteClick} icon="invite">
                 Invite
               </VibesButton>
-              <VibesButton
-                variant={GRAY}
-                icon="settings"
-                onClick={() => (window.location.href = "https://vibes.diy/")}
-              >
+              <VibesButton variant={GRAY} icon="settings" onClick={() => (window.location.href = "https://vibes.diy/")}>
                 Home
               </VibesButton>
             </>

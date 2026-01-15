@@ -2,7 +2,7 @@
  * Utility functions for managing component styling
  */
 
-import type { ImgGenClasses } from '@vibes.diy/use-vibes-types';
+import type { ImgGenClasses } from "@vibes.diy/use-vibes-types";
 
 export type { ImgGenClasses };
 
@@ -31,9 +31,9 @@ export function combineClasses(...classes: (string | boolean | null | undefined)
 
   // For each imggen-* class, add a corresponding img-gen-* class for backward compatibility
   validClasses.forEach((cls) => {
-    if (cls.startsWith('imggen-')) {
+    if (cls.startsWith("imggen-")) {
       // Convert imggen-root to img-gen-root, etc.
-      const legacyClass = cls.replace('imggen-', 'img-gen-');
+      const legacyClass = cls.replace("imggen-", "img-gen-");
       // Only add if not already present
       if (!allClasses.includes(legacyClass)) {
         allClasses.push(legacyClass);
@@ -41,7 +41,7 @@ export function combineClasses(...classes: (string | boolean | null | undefined)
     }
   });
 
-  return allClasses.join(' ');
+  return allClasses.join(" ");
 }
 
 /**

@@ -49,12 +49,8 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     };
   }
 
-  async request<Q extends { auth?: DashAuthType }, S>(
-    req: Q,
-  ): Promise<ResultVibesDiy<S>> {
-    const rDashAuth = await (req.auth
-      ? Promise.resolve(Result.Ok(req.auth))
-      : this.cfg.getToken());
+  async request<Q extends { auth?: DashAuthType }, S>(req: Q): Promise<ResultVibesDiy<S>> {
+    const rDashAuth = await (req.auth ? Promise.resolve(Result.Ok(req.auth)) : this.cfg.getToken());
     if (rDashAuth.isErr()) {
       return Result.Err<S, VibesDiyError>({
         type: "vibes.diy.error",
@@ -82,7 +78,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
           Accept: "application/json",
         },
         body: reqBody,
-      }),
+      })
     );
     if (rres.isErr()) {
       const err = rres.Err();
@@ -109,7 +105,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
   }
 
   async ensureAppSlug(
-    req: Omit<ReqEnsureAppSlug, "type" | "auth"> & { auth?: DashAuthType },
+    req: Omit<ReqEnsureAppSlug, "type" | "auth"> & { auth?: DashAuthType }
   ): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-ensure-app-slug" });
   }
