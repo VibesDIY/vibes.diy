@@ -1,11 +1,10 @@
 import { readFileSync } from "node:fs";
 
 import {
-  LineStreamParser,
-  LineStreamState,
   SSEDataParser,
   JsonParser,
 } from "call-ai";
+import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
 import { describe, it, expect, vi } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";

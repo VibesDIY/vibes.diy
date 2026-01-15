@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 
-import { LineStreamParser, LineStreamState, SSEDataParser, SseEvent, SseData } from "call-ai";
+import { SSEDataParser, SseEvent, SseData } from "call-ai";
+import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
 import { describe, it, expect } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";

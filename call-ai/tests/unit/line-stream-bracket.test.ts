@@ -1,4 +1,5 @@
-import { LineStreamParser, LineStreamState, LineEvent } from "call-ai";
+import { LineEvent } from "call-ai";
+import { LineStreamParser, LineStreamState } from "../../pkg/parser/line-stream.js";
 import { expect, it } from "vitest";
 
 it("Bracket-Test", async () => {

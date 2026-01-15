@@ -1,4 +1,5 @@
-import { LineStreamParser, SSEDataParser, JsonParser, OpenRouterParser, SegmentAccumulator } from "call-ai";
+import { SSEDataParser, JsonParser, OpenRouterParser, SegmentAccumulator } from "call-ai";
+import { LineStreamParser } from "../../pkg/parser/line-stream.js";
 
 /**
  * Creates a random number generator, optionally seeded for reproducibility.
