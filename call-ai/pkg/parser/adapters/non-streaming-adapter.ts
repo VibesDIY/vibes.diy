@@ -7,33 +7,51 @@
 
 import { ParserEvento } from "../parser-evento.js";
 
-type ContentBlock = { type?: string; text?: string; input?: unknown };
-type ToolCall = { function?: { arguments?: string } };
-type FunctionCall = { arguments?: string };
-type Message = {
-  content?: string | ContentBlock[];
-  role?: string;
-  tool_calls?: ToolCall[];
-  function_call?: FunctionCall;
-  images?: Array<{ type: string; image_url?: { url: string } }>;
-};
-type Choice = {
-  message?: Message;
-  delta?: Message;
-  text?: string;
-  finish_reason?: string | null;
-};
-type Usage = { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number; cost?: number };
+interface ContentBlock {
+  readonly type?: string;
+  readonly text?: string;
+  readonly input?: unknown;
+}
+
+interface ToolCall {
+  readonly function?: { readonly arguments?: string };
+}
+
+interface FunctionCall {
+  readonly arguments?: string;
+}
+
+interface Message {
+  readonly content?: string | ContentBlock[];
+  readonly role?: string;
+  readonly tool_calls?: ToolCall[];
+  readonly function_call?: FunctionCall;
+  readonly images?: ReadonlyArray<{ readonly type: string; readonly image_url?: { readonly url: string } }>;
+}
+
+interface Choice {
+  readonly message?: Message;
+  readonly delta?: Message;
+  readonly text?: string;
+  readonly finish_reason?: string | null;
+}
+
+interface Usage {
+  readonly prompt_tokens?: number;
+  readonly completion_tokens?: number;
+  readonly total_tokens?: number;
+  readonly cost?: number;
+}
 
 interface Response {
-  id?: string;
-  provider?: string;
-  model?: string;
-  created?: number;
-  system_fingerprint?: string;
-  choices?: Choice[];
-  usage?: Usage;
-  data?: Array<{ b64_json?: string; url?: string }>;
+  readonly id?: string;
+  readonly provider?: string;
+  readonly model?: string;
+  readonly created?: number;
+  readonly system_fingerprint?: string;
+  readonly choices?: Choice[];
+  readonly usage?: Usage;
+  readonly data?: ReadonlyArray<{ readonly b64_json?: string; readonly url?: string }>;
 }
 
 export class NonStreamingAdapter {
