@@ -23,10 +23,10 @@ describe("Parser register style tests", () => {
         case "or.meta": events({ type: "meta", payload: evt }); break;
         case "or.usage": events({ type: "usage", payload: evt }); break;
         case "or.done": events({ type: "done", payload: evt }); break;
-        case "textFragment":
-        case "codeStart":
-        case "codeFragment":
-        case "codeEnd":
+        case "text.fragment":
+        case "code.start":
+        case "code.fragment":
+        case "code.end":
           events(evt);
           break;
       }
@@ -41,26 +41,26 @@ describe("Parser register style tests", () => {
     });
 
     // Assert text fragment events for markdown before code
-    const textFragments = events.mock.calls.filter((c) => c[0].type === "textFragment");
+    const textFragments = events.mock.calls.filter((c) => c[0].type === "text.fragment");
     expect(textFragments.length).toBeGreaterThan(0);
     // First text should be start of the response
     expect(textFragments[0][0].fragment).toBe("This");
 
     // Assert code block events
-    const codeStarts = events.mock.calls.filter((c) => c[0].type === "codeStart");
+    const codeStarts = events.mock.calls.filter((c) => c[0].type === "code.start");
     expect(codeStarts.length).toBe(1);
     expect(codeStarts[0][0]).toMatchObject({
-      type: "codeStart",
+      type: "code.start",
       language: "jsx",
     });
 
-    const codeFragments = events.mock.calls.filter((c) => c[0].type === "codeFragment");
+    const codeFragments = events.mock.calls.filter((c) => c[0].type === "code.fragment");
     expect(codeFragments.length).toBeGreaterThan(0);
     // Code should contain useFireproof import
     const allCode = codeFragments.map((c) => c[0].fragment).join("");
     expect(allCode).toContain("useFireproof");
 
-    const codeEnds = events.mock.calls.filter((c) => c[0].type === "codeEnd");
+    const codeEnds = events.mock.calls.filter((c) => c[0].type === "code.end");
     expect(codeEnds.length).toBe(1);
 
     // Assert done event
@@ -93,10 +93,10 @@ describe("Parser register style tests", () => {
         case "or.meta": eventTypes.push("meta"); break;
         case "or.usage": eventTypes.push("usage"); break;
         case "or.done": eventTypes.push("done"); break;
-        case "textFragment":
-        case "codeStart":
-        case "codeFragment":
-        case "codeEnd":
+        case "text.fragment":
+        case "code.start":
+        case "code.fragment":
+        case "code.end":
           eventTypes.push(evt.type);
           break;
       }
@@ -112,15 +112,15 @@ describe("Parser register style tests", () => {
     expect(lastFew).toContain("done");
     expect(lastFew).toContain("usage");
 
-    // Code block sequence should be: codeStart -> codeFragment(s) -> codeEnd
-    const codeStartIdx = eventTypes.indexOf("codeStart");
-    const codeEndIdx = eventTypes.indexOf("codeEnd");
+    // Code block sequence should be: code.start -> code.fragment(s) -> code.end
+    const codeStartIdx = eventTypes.indexOf("code.start");
+    const codeEndIdx = eventTypes.indexOf("code.end");
     expect(codeStartIdx).toBeGreaterThan(0);
     expect(codeEndIdx).toBeGreaterThan(codeStartIdx);
 
-    // All codeFragments should be between codeStart and codeEnd
+    // All code.fragments should be between code.start and code.end
     for (let i = 0; i < eventTypes.length; i++) {
-      if (eventTypes[i] === "codeFragment") {
+      if (eventTypes[i] === "code.fragment") {
         expect(i).toBeGreaterThan(codeStartIdx);
         expect(i).toBeLessThan(codeEndIdx);
       }

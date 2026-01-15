@@ -31,7 +31,7 @@ export function createCodeBlockHandler(): ParserHandler {
   function emitText(fragment: string, emit: (evt: TextFragment) => void): void {
     if (fragment.length === 0) return;
     emit({
-      type: "textFragment",
+      type: "text.fragment",
       seq: seq++,
       fragment,
     });
@@ -39,7 +39,7 @@ export function createCodeBlockHandler(): ParserHandler {
 
   function emitCodeStart(blockId: string, language: string | undefined, emit: (evt: CodeStart) => void): void {
     emit({
-      type: "codeStart",
+      type: "code.start",
       seq: seq++,
       blockId,
       language,
@@ -49,7 +49,7 @@ export function createCodeBlockHandler(): ParserHandler {
   function emitCodeFragment(blockId: string, fragment: string, emit: (evt: CodeFragment) => void): void {
     if (fragment.length === 0) return;
     emit({
-      type: "codeFragment",
+      type: "code.fragment",
       seq: seq++,
       blockId,
       fragment,
@@ -58,7 +58,7 @@ export function createCodeBlockHandler(): ParserHandler {
 
   function emitCodeEnd(blockId: string, emit: (evt: CodeEnd) => void): void {
     emit({
-      type: "codeEnd",
+      type: "code.end",
       seq: seq++,
       blockId,
     });

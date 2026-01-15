@@ -78,27 +78,27 @@ export const toolComplete = type({
 
 // Code block events
 export const textFragment = type({
-  type: "'textFragment'",
+  type: "'text.fragment'",
   seq: "number",
   fragment: "string",
 });
 
 export const codeStart = type({
-  type: "'codeStart'",
+  type: "'code.start'",
   seq: "number",
   blockId: "string",
   "language?": "string",
 });
 
 export const codeFragment = type({
-  type: "'codeFragment'",
+  type: "'code.fragment'",
   seq: "number",
   blockId: "string",
   fragment: "string",
 });
 
 export const codeEnd = type({
-  type: "'codeEnd'",
+  type: "'code.end'",
   seq: "number",
   blockId: "string",
 });

@@ -57,13 +57,13 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "textFragment") events.push(evt as TextFragmentEvent);
+        if (evt.type === "text.fragment") events.push(evt as TextFragmentEvent);
       });
 
       simulateDelta(orParser, "Hello world");
 
       expect(events).toHaveLength(1);
-      expect(events[0].type).toBe("textFragment");
+      expect(events[0].type).toBe("text.fragment");
       expect((events[0] as TextFragmentEvent).fragment).toBe("Hello world");
     });
 
@@ -71,25 +71,25 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-        if (["textFragment", "codeStart", "codeFragment", "codeEnd"].includes(evt.type)) {
+        if (["text.fragment", "code.start", "code.fragment", "code.end"].includes(evt.type)) {
           events.push(evt as CodeBlockEvent);
         }
       });
 
       simulateDelta(orParser, "Here is code:\n```js\nconst x = 1;\n```\nDone!");
 
-      // Should have: text, codeStart, codeFragment, codeEnd, text
+      // Should have: text, code.start, code.fragment, code.end, text
       const types = events.map((e) => e.type);
-      expect(types).toContain("textFragment");
-      expect(types).toContain("codeStart");
-      expect(types).toContain("codeFragment");
-      expect(types).toContain("codeEnd");
+      expect(types).toContain("text.fragment");
+      expect(types).toContain("code.start");
+      expect(types).toContain("code.fragment");
+      expect(types).toContain("code.end");
 
-      const codeStart = events.find((e) => e.type === "codeStart") as CodeStartEvent;
-      expect(codeStart.language).toBe("js");
+      const codeStartEvt = events.find((e) => e.type === "code.start") as CodeStartEvent;
+      expect(codeStartEvt.language).toBe("js");
 
-      const codeFragments = events.filter((e) => e.type === "codeFragment") as CodeFragmentEvent[];
-      const code = codeFragments.map((f) => f.fragment).join("");
+      const codeFragmentEvts = events.filter((e) => e.type === "code.fragment") as CodeFragmentEvent[];
+      const code = codeFragmentEvts.map((f) => f.fragment).join("");
       expect(code).toBe("const x = 1;\n");
     });
 
@@ -97,7 +97,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "codeStart") events.push(evt as CodeStartEvent);
+        if (evt.type === "code.start") events.push(evt as CodeStartEvent);
       });
 
       simulateDelta(orParser, "```typescript\ncode\n```\n");
@@ -110,7 +110,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "codeStart") events.push(evt as CodeStartEvent);
+        if (evt.type === "code.start") events.push(evt as CodeStartEvent);
       });
 
       simulateDelta(orParser, "```\ncode\n```\n");
@@ -125,7 +125,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-         if (["codeStart", "codeEnd"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+         if (["code.start", "code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       simulateDelta(orParser, "Start `");
@@ -133,15 +133,15 @@ describe("CodeBlockHandler", () => {
       simulateDelta(orParser, "``\nEnd");
 
       const types = events.map((e) => e.type);
-      expect(types).toContain("codeStart");
-      expect(types).toContain("codeEnd");
+      expect(types).toContain("code.start");
+      expect(types).toContain("code.end");
     });
 
     it("handles code content split across deltas", () => {
       const orParser = createParserStack();
       const codeFragments: string[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "codeFragment") codeFragments.push((evt as CodeFragmentEvent).fragment);
+        if (evt.type === "code.fragment") codeFragments.push((evt as CodeFragmentEvent).fragment);
       });
 
       simulateDelta(orParser, "```js\nfunc");
@@ -156,7 +156,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-         if (["codeStart", "codeFragment", "codeEnd"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+         if (["code.start", "code.fragment", "code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       const text = "```js\nx\n```\n";
@@ -165,9 +165,9 @@ describe("CodeBlockHandler", () => {
       }
 
       const types = events.map((e) => e.type);
-      expect(types).toContain("codeStart");
-      expect(types).toContain("codeFragment");
-      expect(types).toContain("codeEnd");
+      expect(types).toContain("code.start");
+      expect(types).toContain("code.fragment");
+      expect(types).toContain("code.end");
     });
   });
 
@@ -177,8 +177,8 @@ describe("CodeBlockHandler", () => {
       const codeStarts: CodeStartEvent[] = [];
       const codeEnds: CodeEndEvent[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "codeStart") codeStarts.push(evt as CodeStartEvent);
-        if (evt.type === "codeEnd") codeEnds.push(evt as CodeEndEvent);
+        if (evt.type === "code.start") codeStarts.push(evt as CodeStartEvent);
+        if (evt.type === "code.end") codeEnds.push(evt as CodeEndEvent);
       });
 
       simulateDelta(orParser, "```js\nfirst\n```\nText\n```py\nsecond\n```\n");
@@ -197,7 +197,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const textFragments: string[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "textFragment") textFragments.push((evt as TextFragmentEvent).fragment);
+        if (evt.type === "text.fragment") textFragments.push((evt as TextFragmentEvent).fragment);
       });
 
       simulateDelta(orParser, "Use `code` inline");
@@ -210,7 +210,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const textFragments: string[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "textFragment") textFragments.push((evt as TextFragmentEvent).fragment);
+        if (evt.type === "text.fragment") textFragments.push((evt as TextFragmentEvent).fragment);
       });
 
       simulateDelta(orParser, "Not a fence: ``");
@@ -224,7 +224,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const codeFragments: string[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "codeFragment") codeFragments.push((evt as CodeFragmentEvent).fragment);
+        if (evt.type === "code.fragment") codeFragments.push((evt as CodeFragmentEvent).fragment);
       });
 
       simulateDelta(orParser, "```js\nconst s = `template`;\n```\n");
@@ -237,21 +237,21 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-         if (["codeEnd"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+         if (["code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       simulateDelta(orParser, "```js\nincomplete code");
       finalizeParser(orParser);
 
-      const codeEnd = events.find((e) => e.type === "codeEnd");
-      expect(codeEnd).toBeDefined();
+      const codeEndEvt = events.find((e) => e.type === "code.end");
+      expect(codeEndEvt).toBeDefined();
     });
 
     it("auto-finalizes block when stream ends", () => {
       const orParser = createParserStack();
       const ends: CodeEndEvent[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "codeEnd") ends.push(evt as CodeEndEvent);
+        if (evt.type === "code.end") ends.push(evt as CodeEndEvent);
       });
 
       // Start a fence but do not close it in the payload
@@ -266,18 +266,18 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-        if (["codeStart", "codeEnd", "textFragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+        if (["code.start", "code.end", "text.fragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       // Closing fence with trailing spaces: ```   \n
       simulateDelta(orParser, "```js\ncode\n```   \nMore text");
 
       const types = events.map((e) => e.type);
-      expect(types).toContain("codeStart");
-      expect(types).toContain("codeEnd");
+      expect(types).toContain("code.start");
+      expect(types).toContain("code.end");
       // Should have text after code block
       const textAfter = events.filter(
-        (e) => e.type === "textFragment" && (e as TextFragmentEvent).fragment.includes("More text"),
+        (e) => e.type === "text.fragment" && (e as TextFragmentEvent).fragment.includes("More text"),
       );
       expect(textAfter.length).toBeGreaterThan(0);
     });
@@ -286,18 +286,18 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-        if (["codeStart", "codeEnd", "textFragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+        if (["code.start", "code.end", "text.fragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       // Closing fence with CRLF: ```\r\n
       simulateDelta(orParser, "```js\ncode\n```\r\nMore text");
 
       const types = events.map((e) => e.type);
-      expect(types).toContain("codeStart");
-      expect(types).toContain("codeEnd");
+      expect(types).toContain("code.start");
+      expect(types).toContain("code.end");
       // Should have text after code block (may include the \r in "More text")
       const textAfter = events.filter(
-        (e) => e.type === "textFragment" && (e as TextFragmentEvent).fragment.includes("More text"),
+        (e) => e.type === "text.fragment" && (e as TextFragmentEvent).fragment.includes("More text"),
       );
       expect(textAfter.length).toBeGreaterThan(0);
     });
@@ -308,7 +308,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-         if (["codeStart", "codeFragment", "codeEnd", "textFragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+         if (["code.start", "code.fragment", "code.end", "text.fragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       simulateDelta(orParser, "Text\n```js\ncode\n```\nMore");
@@ -327,8 +327,8 @@ describe("CodeBlockHandler", () => {
       const codeStarts: CodeStartEvent[] = [];
       const codeEnds: CodeEndEvent[] = [];
       orParser.onEvent((evt) => {
-        if (evt.type === "codeStart") codeStarts.push(evt as CodeStartEvent);
-        if (evt.type === "codeEnd") codeEnds.push(evt as CodeEndEvent);
+        if (evt.type === "code.start") codeStarts.push(evt as CodeStartEvent);
+        if (evt.type === "code.end") codeEnds.push(evt as CodeEndEvent);
       });
 
       feedFixtureRandomly(orParser, fireproofStreamFixture, { seed: 12345 });

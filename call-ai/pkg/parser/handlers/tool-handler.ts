@@ -4,6 +4,7 @@
  * Supports:
  * - Streaming format: choices[].delta.tool_calls[]
  * - Non-streaming format: choices[].message.tool_calls[]
+ * - Legacy Claude format: type: "tool_use" with name/input fields
  */
 
 import {
@@ -30,9 +31,23 @@ interface MessageToolCall {
   readonly function?: { readonly name?: string; readonly arguments?: string };
 }
 
+// Legacy Claude tool_use format
+interface LegacyToolUse {
+  readonly type: "tool_use";
+  readonly id?: string;
+  readonly name?: string;
+  readonly input?: unknown;
+}
+
 interface Choice {
-  readonly delta?: { readonly tool_calls?: DeltaToolCall[] };
-  readonly message?: { readonly tool_calls?: MessageToolCall[] };
+  readonly delta?: {
+    readonly tool_calls?: DeltaToolCall[];
+    readonly content?: LegacyToolUse[];
+  };
+  readonly message?: {
+    readonly tool_calls?: MessageToolCall[];
+    readonly content?: LegacyToolUse[];
+  };
 }
 
 export const toolHandler: ParserHandler = {
@@ -46,6 +61,10 @@ export const toolHandler: ParserHandler = {
   handle: (ctx) => {
     const event = ctx.event as OrJson;
     const json = event.json as Record<string, unknown>;
+
+    // Handle legacy Claude formats first (they don't always have choices)
+    handleLegacyToolUse(ctx, json);
+
     const choices = json.choices as Choice[] | undefined;
     if (!choices?.length) return;
 
@@ -59,6 +78,20 @@ export const toolHandler: ParserHandler = {
     // Handle non-streaming format: message.tool_calls[]
     if (choice.message?.tool_calls) {
       handleNonStreamingToolCalls(ctx, choice.message.tool_calls);
+    }
+
+    // Handle legacy Claude format in choices[].message.content or delta.content
+    if (Array.isArray(choice.message?.content)) {
+      const toolUseBlock = choice.message.content.find((block) => block.type === "tool_use");
+      if (toolUseBlock) {
+        emitLegacyToolComplete(ctx, toolUseBlock);
+      }
+    }
+    if (Array.isArray(choice.delta?.content)) {
+      const toolUseBlock = choice.delta.content.find((block) => block.type === "tool_use");
+      if (toolUseBlock) {
+        emitLegacyToolComplete(ctx, toolUseBlock);
+      }
     }
   },
 };
@@ -99,4 +132,34 @@ function handleNonStreamingToolCalls(ctx: HandlerContext, toolCalls: MessageTool
       } as ToolComplete);
     }
   }
+}
+
+/**
+ * Handle legacy Claude tool_use formats:
+ * - Direct: { type: "tool_use", id, name, input }
+ * - With stop_reason: { stop_reason: "tool_use", content: [{ type: "tool_use", ... }] }
+ */
+function handleLegacyToolUse(ctx: HandlerContext, json: Record<string, unknown>): void {
+  // Format 1: Direct type: "tool_use"
+  if (json.type === "tool_use") {
+    emitLegacyToolComplete(ctx, json as unknown as LegacyToolUse);
+    return;
+  }
+
+  // Format 2: stop_reason: "tool_use" with content array
+  if (json.stop_reason === "tool_use" && Array.isArray(json.content)) {
+    const toolUseBlock = (json.content as LegacyToolUse[]).find((block) => block.type === "tool_use");
+    if (toolUseBlock) {
+      emitLegacyToolComplete(ctx, toolUseBlock);
+    }
+  }
+}
+
+function emitLegacyToolComplete(ctx: HandlerContext, toolUse: LegacyToolUse): void {
+  ctx.emit({
+    type: "tool.complete",
+    callId: toolUse.id ?? crypto.randomUUID(),
+    functionName: toolUse.name,
+    arguments: typeof toolUse.input === "string" ? toolUse.input : JSON.stringify(toolUse.input ?? {}),
+  } as ToolComplete);
 }

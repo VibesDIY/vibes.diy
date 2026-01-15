@@ -20,6 +20,14 @@ export class OpenRouterParser implements OrEventSource {
     this.adapter.processChunk(chunk);
   }
 
+  /**
+   * Finalize the stream - triggers or.stream-end event.
+   * Call this when all chunks have been processed.
+   */
+  finalize(): void {
+    this.evento.trigger({ type: "or.stream-end" });
+  }
+
   register(handler: ParserHandler): void {
     this.evento.push(handler);
   }

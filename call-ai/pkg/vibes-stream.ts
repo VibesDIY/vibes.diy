@@ -117,7 +117,7 @@ export class VibesStream {
     }
 
     // Signal stream end to flush any buffered content
-    this.parser.processChunk("data: [DONE]\n\n");
+    this.parser.finalize();
 
     // Rebuild text from segments
     const text = this.buildText();
@@ -323,7 +323,7 @@ export class VibesStream {
     let segmentsChanged = false;
 
     switch (evt.type) {
-      case "textFragment":
+      case "text.fragment":
         if (evt.fragment) {
           if (!this.currentMarkdown) {
             this.currentMarkdown = { type: "markdown", content: "" };
@@ -334,21 +334,21 @@ export class VibesStream {
         }
         break;
 
-      case "codeStart":
+      case "code.start":
         this.currentMarkdown = null;
         this.currentCode = { type: "code", content: "" };
         this._segments.push(this.currentCode);
         segmentsChanged = true;
         break;
 
-      case "codeFragment":
+      case "code.fragment":
         if (evt.fragment && this.currentCode) {
           this.currentCode.content += evt.fragment;
           segmentsChanged = true;
         }
         break;
 
-      case "codeEnd":
+      case "code.end":
         this.currentCode = null;
         this.currentMarkdown = null;
         break;

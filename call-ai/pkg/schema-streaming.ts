@@ -7,43 +7,6 @@ import { responseMetadata, boxString } from "./response-metadata.js";
 import { OpenRouterParser } from "./parser/openrouter-parser.js";
 
 /**
- * Helper to check for old Claude tool_use format in JSON
- */
-function extractOldFormatToolUse(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  json: any,
-  schemaStrategy: SchemaStrategy,
-): string | null {
-  // Direct type: "tool_use" format
-  if (json.type === "tool_use") {
-    return schemaStrategy.processResponse(json);
-  }
-
-  // stop_reason: "tool_use" with content array
-  if (json.stop_reason === "tool_use") {
-    if (json.content && Array.isArray(json.content)) {
-      const toolUseBlock = json.content.find((block: { type: string }) => block.type === "tool_use");
-      if (toolUseBlock) return schemaStrategy.processResponse(toolUseBlock);
-    }
-  }
-
-  // choices[].message.content with tool_use block
-  if (json.choices && Array.isArray(json.choices)) {
-    const choice = json.choices[0];
-    if (choice?.message?.content && Array.isArray(choice.message.content)) {
-      const toolUseBlock = choice.message.content.find((block: { type: string }) => block.type === "tool_use");
-      if (toolUseBlock) return schemaStrategy.processResponse(toolUseBlock);
-    }
-    if (choice?.delta?.content && Array.isArray(choice.delta.content)) {
-      const toolUseBlock = choice.delta.content.find((block: { type: string }) => block.type === "tool_use");
-      if (toolUseBlock) return schemaStrategy.processResponse(toolUseBlock);
-    }
-  }
-
-  return null;
-}
-
-/**
  * Create parser with toolHandler already registered for tool.* events
  */
 function createSchemaParser(): OpenRouterParser {
@@ -53,16 +16,8 @@ function createSchemaParser(): OpenRouterParser {
 /**
  * Parse SSE stream using toolHandler for tool_calls responses.
  *
- * This is the parser-based alternative to the legacy parseSSE function
- * for handling schema/tool_mode responses.
- *
- * Handles both:
- * - OpenAI format: choices[0].delta.tool_calls (via toolHandler → tool.complete events)
- * - Old Claude format: type: "tool_use" with input field
- *
- * The legacy behavior only yields when finish_reason: "tool_calls" is received,
- * returning the complete assembled JSON string. This implementation matches
- * that behavior for backward compatibility.
+ * All tool formats (OpenAI tool_calls, Claude tool_use) are handled by
+ * toolHandler which emits tool.complete events.
  *
  * @param response - Fetch Response with SSE body
  * @param schemaStrategy - Strategy for processing the response
@@ -81,17 +36,10 @@ async function* parseSchemaSSE(response: Response, schemaStrategy: SchemaStrateg
   // Track final result - only set when tool call completes
   let finalResult: string | null = null;
 
-  // Handle both OpenAI format (tool.complete) and old Claude format (or.json)
+  // Listen for tool.complete events (toolHandler handles all formats)
   orParser.onEvent((evt) => {
     if (evt.type === "tool.complete") {
-      // OpenAI format via toolHandler
       finalResult = evt.arguments;
-    } else if (evt.type === "or.json") {
-      // Old Claude format
-      const oldFormatResult = extractOldFormatToolUse(evt.json, schemaStrategy);
-      if (oldFormatResult) {
-        finalResult = oldFormatResult;
-      }
     }
   });
 
@@ -114,7 +62,7 @@ async function* parseSchemaSSE(response: Response, schemaStrategy: SchemaStrateg
     }
 
     // Signal stream end to flush any buffered content
-    orParser.processChunk("data: [DONE]\n\n");
+    orParser.finalize();
 
     // Yield any final result from stream end
     if (finalResult) {

@@ -13,7 +13,7 @@ export interface Segment {
 /**
  * SegmentAccumulator - Builds growing Segment[] from parser events.
  *
- * This class listens to code block events (textFragment, codeStart, etc.)
+ * This class listens to code block events (text.fragment, code.start, etc.)
  * from an OrEventSource and accumulates them into a segments array
  * that grows as content streams in.
  *
@@ -46,16 +46,16 @@ export class SegmentAccumulator {
 
   private handleEvent(evt: ParserEvent): void {
     switch (evt.type) {
-      case "textFragment":
+      case "text.fragment":
         this.appendMarkdown(evt.fragment);
         break;
-      case "codeStart":
+      case "code.start":
         this.startCode();
         break;
-      case "codeFragment":
+      case "code.fragment":
         this.appendCode(evt.fragment);
         break;
-      case "codeEnd":
+      case "code.end":
         this.endCode();
         break;
     }

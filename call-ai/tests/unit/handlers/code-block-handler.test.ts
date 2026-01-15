@@ -25,17 +25,17 @@ describe("codeBlockHandler", () => {
 
     evento.onEvent((event) => {
       switch (event.type) {
-        case "textFragment": texts.push(event as TextFragment); break;
-        case "codeStart": starts.push(event as CodeStart); break;
-        case "codeFragment": frags.push(event as CodeFragment); break;
-        case "codeEnd": ends.push(event as CodeEnd); break;
+        case "text.fragment": texts.push(event as TextFragment); break;
+        case "code.start": starts.push(event as CodeStart); break;
+        case "code.fragment": frags.push(event as CodeFragment); break;
+        case "code.end": ends.push(event as CodeEnd); break;
       }
     });
 
     return { texts, starts, frags, ends };
   }
 
-  it("emits textFragment for plain text", () => {
+  it("emits text.fragment for plain text", () => {
     const evento = createEvento();
     const { texts } = collectEvents(evento);
 

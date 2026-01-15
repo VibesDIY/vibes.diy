@@ -26,21 +26,21 @@ describe("CodeBlockHandler End of Stream", () => {
     const orParser = createParserStack();
     const events: CodeBlockEvent[] = [];
     orParser.onEvent((evt) => {
-        if (["codeStart", "codeEnd", "codeFragment"].includes(evt.type)) {
+        if (["code.start", "code.end", "code.fragment"].includes(evt.type)) {
             events.push(evt as CodeBlockEvent);
         }
     });
 
-    simulateDelta(orParser, "```js\nconst x = 1;\n```"); 
+    simulateDelta(orParser, "```js\nconst x = 1;\n```");
     // Signal end of stream
     orParser.processChunk("data: [DONE]\n\n");
 
     const types = events.map(e => e.type);
-    expect(types).toContain("codeStart");
-    expect(types).toContain("codeEnd");
-    
+    expect(types).toContain("code.start");
+    expect(types).toContain("code.end");
+
     // Verify no extra backticks leaked into code
-    const codeFragments = events.filter(e => e.type === "codeFragment");
+    const codeFragments = events.filter(e => e.type === "code.fragment");
     const code = codeFragments.map(f => (f as any).fragment).join("");
     expect(code).toBe("const x = 1;\n");
   });
