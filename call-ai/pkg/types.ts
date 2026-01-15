@@ -475,8 +475,3 @@ export interface ImageGenOptions {
 
   readonly mock?: Mocks;
 }
-
-/**
- * @deprecated Use ImageGenOptions instead
- */
-export type ImageEditOptions = ImageGenOptions;

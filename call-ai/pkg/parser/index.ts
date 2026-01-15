@@ -5,11 +5,6 @@
 export {
   LineStreamParser,
   LineStreamState,
-  // Legacy types still exported for internal xstate use
-  FragmentEvent,
-  BracketEvent,
-  BracketOpenCloseEvent,
-  InBracketEvent,
 } from "./line-stream.js";
 
 // Line parser arktype events

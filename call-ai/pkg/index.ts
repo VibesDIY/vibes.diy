@@ -38,11 +38,6 @@ export { callAiEnv } from "./env.js";
 export {
   LineStreamParser,
   LineStreamState,
-  // Legacy types (internal xstate use)
-  FragmentEvent,
-  BracketEvent,
-  BracketOpenCloseEvent,
-  InBracketEvent,
   // Line parser arktype events
   lineFragment,
   lineBracketOpen,

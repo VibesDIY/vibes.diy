@@ -26,7 +26,7 @@ export enum LineStreamState {
 }
 
 // Event types for external callbacks
-export interface FragmentEvent {
+interface FragmentEvent {
   readonly type: "fragment";
   readonly lineNr: number;
   readonly fragment: string;
@@ -34,12 +34,12 @@ export interface FragmentEvent {
   readonly lineComplete: boolean;
 }
 
-export interface BracketOpenCloseEvent {
+interface BracketOpenCloseEvent {
   readonly type: "bracket";
   readonly bracket: "open" | "close";
 }
 
-export interface InBracketEvent {
+interface InBracketEvent {
   readonly type: "inBracket";
   readonly seqStyle: "first" | "last" | "middle";
   readonly block: number;
@@ -47,7 +47,7 @@ export interface InBracketEvent {
   readonly content: string;
 }
 
-export type BracketEvent = BracketOpenCloseEvent | InBracketEvent;
+type BracketEvent = BracketOpenCloseEvent | InBracketEvent;
 
 // XState machine context
 interface LineStreamContext {
