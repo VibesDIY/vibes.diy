@@ -220,9 +220,11 @@ async function selectLlmsAndOptions(
           }),
       ]);
 
-    const raw = (await withTimeout(
-      (options.mock?.callAI || callAI)(messages, options) as Promise<string>,
-    )) as string;
+    // Options has stream: false, narrow type for overload resolution
+    const nonStreamingOptions = options as CallAIOptions & { stream: false };
+    const raw = await withTimeout(
+      (options.mock?.callAI || callAI)(messages, nonStreamingOptions),
+    );
 
     if (raw === undefined || raw === null) {
       console.warn(

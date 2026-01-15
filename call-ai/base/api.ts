@@ -57,6 +57,13 @@ const FALLBACK_MODEL = "openrouter/auto";
  *          or a Promise that resolves to an AsyncGenerator when streaming is enabled.
  *          The AsyncGenerator yields partial responses as they arrive.
  */
+// Overload: streaming mode returns ThenableStreamResponse
+export function callAi(prompt: string | Message[], options: CallAIOptions & { stream: true }): ThenableStreamResponse;
+// Overload: non-streaming mode (explicit false or default) returns Promise<string>
+export function callAi(prompt: string | Message[], options?: CallAIOptions & { stream?: false }): Promise<string>;
+// Overload: generic boolean stream (for internal/dynamic use) returns union
+export function callAi(prompt: string | Message[], options: CallAIOptions): Promise<string> | ThenableStreamResponse;
+// Implementation signature
 export function callAi(prompt: string | Message[], options: CallAIOptions = {}): Promise<string> | ThenableStreamResponse {
   // Check if we need to force streaming based on model strategy
   const schemaStrategy = chooseSchemaStrategy(options.model, options.schema || null);
