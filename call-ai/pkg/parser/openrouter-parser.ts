@@ -6,19 +6,14 @@ import { imageHandler } from "./handlers/image-handler.js";
 import { toolHandler } from "./handlers/tool-handler.js";
 
 export class OpenRouterParser implements OrEventSource {
-  readonly onEvent = OnFunc<(event: ParserEvent) => void>();
-  private evento: ParserEvento;
+  private readonly evento = new ParserEvento();
+  readonly onEvent = this.evento.onEvent;
   private adapter: StreamingAdapter;
 
   constructor() {
-    this.evento = new ParserEvento();
+    // StreamingAdapter creates its own parser chain internally
     this.evento.push(imageHandler, toolHandler);
     this.adapter = new StreamingAdapter(this.evento);
-
-    // Forward all events from ParserEvento to onEvent
-    this.evento.onEvent((event) => {
-      this.onEvent.invoke(event);
-    });
   }
 
   processChunk(chunk: string): void {

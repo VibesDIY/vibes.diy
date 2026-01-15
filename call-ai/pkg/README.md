@@ -216,6 +216,43 @@ interface CallAIOptions {
 - `schema`: Optional JSON schema for structured output
 - Any other options are passed directly to the API (temperature, max_tokens, etc.)
 
+## Advanced: Event-Driven Parser
+
+For advanced use cases (like custom UI rendering or tool call interception), you can use the event-driven parser stack directly.
+
+```typescript
+import { OpenRouterParser, createCodeBlockHandler, SegmentAccumulator } from "call-ai";
+
+const parser = new OpenRouterParser();
+
+// Register standard handlers
+parser.register(createCodeBlockHandler());
+
+// Listen for specific events
+parser.onEvent((evt) => {
+  switch (evt.type) {
+    case "codeStart":
+      console.log("Started code block:", evt.language);
+      break;
+    case "tool.complete":
+      console.log("Tool call finished:", evt.functionName, evt.arguments);
+      break;
+    case "or.image":
+      console.log("Image generated:", evt.url || "base64 data");
+      break;
+  }
+});
+
+// Or use the SegmentAccumulator for high-level UI blocks
+const accumulator = new SegmentAccumulator(parser);
+
+// Feed raw SSE chunks from your fetch response
+for await (const chunk of response.body) {
+  parser.processChunk(new TextDecoder().decode(chunk));
+  console.log(accumulator.segments); // Growing array of {type, content}
+}
+```
+
 ## License
 
 MIT or Apache-2.0, at your option
