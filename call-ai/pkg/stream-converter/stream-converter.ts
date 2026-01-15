@@ -1,5 +1,5 @@
 import { OnFunc } from "@adviser/cement";
-import { createBaseParser } from "../parser/create-base-parser.js";
+import { OpenRouterParser } from "../parser/openrouter-parser.js";
 import { OrEvent } from "../parser/openrouter-events.js";
 import { StreamEvent } from "./events.js";
 
@@ -59,7 +59,7 @@ export class StreamConverter {
 
   async processPrompt(params: ProcessPromptParams): Promise<void> {
     const { prompt, inputStream } = params;
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     const streamId = crypto.randomUUID();
 
     // Single wiring point - transform and forward

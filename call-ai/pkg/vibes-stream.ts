@@ -1,7 +1,8 @@
 import { OnFunc } from "@adviser/cement";
 
-import { createVibesParser } from "./parser/index.js";
-import { Segment } from "./parser/segment-accumulator.js";
+import { OpenRouterParser } from "./parser/openrouter-parser.js";
+import { createCodeBlockHandler } from "./parser/handlers/code-block-handler.js";
+import { ParserEvent } from "./parser/parser-evento.js";
 import { VibesEvent } from "./vibes-events.js";
 import { CallAIOptions, Message, CallAIError } from "./types.js";
 import { keyStore, globalDebug } from "./key-management.js";
@@ -10,6 +11,14 @@ import { callAiEnv } from "./env.js";
 
 export interface VibesStreamOptions extends CallAIOptions {
   prompt: string | Message[];
+}
+
+/**
+ * Segment - A block of content (markdown or code)
+ */
+export interface Segment {
+  type: "markdown" | "code";
+  content: string;
 }
 
 /**
@@ -43,10 +52,15 @@ export interface VibesStreamOptions extends CallAIOptions {
 export class VibesStream {
   readonly onEvent = OnFunc<(event: VibesEvent) => void>();
 
-  private readonly parser;
+  private readonly parser: OpenRouterParser;
   private readonly streamId: string;
   private started = false;
   private model: string | undefined;
+
+  // Segment accumulation (inlined from SegmentAccumulator)
+  private readonly _segments: Segment[] = [];
+  private currentMarkdown: Segment | null = null;
+  private currentCode: Segment | null = null;
 
   // Stats captured from or.usage event
   private stats: {
@@ -62,9 +76,15 @@ export class VibesStream {
   constructor(options?: { model?: string }) {
     this.streamId = crypto.randomUUID();
     this.model = options?.model;
-    this.parser = createVibesParser();
-    // Note: Stats capture from or.usage events would require exposing
-    // the parser chain's onEvent. For now stats remain undefined.
+
+    // Create parser and register code block handler
+    this.parser = new OpenRouterParser();
+    this.parser.register(createCodeBlockHandler());
+
+    // Wire up event handlers
+    this.parser.onEvent((evt: ParserEvent) => {
+      this.handleParserEvent(evt);
+    });
   }
 
   /**
@@ -81,9 +101,6 @@ export class VibesStream {
     }
 
     this.parser.processChunk(chunk);
-
-    // Emit update with current accumulated state
-    this.emitUpdate();
   }
 
   /**
@@ -109,7 +126,7 @@ export class VibesStream {
       type: "vibes.end",
       streamId: this.streamId,
       text,
-      segments: [...this.parser.segments],
+      segments: [...this._segments],
       stats: this.stats,
     });
   }
@@ -118,7 +135,7 @@ export class VibesStream {
    * Get current segments (read-only)
    */
   get segments(): readonly Segment[] {
-    return this.parser.segments;
+    return this._segments;
   }
 
   /**
@@ -302,17 +319,66 @@ export class VibesStream {
     }
   }
 
+  private handleParserEvent(evt: ParserEvent): void {
+    let segmentsChanged = false;
+
+    switch (evt.type) {
+      case "textFragment":
+        if (evt.fragment) {
+          if (!this.currentMarkdown) {
+            this.currentMarkdown = { type: "markdown", content: "" };
+            this._segments.push(this.currentMarkdown);
+          }
+          this.currentMarkdown.content += evt.fragment;
+          segmentsChanged = true;
+        }
+        break;
+
+      case "codeStart":
+        this.currentMarkdown = null;
+        this.currentCode = { type: "code", content: "" };
+        this._segments.push(this.currentCode);
+        segmentsChanged = true;
+        break;
+
+      case "codeFragment":
+        if (evt.fragment && this.currentCode) {
+          this.currentCode.content += evt.fragment;
+          segmentsChanged = true;
+        }
+        break;
+
+      case "codeEnd":
+        this.currentCode = null;
+        this.currentMarkdown = null;
+        break;
+
+      case "or.usage":
+        this.stats = {
+          promptTokens: evt.promptTokens,
+          completionTokens: evt.completionTokens,
+          totalTokens: evt.totalTokens,
+        };
+        break;
+    }
+
+    // Emit update when segments change
+    if (segmentsChanged && this.started) {
+      this.emitUpdate();
+    }
+  }
+
   private emitUpdate(): void {
     const text = this.buildText();
     this.onEvent.invoke({
       type: "vibes.update",
       text,
-      segments: [...this.parser.segments],
+      segments: [...this._segments],
     });
   }
 
   private buildText(): string {
-    return this.parser.segments
+    return this._segments
       .map((s) => {
         if (s.type === "markdown") {
           return s.content;

@@ -7,13 +7,13 @@
  */
 import { describe, it, expect } from "vitest";
 import { OrEvent } from "../../pkg/parser/index.js";
-import { createBaseParser } from "../helpers/parser-test-utils.js";
+import { OpenRouterParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
 describe("Claude format parser tests", () => {
   describe("content_block_delta handling", () => {
     it("should emit or.delta for text_delta events", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -53,7 +53,7 @@ describe("Claude format parser tests", () => {
     });
 
     it("should handle fragmented chunks splitting mid-SSE", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -78,7 +78,7 @@ describe("Claude format parser tests", () => {
     });
 
     it("should emit or.json for content_block_stop events", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const jsonPayloads: unknown[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -112,7 +112,7 @@ describe("Claude format parser tests", () => {
 
   describe("Claude property splitting scenarios", () => {
     it("should handle property names split across chunks", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -146,7 +146,7 @@ describe("Claude format parser tests", () => {
     });
 
     it("should handle property values split across chunks", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {

@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect, vi } from "vitest";
-import { createBaseParser } from "../../pkg/parser/create-base-parser.js";
+import { OpenRouterParser } from "../../pkg/parser/openrouter-parser.js";
 import { createCodeBlockHandler } from "../../pkg/parser/handlers/code-block-handler.js";
 import { ParserEvent } from "../../pkg/parser/parser-evento.js";
 
@@ -12,7 +12,7 @@ describe("Parser register style tests", () => {
   );
 
   it("should emit code events and upstream usage/meta", () => {
-    const orParser = createBaseParser();
+    const orParser = new OpenRouterParser();
     orParser.register(createCodeBlockHandler());
 
     const events = vi.fn();
@@ -83,7 +83,7 @@ describe("Parser register style tests", () => {
   });
 
   it("should emit events in correct order: meta -> content -> done -> usage", () => {
-    const orParser = createBaseParser();
+    const orParser = new OpenRouterParser();
     orParser.register(createCodeBlockHandler());
 
     const eventTypes: string[] = [];

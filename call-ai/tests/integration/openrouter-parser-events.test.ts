@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect, vi } from "vitest";
-import { createBaseParser } from "../../pkg/parser/create-base-parser.js";
+import { OpenRouterParser } from "../../pkg/parser/openrouter-parser.js";
 import { orEvent, OrEvent, isOrEventError } from "../../pkg/parser/openrouter-events.js";
 
 function loadFixture(filename: string): string {
@@ -10,7 +10,7 @@ function loadFixture(filename: string): string {
 
 describe("OpenRouterParser arktype events", () => {
   it("should emit typed or.* events via onEvent", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     const events = vi.fn();
     parser.onEvent(events);
 
@@ -64,7 +64,7 @@ describe("OpenRouterParser arktype events", () => {
   });
 
   it("should validate events with arktype at runtime", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     const events: OrEvent[] = [];
     parser.onEvent((evt) => {
       // Validate each event as it arrives

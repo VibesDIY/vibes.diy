@@ -4,7 +4,6 @@
 
 import { CallAIOptions, ResponseMeta, SchemaStrategy } from "./types.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
-import { createBaseParser } from "./parser/create-base-parser.js";
 import { OpenRouterParser } from "./parser/openrouter-parser.js";
 
 /**
@@ -48,7 +47,7 @@ function extractOldFormatToolUse(
  * Create parser with toolHandler already registered for tool.* events
  */
 function createSchemaParser(): OpenRouterParser {
-  return createBaseParser();
+  return new OpenRouterParser();
 }
 
 /**

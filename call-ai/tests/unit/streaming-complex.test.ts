@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { OrEvent } from "../../pkg/parser/index.js";
-import { createBaseParser } from "../helpers/parser-test-utils.js";
+import { OpenRouterParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
 describe("Parser-based streaming tests", () => {
-  describe("createBaseParser - OpenRouter format", () => {
+  describe("OpenRouterParser - OpenRouter format", () => {
     it("should handle basic text streaming with or.delta events", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -24,7 +24,7 @@ describe("Parser-based streaming tests", () => {
     });
 
     it("should handle content_block_delta format (Claude format)", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -48,7 +48,7 @@ describe("Parser-based streaming tests", () => {
     });
 
     it("should emit or.json for all JSON payloads including errors", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const jsonPayloads: unknown[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -66,7 +66,7 @@ describe("Parser-based streaming tests", () => {
     });
 
     it("should emit or.done with finish_reason", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const doneEvents: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -84,7 +84,7 @@ describe("Parser-based streaming tests", () => {
     });
 
     it("should emit or.meta on first chunk with id", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       let meta: { id?: string; model?: string } | null = null;
 
       parser.onEvent((evt: OrEvent) => {
@@ -105,7 +105,7 @@ describe("Parser-based streaming tests", () => {
     });
 
     it("should emit or.stream-end on [DONE]", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       let streamEnded = false;
 
       parser.onEvent((evt: OrEvent) => {
@@ -124,7 +124,7 @@ describe("Parser-based streaming tests", () => {
 
   describe("Edge cases - fragmentation resilience", () => {
     it("should handle chunks split mid-JSON", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {
@@ -143,7 +143,7 @@ describe("Parser-based streaming tests", () => {
     });
 
     it("should handle single-byte chunks", () => {
-      const parser = createBaseParser();
+      const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
       parser.onEvent((evt: OrEvent) => {

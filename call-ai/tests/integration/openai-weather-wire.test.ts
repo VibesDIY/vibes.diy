@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { describe, it, expect } from "vitest";
 import { OrEvent } from "../../pkg/parser/index.js";
-import { createBaseParser } from "../helpers/parser-test-utils.js";
+import { OpenRouterParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser } from "../test-helpers.js";
 
 /**
@@ -19,7 +19,7 @@ describe("OpenAI Weather Response Parsing (parser-based)", () => {
   );
 
   it("should correctly parse OpenAI streaming with weather schema", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     const deltas: string[] = [];
 
     parser.onEvent((evt: OrEvent) => {
@@ -59,7 +59,7 @@ describe("OpenAI Weather Response Parsing (parser-based)", () => {
   });
 
   it("should emit proper metadata", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     let model: string | null = null;
 
     parser.onEvent((evt: OrEvent) => {
@@ -72,7 +72,7 @@ describe("OpenAI Weather Response Parsing (parser-based)", () => {
   });
 
   it("should emit usage stats", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null = null;
 
     parser.onEvent((evt: OrEvent) => {
@@ -95,7 +95,7 @@ describe("OpenAI Weather Response Parsing (parser-based)", () => {
   });
 
   it("should handle fragmentation with small chunks", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     const deltas: string[] = [];
 
     parser.onEvent((evt: OrEvent) => {

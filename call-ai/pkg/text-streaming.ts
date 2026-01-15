@@ -4,7 +4,7 @@
 
 import { CallAIError, CallAIOptions, ResponseMeta, SchemaStrategy } from "./types.js";
 import { responseMetadata, boxString } from "./response-metadata.js";
-import { createBaseParser } from "./parser/create-base-parser.js";
+import { OpenRouterParser } from "./parser/openrouter-parser.js";
 
 async function* parseTextSSE(
   response: Response,
@@ -16,7 +16,7 @@ async function* parseTextSSE(
   }
 
   const textDecoder = new TextDecoder();
-  const orParser = createBaseParser();
+  const orParser = new OpenRouterParser();
 
   let accumulated = "";
   let pendingChunks: string[] = [];

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { describe, it, expect } from "vitest";
 import { OrEvent } from "../../pkg/parser/index.js";
-import { createBaseParser } from "../helpers/parser-test-utils.js";
+import { OpenRouterParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser } from "../test-helpers.js";
 
 /**
@@ -19,7 +19,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
   );
 
   it("should parse OpenAI streaming response and extract deltas", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     const deltas: string[] = [];
     let metaEmitted = false;
     let model = "";
@@ -59,7 +59,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
   });
 
   it("should emit or.done with finish_reason stop", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     let finishReason: string | null = null;
 
     parser.onEvent((evt: OrEvent) => {
@@ -74,7 +74,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
   });
 
   it("should emit or.usage with token counts", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null = null;
 
     parser.onEvent((evt: OrEvent) => {
@@ -97,7 +97,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
   });
 
   it("should emit or.stream-end on [DONE]", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     let streamEnded = false;
 
     parser.onEvent((evt: OrEvent) => {
@@ -110,7 +110,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
   });
 
   it("should handle random chunk fragmentation", () => {
-    const parser = createBaseParser();
+    const parser = new OpenRouterParser();
     const deltas: string[] = [];
 
     parser.onEvent((evt: OrEvent) => {

@@ -4,6 +4,6 @@
  */
 
 /**
- * Re-export createBaseParser for tests that need direct access
+ * Re-export OpenRouterParser for tests that need direct access
  */
-export { createBaseParser } from "../../pkg/parser/create-base-parser.js";
+export { OpenRouterParser } from "../../pkg/parser/openrouter-parser.js";
