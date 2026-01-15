@@ -4,12 +4,13 @@ import {
   ParserEvento,
   ParserEvent,
 } from "@vibes.diy/call-ai-base";
-import { toolHandler, ToolStart, ToolArguments, ToolComplete } from "@vibes.diy/call-ai-base";
+import { createToolHandler, ToolStart, ToolArguments, ToolComplete } from "@vibes.diy/call-ai-base";
 
 describe("toolHandler", () => {
   function createEvento() {
     const evento = new ParserEvento();
-    evento.push(toolHandler);
+    // Use factory to get isolated state per test
+    evento.push(createToolHandler());
     return evento;
   }
 
@@ -137,6 +138,168 @@ describe("toolHandler", () => {
       expect(args).toHaveLength(2);
       expect(args[0]).toMatchObject({ index: 0, fragment: "{1}" });
       expect(args[1]).toMatchObject({ index: 1, fragment: "{2}" });
+    });
+
+    it("emits tool.complete on or.done for accumulated streaming tool calls", () => {
+      const evento = createEvento();
+      const { starts, args, completes } = collectToolEvents(evento);
+
+      // First chunk - start with id and name
+      evento.trigger({
+        type: "or.json",
+        json: {
+          choices: [{
+            delta: {
+              tool_calls: [{
+                index: 0,
+                id: "call_stream",
+                function: { name: "get_data", arguments: '{"foo":' }
+              }]
+            }
+          }]
+        }
+      });
+
+      // Second chunk - more arguments
+      evento.trigger({
+        type: "or.json",
+        json: {
+          choices: [{
+            delta: {
+              tool_calls: [{
+                index: 0,
+                function: { arguments: '"bar"}' }
+              }]
+            }
+          }]
+        }
+      });
+
+      // No complete yet
+      expect(completes).toHaveLength(0);
+      expect(starts).toHaveLength(1);
+      expect(args).toHaveLength(2);
+
+      // Stream ends with finish_reason
+      evento.trigger({ type: "or.done", finishReason: "tool_calls" });
+
+      // Now complete should be emitted
+      expect(completes).toHaveLength(1);
+      expect(completes[0]).toMatchObject({
+        type: "tool.complete",
+        callId: "call_stream",
+        functionName: "get_data",
+        arguments: '{"foo":"bar"}',
+      });
+    });
+
+    it("emits tool.complete on or.stream-end for accumulated streaming tool calls", () => {
+      const evento = createEvento();
+      const { completes } = collectToolEvents(evento);
+
+      // Stream tool call
+      evento.trigger({
+        type: "or.json",
+        json: {
+          choices: [{
+            delta: {
+              tool_calls: [{
+                index: 0,
+                id: "call_end",
+                function: { name: "test_fn", arguments: '{"x":1}' }
+              }]
+            }
+          }]
+        }
+      });
+
+      expect(completes).toHaveLength(0);
+
+      // Stream end event
+      evento.trigger({ type: "or.stream-end" });
+
+      expect(completes).toHaveLength(1);
+      expect(completes[0]).toMatchObject({
+        callId: "call_end",
+        functionName: "test_fn",
+        arguments: '{"x":1}',
+      });
+    });
+
+    it("handles multiple parallel streaming tool calls with completion", () => {
+      const evento = createEvento();
+      const { completes } = collectToolEvents(evento);
+
+      // Tool call 1 start
+      evento.trigger({
+        type: "or.json",
+        json: {
+          choices: [{
+            delta: {
+              tool_calls: [{
+                index: 0,
+                id: "call_a",
+                function: { name: "func_a", arguments: '{"a":' }
+              }]
+            }
+          }]
+        }
+      });
+
+      // Tool call 2 start
+      evento.trigger({
+        type: "or.json",
+        json: {
+          choices: [{
+            delta: {
+              tool_calls: [{
+                index: 1,
+                id: "call_b",
+                function: { name: "func_b", arguments: '{"b":' }
+              }]
+            }
+          }]
+        }
+      });
+
+      // Tool call 1 more args
+      evento.trigger({
+        type: "or.json",
+        json: {
+          choices: [{
+            delta: {
+              tool_calls: [{
+                index: 0,
+                function: { arguments: '1}' }
+              }]
+            }
+          }]
+        }
+      });
+
+      // Tool call 2 more args
+      evento.trigger({
+        type: "or.json",
+        json: {
+          choices: [{
+            delta: {
+              tool_calls: [{
+                index: 1,
+                function: { arguments: '2}' }
+              }]
+            }
+          }]
+        }
+      });
+
+      expect(completes).toHaveLength(0);
+
+      // Complete
+      evento.trigger({ type: "or.done", finishReason: "tool_calls" });
+
+      expect(completes).toHaveLength(2);
+      expect(completes[0]).toMatchObject({ callId: "call_a", functionName: "func_a", arguments: '{"a":1}' });
+      expect(completes[1]).toMatchObject({ callId: "call_b", functionName: "func_b", arguments: '{"b":2}' });
     });
   });
 

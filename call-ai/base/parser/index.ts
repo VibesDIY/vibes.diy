@@ -97,7 +97,7 @@ export {
 } from "./parser-evento.js";
 
 export { createCodeBlockHandler } from "./handlers/code-block-handler.js";
-export { toolHandler } from "./handlers/tool-handler.js";
+export { toolHandler, createToolHandler } from "./handlers/tool-handler.js";
 export { imageHandler } from "./handlers/image-handler.js";
 
 // Adapters

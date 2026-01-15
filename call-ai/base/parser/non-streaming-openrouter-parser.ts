@@ -8,7 +8,7 @@ import { OnFunc } from "@adviser/cement";
 import { ParserEvento, ParserEvent, ParserHandler, ParserEventSource } from "./parser-evento.js";
 import { NonStreamingAdapter } from "./adapters/non-streaming-adapter.js";
 import { imageHandler } from "./handlers/image-handler.js";
-import { toolHandler } from "./handlers/tool-handler.js";
+import { createToolHandler } from "./handlers/tool-handler.js";
 
 export class NonStreamingOpenRouterParser implements ParserEventSource {
   private readonly evento = new ParserEvento();
@@ -16,7 +16,8 @@ export class NonStreamingOpenRouterParser implements ParserEventSource {
   private adapter: NonStreamingAdapter;
 
   constructor() {
-    this.evento.push(imageHandler, toolHandler);
+    // Use factory for isolated tool handler state per parser instance
+    this.evento.push(imageHandler, createToolHandler());
     this.adapter = new NonStreamingAdapter(this.evento);
   }
 

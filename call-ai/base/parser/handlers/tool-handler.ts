@@ -5,11 +5,17 @@
  * - Streaming format: choices[].delta.tool_calls[]
  * - Non-streaming format: choices[].message.tool_calls[]
  * - Legacy Claude format: type: "tool_use" with name/input fields
+ *
+ * For streaming tool calls, accumulates arguments fragments and emits
+ * tool.complete on or.done or or.stream-end events.
  */
 
 import {
   ParserHandler,
+  ParserEvent,
   OrJson,
+  OrDone,
+  OrStreamEnd,
   HandlerContext,
   ToolStart,
   ToolArguments,
@@ -18,6 +24,13 @@ import {
 
 // Re-export for consumers
 export type { ToolStart, ToolArguments, ToolComplete };
+
+// Accumulated state for streaming tool calls
+interface StreamingToolCall {
+  id: string;
+  name?: string;
+  args: string;
+}
 
 interface DeltaToolCall {
   readonly index?: number;
@@ -50,58 +63,92 @@ interface Choice {
   };
 }
 
-export const toolHandler: ParserHandler = {
-  hash: "tool-extractor",
-  validate: (event) => {
-    if (event.type === "or.json") {
-      return { some: event };
-    }
-    return { none: true };
-  },
-  handle: (ctx) => {
-    const event = ctx.event as OrJson;
-    const json = event.json as Record<string, unknown>;
+/**
+ * Create a tool handler with isolated state for streaming tool call accumulation.
+ * Use this factory when you need state isolation (e.g., multiple concurrent streams).
+ */
+export function createToolHandler(): ParserHandler {
+  // State for accumulated streaming tool calls (by index)
+  const streamingToolCalls = new Map<number, StreamingToolCall>();
 
-    // Handle legacy Claude formats first (they don't always have choices)
-    handleLegacyToolUse(ctx, json);
-
-    const choices = json.choices as Choice[] | undefined;
-    if (!choices?.length) return;
-
-    const choice = choices[0];
-
-    // Handle streaming format: delta.tool_calls[]
-    if (choice.delta?.tool_calls) {
-      handleStreamingToolCalls(ctx, choice.delta.tool_calls);
-    }
-
-    // Handle non-streaming format: message.tool_calls[]
-    if (choice.message?.tool_calls) {
-      handleNonStreamingToolCalls(ctx, choice.message.tool_calls);
-    }
-
-    // Handle legacy Claude format in choices[].message.content or delta.content
-    if (Array.isArray(choice.message?.content)) {
-      const toolUseBlock = choice.message.content.find((block) => block.type === "tool_use");
-      if (toolUseBlock) {
-        emitLegacyToolComplete(ctx, toolUseBlock);
+  return {
+    hash: "tool-extractor",
+    validate: (event: ParserEvent) => {
+      // Handle or.json, or.done, and or.stream-end events
+      if (event.type === "or.json" || event.type === "or.done" || event.type === "or.stream-end") {
+        return { some: event };
       }
-    }
-    if (Array.isArray(choice.delta?.content)) {
-      const toolUseBlock = choice.delta.content.find((block) => block.type === "tool_use");
-      if (toolUseBlock) {
-        emitLegacyToolComplete(ctx, toolUseBlock);
-      }
-    }
-  },
-};
+      return { none: true };
+    },
+    handle: (ctx) => {
+      const event = ctx.event;
 
-function handleStreamingToolCalls(ctx: HandlerContext, toolCalls: DeltaToolCall[]): void {
+      // Handle stream completion events
+      if (event.type === "or.done" || event.type === "or.stream-end") {
+        emitAccumulatedToolCalls(ctx, streamingToolCalls);
+        return;
+      }
+
+      // Handle or.json events
+      const json = (event as OrJson).json as Record<string, unknown>;
+
+      // Handle legacy Claude formats first (they don't always have choices)
+      handleLegacyToolUse(ctx, json);
+
+      const choices = json.choices as Choice[] | undefined;
+      if (!choices?.length) return;
+
+      const choice = choices[0];
+
+      // Handle streaming format: delta.tool_calls[]
+      if (choice.delta?.tool_calls) {
+        handleStreamingToolCalls(ctx, choice.delta.tool_calls, streamingToolCalls);
+      }
+
+      // Handle non-streaming format: message.tool_calls[]
+      if (choice.message?.tool_calls) {
+        handleNonStreamingToolCalls(ctx, choice.message.tool_calls);
+      }
+
+      // Handle legacy Claude format in choices[].message.content or delta.content
+      if (Array.isArray(choice.message?.content)) {
+        const toolUseBlock = choice.message.content.find((block) => block.type === "tool_use");
+        if (toolUseBlock) {
+          emitLegacyToolComplete(ctx, toolUseBlock);
+        }
+      }
+      if (Array.isArray(choice.delta?.content)) {
+        const toolUseBlock = choice.delta.content.find((block) => block.type === "tool_use");
+        if (toolUseBlock) {
+          emitLegacyToolComplete(ctx, toolUseBlock);
+        }
+      }
+    },
+  };
+}
+
+// Default singleton for backward compatibility (use createToolHandler() for isolated state)
+export const toolHandler: ParserHandler = createToolHandler();
+
+function handleStreamingToolCalls(
+  ctx: HandlerContext,
+  toolCalls: DeltaToolCall[],
+  accumulated: Map<number, StreamingToolCall>,
+): void {
   for (const tc of toolCalls) {
     const index = tc.index ?? 0;
 
-    // Emit start event if id is present (first chunk for this tool call)
+    // Initialize or update accumulated state
+    let state = accumulated.get(index);
+    if (!state) {
+      state = { id: "", name: undefined, args: "" };
+      accumulated.set(index, state);
+    }
+
+    // Capture id if present (first chunk)
     if (tc.id) {
+      state.id = tc.id;
+      // Emit start event
       ctx.emit({
         type: "tool.start",
         index,
@@ -110,8 +157,14 @@ function handleStreamingToolCalls(ctx: HandlerContext, toolCalls: DeltaToolCall[
       } as ToolStart);
     }
 
-    // Emit arguments event if arguments fragment is present
+    // Capture function name if present
+    if (tc.function?.name) {
+      state.name = tc.function.name;
+    }
+
+    // Accumulate arguments and emit fragment event
     if (tc.function?.arguments) {
+      state.args += tc.function.arguments;
       ctx.emit({
         type: "tool.arguments",
         index,
@@ -119,6 +172,25 @@ function handleStreamingToolCalls(ctx: HandlerContext, toolCalls: DeltaToolCall[
       } as ToolArguments);
     }
   }
+}
+
+function emitAccumulatedToolCalls(
+  ctx: HandlerContext,
+  accumulated: Map<number, StreamingToolCall>,
+): void {
+  // Emit tool.complete for each accumulated streaming tool call
+  for (const [, state] of accumulated) {
+    if (state.id) {
+      ctx.emit({
+        type: "tool.complete",
+        callId: state.id,
+        functionName: state.name,
+        arguments: state.args,
+      } as ToolComplete);
+    }
+  }
+  // Clear state after emitting
+  accumulated.clear();
 }
 
 function handleNonStreamingToolCalls(ctx: HandlerContext, toolCalls: MessageToolCall[]): void {

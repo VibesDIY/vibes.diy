@@ -118,6 +118,7 @@ export {
   Segment,
   createCodeBlockHandler,
   toolHandler,
+  createToolHandler,
   imageHandler,
   StreamingAdapter,
   NonStreamingAdapter,

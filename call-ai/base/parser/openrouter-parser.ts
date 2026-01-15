@@ -2,7 +2,7 @@ import { OnFunc } from "@adviser/cement";
 import { ParserEvento, ParserEvent, ParserHandler, ParserEventSource } from "./parser-evento.js";
 import { StreamingAdapter } from "./adapters/streaming-adapter.js";
 import { imageHandler } from "./handlers/image-handler.js";
-import { toolHandler } from "./handlers/tool-handler.js";
+import { createToolHandler } from "./handlers/tool-handler.js";
 
 export class OpenRouterParser implements ParserEventSource {
   private readonly evento = new ParserEvento();
@@ -11,7 +11,8 @@ export class OpenRouterParser implements ParserEventSource {
 
   constructor() {
     // StreamingAdapter creates its own parser chain internally
-    this.evento.push(imageHandler, toolHandler);
+    // Use factory for isolated tool handler state per parser instance
+    this.evento.push(imageHandler, createToolHandler());
     this.adapter = new StreamingAdapter(this.evento);
   }
 
