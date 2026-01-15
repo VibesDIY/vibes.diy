@@ -18,22 +18,22 @@ import {
 // Re-export for consumers
 export type { ToolStart, ToolArguments, ToolComplete };
 
-type DeltaToolCall = {
-  index?: number;
-  id?: string;
-  function?: { name?: string; arguments?: string };
-};
+interface DeltaToolCall {
+  readonly index?: number;
+  readonly id?: string;
+  readonly function?: { readonly name?: string; readonly arguments?: string };
+}
 
-type MessageToolCall = {
-  id?: string;
-  type?: string;
-  function?: { name?: string; arguments?: string };
-};
+interface MessageToolCall {
+  readonly id?: string;
+  readonly type?: string;
+  readonly function?: { readonly name?: string; readonly arguments?: string };
+}
 
-type Choice = {
-  delta?: { tool_calls?: DeltaToolCall[] };
-  message?: { tool_calls?: MessageToolCall[] };
-};
+interface Choice {
+  readonly delta?: { readonly tool_calls?: DeltaToolCall[] };
+  readonly message?: { readonly tool_calls?: MessageToolCall[] };
+}
 
 export const toolHandler: ParserHandler = {
   hash: "tool-extractor",

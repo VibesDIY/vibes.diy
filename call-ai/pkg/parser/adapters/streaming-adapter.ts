@@ -10,29 +10,41 @@ import { LineStreamParser, LineStreamState } from "../line-stream.js";
 import { SSEDataParser } from "../sse-data-parser.js";
 import { SSEJsonParser } from "../json-parser.js";
 
-type ContentBlock = { type?: string; text?: string; input?: unknown };
-type Delta = {
-  content?: string | ContentBlock[];
-  tool_calls?: Array<{ function?: { arguments?: string } }>;
-  function_call?: { arguments?: string };
-};
-type Choice = {
-  delta?: Delta;
-  text?: string;
-  finish_reason?: string | null;
-};
-type Usage = { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number; cost?: number };
+interface ContentBlock {
+  readonly type?: string;
+  readonly text?: string;
+  readonly input?: unknown;
+}
+
+interface Delta {
+  readonly content?: string | ContentBlock[];
+  readonly tool_calls?: ReadonlyArray<{ readonly function?: { readonly arguments?: string } }>;
+  readonly function_call?: { readonly arguments?: string };
+}
+
+interface Choice {
+  readonly delta?: Delta;
+  readonly text?: string;
+  readonly finish_reason?: string | null;
+}
+
+interface Usage {
+  readonly prompt_tokens?: number;
+  readonly completion_tokens?: number;
+  readonly total_tokens?: number;
+  readonly cost?: number;
+}
 
 interface ChunkData {
-  id?: string;
-  provider?: string;
-  model?: string;
-  created?: number;
-  system_fingerprint?: string;
-  choices?: Choice[];
-  usage?: Usage;
-  type?: string;
-  delta?: { type?: string; text?: string };
+  readonly id?: string;
+  readonly provider?: string;
+  readonly model?: string;
+  readonly created?: number;
+  readonly system_fingerprint?: string;
+  readonly choices?: Choice[];
+  readonly usage?: Usage;
+  readonly type?: string;
+  readonly delta?: { readonly type?: string; readonly text?: string };
 }
 
 export class StreamingAdapter {
