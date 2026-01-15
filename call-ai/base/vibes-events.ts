@@ -4,6 +4,11 @@ import { type } from "arktype";
  * Vibes stream events - lifecycle and content events for VibesStream
  */
 
+const segmentType = type({
+  type: "'markdown' | 'code'",
+  content: "string",
+});
+
 export const vibesBegin = type({
   type: "'vibes.begin'",
   streamId: "string",
@@ -13,14 +18,14 @@ export const vibesBegin = type({
 export const vibesUpdate = type({
   type: "'vibes.update'",
   text: "string",
-  segments: "unknown[]",
+  segments: segmentType.array(),
 });
 
 export const vibesEnd = type({
   type: "'vibes.end'",
   streamId: "string",
   text: "string",
-  segments: "unknown[]",
+  segments: segmentType.array(),
   stats: {
     promptTokens: "number | undefined",
     completionTokens: "number | undefined",

@@ -54,10 +54,10 @@ export async function streamVibes(
   stream.onEvent((evt: VibesEvent) => {
     switch (evt.type) {
       case "vibes.update":
-        onUpdate({ text: evt.text, segments: evt.segments as Segment[] });
+        onUpdate({ text: evt.text, segments: evt.segments });
         break;
       case "vibes.end":
-        finalResult = { text: evt.text, segments: evt.segments as Segment[] };
+        finalResult = { text: evt.text, segments: evt.segments };
         break;
       case "vibes.error":
         streamError = new Error(evt.message);
