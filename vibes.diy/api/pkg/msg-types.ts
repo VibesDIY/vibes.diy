@@ -2,6 +2,7 @@
 import { Result } from "@adviser/cement";
 import { type } from "arktype";
 import { fileSystemItem } from "../svc/types.js";
+import { vibeEnv } from "@vibes.diy/use-vibes-base";
 
 // Base types
 export const dashAuthType = type({
@@ -79,14 +80,7 @@ const uint8AssetRef = type({
 });
 
 // Union of all file types
-export const vibeFile = type(
-  codeBlock
-    .or(codeRef)
-    .or(strAssetBlock)
-    .or(strAssetRef)
-    .or(uint8AssetBlock)
-    .or(uint8AssetRef),
-);
+export const vibeFile = type(codeBlock.or(codeRef).or(strAssetBlock).or(strAssetRef).or(uint8AssetBlock).or(uint8AssetRef));
 
 // export const vibeFileRes = type({
 //   type: "'vibe-file-res'",
@@ -101,9 +95,6 @@ export const vibeFile = type(
 // })
 
 export type VibeFile = typeof vibeFile.infer;
-
-export const vibeEnv = type("Record<string, string>");
-export type VibeEnv = typeof vibeEnv.infer;
 
 // Request types
 export const reqEnsureAppSlug = type({

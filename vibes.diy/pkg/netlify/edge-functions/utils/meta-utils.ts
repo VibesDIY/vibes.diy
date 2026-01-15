@@ -9,10 +9,7 @@ export interface VibeMetadata {
   canonicalUrl: string;
 }
 
-export async function fetchVibeMetadata(
-  vibeSlug: string,
-  searchParams?: string,
-): Promise<VibeMetadata> {
+export async function fetchVibeMetadata(vibeSlug: string, searchParams?: string): Promise<VibeMetadata> {
   const sourceUrl = `https://${vibeSlug}.vibesdiy.app/${searchParams || ""}`;
   const sourceResponse = await fetch(sourceUrl, {
     headers: {
@@ -28,14 +25,10 @@ export async function fetchVibeMetadata(
 
   // Extract title and description from source HTML
   const titleMatch = sourceHtml.match(/<title[^>]*>([^<]*)<\/title>/i);
-  const descMatch = sourceHtml.match(
-    /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i,
-  );
+  const descMatch = sourceHtml.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i);
 
   const title = titleMatch ? titleMatch[1] : `${vibeSlug} - Vibes DIY`;
-  const description = descMatch
-    ? descMatch[1]
-    : `Check out ${vibeSlug} - an AI-generated app created with Vibes DIY`;
+  const description = descMatch ? descMatch[1] : `Check out ${vibeSlug} - an AI-generated app created with Vibes DIY`;
 
   return {
     title,
@@ -45,10 +38,7 @@ export async function fetchVibeMetadata(
   };
 }
 
-export function generateMetaHTML(
-  metadata: VibeMetadata,
-  searchParams?: string,
-): string {
+export function generateMetaHTML(metadata: VibeMetadata, searchParams?: string): string {
   const { title, description, vibeSlug, canonicalUrl } = metadata;
 
   return `<!DOCTYPE html>
@@ -95,10 +85,5 @@ export function generateMetaHTML(
 }
 
 export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }

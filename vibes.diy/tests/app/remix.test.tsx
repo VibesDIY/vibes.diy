@@ -68,16 +68,13 @@ vi.stubGlobal(
       status: 200,
       statusText: "OK",
       headers: new Headers(),
-      text: () =>
-        Promise.resolve(
-          "export default function App() { return <div>Test App</div>; }",
-        ),
+      text: () => Promise.resolve("export default function App() { return <div>Test App</div>; }"),
       json: () => Promise.resolve({}),
       blob: () => Promise.resolve(new Blob()),
       arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
       formData: () => Promise.resolve(new FormData()),
     });
-  }),
+  })
 );
 
 // Mock the utils
@@ -89,9 +86,7 @@ vi.mock("~/components/SessionSidebar/utils", () => ({
 vi.mock("~/vibes.diy/app/utils/databaseManager", async () => {
   const { vi } = await import("vitest");
   return {
-    getSessionDatabaseName: vi
-      .fn()
-      .mockImplementation((id) => `session-${id || "default"}`),
+    getSessionDatabaseName: vi.fn().mockImplementation((id) => `session-${id || "default"}`),
   };
 });
 
@@ -143,12 +138,8 @@ describe("Remix Route", () => {
     // Wait for the navigation to occur without prompt parameter
     await waitFor(() => {
       expect(mockOnNavigate).toHaveBeenCalled();
-      expect(mockOnNavigate).toHaveBeenCalledWith(
-        expect.stringMatching(/\/chat\/.*\/.*\/chat$/),
-      );
-      expect(mockOnNavigate).not.toHaveBeenCalledWith(
-        expect.stringMatching(/\?prompt=/),
-      );
+      expect(mockOnNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/chat\/.*\/.*\/chat$/));
+      expect(mockOnNavigate).not.toHaveBeenCalledWith(expect.stringMatching(/\?prompt=/));
     });
   });
 });

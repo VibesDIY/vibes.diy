@@ -1,31 +1,18 @@
-import * as React from 'react';
-import type { ImageGenOptions } from 'call-ai';
-import { useImageGen as defaultUseImageGen } from '../hooks/image-gen/use-image-gen.js';
-import { useFireproof, Database } from '@fireproof/use-fireproof';
-import { ensureSuperThis } from '@fireproof/core-runtime';
-import {
-  ImgGenPromptWaiting,
-  ImgGenDisplayPlaceholder,
-  ImgGenDisplay,
-  ImgGenError,
-} from './ImgGenUtils.js';
+import * as React from "react";
+import type { ImageGenOptions } from "call-ai";
+import { useImageGen as defaultUseImageGen } from "../hooks/image-gen/use-image-gen.js";
+import { useFireproof, Database } from "@fireproof/use-fireproof";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ImgGenPromptWaiting, ImgGenDisplayPlaceholder, ImgGenDisplay, ImgGenError } from "./ImgGenUtils.js";
 // Import from direct file since the main index.ts might not be updated yet
-import { ImgGenUploadWaiting } from './ImgGenUtils/ImgGenUploadWaiting.js';
-import { getImgGenMode } from './ImgGenUtils/ImgGenModeUtils.js';
-import { defaultClasses } from '../utils/style-utils.js';
-import { logDebug } from '../utils/debug.js';
-import {
-  ImageDocument,
-  ImgGenClasses,
-  UseImageGenOptions,
-  UseImageGenResult,
-} from '@vibes.diy/use-vibes-types';
-import { Lazy } from '@adviser/cement';
+import { ImgGenUploadWaiting } from "./ImgGenUtils/ImgGenUploadWaiting.js";
+import { getImgGenMode } from "./ImgGenUtils/ImgGenModeUtils.js";
+import { defaultClasses } from "../utils/style-utils.js";
+import { logDebug } from "../utils/debug.js";
+import { ImageDocument, ImgGenClasses, UseImageGenOptions, UseImageGenResult } from "@vibes.diy/use-vibes-types";
+import { Lazy } from "@adviser/cement";
 
-export interface ImgGenProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  'onError' | 'className'
-> {
+export interface ImgGenProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onError" | "className"> {
   /** Text prompt for image generation (required unless _id is provided) */
   readonly prompt: string;
 
@@ -99,28 +86,23 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
   } = props;
 
   // Get access to the Fireproof database directly
-  const { database: db } = useFireproof(database || 'ImgGen');
+  const { database: db } = useFireproof(database || "ImgGen");
 
   // Use a unique generationId to trigger regeneration
   // This provides a clearer signal when regeneration is needed
   const [generationId, setGenerationId] = React.useState<string | undefined>(undefined);
 
   // Track the edited prompt to pass to the image generator and show in UI
-  const [currentEditedPrompt, setCurrentEditedPrompt] = React.useState<string | undefined>(
-    undefined
-  );
+  const [currentEditedPrompt, setCurrentEditedPrompt] = React.useState<string | undefined>(undefined);
 
   // Track the document for image generation - use ImageDocument type or Record
   const [imageGenDocument, setImageGenDocument] = React.useState<ImageDocument | null>(null);
 
   // Merge options with images into a single options object for the hook
-  const mergedOptions = React.useMemo(
-    () => (images ? { ...options, images } : options),
-    [options, images]
-  );
+  const mergedOptions = React.useMemo(() => (images ? { ...options, images } : options), [options, images]);
 
   // Determine the effective prompt to use - either from form submission or props
-  const effectivePrompt = currentEditedPrompt || prompt || '';
+  const effectivePrompt = currentEditedPrompt || prompt || "";
 
   // Check if we should skip image generation based on whether we have prompt or id
   // Use effectivePrompt instead of just props.prompt
@@ -156,7 +138,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
   }, [document, effectivePrompt, loading, error, debug]); // Update dependency array
 
   if (debug) {
-    logDebug('[ImgGenCore] Current mode:', mode, {
+    logDebug("[ImgGenCore] Current mode:", mode, {
       document: !!document,
       documentId: document?._id,
       prompt: !!prompt,
@@ -199,7 +181,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
         // First, update the document in the database with the new prompt
         const doc = await db.get(id);
         if (!doc) {
-          logDebug('Document not found:', id);
+          logDebug("Document not found:", id);
           return;
         }
 
@@ -239,10 +221,10 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
 
           if (debug) {
             logDebug(
-              '[ImgGen] Setting document for image generation:',
+              "[ImgGen] Setting document for image generation:",
               refreshedDoc._id,
-              'with files:',
-              Object.keys(refreshedDoc._files || {}).filter((key) => key.startsWith('in'))
+              "with files:",
+              Object.keys(refreshedDoc._files || {}).filter((key) => key.startsWith("in"))
             );
           }
         }
@@ -250,7 +232,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
         // Now trigger regeneration with the updated prompt
         handleRegen();
       } catch (error) {
-        logDebug('Error updating prompt:', error);
+        logDebug("Error updating prompt:", error);
       }
     },
     [db, handleRegen, onPromptEdit]
@@ -259,24 +241,24 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
   // Handle document deletion
   const handleDelete = React.useCallback(
     async (id: string) => {
-      logDebug('[ImgGen] Attempting to delete document:', id);
+      logDebug("[ImgGen] Attempting to delete document:", id);
       try {
         // Use await to ensure the operation completes
         const result = await db.del(id);
 
         if (debug) {
-          logDebug('[ImgGen] Document deletion result:', result);
+          logDebug("[ImgGen] Document deletion result:", result);
         }
 
         // Notify parent component about deletion
         if (onDelete) {
           if (debug) {
-            logDebug('[ImgGen] Calling onDelete callback with id:', id);
+            logDebug("[ImgGen] Calling onDelete callback with id:", id);
           }
           onDelete(id);
         }
       } catch (error) {
-        logDebug('Error deleting document:', error);
+        logDebug("Error deleting document:", error);
       }
     },
     [db, onDelete, debug]
@@ -286,7 +268,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
   const handleDocCreated = React.useCallback(
     (docId: string) => {
       if (debug) {
-        logDebug('[ImgGenCore] Document created:', docId);
+        logDebug("[ImgGenCore] Document created:", docId);
       }
 
       // Call user's callback if provided
@@ -300,7 +282,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
   // Render function that determines what to show based on current mode
   function renderContent() {
     if (debug) {
-      logDebug('[ImgGen Debug] Render state:', {
+      logDebug("[ImgGen Debug] Render state:", {
         mode,
         document: document?._id,
         loading,
@@ -312,7 +294,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
 
     // Render different components based on the current mode
     switch (mode) {
-      case 'placeholder': {
+      case "placeholder": {
         // Initial state - no document, no prompt
         // Use the same ImgGenUploadWaiting component that's used in uploadWaiting mode
         // but without a document (this creates a consistent UI for both entry points)
@@ -326,7 +308,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
             onPromptSubmit={(newPrompt: string) => {
               // When a user enters a prompt directly in the initial state
               if (debug) {
-                logDebug('[ImgGenCore] Prompt submitted from initial view:', newPrompt);
+                logDebug("[ImgGenCore] Prompt submitted from initial view:", newPrompt);
               }
 
               // Update the edited prompt and generate a new generationId to trigger generation
@@ -337,7 +319,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
         );
       }
 
-      case 'uploadWaiting': {
+      case "uploadWaiting": {
         // We have a document with uploaded files, waiting for prompt input
         if (!document || !document._id) {
           // This shouldn't happen - go back to placeholder if no document
@@ -349,7 +331,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
           const displayPrompt = currentEditedPrompt || prompt;
           return (
             <ImgGenDisplayPlaceholder
-              prompt={displayPrompt || ''}
+              prompt={displayPrompt || ""}
               loading={loading}
               progress={progress}
               error={error}
@@ -370,7 +352,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
               onFilesAdded={() => {
                 // Just log if new files were added to the same document
                 if (debug) {
-                  logDebug('[ImgGenCore] Files added to existing document:', document._id);
+                  logDebug("[ImgGenCore] Files added to existing document:", document._id);
                 }
               }}
               onPromptSubmit={(newPrompt: string, docId?: string) => {
@@ -379,8 +361,8 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
                 const targetDocId = docId || (document && document._id);
 
                 if (debug) {
-                  logDebug('[ImgGenCore] Prompt submitted for existing uploads:', newPrompt);
-                  logDebug('[ImgGenCore] Using document ID:', targetDocId);
+                  logDebug("[ImgGenCore] Prompt submitted for existing uploads:", newPrompt);
+                  logDebug("[ImgGenCore] Using document ID:", targetDocId);
                 }
 
                 if (targetDocId) {
@@ -393,24 +375,19 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
         );
       }
 
-      case 'generating': {
+      case "generating": {
         // Document with prompt, waiting for generation to complete
         // Use the edited prompt during generation if available, or fall back to document prompt
         // Look in three places: 1) edited prompt 2) direct prop 3) document's prompt
         let displayPrompt = currentEditedPrompt || prompt;
 
         // If we still don't have a prompt but have a document with a prompt, use that
-        if (
-          !displayPrompt &&
-          document &&
-          'prompt' in document &&
-          typeof document.prompt === 'string'
-        ) {
+        if (!displayPrompt && document && "prompt" in document && typeof document.prompt === "string") {
           displayPrompt = document.prompt;
         }
 
         if (debug) {
-          logDebug('[ImgGen Debug] Generating state prompt sources:', {
+          logDebug("[ImgGen Debug] Generating state prompt sources:", {
             currentEditedPrompt: currentEditedPrompt || null,
             propPrompt: prompt || null,
             documentPrompt: document?.prompt || null,
@@ -420,7 +397,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
 
         return (
           <ImgGenDisplayPlaceholder
-            prompt={displayPrompt || ''}
+            prompt={displayPrompt || ""}
             loading={loading}
             progress={progress}
             error={error}
@@ -430,7 +407,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
         );
       }
 
-      case 'display': {
+      case "display": {
         // Document with generated images
         if (!document || !document._id) {
           return <ImgGenError message="Missing document" />;
@@ -445,7 +422,7 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
               onPromptEdit={handlePromptEdit}
               onDelete={handleDelete}
               onRegen={handleRegen}
-              alt={alt || ''}
+              alt={alt || ""}
               className={className}
               classes={classes}
               debug={debug}
@@ -457,11 +434,9 @@ function ImgGenCore(props: Partial<ImgGenProps>): React.ReactElement {
         );
       }
 
-      case 'error': {
+      case "error": {
         // Error state
-        return (
-          <ImgGenError message={error ? error.message : 'Unknown error'} className={className} />
-        );
+        return <ImgGenError message={error ? error.message : "Unknown error"} className={className} />;
       }
 
       default: {
@@ -495,14 +470,14 @@ export function ImgGen(props: Partial<ImgGenProps>): React.ReactElement {
   // Handle document creation callback - combines user callback with internal state
   const handleDocCreated = React.useCallback(
     (docId: string) => {
-      if (debug) logDebug('[ImgGen] Document created:', docId);
+      if (debug) logDebug("[ImgGen] Document created:", docId);
 
       // Update internal state to trigger remount
       setUploadedDocId(docId);
 
       // Call user's callback if provided
       if (onDocumentCreated) {
-        if (debug) logDebug('[ImgGen] Calling onDocumentCreated callback');
+        if (debug) logDebug("[ImgGen] Calling onDocumentCreated callback");
         onDocumentCreated(docId);
       }
     },
@@ -525,7 +500,7 @@ export function ImgGen(props: Partial<ImgGenProps>): React.ReactElement {
     // or if we got a new document ID from uploads
     if (idChanged || (!_id && promptChanged) || uploadedDocIdChanged) {
       if (debug) {
-        logDebug('[ImgGen] Identity change detected, generating new mountKey:', {
+        logDebug("[ImgGen] Identity change detected, generating new mountKey:", {
           idChanged,
           _id,
           prevId: prevIdRef.current,

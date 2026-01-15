@@ -25,9 +25,7 @@ describe("useSimpleChat", () => {
     await act(async () => {
       result.current.setSelectedResponseId("");
     });
-    const mockPendingPut = vi.fn<
-      ReturnType<typeof useSession>["sessionDatabase"]["put"]
-    >(async () => {
+    const mockPendingPut = vi.fn<ReturnType<typeof useSession>["sessionDatabase"]["put"]>(async () => {
       return Promise.resolve({ id: pendingId } as DocResponse);
     });
     sharedSessionDatabase.put = mockPendingPut;
@@ -39,9 +37,7 @@ describe("useSimpleChat", () => {
       await result.current.sendMessage();
     });
 
-    const originalPut = vi.fn<
-      ReturnType<typeof useSession>["sessionDatabase"]["put"]
-    >(async (doc) => {
+    const originalPut = vi.fn<ReturnType<typeof useSession>["sessionDatabase"]["put"]>(async (doc) => {
       const id = doc._id || `ai-message-${Date.now()}`;
       return Promise.resolve({ id } as DocResponse);
     });

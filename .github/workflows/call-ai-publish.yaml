@@ -1,10 +1,10 @@
-name: "call-ai-publish"
+name: 'call-ai-publish'
 on:
   push:
     paths:
-      - "call-ai/**/*"
+      - 'call-ai/**/*'
     tags:
-      - "call-ai@*"
+      - 'call-ai@*'
 
 jobs:
   compile_test:

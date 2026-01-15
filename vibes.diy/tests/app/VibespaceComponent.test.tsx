@@ -13,27 +13,19 @@ vi.mock("use-fireproof", () => ({
 
 // Mock the vibespace theme components
 vi.mock("~/vibes.diy/app/components/vibespace/Basic", () => ({
-  default: ({ userId }: { userId: string }) => (
-    <div data-testid="basic-theme">Basic theme for {userId}</div>
-  ),
+  default: ({ userId }: { userId: string }) => <div data-testid="basic-theme">Basic theme for {userId}</div>,
 }));
 
 vi.mock("~/vibes.diy/app/components/vibespace/Wild", () => ({
-  default: ({ userId }: { userId: string }) => (
-    <div data-testid="wild-theme">Wild theme for {userId}</div>
-  ),
+  default: ({ userId }: { userId: string }) => <div data-testid="wild-theme">Wild theme for {userId}</div>,
 }));
 
 vi.mock("~/vibes.diy/app/components/vibespace/ExplodingBrain", () => ({
-  default: ({ userId }: { userId: string }) => (
-    <div data-testid="brain-theme">Brain theme for {userId}</div>
-  ),
+  default: ({ userId }: { userId: string }) => <div data-testid="brain-theme">Brain theme for {userId}</div>,
 }));
 
 vi.mock("~/vibes.diy/app/components/vibespace/Cyberpunk", () => ({
-  default: ({ userId }: { userId: string }) => (
-    <div data-testid="cyberpunk-theme">Cyberpunk theme for {userId}</div>
-  ),
+  default: ({ userId }: { userId: string }) => <div data-testid="cyberpunk-theme">Cyberpunk theme for {userId}</div>,
 }));
 
 // Mock Canvas API for jsdom
@@ -71,13 +63,7 @@ vi.mock("~/vibes.diy/app/components/VibesDIYLogo", () => ({
 
 // Mock SimpleAppLayout
 vi.mock("~/vibes.diy/app/components/SimpleAppLayout", () => ({
-  default: ({
-    children,
-    headerLeft,
-  }: {
-    children: React.ReactNode;
-    headerLeft: React.ReactNode;
-  }) => (
+  default: ({ children, headerLeft }: { children: React.ReactNode; headerLeft: React.ReactNode }) => (
     <div>
       <header>{headerLeft}</header>
       <main>{children}</main>
@@ -85,13 +71,8 @@ vi.mock("~/vibes.diy/app/components/SimpleAppLayout", () => ({
   ),
 }));
 
-const renderWithRouter = (
-  component: React.ReactElement,
-  initialEntries = ["/"],
-) => {
-  return render(
-    <MemoryRouter initialEntries={initialEntries}>{component}</MemoryRouter>,
-  );
+const renderWithRouter = (component: React.ReactElement, initialEntries = ["/"]) => {
+  return render(<MemoryRouter initialEntries={initialEntries}>{component}</MemoryRouter>);
 };
 
 describe("VibespaceComponent", () => {
@@ -145,9 +126,7 @@ describe("VibespaceComponent", () => {
   });
 
   it("should render canvas element for starfield animation", () => {
-    const { container } = renderWithRouter(
-      <VibespaceComponent tildeId="testuser" />,
-    );
+    const { container } = renderWithRouter(<VibespaceComponent tildeId="testuser" />);
 
     const canvas = container.querySelector("canvas");
     expect(canvas).toBeInTheDocument();
@@ -158,9 +137,7 @@ describe("VibespaceComponent", () => {
     renderWithRouter(<VibespaceComponent tildeId="testuser" />);
 
     // Check that starfield container has the right classes
-    const starfieldContainer = screen
-      .getByText("EMPTY SPACE")
-      .closest(".h-screen");
+    const starfieldContainer = screen.getByText("EMPTY SPACE").closest(".h-screen");
     expect(starfieldContainer).toHaveClass("bg-black");
   });
 });

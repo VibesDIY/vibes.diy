@@ -22,9 +22,7 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", async () => {
       messageHasBeenSent: false,
       setMessageHasBeenSent: vi.fn(),
     }),
-    CookieConsentProvider: ({ children }: { children: React.ReactNode }) => (
-      <>{children}</>
-    ),
+    CookieConsentProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   };
 });
 
@@ -74,8 +72,7 @@ vi.mock("~/vibes.diy/app/hooks/useSession", async () => {
 // Create mock implementations for react-router (note: not react-router-dom)
 vi.mock("react-router", async () => {
   const { vi } = await import("vitest");
-  const actual =
-    await vi.importActual<typeof import("react-router")>("react-router");
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
     useNavigate: () => vi.fn(),
@@ -113,14 +110,8 @@ vi.mock("~/vibes.diy/app/components/AppLayout", () => {
         <div data-testid="app-layout">
           <div data-testid="chat-panel">{chatPanel}</div>
           <div data-testid="preview-panel">{previewPanel}</div>
-          {chatInput && (
-            <div data-testid="chat-input-container">{chatInput}</div>
-          )}
-          {suggestionsComponent && (
-            <div data-testid="suggestions-container">
-              {suggestionsComponent}
-            </div>
-          )}
+          {chatInput && <div data-testid="chat-input-container">{chatInput}</div>}
+          {suggestionsComponent && <div data-testid="suggestions-container">{suggestionsComponent}</div>}
         </div>
       );
     },
@@ -131,18 +122,11 @@ vi.mock("~/vibes.diy/app/components/AppLayout", () => {
 vi.mock("~/vibes.diy/app/components/NewSessionView", () => {
   return {
     __esModule: true,
-    default: ({
-      onSessionCreate,
-    }: {
-      onSessionCreate: (id: string) => void;
-    }) => {
+    default: ({ onSessionCreate }: { onSessionCreate: (id: string) => void }) => {
       return (
         <div data-testid="new-session-view">
           <div data-testid="chat-interface">Chat Interface</div>
-          <button
-            data-testid="create-session"
-            onClick={() => onSessionCreate("test-session-id")}
-          >
+          <button data-testid="create-session" onClick={() => onSessionCreate("test-session-id")}>
             Create Session
           </button>
         </div>
@@ -154,13 +138,7 @@ vi.mock("~/vibes.diy/app/components/NewSessionView", () => {
 vi.mock("~/vibes.diy/app/components/SessionView", () => {
   return {
     __esModule: true,
-    default: ({
-      urlPrompt,
-      urlModel,
-    }: {
-      urlPrompt?: string | null;
-      urlModel?: string | null;
-    }) => {
+    default: ({ urlPrompt, urlModel }: { urlPrompt?: string | null; urlModel?: string | null }) => {
       return (
         <div data-testid="session-view">
           <div data-testid="chat-interface">Chat Interface</div>
@@ -191,7 +169,7 @@ describe("Home Route", () => {
         <MemoryRouter initialEntries={["/"]}>
           <UnifiedSession />
         </MemoryRouter>
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     await waitFor(() => {
@@ -209,16 +187,14 @@ describe("Home Route", () => {
         <MemoryRouter initialEntries={["/chat/test-session-123"]}>
           <UnifiedSession />
         </MemoryRouter>
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     await waitFor(() => {
       expect(screen.getByTestId("session-view")).toBeInTheDocument();
       // Use a more specific selector within the session-view
       const sessionView = screen.getByTestId("session-view");
-      expect(
-        sessionView.querySelector('[data-testid="chat-interface"]'),
-      ).toBeInTheDocument();
+      expect(sessionView.querySelector('[data-testid="chat-interface"]')).toBeInTheDocument();
     });
   });
 });

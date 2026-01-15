@@ -151,7 +151,7 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
             ...options,
             model: FALLBACK_MODEL,
           },
-          true, // Mark as retry to prevent infinite fallback loops
+          true // Mark as retry to prevent infinite fallback loops
         );
       }
 
@@ -219,7 +219,7 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
           ...options,
           apiKey: keyStore().current,
         },
-        isRetry, // Preserve retry status
+        isRetry // Preserve retry status
       );
     }
 

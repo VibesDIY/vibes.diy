@@ -62,11 +62,7 @@ const mockScreenshotDoc = {
   type: "screenshot",
   _files: {
     screenshot: {
-      file: vi
-        .fn()
-        .mockResolvedValue(
-          new Blob(["mockScreenshotData"], { type: "image/png" }),
-        ),
+      file: vi.fn().mockResolvedValue(new Blob(["mockScreenshotData"], { type: "image/png" })),
     },
   },
 };
@@ -118,8 +114,7 @@ describe("publishApp", () => {
   it("includes remixOf metadata in the API payload when publishing an app with remix info", async () => {
     // Arrange: Setup a test case with remix metadata present
     const sessionId = "test-session-id";
-    const testCode =
-      "const App = () => <div>Hello World</div>; export default App;";
+    const testCode = "const App = () => <div>Hello World</div>; export default App;";
     const testTitle = "Remixed Test App";
     const updatePublishedUrl = vi.fn();
     const userId = "test-user-id";
@@ -153,8 +148,7 @@ describe("publishApp", () => {
   it("handles the case when no remix metadata is present", async () => {
     // Arrange: Setup without remix metadata
     const sessionId = "no-remix-session";
-    const testCode =
-      "const App = () => <div>Original App</div>; export default App;";
+    const testCode = "const App = () => <div>Original App</div>; export default App;";
     const testTitle = "Original Test App";
 
     // Mock Fireproof to throw an error when trying to get the vibe doc
@@ -184,8 +178,7 @@ describe("publishApp", () => {
   it("includes screenshot in the API payload when available", async () => {
     // Arrange - screenshot is already set up in the mock
     const sessionId = "test-session-id";
-    const testCode =
-      "const App = () => <div>App with Screenshot</div>; export default App;";
+    const testCode = "const App = () => <div>App with Screenshot</div>; export default App;";
 
     // Act: Call the publishApp function
     await publishApp({
@@ -210,8 +203,7 @@ describe("publishApp", () => {
   it("includes Authorization header when token is provided", async () => {
     // Arrange
     const sessionId = "test-session-id";
-    const testCode =
-      "const App = () => <div>Authenticated App</div>; export default App;";
+    const testCode = "const App = () => <div>Authenticated App</div>; export default App;";
     const testToken = "test-jwt-token-123";
 
     // Act: Call the publishApp function with token
@@ -228,18 +220,14 @@ describe("publishApp", () => {
     expect(mockFetch).toHaveBeenCalled();
 
     const [_url, options] = mockFetch.mock.calls[0];
-    expect(options.headers).toHaveProperty(
-      "Authorization",
-      `Bearer ${testToken}`,
-    );
+    expect(options.headers).toHaveProperty("Authorization", `Bearer ${testToken}`);
     expect(options.headers).toHaveProperty("Content-Type", "application/json");
   });
 
   it("does not include Authorization header when token is null", async () => {
     // Arrange
     const sessionId = "test-session-id";
-    const testCode =
-      "const App = () => <div>Unauthenticated App</div>; export default App;";
+    const testCode = "const App = () => <div>Unauthenticated App</div>; export default App;";
 
     // Act: Call the publishApp function without token
     await publishApp({

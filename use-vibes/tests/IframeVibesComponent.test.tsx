@@ -1,17 +1,13 @@
-import React from 'react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, act, waitFor } from '@testing-library/react';
-import {
-  createMockIframe,
-  simulateIframeMessage,
-  cleanupIframeMocks,
-} from './utils/iframe-mocks.js';
+import React from "react";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import { render, act, waitFor } from "@testing-library/react";
+import { createMockIframe, simulateIframeMessage, cleanupIframeMocks } from "./utils/iframe-mocks.js";
 
 // Direct import of the component
-import IframeVibesComponentActual from '../base/hooks/vibes-gen/IframeVibesComponent.js';
+import IframeVibesComponentActual from "../base/hooks/vibes-gen/IframeVibesComponent.js";
 const IframeVibesComponent = IframeVibesComponentActual;
 
-describe('IframeVibesComponent', () => {
+describe("IframeVibesComponent", () => {
   let mockIframe: ReturnType<typeof createMockIframe>;
 
   beforeEach(() => {
@@ -23,13 +19,9 @@ describe('IframeVibesComponent', () => {
     cleanupIframeMocks();
   });
 
-  it('should render iframe with session-based vibesbox URL', async () => {
+  it("should render iframe with session-based vibesbox URL", async () => {
     const { container } = render(
-      <IframeVibesComponent
-        code="function App() { return <div>Test</div> }"
-        sessionId="test-123"
-        baseUrl="about:blank"
-      />
+      <IframeVibesComponent code="function App() { return <div>Test</div> }" sessionId="test-123" baseUrl="about:blank" />
     );
 
     // Wait for component to render
@@ -46,8 +38,8 @@ describe('IframeVibesComponent', () => {
     // expect(iframe?.src).toBe('https://test-123.vibesbox.dev/');
   });
 
-  it('should send code via postMessage when iframe loads', async () => {
-    const code = 'function App() { return <div>Hello</div> }';
+  it("should send code via postMessage when iframe loads", async () => {
+    const code = "function App() { return <div>Hello</div> }";
     const mockPostMessage = vi.fn();
     mockIframe.contentWindow.postMessage = mockPostMessage;
 
@@ -64,18 +56,18 @@ describe('IframeVibesComponent', () => {
     await waitFor(() => {
       expect(mockPostMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'execute-code',
-          code: expect.stringContaining('function App'),
-          apiKey: 'sk-vibes-proxy-managed',
+          type: "execute-code",
+          code: expect.stringContaining("function App"),
+          apiKey: "sk-vibes-proxy-managed",
           sessionId: expect.any(String),
           // authToken field exists but can be undefined or a string
         }),
-        '*'
+        "*"
       );
     });
   });
 
-  it('should transform imports to esm.sh URLs', async () => {
+  it("should transform imports to esm.sh URLs", async () => {
     const code = `
       import React from "react"
       import { callAI } from "call-ai"
@@ -110,19 +102,19 @@ describe('IframeVibesComponent', () => {
     // expect(sentCode).toContain('from "https://esm.sh/lodash"');
   });
 
-  it('should normalize various export patterns', async () => {
+  it("should normalize various export patterns", async () => {
     const testCases = [
       {
-        input: 'export default function App() { return <div/> }',
-        shouldContain: 'export default',
+        input: "export default function App() { return <div/> }",
+        shouldContain: "export default",
       },
       {
-        input: 'function App() { return <div/> }\\nexport { App as default }',
-        shouldContain: 'export default',
+        input: "function App() { return <div/> }\\nexport { App as default }",
+        shouldContain: "export default",
       },
       {
-        input: 'const App = () => <div/>; export default App',
-        shouldContain: 'export default',
+        input: "const App = () => <div/>; export default App",
+        shouldContain: "export default",
       },
     ];
 
@@ -147,7 +139,7 @@ describe('IframeVibesComponent', () => {
     }
   });
 
-  it('should update ready state when preview-ready message received', async () => {
+  it("should update ready state when preview-ready message received", async () => {
     const onReady = vi.fn();
 
     render(<IframeVibesComponent baseUrl="about:blank" code="..." onReady={onReady} />);
@@ -158,7 +150,7 @@ describe('IframeVibesComponent', () => {
     });
 
     // Simulate message from iframe
-    simulateIframeMessage({ type: 'preview-ready' }, 'https://test.vibesbox.dev');
+    simulateIframeMessage({ type: "preview-ready" }, "https://test.vibesbox.dev");
 
     // Expected behavior once implemented:
     // await waitFor(() => {
@@ -166,7 +158,7 @@ describe('IframeVibesComponent', () => {
     // });
   });
 
-  it('should call onError when error message received', async () => {
+  it("should call onError when error message received", async () => {
     const onError = vi.fn();
 
     render(<IframeVibesComponent baseUrl="about:blank" code="..." onError={onError} />);
@@ -179,10 +171,10 @@ describe('IframeVibesComponent', () => {
     // Simulate error message from iframe
     simulateIframeMessage(
       {
-        type: 'error',
-        error: 'Syntax error in component',
+        type: "error",
+        error: "Syntax error in component",
       },
-      'https://test.vibesbox.dev'
+      "https://test.vibesbox.dev"
     );
 
     // Expected behavior once implemented:
@@ -195,13 +187,8 @@ describe('IframeVibesComponent', () => {
     // });
   });
 
-  it('should generate default session ID when not provided', async () => {
-    render(
-      <IframeVibesComponent
-        baseUrl="about:blank"
-        code="function App() { return <div>Test</div> }"
-      />
-    );
+  it("should generate default session ID when not provided", async () => {
+    render(<IframeVibesComponent baseUrl="about:blank" code="function App() { return <div>Test</div> }" />);
 
     // Wait for component to mount
     await waitFor(() => {
@@ -213,15 +200,10 @@ describe('IframeVibesComponent', () => {
     // expect(iframe?.src).toMatch(/^https:\/\/vibes-\d+\.vibesbox\.dev\/$/);
   });
 
-  it('should clean up event listeners on unmount', async () => {
-    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+  it("should clean up event listeners on unmount", async () => {
+    const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
-    const { unmount } = render(
-      <IframeVibesComponent
-        baseUrl="about:blank"
-        code="function App() { return <div>Test</div> }"
-      />
-    );
+    const { unmount } = render(<IframeVibesComponent baseUrl="about:blank" code="function App() { return <div>Test</div> }" />);
 
     // Wait for component to mount
     await waitFor(() => {

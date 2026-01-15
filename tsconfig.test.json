@@ -1,11 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": [
-    "**/dist/**",
-    "**/node_modules/**",
-    "**/examples/**",
-    "**/.react-router/**",
-    "**/.netlify/**",
-    "**/tests-new/**"
-  ]
+  "exclude": ["**/dist/**", "**/node_modules/**", "**/examples/**", "**/.react-router/**", "**/.netlify/**", "**/tests-new/**"]
 }

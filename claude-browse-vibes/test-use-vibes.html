@@ -30,16 +30,14 @@
       try {
         const { mountVibesApp } = await import("https://esm.sh/use-vibes");
 
-        document.getElementById("output").textContent =
-          "Success: mountVibesApp imported and mounted!";
+        document.getElementById("output").textContent = "Success: mountVibesApp imported and mounted!";
         console.log("Success: mountVibesApp function imported:", mountVibesApp);
 
         // Actually mount the app to test the full functionality
         const result = mountVibesApp();
         console.log("Mount result:", result);
       } catch (error) {
-        document.getElementById("output").textContent =
-          "Error: " + error.message;
+        document.getElementById("output").textContent = "Error: " + error.message;
         console.error("Import or mount error:", error);
       }
     </script>

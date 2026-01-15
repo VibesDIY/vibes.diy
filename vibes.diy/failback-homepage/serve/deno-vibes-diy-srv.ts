@@ -7,10 +7,10 @@ import { MountVibeParams, VibesEnvSchema } from "@vibes.diy/use-vibes-base";
 const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
   const packageJsonStr = await Deno.readTextFile(`package.json`);
   const packageJson = JSON.parse(packageJsonStr);
-  const FP = (
-    packageJson.dependencies["@fireproof/core-cli"] ??
-    packageJson.devDependencies["@fireproof/core-cli"]
-  ).replace(/^[^0-9]*/, "");
+  const FP = (packageJson.dependencies["@fireproof/core-cli"] ?? packageJson.devDependencies["@fireproof/core-cli"]).replace(
+    /^[^0-9]*/,
+    ""
+  );
   console.log("Fireproof-Version:", FP);
   const loadFile = async (file: string): Promise<string | undefined> => {
     // Try exact filename first (for .json, .css, etc.)
@@ -30,9 +30,7 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
     }
     return undefined;
   };
-  const loadFileBinary = async (
-    file: string,
-  ): Promise<Uint8Array | undefined> => {
+  const loadFileBinary = async (file: string): Promise<Uint8Array | undefined> => {
     const path = `${Deno.cwd()}/${file}`;
     const ret = await Deno.readFile(path).catch(() => undefined);
     return ret;

@@ -31,7 +31,7 @@ describe("Error handling integration tests", () => {
       expect(typeof result).toBe("string");
       expect((result as string).length).toBeGreaterThan(10);
     },
-    TIMEOUT,
+    TIMEOUT
   );
 
   // Test with invalid model (should throw an error)
@@ -47,7 +47,7 @@ describe("Error handling integration tests", () => {
         });
       }).rejects.toThrow();
     },
-    TIMEOUT,
+    TIMEOUT
   );
 
   // Test streaming with invalid model (should also throw an error)
@@ -71,7 +71,7 @@ describe("Error handling integration tests", () => {
         }
       }).rejects.toThrow();
     },
-    TIMEOUT,
+    TIMEOUT
   );
 
   // Test error message contents
@@ -101,7 +101,7 @@ describe("Error handling integration tests", () => {
         }
       }
     },
-    TIMEOUT,
+    TIMEOUT
   );
 
   // Test with debug option for error logging
@@ -130,7 +130,7 @@ describe("Error handling integration tests", () => {
         consoleErrorSpy.mockRestore();
       }
     },
-    TIMEOUT,
+    TIMEOUT
   );
 
   // Test JSON parsing error with streaming and invalid model
@@ -181,7 +181,7 @@ describe("Error handling integration tests", () => {
         }
       }
     },
-    TIMEOUT,
+    TIMEOUT
   );
 
   // Test trying to mimic the React app's behavior more closely
@@ -222,6 +222,6 @@ describe("Error handling integration tests", () => {
       // Check results
       expect(true).toBe(true); // Always passes
     },
-    TIMEOUT,
+    TIMEOUT
   );
 });

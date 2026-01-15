@@ -234,8 +234,7 @@ From commit `8509d99` (Sept 17, 2025), use-vibes provides an **enhanced version*
 const { database, useLiveQuery } = useFireproof("mydb");
 
 // Enhanced use-vibes behavior (drop-in replacement):
-const { database, useLiveQuery, enableSync, disableSync, syncEnabled } =
-  useFireproof("mydb");
+const { database, useLiveQuery, enableSync, disableSync, syncEnabled } = useFireproof("mydb");
 ```
 
 #### Key Enhancements Added

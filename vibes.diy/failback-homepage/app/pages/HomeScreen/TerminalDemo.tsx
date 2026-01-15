@@ -5,10 +5,7 @@ declare global {
   interface Window {
     $?: JQueryStatic & {
       fn: {
-        terminal: (
-          interpreter: (() => void) | Record<string, unknown>,
-          options: Record<string, unknown>,
-        ) => JQueryTerminal;
+        terminal: (interpreter: (() => void) | Record<string, unknown>, options: Record<string, unknown>) => JQueryTerminal;
       };
     };
     jQuery?: unknown;
@@ -20,20 +17,12 @@ interface JQueryStatic {
 }
 
 interface JQueryElement {
-  terminal: (
-    interpreter: (() => void) | Record<string, unknown>,
-    options: Record<string, unknown>,
-  ) => JQueryTerminal;
+  terminal: (interpreter: (() => void) | Record<string, unknown>, options: Record<string, unknown>) => JQueryTerminal;
 }
 
 interface JQueryTerminal {
   echo: (text: string) => void;
-  typing: (
-    method: string,
-    delay: number,
-    text: string,
-    callback?: () => void,
-  ) => void;
+  typing: (method: string, delay: number, text: string, callback?: () => void) => void;
   clear: () => void;
   destroy: () => void;
   set_prompt: (prompt: string) => void;
@@ -73,7 +62,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       {
         rootMargin: "600px",
         threshold: 0,
-      },
+      }
     );
 
     observer.observe(containerRef.current);
@@ -92,18 +81,14 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     const loadScript = (src: string): Promise<void> => {
       return new Promise((resolve, reject) => {
         // Check if script tag already exists
-        const existingScript = document.querySelector(
-          `script[src="${src}"]`,
-        ) as HTMLScriptElement | null;
+        const existingScript = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null;
         if (existingScript) {
           // If script exists, wait for it to load if not already
           if (existingScript.dataset.loaded === "true") {
             resolve();
           } else {
             existingScript.addEventListener("load", () => resolve());
-            existingScript.addEventListener("error", () =>
-              reject(new Error(`Failed to load ${src}`)),
-            );
+            existingScript.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)));
           }
           return;
         }
@@ -131,12 +116,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     const waitForJQueryTerminal = (): Promise<void> => {
       return new Promise((resolve) => {
         const check = () => {
-          if (
-            window.$ &&
-            typeof window.$ === "function" &&
-            window.$.fn &&
-            typeof window.$.fn.terminal === "function"
-          ) {
+          if (window.$ && typeof window.$ === "function" && window.$.fn && typeof window.$.fn.terminal === "function") {
             resolve();
           } else {
             setTimeout(check, 50);
@@ -149,17 +129,13 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     const loadDependencies = async () => {
       try {
         // Load styles first
-        loadStyles(
-          "https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css",
-        );
+        loadStyles("https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css");
 
         // Load jQuery first
         await loadScript("https://cdn.jsdelivr.net/npm/jquery");
 
         // Then jQuery Terminal
-        await loadScript(
-          "https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js",
-        );
+        await loadScript("https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js");
 
         // Wait for jQuery Terminal plugin to be available
         await waitForJQueryTerminal();
@@ -181,13 +157,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
 
   // Initialize terminal once scripts are loaded AND visible
   useEffect(() => {
-    if (
-      !scriptsLoaded ||
-      !isVisible ||
-      !terminalRef.current ||
-      !window.$ ||
-      typeof window.$.fn?.terminal !== "function"
-    ) {
+    if (!scriptsLoaded || !isVisible || !terminalRef.current || !window.$ || typeof window.$.fn?.terminal !== "function") {
       return;
     }
 
@@ -295,7 +265,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
               return false;
             }
           },
-        },
+        }
       );
 
       termRef.current = term;
@@ -335,10 +305,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       // Prevent terminal from auto-focusing on external clicks
       const preventExternalFocus = (e: MouseEvent) => {
         // If click is outside the terminal container, blur the terminal
-        if (
-          terminalRef.current &&
-          !terminalRef.current.contains(e.target as Node)
-        ) {
+        if (terminalRef.current && !terminalRef.current.contains(e.target as Node)) {
           // Blur any focused element within the terminal
           const activeElement = document.activeElement;
           if (activeElement && terminalRef.current.contains(activeElement)) {
@@ -357,36 +324,20 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
       const dimGray = "#555";
 
       // Narrow box (44 chars wide total, 42 inner)
+      term.echo(`[[;${orange};]  ╭──────────────────────────────────────────╮]`);
+      term.echo(`[[;${orange};]  │              [[;${yellow};]Vibes OS v.0.1[[;${orange};]              │]`);
+      term.echo(`[[;${orange};]  │                                          │]`);
+      term.echo(`[[;${orange};]  │           [[;${cream};]Welcome, Vibe Coder![[;${orange};]           │]`);
+      term.echo(`[[;${orange};]  │                                          │]`);
       term.echo(
-        `[[;${orange};]  ╭──────────────────────────────────────────╮]`,
+        `[[;${orange};]  │                  [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                   │]`
       );
+      term.echo(`[[;${orange};]  │                                          │]`);
       term.echo(
-        `[[;${orange};]  │              [[;${yellow};]Vibes OS v.0.1[[;${orange};]              │]`,
+        `[[;${orange};]  │         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`
       );
-      term.echo(
-        `[[;${orange};]  │                                          │]`,
-      );
-      term.echo(
-        `[[;${orange};]  │           [[;${cream};]Welcome, Vibe Coder![[;${orange};]           │]`,
-      );
-      term.echo(
-        `[[;${orange};]  │                                          │]`,
-      );
-      term.echo(
-        `[[;${orange};]  │                  [[;${orange};] [[;${blue};]^__^[[;${orange};][[;${orange};]                   │]`,
-      );
-      term.echo(
-        `[[;${orange};]  │                                          │]`,
-      );
-      term.echo(
-        `[[;${orange};]  │         [[;${blue};]Vibes 4.5[[;${orange};] · [[;${yellow};]Local-First[[;${orange};]          │]`,
-      );
-      term.echo(
-        `[[;${orange};]  │          [[;${dimGray};]~/your-brilliant-idea[[;${orange};]           │]`,
-      );
-      term.echo(
-        `[[;${orange};]  ╰──────────────────────────────────────────╯]`,
-      );
+      term.echo(`[[;${orange};]  │          [[;${dimGray};]~/your-brilliant-idea[[;${orange};]           │]`);
+      term.echo(`[[;${orange};]  ╰──────────────────────────────────────────╯]`);
       term.echo("");
       term.echo(`[[;${blue};]> What do you actually want to generate?]`);
       term.echo("");
@@ -398,16 +349,8 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
         // Remove all focus prevention listeners
         if (terminalRef.current) {
           terminalRef.current.removeEventListener("focus", preventFocus, true);
-          terminalRef.current.removeEventListener(
-            "focusin",
-            preventFocus,
-            true,
-          );
-          terminalRef.current.removeEventListener(
-            "scroll",
-            preventScroll,
-            true,
-          );
+          terminalRef.current.removeEventListener("focusin", preventFocus, true);
+          terminalRef.current.removeEventListener("scroll", preventScroll, true);
 
           const allElements = terminalRef.current.querySelectorAll("*");
           allElements.forEach((el) => {
@@ -441,8 +384,7 @@ export const TerminalDemo = ({ isMobile }: { isMobile: boolean }) => {
     borderRadius: "8px",
     overflow: "hidden",
     backgroundColor: "#0a0a0a",
-    boxShadow:
-      "0 0 20px rgba(0, 255, 0, 0.2), inset 0 0 60px rgba(0, 0, 0, 0.5)",
+    boxShadow: "0 0 20px rgba(0, 255, 0, 0.2), inset 0 0 60px rgba(0, 0, 0, 0.5)",
     border: "2px solid #333",
     contentVisibility: "auto" as any,
     containIntrinsicSize: isMobile ? "380px" : "283px",

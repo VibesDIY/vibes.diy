@@ -29,17 +29,7 @@ export const GRAY = "gray" as const;
 
 type ButtonVariant = "blue" | "red" | "yellow" | "gray";
 type ButtonType = "square" | "flat" | "flat-rounded" | "form";
-type IconName =
-  | "login"
-  | "remix"
-  | "invite"
-  | "settings"
-  | "back"
-  | "about"
-  | "firehose"
-  | "groups"
-  | "home"
-  | "myvibes";
+type IconName = "login" | "remix" | "invite" | "settings" | "back" | "about" | "firehose" | "groups" | "home" | "myvibes";
 
 // Icon map - maps icon names to React components
 const iconMap: Record<
@@ -115,32 +105,11 @@ export function VibesButton({
 
   const IconComponent = icon ? iconMap[icon] : undefined;
 
-  const baseStyle = getButtonStyle(
-    buttonVariant,
-    isHovered,
-    isActive,
-    isMobile,
-    !!IconComponent,
-    buttonType,
-  );
-  const mergedStyle = getMergedButtonStyle(
-    baseStyle,
-    ignoreDarkMode,
-    customStyle,
-    buttonType,
-  );
-  const iconContainerStyle = getIconContainerStyle(
-    buttonVariant,
-    isMobile,
-    !!IconComponent,
-    buttonType,
-  );
+  const baseStyle = getButtonStyle(buttonVariant, isHovered, isActive, isMobile, !!IconComponent, buttonType);
+  const mergedStyle = getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle, buttonType);
+  const iconContainerStyle = getIconContainerStyle(buttonVariant, isMobile, !!IconComponent, buttonType);
   const iconStyle = getIconStyle(isMobile, isHovered, isActive);
-  const contentWrapperStyle = getContentWrapperStyle(
-    isMobile,
-    !!IconComponent,
-    buttonType,
-  );
+  const contentWrapperStyle = getContentWrapperStyle(isMobile, !!IconComponent, buttonType);
 
   return (
     <>
@@ -164,12 +133,8 @@ export function VibesButton({
                 <IconComponent
                   bgFill="var(--vibes-button-icon-bg)"
                   fill="var(--vibes-button-icon-fill)"
-                  width={
-                    buttonType === "flat-rounded" ? 28 : isMobile ? 28 : 45
-                  }
-                  height={
-                    buttonType === "flat-rounded" ? 28 : isMobile ? 28 : 45
-                  }
+                  width={buttonType === "flat-rounded" ? 28 : isMobile ? 28 : 45}
+                  height={buttonType === "flat-rounded" ? 28 : isMobile ? 28 : 45}
                   withCircle={icon === "back"}
                 />
               </div>

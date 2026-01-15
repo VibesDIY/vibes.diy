@@ -70,15 +70,11 @@ export function NeedsLoginModal() {
       >
         <div className="py-1" role="dialog" aria-labelledby="login-modal-title">
           <div className="mb-6">
-            <h3
-              id="login-modal-title"
-              className="mb-3 text-center text-lg font-bold text-orange-500"
-            >
+            <h3 id="login-modal-title" className="mb-3 text-center text-lg font-bold text-orange-500">
               Log in for Credits
             </h3>
             <p className="text-light-secondary dark:text-dark-secondary text-sm leading-relaxed">
-              Log in or create an account to continue generating creative apps
-              with Vibes DIY.
+              Log in or create an account to continue generating creative apps with Vibes DIY.
             </p>
           </div>
           <button
@@ -92,6 +88,6 @@ export function NeedsLoginModal() {
         </div>
       </div>
     </div>,
-    document.body,
+    document.body
   );
 }

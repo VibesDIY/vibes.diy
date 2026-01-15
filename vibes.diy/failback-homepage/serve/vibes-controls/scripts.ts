@@ -15,9 +15,7 @@
 // DOM element references
 const switchBtn = document.querySelector("[data-vibe-switch]");
 const panel = document.querySelector("[data-vibe-panel]");
-const morphingPath = document.querySelector(
-  "[data-vibe-switch] svg path.morphing",
-);
+const morphingPath = document.querySelector("[data-vibe-switch] svg path.morphing");
 const defaultMode = document.querySelector('[data-panel-mode="default"]');
 const mutateMode = document.querySelector('[data-panel-mode="mutate"]');
 const inviteMode = document.querySelector('[data-panel-mode="invite"]');
@@ -118,48 +116,36 @@ switchBtn?.addEventListener("pointerdown", (e) => {
 });
 
 // Default mode buttons
-document
-  .querySelector('[data-action="logout"]')
-  ?.addEventListener("click", () => {
-    // Dispatch sync disable event
-    document.dispatchEvent(new CustomEvent("vibes-sync-disable"));
-    // Redirect to main app's logout route (Clerk handles sign-out there)
-    window.location.href = "/logout";
-  });
+document.querySelector('[data-action="logout"]')?.addEventListener("click", () => {
+  // Dispatch sync disable event
+  document.dispatchEvent(new CustomEvent("vibes-sync-disable"));
+  // Redirect to main app's logout route (Clerk handles sign-out there)
+  window.location.href = "/logout";
+});
 
-document
-  .querySelector('[data-action="remix"]')
-  ?.addEventListener("click", () => {
-    const remixUrl = generateRemixUrl();
-    window.open(remixUrl, "_top");
-  });
+document.querySelector('[data-action="remix"]')?.addEventListener("click", () => {
+  const remixUrl = generateRemixUrl();
+  window.open(remixUrl, "_top");
+});
 
-document
-  .querySelector('[data-action="invite"]')
-  ?.addEventListener("click", () => {
-    switchToMode("invite");
-  });
+document.querySelector('[data-action="invite"]')?.addEventListener("click", () => {
+  switchToMode("invite");
+});
 
-document
-  .querySelector('[data-action="home"]')
-  ?.addEventListener("click", () => {
-    window.location.href = "https://vibes.diy/";
-  });
+document.querySelector('[data-action="home"]')?.addEventListener("click", () => {
+  window.location.href = "https://vibes.diy/";
+});
 
 // Mutate mode buttons
-document
-  .querySelector('[data-panel-mode="mutate"] [data-action="fresh-start"]')
-  ?.addEventListener("click", () => {
-    const freshUrl = generateFreshDataUrl();
-    window.open(freshUrl, "_blank");
-  });
+document.querySelector('[data-panel-mode="mutate"] [data-action="fresh-start"]')?.addEventListener("click", () => {
+  const freshUrl = generateFreshDataUrl();
+  window.open(freshUrl, "_blank");
+});
 
-document
-  .querySelector('[data-panel-mode="mutate"] [data-action="remix-code"]')
-  ?.addEventListener("click", () => {
-    const remixUrl = generateRemixUrl();
-    window.open(remixUrl, "_blank");
-  });
+document.querySelector('[data-panel-mode="mutate"] [data-action="remix-code"]')?.addEventListener("click", () => {
+  const remixUrl = generateRemixUrl();
+  window.open(remixUrl, "_blank");
+});
 
 // Back buttons (both mutate and invite modes)
 document.querySelectorAll('[data-action="back"]').forEach((btn) => {
@@ -174,12 +160,8 @@ document.querySelectorAll('[data-action="back"]').forEach((btn) => {
 
 // Populate hidden fields from URL when form is shown
 const dbInput = document.getElementById("vibe-db") as HTMLInputElement | null;
-const vibeInput = document.getElementById(
-  "vibe-vibe",
-) as HTMLInputElement | null;
-const groupInput = document.getElementById(
-  "vibe-group",
-) as HTMLInputElement | null;
+const vibeInput = document.getElementById("vibe-vibe") as HTMLInputElement | null;
+const groupInput = document.getElementById("vibe-group") as HTMLInputElement | null;
 
 // Extract components from URL path and global vibe database
 // Format: /vibe/:titleId/:installId (both required - no default fallback)
@@ -241,15 +223,10 @@ showInviteButton?.addEventListener("click", () => {
 });
 
 // Also populate on form submit to ensure values are fresh
-const inviteForm = document.querySelector(
-  "[data-invite-form]",
-) as HTMLFormElement | null;
+const inviteForm = document.querySelector("[data-invite-form]") as HTMLFormElement | null;
 inviteForm?.addEventListener("submit", () => {
   const components = extractVibeComponentsFromUrl();
-  console.log(
-    "[vibe-controls] Form submit - extracting fresh components:",
-    components,
-  );
+  console.log("[vibe-controls] Form submit - extracting fresh components:", components);
 
   if (dbInput) dbInput.value = components.db;
   if (vibeInput) vibeInput.value = components.vibe;

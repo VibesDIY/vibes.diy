@@ -76,16 +76,12 @@ describe("Screenshot endpoint headers", () => {
     // Both should have identical headers
     expect(headResponse.headers.get("Content-Type")).toBe("image/png");
     expect(headResponse.headers.get("Content-Length")).toBe("5678");
-    expect(headResponse.headers.get("Cache-Control")).toBe(
-      "public, max-age=86400",
-    );
+    expect(headResponse.headers.get("Cache-Control")).toBe("public, max-age=86400");
     expect(headResponse.headers.get("Access-Control-Allow-Origin")).toBe("*");
 
     expect(getResponse.headers.get("Content-Type")).toBe("image/png");
     expect(getResponse.headers.get("Content-Length")).toBe("5678");
-    expect(getResponse.headers.get("Cache-Control")).toBe(
-      "public, max-age=86400",
-    );
+    expect(getResponse.headers.get("Cache-Control")).toBe("public, max-age=86400");
     expect(getResponse.headers.get("Access-Control-Allow-Origin")).toBe("*");
 
     // HEAD should have no body, GET should have body

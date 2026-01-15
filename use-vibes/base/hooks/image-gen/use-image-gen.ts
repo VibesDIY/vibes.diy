@@ -1,11 +1,7 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { Database, useFireproof } from '@fireproof/use-fireproof';
-import { ImageGenOptions, ImageResponse } from 'call-ai';
-import type {
-  UseImageGenOptions,
-  UseImageGenResult,
-  ImageDocument,
-} from '@vibes.diy/use-vibes-types';
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Database, useFireproof } from "@fireproof/use-fireproof";
+import { ImageGenOptions, ImageResponse } from "call-ai";
+import type { UseImageGenOptions, UseImageGenResult, ImageDocument } from "@vibes.diy/use-vibes-types";
 
 import {
   hashInput,
@@ -16,8 +12,8 @@ import {
   cleanupRequestKey,
   getRelevantOptions,
   generateSafeFilename,
-} from './utils.js';
-import { createImageGenerator } from './image-generator.js';
+} from "./utils.js";
+import { createImageGenerator } from "./image-generator.js";
 
 /**
  * Hook for generating images with call-ai's imageGen
@@ -32,7 +28,7 @@ export function useImageGen({
   _id,
   _rev,
   options = {},
-  database = 'ImgGen',
+  database = "ImgGen",
   skip = false, // Skip processing flag
   generationId, // Unique ID that changes for each new generation request
   editedPrompt, // Optional edited prompt that should override the document prompt on regeneration
@@ -49,8 +45,8 @@ export function useImageGen({
   // Initialize Fireproof database
   const { database: db } = useFireproof(database);
 
-  const size = options?.size || '1024x1024';
-  const [width, height] = size.split('x').map(Number);
+  const size = options?.size || "1024x1024";
+  const [width, height] = size.split("x").map(Number);
 
   // Memoize options to prevent unnecessary re-renders and regeneration
   const memoizedOptions = useMemo(
@@ -72,10 +68,7 @@ export function useImageGen({
   // Create a unique request ID for loading by ID or new generation
   // For regeneration requests, we exclude options from the hash to prevent unwanted regeneration
   const requestId = useMemo(() => {
-    return hashInput(
-      prompt || _id || 'unknown',
-      shouldConsiderOptions ? memoizedOptions : undefined
-    );
+    return hashInput(prompt || _id || "unknown", shouldConsiderOptions ? memoizedOptions : undefined);
   }, [prompt, _id, shouldConsiderOptions, memoizedOptions]);
 
   // Track ID and generation state changes
@@ -123,7 +116,7 @@ export function useImageGen({
   }, [prompt, _id, memoizedOptions]); // Dependencies that require state reset
 
   // Track the last request parameters to prevent duplicate requests
-  const lastRequestRef = useRef<string>('');
+  const lastRequestRef = useRef<string>("");
 
   // Generate the image when prompt or options change or load by ID
   useEffect(() => {
@@ -133,7 +126,7 @@ export function useImageGen({
     if (skip || (!prompt && !_id)) {
       setLoading(false);
       if (!skip) {
-        setError(new Error('Either prompt or _id must be provided'));
+        setError(new Error("Either prompt or _id must be provided"));
       }
       return;
     }
@@ -157,8 +150,7 @@ export function useImageGen({
     // Check if only options have changed and we have an existing document
     const currentRelevantOptions = getRelevantOptions(memoizedOptions);
     const previousRelevantOptions = prevOptionsRef.current;
-    const optionsChanged =
-      JSON.stringify(currentRelevantOptions) !== JSON.stringify(previousRelevantOptions);
+    const optionsChanged = JSON.stringify(currentRelevantOptions) !== JSON.stringify(previousRelevantOptions);
 
     // When only options change and we aren't explicitly regenerating,
     // skip regeneration for existing documents to prevent duplicate generations
@@ -223,17 +215,14 @@ export function useImageGen({
 interface LoadOrGenerateImageProps {
   readonly isMounted: boolean;
   readonly loading: boolean;
-  readonly options: Omit<ImageGenOptions, 'database'>;
+  readonly options: Omit<ImageGenOptions, "database">;
   readonly editedPrompt?: string;
   readonly prompt?: string;
   readonly _id?: string;
   readonly db: Database;
   readonly document: ImageDocument | null;
   readonly setLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  readonly callImageGeneration: (
-    promptText: string,
-    genOptions?: ImageGenOptions
-  ) => Promise<ImageResponse>;
+  readonly callImageGeneration: (promptText: string, genOptions?: ImageGenOptions) => Promise<ImageResponse>;
   readonly setProgress: React.Dispatch<React.SetStateAction<number>>;
   readonly setDocument: React.Dispatch<React.SetStateAction<ImageDocument | null>>;
   readonly setImageData: React.Dispatch<React.SetStateAction<string | null>>;
@@ -309,13 +298,12 @@ async function loadOrGenerateImage({
             prompt ||
             (currentPromptKey && prompts[currentPromptKey]?.text) ||
             (existingDoc as unknown as ImageDocument).prompt ||
-            '';
+            "";
 
           // Check if we have a document with only an original file but no output files
           // This happens when someone uploads an image but it hasn't been processed yet
           const { versions } = getVersionsFromDocument(existingDoc);
-          const hasOutputFiles =
-            versions.length > 0 && versions.some((v) => existingDoc._files?.[v.id]);
+          const hasOutputFiles = versions.length > 0 && versions.some((v) => existingDoc._files?.[v.id]);
           const hasOnlyOriginalFile = !hasOutputFiles && existingDoc._files?.original;
 
           // If we have a prompt and only an original file, generate an image
@@ -340,7 +328,7 @@ async function loadOrGenerateImage({
               // Convert base64 to File using browser APIs
               const response = await fetch(`data:image/png;base64,${base64Data}`);
               const blob = await response.blob();
-              const newImageFile = new File([blob], filename, { type: 'image/png' });
+              const newImageFile = new File([blob], filename, { type: "image/png" });
 
               // Add as a new version to the document
               const updatedDoc = addNewVersion(existingDoc, newImageFile, currentPromptText);
@@ -368,9 +356,7 @@ async function loadOrGenerateImage({
 
             // Clear any existing request with the same prompt from the cache
             // This ensures we don't get a cached result
-            const requestKey = `${currentPromptText}-${JSON.stringify(
-              getRelevantOptions(options)
-            )}`;
+            const requestKey = `${currentPromptText}-${JSON.stringify(getRelevantOptions(options))}`;
 
             cleanupRequestKey(requestKey);
 
@@ -385,7 +371,7 @@ async function loadOrGenerateImage({
               // Convert base64 to File using browser APIs
               const response = await fetch(`data:image/png;base64,${base64Data}`);
               const blob = await response.blob();
-              const newImageFile = new File([blob], filename, { type: 'image/png' });
+              const newImageFile = new File([blob], filename, { type: "image/png" });
 
               // Ensure we preserve the original document ID
               const originalDocId = _id;
@@ -408,7 +394,7 @@ async function loadOrGenerateImage({
               reader.readAsDataURL(newImageFile);
               await new Promise<void>((resolve) => {
                 reader.onloadend = () => {
-                  if (typeof reader.result === 'string') {
+                  if (typeof reader.result === "string") {
                     setImageData(reader.result);
                   }
                   resolve();
@@ -442,7 +428,7 @@ async function loadOrGenerateImage({
         // If we have a document in memory and a generationId, we should add a version
         // to the existing document instead of creating a new one
         if (document?._id && generationId) {
-          let currentPromptText = '';
+          let currentPromptText = "";
 
           if (editedPrompt) {
             // Use the edited prompt provided from the UI
@@ -450,12 +436,7 @@ async function loadOrGenerateImage({
           } else {
             // Otherwise extract the prompt from the document
             const { prompts, currentPromptKey } = getPromptsFromDocument(document);
-            currentPromptText =
-              (currentPromptKey && prompts[currentPromptKey]?.text) ||
-              document.prompt ||
-              '' ||
-              prompt ||
-              ''; // Fall back to provided prompt if document has none, ensure string type
+            currentPromptText = (currentPromptKey && prompts[currentPromptKey]?.text) || document.prompt || "" || prompt || ""; // Fall back to provided prompt if document has none, ensure string type
           }
 
           // Create regeneration options with unique ID to force new API call
@@ -479,7 +460,7 @@ async function loadOrGenerateImage({
             // Convert base64 to File using browser APIs
             const response = await fetch(`data:image/png;base64,${base64Data}`);
             const blob = await response.blob();
-            const newImageFile = new File([blob], filename, { type: 'image/png' });
+            const newImageFile = new File([blob], filename, { type: "image/png" });
 
             // Ensure we preserve the original document ID
             const originalDocId = document._id;
@@ -505,7 +486,7 @@ async function loadOrGenerateImage({
             reader.readAsDataURL(newImageFile);
             await new Promise<void>((resolve) => {
               reader.onloadend = () => {
-                if (typeof reader.result === 'string') {
+                if (typeof reader.result === "string") {
                   setImageData(reader.result);
                 }
                 resolve();
@@ -549,23 +530,23 @@ async function loadOrGenerateImage({
           const blob = await response.blob();
 
           // Create File from blob (like working text file approach)
-          const imageFile = new File([blob], filename, { type: 'image/png' });
+          const imageFile = new File([blob], filename, { type: "image/png" });
 
           // Define a stable key for deduplication based on all relevant parameters.
           // Include _id (if present) and current time for regeneration requests
           // to ensure each regeneration gets a unique key
           // Create a unique stable key for this request that changes with generationId
           // When generationId changes, we'll generate a new image
-          const regenPart = generationId ? `gen-${generationId}` : '0';
+          const regenPart = generationId ? `gen-${generationId}` : "0";
           const stableKey = [
-            prompt || '',
-            _id || '',
+            prompt || "",
+            _id || "",
             // For generation requests, use the generationId to ensure uniqueness
             // When there's no _id but there is a prompt, we still want regeneration to work
             regenPart,
             // Stringify only relevant options to avoid spurious cache misses
             JSON.stringify(getRelevantOptions(options)),
-          ].join('|');
+          ].join("|");
 
           // Schedule cleanup of this request from the cache maps
           // to ensure future requests don't reuse this one
@@ -591,11 +572,7 @@ async function loadOrGenerateImage({
 
                 // If the document has a prompt, use it as the prompt text
                 // Need to check for prompt using 'in' operator to avoid TypeScript errors
-                if (
-                  'prompt' in existingDoc &&
-                  typeof existingDoc.prompt === 'string' &&
-                  existingDoc.prompt
-                ) {
+                if ("prompt" in existingDoc && typeof existingDoc.prompt === "string" && existingDoc.prompt) {
                   prompt = existingDoc.prompt;
                 }
 
@@ -628,15 +605,15 @@ async function loadOrGenerateImage({
               documentCreationPromise = (async () => {
                 // Create a new document with initial version and prompt
                 const imgDoc: ImageDocument = {
-                  _id: '', // Will be assigned by Fireproof
-                  type: 'image',
+                  _id: "", // Will be assigned by Fireproof
+                  type: "image",
                   created: Date.now(),
                   currentVersion: 0, // 0-based indexing for versions array
                   versions: [
                     {
-                      id: 'v1',
+                      id: "v1",
                       created: Date.now(),
-                      promptKey: 'p1',
+                      promptKey: "p1",
                     },
                   ],
                   prompts: {
@@ -645,7 +622,7 @@ async function loadOrGenerateImage({
                       created: Date.now(),
                     },
                   },
-                  currentPromptKey: 'p1',
+                  currentPromptKey: "p1",
                   _files: {
                     v1: imageFile,
                   },
@@ -685,7 +662,7 @@ async function loadOrGenerateImage({
             }
             // Empty block - all document creation logic is now handled by the Promise
           } catch (e) {
-            console.error('Error saving to Fireproof:', e);
+            console.error("Error saving to Fireproof:", e);
             // Even if we fail to save to Fireproof, we still have the image data
             setImageData(data.data[0].b64_json);
           } finally {
@@ -701,13 +678,13 @@ async function loadOrGenerateImage({
           }
         }
       } else {
-        console.error('[loadOrGenerateImage] Document loading failed - requirements not met:', {
+        console.error("[loadOrGenerateImage] Document loading failed - requirements not met:", {
           _id,
           hasPrompt: !!prompt,
           promptLength: prompt?.length,
           generationId,
         });
-        throw new Error('Document not found and no prompt provided for generation');
+        throw new Error("Document not found and no prompt provided for generation");
       }
     } catch (error) {
       // Error handled - attempt fallback generation if conditions are met
@@ -720,7 +697,7 @@ async function loadOrGenerateImage({
             setImageData(data.data[0].b64_json);
           }
         } catch (genError) {
-          console.error('Fallback generation also failed:', genError);
+          console.error("Fallback generation also failed:", genError);
           throw genError;
         }
       } else {
@@ -791,7 +768,7 @@ async function handleNewDoc({
       let fileObj: Blob;
 
       // Handle different file access methods
-      if ('file' in imageFile && typeof imageFile.file === 'function') {
+      if ("file" in imageFile && typeof imageFile.file === "function") {
         // DocFileMeta interface from Fireproof
         fileObj = await imageFile.file();
       } else {
@@ -805,7 +782,7 @@ async function handleNewDoc({
         reader.onload = () => {
           const base64 = reader.result as string;
           // Strip the data URL prefix if present
-          const base64Data = base64.split(',')[1] || base64;
+          const base64Data = base64.split(",")[1] || base64;
           resolve(base64Data);
         };
         reader.onerror = reject;
@@ -819,7 +796,7 @@ async function handleNewDoc({
         const imageFile = existingDoc._files.image;
         let fileObj: Blob;
 
-        if ('file' in imageFile && typeof imageFile.file === 'function') {
+        if ("file" in imageFile && typeof imageFile.file === "function") {
           fileObj = await imageFile.file();
         } else {
           fileObj = imageFile as unknown as File;
@@ -831,7 +808,7 @@ async function handleNewDoc({
           reader.onload = () => {
             const base64 = reader.result as string;
             // Strip the data URL prefix if present
-            const base64Data = base64.split(',')[1] || base64;
+            const base64Data = base64.split(",")[1] || base64;
             resolve(base64Data);
           };
           reader.onerror = reject;
@@ -843,10 +820,8 @@ async function handleNewDoc({
       }
     }
   } catch (err) {
-    console.error('Error loading image file:', err);
-    throw new Error(
-      `Failed to load image from document: ${err instanceof Error ? err.message : String(err)}`
-    );
+    console.error("Error loading image file:", err);
+    throw new Error(`Failed to load image from document: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -861,10 +836,7 @@ async function handleExistingDoc({
   db,
   setImageData,
 }: {
-  readonly callImageGeneration: (
-    promptText: string,
-    genOptions?: ImageGenOptions
-  ) => Promise<ImageResponse>;
+  readonly callImageGeneration: (promptText: string, genOptions?: ImageGenOptions) => Promise<ImageResponse>;
   readonly existingDoc: ImageDocument;
   readonly db: Database;
   readonly _id: string;
@@ -875,12 +847,12 @@ async function handleExistingDoc({
   readonly setImageData: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
   // Document exists but has no files - check if it has a prompt field we can use
-  if ('prompt' in existingDoc && typeof existingDoc.prompt === 'string' && existingDoc.prompt) {
+  if ("prompt" in existingDoc && typeof existingDoc.prompt === "string" && existingDoc.prompt) {
     // Use the document's prompt to generate an image
 
     // Extended debug info
     if (options?.debug) {
-      console.log('[ImgGen Debug] Document found with prompt but no files:', {
+      console.log("[ImgGen Debug] Document found with prompt but no files:", {
         docId: existingDoc._id,
         docPrompt: existingDoc.prompt,
         settingLoading: true,
@@ -908,7 +880,7 @@ async function handleExistingDoc({
       const response = await fetch(`data:image/png;base64,${base64Data}`);
       const blob = await response.blob();
       const newImageFile = new File([blob], generateSafeFilename(docPrompt), {
-        type: 'image/png',
+        type: "image/png",
       });
 
       // Add the file to the document

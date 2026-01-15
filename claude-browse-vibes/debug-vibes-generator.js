@@ -42,9 +42,7 @@ import { chromium } from "playwright";
         await promptInput.fill("a simple button that says hello");
 
         // Click Generate Component button
-        const generateButton = await page.locator(
-          'button:has-text("Generate Component")',
-        );
+        const generateButton = await page.locator('button:has-text("Generate Component")');
         if (await generateButton.isVisible()) {
           console.log("Clicking Generate Component button...");
           await generateButton.click();
@@ -53,9 +51,7 @@ import { chromium } from "playwright";
           await page.waitForTimeout(3000);
 
           // Check for any generated content
-          const generatedSection = await page.locator(
-            'text="Generated Component"',
-          );
+          const generatedSection = await page.locator('text="Generated Component"');
           if (await generatedSection.isVisible()) {
             console.log("Generated Component section appeared!");
           } else {
@@ -63,9 +59,7 @@ import { chromium } from "playwright";
           }
 
           // Check for loading state
-          const loadingText = await page.locator(
-            'text="Generating your component"',
-          );
+          const loadingText = await page.locator('text="Generating your component"');
           if (await loadingText.isVisible()) {
             console.log("Loading state is visible");
           } else {
@@ -76,9 +70,7 @@ import { chromium } from "playwright";
           const errorSection = await page.locator('text="Generation Failed"');
           if (await errorSection.isVisible()) {
             console.log("Error section is visible");
-            const errorMessage = await page
-              .locator('text="Generation Failed" + p')
-              .textContent();
+            const errorMessage = await page.locator('text="Generation Failed" + p').textContent();
             console.log("Error message:", errorMessage);
           }
         }

@@ -15,13 +15,7 @@ import {
 } from "../app/components/HeaderContent/SvgIcons.js";
 
 // Wrapper component for better story display
-const IconWrapper = ({
-  children,
-  label,
-}: {
-  children: ReactNode;
-  label: string;
-}) => (
+const IconWrapper = ({ children, label }: { children: ReactNode; label: string }) => (
   <div className="flex flex-col items-center gap-2 rounded-lg border border-gray-200 p-4">
     <div className="text-gray-600">{children}</div>
     <span className="font-mono text-xs text-gray-500">{label}</span>
@@ -111,8 +105,7 @@ const NavigationMeta = {
   parameters: {
     docs: {
       description: {
-        component:
-          "Navigation-related icons used in headers, sidebars, and routing.",
+        component: "Navigation-related icons used in headers, sidebars, and routing.",
       },
     },
   },
@@ -160,9 +153,7 @@ export const GearIcon_Story: StoryObj<ComponentProps<typeof GearIcon>> = {
   },
 };
 
-export const BackArrowIcon_Story: StoryObj<
-  ComponentProps<typeof BackArrowIcon>
-> = {
+export const BackArrowIcon_Story: StoryObj<ComponentProps<typeof BackArrowIcon>> = {
   ...NavigationMeta,
   render: (args) => <BackArrowIcon {...args} />,
   args: {
@@ -188,8 +179,7 @@ const ContentViewMeta = {
   parameters: {
     docs: {
       description: {
-        component:
-          "Icons for different content views with optional loading animations.",
+        component: "Icons for different content views with optional loading animations.",
       },
     },
   },
@@ -220,8 +210,7 @@ export const PreviewIcon_Story: StoryObj<ComponentProps<typeof PreviewIcon>> = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Preview/eye icon for app preview view. Shows spinning animation when loading.",
+        story: "Preview/eye icon for app preview view. Shows spinning animation when loading.",
       },
     },
   },
@@ -252,8 +241,7 @@ export const CodeIcon_Story: StoryObj<ComponentProps<typeof CodeIcon>> = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Code icon for code editor view. Shows spinning animation when loading.",
+        story: "Code icon for code editor view. Shows spinning animation when loading.",
       },
     },
   },
@@ -290,8 +278,7 @@ const ActionMeta = {
   parameters: {
     docs: {
       description: {
-        component:
-          "Icons for user actions like sharing, publishing, and favoriting.",
+        component: "Icons for user actions like sharing, publishing, and favoriting.",
       },
     },
   },
@@ -317,8 +304,7 @@ export const StarIcon_Story: StoryObj<ComponentProps<typeof StarIcon>> = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Star icon for favoriting/bookmarking. Toggle filled state to see both variants.",
+        story: "Star icon for favoriting/bookmarking. Toggle filled state to see both variants.",
       },
     },
   },
@@ -371,33 +357,31 @@ export const PublishIcon_Story: StoryObj<ComponentProps<typeof PublishIcon>> = {
   },
 };
 
-export const MinidiscIcon_Story: StoryObj<ComponentProps<typeof MinidiscIcon>> =
-  {
-    ...ActionMeta,
-    render: (args) => <MinidiscIcon {...args} />,
-    args: {
-      className: "h-6 w-6",
-      title: "Save icon (minidisc)",
+export const MinidiscIcon_Story: StoryObj<ComponentProps<typeof MinidiscIcon>> = {
+  ...ActionMeta,
+  render: (args) => <MinidiscIcon {...args} />,
+  args: {
+    className: "h-6 w-6",
+    title: "Save icon (minidisc)",
+  },
+  argTypes: {
+    className: {
+      description: "CSS classes for styling the icon",
+      control: "text",
     },
-    argTypes: {
-      className: {
-        description: "CSS classes for styling the icon",
-        control: "text",
-      },
-      title: {
-        description: "Accessibility title for the icon",
-        control: "text",
-      },
+    title: {
+      description: "Accessibility title for the icon",
+      control: "text",
     },
-    parameters: {
-      docs: {
-        description: {
-          story:
-            "Retro minidisc icon used for the save button. Features detailed disc design with label area and inner ring.",
-        },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Retro minidisc icon used for the save button. Features detailed disc design with label area and inner ring.",
       },
     },
-  };
+  },
+};
 
 // User Status Icons
 export const UserIcon_Story: StoryObj<ComponentProps<typeof UserIcon>> = {
@@ -413,8 +397,7 @@ export const UserIcon_Story: StoryObj<ComponentProps<typeof UserIcon>> = {
       control: "text",
     },
     isVerifying: {
-      description:
-        "Whether user authentication is being verified (shows pulse animation)",
+      description: "Whether user authentication is being verified (shows pulse animation)",
       control: "boolean",
     },
     isUserAuthenticated: {
@@ -457,8 +440,7 @@ export const SizeVariations = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Common size variations for icons. Most components use responsive sizing (sm:h-4 sm:w-4).",
+        story: "Common size variations for icons. Most components use responsive sizing (sm:h-4 sm:w-4).",
       },
     },
   },
@@ -485,8 +467,7 @@ export const LoadingAnimations = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Icons with animated loading states. Preview and Code icons use slow spin, User icon uses pulse.",
+        story: "Icons with animated loading states. Preview and Code icons use slow spin, User icon uses pulse.",
       },
     },
   },

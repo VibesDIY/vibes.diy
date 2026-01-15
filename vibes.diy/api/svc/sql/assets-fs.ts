@@ -1,12 +1,4 @@
-import {
-  int,
-  sqliteTable,
-  text,
-  blob,
-  primaryKey,
-  uniqueIndex,
-  index,
-} from "drizzle-orm/sqlite-core";
+import { int, sqliteTable, text, blob, primaryKey, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 
 // could be put on R2
 export const sqlAssets = sqliteTable("Assets", {
@@ -22,10 +14,7 @@ export const sqlUserSlugBinding = sqliteTable(
     userSlug: text().notNull(),
     created: text().notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.userSlug, table.userId] }),
-    uniqueIndex("UserSlug_userSlug").on(table.userSlug),
-  ],
+  (table) => [primaryKey({ columns: [table.userSlug, table.userId] }), uniqueIndex("UserSlug_userSlug").on(table.userSlug)]
 );
 
 export const sqlAppSlugBinding = sqliteTable(
@@ -37,7 +26,7 @@ export const sqlAppSlugBinding = sqliteTable(
     appSlug: text().notNull(), // human friendly app id
     created: text().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.appSlug, table.userSlug] })],
+  (table) => [primaryKey({ columns: [table.appSlug, table.userSlug] })]
 );
 
 export const sqlApps = sqliteTable(
@@ -56,6 +45,6 @@ export const sqlApps = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.userId, table.releaseSeq] }),
-    uniqueIndex("Apps_fsId").on(table.fsId, table.userId),
-  ],
+    index("Apps_fsId").on(table.fsId, table.userId),
+  ]
 );

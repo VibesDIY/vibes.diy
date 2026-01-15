@@ -4,10 +4,7 @@ import { mountVibesApp } from "./mountVibesApp.js";
 declare global {
   interface Window {
     Babel: {
-      transform: (
-        code: string,
-        options: { presets: string[] },
-      ) => { code: string | null };
+      transform: (code: string, options: { presets: string[] }) => { code: string | null };
     };
     CALLAI_API_KEY?: string;
     CALLAI_CHAT_URL?: string;
@@ -27,7 +24,7 @@ export async function mountVibeCode(
   showVibesSwitch = true,
   apiKey?: string,
   chatUrl?: string,
-  imgUrl?: string,
+  imgUrl?: string
 ): Promise<void> {
   let objectURL: string | undefined;
 
@@ -53,7 +50,7 @@ export async function mountVibeCode(
     // Step 2: Ensure Babel is loaded (from CDN script tag)
     if (!window.Babel) {
       throw new Error(
-        'Babel not loaded - add <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script> to your HTML',
+        'Babel not loaded - add <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script> to your HTML'
       );
     }
 
@@ -74,9 +71,7 @@ export async function mountVibeCode(
     const AppComponent = userVibeModule.default;
 
     if (typeof AppComponent === "undefined") {
-      throw new Error(
-        "App component is not defined - check your default export",
-      );
+      throw new Error("App component is not defined - check your default export");
     }
 
     const container = document.getElementById(containerId);
@@ -102,7 +97,7 @@ export async function mountVibeCode(
           unmount: mountResult.unmount,
           containerId: containerId,
         },
-      }),
+      })
     );
   } catch (err) {
     console.error("Failed to mount vibe code:", err);
@@ -113,7 +108,7 @@ export async function mountVibeCode(
           error: err instanceof Error ? err.message : String(err),
           containerId: containerId,
         },
-      }),
+      })
     );
     throw err;
   } finally {

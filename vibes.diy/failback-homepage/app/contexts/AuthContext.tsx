@@ -1,13 +1,7 @@
 // Remove jwt-decode import and related code
 // import { jwtDecode } from 'jwt-decode';
 import type { ReactNode } from "react";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 // Import verifyToken and TokenPayload from auth utils
 import { type TokenPayload, verifyToken } from "../utils/auth.js";
 
@@ -27,9 +21,7 @@ export interface AuthContextType {
 }
 
 // Create the context with a default value
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Define the props for the provider component
 interface AuthProviderProps {
@@ -64,9 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Only push if user has granted cookie consent
             const hasConsentCookie =
               typeof document !== "undefined" &&
-              /(?:^|; )cookieConsent=(true|false)(?:;|$)/.test(
-                document.cookie,
-              ) &&
+              /(?:^|; )cookieConsent=(true|false)(?:;|$)/.test(document.cookie) &&
               document.cookie.includes("cookieConsent=true");
             if (hasConsentCookie) {
               // Push identity + auth event to dataLayer directly to avoid tight coupling
@@ -124,10 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (event.origin !== window.location.origin) {
         return;
       }
-      if (
-        event.data?.type === "authSuccess" &&
-        typeof event.data.token === "string"
-      ) {
+      if (event.data?.type === "authSuccess" && typeof event.data.token === "string") {
         const receivedToken = event.data.token;
         setIsLoading(true); // Set loading while processing token
         try {
@@ -163,7 +150,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setNeedsLoginState(false);
       }
     },
-    [isAuthenticated],
+    [isAuthenticated]
   );
 
   // Reset needsLogin when user becomes authenticated

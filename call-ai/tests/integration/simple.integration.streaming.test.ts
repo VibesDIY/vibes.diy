@@ -63,7 +63,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
                 setTimeout(() => {
                   console.warn(`Timeout for ${modelId.id} (Grade ${modelId.grade}): ${name}`);
                   resolve(undefined);
-                }, timeout || TIMEOUT),
+                }, timeout || TIMEOUT)
               ),
             ]);
             return result;
@@ -74,7 +74,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
             return;
           }
         },
-        timeout,
+        timeout
       );
     };
   }
@@ -103,7 +103,7 @@ describe("Simple callAi integration tests", () => {
           expectOrWarn(
             modelId,
             typeof generator === "object",
-            `Generator is not an object but a ${typeof generator} in ${modelName} model`,
+            `Generator is not an object but a ${typeof generator} in ${modelName} model`
           );
 
           // Manual type assertion to help TypeScript recognize generator as AsyncGenerator
@@ -118,7 +118,7 @@ describe("Simple callAi integration tests", () => {
                 expectOrWarn(
                   modelId,
                   typeof chunk === "string",
-                  `Chunk is not a string but a ${typeof chunk} in ${modelName} model`,
+                  `Chunk is not a string but a ${typeof chunk} in ${modelName} model`
                 );
                 finalResult = chunk;
               }
@@ -127,7 +127,7 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 finalResult.length > 10,
-                `Final result too short (${finalResult.length} chars) in ${modelName} model`,
+                `Final result too short (${finalResult.length} chars) in ${modelName} model`
               );
             } catch (error) {
               // Log error but don't fail test for B/C grade models
@@ -136,7 +136,7 @@ describe("Simple callAi integration tests", () => {
             }
           }
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });

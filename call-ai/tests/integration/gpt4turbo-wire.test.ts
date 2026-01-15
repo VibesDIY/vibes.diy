@@ -96,7 +96,7 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
       {
         apiKey: "test-api-key",
         model: "openai/gpt-4-turbo",
-      },
+      }
     );
 
     // Verify the result

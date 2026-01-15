@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - "vibes.diy/tempo/examples/hello-world/**"
-      - ".github/workflows/test-hetzner-cluster.yaml"
+      - 'vibes.diy/tempo/examples/hello-world/**'
+      - '.github/workflows/test-hetzner-cluster.yaml'
   workflow_dispatch:
 
 permissions:

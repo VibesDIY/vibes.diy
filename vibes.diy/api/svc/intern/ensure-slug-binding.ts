@@ -2,10 +2,7 @@ import { exception2Result, Result } from "@adviser/cement";
 import { VibesApiSQLCtx } from "../api.js";
 import { generate } from "random-words";
 import { and, eq } from "drizzle-orm";
-import {
-  sqlAppSlugBinding,
-  sqlUserSlugBinding,
-} from "../sql/vibes-diy-api-schema.js";
+import { sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 
 export interface AppSlugBinding {
   userId: string;
@@ -13,23 +10,12 @@ export interface AppSlugBinding {
   userSlug: string;
 }
 
-export type AppSlugBindingParam = Omit<
-  AppSlugBinding,
-  "created" | "appSlug" | "userSlug"
-> &
+export type AppSlugBindingParam = Omit<AppSlugBinding, "created" | "appSlug" | "userSlug"> &
   Partial<Pick<AppSlugBinding, "appSlug" | "userSlug">>;
 
-async function writeUserSlugBinding(
-  ctx: VibesApiSQLCtx,
-  userId: string,
-  userSlug: string,
-): Promise<Result<string>> {
+async function writeUserSlugBinding(ctx: VibesApiSQLCtx, userId: string, userSlug: string): Promise<Result<string>> {
   return exception2Result(async (): Promise<Result<string>> => {
-    const existing = await ctx.db
-      .select()
-      .from(sqlUserSlugBinding)
-      .where(eq(sqlUserSlugBinding.userId, userId))
-      .all();
+    const existing = await ctx.db.select().from(sqlUserSlugBinding).where(eq(sqlUserSlugBinding.userId, userId)).all();
     if (existing.length >= ctx.params.maxUserSlugPerUserId) {
       return Result.Err("maximum userSlug bindings reached for this userId");
     }
@@ -40,15 +26,13 @@ async function writeUserSlugBinding(
         userSlug: userSlug,
         created: new Date().toISOString(),
       })
+      .onConflictDoNothing()
       .run();
     return Result.Ok(userSlug);
   });
 }
 
-async function ensureUserSlug(
-  ctx: VibesApiSQLCtx,
-  binding: AppSlugBindingParam,
-): Promise<Result<string>> {
+async function ensureUserSlug(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam): Promise<Result<string>> {
   return exception2Result(async (): Promise<Result<string>> => {
     let userSlug: string | undefined = undefined;
     if (!binding.userSlug) {
@@ -58,32 +42,21 @@ async function ensureUserSlug(
           wordsPerString: 3,
           separator: "-",
         })[0];
-        const existing = await ctx.db
-          .select()
-          .from(sqlUserSlugBinding)
-          .where(eq(sqlUserSlugBinding.userSlug, tryUserSlug))
-          .get();
+        const existing = await ctx.db.select().from(sqlUserSlugBinding).where(eq(sqlUserSlugBinding.userSlug, tryUserSlug)).get();
         if (!existing) {
           userSlug = tryUserSlug;
           break;
         }
       }
       if (!userSlug) {
-        return Result.Err(
-          "could not generate unique userSlug after 5 attempts",
-        );
+        return Result.Err("could not generate unique userSlug after 5 attempts");
       }
       return writeUserSlugBinding(ctx, binding.userId, userSlug);
     }
     const existing = await ctx.db
       .select()
       .from(sqlUserSlugBinding)
-      .where(
-        and(
-          eq(sqlUserSlugBinding.userId, binding.userId),
-          eq(sqlUserSlugBinding.userSlug, binding.userSlug),
-        ),
-      )
+      .where(and(eq(sqlUserSlugBinding.userId, binding.userId), eq(sqlUserSlugBinding.userSlug, binding.userSlug)))
       .get();
     if (!existing) {
       return writeUserSlugBinding(ctx, binding.userId, binding.userSlug);
@@ -96,16 +69,13 @@ async function writeAppSlugBinding(
   ctx: VibesApiSQLCtx,
   userId: string,
   userSlug: string,
-  appSlug: string,
+  appSlug: string
 ): Promise<Result<string>> {
   return exception2Result(async (): Promise<Result<string>> => {
     const existing = await ctx.db
       .select()
       .from(sqlUserSlugBinding)
-      .innerJoin(
-        sqlAppSlugBinding,
-        eq(sqlUserSlugBinding.userSlug, sqlAppSlugBinding.userSlug),
-      )
+      .innerJoin(sqlAppSlugBinding, eq(sqlUserSlugBinding.userSlug, sqlAppSlugBinding.userSlug))
       .where(eq(sqlUserSlugBinding.userId, userId))
       .all();
     if (existing.length >= ctx.params.maxAppSlugPerUserId) {
@@ -125,7 +95,7 @@ async function writeAppSlugBinding(
 
 export async function ensureAppSlug(
   ctx: VibesApiSQLCtx,
-  binding: Omit<AppSlugBindingParam, "userSlug"> & { userSlug: string },
+  binding: Omit<AppSlugBindingParam, "userSlug"> & { userSlug: string }
 ): Promise<Result<string>> {
   return exception2Result(async (): Promise<Result<string>> => {
     let appSlug: string | undefined = undefined;
@@ -137,11 +107,7 @@ export async function ensureAppSlug(
           wordsPerString: 3,
           separator: "-",
         })[0];
-        const existing = await ctx.db
-          .select()
-          .from(sqlAppSlugBinding)
-          .where(eq(sqlAppSlugBinding.appSlug, tryAppSlug))
-          .get();
+        const existing = await ctx.db.select().from(sqlAppSlugBinding).where(eq(sqlAppSlugBinding.appSlug, tryAppSlug)).get();
         if (!existing) {
           appSlug = tryAppSlug;
           break;
@@ -150,29 +116,16 @@ export async function ensureAppSlug(
       if (!appSlug) {
         return Result.Err("could not generate unique appSlug after 5 attempts");
       }
-      return writeAppSlugBinding(
-        ctx,
-        binding.userId,
-        binding.userSlug,
-        appSlug,
-      );
+      return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, appSlug);
     } else {
       const existing = await ctx.db
         .select()
         .from(sqlAppSlugBinding)
-        .innerJoin(
-          sqlUserSlugBinding,
-          eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug),
-        )
+        .innerJoin(sqlUserSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
         .where(and(eq(sqlAppSlugBinding.appSlug, binding.appSlug)))
         .get();
       if (!existing) {
-        return writeAppSlugBinding(
-          ctx,
-          binding.userId,
-          binding.userSlug,
-          binding.appSlug,
-        );
+        return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, binding.appSlug);
       }
       appSlug = binding.appSlug;
     }
@@ -180,10 +133,7 @@ export async function ensureAppSlug(
   });
 }
 
-export async function ensureSlugBinding(
-  ctx: VibesApiSQLCtx,
-  binding: AppSlugBindingParam,
-): Promise<Result<AppSlugBinding>> {
+export async function ensureSlugBinding(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam): Promise<Result<AppSlugBinding>> {
   const rUserSlug = await ensureUserSlug(ctx, binding);
   if (rUserSlug.isErr()) {
     return Result.Err(rUserSlug);

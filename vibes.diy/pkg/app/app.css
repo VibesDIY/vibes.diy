@@ -40,8 +40,7 @@
   --color-accent-03-dark: #666;
 
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 html {
@@ -431,23 +430,13 @@ button:hover .bg-glimmer,
 
 /* Default (Light Mode) Button Gradients */
 .light-gradient {
-  background: linear-gradient(
-    110deg,
-    transparent 0%,
-    rgba(255, 255, 255, 1) 45%,
-    white 89%
-  );
+  background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 1) 45%, white 89%);
 }
 
 /* Dark Mode Button Gradients */
 @media (prefers-color-scheme: dark) {
   .light-gradient {
-    background: linear-gradient(
-      110deg,
-      transparent 0%,
-      rgba(0, 0, 0, 1) 45%,
-      black 89%
-    );
+    background: linear-gradient(110deg, transparent 0%, rgba(0, 0, 0, 1) 45%, black 89%);
   }
 }
 

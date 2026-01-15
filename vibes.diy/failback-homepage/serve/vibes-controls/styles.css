@@ -111,8 +111,7 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) {
 }
 
 /* App mount blur and shift when panel is open */
-body:has([data-vibe-controls-container] [data-vibe-switch].active)
-  .vibe-app-container {
+body:has([data-vibe-controls-container] [data-vibe-switch].active) .vibe-app-container {
   filter: blur(4px);
   transform: translateY(-400px);
   transition:

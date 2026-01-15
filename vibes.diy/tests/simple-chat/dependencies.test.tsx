@@ -9,11 +9,7 @@ describe("useSimpleChat", () => {
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          controller.enqueue(
-            encoder.encode(
-              'data: {"choices":[{"delta":{"content":""},"finish_reason":null}]}\n\n',
-            ),
-          );
+          controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":""},"finish_reason":null}]}\n\n'));
           controller.close();
         },
       });

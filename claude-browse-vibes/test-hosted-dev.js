@@ -19,11 +19,7 @@ async function testHostedDev() {
     const text = msg.text();
 
     // Highlight vibes-related logs
-    if (
-      text.includes("vibes") ||
-      text.includes("mount") ||
-      text.includes("Vibes")
-    ) {
+    if (text.includes("vibes") || text.includes("mount") || text.includes("Vibes")) {
       console.log(`🎛️ [${type.toUpperCase()}] ${text}`);
     } else {
       console.log(`📋 [${type.toUpperCase()}] ${text}`);
@@ -53,12 +49,8 @@ async function testHostedDev() {
     console.log(`📦 #vibe-control exists: ${vibeControlExists}`);
 
     if (vibeControlExists) {
-      const vibeControlContent = await vibeControl
-        .innerHTML()
-        .catch(() => "Could not read innerHTML");
-      console.log(
-        `📝 #vibe-control content length: ${vibeControlContent.length} characters`,
-      );
+      const vibeControlContent = await vibeControl.innerHTML().catch(() => "Could not read innerHTML");
+      console.log(`📝 #vibe-control content length: ${vibeControlContent.length} characters`);
     }
 
     // Look for Login and Invite buttons in the entire page
@@ -85,9 +77,7 @@ async function testHostedDev() {
     }
 
     // Look for Remix buttons (should show our emoji and "Remixmaster")
-    const remixButtons = await page
-      .locator("text=/.*Remix.*/", { hasText: /Remix/ })
-      .all();
+    const remixButtons = await page.locator("text=/.*Remix.*/", { hasText: /Remix/ }).all();
     console.log(`💽 Found ${remixButtons.length} "Remix" elements`);
 
     for (let i = 0; i < remixButtons.length; i++) {
@@ -121,9 +111,7 @@ async function testHostedDev() {
 
       // Check for auth wall elements
       const authWallLogin = await page.locator("text=Login").all();
-      console.log(
-        `🔐 After enabling sync, found ${authWallLogin.length} "Login" elements`,
-      );
+      console.log(`🔐 After enabling sync, found ${authWallLogin.length} "Login" elements`);
 
       // Check if any are now visible
       for (let i = 0; i < authWallLogin.length; i++) {
@@ -135,17 +123,13 @@ async function testHostedDev() {
 
       // Also check if Remixmaster appeared after enabling sync
       const postSyncRemixmaster = await page.locator("text=Remixmaster").all();
-      console.log(
-        `🎯 After enabling sync, found ${postSyncRemixmaster.length} "Remixmaster" elements`,
-      );
+      console.log(`🎯 After enabling sync, found ${postSyncRemixmaster.length} "Remixmaster" elements`);
 
       for (let i = 0; i < postSyncRemixmaster.length; i++) {
         const button = postSyncRemixmaster[i];
         const isVisible = await button.isVisible();
         const text = await button.textContent();
-        console.log(
-          `  Post-sync Remixmaster ${i + 1}: "${text}" (visible: ${isVisible})`,
-        );
+        console.log(`  Post-sync Remixmaster ${i + 1}: "${text}" (visible: ${isVisible})`);
       }
     } else {
       console.log('⚠️ "Enable Sync" button not found');
@@ -159,9 +143,7 @@ async function testHostedDev() {
     console.log("📸 Screenshot saved to hosted-dev-test.png");
 
     // Keep browser open for manual inspection
-    console.log(
-      "🔍 Browser left open for manual inspection. Press Ctrl+C to close.",
-    );
+    console.log("🔍 Browser left open for manual inspection. Press Ctrl+C to close.");
     await new Promise((resolve) => {
       process.on("SIGINT", resolve);
     });

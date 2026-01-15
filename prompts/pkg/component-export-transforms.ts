@@ -22,18 +22,12 @@ export default App;`;
 
 export function transformFunctionDeclaration(state: TransformState): string {
   if (!state.patterns.functionDeclaration) return state.input;
-  return state.input.replace(
-    /export\s+default\s+function\s+\w+\s*(\([^)]*\))/g,
-    "export default function App$1",
-  );
+  return state.input.replace(/export\s+default\s+function\s+\w+\s*(\([^)]*\))/g, "export default function App$1");
 }
 
 export function transformClassDeclaration(state: TransformState): string {
   if (!state.patterns.classDeclaration) return state.input;
-  return state.input.replace(
-    /export\s+default\s+class\s+\w+/g,
-    "export default class App",
-  );
+  return state.input.replace(/export\s+default\s+class\s+\w+/g, "export default class App");
 }
 
 export function transformArrowFunction(state: TransformState): string {

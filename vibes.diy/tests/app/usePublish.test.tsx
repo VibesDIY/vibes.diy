@@ -1,11 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { usePublish } from "~/vibes.diy/app/components/ResultPreview/usePublish.js";
-import type {
-  AiChatMessage,
-  ChatMessageDocument,
-  UserChatMessage,
-} from "@vibes.diy/prompts";
+import type { AiChatMessage, ChatMessageDocument, UserChatMessage } from "@vibes.diy/prompts";
 import { trackPublishShared } from "~/vibes.diy/app/utils/analytics.js";
 import { publishApp } from "~/vibes.diy/app/utils/publishUtils.js";
 
@@ -72,7 +68,7 @@ describe("usePublish Hook", () => {
         title: mockTitle,
         messages: mockMessages,
         updatePublishedUrl: mockUpdatePublishedUrl,
-      }),
+      })
     );
 
     expect(result.current.isPublishing).toBe(false);
@@ -94,7 +90,7 @@ describe("usePublish Hook", () => {
         messages: mockMessages,
         updatePublishedUrl: mockUpdatePublishedUrl,
         publishedUrl: initialUrl,
-      }),
+      })
     );
 
     expect(result.current.publishedAppUrl).toBe(initialUrl);
@@ -108,7 +104,7 @@ describe("usePublish Hook", () => {
         title: mockTitle,
         messages: mockMessages,
         updatePublishedUrl: mockUpdatePublishedUrl,
-      }),
+      })
     );
 
     // Initial state should be closed
@@ -138,7 +134,7 @@ describe("usePublish Hook", () => {
         title: mockTitle,
         messages: mockMessages,
         updatePublishedUrl: mockUpdatePublishedUrl,
-      }),
+      })
     );
 
     // Call handlePublish
@@ -160,9 +156,7 @@ describe("usePublish Hook", () => {
     // Verify state updates
     expect(result.current.publishedAppUrl).toBe(mockAppUrl);
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(mockAppUrl);
-    expect(trackPublishShared).toHaveBeenCalledWith(
-      expect.objectContaining({ published_url: mockAppUrl }),
-    );
+    expect(trackPublishShared).toHaveBeenCalledWith(expect.objectContaining({ published_url: mockAppUrl }));
 
     // Verify urlCopied state is set to true initially (the core functionality)
     expect(result.current.urlCopied).toBe(true);
@@ -186,7 +180,7 @@ describe("usePublish Hook", () => {
         title: mockTitle,
         messages: mockMessages,
         updatePublishedUrl: mockUpdatePublishedUrl,
-      }),
+      })
     );
 
     // Call handlePublish
@@ -195,10 +189,7 @@ describe("usePublish Hook", () => {
     });
 
     // Verify error was logged
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "Error in handlePublish:",
-      expect.any(Error),
-    );
+    expect(consoleSpy).toHaveBeenCalledWith("Error in handlePublish:", expect.any(Error));
 
     // Verify state resets
     expect(result.current.isPublishing).toBe(false);
@@ -239,7 +230,7 @@ describe("usePublish Hook", () => {
         title: mockTitle,
         messages: specialMessages,
         updatePublishedUrl: mockUpdatePublishedUrl,
-      }),
+      })
     );
 
     // Call handlePublish
@@ -251,7 +242,7 @@ describe("usePublish Hook", () => {
     expect(publishApp).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: "Actual user prompt",
-      }),
+      })
     );
   });
 
@@ -263,7 +254,7 @@ describe("usePublish Hook", () => {
         title: mockTitle,
         messages: [] as ChatMessageDocument[],
         updatePublishedUrl: mockUpdatePublishedUrl,
-      }),
+      })
     );
 
     // Call handlePublish

@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  isCustomDomain,
-  isFirstPartyApexDomain,
-  isFirstPartySubdomain,
-} from "@vibes.diy/hosting";
+import { isCustomDomain, isFirstPartyApexDomain, isFirstPartySubdomain } from "@vibes.diy/hosting";
 
 describe("Domain Utils", () => {
   describe("isCustomDomain", () => {

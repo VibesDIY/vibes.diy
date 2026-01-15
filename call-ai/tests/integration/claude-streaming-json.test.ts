@@ -37,7 +37,7 @@ const expectOrWarn = (
   model: { id: string; grade: string },
   condition: boolean,
   message: string,
-  debugValue?: unknown, // Added optional debug value parameter
+  debugValue?: unknown // Added optional debug value parameter
 ) => {
   if (model.grade === "A") {
     if (!condition) {
@@ -73,7 +73,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
                 setTimeout(() => {
                   console.warn(`Timeout for ${modelId.id} (Grade ${modelId.grade}): ${name}`);
                   resolve(undefined);
-                }, timeout || TIMEOUT),
+                }, timeout || TIMEOUT)
               ),
             ]);
             return result;
@@ -84,7 +84,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
             return;
           }
         },
-        timeout,
+        timeout
       );
     };
   }
@@ -119,7 +119,7 @@ describe("Claude JSON property splitting test", () => {
                     },
                   },
                 },
-              },
+              }
             );
 
             // Get the metadata
@@ -129,7 +129,7 @@ describe("Claude JSON property splitting test", () => {
             expectOrWarn(
               modelId,
               typeof result === "string",
-              `Result is not a string but a ${typeof result} in ${modelName} model`,
+              `Result is not a string but a ${typeof result} in ${modelName} model`
             );
 
             // For streaming responses, collect all chunks
@@ -176,7 +176,7 @@ describe("Claude JSON property splitting test", () => {
                     modelId,
                     meta.timing.duration >= 5,
                     `API call duration (${meta.timing.duration}ms) was suspiciously fast for ${modelName} model, possibly mocked or cached`,
-                    meta.timing,
+                    meta.timing
                   );
                 } else {
                   console.warn(`No timing information available for ${modelName} model`);
@@ -186,7 +186,7 @@ describe("Claude JSON property splitting test", () => {
                   modelId,
                   typeof data === "object" && data !== null,
                   `Parsed result is not an object in ${modelName} model response`,
-                  data,
+                  data
                 );
 
                 if (typeof data === "object" && data !== null) {
@@ -196,7 +196,7 @@ describe("Claude JSON property splitting test", () => {
                     modelId,
                     "population" in data,
                     `Missing 'population' in ${modelName} model response`,
-                    Object.keys(data),
+                    Object.keys(data)
                   );
 
                   // Validate capital
@@ -205,14 +205,14 @@ describe("Claude JSON property splitting test", () => {
                       modelId,
                       typeof data.capital === "string",
                       `Capital is not a string in ${modelName} model response`,
-                      data.capital,
+                      data.capital
                     );
                     if (typeof data.capital === "string") {
                       expectOrWarn(
                         modelId,
                         data.capital.toLowerCase().includes("paris"),
                         `Capital ${data.capital} is not Paris in ${modelName} model response`,
-                        data.capital,
+                        data.capital
                       );
                     }
                   }
@@ -223,7 +223,7 @@ describe("Claude JSON property splitting test", () => {
                       modelId,
                       typeof data.population === "number",
                       `'population' is not a number in ${modelName} model response`,
-                      data.population,
+                      data.population
                     );
                     if (typeof data.population === "number") {
                       // Population should be in a reasonable range (60-70 million for France)
@@ -235,9 +235,9 @@ describe("Claude JSON property splitting test", () => {
                         modelId,
                         populationInMillions >= 60 && populationInMillions <= 70,
                         `Population ${data.population} (${populationInMillions.toFixed(
-                          2,
+                          2
                         )}M) outside expected range in ${modelName} model response - possibly due to property name splitting`,
-                        data.population,
+                        data.population
                       );
                     }
                   }
@@ -248,7 +248,7 @@ describe("Claude JSON property splitting test", () => {
                       modelId,
                       Array.isArray(data.languages),
                       `'languages' is not an array in ${modelName} model response`,
-                      data.languages,
+                      data.languages
                     );
                     if (Array.isArray(data.languages)) {
                       // Should include French
@@ -256,7 +256,7 @@ describe("Claude JSON property splitting test", () => {
                         modelId,
                         data.languages.some((lang: string) => typeof lang === "string" && lang.toLowerCase().includes("french")),
                         `Languages doesn't include French in ${modelName} model response`,
-                        data.languages,
+                        data.languages
                       );
                     }
                   }
@@ -271,12 +271,12 @@ describe("Claude JSON property splitting test", () => {
                 expectOrWarn(
                   modelId,
                   false,
-                  `JSON parse error in ${modelName} model response: ${e}\nThis indicates the streaming property splitting issue is present!`,
+                  `JSON parse error in ${modelName} model response: ${e}\nThis indicates the streaming property splitting issue is present!`
                 );
               }
             }
           },
-          TIMEOUT,
+          TIMEOUT
         );
       }
     });

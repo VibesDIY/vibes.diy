@@ -15,19 +15,13 @@ function moveImportmapFirst(): Plugin {
       // Post-process the generated HTML file
       const fs = await import("fs/promises");
       const path = await import("path");
-      const htmlPath = path.join(
-        process.cwd(),
-        "build",
-        "client",
-        "index.html",
-      );
+      const htmlPath = path.join(process.cwd(), "build", "client", "index.html");
 
       try {
         let html = await fs.readFile(htmlPath, "utf-8");
 
         // Find the importmap script
-        const importmapRegex =
-          /<script type="importmap"[^>]*>[\s\S]*?<\/script>/;
+        const importmapRegex = /<script type="importmap"[^>]*>[\s\S]*?<\/script>/;
         const importmapMatch = html.match(importmapRegex);
 
         if (!importmapMatch) {
@@ -52,8 +46,7 @@ function moveImportmapFirst(): Plugin {
 
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   // Disable React Router plugin for tests or when explicitly disabled
-  const disableReactRouter =
-    mode === "test" || process.env.DISABLE_REACT_ROUTER === "true";
+  const disableReactRouter = mode === "test" || process.env.DISABLE_REACT_ROUTER === "true";
   console.log("disableReactRouter", disableReactRouter);
 
   return {
@@ -69,25 +62,12 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     ],
     base: process.env.VITE_APP_BASENAME || "/",
     ssr: {
-      external: [
-        "react",
-        "react-dom",
-        "react-dom/client",
-        "react/jsx-runtime",
-        "use-vibes",
-      ],
+      external: ["react", "react-dom", "react-dom/client", "react/jsx-runtime", "use-vibes"],
     },
     build: {
       outDir: "build",
       rollupOptions: {
-        external: [
-          "react",
-          "react-dom",
-          "react-dom/client",
-          "react/jsx-runtime",
-          "use-vibes",
-          "use-fireproof",
-        ],
+        external: ["react", "react-dom", "react-dom/client", "react/jsx-runtime", "use-vibes", "use-fireproof"],
       },
     },
     // Define global constants

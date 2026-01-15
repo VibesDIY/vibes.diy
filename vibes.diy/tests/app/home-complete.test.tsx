@@ -4,12 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 // import * as useSimpleChatModule from "~/vibes.diy/app/hooks/useSimpleChat.js";
 import UnifiedSession from "~/vibes.diy/app/routes/home.js";
-import type {
-  AiChatMessage,
-  ChatMessage,
-  Segment,
-  UserChatMessage,
-} from "@vibes.diy/prompts";
+import type { AiChatMessage, ChatMessage, Segment, UserChatMessage } from "@vibes.diy/prompts";
 
 // Define mocks using vi.hoisted to ensure they are available to hoisted vi.mock calls
 const mocks = vi.hoisted(() => {
@@ -34,16 +29,13 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
     messageHasBeenSent: false,
     setMessageHasBeenSent: mocks.cookieConsentSetMessageHasBeenSent,
   }),
-  CookieConsentProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
+  CookieConsentProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Create mock implementations for react-router (note: not react-router-dom)
 vi.mock("react-router", async () => {
   const { vi } = await import("vitest");
-  const actual =
-    await vi.importActual<typeof import("react-router")>("react-router");
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
     useNavigate: () => mocks.navigateMock,
@@ -57,9 +49,7 @@ vi.mock("react-router", async () => {
 interface _ChatInterfaceProps {
   chatState: {
     messages: ChatMessage[];
-    setMessages: (
-      newMessages: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[]),
-    ) => void;
+    setMessages: (newMessages: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => void;
     input: string;
     setInput: React.Dispatch<React.SetStateAction<string>>;
     isStreaming: () => boolean;
@@ -107,11 +97,7 @@ vi.mock("~/vibes.diy/app/components/NewSessionView", () => ({
   default: ({ onSessionCreate }: { onSessionCreate: (id: string) => void }) => (
     <div data-testid="new-session-view">
       <div data-testid="mock-chat-interface">
-        <button
-          type="button"
-          data-testid="create-session-button"
-          onClick={() => onSessionCreate("new-session-id")}
-        >
+        <button type="button" data-testid="create-session-button" onClick={() => onSessionCreate("new-session-id")}>
           Create Session
         </button>
       </div>
@@ -120,13 +106,7 @@ vi.mock("~/vibes.diy/app/components/NewSessionView", () => ({
 }));
 
 vi.mock("~/vibes.diy/app/components/SessionView", () => ({
-  default: ({
-    urlPrompt,
-    urlModel,
-  }: {
-    urlPrompt?: string | null;
-    urlModel?: string | null;
-  }) => (
+  default: ({ urlPrompt, urlModel }: { urlPrompt?: string | null; urlModel?: string | null }) => (
     <div data-testid="session-view">
       <div data-testid="mock-chat-interface">Chat Interface</div>
       <div data-testid="mock-result-preview">
@@ -137,11 +117,7 @@ vi.mock("~/vibes.diy/app/components/SessionView", () => ({
         <button
           type="button"
           data-testid="share-button"
-          onClick={() =>
-            navigator.clipboard.writeText(
-              `${window.location.origin}/shared?state=mockState`,
-            )
-          }
+          onClick={() => navigator.clipboard.writeText(`${window.location.origin}/shared?state=mockState`)}
         >
           Share
         </button>
@@ -185,8 +161,7 @@ vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async (original) => {
     .map((_, i) => `console.log("Line ${i}");`)
     .join("\n");
   const { mockChatStateProps } = await import("./mockData.js");
-  const all =
-    (await original()) as typeof import("~/vibes.diy/app/hooks/useSimpleChat.js");
+  const all = (await original()) as typeof import("~/vibes.diy/app/hooks/useSimpleChat.js");
   return {
     ...all,
     useSimpleChat: vi.fn().mockReturnValue({
@@ -263,13 +238,11 @@ describe("Home Route in completed state", () => {
     render(
       <MemoryRouter initialEntries={["/chat/test-session-123"]}>
         <UnifiedSession />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("code-line-count")).toHaveTextContent(
-        "210 lines of code",
-      );
+      expect(screen.getByTestId("code-line-count")).toHaveTextContent("210 lines of code");
     });
   });
 
@@ -285,7 +258,7 @@ describe("Home Route in completed state", () => {
     render(
       <MemoryRouter initialEntries={["/chat/test-session-123"]}>
         <UnifiedSession />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     const shareButton = await screen.findByTestId("share-button");
@@ -316,13 +289,11 @@ describe("Home Route in completed state", () => {
     render(
       <MemoryRouter>
         <UnifiedSession />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Find create session button and click it
-    const createSessionButton = await screen.findByTestId(
-      "create-session-button",
-    );
+    const createSessionButton = await screen.findByTestId("create-session-button");
     fireEvent.click(createSessionButton);
 
     // Instead of expecting immediate navigation, allow for the possibility
@@ -339,7 +310,7 @@ describe("Home Route in completed state", () => {
           expect(path.includes("/chat/")).toBe(true);
         }
       },
-      { timeout: 2000 },
+      { timeout: 2000 }
     );
   });
 
@@ -355,7 +326,7 @@ describe("Home Route in completed state", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <UnifiedSession />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Should render new session view by default

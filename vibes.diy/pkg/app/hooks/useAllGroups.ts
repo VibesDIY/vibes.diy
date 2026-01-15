@@ -14,8 +14,7 @@ export function useAllGroups() {
 
   // Query ALL groups for this user (no titleId filter)
   const groupsResult = useLiveQuery<VibeInstanceDocument>(
-    (doc) =>
-      doc.userId === userId || (userId && doc.sharedWith?.includes(userId)),
+    (doc) => doc.userId === userId || (userId && doc.sharedWith?.includes(userId))
   );
 
   const groups = groupsResult.docs || [];

@@ -11,23 +11,13 @@
 
 /* Default (Light Mode) Button Gradients */
 .light-gradient {
-  background: linear-gradient(
-    110deg,
-    transparent 0%,
-    rgba(255, 255, 255, 1) 45%,
-    white 89%
-  );
+  background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 1) 45%, white 89%);
 }
 
 /* Dark Mode Button Gradients */
 @media (prefers-color-scheme: dark) {
   .light-gradient {
-    background: linear-gradient(
-      110deg,
-      transparent 0%,
-      rgba(0, 0, 0, 1) 45%,
-      black 89%
-    );
+    background: linear-gradient(110deg, transparent 0%, rgba(0, 0, 0, 1) 45%, black 89%);
   }
 }
 

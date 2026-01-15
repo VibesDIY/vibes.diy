@@ -1,82 +1,49 @@
 import { Option, URI } from "@adviser/cement";
+import { VibeBindings } from "@vibes.diy/use-vibes-base";
 //   entryPointBaseUrl: string; // https://{fsid}{[-.]groupid}.vibes.app -> https://fsid{--groupId}.vibes.app
 
 export interface CalcEntryPointUrlParams {
-  urlTemplate: string;
-  groupId?: string; // [-.]*groupid
-  fsId: string;
+  hostnameBase: string;
+  bindings: VibeBindings;
+  protocol: "https" | "http";
 }
 
-export function calcEntryPointUrl({
-  urlTemplate,
-  groupId,
-  fsId,
-}: CalcEntryPointUrlParams): string {
-  const uri = URI.from(urlTemplate);
-  let hostname = uri.hostname.replace("{fsid}", fsId);
-  switch (true) {
-    case urlTemplate.includes("{.groupid}"):
-      hostname = hostname.replace("{.groupid}", groupId ? `.${groupId}` : "");
-      break;
-    case urlTemplate.includes("{-groupid}"):
-      hostname = hostname.replace("{-groupid}", groupId ? `-${groupId}` : "");
-      break;
-    case urlTemplate.includes("{--groupid}"):
-      hostname = hostname.replace("{--groupid}", groupId ? `--${groupId}` : "");
-      break;
-    // case urlTemplate.includes("{groupid}"):
-    //   hostname = hostname.replace("{groupid}", groupId ? `${groupId}` : "");
-    //   break;
-  }
-  return uri.build().hostname(hostname).toString();
+export function calcEntryPointUrl({ hostnameBase, protocol, bindings }: CalcEntryPointUrlParams): string {
+  const hostname = `${bindings.appSlug}--${bindings.userSlug}.${hostnameBase}`;
+  return `${protocol}://${hostname}/~${bindings.fsId}~/`;
 }
 
-export interface FsIdAndGroupId {
+export interface ExtractedHostToBindings {
   url: string;
-  fsId: string;
+  userSlug: string;
+  appSlug: string;
+  fsId?: string;
   groupId?: string;
   path: string; // path after given template
 }
 
-export function extractFsIdAndGroupIdFromHost({
-  matchURL,
-  urlTemplate,
-}: {
-  matchURL: string;
-  urlTemplate: string;
-}): Option<FsIdAndGroupId> {
-  const templateURI = URI.from(urlTemplate);
-  if (templateURI.hostname.includes("groupid}")) {
-    throw new Error(
-      "urlTemplate must use {.groupid}, {-groupid}, or {--groupid} for groupId placeholder",
-    );
+export function extractHostToBindings({ matchURL }: { matchURL: string }): Option<ExtractedHostToBindings> {
+  const uri = URI.from(matchURL);
+  const match = /^([a-zA-Z0-9][a-zA-Z0-9-]*?)--([a-zA-Z0-9][a-zA-Z0-9-]+)/.exec(uri.hostname);
+  if (!match) {
+    return Option.None();
   }
-  const hostNameRegExpStr = templateURI.hostname.replace(
-    "{fsid}",
-    "(?<fsId>[^.-]+)",
-  );
-  //.replace("{.groupid}", "\\.(?<groupId>[^.]+)")
-  //.replace("{-groupid}", "-(?<groupId>[^.]+)")
-  //.replace("{--groupid}", "--(?<groupId>[^.]+)")
-  const hostNameRegExp = new RegExp(`^${hostNameRegExpStr}$`);
-  const matchURI = URI.from(matchURL);
-  const match = hostNameRegExp.exec(matchURI.hostname);
-  if (match && match.groups) {
-    const calc = calcEntryPointUrl({
-      urlTemplate,
-      fsId: match.groups["fsId"],
-      groupId: match.groups["groupId"],
-    });
-    let rest = matchURI.pathname.replace(URI.from(calc).pathname, "");
-    if (!rest.startsWith("/")) {
-      rest = `/${rest}`;
-    }
+  const appSlug = match[1].toLowerCase();
+  const userSlug = match[2].toLowerCase();
+  const restPath = uri.pathname.match(/^\/~(z[a-zA-Z0-9]{8,})~(\/.*)?$/);
+  if (restPath) {
     return Option.Some({
-      url: calc,
-      fsId: match.groups["fsId"],
-      groupId: match.groups["groupId"],
-      path: rest,
+      url: matchURL,
+      appSlug,
+      userSlug,
+      fsId: restPath[1],
+      path: restPath[2] ?? "/",
     });
   }
-  return Option.None();
+  return Option.Some({
+    url: matchURL,
+    appSlug,
+    userSlug,
+    path: uri.pathname,
+  });
 }

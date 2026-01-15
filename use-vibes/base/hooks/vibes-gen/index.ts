@@ -5,5 +5,5 @@
  * Provides automatic caching, persistence, and state management.
  */
 
-export { useVibes } from './use-vibes.js';
-export type { UseVibesOptions, UseVibesResult, VibeDocument } from '@vibes.diy/use-vibes-types';
+export { useVibes } from "./use-vibes.js";
+export type { UseVibesOptions, UseVibesResult, VibeDocument } from "@vibes.diy/use-vibes-types";

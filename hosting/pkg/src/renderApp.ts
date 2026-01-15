@@ -46,17 +46,9 @@ app.get("/", async (c) => {
 
     // Redirect to new path-based URL
     if (debugParsed.isInstance && debugParsed.installId) {
-      return c.redirect(
-        URI.from(
-          `https://vibes.diy/vibe/${debugParsed.appSlug}/${debugParsed.installId}`,
-        ).toString(),
-        302,
-      );
+      return c.redirect(URI.from(`https://vibes.diy/vibe/${debugParsed.appSlug}/${debugParsed.installId}`).toString(), 302);
     } else {
-      return c.redirect(
-        URI.from(`https://vibes.diy/vibe/${debugParsed.appSlug}`).toString(),
-        302,
-      );
+      return c.redirect(URI.from(`https://vibes.diy/vibe/${debugParsed.appSlug}`).toString(), 302);
     }
   }
 
@@ -108,18 +100,10 @@ app.get("/", async (c) => {
   // Redirect to new path-based URL format
   if (parsed.isInstance && parsed.installId) {
     // Instance URL: redirect to https://vibes.diy/vibe/{slug}/{installId}
-    return c.redirect(
-      URI.from(
-        `https://vibes.diy/vibe/${parsed.appSlug}/${parsed.installId}`,
-      ).toString(),
-      302,
-    );
+    return c.redirect(URI.from(`https://vibes.diy/vibe/${parsed.appSlug}/${parsed.installId}`).toString(), 302);
   } else {
     // Catalog URL: redirect to https://vibes.diy/vibe/{slug}
-    return c.redirect(
-      URI.from(`https://vibes.diy/vibe/${parsed.appSlug}`).toString(),
-      302,
-    );
+    return c.redirect(URI.from(`https://vibes.diy/vibe/${parsed.appSlug}`).toString(), 302);
   }
 });
 
@@ -207,10 +191,7 @@ app.get("/App.jsx", async (c) => {
 });
 
 // Parse Range header to extract start and end byte positions
-function parseRangeHeader(
-  rangeHeader: string,
-  fileSize: number,
-): { start: number; end: number } | null {
+function parseRangeHeader(rangeHeader: string, fileSize: number): { start: number; end: number } | null {
   const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
   if (!match) return null;
 
@@ -242,12 +223,7 @@ function detectImageContentType(buffer: ArrayBuffer): string {
     return "image/png";
   }
 
-  if (
-    bytes.length >= 3 &&
-    bytes[0] === 0xff &&
-    bytes[1] === 0xd8 &&
-    bytes[2] === 0xff
-  ) {
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
     return "image/jpeg";
   }
 
@@ -281,11 +257,7 @@ function detectImageContentType(buffer: ArrayBuffer): string {
 }
 
 // Shared image asset handler logic (screenshots/icons)
-async function handleImageRequest(
-  c: Context,
-  keySuffix: string,
-  includeBody = true,
-) {
+async function handleImageRequest(c: Context, keySuffix: string, includeBody = true) {
   // Extract subdomain from the request URL
   const url = new URL(c.req.url);
   const hostname = url.hostname;
@@ -364,10 +336,7 @@ async function handleImageRequest(
               },
             });
           } catch (error) {
-            console.error(
-              `Failed to enqueue icon repair for ${appSlug}:`,
-              error,
-            );
+            console.error(`Failed to enqueue icon repair for ${appSlug}:`, error);
           }
         }
       }
