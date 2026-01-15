@@ -131,12 +131,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  call-ai/tests/helpers:
-    dependencies:
-      '@vibes.diy/call-ai-base':
-        specifier: workspace:*
-        version: link:../../base
-
   call-ai/tests/integration:
     dependencies:
       '@vibes.diy/call-ai-base':

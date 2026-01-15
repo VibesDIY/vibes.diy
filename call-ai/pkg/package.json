@@ -1,14 +1,39 @@
 {
   "name": "call-ai",
   "version": "0.0.0",
-  "description": "Public API for call-ai",
+  "description": "Lightweight library for making AI API calls with streaming support",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VibesDIY/vibes.diy.git"
+  },
+  "homepage": "https://github.com/VibesDIY/vibes.diy",
+  "bugs": {
+    "url": "https://github.com/VibesDIY/vibes.diy/issues"
+  },
   "exports": {
     ".": {
       "import": "./index.ts",
       "types": "./index.ts"
     }
   },
+  "scripts": {
+    "build": "core-cli tsc"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "api",
+    "call",
+    "openai",
+    "streaming",
+    "openrouter"
+  ],
+  "contributors": [
+    "J Chris Anderson",
+    "Meno Abels"
+  ],
+  "license": "Apache-2.0",
   "dependencies": {
     "@vibes.diy/call-ai-base": "workspace:*"
   },
@@ -16,7 +41,7 @@
     "@fireproof/core-cli": "0.24.3-dev-20261224",
     "typescript": "^5.9.3"
   },
-  "scripts": {
-    "build": "core-cli tsc"
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

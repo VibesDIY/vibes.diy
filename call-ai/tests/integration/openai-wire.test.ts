@@ -1,8 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect } from "vitest";
-import { ParserEvent } from "@vibes.diy/call-ai-base";
-import { OpenRouterParser } from "../helpers/parser-test-utils.js";
+import { ParserEvent, OpenRouterParser } from "@vibes.diy/call-ai-base";
 import { feedFixtureToParser } from "../test-helpers.js";
 
 /**

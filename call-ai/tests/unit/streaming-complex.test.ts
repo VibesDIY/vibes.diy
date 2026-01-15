@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ParserEvent } from "@vibes.diy/call-ai-base";
-import { OpenRouterParser } from "../helpers/parser-test-utils.js";
+import { ParserEvent, OpenRouterParser } from "@vibes.diy/call-ai-base";
 import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
 describe("Parser-based streaming tests", () => {
