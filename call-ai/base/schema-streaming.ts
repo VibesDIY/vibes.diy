@@ -7,13 +7,6 @@ import { responseMetadata, boxString } from "./response-metadata.js";
 import { OpenRouterParser } from "./parser/openrouter-parser.js";
 
 /**
- * Create parser with toolHandler already registered for tool.* events
- */
-function createSchemaParser(): OpenRouterParser {
-  return new OpenRouterParser();
-}
-
-/**
  * Parse SSE stream using toolHandler for tool_calls responses.
  *
  * All tool formats (OpenAI tool_calls, Claude tool_use) are handled by
@@ -31,7 +24,7 @@ async function* parseSchemaSSE(response: Response, schemaStrategy: SchemaStrateg
   }
 
   const textDecoder = new TextDecoder();
-  const orParser = createSchemaParser();
+  const orParser = new OpenRouterParser();
 
   // Track final result - only set when tool call completes
   let finalResult: string | null = null;
