@@ -3,6 +3,7 @@ import { OnFunc } from "@adviser/cement";
 import { OpenRouterParser } from "./parser/openrouter-parser.js";
 import { createCodeBlockHandler } from "./parser/handlers/code-block-handler.js";
 import { ParserEvent } from "./parser/parser-evento.js";
+import { Segment } from "./parser/segment-accumulator.js";
 import { VibesEvent } from "./vibes-events.js";
 import { CallAIOptions, Message, CallAIError } from "./types.js";
 import { keyStore, globalDebug } from "./key-management.js";
@@ -13,13 +14,8 @@ export interface VibesStreamOptions extends CallAIOptions {
   prompt: string | Message[];
 }
 
-/**
- * Segment - A block of content (markdown or code)
- */
-export interface Segment {
-  type: "markdown" | "code";
-  content: string;
-}
+// Re-export Segment for consumers
+export { Segment };
 
 /**
  * VibesStream - Event-based streaming for vibes.diy code generation

@@ -216,7 +216,7 @@ export class ParserEvento {
 }
 
 /**
- * Interface for parsers that emit OrEvents.
+ * Interface for parsers that emit ParserEvents.
  * Both OpenRouterParser (streaming) and NonStreamingOpenRouterParser implement this.
  */
 export interface OrEventSource {
@@ -226,11 +226,4 @@ export interface OrEventSource {
   };
   register(handler: ParserHandler): void;
   finalize?(): void;
-}
-
-/**
- * Create an OrEventSource-compatible onEvent function.
- */
-export function createOrEventSource(): OrEventSource["onEvent"] {
-  return OnFunc<(event: ParserEvent) => void>();
 }

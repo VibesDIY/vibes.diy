@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { callAi, Schema, Message } from "call-ai";
 import { describe, expect, it, vi } from "vitest";
-import { NonStreamingOpenRouterParser, OrEvent } from "../../pkg/parser/index.js";
+import { NonStreamingOpenRouterParser, ParserEvent } from "../../pkg/parser/index.js";
 
 /**
  * GPT-4 Turbo Wire Protocol Tests
@@ -138,7 +138,7 @@ describe("GPT-4 Turbo Wire Protocol Tests", () => {
   describe("Response parsing (parser-based)", () => {
     it("should parse GPT-4 Turbo response and extract JSON content", () => {
       const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
+      const events: ParserEvent[] = [];
 
       parser.onEvent((evt) => events.push(evt));
       parser.parse(JSON.parse(gpt4turboSystemResponseFixture));

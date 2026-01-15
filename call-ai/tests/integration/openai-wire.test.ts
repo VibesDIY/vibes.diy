@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect } from "vitest";
-import { OrEvent } from "../../pkg/parser/index.js";
+import { ParserEvent } from "../../pkg/parser/index.js";
 import { OpenRouterParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser } from "../test-helpers.js";
 
@@ -24,7 +24,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
     let metaEmitted = false;
     let model = "";
 
-    parser.onEvent((evt: OrEvent) => {
+    parser.onEvent((evt: ParserEvent) => {
       switch (evt.type) {
         case "or.meta":
           metaEmitted = true;
@@ -62,7 +62,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
     const parser = new OpenRouterParser();
     let finishReason: string | null = null;
 
-    parser.onEvent((evt: OrEvent) => {
+    parser.onEvent((evt: ParserEvent) => {
       if (evt.type === "or.done") {
         finishReason = evt.finishReason;
       }
@@ -77,7 +77,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
     const parser = new OpenRouterParser();
     let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null = null;
 
-    parser.onEvent((evt: OrEvent) => {
+    parser.onEvent((evt: ParserEvent) => {
       if (evt.type === "or.usage") {
         usage = {
           promptTokens: evt.promptTokens,
@@ -100,7 +100,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
     const parser = new OpenRouterParser();
     let streamEnded = false;
 
-    parser.onEvent((evt: OrEvent) => {
+    parser.onEvent((evt: ParserEvent) => {
       if (evt.type === "or.stream-end") streamEnded = true;
     });
 
@@ -113,7 +113,7 @@ describe("OpenAI Response Parsing (parser-based)", () => {
     const parser = new OpenRouterParser();
     const deltas: string[] = [];
 
-    parser.onEvent((evt: OrEvent) => {
+    parser.onEvent((evt: ParserEvent) => {
       if (evt.type === "or.delta") deltas.push(evt.content);
     });
 

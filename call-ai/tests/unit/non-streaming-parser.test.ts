@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { describe, it, expect } from "vitest";
-import { NonStreamingOpenRouterParser, OrEvent, OrMeta, OrDelta, OrDone, OrUsage, OrJson } from "../../pkg/parser/index.js";
+import { NonStreamingOpenRouterParser, ParserEvent, OrMeta, OrDelta, OrDone, OrUsage, OrJson } from "../../pkg/parser/index.js";
 
 /**
  * NonStreamingOpenRouterParser Tests
@@ -18,7 +18,7 @@ describe("NonStreamingOpenRouterParser", () => {
 
     it("should emit correct events", () => {
       const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
+      const events: ParserEvent[] = [];
       parser.onEvent((evt) => events.push(evt));
       parser.parse(JSON.parse(fixture));
 
@@ -56,7 +56,7 @@ describe("NonStreamingOpenRouterParser", () => {
 
     it("should parse DeepSeek response correctly", () => {
       const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
+      const events: ParserEvent[] = [];
       parser.onEvent((evt) => events.push(evt));
       parser.parse(JSON.parse(fixture));
 
@@ -85,7 +85,7 @@ describe("NonStreamingOpenRouterParser", () => {
 
     it("should parse Gemini response correctly", () => {
       const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
+      const events: ParserEvent[] = [];
       parser.onEvent((evt) => events.push(evt));
       parser.parse(JSON.parse(fixture));
 
@@ -119,7 +119,7 @@ describe("NonStreamingOpenRouterParser", () => {
   describe("Edge cases", () => {
     it("should handle response without usage", () => {
       const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
+      const events: ParserEvent[] = [];
 
       const responseWithoutUsage = {
         id: "test-id",
@@ -136,7 +136,7 @@ describe("NonStreamingOpenRouterParser", () => {
 
     it("should handle empty content", () => {
       const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
+      const events: ParserEvent[] = [];
 
       const responseWithEmptyContent = {
         id: "test-id",
@@ -153,7 +153,7 @@ describe("NonStreamingOpenRouterParser", () => {
 
     it("should handle response without id (no meta emitted)", () => {
       const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
+      const events: ParserEvent[] = [];
 
       const responseWithoutId = {
         model: "test-model",

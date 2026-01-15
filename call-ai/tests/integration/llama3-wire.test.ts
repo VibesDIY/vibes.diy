@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { callAi, Schema } from "call-ai";
 import { describe, it, expect, vi } from "vitest";
-import { NonStreamingOpenRouterParser, OrEvent } from "../../pkg/parser/index.js";
+import { NonStreamingOpenRouterParser, ParserEvent } from "../../pkg/parser/index.js";
 
 /**
  * Llama3 Wire Protocol Tests
@@ -78,7 +78,7 @@ describe("Llama3 Wire Protocol Tests", () => {
   describe("Response parsing (parser-based)", () => {
     it("should parse Llama3 response and extract content", () => {
       const parser = new NonStreamingOpenRouterParser();
-      const events: OrEvent[] = [];
+      const events: ParserEvent[] = [];
 
       parser.onEvent((evt) => events.push(evt));
       parser.parse(JSON.parse(llama3ResponseFixture));

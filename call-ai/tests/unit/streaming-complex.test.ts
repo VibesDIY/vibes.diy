@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { OrEvent } from "../../pkg/parser/index.js";
+import { ParserEvent } from "../../pkg/parser/index.js";
 import { OpenRouterParser } from "../helpers/parser-test-utils.js";
 import { feedFixtureToParser, toSSE } from "../test-helpers.js";
 
@@ -9,7 +9,7 @@ describe("Parser-based streaming tests", () => {
       const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
-      parser.onEvent((evt: OrEvent) => {
+      parser.onEvent((evt: ParserEvent) => {
         if (evt.type === "or.delta") deltas.push(evt.content);
       });
 
@@ -27,7 +27,7 @@ describe("Parser-based streaming tests", () => {
       const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
-      parser.onEvent((evt: OrEvent) => {
+      parser.onEvent((evt: ParserEvent) => {
         if (evt.type === "or.delta") deltas.push(evt.content);
       });
 
@@ -51,7 +51,7 @@ describe("Parser-based streaming tests", () => {
       const parser = new OpenRouterParser();
       const jsonPayloads: unknown[] = [];
 
-      parser.onEvent((evt: OrEvent) => {
+      parser.onEvent((evt: ParserEvent) => {
         if (evt.type === "or.json") jsonPayloads.push(evt.json);
       });
 
@@ -69,7 +69,7 @@ describe("Parser-based streaming tests", () => {
       const parser = new OpenRouterParser();
       const doneEvents: string[] = [];
 
-      parser.onEvent((evt: OrEvent) => {
+      parser.onEvent((evt: ParserEvent) => {
         if (evt.type === "or.done") doneEvents.push(evt.finishReason);
       });
 
@@ -87,7 +87,7 @@ describe("Parser-based streaming tests", () => {
       const parser = new OpenRouterParser();
       let meta: { id?: string; model?: string } | null = null;
 
-      parser.onEvent((evt: OrEvent) => {
+      parser.onEvent((evt: ParserEvent) => {
         if (evt.type === "or.meta") meta = { id: evt.id, model: evt.model };
       });
 
@@ -108,7 +108,7 @@ describe("Parser-based streaming tests", () => {
       const parser = new OpenRouterParser();
       let streamEnded = false;
 
-      parser.onEvent((evt: OrEvent) => {
+      parser.onEvent((evt: ParserEvent) => {
         if (evt.type === "or.stream-end") streamEnded = true;
       });
 
@@ -127,7 +127,7 @@ describe("Parser-based streaming tests", () => {
       const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
-      parser.onEvent((evt: OrEvent) => {
+      parser.onEvent((evt: ParserEvent) => {
         if (evt.type === "or.delta") deltas.push(evt.content);
       });
 
@@ -146,7 +146,7 @@ describe("Parser-based streaming tests", () => {
       const parser = new OpenRouterParser();
       const deltas: string[] = [];
 
-      parser.onEvent((evt: OrEvent) => {
+      parser.onEvent((evt: ParserEvent) => {
         if (evt.type === "or.delta") deltas.push(evt.content);
       });
 

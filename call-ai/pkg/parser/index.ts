@@ -51,9 +51,6 @@ export {
   isJsonEventError,
 } from "./json-events.js";
 
-// Backward compatibility alias
-export type { JsonEvent as SSEJsonEvent } from "./json-events.js";
-
 export { OpenRouterParser } from "./openrouter-parser.js";
 export { NonStreamingOpenRouterParser } from "./non-streaming-openrouter-parser.js";
 export {
@@ -64,7 +61,7 @@ export {
   orStreamEnd,
   orJson,
   orImage,
-  parserEvent as orEvent,
+  parserEvent,
   OrMeta,
   OrDelta,
   OrUsage,
@@ -72,7 +69,7 @@ export {
   OrStreamEnd,
   OrJson,
   OrImage,
-  ParserEvent as OrEvent,
+  ParserEvent,
   OrEventSource,
 } from "./parser-evento.js";
 
