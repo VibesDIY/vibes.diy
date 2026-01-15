@@ -231,7 +231,7 @@ parser.register(createCodeBlockHandler());
 // Listen for specific events
 parser.onEvent((evt) => {
   switch (evt.type) {
-    case "codeStart":
+    case "code.start":
       console.log("Started code block:", evt.language);
       break;
     case "tool.complete":
