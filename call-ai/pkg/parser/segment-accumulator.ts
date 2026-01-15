@@ -18,10 +18,7 @@ export interface Segment {
  *
  * Usage:
  * ```typescript
- * const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
- * const sseParser = new SSEDataParser(lineParser);
- * const jsonParser = new JsonParser(sseParser);
- * const orParser = new OpenRouterParser(jsonParser);
+ * const orParser = new OpenRouterParser();
  * const codeParser = new CodeBlockParser(orParser);
  * const accumulator = new SegmentAccumulator(codeParser);
  *

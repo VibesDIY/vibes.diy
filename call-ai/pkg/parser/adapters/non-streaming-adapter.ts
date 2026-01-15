@@ -94,6 +94,9 @@ export class NonStreamingAdapter {
         cost: usage.cost,
       });
     }
+
+    // Emit or.stream-end to signal parsing complete
+    this.evento.trigger({ type: "or.stream-end" });
   }
 
   /**

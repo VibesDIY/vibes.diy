@@ -1,10 +1,6 @@
 import { readFileSync } from "node:fs";
 
 import {
-  LineStreamParser,
-  LineStreamState,
-  SSEDataParser,
-  JsonParser,
   OpenRouterParser,
   CodeBlockParser,
   SegmentAccumulator,
@@ -21,10 +17,7 @@ const fireproofStreamFixture = readFileSync(
 
 // Helper to create a full parser stack with accumulator
 function createAccumulator() {
-  const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
-  const sseParser = new SSEDataParser(lineParser);
-  const jsonParser = new JsonParser(sseParser);
-  const orParser = new OpenRouterParser(jsonParser);
+  const orParser = new OpenRouterParser();
   const codeParser = new CodeBlockParser(orParser);
   const accumulator = new SegmentAccumulator(codeParser);
   return { accumulator, orParser };

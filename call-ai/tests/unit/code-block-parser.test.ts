@@ -1,10 +1,6 @@
 import { readFileSync } from "node:fs";
 
 import {
-  LineStreamParser,
-  LineStreamState,
-  SSEDataParser,
-  JsonParser,
   OpenRouterParser,
   CodeBlockParser,
   CodeBlockEvent,
@@ -24,10 +20,7 @@ const fireproofStreamFixture = readFileSync(
 
 // Helper to create a full parser stack
 function createCodeBlockParser() {
-  const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
-  const sseParser = new SSEDataParser(lineParser);
-  const jsonParser = new JsonParser(sseParser);
-  const orParser = new OpenRouterParser(jsonParser);
+  const orParser = new OpenRouterParser();
   const codeParser = new CodeBlockParser(orParser);
   return { codeParser, orParser };
 }

@@ -8,15 +8,13 @@ import { OnFunc } from "@adviser/cement";
 import { ParserEvento, ParserEvent } from "./parser-evento.js";
 import { StreamingAdapter } from "./adapters/streaming-adapter.js";
 import { OrEventSource } from "./openrouter-events.js";
-import { DataSource } from "./json-parser.js";
 
 export class OpenRouterParser implements OrEventSource {
   readonly onEvent = OnFunc<(event: ParserEvent) => void>();
   private evento: ParserEvento;
   private adapter: StreamingAdapter;
 
-  constructor(_jsonParser: DataSource) {
-    // StreamingAdapter creates its own parser chain internally
+  constructor() {
     this.evento = new ParserEvento();
     this.adapter = new StreamingAdapter(this.evento);
 

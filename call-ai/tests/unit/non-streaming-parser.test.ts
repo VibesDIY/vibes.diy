@@ -105,14 +105,14 @@ describe("NonStreamingOpenRouterParser", () => {
   describe("Event order", () => {
     const fixture = fs.readFileSync(path.join(fixturesDir, "llama3-response.json"), "utf8");
 
-    it("should emit events in correct order: json, meta, delta, done, usage", () => {
+    it("should emit events in correct order: json, meta, delta, done, usage, stream-end", () => {
       const parser = new NonStreamingOpenRouterParser();
       const eventTypes: string[] = [];
 
       parser.onEvent((evt) => eventTypes.push(evt.type));
       parser.parse(JSON.parse(fixture));
 
-      expect(eventTypes).toEqual(["or.json", "or.meta", "or.delta", "or.done", "or.usage"]);
+      expect(eventTypes).toEqual(["or.json", "or.meta", "or.delta", "or.done", "or.usage", "or.stream-end"]);
     });
   });
 

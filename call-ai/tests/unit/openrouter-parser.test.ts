@@ -1,12 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import {
-  LineStreamParser,
-  LineStreamState,
-  SSEDataParser,
-  SSEJsonParser,
-  OpenRouterParser,
-} from "call-ai";
+import { OpenRouterParser } from "call-ai";
 import { describe, it, expect, vi } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
@@ -22,13 +16,9 @@ const fireproofStreamFixture = readFileSync(
   "utf8",
 );
 
-// Helper to create a parser stack
+// Helper to create a parser
 function createOpenRouterParser() {
-  const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
-  const sseParser = new SSEDataParser(lineParser);
-  const jsonParser = new SSEJsonParser(sseParser);
-  const orParser = new OpenRouterParser(jsonParser);
-  return orParser;
+  return new OpenRouterParser();
 }
 
 describe("OpenRouterParser", () => {

@@ -7,6 +7,7 @@ import {
   OrDelta,
   OrUsage,
   OrDone,
+  OrStreamEnd,
 } from "../../../pkg/parser/parser-evento.js";
 import { NonStreamingAdapter } from "../../../pkg/parser/adapters/non-streaming-adapter.js";
 
@@ -56,6 +57,7 @@ describe("NonStreamingAdapter", () => {
     const deltas: OrDelta[] = [];
     const usages: OrUsage[] = [];
     const dones: OrDone[] = [];
+    const streamEnds: OrStreamEnd[] = [];
     const all: ParserEvent[] = [];
 
     evento.onEvent((event) => {
@@ -65,10 +67,11 @@ describe("NonStreamingAdapter", () => {
         case "or.delta": deltas.push(event); break;
         case "or.usage": usages.push(event); break;
         case "or.done": dones.push(event); break;
+        case "or.stream-end": streamEnds.push(event); break;
       }
     });
 
-    return { metas, deltas, usages, dones, all };
+    return { metas, deltas, usages, dones, streamEnds, all };
   }
 
   it("emits or.json with response transformed to streaming format", () => {
@@ -170,5 +173,18 @@ describe("NonStreamingAdapter", () => {
     adapter.parse(undefined);
 
     expect(all).toHaveLength(0);
+  });
+
+  it("emits or.stream-end after parsing completes", () => {
+    const evento = new ParserEvento();
+    const adapter = new NonStreamingAdapter(evento);
+    const { streamEnds, all } = collectEvents(evento);
+
+    adapter.parse(standardResponse);
+
+    expect(streamEnds).toHaveLength(1);
+    expect(streamEnds[0]).toMatchObject({ type: "or.stream-end" });
+    // stream-end should be the last event
+    expect(all[all.length - 1].type).toBe("or.stream-end");
   });
 });

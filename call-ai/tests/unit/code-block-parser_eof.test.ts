@@ -2,18 +2,11 @@ import {
   CodeBlockParser,
   CodeBlockEvent,
   OpenRouterParser,
-  JsonParser,
-  SSEDataParser,
-  LineStreamParser,
-  LineStreamState,
 } from "call-ai";
 import { describe, it, expect } from "vitest";
 
 function createCodeBlockParser() {
-  const lineParser = new LineStreamParser(LineStreamState.WaitingForEOL);
-  const sseParser = new SSEDataParser(lineParser);
-  const jsonParser = new JsonParser(sseParser);
-  const orParser = new OpenRouterParser(jsonParser);
+  const orParser = new OpenRouterParser();
   const codeParser = new CodeBlockParser(orParser);
   return { codeParser, orParser };
 }
