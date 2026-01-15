@@ -23,6 +23,7 @@
     "lint": "eslint . && cd hosting/pkg && pnpm lint",
     "knip": "knip",
     "test": "cross-env DISABLE_REACT_ROUTER=true vitest --run",
+    "test:call-ai": "vitest run --project call-ai-test-unit --project call-ai-test-integration",
     "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage",
     "test:all": "cd vibes.diy/tests/app && pnpm run test && cd ../simple-chat && pnpm run test && cd ../../../prompts/tests && pnpm run test && cd ../../use-vibes/tests && pnpm run test && cd ../../call-ai/tests && pnpm run test",
     "playwright:claude": "playwright test -c claude-browse-vibes/playwright.config.js",
