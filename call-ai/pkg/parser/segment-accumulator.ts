@@ -1,5 +1,4 @@
-import { OrEventSource } from "./openrouter-events.js";
-import { ParserEvent } from "./parser-evento.js";
+import { OrEventSource, ParserEvent } from "./parser-evento.js";
 
 /**
  * Segment - A block of content (markdown or code)

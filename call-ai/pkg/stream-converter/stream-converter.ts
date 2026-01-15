@@ -1,6 +1,6 @@
 import { OnFunc } from "@adviser/cement";
 import { OpenRouterParser } from "../parser/openrouter-parser.js";
-import { OrEvent } from "../parser/openrouter-events.js";
+import { ParserEvent } from "../parser/parser-evento.js";
 import { StreamEvent } from "./events.js";
 
 export interface ProcessPromptParams {
@@ -12,7 +12,7 @@ export interface ProcessPromptParams {
 /**
  * Transform OpenRouter events to StreamConverter events
  */
-function toStreamEvent(evt: OrEvent, streamId: string, prompt: string): StreamEvent | null {
+function toStreamEvent(evt: ParserEvent, streamId: string, prompt: string): StreamEvent | null {
   switch (evt.type) {
     case "or.meta":
       return {

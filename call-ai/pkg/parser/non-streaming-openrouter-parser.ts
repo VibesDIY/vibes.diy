@@ -5,9 +5,8 @@
  */
 
 import { OnFunc } from "@adviser/cement";
-import { ParserEvento, ParserEvent, ParserHandler } from "./parser-evento.js";
+import { ParserEvento, ParserEvent, ParserHandler, OrEventSource } from "./parser-evento.js";
 import { NonStreamingAdapter } from "./adapters/non-streaming-adapter.js";
-import { OrEventSource } from "./openrouter-events.js";
 import { imageHandler } from "./handlers/image-handler.js";
 import { toolHandler } from "./handlers/tool-handler.js";
 

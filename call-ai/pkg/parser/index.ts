@@ -64,7 +64,7 @@ export {
   orStreamEnd,
   orJson,
   orImage,
-  orEvent,
+  parserEvent as orEvent,
   OrMeta,
   OrDelta,
   OrUsage,
@@ -72,9 +72,9 @@ export {
   OrStreamEnd,
   OrJson,
   OrImage,
-  OrEvent,
+  ParserEvent as OrEvent,
   OrEventSource,
-} from "./openrouter-events.js";
+} from "./parser-evento.js";
 
 export { SegmentAccumulator, Segment } from "./segment-accumulator.js";
 

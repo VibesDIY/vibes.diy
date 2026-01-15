@@ -4,7 +4,7 @@ import { OpenRouterParser } from "call-ai";
 import { describe, it, expect, vi } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
-import { OrDelta, OrDone, OrMeta, OrUsage } from "../../pkg/parser/openrouter-events.js";
+import { OrDelta, OrDone, OrMeta, OrUsage } from "../../pkg/parser/parser-evento.js";
 
 const openAiStreamFixture = readFileSync(
   new URL("./fixtures/openai-stream-response.json", import.meta.url),

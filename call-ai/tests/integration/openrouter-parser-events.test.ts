@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { describe, it, expect, vi } from "vitest";
 import { OpenRouterParser } from "../../pkg/parser/openrouter-parser.js";
-import { orEvent, OrEvent, isOrEventError } from "../../pkg/parser/openrouter-events.js";
+import { parserEvent, ParserEvent, isParserEventError } from "../../pkg/parser/parser-evento.js";
 
 function loadFixture(filename: string): string {
   return fs.readFileSync(path.join(__dirname, "fixtures", filename), "utf8");
@@ -18,8 +18,8 @@ describe("OpenRouterParser arktype events", () => {
 
     // All events should match arktype schema
     for (const [evt] of events.mock.calls) {
-      const result = orEvent(evt);
-      expect(isOrEventError(result)).toBe(false);
+      const result = parserEvent(evt);
+      expect(isParserEventError(result)).toBe(false);
     }
 
     // First event is or.json (raw chunk)
@@ -65,11 +65,11 @@ describe("OpenRouterParser arktype events", () => {
 
   it("should validate events with arktype at runtime", () => {
     const parser = new OpenRouterParser();
-    const events: OrEvent[] = [];
+    const events: ParserEvent[] = [];
     parser.onEvent((evt) => {
       // Validate each event as it arrives
-      const result = orEvent(evt);
-      if (isOrEventError(result)) {
+      const result = parserEvent(evt);
+      if (isParserEventError(result)) {
         throw new Error(`Invalid event: ${JSON.stringify(result)}`);
       }
       events.push(evt);
