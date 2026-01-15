@@ -219,7 +219,7 @@ export class ParserEvento {
  * Interface for parsers that emit ParserEvents.
  * Both OpenRouterParser (streaming) and NonStreamingOpenRouterParser implement this.
  */
-export interface OrEventSource {
+export interface ParserEventSource {
   readonly onEvent: {
     (callback: (event: ParserEvent) => void): void;
     invoke(event: ParserEvent): void;

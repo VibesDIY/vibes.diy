@@ -1,10 +1,10 @@
 import { OnFunc } from "@adviser/cement";
-import { ParserEvento, ParserEvent, ParserHandler, OrEventSource } from "./parser-evento.js";
+import { ParserEvento, ParserEvent, ParserHandler, ParserEventSource } from "./parser-evento.js";
 import { StreamingAdapter } from "./adapters/streaming-adapter.js";
 import { imageHandler } from "./handlers/image-handler.js";
 import { toolHandler } from "./handlers/tool-handler.js";
 
-export class OpenRouterParser implements OrEventSource {
+export class OpenRouterParser implements ParserEventSource {
   private readonly evento = new ParserEvento();
   readonly onEvent = this.evento.onEvent;
   private adapter: StreamingAdapter;

@@ -1,4 +1,4 @@
-import { OrEventSource, ParserEvent } from "./parser-evento.js";
+import { ParserEventSource, ParserEvent } from "./parser-evento.js";
 
 /**
  * Segment - A block of content (markdown or code)
@@ -13,7 +13,7 @@ export interface Segment {
  * SegmentAccumulator - Builds growing Segment[] from parser events.
  *
  * This class listens to code block events (text.fragment, code.start, etc.)
- * from an OrEventSource and accumulates them into a segments array
+ * from a ParserEventSource and accumulates them into a segments array
  * that grows as content streams in.
  *
  * Usage:
@@ -34,9 +34,9 @@ export class SegmentAccumulator {
   readonly segments: Segment[] = [];
   private currentMarkdown: Segment | null = null;
   private currentCode: Segment | null = null;
-  private readonly parser: OrEventSource;
+  private readonly parser: ParserEventSource;
 
-  constructor(parser: OrEventSource) {
+  constructor(parser: ParserEventSource) {
     this.parser = parser;
     parser.onEvent((evt) => {
       this.handleEvent(evt);

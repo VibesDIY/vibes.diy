@@ -70,7 +70,7 @@ export {
   OrJson,
   OrImage,
   ParserEvent,
-  OrEventSource,
+  ParserEventSource,
 } from "./parser-evento.js";
 
 export { SegmentAccumulator, Segment } from "./segment-accumulator.js";

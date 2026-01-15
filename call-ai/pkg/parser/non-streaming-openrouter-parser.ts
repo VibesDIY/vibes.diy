@@ -5,12 +5,12 @@
  */
 
 import { OnFunc } from "@adviser/cement";
-import { ParserEvento, ParserEvent, ParserHandler, OrEventSource } from "./parser-evento.js";
+import { ParserEvento, ParserEvent, ParserHandler, ParserEventSource } from "./parser-evento.js";
 import { NonStreamingAdapter } from "./adapters/non-streaming-adapter.js";
 import { imageHandler } from "./handlers/image-handler.js";
 import { toolHandler } from "./handlers/tool-handler.js";
 
-export class NonStreamingOpenRouterParser implements OrEventSource {
+export class NonStreamingOpenRouterParser implements ParserEventSource {
   private readonly evento = new ParserEvento();
   readonly onEvent = this.evento.onEvent;
   private adapter: NonStreamingAdapter;
@@ -21,7 +21,7 @@ export class NonStreamingOpenRouterParser implements OrEventSource {
   }
 
   /**
-   * Parse a non-streaming JSON response and emit OrEvents.
+   * Parse a non-streaming JSON response and emit ParserEvents.
    * @param json - The parsed JSON response object
    */
   parse(json: unknown): void {
