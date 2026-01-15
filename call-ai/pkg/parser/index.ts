@@ -75,8 +75,6 @@ export {
 
 export { SegmentAccumulator, Segment } from "./segment-accumulator.js";
 
-export { createVibesParser } from "./create-vibes-parser.js";
-
 // Tool event types from parser-evento (replaces ToolSchemaParser)
 export {
   toolStart,

@@ -102,5 +102,4 @@ export {
   ToolComplete,
   SegmentAccumulator,
   Segment,
-  createVibesParser,
 } from "./parser/index.js";
