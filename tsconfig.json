@@ -37,6 +37,7 @@
     "vibes.diy/tempo/**",
     "vibes.diy/**/root.*",
     "vibes.diy/**/root.test.*",
+    "vibes.diy/pkg/scripts/**",
     "**/dist/**",
     "**/node_modules/**",
     "**/examples/**",

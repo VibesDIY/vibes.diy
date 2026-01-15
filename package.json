@@ -54,6 +54,11 @@
     "Meno Abels"
   ],
   "license": "Apache-2.0",
+  "pnpm": {
+    "overrides": {
+      "@adviser/cement": "^0.5.15"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@fireproof/core-cli": "0.24.3-dev-20261224",

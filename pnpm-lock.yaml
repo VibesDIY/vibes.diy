@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  sharp: 0.33.5
+  '@adviser/cement': ^0.5.15
 
 importers:
 
@@ -75,7 +75,7 @@ importers:
   call-ai/base:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.5
+        specifier: ^0.5.15
         version: 0.5.15(typescript@5.9.3)
       '@fireproof/core':
         specifier: 0.24.3-dev-20261224
@@ -281,8 +281,8 @@ importers:
         specifier: ^13.4.2
         version: 13.4.2
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.1.12
+        version: 4.2.1
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
@@ -1469,11 +1469,6 @@ packages:
     engines: {node: '>=20.19.0'}
     hasBin: true
 
-  '@adviser/cement@0.5.5':
-    resolution: {integrity: sha512-dVHdT5JtkPzmguN7snZDFbb962ufJOFJfDe8dZ5LqoISEGBCdcGhejr8XK+CWYoi3SckDgAzgFkOqMJAmiuP4Q==}
-    engines: {node: '>=20.19.0'}
-    hasBin: true
-
   '@adviser/ts-xxhash@1.0.2':
     resolution: {integrity: sha512-WSryk539sIKc1tYAJ+05Fc7HnH+IPOjoGhtmZSXHHibPH1970EvGah0OG7wnPUn/a0gfG51cwQUtMwNosA+kCA==}
 
@@ -2509,13 +2504,13 @@ packages:
   '@fireproof/use-fireproof@0.24.3-dev-20261224':
     resolution: {integrity: sha512-oeJtZAj2zh2hKwu0nvLFxamK8vUHMcrSTL4FVNg+9/CRkP/WhPr6OP4h0zFwq2dLsi3lFMVZGSmIoWYWe83vpA==}
     peerDependencies:
-      '@adviser/cement': '>=0.4.20'
+      '@adviser/cement': ^0.5.15
       react: '>=18.0.0'
 
   '@fireproof/use-fireproof@0.24.3-dev-use-livequery':
     resolution: {integrity: sha512-fhi4n6QoVitRBGu64vwQ+z8jOpEQJYruXbaWs7V3clF3djeIQzounX5NxKAeEoY5bLbNxHN9xQV5J/Qe2rmFrg==}
     peerDependencies:
-      '@adviser/cement': '>=0.4.20'
+      '@adviser/cement': ^0.5.15
       react: '>=18.0.0'
 
   '@fireproof/vendor@0.24.3-dev-20261224':
@@ -2592,8 +2587,18 @@ packages:
   '@iarna/toml@2.2.5':
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
 
+  '@img/colour@1.0.0':
+    resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
+    engines: {node: '>=18'}
+
   '@img/sharp-darwin-arm64@0.33.5':
     resolution: {integrity: sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@img/sharp-darwin-arm64@0.34.5':
+    resolution: {integrity: sha512-imtQ3WMJXbMY4fxb/Ndp6HBTNVtWCUI0WdobyheGf5+ad6xX8VIDO8u2xE4qc/fr08CKG/7dDseFtn6M6g/r3w==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm64]
     os: [darwin]
@@ -2604,8 +2609,19 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@img/sharp-darwin-x64@0.34.5':
+    resolution: {integrity: sha512-YNEFAF/4KQ/PeW0N+r+aVVsoIY0/qxxikF2SWdp+NRkmMB7y9LBZAVqQ4yhGCm/H3H270OSykqmQMKLBhBJDEw==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [x64]
+    os: [darwin]
+
   '@img/sharp-libvips-darwin-arm64@1.0.4':
     resolution: {integrity: sha512-XblONe153h0O2zuFfTAbQYAX2JhYmDHeWikp1LM9Hul9gVPjFY427k6dFEcOL72O01QxQsWi761svJ/ev9xEDg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@img/sharp-libvips-darwin-arm64@1.2.4':
+    resolution: {integrity: sha512-zqjjo7RatFfFoP0MkQ51jfuFZBnVE2pRiaydKJ1G/rHZvnsrHAOcQALIi9sA5co5xenQdTugCvtb1cuf78Vf4g==}
     cpu: [arm64]
     os: [darwin]
 
@@ -2614,8 +2630,18 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@img/sharp-libvips-darwin-x64@1.2.4':
+    resolution: {integrity: sha512-1IOd5xfVhlGwX+zXv2N93k0yMONvUlANylbJw1eTah8K/Jtpi15KC+WSiaX/nBmbm2HxRM1gZ0nSdjSsrZbGKg==}
+    cpu: [x64]
+    os: [darwin]
+
   '@img/sharp-libvips-linux-arm64@1.0.4':
     resolution: {integrity: sha512-9B+taZ8DlyyqzZQnoeIvDVR/2F4EbMepXMc/NdVbkzsJbzkUjhXv/70GQJ7tdLA4YJgNP25zukcxpX2/SueNrA==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@img/sharp-libvips-linux-arm64@1.2.4':
+    resolution: {integrity: sha512-excjX8DfsIcJ10x1Kzr4RcWe1edC9PquDRRPx3YVCvQv+U5p7Yin2s32ftzikXojb1PIFc/9Mt28/y+iRklkrw==}
     cpu: [arm64]
     os: [linux]
 
@@ -2624,8 +2650,28 @@ packages:
     cpu: [arm]
     os: [linux]
 
+  '@img/sharp-libvips-linux-arm@1.2.4':
+    resolution: {integrity: sha512-bFI7xcKFELdiNCVov8e44Ia4u2byA+l3XtsAj+Q8tfCwO6BQ8iDojYdvoPMqsKDkuoOo+X6HZA0s0q11ANMQ8A==}
+    cpu: [arm]
+    os: [linux]
+
+  '@img/sharp-libvips-linux-ppc64@1.2.4':
+    resolution: {integrity: sha512-FMuvGijLDYG6lW+b/UvyilUWu5Ayu+3r2d1S8notiGCIyYU/76eig1UfMmkZ7vwgOrzKzlQbFSuQfgm7GYUPpA==}
+    cpu: [ppc64]
+    os: [linux]
+
+  '@img/sharp-libvips-linux-riscv64@1.2.4':
+    resolution: {integrity: sha512-oVDbcR4zUC0ce82teubSm+x6ETixtKZBh/qbREIOcI3cULzDyb18Sr/Wcyx7NRQeQzOiHTNbZFF1UwPS2scyGA==}
+    cpu: [riscv64]
+    os: [linux]
+
   '@img/sharp-libvips-linux-s390x@1.0.4':
     resolution: {integrity: sha512-u7Wz6ntiSSgGSGcjZ55im6uvTrOxSIS8/dgoVMoiGE9I6JAfU50yH5BoDlYA1tcuGS7g/QNtetJnxA6QEsCVTA==}
+    cpu: [s390x]
+    os: [linux]
+
+  '@img/sharp-libvips-linux-s390x@1.2.4':
+    resolution: {integrity: sha512-qmp9VrzgPgMoGZyPvrQHqk02uyjA0/QrTO26Tqk6l4ZV0MPWIW6LTkqOIov+J1yEu7MbFQaDpwdwJKhbJvuRxQ==}
     cpu: [s390x]
     os: [linux]
 
@@ -2634,8 +2680,18 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@img/sharp-libvips-linux-x64@1.2.4':
+    resolution: {integrity: sha512-tJxiiLsmHc9Ax1bz3oaOYBURTXGIRDODBqhveVHonrHJ9/+k89qbLl0bcJns+e4t4rvaNBxaEZsFtSfAdquPrw==}
+    cpu: [x64]
+    os: [linux]
+
   '@img/sharp-libvips-linuxmusl-arm64@1.0.4':
     resolution: {integrity: sha512-9Ti+BbTYDcsbp4wfYib8Ctm1ilkugkA/uscUn6UXK1ldpC1JjiXbLfFZtRlBhjPZ5o1NCLiDbg8fhUPKStHoTA==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@img/sharp-libvips-linuxmusl-arm64@1.2.4':
+    resolution: {integrity: sha512-FVQHuwx1IIuNow9QAbYUzJ+En8KcVm9Lk5+uGUQJHaZmMECZmOlix9HnH7n1TRkXMS0pGxIJokIVB9SuqZGGXw==}
     cpu: [arm64]
     os: [linux]
 
@@ -2644,8 +2700,19 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@img/sharp-libvips-linuxmusl-x64@1.2.4':
+    resolution: {integrity: sha512-+LpyBk7L44ZIXwz/VYfglaX/okxezESc6UxDSoyo2Ks6Jxc4Y7sGjpgU9s4PMgqgjj1gZCylTieNamqA1MF7Dg==}
+    cpu: [x64]
+    os: [linux]
+
   '@img/sharp-linux-arm64@0.33.5':
     resolution: {integrity: sha512-JMVv+AMRyGOHtO1RFBiJy/MBsgz0x4AWrT6QoEVVTyh1E39TrCUpTRI7mx9VksGX4awWASxqCYLCV4wBZHAYxA==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [arm64]
+    os: [linux]
+
+  '@img/sharp-linux-arm64@0.34.5':
+    resolution: {integrity: sha512-bKQzaJRY/bkPOXyKx5EVup7qkaojECG6NLYswgktOZjaXecSAeCWiZwwiFf3/Y+O1HrauiE3FVsGxFg8c24rZg==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm64]
     os: [linux]
@@ -2656,8 +2723,32 @@ packages:
     cpu: [arm]
     os: [linux]
 
+  '@img/sharp-linux-arm@0.34.5':
+    resolution: {integrity: sha512-9dLqsvwtg1uuXBGZKsxem9595+ujv0sJ6Vi8wcTANSFpwV/GONat5eCkzQo/1O6zRIkh0m/8+5BjrRr7jDUSZw==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [arm]
+    os: [linux]
+
+  '@img/sharp-linux-ppc64@0.34.5':
+    resolution: {integrity: sha512-7zznwNaqW6YtsfrGGDA6BRkISKAAE1Jo0QdpNYXNMHu2+0dTrPflTLNkpc8l7MUP5M16ZJcUvysVWWrMefZquA==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [ppc64]
+    os: [linux]
+
+  '@img/sharp-linux-riscv64@0.34.5':
+    resolution: {integrity: sha512-51gJuLPTKa7piYPaVs8GmByo7/U7/7TZOq+cnXJIHZKavIRHAP77e3N2HEl3dgiqdD/w0yUfiJnII77PuDDFdw==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [riscv64]
+    os: [linux]
+
   '@img/sharp-linux-s390x@0.33.5':
     resolution: {integrity: sha512-y/5PCd+mP4CA/sPDKl2961b+C9d+vPAveS33s6Z3zfASk2j5upL6fXVPZi7ztePZ5CuH+1kW8JtvxgbuXHRa4Q==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [s390x]
+    os: [linux]
+
+  '@img/sharp-linux-s390x@0.34.5':
+    resolution: {integrity: sha512-nQtCk0PdKfho3eC5MrbQoigJ2gd1CgddUMkabUj+rBevs8tZ2cULOx46E7oyX+04WGfABgIwmMC0VqieTiR4jg==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [s390x]
     os: [linux]
@@ -2668,8 +2759,20 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@img/sharp-linux-x64@0.34.5':
+    resolution: {integrity: sha512-MEzd8HPKxVxVenwAa+JRPwEC7QFjoPWuS5NZnBt6B3pu7EG2Ge0id1oLHZpPJdn3OQK+BQDiw9zStiHBTJQQQQ==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [x64]
+    os: [linux]
+
   '@img/sharp-linuxmusl-arm64@0.33.5':
     resolution: {integrity: sha512-XrHMZwGQGvJg2V/oRSUfSAfjfPxO+4DkiRh6p2AFjLQztWUuY/o8Mq0eMQVIY7HJ1CDQUJlxGGZRw1a5bqmd1g==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [arm64]
+    os: [linux]
+
+  '@img/sharp-linuxmusl-arm64@0.34.5':
+    resolution: {integrity: sha512-fprJR6GtRsMt6Kyfq44IsChVZeGN97gTD331weR1ex1c1rypDEABN6Tm2xa1wE6lYb5DdEnk03NZPqA7Id21yg==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm64]
     os: [linux]
@@ -2680,10 +2783,27 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@img/sharp-linuxmusl-x64@0.34.5':
+    resolution: {integrity: sha512-Jg8wNT1MUzIvhBFxViqrEhWDGzqymo3sV7z7ZsaWbZNDLXRJZoRGrjulp60YYtV4wfY8VIKcWidjojlLcWrd8Q==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [x64]
+    os: [linux]
+
   '@img/sharp-wasm32@0.33.5':
     resolution: {integrity: sha512-ykUW4LVGaMcU9lu9thv85CbRMAwfeadCJHRsg2GmeRa/cJxsVY9Rbd57JcMxBkKHag5U/x7TSBpScF4U8ElVzg==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [wasm32]
+
+  '@img/sharp-wasm32@0.34.5':
+    resolution: {integrity: sha512-OdWTEiVkY2PHwqkbBI8frFxQQFekHaSSkUIJkwzclWZe64O1X4UlUjqqqLaPbUpMOQk6FBu/HtlGXNblIs0huw==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [wasm32]
+
+  '@img/sharp-win32-arm64@0.34.5':
+    resolution: {integrity: sha512-WQ3AgWCWYSb2yt+IG8mnC6Jdk9Whs7O0gxphblsLvdhSpSTtmu69ZG1Gkb6NuvxsNACwiPV6cNSZNzt0KPsw7g==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [arm64]
+    os: [win32]
 
   '@img/sharp-win32-ia32@0.33.5':
     resolution: {integrity: sha512-T36PblLaTwuVJ/zw/LaH0PdZkRz5rd3SmMHX8GSmR7vtNSP5Z6bQkExdSK7xGWyxLw4sUknBuugTelgw2faBbQ==}
@@ -2691,8 +2811,20 @@ packages:
     cpu: [ia32]
     os: [win32]
 
+  '@img/sharp-win32-ia32@0.34.5':
+    resolution: {integrity: sha512-FV9m/7NmeCmSHDD5j4+4pNI8Cp3aW+JvLoXcTUo0IqyjSfAZJ8dIUmijx1qaJsIiU+Hosw6xM5KijAWRJCSgNg==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [ia32]
+    os: [win32]
+
   '@img/sharp-win32-x64@0.33.5':
     resolution: {integrity: sha512-MpY/o8/8kj+EcnxwvrP4aTJSWw/aZ7JIGR4aBeZkZw5B7/Jn+tY9/VNwtcoGmdT7GfggGIU4kygOMSbYnOrAbg==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+    cpu: [x64]
+    os: [win32]
+
+  '@img/sharp-win32-x64@0.34.5':
+    resolution: {integrity: sha512-+29YMsqY2/9eFEiW93eqWnuLcWcufowXewwSNIT6UwZdUUCrM3oFjMWH/Z6/TMmb4hlFenmfAVbpWeup2jryCw==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [win32]
@@ -10362,6 +10494,10 @@ packages:
     resolution: {integrity: sha512-haPVm1EkS9pgvHrQ/F3Xy+hgcuMV0Wm9vfIBSiwZ05k+xgb0PkBQpGsAA/oWdDobNaZTH5ppvHtzCFbnSEwHVw==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
 
+  sharp@0.34.5:
+    resolution: {integrity: sha512-Ou9I5Ft9WNcCbXrU9cMgPBcCK8LiwLqcbywW3t4oDV37n1pzpuNLsYiAV8eODnjbtQlSDwZ2cUEeQz4E54Hltg==}
+    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
     engines: {node: '>=8'}
@@ -11785,13 +11921,6 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@adviser/cement@0.5.5(typescript@5.9.3)':
-    dependencies:
-      ts-essentials: 10.1.1(typescript@5.9.3)
-      yaml: 2.8.2
-    transitivePeerDependencies:
-      - typescript
-
   '@adviser/ts-xxhash@1.0.2': {}
 
   '@ark/schema@0.56.0':
@@ -12905,7 +13034,7 @@ snapshots:
 
   '@fireproof/core-base@0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-blockstore': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -12924,7 +13053,7 @@ snapshots:
 
   '@fireproof/core-base@0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-blockstore': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -12943,7 +13072,7 @@ snapshots:
 
   '@fireproof/core-blockstore@0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-gateways-cloud': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-gateways-file': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -12969,7 +13098,7 @@ snapshots:
 
   '@fireproof/core-blockstore@0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-gateways-cloud': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-gateways-file': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -12995,7 +13124,7 @@ snapshots:
 
   '@fireproof/core-cli@0.24.3-dev-20261224(@pnpm/logger@5.2.0)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-device-id': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-keybag': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13023,7 +13152,7 @@ snapshots:
 
   '@fireproof/core-cli@0.24.3-dev-use-livequery(@pnpm/logger@5.2.0)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-device-id': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13051,7 +13180,7 @@ snapshots:
 
   '@fireproof/core-device-id@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-keybag': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13063,7 +13192,7 @@ snapshots:
 
   '@fireproof/core-device-id@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13075,7 +13204,7 @@ snapshots:
 
   '@fireproof/core-gateways-base@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13087,7 +13216,7 @@ snapshots:
 
   '@fireproof/core-gateways-base@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13099,7 +13228,7 @@ snapshots:
 
   '@fireproof/core-gateways-cloud@0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-protocols-cloud': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13115,7 +13244,7 @@ snapshots:
 
   '@fireproof/core-gateways-cloud@0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-protocols-cloud': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13131,7 +13260,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-deno@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
       '@types/deno': 2.5.0
@@ -13141,7 +13270,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-deno@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@types/deno': 2.5.0
@@ -13151,7 +13280,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-node@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
     transitivePeerDependencies:
@@ -13159,7 +13288,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-node@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
     transitivePeerDependencies:
@@ -13167,7 +13296,7 @@ snapshots:
 
   '@fireproof/core-gateways-file@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-gateways-file-deno': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-gateways-file-node': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13180,7 +13309,7 @@ snapshots:
 
   '@fireproof/core-gateways-file@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-gateways-file-deno': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-gateways-file-node': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13193,7 +13322,7 @@ snapshots:
 
   '@fireproof/core-gateways-indexeddb@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13205,7 +13334,7 @@ snapshots:
 
   '@fireproof/core-gateways-indexeddb@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13217,7 +13346,7 @@ snapshots:
 
   '@fireproof/core-gateways-memory@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13228,7 +13357,7 @@ snapshots:
 
   '@fireproof/core-gateways-memory@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13239,7 +13368,7 @@ snapshots:
 
   '@fireproof/core-keybag@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-file': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-gateways-indexeddb': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13253,7 +13382,7 @@ snapshots:
 
   '@fireproof/core-keybag@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-gateways-file': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-gateways-indexeddb': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13267,7 +13396,7 @@ snapshots:
 
   '@fireproof/core-protocols-cloud@0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13281,7 +13410,7 @@ snapshots:
 
   '@fireproof/core-protocols-cloud@0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13295,7 +13424,7 @@ snapshots:
 
   '@fireproof/core-protocols-dashboard@0.24.3-dev-20261224(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@clerk/shared': 3.41.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@fireproof/core-device-id': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13310,7 +13439,7 @@ snapshots:
 
   '@fireproof/core-protocols-dashboard@0.24.3-dev-use-livequery(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@clerk/shared': 3.39.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@fireproof/core-device-id': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13325,7 +13454,7 @@ snapshots:
 
   '@fireproof/core-protocols-dashboard@0.24.3-dev-use-livequery(react-dom@19.2.1(react@19.2.3))(react@19.2.3)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@clerk/shared': 3.39.0(react-dom@19.2.1(react@19.2.3))(react@19.2.3)
       '@fireproof/core-device-id': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13340,7 +13469,7 @@ snapshots:
 
   '@fireproof/core-protocols-dashboard@0.24.3-dev-use-livequery(react@19.2.0)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@clerk/shared': 3.39.0(react@19.2.0)
       '@fireproof/core-device-id': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13355,7 +13484,7 @@ snapshots:
 
   '@fireproof/core-runtime@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@adviser/ts-xxhash': 1.0.2
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13371,7 +13500,7 @@ snapshots:
 
   '@fireproof/core-runtime@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@adviser/ts-xxhash': 1.0.2
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13387,7 +13516,7 @@ snapshots:
 
   '@fireproof/core-types-base@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
@@ -13400,7 +13529,7 @@ snapshots:
 
   '@fireproof/core-types-base@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
@@ -13413,7 +13542,7 @@ snapshots:
 
   '@fireproof/core-types-blockstore@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-runtime': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13424,7 +13553,7 @@ snapshots:
 
   '@fireproof/core-types-blockstore@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13435,7 +13564,7 @@ snapshots:
 
   '@fireproof/core-types-protocols-cloud@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13447,7 +13576,7 @@ snapshots:
 
   '@fireproof/core-types-protocols-cloud@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13459,7 +13588,7 @@ snapshots:
 
   '@fireproof/core-types-runtime@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
       multiformats: 13.4.2
     transitivePeerDependencies:
@@ -13467,7 +13596,7 @@ snapshots:
 
   '@fireproof/core-types-runtime@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       multiformats: 13.4.2
     transitivePeerDependencies:
@@ -13475,7 +13604,7 @@ snapshots:
 
   '@fireproof/core@0.24.3-dev-20261224(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-base': 0.24.3-dev-20261224(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-types-base': 0.24.3-dev-20261224(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-20261224(typescript@5.9.3)
@@ -13488,7 +13617,7 @@ snapshots:
 
   '@fireproof/core@0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-base': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13501,7 +13630,7 @@ snapshots:
 
   '@fireproof/core@0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.1)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-base': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13514,7 +13643,7 @@ snapshots:
 
   '@fireproof/core@0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       '@fireproof/core-base': 0.24.3-dev-use-livequery(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -13615,14 +13744,14 @@ snapshots:
 
   '@fireproof/vendor@0.24.3-dev-20261224(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
 
   '@fireproof/vendor@0.24.3-dev-use-livequery(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
@@ -13708,9 +13837,16 @@ snapshots:
 
   '@iarna/toml@2.2.5': {}
 
+  '@img/colour@1.0.0': {}
+
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:
       '@img/sharp-libvips-darwin-arm64': 1.0.4
+    optional: true
+
+  '@img/sharp-darwin-arm64@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-darwin-arm64': 1.2.4
     optional: true
 
   '@img/sharp-darwin-x64@0.33.5':
@@ -13718,28 +13854,63 @@ snapshots:
       '@img/sharp-libvips-darwin-x64': 1.0.4
     optional: true
 
+  '@img/sharp-darwin-x64@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-darwin-x64': 1.2.4
+    optional: true
+
   '@img/sharp-libvips-darwin-arm64@1.0.4':
+    optional: true
+
+  '@img/sharp-libvips-darwin-arm64@1.2.4':
     optional: true
 
   '@img/sharp-libvips-darwin-x64@1.0.4':
     optional: true
 
+  '@img/sharp-libvips-darwin-x64@1.2.4':
+    optional: true
+
   '@img/sharp-libvips-linux-arm64@1.0.4':
+    optional: true
+
+  '@img/sharp-libvips-linux-arm64@1.2.4':
     optional: true
 
   '@img/sharp-libvips-linux-arm@1.0.5':
     optional: true
 
+  '@img/sharp-libvips-linux-arm@1.2.4':
+    optional: true
+
+  '@img/sharp-libvips-linux-ppc64@1.2.4':
+    optional: true
+
+  '@img/sharp-libvips-linux-riscv64@1.2.4':
+    optional: true
+
   '@img/sharp-libvips-linux-s390x@1.0.4':
+    optional: true
+
+  '@img/sharp-libvips-linux-s390x@1.2.4':
     optional: true
 
   '@img/sharp-libvips-linux-x64@1.0.4':
     optional: true
 
+  '@img/sharp-libvips-linux-x64@1.2.4':
+    optional: true
+
   '@img/sharp-libvips-linuxmusl-arm64@1.0.4':
     optional: true
 
+  '@img/sharp-libvips-linuxmusl-arm64@1.2.4':
+    optional: true
+
   '@img/sharp-libvips-linuxmusl-x64@1.0.4':
+    optional: true
+
+  '@img/sharp-libvips-linuxmusl-x64@1.2.4':
     optional: true
 
   '@img/sharp-linux-arm64@0.33.5':
@@ -13747,9 +13918,29 @@ snapshots:
       '@img/sharp-libvips-linux-arm64': 1.0.4
     optional: true
 
+  '@img/sharp-linux-arm64@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-linux-arm64': 1.2.4
+    optional: true
+
   '@img/sharp-linux-arm@0.33.5':
     optionalDependencies:
       '@img/sharp-libvips-linux-arm': 1.0.5
+    optional: true
+
+  '@img/sharp-linux-arm@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-linux-arm': 1.2.4
+    optional: true
+
+  '@img/sharp-linux-ppc64@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-linux-ppc64': 1.2.4
+    optional: true
+
+  '@img/sharp-linux-riscv64@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-linux-riscv64': 1.2.4
     optional: true
 
   '@img/sharp-linux-s390x@0.33.5':
@@ -13757,9 +13948,19 @@ snapshots:
       '@img/sharp-libvips-linux-s390x': 1.0.4
     optional: true
 
+  '@img/sharp-linux-s390x@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-linux-s390x': 1.2.4
+    optional: true
+
   '@img/sharp-linux-x64@0.33.5':
     optionalDependencies:
       '@img/sharp-libvips-linux-x64': 1.0.4
+    optional: true
+
+  '@img/sharp-linux-x64@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-linux-x64': 1.2.4
     optional: true
 
   '@img/sharp-linuxmusl-arm64@0.33.5':
@@ -13767,9 +13968,19 @@ snapshots:
       '@img/sharp-libvips-linuxmusl-arm64': 1.0.4
     optional: true
 
+  '@img/sharp-linuxmusl-arm64@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-linuxmusl-arm64': 1.2.4
+    optional: true
+
   '@img/sharp-linuxmusl-x64@0.33.5':
     optionalDependencies:
       '@img/sharp-libvips-linuxmusl-x64': 1.0.4
+    optional: true
+
+  '@img/sharp-linuxmusl-x64@0.34.5':
+    optionalDependencies:
+      '@img/sharp-libvips-linuxmusl-x64': 1.2.4
     optional: true
 
   '@img/sharp-wasm32@0.33.5':
@@ -13777,10 +13988,24 @@ snapshots:
       '@emnapi/runtime': 1.7.1
     optional: true
 
+  '@img/sharp-wasm32@0.34.5':
+    dependencies:
+      '@emnapi/runtime': 1.7.1
+    optional: true
+
+  '@img/sharp-win32-arm64@0.34.5':
+    optional: true
+
   '@img/sharp-win32-ia32@0.33.5':
     optional: true
 
+  '@img/sharp-win32-ia32@0.34.5':
+    optional: true
+
   '@img/sharp-win32-x64@0.33.5':
+    optional: true
+
+  '@img/sharp-win32-x64@0.34.5':
     optional: true
 
   '@import-maps/resolve@2.0.0': {}
@@ -20289,7 +20514,7 @@ snapshots:
       listhen: 1.9.0
       ofetch: 1.5.1
       pathe: 2.0.3
-      sharp: 0.33.5
+      sharp: 0.34.5
       svgo: 4.0.0
       ufo: 1.6.1
       unstorage: 1.17.3(@netlify/blobs@10.1.0)(aws4fetch@1.0.20)(idb-keyval@6.2.1)
@@ -23939,6 +24164,37 @@ snapshots:
       '@img/sharp-wasm32': 0.33.5
       '@img/sharp-win32-ia32': 0.33.5
       '@img/sharp-win32-x64': 0.33.5
+
+  sharp@0.34.5:
+    dependencies:
+      '@img/colour': 1.0.0
+      detect-libc: 2.1.2
+      semver: 7.7.3
+    optionalDependencies:
+      '@img/sharp-darwin-arm64': 0.34.5
+      '@img/sharp-darwin-x64': 0.34.5
+      '@img/sharp-libvips-darwin-arm64': 1.2.4
+      '@img/sharp-libvips-darwin-x64': 1.2.4
+      '@img/sharp-libvips-linux-arm': 1.2.4
+      '@img/sharp-libvips-linux-arm64': 1.2.4
+      '@img/sharp-libvips-linux-ppc64': 1.2.4
+      '@img/sharp-libvips-linux-riscv64': 1.2.4
+      '@img/sharp-libvips-linux-s390x': 1.2.4
+      '@img/sharp-libvips-linux-x64': 1.2.4
+      '@img/sharp-libvips-linuxmusl-arm64': 1.2.4
+      '@img/sharp-libvips-linuxmusl-x64': 1.2.4
+      '@img/sharp-linux-arm': 0.34.5
+      '@img/sharp-linux-arm64': 0.34.5
+      '@img/sharp-linux-ppc64': 0.34.5
+      '@img/sharp-linux-riscv64': 0.34.5
+      '@img/sharp-linux-s390x': 0.34.5
+      '@img/sharp-linux-x64': 0.34.5
+      '@img/sharp-linuxmusl-arm64': 0.34.5
+      '@img/sharp-linuxmusl-x64': 0.34.5
+      '@img/sharp-wasm32': 0.34.5
+      '@img/sharp-win32-arm64': 0.34.5
+      '@img/sharp-win32-ia32': 0.34.5
+      '@img/sharp-win32-x64': 0.34.5
 
   shebang-command@2.0.0:
     dependencies:
