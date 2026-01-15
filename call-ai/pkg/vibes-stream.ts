@@ -3,7 +3,7 @@ import { OnFunc } from "@adviser/cement";
 import { OpenRouterParser } from "./parser/openrouter-parser.js";
 import { createCodeBlockHandler } from "./parser/handlers/code-block-handler.js";
 import { ParserEvent } from "./parser/parser-evento.js";
-import { Segment } from "./parser/segment-accumulator.js";
+import { Segment, SegmentAccumulator } from "./parser/segment-accumulator.js";
 import { VibesEvent } from "./vibes-events.js";
 import { CallAIOptions, Message, CallAIError } from "./types.js";
 import { keyStore, globalDebug } from "./key-management.js";
@@ -49,14 +49,10 @@ export class VibesStream {
   readonly onEvent = OnFunc<(event: VibesEvent) => void>();
 
   private readonly parser: OpenRouterParser;
+  private readonly accumulator: SegmentAccumulator;
   private readonly streamId: string;
   private started = false;
   private model: string | undefined;
-
-  // Segment accumulation (inlined from SegmentAccumulator)
-  private readonly _segments: Segment[] = [];
-  private currentMarkdown: Segment | null = null;
-  private currentCode: Segment | null = null;
 
   // Stats captured from or.usage event
   private stats: {
@@ -76,6 +72,10 @@ export class VibesStream {
     // Create parser and register code block handler
     this.parser = new OpenRouterParser();
     this.parser.register(createCodeBlockHandler());
+
+    // Create accumulator to manage segments
+    // Registered first so it updates before our handler
+    this.accumulator = new SegmentAccumulator(this.parser);
 
     // Wire up event handlers
     this.parser.onEvent((evt: ParserEvent) => {
@@ -122,7 +122,7 @@ export class VibesStream {
       type: "vibes.end",
       streamId: this.streamId,
       text,
-      segments: [...this._segments],
+      segments: [...this.accumulator.segments],
       stats: this.stats,
     });
   }
@@ -131,7 +131,7 @@ export class VibesStream {
    * Get current segments (read-only)
    */
   get segments(): readonly Segment[] {
-    return this._segments;
+    return this.accumulator.segments;
   }
 
   /**
@@ -320,33 +320,12 @@ export class VibesStream {
 
     switch (evt.type) {
       case "text.fragment":
-        if (evt.fragment) {
-          if (!this.currentMarkdown) {
-            this.currentMarkdown = { type: "markdown", content: "" };
-            this._segments.push(this.currentMarkdown);
-          }
-          this.currentMarkdown.content += evt.fragment;
-          segmentsChanged = true;
-        }
-        break;
-
       case "code.start":
-        this.currentMarkdown = null;
-        this.currentCode = { type: "code", content: "" };
-        this._segments.push(this.currentCode);
-        segmentsChanged = true;
-        break;
-
       case "code.fragment":
-        if (evt.fragment && this.currentCode) {
-          this.currentCode.content += evt.fragment;
-          segmentsChanged = true;
-        }
-        break;
-
       case "code.end":
-        this.currentCode = null;
-        this.currentMarkdown = null;
+        // SegmentAccumulator (registered first) has already updated the segments
+        // We just need to trigger an update if the content actually changed.
+        segmentsChanged = true;
         break;
 
       case "or.usage":
@@ -369,12 +348,12 @@ export class VibesStream {
     this.onEvent.invoke({
       type: "vibes.update",
       text,
-      segments: [...this._segments],
+      segments: [...this.accumulator.segments],
     });
   }
 
   private buildText(): string {
-    return this._segments
+    return this.accumulator.segments
       .map((s) => {
         if (s.type === "markdown") {
           return s.content;
