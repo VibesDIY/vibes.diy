@@ -92,3 +92,5 @@ export {
   CodeEnd,
   CodeBlockEvent,
 } from "./parser-evento.js";
+
+export { createCodeBlockHandler } from "./handlers/code-block-handler.js";

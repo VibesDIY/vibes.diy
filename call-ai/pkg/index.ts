@@ -36,8 +36,6 @@ export { callAiEnv } from "./env.js";
 
 // Export parser module
 export {
-  LineStreamParser,
-  LineStreamState,
   // Line parser arktype events
   lineFragment,
   lineBracketOpen,
@@ -97,4 +95,5 @@ export {
   ToolComplete,
   SegmentAccumulator,
   Segment,
+  createCodeBlockHandler,
 } from "./parser/index.js";
