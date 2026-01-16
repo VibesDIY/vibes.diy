@@ -60,7 +60,7 @@
   "dependencies": {
     "@adviser/cement": "^0.5.15",
     "@cloudflare/workers-types": "^4.20260116.0",
-    "@hono/clerk-auth": "^3.0.3",
+    "@hono/clerk-auth": "^3.1.0",
     "@vibes.diy/hosting-base": "workspace:*",
     "call-ai": "workspace:*",
     "chanfana": "^3.0.0",
