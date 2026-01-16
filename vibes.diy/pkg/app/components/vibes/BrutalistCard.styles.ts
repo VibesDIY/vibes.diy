@@ -55,10 +55,7 @@ function getFontSize(size: BrutalistCardSize): string {
 /**
  * Get box shadow based on size and variant
  */
-function getBoxShadow(
-  size: BrutalistCardSize,
-  variant: BrutalistCardVariant,
-): string {
+function getBoxShadow(size: BrutalistCardSize, variant: BrutalistCardVariant): string {
   const color = getShadowColor(variant);
 
   switch (size) {
@@ -93,7 +90,7 @@ function getBorderRadius(messageType?: "user" | "ai"): string {
 export function getBrutalistCardStyle(
   variant: BrutalistCardVariant = "default",
   size: BrutalistCardSize = "md",
-  messageType?: "user" | "ai",
+  messageType?: "user" | "ai"
 ): CSSProperties {
   return {
     // background, color, and border are now controlled by CSS classes for dark mode support

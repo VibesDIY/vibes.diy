@@ -42,14 +42,7 @@ function VibeInstancesListContent() {
     );
   }
 
-  const {
-    instances,
-    isCreating,
-    error,
-    createInstance,
-    updateInstance,
-    deleteInstance,
-  } = useVibeInstances(titleId);
+  const { instances, isCreating, error, createInstance, updateInstance, deleteInstance } = useVibeInstances(titleId);
 
   // Auto-navigate based on instance count
   const hasAutoNavigated = useRef(false);
@@ -79,9 +72,7 @@ function VibeInstancesListContent() {
           // Remove ?new from search params before redirecting
           const newSearchParams = new URLSearchParams(searchParams);
           newSearchParams.delete("new");
-          const cleanSearchSuffix = newSearchParams.toString()
-            ? `?${newSearchParams.toString()}`
-            : "";
+          const cleanSearchSuffix = newSearchParams.toString() ? `?${newSearchParams.toString()}` : "";
           window.location.href = `/vibe/${titleId}/${installId}${cleanSearchSuffix}`;
         });
       } else if (instances.length === 0) {
@@ -140,9 +131,7 @@ function VibeInstancesListContent() {
 
   // Show grid loading screen until redirect decision is made
   if (!showUI) {
-    return (
-      <div className="grid-background flex h-screen w-screen items-center justify-center" />
-    );
+    return <div className="grid-background flex h-screen w-screen items-center justify-center" />;
   }
 
   return (
@@ -186,11 +175,7 @@ function VibeInstancesListContent() {
             autoFocus
           />
           <div className="flex gap-3">
-            <VibesButton
-              variant="blue"
-              onClick={handleCreate}
-              disabled={isCreating || !newDescription.trim()}
-            >
+            <VibesButton variant="blue" onClick={handleCreate} disabled={isCreating || !newDescription.trim()}>
               {isCreating ? "Creating..." : "Create"}
             </VibesButton>
             <VibesButton
@@ -209,9 +194,7 @@ function VibeInstancesListContent() {
       {/* Instances List */}
       {instances.length === 0 ? (
         <BrutalistCard size="md">
-          <p className="text-center text-lg">
-            No instances yet. Create one to get started!
-          </p>
+          <p className="text-center text-lg">No instances yet. Create one to get started!</p>
         </BrutalistCard>
       ) : (
         <div className="space-y-4">
@@ -233,25 +216,16 @@ function VibeInstancesListContent() {
                       onChange={(e) => setEditDescription(e.target.value)}
                       className="w-full px-4 py-3 border-2 border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && instance._id)
-                          handleUpdate(instance._id);
+                        if (e.key === "Enter" && instance._id) handleUpdate(instance._id);
                         if (e.key === "Escape") setEditingId(null);
                       }}
                       autoFocus
                     />
                     <div className="flex gap-3">
-                      <VibesButton
-                        variant="blue"
-                        onClick={() =>
-                          instance._id && handleUpdate(instance._id)
-                        }
-                      >
+                      <VibesButton variant="blue" onClick={() => instance._id && handleUpdate(instance._id)}>
                         Save
                       </VibesButton>
-                      <VibesButton
-                        variant="gray"
-                        onClick={() => setEditingId(null)}
-                      >
+                      <VibesButton variant="gray" onClick={() => setEditingId(null)}>
                         Cancel
                       </VibesButton>
                     </div>
@@ -261,17 +235,12 @@ function VibeInstancesListContent() {
                     <div
                       className="flex-1 cursor-pointer"
                       onClick={() => {
-                        const installId = extractInstallId(
-                          instance._id || "",
-                          titleId,
-                        );
+                        const installId = extractInstallId(instance._id || "", titleId);
                         const search = searchParams.toString();
                         window.location.href = `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`;
                       }}
                     >
-                      <h3 className="text-2xl font-bold mb-2">
-                        {instance.description}
-                      </h3>
+                      <h3 className="text-2xl font-bold mb-2">{instance.description}</h3>
                       <p className="text-sm text-gray-600">
                         Created{" "}
                         {instance.createdAt
@@ -283,8 +252,7 @@ function VibeInstancesListContent() {
                           const shareCount = (instance.sharedWith ?? []).length;
                           return shareCount > 0 ? (
                             <span className="ml-2">
-                              · Shared with {shareCount}{" "}
-                              {shareCount === 1 ? "person" : "people"}
+                              · Shared with {shareCount} {shareCount === 1 ? "person" : "people"}
                             </span>
                           ) : null;
                         })()}
@@ -292,20 +260,14 @@ function VibeInstancesListContent() {
                     </div>
                     <div className="flex gap-2 ml-4">
                       <button
-                        onClick={() =>
-                          instance._id &&
-                          startEditing(instance._id, instance.description)
-                        }
+                        onClick={() => instance._id && startEditing(instance._id, instance.description)}
                         className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => {
-                          const installId = extractInstallId(
-                            instance._id || "",
-                            titleId,
-                          );
+                          const installId = extractInstallId(instance._id || "", titleId);
                           const search = searchParams.toString();
                           window.location.href = `/vibe/${titleId}/${installId}${search ? `?${search}` : ""}`;
                         }}
@@ -314,9 +276,7 @@ function VibeInstancesListContent() {
                         Open
                       </button>
                       <button
-                        onClick={() =>
-                          instance._id && handleDelete(instance._id)
-                        }
+                        onClick={() => instance._id && handleDelete(instance._id)}
                         className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
                       >
                         Delete
@@ -333,7 +293,7 @@ function VibeInstancesListContent() {
 }
 
 // Auth wrapper component - only renders content when authenticated
-export function VibeInstanceList() {
+export default function VibeInstanceList() {
   const { isSignedIn, isLoaded } = useAuth();
 
   if (!isSignedIn) {

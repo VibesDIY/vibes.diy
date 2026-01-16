@@ -13,8 +13,7 @@ export function extractImports(code: string): string[] {
     /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)(?:\s*,\s*(?:\{[^}]*\}|\*\s+as\s+\w+|\w+))*\s+from\s+)?['"]([^'"]+)['"]/g;
 
   // Match export from statements: export ... from 'module'
-  const exportFromRegex =
-    /export\s+(?:\{[^}]*\}|\*(?:\s+as\s+\w+)?)\s+from\s+['"]([^'"]+)['"]/g;
+  const exportFromRegex = /export\s+(?:\{[^}]*\}|\*(?:\s+as\s+\w+)?)\s+from\s+['"]([^'"]+)['"]/g;
 
   let match;
 
@@ -49,9 +48,6 @@ export function transformString(code: string, filename = "input.tsx"): string {
 
     return result.code;
   } catch (err) {
-    throw new Error(
-      "Failed to transform: " +
-        (err instanceof Error ? err.message : String(err)),
-    );
+    throw new Error("Failed to transform: " + (err instanceof Error ? err.message : String(err)));
   }
 }

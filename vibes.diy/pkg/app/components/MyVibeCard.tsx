@@ -27,10 +27,7 @@ export function MyVibeCard({
   const isPublished = !!vibe.publishedUrl;
 
   // Extract slug from publishedUrl if published, otherwise use vibe.id
-  const displaySlug =
-    isPublished && vibe.publishedUrl
-      ? vibe.publishedUrl.split("/").pop()?.split(".")[0] || vibe.id
-      : vibe.id;
+  const displaySlug = isPublished && vibe.publishedUrl ? vibe.publishedUrl.split("/").pop()?.split(".")[0] || vibe.id : vibe.id;
 
   const buttonControls = (
     <div className="flex space-x-2 border-t border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
@@ -40,9 +37,7 @@ export function MyVibeCard({
         data-vibe-id={vibe.id}
         className={`${confirmDelete === vibe.id ? "bg-red-500 text-white" : "text-red-500"} rounded-md px-3 py-1 text-sm hover:bg-red-500 hover:text-white`}
       >
-        {confirmDelete === vibe.id
-          ? "Are you Sure? No undo for this."
-          : "Delete"}
+        {confirmDelete === vibe.id ? "Are you Sure? No undo for this." : "Delete"}
       </button>
       <div className="flex-grow"></div>
       {isPublished && (
@@ -50,9 +45,7 @@ export function MyVibeCard({
           <button
             onClick={(e) => onToggleFavorite(vibe.id, e)}
             className="text-accent-01 hover:text-yellow-500 focus:outline-none"
-            aria-label={
-              vibe.favorite ? "Remove from favorites" : "Add to favorites"
-            }
+            aria-label={vibe.favorite ? "Remove from favorites" : "Add to favorites"}
           >
             <StarIcon filled={vibe.favorite} />
           </button>

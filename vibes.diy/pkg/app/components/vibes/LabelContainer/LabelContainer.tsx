@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  getResponsiveContainerStyle,
-  getResponsiveLabelStyle,
-  getResponsiveButtonWrapperStyle,
-} from "./LabelContainer.styles.js";
+import { getResponsiveContainerStyle, getResponsiveLabelStyle, getResponsiveButtonWrapperStyle } from "./LabelContainer.styles.js";
 import { useMobile } from "@vibes.diy/use-vibes-base";
 
 export interface LabelContainerProps {
@@ -25,26 +21,13 @@ export interface LabelContainerProps {
  * This component wraps content in a brutalist-styled card with an optional
  * vertical label on the side. The label is hidden on mobile devices.
  */
-export function LabelContainer({
-  label,
-  children,
-  style,
-  className,
-  disappear = false,
-}: LabelContainerProps) {
+export function LabelContainer({ label, children, style, className, disappear = false }: LabelContainerProps) {
   const isMobile = useMobile();
 
   return (
-    <div
-      style={{ ...getResponsiveContainerStyle(isMobile), ...style }}
-      className={className}
-    >
-      {label && (
-        <div style={getResponsiveLabelStyle(isMobile, disappear)}>{label}</div>
-      )}
-      <div style={getResponsiveButtonWrapperStyle(isMobile, disappear)}>
-        {children}
-      </div>
+    <div style={{ ...getResponsiveContainerStyle(isMobile), ...style }} className={className}>
+      {label && <div style={getResponsiveLabelStyle(isMobile, disappear)}>{label}</div>}
+      <div style={getResponsiveButtonWrapperStyle(isMobile, disappear)}>{children}</div>
     </div>
   );
 }

@@ -7,9 +7,7 @@ interface GearIconProps {
 /**
  * Gear/settings icon component
  */
-export const GearIcon: React.FC<GearIconProps> = ({
-  className = "h-5 w-5",
-}) => {
+export const GearIcon: React.FC<GearIconProps> = ({ className = "h-5 w-5" }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

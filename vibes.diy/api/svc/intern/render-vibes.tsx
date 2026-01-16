@@ -1,5 +1,5 @@
 import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result } from "@adviser/cement";
-import { FileSystemItem, ResponseType, VibesDiyServCtx, vibesImportMap } from "@vibes.diy/api-types"
+import { FileSystemItem, ResponseType, VibesDiyServCtx, vibesImportMap } from "@vibes.diy/api-types";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { fetchContent } from "../public/serv-entry-point.js";
 import { VibesApiSQLCtx } from "../api.js";
@@ -8,7 +8,7 @@ import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
 import { DefaultHttpHeaders } from "../create-handler.js";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
 import { VibePage } from "./components/vibes-page.js";
-import { renderToString } from 'react-dom/server'
+import { renderToString } from "react-dom/server";
 
 export async function renderVibes(
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>,

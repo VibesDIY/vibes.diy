@@ -1,16 +1,9 @@
-import {
-  loadAndRenderTSX,
-  VibesDiyServCtx,
-  buildMountedApp,
-} from "./render.js";
+import { loadAndRenderTSX, VibesDiyServCtx, buildMountedApp } from "./render.js";
 // import { contentType } from "mime-types";
 import mime from "mime";
 import { LRUMap, uint8array2stream } from "@adviser/cement";
 
-function respInit(
-  status: number,
-  contentType = "application/json",
-): ResponseInit {
+function respInit(status: number, contentType = "application/json"): ResponseInit {
   return {
     status,
     headers: {
@@ -25,7 +18,7 @@ function respInit(
 
 async function fetchVibeCode(
   req: Request,
-  appSlug: string,
+  appSlug: string
 ): Promise<{
   origin: "POST" | "FETCH";
   code: string;
@@ -50,10 +43,7 @@ const sessionVibes = new LRUMap<string, string>({
   maxAge: 1000 * 60 * 10,
 });
 
-async function handleVibeRequest(
-  req: Request,
-  ctx: VibesDiyServCtx,
-): Promise<Response | null> {
+async function handleVibeRequest(req: Request, ctx: VibesDiyServCtx): Promise<Response | null> {
   try {
     const key = `${ctx.vibesCtx.appSlug}-${ctx.vibesCtx.groupId}`;
     if (req.method !== "POST" && sessionVibes.has(key)) {
@@ -76,16 +66,11 @@ async function handleVibeRequest(
     sessionVibes.set(key, html);
     return new Response(html, respInit(200, "text/html"));
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: (error as Error).message }),
-      respInit(500, "application/json"),
-    );
+    return new Response(JSON.stringify({ error: (error as Error).message }), respInit(500, "application/json"));
   }
 }
 
-export function vibesDiyHandler(
-  ctx: () => Promise<VibesDiyServCtx>,
-): (req: Request) => Promise<Response | null> {
+export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Request) => Promise<Response | null> {
   return async (req: Request) => {
     const url = new URL(req.url);
     const requestedPath = url.pathname;
@@ -158,19 +143,9 @@ export function vibesDiyHandler(
         if (content) {
           const ext = requestedPath.substring(requestedPath.lastIndexOf("."));
           const mimeType = mime.getType(ext) || "application/octet-stream";
-          console.log(
-            "Serving static file:",
-            testPath,
-            "with ext:",
-            ext,
-            "mimeType:",
-            mimeType,
-          );
+          console.log("Serving static file:", testPath, "with ext:", ext, "mimeType:", mimeType);
 
-          return new Response(
-            uint8array2stream(content),
-            respInit(200, mimeType),
-          );
+          return new Response(uint8array2stream(content), respInit(200, mimeType));
         }
       }
     } catch (_error) {
@@ -187,7 +162,7 @@ export function vibesDiyHandler(
         () => `
           import { mountVibesDiyApp } from "./dist/vibes.diy/pkg/app/mount-vibes-diy-app.js";
           mountVibesDiyApp(${JSON.stringify(vibeCtx)});
-        `,
+        `
       );
       const html = await loadAndRenderTSX(indexPath, {
         ...(await ctx()),
@@ -197,10 +172,7 @@ export function vibesDiyHandler(
       console.log("render req.url:", req.url);
       return new Response(html, respInit(200, "text/html"));
     } catch (error) {
-      return new Response(
-        JSON.stringify({ error: (error as Error).message }),
-        respInit(500),
-      );
+      return new Response(JSON.stringify({ error: (error as Error).message }), respInit(500));
     }
   };
 }

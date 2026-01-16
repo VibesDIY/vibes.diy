@@ -187,7 +187,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
           headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({
             type: "error",
-            message: `Filesystem not found ${ctx.validated}`,
+            message: `Filesystem not found ${JSON.stringify(ctx.validated)}`,
           }),
         },
       } satisfies ResponseType);

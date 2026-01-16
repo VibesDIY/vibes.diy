@@ -17,11 +17,7 @@ export function getSessionDatabaseName(sessionId?: string) {
  * @param data Additional data to include in the document
  * @returns Promise resolving to the updated document
  */
-export async function updateUserVibespaceDoc(
-  userId: string,
-  slug: string,
-  data: Record<string, unknown>,
-): Promise<DocResponse> {
+export async function updateUserVibespaceDoc(userId: string, slug: string, data: Record<string, unknown>): Promise<DocResponse> {
   if (!userId || !slug) {
     throw new Error("userId and slug are required for updating vibespace");
   }

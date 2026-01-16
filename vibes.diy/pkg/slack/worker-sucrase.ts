@@ -27,16 +27,13 @@ export default {
 
     // Only allow PUT requests
     if (request.method !== "PUT") {
-      return new Response(
-        JSON.stringify({ error: "Method not allowed. Use PUT." }),
-        {
-          status: 405,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-          },
+      return new Response(JSON.stringify({ error: "Method not allowed. Use PUT." }), {
+        status: 405,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
         },
-      );
+      });
     }
 
     try {
@@ -44,16 +41,13 @@ export default {
       const code = await request.text();
 
       if (!code) {
-        return new Response(
-          JSON.stringify({ error: "Request body is empty" }),
-          {
-            status: 400,
-            headers: {
-              "Content-Type": "application/json",
-              ...corsHeaders,
-            },
+        return new Response(JSON.stringify({ error: "Request body is empty" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
           },
-        );
+        });
       }
 
       // Create cache key based on code content
@@ -70,10 +64,7 @@ export default {
         // Add CORS headers to cached response
         const cachedResponse = new Response(response.body, response);
         Object.keys(corsHeaders).forEach((key) => {
-          cachedResponse.headers.set(
-            key,
-            corsHeaders[key as keyof typeof corsHeaders],
-          );
+          cachedResponse.headers.set(key, corsHeaders[key as keyof typeof corsHeaders]);
         });
         cachedResponse.headers.set("X-Cache-Status", "HIT");
         return cachedResponse;
@@ -118,7 +109,7 @@ export default {
             "Content-Type": "application/json",
             ...corsHeaders,
           },
-        },
+        }
       );
     }
   },

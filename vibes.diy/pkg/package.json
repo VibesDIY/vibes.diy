@@ -6,10 +6,13 @@
   "scripts": {
     "tsc": "core-cli tsc",
     "typecheck": "core-cli tsc --noEmit",
-    "build": "core-cli tsc && vite build",
-    "dev": "vite",
+    "build": "core-cli tsc && react-router build",
+    "dev": "react-router dev",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build",
+    "drizzle:libsql": "drizzle-kit push --config ./drizzle.libsql.config.ts",
+    "drizzle:d1-local": "drizzle-kit push --config ./drizzle.d1-local-backend.config.ts",
+    "drizzle:d1-remote": "drizzle-kit push --config ./drizzle.d1-remote.config.ts",
     "format:write": "prettier --write ."
   },
   "dependencies": {
@@ -18,14 +21,19 @@
     "@cloudflare/workers-types": "^4.20260116.0",
     "@fireproof/core": "0.24.8-dev-test-device-id",
     "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
+    "@fireproof/core-protocols-dashboard": "0.24.3-dev-20261224",
+    "@fireproof/core-runtime": "0.24.3-dev-20261224",
+    "@fireproof/use-fireproof": "0.24.3-dev-20261224",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-router/node": "^7.11.0",
     "@shikijs/monaco": "^3.20.0",
     "@tailwindcss/typography": "^0.5.19",
+    "@vibes.diy/api-svc": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
+    "call-ai": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "isbot": "^5.1.25",
@@ -38,7 +46,8 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.11.0",
     "react-router-dom": "^7.11.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "wrangler": "^4.59.2"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.0",
@@ -61,6 +70,6 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vite-tsconfig-paths": "^6.0.4"
+    "zx": "^8.8.5"
   }
 }

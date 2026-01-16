@@ -12,12 +12,7 @@ import { VibesDiyServCtx } from "./serve/render.js";
 // }
 
 function MountVibe(props: VibesDiyServCtx) {
-  return (
-    <script
-      type="module"
-      dangerouslySetInnerHTML={{ __html: props.transformedJS }}
-    />
-  );
+  return <script type="module" dangerouslySetInnerHTML={{ __html: props.transformedJS }} />;
   // return <script type="module" src={`/vibe-mount?appSlug=${props.vibesCtx.appSlug}`} />
 }
 
@@ -27,10 +22,7 @@ export default function VibePage(props: VibesDiyServCtx) {
     <html lang="en">
       <head>
         <ImportMap {...props} />
-        <Meta
-          title={`${appSlug} | Vibes DIY`}
-          description={`Vibe: ${appSlug}`}
-        />
+        <Meta title={`${appSlug} | Vibes DIY`} description={`Vibe: ${appSlug}`} />
         <Links />
         <link rel="stylesheet" href="/app/app.css" />
         <link rel="stylesheet" href="/serve/vibes-controls/styles.css" />

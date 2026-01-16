@@ -1,4 +1,4 @@
-import { VibesDiyServCtx } from "@vibes.diy/api-types"
+import { VibesDiyServCtx } from "@vibes.diy/api-types";
 
 import React from "react";
 

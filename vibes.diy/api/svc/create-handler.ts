@@ -292,7 +292,7 @@ export async function createHandler<T extends VibesSqlite>(params: CreateHandler
     DEVICE_ID_CA_PRIV_KEY: param.REQUIRED,
     DEVICE_ID_CA_CERT: param.REQUIRED,
     WRAPPER_BASE_URL: param.REQUIRED,
-    ENTRY_POINT_TEMPLATE_URL: param.REQUIRED,
+    // ENTRY_POINT_TEMPLATE_URL: param.REQUIRED,
 
     MAX_APP_SLUG_PER_USER_ID: "10",
     MAX_USER_SLUG_PER_USER_ID: "10",

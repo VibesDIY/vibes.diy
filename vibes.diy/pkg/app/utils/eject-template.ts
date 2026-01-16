@@ -16,11 +16,7 @@ import { getImportMapJson } from "../config/import-map.js";
  */
 // this seemes unused. it was made to support the html download link on the vibe settings tab
 // we should use it there or remove it, maybe remove the duplicated functionality elsewhere if there is some
-function generateEjectHtml(
-  appCode: string,
-  apiKey: string,
-  callaiEndpoint: string,
-): string {
+function generateEjectHtml(appCode: string, apiKey: string, callaiEndpoint: string): string {
   return `<!doctype html>
 <html>
   <head>

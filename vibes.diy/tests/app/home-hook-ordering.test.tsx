@@ -91,8 +91,8 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
 // import { SessionWrapper }  from "../../pkg/app/routes/home.js";
 
 function SessionWrapper() {
-  throw new Error("SessionWrapper: SomeThing is missing")
-  return <></>
+  throw new Error("SessionWrapper: SomeThing is missing");
+  return <></>;
 }
 
 describe("SessionWrapper Hook Ordering", () => {
