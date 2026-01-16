@@ -69,8 +69,8 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(@vitest/browser-playwright@4.0.16)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
       wrangler:
-        specifier: ^4.58.0
-        version: 4.58.0(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+        specifier: ^4.59.2
+        version: 4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
 
   call-ai/pkg:
     dependencies:
@@ -263,8 +263,8 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
       wrangler:
-        specifier: ^4.58.0
-        version: 4.58.0(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+        specifier: ^4.59.2
+        version: 4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
 
   hosting/tests/unit:
     dependencies:
@@ -306,8 +306,8 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(@vitest/browser-playwright@4.0.16)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
       wrangler:
-        specifier: ^4.58.0
-        version: 4.58.0(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+        specifier: ^4.59.2
+        version: 4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
 
   prompts/pkg:
     dependencies:
