@@ -20,8 +20,7 @@ function MessageList({
   navigateToView,
 }: MessageListProps) {
   // Create a special message list when there's only one user message
-  const shouldShowWaitingIndicator =
-    messages.length === 1 && messages[0]?.type === "user";
+  const shouldShowWaitingIndicator = messages.length === 1 && messages[0]?.type === "user";
 
   // Handle special case for waiting state
   const messageElements = useMemo(() => {
@@ -39,10 +38,7 @@ function MessageList({
           navigateToView={navigateToView}
         />,
         // Then show the waiting indicator
-        <div
-          key="waiting-indicator"
-          className="mb-4 flex flex-row justify-start px-4"
-        >
+        <div key="waiting-indicator" className="mb-4 flex flex-row justify-start px-4">
           <div className="mr-2 flex-shrink-0">
             <div className="bg-accent-02-light dark:bg-accent-02-dark flex h-8 w-8 items-center justify-center rounded-full shadow-sm">
               <svg
@@ -70,18 +66,9 @@ function MessageList({
           </div>
           <div className="text-light-primary dark:bg-dark-background-01 dark:text-dark-primary max-w-[85%] rounded-xl bg-white px-5 py-3 shadow-md">
             <div className="flex items-center space-x-1">
-              <div
-                className="accent-01 h-2 w-2 animate-pulse rounded-full opacity-75"
-                style={{ animationDelay: "0ms" }}
-              ></div>
-              <div
-                className="accent-01 h-2 w-2 animate-pulse rounded-full opacity-75"
-                style={{ animationDelay: "300ms" }}
-              ></div>
-              <div
-                className="accent-01 h-2 w-2 animate-pulse rounded-full opacity-75"
-                style={{ animationDelay: "600ms" }}
-              ></div>
+              <div className="accent-01 h-2 w-2 animate-pulse rounded-full opacity-75" style={{ animationDelay: "0ms" }}></div>
+              <div className="accent-01 h-2 w-2 animate-pulse rounded-full opacity-75" style={{ animationDelay: "300ms" }}></div>
+              <div className="accent-01 h-2 w-2 animate-pulse rounded-full opacity-75" style={{ animationDelay: "600ms" }}></div>
             </div>
           </div>
         </div>,
@@ -90,14 +77,11 @@ function MessageList({
 
     // Otherwise, just render normal messages
     // Find the index of the latest AI message for streaming indicator
-    const latestAiMessageIndex = messages
-      .map((msg) => msg.type)
-      .lastIndexOf("ai");
+    const latestAiMessageIndex = messages.map((msg) => msg.type).lastIndexOf("ai");
 
     return messages.map((msg, i) => {
       // Only show the streaming indicator on the latest AI message
-      const isLatestAiMessage =
-        isStreaming && i === latestAiMessageIndex && msg.type === "ai";
+      const isLatestAiMessage = isStreaming && i === latestAiMessageIndex && msg.type === "ai";
 
       return (
         <Message
@@ -135,16 +119,13 @@ export default memo(MessageList, (prevProps, nextProps) => {
   const streamingStateEqual = prevProps.isStreaming === nextProps.isStreaming;
 
   // Check if setSelectedResponseId changed
-  const setSelectedResponseIdEqual =
-    prevProps.setSelectedResponseId === nextProps.setSelectedResponseId;
+  const setSelectedResponseIdEqual = prevProps.setSelectedResponseId === nextProps.setSelectedResponseId;
 
   // Check if selectedResponseId changed
-  const selectedResponseIdEqual =
-    prevProps.selectedResponseId === nextProps.selectedResponseId;
+  const selectedResponseIdEqual = prevProps.selectedResponseId === nextProps.selectedResponseId;
 
   // Check if setMobilePreviewShown changed
-  const setMobilePreviewShownEqual =
-    prevProps.setMobilePreviewShown === nextProps.setMobilePreviewShown;
+  const setMobilePreviewShownEqual = prevProps.setMobilePreviewShown === nextProps.setMobilePreviewShown;
 
   // Content equality check for messages - must compare text content
   const messagesEqual =
@@ -156,8 +137,7 @@ export default memo(MessageList, (prevProps, nextProps) => {
     });
 
   // Check if navigateToView changed
-  const navigateToViewEqual =
-    prevProps.navigateToView === nextProps.navigateToView;
+  const navigateToViewEqual = prevProps.navigateToView === nextProps.navigateToView;
 
   return (
     streamingStateEqual &&

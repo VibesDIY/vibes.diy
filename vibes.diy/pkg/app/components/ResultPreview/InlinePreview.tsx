@@ -10,11 +10,7 @@ interface InlinePreviewProps {
 // Uses the code without publishing, but with relaxed iframe sandboxing
 // If data is throw away here, why do we need to publish?? Or vibe controls??
 
-export function InlinePreview({
-  code,
-  sessionId: _sessionId,
-  codeReady,
-}: InlinePreviewProps) {
+export function InlinePreview({ code, sessionId: _sessionId, codeReady }: InlinePreviewProps) {
   const [srcdoc, setSrcdoc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 

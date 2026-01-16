@@ -1,7 +1,7 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { Settings } from "~/vibes.diy/app/routes/settings.js";
+import Settings from "~/vibes.diy/app/routes/settings.js";
 
 // Create mock objects outside the mock function to access them in tests
 const mocks = vi.hoisted(() => {

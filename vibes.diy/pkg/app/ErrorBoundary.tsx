@@ -9,13 +9,9 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    console.log("ttitititii", props);
     this.state = { hasError: false, error: null };
   }
 
@@ -29,7 +25,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   render() {
-    console.log(">>>>>>>", this.state);
+    // console.log(">>>>>>>", this.state);
     if (this.state.hasError && this.state.error) {
       const error = this.state.error;
       const message = "Oops!";

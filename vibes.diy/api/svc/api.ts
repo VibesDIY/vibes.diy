@@ -32,8 +32,9 @@ export interface StorageResult {
 }
 
 export interface CfCacheIf {
-  match(request: Request): Promise<Response | null>;
-  put(request: Request, response: Response): Promise<void>;
+  delete(request: RequestInfo | URL, options?: CacheQueryOptions): Promise<boolean>;
+  match(request: RequestInfo | URL, options?: CacheQueryOptions): Promise<Response | undefined>;
+  put(request: RequestInfo | URL, response: Response): Promise<void>;
 }
 
 export interface VibesApiSQLCtx {

@@ -9,9 +9,7 @@ type DataLayerEvent = Record<string, unknown> & { event?: string };
 function hasConsent(): boolean {
   if (typeof document === "undefined") return false;
   try {
-    const m = document.cookie.match(
-      /(?:^|; )cookieConsent=(true|false)(?:;|$)/,
-    );
+    const m = document.cookie.match(/(?:^|; )cookieConsent=(true|false)(?:;|$)/);
     return m?.[1] === "true";
   } catch {
     return false;
@@ -41,12 +39,7 @@ export function pageview(path: string): void {
  * @param value - Event value (optional)
  */
 // likely remove
-const event = (
-  category: string,
-  action: string,
-  label?: string,
-  value?: number,
-): void => {
+const event = (category: string, action: string, label?: string, value?: number): void => {
   // Backward-compatible wrapper that emits a generic event for GTM
   const payload: DataLayerEvent = {
     event: action || category,
@@ -63,10 +56,7 @@ const event = (
  * @param eventName - Name of the event
  * @param eventParams - Optional parameters for the event
  */
-export const trackEvent = (
-  eventName: string,
-  eventParams?: Record<string, unknown>,
-): void => {
+export const trackEvent = (eventName: string, eventParams?: Record<string, unknown>): void => {
   if (!hasConsent()) return;
   // Emit a first-class GTM event
   gtmPush({ event: eventName, ...(eventParams || {}) });
@@ -76,9 +66,7 @@ export const trackEvent = (
  * Track auth button click
  * @param additionalParams - Optional additional parameters
  */
-export const trackAuthClick = (
-  additionalParams?: Record<string, unknown>,
-): void => {
+export const trackAuthClick = (additionalParams?: Record<string, unknown>): void => {
   trackEvent("auth_click", additionalParams);
 };
 
@@ -86,9 +74,7 @@ export const trackAuthClick = (
  * Track publish button click
  * @param additionalParams - Optional additional parameters
  */
-export const trackPublishClick = (
-  additionalParams?: Record<string, unknown>,
-): void => {
+export const trackPublishClick = (additionalParams?: Record<string, unknown>): void => {
   trackEvent("publish_click", additionalParams);
 };
 
@@ -105,10 +91,7 @@ export const trackPublishShared = (params?: Record<string, unknown>): void => {
  * @param messageLength - Length of the message being sent
  * @param additionalParams - Optional additional parameters
  */
-export const trackChatInputClick = (
-  messageLength: number,
-  additionalParams?: Record<string, unknown>,
-): void => {
+export const trackChatInputClick = (messageLength: number, additionalParams?: Record<string, unknown>): void => {
   trackEvent("chat_input", {
     message_length: messageLength,
     ...additionalParams,
@@ -121,11 +104,7 @@ export const trackChatInputClick = (
  * @param message - Error message
  * @param details - Optional additional details (object)
  */
-export const trackErrorEvent = (
-  errorType: string,
-  message: string,
-  details?: Record<string, unknown>,
-): void => {
+export const trackErrorEvent = (errorType: string, message: string, details?: Record<string, unknown>): void => {
   trackEvent("error", {
     error_type: errorType,
     error_message: message,

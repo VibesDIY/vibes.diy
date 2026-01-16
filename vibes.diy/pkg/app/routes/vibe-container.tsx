@@ -9,11 +9,7 @@ function getHostnameFromUrl(url: string): string {
   }
 }
 
-export function VibeIframeContainerComponent({
-  vibeSlug,
-}: {
-  vibeSlug: string;
-}) {
+export function VibeIframeContainerComponent({ vibeSlug }: { vibeSlug: string }) {
   const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
   const iframeUrl = `https://${vibeSlug}.${hostname}/${location.search}`;
   return (

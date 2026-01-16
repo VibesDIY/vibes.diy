@@ -49,8 +49,11 @@ describe("VibesDiyApi", () => {
         put: async (_req: Request, _res: Response) => {
           /* noop */
         },
-        match: async (_req: Request) => {
-          return null;
+        delete: async (_req: Request) => {
+          return false;
+        },
+        match: async () => {
+          return undefined;
         },
       },
       fetchPkgVersion: async (_pkg: string) => {

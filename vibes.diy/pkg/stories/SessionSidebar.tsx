@@ -50,4 +50,3 @@ export const MockSessionSidebar: React.FC<{
     </BrowserRouter>
   );
 };
-

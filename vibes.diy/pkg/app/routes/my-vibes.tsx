@@ -11,10 +11,7 @@ import BrutalistLayout from "../components/BrutalistLayout.js";
 import LoggedOutView from "../components/LoggedOutView.js";
 
 function meta() {
-  return [
-    { title: "My Vibes - Vibes DIY" },
-    { name: "description", content: "Your created vibes in Vibes DIY" },
-  ];
+  return [{ title: "My Vibes - Vibes DIY" }, { name: "description", content: "Your created vibes in Vibes DIY" }];
 }
 
 function MyVibesContent(): ReactElement {
@@ -54,7 +51,7 @@ function MyVibesContent(): ReactElement {
           loadMoreVibes();
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     );
 
     observer.observe(loadingTriggerRef.current);
@@ -68,10 +65,7 @@ function MyVibesContent(): ReactElement {
         userId ? (
           <>
             Published and favorited vibes on your{" "}
-            <a
-              href={`/~${userId}`}
-              className="text-blue-500 hover:text-blue-600 underline"
-            >
+            <a href={`/~${userId}`} className="text-blue-500 hover:text-blue-600 underline">
               vibespace
             </a>
           </>
@@ -84,17 +78,13 @@ function MyVibesContent(): ReactElement {
           onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
           className="flex items-center gap-2 rounded-md px-3 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
           title={showOnlyFavorites ? "Show all vibes" : "Show favorites only"}
-          aria-label={
-            showOnlyFavorites ? "Show all vibes" : "Show favorites only"
-          }
+          aria-label={showOnlyFavorites ? "Show all vibes" : "Show favorites only"}
         >
           <StarIcon
             filled={showOnlyFavorites}
             className={`h-5 w-5 transition-colors duration-300 ${showOnlyFavorites ? "text-yellow-500" : "text-gray-600"} hover:text-yellow-400`}
           />
-          <span className="text-sm">
-            {showOnlyFavorites ? "Favorites" : "All"}
-          </span>
+          <span className="text-sm">{showOnlyFavorites ? "Favorites" : "All"}</span>
         </button>
       }
     >
@@ -109,9 +99,7 @@ function MyVibesContent(): ReactElement {
         <BrutalistCard size="md">
           <div className="text-center py-8">
             <p className="mb-4 text-lg">
-              {showOnlyFavorites
-                ? "You don't have any favorite vibes yet"
-                : "You don't have any vibes yet"}
+              {showOnlyFavorites ? "You don't have any favorite vibes yet" : "You don't have any vibes yet"}
             </p>
             <VibesButton variant="blue" onClick={() => navigate("/")}>
               Create a Vibe
@@ -128,13 +116,7 @@ function MyVibesContent(): ReactElement {
           ))}
 
           {/* Invisible loading trigger for infinite scroll */}
-          {itemsToShow < filteredVibes.length && (
-            <div
-              ref={loadingTriggerRef}
-              className="col-span-full h-4"
-              aria-hidden="true"
-            />
-          )}
+          {itemsToShow < filteredVibes.length && <div ref={loadingTriggerRef} className="col-span-full h-4" aria-hidden="true" />}
         </div>
       )}
     </BrutalistLayout>

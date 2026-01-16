@@ -8,10 +8,7 @@ export function meta({ location }: { location: { pathname: string } }) {
   const userSpaceMatch = path.match(/^\/([~@])(.+)$/);
 
   if (userSpaceMatch) {
-    return [
-      { title: "Space Vibes - Vibes DIY" },
-      { name: "description", content: "User space in Vibes DIY" },
-    ];
+    return [{ title: "Space Vibes - Vibes DIY" }, { name: "description", content: "User space in Vibes DIY" }];
   }
 
   return [
@@ -23,7 +20,7 @@ export function meta({ location }: { location: { pathname: string } }) {
   ];
 }
 
-export function CatchAll() {
+export default function CatchAll() {
   const location = useLocation();
   const path = location.pathname;
 
@@ -50,18 +47,12 @@ function NotFoundPage() {
       {/* Film strip holes */}
       <div className="absolute top-0 bottom-0 left-4 flex w-6 flex-col justify-center space-y-4">
         {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-4 w-4 rounded-sm border border-gray-600 bg-black"
-          ></div>
+          <div key={i} className="h-4 w-4 rounded-sm border border-gray-600 bg-black"></div>
         ))}
       </div>
       <div className="absolute top-0 right-4 bottom-0 flex w-6 flex-col justify-center space-y-4">
         {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-4 w-4 rounded-sm border border-gray-600 bg-black"
-          ></div>
+          <div key={i} className="h-4 w-4 rounded-sm border border-gray-600 bg-black"></div>
         ))}
       </div>
 

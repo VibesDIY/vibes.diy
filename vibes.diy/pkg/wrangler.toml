@@ -1,0 +1,54 @@
+name = "vibes-diy-v2"
+main = "./worker.ts"
+compatibility_date = "2025-02-24"
+compatibility_flags = ["nodejs_compat"]
+
+vars = { ENVIRONMENT = "test" }
+
+#[observability.logs]
+#enabled = true
+
+[assets]
+directory = "build/client"
+binding = "ASSETS"
+
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dev-vibes-diy-v2"
+database_id = "1ffaf337-c053-48c1-9289-c865e0cb0fe0"
+
+[env.dev]
+vars = { ENVIRONMENT = "dev" }
+routes = [
+  { pattern = "dev.vibesdiy.net", custom_domain = true }
+]
+
+[env.dev.observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "dev-vibes-diy-v2"
+database_id = "1ffaf337-c053-48c1-9289-c865e0cb0fe0"
+
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+routes = [{pattern = "prod.vibesdiy.net", custom_domain = true}]
+
+[env.production.observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "prod-vibes-diy-v2"
+database_id = "0b00c50f-183c-43e6-8db3-b6a282aa0a50"
+
+

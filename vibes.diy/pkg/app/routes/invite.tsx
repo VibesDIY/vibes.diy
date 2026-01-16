@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  useVibeContext,
-  useMobile,
-  constructVibesDatabaseName,
-} from "@vibes.diy/use-vibes-base";
+import { useVibeContext, useMobile, constructVibesDatabaseName } from "@vibes.diy/use-vibes-base";
 import LoggedOutView from "../components/LoggedOutView.js";
 import { LabelContainer } from "../components/vibes/LabelContainer/index.js";
 import {
@@ -28,30 +24,11 @@ function InviteIcon({
   height?: number;
 }) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 44 44"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={width} height={height} viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="22" cy="22" r="22" fill={bgFill} />
       {/* Envelope shape */}
-      <path
-        d="M8 14H36V30H8V14Z"
-        stroke={fill}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-      <path
-        d="M8 14L22 24L36 14"
-        stroke={fill}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M8 14H36V30H8V14Z" stroke={fill} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M8 14L22 24L36 14" stroke={fill} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -59,9 +36,7 @@ function InviteIcon({
 function InviteContent() {
   const [searchParams] = useSearchParams();
   const { dashApi } = useVibeContext();
-  const [status, setStatus] = useState<
-    "idle" | "processing" | "success" | "error"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [displayedText, setDisplayedText] = useState("");
   const [canWrite, setCanWrite] = useState(false);
@@ -73,10 +48,7 @@ function InviteContent() {
   const group = searchParams.get("group"); // Install ID from URL
 
   // Construct return URL from vibe and group
-  const vibeUrl =
-    vibe && group
-      ? `${window.location.origin}/vibe/${vibe}/${group}`
-      : window.location.origin;
+  const vibeUrl = vibe && group ? `${window.location.origin}/vibe/${vibe}/${group}` : window.location.origin;
 
   // Text for typewriter animation based on status
   const fullText =
@@ -118,11 +90,14 @@ function InviteContent() {
     setStatus("processing");
 
     // Construct full database name using shared helper
-    const fullDbName = constructVibesDatabaseName({
-      appSlug: "appSlug-to-changed",
-      userSlug: "userSlug-to-changed",
-      fsId: "we-don't-know-the-fsId"
-    }, db)
+    const fullDbName = constructVibesDatabaseName(
+      {
+        appSlug: "appSlug-to-changed",
+        userSlug: "userSlug-to-changed",
+        fsId: "we-don't-know-the-fsId",
+      },
+      db
+    );
 
     // Get ledger info from database name
     const tokenResult = await dashApi.ensureCloudToken({
@@ -176,14 +151,7 @@ function InviteContent() {
   }
 
   // Determine button variant based on status
-  const buttonVariant =
-    status === "idle"
-      ? "blue"
-      : status === "processing"
-        ? "gray"
-        : status === "success"
-          ? "blue"
-          : "red";
+  const buttonVariant = status === "idle" ? "blue" : status === "processing" ? "gray" : status === "success" ? "blue" : "red";
 
   return (
     <div className="grid-background flex h-screen w-screen items-center justify-center">
@@ -202,17 +170,14 @@ function InviteContent() {
               {/* Non-clickable button with invite icon - using VibesButton styling */}
               <div
                 style={{
-                  ...getMergedButtonStyle(
-                    getButtonStyle(buttonVariant, false, false, isMobile, true),
-                    false,
-                    { cursor: "default", pointerEvents: "none" },
-                  ),
+                  ...getMergedButtonStyle(getButtonStyle(buttonVariant, false, false, isMobile, true), false, {
+                    cursor: "default",
+                    pointerEvents: "none",
+                  }),
                 }}
               >
                 <div style={getContentWrapperStyle(isMobile, true)}>
-                  <div
-                    style={getIconContainerStyle(buttonVariant, isMobile, true)}
-                  >
+                  <div style={getIconContainerStyle(buttonVariant, isMobile, true)}>
                     <div style={getIconStyle(isMobile, false, false)}>
                       <InviteIcon
                         bgFill="var(--vibes-button-icon-bg)"
@@ -226,10 +191,7 @@ function InviteContent() {
                 </div>
               </div>
               <div style={{ width: "300px" }}>
-                <h1
-                  className="mb-4 text-3xl font-bold"
-                  style={{ color: "var(--vibes-text-primary)" }}
-                >
+                <h1 className="mb-4 text-3xl font-bold" style={{ color: "var(--vibes-text-primary)" }}>
                   {displayedText}
                   <span
                     style={{
@@ -311,49 +273,31 @@ function InviteContent() {
                 )}
 
                 {status === "processing" && (
-                  <p
-                    className="mb-6 text-lg"
-                    style={{ color: "var(--vibes-text-primary)" }}
-                  >
+                  <p className="mb-6 text-lg" style={{ color: "var(--vibes-text-primary)" }}>
                     Processing invite...
                   </p>
                 )}
                 {status === "success" && (
                   <div>
-                    <p
-                      className="mb-4 text-lg"
-                      style={{ color: "var(--vibes-text-primary)" }}
-                    >
+                    <p className="mb-4 text-lg" style={{ color: "var(--vibes-text-primary)" }}>
                       {message}
                     </p>
-                    <p
-                      className="mb-2 text-sm"
-                      style={{ color: "var(--vibes-text-secondary)" }}
-                    >
+                    <p className="mb-2 text-sm" style={{ color: "var(--vibes-text-secondary)" }}>
                       Send them this URL:
                     </p>
-                    <a
-                      href={vibeUrl}
-                      className="text-blue-600 underline break-all"
-                    >
+                    <a href={vibeUrl} className="text-blue-600 underline break-all">
                       {vibeUrl}
                     </a>
                   </div>
                 )}
                 {status === "error" && (
-                  <p
-                    className="mb-6 text-lg text-red-600"
-                    style={{ color: "var(--vibes-error-text)" }}
-                  >
+                  <p className="mb-6 text-lg text-red-600" style={{ color: "var(--vibes-error-text)" }}>
                     {message}
                   </p>
                 )}
 
                 {/* Always show invite details at bottom */}
-                <div
-                  className="mt-4 text-xs font-mono"
-                  style={{ color: "var(--vibes-text-secondary)" }}
-                >
+                <div className="mt-4 text-xs font-mono" style={{ color: "var(--vibes-text-secondary)" }}>
                   <div>{email}</div>
                   <div>
                     {vibe} / {db} / {group}

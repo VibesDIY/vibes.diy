@@ -5,12 +5,7 @@ import { Meta } from "./serve/meta.js";
 import { VibesDiyServCtx } from "./serve/render.js";
 
 function MountVibe(props: VibesDiyServCtx) {
-  return (
-    <script
-      type="module"
-      dangerouslySetInnerHTML={{ __html: props.transformedJS }}
-    />
-  );
+  return <script type="module" dangerouslySetInnerHTML={{ __html: props.transformedJS }} />;
   // return <script type="module" src={`/vibe-mount?appSlug=${props.vibesCtx.appSlug}`} />
 }
 
@@ -19,10 +14,7 @@ export default function Index(props: VibesDiyServCtx) {
     <html lang="en">
       <head>
         <ImportMap {...props} />
-        <script
-          type="module"
-          src="https://esm.sh/@tailwindcss/browser@4"
-        ></script>
+        <script type="module" src="https://esm.sh/@tailwindcss/browser@4"></script>
 
         <link rel="stylesheet" href="/app/app.css"></link>
 

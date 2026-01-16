@@ -15,11 +15,7 @@ export interface VibesDiyServCtx {
   // [key: string]: unknown;
 }
 
-export async function buildMountedApp(
-  ctx: MountVibeParams,
-  code: string,
-  wrapperFn?: () => string,
-): Promise<string> {
+export async function buildMountedApp(ctx: MountVibeParams, code: string, wrapperFn?: () => string): Promise<string> {
   let mountVibeImport = "/dist/vibes.diy/pkg/serve/mount-vibe.js";
   if (ctx.env.LOCAL_SERVE) {
     mountVibeImport = pathOps.join(ctx.env.LOCAL_SERVE, mountVibeImport);
@@ -46,13 +42,10 @@ export async function buildMountedApp(
         name: "vibe-code-injector",
         setup(build) {
           // Intercept the special import marker
-          build.onResolve(
-            { filter: /^~transform-with-esbuild-use-code-provided$/ },
-            (args) => ({
-              path: args.path,
-              namespace: "vibe-code",
-            }),
-          );
+          build.onResolve({ filter: /^~transform-with-esbuild-use-code-provided$/ }, (args) => ({
+            path: args.path,
+            namespace: "vibe-code",
+          }));
 
           // Return the provided vibe code for the special import
           build.onLoad({ filter: /.*/, namespace: "vibe-code" }, () => ({
@@ -64,10 +57,7 @@ export async function buildMountedApp(
           build.onResolve({ filter: /.*/ }, (args) => {
             // Skip stdin and the special marker
             if (args.kind === "entry-point") return;
-            if (
-              args.path.startsWith("~transform-with-esbuild-use-code-provided")
-            )
-              return;
+            if (args.path.startsWith("~transform-with-esbuild-use-code-provided")) return;
 
             // External imports
             return {
@@ -83,10 +73,7 @@ export async function buildMountedApp(
   return transformed;
 }
 
-export async function loadAndRenderTSX(
-  filePath: string,
-  ctx: VibesDiyServCtx,
-): Promise<string> {
+export async function loadAndRenderTSX(filePath: string, ctx: VibesDiyServCtx): Promise<string> {
   try {
     // Read the TSX file
     console.log("loadAndRenderTSX filePath:", filePath);
@@ -110,21 +97,14 @@ export async function loadAndRenderTSX(
       platform: "neutral",
     });
 
-    const transformed = new TextDecoder().decode(
-      result.outputFiles[0].contents,
-    );
+    const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
     return await renderScript(transformed, ctx);
   } catch (error) {
-    throw new Error(
-      `Failed to load and render TSX: ${(error as Error).message}`,
-    );
+    throw new Error(`Failed to load and render TSX: ${(error as Error).message}`);
   }
 }
 
-export async function renderScript(
-  script: string,
-  ctx: VibesDiyServCtx,
-): Promise<string> {
+export async function renderScript(script: string, ctx: VibesDiyServCtx): Promise<string> {
   // Create a data URL module
   const dataUrl = `data:text/javascript;base64,${btoa(script)}`;
   const module = await import(dataUrl);
@@ -156,9 +136,7 @@ export async function loadAndRenderJSX(code: string): Promise<string> {
       platform: "browser",
     });
 
-    const transformed = new TextDecoder().decode(
-      result.outputFiles[0].contents,
-    );
+    const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
 
     return transformed; // Return transformed JS, not rendered HTML
   } catch (error) {

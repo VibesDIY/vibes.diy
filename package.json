@@ -73,7 +73,7 @@
     "serve": "^14.2.5",
     "typescript-eslint": "^8.52.0",
     "vitest": "^4.0.16",
-    "wrangler": "^4.58.0"
+    "wrangler": "^4.59.2"
   },
   "pnpm": {
     "patchedDependencies": {

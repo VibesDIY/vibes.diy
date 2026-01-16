@@ -7,9 +7,7 @@ interface DashboardContextType {
   dashApi: DashboardApiImpl<unknown>;
 }
 
-const DashboardContext = createContext<DashboardContextType | undefined>(
-  undefined,
-);
+const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const clerk = useClerk();
@@ -17,11 +15,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     apiUrl: VibesDiyEnv.VibesEnv().DASHBOARD_URL,
   });
 
-  return (
-    <DashboardContext.Provider value={{ dashApi }}>
-      {children}
-    </DashboardContext.Provider>
-  );
+  return <DashboardContext.Provider value={{ dashApi }}>{children}</DashboardContext.Provider>;
 }
 
 export function useDashboard() {

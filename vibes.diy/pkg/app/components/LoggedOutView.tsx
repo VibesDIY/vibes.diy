@@ -13,10 +13,7 @@ interface LoggedOutViewProps {
   trackingEventName?: string;
 }
 
-export default function LoggedOutView({
-  isLoaded = true,
-  trackingEventName,
-}: LoggedOutViewProps) {
+export default function LoggedOutView({ isLoaded = true, trackingEventName }: LoggedOutViewProps) {
   const clerk = useClerk();
   // Typewriter effect state
   const [displayedText, setDisplayedText] = useState("");
@@ -84,10 +81,7 @@ export default function LoggedOutView({
               Login
             </VibesButton>
             <div style={{ width: "300px" }}>
-              <h1
-                className="mb-4 text-3xl font-bold"
-                style={{ color: "var(--vibes-text-primary)" }}
-              >
+              <h1 className="mb-4 text-3xl font-bold" style={{ color: "var(--vibes-text-primary)" }}>
                 {displayedText}
                 <span
                   style={{
@@ -110,10 +104,7 @@ export default function LoggedOutView({
                   `,
                 }}
               />
-              <p
-                className="mb-6 text-lg"
-                style={{ color: "var(--vibes-text-primary)" }}
-              >
+              <p className="mb-6 text-lg" style={{ color: "var(--vibes-text-primary)" }}>
                 You can just code things.
               </p>
             </div>

@@ -1,4 +1,4 @@
-export * from "@vibes.diy/api-types/msg-types.ts";
+export * from "@vibes.diy/api-types";
 export * from "./api.js";
 
 export * from "./react/mount-vibes.js";

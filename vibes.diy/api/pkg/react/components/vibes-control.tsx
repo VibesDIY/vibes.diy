@@ -12,7 +12,7 @@
  */
 
 import React from "react";
-import { VibesDiyServCtx } from "@vibes.diy/api-types"
+import { VibesDiyServCtx } from "@vibes.diy/api-types";
 
 export default function VibeControls(props: VibesDiyServCtx) {
   if (props.wrapper.state === "active") {

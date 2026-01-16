@@ -1,10 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./root.js";
-import {
-  MountVibeParams,
-  VibeContextProvider,
-} from "@vibes.diy/use-vibes-base";
+import { MountVibeParams, VibeContextProvider } from "@vibes.diy/use-vibes-base";
 // import { createBrowserRouter } from 'react-router-dom';
 
 export function mountVibesDiyApp(ctx: MountVibeParams) {
@@ -18,6 +15,6 @@ export function mountVibesDiyApp(ctx: MountVibeParams) {
       <VibeContextProvider mountParams={ctx}>
         <App />
       </VibeContextProvider>
-    </React.StrictMode>,
+    </React.StrictMode>
   );
 }

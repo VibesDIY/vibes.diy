@@ -6,13 +6,10 @@ import ReactMarkdown from "react-markdown";
 import { loadAsset } from "@adviser/cement";
 
 export function meta() {
-  return [
-    { title: "Terms of Service - Vibes DIY" },
-    { name: "description", content: "Terms of Service for Vibes DIY" },
-  ];
+  return [{ title: "Terms of Service - Vibes DIY" }, { name: "description", content: "Terms of Service for Vibes DIY" }];
 }
 
-export function Legal_Tos() {
+export default function Legal_Tos() {
   const [tosContent, setTosContent] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,11 +45,7 @@ export function Legal_Tos() {
         </div>
         <p className="text-light-secondary dark:text-dark-secondary text-center text-xs">
           Copyright © 2025{" "}
-          <a
-            href="https://fireproof.storage"
-            target="_blank"
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
+          <a href="https://fireproof.storage" target="_blank" className="text-blue-600 hover:underline dark:text-blue-400">
             Fireproof
           </a>
         </p>
