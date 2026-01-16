@@ -72,7 +72,7 @@
   "devDependencies": {
     "@types/node": "^25.0.9",
     "@vitest/browser-playwright": "^4.0.17",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.0",
     "typescript": "^5.9.3",
     "wrangler": "^4.59.2"
   },
