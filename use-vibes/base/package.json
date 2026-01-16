@@ -23,7 +23,7 @@
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*",
     "jose": "^6.1.1",
-    "react-dom": "19.2.1",
+    "react-dom": "19.2.3",
     "zod": "^4.1.12"
   },
   "peerDependencies": {
