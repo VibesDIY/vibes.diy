@@ -915,8 +915,8 @@ importers:
         specifier: ^4.1.3
         version: 4.1.3(storybook@10.1.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.7.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(utf-8-validate@5.0.10))
       '@cloudflare/vite-plugin':
-        specifier: ^1.20.1
-        version: 1.20.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260114.0)(wrangler@4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+        specifier: ^1.21.0
+        version: 1.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260114.0)(wrangler@4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@fireproof/core-cli':
         specifier: 0.24.7
         version: 0.24.7(@pnpm/logger@5.2.0)(typescript@5.9.3)
@@ -1129,8 +1129,8 @@ importers:
         specifier: ^4.1.3
         version: 4.1.3(storybook@10.1.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.7.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(utf-8-validate@5.0.10))
       '@cloudflare/vite-plugin':
-        specifier: ^1.20.1
-        version: 1.20.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260114.0)(wrangler@4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+        specifier: ^1.21.0
+        version: 1.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260114.0)(wrangler@4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@fireproof/core-cli':
         specifier: 0.24.7
         version: 0.24.7(@pnpm/logger@5.2.0)(typescript@5.9.3)
@@ -1854,11 +1854,11 @@ packages:
       workerd:
         optional: true
 
-  '@cloudflare/vite-plugin@1.20.1':
-    resolution: {integrity: sha512-hKe2ghXFAWG4s2c08LQZao5Ymt0HBC/XqrUINowHhru2ylnjGp3uuMnI/J1eKpkw1TBdR3weT/EvwT/XtS/b5A==}
+  '@cloudflare/vite-plugin@1.21.0':
+    resolution: {integrity: sha512-3VXtkfjOQL+k3Plj+t0BHRyw8iIIRBQ8RJU6KJHJQKdYHA6rJE/WlSa/lRd0A8MMhvP8e8QiMLuDqveEN8gCZg==}
     peerDependencies:
       vite: ^6.1.0 || ^7.0.0
-      wrangler: ^4.58.0
+      wrangler: ^4.59.2
 
   '@cloudflare/vitest-pool-workers@0.12.1':
     resolution: {integrity: sha512-n3zlxG716/o23a7FWT1FSMXcRcmzw01dqyK24JzrTzJ1NLt5LnkA4LOFnRIznrLESjPxW18wKofMnF/z1iUB2A==}
@@ -2446,10 +2446,6 @@ packages:
   '@fireproof/core-cli@0.24.7':
     resolution: {integrity: sha512-atN4zD8cEKitDNN40WUGb3q7iBrCpiT6IjpOMayqMvYk7MR4ug1n3TP3/l0v4i0l9sucD5KZc61bsH8FdteRPg==}
     hasBin: true
-
-  '@fireproof/core-device-id@0.24.3-dev-use-livequery':
-    resolution: {integrity: sha512-wBXtepkjj+3cRm6aHeRf2p/SDu2VzaqGG7w5PNjhr49lmkF4J2dpvqRup9o7UYb1X+WTSGp2pZFLDP8hCNPyzg==}
-    engines: {node: '>=20'}
 
   '@fireproof/core-device-id@0.24.7':
     resolution: {integrity: sha512-xJQEgk5CyCpdKdOwbwQY0peT304aVjcnQZjfe8tyFnPjH/ON4c7nUkX7DGFXutO17mTr6sRifKcWo/RVpTPkCA==}
@@ -4083,9 +4079,6 @@ packages:
     hasBin: true
     peerDependencies:
       react-router: 7.12.0
-
-  '@remix-run/node-fetch-server@0.8.1':
-    resolution: {integrity: sha512-J1dev372wtJqmqn9U/qbpbZxbJSQrogNN2+Qv1lKlpATpe/WQ9aCZfl/xSb9d2Rgh1IyLSvNxZAXPZxruO6Xig==}
 
   '@remix-run/node-fetch-server@0.9.0':
     resolution: {integrity: sha512-SoLMv7dbH+njWzXnOY6fI08dFMI5+/dQ+vY3n8RnnbdG7MdJEgiP28Xj/xWlnRnED/aB6SFw56Zop+LbmaaKqA==}
@@ -12751,21 +12744,10 @@ snapshots:
     optionalDependencies:
       workerd: 1.20260107.1
 
-  '@cloudflare/unenv-preset@2.8.0(unenv@2.0.0-rc.24)(workerd@1.20260114.0)':
+  '@cloudflare/vite-plugin@1.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260114.0)(wrangler@4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))':
     dependencies:
-      unenv: 2.0.0-rc.24
-    optionalDependencies:
-      workerd: 1.20260114.0
-
-  '@cloudflare/vite-plugin@1.20.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260114.0)(wrangler@4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))':
-    dependencies:
-      '@cloudflare/unenv-preset': 2.8.0(unenv@2.0.0-rc.24)(workerd@1.20260114.0)
-      '@remix-run/node-fetch-server': 0.8.1
-      defu: 6.1.4
-      get-port: 7.1.0
-      miniflare: 4.20260107.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      picocolors: 1.1.1
-      tinyglobby: 0.2.15
+      '@cloudflare/unenv-preset': 2.10.0(unenv@2.0.0-rc.24)(workerd@1.20260114.0)
+      miniflare: 4.20260114.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       unenv: 2.0.0-rc.24
       vite: 7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
       wrangler: 4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
@@ -13366,18 +13348,6 @@ snapshots:
       - '@pnpm/logger'
       - domexception
       - supports-color
-      - typescript
-
-  '@fireproof/core-device-id@0.24.3-dev-use-livequery(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      jose: 6.1.3
-      multiformats: 13.4.2
-      zod: 4.1.13
-    transitivePeerDependencies:
       - typescript
 
   '@fireproof/core-device-id@0.24.7(typescript@5.9.3)':
@@ -15970,8 +15940,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
-
-  '@remix-run/node-fetch-server@0.8.1': {}
 
   '@remix-run/node-fetch-server@0.9.0': {}
 
