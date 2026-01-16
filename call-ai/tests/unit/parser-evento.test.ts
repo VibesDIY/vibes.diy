@@ -40,6 +40,39 @@ describe("ParserEvento", () => {
       );
     });
 
+    it("passes validate result.some to handler ctx.event (not original event)", () => {
+      const evento = new ParserEvento();
+      const handleFn = vi.fn();
+
+      const handler: ParserHandler = {
+        hash: "transforming-handler",
+        validate: (event) => {
+          // Transform the event in validate to prove ctx.event uses result.some
+          if (event.type === "or.json") {
+            return {
+              some: {
+                type: "or.json" as const,
+                json: { ...((event as { json: Record<string, unknown> }).json), transformed: true },
+              },
+            };
+          }
+          return { none: true };
+        },
+        handle: handleFn,
+      };
+
+      evento.push(handler);
+      evento.trigger({ type: "or.json", json: { original: "data" } });
+
+      expect(handleFn).toHaveBeenCalledTimes(1);
+      // Handler should receive the TRANSFORMED event from validate, not the original
+      expect(handleFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: { type: "or.json", json: { original: "data", transformed: true } },
+        }),
+      );
+    });
+
     it("does not trigger handlers when validation returns none", () => {
       const evento = new ParserEvento();
       const handleFn = vi.fn();
