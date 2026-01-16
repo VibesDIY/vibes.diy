@@ -276,8 +276,8 @@ importers:
         version: link:../../base
     devDependencies:
       '@cloudflare/vitest-pool-workers':
-        specifier: ^0.12.1
-        version: 0.12.1(@cloudflare/workers-types@4.20260116.0)(@vitest/runner@4.0.17)(@vitest/snapshot@4.0.17)(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vitest@4.0.16)
+        specifier: ^0.12.4
+        version: 0.12.4(@cloudflare/workers-types@4.20260116.0)(@vitest/runner@4.0.17)(@vitest/snapshot@4.0.17)(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vitest@4.0.16)
       '@cloudflare/workers-types':
         specifier: ^4.20260116.0
         version: 4.20260116.0
@@ -1860,8 +1860,8 @@ packages:
       vite: ^6.1.0 || ^7.0.0
       wrangler: ^4.59.2
 
-  '@cloudflare/vitest-pool-workers@0.12.1':
-    resolution: {integrity: sha512-n3zlxG716/o23a7FWT1FSMXcRcmzw01dqyK24JzrTzJ1NLt5LnkA4LOFnRIznrLESjPxW18wKofMnF/z1iUB2A==}
+  '@cloudflare/vitest-pool-workers@0.12.4':
+    resolution: {integrity: sha512-RfeT9XRK3VfqiD8fzAaBSWmc+G3Z2TH+fewvuF2/uF7hWbhVc/6ETHV1zJsRbF1jRw7ZpD5TEQckwfZZaRVl/Q==}
     peerDependencies:
       '@vitest/runner': 2.0.x - 3.2.x
       '@vitest/snapshot': 2.0.x - 3.2.x
@@ -5893,9 +5893,6 @@ packages:
   bindings@1.5.0:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
 
-  birpc@0.2.14:
-    resolution: {integrity: sha512-37FHE8rqsYM5JEKCnXFyHpBCzvgHEExwVVTq+nUmloInU7l8ezD1TpOhKpS8oe1DTYFqEK27rFZVKG43oTqXRA==}
-
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
 
@@ -6741,9 +6738,6 @@ packages:
 
   dettle@1.0.5:
     resolution: {integrity: sha512-ZVyjhAJ7sCe1PNXEGveObOH9AC8QvMga3HJIghHawtG7mE4K5pW9nz/vDGAr/U7a3LWgdOzEE7ac9MURnyfaTA==}
-
-  devalue@5.6.1:
-    resolution: {integrity: sha512-jDwizj+IlEZBunHcOuuFVBnIMPAEHvTsJj0BcIp94xYguLRVBcXO853px/MyIJvbVzWdsGvrRweIUWJw8hBP7A==}
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
@@ -12761,19 +12755,15 @@ snapshots:
       - utf-8-validate
       - workerd
 
-  '@cloudflare/vitest-pool-workers@0.12.1(@cloudflare/workers-types@4.20260116.0)(@vitest/runner@4.0.17)(@vitest/snapshot@4.0.17)(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vitest@4.0.16)':
+  '@cloudflare/vitest-pool-workers@0.12.4(@cloudflare/workers-types@4.20260116.0)(@vitest/runner@4.0.17)(@vitest/snapshot@4.0.17)(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vitest@4.0.16)':
     dependencies:
       '@vitest/runner': 4.0.17
       '@vitest/snapshot': 4.0.17
-      birpc: 0.2.14
       cjs-module-lexer: 1.4.3
-      devalue: 5.6.1
       esbuild: 0.27.0
-      get-port: 7.1.0
-      miniflare: 4.20260107.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      semver: 7.7.3
+      miniflare: 4.20260114.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       vitest: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(@vitest/browser-playwright@4.0.16)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
-      wrangler: 4.58.0(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      wrangler: 4.59.2(@cloudflare/workers-types@4.20260116.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       zod: 3.25.76
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
@@ -18177,8 +18167,6 @@ snapshots:
     dependencies:
       file-uri-to-path: 1.0.0
 
-  birpc@0.2.14: {}
-
   bl@4.1.0:
     dependencies:
       buffer: 5.7.1
@@ -19027,8 +19015,6 @@ snapshots:
       - supports-color
 
   dettle@1.0.5: {}
-
-  devalue@5.6.1: {}
 
   devlop@1.1.0:
     dependencies:
