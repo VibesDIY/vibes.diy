@@ -903,8 +903,8 @@ importers:
         version: 4.2.1
     devDependencies:
       '@babel/parser':
-        specifier: ^7.28.5
-        version: 7.28.5
+        specifier: ^7.28.6
+        version: 7.28.6
       '@babel/traverse':
         specifier: ^7.28.6
         version: 7.28.6
@@ -12137,7 +12137,7 @@ snapshots:
       '@babel/helper-compilation-targets': 7.27.2
       '@babel/helper-module-transforms': 7.28.3(@babel/core@7.28.5)
       '@babel/helpers': 7.28.4
-      '@babel/parser': 7.28.5
+      '@babel/parser': 7.28.6
       '@babel/template': 7.27.2
       '@babel/traverse': 7.28.6
       '@babel/types': 7.28.6
@@ -12172,7 +12172,7 @@ snapshots:
 
   '@babel/generator@7.28.5':
     dependencies:
-      '@babel/parser': 7.28.5
+      '@babel/parser': 7.28.6
       '@babel/types': 7.28.6
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
@@ -12529,7 +12529,7 @@ snapshots:
       '@babel/code-frame': 7.27.1
       '@babel/generator': 7.28.5
       '@babel/helper-globals': 7.28.0
-      '@babel/parser': 7.28.5
+      '@babel/parser': 7.28.6
       '@babel/template': 7.27.2
       '@babel/types': 7.28.6
       debug: 4.4.3(supports-color@10.2.2)
@@ -16899,7 +16899,7 @@ snapshots:
 
   '@types/babel__core@7.20.5':
     dependencies:
-      '@babel/parser': 7.28.5
+      '@babel/parser': 7.28.6
       '@babel/types': 7.28.6
       '@types/babel__generator': 7.27.0
       '@types/babel__template': 7.4.4
@@ -16920,7 +16920,7 @@ snapshots:
 
   '@types/babel__template@7.4.4':
     dependencies:
-      '@babel/parser': 7.28.5
+      '@babel/parser': 7.28.6
       '@babel/types': 7.28.6
 
   '@types/babel__traverse@7.28.0':
@@ -18193,7 +18193,7 @@ snapshots:
   babel-dead-code-elimination@1.0.11:
     dependencies:
       '@babel/core': 7.28.5
-      '@babel/parser': 7.28.5
+      '@babel/parser': 7.28.6
       '@babel/traverse': 7.28.6
       '@babel/types': 7.28.6
     transitivePeerDependencies:
