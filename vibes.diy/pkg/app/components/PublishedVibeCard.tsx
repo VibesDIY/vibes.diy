@@ -1,9 +1,11 @@
 import React, { ReactElement, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { BrutalistCard } from "./vibes/BrutalistCard.js";
-import { DocFileMeta } from "use-fireproof";
+import { DocFileMeta } from "@fireproof/use-fireproof";
 import { ImgFile } from "./SessionSidebar/ImgFile.js";
-import { constructVibeIconUrl, constructVibeScreenshotUrl } from "../utils/vibeUrls.js";
+import {
+  constructVibeIconUrl,
+  constructVibeScreenshotUrl,
+} from "../utils/vibeUrls.js";
 
 interface PublishedVibeCardProps {
   slug: string;
@@ -38,7 +40,9 @@ export default function PublishedVibeCard({
     }
   }, [iconUrl, localScreenshot]);
 
-  const handleImageError: React.ReactEventHandler<HTMLImageElement> = (event) => {
+  const handleImageError: React.ReactEventHandler<HTMLImageElement> = (
+    event,
+  ) => {
     const failedSrc = event.currentTarget.src;
 
     // If the screenshot also fails, mark as failed and stop
@@ -53,7 +57,9 @@ export default function PublishedVibeCard({
     setImageLoaded(false);
   };
 
-  const handleImageLoad: React.ReactEventHandler<HTMLImageElement> = (event) => {
+  const handleImageLoad: React.ReactEventHandler<HTMLImageElement> = (
+    event,
+  ) => {
     const loadedSrc = event.currentTarget.src;
     setUsingIcon(loadedSrc === iconUrl);
     setImageLoaded(true);
@@ -70,7 +76,10 @@ export default function PublishedVibeCard({
           <h3
             className="text-responsive truncate font-medium"
             style={{
-              fontSize: vibeName.length > 20 ? Math.max(0.8, 1 - (vibeName.length - 20) * 0.02) + "rem" : "1rem",
+              fontSize:
+                vibeName.length > 20
+                  ? Math.max(0.8, 1 - (vibeName.length - 20) * 0.02) + "rem"
+                  : "1rem",
             }}
           >
             {vibeName}
@@ -81,7 +90,12 @@ export default function PublishedVibeCard({
       {localScreenshot ? (
         <div className="relative w-full overflow-hidden bg-white">
           <div className="flex h-48 w-full justify-center">
-            <ImgFile file={localScreenshot} alt={`Screenshot from ${vibeName}`} withBlurredBg={true} maxHeight="12rem" />
+            <ImgFile
+              file={localScreenshot}
+              alt={`Screenshot from ${vibeName}`}
+              withBlurredBg={true}
+              maxHeight="12rem"
+            />
           </div>
         </div>
       ) : (
@@ -120,7 +134,11 @@ export default function PublishedVibeCard({
               <div className="relative z-10 flex h-48 w-full justify-center py-2">
                 <img
                   src={imageSrc}
-                  alt={usingIcon ? `Icon for ${vibeName}` : `Screenshot from ${vibeName}`}
+                  alt={
+                    usingIcon
+                      ? `Icon for ${vibeName}`
+                      : `Screenshot from ${vibeName}`
+                  }
                   className="max-h-full max-w-full object-contain"
                   style={{ opacity: imageLoaded ? 1 : 0 }}
                   loading="lazy"
@@ -136,16 +154,19 @@ export default function PublishedVibeCard({
   );
 
   return (
-    <BrutalistCard size="md" className="overflow-hidden transition-colors hover:border-blue-500">
+    <BrutalistCard
+      size="md"
+      className="overflow-hidden transition-colors hover:border-blue-500"
+    >
       {disableLink ? (
         <div className="block h-full w-full">
           {cardContent}
           {children}
         </div>
       ) : (
-        <Link to={linkUrl} className="block h-full w-full">
+        <a href={linkUrl} className="block h-full w-full">
           {cardContent}
-        </Link>
+        </a>
       )}
       {!disableLink && children}
     </BrutalistCard>

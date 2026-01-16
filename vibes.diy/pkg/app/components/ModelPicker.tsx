@@ -21,7 +21,13 @@ interface ModelPickerProps {
  * Compact, accessible model picker for per‑chat runtime selection.
  * Renders an icon‑only trigger (✨) that opens a dropdown list of models.
  */
-export default function ModelPicker({ currentModel, onModelChange, models, globalModel, compact }: ModelPickerProps) {
+export default function ModelPicker({
+  currentModel,
+  onModelChange,
+  models,
+  globalModel,
+  compact,
+}: ModelPickerProps) {
   const buttonId = useId();
   const menuId = `model-menu-${buttonId}`;
   const [open, setOpen] = useState(false);
@@ -56,14 +62,20 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
   }, [models, globalModel]);
 
   // Find current model for tooltip text from display models (includes synthetic entries)
-  const current = displayModels.find((m) => m.id === currentModel) || models.find((m) => m.id === currentModel);
+  const current =
+    displayModels.find((m) => m.id === currentModel) ||
+    models.find((m) => m.id === currentModel);
 
   // Manage outside clicks
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as Node | null;
-      if (menuRef.current?.contains(target) || buttonRef.current?.contains(target)) return;
+      if (
+        menuRef.current?.contains(target) ||
+        buttonRef.current?.contains(target)
+      )
+        return;
       setOpen(false);
     };
     const onEsc = (e: KeyboardEvent) => {
@@ -80,7 +92,9 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
   // Focus the selected item when the menu opens
   useEffect(() => {
     if (!open) return;
-    const selected = menuRef.current?.querySelector('[aria-checked="true"]') as HTMLButtonElement | null;
+    const selected = menuRef.current?.querySelector(
+      '[aria-checked="true"]',
+    ) as HTMLButtonElement | null;
     selected?.focus();
   }, [open, currentModel]);
 
@@ -94,7 +108,8 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
     if (open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const gap = 8; // space between trigger and menu
-      const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
+      const viewportH =
+        window.innerHeight || document.documentElement.clientHeight || 0;
       // Default to opening upward: anchor the menu's bottom to just above the trigger
       const bottom = Math.max(0, viewportH - rect.top + gap);
       // Available space above the trigger, minus a small padding
@@ -130,7 +145,9 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
         aria-busy={updating || undefined}
         disabled={updating}
         title={current?.description || "Switch AI model"}
-        aria-label={current?.name ? `AI model: ${current.name}` : "Change AI model"}
+        aria-label={
+          current?.name ? `AI model: ${current.name}` : "Change AI model"
+        }
         onClick={() => {
           const willOpen = !open;
           if (willOpen) {
@@ -152,14 +169,20 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
           ✨
         </span>
         {!compact && <span className="truncate">{current?.name}</span>}
-        <span aria-hidden="true" className="text-light-secondary dark:text-dark-secondary">
+        <span
+          aria-hidden="true"
+          className="text-light-secondary dark:text-dark-secondary"
+        >
           {updating ? "⟳" : open ? "▴" : "▾"}
         </span>
       </button>
 
       {open &&
         createPortal(
-          <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)}>
+          <div
+            className="fixed inset-0 z-[9998]"
+            onClick={() => setOpen(false)}
+          >
             <div
               ref={menuRef}
               role="menu"
@@ -175,9 +198,13 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 const items = Array.from(
-                  (menuRef.current?.querySelectorAll('[role="menuitemradio"]') || []) as NodeListOf<HTMLButtonElement>
+                  (menuRef.current?.querySelectorAll(
+                    '[role="menuitemradio"]',
+                  ) || []) as NodeListOf<HTMLButtonElement>,
                 );
-                const idx = items.findIndex((el) => el === document.activeElement);
+                const idx = items.findIndex(
+                  (el) => el === document.activeElement,
+                );
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
                   const next = items[idx + 1] || items[0];
@@ -193,7 +220,10 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
                 }
               }}
             >
-              <div className="max-h-80 overflow-auto py-1" style={{ maxHeight: menuStyle?.maxHeight }}>
+              <div
+                className="max-h-80 overflow-auto py-1"
+                style={{ maxHeight: menuStyle?.maxHeight }}
+              >
                 {displayModels.map((m) => {
                   const selected = m.id === currentModel;
                   return (
@@ -217,7 +247,7 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );

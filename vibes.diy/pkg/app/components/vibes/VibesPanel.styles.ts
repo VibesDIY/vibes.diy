@@ -1,6 +1,8 @@
 import type React from "react";
 
-export function getOuterContainerStyle(customStyle?: React.CSSProperties): React.CSSProperties {
+export function getOuterContainerStyle(
+  customStyle?: React.CSSProperties,
+): React.CSSProperties {
   return {
     padding: "12px",
     display: "flex",
@@ -113,7 +115,9 @@ export function getInviteStatusStyle(): React.CSSProperties {
 }
 
 // Media query helpers (use window.matchMedia in component for responsive behavior)
-export function getResponsiveLabelStyle(isMobile: boolean): React.CSSProperties {
+export function getResponsiveLabelStyle(
+  isMobile: boolean,
+): React.CSSProperties {
   if (isMobile) {
     return {
       display: "none",
@@ -122,7 +126,9 @@ export function getResponsiveLabelStyle(isMobile: boolean): React.CSSProperties 
   return getLabelStyle();
 }
 
-export function getResponsiveButtonWrapperStyle(isMobile: boolean): React.CSSProperties {
+export function getResponsiveButtonWrapperStyle(
+  isMobile: boolean,
+): React.CSSProperties {
   if (isMobile) {
     return {
       background: "transparent",
@@ -139,7 +145,9 @@ export function getResponsiveButtonWrapperStyle(isMobile: boolean): React.CSSPro
   return getButtonWrapperStyle();
 }
 
-export function getResponsiveContainerStyle(isMobile: boolean): React.CSSProperties {
+export function getResponsiveContainerStyle(
+  isMobile: boolean,
+): React.CSSProperties {
   if (isMobile) {
     return {
       ...getContainerStyle(),

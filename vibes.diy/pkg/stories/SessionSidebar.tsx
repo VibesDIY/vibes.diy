@@ -51,4 +51,3 @@ export const MockSessionSidebar: React.FC<{
   );
 };
 
-export default MockSessionSidebar;

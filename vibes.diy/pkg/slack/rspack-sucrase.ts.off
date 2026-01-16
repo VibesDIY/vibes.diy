@@ -1,0 +1,41 @@
+import { readFile } from "node:fs/promises";
+import { command, run, string, option } from "cmd-ts";
+import { extractImports, transformString } from "./transform-sucrase.js";
+
+const cli = command({
+  name: "sucrase-transform",
+  description: "Transform TSX/TS code to JavaScript using Sucrase",
+  args: {
+    file: option({
+      type: string,
+      long: "file",
+      short: "f",
+      description: "Path to the TSX/TS file to read and transform",
+    }),
+  },
+  handler: async ({ file }) => {
+    try {
+      console.log(`Reading ${file}...`);
+      const sourceCode = await readFile(file, "utf-8");
+
+      console.log(`Extracting imports...`);
+      const imports = extractImports(sourceCode);
+
+      console.log(`Transforming with Sucrase...`);
+      const output = transformString(sourceCode, file);
+
+      console.log("\n=== Transformed JavaScript ===\n");
+      console.log(output);
+      console.log("\n=== Dependencies ===\n");
+      imports.forEach((dep) => console.log(dep));
+      console.log("\n=== Transformation complete ===");
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error transforming code:", error.message);
+        process.exit(1);
+      }
+    }
+  },
+});
+
+run(cli, process.argv.slice(2));

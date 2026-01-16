@@ -30,7 +30,7 @@ export function getButtonStyle(
   isHovered: boolean,
   isActive: boolean,
   isMobile = false,
-  hasIcon: boolean
+  hasIcon: boolean,
 ): React.CSSProperties {
   const cssColor = getVariantColor(variant);
   let transform = "translate(0px, 0px)";
@@ -67,18 +67,28 @@ export function getButtonStyle(
 export function getMergedButtonStyle(
   baseStyle: React.CSSProperties,
   ignoreDarkMode: boolean,
-  customStyle?: React.CSSProperties
+  customStyle?: React.CSSProperties,
 ): React.CSSProperties {
   return {
     ...baseStyle,
-    background: ignoreDarkMode ? "var(--vibes-button-bg)" : "var(--vibes-button-bg-dark-aware)",
-    color: ignoreDarkMode ? "var(--vibes-button-text)" : "var(--vibes-button-text-dark-aware)",
-    border: ignoreDarkMode ? "2px solid var(--vibes-button-border)" : "2px solid var(--vibes-button-border-dark-aware)",
+    background: ignoreDarkMode
+      ? "var(--vibes-button-bg)"
+      : "var(--vibes-button-bg-dark-aware)",
+    color: ignoreDarkMode
+      ? "var(--vibes-button-text)"
+      : "var(--vibes-button-text-dark-aware)",
+    border: ignoreDarkMode
+      ? "2px solid var(--vibes-button-border)"
+      : "2px solid var(--vibes-button-border-dark-aware)",
     ...customStyle,
   };
 }
 
-export function getIconContainerStyle(variant: string, isMobile: boolean, hasIcon: boolean): React.CSSProperties {
+export function getIconContainerStyle(
+  variant: string,
+  isMobile: boolean,
+  hasIcon: boolean,
+): React.CSSProperties {
   if (!hasIcon) return {};
 
   const cssColor = getVariantColor(variant);
@@ -96,18 +106,28 @@ export function getIconContainerStyle(variant: string, isMobile: boolean, hasIco
   };
 }
 
-export function getIconStyle(isMobile: boolean, isHovered: boolean, isActive: boolean): React.CSSProperties {
+export function getIconStyle(
+  isMobile: boolean,
+  isHovered: boolean,
+  isActive: boolean,
+): React.CSSProperties {
   return {
     width: isMobile ? "28px" : "50px",
     height: isMobile ? "28px" : "50px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    animation: isHovered && !isActive ? "vibes-button-bounce 0.8s ease-in-out infinite" : "none",
+    animation:
+      isHovered && !isActive
+        ? "vibes-button-bounce 0.8s ease-in-out infinite"
+        : "none",
   };
 }
 
-export function getContentWrapperStyle(isMobile: boolean, hasIcon: boolean): React.CSSProperties {
+export function getContentWrapperStyle(
+  isMobile: boolean,
+  hasIcon: boolean,
+): React.CSSProperties {
   if (!hasIcon) return {};
 
   return {

@@ -63,7 +63,11 @@ if (typeof document !== "undefined") {
 }
 
 // Position type for VibeControl button
-export type VibeControlPosition = "bottom-right" | "bottom-left" | "top-right" | "top-left";
+export type VibeControlPosition =
+  | "bottom-right"
+  | "bottom-left"
+  | "top-right"
+  | "top-left";
 
 // CSS Custom Properties (Variables) as JavaScript constants with fallbacks
 export const vibeControlTheme = {
@@ -80,7 +84,8 @@ export const vibeControlTheme = {
     overlayBorder: "var(--vc-overlay-border, var(--vibes-gray-ultralight))",
 
     closeButtonBg: "var(--vc-close-bg, var(--vibes-gray-whisper))",
-    closeButtonBgHover: "var(--vc-close-bg-hover, var(--vibes-gray-ultralight))",
+    closeButtonBgHover:
+      "var(--vc-close-bg-hover, var(--vibes-gray-ultralight))",
     closeButtonText: "var(--vc-close-text, var(--vibes-gray-medium))",
 
     accent: "var(--vc-accent, var(--vibes-blue-accent))",
@@ -136,7 +141,9 @@ export const vibeControlTheme = {
 };
 
 // Utility function to create inline styles
-export const createVibeControlStyles = (position: VibeControlPosition = "bottom-right") => {
+export const createVibeControlStyles = (
+  position: VibeControlPosition = "bottom-right",
+) => {
   const pos = vibeControlTheme.dimensions.buttonPosition;
   const anchor: Record<string, string> = {};
 

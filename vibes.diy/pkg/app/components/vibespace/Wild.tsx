@@ -40,7 +40,11 @@ interface BasicVibespaceProps {
   isLoading: boolean;
 }
 
-export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps): ReactElement {
+export default function Wild({
+  userId,
+  vibes,
+  isLoading,
+}: BasicVibespaceProps): ReactElement {
   // Create a style element for our keyframe animations
   useEffect(() => {
     // Add keyframe animations to the document
@@ -91,7 +95,22 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Random jungle emojis
-  const jungleEmojis = ["🐯", "🦁", "🐘", "🦓", "🦒", "🦍", "🐆", "🐊", "🦜", "🐒", "🌴", "🌺", "🍌", "🥥"];
+  const jungleEmojis = [
+    "🐯",
+    "🦁",
+    "🐘",
+    "🦓",
+    "🦒",
+    "🦍",
+    "🐆",
+    "🐊",
+    "🦜",
+    "🐒",
+    "🌴",
+    "🌺",
+    "🍌",
+    "🥥",
+  ];
 
   // Create floating emojis periodically
   useEffect(() => {
@@ -100,14 +119,16 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
         const containerWidth = containerRef.current.offsetWidth;
         setFloatingEmojis((prev) => {
           // Keep only the last 15 emojis to prevent too many elements
-          const limited = prev.length > 15 ? prev.slice(prev.length - 15) : prev;
+          const limited =
+            prev.length > 15 ? prev.slice(prev.length - 15) : prev;
           return [
             ...limited,
             {
               id: Date.now(),
               x: Math.random() * containerWidth,
               y: -50,
-              emoji: jungleEmojis[Math.floor(Math.random() * jungleEmojis.length)],
+              emoji:
+                jungleEmojis[Math.floor(Math.random() * jungleEmojis.length)],
               size: 20 + Math.random() * 30,
               speed: 1 + Math.random() * 3,
             },
@@ -134,7 +155,7 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
               if (newY > window.innerHeight) return null;
               return { ...emoji, y: newY };
             })
-            .filter(Boolean) as typeof floatingEmojis
+            .filter(Boolean) as typeof floatingEmojis,
       );
     };
 
@@ -162,7 +183,8 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
 
-    const { left, top, width, height } = containerRef.current.getBoundingClientRect();
+    const { left, top, width, height } =
+      containerRef.current.getBoundingClientRect();
     const x = (e.clientX - left) / width;
     const y = (e.clientY - top) / height;
 
@@ -235,7 +257,9 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
           <div
             className={`transform transition-all duration-700 ${pulse ? "scale-110 rotate-1" : "scale-100 -rotate-1"}`}
             style={{
-              filter: pulse ? "drop-shadow(0 0 15px rgba(255,165,0,0.8))" : "drop-shadow(0 0 5px rgba(255,165,0,0.3))",
+              filter: pulse
+                ? "drop-shadow(0 0 15px rgba(255,165,0,0.8))"
+                : "drop-shadow(0 0 5px rgba(255,165,0,0.3))",
             }}
           >
             <h2
@@ -250,7 +274,8 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
                 transition: "background-position 1.5s ease",
               }}
             >
-              <span className="inline-block animate-bounce">🐯</span> Wild Space: {userId}{" "}
+              <span className="inline-block animate-bounce">🐯</span> Wild
+              Space: {userId}{" "}
               <span className="inline-block animate-bounce delay-150">🐯</span>
             </h2>
             <p
@@ -260,8 +285,8 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
                 letterSpacing: "0.1em",
               }}
             >
-              <span className="animate-pulse">✨</span> Unleash the wild vibes in this jungle space{" "}
-              <span className="animate-pulse">✨</span>
+              <span className="animate-pulse">✨</span> Unleash the wild vibes
+              in this jungle space <span className="animate-pulse">✨</span>
             </p>
           </div>
         </div>
@@ -282,8 +307,12 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
           </div>
         ) : vibes.length === 0 ? (
           <div className="transform rounded-md border-2 border-yellow-500/50 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 py-8 text-center shadow-lg shadow-orange-500/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-            <p className="mb-4 text-2xl font-bold text-amber-500">🏝️ No wild vibes found in this jungle space 🏝️</p>
-            <p className="animate-pulse text-lg text-amber-400">Time to go on a safari and catch some!</p>
+            <p className="mb-4 text-2xl font-bold text-amber-500">
+              🏝️ No wild vibes found in this jungle space 🏝️
+            </p>
+            <p className="animate-pulse text-lg text-amber-400">
+              Time to go on a safari and catch some!
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -294,8 +323,12 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
                 onMouseLeave={() => setHoverIndex(null)}
                 className="group relative overflow-hidden rounded-xl p-5 transition-all hover:shadow-xl"
                 style={{
-                  transform: hoverIndex === index ? "scale(1.05) rotate(1deg)" : "scale(1) rotate(0deg)",
-                  transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                  transform:
+                    hoverIndex === index
+                      ? "scale(1.05) rotate(1deg)"
+                      : "scale(1) rotate(0deg)",
+                  transition:
+                    "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                   background: `linear-gradient(135deg, 
                               ${doc.favorite ? "rgba(255,215,0,0.25)" : "rgba(255,140,0,0.15)"}, 
                               ${doc.favorite ? "rgba(255,165,0,0.35)" : "rgba(139,69,19,0.25)"})`,
@@ -329,7 +362,10 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
                       <span
                         className="relative inline-block bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent"
                         style={{
-                          textShadow: hoverIndex === index ? "0 0 8px rgba(255,165,0,0.4)" : "none",
+                          textShadow:
+                            hoverIndex === index
+                              ? "0 0 8px rgba(255,165,0,0.4)"
+                              : "none",
                         }}
                       >
                         {doc.title || doc._id}
@@ -388,7 +424,9 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
                       </span>
                       <span
                         className="absolute inset-0 -translate-x-full bg-gradient-to-r from-amber-300/0 via-amber-300/30 to-amber-300/0"
-                        style={hoverIndex === index ? wildStyles.shineEffect : {}}
+                        style={
+                          hoverIndex === index ? wildStyles.shineEffect : {}
+                        }
                       ></span>
                     </a>
                   )}
@@ -405,7 +443,9 @@ export default function Wild({ userId, vibes, isLoading }: BasicVibespaceProps):
                       </span>
                       <span
                         className="absolute inset-0 -translate-x-full bg-gradient-to-r from-yellow-300/0 via-yellow-300/20 to-yellow-300/0"
-                        style={hoverIndex === index ? wildStyles.shineEffect : {}}
+                        style={
+                          hoverIndex === index ? wildStyles.shineEffect : {}
+                        }
                       ></span>
                     </a>
                   )}

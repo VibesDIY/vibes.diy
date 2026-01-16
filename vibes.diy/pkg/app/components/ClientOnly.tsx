@@ -8,7 +8,10 @@ interface ClientOnlyProps {
 /**
  * ClientOnly component to ensure client-side only code doesn't run during SSR
  */
-export default function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
+export default function ClientOnly({
+  children,
+  fallback = null,
+}: ClientOnlyProps) {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {

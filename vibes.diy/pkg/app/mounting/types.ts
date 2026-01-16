@@ -11,10 +11,14 @@ export interface VibesMountErrorDetail {
 }
 
 // Type guards for mount events
-export function isVibesMountReadyEvent(event: Event): event is CustomEvent<VibesMountReadyDetail> {
+export function isVibesMountReadyEvent(
+  event: Event,
+): event is CustomEvent<VibesMountReadyDetail> {
   return event.type === "vibes-mount-ready";
 }
 
-export function isVibesMountErrorEvent(event: Event): event is CustomEvent<VibesMountErrorDetail> {
+export function isVibesMountErrorEvent(
+  event: Event,
+): event is CustomEvent<VibesMountErrorDetail> {
   return event.type === "vibes-mount-error";
 }

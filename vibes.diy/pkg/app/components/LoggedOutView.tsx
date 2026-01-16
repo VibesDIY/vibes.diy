@@ -6,14 +6,17 @@ import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
 import { LabelContainer } from "./vibes/LabelContainer/index.js";
 import { VibesButton } from "./vibes/VibesButton/index.js";
 
-export interface LoggedOutViewProps {
+interface LoggedOutViewProps {
   /** Whether Clerk has finished loading */
   isLoaded?: boolean;
   /** Optional event name for analytics tracking */
   trackingEventName?: string;
 }
 
-export default function LoggedOutView({ isLoaded = true, trackingEventName }: LoggedOutViewProps) {
+export default function LoggedOutView({
+  isLoaded = true,
+  trackingEventName,
+}: LoggedOutViewProps) {
   const clerk = useClerk();
   // Typewriter effect state
   const [displayedText, setDisplayedText] = useState("");
@@ -81,7 +84,10 @@ export default function LoggedOutView({ isLoaded = true, trackingEventName }: Lo
               Login
             </VibesButton>
             <div style={{ width: "300px" }}>
-              <h1 className="mb-4 text-3xl font-bold" style={{ color: "var(--vibes-text-primary)" }}>
+              <h1
+                className="mb-4 text-3xl font-bold"
+                style={{ color: "var(--vibes-text-primary)" }}
+              >
                 {displayedText}
                 <span
                   style={{
@@ -104,7 +110,10 @@ export default function LoggedOutView({ isLoaded = true, trackingEventName }: Lo
                   `,
                 }}
               />
-              <p className="mb-6 text-lg" style={{ color: "var(--vibes-text-primary)" }}>
+              <p
+                className="mb-6 text-lg"
+                style={{ color: "var(--vibes-text-primary)" }}
+              >
                 You can just code things.
               </p>
             </div>

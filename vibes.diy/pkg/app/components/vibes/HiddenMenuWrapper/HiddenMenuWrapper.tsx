@@ -16,7 +16,12 @@ export interface HiddenMenuWrapperProps {
   showVibesSwitch?: boolean;
 }
 
-export function HiddenMenuWrapper({ children, menuContent, triggerBounce, showVibesSwitch = true }: HiddenMenuWrapperProps) {
+export function HiddenMenuWrapper({
+  children,
+  menuContent,
+  triggerBounce,
+  showVibesSwitch = true,
+}: HiddenMenuWrapperProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuHeight, setMenuHeight] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -33,7 +38,9 @@ export function HiddenMenuWrapper({ children, menuContent, triggerBounce, showVi
   useEffect(() => {
     if (!hasBouncedOnMount && !menuOpen) {
       // Check for reduced motion preference (with fallback for test environments)
-      const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || false;
+      const prefersReducedMotion =
+        window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
+        false;
       if (!prefersReducedMotion) {
         setIsBouncing(true);
         setTimeout(() => setIsBouncing(false), 800);
@@ -97,9 +104,10 @@ export function HiddenMenuWrapper({ children, menuContent, triggerBounce, showVi
       }
 
       if (menuOpen && e.key === "Tab" && menuContainerRef.current) {
-        const focusableElements = menuContainerRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
+        const focusableElements =
+          menuContainerRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          );
 
         const first = focusableElements[0];
         const last = focusableElements[focusableElements.length - 1];
@@ -128,14 +136,15 @@ export function HiddenMenuWrapper({ children, menuContent, triggerBounce, showVi
   useEffect(() => {
     if (menuOpen) {
       const firstFocusable = menuRef.current?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       firstFocusable?.focus();
     }
   }, [menuOpen]);
 
   // Recalculate when children change size, with feature detection and rAF scheduling
-  const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+  const useIsomorphicLayoutEffect =
+    typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
   useIsomorphicLayoutEffect(() => {
     const menuEl = menuRef.current;
@@ -153,11 +162,13 @@ export function HiddenMenuWrapper({ children, menuContent, triggerBounce, showVi
       if (typeof requestAnimationFrame !== "undefined") {
         const id = requestAnimationFrame(() => run());
         rafIdRef.current = id;
-        cancelRef.current = (cancelId: TimerId) => cancelAnimationFrame(cancelId as number);
+        cancelRef.current = (cancelId: TimerId) =>
+          cancelAnimationFrame(cancelId as number);
       } else {
         const id = setTimeout(run, 0);
         rafIdRef.current = id;
-        cancelRef.current = (cancelId: TimerId) => clearTimeout(cancelId as ReturnType<typeof setTimeout>);
+        cancelRef.current = (cancelId: TimerId) =>
+          clearTimeout(cancelId as ReturnType<typeof setTimeout>);
       }
     };
 
@@ -165,8 +176,13 @@ export function HiddenMenuWrapper({ children, menuContent, triggerBounce, showVi
     scheduleSetHeight(menuEl.offsetHeight);
 
     // Prefer ResizeObserver when available
-    if (typeof (window as unknown as { ResizeObserver?: typeof ResizeObserver }).ResizeObserver !== "undefined") {
-      const RO = (window as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver;
+    if (
+      typeof (window as unknown as { ResizeObserver?: typeof ResizeObserver })
+        .ResizeObserver !== "undefined"
+    ) {
+      const RO = (
+        window as unknown as { ResizeObserver: typeof ResizeObserver }
+      ).ResizeObserver;
       const resizeObserver = new RO(() => {
         scheduleSetHeight(menuEl.offsetHeight);
       });
@@ -240,7 +256,10 @@ export function HiddenMenuWrapper({ children, menuContent, triggerBounce, showVi
       </div>
 
       {/* Content */}
-      <div style={getContentWrapperStyle(menuHeight, menuOpen, isBouncing)} ref={menuContainerRef}>
+      <div
+        style={getContentWrapperStyle(menuHeight, menuOpen, isBouncing)}
+        ref={menuContainerRef}
+      >
         <div style={getInnerContentWrapperStyle(menuOpen)}>
           <div style={getContentStyle()}>{children}</div>
         </div>

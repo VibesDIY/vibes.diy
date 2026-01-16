@@ -7,6 +7,11 @@ settings:
 overrides:
   sharp: 0.33.5
 
+patchedDependencies:
+  drizzle-kit@0.31.8:
+    hash: 8cc0d1f3504e73ec214d631a4a23b583be6c22b9361608b79684e930a682cbdb
+    path: patches/drizzle-kit@0.31.8.patch
+
 importers:
 
   .:
@@ -818,9 +823,9 @@ importers:
       '@libsql/client':
         specifier: ^0.17.0
         version: 0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@5.0.10)
-      '@vibes.diy/api-pkg':
+      '@vibes.diy/api-types':
         specifier: workspace:*
-        version: 'link:'
+        version: link:../types
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../../../use-vibes/base
@@ -842,21 +847,12 @@ importers:
       multiformats:
         specifier: ^13.4.2
         version: 13.4.2
-      preact:
-        specifier: ^10.28.2
-        version: 10.28.2
-      preact-render-to-string:
-        specifier: ^6.6.5
-        version: 6.6.5(preact@10.28.2)
       random-words:
         specifier: ^2.0.1
         version: 2.0.1
       react:
         specifier: ^19.2.3
         version: 19.2.3
-      sucrase:
-        specifier: ^3.35.1
-        version: 3.35.1
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.8-dev-test-device-id
@@ -900,6 +896,9 @@ importers:
       '@vibes.diy/api-pkg':
         specifier: workspace:*
         version: link:../pkg
+      '@vibes.diy/api-types':
+        specifier: workspace:*
+        version: link:../types
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../../../use-vibes/base
@@ -921,18 +920,15 @@ importers:
       multiformats:
         specifier: ^13.4.2
         version: 13.4.2
-      preact:
-        specifier: ^10.28.2
-        version: 10.28.2
-      preact-render-to-string:
-        specifier: ^6.6.5
-        version: 6.6.5(preact@10.28.2)
       random-words:
         specifier: ^2.0.1
         version: 2.0.1
       react:
         specifier: ^19.2.3
         version: 19.2.3
+      react-dom:
+        specifier: ^19.2.3
+        version: 19.2.3(react@19.2.3)
       sucrase:
         specifier: ^3.35.1
         version: 3.35.1
@@ -943,6 +939,9 @@ importers:
       '@types/react':
         specifier: ^19.2.8
         version: 19.2.8
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.8)
 
   vibes.diy/api/tests:
     dependencies:
@@ -972,7 +971,7 @@ importers:
         version: link:../svc
       drizzle-kit:
         specifier: ^0.31.8
-        version: 0.31.8
+        version: 0.31.8(patch_hash=8cc0d1f3504e73ec214d631a4a23b583be6c22b9361608b79684e930a682cbdb)
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@5.0.10))(@opentelemetry/api@1.9.0)(gel@2.2.0)
@@ -989,6 +988,28 @@ importers:
       zx:
         specifier: ^8.8.5
         version: 8.8.5
+
+  vibes.diy/api/types:
+    dependencies:
+      '@adviser/cement':
+        specifier: ^0.5.15
+        version: 0.5.15(typescript@5.9.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@fireproof/core-types-base':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(typescript@5.9.3)
+      '@vibes.diy/use-vibes-base':
+        specifier: workspace:*
+        version: link:../../../use-vibes/base
+      arktype:
+        specifier: ^2.1.29
+        version: 2.1.29
+    devDependencies:
+      '@fireproof/core-cli':
+        specifier: 0.24.8-dev-test-device-id
+        version: 0.24.8-dev-test-device-id(@pnpm/logger@5.2.0)(typescript@5.9.3)
 
   vibes.diy/failback-homepage:
     dependencies:
@@ -1263,27 +1284,18 @@ importers:
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@pnpm/lockfile-file':
-        specifier: ^9.1.3
-        version: 9.1.3(@pnpm/logger@5.2.0)
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.8)(react@19.2.3)
       '@react-router/node':
-        specifier: ^7.12.0
-        version: 7.12.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
-      '@react-router/serve':
-        specifier: ^7.12.0
+        specifier: ^7.11.0
         version: 7.12.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
       '@shikijs/monaco':
-        specifier: ^3.21.0
+        specifier: ^3.20.0
         version: 3.21.0
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.1.18)
-      '@vibes.diy/hosting-base':
-        specifier: workspace:*
-        version: link:../../hosting/base
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -1293,33 +1305,18 @@ importers:
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
-      call-ai:
-        specifier: workspace:*
-        version: link:../../call-ai/pkg
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      cmd-ts:
-        specifier: ^0.14.3
-        version: 0.14.3
-      find-up:
-        specifier: ^8.0.0
-        version: 8.0.0
       isbot:
         specifier: ^5.1.25
         version: 5.1.32
-      jose:
-        specifier: ^6.1.3
-        version: 6.1.3
       monaco-editor:
         specifier: ^0.55.1
         version: 0.55.1
-      multiformats:
-        specifier: ^13.4.2
-        version: 13.4.2
       posthog-js:
         specifier: ^1.325.0
         version: 1.328.0
@@ -1339,20 +1336,14 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.8)(react@19.2.3)
       react-router:
-        specifier: ^7.12.0
+        specifier: ^7.11.0
         version: 7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-router-dom:
-        specifier: ^7.12.0
+        specifier: ^7.11.0
         version: 7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
-      use-fireproof:
-        specifier: 0.24.8-dev-test-device-id
-        version: 0.24.8-dev-test-device-id(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      use-vibes:
-        specifier: workspace:*
-        version: link:../../use-vibes/pkg
     devDependencies:
       '@chromatic-com/storybook':
         specifier: ^5.0.0
@@ -1390,24 +1381,12 @@ importers:
       '@types/react':
         specifier: ~19.2.8
         version: 19.2.8
-      '@types/react-dom':
-        specifier: ~19.2.2
-        version: 19.2.3(@types/react@19.2.8)
       '@vitest/browser-playwright':
         specifier: ^4.0.17
         version: 4.0.17(bufferutil@4.1.0)(playwright@1.57.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.0.9)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.17)
       concurrently:
         specifier: ^9.1.2
         version: 9.2.1
-      cross-env:
-        specifier: ^10.0.0
-        version: 10.1.0
-      netlify:
-        specifier: ^23.13.3
-        version: 23.13.4(@types/node@25.0.9)(aws4fetch@1.0.20)(bufferutil@4.1.0)(encoding@0.1.13)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.55.1)(utf-8-validate@5.0.10)
-      netlify-cli:
-        specifier: ^23.13.3
-        version: 23.13.4(@types/node@25.0.9)(aws4fetch@1.0.20)(bufferutil@4.1.0)(encoding@0.1.13)(idb-keyval@6.2.1)(picomatch@4.0.3)(rollup@4.55.1)(utf-8-validate@5.0.10)
       prettier:
         specifier: ^3.8.0
         version: 3.8.0
@@ -1420,9 +1399,6 @@ importers:
       tailwindcss:
         specifier: ^4.1.18
         version: 4.1.18
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -10341,11 +10317,6 @@ packages:
   posthog-js@1.328.0:
     resolution: {integrity: sha512-1TzO1WOq53vnn+4W7Evda4QyBOcLI1svoMJy1x4CyiR1RgCHh2hhcmCcKeRJh8CAUV8H69qLo6dGvjMY8ENkrg==}
 
-  preact-render-to-string@6.6.5:
-    resolution: {integrity: sha512-O6MHzYNIKYaiSX3bOw0gGZfEbOmlIDtDfWwN1JJdc/T3ihzRT6tGGSEWE088dWrEDGa1u7101q+6fzQnO9XCPA==}
-    peerDependencies:
-      preact: '>=10 || >= 11.0.0-0'
-
   preact@10.24.2:
     resolution: {integrity: sha512-1cSoF0aCC8uaARATfrlz4VCBqE8LwZwRfLgkxJOQwAlQt6ayTmi0D9OF7nXid1POI5SZidFuG9CnlXbDfLqY/Q==}
 
@@ -19167,7 +19138,7 @@ snapshots:
 
   dotenv@17.2.3: {}
 
-  drizzle-kit@0.31.8:
+  drizzle-kit@0.31.8(patch_hash=8cc0d1f3504e73ec214d631a4a23b583be6c22b9361608b79684e930a682cbdb):
     dependencies:
       '@drizzle-team/brocli': 0.10.2
       '@esbuild-kit/esm-loader': 2.6.5
@@ -23368,10 +23339,6 @@ snapshots:
       preact: 10.28.2
       query-selector-shadow-dom: 1.0.1
       web-vitals: 4.2.4
-
-  preact-render-to-string@6.6.5(preact@10.28.2):
-    dependencies:
-      preact: 10.28.2
 
   preact@10.24.2: {}
 

@@ -7,7 +7,9 @@ interface InfoIconProps {
 /**
  * Info icon component
  */
-export const InfoIcon: React.FC<InfoIconProps> = ({ className = "h-5 w-5" }) => {
+export const InfoIcon: React.FC<InfoIconProps> = ({
+  className = "h-5 w-5",
+}) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

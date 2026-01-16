@@ -1,11 +1,6 @@
-import { VibesDiyServCtx } from "../../vibes-diy-serv-ctx.ts";
+import { VibesDiyServCtx } from "@vibes.diy/api-types"
 
-import Preact, { createElement } from "preact";
-
-const React = {
-  ...Preact,
-  createElement,
-};
+import React from "react";
 
 export function ImportMap(prop: VibesDiyServCtx) {
   return <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify(prop.importMap, null, 2) }} />;

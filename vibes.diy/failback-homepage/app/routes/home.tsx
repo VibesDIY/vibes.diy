@@ -22,7 +22,7 @@ export async function clientLoader({ request }: { request: Request }) {
   };
 }
 
-export default function SessionWrapper() {
+export function SessionWrapper() {
   // Check authentication state
   const { isSignedIn } = useAuth();
 

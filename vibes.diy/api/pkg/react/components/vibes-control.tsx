@@ -11,8 +11,8 @@
  * - Self-contained with inline styles
  */
 
-import React from "preact";
-import { VibesDiyServCtx } from "../../../svc/vibes-diy-serv-ctx.ts";
+import React from "react";
+import { VibesDiyServCtx } from "@vibes.diy/api-types"
 
 export default function VibeControls(props: VibesDiyServCtx) {
   if (props.wrapper.state === "active") {

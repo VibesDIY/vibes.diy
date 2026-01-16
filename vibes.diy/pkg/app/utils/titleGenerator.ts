@@ -11,7 +11,11 @@ import type { Segment } from "@vibes.diy/prompts";
  * @param apiKey - The API key to use for the callAI service
  * @returns A promise that resolves to the generated title or null if generation failed
  */
-export async function generateTitle(segments: Segment[], model: string, apiKey = ""): Promise<string> {
+export async function generateTitle(
+  segments: Segment[],
+  model: string,
+  apiKey = "",
+): Promise<string> {
   // Get first markdown segment and first code segment (if they exist)
   const firstMarkdown = segments.find((seg) => seg.type === "markdown");
   const firstCode = segments.find((seg) => seg.type === "code");
@@ -24,7 +28,8 @@ export async function generateTitle(segments: Segment[], model: string, apiKey =
   }
 
   if (firstCode) {
-    titleContent += "```\n" + firstCode.content.split("\n").slice(0, 80).join("\n") + "\n```";
+    titleContent +=
+      "```\n" + firstCode.content.split("\n").slice(0, 80).join("\n") + "\n```";
   }
 
   // Format messages for callAI

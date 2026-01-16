@@ -1,7 +1,12 @@
 import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import StructuredMessage from "./StructuredMessage.js";
-import type { ChatMessageDocument, AiChatMessageDocument, SystemChatMessageDocument, ViewType } from "@vibes.diy/prompts";
+import type {
+  ChatMessageDocument,
+  AiChatMessageDocument,
+  SystemChatMessageDocument,
+  ViewType,
+} from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
 import { BrutalistCard } from "./vibes/BrutalistCard.js";
 
@@ -99,7 +104,7 @@ const AIMessage = memo(
     }
     // Otherwise, skip re-render
     return true;
-  }
+  },
 );
 
 const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
@@ -115,28 +120,37 @@ const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
 });
 
 // System Message component for errors and system notifications
-const SystemMessage = memo(({ message }: { message: SystemChatMessageDocument }) => {
-  // Format error message for display - parse error details
-  const lines = message.text.split("\n");
-  const errorTitle = lines[0] || "System Message";
-  const errorDetails = lines.slice(1).join("\n");
+const SystemMessage = memo(
+  ({ message }: { message: SystemChatMessageDocument }) => {
+    // Format error message for display - parse error details
+    const lines = message.text.split("\n");
+    const errorTitle = lines[0] || "System Message";
+    const errorDetails = lines.slice(1).join("\n");
 
-  // Map error category to BrutalistCard variant
-  const variant = message.errorCategory === "immediate" ? "error" : message.errorCategory === "advisory" ? "warning" : "default";
+    // Map error category to BrutalistCard variant
+    const variant =
+      message.errorCategory === "immediate"
+        ? "error"
+        : message.errorCategory === "advisory"
+          ? "warning"
+          : "default";
 
-  return (
-    <div className="mb-4 flex flex-row justify-center px-4">
-      <BrutalistCard variant={variant} size="lg" className="max-w-[80%]">
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          <h4 className="m-0 font-semibold">{errorTitle}</h4>
-          {errorDetails && (
-            <pre className="mt-2 max-h-[200px] overflow-auto font-mono text-xs whitespace-pre-wrap">{errorDetails}</pre>
-          )}
-        </div>
-      </BrutalistCard>
-    </div>
-  );
-});
+    return (
+      <div className="mb-4 flex flex-row justify-center px-4">
+        <BrutalistCard variant={variant} size="lg" className="max-w-[80%]">
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <h4 className="m-0 font-semibold">{errorTitle}</h4>
+            {errorDetails && (
+              <pre className="mt-2 max-h-[200px] overflow-auto font-mono text-xs whitespace-pre-wrap">
+                {errorDetails}
+              </pre>
+            )}
+          </div>
+        </BrutalistCard>
+      </div>
+    );
+  },
+);
 
 // Main Message component that handles animation and decides which subcomponent to render
 const Message = memo(
@@ -208,7 +222,7 @@ const Message = memo(
 
     // If we get here, props are equal enough to skip re-render
     return true;
-  }
+  },
 );
 
 export default Message;

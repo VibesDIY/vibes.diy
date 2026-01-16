@@ -2,10 +2,17 @@ import React, { useEffect, useState } from "react";
 import DynamicTable from "./DynamicTable.js";
 import { headersForDocs } from "./dynamicTableHelpers.js";
 // Import Fireproof for database access
-import { DocBase, useFireproof } from "use-fireproof";
+import { DocBase, useFireproof } from "@fireproof/use-fireproof";
 
 // Component for displaying database data
-const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({ dbName, sessionId }) => {
+function DatabaseData({
+  dbName,
+  sessionId,
+}: {
+  dbName: string;
+  sessionId: string;
+}) {
+  console.log("DatabaseData", dbName);
   if (!dbName) {
     throw new Error("No valid database name provided");
   }
@@ -23,10 +30,14 @@ const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({ dbName,
 
       // Get all available databases
       const databases = await window.indexedDB.databases();
-      const dbNames = databases.map((db) => db.name).filter(Boolean) as string[];
+      const dbNames = databases
+        .map((db) => db.name)
+        .filter(Boolean) as string[];
 
       // Filter for databases with this session ID
-      const sessionMatches = dbNames.filter((name) => name?.includes(sessionId));
+      const sessionMatches = dbNames.filter((name) =>
+        name?.includes(sessionId),
+      );
       setAvailableDbs(sessionMatches);
     } catch (err) {
       console.error("Error listing databases:", err);
@@ -52,7 +63,9 @@ const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({ dbName,
       const result = await database.allDocs();
 
       // Extract docs from the result based on Fireproof's API
-      const extractedDocs = result.rows.filter((row) => row && row.value).map((row) => row.value);
+      const extractedDocs = result.rows
+        .filter((row) => row && row.value)
+        .map((row) => row.value);
 
       setDocs(extractedDocs);
     } catch (error) {
@@ -76,7 +89,9 @@ const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({ dbName,
   // Create a simple debug display component
   const DbDebugInfo = () => (
     <details className="mb-2 text-sm">
-      <summary className="cursor-pointer text-blue-500 hover:text-blue-700">Database Inspection Details</summary>
+      <summary className="cursor-pointer text-blue-500 hover:text-blue-700">
+        Database Inspection Details
+      </summary>
       <div className="border-light-decorative-01 mt-1 border-l-2 pl-2">
         <p>
           <strong>Original DB Name:</strong> {dbName}
@@ -97,7 +112,9 @@ const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({ dbName,
           >
             Refresh DB List
           </button>
-          <span className="text-accent-02 text-xs">(Filtered by session ID: {sessionId})</span>
+          <span className="text-accent-02 text-xs">
+            (Filtered by session ID: {sessionId})
+          </span>
           <ul className="mt-1 list-disc pl-4">
             {availableDbs.map((name, idx) => (
               <li key={idx}>{name}</li>
@@ -114,7 +131,9 @@ const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({ dbName,
       <div className="bg-light-decorative-00 dark:bg-dark-decorative-00 rounded-md p-4">
         <DbDebugInfo />
         <p>Loading data from {database.name}...</p>
-        <p className="mt-2 text-xs text-gray-500">Loading state: {String(isLoading)}</p>
+        <p className="mt-2 text-xs text-gray-500">
+          Loading state: {String(isLoading)}
+        </p>
       </div>
     );
   }
@@ -140,6 +159,6 @@ const DatabaseData: React.FC<{ dbName: string; sessionId: string }> = ({ dbName,
       />
     </div>
   );
-};
+}
 
 export default DatabaseData;

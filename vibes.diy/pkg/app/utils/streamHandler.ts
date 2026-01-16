@@ -28,7 +28,7 @@ export async function streamAI(
   userMessage: string,
   onContent: (content: string) => void,
   apiKey: string, // API key (can be dummy key for proxy)
-  setNeedsLogin?: (value: boolean) => void
+  setNeedsLogin?: (value: boolean) => void,
 ): Promise<string> {
   // Stream process starts
 
@@ -80,11 +80,16 @@ export async function streamAI(
       } catch (streamError) {
         // Failed to even start streaming
         console.error("Streaming error:", streamError);
-        const errorMsg = streamError instanceof Error ? streamError.message : String(streamError);
+        const errorMsg =
+          streamError instanceof Error
+            ? streamError.message
+            : String(streamError);
 
         // Check if this is an authentication error
         if (isAuthErrorMessage(errorMsg)) {
-          console.warn("Auth error detected during streaming, triggering login modal");
+          console.warn(
+            "Auth error detected during streaming, triggering login modal",
+          );
           if (setNeedsLogin) {
             setNeedsLogin(true);
           }
@@ -100,11 +105,16 @@ export async function streamAI(
   } catch (initialError) {
     // Failed to even start streaming
     console.error("Initial callAI error:", initialError);
-    const errorMsg = initialError instanceof Error ? initialError.message : String(initialError);
+    const errorMsg =
+      initialError instanceof Error
+        ? initialError.message
+        : String(initialError);
 
     // Check if this is an authentication error
     if (isAuthErrorMessage(errorMsg)) {
-      console.warn("Auth error detected in initial callAI, triggering login modal");
+      console.warn(
+        "Auth error detected in initial callAI, triggering login modal",
+      );
       if (setNeedsLogin) {
         setNeedsLogin(true);
       }

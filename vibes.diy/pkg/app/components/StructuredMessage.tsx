@@ -100,7 +100,14 @@ const CodeSegment = ({
           <code className="font-mono">
             <span className="mr-3">App.jsx</span>
 
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" className="inline-block">
+            <svg
+              aria-hidden="true"
+              height="16"
+              viewBox="0 0 16 16"
+              version="1.1"
+              width="16"
+              className="inline-block"
+            >
               <path
                 fill="currentColor"
                 d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"
@@ -122,11 +129,16 @@ const CodeSegment = ({
           .split("\n")
           .slice(0, 3)
           .map((line, i) => (
-            <div key={i} className="text-light-primary dark:text-dark-secondary truncate">
+            <div
+              key={i}
+              className="text-light-primary dark:text-dark-secondary truncate"
+            >
               {line || " "}
             </div>
           ))}
-        {content.split("\n").length > 3 && <div className="text-accent-01 dark:text-accent-01">...</div>}
+        {content.split("\n").length > 3 && (
+          <div className="text-accent-01 dark:text-accent-01">...</div>
+        )}
       </div>
     </BrutalistCard>
   );
@@ -158,11 +170,17 @@ const StructuredMessage = ({
   // Count number of lines in code segments
   const codeLines = validSegments
     .filter((segment) => segment.type === "code")
-    .reduce((acc, segment) => acc + (segment.content?.split("\n").length || 0), 0);
+    .reduce(
+      (acc, segment) => acc + (segment.content?.split("\n").length || 0),
+      0,
+    );
 
   // CRITICAL: We always want to show something if there's any content at all
   const hasContent =
-    validSegments.length > 0 && validSegments.some((segment) => segment?.content && segment.content.trim().length > 0);
+    validSegments.length > 0 &&
+    validSegments.some(
+      (segment) => segment?.content && segment.content.trim().length > 0,
+    );
 
   // Add CSS for sticky elements
   useEffect(() => {
@@ -197,7 +215,10 @@ const StructuredMessage = ({
   }, []);
 
   return (
-    <div className="structured-message" style={{ overflow: "visible", position: "relative" }}>
+    <div
+      className="structured-message"
+      style={{ overflow: "visible", position: "relative" }}
+    >
       {!hasContent ? (
         // Show placeholder if there are no segments with content
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
@@ -206,11 +227,18 @@ const StructuredMessage = ({
       ) : (
         // Map and render each segment that has content
         validSegments
-          .filter((segment): segment is Segment => Boolean(segment?.content && segment.content.trim().length > 0))
+          .filter((segment): segment is Segment =>
+            Boolean(segment?.content && segment.content.trim().length > 0),
+          )
           .map((segment, index) => {
             if (segment.type === "markdown") {
               return (
-                <BrutalistCard key={`markdown-${index}`} size="sm" messageType="ai" className="my-4">
+                <BrutalistCard
+                  key={`markdown-${index}`}
+                  size="sm"
+                  messageType="ai"
+                  className="my-4"
+                >
                   <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
                     <ReactMarkdown>{segment.content || ""}</ReactMarkdown>
                   </div>

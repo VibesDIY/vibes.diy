@@ -7,7 +7,13 @@ import {
   getContentWrapperStyle,
   bounceKeyframes,
 } from "./VibesButton.styles.js";
-import { LoginIcon, RemixIcon, InviteIcon, SettingsIcon, BackIcon } from "../icons/index.js";
+import {
+  LoginIcon,
+  RemixIcon,
+  InviteIcon,
+  SettingsIcon,
+  BackIcon,
+} from "../icons/index.js";
 import { useMobile } from "@vibes.diy/use-vibes-base";
 
 // Variant constants
@@ -81,9 +87,23 @@ export function VibesButton({
 
   const IconComponent = icon ? iconMap[icon] : undefined;
 
-  const baseStyle = getButtonStyle(buttonVariant, isHovered, isActive, isMobile, !!IconComponent);
-  const mergedStyle = getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle);
-  const iconContainerStyle = getIconContainerStyle(buttonVariant, isMobile, !!IconComponent);
+  const baseStyle = getButtonStyle(
+    buttonVariant,
+    isHovered,
+    isActive,
+    isMobile,
+    !!IconComponent,
+  );
+  const mergedStyle = getMergedButtonStyle(
+    baseStyle,
+    ignoreDarkMode,
+    customStyle,
+  );
+  const iconContainerStyle = getIconContainerStyle(
+    buttonVariant,
+    isMobile,
+    !!IconComponent,
+  );
   const iconStyle = getIconStyle(isMobile, isHovered, isActive);
   const contentWrapperStyle = getContentWrapperStyle(isMobile, !!IconComponent);
 
