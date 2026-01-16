@@ -90,8 +90,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -327,8 +327,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -440,8 +440,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -623,8 +623,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -745,8 +745,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -800,8 +800,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(@adviser/cement@0.5.15(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.1))(react@19.2.1)(typescript@5.9.3)(utf-8-validate@5.0.10)
