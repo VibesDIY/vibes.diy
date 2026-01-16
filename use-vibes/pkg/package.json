@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.7",
-    "@vitest/browser-playwright": "^4.0.15",
+    "@vitest/browser-playwright": "^4.0.17",
     "vitest": "^4.0.15"
   }
 }
