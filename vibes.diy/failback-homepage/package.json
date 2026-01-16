@@ -67,7 +67,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@babel/parser": "^7.28.5",
+    "@babel/parser": "^7.28.6",
     "@babel/traverse": "^7.28.6",
     "@babel/types": "^7.28.6",
     "@chromatic-com/storybook": "^4.1.3",
