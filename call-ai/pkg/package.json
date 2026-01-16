@@ -46,6 +46,6 @@
     "@fireproof/core-runtime": "0.24.7",
     "@fireproof/core-types-base": "0.24.7",
     "@fireproof/core-types-protocols-cloud": "0.24.7",
-    "@fireproof/use-fireproof": "0.24.3-dev-use-livequery"
+    "@fireproof/use-fireproof": "0.24.7"
   }
 }
