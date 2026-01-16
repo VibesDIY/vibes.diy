@@ -431,8 +431,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-protocols-dashboard':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -791,8 +791,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-protocols-dashboard':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(react-dom@19.2.3(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(react-dom@19.2.3(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
@@ -12749,6 +12749,18 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
+  '@clerk/shared@3.41.1(react-dom@19.2.3(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      csstype: 3.1.3
+      dequal: 2.0.3
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.5
+      std-env: 3.10.0
+      swr: 2.3.4(react@19.2.1)
+    optionalDependencies:
+      react: 19.2.1
+      react-dom: 19.2.3(react@19.2.1)
+
   '@clerk/shared@3.41.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       csstype: 3.1.3
@@ -13882,6 +13894,22 @@ snapshots:
       '@fireproof/core-types-protocols-cloud': 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/vendor': 0.24.3-dev-use-livequery(typescript@5.9.3)
       zod: 4.1.13
+    transitivePeerDependencies:
+      - react
+      - react-dom
+      - typescript
+
+  '@fireproof/core-protocols-dashboard@0.24.7(react-dom@19.2.3(react@19.2.1))(react@19.2.1)(typescript@5.9.3)':
+    dependencies:
+      '@adviser/cement': 0.5.15(typescript@5.9.3)
+      '@clerk/shared': 3.41.1(react-dom@19.2.3(react@19.2.1))(react@19.2.1)
+      '@fireproof/core-device-id': 0.24.7(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.7(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud': 0.24.7(typescript@5.9.3)
+      '@fireproof/core-types-protocols-dashboard': 0.24.7(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.7(typescript@5.9.3)
+      zod: 4.3.5
     transitivePeerDependencies:
       - react
       - react-dom
