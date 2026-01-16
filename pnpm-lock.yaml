@@ -81,8 +81,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -318,8 +318,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -428,8 +428,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.7
         version: 0.24.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
@@ -614,8 +614,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -736,8 +736,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -788,8 +788,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.7
         version: 0.24.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
@@ -2446,10 +2446,6 @@ packages:
   '@fireproof/core-cli@0.24.7':
     resolution: {integrity: sha512-atN4zD8cEKitDNN40WUGb3q7iBrCpiT6IjpOMayqMvYk7MR4ug1n3TP3/l0v4i0l9sucD5KZc61bsH8FdteRPg==}
     hasBin: true
-
-  '@fireproof/core-device-id@0.24.3-dev-use-livequery':
-    resolution: {integrity: sha512-wBXtepkjj+3cRm6aHeRf2p/SDu2VzaqGG7w5PNjhr49lmkF4J2dpvqRup9o7UYb1X+WTSGp2pZFLDP8hCNPyzg==}
-    engines: {node: '>=20'}
 
   '@fireproof/core-device-id@0.24.7':
     resolution: {integrity: sha512-xJQEgk5CyCpdKdOwbwQY0peT304aVjcnQZjfe8tyFnPjH/ON4c7nUkX7DGFXutO17mTr6sRifKcWo/RVpTPkCA==}
@@ -13368,18 +13364,6 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fireproof/core-device-id@0.24.3-dev-use-livequery(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.5(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.3-dev-use-livequery(typescript@5.9.3)
-      jose: 6.1.3
-      multiformats: 13.4.2
-      zod: 4.1.13
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-device-id@0.24.7(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.15(typescript@5.9.3)
@@ -14274,7 +14258,7 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.3
+      '@types/node': 25.0.9
       jest-mock: 30.2.0
 
   '@jest/expect-utils@30.2.0':
@@ -14301,7 +14285,7 @@ snapshots:
     dependencies:
       '@jest/types': 30.2.0
       '@sinonjs/fake-timers': 13.0.5
-      '@types/node': 25.0.3
+      '@types/node': 25.0.9
       jest-message-util: 30.2.0
       jest-mock: 30.2.0
       jest-util: 30.2.0
@@ -16831,7 +16815,7 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 25.0.3
+      '@types/node': 25.0.9
 
   '@types/mdast@4.0.4':
     dependencies:
@@ -20821,7 +20805,7 @@ snapshots:
       '@jest/expect': 30.2.0
       '@jest/test-result': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.3
+      '@types/node': 25.0.9
       chalk: 4.1.2
       co: 4.6.0
       dedent: 1.7.1(babel-plugin-macros@3.1.0)
@@ -20926,7 +20910,7 @@ snapshots:
       '@jest/environment': 30.2.0
       '@jest/fake-timers': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.3
+      '@types/node': 25.0.9
       jest-mock: 30.2.0
       jest-util: 30.2.0
       jest-validate: 30.2.0
@@ -21174,7 +21158,7 @@ snapshots:
 
   jest-worker@30.2.0:
     dependencies:
-      '@types/node': 25.0.3
+      '@types/node': 25.0.9
       '@ungap/structured-clone': 1.3.0
       jest-util: 30.2.0
       merge-stream: 2.0.0
