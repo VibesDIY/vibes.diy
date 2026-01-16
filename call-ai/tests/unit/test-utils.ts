@@ -4,12 +4,10 @@ import { SSEDataParser } from "@vibes.diy/call-ai-base";
 import { JsonParser } from "@vibes.diy/call-ai-base";
 
 /**
- * Creates a random number generator, optionally seeded for reproducibility.
+ * Creates a seeded random number generator for reproducible tests.
+ * Defaults to a fixed seed to ensure test failures are reproducible.
  */
-function createRandom(seed?: number): () => number {
-  if (seed === undefined) {
-    return Math.random;
-  }
+function createRandom(seed: number = 12345): () => number {
   let s = seed;
   return () => {
     s = (s * 1103515245 + 12345) & 0x7fffffff;
@@ -26,7 +24,7 @@ function createRandom(seed?: number): () => number {
  * @param options - Optional configuration
  * @param options.minChunkSize - Minimum chunk size (default: 1)
  * @param options.maxChunkSize - Maximum chunk size (default: 50)
- * @param options.seed - Random seed for reproducibility (default: uses Math.random)
+ * @param options.seed - Random seed for reproducibility (default: 12345)
  */
 export function feedFixtureRandomly(
   parser: LineStreamParser | SSEDataParser | JsonParser | OpenRouterParser | SegmentAccumulator,
