@@ -87,8 +87,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -324,8 +324,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -437,8 +437,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -620,8 +620,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -742,8 +742,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -797,8 +797,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-types-base':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
