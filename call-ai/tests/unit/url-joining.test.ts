@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { joinUrlParts } from "../../pkg/utils.js";
+import { joinUrlParts } from "@vibes.diy/call-ai-base";
 
 describe("URL joining utility", () => {
   test("handles base URL with trailing slash", () => {

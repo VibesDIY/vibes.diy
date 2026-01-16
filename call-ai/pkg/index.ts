@@ -2,18 +2,48 @@
  * call-ai: A lightweight library for making AI API calls
  */
 
-// Export public types
-export * from "./types.js";
+// Core API
+export { callAi, callAI, imageGen, getMeta, callAiEnv } from "@vibes.diy/call-ai-base";
 
-// Export API functions
-export { callAi } from "./api.js";
-// Backward compatibility for callAI (uppercase AI)
-export { callAi as callAI } from "./api.js";
+// Vibes streaming
+export {
+  VibesStream,
+  type VibesStreamOptions,
+  vibesBegin,
+  vibesUpdate,
+  vibesEnd,
+  vibesError,
+  vibesEvent,
+  type VibesBegin,
+  type VibesUpdate,
+  type VibesEnd,
+  type VibesError,
+  type VibesEvent,
+  isVibesEventError,
+} from "@vibes.diy/call-ai-base";
 
-export { getMeta } from "./response-metadata.js";
+// Types from types.ts (selectively re-exported)
+export type {
+  Message,
+  CallAIOptions,
+  Schema,
+  ImageGenOptions,
+  ImageResponse,
+  ContentItem,
+  AIResponse,
+  ResponseMeta,
+} from "@vibes.diy/call-ai-base";
 
-// Export image generation function
-export { imageGen } from "./image.js";
+export { CallAIError } from "@vibes.diy/call-ai-base";
 
-export { entriesHeaders, joinUrlParts } from "./utils.js";
-export { callAiEnv } from "./env.js";
+// Utils
+export { joinUrlParts, entriesHeaders } from "@vibes.diy/call-ai-base";
+
+// Advanced parser (documented in README)
+export {
+  OpenRouterParser,
+  createCodeBlockHandler,
+  SegmentAccumulator,
+  type Segment,
+  type ParserEvent,
+} from "@vibes.diy/call-ai-base";

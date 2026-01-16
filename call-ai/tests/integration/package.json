@@ -48,6 +48,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "call-ai": "workspace:0.0.0"
+    "call-ai": "workspace:0.0.0",
+    "@vibes.diy/call-ai-base": "workspace:*"
   }
 }

@@ -1,4 +1,5 @@
-import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
+import { callAI, type Message, type CallAIOptions } from "call-ai";
+import type { Mocks } from "@vibes.diy/call-ai-base";
 
 import type { HistoryMessage, UserSettings } from "./settings.js";
 import { CoerceURI, Lazy, URI } from "@adviser/cement";
@@ -179,6 +180,7 @@ async function selectLlmsAndOptions(
       : undefined,
     apiKey: (await opts.getAuthToken?.()) || "",
     model,
+    stream: false,
     schema: {
       name: "module_and_options_selection",
       properties: {
@@ -218,9 +220,11 @@ async function selectLlmsAndOptions(
           }),
       ]);
 
-    const raw = (await withTimeout(
-      (options.mock?.callAI || callAI)(messages, options),
-    )) as string;
+    // Options has stream: false, narrow type for overload resolution
+    const nonStreamingOptions = options as CallAIOptions & { stream: false };
+    const raw = await withTimeout(
+      (options.mock?.callAI || callAI)(messages, nonStreamingOptions),
+    );
 
     if (raw === undefined || raw === null) {
       console.warn(

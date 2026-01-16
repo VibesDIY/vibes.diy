@@ -28,7 +28,7 @@
     "chanfana": "^3.0.0",
     "hono": "^4.11.3",
     "unique-names-generator": "^4.7.1",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.3-dev-20261224",

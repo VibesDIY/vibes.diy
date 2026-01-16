@@ -1,16 +1,29 @@
 /**
  * Core API implementation for call-ai
  */
-import { CallAIError, CallAIErrorParams, CallAIOptions, Message, ResponseMeta, SchemaStrategy, StreamResponse } from "./types.js";
+import {
+  CallAIError,
+  CallAIOptions,
+  Message,
+  ResponseMeta,
+  SchemaStrategy,
+  StreamResponse,
+  ThenableStreamResponse,
+  APIResponse,
+  ModelId,
+  AIResult,
+} from "./types.js";
 import { chooseSchemaStrategy } from "./strategies/index.js";
-import { responseMetadata, boxString } from "./response-metadata.js";
+import { responseMetadata, boxString, getMeta } from "./response-metadata.js";
 import { keyStore, globalDebug } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
-import { createBackwardCompatStreamingProxy } from "./api-core.js";
-import { extractContent, extractClaudeResponse } from "./non-streaming.js";
-import { createStreamingGenerator } from "./streaming.js";
-import { PACKAGE_VERSION } from "./version.js";
-import { callAiEnv, callAiFetch } from "./utils.js";
+import { PACKAGE_VERSION } from "./non-streaming.js";
+import { NonStreamingOpenRouterParser } from "./parser/non-streaming-openrouter-parser.js";
+import { createBackwardCompatStreamingProxy } from "./streaming.js";
+import { createSchemaStreamingGenerator } from "./schema-streaming.js";
+import { createTextStreamingGenerator } from "./text-streaming.js";
+import { callAiFetch, joinUrlParts } from "./utils.js";
+import { callAiEnv } from "./env.js";
 
 // Key management is now imported from ./key-management
 
@@ -29,7 +42,7 @@ import { callAiEnv, callAiFetch } from "./utils.js";
 
 // boxString and getMeta functions are now imported from ./response-metadata
 // Re-export getMeta to maintain backward compatibility
-// export { getMeta };
+export { getMeta };
 
 // Import package version for debugging
 
@@ -44,21 +57,29 @@ const FALLBACK_MODEL = "openrouter/auto";
  *          or a Promise that resolves to an AsyncGenerator when streaming is enabled.
  *          The AsyncGenerator yields partial responses as they arrive.
  */
-export function callAi(prompt: string | Message[], options: CallAIOptions = {}): Promise<string | StreamResponse> {
+// Overload: streaming mode returns ThenableStreamResponse
+export function callAi(prompt: string | Message[], options: CallAIOptions & { stream: true }): ThenableStreamResponse;
+// Overload: non-streaming mode (explicit false or default) returns Promise<string>
+export function callAi(prompt: string | Message[], options?: CallAIOptions & { stream?: false }): Promise<string>;
+// Overload: generic boolean stream (for internal/dynamic use) returns union
+export function callAi(prompt: string | Message[], options: CallAIOptions): Promise<string> | ThenableStreamResponse;
+// Implementation signature
+export function callAi(prompt: string | Message[], options: CallAIOptions = {}): Promise<string> | ThenableStreamResponse {
   // Check if we need to force streaming based on model strategy
   const schemaStrategy = chooseSchemaStrategy(options.model, options.schema || null);
+  const isStreaming = options.stream === true;
 
   // We no longer set a default maxTokens
   // Will only include max_tokens in the request if explicitly set by the user
 
   // Handle special case: Claude with tools requires streaming
-  if (!options.stream && schemaStrategy.shouldForceStream) {
+  if (!isStreaming && schemaStrategy.shouldForceStream) {
     // Buffer streaming results into a single response
     return bufferStreamingResults(prompt, options);
   }
 
   // Handle normal non-streaming mode
-  if (options.stream !== true) {
+  if (!isStreaming) {
     return callAINonStreaming(prompt, options);
   }
 
@@ -207,7 +228,7 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
             statusText: response.statusText,
             details: errorJson,
             contentType,
-          });
+          }); // Add useful metadata
           throw error;
         } catch (jsonError) {
           // If JSON parsing fails, extract a useful message from the raw error body
@@ -255,7 +276,6 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
           message: `API returned ${response.status}: ${response.statusText}`,
           status: response.status,
           statusText: response.statusText,
-          details: undefined,
           contentType,
         });
         throw error;
@@ -265,11 +285,20 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
     if (options.debug) {
       console.log(`[callAi:${PACKAGE_VERSION}] Response OK, creating streaming generator`);
     }
-    return createStreamingGenerator(response, options, schemaStrategy, model);
+    const streamingOptions = {
+      ...options,
+      stream: true,
+    };
+    // Route to appropriate streaming generator based on strategy
+    if (schemaStrategy.strategy === "tool_mode") {
+      return createSchemaStreamingGenerator(response, streamingOptions, schemaStrategy, model) as StreamResponse;
+    } else {
+      return createTextStreamingGenerator(response, streamingOptions, schemaStrategy, model) as StreamResponse;
+    }
   })();
 
   // For backward compatibility with v0.6.x where users didn't await the result
-  if (callAiEnv.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production") {
     if (options.debug) {
       console.warn(
         `[callAi:${PACKAGE_VERSION}] No await found - using legacy streaming pattern. This will be removed in a future version and may cause issues with certain models.`,
@@ -278,7 +307,6 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
   }
 
   // Create a proxy object that acts both as a Promise and an AsyncGenerator for backward compatibility
-  //... @ts-ignore - We're deliberately implementing a proxy with dual behavior
   return createBackwardCompatStreamingProxy(streamPromise);
 }
 
@@ -320,7 +348,7 @@ async function bufferStreamingResults(prompt: string | Message[], options: CallA
     }
   } catch (error) {
     // Handle errors with standard API error handling
-    await handleApiError(error as CallAIErrorParams, "Buffered streaming", options.debug, {
+    await handleApiError(error, "Buffered streaming", options.debug, {
       apiKey: options.apiKey,
       endpoint: options.endpoint,
       skipRefresh: options.skipRefresh,
@@ -331,7 +359,7 @@ async function bufferStreamingResults(prompt: string | Message[], options: CallA
     // Retry with the refreshed key
     return bufferStreamingResults(prompt, {
       ...options,
-      apiKey: keyStore.current || undefined, // Use the refreshed key from keyStore
+      apiKey: keyStore().current, // Use the refreshed key from keyStore
     });
   }
 
@@ -343,7 +371,7 @@ async function bufferStreamingResults(prompt: string | Message[], options: CallA
 /**
  * Standardized API error handler
  */
-// createBackwardCompatStreamingProxy is imported from api-core.ts
+// createBackwardCompatStreamingProxy is imported from streaming.ts
 
 // handleApiError is imported from error-handling.ts
 
@@ -362,8 +390,15 @@ function prepareRequestParams(
   requestOptions: RequestInit;
   schemaStrategy: SchemaStrategy;
 } {
-  // First try to get the API key from options or window globals
-  const apiKey = options.apiKey || keyStore.current || callAiEnv.CALLAI_API_KEY; // Try keyStore first in case it was refreshed in a previous call
+  // Try multiple sources for the API key: explicit option, keyStore, or environment
+  const apiKey = options.apiKey || keyStore().current || callAiEnv.CALLAI_API_KEY;
+  if (!apiKey) {
+    throw new CallAIError({
+      message: "API key is required",
+      status: 401,
+      errorType: "authentication_error",
+    });
+  }
   const schema = options.schema || null;
 
   // If no API key exists, we won't throw immediately. We'll continue and let handleApiError
@@ -374,25 +409,34 @@ function prepareRequestParams(
   const model = schemaStrategy.model;
 
   // Get custom chat API origin if set
-  const customChatOrigin = options.chatUrl || callAiEnv.CALLAI_CHAT_URL;
+  const customChatOrigin = options.chatUrl || callAiEnv.def.CALLAI_CHAT_URL || null;
+  // (typeof window !== "undefined" ? (window as any).CALLAI_CHAT_URL : null) ||
+  // (typeof process !== "undefined" && process.env
+  //   ? process.env.CALLAI_CHAT_URL
+  //   : null);
 
   // Use custom origin or default OpenRouter URL
   const endpoint =
     options.endpoint ||
-    (customChatOrigin ? `${customChatOrigin}/api/v1/chat/completions` : "https://openrouter.ai/api/v1/chat/completions");
+    (customChatOrigin
+      ? joinUrlParts(customChatOrigin, "/api/v1/chat/completions")
+      : "https://openrouter.ai/api/v1/chat/completions");
 
   // Handle both string prompts and message arrays for backward compatibility
   const messages: Message[] = Array.isArray(prompt) ? prompt : [{ role: "user", content: prompt }];
 
   // Common parameters for both streaming and non-streaming
-  const requestParams: CallAIOptions = {
+  const requestParams: Record<string, unknown> = {
     model,
     messages,
     stream: options.stream !== undefined ? options.stream : false,
+    provider: {
+      sort: "latency",
+    },
   };
 
   // Only include temperature if explicitly set
-  if (options.temperature) {
+  if (options.temperature !== undefined) {
     requestParams.temperature = options.temperature;
   }
 
@@ -423,26 +467,23 @@ function prepareRequestParams(
     Object.assign(requestParams, schemaStrategy.prepareRequest(schema, messages));
   }
 
-  // HTTP headers for the request
-  const headers: Record<string, string> = {
+  // HTTP headers for the request (normalize to `Headers` and merge caller headers)
+  const headers = new Headers({
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
     "HTTP-Referer": options.referer || "https://vibes.diy",
     "X-Title": options.title || "Vibes",
-  };
+  });
 
-  // Add any additional headers
   if (options.headers) {
-    Object.assign(headers, options.headers);
+    const extra = new Headers(options.headers as HeadersInit);
+    extra.forEach((value, key) => headers.set(key, value));
   }
 
   // Build the requestOptions object for fetch
   const requestOptions: RequestInit = {
     method: "POST",
-    headers: {
-      ...headers,
-      "Content-Type": "application/json",
-    },
+    headers, // pass a real Headers instance
     body: JSON.stringify(requestParams),
   };
 
@@ -487,7 +528,7 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
     if (!response.ok || response.status >= 400) {
       const { isInvalidModel } = await checkForInvalidModelError(response, model, options.debug);
 
-      if (isInvalidModel) {
+      if (isInvalidModel && !options.skipRetry) {
         // Retry with fallback model
         return callAINonStreaming(prompt, { ...options, model: FALLBACK_MODEL }, true);
       }
@@ -496,25 +537,17 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
       const error = new CallAIError({
         message: `HTTP error! Status: ${response.status}`,
         status: response.status,
-        statusText: response.statusText,
-        details: undefined,
+        statusCode: response.status,
         contentType: "text/plain",
       });
+      // Add status code as a property of the error object
+      // error.status = response.status;
+      // error.statusCode = response.status; // Add statusCode for compatibility with different error patterns
       throw error;
     }
 
-    let result;
-
-    // For Claude, use text() instead of json() to avoid potential hanging
-    if (/claude/i.test(model)) {
-      try {
-        result = await extractClaudeResponse(response);
-      } catch (error) {
-        handleApiError(error as CallAIErrorParams, "Claude API response processing failed", options.debug);
-      }
-    } else {
-      result = await response.json();
-    }
+    // Parse JSON response
+    const result = (await response.json()) as APIResponse;
 
     // Debug logging for raw API response
     if (options.debug) {
@@ -527,12 +560,8 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
         console.error("API returned an error:", result.error);
       }
       // If it's a model error and not already a retry, try with fallback
-      if (
-        !isRetry &&
-        !options.skipRetry &&
-        result.error.message &&
-        result.error.message.toLowerCase().includes("not a valid model")
-      ) {
+      const errorMessage = typeof result.error === "string" ? result.error : result.error.message;
+      if (!isRetry && !options.skipRetry && errorMessage && errorMessage.toLowerCase().includes("not a valid model")) {
         if (options.debug) {
           console.warn(`Model ${model} error, retrying with ${FALLBACK_MODEL}`);
         }
@@ -540,17 +569,24 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
       }
       return JSON.stringify({
         error: result.error,
-        message: result.error.message || "API returned an error",
+        message: errorMessage || "API returned an error",
       });
     }
 
-    // Extract content from the response
-    const content = extractContent(result, schemaStrategy);
+    // Extract content using the parser
+    const parser = new NonStreamingOpenRouterParser();
+    let content = "";
+    parser.onEvent((evt) => {
+      if (evt.type === "or.delta") {
+        content = evt.content;
+      }
+    });
+    parser.parse(result);
 
     // Store the raw response data for user access
     if (result) {
       // Store the parsed JSON result from the API call
-      meta.rawResponse = result;
+      meta.rawResponse = result as string | ModelId;
     }
 
     // Update model info
@@ -584,7 +620,7 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
       prompt,
       {
         ...options,
-        apiKey: keyStore.current || undefined, // Use the refreshed key from keyStore
+        apiKey: keyStore().current, // Use the refreshed key from keyStore
       },
       true,
     ); // Set isRetry to true

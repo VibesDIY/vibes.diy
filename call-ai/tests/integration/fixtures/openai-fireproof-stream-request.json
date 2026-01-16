@@ -1,0 +1,10 @@
+{
+  "model": "openai/gpt-4o",
+  "stream": true,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a short demo response made of three parts: first a markdown paragraph (2 sentences max) of lorem ipsum describing a tiny app idea, then a ```jsx code block that starts with `import { useFireproof } from 'use-vibes';` and defines a React component named App that calls the hook (keep the component under 20 lines), and finally a closing markdown sentence that summarizes the feature."
+    }
+  ]
+}

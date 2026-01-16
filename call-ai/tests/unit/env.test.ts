@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
-import { CallAIEnv } from "../../pkg/env.js";
+import { CallAIEnv } from "@vibes.diy/call-ai-base";
 
 // Extend Window interface for our custom properties
 declare global {
