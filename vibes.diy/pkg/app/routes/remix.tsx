@@ -6,14 +6,19 @@ import { VibeDocument } from "@vibes.diy/prompts";
 import { constructVibeCodeUrl } from "../utils/vibeUrls.js";
 
 export function meta() {
-  return [{ title: "Remix App - Vibes DIY" }, { name: "description", content: "Remix an existing app with Vibes DIY" }];
+  return [
+    { title: "Remix App - Vibes DIY" },
+    { name: "description", content: "Remix an existing app with Vibes DIY" },
+  ];
 }
 
 interface RemixProps {
   onNavigate?: (url: string) => void;
 }
 
-export default function Remix({ onNavigate = (url) => (window.location.href = url) }: RemixProps) {
+export function Remix({
+  onNavigate = (url) => (window.location.href = url),
+}: RemixProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { vibeSlug } = useParams<{ vibeSlug?: string }>();
@@ -23,7 +28,8 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
 
   // Generate a sessionId for this remix session
   const [sessionId] = useState(
-    () => `remix-${Date.now().toString(36).padStart(9, "f")}${Math.random().toString(36).slice(2, 11).padEnd(9, "0")}`
+    () =>
+      `remix-${Date.now().toString(36).padStart(9, "f")}${Math.random().toString(36).slice(2, 11).padEnd(9, "0")}`,
   );
 
   // Get database instances from hooks
@@ -61,9 +67,11 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
 
         const codeContent = await response.text();
 
-        const vibeDoc = await sessionDatabase.get<VibeDocument>("vibe").catch(() => {
-          return { _id: "vibe", created_at: Date.now() } as VibeDocument;
-        });
+        const vibeDoc = await sessionDatabase
+          .get<VibeDocument>("vibe")
+          .catch(() => {
+            return { _id: "vibe", created_at: Date.now() } as VibeDocument;
+          });
 
         vibeDoc.remixOf = appName;
         await sessionDatabase.put(vibeDoc);
@@ -81,7 +89,7 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
         // Clean the code - remove esm.sh references from import statements
         const cleanedCode = codeContent.replace(
           /import\s+(.+)\s+from\s+['"]https:\/\/esm\.sh\/([^'"]+)['"];?/g,
-          "import $1 from '$2';"
+          "import $1 from '$2';",
         );
 
         // Create and save AI response directly with deterministic ID
@@ -110,7 +118,9 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
         onNavigate(targetUrl);
       } catch (error) {
         console.error("Error in remix process:", error);
-        setError(error instanceof Error ? error.message : "Unknown error occurred");
+        setError(
+          error instanceof Error ? error.message : "Unknown error occurred",
+        );
         setIsLoading(false);
       }
     }
@@ -159,7 +169,10 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
     function generateStatic() {
       if (!staticCtx) return;
 
-      const imgData = staticCtx.createImageData(staticBuffer.width, staticBuffer.height);
+      const imgData = staticCtx.createImageData(
+        staticBuffer.width,
+        staticBuffer.height,
+      );
       const data = imgData.data;
 
       for (let i = 0; i < data.length; i += 4) {
@@ -189,7 +202,7 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
         0,
         0,
         canvas.width / (window.devicePixelRatio || 1),
-        canvas.height / (window.devicePixelRatio || 1)
+        canvas.height / (window.devicePixelRatio || 1),
       );
 
       animationRef.current = requestAnimationFrame(render);
@@ -210,7 +223,11 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
   return (
     <div className="relative flex h-screen w-full items-center justify-center overflow-hidden">
       {/* TV Static Background */}
-      <canvas ref={canvasRef} className="absolute inset-0 z-0" style={{ filter: "brightness(0.5) contrast(1.2)" }} />
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 z-0"
+        style={{ filter: "brightness(0.5) contrast(1.2)" }}
+      />
 
       {/* Content Container */}
       <div className="relative z-10">
@@ -238,7 +255,9 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
           </div>
         ) : error ? (
           <div className="rounded-xl border border-red-500/40 bg-black/40 p-8 text-center shadow-2xl backdrop-blur-md">
-            <div className="mb-4 text-3xl font-bold text-red-500">TRANSMISSION ERROR</div>
+            <div className="mb-4 text-3xl font-bold text-red-500">
+              TRANSMISSION ERROR
+            </div>
             <div className="mt-2 text-lg text-white">{error}</div>
             <button
               onClick={() => navigate("/")}

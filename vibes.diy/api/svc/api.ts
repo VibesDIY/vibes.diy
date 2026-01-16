@@ -4,7 +4,7 @@ import { ensureLogger } from "@fireproof/core-runtime";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { FPApiParameters, FPApiToken } from "@fireproof/core-types-protocols-dashboard";
 import { Logger, Result } from "@adviser/cement";
-import { ImportMapProps } from "./intern/import-map.ts";
+import { ImportMapProps } from "./intern/import-map.js";
 import { VibesEnv } from "@vibes.diy/use-vibes-base";
 
 export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "clerkPublishableKey"> & {

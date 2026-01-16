@@ -109,8 +109,16 @@ export function VibeControl({
     if (!isOpen) return null;
 
     return ReactDOM.createPortal(
-      <div style={styles.backdrop} onClick={handleClose} className={classes.backdrop}>
-        <div style={styles.overlay} onClick={(e) => e.stopPropagation()} className={classes.overlay}>
+      <div
+        style={styles.backdrop}
+        onClick={handleClose}
+        className={classes.backdrop}
+      >
+        <div
+          style={styles.overlay}
+          onClick={(e) => e.stopPropagation()}
+          className={classes.overlay}
+        >
           <h2 style={styles.overlayTitle} className={classes.overlayTitle}>
             Vibe Control
           </h2>
@@ -130,7 +138,10 @@ export function VibeControl({
             {children || (
               <div>
                 <p>Welcome to Vibe Control!</p>
-                <p>This is the default content. You can customize this by passing children to the VibeControl component.</p>
+                <p>
+                  This is the default content. You can customize this by passing
+                  children to the VibeControl component.
+                </p>
                 <div
                   style={{
                     marginTop: "20px",
@@ -152,7 +163,7 @@ export function VibeControl({
           </div>
         </div>
       </div>,
-      document.body
+      document.body,
     );
   };
 

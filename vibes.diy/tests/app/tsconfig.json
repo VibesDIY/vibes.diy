@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.json",
+  "extends": ["../../../tsconfig.json"],
   "compilerOptions": {
     "types": ["@vitest/browser/providers/playwright", "@testing-library/jest-dom"],
     "outDir": "./dist",

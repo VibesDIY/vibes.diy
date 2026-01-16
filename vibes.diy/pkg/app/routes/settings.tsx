@@ -1,7 +1,7 @@
 import type { ChangeEvent } from "react";
 import React, { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 import { useAuth as useClerkAuth, useClerk } from "@clerk/clerk-react";
 import { BrutalistCard } from "../components/vibes/BrutalistCard.js";
 import { VibesButton } from "../components/vibes/VibesButton/index.js";
@@ -12,7 +12,10 @@ import LoggedOutView from "../components/LoggedOutView.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
 
 export function meta() {
-  return [{ title: "Settings - Vibes DIY" }, { name: "description", content: "Settings for AI App Builder" }];
+  return [
+    { title: "Settings - Vibes DIY" },
+    { name: "description", content: "Settings for AI App Builder" },
+  ];
 }
 
 function SettingsContent() {
@@ -46,7 +49,7 @@ function SettingsContent() {
       mergeSettings({ stylePrompt: e.target.value });
       setHasUnsavedChanges(true); // Track change
     },
-    [mergeSettings]
+    [mergeSettings],
   );
 
   const handleStylePromptSelection = useCallback(
@@ -63,7 +66,7 @@ function SettingsContent() {
         }
       }, 50);
     },
-    [mergeSettings]
+    [mergeSettings],
   );
 
   const handleModelChange = useCallback(
@@ -71,7 +74,7 @@ function SettingsContent() {
       mergeSettings({ model: e.target.value });
       setHasUnsavedChanges(true); // Track change
     },
-    [mergeSettings]
+    [mergeSettings],
   );
 
   const handleModelSelection = useCallback(
@@ -87,7 +90,7 @@ function SettingsContent() {
         }
       }, 50);
     },
-    [mergeSettings]
+    [mergeSettings],
   );
 
   const handleUserPromptChange = useCallback(
@@ -95,7 +98,7 @@ function SettingsContent() {
       mergeSettings({ userPrompt: e.target.value });
       setHasUnsavedChanges(true); // Track change
     },
-    [mergeSettings]
+    [mergeSettings],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -124,7 +127,7 @@ function SettingsContent() {
       mergeSettings({ showModelPickerInChat: e.target.checked });
       setHasUnsavedChanges(true); // Track change
     },
-    [mergeSettings]
+    [mergeSettings],
   );
 
   return (
@@ -132,7 +135,11 @@ function SettingsContent() {
       title="Settings"
       subtitle="Configure your AI preferences"
       headerActions={
-        <VibesButton variant="blue" onClick={handleSubmit} disabled={!hasUnsavedChanges}>
+        <VibesButton
+          variant="blue"
+          onClick={handleSubmit}
+          disabled={!hasUnsavedChanges}
+        >
           {saveSuccess ? "Saved!" : "Save"}
         </VibesButton>
       }
@@ -178,7 +185,10 @@ function SettingsContent() {
         </div>
 
         <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium" style={{ color: "var(--vibes-text-primary)" }}>
+          <label
+            className="mb-2 block text-sm font-medium"
+            style={{ color: "var(--vibes-text-primary)" }}
+          >
             Recommended models:
           </label>
           <div className="flex flex-wrap gap-2">
@@ -188,7 +198,9 @@ function SettingsContent() {
                 type="button"
                 onClick={() => handleModelSelection(model)}
                 className={`cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  settings.model === model.id ? "bg-blue-600 text-white dark:bg-purple-500" : ""
+                  settings.model === model.id
+                    ? "bg-blue-600 text-white dark:bg-purple-500"
+                    : ""
                 }`}
                 style={
                   settings.model !== model.id
@@ -244,7 +256,10 @@ function SettingsContent() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium" style={{ color: "var(--vibes-text-primary)" }}>
+          <label
+            className="mb-2 block text-sm font-medium"
+            style={{ color: "var(--vibes-text-primary)" }}
+          >
             Suggestions:
           </label>
           <div className="flex flex-wrap gap-2">
@@ -254,12 +269,14 @@ function SettingsContent() {
                 type="button"
                 onClick={() => handleStylePromptSelection(suggestion)}
                 className={`cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  settings.stylePrompt && settings.stylePrompt.startsWith(suggestion.name)
+                  settings.stylePrompt &&
+                  settings.stylePrompt.startsWith(suggestion.name)
                     ? "bg-blue-600 text-white dark:bg-purple-500"
                     : ""
                 }`}
                 style={
-                  settings.stylePrompt && !settings.stylePrompt.startsWith(suggestion.name)
+                  settings.stylePrompt &&
+                  !settings.stylePrompt.startsWith(suggestion.name)
                     ? {
                         background: "var(--vibes-bg-secondary)",
                         color: "var(--vibes-text-primary)",
@@ -301,7 +318,8 @@ function SettingsContent() {
           <h2 className="text-2xl font-bold mb-4">Account</h2>
           <div className="flex items-center justify-between">
             <p style={{ color: "var(--vibes-text-secondary)" }}>
-              Sign out from your account. Your vibes will still be in browser storage.
+              Sign out from your account. Your vibes will still be in browser
+              storage.
             </p>
             <VibesButton variant="red" onClick={handleLogout}>
               Logout
@@ -314,7 +332,7 @@ function SettingsContent() {
 }
 
 // Auth wrapper component
-export default function Settings() {
+export function Settings() {
   const { isSignedIn, isLoaded } = useClerkAuth();
 
   if (!isSignedIn) {

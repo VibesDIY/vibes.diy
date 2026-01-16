@@ -1,5 +1,5 @@
 import { BuildURI, toSortedObject } from "@adviser/cement";
-import { VibesImportMap } from "@vibes.diy/api-pkg";
+import { VibesImportMap } from "@vibes.diy/api-types";
 
 function enhance(
   importMap: Record<string, string | undefined>,

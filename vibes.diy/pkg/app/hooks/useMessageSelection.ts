@@ -23,7 +23,8 @@ export function useMessageSelection({
   // The list of messages for the UI: docs + streaming message if active
   // Also include the last message that was streaming even after streaming ends
   // This prevents temporarily losing the message during the transition
-  const [prevStreamingMessage, setPrevStreamingMessage] = useState<ChatMessageDocument | null>(null);
+  const [prevStreamingMessage, setPrevStreamingMessage] =
+    useState<ChatMessageDocument | null>(null);
 
   // When streaming and we have text, capture the streaming message
   useEffect(() => {
@@ -35,7 +36,8 @@ export function useMessageSelection({
   const messages = useMemo(() => {
     // First filter the docs to get messages we want to display
     const baseDocs = docs.filter(
-      (doc) => doc.type === "ai" || doc.type === "user" || doc.type === "system"
+      (doc) =>
+        doc.type === "ai" || doc.type === "user" || doc.type === "system",
     ) as unknown as ChatMessageDocument[];
 
     // If currently streaming, include the streaming message
@@ -46,7 +48,10 @@ export function useMessageSelection({
     // When streaming just ended, check if the last message is in docs
     if (!isStreaming && prevStreamingMessage) {
       // Look for the message ID in the docs to see if it's been saved
-      const messageInDocs = baseDocs.some((doc) => prevStreamingMessage._id && doc._id === prevStreamingMessage._id);
+      const messageInDocs = baseDocs.some(
+        (doc) =>
+          prevStreamingMessage._id && doc._id === prevStreamingMessage._id,
+      );
 
       // If the message has been saved to the database, no need to append it
       if (messageInDocs) {
@@ -57,7 +62,9 @@ export function useMessageSelection({
 
       // Check if we have a similar message with the same text content
       // This helps prevent duplicates during session ID transitions
-      const similarMessageExists = baseDocs.some((doc) => doc.type === "ai" && doc.text === prevStreamingMessage.text);
+      const similarMessageExists = baseDocs.some(
+        (doc) => doc.type === "ai" && doc.text === prevStreamingMessage.text,
+      );
 
       if (similarMessageExists) {
         // We have a message with identical content - likely the same message
@@ -78,7 +85,9 @@ export function useMessageSelection({
   const selectedResponseDoc = useMemo(() => {
     // Priority 1: Explicit user selection (from confirmed docs)
     if (selectedResponseId) {
-      const foundInDocs = docs.find((doc) => doc.type === "ai" && doc._id === selectedResponseId);
+      const foundInDocs = docs.find(
+        (doc) => doc.type === "ai" && doc._id === selectedResponseId,
+      );
       if (foundInDocs) return foundInDocs;
     }
 
@@ -104,15 +113,21 @@ export function useMessageSelection({
     // Sort by document ID - this is more reliable than timestamps
     // when determining the most recent message, especially since IDs often have
     // chronological information encoded in them
-    const sortedDocsWithCode = docsWithCode.sort((a, b) => b._id?.localeCompare(a._id ?? "") || 0);
+    const sortedDocsWithCode = docsWithCode.sort(
+      (a, b) => b._id?.localeCompare(a._id ?? "") || 0,
+    );
 
     const latestAiDocWithCode = sortedDocsWithCode[0];
     return latestAiDocWithCode;
-  }, [selectedResponseId, docs, pendingAiMessage, isStreaming, aiMessage]) as ChatMessageDocument | undefined;
+  }, [selectedResponseId, docs, pendingAiMessage, isStreaming, aiMessage]) as
+    | ChatMessageDocument
+    | undefined;
 
   // Process selected response into segments and code
   const { selectedSegments, selectedCode } = useMemo(() => {
-    const { segments } = selectedResponseDoc ? parseContent(selectedResponseDoc.text) : { segments: [] };
+    const { segments } = selectedResponseDoc
+      ? parseContent(selectedResponseDoc.text)
+      : { segments: [] };
 
     // First try to find code in the currently selected message
     let code = segments.find((segment) => segment.type === "code");
@@ -120,7 +135,9 @@ export function useMessageSelection({
     // If no code was found and we have a valid selectedResponseDoc, look through all AI messages
     if (!code && selectedResponseDoc) {
       // Get all AI messages sorted from newest to oldest
-      const aiMessages = docs.filter((doc) => doc.type === "ai").sort((a, b) => b.created_at - a.created_at);
+      const aiMessages = docs
+        .filter((doc) => doc.type === "ai")
+        .sort((a, b) => b.created_at - a.created_at);
 
       // Look through each AI message until we find code
       for (const message of aiMessages) {
@@ -143,14 +160,21 @@ export function useMessageSelection({
   }, [selectedResponseDoc, docs]);
 
   // Build message history for AI requests
-  const filteredDocs = docs.filter((doc) => doc.type === "ai" || doc.type === "user" || doc.type === "system");
+  const filteredDocs = docs.filter(
+    (doc) => doc.type === "ai" || doc.type === "user" || doc.type === "system",
+  );
   const buildMessageHistory = useCallback((): {
     role: "user" | "assistant" | "system";
     content: string;
   }[] => {
     // Map all messages to the correct format first
     const allMessages = filteredDocs.map((msg) => {
-      const role = msg.type === "user" ? ("user" as const) : msg.type === "system" ? ("system" as const) : ("assistant" as const);
+      const role =
+        msg.type === "user"
+          ? ("user" as const)
+          : msg.type === "system"
+            ? ("system" as const)
+            : ("assistant" as const);
       return {
         role,
         content: msg.text || "",

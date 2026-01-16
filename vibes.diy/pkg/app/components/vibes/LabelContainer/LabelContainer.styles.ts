@@ -1,6 +1,6 @@
 import type React from "react";
 
-export function getContainerStyle(): React.CSSProperties {
+function getContainerStyle(): React.CSSProperties {
   return {
     position: "relative",
     display: "inline-flex",
@@ -10,7 +10,7 @@ export function getContainerStyle(): React.CSSProperties {
   };
 }
 
-export function getLabelStyle(): React.CSSProperties {
+function getLabelStyle(): React.CSSProperties {
   return {
     background: "var(--vibes-card-bg)",
     border: "2px solid var(--vibes-card-border)",
@@ -34,7 +34,7 @@ export function getLabelStyle(): React.CSSProperties {
   };
 }
 
-export function getButtonWrapperStyle(): React.CSSProperties {
+function getButtonWrapperStyle(): React.CSSProperties {
   return {
     background: "var(--vibes-card-bg)",
     border: "2px solid var(--vibes-card-border)",
@@ -48,7 +48,10 @@ export function getButtonWrapperStyle(): React.CSSProperties {
 }
 
 // Media query helpers (use window.matchMedia in component for responsive behavior)
-export function getResponsiveLabelStyle(isMobile: boolean, disappear = false): React.CSSProperties {
+export function getResponsiveLabelStyle(
+  isMobile: boolean,
+  disappear = false,
+): React.CSSProperties {
   if (isMobile) {
     if (disappear) {
       return {
@@ -108,7 +111,10 @@ export function getResponsiveLabelStyle(isMobile: boolean, disappear = false): R
   };
 }
 
-export function getResponsiveButtonWrapperStyle(isMobile: boolean, disappear = false): React.CSSProperties {
+export function getResponsiveButtonWrapperStyle(
+  isMobile: boolean,
+  disappear = false,
+): React.CSSProperties {
   if (isMobile && disappear) {
     return {
       background: "transparent",
@@ -148,7 +154,9 @@ export function getResponsiveButtonWrapperStyle(isMobile: boolean, disappear = f
   };
 }
 
-export function getResponsiveContainerStyle(isMobile: boolean): React.CSSProperties {
+export function getResponsiveContainerStyle(
+  isMobile: boolean,
+): React.CSSProperties {
   if (isMobile) {
     return {
       position: "relative",

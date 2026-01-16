@@ -15,7 +15,7 @@ fs.mkdirSync(path.dirname(url), { recursive: true });
 
 export default defineConfig({
   dialect: "sqlite",
-  schema: "../svc/sql/assets-fs.ts",
+  schema: "./node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema.ts",
   out: "./dist",
   dbCredentials: { url },
 });

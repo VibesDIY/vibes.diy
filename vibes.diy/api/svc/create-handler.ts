@@ -32,8 +32,8 @@ import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters
 import { msgBase, MsgBase } from "vibes-diy-api-pkg";
 import { type } from "arktype";
 import { ensureStorage } from "./intern/ensure-storage.js";
-import { isResponseType, ResponseType } from "./types.ts";
-import { servEntryPoint } from "./public/serv-entry-point.ts";
+import { isResponseType, ResponseType } from "@vibes.diy/api-types";
+import { servEntryPoint } from "./public/serv-entry-point.js";
 import { D1Result } from "@cloudflare/workers-types";
 
 const defaultHttpHeaders = Lazy(() =>

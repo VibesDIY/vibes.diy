@@ -33,7 +33,10 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
     if (!isVisible) return;
 
     function handleClickOutside(event: MouseEvent) {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
         onClose();
       }
     }
@@ -142,7 +145,8 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                   <div className="flex flex-col gap-1 px-4 py-3 text-sm font-medium">
                     <span className="">Opening log in window...</span>
                     <span className="font-small text-xs italic">
-                      Don't see it? Please check your browser for a blocked pop-up window
+                      Don't see it? Please check your browser for a blocked
+                      pop-up window
                     </span>
                   </div>
                 </li>
@@ -150,7 +154,11 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                 <>
                   <li>
                     <div className="flex flex-col px-1 py-1 text-sm font-medium">
-                      {pollError && <span className="font-small text-xs text-gray-400 italic">{pollError}</span>}
+                      {pollError && (
+                        <span className="font-small text-xs text-gray-400 italic">
+                          {pollError}
+                        </span>
+                      )}
                     </div>
                   </li>
                   <li>

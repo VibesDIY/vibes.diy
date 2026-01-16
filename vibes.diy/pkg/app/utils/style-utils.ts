@@ -22,7 +22,9 @@ export type { ImgGenClasses };
  * // Returns "imggen-root img-gen-container" (with legacy class name)
  * combineClasses('imggen-root', classes.root)
  */
-export function combineClasses(...classes: (string | boolean | null | undefined)[]): string {
+export function combineClasses(
+  ...classes: (string | boolean | null | undefined)[]
+): string {
   // Filter out falsy values
   const validClasses = classes.filter(Boolean) as string[];
 

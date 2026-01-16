@@ -5,7 +5,9 @@ import { useRef, useCallback, useEffect } from "react";
  * @param mergeAiMessage - Function to update AI message content
  * @returns Object with throttled update function and refs
  */
-export function useThrottledUpdates(mergeAiMessage: (update: { text: string }) => void) {
+export function useThrottledUpdates(
+  mergeAiMessage: (update: { text: string }) => void,
+) {
   const isProcessingRef = useRef<boolean>(false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousContentRef = useRef<string>("");
@@ -38,7 +40,9 @@ export function useThrottledUpdates(mergeAiMessage: (update: { text: string }) =
       const shouldUpdate =
         linesDifference >= MIN_LINE_THRESHOLD ||
         currentLineCount >= MAX_LINES_BUFFER ||
-        (content !== previousContent && currentLineCount >= 1 && previousContent === "");
+        (content !== previousContent &&
+          currentLineCount >= 1 &&
+          previousContent === "");
 
       // Set delay based on whether we've crossed the line threshold
       const delay = shouldUpdate ? 0 : FALLBACK_DELAY;
@@ -52,7 +56,7 @@ export function useThrottledUpdates(mergeAiMessage: (update: { text: string }) =
         mergeAiMessage({ text: content });
       }, delay);
     },
-    [mergeAiMessage]
+    [mergeAiMessage],
   );
 
   // Cleanup any pending updates when the component unmounts

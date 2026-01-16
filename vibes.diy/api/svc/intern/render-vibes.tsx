@@ -1,15 +1,14 @@
 import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result } from "@adviser/cement";
-import { FileSystemItem, ResponseType } from "../types.ts";
-import { renderToString } from "preact-render-to-string";
-import { sqlApps } from "../sql/assets-fs.ts";
-import { fetchContent } from "../public/serv-entry-point.ts";
-import { VibesApiSQLCtx } from "../api.ts";
-import { VibesDiyServCtx, vibesImportMap } from "vibes-diy-api-pkg";
+import { FileSystemItem, ResponseType, VibesDiyServCtx, vibesImportMap } from "@vibes.diy/api-types"
+import { sqlApps } from "../sql/vibes-diy-api-schema.js";
+import { fetchContent } from "../public/serv-entry-point.js";
+import { VibesApiSQLCtx } from "../api.js";
 import { type } from "arktype";
 import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
-import { DefaultHttpHeaders } from "../create-handler.ts";
-import { ExtractedHostToBindings } from "../entry-point-utils.ts";
-import { VibePage } from "./components/vibes-page.tsx";
+import { DefaultHttpHeaders } from "../create-handler.js";
+import { ExtractedHostToBindings } from "../entry-point-utils.js";
+import { VibePage } from "./components/vibes-page.js";
+import { renderToString } from 'react-dom/server'
 
 export async function renderVibes(
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>,
@@ -73,7 +72,7 @@ export async function renderVibes(
     mountJS: [
       `import { mountVibe } from '@vibes.diy/api-pkg';`,
       ...imports.map((i) => i.importStmt),
-      `mountVibe(${JSON.stringify(imports.map((i) => i.var))}, ${JSON.stringify(ctx)});`,
+      `mountVibe(${JSON.stringify(imports.map((i) => i.var))}, ${JSON.stringify(env)});`,
     ].join("\n"),
   };
   const res = await exception2Result(() =>

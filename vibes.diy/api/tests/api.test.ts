@@ -103,6 +103,9 @@ describe("VibesDiyApi", () => {
     // this is the iframe content page
     const res = await api.ensureAppSlug({
       mode: "dev",
+      env: {
+        TEST_ENV_VAR: "testVar",
+      },
       fileSystem: [
         {
           type: "code-block",

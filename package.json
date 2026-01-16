@@ -77,7 +77,7 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "drizzle-kit": "patches/drizzle-kit.patch"
+      "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch"
     }
   }
 }

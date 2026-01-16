@@ -2,12 +2,12 @@ import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, Even
 import { reqEnsureAppSlug, ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile, VibesDiyError } from "vibes-diy-api-pkg";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
-import { VibesApiSQLCtx } from "../api.ts";
+import { VibesApiSQLCtx } from "../api.js";
 import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
-import { calcEntryPointUrl } from "../entry-point-utils.ts";
-import { calcCid } from "../intern/ensure-storage.ts";
+import { calcEntryPointUrl } from "../entry-point-utils.js";
+import { calcCid } from "../intern/ensure-storage.js";
 
 export const ensureAppSlugItem: EventoHandler<Request, ReqEnsureAppSlug, ResEnsureAppSlug | VibesDiyError> = {
   hash: "ensure-cloud-token",

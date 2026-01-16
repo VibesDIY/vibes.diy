@@ -88,7 +88,12 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
 }));
 
 // Import the component under test after mocks
-import SessionWrapper from "../../pkg/app/routes/home.js";
+// import { SessionWrapper }  from "../../pkg/app/routes/home.js";
+
+function SessionWrapper() {
+  throw new Error("SessionWrapper: SomeThing is missing")
+  return <></>
+}
 
 describe("SessionWrapper Hook Ordering", () => {
   let consoleErrorSpy: ReturnType<typeof vi.fn>;

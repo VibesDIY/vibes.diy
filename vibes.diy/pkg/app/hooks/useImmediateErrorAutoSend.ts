@@ -36,7 +36,9 @@ export function useImmediateErrorAutoSend({
       return;
     }
 
-    const hasSyntax = immediateErrors.some((e) => e.errorType === "SyntaxError");
+    const hasSyntax = immediateErrors.some(
+      (e) => e.errorType === "SyntaxError",
+    );
     if (isStreaming && hasSyntax) {
       setIsStreaming(false);
     }
@@ -58,5 +60,12 @@ export function useImmediateErrorAutoSend({
         debouncedSendRef.current = null;
       }
     };
-  }, [immediateErrors, isStreaming, userInput, mergeUserMessage, setDidSendErrors, setIsStreaming]);
+  }, [
+    immediateErrors,
+    isStreaming,
+    userInput,
+    mergeUserMessage,
+    setDidSendErrors,
+    setIsStreaming,
+  ]);
 }

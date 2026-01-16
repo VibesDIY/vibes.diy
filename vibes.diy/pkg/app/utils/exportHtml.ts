@@ -1,6 +1,9 @@
 import { VibesDiyEnv } from "../config/env.js";
 import { ejectTemplateWithPlaceholders } from "./eject-template.js";
-import { normalizeComponentExports, transformImports } from "@vibes.diy/prompts";
+import {
+  normalizeComponentExports,
+  transformImports,
+} from "@vibes.diy/prompts";
 
 export function generateStandaloneHtml(params: { code: string }): string {
   const normalized = normalizeComponentExports(params.code);
@@ -12,7 +15,11 @@ export function generateStandaloneHtml(params: { code: string }): string {
     .replace("{{APP_CODE}}", transformed);
 }
 
-export function downloadTextFile(filename: string, contents: string, type = "text/html"): void {
+export function downloadTextFile(
+  filename: string,
+  contents: string,
+  type = "text/html",
+): void {
   const blob = new Blob([contents], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

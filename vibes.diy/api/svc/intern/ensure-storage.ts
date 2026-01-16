@@ -1,7 +1,7 @@
 import { CoerceBinaryInput, exception2Result, Result, to_uint8 } from "@adviser/cement";
-import { StorageResult } from "../api.ts";
+import { StorageResult } from "../api.js";
 import { VibesSqlite } from "../create-handler.js";
-import { sqlAssets } from "../sql/assets-fs.js";
+import { sqlAssets } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
 import { SuperThis } from "@fireproof/core-types-base";

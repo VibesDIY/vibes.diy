@@ -6,7 +6,10 @@ import type { IframeFiles, ResultPreviewProps } from "./ResultPreviewTypes.js";
 // ResultPreview component
 import IframeContent from "./IframeContent.js";
 import AppSettingsView from "./AppSettingsView.js";
-import { downloadTextFile, generateStandaloneHtml } from "../../utils/exportHtml.js";
+import {
+  downloadTextFile,
+  generateStandaloneHtml,
+} from "../../utils/exportHtml.js";
 import { useSession } from "../../hooks/useSession.js";
 import { useTheme } from "../../contexts/ThemeContext.js";
 
@@ -30,7 +33,8 @@ function ResultPreview({
   onSyntaxErrorChange,
 }: ResultPreviewProps & { children?: React.ReactNode }) {
   const { isDarkMode } = useTheme();
-  const { vibeDoc, updateDependencies, updateDemoDataOverride } = useSession(sessionId);
+  const { vibeDoc, updateDependencies, updateDemoDataOverride } =
+    useSession(sessionId);
   const showWelcome = !isStreaming && (!code || code.length === 0);
 
   // Use title from props directly
@@ -102,7 +106,15 @@ function ResultPreview({
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [onScreenshotCaptured, onPreviewLoaded, setIsIframeFetching, setMobilePreviewShown, addError, sessionId, currentTitle]);
+  }, [
+    onScreenshotCaptured,
+    onPreviewLoaded,
+    setIsIframeFetching,
+    setMobilePreviewShown,
+    addError,
+    sessionId,
+    currentTitle,
+  ]);
 
   const previewArea = showWelcome ? (
     <div className="h-full">{/* empty div to prevent layout shift */}</div>
@@ -147,7 +159,10 @@ function ResultPreview({
   );
 
   return (
-    <div className="h-full" style={{ overflow: "hidden", position: "relative" }}>
+    <div
+      className="h-full"
+      style={{ overflow: "hidden", position: "relative" }}
+    >
       <style>{animationStyles}</style>
       {previewArea}
       {children}

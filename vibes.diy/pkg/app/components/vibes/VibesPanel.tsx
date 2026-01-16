@@ -33,15 +33,24 @@ export interface VibesPanelProps {
  */
 type PanelMode = "default" | "mutate" | "invite";
 
-export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps = {}) {
+export function VibesPanel({
+  style,
+  className,
+  baseURL,
+  token,
+}: VibesPanelProps = {}) {
   const emailId = useId();
   const [mode, setMode] = useState<PanelMode>("default");
   const [email, setEmail] = useState("");
-  const [inviteStatus, setInviteStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [inviteStatus, setInviteStatus] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
   const [inviteMessage, setInviteMessage] = useState("");
 
   // Safe browser check for base URL
-  const defaultBaseURL = runtimeFn().isBrowser ? window.location.origin : "https://vibes.diy";
+  const defaultBaseURL = runtimeFn().isBrowser
+    ? window.location.origin
+    : "https://vibes.diy";
   const effectiveBaseURL = baseURL ?? defaultBaseURL;
 
   const handleMutateClick = () => {
@@ -92,7 +101,7 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
           right: "read",
           token,
         },
-      })
+      }),
     );
   };
 
@@ -104,13 +113,19 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
         message?: string;
       }>;
       setInviteStatus("success");
-      setInviteMessage(customEvent.detail?.message || `Invitation sent to ${customEvent.detail?.email}!`);
+      setInviteMessage(
+        customEvent.detail?.message ||
+          `Invitation sent to ${customEvent.detail?.email}!`,
+      );
     };
 
     const handleShareError = (event: Event) => {
       const customEvent = event as CustomEvent<{ error: { message: string } }>;
       setInviteStatus("error");
-      setInviteMessage(customEvent.detail?.error?.message || "Failed to send invitation. Please try again.");
+      setInviteMessage(
+        customEvent.detail?.error?.message ||
+          "Failed to send invitation. Please try again.",
+      );
     };
 
     document.addEventListener("vibes-share-success", handleShareSuccess);
@@ -132,10 +147,18 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
               <VibesButton variant={BLUE} onClick={handleFreshDataClick}>
                 Fresh Start
               </VibesButton>
-              <VibesButton variant={RED} onClick={handleChangeCodeClick} icon="remix">
+              <VibesButton
+                variant={RED}
+                onClick={handleChangeCodeClick}
+                icon="remix"
+              >
                 Remix Code
               </VibesButton>
-              <VibesButton variant={YELLOW} onClick={handleBackClick} icon="back">
+              <VibesButton
+                variant={YELLOW}
+                onClick={handleBackClick}
+                icon="back"
+              >
                 Back
               </VibesButton>
             </>
@@ -144,7 +167,10 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
             <>
               {inviteStatus === "idle" ? (
                 // Show form when idle
-                <form onSubmit={handleInviteSubmit} style={getInviteFormStyle()}>
+                <form
+                  onSubmit={handleInviteSubmit}
+                  style={getInviteFormStyle()}
+                >
                   <label htmlFor={emailId} style={getInviteLabelStyle()}>
                     Invite by email
                   </label>
@@ -160,7 +186,11 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
                       required
                     />
                   </BrutalistCard>
-                  <VibesButton variant={BLUE} type="submit" disabled={!email.trim()}>
+                  <VibesButton
+                    variant={BLUE}
+                    type="submit"
+                    disabled={!email.trim()}
+                  >
                     Send Invite
                   </VibesButton>
                 </form>
@@ -171,26 +201,48 @@ export function VibesPanel({ style, className, baseURL, token }: VibesPanelProps
                   role="status"
                   aria-live="polite"
                   size="sm"
-                  variant={inviteStatus === "sending" ? "default" : inviteStatus === "error" ? "error" : "success"}
+                  variant={
+                    inviteStatus === "sending"
+                      ? "default"
+                      : inviteStatus === "error"
+                        ? "error"
+                        : "success"
+                  }
                   style={getInviteStatusStyle()}
                 >
                   {inviteStatus === "sending" ? "Inviting..." : inviteMessage}
                 </BrutalistCard>
               )}
-              <VibesButton variant={YELLOW} onClick={handleBackClick} icon="back">
+              <VibesButton
+                variant={YELLOW}
+                onClick={handleBackClick}
+                icon="back"
+              >
                 Back
               </VibesButton>
             </>
           ) : (
             // Default buttons
             <>
-              <VibesButton variant={BLUE} onClick={handleLogoutClick} icon="login">
+              <VibesButton
+                variant={BLUE}
+                onClick={handleLogoutClick}
+                icon="login"
+              >
                 Logout
               </VibesButton>
-              <VibesButton variant={RED} onClick={handleMutateClick} icon="remix">
+              <VibesButton
+                variant={RED}
+                onClick={handleMutateClick}
+                icon="remix"
+              >
                 Remix
               </VibesButton>
-              <VibesButton variant={YELLOW} onClick={handleInviteClick} icon="invite">
+              <VibesButton
+                variant={YELLOW}
+                onClick={handleInviteClick}
+                icon="invite"
+              >
                 Invite
               </VibesButton>
               <VibesButton variant={GRAY} icon="settings">

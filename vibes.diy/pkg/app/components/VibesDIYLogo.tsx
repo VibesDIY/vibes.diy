@@ -8,7 +8,13 @@ interface VibesDIYLogoProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 // Logo component using the VibesSwitch from use-vibes-base
-const VibesDIYLogo: React.FC<VibesDIYLogoProps> = ({ className, width, height, size, ...props }) => {
+const VibesDIYLogo: React.FC<VibesDIYLogoProps> = ({
+  className,
+  width,
+  height,
+  size,
+  ...props
+}) => {
   // Use size if provided, otherwise calculate from width/height
   const effectiveSize = size || width || height || 24;
 

@@ -42,21 +42,31 @@ export default function AppLayout({
         <div className="flex-grow overflow-auto">{chatPanel}</div>
 
         {suggestionsComponent && (
-          <div className={`w-full ${fullWidthChat ? "md:flex md:justify-center" : ""}`}>
-            <div className={`${fullWidthChat ? "md:w-4/5" : "w-full"}`}>{suggestionsComponent}</div>
+          <div
+            className={`w-full ${fullWidthChat ? "md:flex md:justify-center" : ""}`}
+          >
+            <div className={`${fullWidthChat ? "md:w-4/5" : "w-full"}`}>
+              {suggestionsComponent}
+            </div>
           </div>
         )}
 
         <div
           className={`w-full ${fullWidthChat ? "md:flex md:justify-center md:pb-[20vh]" : "pb-0"} transition-all duration-300 ease-in-out`}
         >
-          <div className={`${fullWidthChat ? "md:w-4/5" : "w-full"} transition-all duration-300 ease-in-out`}>{chatInput}</div>
+          <div
+            className={`${fullWidthChat ? "md:w-4/5" : "w-full"} transition-all duration-300 ease-in-out`}
+          >
+            {chatInput}
+          </div>
         </div>
       </div>
 
       <div
         className={`flex w-full flex-col ${fullWidthChat ? "md:w-0" : "md:w-2/3"} ${
-          mobilePreviewShown ? "h-full" : "h-auto overflow-visible opacity-100 md:h-full"
+          mobilePreviewShown
+            ? "h-full"
+            : "h-auto overflow-visible opacity-100 md:h-full"
         } relative z-10 transition-all duration-300 ease-in-out`}
       >
         <div

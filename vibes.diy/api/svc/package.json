@@ -20,6 +20,7 @@
     "@fireproof/core-types-protocols-dashboard": "0.24.8-dev-test-device-id",
     "@libsql/client": "^0.17.0",
     "@vibes.diy/api-pkg": "workspace:*",
+    "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
     "acorn": "^8.15.0",
     "arktype": "^2.1.29",
@@ -27,14 +28,14 @@
     "jose": "^6.1.3",
     "mime": "^4.1.0",
     "multiformats": "^13.4.2",
-    "preact": "^10.28.2",
-    "preact-render-to-string": "^6.6.5",
     "random-words": "^2.0.1",
     "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "sucrase": "^3.35.1"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.8-dev-test-device-id",
-    "@types/react": "^19.2.8"
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3"
   }
 }

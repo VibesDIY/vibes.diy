@@ -1,18 +1,18 @@
 import { ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile } from "vibes-diy-api-pkg";
 import { exception2Result, Result, to_uint8, toSortedObject } from "@adviser/cement";
-import { AppSlugBinding } from "./ensure-slug-binding.ts";
+import { AppSlugBinding } from "./ensure-slug-binding.js";
 import { ReqWithVerifiedAuth } from "../check-auth.js";
-import { sqlApps } from "../sql/assets-fs.js";
+import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
 import { and, eq, or } from "drizzle-orm";
-import { FileSystemItem } from "../types.js";
+import { FileSystemItem } from "@vibes.diy/api-types";
 import mime from "mime";
 import { transform } from "sucrase";
-import { calcCid } from "./ensure-storage.ts";
+import { calcCid } from "./ensure-storage.js";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
-import { StorageResult, VibesApiSQLCtx } from "../api.ts";
-import { svcImportMap } from "./import-map.ts";
+import { StorageResult, VibesApiSQLCtx } from "../api.js";
+import { svcImportMap } from "./import-map.js";
 
 async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug: string): Promise<Result<number>> {
   const userApps = await ctx.db.select().from(sqlApps).where(eq(sqlApps.userId, userId)).orderBy(sqlApps.created).all();

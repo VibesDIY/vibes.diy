@@ -4,7 +4,12 @@
  */
 
 export function initGTM(containerId: string) {
-  if (typeof window === "undefined" || typeof document === "undefined" || !containerId) return;
+  if (
+    typeof window === "undefined" ||
+    typeof document === "undefined" ||
+    !containerId
+  )
+    return;
 
   // Avoid duplicate injection
   if (document.getElementById("gtm-src")) return;

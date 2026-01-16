@@ -10,14 +10,14 @@ import {
   URI,
   CoerceURI,
 } from "@adviser/cement";
-import { DefaultHttpHeaders } from "../create-handler.ts";
-import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.ts";
-import { VibesApiSQLCtx } from "../api.ts";
-import { sqlApps, sqlAssets } from "../sql/assets-fs.ts";
+import { DefaultHttpHeaders } from "../create-handler.js";
+import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
+import { VibesApiSQLCtx } from "../api.js";
+import { sqlApps, sqlAssets } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
-import { FileSystemItem, fileSystemItem, ResponseType } from "../types.ts";
+import { FileSystemItem, fileSystemItem, ResponseType } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { renderVibes } from "../intern/render-vibes.tsx";
+import { renderVibes } from "../intern/render-vibes.js";
 
 function pairReqRes(key: CoerceURI, content: unknown, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
   return [
