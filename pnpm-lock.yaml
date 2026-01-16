@@ -84,8 +84,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -183,8 +183,8 @@ importers:
         specifier: ^0.5.15
         version: 0.5.15(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-20261224
-        version: 0.24.3-dev-20261224(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -321,8 +321,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -434,8 +434,8 @@ importers:
         specifier: 0.24.7
         version: 0.24.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -617,8 +617,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -739,8 +739,8 @@ importers:
         specifier: 0.24.3-dev-use-livequery
         version: 0.24.3-dev-use-livequery(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -794,8 +794,8 @@ importers:
         specifier: 0.24.7
         version: 0.24.7(react-dom@19.2.3(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-use-livequery
-        version: 0.24.3-dev-use-livequery(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.7
         version: 0.24.7(typescript@5.9.3)
@@ -1038,8 +1038,8 @@ importers:
         specifier: 0.24.3-dev-20261224
         version: 0.24.3-dev-20261224(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-runtime':
-        specifier: 0.24.3-dev-20261224
-        version: 0.24.3-dev-20261224(typescript@5.9.3)
+        specifier: 0.24.7
+        version: 0.24.7(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
