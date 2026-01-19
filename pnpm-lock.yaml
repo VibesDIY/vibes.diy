@@ -851,8 +851,8 @@ importers:
         specifier: ^0.27.2
         version: 0.27.2
       isbot:
-        specifier: ^5.1.25
-        version: 5.1.32
+        specifier: ^5.1.33
+        version: 5.1.33
       jose:
         specifier: ^6.1.1
         version: 6.1.3
@@ -1080,8 +1080,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       isbot:
-        specifier: ^5.1.25
-        version: 5.1.32
+        specifier: ^5.1.33
+        version: 5.1.33
       jose:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1246,8 +1246,8 @@ importers:
         specifier: workspace:*
         version: link:../../../call-ai/pkg
       isbot:
-        specifier: ^5.1.25
-        version: 5.1.32
+        specifier: ^5.1.33
+        version: 5.1.33
       jose:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1349,8 +1349,8 @@ importers:
         specifier: workspace:*
         version: link:../../../call-ai/pkg
       isbot:
-        specifier: ^5.1.25
-        version: 5.1.32
+        specifier: ^5.1.33
+        version: 5.1.33
       jose:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6935,6 +6935,9 @@ packages:
   eventemitter3@5.0.1:
     resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
 
+  eventemitter3@5.0.4:
+    resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
+
   events-universal@1.0.1:
     resolution: {integrity: sha512-LUd5euvbMLpwOF8m6ivPCbhQeSiYVNb8Vs0fQ8QjXo0JTkEHpz8pxdQf0gStltaPpw0Cca8b39KxvK9cfKRiAw==}
 
@@ -7998,6 +8001,10 @@ packages:
 
   isbot@5.1.32:
     resolution: {integrity: sha512-VNfjM73zz2IBZmdShMfAUg10prm6t7HFUQmNAEOAVS4YH92ZrZcvkMcGX6cIgBJAzWDzPent/EeAtYEHNPNPBQ==}
+    engines: {node: '>=18'}
+
+  isbot@5.1.33:
+    resolution: {integrity: sha512-P4Hgb5NqswjkI0J1CM6XKXon/sxKY1SuowE7Qx2hrBhIwICFyXy54mfgB5eMHXsbe/eStzzpbIGNOvGmz+dlKg==}
     engines: {node: '>=18'}
 
   iserror@0.0.2:
@@ -10727,10 +10734,12 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   tar@7.5.2:
     resolution: {integrity: sha512-7NyxrTE4Anh8km8iEy7o0QYPs+0JKBTj5ZaqHg6B39erLg0qYXN3BijtShwbsNSvQ+LN75+KV+C4QR/f6Gwnpg==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   terminal-link@4.0.0:
     resolution: {integrity: sha512-lk+vH+MccxNqgVqSnkMVKx4VLJfnLjDBGzH16JVZjKE2DoxP57s6/vt6JmXV5I3jBcfGrxNrYtC+mPtU7WJztA==}
@@ -18613,6 +18622,8 @@ snapshots:
 
   eventemitter3@5.0.1: {}
 
+  eventemitter3@5.0.4: {}
+
   events-universal@1.0.1:
     dependencies:
       bare-events: 2.8.2
@@ -19793,6 +19804,8 @@ snapshots:
   isarray@2.0.5: {}
 
   isbot@5.1.32: {}
+
+  isbot@5.1.33: {}
 
   iserror@0.0.2: {}
 
@@ -22927,7 +22940,7 @@ snapshots:
       '@types/uuid': 8.3.4
       '@types/ws': 8.18.1
       buffer: 6.0.3
-      eventemitter3: 5.0.1
+      eventemitter3: 5.0.4
       uuid: 8.3.2
       ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     optionalDependencies:
