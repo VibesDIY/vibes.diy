@@ -29,7 +29,7 @@ import { ensureAppSlugItem } from "./public/ensure-app-slug-item.js";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
-import { msgBase, MsgBase } from "vibes-diy-api-pkg";
+import { msgBase, MsgBase } from "@vibes.diy/api-pkg";
 import { type } from "arktype";
 import { ensureStorage } from "./intern/ensure-storage.js";
 import { isResponseType, ResponseType } from "@vibes.diy/api-types";

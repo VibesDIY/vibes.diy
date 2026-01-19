@@ -1,5 +1,5 @@
-import { VibeDiyApi } from "vibes-diy-api-impl";
-import { createHandler } from "vibes-diy-api-svc";
+import { VibeDiyApi } from "@vibes.diy/api-impl";
+import { createHandler } from "@vibes.diy/api-svc";
 import { createClient } from "@libsql/client/node";
 import { beforeAll, describe, expect, inject, it } from "vitest";
 import { drizzle } from "drizzle-orm/libsql";

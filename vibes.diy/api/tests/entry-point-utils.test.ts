@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcEntryPointUrl, extractHostToBindings } from "vibes-diy-api-svc";
+import { calcEntryPointUrl, extractHostToBindings } from "@vibes.diy/api-svc";
 
 describe("entry-point-utils", () => {
   describe("calcEntryPointUrl", () => {

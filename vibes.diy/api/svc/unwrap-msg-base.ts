@@ -1,6 +1,6 @@
 import { Result, Option, ValidateTriggerCtx } from "@adviser/cement";
 import { type } from "arktype";
-import { msgBase } from "vibes-diy-api-pkg";
+import { msgBase } from "@vibes.diy/api-pkg";
 
 // ValidateTriggerCtx<INREQ, REQ, RES>
 export function unwrapMsgBase<INREQ, REQ, RES>(

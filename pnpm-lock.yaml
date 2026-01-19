@@ -853,6 +853,9 @@ importers:
       react:
         specifier: ^19.2.3
         version: 19.2.3
+      react-dom:
+        specifier: ^19.2.3
+        version: 19.2.3(react@19.2.3)
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.8-dev-test-device-id

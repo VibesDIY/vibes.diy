@@ -1,4 +1,4 @@
-import { ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile } from "vibes-diy-api-pkg";
+import { ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile } from "@vibes.diy/api-pkg";
 import { exception2Result, Result, to_uint8, toSortedObject } from "@adviser/cement";
 import { AppSlugBinding } from "./ensure-slug-binding.js";
 import { ReqWithVerifiedAuth } from "../check-auth.js";
