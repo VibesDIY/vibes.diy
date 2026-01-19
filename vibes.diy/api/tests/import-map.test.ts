@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { toEsmSh } from "vibes-diy-api-svc";
+import { toEsmSh } from "@vibes.diy/api-svc";
 
 describe("toEsmSh", () => {
   const baseURL = "https://esm.sh/";
