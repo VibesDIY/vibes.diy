@@ -36,6 +36,7 @@ runs:
       working-directory: vibes.diy/pkg
       shell: bash
       run: |
+        pnpm install
         pnpm run build
 
     - name: Deploy vibes.diy
