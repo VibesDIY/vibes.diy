@@ -7,7 +7,7 @@ import {
   ResultVibesDiy,
   VibesDiyApiIface,
   VibesDiyError,
-} from "vibes-diy-api-pkg";
+} from "@vibes.diy/api-pkg";
 import { exception2Result, Result } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
