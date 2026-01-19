@@ -22,7 +22,7 @@ database_id = "105530de-9900-435b-92f4-15347af604f6"
 name = "vibes-diy-v2-dev"
 vars = { ENVIRONMENT = "dev", VIBES_SVC_HOSTNAME_BASE = ".dev-v2.vibesdiy.net" }
 routes = [
-  { pattern = "dev-v2.vibesdiy.net", custom_domain = true },
+  { pattern = "dev-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" },
   { pattern = "*.dev-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" }
 ]
 
@@ -42,7 +42,7 @@ database_id = "105530de-9900-435b-92f4-15347af604f6"
 name = "vibes-diy-v2-prod"
 vars = { ENVIRONMENT = "prod", VIBES_SVC_HOSTNAME_BASE = ".prod-v2.vibesdiy.net" }
 routes = [
-  { pattern = "prod-v2.vibesdiy.net", custom_domain = true },
+  { pattern = "prod-v2.vibesdiy.net", zone_name = "vibesdiy.net" },
   { pattern = "*.prod-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" }
 ]
 
