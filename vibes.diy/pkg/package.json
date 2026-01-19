@@ -13,6 +13,10 @@
     "drizzle:libsql": "drizzle-kit push --config ./drizzle.libsql.config.ts",
     "drizzle:d1-local": "drizzle-kit push --config ./drizzle.d1-local-backend.config.ts",
     "drizzle:d1-remote": "drizzle-kit push --config ./drizzle.d1-remote.config.ts",
+    "build:dev": "CLOUDFLARE_ENV=dev react-router build",
+    "build:prod": "CLOUDFLARE_ENV=prod react-router build",
+    "deploy:dev": "CLOUDFLARE_ENV=dev react-router build && wrangler deploy",
+    "deploy:prod": "CLOUDFLARE_ENV=prod react-router build && wrangler deploy",
     "format:write": "prettier --write ."
   },
   "dependencies": {
@@ -55,8 +59,10 @@
     "@types/react": "~19.2.7",
     "@types/react-dom": "~19.2.2",
     "drizzle-kit": "^0.31.8",
+    "rollup-plugin-visualizer": "^6.0.5",
     "shiki": "^3.20.0",
     "tailwindcss": "^4.1.18",
+    "toml": "^3.0.0",
     "typescript": "^5.9.3",
     "vite": "^7.2.7",
     "vite-tsconfig-paths": "^5.1.4",

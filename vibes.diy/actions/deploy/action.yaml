@@ -10,35 +10,56 @@ inputs:
   CLOUDFLARE_ENV:
     description: "Cloudflare environment (e.g., production, staging)"
     required: true
+  CLOUD_SESSION_TOKEN_PUBLIC:
+    description: "Cloud session token for public access"
+    required: true
+  CLERK_PUBLISHABLE_KEY:
+    description: "Clerk publishable key for authentication"
+    required: true
+  DEVICE_ID_CA_PRIV_KEY:
+    description: "Device ID CA private key"
+    required: true
+  DEVICE_ID_CA_CERT:
+    description: "Device ID CA certificate"
+    required: true
+  WRAPPER_BASE_URL:
+    description: "Base URL for the wrapper"
+    required: true
+  FP_VERSION:
+    description: "Fireproof version"
+    required: true
 
 runs:
   using: "composite"
   steps:
-    - name: Manual approval step
-      uses: trstringer/manual-approval@v1
-      with:
-        secret: ${{ github.TOKEN }}
-        approvers: user1,org-team1
-        minimum-approvals: 1
-        issue-title: "Deploying ${{ github.event.inputs.version }} to prod"
-        issue-body: "Please approve or deny the deployment."
-
     - name: Build vibes.diy
       working-directory: vibes.diy/pkg
       shell: bash
       run: |
         pnpm run build
 
-    # - name: Deploy vibes.diy
-    #   working-directory: vibes.diy/pkg
-    #   shell: bash
-    #   env:
-    #     # need for drizzle
-    #     CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
-    #     CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
-    #     CLOUDFLARE_ENV: ${{ inputs.CLOUDFLARE_ENV }}
-    #   run: |
-    #     pnpm exec core-cli writeEnv --env ${{inputs.CLOUDFLARE_ENV}} --out /dev/stdout --json > sec.json
-    #     cat sec.json
-    #     pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk < sec.json
-    #     pnpm run deploy --env ${{inputs.CLOUDFLARE_ENV}}
+    - name: Deploy vibes.diy
+      working-directory: vibes.diy/pkg
+      shell: bash
+      env:
+        # need for drizzle
+        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
+        CLOUDFLARE_ENV: ${{ inputs.CLOUDFLARE_ENV }}
+        CLOUD_SESSION_TOKEN_PUBLIC: ${{ inputs.CLOUD_SESSION_TOKEN_PUBLIC }}
+        CLERK_PUBLISHABLE_KEY: ${{ inputs.CLERK_PUBLISHABLE_KEY }}
+        DEVICE_ID_CA_PRIV_KEY: ${{ inputs.DEVICE_ID_CA_PRIV_KEY }}
+        DEVICE_ID_CA_CERT: ${{ inputs.DEVICE_ID_CA_CERT }}
+        WRAPPER_BASE_URL: ${{ inputs.WRAPPER_BASE_URL }}
+        FP_VERSION: ${{ inputs.FP_VERSION }}
+      run: |
+        pnpm run drizzle:d1-remote
+        pnpm exec core-cli writeEnv --out - --json \
+          --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
+          --fromEnv CLERK_PUBLISHABLE_KEY \
+          --fromEnv DEVICE_ID_CA_PRIV_KEY \
+          --fromEnv DEVICE_ID_CA_CERT \
+          --fromEnv WRAPPER_BASE_URL \
+          --fromEnv FP_VERSION | \
+          pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk < sec.json
+        pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}

@@ -1,16 +1,16 @@
-name: "deploy vibes.diy"
+name: 'deploy vibes.diy'
 on:
   push:
     paths:
-      - "vibes.diy/**/*"
+      - 'vibes.diy/**/*'
 
-  #    tags:
-  #      - "vibes-diy@*"
+    tags:
+      - 'vibes-diy@*'
 
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to deploy"
+        description: 'Version to deploy'
         required: true
 
 jobs:
@@ -28,3 +28,9 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_ENV: ${{ vars.CLOUDFLARE_ENV }}
+          CLOUD_SESSION_TOKEN_PUBLIC: ${{ vars.CLOUD_SESSION_TOKEN_PUBLIC }}
+          CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          DEVICE_ID_CA_PRIV_KEY: ${{ secrets.DEVICE_ID_CA_PRIV_KEY }}
+          DEVICE_ID_CA_CERT: ${{ vars.DEVICE_ID_CA_CERT }}
+          WRAPPER_BASE_URL: ${{ vars.WRAPPER_BASE_URL }}
+          FP_VERSION: ${{ vars.FP_VERSION }}
