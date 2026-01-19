@@ -18,6 +18,8 @@ import {
   FirehoseIcon,
   AboutIcon,
   ArrowRightIcon,
+  GoogleIcon,
+  GitHubIcon,
 } from "../icons/index.js";
 import { useMobile } from "@vibes.diy/use-vibes-base";
 
@@ -39,7 +41,9 @@ type IconName =
   | "firehose"
   | "groups"
   | "home"
-  | "myvibes";
+  | "myvibes"
+  | "google"
+  | "github";
 
 // Icon map - maps icon names to React components
 const iconMap: Record<
@@ -62,6 +66,8 @@ const iconMap: Record<
   groups: GroupsIcon,
   home: HomeIconCircle,
   myvibes: MyVibesIcon,
+  google: GoogleIcon,
+  github: GitHubIcon,
 };
 
 export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -86,6 +92,11 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
    * @default true
    */
   ignoreDarkMode?: boolean;
+  /**
+   * Custom background color for form type buttons. Only applies when buttonType is "form".
+   * Accepts any valid CSS color value.
+   */
+  formColor?: string;
 }
 
 export function VibesButton({
@@ -98,6 +109,7 @@ export function VibesButton({
   style: customStyle,
   className = "",
   ignoreDarkMode = false,
+  formColor,
   ...props
 }: MenuButtonProps) {
   const buttonVariant = variant;
@@ -122,6 +134,7 @@ export function VibesButton({
     isMobile,
     !!IconComponent,
     buttonType,
+    formColor,
   );
   const mergedStyle = getMergedButtonStyle(
     baseStyle,
@@ -163,7 +176,7 @@ export function VibesButton({
               <div style={iconStyle}>
                 <IconComponent
                   bgFill="var(--vibes-button-icon-bg)"
-                  fill="var(--vibes-button-icon-fill)"
+                  fill={icon === "google" || icon === "github" ? "#000" : "var(--vibes-button-icon-fill)"}
                   width={
                     buttonType === "flat-rounded" ? 28 : isMobile ? 28 : 45
                   }

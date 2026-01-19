@@ -1,8 +1,9 @@
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
-// Original routes: import { flatRoutes } from "@react-router/fs-routes"; export default flatRoutes() satisfies RouteConfig;
+import { type RouteConfig, index, route, layout } from "@react-router/dev/routes";
+
 export default [
   index("routes/test-menu.tsx", { id: "index" }),
-  route("*", "routes/test-menu.tsx", { id: "test-menu" }),
-//   index("routes/catch-all.tsx", { id: "index" }),
-//   route("*", "routes/catch-all.tsx", { id: "catch-all" }),
+  layout("routes/general-layout.tsx", [
+    route("auth", "routes/auth.tsx", { id: "auth" }),
+  ]),
+  route("*", "routes/test-menu.tsx", { id: "catch-all" }),
 ] satisfies RouteConfig;

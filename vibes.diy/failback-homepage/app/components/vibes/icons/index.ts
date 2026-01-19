@@ -17,3 +17,6 @@ export { FaceIcon3 } from "./FaceIcon3.js";
 export { FaceIcon4 } from "./FaceIcon4.js";
 export { ArrowLeftIcon } from "./ArrowLeftIcon.js";
 export { ArrowRightIcon } from "./ArrowRightIcon.js";
+export { VibesCardIcon } from "./VibesCardIcon.js";
+export { GoogleIcon } from "./GoogleIcon.js";
+export { GitHubIcon } from "./GitHubIcon.js";

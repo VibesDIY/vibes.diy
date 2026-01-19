@@ -26,8 +26,8 @@ export const bounceKeyframes = `
 `;
 
 // Form button style - simple flat style with rounded corners
-export function getFormButtonStyle(variant: string): React.CSSProperties {
-  const cssColor = getVariantColor(variant);
+export function getFormButtonStyle(variant: string, formColor?: string): React.CSSProperties {
+  const cssColor = formColor || getVariantColor(variant);
 
   return {
     width: "100%",
@@ -52,10 +52,11 @@ export function getButtonStyle(
   isMobile = false,
   hasIcon: boolean,
   buttonType: string,
+  formColor?: string,
 ): React.CSSProperties {
   // Use form style for form button type
   if (buttonType === "form") {
-    return getFormButtonStyle(variant);
+    return getFormButtonStyle(variant, formColor);
   }
   const cssColor = getVariantColor(variant);
   let transform = "translate(0px, 0px)";
@@ -93,7 +94,7 @@ export function getButtonStyle(
     minHeight: isMobile ? "60px" : undefined,
     padding:
       buttonType === "flat-rounded"
-        ? "0.5rem"
+        ? "0.5rem 0.75rem"
         : isMobile
           ? buttonType
             ? "none"
@@ -160,10 +161,10 @@ export function getIconContainerStyle(
   const cssColor = getVariantColor(variant);
 
   return {
-    width: buttonType === "flat-rounded" ? "30px" : isMobile ? "48px" : "80px",
-    height: buttonType === "flat-rounded" ? "30px" : isMobile ? "48px" : "80px",
-    backgroundColor: buttonType === "flat-rounded" ? "none" : cssColor,
-    borderRadius: buttonType === "flat-rounded" ? "none" : "8px",
+    width: buttonType === "flat-rounded" ? "28px" : isMobile ? "48px" : "80px",
+    height: buttonType === "flat-rounded" ? "28px" : isMobile ? "48px" : "80px",
+    backgroundColor: buttonType === "flat-rounded" ? "transparent" : cssColor,
+    borderRadius: buttonType === "flat-rounded" ? "0" : "8px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -201,7 +202,7 @@ export function getContentWrapperStyle(
   return {
     display: "flex",
     alignItems: "center",
-    gap: isMobile ? "16px" : "6px",
+    gap: buttonType === "flat-rounded" ? "0.5rem" : isMobile ? "16px" : "6px",
     flexDirection:
       buttonType === "flat-rounded"
         ? ("row" as const)
