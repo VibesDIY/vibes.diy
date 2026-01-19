@@ -2,10 +2,7 @@ import { Editor, Monaco } from "@monaco-editor/react";
 import React, { useEffect, useRef, useState } from "react";
 import type { IframeFiles } from "./ResultPreviewTypes.js";
 import { DatabaseListView } from "./DataView/index.js";
-import {
-  diagnosticsForCodeReady,
-  setupMonacoEditor,
-} from "./setupMonacoEditor.js";
+import { diagnosticsForCodeReady, setupMonacoEditor } from "./setupMonacoEditor.js";
 import type { MonacoDiagnosticsDefaults } from "./setupMonacoEditor.js";
 import { editor, Uri } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
@@ -41,10 +38,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
   // Reference to store the Monaco API instance
   const monacoApiRef = useRef<Monaco>(null);
   // Reference to store the current Shiki highlighter
-  const highlighterRef = useRef<HighlighterGeneric<
-    BundledLanguage,
-    BundledTheme
-  > | null>(null);
+  const highlighterRef = useRef<HighlighterGeneric<BundledLanguage, BundledTheme> | null>(null);
   // Reference to store disposables for cleanup
   const disposablesRef = useRef<{ dispose: () => void }[]>([]);
   // Flag to track if user has manually scrolled during streaming
@@ -69,10 +63,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
 
     // Also check the editor's current value to be extra sure
     const editorCurrentValue = monacoEditorRef.current?.getValue() || newCode;
-    const actualValue =
-      editorCurrentValue.length >= newCode.length
-        ? editorCurrentValue
-        : newCode;
+    const actualValue = editorCurrentValue.length >= newCode.length ? editorCurrentValue : newCode;
 
     setEditedCode(actualValue);
     const hasChanges = actualValue !== appCode;
@@ -91,9 +82,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
   const handleSave = async () => {
     // Format the code before saving
     try {
-      await monacoEditorRef.current
-        ?.getAction("editor.action.formatDocument")
-        ?.run();
+      await monacoEditorRef.current?.getAction("editor.action.formatDocument")?.run();
     } catch (error) {
       console.warn("Could not format document:", error);
     }
@@ -131,9 +120,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
   useEffect(() => {
     if (monacoApiRef.current) {
       // Update the Shiki theme in Monaco when dark mode changes from parent
-      const currentTheme = isDarkMode
-        ? "github-dark-default"
-        : "github-light-default";
+      const currentTheme = isDarkMode ? "github-dark-default" : "github-light-default";
       // Use monaco editor namespace to set theme
       monacoApiRef.current.editor.setTheme(currentTheme);
     }
@@ -148,22 +135,16 @@ const IframeContent: React.FC<IframeContentProps> = ({
     const monacoInstance = monacoApiRef.current;
     if (!monacoInstance) return;
 
-    const defaults = monacoInstance.languages.typescript
-      .javascriptDefaults as MonacoDiagnosticsDefaults;
+    const defaults = monacoInstance.languages.typescript.javascriptDefaults as MonacoDiagnosticsDefaults;
 
     if (typeof defaults.setDiagnosticsOptions !== "function") {
       // This should never happen with a real Monaco instance; log so
       // misconfigured test/mocked environments are easier to debug.
-      console.error(
-        "[IframeContent] Monaco javascriptDefaults.setDiagnosticsOptions is missing; skipping diagnostics toggle.",
-      );
+      console.error("[IframeContent] Monaco javascriptDefaults.setDiagnosticsOptions is missing; skipping diagnostics toggle.");
       return;
     }
 
-    const current =
-      typeof defaults.getDiagnosticsOptions === "function"
-        ? defaults.getDiagnosticsOptions()
-        : undefined;
+    const current = typeof defaults.getDiagnosticsOptions === "function" ? defaults.getDiagnosticsOptions() : undefined;
 
     defaults.setDiagnosticsOptions(diagnosticsForCodeReady(codeReady, current));
   }, [codeReady]);
@@ -205,11 +186,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
           left: 0,
         }}
       >
-        <InlinePreview
-          code={appCode}
-          sessionId={sessionId}
-          codeReady={codeReady}
-        />
+        <InlinePreview code={appCode} sessionId={sessionId} codeReady={codeReady} />
       </div>
       <div
         style={{
@@ -254,10 +231,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
                 monacoApiRef.current = mo;
               },
               setHighlighter: (h) => {
-                highlighterRef.current = h as HighlighterGeneric<
-                  BundledLanguage,
-                  BundledTheme
-                >;
+                highlighterRef.current = h as HighlighterGeneric<BundledLanguage, BundledTheme>;
               },
             });
 
@@ -268,18 +242,13 @@ const IframeContent: React.FC<IframeContentProps> = ({
               // any previously scheduled run before queuing a new one. This acts as a
               // lightweight, manual debounce without bringing in lodash or a similar
               // utility.
-              let syntaxErrorCheckTimeoutId: ReturnType<
-                typeof setTimeout
-              > | null = null;
+              let syntaxErrorCheckTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
               const scheduleSyntaxCheck = (delay: number) => {
                 if (syntaxErrorCheckTimeoutId !== null) {
                   clearTimeout(syntaxErrorCheckTimeoutId);
                 }
-                syntaxErrorCheckTimeoutId = setTimeout(
-                  checkSyntaxErrors,
-                  delay,
-                );
+                syntaxErrorCheckTimeoutId = setTimeout(checkSyntaxErrors, delay);
               };
 
               const checkSyntaxErrors = () => {
@@ -289,10 +258,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
                 });
 
                 // Filter for error markers from any language service
-                const errorMarkers = allMarkers.filter(
-                  (marker: editor.IMarker) =>
-                    marker.severity === monaco.MarkerSeverity.Error,
-                );
+                const errorMarkers = allMarkers.filter((marker: editor.IMarker) => marker.severity === monaco.MarkerSeverity.Error);
 
                 const errorCount = errorMarkers.length;
 
@@ -305,19 +271,13 @@ const IframeContent: React.FC<IframeContentProps> = ({
               scheduleSyntaxCheck(100);
 
               // Listen for marker changes - check every time markers change
-              const disposable = monaco.editor.onDidChangeMarkers(
-                (uris: readonly Uri[]) => {
-                  // Check if our model's URI is in the changed URIs
-                  if (
-                    uris.some(
-                      (uri: Uri) => uri.toString() === model.uri.toString(),
-                    )
-                  ) {
-                    // Add a small delay to ensure markers are updated
-                    scheduleSyntaxCheck(50);
-                  }
-                },
-              );
+              const disposable = monaco.editor.onDidChangeMarkers((uris: readonly Uri[]) => {
+                // Check if our model's URI is in the changed URIs
+                if (uris.some((uri: Uri) => uri.toString() === model.uri.toString())) {
+                  // Add a small delay to ensure markers are updated
+                  scheduleSyntaxCheck(50);
+                }
+              });
 
               // Also listen for model content changes as a backup
               const contentDisposable = editor.onDidChangeModelContent(() => {
@@ -347,10 +307,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
         }}
       >
         <div className="data-container">
-          <DatabaseListView
-            appCode={filesContent["/App.jsx"]?.code || ""}
-            sessionId={sessionId || "default-session"}
-          />
+          <DatabaseListView appCode={filesContent["/App.jsx"]?.code || ""} sessionId={sessionId || "default-session"} />
         </div>
       </div>
       {/**

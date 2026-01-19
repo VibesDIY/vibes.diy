@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import { BrutalistCard } from "../../components/vibes/BrutalistCard.js";
 import { VibesButton } from "../../components/vibes/VibesButton/index.js";
@@ -55,9 +49,7 @@ function CreateWithStreaming({
     // Only auto-navigate when actively streaming
     if (!chatState.isStreaming) return;
 
-    const latestAiMessage = chatState.docs
-      .filter((doc) => doc.type === "ai")
-      .sort((a, b) => b.created_at - a.created_at)[0];
+    const latestAiMessage = chatState.docs.filter((doc) => doc.type === "ai").sort((a, b) => b.created_at - a.created_at)[0];
 
     if (!latestAiMessage?.text) return;
 
@@ -67,23 +59,17 @@ function CreateWithStreaming({
 
     // Check if we have code and content after the last code segment is CURRENTLY being streamed
     if (codeSegments.length > 0) {
-      const lastCodeIndex = segments.findLastIndex(
-        (seg) => seg.type === "code",
-      );
+      const lastCodeIndex = segments.findLastIndex((seg) => seg.type === "code");
 
       // Only navigate if there's content after code AND we're still streaming
       // This means the post-code content is actively being generated RIGHT NOW
       const segmentsAfterCode = segments.slice(lastCodeIndex + 1);
-      const hasContentAfterCode = segmentsAfterCode.some(
-        (seg) => seg.content && seg.content.trim().length > 0,
-      );
+      const hasContentAfterCode = segmentsAfterCode.some((seg) => seg.content && seg.content.trim().length > 0);
 
       // Additional check: Only navigate if this is fresh content being streamed
       // Check that the last segment after code is at the end (still being written to)
       const isStreamingPostCodeContent =
-        hasContentAfterCode &&
-        segmentsAfterCode.length > 0 &&
-        segments[segments.length - 1] !== segments[lastCodeIndex]; // Last segment is not the code
+        hasContentAfterCode && segmentsAfterCode.length > 0 && segments[segments.length - 1] !== segments[lastCodeIndex]; // Last segment is not the code
 
       if (isStreamingPostCodeContent) {
         hasNavigated.current = true;
@@ -95,9 +81,7 @@ function CreateWithStreaming({
 
   // Auto-scroll to bottom when segments change
   useEffect(() => {
-    const latestAiMessage = chatState.docs
-      .filter((doc) => doc.type === "ai")
-      .sort((a, b) => b.created_at - a.created_at)[0];
+    const latestAiMessage = chatState.docs.filter((doc) => doc.type === "ai").sort((a, b) => b.created_at - a.created_at)[0];
 
     if (!latestAiMessage?.text) return;
 
@@ -109,14 +93,10 @@ function CreateWithStreaming({
   }, [chatState.docs]);
 
   // Filter and dedupe AI messages
-  const aiMessages = chatState.docs
-    .filter((doc) => doc.type === "ai")
-    .sort((a, b) => a.created_at - b.created_at);
+  const aiMessages = chatState.docs.filter((doc) => doc.type === "ai").sort((a, b) => a.created_at - b.created_at);
 
   // Deduplicate by _id
-  const uniqueMessages = Array.from(
-    new Map(aiMessages.map((msg) => [msg._id, msg])).values(),
-  );
+  const uniqueMessages = Array.from(new Map(aiMessages.map((msg) => [msg._id, msg])).values());
 
   return (
     <>
@@ -125,20 +105,14 @@ function CreateWithStreaming({
         const parsed = parseContent(message.text);
         const segments = parsed.segments;
         const codeSegments = segments.filter((seg) => seg.type === "code");
-        const codeLines = codeSegments.reduce(
-          (acc, seg) => acc + (seg.content?.split("\n").length || 0),
-          0,
-        );
+        const codeLines = codeSegments.reduce((acc, seg) => acc + (seg.content?.split("\n").length || 0), 0);
 
         return (
           <div key={message._id}>
             {segments.map((segment, index) => {
               if (segment.type === "markdown" && segment.content) {
                 return (
-                  <BrutalistCard
-                    key={`${message._id}-markdown-${index}`}
-                    size="md"
-                  >
+                  <BrutalistCard key={`${message._id}-markdown-${index}`} size="md">
                     <div className="ai-markdown prose">
                       <ReactMarkdown>{segment.content}</ReactMarkdown>
                     </div>
@@ -159,14 +133,7 @@ function CreateWithStreaming({
                       >
                         <code className="font-mono">
                           <span className="mr-3">App.jsx</span>
-                          <svg
-                            aria-hidden="true"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            version="1.1"
-                            width="16"
-                            className="inline-block"
-                          >
+                          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" className="inline-block">
                             <path
                               fill="currentColor"
                               d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"
@@ -180,9 +147,7 @@ function CreateWithStreaming({
                       </button>
                     </div>
                     <pre className="m-0 overflow-x-auto rounded-sm bg-light-background-02 p-4 font-mono text-sm dark:bg-dark-background-01">
-                      <code>
-                        {segment.content.split("\n").slice(-3).join("\n")}
-                      </code>
+                      <code>{segment.content.split("\n").slice(-3).join("\n")}</code>
                     </pre>
                   </BrutalistCard>
                 );
@@ -207,9 +172,7 @@ function CreateWithStreaming({
       {showInputAtBottom && chatState.docs.length > 0 && (
         <>
           <BrutalistCard size="md" style={{ width: "100%" }}>
-            <div style={{ marginBottom: "12px", fontWeight: 600 }}>
-              Continue the conversation
-            </div>
+            <div style={{ marginBottom: "12px", fontWeight: 600 }}>Continue the conversation</div>
             <textarea
               value={newPromptText}
               onChange={(e) => setNewPromptText(e.target.value)}
@@ -259,14 +222,10 @@ export const CreateSection = () => {
   const sessionId = params.sessionId || null;
 
   // Initialize state from location.state if available
-  const locationState = location.state as
-    | { shouldGenerate?: boolean; prompt?: string }
-    | undefined;
+  const locationState = location.state as { shouldGenerate?: boolean; prompt?: string } | undefined;
 
   const [pendingSubmit, setPendingSubmit] = useState(false);
-  const [shouldGenerate, setShouldGenerate] = useState(
-    locationState?.shouldGenerate || false,
-  );
+  const [shouldGenerate, setShouldGenerate] = useState(locationState?.shouldGenerate || false);
 
   // Use chat state for the input UI (only when no session exists yet)
   const chatState = useNewSessionChat(() => {
@@ -296,7 +255,7 @@ export const CreateSection = () => {
         },
       });
     },
-    [navigate, sessionId],
+    [navigate, sessionId]
   );
 
   useEffect(() => {
@@ -318,13 +277,7 @@ export const CreateSection = () => {
           });
       }
     }
-  }, [
-    pendingSubmit,
-    isAuthenticated,
-    chatState.input,
-    chatState.sendMessage,
-    setShouldGenerate,
-  ]);
+  }, [pendingSubmit, isAuthenticated, chatState.input, chatState.sendMessage, setShouldGenerate]);
 
   const handleLetsGo = async () => {
     if (!isAuthenticated) {
@@ -365,33 +318,19 @@ export const CreateSection = () => {
           {!sessionId && (
             <>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                <VibesButton
-                  variant="blue"
-                  style={{ flex: "1" }}
-                  onClick={() => chatState.setInput(randomSuggestions[0].text)}
-                >
+                <VibesButton variant="blue" style={{ flex: "1" }} onClick={() => chatState.setInput(randomSuggestions[0].text)}>
                   {randomSuggestions[0].label}
                 </VibesButton>
-                <VibesButton
-                  variant="yellow"
-                  style={{ flex: "1" }}
-                  onClick={() => chatState.setInput(randomSuggestions[1].text)}
-                >
+                <VibesButton variant="yellow" style={{ flex: "1" }} onClick={() => chatState.setInput(randomSuggestions[1].text)}>
                   {randomSuggestions[1].label}
                 </VibesButton>
-                <VibesButton
-                  variant="gray"
-                  style={{ flex: "1" }}
-                  onClick={() => chatState.setInput(randomSuggestions[2].text)}
-                >
+                <VibesButton variant="gray" style={{ flex: "1" }} onClick={() => chatState.setInput(randomSuggestions[2].text)}>
                   {randomSuggestions[2].label}
                 </VibesButton>
               </div>
 
               <BrutalistCard size="md" style={{ width: "100%" }}>
-                <div style={{ marginBottom: "12px", fontWeight: 600 }}>
-                  Describe your vibe
-                </div>
+                <div style={{ marginBottom: "12px", fontWeight: 600 }}>Describe your vibe</div>
                 <ChatInput
                   chatState={chatState}
                   showModelPickerInChat={chatState.showModelPickerInChat}
@@ -417,12 +356,7 @@ export const CreateSection = () => {
                 />
               </BrutalistCard>
 
-              <VibesButton
-                variant="blue"
-                style={{ width: "200px" }}
-                onClick={handleLetsGo}
-                disabled={shouldGenerate}
-              >
+              <VibesButton variant="blue" style={{ width: "200px" }} onClick={handleLetsGo} disabled={shouldGenerate}>
                 {shouldGenerate ? "Generating..." : "Let's Go"}
               </VibesButton>
             </>
@@ -431,11 +365,7 @@ export const CreateSection = () => {
           {/* Show first user message when session exists */}
           {sessionId && chatState.input && (
             <BrutalistCard size="md" style={{ width: "100%" }}>
-              <div
-                style={{ marginBottom: "8px", fontWeight: 600, opacity: 0.7 }}
-              >
-                Your request:
-              </div>
+              <div style={{ marginBottom: "8px", fontWeight: 600, opacity: 0.7 }}>Your request:</div>
               <div>{chatState.input}</div>
             </BrutalistCard>
           )}
@@ -451,10 +381,7 @@ export const CreateSection = () => {
             />
           )}
 
-          <a
-            href="/"
-            style={{ textAlign: "right", textDecoration: "underline" }}
-          >
+          <a href="/" style={{ textAlign: "right", textDecoration: "underline" }}>
             Learn
           </a>
         </div>

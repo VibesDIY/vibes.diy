@@ -31,7 +31,7 @@ export const openAIStrategy: ModelStrategy = {
       additionalProperties: schema.additionalProperties !== undefined ? schema.additionalProperties : false,
       // Copy any additional schema properties
       ...Object.fromEntries(
-        Object.entries(schema).filter(([key]) => !["name", "properties", "required", "additionalProperties"].includes(key)),
+        Object.entries(schema).filter(([key]) => !["name", "properties", "required", "additionalProperties"].includes(key))
       ),
     });
 

@@ -26,10 +26,10 @@ pnpm dev
 The example demonstrates how to use the ImgGen component from use-vibes:
 
 ```tsx
-import { ImgGen } from 'use-vibes';
+import { ImgGen } from "use-vibes";
 
 function App() {
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState("");
 
   return (
     <div className="container">

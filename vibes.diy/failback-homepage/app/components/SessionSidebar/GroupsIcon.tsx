@@ -7,9 +7,7 @@ interface GroupsIconProps {
 /**
  * Groups icon component - represents vibe groups
  */
-export const GroupsIcon: React.FC<GroupsIconProps> = ({
-  className = "h-5 w-5",
-}) => {
+export const GroupsIcon: React.FC<GroupsIconProps> = ({ className = "h-5 w-5" }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

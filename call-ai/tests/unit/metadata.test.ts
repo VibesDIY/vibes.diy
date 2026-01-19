@@ -144,7 +144,7 @@ describe("getMeta", () => {
       Promise.resolve({
         choices: [{ message: { content: "First response" } }],
         model: "openai/gpt-4",
-      }),
+      })
     );
 
     // First API call

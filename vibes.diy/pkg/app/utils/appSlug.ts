@@ -127,11 +127,7 @@ export function isProductionEnvironment(): boolean {
   }
 
   const { hostname } = window.location;
-  return (
-    hostname.includes(".") &&
-    hostname !== "localhost" &&
-    !hostname.startsWith("127.0.0.1")
-  );
+  return hostname.includes(".") && hostname !== "localhost" && !hostname.startsWith("127.0.0.1");
 }
 
 /**

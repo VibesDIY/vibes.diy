@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { combineClasses, defaultClasses, ImgGenClasses } from '../../utils/style-utils.js';
-import { ImgGenFileDrop } from './ImgGenFileDrop.js';
-import { useFireproof } from '@fireproof/use-fireproof';
+import * as React from "react";
+import { combineClasses, defaultClasses, ImgGenClasses } from "../../utils/style-utils.js";
+import { ImgGenFileDrop } from "./ImgGenFileDrop.js";
+import { useFireproof } from "@fireproof/use-fireproof";
 
 interface ImgGenPromptWaitingProps {
   /** Classname(s) to apply to the container */
@@ -25,7 +25,7 @@ export function ImgGenPromptWaiting({
   debug,
   onFilesUploaded,
 }: ImgGenPromptWaitingProps) {
-  const { database: db } = useFireproof(database || 'ImgGen');
+  const { database: db } = useFireproof(database || "ImgGen");
 
   // Handle files being uploaded
   const handleFilesDropped = React.useCallback(
@@ -39,7 +39,7 @@ export function ImgGenPromptWaiting({
       try {
         // Create new document to hold the uploaded files
         const newDoc = {
-          type: 'image',
+          type: "image",
           createdAt: new Date().toISOString(),
           _files: {} as Record<string, File>,
         };
@@ -55,7 +55,7 @@ export function ImgGenPromptWaiting({
         const result = await db.put(newDoc);
 
         if (debug) {
-          console.log('[ImgGenPromptWaiting] Created document for uploads:', result.id);
+          console.log("[ImgGenPromptWaiting] Created document for uploads:", result.id);
         }
 
         // Notify parent component that files were uploaded
@@ -63,30 +63,21 @@ export function ImgGenPromptWaiting({
           onFilesUploaded(result.id);
         }
       } catch (error) {
-        console.error('[ImgGenPromptWaiting] Error handling file upload:', error);
+        console.error("[ImgGenPromptWaiting] Error handling file upload:", error);
       }
     },
     [db, debug, onFilesUploaded]
   );
 
   return (
-    <div
-      className={combineClasses(
-        'imggen-upload-waiting',
-        className || '',
-        classes?.uploadWaiting || ''
-      )}
-    >
-      <div
-        className="imggen-placeholder-content"
-        style={{ marginBottom: '1rem', textAlign: 'center' }}
-      >
-        <h3 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>Generate an Image</h3>
-        <p style={{ margin: '0', color: '#666' }}>Enter a prompt or upload an image to edit</p>
+    <div className={combineClasses("imggen-upload-waiting", className || "", classes?.uploadWaiting || "")}>
+      <div className="imggen-placeholder-content" style={{ marginBottom: "1rem", textAlign: "center" }}>
+        <h3 style={{ margin: "0 0 0.5rem 0", color: "#333" }}>Generate an Image</h3>
+        <p style={{ margin: "0", color: "#666" }}>Enter a prompt or upload an image to edit</p>
       </div>
 
       <ImgGenFileDrop
-        className={classes?.dropZone || ''}
+        className={classes?.dropZone || ""}
         onFilesDropped={handleFilesDropped}
         isActive={true}
         maxFiles={10}

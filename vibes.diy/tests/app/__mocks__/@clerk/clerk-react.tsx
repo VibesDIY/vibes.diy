@@ -45,20 +45,13 @@ export const mockUseSignIn = vi.fn(() => ({
   },
 }));
 
-export const mockClerkProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => <>{children}</>;
+export const mockClerkProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
-export const mockAuthenticateWithRedirectCallback = () => (
-  <div>Mock SSO Callback</div>
-);
+export const mockAuthenticateWithRedirectCallback = () => <div>Mock SSO Callback</div>;
 
 // Default exports for auto-mocking
 export const useAuth = mockUseAuth;
 export const useUser = mockUseUser;
 export const useSignIn = mockUseSignIn;
 export const ClerkProvider = mockClerkProvider;
-export const AuthenticateWithRedirectCallback =
-  mockAuthenticateWithRedirectCallback;
+export const AuthenticateWithRedirectCallback = mockAuthenticateWithRedirectCallback;

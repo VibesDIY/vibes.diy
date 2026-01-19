@@ -62,9 +62,7 @@ test("debug module/options selection undefined response", async ({ page }) => {
 
   // Look for the specific problematic log
   const undefinedResponseLog = logs.find(
-    (log) =>
-      log.includes("Module/options selection raw response:") &&
-      log.includes("undefined"),
+    (log) => log.includes("Module/options selection raw response:") && log.includes("undefined")
   );
 
   if (undefinedResponseLog) {
@@ -72,12 +70,8 @@ test("debug module/options selection undefined response", async ({ page }) => {
 
     // Check if there were any timeout or error logs
     const timeoutLog = logs.find((log) => log.includes("API call timed out"));
-    const errorLog = logs.find((log) =>
-      log.includes("API call failed with error"),
-    );
-    const successLog = logs.find((log) =>
-      log.includes("API call completed successfully"),
-    );
+    const errorLog = logs.find((log) => log.includes("API call failed with error"));
+    const successLog = logs.find((log) => log.includes("API call completed successfully"));
 
     if (timeoutLog) {
       console.log("🕐 TIMEOUT DETECTED:", timeoutLog);

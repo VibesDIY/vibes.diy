@@ -22,10 +22,7 @@ interface MockContext {
   req: {
     json: () => Promise<unknown>;
   };
-  json: (
-    data: unknown,
-    status?: number,
-  ) => { body: string; init: { status: number } };
+  json: (data: unknown, status?: number) => { body: string; init: { status: number } };
 }
 
 describe("Queue functionality", () => {
@@ -96,7 +93,7 @@ describe("Queue functionality", () => {
           userId: string;
           remixOf?: string;
         };
-      },
+      }
     );
 
     // Call the handler
@@ -166,7 +163,7 @@ describe("Queue functionality", () => {
           userId: string;
           remixOf?: string;
         };
-      },
+      }
     );
 
     // Call the handler
@@ -232,7 +229,7 @@ describe("Queue functionality", () => {
           userId: string;
           remixOf?: string;
         };
-      },
+      }
     );
 
     // Call the handler
@@ -242,10 +239,7 @@ describe("Queue functionality", () => {
     expect(mockQueue.send).toHaveBeenCalledOnce();
 
     // Verify error was logged
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "Error sending to queue:",
-      expect.any(Error),
-    );
+    expect(consoleSpy).toHaveBeenCalledWith("Error sending to queue:", expect.any(Error));
 
     // Verify the API still returns success (queue failure doesn't break app creation)
     expect(result.success).toBe(true);
@@ -283,7 +277,7 @@ describe("Queue functionality", () => {
           userId: string;
           remixOf?: string;
         };
-      },
+      }
     );
 
     // Call the handler

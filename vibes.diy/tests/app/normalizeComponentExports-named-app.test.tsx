@@ -31,8 +31,7 @@ export default App;
     expect(normalized).toContain("const App = () => {");
 
     // Make sure we don't have duplicate exports
-    const exportCount = (normalized.match(/export\s+default\s+App/g) || [])
-      .length;
+    const exportCount = (normalized.match(/export\s+default\s+App/g) || []).length;
     expect(exportCount).toBe(1);
   });
 
@@ -67,9 +66,7 @@ export default App;
     // Check for specific syntax error patterns
     expect(normalized).not.toMatch(/const\s+App\s+=\s+App/); // No duplicate App declarations
     expect(normalized).toContain("export default App"); // Has the export
-    expect(normalized).not.toMatch(
-      /export\s+default\s+App.*export\s+default\s+App/s,
-    ); // No duplicate exports
+    expect(normalized).not.toMatch(/export\s+default\s+App.*export\s+default\s+App/s); // No duplicate exports
   });
 
   // Test with variable declaration pattern
@@ -94,8 +91,7 @@ export default App;
     expect(normalized).toContain("const App = ({ count }) => {");
 
     // Should have exactly one export default App
-    const exportCount = (normalized.match(/export\s+default\s+App/g) || [])
-      .length;
+    const exportCount = (normalized.match(/export\s+default\s+App/g) || []).length;
     expect(exportCount).toBe(1);
   });
 });

@@ -1,12 +1,5 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
-import React, {
-  useEffect,
-  useCallback,
-  useRef,
-  forwardRef,
-  useImperativeHandle,
-  useState,
-} from "react";
+import React, { useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useState } from "react";
 import type { BaseChatState } from "@vibes.diy/prompts";
 import ModelPicker, { type ModelOption } from "./ModelPicker.js";
 import { Button } from "./ui/button.js";
@@ -28,19 +21,7 @@ export interface ChatInputRef extends HTMLTextAreaElement {
 }
 
 const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
-  (
-    {
-      chatState,
-      onSend,
-      currentModel,
-      onModelChange,
-      models,
-      globalModel,
-      showModelPickerInChat,
-      hideSubmitButton,
-    },
-    ref,
-  ) => {
+  ({ chatState, onSend, currentModel, onModelChange, models, globalModel, showModelPickerInChat, hideSubmitButton }, ref) => {
     // Refs
     const submitButtonRef = useRef<HTMLButtonElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -58,7 +39,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
               submitButtonRef.current.click();
             }
           },
-        }) as ChatInputRef,
+        }) as ChatInputRef
     );
 
     // Internal callback to handle sending messages
@@ -127,18 +108,11 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
               }
             }}
             className="border-light-decorative-00 dark:border-dark-decorative-00 text-light-primary dark:text-dark-primary bg-light-background-01 dark:bg-dark-background-01 focus:ring-accent-01-light dark:focus:ring-accent-01-dark max-h-[200px] min-h-[90px] w-full resize-y rounded-lg border p-2.5 text-sm focus:border-transparent focus:ring-2 focus:outline-none"
-            placeholder={
-              chatState.docs.length || chatState.isStreaming
-                ? "Continue coding..."
-                : "I want to build..."
-            }
+            placeholder={chatState.docs.length || chatState.isStreaming ? "Continue coding..." : "I want to build..."}
             rows={2}
           />
           <div className="flex items-center justify-between gap-2">
-            {showModelPickerInChat &&
-            Array.isArray(models) &&
-            models.length > 0 &&
-            onModelChange ? (
+            {showModelPickerInChat && Array.isArray(models) && models.length > 0 && onModelChange ? (
               <ModelPicker
                 currentModel={currentModel}
                 onModelChange={onModelChange}
@@ -157,9 +131,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 disabled={chatState.isStreaming}
                 variant="blue"
                 size="fixed"
-                aria-label={
-                  chatState.isStreaming ? "Generating" : "Send message"
-                }
+                aria-label={chatState.isStreaming ? "Generating" : "Send message"}
               >
                 {chatState.isStreaming ? "•••" : "Code"}
               </Button>
@@ -168,7 +140,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
         </div>
       </div>
     );
-  },
+  }
 );
 
 ChatInput.displayName = "ChatInput";

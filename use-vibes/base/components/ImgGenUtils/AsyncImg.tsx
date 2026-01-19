@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { DocFileMeta } from '@fireproof/use-fireproof';
+import * as React from "react";
+import { DocFileMeta } from "@fireproof/use-fireproof";
 
 interface AsyncImgProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   file: DocFileMeta | File | null | undefined;
@@ -23,7 +23,7 @@ export function AsyncImg({ file, ...props }: AsyncImgProps) {
     }
 
     // Handle both File objects (direct) and DocFileMeta objects (with .file() method)
-    if ('file' in file && typeof file.file === 'function') {
+    if ("file" in file && typeof file.file === "function") {
       // This is a DocFileMeta object
       file
         .file()
@@ -31,17 +31,17 @@ export function AsyncImg({ file, ...props }: AsyncImgProps) {
           if (!isMounted) return;
 
           // Only create blob URL for image files
-          if (fileObj.type.startsWith('image/')) {
+          if (fileObj.type.startsWith("image/")) {
             objectUrl = URL.createObjectURL(fileObj);
             setSrc(objectUrl);
           }
         })
         .catch((error) => {
-          console.error('[AsyncImg] Failed to load file:', error);
+          console.error("[AsyncImg] Failed to load file:", error);
         });
     } else if (file instanceof File) {
       // This is a direct File object (likely from tests)
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith("image/")) {
         objectUrl = URL.createObjectURL(file);
         setSrc(objectUrl);
       }

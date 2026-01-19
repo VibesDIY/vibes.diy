@@ -14,13 +14,7 @@ interface ImgFileProps {
  * It handles loading the file and converting it to a data URL
  * Can optionally display with a blurred background and variable height foreground
  */
-export function ImgFile({
-  file,
-  alt,
-  className,
-  withBlurredBg = false,
-  maxHeight = "10rem",
-}: ImgFileProps) {
+export function ImgFile({ file, alt, className, withBlurredBg = false, maxHeight = "10rem" }: ImgFileProps) {
   const [imgDataUrl, setImgDataUrl] = useState("");
 
   useEffect(() => {
@@ -38,10 +32,7 @@ export function ImgFile({
   // If we want the fancy blurred background version
   if (withBlurredBg) {
     return (
-      <div
-        className="relative w-full overflow-hidden"
-        style={{ minHeight: maxHeight }}
-      >
+      <div className="relative w-full overflow-hidden" style={{ minHeight: maxHeight }}>
         {/* Extremely blurred background version (50x blur) */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <img
@@ -54,23 +45,12 @@ export function ImgFile({
 
         {/* Foreground image with variable height */}
         <div className="relative z-10 flex w-full justify-center py-2">
-          <img
-            className={`${className} max-w-full object-contain`}
-            style={{ maxHeight }}
-            alt={alt}
-            src={imgDataUrl}
-          />
+          <img className={`${className} max-w-full object-contain`} style={{ maxHeight }} alt={alt} src={imgDataUrl} />
         </div>
       </div>
     );
   }
 
   // Default fixed-height version
-  return (
-    <img
-      className={`${className} h-40 w-full object-cover`}
-      alt={alt}
-      src={imgDataUrl}
-    />
-  );
+  return <img className={`${className} h-40 w-full object-cover`} alt={alt} src={imgDataUrl} />;
 }

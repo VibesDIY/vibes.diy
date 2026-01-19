@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useFireproof } from 'use-vibes';
-import { callAi } from 'call-ai';
+import { useState, useEffect } from "react";
+import { useFireproof } from "use-vibes";
+import { callAi } from "call-ai";
 
 // Message document interface
 interface MessageDoc {
@@ -21,20 +21,20 @@ declare global {
 
 // Sample app that demonstrates hosted app patterns
 export default function App() {
-  const { database, useLiveQuery, enableSync, syncEnabled } = useFireproof('hosted-dev-app');
-  const [message, setMessage] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
+  const { database, useLiveQuery, enableSync, syncEnabled } = useFireproof("hosted-dev-app");
+  const [message, setMessage] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Vibe loading state
-  const [vibeSlug, setVibeSlug] = useState('');
-  const [vibeCode, setVibeCode] = useState('');
+  const [vibeSlug, setVibeSlug] = useState("");
+  const [vibeCode, setVibeCode] = useState("");
   const [vibeLoading, setVibeLoading] = useState(false);
-  const [vibeError, setVibeError] = useState('');
+  const [vibeError, setVibeError] = useState("");
 
   // Sample data query (like hosted apps would do)
-  const { docs: messages } = useLiveQuery('type', {
-    key: 'message',
+  const { docs: messages } = useLiveQuery("type", {
+    key: "message",
     descending: true,
   }) as { docs: MessageDoc[] };
 
@@ -43,25 +43,25 @@ export default function App() {
 
     await database.put({
       _id: `msg-${Date.now()}`,
-      type: 'message',
+      type: "message",
       text: message,
       timestamp: new Date().toISOString(),
     });
 
-    setMessage('');
+    setMessage("");
   };
 
   const handleAiCall = async () => {
     setLoading(true);
-    setAiResponse('');
+    setAiResponse("");
 
     try {
       // Test AI integration (like hosted apps would do)
-      const response = await callAi('Say hello and explain what this app demonstrates');
+      const response = await callAi("Say hello and explain what this app demonstrates");
 
-      setAiResponse(typeof response === 'string' ? response : JSON.stringify(response));
+      setAiResponse(typeof response === "string" ? response : JSON.stringify(response));
     } catch (error) {
-      setAiResponse(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setAiResponse(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setLoading(false);
     }
@@ -69,12 +69,12 @@ export default function App() {
 
   const fetchVibeCode = async (slug: string) => {
     setVibeLoading(true);
-    setVibeError('');
-    setVibeCode('');
+    setVibeError("");
+    setVibeCode("");
 
     try {
       // Try both vibesdiy domains
-      const domains = ['vibesdiy.app', 'vibesdiy.net'];
+      const domains = ["vibesdiy.app", "vibesdiy.net"];
       let response: Response | null = null;
       let lastError: Error | null = null;
 
@@ -94,16 +94,14 @@ export default function App() {
       }
 
       if (!response || !response.ok) {
-        throw new Error(
-          `Failed to fetch vibe "${slug}" from all domains. Last error: ${lastError?.message}`
-        );
+        throw new Error(`Failed to fetch vibe "${slug}" from all domains. Last error: ${lastError?.message}`);
       }
 
       const code = await response.text();
       setVibeCode(code);
       console.log(`✅ Successfully loaded vibe "${slug}" (${code.length} chars)`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       setVibeError(errorMessage);
       console.error(`💥 Failed to load vibe "${slug}":`, errorMessage);
     } finally {
@@ -119,9 +117,9 @@ export default function App() {
       const slug = vibeMatch[1];
       setVibeSlug(slug);
       fetchVibeCode(slug);
-    } else if (path === '/vibe' || path === '/vibe/') {
+    } else if (path === "/vibe" || path === "/vibe/") {
       // Default to lunar-filter-7721
-      const defaultSlug = 'lunar-filter-7721';
+      const defaultSlug = "lunar-filter-7721";
       setVibeSlug(defaultSlug);
       fetchVibeCode(defaultSlug);
     }
@@ -139,8 +137,7 @@ export default function App() {
       <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">🏠 Hosted Dev Environment</h1>
         <p className="text-gray-600 mb-4">
-          This example app mimics the hosted environment on vibesdiy.net with live HMR for
-          development.
+          This example app mimics the hosted environment on vibesdiy.net with live HMR for development.
         </p>
 
         {/* Environment Info */}
@@ -149,7 +146,7 @@ export default function App() {
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• API Key: {window.CALLAI_API_KEY}</li>
             <li>• Chat URL: {window.CALLAI_CHAT_URL}</li>
-            <li>• Sync Enabled: {syncEnabled ? '✅ Yes' : '❌ No'}</li>
+            <li>• Sync Enabled: {syncEnabled ? "✅ Yes" : "❌ No"}</li>
             <li>• Database: Connected</li>
           </ul>
         </div>
@@ -161,7 +158,7 @@ export default function App() {
             disabled={syncEnabled || false}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {syncEnabled ? '✅ Sync Active' : 'Enable Sync'}
+            {syncEnabled ? "✅ Sync Active" : "Enable Sync"}
           </button>
         </div>
       </div>
@@ -177,12 +174,9 @@ export default function App() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Enter a message..."
             className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onKeyDown={(e) => e.key === 'Enter' && handleAddMessage()}
+            onKeyDown={(e) => e.key === "Enter" && handleAddMessage()}
           />
-          <button
-            onClick={handleAddMessage}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          >
+          <button onClick={handleAddMessage} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Add Message
           </button>
         </div>
@@ -191,14 +185,10 @@ export default function App() {
           {messages.map((msg) => (
             <div key={msg._id} className="p-3 bg-gray-50 rounded border">
               <p className="text-gray-900">{msg.text}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {new Date(msg.timestamp).toLocaleString()}
-              </p>
+              <p className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleString()}</p>
             </div>
           ))}
-          {messages.length === 0 && (
-            <p className="text-gray-500 italic">No messages yet. Add one above!</p>
-          )}
+          {messages.length === 0 && <p className="text-gray-500 italic">No messages yet. Add one above!</p>}
         </div>
       </div>
 
@@ -211,7 +201,7 @@ export default function App() {
           disabled={loading}
           className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 mb-4"
         >
-          {loading ? 'Calling AI...' : 'Test AI Call'}
+          {loading ? "Calling AI..." : "Test AI Call"}
         </button>
 
         {aiResponse && (
@@ -225,9 +215,7 @@ export default function App() {
       {/* Vibe Loading Demo */}
       <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">🎨 Vibe Loading Demo</h2>
-        <p className="text-gray-600 mb-4">
-          Load production vibes from vibesdiy.app or vibesdiy.net to see their code.
-        </p>
+        <p className="text-gray-600 mb-4">Load production vibes from vibesdiy.app or vibesdiy.net to see their code.</p>
 
         <div className="flex gap-2 mb-4">
           <input
@@ -236,21 +224,21 @@ export default function App() {
             onChange={(e) => setVibeSlug(e.target.value)}
             placeholder="Enter vibe slug (e.g., lunar-filter-7721)"
             className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onKeyDown={(e) => e.key === 'Enter' && handleLoadVibe()}
+            onKeyDown={(e) => e.key === "Enter" && handleLoadVibe()}
           />
           <button
             onClick={handleLoadVibe}
             disabled={vibeLoading || !vibeSlug.trim()}
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
           >
-            {vibeLoading ? 'Loading...' : 'Load Vibe'}
+            {vibeLoading ? "Loading..." : "Load Vibe"}
           </button>
         </div>
 
         <div className="text-sm text-gray-500 mb-4">
           <p>💡 Try these examples:</p>
           <div className="flex flex-wrap gap-2 mt-1">
-            {['lunar-filter-7721', 'dynamic-vishnu-1713'].map((example) => (
+            {["lunar-filter-7721", "dynamic-vishnu-1713"].map((example) => (
               <button
                 key={example}
                 onClick={() => {
@@ -264,7 +252,7 @@ export default function App() {
             ))}
           </div>
           <p className="mt-2">
-            🌐 URL support: visit <code>/vibe/{'{slug}'}</code> to auto-load
+            🌐 URL support: visit <code>/vibe/{"{slug}"}</code> to auto-load
           </p>
         </div>
 
@@ -281,9 +269,7 @@ export default function App() {
             <div className="p-3 bg-gray-50 rounded border max-h-96 overflow-auto">
               <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">{vibeCode}</pre>
             </div>
-            <p className="text-xs text-gray-500">
-              Loaded {vibeCode.length} characters from production
-            </p>
+            <p className="text-xs text-gray-500">Loaded {vibeCode.length} characters from production</p>
           </div>
         )}
       </div>

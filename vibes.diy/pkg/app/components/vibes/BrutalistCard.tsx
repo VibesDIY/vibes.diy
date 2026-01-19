@@ -1,9 +1,6 @@
 import React from "react";
 import { getBrutalistCardStyle } from "./BrutalistCard.styles.js";
-import type {
-  BrutalistCardVariant,
-  BrutalistCardSize,
-} from "./BrutalistCard.styles.js";
+import type { BrutalistCardVariant, BrutalistCardSize } from "./BrutalistCard.styles.js";
 
 export interface BrutalistCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Content to render inside the card */
@@ -33,22 +30,8 @@ export interface BrutalistCardProps extends React.HTMLAttributes<HTMLDivElement>
  * </BrutalistCard>
  * ```
  */
-export const BrutalistCard = React.forwardRef<
-  HTMLDivElement,
-  BrutalistCardProps
->(
-  (
-    {
-      children,
-      variant = "default",
-      size = "md",
-      messageType,
-      style,
-      className,
-      ...divProps
-    }: BrutalistCardProps,
-    ref,
-  ) => {
+export const BrutalistCard = React.forwardRef<HTMLDivElement, BrutalistCardProps>(
+  ({ children, variant = "default", size = "md", messageType, style, className, ...divProps }: BrutalistCardProps, ref) => {
     const cardStyle = {
       ...getBrutalistCardStyle(variant, size, messageType),
       background: "var(--vibes-card-bg)",
@@ -62,7 +45,7 @@ export const BrutalistCard = React.forwardRef<
         {children}
       </div>
     );
-  },
+  }
 );
 
 BrutalistCard.displayName = "BrutalistCard";

@@ -112,7 +112,7 @@ describe("OpenAI Wire Protocol Tests", () => {
     expect(actualRequestBody.response_format.json_schema.name).toEqual(openaiRequestFixture.response_format.json_schema.name);
 
     expect(actualRequestBody.response_format.json_schema.schema.properties).toEqual(
-      openaiRequestFixture.response_format.json_schema.schema.properties,
+      openaiRequestFixture.response_format.json_schema.schema.properties
     );
   });
 

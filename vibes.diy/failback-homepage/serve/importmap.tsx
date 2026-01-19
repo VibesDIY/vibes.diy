@@ -1,9 +1,6 @@
 import React from "react";
 
-function enhance(
-  importMap: Record<string, string | undefined>,
-  ver: Record<string, string>,
-): Record<string, string> {
+function enhance(importMap: Record<string, string | undefined>, ver: Record<string, string>): Record<string, string> {
   const enhancedMap: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(importMap)) {
@@ -51,8 +48,7 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
     "dequal/lite": "https://esm.sh/dequal@2.0.3/lite",
     "use-sync-external-store": "https://esm.sh/use-sync-external-store@1.6.0",
     "@adviser/cement": "https://esm.sh/@adviser/cement@0.5.5",
-    "@clerk/clerk-react":
-      "https://esm.sh/@clerk/clerk-react?deps=react@19.2.1,react-dom@19.2.1",
+    "@clerk/clerk-react": "https://esm.sh/@clerk/clerk-react?deps=react@19.2.1,react-dom@19.2.1",
     "@clerk/clerk-js": "https://esm.sh/@clerk/clerk-js@5",
     multiformats: "https://esm.sh/multiformats",
     cborg: "https://esm.sh/cborg",
@@ -63,12 +59,9 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
     "jose/jwt/decode": "https://esm.sh/jose/jwt/decode",
     dompurify: "https://esm.sh/dompurify",
     yaml: "https://esm.sh/yaml",
-    "posthog-js":
-      "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
-    "posthog-js@1.302.2":
-      "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
-    "posthog-js/react":
-      "https://esm.sh/posthog-js/react?deps=react@19.2.1,react-dom@19.2.1",
+    "posthog-js": "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
+    "posthog-js@1.302.2": "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
+    "posthog-js/react": "https://esm.sh/posthog-js/react?deps=react@19.2.1,react-dom@19.2.1",
 
     react: "https://esm.sh/react@19.2.1",
 
@@ -98,48 +91,36 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
     "react-dom/client": "https://esm.sh/react-dom@19.2.1/client",
     "react/jsx-runtime": "https://esm.sh/react@19.2.1/jsx-runtime",
     "react/jsx-dev-runtime": "https://esm.sh/react@19.2.1/jsx-dev-runtime",
-    "react-router":
-      "https://esm.sh/react-router?deps=react@19.2.1,react-dom@19.2.1",
-    "react-router-dom":
-      "https://esm.sh/react-router-dom?deps=react@19.2.1,react-dom@19.2.1",
+    "react-router": "https://esm.sh/react-router?deps=react@19.2.1,react-dom@19.2.1",
+    "react-router-dom": "https://esm.sh/react-router-dom?deps=react@19.2.1,react-dom@19.2.1",
     "call-ai": "https://esm.sh/call-ai@v0.14.5",
 
-    "react-hot-toast":
-      "https://esm.sh/react-hot-toast?deps=react@19.2.1,react-dom@19.2.1",
+    "react-hot-toast": "https://esm.sh/react-hot-toast?deps=react@19.2.1,react-dom@19.2.1",
     "@radix-ui/react-slot": "https://esm.sh/@radix-ui/react-slot",
     "class-variance-authority": "https://esm.sh/class-variance-authority",
     clsx: "https://esm.sh/clsx",
     "react-markdown": "https://esm.sh/react-markdown",
 
     "tailwind-merge": "https://esm.sh/tailwind-merge",
-    "@monaco-editor/react":
-      "https://esm.sh/@monaco-editor/react?deps=react@19.2.1,react-dom@19.2.1",
+    "@monaco-editor/react": "https://esm.sh/@monaco-editor/react?deps=react@19.2.1,react-dom@19.2.1",
     "@shikijs/monaco": "https://esm.sh/@shikijs/monaco",
     "shiki/core": "https://esm.sh/shiki/core",
     "shiki/langs/javascript.mjs": "https://esm.sh/shiki/langs/javascript.mjs",
     "shiki/langs/typescript.mjs": "https://esm.sh/shiki/langs/typescript.mjs",
     "shiki/langs/jsx.mjs": "https://esm.sh/shiki/langs/jsx.mjs",
     "shiki/langs/tsx.mjs": "https://esm.sh/shiki/langs/tsx.mjs",
-    "shiki/themes/github-dark-default.mjs":
-      "https://esm.sh/shiki/themes/github-dark-default.mjs",
-    "shiki/themes/github-light-default.mjs":
-      "https://esm.sh/shiki/themes/github-light-default.mjs",
+    "shiki/themes/github-dark-default.mjs": "https://esm.sh/shiki/themes/github-dark-default.mjs",
+    "shiki/themes/github-light-default.mjs": "https://esm.sh/shiki/themes/github-light-default.mjs",
     "shiki/engine/oniguruma": "https://esm.sh/shiki/engine/oniguruma",
     "shiki/wasm": "https://esm.sh/shiki/wasm",
-    "react-cookie-consent":
-      "https://esm.sh/react-cookie-consent?deps=react@19.2.1,react-dom@19.2.1",
+    "react-cookie-consent": "https://esm.sh/react-cookie-consent?deps=react@19.2.1,react-dom@19.2.1",
 
     three: "https://esm.sh/three@0.182.0",
-    "three/examples/jsm/lines/Line2.js":
-      "https://esm.sh/three@0.182.0/examples/jsm/lines/Line2.js",
-    "three/examples/jsm/lines/LineGeometry.js":
-      "https://esm.sh/three@0.182.0/examples/jsm/lines/LineGeometry.js",
-    "three/examples/jsm/lines/LineMaterial.js":
-      "https://esm.sh/three@0.182.0/examples/jsm/lines/LineMaterial.js",
-    "three/examples/jsm/geometries/TextGeometry.js":
-      "https://esm.sh/three@0.182.0/examples/jsm/geometries/TextGeometry.js",
-    "three/examples/jsm/loaders/FontLoader.js":
-      "https://esm.sh/three@0.182.0/examples/jsm/loaders/FontLoader.js",
+    "three/examples/jsm/lines/Line2.js": "https://esm.sh/three@0.182.0/examples/jsm/lines/Line2.js",
+    "three/examples/jsm/lines/LineGeometry.js": "https://esm.sh/three@0.182.0/examples/jsm/lines/LineGeometry.js",
+    "three/examples/jsm/lines/LineMaterial.js": "https://esm.sh/three@0.182.0/examples/jsm/lines/LineMaterial.js",
+    "three/examples/jsm/geometries/TextGeometry.js": "https://esm.sh/three@0.182.0/examples/jsm/geometries/TextGeometry.js",
+    "three/examples/jsm/loaders/FontLoader.js": "https://esm.sh/three@0.182.0/examples/jsm/loaders/FontLoader.js",
     animejs: "https://esm.sh/animejs@4.2.2",
     "monaco-editor": "https://esm.sh/monaco-editor@0.55.1",
     shiki: "https://esm.sh/shiki@3.20.0",
@@ -175,9 +156,5 @@ export function ImportMap(prop?: Partial<ImportMapProp>) {
     "@fireproof/use-fireproof": "FP",
   };
 
-  return (
-    <script type="importmap">
-      {JSON.stringify({ imports: enhance(importMap, versions) }, null, 2)}
-    </script>
-  );
+  return <script type="importmap">{JSON.stringify({ imports: enhance(importMap, versions) }, null, 2)}</script>;
 }

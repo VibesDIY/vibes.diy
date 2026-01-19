@@ -6,18 +6,16 @@ import type { Segment, ViewType } from "@vibes.diy/prompts";
 // Mock wrapper component for Storybook
 const StructuredMessageWrapper = ({
   segments,
-  isStreaming = false,
+  promptProcessing = false,
   isLatestMessage = false,
   initialSelectedResponseId = "test-message-1",
 }: {
   segments: Segment[];
-  isStreaming?: boolean;
+  promptProcessing?: boolean;
   isLatestMessage?: boolean;
   initialSelectedResponseId?: string;
 }) => {
-  const [selectedResponseId, setSelectedResponseId] = useState(
-    initialSelectedResponseId,
-  );
+  const [selectedResponseId, setSelectedResponseId] = useState(initialSelectedResponseId);
   const [mobilePreviewShown, setMobilePreviewShown] = useState(false);
 
   const mockNavigateToView = (view: ViewType) => {
@@ -37,12 +35,11 @@ const StructuredMessageWrapper = ({
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-600 dark:text-gray-400">
-        Selected Response ID: {selectedResponseId} | Mobile Preview:{" "}
-        {mobilePreviewShown.toString()}
+        Selected Response ID: {selectedResponseId} | Mobile Preview: {mobilePreviewShown.toString()}
       </div>
       <StructuredMessage
         segments={segments}
-        isStreaming={isStreaming}
+        promptProcessing={promptProcessing}
         messageId="test-message-1"
         setSelectedResponseId={mockSetSelectedResponseId}
         selectedResponseId={selectedResponseId}
@@ -73,13 +70,12 @@ const meta = {
       description: "Array of segments (markdown/code) to display",
       control: "object",
     },
-    isStreaming: {
+    promptProcessing: {
       description: "Whether the message is currently streaming",
       control: "boolean",
     },
     isLatestMessage: {
-      description:
-        "Whether this is the latest message (shows streaming indicator)",
+      description: "Whether this is the latest message (shows streaming indicator)",
       control: "boolean",
     },
     initialSelectedResponseId: {
@@ -224,7 +220,7 @@ The application is fully responsive and works across all devices.`,
 export const Loading: Story = {
   args: {
     segments: [],
-    isStreaming: true,
+    promptProcessing: true,
     isLatestMessage: true,
   },
 };
@@ -235,7 +231,7 @@ export const EmptySegments: Story = {
       { type: "markdown", content: "" },
       { type: "code", content: "" },
     ],
-    isStreaming: false,
+    promptProcessing: false,
   },
 };
 
@@ -243,14 +239,14 @@ export const EmptySegments: Story = {
 export const MarkdownOnly: Story = {
   args: {
     segments: [markdownSegment],
-    isStreaming: false,
+    promptProcessing: false,
   },
 };
 
 export const LongMarkdown: Story = {
   args: {
     segments: [longMarkdownSegment],
-    isStreaming: false,
+    promptProcessing: false,
   },
 };
 
@@ -258,14 +254,14 @@ export const LongMarkdown: Story = {
 export const CodeOnly: Story = {
   args: {
     segments: [codeSegment],
-    isStreaming: false,
+    promptProcessing: false,
   },
 };
 
 export const ShortCode: Story = {
   args: {
     segments: [shortCodeSegment],
-    isStreaming: false,
+    promptProcessing: false,
   },
 };
 
@@ -273,7 +269,7 @@ export const ShortCode: Story = {
 export const MarkdownAndCode: Story = {
   args: {
     segments: [markdownSegment, codeSegment],
-    isStreaming: false,
+    promptProcessing: false,
   },
 };
 
@@ -284,8 +280,7 @@ export const MultipleSegments: Story = {
       codeSegment,
       {
         type: "markdown",
-        content:
-          "This creates a fully functional todo application. You can now:",
+        content: "This creates a fully functional todo application. You can now:",
       },
       {
         type: "markdown",
@@ -297,7 +292,7 @@ export const MultipleSegments: Story = {
 The app uses React hooks for state management and Tailwind for styling.`,
       },
     ],
-    isStreaming: false,
+    promptProcessing: false,
   },
 };
 
@@ -310,7 +305,7 @@ export const StreamingMarkdown: Story = {
         content: "I'm creating a todo app for you. Let me start with...",
       },
     ],
-    isStreaming: true,
+    promptProcessing: true,
     isLatestMessage: true,
   },
 };
@@ -318,7 +313,7 @@ export const StreamingMarkdown: Story = {
 export const StreamingWithCode: Story = {
   args: {
     segments: [markdownSegment, codeSegment],
-    isStreaming: true,
+    promptProcessing: true,
     isLatestMessage: true,
   },
 };
@@ -330,11 +325,10 @@ export const StreamingComplete: Story = {
       codeSegment,
       {
         type: "markdown",
-        content:
-          "The todo app is now complete! You can copy the code and use it in your project.",
+        content: "The todo app is now complete! You can copy the code and use it in your project.",
       },
     ],
-    isStreaming: true,
+    promptProcessing: true,
     isLatestMessage: true,
   },
 };
@@ -343,7 +337,7 @@ export const StreamingComplete: Story = {
 export const Selected: Story = {
   args: {
     segments: [markdownSegment, codeSegment],
-    isStreaming: false,
+    promptProcessing: false,
     initialSelectedResponseId: "test-message-1",
   },
 };
@@ -351,7 +345,7 @@ export const Selected: Story = {
 export const NotSelected: Story = {
   args: {
     segments: [markdownSegment, codeSegment],
-    isStreaming: false,
+    promptProcessing: false,
     initialSelectedResponseId: "different-message",
   },
 };
@@ -532,6 +526,6 @@ export default TodoApp;`,
 The app automatically saves your todos to localStorage and restores them when you reload the page. You can filter between all todos, active todos, or completed todos using the tabs.`,
       },
     ],
-    isStreaming: false,
+    promptProcessing: false,
   },
 };

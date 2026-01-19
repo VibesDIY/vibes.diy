@@ -11,11 +11,7 @@ describe("useSimpleChat", () => {
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          controller.enqueue(
-            encoder.encode(
-              'data: {"choices":[{"delta":{"content":""},"finish_reason":null}]}\n\n',
-            ),
-          );
+          controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":""},"finish_reason":null}]}\n\n'));
           controller.close();
         },
       });
@@ -92,20 +88,12 @@ export default HelloWorld;`;
 
     expect(result.current.selectedSegments?.length).toBe(3);
     expect(result.current.selectedSegments?.[0].type).toBe("markdown");
-    expect(result.current.selectedSegments?.[0].content).toContain(
-      "Here's a simple React component",
-    );
+    expect(result.current.selectedSegments?.[0].content).toContain("Here's a simple React component");
     expect(result.current.selectedSegments?.[1].type).toBe("code");
-    expect(result.current.selectedSegments?.[1].content).toContain(
-      "function HelloWorld()",
-    );
+    expect(result.current.selectedSegments?.[1].content).toContain("function HelloWorld()");
     expect(result.current.selectedSegments?.[2].type).toBe("markdown");
-    expect(result.current.selectedSegments?.[2].content).toContain(
-      "You can use this component",
-    );
-    expect(result.current.selectedCode?.content).toContain(
-      "function HelloWorld()",
-    );
+    expect(result.current.selectedSegments?.[2].content).toContain("You can use this component");
+    expect(result.current.selectedCode?.content).toContain("function HelloWorld()");
 
     if (originalSelectedSegments) {
       Object.defineProperty(result.current, "selectedSegments", {

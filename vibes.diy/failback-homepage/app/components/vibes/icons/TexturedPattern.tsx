@@ -6,11 +6,7 @@ interface TexturedPatternProps {
   borderRadius?: number;
 }
 
-export function TexturedPattern({
-  width = 75.78,
-  height = 75.78,
-  borderRadius = 20.08,
-}: TexturedPatternProps) {
+export function TexturedPattern({ width = 75.78, height = 75.78, borderRadius = 20.08 }: TexturedPatternProps) {
   return (
     <svg
       width={width}
@@ -66,13 +62,7 @@ export function TexturedPattern({
           <rect fill="#231f20" x="7.88" y="7.88" width="1.12" height="1.12" />
         </pattern>
       </defs>
-      <rect
-        fill="url(#textured-pattern)"
-        width="75.78"
-        height="75.78"
-        rx={borderRadius}
-        ry={borderRadius}
-      />
+      <rect fill="url(#textured-pattern)" width="75.78" height="75.78" rx={borderRadius} ry={borderRadius} />
     </svg>
   );
 }

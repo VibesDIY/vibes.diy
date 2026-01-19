@@ -4,8 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - "hosting/**/*"
-      - ".github/workflows/hosting-pr-preview.yaml"
+      - 'hosting/**/*'
+      - '.github/workflows/hosting-pr-preview.yaml'
 
 # Ensure only one preview deployment runs at a time per PR
 concurrency:

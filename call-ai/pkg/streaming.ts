@@ -18,7 +18,7 @@ async function* createStreamingGenerator(
   response: Response,
   options: CallAIOptions,
   schemaStrategy: SchemaStrategy,
-  model: string,
+  model: string
 ): AsyncGenerator<string, string, unknown> {
   // Create a metadata object for this streaming response
   const meta: ResponseMeta = {
@@ -140,7 +140,7 @@ async function* createStreamingGenerator(
                       if (options.debug) {
                         console.log(
                           `[callAi:${PACKAGE_VERSION}] Attempting to fix malformed JSON in tool call:`,
-                          toolCallsAssembled,
+                          toolCallsAssembled
                         );
                       }
 
@@ -190,7 +190,7 @@ async function* createStreamingGenerator(
                         console.log(
                           `[callAi:${PACKAGE_VERSION}] Applied comprehensive JSON fixes:`,
                           `\nBefore: ${toolCallsAssembled}`,
-                          `\nAfter: ${fixedJson}`,
+                          `\nAfter: ${fixedJson}`
                         );
                       }
 
@@ -422,7 +422,7 @@ async function* createStreamingGenerator(
 async function* callAIStreaming(
   prompt: string | Message[],
   options: CallAIOptions = {},
-  isRetry = false,
+  isRetry = false
 ): AsyncGenerator<string, string, unknown> {
   // Convert simple string prompts to message array format
   const messages = Array.isArray(prompt) ? prompt : [{ role: "user", content: prompt } as Message];
@@ -538,7 +538,7 @@ async function* callAIStreaming(
             ...options,
             model: FALLBACK_MODEL,
           },
-          true, // Mark as retry to prevent infinite fallback loops
+          true // Mark as retry to prevent infinite fallback loops
         );
 
         // Generator delegation handles returning the final value

@@ -74,19 +74,13 @@ export const MockShareModal: React.FC<MockShareModalProps> = ({
     <div className="relative flex h-96 flex-col items-center pt-8">
       {/* Visible reference button for context */}
       <div className="mb-4">
-        <button
-          ref={buttonRef}
-          className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white"
-        >
+        <button ref={buttonRef} className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white">
           Share Button (Reference)
         </button>
       </div>
 
       {showCloseButton && (
-        <button
-          onClick={handleClose}
-          className="mb-4 rounded bg-gray-200 px-3 py-1.5 text-sm hover:bg-gray-300"
-        >
+        <button onClick={handleClose} className="mb-4 rounded bg-gray-200 px-3 py-1.5 text-sm hover:bg-gray-300">
           Close Modal (for demo)
         </button>
       )}

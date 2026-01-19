@@ -1,17 +1,17 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import React from "react";
+import { render, fireEvent } from "@testing-library/react";
 
 // Use vi.hoisted to define mocks that need to be referenced in vi.mock
 const mockImgFile = vi.hoisted(() =>
   vi.fn().mockImplementation(({ className, alt, style, ...rest }) => {
     return React.createElement(
-      'div',
+      "div",
       {
-        'data-testid': 'mock-img-file',
-        className: `img-file ${className || ''}`,
+        "data-testid": "mock-img-file",
+        className: `img-file ${className || ""}`,
         style,
-        'aria-label': alt,
+        "aria-label": alt,
         ...rest,
         onClick:
           rest.onClick ||
@@ -19,13 +19,13 @@ const mockImgFile = vi.hoisted(() =>
             /* no-op */
           }),
       },
-      'Image Content'
+      "Image Content"
     );
   })
 );
 
 // Mock use-fireproof module (placed before imports that use it)
-vi.mock('use-vibes', (actual) => ({
+vi.mock("use-vibes", (actual) => ({
   ...actual,
   ImgFile: mockImgFile,
   // Mock File constructor for tests
@@ -33,9 +33,9 @@ vi.mock('use-vibes', (actual) => ({
 }));
 
 // Import the components directly to test them individually
-import { ImageOverlay } from '@vibes.diy/use-vibes-base';
+import { ImageOverlay } from "@vibes.diy/use-vibes-base";
 
-describe('ImageOverlay Component Versions', () => {
+describe("ImageOverlay Component Versions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -45,9 +45,9 @@ describe('ImageOverlay Component Versions', () => {
   });
 
   // Test that the component correctly displays the prompt text
-  it('should display the provided prompt text', () => {
+  it("should display the provided prompt text", () => {
     const mockProps = {
-      promptText: 'This is a test prompt',
+      promptText: "This is a test prompt",
       editedPrompt: null,
       setEditedPrompt: vi.fn(),
       handlePromptEdit: vi.fn(),
@@ -67,17 +67,17 @@ describe('ImageOverlay Component Versions', () => {
     const { container } = render(<ImageOverlay {...mockProps} />);
 
     // Verify the prompt text is displayed
-    expect(container.textContent).toContain('This is a test prompt');
+    expect(container.textContent).toContain("This is a test prompt");
   });
 
   // Test for the refresh button functionality
-  it('should call handleRegen when refresh button is clicked', () => {
+  it("should call handleRegen when refresh button is clicked", () => {
     // Mock the regenerate callback function
     const mockHandleRegen = vi.fn();
 
     // Create mock props
     const mockProps = {
-      promptText: 'Test prompt',
+      promptText: "Test prompt",
       editedPrompt: null,
       setEditedPrompt: vi.fn(),
       handlePromptEdit: vi.fn(),
@@ -109,14 +109,14 @@ describe('ImageOverlay Component Versions', () => {
   });
 
   // Test version navigation for multiple versions
-  it('should call navigation handlers when version buttons are clicked', () => {
+  it("should call navigation handlers when version buttons are clicked", () => {
     // Mock the navigation handlers
     const mockHandlePrevVersion = vi.fn();
     const mockHandleNextVersion = vi.fn();
 
     // Create mock props with multiple versions
     const mockProps = {
-      promptText: 'Test prompt',
+      promptText: "Test prompt",
       editedPrompt: null,
       setEditedPrompt: vi.fn(),
       handlePromptEdit: vi.fn(),
@@ -136,9 +136,9 @@ describe('ImageOverlay Component Versions', () => {
     const { container } = render(<ImageOverlay {...mockProps} />);
 
     // Check that we're on version 2 of 3
-    const versionIndicator = container.querySelector('.version-indicator');
+    const versionIndicator = container.querySelector(".version-indicator");
     expect(versionIndicator).toBeInTheDocument();
-    expect(versionIndicator?.textContent).toContain('2 / 3');
+    expect(versionIndicator?.textContent).toContain("2 / 3");
 
     // Test next button
     const nextButton = container.querySelector('[aria-label="Next version"]');

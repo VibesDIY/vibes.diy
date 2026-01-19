@@ -13,7 +13,5 @@
  */
 export function getClerkKeyForHostname(hostname: string): string {
   const isProduction = hostname === "vibes.diy";
-  return isProduction
-    ? "pk_live_Y2xlcmsudmliZXMuZGl5JA"
-    : "pk_test_c2luY2VyZS1jaGVldGFoLTMwLmNsZXJrLmFjY291bnRzLmRldiQ";
+  return isProduction ? "pk_live_Y2xlcmsudmliZXMuZGl5JA" : "pk_test_c2luY2VyZS1jaGVldGFoLTMwLmNsZXJrLmFjY291bnRzLmRldiQ";
 }

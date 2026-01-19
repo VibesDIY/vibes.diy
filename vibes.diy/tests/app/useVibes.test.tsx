@@ -4,12 +4,7 @@ import { useVibes } from "~/vibes.diy/app/hooks/useVibes.js";
 // Import VibeDocument from the correct location
 import type { VibeDocument } from "@vibes.diy/prompts";
 import type { LocalVibe } from "~/vibes.diy/app/utils/vibeUtils.js";
-import {
-  deleteVibeDatabase,
-  listLocalVibeIds,
-  listLocalVibes,
-  toggleVibeFavorite,
-} from "~/vibes.diy/app/utils/vibeUtils.js";
+import { deleteVibeDatabase, listLocalVibeIds, listLocalVibes, toggleVibeFavorite } from "~/vibes.diy/app/utils/vibeUtils.js";
 
 // Mock vibeUtils
 vi.mock("~/vibes.diy/app/utils/vibeUtils.js", () => ({
@@ -75,10 +70,7 @@ describe("useVibes", () => {
     vi.resetAllMocks();
     // Setup vibeUtils mocks
     vi.mocked(listLocalVibes).mockResolvedValue(mockVibes as LocalVibe[]);
-    vi.mocked(listLocalVibeIds).mockResolvedValue([
-      "test-vibe-1",
-      "test-vibe-2",
-    ]);
+    vi.mocked(listLocalVibeIds).mockResolvedValue(["test-vibe-1", "test-vibe-2"]);
     vi.mocked(deleteVibeDatabase).mockResolvedValue(undefined);
     vi.mocked(toggleVibeFavorite).mockResolvedValue(mockVibeDoc);
   });
@@ -92,19 +84,13 @@ describe("useVibes", () => {
     const { result } = renderHook(() => useVibes());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(listLocalVibeIds).toHaveBeenCalled();
-    expect(result.current.vibes).toEqual([
-      { id: "test-vibe-2" },
-      { id: "test-vibe-1" },
-    ]);
+    expect(result.current.vibes).toEqual([{ id: "test-vibe-2" }, { id: "test-vibe-1" }]);
   });
 
   it("should handle loading state correctly", async () => {
     // Arrange - delay the promise resolution
     vi.mocked(listLocalVibeIds).mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(() => resolve(["test-vibe-1", "test-vibe-2"]), 100),
-        ),
+      () => new Promise((resolve) => setTimeout(() => resolve(["test-vibe-1", "test-vibe-2"]), 100))
     );
 
     const { result } = renderHook(() => useVibes());
@@ -120,10 +106,7 @@ describe("useVibes", () => {
     // Assert - loading completed
     expect(result.current.isLoading).toBe(false);
     // Order is reversed now as we're showing newest first
-    expect(result.current.vibes).toEqual([
-      { id: "test-vibe-2" },
-      { id: "test-vibe-1" },
-    ]);
+    expect(result.current.vibes).toEqual([{ id: "test-vibe-2" }, { id: "test-vibe-1" }]);
   });
 
   it("should handle errors when loading vibes", async () => {
@@ -211,17 +194,12 @@ describe("useVibes", () => {
     await act(async () => {
       await result.current.toggleFavorite("test-vibe-1");
     });
-    expect(toggleVibeFavorite).toHaveBeenCalledWith(
-      "test-vibe-1",
-      "test-user-id",
-    );
+    expect(toggleVibeFavorite).toHaveBeenCalledWith("test-vibe-1", "test-user-id");
     // ... assertions ...
   });
 
   it("should reload vibes if toggling favorite fails", async () => {
-    vi.mocked(toggleVibeFavorite).mockRejectedValueOnce(
-      new Error("Toggle failed"),
-    );
+    vi.mocked(toggleVibeFavorite).mockRejectedValueOnce(new Error("Toggle failed"));
     const { result } = renderHook(() => useVibes());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     vi.mocked(listLocalVibeIds).mockClear();
@@ -233,10 +211,7 @@ describe("useVibes", () => {
       }
     });
     await waitFor(() => expect(result.current.error).toBeDefined());
-    expect(toggleVibeFavorite).toHaveBeenCalledWith(
-      "test-vibe-1",
-      "test-user-id",
-    );
+    expect(toggleVibeFavorite).toHaveBeenCalledWith("test-vibe-1", "test-user-id");
     expect(listLocalVibeIds).toHaveBeenCalled();
   });
 });

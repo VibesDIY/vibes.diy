@@ -1,4 +1,4 @@
-import { Database } from "use-fireproof";
+import { Database } from "@fireproof/use-fireproof";
 import {
   resolveEffectiveModel,
   type AiChatMessageDocument,
@@ -15,7 +15,7 @@ import { AUTH_REQUIRED_ERROR } from "../utils/authErrors.js";
 export interface SendMessageContext {
   userMessage: ChatMessageDocument;
   setPendingUserDoc: (doc: ChatMessageDocument) => void;
-  setIsStreaming: (v: boolean) => void;
+  setPromptProcessing: (v: boolean) => void;
   ensureApiKey: () => Promise<{ key: string } | null>;
   setNeedsLogin: (v: boolean) => void;
   ensureSystemPrompt: (overrides?: {
@@ -41,14 +41,11 @@ export interface SendMessageContext {
   vibeDoc: VibeDocument;
 }
 
-export async function sendChatMessage(
-  ctx: SendMessageContext,
-  textOverride?: string,
-): Promise<void> {
+export async function sendChatMessage(ctx: SendMessageContext, textOverride?: string): Promise<void> {
   const {
     userMessage,
     setPendingUserDoc,
-    setIsStreaming,
+    setPromptProcessing,
     ensureApiKey,
     setNeedsLogin,
     ensureSystemPrompt,
@@ -67,8 +64,7 @@ export async function sendChatMessage(
     vibeDoc,
   } = ctx;
 
-  const promptText =
-    typeof textOverride === "string" ? textOverride : userMessage.text;
+  const promptText = typeof textOverride === "string" ? textOverride : userMessage.text;
   trackChatInputClick(promptText.length);
 
   if (!promptText.trim()) return;
@@ -87,7 +83,7 @@ export async function sendChatMessage(
   // Clear the chat input once the user message has been submitted
   setInput("");
 
-  setIsStreaming(true);
+  setPromptProcessing(true);
 
   // Get API key (Clerk session token)
   let currentApiKey = "";
@@ -111,10 +107,7 @@ export async function sendChatMessage(
   });
   const currentSystemPrompt = promptResult.systemPrompt;
 
-  const modelToUse = await resolveEffectiveModel(
-    { model: ctx.modelToUse?.[0] },
-    vibeDoc,
-  );
+  const modelToUse = await resolveEffectiveModel({ model: ctx.modelToUse?.[0] }, vibeDoc);
 
   return streamAI(
     modelToUse,
@@ -123,7 +116,7 @@ export async function sendChatMessage(
     promptText,
     (content) => throttledMergeAiMessage(content),
     currentApiKey,
-    setNeedsLogin,
+    setNeedsLogin
   )
     .then(async (finalContent) => {
       isProcessingRef.current = true;
@@ -140,27 +133,17 @@ export async function sendChatMessage(
               finalContent = parsedContent;
             }
           } catch (jsonError) {
-            console.warn(
-              "Error parsing JSON response:",
-              jsonError,
-              finalContent,
-            );
+            console.warn("Error parsing JSON response:", jsonError, finalContent);
           }
         }
 
         if (!finalContent) {
           console.warn("No response from AI");
           finalContent = "Error: No response from AI service.";
-        } else if (
-          typeof finalContent === "string" &&
-          finalContent.trim().length === 0
-        ) {
-          console.warn(
-            "Empty response from AI, this might indicate an API issue",
-          );
+        } else if (typeof finalContent === "string" && finalContent.trim().length === 0) {
+          console.warn("Empty response from AI, this might indicate an API issue");
           // Save an error message instead of returning early
-          finalContent =
-            "Error: Empty response from AI service. This might be due to missing API key or proxy issues.";
+          finalContent = "Error: Empty response from AI service. This might be due to missing API key or proxy issues.";
         }
 
         if (aiMessage?.text !== finalContent) {
@@ -191,18 +174,13 @@ export async function sendChatMessage(
         }
 
         // Skip title generation if the response is an error or title was set manually
-        const isErrorResponse =
-          typeof finalContent === "string" && finalContent.startsWith("Error:");
+        const isErrorResponse = typeof finalContent === "string" && finalContent.startsWith("Error:");
         const titleSetManually = vibeDoc?.titleSetManually === true;
 
         if (!isErrorResponse && !titleSetManually) {
           const { segments } = parseContent(aiMessage?.text || "");
           try {
-            const title = await generateTitle(
-              segments,
-              titleModel,
-              currentApiKey,
-            );
+            const title = await generateTitle(segments, titleModel, currentApiKey);
             if (title) {
               await updateTitle(title, false); // Mark as AI-generated
             }
@@ -238,7 +216,7 @@ export async function sendChatMessage(
       setSelectedResponseId("");
     })
     .finally(() => {
-      setIsStreaming(false);
+      setPromptProcessing(false);
       // Credit checking no longer needed
     });
 }

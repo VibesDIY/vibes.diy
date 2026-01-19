@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { transformImports, normalizeComponentExports } from '@vibes.diy/prompts';
+import React, { useEffect, useRef, useState } from "react";
+import { transformImports, normalizeComponentExports } from "@vibes.diy/prompts";
 
 interface IframeVibesComponentProps {
   code: string;
@@ -10,14 +10,7 @@ interface IframeVibesComponentProps {
   authToken?: string;
 }
 
-const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
-  code,
-  sessionId,
-  baseUrl,
-  onReady,
-  onError,
-  authToken,
-}) => {
+const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({ code, sessionId, baseUrl, onReady, onError, authToken }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -31,29 +24,25 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
     // Set up message listener for iframe communication
     const handleMessage = (event: MessageEvent) => {
       // Get expected origin from baseUrl or default to vibesbox.dev
-      const expectedOrigin = baseUrl
-        ? baseUrl.includes('://')
-          ? new URL(baseUrl).hostname
-          : baseUrl
-        : 'vibesbox.dev';
+      const expectedOrigin = baseUrl ? (baseUrl.includes("://") ? new URL(baseUrl).hostname : baseUrl) : "vibesbox.dev";
 
       // Only accept messages from expected domains (or allow null for about:blank)
-      if (expectedOrigin !== 'about:blank' && !event.origin.includes(expectedOrigin)) {
+      if (expectedOrigin !== "about:blank" && !event.origin.includes(expectedOrigin)) {
         return;
       }
 
       const { data } = event;
 
-      if (data?.type === 'preview-ready') {
+      if (data?.type === "preview-ready") {
         setIsReady(true);
         onReady?.();
-      } else if (data?.type === 'error') {
-        const error = new Error(data.error || 'Component error');
+      } else if (data?.type === "error") {
+        const error = new Error(data.error || "Component error");
         onError?.(error);
       }
     };
 
-    window.addEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
 
     // Set iframe source
     iframe.src = baseUrl || `https://${effectiveSessionId}.vibesbox.dev/`;
@@ -68,21 +57,21 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({
 
       // Send code to iframe
       const messageData = {
-        type: 'execute-code',
+        type: "execute-code",
         code: transformedCode,
-        apiKey: 'sk-vibes-proxy-managed',
+        apiKey: "sk-vibes-proxy-managed",
         sessionId: effectiveSessionId,
         authToken, // Pass auth token to iframe
       };
 
-      iframe.contentWindow.postMessage(messageData, '*');
+      iframe.contentWindow.postMessage(messageData, "*");
     };
 
-    iframe.addEventListener('load', handleIframeLoad);
+    iframe.addEventListener("load", handleIframeLoad);
 
     return () => {
-      window.removeEventListener('message', handleMessage);
-      iframe.removeEventListener('load', handleIframeLoad);
+      window.removeEventListener("message", handleMessage);
+      iframe.removeEventListener("load", handleIframeLoad);
     };
   }, [code, effectiveSessionId, onReady, onError, authToken]);
 

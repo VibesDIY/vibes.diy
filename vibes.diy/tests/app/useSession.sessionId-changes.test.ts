@@ -65,12 +65,9 @@ describe("useSession", () => {
    */
   it("should initialize new database when sessionId changes", async () => {
     // Start with first session ID
-    const { rerender, result } = renderHook(
-      ({ id }: { id: string }) => useSession(id),
-      {
-        initialProps: { id: "test-session-1" } as { id: string },
-      },
-    );
+    const { rerender, result } = renderHook(({ id }: { id: string }) => useSession(id), {
+      initialProps: { id: "test-session-1" } as { id: string },
+    });
 
     await waitFor(() => {
       expect(result.current.sessionDatabase).toBeDefined();
@@ -87,9 +84,7 @@ describe("useSession", () => {
 
     // Verify new database is initialized with the new session ID
     // The call count should have increased
-    expect(mockUseFireproof.mock.calls.length).toBeGreaterThan(
-      initialCallCount,
-    );
+    expect(mockUseFireproof.mock.calls.length).toBeGreaterThan(initialCallCount);
     expect(mockUseFireproof).toHaveBeenCalledWith("vibe-new-session-id");
   });
 });

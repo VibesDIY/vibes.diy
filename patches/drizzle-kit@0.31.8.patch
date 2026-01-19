@@ -1,0 +1,54 @@
+diff --git a/bin.cjs b/bin.cjs
+index 289fd467b9b9334640e9211536d32ed0ab9cd45e..ef73e99a3b86e4799261223d074ccedba11cae6a 100755
+--- a/bin.cjs
++++ b/bin.cjs
+@@ -27286,6 +27286,7 @@ var init_sqlitePushUtils = __esm({
+       const columnsToRemove = [];
+       const schemasToRemove = [];
+       const tablesToTruncate = [];
++      const recreatedTables = new Set();
+       for (const statement of statements) {
+         if (statement.type === "drop_table") {
+           const res = await connection.query(
+@@ -27348,6 +27349,7 @@ var init_sqlitePushUtils = __esm({
+           );
+         } else if (statement.type === "recreate_table") {
+           const tableName = statement.tableName;
++          recreatedTables.add(tableName);
+           const oldTableName = getOldTableName(tableName, meta);
+           let dataLoss = false;
+           const prevColumnNames = Object.keys(json1.tables[oldTableName].columns);
+@@ -27410,6 +27412,8 @@ var init_sqlitePushUtils = __esm({
+           if (pragmaState) {
+             statementsToExecute.push(`PRAGMA foreign_keys=ON;`);
+           }
++        } else if (statement.type === "create_index" && recreatedTables.has(statement.tableName)) {
++          continue;
+         } else {
+           const fromJsonStatement = fromJson([statement], "sqlite", "push");
+           statementsToExecute.push(
+@@ -81536,6 +81540,7 @@ var init_libSqlPushUtils = __esm({
+       const tablesToRemove = [];
+       const columnsToRemove = [];
+       const tablesToTruncate = [];
++      const recreatedTables = new Set();
+       for (const statement of statements) {
+         if (statement.type === "drop_table") {
+           const res = await connection.query(
+@@ -81618,6 +81623,7 @@ var init_libSqlPushUtils = __esm({
+           );
+         } else if (statement.type === "recreate_table") {
+           const tableName = statement.tableName;
++          recreatedTables.add(tableName);
+           let dataLoss = false;
+           const oldTableName = getOldTableName2(tableName, meta);
+           const prevColumnNames = Object.keys(json1.tables[oldTableName].columns);
+@@ -81694,6 +81700,8 @@ var init_libSqlPushUtils = __esm({
+           statementsToExecute.push(
+             ...Array.isArray(fromJsonStatement) ? fromJsonStatement : [fromJsonStatement]
+           );
++        } else if (statement.type === "create_index" && recreatedTables.has(statement.tableName)) {
++          continue;
+         } else {
+           const fromJsonStatement = fromJson([statement], "turso", "push", json2);
+           statementsToExecute.push(

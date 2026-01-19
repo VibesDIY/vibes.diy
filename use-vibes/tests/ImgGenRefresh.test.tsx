@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 
 // Create a mock File
-const mockFile = new File(['test content'], 'test-image.png', { type: 'image/png' });
+const mockFile = new File(["test content"], "test-image.png", { type: "image/png" });
 
 // Mock for database operations
 const mockDb = {
@@ -15,10 +15,7 @@ const mockDb = {
 const mockAddNewVersion = vi.fn((doc, file, prompt) => ({
   ...doc,
   currentVersion: (doc.currentVersion || 0) + 1,
-  versions: [
-    ...(doc.versions || []),
-    { id: `v${(doc.currentVersion || 0) + 2}`, created: Date.now(), promptKey: 'p1' },
-  ],
+  versions: [...(doc.versions || []), { id: `v${(doc.currentVersion || 0) + 2}`, created: Date.now(), promptKey: "p1" }],
   _files: { ...doc._files, [`v${(doc.currentVersion || 0) + 2}`]: file },
   ...(prompt && {
     prompts: { ...doc.prompts, p1: { text: prompt, created: Date.now() } },
@@ -38,7 +35,7 @@ const regenerateImage = vi.fn(async ({ db, _id, _prompt }) => {
 
   // Return the result
   return {
-    document: { ...updatedDoc, _rev: 'new-rev' },
+    document: { ...updatedDoc, _rev: "new-rev" },
     file: mockFile,
   };
 });
@@ -55,19 +52,19 @@ const generateImage = vi.fn(async ({ db, _id, prompt }) => {
     await db.put(updatedDoc);
 
     return {
-      document: { ...updatedDoc, _rev: 'new-rev' },
+      document: { ...updatedDoc, _rev: "new-rev" },
       file: mockFile,
     };
   } else {
     // Create new document
     const newDoc = {
       _id: `img_${Date.now()}`,
-      type: 'image',
+      type: "image",
       created: Date.now(),
       prompt,
       currentVersion: 0,
-      currentPromptKey: 'p1',
-      versions: [{ id: 'v1', created: Date.now(), promptKey: 'p1' }],
+      currentPromptKey: "p1",
+      versions: [{ id: "v1", created: Date.now(), promptKey: "p1" }],
       prompts: { p1: { text: prompt, created: Date.now() } },
       _files: { v1: mockFile },
     };
@@ -75,15 +72,15 @@ const generateImage = vi.fn(async ({ db, _id, prompt }) => {
     await db.put(newDoc);
 
     return {
-      document: { ...newDoc, _rev: 'new-rev' },
+      document: { ...newDoc, _rev: "new-rev" },
       file: mockFile,
     };
   }
 });
 
 // Mock the use-vibes-base module
-vi.mock('@vibes.diy/use-vibes-base', async () => {
-  const actual = await vi.importActual('@vibes.diy/use-vibes-base');
+vi.mock("@vibes.diy/use-vibes-base", async () => {
+  const actual = await vi.importActual("@vibes.diy/use-vibes-base");
   return {
     ...actual,
     addNewVersion: mockAddNewVersion,
@@ -93,9 +90,9 @@ vi.mock('@vibes.diy/use-vibes-base', async () => {
 });
 
 // Import after mocks
-import { ImageDocument } from '@vibes.diy/use-vibes-base';
+import { ImageDocument } from "@vibes.diy/use-vibes-base";
 
-describe('Image Generation Refresh Functionality', () => {
+describe("Image Generation Refresh Functionality", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb.get.mockReset();
@@ -106,25 +103,25 @@ describe('Image Generation Refresh Functionality', () => {
     vi.restoreAllMocks();
   });
 
-  it('should add a new version to an existing document instead of creating a new one', async () => {
+  it("should add a new version to an existing document instead of creating a new one", async () => {
     // Create a mock document to test with
-    const existingDocId = 'test-document-id';
+    const existingDocId = "test-document-id";
     const mockDocument: ImageDocument = {
       _id: existingDocId,
-      _rev: 'test-rev-1',
-      type: 'image',
+      _rev: "test-rev-1",
+      type: "image",
       created: Date.now() - 10000,
-      prompt: 'Original prompt',
+      prompt: "Original prompt",
       currentVersion: 0,
-      currentPromptKey: 'p1',
-      versions: [{ id: 'v1', created: Date.now() - 10000, promptKey: 'p1' }],
-      prompts: { p1: { text: 'Original prompt', created: Date.now() - 10000 } },
+      currentPromptKey: "p1",
+      versions: [{ id: "v1", created: Date.now() - 10000, promptKey: "p1" }],
+      prompts: { p1: { text: "Original prompt", created: Date.now() - 10000 } },
       _files: { v1: mockFile },
     };
 
     // Set up the database mock
     mockDb.get.mockResolvedValue(mockDocument);
-    mockDb.put.mockResolvedValue({ id: existingDocId, rev: 'new-rev' });
+    mockDb.put.mockResolvedValue({ id: existingDocId, rev: "new-rev" });
 
     // Call regenerateImage
     const result = await regenerateImage({ db: mockDb, _id: existingDocId });
@@ -141,27 +138,27 @@ describe('Image Generation Refresh Functionality', () => {
     expect(mockDb.put).toHaveBeenCalledTimes(1);
   });
 
-  it('should preserve document ID when creating multiple versions', async () => {
-    const existingDocId = 'preserved-document-id';
+  it("should preserve document ID when creating multiple versions", async () => {
+    const existingDocId = "preserved-document-id";
     const mockDocument: ImageDocument = {
       _id: existingDocId,
-      _rev: 'test-rev-1',
-      type: 'image',
+      _rev: "test-rev-1",
+      type: "image",
       created: Date.now() - 10000,
-      prompt: 'Original prompt',
+      prompt: "Original prompt",
       currentVersion: 1,
-      currentPromptKey: 'p1',
+      currentPromptKey: "p1",
       versions: [
-        { id: 'v1', created: Date.now() - 10000, promptKey: 'p1' },
-        { id: 'v2', created: Date.now() - 5000, promptKey: 'p1' },
+        { id: "v1", created: Date.now() - 10000, promptKey: "p1" },
+        { id: "v2", created: Date.now() - 5000, promptKey: "p1" },
       ],
-      prompts: { p1: { text: 'Original prompt', created: Date.now() - 10000 } },
+      prompts: { p1: { text: "Original prompt", created: Date.now() - 10000 } },
       _files: { v1: mockFile, v2: mockFile },
     };
 
     // Set up the database mock
     mockDb.get.mockResolvedValue(mockDocument);
-    mockDb.put.mockResolvedValue({ id: existingDocId, rev: 'new-rev-2' });
+    mockDb.put.mockResolvedValue({ id: existingDocId, rev: "new-rev-2" });
 
     // Call regenerateImage again
     const result = await regenerateImage({ db: mockDb, _id: existingDocId });
@@ -172,25 +169,25 @@ describe('Image Generation Refresh Functionality', () => {
     expect(result.document.versions).toHaveLength(3);
   });
 
-  it('should support creating a new version with a different prompt', async () => {
-    const existingDocId = 'test-document-with-new-prompt';
-    const newPrompt = 'New and improved prompt';
+  it("should support creating a new version with a different prompt", async () => {
+    const existingDocId = "test-document-with-new-prompt";
+    const newPrompt = "New and improved prompt";
     const mockDocument: ImageDocument = {
       _id: existingDocId,
-      _rev: 'test-rev-1',
-      type: 'image',
+      _rev: "test-rev-1",
+      type: "image",
       created: Date.now() - 10000,
-      prompt: 'Original prompt',
+      prompt: "Original prompt",
       currentVersion: 0,
-      currentPromptKey: 'p1',
-      versions: [{ id: 'v1', created: Date.now() - 10000, promptKey: 'p1' }],
-      prompts: { p1: { text: 'Original prompt', created: Date.now() - 10000 } },
+      currentPromptKey: "p1",
+      versions: [{ id: "v1", created: Date.now() - 10000, promptKey: "p1" }],
+      prompts: { p1: { text: "Original prompt", created: Date.now() - 10000 } },
       _files: { v1: mockFile },
     };
 
     // Set up the database mock
     mockDb.get.mockResolvedValue(mockDocument);
-    mockDb.put.mockResolvedValue({ id: existingDocId, rev: 'new-rev' });
+    mockDb.put.mockResolvedValue({ id: existingDocId, rev: "new-rev" });
 
     // Call generateImage with new prompt
     const result = await generateImage({

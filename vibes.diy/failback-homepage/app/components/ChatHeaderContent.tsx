@@ -9,13 +9,7 @@ export interface ChatHeaderContentProps {
   remixOf?: string;
 }
 
-function ChatHeaderContent({
-  onOpenSidebar,
-  title,
-  isStreaming,
-  codeReady,
-  remixOf,
-}: ChatHeaderContentProps) {
+function ChatHeaderContent({ onOpenSidebar, title, isStreaming, codeReady, remixOf }: ChatHeaderContentProps) {
   return (
     <div className="flex h-full w-full items-center justify-between p-2 py-4">
       <div className="flex items-center">

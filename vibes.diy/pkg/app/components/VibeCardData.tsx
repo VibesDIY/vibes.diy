@@ -4,7 +4,7 @@ import { MyVibeCard } from "./MyVibeCard.js";
 import { loadVibeDocument, loadVibeScreenshot } from "../utils/vibeUtils.js";
 import type { LocalVibe } from "../utils/vibeUtils.js";
 import { useVibes } from "../hooks/useVibes.js";
-import { DocFileMeta } from "use-fireproof";
+import { DocFileMeta } from "@fireproof/use-fireproof";
 
 interface VibeCardDataProps {
   vibeId: string;
@@ -12,9 +12,7 @@ interface VibeCardDataProps {
 
 export function VibeCardData({ vibeId }: VibeCardDataProps) {
   const [vibe, setVibe] = useState<LocalVibe | null>(null);
-  const [screenshot, setScreenshot] = useState<DocFileMeta | undefined>(
-    undefined,
-  );
+  const [screenshot, setScreenshot] = useState<DocFileMeta | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -22,13 +20,11 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
 
   // Navigation functions
   const handleEditClick = (id: string, encodedTitle: string) => {
+    console.log(`t-2`, id);
     navigate(`/chat/${id}/${encodedTitle}/app`);
   };
 
-  const handleRemixClick = (
-    slug: string,
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
+  const handleRemixClick = (slug: string, event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     navigate(`/remix/${slug}`);
   };
@@ -80,10 +76,7 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
   useEffect(() => {
     const handlePageClick = (e: MouseEvent) => {
       // Don't clear if the click originated from a delete button
-      if (
-        confirmDelete &&
-        !(e.target as Element).closest('button[data-action="delete"]')
-      ) {
+      if (confirmDelete && !(e.target as Element).closest('button[data-action="delete"]')) {
         setConfirmDelete(null);
       }
     };

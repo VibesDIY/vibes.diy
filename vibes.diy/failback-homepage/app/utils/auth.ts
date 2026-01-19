@@ -14,10 +14,7 @@ export interface TokenPayload {
 }
 
 // Stub implementation of base verifyToken
-async function baseVerifyToken(
-  token: string,
-  publicKey: string,
-): Promise<{ payload: TokenPayload } | null> {
+async function baseVerifyToken(token: string, publicKey: string): Promise<{ payload: TokenPayload } | null> {
   // TODO: Implement JWT verification with publicKey
   // For now, return a basic decoded payload
   try {
@@ -37,11 +34,7 @@ function isTokenAboutToExpire(payload: TokenPayload): boolean {
 }
 
 // Stub implementation of extendToken
-async function baseExtendToken(
-  token: string,
-  connectApiUrl: string,
-  fetchFn: typeof fetch,
-): Promise<string | null> {
+async function baseExtendToken(token: string, connectApiUrl: string, fetchFn: typeof fetch): Promise<string | null> {
   // TODO: Implement token extension
   return null;
 }
@@ -56,9 +49,7 @@ function callPathname(pathnameFn?: () => string) {
   return pathnameFn ? pathnameFn() : globalThis.window.location.pathname;
 }
 
-export function initiateAuthFlow({
-  pathnameFn,
-}: { pathnameFn?: () => string } = {}): {
+export function initiateAuthFlow({ pathnameFn }: { pathnameFn?: () => string } = {}): {
   connectUrl: string;
   resultId: string;
 } | null {
@@ -68,15 +59,11 @@ export function initiateAuthFlow({
   }
 
   // Generate a random resultId (base58btc-like, 10 chars)
-  const BASE58BTC_ALPHABET =
-    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const BASE58BTC_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   function randomResultId(length = 10) {
     let res = "z";
     for (let i = 0; i < length; i++) {
-      res +=
-        BASE58BTC_ALPHABET[
-          Math.floor(Math.random() * BASE58BTC_ALPHABET.length)
-        ];
+      res += BASE58BTC_ALPHABET[Math.floor(Math.random() * BASE58BTC_ALPHABET.length)];
     }
     return res;
   }
@@ -107,7 +94,7 @@ export async function pollForAuthToken(
   mock: {
     fetch: typeof fetch;
     toast: { success: (s: string) => void };
-  } = { fetch: systemFetch, toast },
+  } = { fetch: systemFetch, toast }
 ): Promise<string | null> {
   const endpoint = `${VibesDiyEnv.CONNECT_API_URL()}/token/${resultId}`;
   const start = Date.now();
@@ -147,9 +134,7 @@ export async function pollForAuthToken(
  * If the token is about to expire, it will attempt to extend it automatically.
  * Returns an object with the decoded payload and potentially extended token if valid, otherwise null.
  */
-export async function verifyToken(
-  token: string,
-): Promise<{ payload: TokenPayload } | null> {
+export async function verifyToken(token: string): Promise<{ payload: TokenPayload } | null> {
   // Get the public key from environment
   const publicKey = VibesDiyEnv.CLOUD_SESSION_TOKEN_PUBLIC_KEY();
 
@@ -181,10 +166,7 @@ export async function verifyToken(
  * @param {string} currentToken - The current token to extend
  * @returns {Promise<string | null>} - The new extended token or null if extension failed
  */
-export async function extendToken(
-  currentToken: string,
-  mock = { fetch: systemFetch },
-): Promise<string | null> {
+export async function extendToken(currentToken: string, mock = { fetch: systemFetch }): Promise<string | null> {
   const connectApiUrl = VibesDiyEnv.CONNECT_API_URL();
 
   // Use the base extendToken from utils package

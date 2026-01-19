@@ -63,7 +63,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
                 setTimeout(() => {
                   console.warn(`Timeout for ${modelId.id} (Grade ${modelId.grade}): ${name}`);
                   resolve(undefined);
-                }, timeout || TIMEOUT),
+                }, timeout || TIMEOUT)
               ),
             ]);
             return result;
@@ -74,7 +74,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
             return;
           }
         },
-        timeout,
+        timeout
       );
     };
   }
@@ -112,7 +112,7 @@ describe("Simple callAi integration tests", () => {
           expect(resultMeta?.timing?.startTime).toBeLessThanOrEqual(resultMeta?.timing?.endTime as number);
           expect(resultMeta?.rawResponse).toBeDefined();
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });

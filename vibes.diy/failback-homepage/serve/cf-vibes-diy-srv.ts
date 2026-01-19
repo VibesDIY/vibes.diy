@@ -18,10 +18,10 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
   const packageJsonStr = await bundle.readFile(`package.json`);
   console.log("packageJsonStr:", packageJsonStr);
   const packageJson = JSON.parse(packageJsonStr);
-  const FP = (
-    packageJson.dependencies["@fireproof/core-cli"] ??
-    packageJson.devDependencies["@fireproof/core-cli"]
-  ).replace(/^[^0-9]*/, "");
+  const FP = (packageJson.dependencies["@fireproof/core-cli"] ?? packageJson.devDependencies["@fireproof/core-cli"]).replace(
+    /^[^0-9]*/,
+    ""
+  );
   console.log("Fireproof-Version:", FP);
   const loadFile = async (file: string): Promise<string | undefined> => {
     const stripExt = file
@@ -43,9 +43,7 @@ const ctx = Lazy(async (): Promise<VibesDiyServCtx> => {
     }
     return undefined;
   };
-  const loadFileBinary = async (
-    file: string,
-  ): Promise<Uint8Array | undefined> => {
+  const loadFileBinary = async (file: string): Promise<Uint8Array | undefined> => {
     try {
       const path = await bundle.readFile(file);
       if (path) {

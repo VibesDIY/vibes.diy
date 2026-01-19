@@ -1,20 +1,12 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import Settings from "~/vibes.diy/app/routes/settings.js";
 
 // Create mock objects outside the mock function to access them in tests
 const mocks = vi.hoisted(() => {
   const mockMerge = vi.fn();
-  const mockSave = vi
-    .fn()
-    .mockImplementation(() => Promise.resolve({ ok: true }));
+  const mockSave = vi.fn().mockImplementation(() => Promise.resolve({ ok: true }));
   const mockSettings = {
     _id: "user_settings",
     stylePrompt: "",
@@ -60,10 +52,7 @@ vi.mock("use-fireproof", () => ({
 // Create mock implementations for react-router-dom
 vi.mock("react-router-dom", async () => {
   const { vi } = await import("vitest");
-  const actual =
-    await vi.importActual<typeof import("react-router-dom")>(
-      "react-router-dom",
-    );
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return {
     ...actual,
     useNavigate: () => mocks.navigateMock,
@@ -158,9 +147,7 @@ describe("Settings Route", () => {
       isSignedIn: true,
     });
     render(<Settings />);
-    const styleInput = screen.getByPlaceholderText(
-      /enter or select style prompt/i,
-    );
+    const styleInput = screen.getByPlaceholderText(/enter or select style prompt/i);
 
     await act(async () => {
       fireEvent.change(styleInput, { target: { value: "new style" } });
@@ -195,9 +182,7 @@ describe("Settings Route", () => {
       isSignedIn: true,
     });
     render(<Settings />);
-    const userPromptTextarea = screen.getByPlaceholderText(
-      /enter custom instructions/i,
-    );
+    const userPromptTextarea = screen.getByPlaceholderText(/enter custom instructions/i);
 
     await act(async () => {
       fireEvent.change(userPromptTextarea, {
@@ -232,12 +217,9 @@ describe("Settings Route", () => {
 
     // Enable the save button
     await act(async () => {
-      fireEvent.change(
-        screen.getByPlaceholderText(/enter or select style prompt/i),
-        {
-          target: { value: "enable save" },
-        },
-      );
+      fireEvent.change(screen.getByPlaceholderText(/enter or select style prompt/i), {
+        target: { value: "enable save" },
+      });
     });
 
     expect(saveButton).not.toBeDisabled(); // Enabled after change
@@ -277,12 +259,9 @@ describe("Settings Route", () => {
 
     // Make a change to enable the save button
     await act(async () => {
-      fireEvent.change(
-        screen.getByPlaceholderText(/enter or select style prompt/i),
-        {
-          target: { value: "save this" },
-        },
-      );
+      fireEvent.change(screen.getByPlaceholderText(/enter or select style prompt/i), {
+        target: { value: "save this" },
+      });
     });
 
     // Click the save button
@@ -320,7 +299,7 @@ describe("Settings Route", () => {
       () => {
         expect(brutalistButton).toHaveClass("bg-blue-500");
       },
-      { timeout: 10000 },
+      { timeout: 10000 }
     );
     expect(brutalistButton).toHaveClass("text-white");
   }, 10000);

@@ -1,10 +1,10 @@
-import * as React from 'react';
-import { DocFileMeta } from '@fireproof/use-fireproof';
-import { AsyncImg } from './AsyncImg.js';
-import { createPortal } from 'react-dom';
-import { ImageOverlay } from './overlays/ImageOverlay.js';
-import { ImgGenError } from './ImgGenError.js';
-import { defaultClasses, ImgGenClasses } from '../../utils/style-utils.js';
+import * as React from "react";
+import { DocFileMeta } from "@fireproof/use-fireproof";
+import { AsyncImg } from "./AsyncImg.js";
+import { createPortal } from "react-dom";
+import { ImageOverlay } from "./overlays/ImageOverlay.js";
+import { ImgGenError } from "./ImgGenError.js";
+import { defaultClasses, ImgGenClasses } from "../../utils/style-utils.js";
 
 export interface ImgGenModalProps {
   readonly isOpen: boolean;
@@ -56,14 +56,14 @@ export function ImgGenModal({
   // ESC handling while modal is open
   React.useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
 
     if (isOpen) {
-      window.addEventListener('keydown', handleEsc);
-      return () => window.removeEventListener('keydown', handleEsc);
+      window.addEventListener("keydown", handleEsc);
+      return () => window.removeEventListener("keydown", handleEsc);
     }
   }, [isOpen, onClose]);
 
@@ -78,18 +78,18 @@ export function ImgGenModal({
     <div
       className="imggen-backdrop"
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         zIndex: 9999,
-        padding: '20px',
-        boxSizing: 'border-box',
+        padding: "20px",
+        boxSizing: "border-box",
       }}
       onClick={(e) => {
         e.stopPropagation(); // Prevent click from propagating beyond
@@ -101,16 +101,16 @@ export function ImgGenModal({
         className="imggen-full-wrapper"
         role="figure"
         style={{
-          position: 'relative',
+          position: "relative",
           margin: 0,
-          maxWidth: '90vw',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "white",
+          borderRadius: "8px",
+          overflow: "hidden",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -118,11 +118,11 @@ export function ImgGenModal({
           <div
             className="imggen-backdrop-error"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '400px',
-              padding: '2rem',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "400px",
+              padding: "2rem",
             }}
           >
             <ImgGenError message={error.message} />
@@ -132,12 +132,12 @@ export function ImgGenModal({
             file={currentFile}
             className="imggen-backdrop-image"
             style={{
-              maxWidth: '100%',
-              maxHeight: '70vh',
-              objectFit: 'contain',
-              display: 'block',
+              maxWidth: "100%",
+              maxHeight: "70vh",
+              objectFit: "contain",
+              display: "block",
             }}
-            alt={alt || 'Generated image'}
+            alt={alt || "Generated image"}
           />
         )}
         {/* Overlay as caption */}

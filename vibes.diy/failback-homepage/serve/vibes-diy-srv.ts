@@ -1,8 +1,4 @@
-import {
-  loadAndRenderTSX,
-  loadAndRenderJSX,
-  VibesDiyServCtx,
-} from "./render.js";
+import { loadAndRenderTSX, loadAndRenderJSX, VibesDiyServCtx } from "./render.js";
 // import { contentType } from "mime-types";
 import mime from "mime";
 import { getClerkKeyForHostname } from "../clerk-env.js";
@@ -22,7 +18,7 @@ async function handleVibeRequest(
   ctx: VibesDiyServCtx & {
     appSlug: string;
     groupId: string;
-  },
+  }
 ): Promise<Response | null> {
   const { appSlug } = ctx;
   try {
@@ -58,10 +54,7 @@ async function handleVibeRequest(
   }
 }
 
-function respInit(
-  status: number,
-  contentType = "application/json",
-): ResponseInit {
+function respInit(status: number, contentType = "application/json"): ResponseInit {
   return {
     status,
     headers: {
@@ -71,9 +64,7 @@ function respInit(
   };
 }
 
-export function vibesDiyHandler(
-  ctx: () => Promise<VibesDiyServCtx>,
-): (req: Request) => Promise<Response | null> {
+export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Request) => Promise<Response | null> {
   return async (req: Request) => {
     const url = new URL(req.url);
     const requestedPath = url.pathname;
@@ -81,10 +72,7 @@ export function vibesDiyHandler(
     if (url.pathname === "/vibe-mount") {
       const appSlug = url.searchParams.get("appSlug");
       if (!appSlug) {
-        return new Response(
-          JSON.stringify({ error: "Missing appSlug parameter" }),
-          respInit(400),
-        );
+        return new Response(JSON.stringify({ error: "Missing appSlug parameter" }), respInit(400));
       }
       const env = await ctx().then((c) => c.vibesCtx.env);
 
@@ -94,16 +82,13 @@ export function vibesDiyHandler(
          import vibe from '/vibe-script?appSlug=${appSlug}';
          mountVibe(vibe, ${ctxStr});
         `,
-        respInit(200, "text/javascript"),
+        respInit(200, "text/javascript")
       );
     }
     if (url.pathname === "/vibe-script") {
       const appSlug = url.searchParams.get("appSlug");
       if (!appSlug) {
-        return new Response(
-          JSON.stringify({ error: "Missing appSlug parameter" }),
-          respInit(400),
-        );
+        return new Response(JSON.stringify({ error: "Missing appSlug parameter" }), respInit(400));
       }
       const vibeCode = await fetchVibeCode(appSlug);
       const transformedJS = await loadAndRenderJSX(vibeCode);
@@ -137,19 +122,9 @@ export function vibesDiyHandler(
         if (content) {
           const ext = requestedPath.substring(requestedPath.lastIndexOf("."));
           const mimeType = mime.getType(ext) || "application/octet-stream";
-          console.log(
-            "Serving static file:",
-            testPath,
-            "with ext:",
-            ext,
-            "mimeType:",
-            mimeType,
-          );
+          console.log("Serving static file:", testPath, "with ext:", ext, "mimeType:", mimeType);
 
-          return new Response(
-            uint8array2stream(content),
-            respInit(200, mimeType),
-          );
+          return new Response(uint8array2stream(content), respInit(200, mimeType));
         }
       }
     } catch (_error) {
@@ -163,10 +138,7 @@ export function vibesDiyHandler(
       console.log("vibesDiyHandler-done req.url:", req.url);
       return new Response(html, respInit(200, "text/html"));
     } catch (error) {
-      return new Response(
-        JSON.stringify({ error: (error as Error).message }),
-        respInit(500),
-      );
+      return new Response(JSON.stringify({ error: (error as Error).message }), respInit(500));
     }
   };
 }

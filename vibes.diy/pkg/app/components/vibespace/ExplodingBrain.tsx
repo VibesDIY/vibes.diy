@@ -46,17 +46,11 @@ const BRAIN_LEVELS: BrainLevel[] = [
   },
 ];
 
-export default function ExplodingBrain({
-  userId,
-  vibes,
-  isLoading,
-}: ExplodingBrainProps): ReactElement {
+export default function ExplodingBrain({ userId, vibes, isLoading }: ExplodingBrainProps): ReactElement {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [brainLevel, setBrainLevel] = useState(0);
   const [brainPulse, setBrainPulse] = useState(false);
-  const [neuronLines, setNeuronLines] = useState<
-    { x1: number; y1: number; x2: number; y2: number; color: string }[]
-  >([]);
+  const [neuronLines, setNeuronLines] = useState<{ x1: number; y1: number; x2: number; y2: number; color: string }[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Add keyframes for the brain animation
@@ -237,10 +231,7 @@ export default function ExplodingBrain({
           <div
             className="transition-all duration-1000"
             style={{
-              animation:
-                brainLevel === 3
-                  ? "enlightenment 3s ease-in-out infinite"
-                  : undefined,
+              animation: brainLevel === 3 ? "enlightenment 3s ease-in-out infinite" : undefined,
             }}
           >
             <h2
@@ -261,12 +252,9 @@ export default function ExplodingBrain({
               }}
             >
               {brainLevel === 0 && "Browse your vibes like a normal person"}
-              {brainLevel === 1 &&
-                "Discovering new neural pathways through your vibespace"}
-              {brainLevel === 2 &&
-                "Transcending the ordinary limitations of vibespace perception"}
-              {brainLevel === 3 &&
-                "ACHIEVING VIBESPACE CONSCIOUSNESS BEYOND MORTAL COMPREHENSION"}
+              {brainLevel === 1 && "Discovering new neural pathways through your vibespace"}
+              {brainLevel === 2 && "Transcending the ordinary limitations of vibespace perception"}
+              {brainLevel === 3 && "ACHIEVING VIBESPACE CONSCIOUSNESS BEYOND MORTAL COMPREHENSION"}
             </p>
           </div>
         </div>
@@ -300,12 +288,8 @@ export default function ExplodingBrain({
               animation: "expand 3s ease-in-out infinite",
             }}
           >
-            <p
-              className={`text-2xl font-bold text-${BRAIN_LEVELS[brainLevel].color} mb-4`}
-            >
-              {brainLevel < 2
-                ? "No vibes found in this space"
-                : "YOUR MIND IS A BLANK CANVAS AWAITING CREATION"}
+            <p className={`text-2xl font-bold text-${BRAIN_LEVELS[brainLevel].color} mb-4`}>
+              {brainLevel < 2 ? "No vibes found in this space" : "YOUR MIND IS A BLANK CANVAS AWAITING CREATION"}
             </p>
             <div className="animate-pulse text-6xl">🧠</div>
           </div>
@@ -330,10 +314,7 @@ export default function ExplodingBrain({
                       hoverIndex === index
                         ? `0 0 30px ${BRAIN_LEVELS[vibeLevel].glow}`
                         : `0 0 10px ${BRAIN_LEVELS[vibeLevel].glow}`,
-                    transform:
-                      hoverIndex === index
-                        ? "translateY(-10px) scale(1.03)"
-                        : "translateY(0) scale(1)",
+                    transform: hoverIndex === index ? "translateY(-10px) scale(1.03)" : "translateY(0) scale(1)",
                   }}
                 >
                   {/* Brain level icon */}
@@ -341,8 +322,7 @@ export default function ExplodingBrain({
                     className={`absolute top-3 right-3 transition-all duration-300 opacity-${hoverIndex === index ? "100" : "70"}`}
                     style={{
                       filter: `drop-shadow(0 0 5px ${BRAIN_LEVELS[vibeLevel].glow})`,
-                      transform:
-                        hoverIndex === index ? "scale(1.2)" : "scale(1)",
+                      transform: hoverIndex === index ? "scale(1.2)" : "scale(1)",
                     }}
                   >
                     {vibeLevel === 0 && "🧠"}
@@ -355,10 +335,7 @@ export default function ExplodingBrain({
                     <h3
                       className={`text-xl font-bold tracking-tight text-${brainColor}`}
                       style={{
-                        textShadow:
-                          vibeLevel > 1
-                            ? `0 0 5px ${BRAIN_LEVELS[vibeLevel].glow}`
-                            : "none",
+                        textShadow: vibeLevel > 1 ? `0 0 5px ${BRAIN_LEVELS[vibeLevel].glow}` : "none",
                       }}
                     >
                       {doc.title || doc._id}
@@ -421,15 +398,10 @@ export default function ExplodingBrain({
                         href={`/remix/${doc.slug}`}
                         className={`relative overflow-hidden font-medium text-${brainColor} bg-${brainColor}/20 hover:bg-${brainColor}/30 rounded-md px-4 py-2 text-sm transition-all duration-300`}
                         style={{
-                          boxShadow:
-                            vibeLevel > 1
-                              ? `0 0 10px ${BRAIN_LEVELS[vibeLevel].glow}`
-                              : "none",
+                          boxShadow: vibeLevel > 1 ? `0 0 10px ${BRAIN_LEVELS[vibeLevel].glow}` : "none",
                         }}
                       >
-                        <span className="relative z-10 flex items-center gap-1">
-                          {vibeLevel < 2 ? "🔄" : "🧠"} Remix
-                        </span>
+                        <span className="relative z-10 flex items-center gap-1">{vibeLevel < 2 ? "🔄" : "🧠"} Remix</span>
                       </a>
                     )}
 

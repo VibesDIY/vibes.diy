@@ -114,9 +114,6 @@ export const quickSuggestions: Suggestion[] = [
 ];
 
 // Named exports for specific prompts used in the create page
-export const partyPlannerPrompt =
-  "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
-export const progressTrackerPrompt =
-  "Create a random app idea and build it automatically.";
-export const jamSessionPrompt =
-  "Create a music collaboration tool with chord progressions and shared bpm and drum machine.";
+export const partyPlannerPrompt = "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
+export const progressTrackerPrompt = "Create a random app idea and build it automatically.";
+export const jamSessionPrompt = "Create a music collaboration tool with chord progressions and shared bpm and drum machine.";

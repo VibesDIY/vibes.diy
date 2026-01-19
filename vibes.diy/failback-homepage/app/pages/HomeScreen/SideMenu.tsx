@@ -49,11 +49,7 @@ const menuItems: MenuItem[] = [
   { icon: "about", label: "About", href: "/about", variant: "blue" },
 ];
 
-export const SideMenu: React.FC<SideMenuProps> = ({
-  isOpen,
-  onClose,
-  onLogin,
-}) => {
+export const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogin }) => {
   const [isVisible, setIsVisible] = useState(isOpen);
   const [shouldRender, setShouldRender] = useState(isOpen);
 
@@ -132,20 +128,13 @@ export const SideMenu: React.FC<SideMenuProps> = ({
       <div style={getSideMenuOverlay(!isVisible)} onClick={onClose} />
 
       {/* Side Menu Container */}
-      <div
-        className="side-menu-container"
-        style={getSideMenuContainer(!isVisible)}
-      >
+      <div className="side-menu-container" style={getSideMenuContainer(!isVisible)}>
         {/* Header */}
         <div style={getSideMenuHeader()}>
           <div style={getSideMenuSwitchWrapper()}>
             <VibesSwitch size={80} />
           </div>
-          <button
-            style={getSideMenuCloseButton()}
-            onClick={onClose}
-            aria-label="Close menu"
-          >
+          <button style={getSideMenuCloseButton()} onClick={onClose} aria-label="Close menu">
             ✕
           </button>
         </div>

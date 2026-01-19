@@ -33,13 +33,7 @@ describe("ViewControls", () => {
 
   // Mock the SVG icons
   vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons", () => ({
-    PreviewIcon: ({
-      className,
-    }: {
-      className: string;
-      isLoading?: boolean;
-      title?: string;
-    }) => (
+    PreviewIcon: ({ className }: { className: string; isLoading?: boolean; title?: string }) => (
       <span data-testid="preview-icon" className={className}>
         Preview Icon
       </span>
@@ -67,9 +61,7 @@ describe("ViewControls", () => {
   });
 
   it("renders all view controls", () => {
-    render(
-      <ViewControls viewControls={mockViewControls} currentView="preview" />,
-    );
+    render(<ViewControls viewControls={mockViewControls} currentView="preview" />);
 
     // Check that all buttons are rendered
     expect(screen.getByText("App")).toBeInTheDocument();
@@ -111,9 +103,7 @@ describe("ViewControls", () => {
       },
     };
 
-    render(
-      <ViewControls viewControls={disabledControls} currentView="preview" />,
-    );
+    render(<ViewControls viewControls={disabledControls} currentView="preview" />);
 
     // Get all buttons
     const appButton = screen.getByText("App").closest("button");
@@ -133,13 +123,7 @@ describe("ViewControls", () => {
   it("calls onClick handler when a button is clicked", () => {
     const mockOnClick = vi.fn();
 
-    render(
-      <ViewControls
-        viewControls={mockViewControls}
-        currentView="preview"
-        onClick={mockOnClick}
-      />,
-    );
+    render(<ViewControls viewControls={mockViewControls} currentView="preview" onClick={mockOnClick} />);
 
     // Click the Code button
     fireEvent.click(screen.getByText("Code"));
@@ -164,13 +148,7 @@ describe("ViewControls", () => {
     // This test simulates the fix we implemented for the navigation issue
     const mockNavigateToView = vi.fn();
 
-    render(
-      <ViewControls
-        viewControls={mockViewControls}
-        currentView="preview"
-        onClick={mockNavigateToView}
-      />,
-    );
+    render(<ViewControls viewControls={mockViewControls} currentView="preview" onClick={mockNavigateToView} />);
 
     // Test navigation to code view
     fireEvent.click(screen.getByText("Code"));
@@ -188,23 +166,11 @@ describe("ViewControls", () => {
     mockNavigateToView.mockClear();
 
     // Render with a different current view
-    const { unmount } = render(
-      <ViewControls
-        viewControls={mockViewControls}
-        currentView="code"
-        onClick={mockNavigateToView}
-      />,
-    );
+    const { unmount } = render(<ViewControls viewControls={mockViewControls} currentView="code" onClick={mockNavigateToView} />);
     unmount();
 
     // Render again with code as current view
-    render(
-      <ViewControls
-        viewControls={mockViewControls}
-        currentView="code"
-        onClick={mockNavigateToView}
-      />,
-    );
+    render(<ViewControls viewControls={mockViewControls} currentView="code" onClick={mockNavigateToView} />);
 
     // Test navigation to app view - use a more specific selector
     // Get the button that contains the App text and has the preview icon
@@ -233,13 +199,7 @@ describe("ViewControls", () => {
       },
     };
 
-    render(
-      <ViewControls
-        viewControls={disabledControls}
-        currentView="preview"
-        onClick={mockOnClick}
-      />,
-    );
+    render(<ViewControls viewControls={disabledControls} currentView="preview" onClick={mockOnClick} />);
 
     // Try to click the disabled Data button
     const dataButton = screen.getByText("Data").closest("button");

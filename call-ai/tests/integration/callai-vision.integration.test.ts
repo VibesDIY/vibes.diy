@@ -60,6 +60,6 @@ describe("Call-AI Vision Recognition", () => {
         throw error;
       }
     },
-    TIMEOUT,
+    TIMEOUT
   );
 });

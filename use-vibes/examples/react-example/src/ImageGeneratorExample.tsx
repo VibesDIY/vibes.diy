@@ -1,28 +1,28 @@
-import { useRef, useState } from 'react';
-import type { DocBase, DocFileMeta } from 'use-vibes';
-import { ImgGen, useFireproof } from 'use-vibes';
-import './App.css';
+import { useRef, useState } from "react";
+import type { DocBase, DocFileMeta } from "use-vibes";
+import { ImgGen, useFireproof } from "use-vibes";
+import "./App.css";
 
 // Define interface for image documents
 interface ImageDocument extends DocBase {
-  type: 'image';
+  type: "image";
   prompt: string;
   created?: number;
   _files?: Record<string, File | DocFileMeta>;
 }
 
 function ImageGeneratorExample() {
-  const [inputPrompt, setInputPrompt] = useState('');
-  const [activePrompt, setActivePrompt] = useState('');
+  const [inputPrompt, setInputPrompt] = useState("");
+  const [activePrompt, setActivePrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedImageId, setSelectedImageId] = useState<string | undefined>();
-  const [quality, setQuality] = useState<'low' | 'medium' | 'high' | 'auto'>('low');
+  const [quality, setQuality] = useState<"low" | "medium" | "high" | "auto">("low");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Use Fireproof to query all images
-  const { useLiveQuery } = useFireproof('ImgGen');
+  const { useLiveQuery } = useFireproof("ImgGen");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputPrompt(e.target.value);
@@ -30,11 +30,11 @@ function ImageGeneratorExample() {
 
   const handleQualityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-    const qualityMap: Record<number, 'low' | 'medium' | 'high' | 'auto'> = {
-      0: 'low',
-      1: 'medium',
-      2: 'high',
-      3: 'auto',
+    const qualityMap: Record<number, "low" | "medium" | "high" | "auto"> = {
+      0: "low",
+      1: "medium",
+      2: "high",
+      3: "auto",
     };
     setQuality(qualityMap[value]);
   };
@@ -55,7 +55,7 @@ function ImageGeneratorExample() {
   };
 
   const handleImageError = (error: Error) => {
-    console.error('Image generation failed:', error);
+    console.error("Image generation failed:", error);
     setIsGenerating(false);
   };
 
@@ -77,13 +77,13 @@ function ImageGeneratorExample() {
     setUploadedImage(null);
     setImagePreview(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   // Get all documents with type: 'image'
-  const { docs: imageDocuments } = useLiveQuery<ImageDocument>('type', {
-    key: 'image',
+  const { docs: imageDocuments } = useLiveQuery<ImageDocument>("type", {
+    key: "image",
     descending: true,
   });
 
@@ -109,63 +109,53 @@ function ImageGeneratorExample() {
             min="0"
             max="3"
             step="1"
-            value={['low', 'medium', 'high', 'auto'].indexOf(quality)}
+            value={["low", "medium", "high", "auto"].indexOf(quality)}
             onChange={handleQualityChange}
             className="quality-slider"
-            style={{ width: '100%' }}
+            style={{ width: "100%" }}
           />
           <div
             className="quality-labels"
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              width: '100%',
-              marginTop: '8px',
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+              marginTop: "8px",
             }}
           >
-            <span className={quality === 'low' ? 'active' : ''} style={{ textAlign: 'center' }}>
+            <span className={quality === "low" ? "active" : ""} style={{ textAlign: "center" }}>
               Low
             </span>
-            <span className={quality === 'medium' ? 'active' : ''} style={{ textAlign: 'center' }}>
+            <span className={quality === "medium" ? "active" : ""} style={{ textAlign: "center" }}>
               Medium
             </span>
-            <span className={quality === 'high' ? 'active' : ''} style={{ textAlign: 'center' }}>
+            <span className={quality === "high" ? "active" : ""} style={{ textAlign: "center" }}>
               High
             </span>
-            <span className={quality === 'auto' ? 'active' : ''} style={{ textAlign: 'center' }}>
+            <span className={quality === "auto" ? "active" : ""} style={{ textAlign: "center" }}>
               Auto
             </span>
           </div>
         </div>
-        <button
-          type="submit"
-          className="generate-button"
-          disabled={isGenerating || !inputPrompt.trim()}
-        >
-          {isGenerating ? 'Generating...' : uploadedImage ? 'Edit Image' : 'Generate Image'}
+        <button type="submit" className="generate-button" disabled={isGenerating || !inputPrompt.trim()}>
+          {isGenerating ? "Generating..." : uploadedImage ? "Edit Image" : "Generate Image"}
         </button>
       </form>
 
-      <div className="image-upload-container" style={{ marginTop: '20px', marginBottom: '20px' }}>
+      <div className="image-upload-container" style={{ marginTop: "20px", marginBottom: "20px" }}>
         <h3>Upload an image to edit</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            ref={fileInputRef}
-            style={{ flexGrow: 1 }}
-          />
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} style={{ flexGrow: 1 }} />
           {uploadedImage && (
             <button
               onClick={handleClearImage}
               style={{
-                padding: '5px 10px',
-                backgroundColor: '#f44336',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
+                padding: "5px 10px",
+                backgroundColor: "#f44336",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
               }}
             >
               Clear
@@ -173,12 +163,8 @@ function ImageGeneratorExample() {
           )}
         </div>
         {imagePreview && (
-          <div style={{ marginTop: '10px', maxWidth: '300px' }}>
-            <img
-              src={imagePreview}
-              alt="Preview"
-              style={{ width: '100%', borderRadius: '8px', border: '2px solid #ddd' }}
-            />
+          <div style={{ marginTop: "10px", maxWidth: "300px" }}>
+            <img src={imagePreview} alt="Preview" style={{ width: "100%", borderRadius: "8px", border: "2px solid #ddd" }} />
           </div>
         )}
       </div>
@@ -191,8 +177,8 @@ function ImageGeneratorExample() {
           options={{
             debug: true,
             quality,
-            imgUrl: 'https://vibecode.garden',
-            size: '1024x1024',
+            imgUrl: "https://vibecode.garden",
+            size: "1024x1024",
           }}
           onComplete={handleImageLoad}
           onError={handleImageError}
@@ -213,8 +199,8 @@ function ImageGeneratorExample() {
                     debug={true}
                     options={{
                       quality: quality,
-                      imgUrl: 'https://vibecode.garden',
-                      size: '1024x1024',
+                      imgUrl: "https://vibecode.garden",
+                      size: "1024x1024",
                     }}
                   />
                 </div>

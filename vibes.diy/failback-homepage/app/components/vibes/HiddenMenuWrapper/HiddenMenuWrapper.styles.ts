@@ -87,10 +87,7 @@ export const getMenuStyle = (): CSSProperties => ({
     linear-gradient(90deg, ${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px)
   `,
   border: `2px solid ${hiddenMenuTheme.colors.gridLineColor}`,
-  backgroundSize:
-    hiddenMenuTheme.dimensions.gridSize +
-    " " +
-    hiddenMenuTheme.dimensions.gridSize,
+  backgroundSize: hiddenMenuTheme.dimensions.gridSize + " " + hiddenMenuTheme.dimensions.gridSize,
 });
 
 export const getMenuStyleWrapper = (): CSSProperties => ({
@@ -100,10 +97,7 @@ export const getMenuStyleWrapper = (): CSSProperties => ({
   right: 0,
   padding: "0px 15px 15px 15px",
   backgroundColor: "black",
-  backgroundSize:
-    hiddenMenuTheme.dimensions.gridSize +
-    " " +
-    hiddenMenuTheme.dimensions.gridSize,
+  backgroundSize: hiddenMenuTheme.dimensions.gridSize + " " + hiddenMenuTheme.dimensions.gridSize,
 });
 
 export const getMenuStyleWrapperGray = (): CSSProperties => ({
@@ -111,10 +105,7 @@ export const getMenuStyleWrapperGray = (): CSSProperties => ({
   borderBottomRightRadius: "20px",
   borderBottomLeftRadius: "20px",
   backgroundColor: hiddenMenuTheme.colors.menuBg,
-  backgroundSize:
-    hiddenMenuTheme.dimensions.gridSize +
-    " " +
-    hiddenMenuTheme.dimensions.gridSize,
+  backgroundSize: hiddenMenuTheme.dimensions.gridSize + " " + hiddenMenuTheme.dimensions.gridSize,
 });
 
 export const getContentStyle = (): CSSProperties => ({
@@ -123,11 +114,7 @@ export const getContentStyle = (): CSSProperties => ({
   height: "100%",
 });
 
-export const getContentWrapperStyle = (
-  menuHeight: number,
-  menuOpen: boolean,
-  isBouncing: boolean,
-): CSSProperties => ({
+export const getContentWrapperStyle = (menuHeight: number, menuOpen: boolean, isBouncing: boolean): CSSProperties => ({
   position: "fixed",
   top: 0,
   left: 0,
@@ -144,15 +131,11 @@ export const getContentWrapperStyle = (
   borderTopStyle: "solid",
   boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
   backgroundColor: hiddenMenuTheme.colors.contentBg,
-  animation: isBouncing
-    ? "vibes-drop-to-close 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
-    : undefined,
+  animation: isBouncing ? "vibes-drop-to-close 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)" : undefined,
   willChange: isBouncing ? "transform" : undefined,
 });
 
-export const getInnerContentWrapperStyle = (
-  menuOpen: boolean,
-): CSSProperties => ({
+export const getInnerContentWrapperStyle = (menuOpen: boolean): CSSProperties => ({
   filter: menuOpen ? `blur(${hiddenMenuTheme.animation.blurAmount})` : "none",
   width: "100%",
   height: "100%",
