@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { cloudflare } from "@cloudflare/vite-plugin";
+import { visualizer } from "rollup-plugin-visualizer";
 import { $ } from "zx";
 
 function setupSqlPlugin() {
@@ -28,10 +29,17 @@ export default defineConfig({
     }),
     reactRouter(),
     setupSqlPlugin(),
+    visualizer({
+      filename: "dist/stats.html",
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+    }),
   ],
   base: process.env.VITE_APP_BASENAME || "/",
   build: {
     outDir: "build",
+    manifest: true,
   },
   server: {
     host: "127.0.0.1",

@@ -13,6 +13,10 @@
     "drizzle:libsql": "drizzle-kit push --config ./drizzle.libsql.config.ts",
     "drizzle:d1-local": "drizzle-kit push --config ./drizzle.d1-local-backend.config.ts",
     "drizzle:d1-remote": "drizzle-kit push --config ./drizzle.d1-remote.config.ts",
+    "build:dev": "CLOUDFLARE_ENV=dev react-router build",
+    "build:prod": "CLOUDFLARE_ENV=prod react-router build",
+    "deploy:dev": "CLOUDFLARE_ENV=dev react-router build && wrangler deploy",
+    "deploy:prod": "CLOUDFLARE_ENV=prod react-router build && wrangler deploy",
     "format:write": "prettier --write ."
   },
   "dependencies": {
@@ -68,6 +72,7 @@
     "shiki": "^3.21.0",
     "storybook": "^10.1.11",
     "tailwindcss": "^4.1.18",
+    "toml": "^3.0.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "zx": "^8.8.5"
