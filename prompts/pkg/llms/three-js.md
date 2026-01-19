@@ -30,18 +30,11 @@ const camera = new THREE.PerspectiveCamera(
   75, // field of view
   aspect, // aspect ratio
   0.1, // near plane
-  1000, // far plane
+  1000 // far plane
 );
 
 // Orthographic (2D/technical)
-const camera = new THREE.OrthographicCamera(
-  left,
-  right,
-  top,
-  bottom,
-  near,
-  far,
-);
+const camera = new THREE.OrthographicCamera(left, right, top, bottom, near, far);
 
 // Camera controls
 camera.position.set(x, y, z);
@@ -442,10 +435,7 @@ geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
 // Custom attributes for shaders
 const customData = new Float32Array(vertexCount);
-geometry.setAttribute(
-  "customAttribute",
-  new THREE.BufferAttribute(customData, 1),
-);
+geometry.setAttribute("customAttribute", new THREE.BufferAttribute(customData, 1));
 ```
 
 ## Events and Interaction
@@ -636,10 +626,7 @@ import Stats from "three/addons/libs/stats.module.js";
 import * as THREE from "three";
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight);
 const renderer = new THREE.WebGLRenderer();
 
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -674,12 +661,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 // Basic setup
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000,
-);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -727,11 +709,7 @@ const colorInside = uniform(color("#ffa575"));
 const colorOutside = uniform(color("#311599"));
 material.colorNode = mix(colorInside, colorOutside, radiusRatio);
 
-const galaxy = new THREE.InstancedMesh(
-  new THREE.PlaneGeometry(1, 1),
-  material,
-  20000,
-);
+const galaxy = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), material, 20000);
 ```
 
 ### Ocean Shaders
@@ -778,7 +756,7 @@ const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
   1.5, // strength
   0.4, // radius
-  0.85, // threshold
+  0.85 // threshold
 );
 composer.addPass(bloomPass);
 
@@ -860,9 +838,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 
 // Environment setup
-scene.environment = new HDRLoader().load(
-  "textures/equirectangular/venice_sunset_1k.hdr",
-);
+scene.environment = new HDRLoader().load("textures/equirectangular/venice_sunset_1k.hdr");
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.85;
 
@@ -896,9 +872,7 @@ function generateTerrain(width, depth) {
   for (let x = 0; x < width; x++) {
     for (let z = 0; z < depth; z++) {
       // Multi-octave noise
-      const height =
-        noise.noise(x / 100, z / 100, 0) * 50 +
-        noise.noise(x / 50, z / 50, 0) * 25;
+      const height = noise.noise(x / 100, z / 100, 0) * 50 + noise.noise(x / 50, z / 50, 0) * 25;
       data.push(Math.floor(height));
     }
   }
@@ -960,11 +934,7 @@ const vehicleDesc = world.createRigidBody({
 
 // Wheel constraints
 wheels.forEach((wheel, index) => {
-  const wheelJoint = world.createImpulseJoint(
-    vehicleDesc,
-    wheel.body,
-    wheelConstraints[index],
-  );
+  const wheelJoint = world.createImpulseJoint(vehicleDesc, wheel.body, wheelConstraints[index]);
 });
 ```
 
@@ -1018,11 +988,7 @@ const instancedMesh = new THREE.InstancedMesh(geometry, material, 100000);
 const matrix = new THREE.Matrix4();
 
 for (let i = 0; i < instancedMesh.count; i++) {
-  matrix.setPosition(
-    Math.random() * 2000 - 1000,
-    Math.random() * 2000 - 1000,
-    Math.random() * 2000 - 1000,
-  );
+  matrix.setPosition(Math.random() * 2000 - 1000, Math.random() * 2000 - 1000, Math.random() * 2000 - 1000);
   instancedMesh.setMatrixAt(i, matrix);
 }
 ```
@@ -1128,7 +1094,7 @@ export default function SkyGlider() {
         timestamp: Date.now(),
       });
     },
-    [database],
+    [database]
   );
 
   const createGlowEffect = useCallback((position) => {
@@ -1141,7 +1107,7 @@ export default function SkyGlider() {
         color: 0xffd670,
         transparent: true,
         opacity: 0.8,
-      }),
+      })
     );
 
     glowSphere.position.copy(position);
@@ -1167,11 +1133,7 @@ export default function SkyGlider() {
     const state = gameStateRef.current;
     if (!state.scene) return;
 
-    const smokeGeometry = new THREE.SphereGeometry(
-      0.1 + Math.random() * 0.05,
-      4,
-      3,
-    );
+    const smokeGeometry = new THREE.SphereGeometry(0.1 + Math.random() * 0.05, 4, 3);
     const smokeMaterial = new THREE.MeshLambertMaterial({
       color: 0x242424,
       transparent: true,
@@ -1187,7 +1149,7 @@ export default function SkyGlider() {
     smokeCloud.position.set(
       position.x + offsetX + (Math.random() - 0.5) * 0.2,
       position.y - 0.2 + (Math.random() - 0.5) * 0.1,
-      position.z + offsetZ + Math.random() * 0.3,
+      position.z + offsetZ + Math.random() * 0.3
     );
 
     state.scene.add(smokeCloud);
@@ -1236,7 +1198,7 @@ export default function SkyGlider() {
         map: texture,
         metalness: 0.8,
         roughness: 0.2,
-      }),
+      })
     );
 
     coin.position.copy(position);
@@ -1257,12 +1219,7 @@ export default function SkyGlider() {
     scene.background = new THREE.Color(0x70d6ff);
     scene.fog = new THREE.Fog(0x70d6ff, 50, 300);
 
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000,
-    );
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 10, 20);
 
     const renderer = new THREE.WebGLRenderer({
@@ -1280,10 +1237,7 @@ export default function SkyGlider() {
 
     // Glider
     const glider = new THREE.Group();
-    const body = new THREE.Mesh(
-      new THREE.ConeGeometry(2, 8, 3),
-      new THREE.MeshLambertMaterial({ color: 0xff70a6 }),
-    );
+    const body = new THREE.Mesh(new THREE.ConeGeometry(2, 8, 3), new THREE.MeshLambertMaterial({ color: 0xff70a6 }));
     body.rotation.x = Math.PI / 2;
     glider.add(body);
 
@@ -1299,13 +1253,9 @@ export default function SkyGlider() {
           color: 0xffffff,
           transparent: true,
           opacity: 0.7,
-        }),
+        })
       );
-      cloud.position.set(
-        (Math.random() - 0.5) * 400,
-        Math.random() * 30 + 10,
-        (Math.random() - 0.5) * 400,
-      );
+      cloud.position.set((Math.random() - 0.5) * 400, Math.random() * 30 + 10, (Math.random() - 0.5) * 400);
       scene.add(cloud);
       clouds.push({
         mesh: cloud,
@@ -1322,11 +1272,7 @@ export default function SkyGlider() {
     for (let i = 0; i < 20; i++) {
       const coin = createTexturedCoin(
         scene,
-        new THREE.Vector3(
-          (Math.random() - 0.5) * 200,
-          Math.random() * 40 + 10,
-          (Math.random() - 0.5) * 200,
-        ),
+        new THREE.Vector3((Math.random() - 0.5) * 200, Math.random() * 40 + 10, (Math.random() - 0.5) * 200)
       );
       coins.push(coin);
     }
@@ -1372,11 +1318,7 @@ export default function SkyGlider() {
 
           // Respawn coin at random location
           setTimeout(() => {
-            coin.mesh.position.set(
-              (Math.random() - 0.5) * 200,
-              Math.random() * 40 + 10,
-              (Math.random() - 0.5) * 200,
-            );
+            coin.mesh.position.set((Math.random() - 0.5) * 200, Math.random() * 40 + 10, (Math.random() - 0.5) * 200);
             coin.mesh.visible = true;
             coin.collected = false;
           }, 5000);
@@ -1406,27 +1348,18 @@ export default function SkyGlider() {
     if (keys["ArrowRight"] || keys["KeyD"]) state.heading -= 0.03;
     if (keys["ArrowUp"] || keys["KeyW"]) state.pitch += 0.01;
     if (keys["ArrowDown"] || keys["KeyS"]) state.pitch -= 0.01;
-    if (keys["Space"])
-      state.forwardSpeed = Math.min(0.3, state.forwardSpeed + 0.005);
+    if (keys["Space"]) state.forwardSpeed = Math.min(0.3, state.forwardSpeed + 0.005);
 
     // Physics
     state.forwardSpeed = Math.max(0.05, state.forwardSpeed * 0.995);
-    state.velocity.x =
-      Math.sin(state.heading) * Math.cos(state.pitch) * state.forwardSpeed;
+    state.velocity.x = Math.sin(state.heading) * Math.cos(state.pitch) * state.forwardSpeed;
     state.velocity.y = Math.sin(-state.pitch) * state.forwardSpeed;
-    state.velocity.z =
-      Math.cos(state.heading) * Math.cos(state.pitch) * state.forwardSpeed;
+    state.velocity.z = Math.cos(state.heading) * Math.cos(state.pitch) * state.forwardSpeed;
 
-    glider.position.add(
-      new THREE.Vector3(state.velocity.x, state.velocity.y, state.velocity.z),
-    );
+    glider.position.add(new THREE.Vector3(state.velocity.x, state.velocity.y, state.velocity.z));
 
     // Point glider in thrust vector direction
-    const thrustDirection = new THREE.Vector3(
-      state.velocity.x,
-      state.velocity.y,
-      state.velocity.z,
-    ).normalize();
+    const thrustDirection = new THREE.Vector3(state.velocity.x, state.velocity.y, state.velocity.z).normalize();
     if (thrustDirection.length() > 0) {
       glider.lookAt(glider.position.clone().add(thrustDirection));
     }
@@ -1436,7 +1369,7 @@ export default function SkyGlider() {
     state.camera.position.set(
       glider.position.x - Math.sin(state.heading) * cameraDistance,
       glider.position.y + 10,
-      glider.position.z - Math.cos(state.heading) * cameraDistance,
+      glider.position.z - Math.cos(state.heading) * cameraDistance
     );
     state.camera.lookAt(glider.position);
 
@@ -1456,9 +1389,7 @@ export default function SkyGlider() {
       if (!coin.collected) coin.mesh.rotation.y += coin.rotation;
     });
     state.clouds.forEach((cloud) => {
-      cloud.mesh.position.add(
-        new THREE.Vector3(cloud.drift.x, cloud.drift.y, cloud.drift.z),
-      );
+      cloud.mesh.position.add(new THREE.Vector3(cloud.drift.x, cloud.drift.y, cloud.drift.z));
     });
 
     // Animate glow effects
@@ -1478,8 +1409,7 @@ export default function SkyGlider() {
         smoke.mesh.material.opacity = 0;
       } else if (age > 7500) {
         const fadeProgress = (age - 7500) / 7500;
-        smoke.mesh.material.opacity =
-          (0.7 + Math.random() * 0.2) * (1 - fadeProgress);
+        smoke.mesh.material.opacity = (0.7 + Math.random() * 0.2) * (1 - fadeProgress);
       }
     });
 
@@ -1578,7 +1508,7 @@ export default function HalftoneArtStudio() {
         timestamp: Date.now(),
       });
     },
-    [database],
+    [database]
   );
 
   const savePreset = useCallback(async () => {
@@ -1652,12 +1582,7 @@ export default function HalftoneArtStudio() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x242424);
 
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      1,
-      1000,
-    );
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     camera.position.z = 12;
 
     const renderer = new THREE.WebGLRenderer({
@@ -1785,8 +1710,7 @@ export default function HalftoneArtStudio() {
       ];
 
       for (let i = 0; i < parameters.objectCount; i++) {
-        const geometry =
-          geometries[Math.floor(Math.random() * geometries.length)];
+        const geometry = geometries[Math.floor(Math.random() * geometries.length)];
         const basicMaterial = new THREE.MeshPhongMaterial({
           color: colors[Math.floor(Math.random() * colors.length)],
           shininess: 100,
@@ -1794,22 +1718,11 @@ export default function HalftoneArtStudio() {
           opacity: 0.8 + Math.random() * 0.2,
         });
 
-        const mesh = new THREE.Mesh(
-          geometry,
-          Math.random() > 0.3 ? basicMaterial : material,
-        );
+        const mesh = new THREE.Mesh(geometry, Math.random() > 0.3 ? basicMaterial : material);
 
-        mesh.position.set(
-          (Math.random() - 0.5) * 20,
-          (Math.random() - 0.5) * 20,
-          (Math.random() - 0.5) * 20,
-        );
+        mesh.position.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
 
-        mesh.rotation.set(
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2,
-        );
+        mesh.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
 
         mesh.scale.setScalar(0.5 + Math.random() * 1.5);
 
@@ -1878,12 +1791,8 @@ export default function HalftoneArtStudio() {
     }
   }, [parameters]);
 
-  const shapeName =
-    ["", "Dot", "Ellipse", "Line", "Square"][parameters.shape] || "Dot";
-  const blendModeName =
-    ["", "Linear", "Multiply", "Add", "Lighter", "Darker"][
-      parameters.blendingMode
-    ] || "Linear";
+  const shapeName = ["", "Dot", "Ellipse", "Line", "Square"][parameters.shape] || "Dot";
+  const blendModeName = ["", "Linear", "Multiply", "Add", "Lighter", "Darker"][parameters.blendingMode] || "Linear";
   const actionNames = {
     "before-randomize": "🎲 Before Random",
     randomized: "✨ Randomized",
@@ -1907,9 +1816,7 @@ export default function HalftoneArtStudio() {
       <div
         className={`absolute top-4 left-4 max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border-4 border-[#242424] bg-[#ffffff] p-4 shadow-lg transition-all duration-300 ${showParameters ? "w-80" : "w-64"}`}
       >
-        <h2 className="mb-4 text-lg font-bold text-[#242424]">
-          RGB Halftone Studio
-        </h2>
+        <h2 className="mb-4 text-lg font-bold text-[#242424]">RGB Halftone Studio</h2>
 
         {/* Always visible controls */}
         <div className="mb-4 space-y-3">
@@ -1934,9 +1841,7 @@ export default function HalftoneArtStudio() {
           <div className="space-y-4">
             {/* Shape Controls */}
             <div>
-              <label className="mb-2 block text-sm font-bold text-[#242424]">
-                Shape: {shapeName}
-              </label>
+              <label className="mb-2 block text-sm font-bold text-[#242424]">Shape: {shapeName}</label>
               <select
                 value={parameters.shape}
                 onChange={(e) =>
@@ -1956,9 +1861,7 @@ export default function HalftoneArtStudio() {
 
             {/* Size Controls */}
             <div>
-              <label className="mb-2 block text-sm font-bold text-[#242424]">
-                Size: {parameters.radius.toFixed(1)}
-              </label>
+              <label className="mb-2 block text-sm font-bold text-[#242424]">Size: {parameters.radius.toFixed(1)}</label>
               <input
                 type="range"
                 min="1"
@@ -1978,9 +1881,7 @@ export default function HalftoneArtStudio() {
             {/* Color Rotation */}
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="mb-1 block text-xs font-bold text-[#ff70a6]">
-                  Red: {parameters.rotateR.toFixed(0)}°
-                </label>
+                <label className="mb-1 block text-xs font-bold text-[#ff70a6]">Red: {parameters.rotateR.toFixed(0)}°</label>
                 <input
                   type="range"
                   min="0"
@@ -1996,9 +1897,7 @@ export default function HalftoneArtStudio() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-bold text-[#e9ff70]">
-                  Green: {parameters.rotateG.toFixed(0)}°
-                </label>
+                <label className="mb-1 block text-xs font-bold text-[#e9ff70]">Green: {parameters.rotateG.toFixed(0)}°</label>
                 <input
                   type="range"
                   min="0"
@@ -2014,9 +1913,7 @@ export default function HalftoneArtStudio() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-bold text-[#70d6ff]">
-                  Blue: {parameters.rotateB.toFixed(0)}°
-                </label>
+                <label className="mb-1 block text-xs font-bold text-[#70d6ff]">Blue: {parameters.rotateB.toFixed(0)}°</label>
                 <input
                   type="range"
                   min="0"
@@ -2075,9 +1972,7 @@ export default function HalftoneArtStudio() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-bold text-[#242424]">
-                Blend Mode: {blendModeName}
-              </label>
+              <label className="mb-2 block text-sm font-bold text-[#242424]">Blend Mode: {blendModeName}</label>
               <select
                 value={parameters.blendingMode}
                 onChange={(e) =>
@@ -2110,9 +2005,7 @@ export default function HalftoneArtStudio() {
                   }
                   className="mr-2"
                 />
-                <span className="text-sm font-bold text-[#242424]">
-                  Greyscale
-                </span>
+                <span className="text-sm font-bold text-[#242424]">Greyscale</span>
               </label>
 
               <label className="flex items-center">
@@ -2127,9 +2020,7 @@ export default function HalftoneArtStudio() {
                   }
                   className="mr-2"
                 />
-                <span className="text-sm font-bold text-[#242424]">
-                  Disable Effect
-                </span>
+                <span className="text-sm font-bold text-[#242424]">Disable Effect</span>
               </label>
             </div>
 
@@ -2154,9 +2045,7 @@ export default function HalftoneArtStudio() {
             {/* Saved Presets */}
             {presets.length > 0 && (
               <div>
-                <h4 className="mb-2 text-sm font-bold text-[#242424]">
-                  💾 Saved Presets
-                </h4>
+                <h4 className="mb-2 text-sm font-bold text-[#242424]">💾 Saved Presets</h4>
                 <div className="max-h-32 space-y-2 overflow-y-auto">
                   {presets
                     .sort((a, b) => b.timestamp - a.timestamp)
@@ -2170,16 +2059,10 @@ export default function HalftoneArtStudio() {
                         }`}
                         onClick={() => loadPreset(preset)}
                       >
-                        <div className="text-xs font-bold text-[#242424]">
-                          {preset.name}
-                        </div>
+                        <div className="text-xs font-bold text-[#242424]">{preset.name}</div>
                         <div className="text-xs text-[#242424] opacity-75">
-                          {
-                            ["", "Dot", "Ellipse", "Line", "Square"][
-                              preset.parameters.shape
-                            ]
-                          }{" "}
-                          • {preset.parameters.greyscale ? "B&W" : "Color"}
+                          {["", "Dot", "Ellipse", "Line", "Square"][preset.parameters.shape]} •{" "}
+                          {preset.parameters.greyscale ? "B&W" : "Color"}
                         </div>
                       </div>
                     ))}
@@ -2190,9 +2073,7 @@ export default function HalftoneArtStudio() {
             {/* Parameter History */}
             {parameterHistory.length > 0 && (
               <div>
-                <h4 className="mb-2 text-sm font-bold text-[#242424]">
-                  📜 Parameter History
-                </h4>
+                <h4 className="mb-2 text-sm font-bold text-[#242424]">📜 Parameter History</h4>
                 <div className="max-h-40 space-y-2 overflow-y-auto">
                   {parameterHistory
                     .sort((a, b) => b.timestamp - a.timestamp)
@@ -2203,21 +2084,12 @@ export default function HalftoneArtStudio() {
                         className="cursor-pointer rounded border-2 border-[#242424] p-2 transition-colors hover:bg-[#e9ff70]"
                         onClick={() => loadParameterState(state)}
                       >
-                        <div className="text-xs font-bold text-[#242424]">
-                          {actionNames[state.action] || "⚙️ Unknown"}
-                        </div>
+                        <div className="text-xs font-bold text-[#242424]">{actionNames[state.action] || "⚙️ Unknown"}</div>
                         <div className="text-xs text-[#242424] opacity-75">
-                          {
-                            ["", "Dot", "Ellipse", "Line", "Square"][
-                              state.parameters.shape
-                            ]
-                          }{" "}
-                          • Size: {state.parameters.radius.toFixed(1)} •{" "}
-                          {state.parameters.greyscale ? "B&W" : "Color"}
+                          {["", "Dot", "Ellipse", "Line", "Square"][state.parameters.shape]} • Size:{" "}
+                          {state.parameters.radius.toFixed(1)} • {state.parameters.greyscale ? "B&W" : "Color"}
                         </div>
-                        <div className="text-xs text-[#242424] opacity-50">
-                          {new Date(state.timestamp).toLocaleTimeString()}
-                        </div>
+                        <div className="text-xs text-[#242424] opacity-50">{new Date(state.timestamp).toLocaleTimeString()}</div>
                       </div>
                     ))}
                 </div>

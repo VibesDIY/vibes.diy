@@ -49,7 +49,7 @@ describe("ChatInput Component", () => {
     render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
     expect(screen.getByPlaceholderText("I want to build...")).toBeDefined();
   });
@@ -58,7 +58,7 @@ describe("ChatInput Component", () => {
     render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("I want to build...");
@@ -71,7 +71,7 @@ describe("ChatInput Component", () => {
     render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     const sendButton = screen.getByLabelText("Send message");
@@ -88,7 +88,7 @@ describe("ChatInput Component", () => {
     render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("Continue coding...");
@@ -105,7 +105,7 @@ describe("ChatInput Component", () => {
     render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("I want to build...");
@@ -119,7 +119,7 @@ describe("ChatInput Component", () => {
     render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("I want to build...");
@@ -136,7 +136,7 @@ describe("ChatInput Component", () => {
     render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("Continue coding...");
@@ -152,7 +152,7 @@ describe("ChatInput Component", () => {
     render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // The button should be disabled, but let's try to click it anyway
@@ -167,7 +167,7 @@ describe("ChatInput Component", () => {
     const { rerender } = render(
       <MockThemeProvider>
         <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
     expect(screen.queryByRole("button", { name: /ai model/i })).toBeNull();
 
@@ -178,14 +178,8 @@ describe("ChatInput Component", () => {
     }[] = [];
     rerender(
       <MockThemeProvider>
-        <ChatInput
-          chatState={mockChatState}
-          onSend={onSend}
-          models={emptyModels}
-          onModelChange={vi.fn()}
-          showModelPickerInChat
-        />
-      </MockThemeProvider>,
+        <ChatInput chatState={mockChatState} onSend={onSend} models={emptyModels} onModelChange={vi.fn()} showModelPickerInChat />
+      </MockThemeProvider>
     );
     expect(screen.queryByRole("button", { name: /ai model/i })).toBeNull();
   });
@@ -206,24 +200,16 @@ describe("ChatInput Component", () => {
           onModelChange={vi.fn()}
           showModelPickerInChat={false}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
     expect(screen.queryByRole("button", { name: /ai model/i })).toBeNull();
 
     // Flag true → picker renders
     rerender(
       <MockThemeProvider>
-        <ChatInput
-          chatState={mockChatState}
-          onSend={onSend}
-          models={models}
-          onModelChange={vi.fn()}
-          showModelPickerInChat
-        />
-      </MockThemeProvider>,
+        <ChatInput chatState={mockChatState} onSend={onSend} models={models} onModelChange={vi.fn()} showModelPickerInChat />
+      </MockThemeProvider>
     );
-    expect(
-      screen.getByRole("button", { name: /ai model/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /ai model/i })).toBeInTheDocument();
   });
 });

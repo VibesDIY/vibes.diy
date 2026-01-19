@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 import { DEFAULT_CODING_MODEL, type UserSettings } from "@vibes.diy/prompts";
 import { VibesDiyEnv } from "../config/env.js";
 
@@ -13,13 +13,10 @@ export function useModelSelection() {
     _id: "user_settings",
   });
 
-  const [selectedModel, setSelectedModel] = useState<string | undefined>(
-    undefined,
-  );
+  const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
 
   // Determine effective model: user selection > global setting > default
-  const effectiveModel =
-    selectedModel || settingsDoc?.model || DEFAULT_CODING_MODEL;
+  const effectiveModel = selectedModel || settingsDoc?.model || DEFAULT_CODING_MODEL;
 
   return {
     selectedModel,

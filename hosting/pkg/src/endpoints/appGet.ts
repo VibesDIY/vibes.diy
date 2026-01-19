@@ -27,7 +27,7 @@ export class AppGet extends OpenAPIRoute {
           z.object({
             success: z.boolean(),
             app: AppMetadataSchema,
-          }),
+          })
         ),
       },
       "404": {
@@ -35,7 +35,7 @@ export class AppGet extends OpenAPIRoute {
         ...contentJson(
           z.object({
             error: z.string(),
-          }),
+          })
         ),
       },
     },

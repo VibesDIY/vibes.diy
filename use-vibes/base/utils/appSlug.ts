@@ -6,13 +6,13 @@
  * - instance-id: asd223222f4
  */
 
-import { Lazy } from '@adviser/cement';
-import { ensureSuperThis, runtimeFn } from '@fireproof/core-runtime';
+import { Lazy } from "@adviser/cement";
+import { ensureSuperThis, runtimeFn } from "@fireproof/core-runtime";
 
 const sthis = Lazy(() => ensureSuperThis());
 
 // Default fallback app slug when detection fails
-const DEFAULT_APP_SLUG = 'atmospheric-tiger-9377';
+const DEFAULT_APP_SLUG = "atmospheric-tiger-9377";
 
 /**
  * Extract the app slug from the current URL
@@ -25,23 +25,23 @@ const DEFAULT_APP_SLUG = 'atmospheric-tiger-9377';
  */
 export function getAppSlug(): string {
   if (!runtimeFn().isBrowser) {
-    throw new Error('getAppSlug can only be called in a browser environment');
+    throw new Error("getAppSlug can only be called in a browser environment");
   }
 
   const { pathname } = window.location;
 
   // Parse path-based routing: /vibe/{slug}/{instance-id}
-  if (pathname.startsWith('/vibe/')) {
-    const pathPart = pathname.slice('/vibe/'.length); // Remove '/vibe/'
+  if (pathname.startsWith("/vibe/")) {
+    const pathPart = pathname.slice("/vibe/".length); // Remove '/vibe/'
     if (pathPart) {
-      const slug = pathPart.split('/')[0]; // Take first segment
+      const slug = pathPart.split("/")[0]; // Take first segment
       if (slug) {
         return slug;
       }
     }
   }
 
-  throw new Error('Unable to determine app slug from URL');
+  throw new Error("Unable to determine app slug from URL");
 }
 
 /**
@@ -61,10 +61,10 @@ export function getInstanceId(): string | undefined {
   const { pathname } = window.location;
 
   // Parse path-based routing: /vibe/{slug}/{instance-id}
-  if (pathname.startsWith('/vibe/')) {
-    const pathPart = pathname.slice('/vibe/'.length); // Remove '/vibe/'
+  if (pathname.startsWith("/vibe/")) {
+    const pathPart = pathname.slice("/vibe/".length); // Remove '/vibe/'
     if (pathPart) {
-      const parts = pathPart.split('/');
+      const parts = pathPart.split("/");
       if (parts.length >= 2 && parts[1]) {
         return parts[1];
       }
@@ -91,11 +91,11 @@ export function getFullAppIdentifier(): string {
   const { pathname } = window.location;
 
   // Parse path-based routing: /vibe/{slug}/{instance-id}
-  if (pathname.startsWith('/vibe/')) {
-    const pathPart = pathname.slice('/vibe/'.length); // Remove '/vibe/'
+  if (pathname.startsWith("/vibe/")) {
+    const pathPart = pathname.slice("/vibe/".length); // Remove '/vibe/'
     if (pathPart) {
       // Remove trailing slash if present
-      return pathPart.replace(/\/$/, '');
+      return pathPart.replace(/\/$/, "");
     }
   }
 
@@ -113,7 +113,7 @@ export function isDevelopmentEnvironment(): boolean {
   }
 
   const { hostname } = window.location;
-  return hostname === 'localhost' || hostname === '127.0.0.1';
+  return hostname === "localhost" || hostname === "127.0.0.1";
 }
 
 /**
@@ -127,7 +127,7 @@ export function isProductionEnvironment(): boolean {
   }
 
   const { hostname } = window.location;
-  return hostname.includes('.') && hostname !== 'localhost' && !hostname.startsWith('127.0.0.1');
+  return hostname.includes(".") && hostname !== "localhost" && !hostname.startsWith("127.0.0.1");
 }
 
 /**

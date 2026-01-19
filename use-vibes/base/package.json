@@ -21,6 +21,7 @@
     "@fireproof/use-fireproof": "0.24.10",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
+    "arktype": "^2.1.29",
     "call-ai": "workspace:*",
     "jose": "^6.1.1",
     "react-dom": "19.2.4",

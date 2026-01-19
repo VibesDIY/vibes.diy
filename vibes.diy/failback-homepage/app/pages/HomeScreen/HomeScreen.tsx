@@ -59,12 +59,7 @@ import {
   getHiddenScrollDivStyle,
   getHiddenScrollDivInnerStyle,
 } from "./HomeScreen.styles.js";
-import {
-  ChatAnimation,
-  DraggableCard,
-  DraggableSection,
-  VibesSwitch,
-} from "../../components/index.js";
+import { ChatAnimation, DraggableCard, DraggableSection, VibesSwitch } from "../../components/index.js";
 import { HomeScreenProps } from "./HomeScreen.types.js";
 import { useIsMobile, usePrefersDarkMode } from "../../hooks/index.js";
 import { AnimatedScene } from "./AnimatedScene.js";
@@ -193,16 +188,14 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       arrayOfMessages: [
         {
           user: "James",
-          message:
-            "sorry roomies, I didn’t have time to tackle Dish Mountain last night",
+          message: "sorry roomies, I didn’t have time to tackle Dish Mountain last night",
         },
         { user: "James", message: "will absolutely get to it after work" },
         { user: "Lola", message: "Pretty sure it’s my turn, no?" },
         { user: "Jordan", message: "Huge if true!!" },
         {
           user: "James",
-          message:
-            "@Lola if you do the dishes I’ll take out the trash tomorrow AM!",
+          message: "@Lola if you do the dishes I’ll take out the trash tomorrow AM!",
         },
         { user: "You", message: "ok hear me out:" },
         { user: "You", message: "chore chart, but make it fun?" },
@@ -232,8 +225,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
         { user: "Bobby", message: "imagine Andy Cohen as a host" },
         {
           user: "You",
-          message:
-            "I kinda think you might have something with this:\nhttps://chromatic-fader-4248.vibesdiy.app/",
+          message: "I kinda think you might have something with this:\nhttps://chromatic-fader-4248.vibesdiy.app/",
         },
         { user: "Bobby", message: "oh it’s so over for all of you!!!!" },
       ],
@@ -243,7 +235,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   // 🎲 Pick one scenario at random on each render
   const selectedScenario = useMemo(
     () => scenarios[Math.floor(Math.random() * scenarios.length)],
-    [], // empty deps = pick once per mount
+    [] // empty deps = pick once per mount
   );
 
   // Inject animations into document
@@ -512,13 +504,10 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
     const handleWheel = (e: WheelEvent) => {
       // Check if the scroll event is happening inside the Section 0 animated scene container
-      const isInsideSection0AnimatedScene =
-        animatedSection0Container &&
-        animatedSection0Container.contains(e.target as Node);
+      const isInsideSection0AnimatedScene = animatedSection0Container && animatedSection0Container.contains(e.target as Node);
 
       // Check if the scroll event is happening inside the animated scene container
-      const isInsideAnimatedScene =
-        animatedContainer && animatedContainer.contains(e.target as Node);
+      const isInsideAnimatedScene = animatedContainer && animatedContainer.contains(e.target as Node);
 
       // For Section 0, let them scroll naturally - the scroll event listener will handle progress updates
       if (isInsideSection0AnimatedScene) {
@@ -538,10 +527,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             // Update progress immediately
             const newScrollTop = animatedContainer.scrollTop;
-            const scrollProgress =
-              scrollHeight > clientHeight
-                ? (newScrollTop / (scrollHeight - clientHeight)) * 100
-                : 0;
+            const scrollProgress = scrollHeight > clientHeight ? (newScrollTop / (scrollHeight - clientHeight)) * 100 : 0;
             setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
             return;
           }
@@ -552,10 +538,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
             // Update progress immediately
             const newScrollTop = animatedContainer.scrollTop;
-            const scrollProgress =
-              scrollHeight > clientHeight
-                ? (newScrollTop / (scrollHeight - clientHeight)) * 100
-                : 0;
+            const scrollProgress = scrollHeight > clientHeight ? (newScrollTop / (scrollHeight - clientHeight)) * 100 : 0;
             setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
             return;
           }
@@ -602,12 +585,8 @@ export const HomeScreen = (_props: HomeScreenProps) => {
     }
 
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } =
-        animatedSection0Container;
-      const scrollProgress =
-        scrollHeight > clientHeight
-          ? (scrollTop / (scrollHeight - clientHeight)) * 100
-          : 0;
+      const { scrollTop, scrollHeight, clientHeight } = animatedSection0Container;
+      const scrollProgress = scrollHeight > clientHeight ? (scrollTop / (scrollHeight - clientHeight)) * 100 : 0;
       setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
     };
 
@@ -631,10 +610,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = hiddenScrollDiv;
-      const scrollProgress =
-        scrollHeight > clientHeight
-          ? (scrollTop / (scrollHeight - clientHeight)) * 100
-          : 0;
+      const scrollProgress = scrollHeight > clientHeight ? (scrollTop / (scrollHeight - clientHeight)) * 100 : 0;
       setAnimationProgress(Math.max(0, Math.min(100, scrollProgress)));
     };
 
@@ -653,9 +629,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   // Auto-center Section 0 when user starts interacting
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    const animatedSection0Container = isMobile
-      ? animatedSceneSection0MobileRef.current
-      : animatedSceneSection0Ref.current;
+    const animatedSection0Container = isMobile ? animatedSceneSection0MobileRef.current : animatedSceneSection0Ref.current;
     const section0 = section0Ref.current;
 
     if (!scrollContainer || !animatedSection0Container || !section0) return;
@@ -665,8 +639,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       const scrollContainerRect = scrollContainer.getBoundingClientRect();
 
       // Calculate the absolute top position of the element
-      const elementTop =
-        elementRect.top + scrollContainer.scrollTop - scrollContainerRect.top;
+      const elementTop = elementRect.top + scrollContainer.scrollTop - scrollContainerRect.top;
 
       // On mobile, account for the 64px menu at the top
       const menuHeight = isMobile ? 64 : 0;
@@ -691,9 +664,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
       });
     };
 
-    const handleSection0Interaction = (
-      e: WheelEvent | MouseEvent | TouchEvent,
-    ) => {
+    const handleSection0Interaction = (e: WheelEvent | MouseEvent | TouchEvent) => {
       if (animatedSection0Container?.contains(e.target as Node)) {
         // Position section 0 at the top of viewport (below menu)
         if (section0) positionElement(section0);
@@ -701,35 +672,17 @@ export const HomeScreen = (_props: HomeScreenProps) => {
     };
 
     // Add event listeners to detect scroll/touch start
-    animatedSection0Container.addEventListener(
-      "wheel",
-      handleSection0Interaction as EventListener,
-      { passive: true, once: true },
-    );
-    animatedSection0Container.addEventListener(
-      "mouseenter",
-      handleSection0Interaction as EventListener,
-      { passive: true },
-    );
-    animatedSection0Container.addEventListener(
-      "touchstart",
-      handleSection0Interaction as EventListener,
-      { passive: true, once: true },
-    );
+    animatedSection0Container.addEventListener("wheel", handleSection0Interaction as EventListener, { passive: true, once: true });
+    animatedSection0Container.addEventListener("mouseenter", handleSection0Interaction as EventListener, { passive: true });
+    animatedSection0Container.addEventListener("touchstart", handleSection0Interaction as EventListener, {
+      passive: true,
+      once: true,
+    });
 
     return () => {
-      animatedSection0Container.removeEventListener(
-        "wheel",
-        handleSection0Interaction as EventListener,
-      );
-      animatedSection0Container.removeEventListener(
-        "mouseenter",
-        handleSection0Interaction as EventListener,
-      );
-      animatedSection0Container.removeEventListener(
-        "touchstart",
-        handleSection0Interaction as EventListener,
-      );
+      animatedSection0Container.removeEventListener("wheel", handleSection0Interaction as EventListener);
+      animatedSection0Container.removeEventListener("mouseenter", handleSection0Interaction as EventListener);
+      animatedSection0Container.removeEventListener("touchstart", handleSection0Interaction as EventListener);
     };
   }, [isMobile]);
 
@@ -766,34 +719,15 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               </button>
             </div> */}
             <div className="navbar-button-wrapper">
-              <button
-                style={getButtonsNavbar(isDarkMode ? "#fa5c00ff" : "#5398c9")}
-                onClick={toggleDarkMode}
-              >
-                <div
-                  className="navbar-button-icon"
-                  style={getNavbarButtonIconWrapper()}
-                >
+              <button style={getButtonsNavbar(isDarkMode ? "#fa5c00ff" : "#5398c9")} onClick={toggleDarkMode}>
+                <div className="navbar-button-icon" style={getNavbarButtonIconWrapper()}>
                   {isDarkMode ? (
-                    <SunIcon
-                      fill="var(--vibes-cream)"
-                      bgFill="#231F20"
-                      width={35}
-                      height={35}
-                    />
+                    <SunIcon fill="var(--vibes-cream)" bgFill="#231F20" width={35} height={35} />
                   ) : (
-                    <MoonIcon
-                      fill="var(--vibes-cream)"
-                      bgFill="#231F20"
-                      width={35}
-                      height={35}
-                    />
+                    <MoonIcon fill="var(--vibes-cream)" bgFill="#231F20" width={35} height={35} />
                   )}
                 </div>
-                <div
-                  className="navbar-button-label"
-                  style={getNavbarButtonLabel()}
-                >
+                <div className="navbar-button-label" style={getNavbarButtonLabel()}>
                   {isDarkMode ? "Light" : "Dark"}
                 </div>
               </button>
@@ -830,46 +764,11 @@ export const HomeScreen = (_props: HomeScreenProps) => {
         >
           {refsReady && (
             <>
-              <div
-                key={`bg0-${recalcCounter}`}
-                style={getSection0BackgroundStyle(
-                  section0Ref,
-                  sectionsContainerRef,
-                  isMobile,
-                )}
-              />
-              <div
-                key={`bg1-${recalcCounter}`}
-                style={getSection1BackgroundStyle(
-                  section1Ref,
-                  sectionsContainerRef,
-                  isMobile,
-                )}
-              />
-              <div
-                key={`bg3-${recalcCounter}`}
-                style={getSection3BackgroundStyle(
-                  section3Ref,
-                  sectionsContainerRef,
-                  isMobile,
-                )}
-              />
-              <div
-                key={`bg5-${recalcCounter}`}
-                style={getSection5BackgroundStyle(
-                  section5Ref,
-                  sectionsContainerRef,
-                  isMobile,
-                )}
-              />
-              <div
-                key={`bg8-${recalcCounter}`}
-                style={getSection8BackgroundStyle(
-                  section8Ref,
-                  sectionsContainerRef,
-                  isMobile,
-                )}
-              />
+              <div key={`bg0-${recalcCounter}`} style={getSection0BackgroundStyle(section0Ref, sectionsContainerRef, isMobile)} />
+              <div key={`bg1-${recalcCounter}`} style={getSection1BackgroundStyle(section1Ref, sectionsContainerRef, isMobile)} />
+              <div key={`bg3-${recalcCounter}`} style={getSection3BackgroundStyle(section3Ref, sectionsContainerRef, isMobile)} />
+              <div key={`bg5-${recalcCounter}`} style={getSection5BackgroundStyle(section5Ref, sectionsContainerRef, isMobile)} />
+              <div key={`bg8-${recalcCounter}`} style={getSection8BackgroundStyle(section8Ref, sectionsContainerRef, isMobile)} />
             </>
           )}
         </div>
@@ -880,33 +779,25 @@ export const HomeScreen = (_props: HomeScreenProps) => {
           <div style={getInnerContainerStyle(isMobile)} ref={innerContainerRef}>
             <DraggableSection color="grey" x={20} y={20} removePaddingTop>
               <h2 style={getHeroHeadingStyle()}>Impress the Group Chat</h2>
-              <p style={getHeroSubheadingStyle()}>
-                Instantly make your own apps on the fly
-              </p>
+              <p style={getHeroSubheadingStyle()}>Instantly make your own apps on the fly</p>
             </DraggableSection>
 
             {isMobile && (
               <DraggableSection color="blue" x={20} y={170}>
-                <ChatAnimation
-                  title={selectedScenario.title}
-                  arrayOfMessages={selectedScenario.arrayOfMessages}
-                  user={"You"}
-                />
+                <ChatAnimation title={selectedScenario.title} arrayOfMessages={selectedScenario.arrayOfMessages} user={"You"} />
               </DraggableSection>
             )}
 
             <DraggableCard color="red" x={860} y={180} isText>
               <p style={getCardTextStyle("270px", isMobile)}>
-                Our <a href="http://fireproof.storage/">vibe coding database</a>{" "}
-                encrypts all your data. Which means the group chat's stays
-                local, portable, and safe.
+                Our <a href="http://fireproof.storage/">vibe coding database</a> encrypts all your data. Which means the group
+                chat's stays local, portable, and safe.
               </p>
             </DraggableCard>
 
             <DraggableCard color="blue" x={620} y={60} isText>
               <p style={getCardTextStyle("250px", isMobile)}>
-                No coding experience required. Just type an idea, and invite
-                your friends.
+                No coding experience required. Just type an idea, and invite your friends.
               </p>
             </DraggableCard>
 
@@ -925,10 +816,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 {" "}
                 <DraggableCard color="yellow" x={200} y={1600}>
                   <p style={getImageCardStyle()}>
-                    <img
-                      src={rainbowComputer}
-                      style={getFullSizeImageStyle()}
-                    />
+                    <img src={rainbowComputer} style={getFullSizeImageStyle()} />
                   </p>
                 </DraggableCard>
                 <DraggableCard color="blue" x={950} y={2880}>
@@ -948,46 +836,23 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             )}
 
             {!isMobile && (
-              <div
-                className="chat-container-wrapper"
-                style={getChatContainerStyleOut()}
-              >
+              <div className="chat-container-wrapper" style={getChatContainerStyleOut()}>
                 <div className="chat-inner" style={getChatContainerStyle()}>
                   <div>
                     <div style={getChatContainerTopBar()} />
-                    <div
-                      style={getChatContainerBottomCard()}
-                      ref={chatContainerRef}
-                    >
-                      {selectedScenario.title && (
-                        <div style={getTitleStyle()}>
-                          {selectedScenario.title}
-                        </div>
-                      )}
+                    <div style={getChatContainerBottomCard()} ref={chatContainerRef}>
+                      {selectedScenario.title && <div style={getTitleStyle()}>{selectedScenario.title}</div>}
                       {selectedScenario.arrayOfMessages.map((msg, index) => {
                         const isCurrentUser = msg.user === "You";
-                        const isLastMessage =
-                          index === selectedScenario.arrayOfMessages.length - 1;
-                        const className = isCurrentUser
-                          ? "message-current-user"
-                          : "message-other-user";
-                        const wrapperClass = isLastMessage
-                          ? `${className} last-message-wrapper`
-                          : className;
+                        const isLastMessage = index === selectedScenario.arrayOfMessages.length - 1;
+                        const className = isCurrentUser ? "message-current-user" : "message-other-user";
+                        const wrapperClass = isLastMessage ? `${className} last-message-wrapper` : className;
 
                         return (
-                          <div
-                            key={index}
-                            className={wrapperClass}
-                            style={getMessageWrapperStyle(isCurrentUser)}
-                          >
+                          <div key={index} className={wrapperClass} style={getMessageWrapperStyle(isCurrentUser)}>
                             <div style={getMessageContentWrapperStyle()}>
-                              <div style={getUsernameStyle(isCurrentUser)}>
-                                {msg.user}
-                              </div>
-                              <div style={getMessageBubbleStyle(isCurrentUser)}>
-                                {renderMessageWithLinks(msg.message)}
-                              </div>
+                              <div style={getUsernameStyle(isCurrentUser)}>{msg.user}</div>
+                              <div style={getMessageBubbleStyle(isCurrentUser)}>{renderMessageWithLinks(msg.message)}</div>
                             </div>
                           </div>
                         );
@@ -999,10 +864,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             )}
           </div>
 
-          <div
-            style={getSectionsContainerStyle(isMobile)}
-            ref={sectionsContainerRef}
-          >
+          <div style={getSectionsContainerStyle(isMobile)} ref={sectionsContainerRef}>
             {/* Section 0: Create Section with Animated Scene */}
             <section
               style={{
@@ -1017,21 +879,14 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 {/* Section 1: 0-33% */}
                 {animationProgress < 33 && (
                   <DraggableSection color="blue" static>
-                    <h3 style={getSectionHeadingStyle("#5398c9")}>
-                      You're about to make an app
-                    </h3>
+                    <h3 style={getSectionHeadingStyle("#5398c9")}>You're about to make an app</h3>
                     <div style={getContentWrapperStyle()}>
-                      <b style={getSubheadingBoldStyle()}>
-                        The front-end is the fun part
-                      </b>
+                      <b style={getSubheadingBoldStyle()}>The front-end is the fun part</b>
                       <p>
-                        Let's start there. Let's say you want to make a simple
-                        counter that keeps track of the number of times a group
-                        of people click a red button.
+                        Let's start there. Let's say you want to make a simple counter that keeps track of the number of times a
+                        group of people click a red button.
                       </p>
-                      <p>
-                        Most AI models will give you something cool right away.
-                      </p>
+                      <p>Most AI models will give you something cool right away.</p>
                     </div>
                   </DraggableSection>
                 )}
@@ -1039,23 +894,16 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 {/* Section 2: 33-66% */}
                 {animationProgress >= 33 && animationProgress < 66 && (
                   <DraggableSection color="yellow" static>
-                    <h3 style={getSectionHeadingStyle("#FEDD00")}>
-                      Back to your counter app...
-                    </h3>
+                    <h3 style={getSectionHeadingStyle("#FEDD00")}>Back to your counter app...</h3>
                     <div style={getContentWrapperStyle()}>
-                      <b style={getSubheadingBoldStyle()}>
-                        Now you're using Fireproof + Vibes DIY
-                      </b>
+                      <b style={getSubheadingBoldStyle()}>Now you're using Fireproof + Vibes DIY</b>
                       <span>
-                        Your data lives locally inside your component, syncing
-                        when and where you choose. Conflicts resolve sensibly.
-                        State just... persists.
+                        Your data lives locally inside your component, syncing when and where you choose. Conflicts resolve
+                        sensibly. State just... persists.
                       </span>
                       <span>
-                        You can build offline, share instantly, and grow without
-                        rewriting your stack. Even if you have no idea what any
-                        of that means and just want to spell out an idea and get
-                        an app. We got you.
+                        You can build offline, share instantly, and grow without rewriting your stack. Even if you have no idea what
+                        any of that means and just want to spell out an idea and get an app. We got you.
                       </span>
                     </div>
                   </DraggableSection>
@@ -1064,22 +912,15 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 {/* Section 3: 66-100% */}
                 {animationProgress >= 66 && (
                   <DraggableSection color="red" static>
-                    <h3 style={getSectionHeadingStyle("#D94827")}>
-                      Build together, instantly
-                    </h3>
+                    <h3 style={getSectionHeadingStyle("#D94827")}>Build together, instantly</h3>
                     <div style={getContentWrapperStyle()}>
-                      <b style={getSubheadingBoldStyle()}>
-                        No setup, no friction
-                      </b>
+                      <b style={getSubheadingBoldStyle()}>No setup, no friction</b>
                       <span>
-                        Share your creations with a simple link. Your friends
-                        can jump in immediately — no downloads, no waiting.
+                        Share your creations with a simple link. Your friends can jump in immediately — no downloads, no waiting.
                       </span>
                       <span>
-                        Everyone's changes sync in real-time, and your data
-                        stays safe and encrypted locally. And the entire
-                        community of Vibes is like a community-run app store
-                        with no monopolist gatekeeper (shots fired).
+                        Everyone's changes sync in real-time, and your data stays safe and encrypted locally. And the entire
+                        community of Vibes is like a community-run app store with no monopolist gatekeeper (shots fired).
                       </span>
                     </div>
                   </DraggableSection>
@@ -1089,15 +930,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               {/* Right column: AnimatedScene */}
               {isMobile ? (
                 // Mobile: Container with placeholder and overlay
-                <div
-                  ref={animatedSceneContainer0MobileRef}
-                  style={getScrollableAnimatedSceneMobileContainerStyle()}
-                >
+                <div ref={animatedSceneContainer0MobileRef} style={getScrollableAnimatedSceneMobileContainerStyle()}>
                   {/* Hidden scrollable div for slower animation */}
-                  <div
-                    ref={hiddenScrollDivRef}
-                    style={getHiddenScrollDivStyle()}
-                  >
+                  <div ref={hiddenScrollDivRef} style={getHiddenScrollDivStyle()}>
                     <div style={getHiddenScrollDivInnerStyle()} />
                   </div>
 
@@ -1128,13 +963,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <div style={getScrollableAnimatedSceneInnerStyle()}>
                       <div style={getStickyAnimatedSceneDesktopStyle()}>
                         {/* Empty space for left column (1/3) */}
-                        <div
-                          style={getStickyAnimatedSceneDesktopLeftSpacerStyle()}
-                        />
+                        <div style={getStickyAnimatedSceneDesktopLeftSpacerStyle()} />
                         {/* AnimatedScene in right area (2/3) */}
-                        <div
-                          style={getStickyAnimatedSceneDesktopRightContainerStyle()}
-                        >
+                        <div style={getStickyAnimatedSceneDesktopRightContainerStyle()}>
                           <AnimatedScene progress={animationProgress} />
                         </div>
                       </div>
@@ -1168,33 +999,23 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                 </div> */}
                 <div style={get2of3Column(isMobile)}>
                   <DraggableSection color="blue" static removeMargin>
-                    <h3 style={getSectionHeadingStyle("#5398c9")}>
-                      The Vibe Coding Stack Made for Coding Agents
-                    </h3>
+                    <h3 style={getSectionHeadingStyle("#5398c9")}>The Vibe Coding Stack Made for Coding Agents</h3>
                     <div style={getContentWrapperStyle()}>
-                      <b style={getSubheadingBoldStyle()}>
-                        It's not for you. It's for them.
-                      </b>
+                      <b style={getSubheadingBoldStyle()}>It's not for you. It's for them.</b>
                       <p>
-                        Vibes DIY is so obsessed with making a better vibe
-                        coding experience that we started by making our own
-                        database. The Vibes DIY web stack is open source, and
-                        uses a sync-engine powered by our database,{" "}
-                        <a style={getLinkOutStyle()}>Fireproof </a>. Because{" "}
-                        <a style={getLinkOutStyle()}>Fireproof</a> is local
-                        first, your data lives in the browser, and syncs across
-                        your users' browsers automatically. Without a virtual
-                        machine + web server to make everything complicated.
+                        Vibes DIY is so obsessed with making a better vibe coding experience that we started by making our own
+                        database. The Vibes DIY web stack is open source, and uses a sync-engine powered by our database,{" "}
+                        <a style={getLinkOutStyle()}>Fireproof </a>. Because <a style={getLinkOutStyle()}>Fireproof</a> is local
+                        first, your data lives in the browser, and syncs across your users' browsers automatically. Without a
+                        virtual machine + web server to make everything complicated.
                       </p>
                       <p>Our timing is good.</p>
                       <p>
-                        Every generation of web tooling promises the same thing:
-                        faster builds, fewer bugs, better DX. APIs got cleaner.
-                        Frameworks got smarter.
+                        Every generation of web tooling promises the same thing: faster builds, fewer bugs, better DX. APIs got
+                        cleaner. Frameworks got smarter.
                       </p>
                       <p>
-                        And yet modern apps are still a maze of clients,
-                        servers, endpoints, retries, caches, and edge cases. So
+                        And yet modern apps are still a maze of clients, servers, endpoints, retries, caches, and edge cases. So
                         let's ask a different question...
                       </p>
                     </div>
@@ -1207,13 +1028,9 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   }}
                 >
                   <DraggableSection color="blue" static removeMargin>
-                    <h3 style={getSectionHeadingStyle("#5398c9")}>
-                      Let's Ask the AI.
-                    </h3>
+                    <h3 style={getSectionHeadingStyle("#5398c9")}>Let's Ask the AI.</h3>
                     <div style={getContentWrapperStyle()}>
-                      <b style={getSubheadingBoldStyle()}>
-                        What do you actually want to generate?
-                      </b>
+                      <b style={getSubheadingBoldStyle()}>What do you actually want to generate?</b>
                       <TerminalDemo isMobile={isMobile} />
                     </div>
                   </DraggableSection>
@@ -1230,9 +1047,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ref={section3Ref}
             >
               <DraggableSection color="yellow" static>
-                <h3 style={getSectionHeadingStyle("#FEDD00")}>
-                  Now comes the hard part
-                </h3>
+                <h3 style={getSectionHeadingStyle("#FEDD00")}>Now comes the hard part</h3>
                 <div style={{ marginTop: "12px" }}>
                   {!isMobile && (
                     <img
@@ -1257,9 +1072,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                   >
                     You're about to leave the Vibe Zone
                   </b>
-                  <p style={{ marginBottom: "18px" }}>
-                    Every vibe-coded project starts in the vibe zone.
-                  </p>
+                  <p style={{ marginBottom: "18px" }}>Every vibe-coded project starts in the vibe zone.</p>
                   {isMobile && (
                     <div
                       style={{
@@ -1286,9 +1099,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <br />
                     Each change moves the app forward.
                   </p>
-                  <p style={{ marginBottom: "18px" }}>
-                    Then something small goes wrong.
-                  </p>
+                  <p style={{ marginBottom: "18px" }}>Then something small goes wrong.</p>
                   <p style={{ marginBottom: "18px" }}>
                     A slightly off assumption.
                     <br />
@@ -1307,17 +1118,13 @@ export const HomeScreen = (_props: HomeScreenProps) => {
                     <br />
                     The model isn't failing.
                   </p>
+                  <p style={{ marginBottom: "18px" }}>You've just drifted out of the vibe zone.</p>
                   <p style={{ marginBottom: "18px" }}>
-                    You've just drifted out of the vibe zone.
+                    Vibe coding works when state is simple and visible. It breaks when complexity crosses a threshold the model
+                    can't intuit or unwind.
                   </p>
                   <p style={{ marginBottom: "18px" }}>
-                    Vibe coding works when state is simple and visible. It
-                    breaks when complexity crosses a threshold the model can't
-                    intuit or unwind.
-                  </p>
-                  <p style={{ marginBottom: "18px" }}>
-                    Vibes DIY keeps things simple enough that you and your
-                    coding agent stay where you want to be. In the vibe zone.
+                    Vibes DIY keeps things simple enough that you and your coding agent stay where you want to be. In the vibe zone.
                   </p>
                   <div style={{ clear: "both" }} />
                 </div>
@@ -1334,38 +1141,26 @@ export const HomeScreen = (_props: HomeScreenProps) => {
             >
               <DraggableSection color="red" static>
                 <div style={getSecondCardStyle()}>
-                  <h3 style={getSectionHeadingStyle("#DA291C")}>
-                    One shot. Then Ship It.
-                  </h3>
+                  <h3 style={getSectionHeadingStyle("#DA291C")}>One shot. Then Ship It.</h3>
                   <div style={getContentWrapperStyle()}>
-                    <b style={getSubheadingBoldStyle()}>
-                      Get more app for your prompt.
-                    </b>
+                    <b style={getSubheadingBoldStyle()}>Get more app for your prompt.</b>
                     <span>
-                      When you vibe code an app, your coding agent has to choose
-                      a web stack. When you tell your agent to use the Vibe
-                      Stack, you're giving it an unfair advantage. Because Vibes
-                      collapses <i>application code</i> and
+                      When you vibe code an app, your coding agent has to choose a web stack. When you tell your agent to use the
+                      Vibe Stack, you're giving it an unfair advantage. Because Vibes collapses <i>application code</i> and
                       <i>application state</i> into a single, local HTML file.
                     </span>
                     <span>
-                      Think about it. AI doesn't make apps - it makes{" "}
-                      <i>text</i>. Embedding the database in javascript (via the
-                      browser) lets your agent describe an entire app—including
-                      its persistence layer—<strong>in one shot</strong>.
+                      Think about it. AI doesn't make apps - it makes <i>text</i>. Embedding the database in javascript (via the
+                      browser) lets your agent describe an entire app—including its persistence layer—<strong>in one shot</strong>.
                     </span>
                     <span>
-                      This means the AI doesn't have to give you, the human,
-                      instructions about how to setup a server, or import a
-                      schema. It just gives you a working app. Fast. And it
-                      works as pure HTML, so you're not locked into someone's
+                      This means the AI doesn't have to give you, the human, instructions about how to setup a server, or import a
+                      schema. It just gives you a working app. Fast. And it works as pure HTML, so you're not locked into someone's
                       virtual server.
                     </span>
                     <span>
-                      This yields a brand new vibe coding magic trick:
-                      prompt-to-vibe. A single file encodes UI, logic, and seed
-                      data, making vibe-coded apps trivially shareable and
-                      endlessly remixable by your group chat.
+                      This yields a brand new vibe coding magic trick: prompt-to-vibe. A single file encodes UI, logic, and seed
+                      data, making vibe-coded apps trivially shareable and endlessly remixable by your group chat.
                     </span>
                   </div>
                 </div>
@@ -1381,64 +1176,39 @@ export const HomeScreen = (_props: HomeScreenProps) => {
               ref={section8Ref}
             >
               <DraggableSection color="grey" static>
-                <h3 style={getSectionHeadingStyle("#000000")}>
-                  Join the party
-                </h3>
+                <h3 style={getSectionHeadingStyle("#000000")}>Join the party</h3>
                 <div style={getContentWrapperStyle()}>
-                  <b style={getSubheadingBoldStyle()}>
-                    You're early. But right on time.
-                  </b>
+                  <b style={getSubheadingBoldStyle()}>You're early. But right on time.</b>
                   <span>
-                    Volunteer sign-ups and school drop-offs. Project checklists
-                    and vacation planners. Pick-up basketball schedules and
-                    fantasy football rankings. A cooperative chore wheel for the
-                    roomies and the ultimate Oscars bracket for movie club. Each
-                    of these concepts can be vibe coded in <i>60 seconds</i>.
-                    Whatever the vibe, you can build it with Vibes.
+                    Volunteer sign-ups and school drop-offs. Project checklists and vacation planners. Pick-up basketball schedules
+                    and fantasy football rankings. A cooperative chore wheel for the roomies and the ultimate Oscars bracket for
+                    movie club. Each of these concepts can be vibe coded in <i>60 seconds</i>. Whatever the vibe, you can build it
+                    with Vibes.
                   </span>
                   <span>
-                    Everyone's ideas are welcome and everyone's data is
-                    protected. This is software that communities build together
-                    in real time — to make life easier, fairer, and more fun for
-                    everyone.
+                    Everyone's ideas are welcome and everyone's data is protected. This is software that communities build together
+                    in real time — to make life easier, fairer, and more fun for everyone.
                   </span>
-                  <span>
-                    You and your friends aren't users anymore. You're makers.
-                  </span>
+                  <span>You and your friends aren't users anymore. You're makers.</span>
                   <span>
                     Curious? Try a prompt using our open source web builder.{" "}
-                    <a
-                      style={getLinkOutStyle()}
-                      href="https://discord.gg/vnpWycj4Ta"
-                    >
+                    <a style={getLinkOutStyle()} href="https://discord.gg/vnpWycj4Ta">
                       Join our Discord
                     </a>
                     ,{" "}
-                    <a
-                      style={getLinkOutStyle()}
-                      href="https://vibesdiy.substack.com/"
-                    >
+                    <a style={getLinkOutStyle()} href="https://vibesdiy.substack.com/">
                       read our Substack
                     </a>
                     , and follow us on{" "}
-                    <a
-                      style={getLinkOutStyle()}
-                      href="https://www.youtube.com/@VibesDIY"
-                    >
+                    <a style={getLinkOutStyle()} href="https://www.youtube.com/@VibesDIY">
                       YouTube
                     </a>
                     ,{" "}
-                    <a
-                      style={getLinkOutStyle()}
-                      href=" https://github.com/VibesDIY"
-                    >
+                    <a style={getLinkOutStyle()} href=" https://github.com/VibesDIY">
                       Github
                     </a>
                     , and{" "}
-                    <a
-                      style={getLinkOutStyle()}
-                      href=" https://bsky.app/profile/vibes.diy"
-                    >
+                    <a style={getLinkOutStyle()} href=" https://bsky.app/profile/vibes.diy">
                       Bluesky
                     </a>
                     .
@@ -1450,11 +1220,7 @@ export const HomeScreen = (_props: HomeScreenProps) => {
         </div>
 
         {/* Side Menu */}
-        <SideMenu
-          isOpen={isSideMenuOpen}
-          onClose={() => setIsSideMenuOpen(false)}
-          onLogin={handleLogin}
-        />
+        <SideMenu isOpen={isSideMenuOpen} onClose={() => setIsSideMenuOpen(false)} onLogin={handleLogin} />
       </div>
     </div>
   );

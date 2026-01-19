@@ -63,9 +63,7 @@ export const DEFAULT_STYLE_NAME = "brutalist web" as const;
 const nameToStyle = new Map<string, StylePrompt>();
 for (const s of stylePrompts) {
   if (nameToStyle.has(s.name)) {
-    throw new Error(
-      `Duplicate style name detected: "${s.name}". Style names must be unique.`,
-    );
+    throw new Error(`Duplicate style name detected: "${s.name}". Style names must be unique.`);
   }
   nameToStyle.set(s.name, s);
 }
@@ -76,7 +74,7 @@ export const defaultStylePrompt = (() => {
   if (!entry) {
     const available = Array.from(nameToStyle.keys()).join(", ");
     throw new Error(
-      `DEFAULT_STYLE_NAME "${DEFAULT_STYLE_NAME}" not found in stylePrompts. Available names: ${available}. Update DEFAULT_STYLE_NAME or the style list.`,
+      `DEFAULT_STYLE_NAME "${DEFAULT_STYLE_NAME}" not found in stylePrompts. Available names: ${available}. Update DEFAULT_STYLE_NAME or the style list.`
     );
   }
   return entry.prompt;

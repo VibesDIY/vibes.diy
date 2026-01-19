@@ -1,28 +1,28 @@
-import { act, render, renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanupIframeMocks, createMockIframe } from './utils/iframe-mocks.js';
+import { act, render, renderHook, waitFor } from "@testing-library/react";
+import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanupIframeMocks, createMockIframe } from "./utils/iframe-mocks.js";
 
 // Mock call-ai module to prevent network calls
-vi.mock('call-ai', () => ({
-  callAI: vi.fn().mockResolvedValue('Mocked AI response'),
+vi.mock("call-ai", () => ({
+  callAI: vi.fn().mockResolvedValue("Mocked AI response"),
   joinUrlParts: vi.fn((base: string, path: string) => {
-    if (!base || !path) return base || path || '';
-    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    if (!base || !path) return base || path || "";
+    const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    const cleanPath = path.startsWith("/") ? path.slice(1) : path;
     return `${cleanBase}/${cleanPath}`;
   }),
 }));
 
 // Mock the environment config that would be used for endpoints
-vi.mock('../../base/config/env', () => ({
+vi.mock("../../base/config/env", () => ({
   VibesDiyEnv: {
-    CALLAI_ENDPOINT: () => 'https://api.openrouter.ai/api/v1/chat/completions',
+    CALLAI_ENDPOINT: () => "https://api.openrouter.ai/api/v1/chat/completions",
   },
 }));
 
 // Mock parseContent with realistic parsing
-vi.mock('@vibes.diy/prompts', () => ({
+vi.mock("@vibes.diy/prompts", () => ({
   parseContent: vi.fn((text: string) => {
     // Simulate realistic markdown parsing with code blocks
     const segments = [];
@@ -30,26 +30,26 @@ vi.mock('@vibes.diy/prompts', () => ({
 
     if (parts.length === 1) {
       // No code blocks
-      return { segments: [{ type: 'markdown', content: text }] };
+      return { segments: [{ type: "markdown", content: text }] };
     }
 
     for (let i = 0; i < parts.length; i++) {
       if (i === 0) {
         // First part is always markdown
         if (parts[i].trim()) {
-          segments.push({ type: 'markdown', content: parts[i] });
+          segments.push({ type: "markdown", content: parts[i] });
         }
       } else if (i % 2 === 1) {
         // Odd indices are code blocks
-        const codeEndIndex = parts[i].indexOf('\n```');
+        const codeEndIndex = parts[i].indexOf("\n```");
         if (codeEndIndex !== -1) {
           const code = parts[i].substring(0, codeEndIndex);
-          segments.push({ type: 'code', content: code });
+          segments.push({ type: "code", content: code });
 
           // Add remaining text as markdown if any
           const remaining = parts[i].substring(codeEndIndex + 4);
           if (remaining.trim()) {
-            segments.push({ type: 'markdown', content: remaining });
+            segments.push({ type: "markdown", content: remaining });
           }
         }
       }
@@ -61,18 +61,18 @@ vi.mock('@vibes.diy/prompts', () => ({
   makeBaseSystemPrompt: vi.fn().mockImplementation(async (model, options) => {
     // Fast mock that bypasses network calls
     return {
-      systemPrompt: 'You are a React component generator',
-      dependencies: options?.dependencies || ['useFireproof'],
+      systemPrompt: "You are a React component generator",
+      dependencies: options?.dependencies || ["useFireproof"],
       demoData: false,
-      model: model || 'anthropic/claude-sonnet-4.5',
+      model: model || "anthropic/claude-sonnet-4.5",
     };
   }),
 }));
 
 // Import the hook after mocks are set up
-import { useVibes } from '../base/hooks/vibes-gen/use-vibes.js';
+import { useVibes } from "../base/hooks/vibes-gen/use-vibes.js";
 
-describe('useVibes Integration Tests', () => {
+describe("useVibes Integration Tests", () => {
   beforeEach(() => {
     createMockIframe();
     vi.clearAllMocks();
@@ -82,7 +82,7 @@ describe('useVibes Integration Tests', () => {
     cleanupIframeMocks();
   });
 
-  it('should complete full flow from prompt to iframe render', async () => {
+  it("should complete full flow from prompt to iframe render", async () => {
     const _startTime = performance.now();
 
     const mockCallAI = vi.fn().mockImplementation((_messages, _options) => {
@@ -153,9 +153,7 @@ This creates a fully functional todo app with Fireproof for data persistence.
       `);
     });
 
-    const { result } = renderHook(() =>
-      useVibes('create a todo app', { dependencies: ['useFireproof'] }, mockCallAI)
-    );
+    const { result } = renderHook(() => useVibes("create a todo app", { dependencies: ["useFireproof"] }, mockCallAI));
 
     // Initially loading
     expect(result.current.loading).toBe(true);
@@ -173,9 +171,9 @@ This creates a fully functional todo app with Fireproof for data persistence.
     const _endTime = performance.now();
 
     // Verify code was extracted correctly
-    expect(result.current.code).toContain('TodoApp');
-    expect(result.current.code).toContain('useFireproof');
-    expect(result.current.code).toContain('useLiveQuery');
+    expect(result.current.code).toContain("TodoApp");
+    expect(result.current.code).toContain("useFireproof");
+    expect(result.current.code).toContain("useLiveQuery");
     expect(result.current.error).toBe(null);
 
     // Should have generated a component
@@ -196,11 +194,11 @@ This creates a fully functional todo app with Fireproof for data persistence.
 
     // Verify document was created with correct metadata
     expect(result.current.document).toBeDefined();
-    expect(result.current.document?.prompt).toBe('create a todo app');
-    expect(result.current.document?.code).toContain('TodoApp');
+    expect(result.current.document?.prompt).toBe("create a todo app");
+    expect(result.current.document?.code).toContain("TodoApp");
   });
 
-  it('should handle complex component with multiple imports', async () => {
+  it("should handle complex component with multiple imports", async () => {
     const mockCallAI = vi.fn().mockResolvedValue(`
 \`\`\`jsx
 import React, { useState, useEffect } from "react"
@@ -246,9 +244,9 @@ export default function DataDashboard() {
 
     const { result } = renderHook(() =>
       useVibes(
-        'create a data dashboard',
+        "create a data dashboard",
         {
-          dependencies: ['axios', 'lodash'],
+          dependencies: ["axios", "lodash"],
         },
         mockCallAI
       )
@@ -262,7 +260,7 @@ export default function DataDashboard() {
     );
 
     // Should have extracted the complex component
-    expect(result.current.code).toContain('DataDashboard');
+    expect(result.current.code).toContain("DataDashboard");
     expect(result.current.code).toContain('import axios from "axios"');
     expect(result.current.code).toContain('import lodash from "lodash"');
 
@@ -276,13 +274,11 @@ export default function DataDashboard() {
     }
   });
 
-  it('should handle edge cases and error scenarios', async () => {
+  it("should handle edge cases and error scenarios", async () => {
     // Test with malformed response
-    const mockCallAI = vi.fn().mockResolvedValue('```jsx\nincomplete code block without closing');
+    const mockCallAI = vi.fn().mockResolvedValue("```jsx\nincomplete code block without closing");
 
-    const { result } = renderHook(() =>
-      useVibes('create something', { dependencies: ['useFireproof'] }, mockCallAI)
-    );
+    const { result } = renderHook(() => useVibes("create something", { dependencies: ["useFireproof"] }, mockCallAI));
 
     await waitFor(
       () => {
@@ -297,7 +293,7 @@ export default function DataDashboard() {
     expect(result.current.error).toBe(null);
   });
 
-  it('should support iframe communication flow', async () => {
+  it("should support iframe communication flow", async () => {
     const mockCallAI = vi.fn().mockResolvedValue(`
 \`\`\`jsx
 function App() {
@@ -312,9 +308,7 @@ export default App;
 \`\`\`
     `);
 
-    const { result } = renderHook(() =>
-      useVibes('create communicating component', { dependencies: ['useFireproof'] }, mockCallAI)
-    );
+    const { result } = renderHook(() => useVibes("create communicating component", { dependencies: ["useFireproof"] }, mockCallAI));
 
     await waitFor(
       () => {
@@ -342,7 +336,7 @@ export default App;
     }
   });
 
-  it('should handle regeneration with different results', async () => {
+  it("should handle regeneration with different results", async () => {
     let generation = 0;
     const mockCallAI = vi.fn().mockImplementation(() => {
       generation++;
@@ -361,9 +355,7 @@ export default App${generation};
       `);
     });
 
-    const { result } = renderHook(() =>
-      useVibes('create a component', { dependencies: ['useFireproof'] }, mockCallAI)
-    );
+    const { result } = renderHook(() => useVibes("create a component", { dependencies: ["useFireproof"] }, mockCallAI));
 
     // Wait for first generation
     await waitFor(
@@ -373,8 +365,8 @@ export default App${generation};
       { timeout: 2000, interval: 50 }
     );
 
-    expect(result.current.code).toContain('App1');
-    expect(result.current.code).toContain('Generation 1');
+    expect(result.current.code).toContain("App1");
+    expect(result.current.code).toContain("Generation 1");
 
     // Trigger regeneration within act to ensure state updates
     act(() => {
@@ -392,8 +384,8 @@ export default App${generation};
     );
 
     // Should have new content
-    expect(result.current.code).toContain('App2');
-    expect(result.current.code).toContain('Generation 2');
+    expect(result.current.code).toContain("App2");
+    expect(result.current.code).toContain("Generation 2");
 
     // Both generations should create valid components
     if (result.current.App) {
@@ -402,19 +394,13 @@ export default App${generation};
     }
   });
 
-  it('should handle different session IDs properly', async () => {
-    const mockCallAI = vi
-      .fn()
-      .mockResolvedValue('```jsx\nfunction App() { return <div>Test</div> }\n```');
+  it("should handle different session IDs properly", async () => {
+    const mockCallAI = vi.fn().mockResolvedValue("```jsx\nfunction App() { return <div>Test</div> }\n```");
 
     // Create multiple instances
-    const { result: result1 } = renderHook(() =>
-      useVibes('component 1', { dependencies: ['useFireproof'] }, mockCallAI)
-    );
+    const { result: result1 } = renderHook(() => useVibes("component 1", { dependencies: ["useFireproof"] }, mockCallAI));
 
-    const { result: result2 } = renderHook(() =>
-      useVibes('component 2', { dependencies: ['useFireproof'] }, mockCallAI)
-    );
+    const { result: result2 } = renderHook(() => useVibes("component 2", { dependencies: ["useFireproof"] }, mockCallAI));
 
     await waitFor(
       () => {

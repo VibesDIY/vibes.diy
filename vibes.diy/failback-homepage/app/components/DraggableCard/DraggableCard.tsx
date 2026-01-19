@@ -1,19 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import { DraggableCardProps } from "./DraggableCard.types.js";
-import {
-  getCardChildrenStyle,
-  getCardStyle,
-  getTitleBarStyle,
-} from "./DraggableCard.styles.js";
+import { getCardChildrenStyle, getCardStyle, getTitleBarStyle } from "./DraggableCard.styles.js";
 import { useIsMobile } from "../../hooks/index.js";
 
-export const DraggableCard = ({
-  color,
-  children,
-  x = 0,
-  y = 0,
-  isText = false,
-}: DraggableCardProps) => {
+export const DraggableCard = ({ color, children, x = 0, y = 0, isText = false }: DraggableCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });

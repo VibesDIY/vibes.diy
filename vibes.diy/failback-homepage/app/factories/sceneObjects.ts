@@ -2,10 +2,7 @@ import * as THREE from "three";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
-import {
-  FontLoader,
-  type Font,
-} from "three/examples/jsm/loaders/FontLoader.js";
+import { FontLoader, type Font } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import {
   SCENE_DIMENSIONS,
@@ -53,16 +50,8 @@ export function makeGridGroup() {
 
   // Create 5 horizontal lines (4 spaces = 5 lines)
   for (let i = 0; i < DATA_LAYER.GRID_LINES.HORIZONTAL; i++) {
-    const y =
-      SCENE_DIMENSIONS.GRID.HEIGHT / 2 - i * (SCENE_DIMENSIONS.GRID.HEIGHT / 4);
-    const points = [
-      -SCENE_DIMENSIONS.GRID.WIDTH / 2,
-      y,
-      0,
-      SCENE_DIMENSIONS.GRID.WIDTH / 2,
-      y,
-      0,
-    ];
+    const y = SCENE_DIMENSIONS.GRID.HEIGHT / 2 - i * (SCENE_DIMENSIONS.GRID.HEIGHT / 4);
+    const points = [-SCENE_DIMENSIONS.GRID.WIDTH / 2, y, 0, SCENE_DIMENSIONS.GRID.WIDTH / 2, y, 0];
     const lineGeometry = new LineGeometry();
     lineGeometry.setPositions(points);
     const line = new Line2(lineGeometry, lineMaterial);
@@ -71,16 +60,8 @@ export function makeGridGroup() {
 
   // Create 4 vertical lines (3 spaces = 4 lines)
   for (let i = 0; i < DATA_LAYER.GRID_LINES.VERTICAL; i++) {
-    const x =
-      SCENE_DIMENSIONS.GRID.WIDTH / 2 - i * (SCENE_DIMENSIONS.GRID.WIDTH / 3);
-    const points = [
-      x,
-      -SCENE_DIMENSIONS.GRID.HEIGHT / 2,
-      0,
-      x,
-      SCENE_DIMENSIONS.GRID.HEIGHT / 2,
-      0,
-    ];
+    const x = SCENE_DIMENSIONS.GRID.WIDTH / 2 - i * (SCENE_DIMENSIONS.GRID.WIDTH / 3);
+    const points = [x, -SCENE_DIMENSIONS.GRID.HEIGHT / 2, 0, x, SCENE_DIMENSIONS.GRID.HEIGHT / 2, 0];
     const lineGeometry = new LineGeometry();
     lineGeometry.setPositions(points);
     const line = new Line2(lineGeometry, lineMaterial);
@@ -95,7 +76,7 @@ export function makeUnencryptedBlock(blockColor: number = 0x009ace) {
   const blockGeometry = new THREE.BoxGeometry(
     SCENE_DIMENSIONS.BLOCK.WIDTH,
     SCENE_DIMENSIONS.BLOCK.HEIGHT,
-    SCENE_DIMENSIONS.BLOCK.DEPTH,
+    SCENE_DIMENSIONS.BLOCK.DEPTH
   );
   const blockMaterial = new THREE.MeshToonMaterial({ color: blockColor });
   const block = new THREE.Mesh(blockGeometry, blockMaterial);
@@ -108,7 +89,7 @@ export function makeEncryptedBlock(blockColor: number = 0x009ace) {
     SCENE_DIMENSIONS.BLOCK.WIDTH / 2, // top radius (half width for cylinder)
     SCENE_DIMENSIONS.BLOCK.WIDTH / 2, // bottom radius (half width for cylinder)
     SCENE_DIMENSIONS.BLOCK.HEIGHT, // height
-    SCENE_DIMENSIONS.BLOCK.SEGMENTS,
+    SCENE_DIMENSIONS.BLOCK.SEGMENTS
   );
   const blockMaterial = new THREE.MeshToonMaterial({ color: blockColor });
   const block = new THREE.Mesh(blockGeometry, blockMaterial);
@@ -155,16 +136,8 @@ export function makeCid(hexPair: string, options?: { signal?: AbortSignal }) {
   return textGroup;
 }
 
-export function makeBlockSituation(
-  hexPair: string,
-  params: BlockSituationParams = {},
-  options?: { signal?: AbortSignal },
-) {
-  const {
-    speed = ANIMATION_DURATIONS.BLOCK_SPEED,
-    startPosition = 4,
-    blockColor = 0x009ace,
-  } = params;
+export function makeBlockSituation(hexPair: string, params: BlockSituationParams = {}, options?: { signal?: AbortSignal }) {
+  const { speed = ANIMATION_DURATIONS.BLOCK_SPEED, startPosition = 4, blockColor = 0x009ace } = params;
   const group = new THREE.Group();
   // Add blocks - both use same color for consistency
   const unencryptedBlock = makeUnencryptedBlock(blockColor);
@@ -215,10 +188,8 @@ export function makeTabletLabel(gridGroup: THREE.Group) {
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
     textMesh.position.set(
       SCENE_DIMENSIONS.TEXT.POSITION.X,
-      SCENE_DIMENSIONS.GRID.HEIGHT / 2 -
-        3 * (SCENE_DIMENSIONS.GRID.HEIGHT / 4) +
-        SCENE_DIMENSIONS.TEXT.POSITION.Y_OFFSET,
-      0,
+      SCENE_DIMENSIONS.GRID.HEIGHT / 2 - 3 * (SCENE_DIMENSIONS.GRID.HEIGHT / 4) + SCENE_DIMENSIONS.TEXT.POSITION.Y_OFFSET,
+      0
     );
     gridGroup.add(textMesh);
   });
@@ -238,14 +209,14 @@ export function makeDataLayer() {
     SCENE_DIMENSIONS.BUTTON_PAD.RADIUS,
     SCENE_DIMENSIONS.BUTTON_PAD.TUBE_RADIUS,
     SCENE_DIMENSIONS.BUTTON_PAD.SEGMENTS,
-    SCENE_DIMENSIONS.BUTTON_PAD.SEGMENTS,
+    SCENE_DIMENSIONS.BUTTON_PAD.SEGMENTS
   );
   const buttonMaterial = new THREE.MeshToonMaterial({ color: COLORS.BUTTON });
   const button = new THREE.Mesh(buttonGeometry, buttonMaterial);
   button.position.set(
     SCENE_DIMENSIONS.BUTTON_PAD.POSITION.X,
     SCENE_DIMENSIONS.BUTTON_PAD.POSITION.Y,
-    SCENE_DIMENSIONS.BUTTON_PAD.POSITION.Z,
+    SCENE_DIMENSIONS.BUTTON_PAD.POSITION.Z
   );
   // button.castShadow = true
   // button.receiveShadow = true
@@ -259,15 +230,12 @@ export function makeEnclosureBack() {
   const enclosureBackGeometry = new THREE.BoxGeometry(
     SCENE_DIMENSIONS.ENCLOSURE.WIDTH + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
     SCENE_DIMENSIONS.ENCLOSURE.HEIGHT + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
-    SCENE_DIMENSIONS.ENCLOSURE.DEPTH,
+    SCENE_DIMENSIONS.ENCLOSURE.DEPTH
   );
   const enclosureBackMaterial = new THREE.MeshToonMaterial({
     color: COLORS.ENCLOSURE,
   });
-  const enclosureBack = new THREE.Mesh(
-    enclosureBackGeometry,
-    enclosureBackMaterial,
-  );
+  const enclosureBack = new THREE.Mesh(enclosureBackGeometry, enclosureBackMaterial);
   // enclosureBack.castShadow = true
   // enclosureBack.receiveShadow = true
   return enclosureBack;
@@ -278,19 +246,15 @@ export function makeChrome() {
   const chromeGeometry = new THREE.BoxGeometry(
     SCENE_DIMENSIONS.CHROME.WIDTH,
     SCENE_DIMENSIONS.CHROME.HEIGHT,
-    SCENE_DIMENSIONS.CHROME.DEPTH,
+    SCENE_DIMENSIONS.CHROME.DEPTH
   );
   const chromeMaterial = new THREE.MeshToonMaterial({ color: COLORS.CHROME });
   const chrome = new THREE.Mesh(chromeGeometry, chromeMaterial);
-  chrome.position.set(
-    0,
-    SCENE_DIMENSIONS.CHROME.POSITION.Y,
-    SCENE_DIMENSIONS.CHROME.POSITION.Z,
-  );
+  chrome.position.set(0, SCENE_DIMENSIONS.CHROME.POSITION.Y, SCENE_DIMENSIONS.CHROME.POSITION.Z);
   const addressBarGeometry = new THREE.BoxGeometry(
     SCENE_DIMENSIONS.CHROME.ADDRESS_BAR.WIDTH,
     SCENE_DIMENSIONS.CHROME.ADDRESS_BAR.HEIGHT,
-    SCENE_DIMENSIONS.CHROME.ADDRESS_BAR.DEPTH,
+    SCENE_DIMENSIONS.CHROME.ADDRESS_BAR.DEPTH
   );
   const addressBarMaterial = new THREE.MeshToonMaterial({
     color: COLORS.ADDRESS_BAR,
@@ -299,7 +263,7 @@ export function makeChrome() {
   addressBar.position.set(
     SCENE_DIMENSIONS.CHROME.ADDRESS_BAR.POSITION.X,
     SCENE_DIMENSIONS.CHROME.ADDRESS_BAR.POSITION.Y,
-    SCENE_DIMENSIONS.CHROME.ADDRESS_BAR.POSITION.Z,
+    SCENE_DIMENSIONS.CHROME.ADDRESS_BAR.POSITION.Z
   );
   chrome.add(addressBar);
   // chrome.castShadow = true
@@ -324,11 +288,7 @@ export function makeDisplayTexture(counter = 0) {
   ctx.font = `${SCENE_DIMENSIONS.DISPLAY.FONT_SIZE}px dseg7_classic_miniregular`;
   // right
   ctx.textAlign = "right";
-  ctx.fillText(
-    counter.toString(),
-    SCENE_DIMENSIONS.DISPLAY.TEXT_X,
-    canvas.height / 2 + SCENE_DIMENSIONS.DISPLAY.FONT_SIZE / 2,
-  );
+  ctx.fillText(counter.toString(), SCENE_DIMENSIONS.DISPLAY.TEXT_X, canvas.height / 2 + SCENE_DIMENSIONS.DISPLAY.FONT_SIZE / 2);
 
   return canvas;
 }
@@ -338,7 +298,7 @@ export function makeEnclosure() {
   const geometry = new THREE.BoxGeometry(
     SCENE_DIMENSIONS.ENCLOSURE.WIDTH + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
     SCENE_DIMENSIONS.ENCLOSURE.HEIGHT + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
-    SCENE_DIMENSIONS.ENCLOSURE.DEPTH,
+    SCENE_DIMENSIONS.ENCLOSURE.DEPTH
   );
   const material = new THREE.MeshToonMaterial({ color: COLORS.ENCLOSURE });
   const enclosure = new THREE.Mesh(geometry, material);
@@ -348,15 +308,11 @@ export function makeEnclosure() {
     SCENE_DIMENSIONS.BUTTON.RADIUS,
     SCENE_DIMENSIONS.BUTTON.RADIUS,
     SCENE_DIMENSIONS.BUTTON.HEIGHT,
-    SCENE_DIMENSIONS.BUTTON.SEGMENTS,
+    SCENE_DIMENSIONS.BUTTON.SEGMENTS
   );
   const buttonMaterial = new THREE.MeshToonMaterial({ color: COLORS.BUTTON });
   const button = new THREE.Mesh(buttonGeometry, buttonMaterial);
-  button.position.set(
-    SCENE_DIMENSIONS.BUTTON.POSITION.X,
-    SCENE_DIMENSIONS.BUTTON.POSITION.Y,
-    SCENE_DIMENSIONS.BUTTON.POSITION.Z,
-  );
+  button.position.set(SCENE_DIMENSIONS.BUTTON.POSITION.X, SCENE_DIMENSIONS.BUTTON.POSITION.Y, SCENE_DIMENSIONS.BUTTON.POSITION.Z);
   button.rotation.x = Math.PI / 2;
   enclosure.add(button);
 
@@ -367,13 +323,13 @@ export function makeEnclosure() {
   const displayGeometry = new THREE.BoxGeometry(
     SCENE_DIMENSIONS.DISPLAY.WIDTH,
     SCENE_DIMENSIONS.DISPLAY.HEIGHT,
-    SCENE_DIMENSIONS.DISPLAY.DEPTH,
+    SCENE_DIMENSIONS.DISPLAY.DEPTH
   );
   const display = new THREE.Mesh(displayGeometry, displayMaterial);
   display.position.set(
     SCENE_DIMENSIONS.DISPLAY.POSITION.X,
     SCENE_DIMENSIONS.DISPLAY.POSITION.Y,
-    SCENE_DIMENSIONS.DISPLAY.POSITION.Z,
+    SCENE_DIMENSIONS.DISPLAY.POSITION.Z
   );
   display.rotation.x = Math.PI / 2;
   enclosure.add(display);
@@ -391,9 +347,7 @@ export function makeEnclosure() {
       displayMaterial,
       displayMaterial,
     ];
-    (
-      display as unknown as THREE.Mesh<THREE.BoxGeometry, THREE.Material[]>
-    ).material = materials;
+    (display as unknown as THREE.Mesh<THREE.BoxGeometry, THREE.Material[]>).material = materials;
   }, RENDERING.FONT_LOAD_DELAY);
 
   return { enclosure, display, button };

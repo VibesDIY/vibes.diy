@@ -105,7 +105,7 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
           const responseText = await diagnosticResponse.text();
           console.log(
             `[callAi:${PACKAGE_VERSION}] First 500 chars of response body:`,
-            responseText.substring(0, 500) + (responseText.length > 500 ? "..." : ""),
+            responseText.substring(0, 500) + (responseText.length > 500 ? "..." : "")
           );
         } catch (e) {
           console.log(`[callAi:${PACKAGE_VERSION}] Could not read response body for diagnostics:`, e);
@@ -138,7 +138,7 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
     if (hasHttpError || hasJsonError) {
       if (options.debug) {
         console.log(
-          `[callAi:${PACKAGE_VERSION}] ⚠️ Error detected - HTTP Status: ${response.status}, Content-Type: ${contentType}`,
+          `[callAi:${PACKAGE_VERSION}] ⚠️ Error detected - HTTP Status: ${response.status}, Content-Type: ${contentType}`
         );
       }
 
@@ -281,7 +281,7 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
   if (process.env.NODE_ENV !== "production") {
     if (options.debug) {
       console.warn(
-        `[callAi:${PACKAGE_VERSION}] No await found - using legacy streaming pattern. This will be removed in a future version and may cause issues with certain models.`,
+        `[callAi:${PACKAGE_VERSION}] No await found - using legacy streaming pattern. This will be removed in a future version and may cause issues with certain models.`
       );
     }
   }
@@ -362,7 +362,7 @@ async function bufferStreamingResults(prompt: string | Message[], options: CallA
  */
 function prepareRequestParams(
   prompt: string | Message[],
-  options: CallAIOptions,
+  options: CallAIOptions
 ): {
   apiKey: string;
   model: string;
@@ -606,7 +606,7 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
         ...options,
         apiKey: keyStore().current, // Use the refreshed key from keyStore
       },
-      true,
+      true
     ); // Set isRetry to true
   }
 

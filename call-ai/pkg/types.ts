@@ -226,7 +226,7 @@ export interface ModelStrategy {
   readonly name: string;
   readonly prepareRequest: (
     schema: Schema | Falsy,
-    messages: Message[],
+    messages: Message[]
   ) => SchemaAISimpleMsg | SchemaAIMessageRequest | SchemaAIToolRequest | SchemaAIJsonSchemaRequest | SchemaAIJsonObjectRequest;
   // | undefined;
   readonly processResponse: (content: string | ToolUseType | ToolUseResponse | OpenAIFunctionCall[]) => string;

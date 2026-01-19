@@ -17,12 +17,8 @@ export default function CookieBanner() {
   const { isDarkMode } = useTheme();
 
   // Dynamic import for client-side only
-  const [XCookieConsent, setXCookieConsent] = useState<
-    typeof CookieConsent | null
-  >(null);
-  const [getXCookieConsentValue, setXGetCookieConsentValue] = useState<
-    typeof getCookieConsentValue | null
-  >(null);
+  const [XCookieConsent, setXCookieConsent] = useState<typeof CookieConsent | null>(null);
+  const [getXCookieConsentValue, setXGetCookieConsentValue] = useState<typeof getCookieConsentValue | null>(null);
 
   const posthog = usePostHog();
 
@@ -31,9 +27,7 @@ export default function CookieBanner() {
   // Load the cookie consent library on client side only
   useEffect(() => {
     import("react-cookie-consent").then((module) => {
-      setXCookieConsent(
-        () => module.default as unknown as typeof CookieConsent,
-      );
+      setXCookieConsent(() => module.default as unknown as typeof CookieConsent);
       setXGetCookieConsentValue(() => module.getCookieConsentValue);
     });
   }, []);
@@ -96,9 +90,7 @@ export default function CookieBanner() {
       style={{
         background: isDarkMode ? "#1a1a1a" : "#ffffff",
         color: "#808080",
-        boxShadow: isDarkMode
-          ? "0 -1px 10px rgba(255, 255, 255, 0.1)"
-          : "0 -1px 10px rgba(0, 0, 0, 0.1)",
+        boxShadow: isDarkMode ? "0 -1px 10px rgba(255, 255, 255, 0.1)" : "0 -1px 10px rgba(0, 0, 0, 0.1)",
       }}
       buttonStyle={{
         color: isDarkMode ? "#ffffff" : "#000000",
@@ -125,8 +117,7 @@ export default function CookieBanner() {
         trackEvent("cookie_decline");
       }}
     >
-      This website uses cookies to enhance the user experience and analyze site
-      traffic.
+      This website uses cookies to enhance the user experience and analyze site traffic.
     </XCookieConsent>
   );
 }

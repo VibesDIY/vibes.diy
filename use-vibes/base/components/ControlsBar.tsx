@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { combineClasses, defaultClasses } from '../utils/style-utils.js';
-import { imgGenStyles, imgGenTheme } from '../utils/styles.js';
-import { logDebug } from '../utils/debug.js';
-import { ImgGenClasses } from '@vibes.diy/use-vibes-types';
+import * as React from "react";
+import { combineClasses, defaultClasses } from "../utils/style-utils.js";
+import { imgGenStyles, imgGenTheme } from "../utils/styles.js";
+import { logDebug } from "../utils/debug.js";
+import { ImgGenClasses } from "@vibes.diy/use-vibes-types";
 
 interface ControlsBarProps {
   /** Handle delete confirmation */
@@ -63,7 +63,7 @@ export function ControlsBar({
   const onDeleteClick = () => {
     if (isConfirming) {
       // User clicked delete while confirmation is showing - confirm the delete
-      logDebug('ControlsBar: Delete confirmed, calling handleDeleteConfirm');
+      logDebug("ControlsBar: Delete confirmed, calling handleDeleteConfirm");
       // Ensure we call handleDeleteConfirm with no arguments, it will handle the document ID
       handleDeleteConfirm();
 
@@ -75,7 +75,7 @@ export function ControlsBar({
       }
     } else {
       // Show confirmation
-      logDebug('ControlsBar: Showing delete confirmation');
+      logDebug("ControlsBar: Showing delete confirmation");
       setShowConfirmation(true);
 
       // Set timer to auto-hide confirmation after 6.5 seconds (allows 0.5s for fade)
@@ -114,34 +114,32 @@ export function ControlsBar({
             {/* Left side: Delete button */}
             <div
               style={{
-                display: 'flex',
-                gap: '6px',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
+                display: "flex",
+                gap: "6px",
+                alignItems: "center",
+                justifyContent: "flex-start",
               }}
             >
               {showDelete && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <button
                     aria-label="Delete image"
                     onClick={onDeleteClick}
-                    className={combineClasses('imggen-button imggen-delete-button', classes.button)}
+                    className={combineClasses("imggen-button imggen-delete-button", classes.button)}
                     style={{
                       ...imgGenStyles.button,
-                      position: 'static', // Override CSS absolute positioning
-                      top: 'auto',
-                      right: 'auto',
-                      backgroundColor: isConfirming
-                        ? imgGenTheme.colors.errorBorder
-                        : imgGenStyles.button.background,
-                      color: isConfirming ? 'white' : imgGenStyles.button.color,
+                      position: "static", // Override CSS absolute positioning
+                      top: "auto",
+                      right: "auto",
+                      backgroundColor: isConfirming ? imgGenTheme.colors.errorBorder : imgGenStyles.button.background,
+                      color: isConfirming ? "white" : imgGenStyles.button.color,
                       opacity: isConfirming ? 1 : imgGenStyles.button.opacity,
                     }}
                   >
                     ✕
                   </button>
                   {isConfirming && (
-                    <div className="fade-transition" style={{ animationDelay: '6s' }}>
+                    <div className="fade-transition" style={{ animationDelay: "6s" }}>
                       <button
                         onClick={() => {
                           handleDeleteConfirm();
@@ -150,21 +148,21 @@ export function ControlsBar({
                         aria-label="Confirm delete"
                         style={{
                           fontSize: imgGenTheme.typography.fontSize,
-                          fontWeight: 'bold',
-                          whiteSpace: 'nowrap',
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
                           border: `1px solid ${imgGenTheme.colors.errorBorder}`,
                           background: imgGenTheme.colors.errorBorder,
-                          color: 'white',
+                          color: "white",
                           borderRadius: imgGenTheme.dimensions.borderRadius,
-                          cursor: 'pointer',
-                          padding: '2px 8px',
+                          cursor: "pointer",
+                          padding: "2px 8px",
                         }}
                       >
                         Delete image?
                       </button>
                       <button
                         onClick={() => {
-                          logDebug('ControlsBar: Delete canceled');
+                          logDebug("ControlsBar: Delete canceled");
                           setShowConfirmation(false);
                           if (cancelTimerRef.current) {
                             window.clearTimeout(cancelTimerRef.current);
@@ -173,12 +171,12 @@ export function ControlsBar({
                         aria-label="Cancel delete"
                         style={{
                           fontSize: imgGenTheme.typography.fontSize,
-                          whiteSpace: 'nowrap',
-                          border: 'none',
-                          background: 'none',
+                          whiteSpace: "nowrap",
+                          border: "none",
+                          background: "none",
                           color: imgGenTheme.colors.text,
-                          cursor: 'pointer',
-                          padding: '0 4px',
+                          cursor: "pointer",
+                          padding: "0 4px",
                         }}
                       >
                         Cancel
@@ -197,7 +195,7 @@ export function ControlsBar({
                   aria-label="Previous version"
                   disabled={versionIndex === 0}
                   onClick={handlePrevVersion}
-                  className={combineClasses('imggen-button', classes.button)}
+                  className={combineClasses("imggen-button", classes.button)}
                   style={imgGenStyles.button}
                 >
                   ◀︎
@@ -207,9 +205,7 @@ export function ControlsBar({
               {/* Version indicator - only display if we have versions */}
               {totalVersions > 1 && (
                 <span
-                  className={`imggen-version-indicator version-indicator ${
-                    versionFlash ? 'imggen-version-flash' : ''
-                  }`}
+                  className={`imggen-version-indicator version-indicator ${versionFlash ? "imggen-version-flash" : ""}`}
                   aria-live="polite"
                 >
                   {versionIndex + 1} / {totalVersions}
@@ -222,7 +218,7 @@ export function ControlsBar({
                   aria-label="Next version"
                   disabled={versionIndex >= totalVersions - 1}
                   onClick={handleNextVersion}
-                  className={combineClasses('imggen-button', classes.button)}
+                  className={combineClasses("imggen-button", classes.button)}
                   style={imgGenStyles.button}
                 >
                   ▶︎
@@ -238,12 +234,10 @@ export function ControlsBar({
                 }}
                 disabled={isRegenerating}
                 className={combineClasses(
-                  'imggen-button',
+                  "imggen-button",
                   classes.button,
-                  editedPrompt !== null && editedPrompt.trim() !== promptText
-                    ? 'imggen-button-highlight'
-                    : '',
-                  isRegenerating ? 'imggen-button-disabled' : ''
+                  editedPrompt !== null && editedPrompt.trim() !== promptText ? "imggen-button-highlight" : "",
+                  isRegenerating ? "imggen-button-disabled" : ""
                 )}
                 style={{
                   ...imgGenStyles.button,
@@ -252,10 +246,10 @@ export function ControlsBar({
                       ? imgGenTheme.colors.accent
                       : imgGenStyles.button.background,
                   opacity: isRegenerating ? 0.3 : imgGenStyles.button.opacity,
-                  cursor: isRegenerating ? 'not-allowed' : imgGenStyles.button.cursor,
+                  cursor: isRegenerating ? "not-allowed" : imgGenStyles.button.cursor,
                 }}
               >
-                <span className={isRegenerating ? 'imggen-regen-spinning' : ''}>⟳</span>
+                <span className={isRegenerating ? "imggen-regen-spinning" : ""}>⟳</span>
               </button>
             </div>
           </>

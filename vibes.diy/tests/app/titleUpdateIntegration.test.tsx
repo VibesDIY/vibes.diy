@@ -18,11 +18,7 @@ describe("Title Update Integration", () => {
     const initialTitle = "Generated App Title";
 
     const { rerender } = render(
-      <AppSettingsView
-        title={initialTitle}
-        onUpdateTitle={mockUpdateTitle}
-        onDownloadHtml={mockDownloadHtml}
-      />,
+      <AppSettingsView title={initialTitle} onUpdateTitle={mockUpdateTitle} onDownloadHtml={mockDownloadHtml} />
     );
 
     // Check initial title is displayed
@@ -51,13 +47,7 @@ describe("Title Update Integration", () => {
     });
 
     // Simulate the prop update that should happen after save
-    rerender(
-      <AppSettingsView
-        title={newTitle}
-        onUpdateTitle={mockUpdateTitle}
-        onDownloadHtml={mockDownloadHtml}
-      />,
-    );
+    rerender(<AppSettingsView title={newTitle} onUpdateTitle={mockUpdateTitle} onDownloadHtml={mockDownloadHtml} />);
 
     // Check that the new title is displayed
     expect(screen.getByText(newTitle)).toBeInTheDocument();
@@ -66,13 +56,7 @@ describe("Title Update Integration", () => {
   it("should handle title updates via keyboard", async () => {
     const initialTitle = "Initial Title";
 
-    render(
-      <AppSettingsView
-        title={initialTitle}
-        onUpdateTitle={mockUpdateTitle}
-        onDownloadHtml={mockDownloadHtml}
-      />,
-    );
+    render(<AppSettingsView title={initialTitle} onUpdateTitle={mockUpdateTitle} onDownloadHtml={mockDownloadHtml} />);
 
     // Click Edit button
     const editButton = screen.getByRole("button", { name: /edit/i });
@@ -97,13 +81,7 @@ describe("Title Update Integration", () => {
   it("should cancel edit when Escape is pressed", async () => {
     const initialTitle = "Initial Title";
 
-    render(
-      <AppSettingsView
-        title={initialTitle}
-        onUpdateTitle={mockUpdateTitle}
-        onDownloadHtml={mockDownloadHtml}
-      />,
-    );
+    render(<AppSettingsView title={initialTitle} onUpdateTitle={mockUpdateTitle} onDownloadHtml={mockDownloadHtml} />);
 
     // Click Edit button
     const editButton = screen.getByRole("button", { name: /edit/i });
@@ -128,13 +106,7 @@ describe("Title Update Integration", () => {
   it("should not save if title is unchanged", async () => {
     const initialTitle = "Initial Title";
 
-    render(
-      <AppSettingsView
-        title={initialTitle}
-        onUpdateTitle={mockUpdateTitle}
-        onDownloadHtml={mockDownloadHtml}
-      />,
-    );
+    render(<AppSettingsView title={initialTitle} onUpdateTitle={mockUpdateTitle} onDownloadHtml={mockDownloadHtml} />);
 
     // Click Edit button
     const editButton = screen.getByRole("button", { name: /edit/i });
@@ -155,11 +127,7 @@ describe("Title Update Integration", () => {
     const initialTitle = "Initial Title";
 
     const { rerender } = render(
-      <AppSettingsView
-        title={initialTitle}
-        onUpdateTitle={mockUpdateTitle}
-        onDownloadHtml={mockDownloadHtml}
-      />,
+      <AppSettingsView title={initialTitle} onUpdateTitle={mockUpdateTitle} onDownloadHtml={mockDownloadHtml} />
     );
 
     // Check initial title is displayed
@@ -167,13 +135,7 @@ describe("Title Update Integration", () => {
 
     // Simulate title prop changing (e.g., from AI generation or database update)
     const updatedTitle = "Externally Updated Title";
-    rerender(
-      <AppSettingsView
-        title={updatedTitle}
-        onUpdateTitle={mockUpdateTitle}
-        onDownloadHtml={mockDownloadHtml}
-      />,
-    );
+    rerender(<AppSettingsView title={updatedTitle} onUpdateTitle={mockUpdateTitle} onDownloadHtml={mockDownloadHtml} />);
 
     // Check that the new title is displayed
     expect(screen.getByText(updatedTitle)).toBeInTheDocument();

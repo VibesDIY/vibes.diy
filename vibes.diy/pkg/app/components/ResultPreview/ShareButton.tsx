@@ -12,9 +12,7 @@ export const ShareButton = forwardRef<HTMLButtonElement, ShareButtonProps>(
   ({ onClick, isPublishing, urlCopied, hasPublishedUrl = false }, ref) => {
     // Button text/tooltip changes based on whether this is a first-time publish or reopening modal
     const buttonLabel = hasPublishedUrl ? "Share App" : "Publish";
-    const buttonTooltip = hasPublishedUrl
-      ? "View and share URL"
-      : "Share with the world";
+    const buttonTooltip = hasPublishedUrl ? "View and share URL" : "Share with the world";
 
     return (
       <button
@@ -34,14 +32,7 @@ export const ShareButton = forwardRef<HTMLButtonElement, ShareButtonProps>(
             viewBox="0 0 24 24"
             aria-label="Publishing in progress"
           >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path
               className="opacity-75"
               fill="currentColor"
@@ -65,10 +56,8 @@ export const ShareButton = forwardRef<HTMLButtonElement, ShareButtonProps>(
         ) : (
           <PublishIcon className="h-5 w-5" />
         )}
-        <span className="hidden text-xs whitespace-nowrap min-[1024px]:inline">
-          {urlCopied ? "URL copied" : "Share"}
-        </span>
+        <span className="hidden text-xs whitespace-nowrap min-[1024px]:inline">{urlCopied ? "URL copied" : "Share"}</span>
       </button>
     );
-  },
+  }
 );

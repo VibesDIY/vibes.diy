@@ -105,15 +105,10 @@ export function parseSubdomain(hostname: string): ParsedSubdomain {
  * @returns The constructed subdomain string
  * @throws Error if installId is empty string (would create invalid subdomain)
  */
-export function constructSubdomain(
-  appSlug: string,
-  installId?: string,
-): string {
+export function constructSubdomain(appSlug: string, installId?: string): string {
   if (installId !== undefined) {
     if (installId.trim().length === 0) {
-      throw new Error(
-        "Install ID cannot be empty string - would create invalid subdomain",
-      );
+      throw new Error("Install ID cannot be empty string - would create invalid subdomain");
     }
 
     // All domains now use the new format with v- prefix and -- separator
@@ -136,10 +131,7 @@ export function isValidSubdomain(parsed: ParsedSubdomain): boolean {
   }
 
   // If it's an instance, install ID must be non-empty
-  if (
-    parsed.isInstance &&
-    (!parsed.installId || parsed.installId.trim().length === 0)
-  ) {
+  if (parsed.isInstance && (!parsed.installId || parsed.installId.trim().length === 0)) {
     return false;
   }
 
@@ -149,11 +141,7 @@ export function isValidSubdomain(parsed: ParsedSubdomain): boolean {
   }
 
   // Validate install ID if present
-  if (
-    parsed.isInstance &&
-    parsed.installId &&
-    !isValidInstallId(parsed.installId)
-  ) {
+  if (parsed.isInstance && parsed.installId && !isValidInstallId(parsed.installId)) {
     return false;
   }
 

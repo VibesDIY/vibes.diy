@@ -23,9 +23,7 @@ test("Screenshot API integration test", async ({ page }) => {
 
   // Read the computed background on the body (less brittle than selecting a div)
   await page.waitForTimeout(500);
-  const backgroundImage = await page.evaluate(
-    () => getComputedStyle(document.body).backgroundImage,
-  );
+  const backgroundImage = await page.evaluate(() => getComputedStyle(document.body).backgroundImage);
   console.log(`🖼️  Background image: ${backgroundImage}`);
   expect(backgroundImage).not.toBe("none");
   // Expect either screenshot.png (preferred) or a known fallback
@@ -33,9 +31,7 @@ test("Screenshot API integration test", async ({ page }) => {
 
   // Test if screenshot endpoint exists
   console.log("🔍 Testing screenshot endpoint...");
-  const resp = await page.request.get(
-    "http://localhost:3456/vibe/cute-frog-9259_jchris/screenshot.png",
-  );
+  const resp = await page.request.get("http://localhost:3456/vibe/cute-frog-9259_jchris/screenshot.png");
   console.log(`📊 Screenshot endpoint status: ${resp.status()}`);
   if (process.env.ALLOW_SCREENSHOT_404 === "1") {
     expect([200, 404]).toContain(resp.status());
@@ -50,7 +46,5 @@ test("Screenshot API integration test", async ({ page }) => {
     fullPage: true,
   });
 
-  console.log(
-    "✅ Test completed - screenshot saved as screenshot-api-test.png",
-  );
+  console.log("✅ Test completed - screenshot saved as screenshot-api-test.png");
 });

@@ -1,0 +1,66 @@
+name = "vibes-diy-v2"
+main = "./workers/app.ts"
+compatibility_date = "2025-02-24"
+compatibility_flags = ["nodejs_compat"]
+
+vars = { ENVIRONMENT = "test", VIBES_SVC_HOSTNAME_BASE = ".localhost.vibesdiy.net" }
+
+#[observability.logs]
+#enabled = true
+
+[assets]
+directory = "build/client"
+binding = "ASSETS"
+
+[durable_objects]
+bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ChatSessions"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dev-vibes-diy-v2"
+database_id = "105530de-9900-435b-92f4-15347af604f6"
+
+[env.dev]
+name = "vibes-diy-v2-dev"
+vars = { ENVIRONMENT = "dev", VIBES_SVC_HOSTNAME_BASE = ".dev-v2.vibesdiy.net" }
+routes = [
+  { pattern = "dev-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" },
+  { pattern = "*.dev-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" }
+]
+
+[env.dev.observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "dev-vibes-diy-v2"
+database_id = "105530de-9900-435b-92f4-15347af604f6"
+
+
+[env.prod]
+name = "vibes-diy-v2-prod"
+vars = { ENVIRONMENT = "prod", VIBES_SVC_HOSTNAME_BASE = ".prod-v2.vibesdiy.net" }
+routes = [
+  { pattern = "prod-v2.vibesdiy.net", zone_name = "vibesdiy.net" },
+  { pattern = "*.prod-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" }
+]
+
+[env.prod.observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[[env.prod.d1_databases]]
+binding = "DB"
+database_name = "prod-vibes-diy-v2"
+database_id = "0f783eae-91cf-49c4-a706-6e4d2498cb4a"
+
+

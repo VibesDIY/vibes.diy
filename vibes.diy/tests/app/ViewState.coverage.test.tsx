@@ -58,16 +58,12 @@ describe("ViewState Coverage Tests", () => {
     // First initialize with streaming state
     const { unmount } = renderHook(
       (props) => {
-        hookResult = useViewState(
-          props,
-          "/chat/session123/title",
-          mockNavigate,
-        );
+        hookResult = useViewState(props, "/chat/session123/title", mockNavigate);
         return hookResult;
       },
       {
         initialProps: initialProps,
-      },
+      }
     );
 
     // Cleanup to reset refs
@@ -76,16 +72,12 @@ describe("ViewState Coverage Tests", () => {
     // Render the hook with initial streaming state
     const { rerender } = renderHook(
       (props) => {
-        hookResult = useViewState(
-          props,
-          "/chat/session123/title",
-          mockNavigate,
-        );
+        hookResult = useViewState(props, "/chat/session123/title", mockNavigate);
         return hookResult;
       },
       {
         initialProps: initialProps,
-      },
+      }
     );
 
     // Clear any initial navigation calls
@@ -99,12 +91,9 @@ describe("ViewState Coverage Tests", () => {
     });
 
     // Verify navigation to app view occurred
-    expect(mockNavigate).toHaveBeenCalledWith(
-      `/chat/${mockSessionId}/${mockTitle}/app`,
-      {
-        replace: true,
-      },
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(`/chat/${mockSessionId}/${mockTitle}/app`, {
+      replace: true,
+    });
   });
 
   test("should navigate to specified view when navigateToView is called with valid session", () => {
@@ -123,9 +112,7 @@ describe("ViewState Coverage Tests", () => {
     };
 
     // Render the hook
-    const { result } = renderHook(() =>
-      useViewState(props, "/chat/session123/title", mockNavigate),
-    );
+    const { result } = renderHook(() => useViewState(props, "/chat/session123/title", mockNavigate));
 
     // Call navigateToView to navigate to data view
     act(() => {
@@ -133,9 +120,7 @@ describe("ViewState Coverage Tests", () => {
     });
 
     // Verify navigation occurred with correct path
-    expect(mockNavigate).toHaveBeenCalledWith(
-      `/chat/${mockSessionId}/${mockTitle}/data`,
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(`/chat/${mockSessionId}/${mockTitle}/data`);
 
     // Clear mock for next test
     mockNavigate.mockClear();
@@ -146,9 +131,7 @@ describe("ViewState Coverage Tests", () => {
     });
 
     // Verify navigation with 'app' suffix
-    expect(mockNavigate).toHaveBeenCalledWith(
-      `/chat/${mockSessionId}/${mockTitle}/app`,
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(`/chat/${mockSessionId}/${mockTitle}/app`);
   });
 
   test("should not navigate when view is disabled", () => {
@@ -167,9 +150,7 @@ describe("ViewState Coverage Tests", () => {
     };
 
     // Render the hook
-    const { result } = renderHook(() =>
-      useViewState(props, "/chat/session123/title", mockNavigate),
-    );
+    const { result } = renderHook(() => useViewState(props, "/chat/session123/title", mockNavigate));
 
     // Attempt to navigate to data view (which should be disabled)
     act(() => {
@@ -190,11 +171,7 @@ describe("ViewState Coverage Tests", () => {
     // First render to establish the wasStreamingRef value as true
     const { unmount } = renderHook(
       (props) => {
-        hookResult = useViewState(
-          props,
-          "/chat/session123/title",
-          mockNavigate,
-        );
+        hookResult = useViewState(props, "/chat/session123/title", mockNavigate);
         return hookResult;
       },
       {
@@ -205,7 +182,7 @@ describe("ViewState Coverage Tests", () => {
           isStreaming: true, // Initially streaming
           previewReady: false, // Start with previewReady=false to test the transition
         },
-      },
+      }
     );
 
     // Cleanup to reset refs
@@ -214,11 +191,7 @@ describe("ViewState Coverage Tests", () => {
     // Re-render to get fresh refs
     const { rerender } = renderHook(
       (props) => {
-        hookResult = useViewState(
-          props,
-          "/chat/session123/title",
-          mockNavigate,
-        );
+        hookResult = useViewState(props, "/chat/session123/title", mockNavigate);
         return hookResult;
       },
       {
@@ -229,7 +202,7 @@ describe("ViewState Coverage Tests", () => {
           isStreaming: true, // Still streaming
           previewReady: false, // Start with previewReady=false to test the transition
         },
-      },
+      }
     );
 
     // Clear any initial navigation calls
@@ -245,11 +218,8 @@ describe("ViewState Coverage Tests", () => {
     });
 
     // Verify navigation to app view occurred
-    expect(mockNavigate).toHaveBeenCalledWith(
-      `/chat/${mockSessionId}/${mockTitle}/app`,
-      {
-        replace: true,
-      },
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(`/chat/${mockSessionId}/${mockTitle}/app`, {
+      replace: true,
+    });
   });
 });

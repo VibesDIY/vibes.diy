@@ -5,9 +5,7 @@ import { ShareButton } from "~/vibes.diy/app/components/ResultPreview/ShareButto
 
 // Mock the SVG icon component
 vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons", () => ({
-  PublishIcon: ({ className }: { className: string }) => (
-    <svg data-testid="publish-icon" className={className} />
-  ),
+  PublishIcon: ({ className }: { className: string }) => <svg data-testid="publish-icon" className={className} />,
 }));
 
 describe("ShareButton", () => {
@@ -19,13 +17,7 @@ describe("ShareButton", () => {
   });
 
   it("renders with default props", () => {
-    render(
-      <ShareButton
-        onClick={mockOnClick}
-        isPublishing={false}
-        urlCopied={false}
-      />,
-    );
+    render(<ShareButton onClick={mockOnClick} isPublishing={false} urlCopied={false} />);
 
     // Button should be enabled and show the publish icon
     const button = screen.getByRole("button");
@@ -42,14 +34,7 @@ describe("ShareButton", () => {
   });
 
   it("renders with hasPublishedUrl=true", () => {
-    render(
-      <ShareButton
-        onClick={mockOnClick}
-        isPublishing={false}
-        urlCopied={false}
-        hasPublishedUrl={true}
-      />,
-    );
+    render(<ShareButton onClick={mockOnClick} isPublishing={false} urlCopied={false} hasPublishedUrl={true} />);
 
     // Should have correct aria-label and title for sharing existing app
     const button = screen.getByRole("button");
@@ -61,13 +46,7 @@ describe("ShareButton", () => {
   });
 
   it("shows publishing state", () => {
-    render(
-      <ShareButton
-        onClick={mockOnClick}
-        isPublishing={true}
-        urlCopied={false}
-      />,
-    );
+    render(<ShareButton onClick={mockOnClick} isPublishing={true} urlCopied={false} />);
 
     // Button should be disabled when publishing
     const button = screen.getByRole("button");
@@ -84,13 +63,7 @@ describe("ShareButton", () => {
   });
 
   it("shows URL copied state", () => {
-    render(
-      <ShareButton
-        onClick={mockOnClick}
-        isPublishing={false}
-        urlCopied={true}
-      />,
-    );
+    render(<ShareButton onClick={mockOnClick} isPublishing={false} urlCopied={true} />);
 
     // Should show URL copied text
     expect(screen.getByText("URL copied")).toBeInTheDocument();
@@ -110,13 +83,7 @@ describe("ShareButton", () => {
   });
 
   it("calls onClick when clicked", () => {
-    render(
-      <ShareButton
-        onClick={mockOnClick}
-        isPublishing={false}
-        urlCopied={false}
-      />,
-    );
+    render(<ShareButton onClick={mockOnClick} isPublishing={false} urlCopied={false} />);
 
     // Click the button
     const button = screen.getByRole("button");
@@ -127,13 +94,7 @@ describe("ShareButton", () => {
   });
 
   it("does not call onClick when disabled", () => {
-    render(
-      <ShareButton
-        onClick={mockOnClick}
-        isPublishing={true}
-        urlCopied={false}
-      />,
-    );
+    render(<ShareButton onClick={mockOnClick} isPublishing={true} urlCopied={false} />);
 
     // Try to click the disabled button
     const button = screen.getByRole("button");
@@ -147,14 +108,7 @@ describe("ShareButton", () => {
     // Create a ref
     const ref = React.createRef<HTMLButtonElement>();
 
-    render(
-      <ShareButton
-        ref={ref}
-        onClick={mockOnClick}
-        isPublishing={false}
-        urlCopied={false}
-      />,
-    );
+    render(<ShareButton ref={ref} onClick={mockOnClick} isPublishing={false} urlCopied={false} />);
 
     // The ref should be attached to the button
     expect(ref.current).not.toBeNull();

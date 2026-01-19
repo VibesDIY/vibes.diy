@@ -25,9 +25,7 @@ export interface LocalVibe {
  * @param vibeId The ID of the vibe to load the screenshot for
  * @returns Object containing the screenshot file function and type, or undefined if no screenshot
  */
-export async function loadVibeScreenshot(
-  vibeId: string,
-): Promise<DocFileMeta | undefined> {
+export async function loadVibeScreenshot(vibeId: string): Promise<DocFileMeta | undefined> {
   try {
     // Open the Fireproof database for this vibe
     const db = fireproof("vibe-" + vibeId);
@@ -88,9 +86,7 @@ export async function listLocalVibeIds(): Promise<string[]> {
  * @param vibeId The ID of the vibe to load
  * @returns A LocalVibe object or null if not found/valid
  */
-export async function loadVibeDocument(
-  vibeId: string,
-): Promise<LocalVibe | null> {
+export async function loadVibeDocument(vibeId: string): Promise<LocalVibe | null> {
   try {
     // Open the Fireproof database for this vibe
     const db = fireproof("vibe-" + vibeId);
@@ -142,9 +138,7 @@ export async function listLocalVibes(): Promise<LocalVibe[]> {
     // Filter out null values and sort by creation date
     return results
       .filter((vibe): vibe is LocalVibe => vibe !== null)
-      .sort(
-        (b, a) => new Date(a.created).getTime() - new Date(b.created).getTime(),
-      );
+      .sort((b, a) => new Date(a.created).getTime() - new Date(b.created).getTime());
   } catch (error) {
     // Return empty array if there's any error in the process
     return [];
@@ -167,10 +161,7 @@ export async function deleteVibeDatabase(vibeId: string): Promise<void> {
  * @param userId Optional user ID to update the user's vibe space database
  * @returns Promise that resolves to the updated vibe document
  */
-export async function toggleVibeFavorite(
-  vibeId: string,
-  userId?: string,
-): Promise<VibeDocument> {
+export async function toggleVibeFavorite(vibeId: string, userId?: string): Promise<VibeDocument> {
   // Open the Fireproof database for this vibe
   const db = fireproof("vibe-" + vibeId);
 

@@ -4,7 +4,7 @@ on:
   # Production deployment on main only
   push:
     paths:
-      - "vibesbox/**/*"
+      - 'vibesbox/**/*'
     branches:
       - main
 
@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment to deploy to"
+        description: 'Environment to deploy to'
         required: true
-        default: "production"
+        default: 'production'
         type: choice
         options:
           - production

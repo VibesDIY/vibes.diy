@@ -62,7 +62,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
                 setTimeout(() => {
                   console.warn(`Timeout for ${modelId.id} (Grade ${modelId.grade}): ${name}`);
                   resolve(undefined);
-                }, timeout || TIMEOUT),
+                }, timeout || TIMEOUT)
               ),
             ]);
             return result;
@@ -73,7 +73,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
             return;
           }
         },
-        timeout,
+        timeout
       );
     };
   }
@@ -141,7 +141,7 @@ describe("Simple callAi integration tests", () => {
                 },
                 required: ["root"],
               },
-            },
+            }
           );
 
           // Get the metadata
@@ -168,7 +168,7 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 typeof data === "object" && data !== null,
-                `Parsed result is not an object in ${modelName} model response`,
+                `Parsed result is not an object in ${modelName} model response`
               );
 
               if (typeof data === "object" && data !== null) {
@@ -185,19 +185,19 @@ describe("Simple callAi integration tests", () => {
                     expectOrWarn(
                       modelId,
                       typeof data.root.name === "string",
-                      `'root.name' is not a string in ${modelName} model response`,
+                      `'root.name' is not a string in ${modelName} model response`
                     );
                   if ("type" in data.root)
                     expectOrWarn(
                       modelId,
                       data.root.type === "directory",
-                      `'root.type' is not 'directory' in ${modelName} model response`,
+                      `'root.type' is not 'directory' in ${modelName} model response`
                     );
                   if ("children" in data.root)
                     expectOrWarn(
                       modelId,
                       Array.isArray(data.root.children),
-                      `'root.children' is not an array in ${modelName} model response`,
+                      `'root.children' is not an array in ${modelName} model response`
                     );
 
                   // Check first level of nesting
@@ -214,19 +214,19 @@ describe("Simple callAi integration tests", () => {
                         expectOrWarn(
                           modelId,
                           typeof firstChild.name === "string",
-                          `'firstChild.name' is not a string in ${modelName} model response`,
+                          `'firstChild.name' is not a string in ${modelName} model response`
                         );
                       if (firstChild.type)
                         expectOrWarn(
                           modelId,
                           typeof firstChild.type === "string",
-                          `'firstChild.type' is not a string in ${modelName} model response`,
+                          `'firstChild.type' is not a string in ${modelName} model response`
                         );
                       if (firstChild.children)
                         expectOrWarn(
                           modelId,
                           Array.isArray(firstChild.children),
-                          `'firstChild.children' is not an array in ${modelName} model response`,
+                          `'firstChild.children' is not an array in ${modelName} model response`
                         );
 
                       // Check for at least one file in the second level
@@ -242,13 +242,13 @@ describe("Simple callAi integration tests", () => {
                             expectOrWarn(
                               modelId,
                               typeof secondChild.name === "string",
-                              `'secondChild.name' is not a string in ${modelName} model response`,
+                              `'secondChild.name' is not a string in ${modelName} model response`
                             );
                           if (secondChild.type)
                             expectOrWarn(
                               modelId,
                               typeof secondChild.type === "string",
-                              `'secondChild.type' is not a string in ${modelName} model response`,
+                              `'secondChild.type' is not a string in ${modelName} model response`
                             );
                         }
                       }
@@ -261,7 +261,7 @@ describe("Simple callAi integration tests", () => {
             }
           }
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });

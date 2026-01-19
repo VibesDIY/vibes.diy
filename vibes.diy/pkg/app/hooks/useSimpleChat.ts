@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
-import type {
-  AiChatMessageDocument,
-  ChatMessageDocument,
-  ChatState,
-  SystemPromptResult,
-} from "@vibes.diy/prompts";
+import type { AiChatMessageDocument, ChatMessageDocument, ChatState, SystemPromptResult } from "@vibes.diy/prompts";
 
 import { saveErrorAsSystemMessage } from "./saveErrorAsSystemMessage.js";
 import { useApiKey } from "./useApiKey.js";
@@ -62,9 +57,8 @@ export function useSimpleChat(sessionId: string): ChatState {
 
   // Function to save errors as system messages to the session database
   const saveErrorAsSystemMessageCb = useCallback(
-    (error: RuntimeError, category: ErrorCategory) =>
-      saveErrorAsSystemMessage(sessionDatabase, sessionId, error, category),
-    [sessionDatabase, sessionId],
+    (error: RuntimeError, category: ErrorCategory) => saveErrorAsSystemMessage(sessionDatabase, sessionId, error, category),
+    [sessionDatabase, sessionId]
   );
 
   // State to track when errors were sent to the AI
@@ -94,10 +88,9 @@ export function useSimpleChat(sessionId: string): ChatState {
   const modelSelection = useModelSelection();
 
   // State hooks
-  const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [promptProcessing, setPromptProcessing] = useState<boolean>(false);
   const [selectedResponseId, setSelectedResponseId] = useState<string>("");
-  const [pendingAiMessage, setPendingAiMessage] =
-    useState<ChatMessageDocument | null>(null);
+  const [pendingAiMessage, setPendingAiMessage] = useState<ChatMessageDocument | null>(null);
 
   // setNeedsLogin is now obtained from AuthContext above
 
@@ -105,10 +98,7 @@ export function useSimpleChat(sessionId: string): ChatState {
   const modelToUse = effectiveModel;
 
   // Use our custom hooks
-  const baseEnsureSystemPrompt = useSystemPromptManager(
-    modelSelection.settingsDoc,
-    vibeDoc,
-  );
+  const baseEnsureSystemPrompt = useSystemPromptManager(modelSelection.settingsDoc, vibeDoc);
 
   // Create wrapper that handles dependency updates
   const ensureSystemPrompt = useCallback(
@@ -125,15 +115,13 @@ export function useSimpleChat(sessionId: string): ChatState {
 
       return result;
     },
-    [baseEnsureSystemPrompt, updateAiSelectedDependencies],
+    [baseEnsureSystemPrompt, updateAiSelectedDependencies]
   );
 
-  const { throttledMergeAiMessage, isProcessingRef } =
-    useThrottledUpdates(mergeAiMessage);
+  const { throttledMergeAiMessage, isProcessingRef } = useThrottledUpdates(mergeAiMessage);
 
   // Keep track of the immediate user message for UI display
-  const [pendingUserDoc, setPendingUserDoc] =
-    useState<ChatMessageDocument | null>(null);
+  const [pendingUserDoc, setPendingUserDoc] = useState<ChatMessageDocument | null>(null);
 
   // Prepare the full message list with any pending messages
   const allDocs = useMemo(() => {
@@ -144,9 +132,7 @@ export function useSimpleChat(sessionId: string): ChatState {
     if (pendingUserDoc && pendingUserDoc.text.trim()) {
       // Make sure it's not already in the list (to avoid duplicates)
       const exists = docs.some(
-        (doc) =>
-          doc.type === "user" &&
-          (doc._id === pendingUserDoc._id || doc.text === pendingUserDoc.text),
+        (doc) => doc.type === "user" && (doc._id === pendingUserDoc._id || doc.text === pendingUserDoc.text)
       );
 
       if (!exists) {
@@ -157,15 +143,9 @@ export function useSimpleChat(sessionId: string): ChatState {
     return result;
   }, [docs, pendingUserDoc]);
 
-  const {
-    messages,
-    selectedResponseDoc,
-    selectedSegments,
-    selectedCode,
-    buildMessageHistory,
-  } = useMessageSelection({
+  const { messages, selectedResponseDoc, selectedSegments, selectedCode, buildMessageHistory } = useMessageSelection({
     docs: allDocs,
-    isStreaming,
+    promptProcessing,
     aiMessage,
     selectedResponseId,
     pendingAiMessage,
@@ -176,14 +156,11 @@ export function useSimpleChat(sessionId: string): ChatState {
     (input: string) => {
       mergeUserMessage({ text: input });
     },
-    [mergeUserMessage],
+    [mergeUserMessage]
   );
 
   // No longer needed - proxy handles authentication
-  const boundCheckCredits = useCallback(
-    async (_key: string) => ({ available: 999999, usage: 0, limit: 999999 }),
-    [],
-  );
+  const boundCheckCredits = useCallback(async (_key: string) => ({ available: 999999, usage: 0, limit: 999999 }), []);
 
   /**
    * Send a message and process the AI response
@@ -194,7 +171,7 @@ export function useSimpleChat(sessionId: string): ChatState {
       const ctx: SendMessageContext = {
         userMessage,
         setPendingUserDoc,
-        setIsStreaming,
+        setPromptProcessing,
         ensureApiKey,
         setNeedsLogin: () => {
           // No-op: Clerk handles auth differently
@@ -220,7 +197,7 @@ export function useSimpleChat(sessionId: string): ChatState {
     [
       userMessage.text,
       ensureSystemPrompt,
-      setIsStreaming,
+      setPromptProcessing,
       submitUserMessage,
       buildMessageHistory,
       modelToUse,
@@ -234,25 +211,19 @@ export function useSimpleChat(sessionId: string): ChatState {
       boundCheckCredits,
       ensureApiKey,
       isSignedIn,
-    ],
+    ]
   );
 
   // Login handling no longer needed - proxy handles authentication
 
   // Determine if code is ready for display
-  const codeReady = useMemo(() => {
-    return (
-      (!isStreaming && selectedSegments.length > 1) ||
-      selectedSegments.length > 2
-    );
-  }, [isStreaming, selectedSegments]);
+  // const codeReady = useMemo(() => {
+  //   return (!promptProcessing && selectedSegments.length > 1) || selectedSegments.length > 2;
+  // }, [promptProcessing, selectedSegments]);
 
   // Effect to clear pending message once it appears in the main docs list
   useEffect(() => {
-    if (
-      pendingAiMessage &&
-      docs.some((doc) => doc._id === pendingAiMessage._id)
-    ) {
+    if (pendingAiMessage && docs.some((doc) => doc._id === pendingAiMessage._id)) {
       setPendingAiMessage(null);
     }
   }, [docs, pendingAiMessage]);
@@ -263,28 +234,23 @@ export function useSimpleChat(sessionId: string): ChatState {
   // Auto-send for immediate runtime errors
   useImmediateErrorAutoSend({
     immediateErrors,
-    isStreaming,
+    promptProcessing,
     userInput: userMessage.text,
     mergeUserMessage,
     setDidSendErrors,
-    setIsStreaming,
+    setPromptProcessing,
   });
 
   // Function to save edited code as user edit + AI response
   const saveCodeAsAiMessage = useCallback(
-    async (
-      code: string,
-      currentMessages: ChatMessageDocument[],
-    ): Promise<string> => {
+    async (code: string, currentMessages: ChatMessageDocument[]): Promise<string> => {
       // Use the current UI messages state AS-IS - trust the array order
       // No sorting needed - the messages array is already in the correct order from the UI
       const messages = currentMessages;
 
       // SIMPLIFIED LOGIC: Just look at the last message in the array
       const lastMessage = messages[messages.length - 1];
-      const isLastMessageFromUserEdit =
-        lastMessage?.type === "ai" &&
-        (lastMessage as AiChatMessageDocument)?.isEditedCode === true;
+      const isLastMessageFromUserEdit = lastMessage?.type === "ai" && (lastMessage as AiChatMessageDocument)?.isEditedCode === true;
 
       // UPDATE if last message is AI with isEditedCode, otherwise CREATE
       const shouldUpdateExisting = isLastMessageFromUserEdit;
@@ -327,7 +293,7 @@ ${code}
         return result.id || `ai-message-${Date.now()}`;
       }
     },
-    [session._id, sessionDatabase],
+    [session._id, sessionDatabase]
   );
 
   // Monitor advisory errors whenever they change (non-critical errors)
@@ -337,13 +303,13 @@ ${code}
   }, [advisoryErrors]);
 
   return {
-    sessionId: session._id,
+    // sessionId: session._id,
     vibeDoc,
     selectedModel: vibeDoc?.selectedModel,
     effectiveModel: effectiveModel[0] || modelSelection.effectiveModel,
     globalModel: modelSelection.globalModel,
     showModelPickerInChat: modelSelection.showModelPickerInChat,
-    addScreenshot,
+    setScreenshot: addScreenshot,
     docs: messages,
     setSelectedResponseId,
     selectedResponseDoc,
@@ -351,18 +317,21 @@ ${code}
     selectedCode,
     input: userMessage.text,
     setInput,
-    isStreaming,
-    codeReady,
-    sendMessage,
+    promptProcessing,
+    // hasCode: codeReady,
+    // codeReady,
+    sendPrompt: sendMessage,
     saveCodeAsAiMessage,
     inputRef,
-    title: vibeDoc?.title || "",
-    updateTitle,
+    title: { title: vibeDoc?.title || "", src: "url" },
+    setTitle: (ts: { title: string; src: "url" | "ai" | "user" }) => {
+      updateTitle(ts.title);
+    },
     // Error tracking
     immediateErrors,
     advisoryErrors,
     addError,
-    isEmpty: docs.length === 0,
+    // isEmpty: docs.length === 0,
     updateSelectedModel,
   };
 }

@@ -1,12 +1,6 @@
 import { useRef } from "react";
 import * as THREE from "three";
-import {
-  SCENE_DIMENSIONS,
-  COLORS,
-  LIGHTING,
-  RENDERING,
-  COUNTERBOY_POSITIONS,
-} from "../constants/scene.js";
+import { SCENE_DIMENSIONS, COLORS, LIGHTING, RENDERING, COUNTERBOY_POSITIONS } from "../constants/scene.js";
 import { CounterBoy } from "../classes/CounterBoy.js";
 import { ScreenshotBoy } from "../classes/ScreenshotBoy.js";
 
@@ -17,9 +11,7 @@ const encryptImg = "/screenshots/encrypt.png";
 const pickathonImg = "/screenshots/pickathon.png";
 const puzzleImg = "/screenshots/puzzle.png";
 
-export function useSceneSetup(
-  mountRef: React.RefObject<HTMLDivElement | null>,
-) {
+export function useSceneSetup(mountRef: React.RefObject<HTMLDivElement | null>) {
   const sceneRef = useRef<THREE.Scene | undefined>(undefined);
   const rendererRef = useRef<THREE.WebGLRenderer | undefined>(undefined);
   const cameraRef = useRef<THREE.OrthographicCamera | undefined>(undefined);
@@ -43,18 +35,13 @@ export function useSceneSetup(
       SCENE_DIMENSIONS.FRUSTUM.HEIGHT / 2,
       SCENE_DIMENSIONS.FRUSTUM.HEIGHT / -2,
       RENDERING.CAMERA.NEAR,
-      RENDERING.CAMERA.FAR,
+      RENDERING.CAMERA.FAR
     );
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(
-      mountRef.current.clientWidth,
-      mountRef.current.clientHeight,
-    );
-    renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio, RENDERING.PIXEL_RATIO_MAX),
-    );
+    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, RENDERING.PIXEL_RATIO_MAX));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.localClippingEnabled = true;
@@ -88,13 +75,7 @@ export function useSceneSetup(
     // Create ScreenshotBoy instances at grid positions
     const gridValues = [-18, -9, 0, 9, 18];
 
-    const screenshots = [
-      bonsaiImg,
-      deasImg,
-      encryptImg,
-      pickathonImg,
-      puzzleImg,
-    ];
+    const screenshots = [bonsaiImg, deasImg, encryptImg, pickathonImg, puzzleImg];
 
     const screenshotBoys: ScreenshotBoy[] = [];
     let screenshotIndex = 0;
@@ -126,7 +107,7 @@ export function useSceneSetup(
     const replicatorGeometry = new THREE.BoxGeometry(
       SCENE_DIMENSIONS.REPLICATOR.WIDTH,
       SCENE_DIMENSIONS.REPLICATOR.HEIGHT,
-      SCENE_DIMENSIONS.REPLICATOR.DEPTH,
+      SCENE_DIMENSIONS.REPLICATOR.DEPTH
     );
     const replicatorMaterial = new THREE.MeshLambertMaterial({
       color: COLORS.REPLICATOR,
@@ -147,10 +128,7 @@ export function useSceneSetup(
     // axesHelperRef.current = axesHelper
     // scene.add(axesHelper)
 
-    const groundGeometry = new THREE.PlaneGeometry(
-      SCENE_DIMENSIONS.GROUND.SIZE,
-      SCENE_DIMENSIONS.GROUND.SIZE,
-    );
+    const groundGeometry = new THREE.PlaneGeometry(SCENE_DIMENSIONS.GROUND.SIZE, SCENE_DIMENSIONS.GROUND.SIZE);
     const groundMaterial = new THREE.MeshLambertMaterial({
       color: COLORS.GROUND,
       transparent: true,
@@ -162,36 +140,25 @@ export function useSceneSetup(
     // scene.add(ground)
 
     // Add lighting
-    const ambientLight = new THREE.AmbientLight(
-      COLORS.AMBIENT_LIGHT,
-      LIGHTING.AMBIENT_INTENSITY,
-    );
+    const ambientLight = new THREE.AmbientLight(COLORS.AMBIENT_LIGHT, LIGHTING.AMBIENT_INTENSITY);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(
-      COLORS.DIRECTIONAL_LIGHT,
-      LIGHTING.DIRECTIONAL.INTENSITY,
-    );
+    const directionalLight = new THREE.DirectionalLight(COLORS.DIRECTIONAL_LIGHT, LIGHTING.DIRECTIONAL.INTENSITY);
     directionalLight.position.set(
       LIGHTING.DIRECTIONAL.POSITION.x,
       LIGHTING.DIRECTIONAL.POSITION.y,
-      LIGHTING.DIRECTIONAL.POSITION.z,
+      LIGHTING.DIRECTIONAL.POSITION.z
     );
     directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width =
-      LIGHTING.DIRECTIONAL.SHADOW_MAP_SIZE;
-    directionalLight.shadow.mapSize.height =
-      LIGHTING.DIRECTIONAL.SHADOW_MAP_SIZE;
+    directionalLight.shadow.mapSize.width = LIGHTING.DIRECTIONAL.SHADOW_MAP_SIZE;
+    directionalLight.shadow.mapSize.height = LIGHTING.DIRECTIONAL.SHADOW_MAP_SIZE;
     directionalLight.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(directionalLight);
 
     return { scene, camera, renderer, counterBoyLeft, counterBoyRight };
   };
 
-  const setupResizeHandler = (
-    renderer: THREE.WebGLRenderer,
-    camera: THREE.OrthographicCamera,
-  ) => {
+  const setupResizeHandler = (renderer: THREE.WebGLRenderer, camera: THREE.OrthographicCamera) => {
     const handleResize = () => {
       if (!mountRef.current || !renderer) return;
 
@@ -233,11 +200,7 @@ export function useSceneSetup(
     };
   };
 
-  const startRenderLoop = (
-    renderer: THREE.WebGLRenderer,
-    scene: THREE.Scene,
-    camera: THREE.OrthographicCamera,
-  ) => {
+  const startRenderLoop = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.OrthographicCamera) => {
     const animate = () => {
       requestAnimationFrame(animate);
       // Render loop - no individual object animations needed

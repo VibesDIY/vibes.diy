@@ -1,11 +1,6 @@
 import React, { useMemo } from "react";
 import VibeGalleryCard from "./VibeGalleryCard.js";
-import {
-  FaceIcon1,
-  FaceIcon2,
-  FaceIcon3,
-  FaceIcon4,
-} from "../vibes/icons/index.js";
+import { FaceIcon1, FaceIcon2, FaceIcon3, FaceIcon4 } from "../vibes/icons/index.js";
 import { getVibeGalleryWrapperStyle } from "./NewSessionContent.styles.js";
 
 // Featured vibes data (imported from FeaturedVibes)
@@ -49,10 +44,7 @@ interface VibeGalleryProps {
   isMobile?: boolean;
 }
 
-export default function VibeGallery({
-  count = 4,
-  isMobile = false,
-}: VibeGalleryProps) {
+export default function VibeGallery({ count = 4, isMobile = false }: VibeGalleryProps) {
   const selectedVibes = useMemo(() => {
     // Get random vibes from the publishedVibes array
     const shuffled = [...publishedVibes].sort(() => 0.5 - Math.random());

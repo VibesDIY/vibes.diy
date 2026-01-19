@@ -1,4 +1,4 @@
-import type { ImageDocument, PartialImageDocument } from '@vibes.diy/use-vibes-types';
+import type { ImageDocument, PartialImageDocument } from "@vibes.diy/use-vibes-types";
 
 /**
  * Utility functions for the ImgGenDisplay component
@@ -55,17 +55,14 @@ export function getVersionInfo(document?: PartialImageDocument): VersionInfoResu
     return {
       versions: enhancedVersions,
       // Use currentVersion directly (now 0-based) or default to last version
-      currentVersion:
-        typeof document.currentVersion === 'number'
-          ? document.currentVersion
-          : document.versions.length - 1,
+      currentVersion: typeof document.currentVersion === "number" ? document.currentVersion : document.versions.length - 1,
     };
   }
 
   // Legacy document with just an 'image' file - treat as single version
   if (document?._files && document._files.image) {
     return {
-      versions: [{ id: 'image', created: document.created || Date.now() }],
+      versions: [{ id: "image", created: document.created || Date.now() }],
       currentVersion: 0, // Now 0-based
     };
   }
@@ -82,25 +79,20 @@ export function getVersionInfo(document?: PartialImageDocument): VersionInfoResu
 export function getPromptInfo(document?: PartialImageDocument, versionIndex?: number) {
   try {
     // If versionIndex is provided, try to get the version-specific prompt
-    if (typeof versionIndex === 'number') {
+    if (typeof versionIndex === "number") {
       const { versions } = getVersionInfo(document);
 
       // Make sure we have valid data
-      if (
-        versions &&
-        Array.isArray(versions) &&
-        versionIndex >= 0 &&
-        versionIndex < versions.length
-      ) {
+      if (versions && Array.isArray(versions) && versionIndex >= 0 && versionIndex < versions.length) {
         const version = versions[versionIndex];
 
         // APPROACH 1: Check if this version has a promptKey defined
-        const promptKey = version.promptKey || 'p1';
+        const promptKey = version.promptKey || "p1";
 
         // First check if we have prompts and this version's promptKey
         if (document?.prompts && promptKey && document.prompts[promptKey]) {
           return {
-            currentPrompt: document.prompts[promptKey].text || '',
+            currentPrompt: document.prompts[promptKey].text || "",
             prompts: document.prompts,
             currentPromptKey: promptKey,
           };
@@ -111,7 +103,7 @@ export function getPromptInfo(document?: PartialImageDocument, versionIndex?: nu
           return {
             currentPrompt: version.prompt,
             prompts: { ...(document?.prompts || {}), legacy: { text: version.prompt } },
-            currentPromptKey: 'legacy',
+            currentPromptKey: "legacy",
           };
         }
 
@@ -123,13 +115,13 @@ export function getPromptInfo(document?: PartialImageDocument, versionIndex?: nu
           return {
             currentPrompt: legacyPrompt,
             prompts: { legacy: { text: legacyPrompt } },
-            currentPromptKey: 'legacy',
+            currentPromptKey: "legacy",
           };
         }
       }
     }
   } catch (e) {
-    console.error('Error getting version-specific prompt:', e);
+    console.error("Error getting version-specific prompt:", e);
   }
 
   // If we don't have a specific version prompt or there was an error, fall back to default behavior
@@ -137,7 +129,7 @@ export function getPromptInfo(document?: PartialImageDocument, versionIndex?: nu
   // If we have the new prompts structure
   if (document?.prompts && document.currentPromptKey) {
     return {
-      currentPrompt: document.prompts[document.currentPromptKey]?.text || '',
+      currentPrompt: document.prompts[document.currentPromptKey]?.text || "",
       prompts: document.prompts,
       currentPromptKey: document.currentPromptKey,
     };
@@ -148,12 +140,12 @@ export function getPromptInfo(document?: PartialImageDocument, versionIndex?: nu
     return {
       currentPrompt: document.prompt,
       prompts: { p1: { text: document.prompt, created: document.created || Date.now() } },
-      currentPromptKey: 'p1',
+      currentPromptKey: "p1",
     };
   }
 
   // No prompt found
-  return { currentPrompt: '', prompts: {}, currentPromptKey: '' };
+  return { currentPrompt: "", prompts: {}, currentPromptKey: "" };
 }
 
 /**
@@ -176,7 +168,7 @@ export function getCurrentFileKey(
 
   // Fallback to 'image' for legacy docs
   if (document?._files && document._files.image) {
-    return 'image';
+    return "image";
   }
 
   return null;

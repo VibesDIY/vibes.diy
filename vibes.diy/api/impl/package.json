@@ -1,0 +1,27 @@
+{
+  "name": "@vibes.diy/api-impl",
+  "version": "0.0.0",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "build": "core-cli tsc",
+    "pack": "core-cli build --doPack",
+    "publish": "core-cli build"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.21",
+    "@fireproof/core-protocols-dashboard": "0.24.10",
+    "@fireproof/core-runtime": "0.24.10",
+    "@fireproof/core-types-base": "0.24.10",
+    "@fireproof/core-types-protocols-dashboard": "0.24.10",
+    "@vibes.diy/api-pkg": "workspace:*",
+    "@vibes.diy/api-types": "workspace:*",
+    "@vibes.diy/call-ai-v2": "workspace:*",
+    "arktype": "^2.1.29",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@fireproof/core-cli": "0.24.10",
+    "@types/ws": "^8.18.1"
+  }
+}

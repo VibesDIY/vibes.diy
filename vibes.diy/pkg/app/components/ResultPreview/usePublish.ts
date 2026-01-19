@@ -27,9 +27,7 @@ export const usePublish = ({
   const [isPublishing, setIsPublishing] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [publishedAppUrl, setPublishedAppUrl] = useState<string | undefined>(
-    initialPublishedUrl,
-  );
+  const [publishedAppUrl, setPublishedAppUrl] = useState<string | undefined>(initialPublishedUrl);
 
   // Update publishedAppUrl when the initial URL changes
   useEffect(() => {
@@ -48,9 +46,7 @@ export const usePublish = ({
       }
 
       let prompt = messages[0].text;
-      const userMessages = messages.filter(
-        (message) => message.type === "user",
-      );
+      const userMessages = messages.filter((message) => message.type === "user");
 
       if (userMessages.length > 1) {
         if (userMessages[0]._id === "0001-user-first") {
@@ -61,9 +57,7 @@ export const usePublish = ({
       // Get auth token from Clerk
       const token = await getToken();
       if (!token) {
-        throw new Error(
-          "Authentication required. Please log in to publish apps.",
-        );
+        throw new Error("Authentication required. Please log in to publish apps.");
       }
 
       const appUrl = await publishApp({

@@ -12,11 +12,7 @@ import {
   getTitleStyle,
 } from "./ChatAnimation.styles.js";
 
-export const ChatAnimation: React.FC<ChatAnimationProps> = ({
-  arrayOfMessages,
-  user,
-  title,
-}) => {
+export const ChatAnimation: React.FC<ChatAnimationProps> = ({ arrayOfMessages, user, title }) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
 
@@ -27,10 +23,7 @@ export const ChatAnimation: React.FC<ChatAnimationProps> = ({
     if (!container) return;
 
     const handleScroll = () => {
-      const isAtBottom =
-        Math.abs(
-          container.scrollHeight - container.scrollTop - container.clientHeight,
-        ) < 5;
+      const isAtBottom = Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 5;
 
       setShowScrollIndicator(!isAtBottom);
     };
@@ -112,33 +105,19 @@ export const ChatAnimation: React.FC<ChatAnimationProps> = ({
   }, []);
 
   return (
-    <div
-      className="chat-container-wrapper"
-      style={getChatContainerStyle()}
-      ref={chatContainerRef}
-    >
+    <div className="chat-container-wrapper" style={getChatContainerStyle()} ref={chatContainerRef}>
       {title && <div style={getTitleStyle()}>{title}</div>}
       {arrayOfMessages.map((msg, index) => {
         const isCurrentUser = msg.user === user;
         const isLastMessage = index === arrayOfMessages.length - 1;
-        const className = isCurrentUser
-          ? "message-current-user"
-          : "message-other-user";
-        const wrapperClass = isLastMessage
-          ? `${className} last-message-wrapper`
-          : className;
+        const className = isCurrentUser ? "message-current-user" : "message-other-user";
+        const wrapperClass = isLastMessage ? `${className} last-message-wrapper` : className;
 
         return (
-          <div
-            key={index}
-            className={wrapperClass}
-            style={getMessageWrapperStyle(isCurrentUser)}
-          >
+          <div key={index} className={wrapperClass} style={getMessageWrapperStyle(isCurrentUser)}>
             <div style={{ width: "100%" }}>
               <div style={getUsernameStyle(isCurrentUser)}>{msg.user}</div>
-              <div style={getMessageBubbleStyle(isCurrentUser)}>
-                {msg.message}
-              </div>
+              <div style={getMessageBubbleStyle(isCurrentUser)}>{msg.message}</div>
             </div>
           </div>
         );

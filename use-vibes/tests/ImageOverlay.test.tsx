@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
-import { ImageOverlay, defaultClasses } from '@vibes.diy/use-vibes-base';
+import { ImageOverlay, defaultClasses } from "@vibes.diy/use-vibes-base";
 
-describe('ImageOverlay Component', () => {
+describe("ImageOverlay Component", () => {
   // Mock functions for all the callbacks
   const mockPrevVersion = vi.fn();
   const mockNextVersion = vi.fn();
@@ -17,7 +17,7 @@ describe('ImageOverlay Component', () => {
 
   // Default props to be used in most tests
   const defaultProps = {
-    promptText: 'Test prompt',
+    promptText: "Test prompt",
     editedPrompt: null,
     setEditedPrompt: mockSetEditedPrompt,
     handlePromptEdit: mockHandlePromptEdit,
@@ -34,105 +34,103 @@ describe('ImageOverlay Component', () => {
   };
 
   beforeEach(() => {
-    globalThis.document.body.innerHTML = ''; // Clear any existing modals in the document
+    globalThis.document.body.innerHTML = ""; // Clear any existing modals in the document
     vi.clearAllMocks();
   });
 
   //---------------------------------------------------------------
   // A. Rendering / Layout Tests
   //---------------------------------------------------------------
-  describe('Rendering & Layout', () => {
-    it('renders prompt text in read-only mode by default', () => {
+  describe("Rendering & Layout", () => {
+    it("renders prompt text in read-only mode by default", () => {
       render(<ImageOverlay {...defaultProps} />);
-      expect(screen.getByText('Test prompt')).toBeInTheDocument();
+      expect(screen.getByText("Test prompt")).toBeInTheDocument();
       // No input should be present
-      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     });
 
-    it('applies truncate class and title to prompt', () => {
+    it("applies truncate class and title to prompt", () => {
       const { container } = render(<ImageOverlay {...defaultProps} />);
-      const promptText = container.querySelector('.imggen-prompt-text');
-      expect(promptText).toHaveAttribute('title', 'Click to edit prompt');
+      const promptText = container.querySelector(".imggen-prompt-text");
+      expect(promptText).toHaveAttribute("title", "Click to edit prompt");
     });
 
-    it('wraps root container with imggen-overlay class', () => {
+    it("wraps root container with imggen-overlay class", () => {
       const { container } = render(<ImageOverlay {...defaultProps} />);
-      expect(container.querySelector('.imggen-overlay')).toBeInTheDocument();
+      expect(container.querySelector(".imggen-overlay")).toBeInTheDocument();
     });
   });
 
   //---------------------------------------------------------------
   // B. Controls Visible Tests (showControls = true, default)
   //---------------------------------------------------------------
-  describe('Controls Visible (default)', () => {
-    it('shows regenerate button that triggers handleRegen when clicked', () => {
+  describe("Controls Visible (default)", () => {
+    it("shows regenerate button that triggers handleRegen when clicked", () => {
       render(<ImageOverlay {...defaultProps} />);
-      const regenButton = screen.getAllByRole('button', { name: /regenerate image/i })[0];
+      const regenButton = screen.getAllByRole("button", { name: /regenerate image/i })[0];
       expect(regenButton).toBeInTheDocument();
 
       fireEvent.click(regenButton);
       expect(mockRegen).toHaveBeenCalledTimes(1);
     });
 
-    it('does not render prev/next buttons or version indicator when totalVersions = 1', () => {
+    it("does not render prev/next buttons or version indicator when totalVersions = 1", () => {
       render(<ImageOverlay {...defaultProps} totalVersions={1} />);
 
-      expect(screen.queryByRole('button', { name: /previous version/i })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /next version/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /previous version/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /next version/i })).not.toBeInTheDocument();
       expect(screen.queryByText(/1 \/ 1/)).not.toBeInTheDocument();
     });
 
-    it('renders prev/next buttons and version indicator when totalVersions > 1', () => {
+    it("renders prev/next buttons and version indicator when totalVersions > 1", () => {
       render(<ImageOverlay {...defaultProps} totalVersions={3} versionIndex={1} />);
 
-      expect(screen.getAllByRole('button', { name: /previous version/i })[0]).toBeInTheDocument();
-      expect(screen.getAllByRole('button', { name: /next version/i })[0]).toBeInTheDocument();
-      expect(screen.getByText('2 / 3')).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: /previous version/i })[0]).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: /next version/i })[0]).toBeInTheDocument();
+      expect(screen.getByText("2 / 3")).toBeInTheDocument();
     });
 
-    it('disables prev button when at first version', () => {
+    it("disables prev button when at first version", () => {
       render(<ImageOverlay {...defaultProps} totalVersions={3} versionIndex={0} />);
 
-      const prevButton = screen.getAllByRole('button', { name: /previous version/i })[0];
+      const prevButton = screen.getAllByRole("button", { name: /previous version/i })[0];
       expect(prevButton).toBeDisabled();
 
-      const nextButton = screen.getAllByRole('button', { name: /next version/i })[0];
+      const nextButton = screen.getAllByRole("button", { name: /next version/i })[0];
       expect(nextButton).not.toBeDisabled();
     });
 
-    it('disables next button when at last version', () => {
+    it("disables next button when at last version", () => {
       render(<ImageOverlay {...defaultProps} totalVersions={3} versionIndex={2} />);
 
-      const prevButton = screen.getByRole('button', { name: /previous version/i });
+      const prevButton = screen.getByRole("button", { name: /previous version/i });
       expect(prevButton).not.toBeDisabled();
 
-      const nextButton = screen.getByRole('button', { name: /next version/i });
+      const nextButton = screen.getByRole("button", { name: /next version/i });
       expect(nextButton).toBeDisabled();
     });
 
-    it('calls handlePrevVersion/handleNextVersion when buttons clicked', () => {
+    it("calls handlePrevVersion/handleNextVersion when buttons clicked", () => {
       render(<ImageOverlay {...defaultProps} totalVersions={3} versionIndex={1} />);
 
       // Click Previous
-      const prevButton = screen.getAllByRole('button', { name: /previous version/i })[0];
+      const prevButton = screen.getAllByRole("button", { name: /previous version/i })[0];
       fireEvent.click(prevButton);
       expect(mockPrevVersion).toHaveBeenCalledTimes(1);
 
       // Click Next
-      const nextButton = screen.getAllByRole('button', { name: /next version/i })[0];
+      const nextButton = screen.getAllByRole("button", { name: /next version/i })[0];
       fireEvent.click(nextButton);
       expect(mockNextVersion).toHaveBeenCalledTimes(1);
     });
 
-    it('adds the correct CSS classes to the buttons', () => {
-      const { container } = render(
-        <ImageOverlay {...defaultProps} totalVersions={3} versionIndex={1} />
-      );
+    it("adds the correct CSS classes to the buttons", () => {
+      const { container } = render(<ImageOverlay {...defaultProps} totalVersions={3} versionIndex={1} />);
 
-      const buttons = container.querySelectorAll('button');
+      const buttons = container.querySelectorAll("button");
       buttons.forEach((button) => {
         // All buttons should have the imggen-button class
-        expect(button).toHaveClass('imggen-button');
+        expect(button).toHaveClass("imggen-button");
       });
     });
   });
@@ -140,19 +138,17 @@ describe('ImageOverlay Component', () => {
   //---------------------------------------------------------------
   // C. Controls Hidden Tests (showControls = false)
   //---------------------------------------------------------------
-  describe('Controls Hidden', () => {
+  describe("Controls Hidden", () => {
     it('shows "Generating..." text when showControls=false and progress < 100', () => {
-      const { container } = render(
-        <ImageOverlay {...defaultProps} showControls={false} progress={50} />
-      );
+      const { container } = render(<ImageOverlay {...defaultProps} showControls={false} progress={50} />);
 
       // Find the status text element directly
-      const statusText = container.querySelector('.imggen-status-text');
+      const statusText = container.querySelector(".imggen-status-text");
       expect(statusText).toBeInTheDocument();
-      expect(statusText).toHaveTextContent('Generating...');
+      expect(statusText).toHaveTextContent("Generating...");
 
       // Controls should not be visible
-      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
 
     // Test removed since we always show "Generating..." when controls are hidden
@@ -161,103 +157,95 @@ describe('ImageOverlay Component', () => {
   //---------------------------------------------------------------
   // D. Prompt Editing Behavior Tests
   //---------------------------------------------------------------
-  describe('Prompt Editing Behavior', () => {
-    it('switches to edit mode when prompt text is double clicked', () => {
+  describe("Prompt Editing Behavior", () => {
+    it("switches to edit mode when prompt text is double clicked", () => {
       render(<ImageOverlay {...defaultProps} />);
 
-      const promptText = screen.getAllByText('Test prompt')[0];
+      const promptText = screen.getAllByText("Test prompt")[0];
       // Manual double click simulation
       fireEvent.click(promptText, { detail: 2 });
 
-      expect(mockSetEditedPrompt).toHaveBeenCalledWith('Test prompt');
+      expect(mockSetEditedPrompt).toHaveBeenCalledWith("Test prompt");
     });
 
-    it('shows input field with current text when in edit mode', () => {
+    it("shows input field with current text when in edit mode", () => {
       render(<ImageOverlay {...defaultProps} editedPrompt="Edited prompt" />);
 
-      const input = screen.getAllByRole('textbox')[0];
+      const input = screen.getAllByRole("textbox")[0];
       expect(input).toBeInTheDocument();
-      expect(input).toHaveValue('Edited prompt');
+      expect(input).toHaveValue("Edited prompt");
       expect(input).toHaveFocus();
     });
 
-    it('calls handlePromptEdit when Enter key is pressed in edit mode', () => {
+    it("calls handlePromptEdit when Enter key is pressed in edit mode", () => {
       render(<ImageOverlay {...defaultProps} editedPrompt="Edited prompt" />);
 
-      const input = screen.getAllByRole('textbox')[0];
-      fireEvent.keyDown(input, { key: 'Enter' });
+      const input = screen.getAllByRole("textbox")[0];
+      fireEvent.keyDown(input, { key: "Enter" });
 
-      expect(mockHandlePromptEdit).toHaveBeenCalledWith('Edited prompt');
+      expect(mockHandlePromptEdit).toHaveBeenCalledWith("Edited prompt");
     });
 
-    it('exits edit mode without calling handlePromptEdit when Escape key is pressed', () => {
+    it("exits edit mode without calling handlePromptEdit when Escape key is pressed", () => {
       render(<ImageOverlay {...defaultProps} editedPrompt="Edited prompt" />);
 
-      const input = screen.getAllByRole('textbox')[0];
-      fireEvent.keyDown(input, { key: 'Escape' });
+      const input = screen.getAllByRole("textbox")[0];
+      fireEvent.keyDown(input, { key: "Escape" });
 
       expect(mockSetEditedPrompt).toHaveBeenCalledWith(null);
       expect(mockHandlePromptEdit).not.toHaveBeenCalled();
     });
 
-    it('should not exit edit mode when input loses focus', () => {
+    it("should not exit edit mode when input loses focus", () => {
       // Given
       const mockSetEditedPrompt = vi.fn();
 
-      render(
-        <ImageOverlay
-          {...defaultProps}
-          editedPrompt="test edit"
-          setEditedPrompt={mockSetEditedPrompt}
-        />
-      );
+      render(<ImageOverlay {...defaultProps} editedPrompt="test edit" setEditedPrompt={mockSetEditedPrompt} />);
 
-      const input = screen.getAllByRole('textbox')[0];
+      const input = screen.getAllByRole("textbox")[0];
       fireEvent.blur(input);
 
       // Verify setEditedPrompt was NOT called (we removed onBlur handler)
       expect(mockSetEditedPrompt).not.toHaveBeenCalled();
     });
 
-    it('updates edited prompt value as user types', () => {
+    it("updates edited prompt value as user types", () => {
       render(<ImageOverlay {...defaultProps} editedPrompt="Initial text" />);
 
-      const input = screen.getAllByRole('textbox')[0];
-      fireEvent.change(input, { target: { value: 'Updated text' } });
+      const input = screen.getAllByRole("textbox")[0];
+      fireEvent.change(input, { target: { value: "Updated text" } });
 
-      expect(mockSetEditedPrompt).toHaveBeenCalledWith('Updated text');
+      expect(mockSetEditedPrompt).toHaveBeenCalledWith("Updated text");
     });
   });
 
   //---------------------------------------------------------------
   // E. Accessibility Tests
   //---------------------------------------------------------------
-  describe('Accessibility', () => {
-    it('provides proper aria labels for interactive elements', () => {
+  describe("Accessibility", () => {
+    it("provides proper aria labels for interactive elements", () => {
       render(<ImageOverlay {...defaultProps} totalVersions={3} versionIndex={1} />);
 
       // Version controls
-      expect(screen.getAllByRole('button', { name: 'Previous version' })[0]).toBeInTheDocument();
-      expect(screen.getAllByRole('button', { name: 'Next version' })[0]).toBeInTheDocument();
-      expect(screen.getAllByRole('button', { name: 'Regenerate image' })[0]).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "Previous version" })[0]).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "Next version" })[0]).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "Regenerate image" })[0]).toBeInTheDocument();
 
       // Delete control (should be available when enableDelete is true)
-      expect(screen.getAllByRole('button', { name: 'Delete image' })[0]).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "Delete image" })[0]).toBeInTheDocument();
     });
 
-    it('includes aria-label for input in edit mode', () => {
+    it("includes aria-label for input in edit mode", () => {
       render(<ImageOverlay {...defaultProps} editedPrompt="Edited prompt" />);
 
-      expect(screen.getAllByRole('textbox', { name: 'Edit prompt' })[0]).toBeInTheDocument();
+      expect(screen.getAllByRole("textbox", { name: "Edit prompt" })[0]).toBeInTheDocument();
     });
 
-    it('has aria-live attribute on version indicator', () => {
-      const { container } = render(
-        <ImageOverlay {...defaultProps} totalVersions={3} versionIndex={1} />
-      );
+    it("has aria-live attribute on version indicator", () => {
+      const { container } = render(<ImageOverlay {...defaultProps} totalVersions={3} versionIndex={1} />);
 
-      const versionIndicator = container.querySelector('.imggen-version-indicator');
-      expect(versionIndicator).toHaveAttribute('aria-live', 'polite');
+      const versionIndicator = container.querySelector(".imggen-version-indicator");
+      expect(versionIndicator).toHaveAttribute("aria-live", "polite");
     });
   });
 });

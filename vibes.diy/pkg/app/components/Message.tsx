@@ -1,18 +1,13 @@
 import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import StructuredMessage from "./StructuredMessage.js";
-import type {
-  ChatMessageDocument,
-  AiChatMessageDocument,
-  SystemChatMessageDocument,
-  ViewType,
-} from "@vibes.diy/prompts";
+import type { ChatMessageDocument, AiChatMessageDocument, SystemChatMessageDocument, ViewType } from "@vibes.diy/prompts";
 import { parseContent } from "@vibes.diy/prompts";
 import { BrutalistCard } from "./vibes/BrutalistCard.js";
 
 interface MessageProps {
   message: ChatMessageDocument;
-  isStreaming: boolean;
+  promptProcessing: boolean;
   setSelectedResponseId: (id: string) => void;
   selectedResponseId: string;
   setMobilePreviewShown: (shown: boolean) => void;
@@ -25,7 +20,7 @@ const AIMessage = memo(
   ({
     message,
     model,
-    isStreaming,
+    promptProcessing,
     setSelectedResponseId,
     selectedResponseId,
     setMobilePreviewShown,
@@ -34,7 +29,7 @@ const AIMessage = memo(
   }: {
     message: AiChatMessageDocument;
     model?: string;
-    isStreaming: boolean;
+    promptProcessing: boolean;
     setSelectedResponseId: (id: string) => void;
     selectedResponseId: string;
     setMobilePreviewShown: (shown: boolean) => void;
@@ -75,7 +70,7 @@ const AIMessage = memo(
         <div className="max-w-[85%]">
           <StructuredMessage
             segments={segments || []}
-            isStreaming={isStreaming}
+            promptProcessing={promptProcessing}
             messageId={message._id}
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
@@ -93,7 +88,7 @@ const AIMessage = memo(
     // Return false to signal React to re-render the component
     if (
       prevProps.message.text !== nextProps.message.text ||
-      prevProps.isStreaming !== nextProps.isStreaming ||
+      prevProps.promptProcessing !== nextProps.promptProcessing ||
       prevProps.setSelectedResponseId !== nextProps.setSelectedResponseId ||
       prevProps.selectedResponseId !== nextProps.selectedResponseId ||
       prevProps.setMobilePreviewShown !== nextProps.setMobilePreviewShown ||
@@ -104,10 +99,10 @@ const AIMessage = memo(
     }
     // Otherwise, skip re-render
     return true;
-  },
+  }
 );
 
-const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
+export const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
   return (
     <div className="mb-4 flex flex-row justify-end px-4">
       <BrutalistCard size="md" messageType="user" className="max-w-[85%]">
@@ -120,43 +115,34 @@ const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
 });
 
 // System Message component for errors and system notifications
-const SystemMessage = memo(
-  ({ message }: { message: SystemChatMessageDocument }) => {
-    // Format error message for display - parse error details
-    const lines = message.text.split("\n");
-    const errorTitle = lines[0] || "System Message";
-    const errorDetails = lines.slice(1).join("\n");
+const SystemMessage = memo(({ message }: { message: SystemChatMessageDocument }) => {
+  // Format error message for display - parse error details
+  const lines = message.text.split("\n");
+  const errorTitle = lines[0] || "System Message";
+  const errorDetails = lines.slice(1).join("\n");
 
-    // Map error category to BrutalistCard variant
-    const variant =
-      message.errorCategory === "immediate"
-        ? "error"
-        : message.errorCategory === "advisory"
-          ? "warning"
-          : "default";
+  // Map error category to BrutalistCard variant
+  const variant = message.errorCategory === "immediate" ? "error" : message.errorCategory === "advisory" ? "warning" : "default";
 
-    return (
-      <div className="mb-4 flex flex-row justify-center px-4">
-        <BrutalistCard variant={variant} size="lg" className="max-w-[80%]">
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <h4 className="m-0 font-semibold">{errorTitle}</h4>
-            {errorDetails && (
-              <pre className="mt-2 max-h-[200px] overflow-auto font-mono text-xs whitespace-pre-wrap">
-                {errorDetails}
-              </pre>
-            )}
-          </div>
-        </BrutalistCard>
-      </div>
-    );
-  },
-);
+  return (
+    <div className="mb-4 flex flex-row justify-center px-4">
+      <BrutalistCard variant={variant} size="lg" className="max-w-[80%]">
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          <h4 className="m-0 font-semibold">{errorTitle}</h4>
+          {errorDetails && (
+            <pre className="mt-2 max-h-[200px] overflow-auto font-mono text-xs whitespace-pre-wrap">{errorDetails}</pre>
+          )}
+        </div>
+      </BrutalistCard>
+    </div>
+  );
+});
 
 // Main Message component that handles animation and decides which subcomponent to render
 const Message = memo(
   ({
     message,
-    isStreaming,
+    promptProcessing,
     setSelectedResponseId,
     selectedResponseId,
     setMobilePreviewShown,
@@ -169,7 +155,7 @@ const Message = memo(
           <AIMessage
             message={message as AiChatMessageDocument}
             model={message.model}
-            isStreaming={isStreaming}
+            promptProcessing={promptProcessing}
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
             setMobilePreviewShown={setMobilePreviewShown}
@@ -191,7 +177,7 @@ const Message = memo(
     }
 
     // Check for streaming state changes
-    if (prevProps.isStreaming !== nextProps.isStreaming) {
+    if (prevProps.promptProcessing !== nextProps.promptProcessing) {
       return false; // State changed, need to re-render
     }
 
@@ -222,7 +208,7 @@ const Message = memo(
 
     // If we get here, props are equal enough to skip re-render
     return true;
-  },
+  }
 );
 
 export default Message;

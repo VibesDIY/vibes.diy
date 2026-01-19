@@ -4,10 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vibes DIY - Impress the Group Chat</title>
-    <meta
-      name="description"
-      content="Instantly make your own apps on the fly. No coding experience required."
-    />
+    <meta name="description" content="Instantly make your own apps on the fly. No coding experience required." />
 
     <!-- Fonts -->
     <style>
@@ -29,10 +26,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/jquery.terminal@2.38.0/css/jquery.terminal.min.css"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.terminal@2.38.0/css/jquery.terminal.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.38.0/js/jquery.terminal.min.js"></script>
 
     <!-- Main Styles -->
@@ -60,33 +54,17 @@
         <!-- Sticky Menu -->
         <header class="menu">
           <div class="vibes-switch">
-            <svg
-              width="64"
-              height="64"
-              viewBox="0 0 64 64"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect width="64" height="64" fill="#231F20" />
               <path d="M32 8L8 56H24L32 40L40 56H56L32 8Z" fill="#EDCE02" />
             </svg>
           </div>
           <div class="buttons-wrapper">
             <div class="navbar-button-wrapper">
-              <button
-                class="navbar-button"
-                style="background-color: #5398c9"
-                id="darkModeToggle"
-              >
+              <button class="navbar-button" style="background-color: #5398c9" id="darkModeToggle">
                 <div class="navbar-button-icon">
                   <!-- Moon Icon (Light mode default) -->
-                  <svg
-                    width="35"
-                    height="35"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
+                  <svg width="35" height="35" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                       d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
                       stroke="var(--vibes-cream)"
@@ -108,9 +86,7 @@
             <!-- Hero Section -->
             <div class="draggable-section grey" style="left: 20px; top: 20px">
               <h2 class="hero-heading">Impress the Group Chat</h2>
-              <p class="hero-subheading">
-                Instantly make your own apps on the fly
-              </p>
+              <p class="hero-subheading">Instantly make your own apps on the fly</p>
             </div>
 
             <!-- Info Cards -->
@@ -118,15 +94,13 @@
               <p class="card-text" style="max-width: 270px">
                 Our
                 <a href="http://fireproof.storage/">vibe coding database</a>
-                encrypts all your data. Which means the group chat's stays
-                local, portable, and safe.
+                encrypts all your data. Which means the group chat's stays local, portable, and safe.
               </p>
             </div>
 
             <div class="draggable-card blue" style="left: 620px; top: 60px">
               <p class="card-text" style="max-width: 250px">
-                No coding experience required. Just type an idea, and invite
-                your friends.
+                No coding experience required. Just type an idea, and invite your friends.
               </p>
             </div>
 
@@ -136,64 +110,31 @@
 
             <div class="draggable-card grey" style="left: 820px; top: 520px">
               <div class="computer-anim-container">
-                <img
-                  src="assets/images/computer-anim.gif"
-                  alt="Computer Animation"
-                  class="full-size-image"
-                />
+                <img src="assets/images/computer-anim.gif" alt="Computer Animation" class="full-size-image" />
               </div>
             </div>
 
             <!-- Desktop-only decorative cards -->
-            <div
-              class="draggable-card yellow desktop-only"
-              style="left: 250px; top: 1450px"
-            >
+            <div class="draggable-card yellow desktop-only" style="left: 250px; top: 1450px">
               <div class="image-card">
-                <img
-                  src="assets/images/rainbow-computer.gif"
-                  alt="Rainbow Computer"
-                  class="full-size-image"
-                />
+                <img src="assets/images/rainbow-computer.gif" alt="Rainbow Computer" class="full-size-image" />
               </div>
             </div>
 
-            <div
-              class="draggable-card blue desktop-only"
-              style="left: 950px; top: 2880px"
-            >
+            <div class="draggable-card blue desktop-only" style="left: 950px; top: 2880px">
               <div class="image-card">
-                <img
-                  src="assets/images/fireproof-logo.png"
-                  alt="Fireproof Logo"
-                  class="full-size-image"
-                />
+                <img src="assets/images/fireproof-logo.png" alt="Fireproof Logo" class="full-size-image" />
               </div>
             </div>
 
-            <div
-              class="draggable-card yellow desktop-only"
-              style="left: 830px; top: 4040px"
-            >
+            <div class="draggable-card yellow desktop-only" style="left: 830px; top: 4040px">
               <div class="image-card-small" style="max-width: 140px">
-                <img
-                  src="assets/images/html.png"
-                  alt="HTML"
-                  class="full-size-image"
-                />
+                <img src="assets/images/html.png" alt="HTML" class="full-size-image" />
               </div>
             </div>
 
-            <div
-              class="draggable-card yellow desktop-only"
-              style="left: 900px; top: 5300px"
-            >
-              <img
-                class="image-card-small"
-                style="max-width: 340px"
-                src="assets/images/mouth.gif"
-                alt="Mouth Animation"
-              />
+            <div class="draggable-card yellow desktop-only" style="left: 900px; top: 5300px">
+              <img class="image-card-small" style="max-width: 340px" src="assets/images/mouth.gif" alt="Mouth Animation" />
             </div>
 
             <!-- Chat Container (Desktop only) -->
@@ -201,53 +142,40 @@
               <div class="chat-inner">
                 <div class="chat-top-bar"></div>
                 <div class="chat-bottom-card" id="chatContainer">
-                  <div class="chat-title">
-                    JChris named the conversation "Friendsgiving 2: Mac n Cheese
-                    Redemption"
-                  </div>
+                  <div class="chat-title">JChris named the conversation "Friendsgiving 2: Mac n Cheese Redemption"</div>
 
                   <div class="message-wrapper message-other-user">
                     <div class="message-content-wrapper">
                       <div class="username">JChris</div>
-                      <div class="message-bubble other">
-                        Who's coming to Friendsgiving this year?
-                      </div>
+                      <div class="message-bubble other">Who's coming to Friendsgiving this year?</div>
                     </div>
                   </div>
 
                   <div class="message-wrapper message-other-user">
                     <div class="message-content-wrapper">
                       <div class="username">Megan</div>
-                      <div class="message-bubble other">
-                        yes please rescue me from my family &#x1F972;
-                      </div>
+                      <div class="message-bubble other">yes please rescue me from my family &#x1F972;</div>
                     </div>
                   </div>
 
                   <div class="message-wrapper message-other-user">
                     <div class="message-content-wrapper">
                       <div class="username">JChris</div>
-                      <div class="message-bubble other">
-                        can we not repeat last year's mac n cheese disaster tho
-                      </div>
+                      <div class="message-bubble other">can we not repeat last year's mac n cheese disaster tho</div>
                     </div>
                   </div>
 
                   <div class="message-wrapper message-other-user">
                     <div class="message-content-wrapper">
                       <div class="username">Megan</div>
-                      <div class="message-bubble other">
-                        I'm still recovering!
-                      </div>
+                      <div class="message-bubble other">I'm still recovering!</div>
                     </div>
                   </div>
 
                   <div class="message-wrapper message-other-user">
                     <div class="message-content-wrapper">
                       <div class="username">Mike</div>
-                      <div class="message-bubble other">
-                        Should I make a spreadsheet?
-                      </div>
+                      <div class="message-bubble other">Should I make a spreadsheet?</div>
                     </div>
                   </div>
 
@@ -268,9 +196,7 @@
                   <div class="message-wrapper message-current-user">
                     <div class="message-content-wrapper">
                       <div class="username current">You</div>
-                      <div class="message-bubble current">
-                        lemme just make us a festive lil app:
-                      </div>
+                      <div class="message-bubble current">lemme just make us a festive lil app:</div>
                     </div>
                   </div>
 
@@ -278,10 +204,7 @@
                     <div class="message-content-wrapper">
                       <div class="username current">You</div>
                       <div class="message-bubble current">
-                        <a
-                          href="https://bright-shango-4087.vibesdiy.app/"
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <a href="https://bright-shango-4087.vibesdiy.app/" target="_blank" rel="noopener noreferrer"
                           >https://bright-shango-4087.vibesdiy.app/</a
                         >
                       </div>
@@ -291,20 +214,14 @@
                   <div class="message-wrapper message-other-user">
                     <div class="message-content-wrapper">
                       <div class="username">JChris</div>
-                      <div class="message-bubble other">
-                        nice! dibs on the mac
-                      </div>
+                      <div class="message-bubble other">nice! dibs on the mac</div>
                     </div>
                   </div>
 
-                  <div
-                    class="message-wrapper message-other-user last-message-wrapper"
-                  >
+                  <div class="message-wrapper message-other-user last-message-wrapper">
                     <div class="message-content-wrapper">
                       <div class="username">Marcus</div>
-                      <div class="message-bubble other">
-                        I'm a *coder* now<br />*tries Vibes DIY once* &#x1F913;
-                      </div>
+                      <div class="message-bubble other">I'm a *coder* now<br />*tries Vibes DIY once* &#x1F913;</div>
                     </div>
                   </div>
                 </div>
@@ -318,69 +235,44 @@
             <section class="section-wrapper section-0" id="section0">
               <div class="animated-section-text-column">
                 <!-- Text content changes based on animation progress -->
-                <div
-                  class="draggable-section blue static"
-                  id="animTextSection1"
-                >
-                  <h3 class="section-heading" style="color: #5398c9">
-                    You're about to make an app
-                  </h3>
+                <div class="draggable-section blue static" id="animTextSection1">
+                  <h3 class="section-heading" style="color: #5398c9">You're about to make an app</h3>
                   <div class="content-wrapper">
                     <b class="subheading-bold">The front-end is the fun part</b>
                     <p>
-                      Let's start there. Let's say you want to make a simple
-                      counter that keeps track of the number of times a group of
-                      people click a red button.
+                      Let's start there. Let's say you want to make a simple counter that keeps track of the number of times a group
+                      of people click a red button.
                     </p>
-                    <p>
-                      Most AI models will give you something cool right away.
-                    </p>
+                    <p>Most AI models will give you something cool right away.</p>
                   </div>
                 </div>
 
-                <div
-                  class="draggable-section yellow static hidden"
-                  id="animTextSection2"
-                >
-                  <h3 class="section-heading" style="color: #fedd00">
-                    Back to your counter app...
-                  </h3>
+                <div class="draggable-section yellow static hidden" id="animTextSection2">
+                  <h3 class="section-heading" style="color: #fedd00">Back to your counter app...</h3>
                   <div class="content-wrapper">
-                    <b class="subheading-bold"
-                      >Now you're using Fireproof + Vibes DIY</b
-                    >
+                    <b class="subheading-bold">Now you're using Fireproof + Vibes DIY</b>
                     <span
-                      >Your data lives locally inside your component, syncing
-                      when and where you choose. Conflicts resolve sensibly.
+                      >Your data lives locally inside your component, syncing when and where you choose. Conflicts resolve sensibly.
                       State just... persists.</span
                     >
                     <span
-                      >You can build offline, share instantly, and grow without
-                      rewriting your stack. Even if you have no idea what any of
-                      that means and just want to spell out an idea and get an
-                      app. We got you.</span
+                      >You can build offline, share instantly, and grow without rewriting your stack. Even if you have no idea what
+                      any of that means and just want to spell out an idea and get an app. We got you.</span
                     >
                   </div>
                 </div>
 
-                <div
-                  class="draggable-section red static hidden"
-                  id="animTextSection3"
-                >
-                  <h3 class="section-heading" style="color: #d94827">
-                    Build together, instantly
-                  </h3>
+                <div class="draggable-section red static hidden" id="animTextSection3">
+                  <h3 class="section-heading" style="color: #d94827">Build together, instantly</h3>
                   <div class="content-wrapper">
                     <b class="subheading-bold">No setup, no friction</b>
                     <span
-                      >Share your creations with a simple link. Your friends can
-                      jump in immediately - no downloads, no waiting.</span
+                      >Share your creations with a simple link. Your friends can jump in immediately - no downloads, no
+                      waiting.</span
                     >
                     <span
-                      >Everyone's changes sync in real-time, and your data stays
-                      safe and encrypted locally. And the entire community of
-                      Vibes is like a community-run app store with no monopolist
-                      gatekeeper (shots fired).</span
+                      >Everyone's changes sync in real-time, and your data stays safe and encrypted locally. And the entire
+                      community of Vibes is like a community-run app store with no monopolist gatekeeper (shots fired).</span
                     >
                   </div>
                 </div>
@@ -407,38 +299,24 @@
               <div class="section-columns">
                 <div class="column-2of3">
                   <div class="draggable-section blue static no-margin">
-                    <h3 class="section-heading" style="color: #5398c9">
-                      The Vibe Coding Stack Made for Coding Agents
-                    </h3>
+                    <h3 class="section-heading" style="color: #5398c9">The Vibe Coding Stack Made for Coding Agents</h3>
                     <div class="content-wrapper">
-                      <b class="subheading-bold"
-                        >It's not for you. It's for them.</b
-                      >
+                      <b class="subheading-bold">It's not for you. It's for them.</b>
                       <p>
-                        Vibes DIY is so obsessed with making a better vibe
-                        coding experience that we started by making our own
-                        database. The Vibes DIY web stack is open source, and
-                        uses a sync-engine powered by our database,
-                        <a href="http://fireproof.storage/" class="link-out"
-                          >Fireproof</a
-                        >. Because
-                        <a href="http://fireproof.storage/" class="link-out"
-                          >Fireproof</a
-                        >
-                        is local first, your data lives in the browser, and
-                        syncs across your users' browsers automatically. Without
-                        a virtual machine + web server to make everything
-                        complicated.
+                        Vibes DIY is so obsessed with making a better vibe coding experience that we started by making our own
+                        database. The Vibes DIY web stack is open source, and uses a sync-engine powered by our database,
+                        <a href="http://fireproof.storage/" class="link-out">Fireproof</a>. Because
+                        <a href="http://fireproof.storage/" class="link-out">Fireproof</a>
+                        is local first, your data lives in the browser, and syncs across your users' browsers automatically. Without
+                        a virtual machine + web server to make everything complicated.
                       </p>
                       <p>Our timing is good.</p>
                       <p>
-                        Every generation of web tooling promises the same thing:
-                        faster builds, fewer bugs, better DX. APIs got cleaner.
-                        Frameworks got smarter.
+                        Every generation of web tooling promises the same thing: faster builds, fewer bugs, better DX. APIs got
+                        cleaner. Frameworks got smarter.
                       </p>
                       <p>
-                        And yet modern apps are still a maze of clients,
-                        servers, endpoints, retries, caches, and edge cases. So
+                        And yet modern apps are still a maze of clients, servers, endpoints, retries, caches, and edge cases. So
                         let's ask a different question...
                       </p>
                     </div>
@@ -446,13 +324,9 @@
                 </div>
                 <div class="column-1of3">
                   <div class="draggable-section blue static no-margin">
-                    <h3 class="section-heading" style="color: #5398c9">
-                      Let's Ask the AI.
-                    </h3>
+                    <h3 class="section-heading" style="color: #5398c9">Let's Ask the AI.</h3>
                     <div class="content-wrapper">
-                      <b class="subheading-bold"
-                        >What do you actually want to generate?</b
-                      >
+                      <b class="subheading-bold">What do you actually want to generate?</b>
                       <!-- Terminal Demo -->
                       <div class="terminal-container" id="terminalDemo"></div>
                     </div>
@@ -464,49 +338,30 @@
             <!-- Section 3: Vibe Zone -->
             <section class="section-wrapper section-3" id="section3">
               <div class="draggable-section yellow static">
-                <h3 class="section-heading" style="color: #fedd00">
-                  Now comes the hard part
-                </h3>
+                <h3 class="section-heading" style="color: #fedd00">Now comes the hard part</h3>
                 <div class="section-content-with-image">
                   <img
                     src="assets/images/vibe-zone.png"
                     alt="Vibe Zone chart showing Progress, Complexity, and Happiness over Time"
                     class="vibe-zone-image desktop-only"
                   />
-                  <b class="subheading-bold block"
-                    >You're about to leave the Vibe Zone</b
-                  >
+                  <b class="subheading-bold block">You're about to leave the Vibe Zone</b>
                   <p>Every vibe-coded project starts in the vibe zone.</p>
-                  <img
-                    src="assets/images/vibe-zone.png"
-                    alt="Vibe Zone chart"
-                    class="vibe-zone-image-mobile mobile-only"
-                  />
-                  <p>
-                    The model understands you.<br />Progress is fast.<br />Each
-                    change moves the app forward.
-                  </p>
+                  <img src="assets/images/vibe-zone.png" alt="Vibe Zone chart" class="vibe-zone-image-mobile mobile-only" />
+                  <p>The model understands you.<br />Progress is fast.<br />Each change moves the app forward.</p>
                   <p>Then something small goes wrong.</p>
                   <p>
-                    A slightly off assumption.<br />A fix that mostly works.<br />A
-                    new edge case layered on top of the last one.
+                    A slightly off assumption.<br />A fix that mostly works.<br />A new edge case layered on top of the last one.
                   </p>
-                  <p>
-                    You correct it.<br />Then correct the correction.<br />And
-                    suddenly progress slows to a crawl.
-                  </p>
-                  <p>
-                    You're not prompting wrong.<br />The model isn't failing.
-                  </p>
+                  <p>You correct it.<br />Then correct the correction.<br />And suddenly progress slows to a crawl.</p>
+                  <p>You're not prompting wrong.<br />The model isn't failing.</p>
                   <p>You've just drifted out of the vibe zone.</p>
                   <p>
-                    Vibe coding works when state is simple and visible. It
-                    breaks when complexity crosses a threshold the model can't
-                    intuit or unwind.
+                    Vibe coding works when state is simple and visible. It breaks when complexity crosses a threshold the model
+                    can't intuit or unwind.
                   </p>
                   <p>
-                    Vibes DIY keeps things simple enough that you and your
-                    coding agent stay where you want to be. In the vibe zone.
+                    Vibes DIY keeps things simple enough that you and your coding agent stay where you want to be. In the vibe zone.
                   </p>
                   <div style="clear: both"></div>
                 </div>
@@ -517,37 +372,27 @@
             <section class="section-wrapper section-5" id="section5">
               <div class="draggable-section red static">
                 <div class="second-card">
-                  <h3 class="section-heading" style="color: #da291c">
-                    One shot. Then Ship It.
-                  </h3>
+                  <h3 class="section-heading" style="color: #da291c">One shot. Then Ship It.</h3>
                   <div class="content-wrapper">
                     <b class="subheading-bold">Get more app for your prompt.</b>
                     <span
-                      >When you vibe code an app, your coding agent has to
-                      choose a web stack. When you tell your agent to use the
-                      Vibe Stack, you're giving it an unfair advantage. Because
-                      Vibes collapses <i>application code</i> and
-                      <i>application state</i> into a single, local HTML
-                      file.</span
+                      >When you vibe code an app, your coding agent has to choose a web stack. When you tell your agent to use the
+                      Vibe Stack, you're giving it an unfair advantage. Because Vibes collapses <i>application code</i> and
+                      <i>application state</i> into a single, local HTML file.</span
                     >
                     <span
-                      >Think about it. AI doesn't make apps - it makes
-                      <i>text</i>. Embedding the database in javascript (via the
-                      browser) lets your agent describe an entire app—including
-                      its persistence layer—<strong>in one shot</strong>.</span
+                      >Think about it. AI doesn't make apps - it makes <i>text</i>. Embedding the database in javascript (via the
+                      browser) lets your agent describe an entire app—including its persistence layer—<strong>in one shot</strong
+                      >.</span
                     >
                     <span
-                      >This means the AI doesn't have to give you, the human,
-                      instructions about how to setup a server, or import a
-                      schema. It just gives you a working app. Fast. And it
-                      works as pure HTML, so you're not locked into someone's
+                      >This means the AI doesn't have to give you, the human, instructions about how to setup a server, or import a
+                      schema. It just gives you a working app. Fast. And it works as pure HTML, so you're not locked into someone's
                       virtual server.</span
                     >
                     <span
-                      >This yields a brand new vibe coding magic trick:
-                      prompt-to-vibe. A single file encodes UI, logic, and seed
-                      data, making vibe-coded apps trivially shareable and
-                      endlessly remixable by your group chat.</span
+                      >This yields a brand new vibe coding magic trick: prompt-to-vibe. A single file encodes UI, logic, and seed
+                      data, making vibe-coded apps trivially shareable and endlessly remixable by your group chat.</span
                     >
                   </div>
                 </div>
@@ -557,50 +402,27 @@
             <!-- Section 8: Join the Party -->
             <section class="section-wrapper section-8" id="section8">
               <div class="draggable-section grey static">
-                <h3 class="section-heading" style="color: #000000">
-                  Join the party
-                </h3>
+                <h3 class="section-heading" style="color: #000000">Join the party</h3>
                 <div class="content-wrapper">
-                  <b class="subheading-bold"
-                    >You're early. But right on time.</b
+                  <b class="subheading-bold">You're early. But right on time.</b>
+                  <span
+                    >Volunteer sign-ups and school drop-offs. Project checklists and vacation planners. Pick-up basketball schedules
+                    and fantasy football rankings. A cooperative chore wheel for the roomies and the ultimate Oscars bracket for
+                    movie club. Each of these concepts can be vibe coded in <i>60 seconds</i>. Whatever the vibe, you can build it
+                    with Vibes.</span
                   >
                   <span
-                    >Volunteer sign-ups and school drop-offs. Project checklists
-                    and vacation planners. Pick-up basketball schedules and
-                    fantasy football rankings. A cooperative chore wheel for the
-                    roomies and the ultimate Oscars bracket for movie club. Each
-                    of these concepts can be vibe coded in <i>60 seconds</i>.
-                    Whatever the vibe, you can build it with Vibes.</span
+                    >Everyone's ideas are welcome and everyone's data is protected. This is software that communities build together
+                    in real time — to make life easier, fairer, and more fun for everyone.</span
                   >
-                  <span
-                    >Everyone's ideas are welcome and everyone's data is
-                    protected. This is software that communities build together
-                    in real time — to make life easier, fairer, and more fun for
-                    everyone.</span
-                  >
-                  <span
-                    >You and your friends aren't users anymore. You're
-                    makers.</span
-                  >
+                  <span>You and your friends aren't users anymore. You're makers.</span>
                   <span
                     >Curious? Try a prompt using our open source web builder.
-                    <a class="link-out" href="https://discord.gg/vnpWycj4Ta"
-                      >Join our Discord</a
-                    >,
-                    <a class="link-out" href="https://vibesdiy.substack.com/"
-                      >read our Substack</a
-                    >, and follow us on
-                    <a class="link-out" href="https://www.youtube.com/@VibesDIY"
-                      >YouTube</a
-                    >,
-                    <a class="link-out" href="https://github.com/VibesDIY"
-                      >Github</a
-                    >, and
-                    <a
-                      class="link-out"
-                      href="https://bsky.app/profile/vibes.diy"
-                      >Bluesky</a
-                    >.
+                    <a class="link-out" href="https://discord.gg/vnpWycj4Ta">Join our Discord</a>,
+                    <a class="link-out" href="https://vibesdiy.substack.com/">read our Substack</a>, and follow us on
+                    <a class="link-out" href="https://www.youtube.com/@VibesDIY">YouTube</a>,
+                    <a class="link-out" href="https://github.com/VibesDIY">Github</a>, and
+                    <a class="link-out" href="https://bsky.app/profile/vibes.diy">Bluesky</a>.
                   </span>
                 </div>
               </div>
