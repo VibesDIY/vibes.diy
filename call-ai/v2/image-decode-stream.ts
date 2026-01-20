@@ -1,7 +1,8 @@
 import { type } from "arktype";
 import { CoercedDate } from "./types.js";
-import { isBlockImage, type BlockImageOutput, type BlockOutputMsg } from "./block-stream.js";
+import { isBlockImage, type BlockOutputMsg } from "./block-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
+import type { SseOutput } from "./sse-stream.js";
 import type { DeltaStreamMsg } from "./delta-stream.js";
 import type { FullStreamMsg } from "./full-stream.js";
 
@@ -93,7 +94,7 @@ function decodeDataUri(dataUri: string): { data: Uint8Array; mimetype: string } 
 }
 
 // Input type - union of all upstream types at this pipeline position
-export type ImageDecodeInput = BlockImageOutput | DeltaStreamMsg | FullStreamMsg | BlockOutputMsg;
+export type ImageDecodeInput = SseOutput | DeltaStreamMsg | FullStreamMsg | BlockOutputMsg;
 
 // Combined output type (passthrough + image decode events)
 export type ImageDecodeOutput = ImageDecodeInput | ImageDecodeMsg;

@@ -3,7 +3,7 @@ import { CoercedDate } from "./types.js";
 import type { LineStreamOutput } from "./line-stream.js";
 import { isLineBegin, isLineLine, isLineEnd, isLineStats } from "./line-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
-import { isSseLine, type SseOutput } from "./sse-stream.js";
+import { isSseLine } from "./sse-stream.js";
 
 // Block stream lifecycle events
 export const BlockBeginMsg = type({
@@ -82,14 +82,13 @@ export const CodeEndMsg = type({
   timestamp: CoercedDate,
 });
 
-// Image block events
+// Image block events (raw URL, decoding happens in image-decode-stream)
 export const BlockImageMsg = type({
   type: "'block.image'",
   id: "string",
   streamId: "string",
   index: "number",
   url: "string",
-  mimetype: "string",
   timestamp: CoercedDate,
 });
 
@@ -196,6 +195,25 @@ export function createBlockStream<T>(
 
       // Passthrough line.stats
       if (isLineStats(msg, filterStreamId)) {
+        return;
+      }
+
+      // Check for images in sse.line (no streamId filter - SSE uses main streamId)
+      if (isSseLine(msg)) {
+        const images = msg.chunk.choices[0]?.delta?.images;
+        if (images) {
+          for (const img of images) {
+            imageIndex++;
+            controller.enqueue({
+              type: "block.image",
+              id: createId(),
+              streamId: filterStreamId,
+              index: img.index ?? imageIndex,
+              url: img.image_url.url,
+              timestamp: new Date(),
+            });
+          }
+        }
         return;
       }
 
@@ -338,61 +356,3 @@ export function createBlockStream<T>(
   });
 }
 
-// Helper to extract mimetype from data URI or URL
-function extractMimetype(url: string): string {
-  // Check for data URI: data:image/png;base64,...
-  const dataUriMatch = /^data:([^;,]+)/.exec(url);
-  if (dataUriMatch) {
-    return dataUriMatch[1];
-  }
-  // Fallback: try to guess from extension
-  const extMatch = /\.(\w+)(?:\?|$)/.exec(url);
-  if (extMatch) {
-    const ext = extMatch[1].toLowerCase();
-    const mimeMap: Record<string, string> = {
-      png: "image/png",
-      jpg: "image/jpeg",
-      jpeg: "image/jpeg",
-      gif: "image/gif",
-      webp: "image/webp",
-      svg: "image/svg+xml",
-    };
-    return mimeMap[ext] || "application/octet-stream";
-  }
-  return "application/octet-stream";
-}
-
-// Combined output type for image stream (passthrough + image events)
-export type BlockImageOutput = SseOutput | BlockImageMsg;
-
-export function createBlockImageStream(
-  filterStreamId: string,
-  createId: () => string
-): TransformStream<SseOutput, BlockImageOutput> {
-  let imageIndex = 0;
-
-  return new TransformStream<SseOutput, BlockImageOutput>({
-    transform(msg, controller) {
-      // Passthrough all upstream events
-      controller.enqueue(msg);
-
-      // Check for images in sse.line
-      if (isSseLine(msg, filterStreamId)) {
-        const images = msg.chunk.choices[0]?.delta?.images;
-        if (!images) return;
-        for (const img of images) {
-          imageIndex++;
-          controller.enqueue({
-            type: "block.image",
-            id: createId(),
-            streamId: filterStreamId,
-            index: img.index ?? imageIndex,
-            url: img.image_url.url,
-            mimetype: extractMimetype(img.image_url.url),
-            timestamp: new Date(),
-          });
-        }
-      }
-    },
-  });
-}

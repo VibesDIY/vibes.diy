@@ -46,6 +46,7 @@
     "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
     "@fireproof/core-types-base": "0.24.8-dev-test-device-id",
     "@fireproof/core-types-protocols-cloud": "0.24.8-dev-test-device-id",
-    "@fireproof/use-fireproof": "0.24.8-dev-test-device-id"
+    "@fireproof/use-fireproof": "0.24.8-dev-test-device-id",
+    "mime": "^4.1.0"
   }
 }

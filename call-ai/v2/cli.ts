@@ -6,7 +6,6 @@ import {
   createLineStream,
   createDataStream,
   createSseStream,
-  createBlockImageStream,
   createDeltaStream,
   createFullStream,
   createImageDecodeStream,
@@ -18,6 +17,8 @@ import {
   isBlockOutput,
   isBlockImage,
   isImageDecodeMsg,
+  isImageFragment,
+  isImageEnd,
   isStatsCollect,
   isLineStats,
   isDataStats,
@@ -28,7 +29,8 @@ import {
   isImageStats,
 } from "./index.js";
 import { createLineStreamFromDelta } from "./delta-stream.js";
-import { createImageSaver } from "./image-saver.js";
+import mime from "mime";
+import { join } from "node:path";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 
 const env = dotenv.load(".env");
@@ -213,19 +215,18 @@ const app = command({
         .pipeThrough(createLineStream(streamId))
         .pipeThrough(createDataStream(streamId))
         .pipeThrough(createSseStream(streamId))
-        .pipeThrough(createBlockImageStream(streamId, () => sthis.nextId().str))
         .pipeThrough(createDeltaStream(streamId));
 
       const withFull = full || all ? basePipeline.pipeThrough(createFullStream(streamId)) : basePipeline;
       const withBlocks = withFull.pipeThrough(createLineStreamFromDelta(streamId, () => sthis.nextId().str));
 
       // Add image decode stream if image flag or imageDir is set
-      const withImageDecode = image || imageDir ? withBlocks.pipeThrough(createImageDecodeStream(streamId)) : withBlocks;
-
-      // Add image saver if imageDir is set
-      const pipeline = imageDir ? withImageDecode.pipeThrough(createImageSaver(imageDir)) : withImageDecode;
+      const pipeline = image || imageDir ? withBlocks.pipeThrough(createImageDecodeStream(streamId)) : withBlocks;
 
       const reader = pipeline.getReader();
+
+      // State for accumulating image fragments when saving
+      const imageFragments = new Map<string, Uint8Array[]>();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -247,8 +248,34 @@ const app = command({
           console.log(JSON.stringify(value));
         } else if (image && (isBlockImage(value) || isImageDecodeMsg(value))) {
           console.log(JSON.stringify(value));
-        } else if (
-          stats &&
+        }
+
+        // Handle image saving inline
+        if (imageDir) {
+          if (isImageFragment(value)) {
+            const existing = imageFragments.get(value.id) || [];
+            existing.push(value.data);
+            imageFragments.set(value.id, existing);
+          } else if (isImageEnd(value)) {
+            const fragments = imageFragments.get(value.id);
+            if (fragments?.length) {
+              const totalLength = fragments.reduce((sum, f) => sum + f.length, 0);
+              const combined = new Uint8Array(totalLength);
+              let offset = 0;
+              for (const fragment of fragments) {
+                combined.set(fragment, offset);
+                offset += fragment.length;
+              }
+              const ext = mime.getExtension(value.mimetype) || "bin";
+              const filepath = join(imageDir, `${value.id}.${ext}`);
+              await fs.mkdir(imageDir, { recursive: true });
+              await fs.writeFile(filepath, combined);
+              imageFragments.delete(value.id);
+            }
+          }
+        }
+
+        if (stats &&
           (isStatsCollect(value) ||
             isLineStats(value) ||
             isDataStats(value) ||
