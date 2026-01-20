@@ -6,15 +6,18 @@ import {
   createLineStream,
   createDataStream,
   createSseStream,
-  createImageStream,
+  createBlockImageStream,
   createDeltaStream,
   createFullStream,
+  createImageDecodeStream,
   isLineMsg,
   isDataMsg,
   isSseMsg,
   isDeltaMsg,
   isFullMsg,
   isBlockOutput,
+  isBlockImage,
+  isImageDecodeMsg,
   isStatsCollect,
   isLineStats,
   isDataStats,
@@ -22,8 +25,10 @@ import {
   isDeltaStats,
   isFullStats,
   isBlockStats,
+  isImageStats,
 } from "./index.js";
 import { createLineStreamFromDelta } from "./delta-stream.js";
+import { createImageSaver } from "./image-saver.js";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 
 const env = dotenv.load(".env");
@@ -115,15 +120,44 @@ const app = command({
       description: "Stats collection interval in ms (default: 1000)",
       defaultValue: () => "1000",
     }),
+    image: flag({
+      long: "image",
+      short: "i",
+      description: "Output image events (block.image, image.begin/fragment/end)",
+    }),
+    imageDir: option({
+      type: string,
+      long: "image-dir",
+      description: "Directory to save decoded images (enables image saving)",
+      defaultValue: () => "",
+    }),
   },
-  handler: async ({ prompt, src, model, apiKey, url, raw, line, data, sse, delta, full, block, all, stats, statsInterval }) => {
+  handler: async ({
+    prompt,
+    src,
+    model,
+    apiKey,
+    url,
+    raw,
+    line,
+    data,
+    sse,
+    delta,
+    full,
+    block,
+    all,
+    stats,
+    statsInterval,
+    image,
+    imageDir,
+  }) => {
     let body: ReadableStream<Uint8Array>;
 
     if (src) {
       body = new ReadableStream({
         async start(controller) {
           const handle = await fs.open(src, "r");
-          const buffer = new Uint8Array(64*1024);
+          const buffer = new Uint8Array(64 * 1024);
           let bytesRead: number;
           while ((bytesRead = (await handle.read(buffer, 0, buffer.length)).bytesRead) > 0) {
             controller.enqueue(buffer.slice(0, bytesRead));
@@ -171,7 +205,7 @@ const app = command({
     }
     const sthis = ensureSuperThis();
 
-    if (all || line || data || sse || delta || full || block || stats) {
+    if (all || line || data || sse || delta || full || block || stats || image) {
       const streamId = sthis.nextId().str;
       const intervalMs = parseInt(statsInterval, 10) || 1000;
       const basePipeline = body
@@ -179,13 +213,19 @@ const app = command({
         .pipeThrough(createLineStream(streamId))
         .pipeThrough(createDataStream(streamId))
         .pipeThrough(createSseStream(streamId))
-        .pipeThrough(createImageStream(streamId))
+        .pipeThrough(createBlockImageStream(streamId, () => sthis.nextId().str))
         .pipeThrough(createDeltaStream(streamId));
 
-      const pipeline = full || all ? basePipeline.pipeThrough(createFullStream(streamId)) : basePipeline;
+      const withFull = full || all ? basePipeline.pipeThrough(createFullStream(streamId)) : basePipeline;
+      const withBlocks = withFull.pipeThrough(createLineStreamFromDelta(streamId, () => sthis.nextId().str));
 
-      const stream = pipeline.pipeThrough(createLineStreamFromDelta(streamId, () => sthis.nextId().str));
-      const reader = stream.getReader();
+      // Add image decode stream if image flag or imageDir is set
+      const withImageDecode = image || imageDir ? withBlocks.pipeThrough(createImageDecodeStream(streamId)) : withBlocks;
+
+      // Add image saver if imageDir is set
+      const pipeline = imageDir ? withImageDecode.pipeThrough(createImageSaver(imageDir)) : withImageDecode;
+
+      const reader = pipeline.getReader();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -205,6 +245,8 @@ const app = command({
           console.log(JSON.stringify(value));
         } else if (block && isBlockOutput(value)) {
           console.log(JSON.stringify(value));
+        } else if (image && (isBlockImage(value) || isImageDecodeMsg(value))) {
+          console.log(JSON.stringify(value));
         } else if (
           stats &&
           (isStatsCollect(value) ||
@@ -213,7 +255,8 @@ const app = command({
             isSseStats(value) ||
             isDeltaStats(value) ||
             isFullStats(value) ||
-            isBlockStats(value))
+            isBlockStats(value) ||
+            isImageStats(value))
         ) {
           console.log(JSON.stringify(value));
         }

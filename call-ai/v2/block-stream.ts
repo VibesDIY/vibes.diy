@@ -3,6 +3,7 @@ import { CoercedDate } from "./types.js";
 import type { LineStreamOutput } from "./line-stream.js";
 import { isLineBegin, isLineLine, isLineEnd, isLineStats } from "./line-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
+import { isSseLine, type SseOutput } from "./sse-stream.js";
 
 // Block stream lifecycle events
 export const BlockBeginMsg = type({
@@ -81,6 +82,17 @@ export const CodeEndMsg = type({
   timestamp: CoercedDate,
 });
 
+// Image block events
+export const BlockImageMsg = type({
+  type: "'block.image'",
+  id: "string",
+  streamId: "string",
+  index: "number",
+  url: "string",
+  mimetype: "string",
+  timestamp: CoercedDate,
+});
+
 // Stats message
 export const BlockStatsMsg = type({
   type: "'block.stats'",
@@ -88,6 +100,7 @@ export const BlockStatsMsg = type({
   stats: {
     toplevelIndex: "number",
     codeIndex: "number",
+    imageIndex: "number",
     totalLines: "number",
   },
   timestamp: CoercedDate,
@@ -97,7 +110,7 @@ export const BlockStatsMsg = type({
 export const BlockStreamMsg = BlockBeginMsg.or(BlockEndMsg).or(BlockStatsMsg);
 export const ToplevelMsg = ToplevelBeginMsg.or(ToplevelLineMsg).or(ToplevelEndMsg);
 export const CodeMsg = CodeBeginMsg.or(CodeLineMsg).or(CodeEndMsg);
-export const BlockOutput = BlockStreamMsg.or(ToplevelMsg).or(CodeMsg);
+export const BlockOutput = BlockStreamMsg.or(ToplevelMsg).or(CodeMsg).or(BlockImageMsg);
 
 // Inferred types
 export type BlockBeginMsg = typeof BlockBeginMsg.infer;
@@ -109,6 +122,7 @@ export type ToplevelEndMsg = typeof ToplevelEndMsg.infer;
 export type CodeBeginMsg = typeof CodeBeginMsg.infer;
 export type CodeLineMsg = typeof CodeLineMsg.infer;
 export type CodeEndMsg = typeof CodeEndMsg.infer;
+export type BlockImageMsg = typeof BlockImageMsg.infer;
 export type BlockStreamMsg = typeof BlockStreamMsg.infer;
 export type ToplevelMsg = typeof ToplevelMsg.infer;
 export type CodeMsg = typeof CodeMsg.infer;
@@ -133,6 +147,8 @@ export const isCodeLine = (msg: unknown, streamId?: string): msg is CodeLineMsg 
   !(CodeLineMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeLineMsg).streamId === streamId);
 export const isCodeEnd = (msg: unknown, streamId?: string): msg is CodeEndMsg =>
   !(CodeEndMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeEndMsg).streamId === streamId);
+export const isBlockImage = (msg: unknown, streamId?: string): msg is BlockImageMsg =>
+  !(BlockImageMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockImageMsg).streamId === streamId);
 export const isBlockOutput = (msg: unknown, streamId?: string): msg is BlockOutputMsg =>
   !(BlockOutput(msg) instanceof type.errors) && (!streamId || (msg as BlockOutputMsg).streamId === streamId);
 
@@ -148,7 +164,7 @@ export type BlockStreamOutput<T> = T | BlockOutputMsg;
 
 export function createBlockStream<T>(
   filterStreamId: string,
-  createId: () => string,
+  createId: () => string
 ): TransformStream<T | LineStreamOutput, BlockStreamOutput<T>> {
   let streamId = "";
   let blockId = "";
@@ -158,6 +174,7 @@ export function createBlockStream<T>(
   let currentLang = "";
   let toplevelIndex = 0;
   let codeIndex = 0;
+  let imageIndex = 0;
   let lineIndex = 0;
   let totalLines = 0;
 
@@ -171,7 +188,7 @@ export function createBlockStream<T>(
         controller.enqueue({
           type: "block.stats",
           streamId: filterStreamId,
-          stats: { toplevelIndex, codeIndex, totalLines },
+          stats: { toplevelIndex, codeIndex, imageIndex, totalLines },
           timestamp: new Date(),
         });
         return;
@@ -316,6 +333,65 @@ export function createBlockStream<T>(
           totalLines,
           timestamp: new Date(),
         });
+      }
+    },
+  });
+}
+
+// Helper to extract mimetype from data URI or URL
+function extractMimetype(url: string): string {
+  // Check for data URI: data:image/png;base64,...
+  const dataUriMatch = /^data:([^;,]+)/.exec(url);
+  if (dataUriMatch) {
+    return dataUriMatch[1];
+  }
+  // Fallback: try to guess from extension
+  const extMatch = /\.(\w+)(?:\?|$)/.exec(url);
+  if (extMatch) {
+    const ext = extMatch[1].toLowerCase();
+    const mimeMap: Record<string, string> = {
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      gif: "image/gif",
+      webp: "image/webp",
+      svg: "image/svg+xml",
+    };
+    return mimeMap[ext] || "application/octet-stream";
+  }
+  return "application/octet-stream";
+}
+
+// Combined output type for image stream (passthrough + image events)
+export type BlockImageOutput = SseOutput | BlockImageMsg;
+
+export function createBlockImageStream(
+  filterStreamId: string,
+  createId: () => string
+): TransformStream<SseOutput, BlockImageOutput> {
+  let imageIndex = 0;
+
+  return new TransformStream<SseOutput, BlockImageOutput>({
+    transform(msg, controller) {
+      // Passthrough all upstream events
+      controller.enqueue(msg);
+
+      // Check for images in sse.line
+      if (isSseLine(msg, filterStreamId)) {
+        const images = msg.chunk.choices[0]?.delta?.images;
+        if (!images) return;
+        for (const img of images) {
+          imageIndex++;
+          controller.enqueue({
+            type: "block.image",
+            id: createId(),
+            streamId: filterStreamId,
+            index: img.index ?? imageIndex,
+            url: img.image_url.url,
+            mimetype: extractMimetype(img.image_url.url),
+            timestamp: new Date(),
+          });
+        }
       }
     },
   });
