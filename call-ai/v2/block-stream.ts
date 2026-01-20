@@ -3,7 +3,6 @@ import { CoercedDate } from "./types.js";
 import type { LineStreamOutput } from "./line-stream.js";
 import { isLineBegin, isLineLine, isLineEnd, isLineStats } from "./line-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
-import { isSseLine } from "./sse-stream.js";
 import { passthrough } from "./passthrough.js";
 
 // Block stream lifecycle events
@@ -194,26 +193,6 @@ export function createBlockStream<T>(
 
       // Passthrough line.stats
       if (isLineStats(msg, filterStreamId)) {
-        return;
-      }
-
-      // Check for images in sse.line (no streamId filter - SSE uses main streamId)
-      if (isSseLine(msg)) {
-        const images = msg.chunk.choices[0]?.delta?.images;
-        if (images) {
-          for (const img of images) {
-            imageIndex++;
-            controller.enqueue({
-              type: "block.image",
-              id: createId(),
-              streamId: filterStreamId,
-              seq: imageIndex,
-              ...(img.index !== undefined && { index: img.index }),
-              url: img.image_url.url,
-              timestamp: new Date(),
-            });
-          }
-        }
         return;
       }
 

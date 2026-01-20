@@ -5,7 +5,7 @@ import { isSseBegin, isSseLine, isSseEnd, isSseStats } from "./sse-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
 import { createLineStream, type LineStreamInput } from "./line-stream.js";
 import { consumeStream } from "@adviser/cement";
-import { createBlockStream, type BlockImageMsg } from "./block-stream.js";
+import { createBlockStream, type BlockOutputMsg } from "./block-stream.js";
 import { passthrough } from "./passthrough.js";
 
 export const DeltaBeginMsg = type({
@@ -159,15 +159,19 @@ export function createDeltaStream(filterStreamId: string): TransformStream<SseOu
   });
 }
 
-export function createLineStreamFromDelta<T extends DeltaOutput>(
+// Output type for createLineStreamFromDelta (passthrough + block events)
+export type DeltaBlockOutput = DeltaOutput | BlockOutputMsg;
+
+export function createLineStreamFromDelta(
   filterStreamId: string,
   createId: () => string,
-): TransformStream<T, T> {
+): TransformStream<DeltaOutput, DeltaBlockOutput> {
   let transStream: TransformStream<LineStreamInput>;
   let writer: WritableStreamDefaultWriter<LineStreamInput>;
   let consumePromise: Promise<unknown>;
   let blockStreamId: string;
-  return new TransformStream<T, T>({
+  let imageIndex = 0;
+  return new TransformStream<DeltaOutput, DeltaBlockOutput>({
     async transform(msg, controller) {
       controller.enqueue(msg);
       switch (true) {
@@ -178,18 +182,33 @@ export function createLineStreamFromDelta<T extends DeltaOutput>(
           consumePromise = consumeStream(
             transStream.readable
               .pipeThrough(createLineStream(blockStreamId))
-              .pipeThrough(createBlockStream(blockStreamId, createId)),
-            (e: unknown) => controller.enqueue(e as T),
+              .pipeThrough(createBlockStream<never>(blockStreamId, createId)),
+            (e) => controller.enqueue(e),
           );
           break;
         }
         case isDeltaLine(msg, filterStreamId):
           writer?.write(new TextEncoder().encode(msg.content));
           break;
-        case isSseLine(msg, filterStreamId):
-          // Forward sse.line to inner pipeline for image detection in block-stream
-          writer?.write(msg);
+        case isSseLine(msg, filterStreamId): {
+          // Emit block.image directly for any images in the SSE chunk
+          const images = msg.chunk.choices[0]?.delta?.images;
+          if (images) {
+            for (const img of images) {
+              imageIndex++;
+              controller.enqueue({
+                type: "block.image",
+                id: createId(),
+                streamId: blockStreamId,
+                seq: imageIndex,
+                ...(img.index !== undefined && { index: img.index }),
+                url: img.image_url.url,
+                timestamp: new Date(),
+              });
+            }
+          }
           break;
+        }
         case isDeltaEnd(msg, filterStreamId):
           if (writer) {
             await writer.close().then(() => consumePromise);
