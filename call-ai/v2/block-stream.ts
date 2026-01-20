@@ -159,13 +159,10 @@ const CODE_FENCE_END = /^```$/;
 
 type Mode = "toplevel" | "code";
 
-// Combined output type (passthrough + own events)
-export type BlockStreamOutput<T> = T | BlockOutputMsg;
-
-export function createBlockStream<T>(
+export function createBlockStream(
   filterStreamId: string,
   createId: () => string
-): TransformStream<T | LineStreamOutput, BlockStreamOutput<T>> {
+): TransformStream<LineStreamOutput, BlockOutputMsg> {
   let streamId = "";
   let blockId = "";
   let currentSectionId = "";
@@ -178,7 +175,7 @@ export function createBlockStream<T>(
   let lineIndex = 0;
   let totalLines = 0;
 
-  return new TransformStream<T | LineStreamOutput, BlockStreamOutput<T>>({
+  return new TransformStream<LineStreamOutput, BlockOutputMsg>({
     transform: passthrough((msg, controller) => {
       // Handle stats.collect trigger
       if (isStatsCollect(msg, filterStreamId)) {

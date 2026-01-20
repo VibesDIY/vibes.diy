@@ -182,7 +182,7 @@ export function createLineStreamFromDelta(
           consumePromise = consumeStream(
             transStream.readable
               .pipeThrough(createLineStream(blockStreamId))
-              .pipeThrough(createBlockStream<never>(blockStreamId, createId)),
+              .pipeThrough(createBlockStream(blockStreamId, createId)),
             (e) => controller.enqueue(e),
           );
           break;
