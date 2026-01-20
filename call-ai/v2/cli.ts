@@ -6,6 +6,7 @@ import {
   createLineStream,
   createDataStream,
   createSseStream,
+  createImageStream,
   createDeltaStream,
   createFullStream,
   isLineMsg,
@@ -178,6 +179,7 @@ const app = command({
         .pipeThrough(createLineStream(streamId))
         .pipeThrough(createDataStream(streamId))
         .pipeThrough(createSseStream(streamId))
+        .pipeThrough(createImageStream(streamId))
         .pipeThrough(createDeltaStream(streamId));
 
       const pipeline = full || all ? basePipeline.pipeThrough(createFullStream(streamId)) : basePipeline;

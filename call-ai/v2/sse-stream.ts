@@ -25,6 +25,7 @@ export const SseChunk = type({
       "content?": "string",
       "reasoning?": "string|null",
       "reasoning_details?": "unknown[]",
+      "images?": type({ type: "string", index: "number", image_url: { url: "string" } }).array(),
       "+": "delete",
     },
     finish_reason: "string|null",
