@@ -113,6 +113,41 @@ export function decodeBase64(base64: string): Uint8Array {
   return data;
 }
 
+/**
+ * Accumulates image fragments and returns combined binary data on image.end.
+ * Used by consumers that need to reconstruct full images from fragment streams.
+ */
+export class ImageAccumulator {
+  private fragments = new Map<string, string[]>();
+
+  /**
+   * Process a stream message. Returns combined Uint8Array when image.end is received,
+   * undefined otherwise.
+   */
+  process(msg: unknown): Uint8Array | undefined {
+    if (isImageFragment(msg)) {
+      const existing = this.fragments.get(msg.imageId) || [];
+      existing.push(msg.data);
+      this.fragments.set(msg.imageId, existing);
+    } else if (isImageEnd(msg)) {
+      const fragments = this.fragments.get(msg.imageId);
+      if (fragments?.length) {
+        const decoded = fragments.map(decodeBase64);
+        const totalLength = decoded.reduce((sum, f) => sum + f.length, 0);
+        const combined = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const f of decoded) {
+          combined.set(f, offset);
+          offset += f.length;
+        }
+        this.fragments.delete(msg.imageId);
+        return combined;
+      }
+    }
+    return undefined;
+  }
+}
+
 // Helper to decode base64 data URI to Uint8Array
 function decodeDataUri(dataUri: string): { data: Uint8Array; mimetype: string; suffix: string } | undefined {
   const match = /^data:([^;,]+);base64,(.+)$/.exec(dataUri);

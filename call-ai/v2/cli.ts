@@ -9,7 +9,7 @@ import {
   createDeltaStream,
   createFullStream,
   createImageDecodeStream,
-  decodeBase64,
+  ImageAccumulator,
   isLineMsg,
   isDataMsg,
   isSseMsg,
@@ -18,7 +18,6 @@ import {
   isBlockOutput,
   isBlockImage,
   isImageDecodeMsg,
-  isImageFragment,
   isImageEnd,
   isStatsCollect,
   isLineStats,
@@ -228,9 +227,7 @@ const app = command({
           : withBlocks;
 
       const reader = pipeline.getReader();
-
-      // State for accumulating image fragments when saving (base64 strings)
-      const imageFragments = new Map<string, string[]>();
+      const accumulator = imageDir ? new ImageAccumulator() : undefined;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -254,30 +251,14 @@ const app = command({
           console.log(JSON.stringify(value));
         }
 
-        // Handle image saving inline
-        if (imageDir) {
-          if (isImageFragment(value)) {
-            const existing = imageFragments.get(value.imageId) || [];
-            existing.push(value.data);
-            imageFragments.set(value.imageId, existing);
-          } else if (isImageEnd(value)) {
-            const fragments = imageFragments.get(value.imageId);
-            if (fragments?.length) {
-              // Decode base64 fragments and combine
-              const decoded = fragments.map(decodeBase64);
-              const totalLength = decoded.reduce((sum, f) => sum + f.length, 0);
-              const combined = new Uint8Array(totalLength);
-              let offset = 0;
-              for (const fragment of decoded) {
-                combined.set(fragment, offset);
-                offset += fragment.length;
-              }
-              const ext = mime.getExtension(value.mimetype) || "bin";
-              const filepath = join(imageDir, `${value.imageId}.${ext}`);
-              await fs.mkdir(imageDir, { recursive: true });
-              await fs.writeFile(filepath, combined);
-              imageFragments.delete(value.imageId);
-            }
+        // Handle image saving
+        if (accumulator) {
+          const imageData = accumulator.process(value);
+          if (imageData && isImageEnd(value)) {
+            const ext = mime.getExtension(value.mimetype) || "bin";
+            const filepath = join(imageDir, `${value.imageId}.${ext}`);
+            await fs.mkdir(imageDir, { recursive: true });
+            await fs.writeFile(filepath, imageData);
           }
         }
 
