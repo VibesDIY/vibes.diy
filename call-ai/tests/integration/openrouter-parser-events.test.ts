@@ -26,7 +26,7 @@ describe("OpenRouterParser arktype events", () => {
     expect(events.mock.calls[0][0].type).toBe("or.json");
 
     // or.meta follows once identified in the chunk
-    const metaEvent = events.mock.calls.find(c => c[0].type === "or.meta")?.[0];
+    const metaEvent = events.mock.calls.find((c) => c[0].type === "or.meta")?.[0];
     expect(metaEvent).toMatchObject({
       type: "or.meta",
       model: "openai/gpt-4o",

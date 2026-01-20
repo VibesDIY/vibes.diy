@@ -1,6 +1,7 @@
 packages:
   - "call-ai/base"
   - "call-ai/pkg"
+  - "call-ai/v2"
   - "call-ai/tests/unit"
   - "call-ai/tests/integration"
   - "call-ai/tests/helpers"

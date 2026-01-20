@@ -26,7 +26,7 @@ describe("toolHandler - Legacy Formats", () => {
         type: "tool_use",
         id: "call_1",
         name: "test_tool",
-        input: { foo: "bar" }
+        input: { foo: "bar" },
       };
 
       evento.trigger({ type: "or.json", json: payload });
@@ -35,7 +35,7 @@ describe("toolHandler - Legacy Formats", () => {
       expect(completes[0]).toMatchObject({
         callId: "call_1",
         functionName: "test_tool",
-        arguments: '{"foo":"bar"}'
+        arguments: '{"foo":"bar"}',
       });
     });
   });
@@ -49,13 +49,13 @@ describe("toolHandler - Legacy Formats", () => {
         stop_reason: "tool_use",
         content: [
           { type: "text", text: "Thinking..." },
-          { 
+          {
             type: "tool_use",
             id: "call_2",
             name: "calc",
-            input: { expr: "1+1" }
-          }
-        ]
+            input: { expr: "1+1" },
+          },
+        ],
       };
 
       evento.trigger({ type: "or.json", json: payload });
@@ -64,7 +64,7 @@ describe("toolHandler - Legacy Formats", () => {
       expect(completes[0]).toMatchObject({
         callId: "call_2",
         functionName: "calc",
-        arguments: '{"expr":"1+1"}'
+        arguments: '{"expr":"1+1"}',
       });
     });
   });
@@ -75,19 +75,21 @@ describe("toolHandler - Legacy Formats", () => {
       const completes = collectToolEvents(evento);
 
       const payload = {
-        choices: [{
-          message: {
-            content: [
-              { type: "text", text: "Hi" },
-              { 
-                type: "tool_use",
-                id: "call_3",
-                name: "greet",
-                input: { name: "User" }
-              }
-            ]
-          }
-        }]
+        choices: [
+          {
+            message: {
+              content: [
+                { type: "text", text: "Hi" },
+                {
+                  type: "tool_use",
+                  id: "call_3",
+                  name: "greet",
+                  input: { name: "User" },
+                },
+              ],
+            },
+          },
+        ],
       };
 
       evento.trigger({ type: "or.json", json: payload });
@@ -96,7 +98,7 @@ describe("toolHandler - Legacy Formats", () => {
       expect(completes[0]).toMatchObject({
         callId: "call_3",
         functionName: "greet",
-        arguments: '{"name":"User"}'
+        arguments: '{"name":"User"}',
       });
     });
 
@@ -105,18 +107,20 @@ describe("toolHandler - Legacy Formats", () => {
       const completes = collectToolEvents(evento);
 
       const payload = {
-        choices: [{
-          delta: {
-            content: [
-              { 
-                type: "tool_use",
-                id: "call_4",
-                name: "delta_tool",
-                input: { x: 1 }
-              }
-            ]
-          }
-        }]
+        choices: [
+          {
+            delta: {
+              content: [
+                {
+                  type: "tool_use",
+                  id: "call_4",
+                  name: "delta_tool",
+                  input: { x: 1 },
+                },
+              ],
+            },
+          },
+        ],
       };
 
       evento.trigger({ type: "or.json", json: payload });
@@ -125,7 +129,7 @@ describe("toolHandler - Legacy Formats", () => {
       expect(completes[0]).toMatchObject({
         callId: "call_4",
         functionName: "delta_tool",
-        arguments: '{"x":1}'
+        arguments: '{"x":1}',
       });
     });
   });

@@ -2,13 +2,7 @@
  * Streaming response handling for call-ai
  */
 
-import {
-  CallAIOptions,
-  Message,
-  SchemaAIMessageRequest,
-  StreamResponse,
-  ThenableStreamResponse,
-} from "./types.js";
+import { CallAIOptions, Message, SchemaAIMessageRequest, StreamResponse, ThenableStreamResponse } from "./types.js";
 import { globalDebug } from "./key-management.js";
 import { checkForInvalidModelError } from "./error-handling.js";
 import { copyPassthroughOptions } from "./utils.js";

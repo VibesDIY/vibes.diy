@@ -3,10 +3,7 @@ import { readFileSync } from "node:fs";
 
 import { VibesStream, VibesEvent, vibesEvent, isVibesEventError } from "call-ai";
 
-const fireproofStreamFixture = readFileSync(
-  new URL("./fixtures/openai-fireproof-stream-response.txt", import.meta.url),
-  "utf8",
-);
+const fireproofStreamFixture = readFileSync(new URL("./fixtures/openai-fireproof-stream-response.txt", import.meta.url), "utf8");
 
 describe("VibesStream", () => {
   describe("event emission", () => {

@@ -12,10 +12,7 @@ import { feedFixtureToParser } from "../test-helpers.js";
  */
 
 describe("OpenAI Response Parsing (parser-based)", () => {
-  const openaiStreamResponseFixture = fs.readFileSync(
-    path.join(__dirname, "fixtures/openai-stream-response.json"),
-    "utf8",
-  );
+  const openaiStreamResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/openai-stream-response.json"), "utf8");
 
   it("should parse OpenAI streaming response and extract deltas", () => {
     const parser = new OpenRouterParser();

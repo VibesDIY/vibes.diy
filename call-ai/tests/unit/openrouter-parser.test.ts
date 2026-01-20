@@ -6,10 +6,7 @@ import { describe, it, expect, vi } from "vitest";
 import { feedFixtureRandomly } from "./test-utils.js";
 import { OrDelta, OrDone, OrMeta, OrUsage } from "@vibes.diy/call-ai-base";
 
-const openAiStreamFixture = readFileSync(
-  new URL("./fixtures/openai-stream-response.json", import.meta.url),
-  "utf8",
-);
+const openAiStreamFixture = readFileSync(new URL("./fixtures/openai-stream-response.json", import.meta.url), "utf8");
 
 const fireproofStreamFixture = readFileSync(
   new URL("../integration/fixtures/openai-fireproof-stream-response.txt", import.meta.url),
@@ -161,10 +158,18 @@ describe("OpenRouterParser", () => {
 
       parser.onEvent((evt) => {
         switch (evt.type) {
-          case "or.delta": deltas.push(evt); break;
-          case "or.meta": metas.push(evt); break;
-          case "or.usage": usages.push(evt); break;
-          case "or.done": dones.push(evt); break;
+          case "or.delta":
+            deltas.push(evt);
+            break;
+          case "or.meta":
+            metas.push(evt);
+            break;
+          case "or.usage":
+            usages.push(evt);
+            break;
+          case "or.done":
+            dones.push(evt);
+            break;
         }
       });
 

@@ -6,10 +6,7 @@ import { CallAIError, CallAIOptions, ResponseMeta, SchemaStrategy } from "./type
 import { responseMetadata, boxString } from "./response-metadata.js";
 import { OpenRouterParser } from "./parser/openrouter-parser.js";
 
-async function* parseTextSSE(
-  response: Response,
-  schemaStrategy: SchemaStrategy,
-): AsyncGenerator<string, string, unknown> {
+async function* parseTextSSE(response: Response, schemaStrategy: SchemaStrategy): AsyncGenerator<string, string, unknown> {
   const reader = response.body?.getReader();
   if (!reader) {
     throw new Error("Response body is undefined - API endpoint may not support streaming");

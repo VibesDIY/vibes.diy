@@ -6,15 +6,9 @@ import { describe, it, expect } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 
-const openAiStreamFixture = readFileSync(
-  new URL("./fixtures/openai-stream-response.json", import.meta.url),
-  "utf8",
-);
+const openAiStreamFixture = readFileSync(new URL("./fixtures/openai-stream-response.json", import.meta.url), "utf8");
 
-const openAiWeatherStreamFixture = readFileSync(
-  new URL("./fixtures/openai-weather-response.json", import.meta.url),
-  "utf8",
-);
+const openAiWeatherStreamFixture = readFileSync(new URL("./fixtures/openai-weather-response.json", import.meta.url), "utf8");
 
 const fireproofStreamFixture = readFileSync(
   new URL("../integration/fixtures/openai-fireproof-stream-response.txt", import.meta.url),

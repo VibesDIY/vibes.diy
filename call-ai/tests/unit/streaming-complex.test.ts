@@ -73,9 +73,7 @@ describe("Parser-based streaming tests", () => {
       });
 
       const fixture =
-        toSSE({ choices: [{ delta: { content: "Hi" } }] }) +
-        toSSE({ choices: [{ finish_reason: "stop" }] }) +
-        "data: [DONE]\n\n";
+        toSSE({ choices: [{ delta: { content: "Hi" } }] }) + toSSE({ choices: [{ finish_reason: "stop" }] }) + "data: [DONE]\n\n";
 
       feedFixtureToParser(parser, fixture);
 
@@ -95,8 +93,7 @@ describe("Parser-based streaming tests", () => {
           id: "chatcmpl-123",
           model: "gpt-4",
           choices: [{ delta: { content: "Hi" } }],
-        }) +
-        "data: [DONE]\n\n";
+        }) + "data: [DONE]\n\n";
 
       feedFixtureToParser(parser, fixture);
 
@@ -111,9 +108,7 @@ describe("Parser-based streaming tests", () => {
         if (evt.type === "or.stream-end") streamEnded = true;
       });
 
-      const fixture =
-        toSSE({ choices: [{ delta: { content: "Hi" } }] }) +
-        "data: [DONE]\n\n";
+      const fixture = toSSE({ choices: [{ delta: { content: "Hi" } }] }) + "data: [DONE]\n\n";
 
       feedFixtureToParser(parser, fixture);
 
@@ -149,9 +144,7 @@ describe("Parser-based streaming tests", () => {
         if (evt.type === "or.delta") deltas.push(evt.content);
       });
 
-      const fixture =
-        toSSE({ choices: [{ delta: { content: "A" } }] }) +
-        "data: [DONE]\n\n";
+      const fixture = toSSE({ choices: [{ delta: { content: "A" } }] }) + "data: [DONE]\n\n";
 
       // Feed one byte at a time
       feedFixtureToParser(parser, fixture, 1);

@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  ParserEvento,
-  ParserEvent,
-} from "@vibes.diy/call-ai-base";
+import { ParserEvento, ParserEvent } from "@vibes.diy/call-ai-base";
 import { createToolHandler, ToolStart, ToolArguments, ToolComplete } from "@vibes.diy/call-ai-base";
 
 describe("toolHandler", () => {
@@ -36,16 +33,20 @@ describe("toolHandler", () => {
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                id: "call_123",
-                function: { name: "test_func", arguments: "{" }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call_123",
+                    function: { name: "test_func", arguments: "{" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       expect(starts).toHaveLength(1);
@@ -64,30 +65,38 @@ describe("toolHandler", () => {
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                id: "call_123",
-                function: { name: "func", arguments: '{"foo":' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call_123",
+                    function: { name: "func", arguments: '{"foo":' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                function: { arguments: '"bar"}' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    function: { arguments: '"bar"}' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       expect(args).toHaveLength(2);
@@ -103,32 +112,40 @@ describe("toolHandler", () => {
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                id: "call_1",
-                function: { name: "func1", arguments: "{1}" }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call_1",
+                    function: { name: "func1", arguments: "{1}" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       // Tool call 2
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 1,
-                id: "call_2",
-                function: { name: "func2", arguments: "{2}" }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 1,
+                    id: "call_2",
+                    function: { name: "func2", arguments: "{2}" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       expect(starts).toHaveLength(2);
@@ -148,31 +165,39 @@ describe("toolHandler", () => {
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                id: "call_stream",
-                function: { name: "get_data", arguments: '{"foo":' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call_stream",
+                    function: { name: "get_data", arguments: '{"foo":' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       // Second chunk - more arguments
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                function: { arguments: '"bar"}' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    function: { arguments: '"bar"}' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       // No complete yet
@@ -201,16 +226,20 @@ describe("toolHandler", () => {
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                id: "call_end",
-                function: { name: "test_fn", arguments: '{"x":1}' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call_end",
+                    function: { name: "test_fn", arguments: '{"x":1}' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       expect(completes).toHaveLength(0);
@@ -234,62 +263,78 @@ describe("toolHandler", () => {
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                id: "call_a",
-                function: { name: "func_a", arguments: '{"a":' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call_a",
+                    function: { name: "func_a", arguments: '{"a":' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       // Tool call 2 start
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 1,
-                id: "call_b",
-                function: { name: "func_b", arguments: '{"b":' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 1,
+                    id: "call_b",
+                    function: { name: "func_b", arguments: '{"b":' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       // Tool call 1 more args
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 0,
-                function: { arguments: '1}' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    function: { arguments: "1}" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       // Tool call 2 more args
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            delta: {
-              tool_calls: [{
-                index: 1,
-                function: { arguments: '2}' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 1,
+                    function: { arguments: "2}" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       expect(completes).toHaveLength(0);
@@ -311,16 +356,20 @@ describe("toolHandler", () => {
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            message: {
-              tool_calls: [{
-                id: "call_456",
-                type: "function",
-                function: { name: "get_weather", arguments: '{"city":"NYC"}' }
-              }]
-            }
-          }]
-        }
+          choices: [
+            {
+              message: {
+                tool_calls: [
+                  {
+                    id: "call_456",
+                    type: "function",
+                    function: { name: "get_weather", arguments: '{"city":"NYC"}' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       expect(completes).toHaveLength(1);
@@ -339,15 +388,17 @@ describe("toolHandler", () => {
       evento.trigger({
         type: "or.json",
         json: {
-          choices: [{
-            message: {
-              tool_calls: [
-                { id: "c1", type: "function", function: { name: "func1", arguments: "{}" } },
-                { id: "c2", type: "function", function: { name: "func2", arguments: '{"x":1}' } },
-              ]
-            }
-          }]
-        }
+          choices: [
+            {
+              message: {
+                tool_calls: [
+                  { id: "c1", type: "function", function: { name: "func1", arguments: "{}" } },
+                  { id: "c2", type: "function", function: { name: "func2", arguments: '{"x":1}' } },
+                ],
+              },
+            },
+          ],
+        },
       });
 
       expect(completes).toHaveLength(2);
@@ -363,7 +414,7 @@ describe("toolHandler", () => {
 
       evento.trigger({
         type: "or.json",
-        json: { choices: [{ delta: { content: "Hello" } }] }
+        json: { choices: [{ delta: { content: "Hello" } }] },
       });
 
       expect(starts).toHaveLength(0);

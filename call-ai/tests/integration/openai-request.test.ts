@@ -11,14 +11,9 @@ import { describe, it, expect, vi } from "vitest";
  */
 
 describe("OpenAI Request Formatting (injected mock)", () => {
-  const openaiRequestFixture = JSON.parse(
-    fs.readFileSync(path.join(__dirname, "fixtures/openai-request.json"), "utf8"),
-  );
+  const openaiRequestFixture = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/openai-request.json"), "utf8"));
 
-  const openaiResponseFixture = fs.readFileSync(
-    path.join(__dirname, "fixtures/openai-response.json"),
-    "utf8",
-  );
+  const openaiResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/openai-response.json"), "utf8");
 
   function createMockFetch() {
     return vi.fn().mockResolvedValue({
@@ -57,9 +52,7 @@ describe("OpenAI Request Formatting (injected mock)", () => {
     expect(actualRequestBody.model).toEqual(openaiRequestFixture.model);
     expect(actualRequestBody.messages).toEqual(openaiRequestFixture.messages);
     expect(actualRequestBody.response_format.type).toEqual(openaiRequestFixture.response_format.type);
-    expect(actualRequestBody.response_format.json_schema.name).toEqual(
-      openaiRequestFixture.response_format.json_schema.name,
-    );
+    expect(actualRequestBody.response_format.json_schema.name).toEqual(openaiRequestFixture.response_format.json_schema.name);
     expect(actualRequestBody.response_format.json_schema.schema.properties).toEqual(
       openaiRequestFixture.response_format.json_schema.schema.properties,
     );

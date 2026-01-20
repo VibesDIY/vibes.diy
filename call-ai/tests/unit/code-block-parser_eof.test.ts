@@ -1,7 +1,4 @@
-import {
-  CodeBlockEvent,
-  OpenRouterParser,
-} from "@vibes.diy/call-ai-base";
+import { CodeBlockEvent, OpenRouterParser } from "@vibes.diy/call-ai-base";
 import { describe, it, expect } from "vitest";
 import { createCodeBlockHandler } from "@vibes.diy/call-ai-base";
 
@@ -26,22 +23,22 @@ describe("CodeBlockHandler End of Stream", () => {
     const orParser = createParserStack();
     const events: CodeBlockEvent[] = [];
     orParser.onEvent((evt) => {
-        if (["code.start", "code.end", "code.fragment"].includes(evt.type)) {
-            events.push(evt as CodeBlockEvent);
-        }
+      if (["code.start", "code.end", "code.fragment"].includes(evt.type)) {
+        events.push(evt as CodeBlockEvent);
+      }
     });
 
     simulateDelta(orParser, "```js\nconst x = 1;\n```");
     // Signal end of stream
     orParser.processChunk("data: [DONE]\n\n");
 
-    const types = events.map(e => e.type);
+    const types = events.map((e) => e.type);
     expect(types).toContain("code.start");
     expect(types).toContain("code.end");
 
     // Verify no extra backticks leaked into code
-    const codeFragments = events.filter(e => e.type === "code.fragment");
-    const code = codeFragments.map(f => (f as any).fragment).join("");
+    const codeFragments = events.filter((e) => e.type === "code.fragment");
+    const code = codeFragments.map((f) => (f as any).fragment).join("");
     expect(code).toBe("const x = 1;\n");
   });
 });

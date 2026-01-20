@@ -6,10 +6,7 @@ import { createCodeBlockHandler } from "@vibes.diy/call-ai-base";
 import { ParserEvent } from "@vibes.diy/call-ai-base";
 
 describe("Parser register style tests", () => {
-  const fixture = fs.readFileSync(
-    path.join(__dirname, "fixtures/openai-fireproof-stream-response.txt"),
-    "utf8"
-  );
+  const fixture = fs.readFileSync(path.join(__dirname, "fixtures/openai-fireproof-stream-response.txt"), "utf8");
 
   it("should emit code events and upstream usage/meta", () => {
     const orParser = new OpenRouterParser();
@@ -20,9 +17,15 @@ describe("Parser register style tests", () => {
     // All events come through orParser.onEvent now
     orParser.onEvent((evt: ParserEvent) => {
       switch (evt.type) {
-        case "or.meta": events({ type: "meta", payload: evt }); break;
-        case "or.usage": events({ type: "usage", payload: evt }); break;
-        case "or.done": events({ type: "done", payload: evt }); break;
+        case "or.meta":
+          events({ type: "meta", payload: evt });
+          break;
+        case "or.usage":
+          events({ type: "usage", payload: evt });
+          break;
+        case "or.done":
+          events({ type: "done", payload: evt });
+          break;
         case "text.fragment":
         case "code.start":
         case "code.fragment":
@@ -90,9 +93,15 @@ describe("Parser register style tests", () => {
 
     orParser.onEvent((evt: ParserEvent) => {
       switch (evt.type) {
-        case "or.meta": eventTypes.push("meta"); break;
-        case "or.usage": eventTypes.push("usage"); break;
-        case "or.done": eventTypes.push("done"); break;
+        case "or.meta":
+          eventTypes.push("meta");
+          break;
+        case "or.usage":
+          eventTypes.push("usage");
+          break;
+        case "or.done":
+          eventTypes.push("done");
+          break;
         case "text.fragment":
         case "code.start":
         case "code.fragment":

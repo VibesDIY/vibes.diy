@@ -25,16 +25,12 @@ function parseAndExtract(response: unknown): string {
 describe("NonStreamingOpenRouterParser direct tests", () => {
   describe("message.content (string)", () => {
     it("extracts simple string content", () => {
-      const result = parseAndExtract(
-        { choices: [{ message: { content: "Hello from AI" } }] },
-      );
+      const result = parseAndExtract({ choices: [{ message: { content: "Hello from AI" } }] });
       expect(result).toBe("Hello from AI");
     });
 
     it("extracts JSON string content", () => {
-      const result = parseAndExtract(
-        { choices: [{ message: { content: '{"name":"test","value":42}' } }] },
-      );
+      const result = parseAndExtract({ choices: [{ message: { content: '{"name":"test","value":42}' } }] });
       expect(result).toBe('{"name":"test","value":42}');
     });
   });
@@ -78,20 +74,18 @@ describe("NonStreamingOpenRouterParser direct tests", () => {
 
   describe("content[] with text blocks", () => {
     it("concatenates text blocks correctly", () => {
-      const result = parseAndExtract(
-        {
-          choices: [
-            {
-              message: {
-                content: [
-                  { type: "text", text: "Hello " },
-                  { type: "text", text: "World" },
-                ],
-              },
+      const result = parseAndExtract({
+        choices: [
+          {
+            message: {
+              content: [
+                { type: "text", text: "Hello " },
+                { type: "text", text: "World" },
+              ],
             },
-          ],
-        },
-      );
+          },
+        ],
+      });
 
       // Parser correctly concatenates text blocks
       expect(result).toBe("Hello World");
@@ -100,24 +94,22 @@ describe("NonStreamingOpenRouterParser direct tests", () => {
 
   describe("content[] with tool_use blocks", () => {
     it("extracts tool_use input correctly", () => {
-      const result = parseAndExtract(
-        {
-          choices: [
-            {
-              message: {
-                content: [
-                  {
-                    type: "tool_use",
-                    id: "toolu_123",
-                    name: "get_data",
-                    input: { name: "Alice", age: 30 },
-                  },
-                ],
-              },
+      const result = parseAndExtract({
+        choices: [
+          {
+            message: {
+              content: [
+                {
+                  type: "tool_use",
+                  id: "toolu_123",
+                  name: "get_data",
+                  input: { name: "Alice", age: 30 },
+                },
+              ],
             },
-          ],
-        },
-      );
+          },
+        ],
+      });
 
       // Parser extracts tool_use input as JSON
       const parsed = JSON.parse(result);

@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  ParserEvento,
-  ParserEvent,
-  OrImage,
-} from "@vibes.diy/call-ai-base";
+import { ParserEvento, ParserEvent, OrImage } from "@vibes.diy/call-ai-base";
 import { imageHandler } from "@vibes.diy/call-ai-base";
 
 describe("imageHandler", () => {
@@ -40,8 +36,7 @@ describe("imageHandler", () => {
     created: 1234567890,
     data: [
       {
-        b64_json:
-          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        b64_json: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
         revised_prompt: "A beautiful sunset",
       },
     ],
@@ -81,11 +76,7 @@ describe("imageHandler", () => {
   // Multiple images
   const multipleImagesResponse = {
     created: 1234567890,
-    data: [
-      { b64_json: "image1base64data" },
-      { b64_json: "image2base64data" },
-      { url: "https://example.com/image3.png" },
-    ],
+    data: [{ b64_json: "image1base64data" }, { b64_json: "image2base64data" }, { url: "https://example.com/image3.png" }],
   };
 
   function createEvento() {
@@ -115,8 +106,7 @@ describe("imageHandler", () => {
       expect(images[0]).toMatchObject({
         type: "or.image",
         index: 0,
-        b64_json:
-          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        b64_json: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
       });
     });
 
@@ -158,8 +148,7 @@ describe("imageHandler", () => {
       expect(images[0]).toMatchObject({
         type: "or.image",
         index: 0,
-        b64_json:
-          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        b64_json: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
       });
     });
 

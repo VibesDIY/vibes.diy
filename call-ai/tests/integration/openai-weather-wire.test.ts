@@ -12,10 +12,7 @@ import { feedFixtureToParser } from "../test-helpers.js";
  */
 
 describe("OpenAI Weather Response Parsing (parser-based)", () => {
-  const weatherResponseFixture = fs.readFileSync(
-    path.join(__dirname, "fixtures/openai-weather-response.json"),
-    "utf8",
-  );
+  const weatherResponseFixture = fs.readFileSync(path.join(__dirname, "fixtures/openai-weather-response.json"), "utf8");
 
   it("should correctly parse OpenAI streaming with weather schema", () => {
     const parser = new OpenRouterParser();

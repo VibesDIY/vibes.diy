@@ -1,13 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import {
-  OpenRouterParser,
-  CodeBlockEvent,
-  TextFragment,
-  CodeStart,
-  CodeFragment,
-  CodeEnd,
-} from "@vibes.diy/call-ai-base";
+import { OpenRouterParser, CodeBlockEvent, TextFragment, CodeStart, CodeFragment, CodeEnd } from "@vibes.diy/call-ai-base";
 
 // Type aliases for backwards compat in tests
 type TextFragmentEvent = TextFragment;
@@ -125,7 +118,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-         if (["code.start", "code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+        if (["code.start", "code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       simulateDelta(orParser, "Start `");
@@ -156,7 +149,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-         if (["code.start", "code.fragment", "code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+        if (["code.start", "code.fragment", "code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       const text = "```js\nx\n```\n";
@@ -237,7 +230,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-         if (["code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+        if (["code.end"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       simulateDelta(orParser, "```js\nincomplete code");
@@ -276,9 +269,7 @@ describe("CodeBlockHandler", () => {
       expect(types).toContain("code.start");
       expect(types).toContain("code.end");
       // Should have text after code block
-      const textAfter = events.filter(
-        (e) => e.type === "text.fragment" && (e as TextFragmentEvent).fragment.includes("More text"),
-      );
+      const textAfter = events.filter((e) => e.type === "text.fragment" && (e as TextFragmentEvent).fragment.includes("More text"));
       expect(textAfter.length).toBeGreaterThan(0);
     });
 
@@ -296,9 +287,7 @@ describe("CodeBlockHandler", () => {
       expect(types).toContain("code.start");
       expect(types).toContain("code.end");
       // Should have text after code block (may include the \r in "More text")
-      const textAfter = events.filter(
-        (e) => e.type === "text.fragment" && (e as TextFragmentEvent).fragment.includes("More text"),
-      );
+      const textAfter = events.filter((e) => e.type === "text.fragment" && (e as TextFragmentEvent).fragment.includes("More text"));
       expect(textAfter.length).toBeGreaterThan(0);
     });
   });
@@ -308,7 +297,7 @@ describe("CodeBlockHandler", () => {
       const orParser = createParserStack();
       const events: CodeBlockEvent[] = [];
       orParser.onEvent((evt) => {
-         if (["code.start", "code.fragment", "code.end", "text.fragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
+        if (["code.start", "code.fragment", "code.end", "text.fragment"].includes(evt.type)) events.push(evt as CodeBlockEvent);
       });
 
       simulateDelta(orParser, "Text\n```js\ncode\n```\nMore");

@@ -1,10 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import {
-  OpenRouterParser,
-  SegmentAccumulator,
-  Segment,
-} from "@vibes.diy/call-ai-base";
+import { OpenRouterParser, SegmentAccumulator, Segment } from "@vibes.diy/call-ai-base";
 import { describe, it, expect } from "vitest";
 import { createCodeBlockHandler } from "@vibes.diy/call-ai-base";
 
@@ -84,13 +80,7 @@ describe("SegmentAccumulator", () => {
       simulateDelta(orParser, "First:\n```js\nconst a = 1;\n```\nSecond:\n```py\nx = 2\n```\nEnd");
 
       expect(accumulator.segments).toHaveLength(5);
-      expect(accumulator.segments.map((s) => s.type)).toEqual([
-        "markdown",
-        "code",
-        "markdown",
-        "code",
-        "markdown",
-      ]);
+      expect(accumulator.segments.map((s) => s.type)).toEqual(["markdown", "code", "markdown", "code", "markdown"]);
 
       expect(accumulator.segments[1].content).toBe("const a = 1;\n");
       expect(accumulator.segments[3].content).toBe("x = 2\n");

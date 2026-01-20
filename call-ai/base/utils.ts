@@ -104,10 +104,7 @@ const HANDLED_OPTION_KEYS = [
 /**
  * Copy passthrough options (anything not explicitly handled) to request body.
  */
-export function copyPassthroughOptions(
-  options: Record<string, unknown>,
-  requestBody: Record<string, unknown>,
-): void {
+export function copyPassthroughOptions(options: Record<string, unknown>, requestBody: Record<string, unknown>): void {
   for (const key of Object.keys(options)) {
     if (!HANDLED_OPTION_KEYS.includes(key as (typeof HANDLED_OPTION_KEYS)[number])) {
       requestBody[key] = options[key];

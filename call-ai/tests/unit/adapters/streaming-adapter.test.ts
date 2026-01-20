@@ -1,13 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  ParserEvento,
-  OrMeta,
-  OrDelta,
-  OrUsage,
-  OrDone,
-  OrStreamEnd,
-} from "@vibes.diy/call-ai-base";
+import { ParserEvento, OrMeta, OrDelta, OrUsage, OrDone, OrStreamEnd } from "@vibes.diy/call-ai-base";
 import { StreamingAdapter } from "@vibes.diy/call-ai-base";
 
 describe("StreamingAdapter", () => {
@@ -20,11 +13,21 @@ describe("StreamingAdapter", () => {
 
     evento.onEvent((event) => {
       switch (event.type) {
-        case "or.meta": metas.push(event); break;
-        case "or.delta": deltas.push(event); break;
-        case "or.usage": usages.push(event); break;
-        case "or.done": dones.push(event); break;
-        case "or.stream-end": streamEnds.push(event); break;
+        case "or.meta":
+          metas.push(event);
+          break;
+        case "or.delta":
+          deltas.push(event);
+          break;
+        case "or.usage":
+          usages.push(event);
+          break;
+        case "or.done":
+          dones.push(event);
+          break;
+        case "or.stream-end":
+          streamEnds.push(event);
+          break;
       }
     });
 
@@ -37,7 +40,7 @@ describe("StreamingAdapter", () => {
     const { deltas } = collectEvents(evento);
 
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"index":0,"delta":{"role":"assistant","content":"Hello"}}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"index":0,"delta":{"role":"assistant","content":"Hello"}}]}\n',
     );
 
     expect(deltas).toHaveLength(1);
@@ -51,7 +54,7 @@ describe("StreamingAdapter", () => {
     const { metas } = collectEvents(evento);
 
     adapter.processChunk(
-      'data: {"id":"gen-123","provider":"OpenAI","model":"openai/gpt-4o","created":1742583676,"system_fingerprint":"fp_test","choices":[{"index":0,"delta":{"role":"assistant","content":""}}]}\n'
+      'data: {"id":"gen-123","provider":"OpenAI","model":"openai/gpt-4o","created":1742583676,"system_fingerprint":"fp_test","choices":[{"index":0,"delta":{"role":"assistant","content":""}}]}\n',
     );
 
     expect(metas).toHaveLength(1);
@@ -71,10 +74,10 @@ describe("StreamingAdapter", () => {
     const { metas } = collectEvents(evento);
 
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"A"}}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"A"}}]}\n',
     );
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"B"}}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"B"}}]}\n',
     );
 
     expect(metas).toHaveLength(1);
@@ -86,7 +89,7 @@ describe("StreamingAdapter", () => {
     const { usages } = collectEvents(evento);
 
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":""}}],"usage":{"prompt_tokens":10,"completion_tokens":20,"total_tokens":30,"cost":0.001}}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":""}}],"usage":{"prompt_tokens":10,"completion_tokens":20,"total_tokens":30,"cost":0.001}}\n',
     );
 
     expect(usages).toHaveLength(1);
@@ -105,7 +108,7 @@ describe("StreamingAdapter", () => {
     const { dones } = collectEvents(evento);
 
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":""},"finish_reason":"stop"}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":""},"finish_reason":"stop"}]}\n',
     );
 
     expect(dones).toHaveLength(1);
@@ -121,17 +124,17 @@ describe("StreamingAdapter", () => {
     const { deltas } = collectEvents(evento);
 
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"A"}}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"A"}}]}\n',
     );
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"B"}}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"B"}}]}\n',
     );
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"C"}}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"C"}}]}\n',
     );
 
-    expect(deltas.map(d => d.seq)).toEqual([0, 1, 2]);
-    expect(deltas.map(d => d.content)).toEqual(["A", "B", "C"]);
+    expect(deltas.map((d) => d.seq)).toEqual([0, 1, 2]);
+    expect(deltas.map((d) => d.content)).toEqual(["A", "B", "C"]);
   });
 
   it("handles empty content deltas (no event)", () => {
@@ -140,7 +143,7 @@ describe("StreamingAdapter", () => {
     const { deltas } = collectEvents(evento);
 
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"role":"assistant","content":""}}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"role":"assistant","content":""}}]}\n',
     );
 
     expect(deltas).toHaveLength(0);
@@ -165,7 +168,7 @@ describe("StreamingAdapter", () => {
     const { streamEnds } = collectEvents(evento);
 
     adapter.processChunk(
-      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"Hi"}}]}\n'
+      'data: {"id":"gen-1","provider":"OpenAI","model":"gpt-4","created":123,"system_fingerprint":"fp","choices":[{"delta":{"content":"Hi"}}]}\n',
     );
     adapter.processChunk("data: [DONE]\n");
 

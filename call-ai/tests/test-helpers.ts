@@ -21,11 +21,7 @@ function createRandom(seed: number): () => number {
  * @param content - The fixture content to feed
  * @param chunkSize - Max chunk size for random chunking (default 15), or 0 for no fragmentation
  */
-export function feedFixtureToParser(
-  parser: { processChunk: (s: string) => void },
-  content: string,
-  chunkSize = 15,
-) {
+export function feedFixtureToParser(parser: { processChunk: (s: string) => void }, content: string, chunkSize = 15) {
   if (chunkSize === 0) {
     parser.processChunk(content);
     return;

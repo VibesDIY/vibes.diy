@@ -1,14 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  ParserEvento,
-  ParserEvent,
-  OrMeta,
-  OrDelta,
-  OrUsage,
-  OrDone,
-  OrStreamEnd,
-} from "@vibes.diy/call-ai-base";
+import { ParserEvento, ParserEvent, OrMeta, OrDelta, OrUsage, OrDone, OrStreamEnd } from "@vibes.diy/call-ai-base";
 import { NonStreamingAdapter } from "@vibes.diy/call-ai-base";
 
 describe("NonStreamingAdapter", () => {
@@ -19,18 +11,20 @@ describe("NonStreamingAdapter", () => {
     model: "gpt-4",
     created: 1234567890,
     system_fingerprint: "fp_test",
-    choices: [{
-      message: {
-        role: "assistant",
-        content: "Hello, world!"
+    choices: [
+      {
+        message: {
+          role: "assistant",
+          content: "Hello, world!",
+        },
+        finish_reason: "stop",
       },
-      finish_reason: "stop"
-    }],
+    ],
     usage: {
       prompt_tokens: 10,
       completion_tokens: 5,
-      total_tokens: 15
-    }
+      total_tokens: 15,
+    },
   };
 
   // Response with content array (Claude format)
@@ -40,16 +34,18 @@ describe("NonStreamingAdapter", () => {
     model: "claude-3",
     created: 1234567890,
     system_fingerprint: "",
-    choices: [{
-      message: {
-        role: "assistant",
-        content: [
-          { type: "text", text: "Part 1" },
-          { type: "text", text: " Part 2" }
-        ]
+    choices: [
+      {
+        message: {
+          role: "assistant",
+          content: [
+            { type: "text", text: "Part 1" },
+            { type: "text", text: " Part 2" },
+          ],
+        },
+        finish_reason: "end_turn",
       },
-      finish_reason: "end_turn"
-    }]
+    ],
   };
 
   function collectEvents(evento: ParserEvento) {
@@ -63,11 +59,21 @@ describe("NonStreamingAdapter", () => {
     evento.onEvent((event) => {
       all.push(event);
       switch (event.type) {
-        case "or.meta": metas.push(event); break;
-        case "or.delta": deltas.push(event); break;
-        case "or.usage": usages.push(event); break;
-        case "or.done": dones.push(event); break;
-        case "or.stream-end": streamEnds.push(event); break;
+        case "or.meta":
+          metas.push(event);
+          break;
+        case "or.delta":
+          deltas.push(event);
+          break;
+        case "or.usage":
+          usages.push(event);
+          break;
+        case "or.done":
+          dones.push(event);
+          break;
+        case "or.stream-end":
+          streamEnds.push(event);
+          break;
       }
     });
 
@@ -81,7 +87,7 @@ describe("NonStreamingAdapter", () => {
 
     adapter.parse(standardResponse);
 
-    const jsonEvents = all.filter(e => e.type === "or.json");
+    const jsonEvents = all.filter((e) => e.type === "or.json");
     expect(jsonEvents).toHaveLength(1);
     // Response is transformed: message → delta
     const json = (jsonEvents[0] as { json: { choices: Array<{ delta?: unknown; message?: unknown }> } }).json;

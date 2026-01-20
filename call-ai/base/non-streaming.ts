@@ -1,14 +1,7 @@
 /**
  * Non-streaming API call implementation for call-ai
  */
-import {
-  AIResult,
-  CallAIErrorParams,
-  CallAIOptions,
-  Message,
-  SchemaAIMessageRequest,
-  SchemaStrategy,
-} from "./types.js";
+import { AIResult, CallAIErrorParams, CallAIOptions, Message, SchemaAIMessageRequest, SchemaStrategy } from "./types.js";
 import { globalDebug, keyStore, initKeyStore } from "./key-management.js";
 import { handleApiError, checkForInvalidModelError } from "./error-handling.js";
 import { responseMetadata, boxString } from "./response-metadata.js";

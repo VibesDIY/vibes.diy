@@ -1,17 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  openAIStrategy,
-  geminiStrategy,
-  claudeStrategy,
-  systemMessageStrategy,
-  defaultStrategy,
-} from "@vibes.diy/call-ai-base";
-import type {
-  Message,
-  SchemaAIJsonSchemaRequest,
-  SchemaAIToolRequest,
-  SchemaAISimpleMsg,
-} from "@vibes.diy/call-ai-base";
+import { openAIStrategy, geminiStrategy, claudeStrategy, systemMessageStrategy, defaultStrategy } from "@vibes.diy/call-ai-base";
+import type { Message, SchemaAIJsonSchemaRequest, SchemaAIToolRequest, SchemaAISimpleMsg } from "@vibes.diy/call-ai-base";
 
 const testSchema = {
   name: "test_result",

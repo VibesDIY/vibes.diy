@@ -1,15 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 // Import the types and classes we'll create
-import {
-  ParserEvento,
-  ParserHandler,
-  ParserEvent,
-  orJson,
-  orDone,
-  orImage,
-  isParserEventError,
-} from "@vibes.diy/call-ai-base";
+import { ParserEvento, ParserHandler, ParserEvent, orJson, orDone, orImage, isParserEventError } from "@vibes.diy/call-ai-base";
 
 describe("ParserEvento", () => {
   describe("handler registration and triggering", () => {
@@ -52,7 +44,7 @@ describe("ParserEvento", () => {
             return {
               some: {
                 type: "or.json" as const,
-                json: { ...((event as { json: Record<string, unknown> }).json), transformed: true },
+                json: { ...(event as { json: Record<string, unknown> }).json, transformed: true },
               },
             };
           }

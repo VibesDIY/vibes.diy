@@ -60,9 +60,7 @@ describe("LineStreamParser arktype events", () => {
       parser.processChunk("first");
       parser.processChunk(" line\n");
 
-      const completeFragments = events.filter(
-        (e) => e.type === "line.fragment" && (e as LineFragment).lineComplete
-      );
+      const completeFragments = events.filter((e) => e.type === "line.fragment" && (e as LineFragment).lineComplete);
       expect(completeFragments.length).toBe(1);
     });
 
@@ -74,7 +72,7 @@ describe("LineStreamParser arktype events", () => {
       parser.processChunk("line1\nline2\n");
 
       const completeFragments = events.filter(
-        (e) => e.type === "line.fragment" && (e as LineFragment).lineComplete
+        (e) => e.type === "line.fragment" && (e as LineFragment).lineComplete,
       ) as LineFragment[];
       expect(completeFragments.length).toBe(2);
       // First complete fragment is line 0, second is line 1

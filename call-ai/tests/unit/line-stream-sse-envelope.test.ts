@@ -6,15 +6,9 @@ import { describe, it, expect } from "vitest";
 
 import { feedFixtureRandomly } from "./test-utils.js";
 
-const openAiStreamFixture = readFileSync(
-  new URL("./fixtures/openai-stream-response.json", import.meta.url),
-  "utf8",
-);
+const openAiStreamFixture = readFileSync(new URL("./fixtures/openai-stream-response.json", import.meta.url), "utf8");
 
-const openAiWeatherStreamFixture = readFileSync(
-  new URL("./fixtures/openai-weather-response.json", import.meta.url),
-  "utf8",
-);
+const openAiWeatherStreamFixture = readFileSync(new URL("./fixtures/openai-weather-response.json", import.meta.url), "utf8");
 
 const fireproofStreamFixture = readFileSync(
   new URL("../integration/fixtures/openai-fireproof-stream-response.txt", import.meta.url),
@@ -52,9 +46,7 @@ describe("SSE envelope parsing", () => {
 
     it("parses data payloads as JSON with OpenRouter structure", () => {
       const dataLines = openAiStreamFixture.match(/^data: .+$/gm) ?? [];
-      const jsonPayloads = dataLines
-        .filter((line) => !line.includes("[DONE]"))
-        .map((line) => JSON.parse(line.slice(6)));
+      const jsonPayloads = dataLines.filter((line) => !line.includes("[DONE]")).map((line) => JSON.parse(line.slice(6)));
 
       expect(jsonPayloads[0]).toMatchObject({
         provider: "OpenAI",
@@ -97,13 +89,9 @@ describe("SSE envelope parsing", () => {
 
     it("extracts weather JSON from content deltas", () => {
       const dataLines = openAiWeatherStreamFixture.match(/^data: .+$/gm) ?? [];
-      const jsonPayloads = dataLines
-        .filter((line) => !line.includes("[DONE]"))
-        .map((line) => JSON.parse(line.slice(6)));
+      const jsonPayloads = dataLines.filter((line) => !line.includes("[DONE]")).map((line) => JSON.parse(line.slice(6)));
 
-      const contentParts = jsonPayloads
-        .map((p) => p.choices[0]?.delta?.content ?? "")
-        .join("");
+      const contentParts = jsonPayloads.map((p) => p.choices[0]?.delta?.content ?? "").join("");
 
       expect(contentParts).toContain("New York");
       expect(contentParts).toContain("current_temp");
@@ -129,13 +117,9 @@ describe("SSE envelope parsing", () => {
 
     it("extracts code content from deltas", () => {
       const dataLines = fireproofStreamFixture.match(/^data: .+$/gm) ?? [];
-      const jsonPayloads = dataLines
-        .filter((line) => !line.includes("[DONE]"))
-        .map((line) => JSON.parse(line.slice(6)));
+      const jsonPayloads = dataLines.filter((line) => !line.includes("[DONE]")).map((line) => JSON.parse(line.slice(6)));
 
-      const contentParts = jsonPayloads
-        .map((p) => p.choices[0]?.delta?.content ?? "")
-        .join("");
+      const contentParts = jsonPayloads.map((p) => p.choices[0]?.delta?.content ?? "").join("");
 
       expect(contentParts).toContain("import { useFireproof }");
       expect(contentParts).toContain("function App()");

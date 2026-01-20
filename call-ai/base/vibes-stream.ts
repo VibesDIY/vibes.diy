@@ -180,9 +180,7 @@ export class VibesStream {
         : "https://openrouter.ai/api/v1/chat/completions");
 
     // Build messages array
-    const messages: Message[] = Array.isArray(options.prompt)
-      ? options.prompt
-      : [{ role: "user", content: options.prompt }];
+    const messages: Message[] = Array.isArray(options.prompt) ? options.prompt : [{ role: "user", content: options.prompt }];
 
     // Build request body
     const requestParams: Record<string, unknown> = {

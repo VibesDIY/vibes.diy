@@ -174,10 +174,7 @@ function handleStreamingToolCalls(
   }
 }
 
-function emitAccumulatedToolCalls(
-  ctx: HandlerContext,
-  accumulated: Map<number, StreamingToolCall>,
-): void {
+function emitAccumulatedToolCalls(ctx: HandlerContext, accumulated: Map<number, StreamingToolCall>): void {
   // Emit tool.complete for each accumulated streaming tool call
   for (const [, state] of accumulated) {
     if (state.id) {

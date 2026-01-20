@@ -26,9 +26,7 @@ it("EOL-Test", async () => {
 
   const fragmentEvents = events.filter((e) => e.type === "line.fragment") as LineFragment[];
 
-  const incompleteFragments = fragmentEvents
-    .filter((evt) => !evt.lineComplete)
-    .map((evt) => evt.fragment);
+  const incompleteFragments = fragmentEvents.filter((evt) => !evt.lineComplete).map((evt) => evt.fragment);
   expect(incompleteFragments).toEqual([
     "Line 0",
     "Line 1",
@@ -45,9 +43,7 @@ it("EOL-Test", async () => {
 
   // Non-accumulating: complete fragment contains only the portion of the
   // final chunk before the newline, NOT the accumulated line
-  const completeFragments = fragmentEvents
-    .filter((evt) => evt.lineComplete)
-    .map((evt) => evt.fragment);
+  const completeFragments = fragmentEvents.filter((evt) => evt.lineComplete).map((evt) => evt.fragment);
   expect(completeFragments).toEqual([
     "FragmentLine 1", // Only the chunk portion before \n, not accumulated
   ]);
@@ -62,7 +58,5 @@ it("EOL-Test", async () => {
       buffer = "";
     }
   });
-  expect(fullLines).toEqual([
-    "Line 0Line 1Line 2Line 3Line 4Line 5Line 6Line 7Line 8Line 9FragmentLine 1",
-  ]);
+  expect(fullLines).toEqual(["Line 0Line 1Line 2Line 3Line 4Line 5Line 6Line 7Line 8Line 9FragmentLine 1"]);
 });

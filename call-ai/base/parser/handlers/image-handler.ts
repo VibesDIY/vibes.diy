@@ -37,9 +37,11 @@ export const imageHandler: ParserHandler = {
     }
 
     // Format A: Raw OpenRouter choices[].message.images[]
-    const choices = json.choices as Array<{
-      message?: { images?: Array<{ type: string; image_url?: { url: string } }> };
-    }> | undefined;
+    const choices = json.choices as
+      | Array<{
+          message?: { images?: Array<{ type: string; image_url?: { url: string } }> };
+        }>
+      | undefined;
 
     const images = choices?.[0]?.message?.images;
     if (images && Array.isArray(images)) {

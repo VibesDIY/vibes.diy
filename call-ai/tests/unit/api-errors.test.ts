@@ -95,9 +95,7 @@ describe("callAi error handling and complex paths (injected mock)", () => {
         "data: [DONE]\n\n",
       ]);
 
-      const mockFetch = vi.fn()
-        .mockResolvedValueOnce(errorResponse)
-        .mockResolvedValueOnce(successResponse);
+      const mockFetch = vi.fn().mockResolvedValueOnce(errorResponse).mockResolvedValueOnce(successResponse);
 
       const streamProxy = callAi("test", {
         apiKey,
@@ -163,9 +161,7 @@ describe("callAi error handling and complex paths (injected mock)", () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      const mockFetch = vi.fn()
-        .mockResolvedValueOnce(errorResponse)
-        .mockResolvedValueOnce(successResponse);
+      const mockFetch = vi.fn().mockResolvedValueOnce(errorResponse).mockResolvedValueOnce(successResponse);
 
       const result = await callAi("test", {
         apiKey,
@@ -221,9 +217,7 @@ describe("callAi error handling and complex paths (injected mock)", () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      const mockFetch = vi.fn()
-        .mockResolvedValueOnce(errorResponse)
-        .mockResolvedValueOnce(successResponse);
+      const mockFetch = vi.fn().mockResolvedValueOnce(errorResponse).mockResolvedValueOnce(successResponse);
 
       const result = await callAi("test", {
         apiKey,

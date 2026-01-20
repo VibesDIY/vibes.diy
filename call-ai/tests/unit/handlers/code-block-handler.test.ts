@@ -1,13 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  ParserEvento,
-  TextFragment,
-  CodeStart,
-  CodeFragment,
-  CodeEnd,
-  OrDelta,
-} from "@vibes.diy/call-ai-base";
+import { ParserEvento, TextFragment, CodeStart, CodeFragment, CodeEnd, OrDelta } from "@vibes.diy/call-ai-base";
 import { createCodeBlockHandler } from "@vibes.diy/call-ai-base";
 
 describe("codeBlockHandler", () => {
@@ -25,10 +18,18 @@ describe("codeBlockHandler", () => {
 
     evento.onEvent((event) => {
       switch (event.type) {
-        case "text.fragment": texts.push(event as TextFragment); break;
-        case "code.start": starts.push(event as CodeStart); break;
-        case "code.fragment": frags.push(event as CodeFragment); break;
-        case "code.end": ends.push(event as CodeEnd); break;
+        case "text.fragment":
+          texts.push(event as TextFragment);
+          break;
+        case "code.start":
+          starts.push(event as CodeStart);
+          break;
+        case "code.fragment":
+          frags.push(event as CodeFragment);
+          break;
+        case "code.end":
+          ends.push(event as CodeEnd);
+          break;
       }
     });
 
@@ -94,7 +95,7 @@ describe("codeBlockHandler", () => {
     // Code content
     evento.trigger({ type: "or.delta", seq: 3, content: "co" } as OrDelta);
     evento.trigger({ type: "or.delta", seq: 4, content: "de" } as OrDelta);
-    
+
     expect(frags).toHaveLength(2);
     expect(frags[0].fragment).toBe("co");
     expect(frags[1].fragment).toBe("de");
@@ -117,7 +118,7 @@ describe("codeBlockHandler", () => {
     // Should flush code fragment and close block
     expect(frags).toHaveLength(1);
     expect(frags[0].fragment).toBe("code");
-    
+
     expect(ends).toHaveLength(1);
   });
 });
