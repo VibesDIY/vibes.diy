@@ -9,6 +9,7 @@ import {
   createDeltaStream,
   createFullStream,
   createImageDecodeStream,
+  decodeBase64,
   isLineMsg,
   isDataMsg,
   isSseMsg,
@@ -228,8 +229,8 @@ const app = command({
 
       const reader = pipeline.getReader();
 
-      // State for accumulating image fragments when saving
-      const imageFragments = new Map<string, Uint8Array[]>();
+      // State for accumulating image fragments when saving (base64 strings)
+      const imageFragments = new Map<string, string[]>();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -262,10 +263,12 @@ const app = command({
           } else if (isImageEnd(value)) {
             const fragments = imageFragments.get(value.imageId);
             if (fragments?.length) {
-              const totalLength = fragments.reduce((sum, f) => sum + f.length, 0);
+              // Decode base64 fragments and combine
+              const decoded = fragments.map(decodeBase64);
+              const totalLength = decoded.reduce((sum, f) => sum + f.length, 0);
               const combined = new Uint8Array(totalLength);
               let offset = 0;
-              for (const fragment of fragments) {
+              for (const fragment of decoded) {
                 combined.set(fragment, offset);
                 offset += fragment.length;
               }

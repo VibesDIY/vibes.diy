@@ -1,6 +1,5 @@
 import { type } from "arktype";
 import mime from "mime";
-import { rebuffer } from "@adviser/cement";
 import { CoercedDate } from "./types.js";
 import { isBlockImage, type BlockOutputMsg } from "./block-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
@@ -23,7 +22,7 @@ export const ImageBeginMsg = type({
   timestamp: CoercedDate,
 });
 
-// image.fragment - binary chunk
+// image.fragment - base64-encoded chunk
 export const ImageFragmentMsg = type({
   type: "'image.fragment'",
   imageId: "string",
@@ -32,7 +31,7 @@ export const ImageFragmentMsg = type({
   seq: "number",
   mimetype: "string",
   suffix: "string",
-  data: "unknown", // Uint8Array at runtime
+  data: "string", // base64-encoded binary data
   timestamp: CoercedDate,
 });
 
@@ -75,7 +74,7 @@ export const ImageDecodeMsg = ImageBeginMsg.or(ImageFragmentMsg).or(ImageEndMsg)
 
 // Inferred types
 export type ImageBeginMsg = typeof ImageBeginMsg.infer;
-export type ImageFragmentMsg = Omit<typeof ImageFragmentMsg.infer, "data"> & { data: Uint8Array };
+export type ImageFragmentMsg = typeof ImageFragmentMsg.infer;
 export type ImageEndMsg = typeof ImageEndMsg.infer;
 export type ImageErrorMsg = typeof ImageErrorMsg.infer;
 export type ImageStatsMsg = typeof ImageStatsMsg.infer;
@@ -94,6 +93,25 @@ export const isImageStats = (msg: unknown, streamId?: string): msg is ImageStats
   !(ImageStatsMsg(msg) instanceof type.errors) && (!streamId || (msg as ImageStatsMsg).streamId === streamId);
 export const isImageDecodeMsg = (msg: unknown, streamId?: string): msg is ImageDecodeMsg =>
   !(ImageDecodeMsg(msg) instanceof type.errors) && (!streamId || (msg as ImageDecodeMsg).streamId === streamId);
+
+// Helper to encode Uint8Array to base64
+function encodeBase64(data: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < data.length; i++) {
+    binary += String.fromCharCode(data[i]);
+  }
+  return btoa(binary);
+}
+
+// Helper to decode base64 to Uint8Array (for consumers)
+export function decodeBase64(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const data = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    data[i] = binary.charCodeAt(i);
+  }
+  return data;
+}
 
 // Helper to decode base64 data URI to Uint8Array
 function decodeDataUri(dataUri: string): { data: Uint8Array; mimetype: string; suffix: string } | undefined {
@@ -169,30 +187,18 @@ export function createImageDecodeStream(
           timestamp: new Date(),
         });
 
-        // Create a stream from the decoded data and rebuffer it to fixed chunks
-        const dataStream = new ReadableStream<Uint8Array>({
-          start(ctrl) {
-            ctrl.enqueue(decoded.data);
-            ctrl.close();
-          },
-        });
-
-        const chunked = rebuffer(dataStream, CHUNK_SIZE);
-        const reader = chunked.getReader();
-
-        let seq = 0;
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        // Emit fragments in fixed-size chunks
+        for (let offset = 0; offset < decoded.data.length; offset += CHUNK_SIZE) {
+          const chunk = decoded.data.subarray(offset, Math.min(offset + CHUNK_SIZE, decoded.data.length));
           controller.enqueue({
             type: "image.fragment",
             imageId,
             id: msg.id,
             streamId: msg.streamId,
-            seq: seq++,
+            seq: Math.floor(offset / CHUNK_SIZE),
             mimetype: decoded.mimetype,
             suffix: decoded.suffix,
-            data: value,
+            data: encodeBase64(chunk),
             timestamp: new Date(),
           });
         }
