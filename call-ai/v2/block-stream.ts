@@ -4,6 +4,7 @@ import type { LineStreamOutput } from "./line-stream.js";
 import { isLineBegin, isLineLine, isLineEnd, isLineStats } from "./line-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
 import { isSseLine } from "./sse-stream.js";
+import { passthrough } from "./passthrough.js";
 
 // Block stream lifecycle events
 export const BlockBeginMsg = type({
@@ -179,10 +180,7 @@ export function createBlockStream<T>(
   let totalLines = 0;
 
   return new TransformStream<T | LineStreamOutput, BlockStreamOutput<T>>({
-    transform(msg, controller) {
-      // Passthrough all upstream events
-      controller.enqueue(msg as BlockStreamOutput<T>);
-
+    transform: passthrough((msg, controller) => {
       // Handle stats.collect trigger
       if (isStatsCollect(msg, filterStreamId)) {
         controller.enqueue({
@@ -354,7 +352,7 @@ export function createBlockStream<T>(
           timestamp: new Date(),
         });
       }
-    },
+    }),
   });
 }
 

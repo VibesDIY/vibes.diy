@@ -3,6 +3,7 @@ import { CoercedDate } from "./types.js";
 import type { DeltaOutput } from "./delta-stream.js";
 import { isDeltaBegin, isDeltaLine, isDeltaEnd, isDeltaStats } from "./delta-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
+import { passthrough } from "./passthrough.js";
 
 export const FullBeginMsg = type({
   type: "'full.begin'",
@@ -67,10 +68,7 @@ export function createFullStream(filterStreamId: string): TransformStream<DeltaO
   let totalChars = 0;
 
   return new TransformStream<DeltaOutput, FullOutput>({
-    transform(msg, controller) {
-      // Passthrough all upstream events
-      controller.enqueue(msg);
-
+    transform: passthrough((msg, controller) => {
       // Handle stats.collect trigger
       if (isStatsCollect(msg, filterStreamId)) {
         controller.enqueue({
@@ -113,6 +111,6 @@ export function createFullStream(filterStreamId: string): TransformStream<DeltaO
           });
         }
       }
-    },
+    }),
   });
 }

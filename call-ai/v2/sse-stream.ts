@@ -3,6 +3,7 @@ import { CoercedDate } from "./types.js";
 import type { DataOutput } from "./data-stream.js";
 import { isDataBegin, isDataLine, isDataEnd, isDataStats } from "./data-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
+import { passthrough } from "./passthrough.js";
 
 export const SseUsage = type({
   prompt_tokens: "number",
@@ -114,10 +115,7 @@ export function createSseStream(filterStreamId: string): TransformStream<DataOut
   let streamId = "";
 
   return new TransformStream<DataOutput, SseOutput>({
-    transform(msg, controller) {
-      // Passthrough all upstream events
-      controller.enqueue(msg);
-
+    transform: passthrough((msg, controller) => {
       // Handle stats.collect trigger
       if (isStatsCollect(msg, filterStreamId)) {
         controller.enqueue({
@@ -176,6 +174,6 @@ export function createSseStream(filterStreamId: string): TransformStream<DataOut
           timestamp: new Date(),
         });
       }
-    },
+    }),
   });
 }

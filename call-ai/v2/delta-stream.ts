@@ -6,6 +6,7 @@ import { isStatsCollect } from "./stats-stream.js";
 import { createLineStream, type LineStreamInput } from "./line-stream.js";
 import { consumeStream } from "@adviser/cement";
 import { createBlockStream, type BlockImageMsg } from "./block-stream.js";
+import { passthrough } from "./passthrough.js";
 
 export const DeltaBeginMsg = type({
   type: "'delta.begin'",
@@ -90,10 +91,7 @@ export function createDeltaStream(filterStreamId: string): TransformStream<SseOu
   let streamId = "";
 
   return new TransformStream<SseOutput, DeltaOutput>({
-    transform(msg, controller) {
-      // Passthrough all upstream events
-      controller.enqueue(msg);
-
+    transform: passthrough((msg, controller) => {
       // Handle stats.collect trigger
       if (isStatsCollect(msg, filterStreamId)) {
         controller.enqueue({
@@ -157,7 +155,7 @@ export function createDeltaStream(filterStreamId: string): TransformStream<SseOu
           timestamp: new Date(),
         });
       }
-    },
+    }),
   });
 }
 

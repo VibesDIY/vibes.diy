@@ -3,6 +3,7 @@ import { CoercedDate } from "./types.js";
 import type { LineStreamOutput } from "./line-stream.js";
 import { isLineBegin, isLineLine, isLineEnd, isLineStats } from "./line-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
+import { passthrough } from "./passthrough.js";
 
 export const DataBeginMsg = type({
   type: "'data.begin'",
@@ -62,10 +63,7 @@ export function createDataStream(filterStreamId: string): TransformStream<LineSt
   let streamId = "";
 
   return new TransformStream<LineStreamOutput, DataOutput>({
-    transform(msg, controller) {
-      // Passthrough all upstream events
-      controller.enqueue(msg);
-
+    transform: passthrough((msg, controller) => {
       // Handle stats.collect trigger
       if (isStatsCollect(msg, filterStreamId)) {
         controller.enqueue({
@@ -116,6 +114,6 @@ export function createDataStream(filterStreamId: string): TransformStream<LineSt
           timestamp: new Date(),
         });
       }
-    },
+    }),
   });
 }
