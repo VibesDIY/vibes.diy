@@ -110,6 +110,21 @@ export const reqEnsureAppSlug = type({
 
 export type ReqEnsureAppSlug = typeof reqEnsureAppSlug.infer;
 
+export const reqEnsureChatContext = type({
+  type: "'vibes.diy.req-ensure-chat-context'",
+  auth: dashAuthType,
+  "contextId?": "string", // desired context id
+});
+
+export type ReqEnsureChatContext = typeof reqEnsureChatContext.infer;
+
+export const resEnsureChatContext = type({
+  type: "'vibes.diy.res-ensure-chat-context'",
+  contextId: "string",
+});
+
+export type ResEnsureChatContext = typeof resEnsureChatContext.infer;
+
 // Error types
 export const resError = type({
   // name: "VibesDiyError",
@@ -118,6 +133,29 @@ export const resError = type({
   "code?": "string",
   "stack?": "string[]",
 });
+
+
+export const reqAppendChatSection = type({
+  type: "'vibes.diy.req-append-chat-section'",
+  auth: dashAuthType,
+  contextId: "string",
+  origin: "'user'|'llm'",
+  // Array<{ type: 'origin.prompt' | 'block.xxx'}>
+  blocks: [type({
+    type: "string",
+    content: "unknown",
+  }), "[]"],
+});
+export type ReqAppendChatSection = typeof reqAppendChatSection.infer;
+
+export const resAppendChatSection = type({
+  type: "'vibes.diy.res-append-chat-section'",
+  contextId: "string",
+  seq: "number",
+  origin: "'user'|'llm'",
+});
+export type ResAppendChatSection = typeof resAppendChatSection.infer;
+
 
 export type ResError = typeof resError.infer;
 
@@ -176,3 +214,4 @@ export type MsgBaseParam = Partial<MsgBaseCfg>;
 export type VibesDiyError = (ResError | ResEnsureAppSlugError) & Error;
 
 export type ResultVibesDiy<T> = Result<T, VibesDiyError>;
+

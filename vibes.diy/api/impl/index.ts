@@ -3,7 +3,9 @@ import {
   MsgBase,
   MsgBaseCfg,
   ReqEnsureAppSlug,
+  ReqEnsureChatContext,
   ResEnsureAppSlug,
+  ResEnsureChatContext,
   ResultVibesDiy,
   VibesDiyApiIface,
   VibesDiyError,
@@ -108,5 +110,11 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     req: Omit<ReqEnsureAppSlug, "type" | "auth"> & { auth?: DashAuthType }
   ): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-ensure-app-slug" });
+  }
+
+  async ensureChatContext(
+    req: Omit<ReqEnsureChatContext, "type" | "auth"> & { auth?: DashAuthType }
+  ): Promise<Result<ResEnsureChatContext, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-ensure-chat-context" });
   }
 }

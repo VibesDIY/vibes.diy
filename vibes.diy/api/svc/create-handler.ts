@@ -26,6 +26,7 @@ import { ResultSet } from "@libsql/client";
 // import { VerifyWithCertificateOptions } from "@fireproof/core-types-device-id";
 // import { FPApiParameters } from "@fireproof/core-types-protocols-dashboard";
 import { ensureAppSlugItem } from "./public/ensure-app-slug-item.js";
+import { ensureChatContext } from "./public/ensure-chat-context.js";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
@@ -145,6 +146,7 @@ export const vibesApiEvento = Lazy(() => {
       },
     },
     ensureAppSlugItem,
+    ensureChatContext,
     {
       type: EventoType.WildCard,
       hash: "not-found-handler",

@@ -130,6 +130,40 @@ describe("VibesDiyApi", () => {
     }
   });
 
+  it("ensureChatContext creates new context", async () => {
+    const res = await api.ensureChatContext({});
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().contextId.length).toBeGreaterThan(0);
+
+    // Calling again without contextId should create a new context
+    const res2 = await api.ensureChatContext({});
+    expect(res2.isOk()).toBe(true);
+    expect(res2.Ok().contextId).not.toBe(res.Ok().contextId);
+  });
+
+  it("ensureChatContext reuses existing context", async () => {
+    const res = await api.ensureChatContext({});
+    expect(res.isOk()).toBe(true);
+    const contextId = res.Ok().contextId;
+
+    // Calling with existing contextId should return the same context
+    const res2 = await api.ensureChatContext({ contextId });
+    expect(res2.isOk()).toBe(true);
+    expect(res2.Ok().contextId).toBe(contextId);
+  });
+
+  it("ensureChatContext creates context with provided id", async () => {
+    const contextId = `test-context-${Date.now()}`;
+    const res = await api.ensureChatContext({ contextId });
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().contextId).toBe(contextId);
+
+    // Verify it can be retrieved again
+    const res2 = await api.ensureChatContext({ contextId });
+    expect(res2.isOk()).toBe(true);
+    expect(res2.Ok().contextId).toBe(contextId);
+  });
+
   it("repeatable stable ensureAppSlug", async () => {
     const now = Date.now();
     for (let i = 0; i < 2; i++) {

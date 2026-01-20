@@ -49,3 +49,25 @@ export const sqlApps = sqliteTable(
     index("created_idx").on(table.created),
   ]
 );
+
+export const sqlChatContexts = sqliteTable(
+  "ChatContexts",
+  {
+    contextId: text().notNull().primaryKey(), // uuid v4
+    userId: text().notNull(),
+    created: text().notNull(),
+  }
+);
+
+export const sqlChatSections = sqliteTable(
+  "ChatSections",
+  {
+    contextId: text() .notNull() .references(() => sqlChatContexts.contextId),
+    seq: int().notNull(), // incremented per section
+    origin: text().notNull(), // 'user' | 'llm'
+    // Array<{ type: 'origin.prompt' | 'block.xxx'}>
+    blocks: text({ mode: "json" }).notNull(),
+    created: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.seq, table.contextId] })]
+);
