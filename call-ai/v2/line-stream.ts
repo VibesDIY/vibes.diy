@@ -1,6 +1,7 @@
 import { type } from "arktype";
 import { CoercedDate } from "./types.js";
 import { isStatsCollect, type StatsCollectMsg } from "./stats-stream.js";
+import type { SseLineMsg } from "./sse-stream.js";
 
 export const LineBeginMsg = type({
   type: "'line.begin'",
@@ -122,9 +123,9 @@ export function flushParser(parser: LineParser): LineStreamMsg[] {
   return events;
 }
 
-// Combined output type for line stream (input can include stats.collect trigger)
-export type LineStreamInput = Uint8Array | StatsCollectMsg;
-export type LineStreamOutput = LineStreamMsg | StatsCollectMsg;
+// Combined output type for line stream (input can include stats.collect trigger or sse.line for passthrough)
+export type LineStreamInput = Uint8Array | StatsCollectMsg | SseLineMsg;
+export type LineStreamOutput = LineStreamMsg | StatsCollectMsg | SseLineMsg;
 
 export function createLineStream(filterStreamId: string): TransformStream<LineStreamInput, LineStreamOutput> {
   let buffer = "";
@@ -147,8 +148,11 @@ export function createLineStream(filterStreamId: string): TransformStream<LineSt
         return;
       }
 
-      // Handle Uint8Array input
-      if (!(chunk instanceof Uint8Array)) return;
+      // Handle Uint8Array input - pass through anything else
+      if (!(chunk instanceof Uint8Array)) {
+        controller.enqueue(chunk as LineStreamOutput);
+        return;
+      }
 
       if (!started) {
         started = true;

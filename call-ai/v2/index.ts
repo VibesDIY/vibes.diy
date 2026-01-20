@@ -8,6 +8,7 @@ export * from "./delta-stream.js";
 export * from "./full-stream.js";
 export * from "./block-stream.js";
 export * from "./image-decode-stream.js";
+export * from "./passthrough.js";
 
 // Unified event type (all possible messages from full pipeline)
 import type { StatsCollectMsg } from "./stats-stream.js";

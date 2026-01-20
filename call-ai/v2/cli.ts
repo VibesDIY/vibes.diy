@@ -207,7 +207,7 @@ const app = command({
     }
     const sthis = ensureSuperThis();
 
-    if (all || line || data || sse || delta || full || block || stats || image) {
+    if (all || line || data || sse || delta || full || block || stats || image || imageDir) {
       const streamId = sthis.nextId().str;
       const intervalMs = parseInt(statsInterval, 10) || 1000;
       const basePipeline = body
@@ -221,7 +221,10 @@ const app = command({
       const withBlocks = withFull.pipeThrough(createLineStreamFromDelta(streamId, () => sthis.nextId().str));
 
       // Add image decode stream if image flag or imageDir is set
-      const pipeline = image || imageDir ? withBlocks.pipeThrough(createImageDecodeStream(streamId)) : withBlocks;
+      const pipeline =
+        image || imageDir
+          ? withBlocks.pipeThrough(createImageDecodeStream(streamId, () => sthis.nextId().str))
+          : withBlocks;
 
       const reader = pipeline.getReader();
 
@@ -253,11 +256,11 @@ const app = command({
         // Handle image saving inline
         if (imageDir) {
           if (isImageFragment(value)) {
-            const existing = imageFragments.get(value.id) || [];
+            const existing = imageFragments.get(value.imageId) || [];
             existing.push(value.data);
-            imageFragments.set(value.id, existing);
+            imageFragments.set(value.imageId, existing);
           } else if (isImageEnd(value)) {
-            const fragments = imageFragments.get(value.id);
+            const fragments = imageFragments.get(value.imageId);
             if (fragments?.length) {
               const totalLength = fragments.reduce((sum, f) => sum + f.length, 0);
               const combined = new Uint8Array(totalLength);
@@ -267,10 +270,10 @@ const app = command({
                 offset += fragment.length;
               }
               const ext = mime.getExtension(value.mimetype) || "bin";
-              const filepath = join(imageDir, `${value.id}.${ext}`);
+              const filepath = join(imageDir, `${value.imageId}.${ext}`);
               await fs.mkdir(imageDir, { recursive: true });
               await fs.writeFile(filepath, combined);
-              imageFragments.delete(value.id);
+              imageFragments.delete(value.imageId);
             }
           }
         }

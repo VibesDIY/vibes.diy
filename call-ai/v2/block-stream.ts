@@ -87,7 +87,8 @@ export const BlockImageMsg = type({
   type: "'block.image'",
   id: "string",
   streamId: "string",
-  index: "number",
+  seq: "number",
+  "index?": "number",
   url: "string",
   timestamp: CoercedDate,
 });
@@ -208,7 +209,8 @@ export function createBlockStream<T>(
               type: "block.image",
               id: createId(),
               streamId: filterStreamId,
-              index: img.index ?? imageIndex,
+              seq: imageIndex,
+              ...(img.index !== undefined && { index: img.index }),
               url: img.image_url.url,
               timestamp: new Date(),
             });

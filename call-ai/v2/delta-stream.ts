@@ -5,7 +5,7 @@ import { isSseBegin, isSseLine, isSseEnd, isSseStats } from "./sse-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
 import { createLineStream, type LineStreamInput } from "./line-stream.js";
 import { consumeStream } from "@adviser/cement";
-import { createBlockStream } from "./block-stream.js";
+import { createBlockStream, type BlockImageMsg } from "./block-stream.js";
 
 export const DeltaBeginMsg = type({
   type: "'delta.begin'",
@@ -187,6 +187,10 @@ export function createLineStreamFromDelta<T extends DeltaOutput>(
         }
         case isDeltaLine(msg, filterStreamId):
           writer?.write(new TextEncoder().encode(msg.content));
+          break;
+        case isSseLine(msg, filterStreamId):
+          // Forward sse.line to inner pipeline for image detection in block-stream
+          writer?.write(msg);
           break;
         case isDeltaEnd(msg, filterStreamId):
           if (writer) {
