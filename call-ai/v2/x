@@ -1,0 +1,290 @@
+
+> v2@1.0.0 cli /Users/menabe/Software/fproof/vibes.diy/call-ai/v2
+> tsx cli.ts --prompt 'Explain recursion' -m anthropic/claude-sonnet-4
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"#","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Recursion","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Explained\n\nRecursion is a programming","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" concept where a function calls itself to solve","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" a problem by","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" breaking it down into smaller, similar sub","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"problems.","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n\n## Key","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Components","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n\nEvery","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" recursive function needs","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" two","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" essential","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" parts:\n\n1. **Base Case","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"**: A condition that stops the recursion","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n2. **Recursive Case**:","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" The function calling itself with a","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" modifie","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"d input\n\n## Simple","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Example:","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Factorial\n\n```","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"python\ndef factorial(n):","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n    # Base case","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n    if n == 0 or","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" n == 1:\n        return","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" 1\n    \n    #","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Recursive case\n    return n * factorial","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"(n -","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" 1)\n\nprint","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"(factorial(5))  # Output","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":": 120\n```\n\n**","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"How","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" it works:**\n- factorial","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"(5) =","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" 5 × factorial(4)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n- factorial(4) = ","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"4 × factorial(3)  ","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n- factorial(3) = ","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"3 × factorial(2)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n- factorial(2) = 2","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" × factorial(1)\n-","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" factorial(1) = 1 ","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"(","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"base case reache","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"d)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n\n## Visual","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Representation\n\n```\nfactorial(5","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":")","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n├── ","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"5 × factorial(4)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n    ","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"├── 4 × factorial","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"(3)\n        ","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"├── 3 × factorial","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"(2)\n            ├──","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" 2 × factorial(1)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n                └","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"── 1 (base case)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n```\n\n## Real","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"-Worl","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"d Analogy\n\nThink","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" of Russian","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" n","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"esting dolls (","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"Matryoshka):","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n- To","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" see","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" all","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" dolls, you open","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" one","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" an","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"d fin","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"d a","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" smaller doll inside\n- You","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" repeat","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" this process until you reach the smallest ","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"doll (","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"base case)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n- Then","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" you work","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" your way back","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" out","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n\n## Common","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Use","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" Cases\n\n1. **Tree","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" travers","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"al** (file","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" systems, organizational","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" charts","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":")\n2. **Mathematical","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" sequences** (Fibonacci, factorial)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n3. **Divide and con","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"quer algorithms","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"**","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" (merge sort, quick sort)","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n4. **Parsing","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" neste","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"d structures** (JSON","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":", XML)\n\n## Pros","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" and Cons\n\n**Advantages","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":":**\n- Elegant","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" and clean","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" code for","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" certain","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" problems\n- Natural","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" fit","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" for hierarch","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"ical data structures","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"\n\n**Disadvantages:**\n- Can","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" be memory","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"-","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"intensive (","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"stack","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" overflow risk","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":")\n- Sometimes","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" slower","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" than iterative solutions\n- Can","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" be","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" harder","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" to debug\n\nThe","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" key to","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" understanding","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" recursion is recognizing that","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" complex","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" problems can often","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" be solve","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"d by handling","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" a","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" simple","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" case an","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"d then","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" applying the same logic","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" to a","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" smaller version of the original","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":" problem.","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning":null,"reasoning_details":[]},"finish_reason":"stop","native_finish_reason":"stop","logprobs":null}]}
+
+data: {"id":"gen-1768838391-AgS3x0EoZiCdEJck0852","provider":"Google","model":"anthropic/claude-sonnet-4","object":"chat.completion.chunk","created":1768838391,"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"usage":{"prompt_tokens":11,"completion_tokens":547,"total_tokens":558,"cost":0.008238,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"cache_write_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":null,"upstream_inference_prompt_cost":0.000033,"upstream_inference_completions_cost":0.008205},"completion_tokens_details":{"reasoning_tokens":0,"image_tokens":0}}}
+
+data: [DONE]
+
