@@ -1,3 +1,0 @@
-run it with
-
-pnpm exec deno run --allow-sys --allow-read --allow-env --sloppy-imports ./cli.ts --prompt 'Explain recursion' -m anthropic/claude-sonnet-4 --src hello-world --block --stats
