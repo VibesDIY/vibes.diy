@@ -8,7 +8,6 @@ import {
   param,
   Option,
   Evento,
-  EventoEnDecoder,
   EventoType,
   AppContext,
   ValidateTriggerCtx,
@@ -17,25 +16,21 @@ import {
   EventoResult,
   EventoSendProvider,
 } from "@adviser/cement";
-// import type { Env } from "./cf-serve.js";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { ResultSet } from "@libsql/client";
-// import { getCloudPubkeyFromEnv } from "./get-cloud-pubkey-from-env.js";
-// import { ClerkVerifiedAuth, FPApiSQLCtx, FPApiToken, VerifiedClaimsResult } from "./types.js";
-// import { VerifyWithCertificateOptions } from "@fireproof/core-types-device-id";
-// import { FPApiParameters } from "@fireproof/core-types-protocols-dashboard";
 import { ensureAppSlugItem } from "./public/ensure-app-slug-item.js";
 import { ensureChatContext } from "./public/ensure-chat-context.js";
+import { appendChatSection } from "./public/append-chat-section.js";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
-import { msgBase, MsgBase } from "@vibes.diy/api-pkg";
-import { type } from "arktype";
 import { ensureStorage } from "./intern/ensure-storage.js";
-import { isResponseType, ResponseType } from "@vibes.diy/api-types";
+import { isResponseType, MsgBase, msgBase, ResponseType, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { servEntryPoint } from "./public/serv-entry-point.js";
 import { D1Result } from "@cloudflare/workers-types";
+import { type } from "arktype";
+import { CombinedEventoEnDecoder, ReqResEventoEnDecoder, W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 
 const defaultHttpHeaders = Lazy(() =>
   HttpHeader.from({
@@ -60,21 +55,8 @@ export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Reco
 
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
 
-class ReqResEventoEnDecoder implements EventoEnDecoder<Request, string> {
-  async encode(args: Request): Promise<Result<unknown>> {
-    if (args.method === "POST" || args.method === "PUT") {
-      const body = (await args.json()) as unknown;
-      return Result.Ok(body);
-    }
-    return Result.Ok(null);
-  }
-  decode(data: unknown): Promise<Result<string>> {
-    return Promise.resolve(Result.Ok(JSON.stringify(data)));
-  }
-}
-
 export const vibesApiEvento = Lazy(() => {
-  const evento = new Evento(new ReqResEventoEnDecoder());
+  const evento = new Evento(new CombinedEventoEnDecoder(new ReqResEventoEnDecoder(), new W3CWebSocketEventEventoEnDecoder()));
   evento.push(
     {
       hash: "cors-preflight",
@@ -147,6 +129,7 @@ export const vibesApiEvento = Lazy(() => {
     },
     ensureAppSlugItem,
     ensureChatContext,
+    appendChatSection,
     {
       type: EventoType.WildCard,
       hash: "not-found-handler",
@@ -371,7 +354,7 @@ export async function createHandler<T extends VibesSqlite>(params: CreateHandler
   );
   const evento = vibesApiEvento();
   const send = new SendResponseProvider();
-  return async (req: Request, bindPromise: BindPromise<Result<unknown>> = (p) => p): Promise<Response> => {
+  return async (req: Request | W3CWebSocketEvent, bindPromise: BindPromise<Result<unknown>> = (p) => p): Promise<Response> => {
     const rTrigger = await bindPromise(
       evento.trigger({
         ctx: vibesApiCtx,

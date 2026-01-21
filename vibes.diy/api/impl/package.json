@@ -13,6 +13,7 @@
     "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
     "@fireproof/core-types-base": "0.24.8-dev-test-device-id",
     "arktype": "^2.1.29",
+    "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/api-pkg": "workspace:*"
   },
   "devDependencies": {

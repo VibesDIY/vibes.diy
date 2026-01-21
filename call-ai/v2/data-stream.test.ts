@@ -9,8 +9,8 @@ import {
   type DataEndMsg,
   type DataStatsMsg,
 } from "./data-stream.js";
-import { type LineStreamOutput, isLineBegin, isLineLine, isLineEnd } from "./line-stream.js";
-import { type StatsCollectMsg } from "./stats-stream.js";
+import { isLineBegin, isLineLine, isLineEnd, LineStreamMsg } from "./line-stream.js";
+import { StatsCollectMsg } from "./stats-stream.js";
 
 // Helper to collect all chunks from a stream
 async function collectStream<T>(stream: ReadableStream<T>): Promise<T[]> {
@@ -26,8 +26,8 @@ async function collectStream<T>(stream: ReadableStream<T>): Promise<T[]> {
 
 describe("data-stream", () => {
   describe("createDataStream", () => {
-    const createLineEvents = (streamId: string, lines: string[]): LineStreamOutput[] => {
-      const events: LineStreamOutput[] = [{ type: "line.begin", streamId, timestamp: new Date() }];
+    const createLineEvents = (streamId: string, lines: string[]): LineStreamMsg[] => {
+      const events: LineStreamMsg[] = [{ type: "line.begin", streamId, timestamp: new Date() }];
       lines.forEach((content, i) => {
         events.push({
           type: "line.line",
@@ -48,7 +48,7 @@ describe("data-stream", () => {
 
     it("emits data.begin on line.begin", async () => {
       const events = createLineEvents("test", []);
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -63,7 +63,7 @@ describe("data-stream", () => {
 
     it("parses SSE data lines", async () => {
       const events = createLineEvents("test", ['data: {"id":"123","content":"hello"}', 'data: {"id":"456","content":"world"}']);
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -83,7 +83,7 @@ describe("data-stream", () => {
 
     it("ignores non-data lines", async () => {
       const events = createLineEvents("test", [": comment", "event: message", 'data: {"valid":"json"}', ""]);
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -93,13 +93,13 @@ describe("data-stream", () => {
       const output = input.pipeThrough(createDataStream("test"));
       const chunks = await collectStream(output);
 
-      const dataLines = chunks.filter((c) => isDataLine(c));
+      const dataLines = chunks.filter((c) => isDataLine(c)) as DataLineMsg[];
       expect(dataLines).toHaveLength(1);
     });
 
     it("ignores [DONE] marker", async () => {
       const events = createLineEvents("test", ['data: {"id":"1"}', "data: [DONE]"]);
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -115,7 +115,7 @@ describe("data-stream", () => {
 
     it("skips malformed JSON", async () => {
       const events = createLineEvents("test", ["data: not-json", 'data: {"valid":"json"}']);
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -131,7 +131,7 @@ describe("data-stream", () => {
 
     it("emits data.end with correct count", async () => {
       const events = createLineEvents("test", ['data: {"a":1}', 'data: {"b":2}', 'data: {"c":3}']);
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -147,7 +147,7 @@ describe("data-stream", () => {
 
     it("passes through upstream events", async () => {
       const events = createLineEvents("test", ['data: {"x":1}']);
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -169,14 +169,14 @@ describe("data-stream", () => {
         streamId: "test",
         timestamp: new Date(),
       };
-      const events: LineStreamOutput[] = [
+      const events: (StatsCollectMsg | LineStreamMsg)[] = [
         { type: "line.begin", streamId: "test", timestamp: new Date() },
         { type: "line.line", streamId: "test", content: 'data: {"x":1}', lineNr: 1, timestamp: new Date() },
         statsCollect,
         { type: "line.end", streamId: "test", totalLines: 1, timestamp: new Date() },
       ];
 
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg | StatsCollectMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -192,13 +192,13 @@ describe("data-stream", () => {
     });
 
     it("filters by streamId", async () => {
-      const events: LineStreamOutput[] = [
+      const events: LineStreamMsg[] = [
         { type: "line.begin", streamId: "other", timestamp: new Date() },
         { type: "line.line", streamId: "other", content: 'data: {"x":1}', lineNr: 1, timestamp: new Date() },
         { type: "line.end", streamId: "other", totalLines: 1, timestamp: new Date() },
       ];
 
-      const input = new ReadableStream<LineStreamOutput>({
+      const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();

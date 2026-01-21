@@ -123,21 +123,19 @@ export function flushParser(parser: LineParser): LineStreamMsg[] {
 }
 
 // Combined output type for line stream (input can include stats.collect trigger)
-export type LineStreamInput = Uint8Array | StatsCollectMsg;
-export type LineStreamOutput = LineStreamMsg | StatsCollectMsg;
+export type LineStreamInput = Uint8Array | string | StatsCollectMsg;
 
-export function createLineStream(filterStreamId: string): TransformStream<LineStreamInput, LineStreamOutput> {
+export function createLineStream(filterStreamId: string): TransformStream<LineStreamInput, LineStreamMsg | StatsCollectMsg> {
   let buffer = "";
   let totalBytes = 0;
   let lineNr = 0;
   let started = false;
   const decoder = new TextDecoder();
 
-  return new TransformStream<LineStreamInput, LineStreamOutput>({
+  return new TransformStream<LineStreamInput, LineStreamMsg | StatsCollectMsg>({
     transform(chunk, controller) {
       // Handle stats.collect trigger
       if (isStatsCollect(chunk, filterStreamId)) {
-        controller.enqueue(chunk); // passthrough
         controller.enqueue({
           type: "line.stats",
           streamId: filterStreamId,
@@ -146,11 +144,13 @@ export function createLineStream(filterStreamId: string): TransformStream<LineSt
         });
         return;
       }
-
-      // Handle Uint8Array input
-      if (!(chunk instanceof Uint8Array)) {
+      if (!(typeof chunk === "string" || chunk instanceof Uint8Array)) {
+        // ignore invalid input
+        controller.enqueue(chunk);
         return;
       }
+
+      // Handle Uint8Array input
 
       if (!started) {
         started = true;
@@ -161,8 +161,13 @@ export function createLineStream(filterStreamId: string): TransformStream<LineSt
         });
       }
 
-      totalBytes += chunk.byteLength;
-      buffer += decoder.decode(chunk, { stream: true });
+      if (typeof chunk === "string") {
+        totalBytes += chunk.length;
+        buffer += chunk;
+      } else {
+        totalBytes += chunk.byteLength;
+        buffer += decoder.decode(chunk, { stream: true });
+      }
 
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";

@@ -16,7 +16,7 @@ export const isStatsCollect = (msg: unknown, streamId?: string): msg is StatsCol
 /**
  * Creates a transform stream that injects stats.collect messages at regular intervals
  */
-export function createStatsCollector<T>(streamId: string, intervalMs: number = 1000): TransformStream<T, T | StatsCollectMsg> {
+export function createStatsCollector<T>(streamId: string, intervalMs = 1000): TransformStream<T, T | StatsCollectMsg> {
   let intervalId: ReturnType<typeof setInterval> | undefined;
   let controller: TransformStreamDefaultController<T | StatsCollectMsg> | undefined;
 

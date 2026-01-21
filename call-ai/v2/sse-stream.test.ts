@@ -12,7 +12,7 @@ import {
   SseStatsMsg,
   SseChunk,
 } from "./sse-stream.js";
-import { DataOutput, isDataBegin, isDataLine, isDataEnd } from "./data-stream.js";
+import { isDataBegin, isDataLine, isDataEnd, DataStreamMsg } from "./data-stream.js";
 import { StatsCollectMsg } from "./stats-stream.js";
 
 // Helper to collect all chunks from a stream
@@ -47,8 +47,8 @@ const createValidChunk = (content: string, finishReason: string | null = null): 
 
 describe("sse-stream", () => {
   describe("createSseStream", () => {
-    const createDataEvents = (streamId: string, jsonObjects: unknown[]): DataOutput[] => {
-      const events: DataOutput[] = [{ type: "data.begin", streamId, timestamp: new Date() }];
+    const createDataEvents = (streamId: string, jsonObjects: unknown[]): DataStreamMsg[] => {
+      const events: DataStreamMsg[] = [{ type: "data.begin", streamId, timestamp: new Date() }];
       jsonObjects.forEach((json, i) => {
         events.push({
           type: "data.line",
@@ -69,7 +69,7 @@ describe("sse-stream", () => {
 
     it("emits sse.begin on data.begin", async () => {
       const events = createDataEvents("test", []);
-      const input = new ReadableStream<DataOutput>({
+      const input = new ReadableStream<DataStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -84,7 +84,7 @@ describe("sse-stream", () => {
 
     it("validates and emits sse.line for valid chunks", async () => {
       const events = createDataEvents("test", [createValidChunk("Hello"), createValidChunk(" world")]);
-      const input = new ReadableStream<DataOutput>({
+      const input = new ReadableStream<DataStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -104,7 +104,7 @@ describe("sse-stream", () => {
 
     it("emits sse.error for invalid chunks", async () => {
       const events = createDataEvents("test", [{ invalid: "structure" }, createValidChunk("valid")]);
-      const input = new ReadableStream<DataOutput>({
+      const input = new ReadableStream<DataStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -123,7 +123,7 @@ describe("sse-stream", () => {
 
     it("emits sse.end with correct counts", async () => {
       const events = createDataEvents("test", [createValidChunk("a"), { invalid: true }, createValidChunk("b")]);
-      const input = new ReadableStream<DataOutput>({
+      const input = new ReadableStream<DataStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -148,7 +148,7 @@ describe("sse-stream", () => {
         },
       };
       const events = createDataEvents("test", [chunkWithUsage]);
-      const input = new ReadableStream<DataOutput>({
+      const input = new ReadableStream<DataStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -159,7 +159,7 @@ describe("sse-stream", () => {
       const chunks = await collectStream(output);
 
       const endEvent = chunks.find((c) => isSseEnd(c)) as SseEndMsg;
-      expect(endEvent.usage).toEqual({
+      expect(endEvent.usages[0]).toEqual({
         prompt_tokens: 10,
         completion_tokens: 20,
         total_tokens: 30,
@@ -168,7 +168,7 @@ describe("sse-stream", () => {
 
     it("passes through upstream events", async () => {
       const events = createDataEvents("test", [createValidChunk("x")]);
-      const input = new ReadableStream<DataOutput>({
+      const input = new ReadableStream<DataStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
@@ -190,14 +190,14 @@ describe("sse-stream", () => {
         streamId: "test",
         timestamp: new Date(),
       };
-      const events: DataOutput[] = [
+      const events: (StatsCollectMsg | DataStreamMsg)[] = [
         { type: "data.begin", streamId: "test", timestamp: new Date() },
         { type: "data.line", streamId: "test", json: createValidChunk("x"), dataLineNr: 1, timestamp: new Date() },
         statsCollect,
         { type: "data.end", streamId: "test", totalDataLines: 1, timestamp: new Date() },
       ];
 
-      const input = new ReadableStream<DataOutput>({
+      const input = new ReadableStream<DataStreamMsg | StatsCollectMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();

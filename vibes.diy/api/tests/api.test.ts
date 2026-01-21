@@ -164,6 +164,122 @@ describe("VibesDiyApi", () => {
     expect(res2.Ok().contextId).toBe(contextId);
   });
 
+  it("appendChatSection adds section with incrementing seq", async () => {
+    // First create a context
+    const contextRes = await api.ensureChatContext({});
+    expect(contextRes.isOk()).toBe(true);
+    const contextId = contextRes.Ok().contextId;
+
+    // Append first section (seq should be 0)
+    const res1 = await api.appendChatSection({
+      contextId,
+      origin: "user",
+      blocks: [
+        {
+          type: "prompt.txt",
+          streamId: "test-stream-1",
+          request: {
+            model: "test-model",
+            messages: [{ role: "user", content: "Hello, world!" }],
+          },
+          timestamp: new Date(),
+        },
+      ],
+    });
+    expect(res1.isOk()).toBe(true);
+    expect(res1.Ok().contextId).toBe(contextId);
+    expect(res1.Ok().seq).toBe(0);
+    expect(res1.Ok().origin).toBe("user");
+
+    // Append second section (seq should be 1)
+    const res2 = await api.appendChatSection({
+      contextId,
+      origin: "llm",
+      blocks: [
+        {
+          type: "block.begin",
+          id: "block-1",
+          streamId: "test-stream-1",
+          timestamp: new Date(),
+        },
+        {
+          type: "block.toplevel.begin",
+          id: "toplevel-1",
+          streamId: "test-stream-1",
+          index: 1,
+          timestamp: new Date(),
+        },
+        {
+          type: "block.toplevel.line",
+          id: "toplevel-1",
+          streamId: "test-stream-1",
+          index: 1,
+          lineIndex: 1,
+          content: "Hello! How can I help?",
+          timestamp: new Date(),
+        },
+        {
+          type: "block.toplevel.end",
+          id: "toplevel-1",
+          streamId: "test-stream-1",
+          index: 1,
+          totalLines: 1,
+          timestamp: new Date(),
+        },
+        {
+          type: "block.end",
+          id: "block-1",
+          streamId: "test-stream-1",
+          totalToplevelSections: 1,
+          totalCodeBlocks: 0,
+          totalLines: 1,
+          timestamp: new Date(),
+        },
+      ],
+    });
+    expect(res2.isOk()).toBe(true);
+    expect(res2.Ok().seq).toBe(1);
+    expect(res2.Ok().origin).toBe("llm");
+
+    // Append third section (seq should be 2)
+    const res3 = await api.appendChatSection({
+      contextId,
+      origin: "user",
+      blocks: [
+        {
+          type: "prompt.txt",
+          streamId: "test-stream-2",
+          request: {
+            model: "test-model",
+            messages: [{ role: "user", content: "Tell me a joke" }],
+          },
+          timestamp: new Date(),
+        },
+      ],
+    });
+    expect(res3.isOk()).toBe(true);
+    expect(res3.Ok().seq).toBe(2);
+  });
+
+  it("appendChatSection fails for non-existent context", async () => {
+    const res = await api.appendChatSection({
+      contextId: "non-existent-context-id",
+      origin: "user",
+      blocks: [
+        {
+          type: "prompt.txt",
+          streamId: "test-stream",
+          request: {
+            model: "test-model",
+            messages: [{ role: "user", content: "Hello" }],
+          },
+          timestamp: new Date(),
+        },
+      ],
+    });
+    expect(res.isErr()).toBe(true);
+  });
+
   it("repeatable stable ensureAppSlug", async () => {
     const now = Date.now();
     for (let i = 0; i < 2; i++) {

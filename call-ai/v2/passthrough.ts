@@ -1,11 +1,4 @@
-/**
- * Helper type for transform functions
- */
-type TransformFn<I, O> = (
-  msg: I,
-  controller: TransformStreamDefaultController<O>
-) => void | Promise<void>;
-
+type TransformFn<I, O> = (msg: I, controller: TransformStreamDefaultController<O>) => void | Promise<void>;
 /**
  * Creates a transform function that passes through all input messages
  * before calling the provided handler for additional processing.

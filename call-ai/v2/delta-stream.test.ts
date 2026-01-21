@@ -10,8 +10,9 @@ import {
   DeltaEndMsg,
   DeltaStatsMsg,
 } from "./delta-stream.js";
-import { SseOutput, SseChunk, isSseBegin, isSseLine, isSseEnd } from "./sse-stream.js";
+import { SseChunk, isSseBegin, isSseLine, isSseEnd, SseStreamMsg } from "./sse-stream.js";
 import { StatsCollectMsg } from "./stats-stream.js";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 
 // Helper to collect all chunks from a stream
 async function collectStream<T>(stream: ReadableStream<T>): Promise<T[]> {
@@ -44,9 +45,13 @@ const createSseChunk = (content: string, finishReason: string | null = null): Ss
 });
 
 describe("delta-stream", () => {
+  const sthis = ensureSuperThis();
+  function createId() {
+    return sthis.nextId().str;
+  }
   describe("createDeltaStream", () => {
-    const createSseEvents = (streamId: string, chunks: SseChunk[]): SseOutput[] => {
-      const events: SseOutput[] = [{ type: "sse.begin", streamId, timestamp: new Date() }];
+    const createSseEvents = (streamId: string, chunks: SseChunk[]): SseStreamMsg[] => {
+      const events: SseStreamMsg[] = [{ type: "sse.begin", streamId, timestamp: new Date() }];
       chunks.forEach((chunk, i) => {
         events.push({
           type: "sse.line",
@@ -59,6 +64,7 @@ describe("delta-stream", () => {
       events.push({
         type: "sse.end",
         streamId,
+        usages: [],
         totalChunks: chunks.length,
         totalErrors: 0,
         timestamp: new Date(),
@@ -68,14 +74,14 @@ describe("delta-stream", () => {
 
     it("emits delta.begin on first sse.line", async () => {
       const events = createSseEvents("test", [createSseChunk("Hello")]);
-      const input = new ReadableStream<SseOutput>({
+      const input = new ReadableStream<SseStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
         },
       });
 
-      const output = input.pipeThrough(createDeltaStream("test"));
+      const output = input.pipeThrough(createDeltaStream("test", createId));
       const chunks = await collectStream(output);
 
       const beginEvent = chunks.find((c) => isDeltaBegin(c)) as DeltaBeginMsg;
@@ -86,14 +92,14 @@ describe("delta-stream", () => {
 
     it("emits delta.line for content deltas", async () => {
       const events = createSseEvents("test", [createSseChunk("Hello"), createSseChunk(" "), createSseChunk("world")]);
-      const input = new ReadableStream<SseOutput>({
+      const input = new ReadableStream<SseStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
         },
       });
 
-      const output = input.pipeThrough(createDeltaStream("test"));
+      const output = input.pipeThrough(createDeltaStream("test", createId));
       const chunks = await collectStream(output);
 
       const deltaChunks = chunks.filter((c) => isDeltaBegin(c) || isDeltaLine(c) || isDeltaEnd(c));
@@ -105,8 +111,8 @@ describe("delta-stream", () => {
       expect(deltaLines[0].content).toBe("Hello");
       expect(deltaLines[1].content).toBe(" ");
       expect(deltaLines[2].content).toBe("world");
-      expect(deltaLines[0].deltaNr).toBe(1);
-      expect(deltaLines[2].deltaNr).toBe(3);
+      expect(deltaLines[0].deltaSeq).toBe(0);
+      expect(deltaLines[2].deltaSeq).toBe(2);
     });
 
     it("skips chunks without content", async () => {
@@ -127,14 +133,14 @@ describe("delta-stream", () => {
         ],
       };
       const events = createSseEvents("test", [chunkNoContent, createSseChunk("content")]);
-      const input = new ReadableStream<SseOutput>({
+      const input = new ReadableStream<SseStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
         },
       });
 
-      const output = input.pipeThrough(createDeltaStream("test"));
+      const output = input.pipeThrough(createDeltaStream("test", createId));
       const chunks = await collectStream(output);
 
       const deltaLines = chunks.filter((c) => isDeltaLine(c));
@@ -143,18 +149,18 @@ describe("delta-stream", () => {
 
     it("emits delta.end with correct stats", async () => {
       const events = createSseEvents("test", [createSseChunk("Hello"), createSseChunk(" world"), createSseChunk("!", "stop")]);
-      const input = new ReadableStream<SseOutput>({
+      const input = new ReadableStream<SseStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
         },
       });
 
-      const output = input.pipeThrough(createDeltaStream("test"));
+      const output = input.pipeThrough(createDeltaStream("test", createId));
       const chunks = await collectStream(output);
 
       const endEvent = chunks.find((c) => isDeltaEnd(c)) as DeltaEndMsg;
-      expect(endEvent.finishReason).toBe("stop");
+      expect(endEvent.finishReasons).toEqual(["stop"]);
       expect(endEvent.totalDeltas).toBe(3);
       expect(endEvent.totalChars).toBe(12); // "Hello" + " world" + "!"
     });
@@ -168,7 +174,7 @@ describe("delta-stream", () => {
           total_tokens: 30,
         },
       };
-      const events: SseOutput[] = [
+      const events: SseStreamMsg[] = [
         { type: "sse.begin", streamId: "test", timestamp: new Date() },
         { type: "sse.line", streamId: "test", chunk: chunkWithUsage, chunkNr: 1, timestamp: new Date() },
         {
@@ -176,38 +182,40 @@ describe("delta-stream", () => {
           streamId: "test",
           totalChunks: 1,
           totalErrors: 0,
-          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
+          usages: [{ prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }],
           timestamp: new Date(),
         },
       ];
-      const input = new ReadableStream<SseOutput>({
+      const input = new ReadableStream<SseStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
         },
       });
 
-      const output = input.pipeThrough(createDeltaStream("test"));
+      const output = input.pipeThrough(createDeltaStream("test", createId));
       const chunks = await collectStream(output);
 
       const endEvent = chunks.find((c) => isDeltaEnd(c)) as DeltaEndMsg;
-      expect(endEvent.usage).toEqual({
-        prompt_tokens: 10,
-        completion_tokens: 20,
-        total_tokens: 30,
-      });
+      expect(endEvent.usages).toEqual([
+        {
+          prompt_tokens: 10,
+          completion_tokens: 20,
+          total_tokens: 30,
+        },
+      ]);
     });
 
     it("passes through upstream events", async () => {
       const events = createSseEvents("test", [createSseChunk("x")]);
-      const input = new ReadableStream<SseOutput>({
+      const input = new ReadableStream<SseStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
         },
       });
 
-      const output = input.pipeThrough(createDeltaStream("test"));
+      const output = input.pipeThrough(createDeltaStream("test", createId));
       const chunks = await collectStream(output);
 
       expect(isSseBegin(chunks[0])).toBe(true);
@@ -222,26 +230,26 @@ describe("delta-stream", () => {
         streamId: "test",
         timestamp: new Date(),
       };
-      const events: SseOutput[] = [
+      const events: (SseStreamMsg | StatsCollectMsg)[] = [
         { type: "sse.begin", streamId: "test", timestamp: new Date() },
         { type: "sse.line", streamId: "test", chunk: createSseChunk("Hello"), chunkNr: 1, timestamp: new Date() },
         statsCollect,
-        { type: "sse.end", streamId: "test", totalChunks: 1, totalErrors: 0, timestamp: new Date() },
+        { type: "sse.end", streamId: "test", totalChunks: 1, totalErrors: 0, timestamp: new Date(), usages: [] },
       ];
 
-      const input = new ReadableStream<SseOutput>({
+      const input = new ReadableStream<SseStreamMsg | StatsCollectMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
           controller.close();
         },
       });
 
-      const output = input.pipeThrough(createDeltaStream("test"));
+      const output = input.pipeThrough(createDeltaStream("test", createId));
       const chunks = await collectStream(output);
 
       const statsEvents = chunks.filter((c) => isDeltaStats(c)) as DeltaStatsMsg[];
       expect(statsEvents).toHaveLength(1);
-      expect(statsEvents[0].stats.deltaNr).toBe(1);
+      expect(statsEvents[0].stats.deltaSeq).toBe(1);
       expect(statsEvents[0].stats.totalChars).toBe(5);
     });
   });

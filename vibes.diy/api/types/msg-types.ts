@@ -3,6 +3,7 @@ import { Result } from "@adviser/cement";
 import { type } from "arktype";
 import { vibeEnv } from "@vibes.diy/use-vibes-base";
 import { fileSystemItem } from "./types.js";
+import { BlockMsgs, PromptMsg } from "@vibes.diy/call-ai-v2";
 
 // Base types
 export const dashAuthType = type({
@@ -134,6 +135,7 @@ export const resError = type({
   "stack?": "string[]",
 });
 
+const blockMsg = BlockMsgs.or(PromptMsg);
 
 export const reqAppendChatSection = type({
   type: "'vibes.diy.req-append-chat-section'",
@@ -141,10 +143,7 @@ export const reqAppendChatSection = type({
   contextId: "string",
   origin: "'user'|'llm'",
   // Array<{ type: 'origin.prompt' | 'block.xxx'}>
-  blocks: [type({
-    type: "string",
-    content: "unknown",
-  }), "[]"],
+  blocks: [blockMsg, "[]"],
 });
 export type ReqAppendChatSection = typeof reqAppendChatSection.infer;
 
@@ -155,7 +154,6 @@ export const resAppendChatSection = type({
   origin: "'user'|'llm'",
 });
 export type ResAppendChatSection = typeof resAppendChatSection.infer;
-
 
 export type ResError = typeof resError.infer;
 
@@ -189,15 +187,6 @@ export const resEnsureAppSlug = type({
 
 export type ResEnsureAppSlug = typeof resEnsureAppSlug.infer;
 
-// Message payload union
-// const msgPayload = type([
-//   [resEnsureAppSlug, "|", resError],
-//   "|",
-//   [resEnsureAppSlugError, "|", reqEnsureAppSlug]
-// ]);
-
-// type("<t>", { box: "t" })
-// Message base schema with discriminated union payload
 export const msgBase = type({
   tid: "string",
   src: "string",
@@ -208,6 +197,10 @@ export const msgBase = type({
 
 export type MsgBase = typeof msgBase.infer;
 
+export interface MsgBox<T = unknown> extends Omit<MsgBase, "payload"> {
+  payload: T;
+}
+
 export type MsgBaseCfg = Pick<MsgBase, "src" | "dst" | "ttl">;
 export type MsgBaseParam = Partial<MsgBaseCfg>;
 
@@ -215,3 +208,39 @@ export type VibesDiyError = (ResError | ResEnsureAppSlugError) & Error;
 
 export type ResultVibesDiy<T> = Result<T, VibesDiyError>;
 
+const w3cMessageEventBox = type({
+  type: "'MessageEvent'",
+  event: type({
+    data: type("string").or(["instanceof", Uint8Array]),
+    origin: "string|null",
+    lastEventId: "string",
+    source: "unknown",
+    ports: "unknown",
+  }).partial(),
+});
+
+const w3cCloseEventBox = type({
+  type: "'CloseEvent'",
+  event: type({
+    wasClean: "boolean",
+    code: "number",
+    reason: "string",
+  }),
+});
+
+const w3cErrorEventBox = type({
+  type: "'ErrorEvent'",
+  event: type({
+    message: "string",
+    filename: "string",
+    lineno: "number",
+    colno: "number",
+    error: "unknown",
+  }).partial(),
+});
+
+export const w3CWebSocketEvent = w3cMessageEventBox.or(w3cCloseEventBox).or(w3cErrorEventBox);
+export type W3CWebSocketEvent = typeof w3CWebSocketEvent.infer;
+export type W3CWebSocketErrorEvent = typeof w3cErrorEventBox.infer;
+export type W3CWebSocketMessageEvent = typeof w3cMessageEventBox.infer;
+export type W3CWebSocketCloseEvent = typeof w3cCloseEventBox.infer;

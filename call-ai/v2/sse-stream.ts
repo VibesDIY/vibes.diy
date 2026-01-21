@@ -1,7 +1,6 @@
 import { type } from "arktype";
 import { CoercedDate } from "./types.js";
-import type { DataOutput } from "./data-stream.js";
-import { isDataBegin, isDataLine, isDataEnd, isDataStats } from "./data-stream.js";
+import { isDataBegin, isDataLine, isDataEnd, isDataStats, DataStreamMsg } from "./data-stream.js";
 import { isStatsCollect } from "./stats-stream.js";
 import { passthrough } from "./passthrough.js";
 
@@ -12,6 +11,14 @@ export const SseUsage = type({
 });
 
 export type SseUsage = typeof SseUsage.infer;
+
+export const SSeImage = type({
+  type: "string",
+  index: "number",
+  image_url: type({
+    url: "string",
+  }),
+});
 
 export const SseChunk = type({
   id: "string",
@@ -26,7 +33,7 @@ export const SseChunk = type({
       "content?": "string",
       "reasoning?": "string|null",
       "reasoning_details?": "unknown[]",
-      "images?": type({ type: "string", index: "number", image_url: { url: "string" } }).array(),
+      "images?": SSeImage.array(),
       "+": "delete",
     },
     finish_reason: "string|null",
@@ -57,7 +64,7 @@ export const SseLineMsg = type({
 export const SseEndMsg = type({
   type: "'sse.end'",
   streamId: "string",
-  "usage?": SseUsage,
+  usages: SseUsage.array(),
   totalChunks: "number",
   totalErrors: "number",
   timestamp: CoercedDate,
@@ -106,15 +113,14 @@ export const isSseMsg = (msg: unknown, streamId?: string): msg is SseStreamMsg =
   !(SseStreamMsg(msg) instanceof type.errors) && (!streamId || (msg as SseStreamMsg).streamId === streamId);
 
 // Combined output type (passthrough + own events)
-export type SseOutput = DataOutput | SseStreamMsg;
 
-export function createSseStream(filterStreamId: string): TransformStream<DataOutput, SseOutput> {
+export function createSseStream(filterStreamId: string): TransformStream<DataStreamMsg, SseStreamMsg> {
   let chunkNr = 0;
   let errorNr = 0;
-  let usage: SseUsage | undefined;
+  const usages: SseUsage[] = [];
   let streamId = "";
 
-  return new TransformStream<DataOutput, SseOutput>({
+  return new TransformStream<DataStreamMsg, SseStreamMsg>({
     transform: passthrough((msg, controller) => {
       // Handle stats.collect trigger
       if (isStatsCollect(msg, filterStreamId)) {
@@ -155,7 +161,7 @@ export function createSseStream(filterStreamId: string): TransformStream<DataOut
         }
         chunkNr++;
         if (result.usage) {
-          usage = result.usage;
+          usages.push(result.usage);
         }
         controller.enqueue({
           type: "sse.line",
@@ -168,7 +174,7 @@ export function createSseStream(filterStreamId: string): TransformStream<DataOut
         controller.enqueue({
           type: "sse.end",
           streamId,
-          ...(usage && { usage }),
+          usages,
           totalChunks: chunkNr,
           totalErrors: errorNr,
           timestamp: new Date(),

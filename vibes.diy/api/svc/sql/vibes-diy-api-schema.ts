@@ -50,19 +50,18 @@ export const sqlApps = sqliteTable(
   ]
 );
 
-export const sqlChatContexts = sqliteTable(
-  "ChatContexts",
-  {
-    contextId: text().notNull().primaryKey(), // uuid v4
-    userId: text().notNull(),
-    created: text().notNull(),
-  }
-);
+export const sqlChatContexts = sqliteTable("ChatContexts", {
+  contextId: text().notNull().primaryKey(), // uuid v4
+  userId: text().notNull(),
+  created: text().notNull(),
+});
 
 export const sqlChatSections = sqliteTable(
   "ChatSections",
   {
-    contextId: text() .notNull() .references(() => sqlChatContexts.contextId),
+    contextId: text()
+      .notNull()
+      .references(() => sqlChatContexts.contextId),
     seq: int().notNull(), // incremented per section
     origin: text().notNull(), // 'user' | 'llm'
     // Array<{ type: 'origin.prompt' | 'block.xxx'}>

@@ -49,11 +49,7 @@ async function ensureChatContextId(ctx: VibesApiSQLCtx, param: ChatContextParam)
   return exception2Result(async (): Promise<Result<string>> => {
     if (param.contextId) {
       // Check if the provided contextId exists and belongs to this user
-      const existing = await ctx.db
-        .select()
-        .from(sqlChatContexts)
-        .where(eq(sqlChatContexts.contextId, param.contextId))
-        .get();
+      const existing = await ctx.db.select().from(sqlChatContexts).where(eq(sqlChatContexts.contextId, param.contextId)).get();
 
       if (existing) {
         // Context exists - verify it belongs to this user

@@ -1,5 +1,5 @@
 import { command, run, string, option, flag } from "cmd-ts";
-import { dotenv } from "zx";
+import { dotenv, path } from "zx";
 import { promises as fs } from "node:fs";
 import {
   createStatsCollector,
@@ -7,31 +7,30 @@ import {
   createDataStream,
   createSseStream,
   createDeltaStream,
-  createFullStream,
-  createImageDecodeStream,
-  ImageAccumulator,
   isLineMsg,
   isDataMsg,
   isSseMsg,
   isDeltaMsg,
-  isFullMsg,
-  isBlockOutput,
-  isBlockImage,
-  isImageDecodeMsg,
-  isImageEnd,
   isStatsCollect,
   isLineStats,
   isDataStats,
   isSseStats,
   isDeltaStats,
-  isFullStats,
   isBlockStats,
-  isImageStats,
+  createSectionsStream,
+  isBlockSteamMsg,
+  isToplevelBegin,
+  isCodeBegin,
+  isBlockImage,
+  isToplevelLine,
+  isCodeLine,
+  isToplevelEnd,
+  isCodeEnd,
+  ToplevelLineMsg,
+  CodeLineMsg,
 } from "./index.js";
-import { createLineStreamFromDelta } from "./delta-stream.js";
-import mime from "mime";
-import { join } from "node:path";
 import { ensureSuperThis } from "@fireproof/core-runtime";
+import mime from "mime";
 
 const env = dotenv.load(".env");
 
@@ -210,24 +209,23 @@ const app = command({
     if (all || line || data || sse || delta || full || block || stats || image || imageDir) {
       const streamId = sthis.nextId().str;
       const intervalMs = parseInt(statsInterval, 10) || 1000;
-      const basePipeline = body
+      const pipeline = body
         .pipeThrough(createStatsCollector(streamId, intervalMs))
         .pipeThrough(createLineStream(streamId))
         .pipeThrough(createDataStream(streamId))
         .pipeThrough(createSseStream(streamId))
-        .pipeThrough(createDeltaStream(streamId));
-
-      const withFull = full || all ? basePipeline.pipeThrough(createFullStream(streamId)) : basePipeline;
-      const withBlocks = withFull.pipeThrough(createLineStreamFromDelta(streamId, () => sthis.nextId().str));
-
-      // Add image decode stream if image flag or imageDir is set
-      const pipeline =
-        image || imageDir
-          ? withBlocks.pipeThrough(createImageDecodeStream(streamId, () => sthis.nextId().str))
-          : withBlocks;
+        .pipeThrough(createDeltaStream(streamId, () => sthis.nextId().str))
+        .pipeThrough(createSectionsStream(streamId, () => sthis.nextId().str));
+      // .pipeThrough(createImageStream(streamId))
+      // .pipeThrough((all || full) ? createFullStream(streamId) : passthrough<unknown, unknown>(() => {}));
 
       const reader = pipeline.getReader();
-      const accumulator = imageDir ? new ImageAccumulator() : undefined;
+
+      const sectionState = {
+        sectionId: "",
+        mode: "" as "toplevel" | "code" | "",
+        blocks: [] as (ToplevelLineMsg | CodeLineMsg)[],
+      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -235,42 +233,78 @@ const app = command({
 
         if (all) {
           console.log(JSON.stringify(value));
-        } else if (line && isLineMsg(value)) {
-          console.log(JSON.stringify(value));
-        } else if (data && isDataMsg(value)) {
-          console.log(JSON.stringify(value));
-        } else if (sse && isSseMsg(value)) {
-          console.log(JSON.stringify(value));
-        } else if (delta && isDeltaMsg(value)) {
-          console.log(JSON.stringify(value));
-        } else if (full && isFullMsg(value)) {
-          console.log(JSON.stringify(value));
-        } else if (block && isBlockOutput(value)) {
-          console.log(JSON.stringify(value));
-        } else if (image && (isBlockImage(value) || isImageDecodeMsg(value))) {
-          console.log(JSON.stringify(value));
-        }
-
-        // Handle image saving
-        if (accumulator) {
-          const imageData = accumulator.process(value);
-          if (imageData && isImageEnd(value)) {
-            const ext = mime.getExtension(value.mimetype) || "bin";
-            const filepath = join(imageDir, `${value.imageId}.${ext}`);
-            await fs.mkdir(imageDir, { recursive: true });
-            await fs.writeFile(filepath, imageData);
+        } else {
+          if (line && isLineMsg(value)) {
+            console.log(JSON.stringify(value));
+          }
+          if (data && isDataMsg(value)) {
+            console.log(JSON.stringify(value));
+          }
+          if (sse && isSseMsg(value)) {
+            console.log(JSON.stringify(value));
+          }
+          if (delta && isDeltaMsg(value)) {
+            console.log(JSON.stringify(value));
+          }
+          if (block && isBlockSteamMsg(value)) {
+            console.log(JSON.stringify(value));
           }
         }
 
-        if (stats &&
+        if (full) {
+          if (isToplevelBegin(value) || isCodeBegin(value)) {
+            sectionState.sectionId = value.sectionId;
+            sectionState.mode = isToplevelBegin(value) ? "toplevel" : "code";
+            sectionState.blocks = [];
+          }
+          if (isToplevelLine(value) || isCodeLine(value)) {
+            sectionState.blocks.push(value);
+          }
+          if (isToplevelEnd(value) || isCodeEnd(value)) {
+            console.log(
+              JSON.stringify({
+                type: sectionState.mode === "toplevel" ? "section.toplevel" : "section.code",
+                sectionId: sectionState.sectionId,
+                ...(sectionState.mode === "code" ? { lang: (value as { lang: string }).lang } : {}),
+                section: sectionState.blocks.map((b) => b.line).join("\n"),
+                timestamp: new Date(),
+              })
+            );
+          }
+          if (isBlockImage(value)) {
+            console.log(JSON.stringify(value));
+          }
+        }
+
+        if (image && isBlockImage(value)) {
+          const response = await fetch(value.url);
+          const blob = await response.blob();
+          const mimetype = response.headers.get("content-type") || "application/octet-stream";
+          if (imageDir.length) {
+            await fs.mkdir(imageDir, { recursive: true });
+            const arrayBuffer = await blob.arrayBuffer();
+            const fname = path.join(imageDir, `${value.sectionId}.${mime.getExtension(mimetype) || "bin"}`);
+            await fs.writeFile(fname, new Uint8Array(arrayBuffer));
+            console.log(`Saved image of ${mimetype} to ${fname}`);
+          } else {
+            console.log(
+              JSON.stringify({
+                type: "block.image.data",
+                mimetype,
+                size: blob.size,
+              })
+            );
+          }
+        }
+
+        if (
+          stats &&
           (isStatsCollect(value) ||
             isLineStats(value) ||
             isDataStats(value) ||
             isSseStats(value) ||
             isDeltaStats(value) ||
-            isFullStats(value) ||
-            isBlockStats(value) ||
-            isImageStats(value))
+            isBlockStats(value))
         ) {
           console.log(JSON.stringify(value));
         }
