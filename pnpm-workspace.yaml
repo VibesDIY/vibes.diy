@@ -13,6 +13,7 @@ packages:
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"
   - "vibes.diy/failback-homepage"
+  - "vibes.diy/storybook"
   - "prompts/pkg"
   - "prompts/tests"
   - "hosting/base"

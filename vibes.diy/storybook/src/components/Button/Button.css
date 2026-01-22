@@ -1,0 +1,12 @@
+/**
+ * Button Component Styles
+ *
+ * Minimal CSS for accessibility and browser defaults.
+ * All visual styles are now handled via inline styles and tokens.
+ */
+
+/* Focus styles for accessibility */
+.vibes-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
