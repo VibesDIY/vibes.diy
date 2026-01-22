@@ -40,12 +40,14 @@ Uint8Array (HTTP response body)
 │  │                                                    │ │
 │  │  delta.line content ──► LineStream ──► BlockStream │ │
 │  │         (bytes)          (markdown)    (sections)  │ │
+│  │                                                    │ │
+│  │  BlockStream is not passthrough (prevents duplication) │
 │  └────────────────────────────────────────────────────┘ │
 │  Outputs: block.begin/toplevel/code/image/end           │
 └─────────────────────────────────────────────────────────┘
 
-createId: () => string  — passed to DeltaStream, SectionsStream, BlockStream
-                          BlockStream is not passthrough (prevents duplication)
+createId: () => string  — any function returning unique IDs,
+                          passed to DeltaStream, SectionsStream, BlockStream
 ```
 
 ## CLI Tool
@@ -242,12 +244,10 @@ Currently used by:
 - CLI tool (`cli.ts`) for testing and debugging
 - Unit tests
 
-Coming soon: 
+Integration plans (not part of this package):
 - vibes.diy chat using advanced API
-
-Coming later:
 - Auth for vibes iframe runtime
-- Generated vibes legacy callAI usage
+- Generated vibes legacy callAI wrapper
 
 ## TODO
 
