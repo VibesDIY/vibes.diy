@@ -14,7 +14,7 @@ Uint8Array (HTTP response body)
     │
     ▼
 ┌─────────────────────┐
-│  LineStream         │  Bytes → line.begin/line/end
+│  LineStream         │  Bytes → line.begin/line/end (SSE wire format)
 └─────────────────────┘
     │
     ▼
@@ -33,9 +33,19 @@ Uint8Array (HTTP response body)
 └─────────────────────┘
     │
     ▼
-┌─────────────────────┐
-│  SectionsStream     │  Deltas → block.begin/toplevel/code/image/end
-└─────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  SectionsStream(streamId, createId)                     │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │  On delta.begin, creates inner pipeline:           │ │
+│  │                                                    │ │
+│  │  delta.line content ──► LineStream ──► BlockStream │ │
+│  │         (bytes)          (markdown)    (sections)  │ │
+│  └────────────────────────────────────────────────────┘ │
+│  Outputs: block.begin/toplevel/code/image/end           │
+└─────────────────────────────────────────────────────────┘
+
+createId: () => string  — passed to DeltaStream, SectionsStream, BlockStream
+                          BlockStream is not passthrough (prevents duplication)
 ```
 
 ## CLI Tool
@@ -87,9 +97,11 @@ import {
   isCodeLine,
   isBlockImage,
 } from "call-ai/v2";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 
-const streamId = crypto.randomUUID();
-const createId = () => crypto.randomUUID();
+const sthis = ensureSuperThis();
+const streamId = sthis.nextId().str;
+const createId = () => sthis.nextId().str;
 
 const pipeline = response.body
   .pipeThrough(createStatsCollector(streamId, 1000))
