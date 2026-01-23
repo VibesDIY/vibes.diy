@@ -33,7 +33,7 @@ export interface StorageResult {
 }
 
 export interface AssetStorage {
-  ensureAsset(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
+  ensureAssets(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
   fetchAssets(...urls: string[]): Promise<Result<{ url: string; asset: Uint8Array }>[]>;
 }
 
