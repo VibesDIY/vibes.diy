@@ -6,7 +6,7 @@ import { ResultSet } from "@libsql/client";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
-import { ensureStorage } from "./intern/ensure-storage.js";
+import { createAssetStorage } from "./intern/ensure-storage.js";
 import type { D1Result } from "@cloudflare/workers-types";
 import { defaultFetchPkgVersion } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
@@ -26,7 +26,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   env: Record<string, string>; // | Env;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
   llmRequest?(prompt: LLMRequest): Promise<Response>;
-  // waitUntil?<T>(promise: Promise<T>): void;
+  waitUntil?<T>(promise: Promise<T>): void;
 }
 
 export interface SVCParam {
@@ -120,7 +120,8 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
         clockTolerance: 60,
         deviceIdCA: rDeviceIdCA.Ok(),
       }),
-      ensureStorage: ensureStorage(params.db),
+      waitUntil: params.waitUntil ?? (<T>(p: Promise<T>) => { p; }),
+      assetStorage: createAssetStorage(params.db),
       llmRequest: defaultLLMRequest(params.llmRequest, {
         url: params.env["LLM_BACKEND_URL"],
         apiKey: params.env["LLM_BACKEND_API_KEY"],
