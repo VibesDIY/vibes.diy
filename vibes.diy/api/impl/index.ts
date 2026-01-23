@@ -11,31 +11,20 @@ import {
   ResultVibesDiy,
   VibesDiyError,
   MsgBox,
-  W3CWebSocketErrorEvent,
-  W3CWebSocketMessageEvent,
-  W3CWebSocketCloseEvent,
+  W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
-import {
-  Evento,
-  Future,
-  JSONEnDecoderSingleton,
-  KeyedResolvOnce,
-  OnFunc,
-  Result,
-  ReturnOnFunc,
-  ToDecoder,
-  TriggerCtx,
-  exception2Result,
-  timeouted,
-} from "@adviser/cement";
+import { Evento, EventoSendProvider, Result, TriggerCtx, timeouted } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { VibesDiyApiIface, W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
-import { on } from "node:cluster";
+import { VibeDiyApiConnection } from "./api-connection.js";
+import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
 
 export interface VibesDiyApiParam {
   readonly apiUrl?: string;
   readonly me?: string;
+  fetch?(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+  readonly ws?: WebSocket;
   getToken(): Promise<Result<DashAuthType>>;
   readonly msg?: MsgBaseCfg;
   readonly sthis?: SuperThis;
@@ -45,6 +34,8 @@ export interface VibesDiyApiParam {
 interface VibesDiyApiConfig {
   readonly apiUrl: string;
   readonly me: string;
+  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+  readonly ws?: WebSocket;
   getToken(): Promise<Result<DashAuthType>>;
   readonly msg: MsgBaseCfg;
   readonly sthis: SuperThis;
@@ -55,15 +46,6 @@ interface PendingRequest<S> {
   resolve: (result: ResultVibesDiy<S>) => void;
 }
 
-interface VibeDiyApiConnection {
-  readonly ws: WebSocket;
-  onError: ReturnOnFunc<[W3CWebSocketErrorEvent]>;
-  onMessage: ReturnOnFunc<[W3CWebSocketMessageEvent]>;
-  onClose: ReturnOnFunc<[W3CWebSocketCloseEvent]>;
-  send(data: ToDecoder): void;
-}
-
-const vibesDiyApiPerConnection = new KeyedResolvOnce<Result<VibeDiyApiConnection>>();
 export class VibeDiyApi implements VibesDiyApiIface<{
   auth?: DashAuthType;
   type?: string;
@@ -77,6 +59,8 @@ export class VibeDiyApi implements VibesDiyApiIface<{
       apiUrl: cfg.apiUrl ?? "wss://api.vibes.diy/v1/ws",
       me: cfg.me ?? `vibes.diy.client.${sthis.nextId().str}`,
       getToken: cfg.getToken,
+      fetch: cfg.fetch ?? fetch.bind(globalThis),
+      ws: cfg.ws ?? new WebSocket("wss://api.vibes.diy/v1/ws"),
       timeoutMs: cfg.timeoutMs ?? 10000,
       msg: {
         src: "vibes.diy.client",
@@ -88,40 +72,8 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     };
   }
 
-  getReadyConnection(): Promise<Result<VibeDiyApiConnection>> {
-    return vibesDiyApiPerConnection.get(this.cfg.apiUrl).once(async () => {
-      const ws = new WebSocket(this.cfg.apiUrl);
-      const waitOpen = new Future<WebSocket>();
-
-      const onError = OnFunc<(event: W3CWebSocketErrorEvent) => void>();
-      const onMessage = OnFunc<(event: W3CWebSocketMessageEvent) => void>();
-      const onClose = OnFunc<(event: W3CWebSocketCloseEvent) => void>();
-      const ende = JSONEnDecoderSingleton();
-
-      ws.onopen = () => {
-        waitOpen.resolve(ws);
-      };
-      ws.onerror = (event) => {
-        onError.invoke({ type: "ErrorEvent", event: event as W3CWebSocketErrorEvent["event"] });
-        waitOpen.reject(new Error(`WebSocket error: ${event}`));
-      };
-      ws.close = (code, reason) => {
-        onClose.invoke({ type: "CloseEvent", event: { wasClean: true, code: code ?? 1000, reason: reason ?? "Closed by client" } });
-        vibesDiyApiPerConnection.delete(this.cfg.apiUrl);
-      };
-      ws.onmessage = (event) => {
-        onMessage.invoke({ type: "MessageEvent", event });
-      };
-      return exception2Result(() =>
-        waitOpen.asPromise().then((ws) => ({
-          ws,
-          onError,
-          onMessage,
-          onClose,
-          send: (data: ToDecoder) => ws.send(ende.stringify(data)),
-        }))
-      );
-    });
+  getReadyConnection(): Promise<VibeDiyApiConnection> {
+    return getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws);
   }
 
   async send<T extends { auth?: DashAuthType }>(
@@ -148,55 +100,25 @@ export class VibeDiyApi implements VibesDiyApiIface<{
         auth,
       },
     };
-    const rConn = await this.getReadyConnection();
-    if (rConn.isErr()) {
-      return Result.Err<MsgBox<T>, VibesDiyError>({
-        type: "vibes.diy.error",
-        name: "VibesDiyError",
-        message: rConn.Err().message,
-        code: "websocket-connection-error",
-      });
-    }
-    const conn = rConn.unwrap();
+    const conn = await this.getReadyConnection();
     conn.send(JSON.stringify(msgBox));
     return Result.Ok(msgBox as MsgBox<T>);
   }
 
   async request<Q extends { auth?: DashAuthType }, S>(req: Q): Promise<ResultVibesDiy<S>> {
-    // const rConn = await this.getReadyConnection();
-    // if (rConn.isErr()) {
-    //   return Result.Err<S, VibesDiyError>({
-    //     type: "vibes.diy.error",
-    //     name: "VibesDiyError",
-    //     message: rConn.Err().message,
-    //     code: "websocket-connection-error",
-    //   });
-    // }
-    // const conn = rConn.unwrap();
     const tid = this.cfg.sthis.nextId(12).str;
     let unreg: (() => void) | undefined;
     const rtRes = await timeouted(
       async () => {
-        const rConn = await this.getReadyConnection();
-        if (rConn.isErr()) {
-          return Result.Err<S, VibesDiyError>({
-            type: "vibes.diy.error",
-            name: "VibesDiyError",
-            message: rConn.Err().message,
-            code: "websocket-connection-error",
-          });
-        }
-
+        const conn = await this.getReadyConnection();
         const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
-        const conn = rConn.unwrap();
         unreg = conn.onMessage((event) => {
           evento.trigger({
             request: event,
-            send: async (_ctx: TriggerCtx<unknown, unknown, unknown>, data: unknown) => {
-              const res = await this.send(data, { tid: "x" });
-              return Result.Ok(res);
-            },
-            /// <IS, OS>(trigger: HandleTriggerCtx<INREQ, REQ, RES>, data: IS): Promise<Result<OS>>;
+            send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
+              const res = await this.send(data as Parameters<this["send"]>[0], { tid: "x" });
+              return res;
+            }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
           });
         });
 
@@ -219,38 +141,6 @@ export class VibeDiyApi implements VibesDiyApiIface<{
       });
     }
     return rtRes.value as ResultVibesDiy<S>;
-
-    // return new Promise<ResultVibesDiy<S>>((resolve) => {
-
-    // const tid = this.cfg.sthis.nextId().str;
-    // const msgBody: MsgBase = {
-    //   ...this.cfg.msg,
-    //   tid,
-    //   payload: {
-    //     ...req,
-    //     auth,
-    //   },
-    // };
-
-    // try {
-    //   const conn = this.connection.value();
-    //   await conn.ready;
-
-    //   return new Promise<ResultVibesDiy<S>>((resolve) => {
-    //     this.pendingRequests.set(tid, {
-    //       resolve: resolve as (result: ResultVibesDiy<unknown>) => void,
-    //     });
-
-    //     conn.ws.send(JSON.stringify(msgBody));
-    //   });
-    // } catch (err) {
-    //   return Result.Err<S, VibesDiyError>({
-    //     type: "vibes.diy.error",
-    //     name: "VibesDiyError",
-    //     message: `WebSocket error: ${err instanceof Error ? err.message : String(err)}`,
-    //     code: "websocket-error",
-    //   });
-    // }
   }
 
   async ensureAppSlug(
@@ -271,3 +161,5 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     return this.request({ ...req, type: "vibes.diy.req-append-chat-section" });
   }
 }
+
+export * from "./api-connection.js";

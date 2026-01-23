@@ -1,5 +1,5 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
-import { reqEnsureChatContext, ReqEnsureChatContext, ResEnsureChatContext, VibesDiyError } from "@vibes.diy/api-pkg";
+import { reqEnsureChatContext, ReqEnsureChatContext, ResEnsureChatContext, VibesDiyError } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../api.js";

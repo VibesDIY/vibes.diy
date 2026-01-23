@@ -74,6 +74,7 @@ pnpm cli --src captured-image.sse --image --image-dir ./output
 ```
 
 **Flags:**
+
 - `--line` - Show line-level events
 - `--data` - Show data-level events
 - `--sse` - Show SSE-level events
@@ -132,40 +133,47 @@ for await (const msg of pipeline) {
 ## Stream Modules
 
 ### stats-stream.ts
+
 Injects `stats.collect` trigger messages at configurable intervals. Each downstream stream responds by emitting its own `*.stats` message with current counts.
 
 **Messages:** `stats.collect`
 
 ### line-stream.ts
+
 Converts raw bytes into newline-delimited lines.
 
 **Input:** `Uint8Array | string`
 **Messages:** `line.begin`, `line.line`, `line.end`, `line.stats`
 
 ### data-stream.ts
+
 Parses SSE format, extracting JSON from `data: {json}` lines.
 
 **Input:** `LineStreamMsg`
 **Messages:** `data.begin`, `data.line`, `data.error`, `data.end`, `data.stats`
 
 ### sse-stream.ts
+
 Validates JSON against OpenRouter's streaming chunk schema using Arktype.
 
 **Input:** `DataStreamMsg`
 **Messages:** `sse.begin`, `sse.line`, `sse.error`, `sse.end`, `sse.stats`
 
 **Key types:**
+
 - `SseChunk` - Validated OpenRouter response chunk
 - `SseUsage` - Token usage stats
 - `SSeImage` - Image URL from vision models
 
 ### delta-stream.ts
+
 Extracts content deltas, images, and usage from validated SSE chunks.
 
 **Input:** `SseStreamMsg`
 **Messages:** `delta.begin`, `delta.line`, `delta.image`, `delta.usage`, `delta.end`, `delta.stats`
 
 ### sections-stream.ts
+
 Parses markdown structure from accumulated content, detecting code fences and images.
 
 **Input:** `DeltaStreamMsg`
@@ -206,7 +214,7 @@ Every message type has a corresponding type guard with optional `streamId` filte
 ```typescript
 // Check message type
 if (isDeltaLine(msg)) {
-  console.log(msg.content);  // TypeScript knows msg is DeltaLineMsg
+  console.log(msg.content); // TypeScript knows msg is DeltaLineMsg
 }
 
 // Filter by streamId (for multiplexed streams)
@@ -241,10 +249,12 @@ if (isBlockStats(msg)) console.log("Block stats:", msg.stats);
 ## Current Status
 
 Currently used by:
+
 - CLI tool (`cli.ts`) for testing and debugging
 - Unit tests
 
 Integration plans (not part of this package):
+
 - vibes.diy chat using advanced API
 - Auth for vibes iframe runtime
 - Generated vibes legacy callAI wrapper

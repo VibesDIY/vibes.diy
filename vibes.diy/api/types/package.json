@@ -9,14 +9,14 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.15",
-    "@vibes.diy/use-vibes-base": "workspace:*",
+    "@adviser/cement": "^0.5.17",
+    "@fireproof/core-runtime": "0.24.9",
+    "@fireproof/core-types-base": "0.24.9",
     "@vibes.diy/call-ai-v2": "workspace:*",
-    "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
-    "@fireproof/core-types-base": "0.24.8-dev-test-device-id",
+    "@vibes.diy/use-vibes-base": "workspace:*",
     "arktype": "^2.1.29"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.8-dev-test-device-id"
+    "@fireproof/core-cli": "0.24.9"
   }
 }

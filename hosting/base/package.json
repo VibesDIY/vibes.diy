@@ -20,8 +20,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.5.15",
-    "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
+    "@adviser/cement": "^0.5.17",
+    "@fireproof/core-runtime": "0.24.9",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
     "call-ai": "workspace:*",
@@ -31,8 +31,8 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.8-dev-test-device-id",
-    "@vitest/browser-playwright": "^4.0.17",
+    "@fireproof/core-cli": "0.24.9",
+    "@vitest/browser-playwright": "^4.0.18",
     "typescript": "^5.9.3"
   }
 }

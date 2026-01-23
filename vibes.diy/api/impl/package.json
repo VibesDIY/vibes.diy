@@ -4,19 +4,21 @@
   "private": "true",
   "type": "module",
   "scripts": {
-    "build": "core-cli build",
+    "build": "core-cli tsc",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.15",
-    "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
-    "@fireproof/core-types-base": "0.24.8-dev-test-device-id",
-    "arktype": "^2.1.29",
+    "@adviser/cement": "^0.5.17",
+    "@fireproof/core-runtime": "0.24.9",
+    "@fireproof/core-types-base": "0.24.9",
+    "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
-    "@vibes.diy/api-pkg": "workspace:*"
+    "arktype": "^2.1.29",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.8-dev-test-device-id"
+    "@fireproof/core-cli": "0.24.9",
+    "@types/ws": "^8.18.1"
   }
 }

@@ -10,12 +10,11 @@ import {
   URI,
   CoerceURI,
 } from "@adviser/cement";
-import { DefaultHttpHeaders } from "../create-handler.js";
 import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
 import { VibesApiSQLCtx } from "../api.js";
 import { sqlApps, sqlAssets } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
-import { FileSystemItem, fileSystemItem, ResponseType } from "@vibes.diy/api-types";
+import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibes } from "../intern/render-vibes.js";
 
@@ -101,32 +100,26 @@ async function renderFromFs(
     const rContent = await fetchContent(ctx, foundPath);
     if (rContent.isErr()) {
       await ctx.send.send(ctx, {
-        type: "Response",
-        payload: {
-          status: 500,
-          headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({
-            type: "error",
-            message: `Error fetching content for ${ctx.validated.path}: ${rContent.Err().message}`,
-          }),
+        type: "http.Response.JSON",
+        status: 500,
+        json: {
+          type: "error",
+          message: `Error fetching content for ${ctx.validated.path}: ${rContent.Err().message}`,
         },
-      } satisfies ResponseType);
+      } satisfies HttpResponseJsonType);
       return Result.Ok(EventoResult.Stop);
     }
     const content = rContent.unwrap();
     await ctx.send.send(ctx, {
-      type: "Response",
-      payload: {
-        status: 200,
-        headers: DefaultHttpHeaders({
-          "Content-Type": foundPath.mimeType,
-          "X-Vibes-Asset-Id": foundPath.assetId,
-          ETag: foundPath.assetId,
-          "Cache-Control": "no-cache",
-        }),
-        body: content as BodyInit,
+      type: "http.Response.Body",
+      headers: {
+        "Content-Type": foundPath.mimeType,
+        "X-Vibes-Asset-Id": foundPath.assetId,
+        ETag: foundPath.assetId,
+        "Cache-Control": "no-cache",
       },
-    } satisfies ResponseType);
+      body: content,
+    } satisfies HttpResponseBodyType);
     return Result.Ok(EventoResult.Stop);
   }
   return Result.Ok(EventoResult.Continue);
@@ -181,16 +174,13 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     if (!fs) {
       // todo render 404 page
       await ctx.send.send(ctx, {
-        type: "Response",
-        payload: {
-          status: 404,
-          headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({
-            type: "error",
-            message: `Filesystem not found ${JSON.stringify(ctx.validated)}`,
-          }),
+        type: "http.Response.JSON",
+        status: 404,
+        json: {
+          type: "error",
+          message: `Filesystem not found ${JSON.stringify(ctx.validated)}`,
         },
-      } satisfies ResponseType);
+      } satisfies HttpResponseJsonType);
       return Result.Ok(EventoResult.Stop);
     }
     const fileSystem = type([fileSystemItem, "[]"])(fs.fileSystem);
@@ -221,16 +211,13 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     }
     // todo render 404 page
     await ctx.send.send(ctx, {
-      type: "Response",
-      payload: {
-        status: 404,
-        headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({
-          type: "error",
-          message: `File not found ${ctx.validated.path}`,
-        }),
+      type: "http.Response.JSON",
+      status: 404,
+      json: {
+        type: "error",
+        message: `File not found ${ctx.validated.path}`,
       },
-    } satisfies ResponseType);
+    } satisfies HttpResponseJsonType);
     return Result.Ok(EventoResult.Stop);
   },
 };

@@ -1,11 +1,10 @@
 import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result } from "@adviser/cement";
-import { FileSystemItem, ResponseType, VibesDiyServCtx, vibesImportMap } from "@vibes.diy/api-types";
+import { FileSystemItem, HttpResponseBodyType, VibesDiyServCtx, vibesImportMap } from "@vibes.diy/api-types";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { fetchContent } from "../public/serv-entry-point.js";
 import { VibesApiSQLCtx } from "../api.js";
 import { type } from "arktype";
 import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
-import { DefaultHttpHeaders } from "../create-handler.js";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
 import { VibePage } from "./components/vibes-page.js";
 import { renderToString } from "react-dom/server";
@@ -77,17 +76,15 @@ export async function renderVibes(
   };
   const res = await exception2Result(() =>
     ctx.send.send(ctx, {
-      type: "Response",
-      payload: {
-        status: 200,
-        headers: DefaultHttpHeaders({
-          "Content-Type": "text/html",
-          "X-Vibes-Asset-Id": fs.fsId,
-          ETag: fs.fsId,
-        }),
-        body: renderToString(VibePage(vsctx)) as BodyInit,
+      type: "http.Response.Body",
+      status: 200,
+      headers: {
+        "Content-Type": "text/html",
+        "X-Vibes-Asset-Id": fs.fsId,
+        ETag: fs.fsId,
       },
-    } satisfies ResponseType)
+      body: renderToString(VibePage(vsctx)) as BodyInit,
+    } satisfies HttpResponseBodyType)
   );
   if (res.isErr()) {
     return Result.Err(res);

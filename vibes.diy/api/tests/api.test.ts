@@ -3,9 +3,21 @@ import { createHandler } from "@vibes.diy/api-svc";
 import { createClient } from "@libsql/client/node";
 import { beforeAll, describe, expect, inject, it } from "vitest";
 import { drizzle } from "drizzle-orm/libsql";
-import { BuildURI, Result } from "@adviser/cement";
+import { BuildURI, HandleTriggerCtx, Result, TestFetchPair, TestWSPair, EventoSendProvider } from "@adviser/cement";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
+
+const noopCache = {
+  put: async (_req: Request, _res: Response) => {
+    /* noop */
+  },
+  delete: async (_req: Request) => {
+    return false;
+  },
+  match: async () => {
+    return undefined;
+  },
+};
 
 describe("VibesDiyApi", () => {
   const sthis = ensureSuperThis();
@@ -13,7 +25,7 @@ describe("VibesDiyApi", () => {
   const client = createClient({ url });
   const db = drizzle(client);
 
-  let svc: Awaited<ReturnType<typeof createHandler>>;
+  // let svc: Awaited<ReturnType<typeof createHandler>>;
   let api: VibeDiyApi;
 
   beforeAll(async () => {
@@ -43,28 +55,33 @@ describe("VibesDiyApi", () => {
       CALLAI_CHAT_URL: "what-ever",
     };
 
-    svc = await createHandler({
+    const fetchPair = TestFetchPair.create();
+    const wsPair = TestWSPair.create();
+
+    const svc = await createHandler({
       db,
-      cache: {
-        put: async (_req: Request, _res: Response) => {
-          /* noop */
-        },
-        delete: async (_req: Request) => {
-          return false;
-        },
-        match: async () => {
-          return undefined;
-        },
-      },
-      fetchPkgVersion: async (_pkg: string) => {
-        return "1.2.3";
-      },
+      cache: noopCache,
       env,
     });
+    const svcSendWS = new (class implements EventoSendProvider<Request, unknown, unknown> {
+      readonly responses: Response[] = [];
+      send<IS, OS>(_trigger: HandleTriggerCtx<Request, unknown, unknown>, data: IS): Promise<Result<OS, Error>> {
+        this.responses.push(new Response(JSON.stringify(data), { status: 200, headers: { "Content-Type": "application/json" } }));
+        wsPair.p1.onMessage({ data: JSON.stringify(data) } as MessageEvent<string>);
+        return Promise.resolve(Result.Ok(data as unknown as OS));
+      }
+    })();
+    wsPair.p2.onMessage = async (evt: MessageEvent) => {
+      svc({ type: "MessageEvent", event: evt }, { send: svcSendWS });
+    };
+    // const svcSendFetch = new (class implements EventoSendProvider<Request, unknown, unknown> {
+    // fetchPair.server.onServe((req: Request) => {
+    //   svc(req)
+    // });
+
     api = new VibeDiyApi({
-      fetch: (input, init?) => {
-        return svc(new Request(input, init));
-      },
+      ws: wsPair.p1 as unknown as WebSocket,
+      fetch: fetchPair.client.fetch,
       getToken: async () => {
         return Result.Ok(await testUser.getDashBoardToken());
       },
@@ -198,41 +215,57 @@ describe("VibesDiyApi", () => {
       blocks: [
         {
           type: "block.begin",
-          id: "block-1",
+          blockId: "block-1",
+          blockNr: 0,
+          seq: 1,
           streamId: "test-stream-1",
           timestamp: new Date(),
         },
         {
           type: "block.toplevel.begin",
-          id: "toplevel-1",
+          blockId: "block-1",
+          sectionId: "toplevel-1",
+          blockNr: 0,
+          seq: 1,
           streamId: "test-stream-1",
-          index: 1,
           timestamp: new Date(),
         },
         {
           type: "block.toplevel.line",
-          id: "toplevel-1",
+          blockId: "block-1",
+          blockNr: 0,
+          sectionId: "toplevel-1",
+          seq: 2,
           streamId: "test-stream-1",
-          index: 1,
-          lineIndex: 1,
-          content: "Hello! How can I help?",
+          lineNr: 0,
+          line: "Hello! How can I help?",
           timestamp: new Date(),
         },
         {
           type: "block.toplevel.end",
-          id: "toplevel-1",
+          blockId: "block-1",
+          blockNr: 0,
+          sectionId: "toplevel-1",
           streamId: "test-stream-1",
-          index: 1,
-          totalLines: 1,
+          seq: 3,
+          stats: {
+            lines: 1,
+            bytes: 18,
+          },
           timestamp: new Date(),
         },
         {
           type: "block.end",
-          id: "block-1",
+          blockId: "block-1",
+          blockNr: 0,
           streamId: "test-stream-1",
-          totalToplevelSections: 1,
-          totalCodeBlocks: 0,
-          totalLines: 1,
+          seq: 4,
+          stats: {
+            toplevel: { lines: 1, bytes: 18 },
+            code: { lines: 0, bytes: 0 },
+            image: { lines: 0, bytes: 0 },
+            total: { lines: 1, bytes: 18 },
+          },
           timestamp: new Date(),
         },
       ],

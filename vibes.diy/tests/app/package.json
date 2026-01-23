@@ -16,7 +16,7 @@
     "publish": "echo core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.15",
+    "@adviser/cement": "^0.5.17",
     "@monaco-editor/react": "^4.7.0",
     "@react-router/node": "^7.12.0",
     "@react-router/serve": "^7.12.0",
@@ -37,20 +37,20 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.12.0",
     "react-router-dom": "^7.12.0",
-    "use-fireproof": "0.24.8-dev-test-device-id",
+    "use-fireproof": "0.24.9",
     "use-vibes": "workspace:*",
     "vibes-diy": "workspace:*"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.8-dev-test-device-id",
+    "@fireproof/core-cli": "0.24.9",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@types/react": "~19.2.8",
     "@types/react-dom": "^19.2.2",
-    "@vitest/browser": "^4.0.17",
-    "@vitest/browser-playwright": "^4.0.17",
+    "@vitest/browser": "^4.0.18",
+    "@vitest/browser-playwright": "^4.0.18",
     "vite": "7.3.1",
     "vite-tsconfig-paths": "^6.0.4",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.18"
   }
 }

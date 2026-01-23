@@ -10,21 +10,22 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.15",
-    "@fireproof/core-device-id": "0.24.8-dev-test-device-id",
-    "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
-    "@fireproof/core-types-device-id": "0.24.8-dev-test-device-id",
+    "@adviser/cement": "^0.5.17",
+    "@fireproof/core-device-id": "0.24.9",
+    "@fireproof/core-runtime": "0.24.9",
+    "@fireproof/core-types-device-id": "0.24.9",
     "@libsql/client": "^0.17.0",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-svc": "workspace:*",
+    "@vibes.diy/api-types": "workspace:*",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.8-dev-test-device-id",
-    "@vitest/ui": "4.0.16",
-    "vitest": "^4.0.17",
+    "@fireproof/core-cli": "0.24.9",
+    "@vitest/ui": "4.0.18",
+    "vitest": "^4.0.18",
     "zx": "^8.8.5"
   }
 }

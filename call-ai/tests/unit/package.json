@@ -38,11 +38,11 @@
     "@playwright/test": "^1.57.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.9",
-    "@vitest/browser-playwright": "^4.0.17",
+    "@vitest/browser-playwright": "^4.0.18",
     "jest": "^30.0.5",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17",
+    "vitest": "^4.0.18",
     "zx": "^8.8.4"
   },
   "engines": {

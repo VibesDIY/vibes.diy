@@ -50,12 +50,12 @@ api/
 
 ## Package Summary
 
-| Package | Runs On | Purpose |
-|---------|---------|---------|
-| `@vibes.diy/api-types` | Both | arktype schemas, request/response types |
-| `@vibes.diy/api-pkg` | Both | Interface + encoders (shared contract) |
-| `@vibes.diy/api-impl` | Client | `VibeDiyApi` WebSocket client class |
-| `@vibes.diy/api-svc` | Server | Cloudflare Worker handlers, D1/Drizzle |
+| Package                | Runs On | Purpose                                 |
+| ---------------------- | ------- | --------------------------------------- |
+| `@vibes.diy/api-types` | Both    | arktype schemas, request/response types |
+| `@vibes.diy/api-pkg`   | Both    | Interface + encoders (shared contract)  |
+| `@vibes.diy/api-impl`  | Client  | `VibeDiyApi` WebSocket client class     |
+| `@vibes.diy/api-svc`   | Server  | Cloudflare Worker handlers, D1/Drizzle  |
 
 ## Architecture
 
@@ -65,10 +65,10 @@ All requests are wrapped in a `MsgBase` envelope:
 
 ```typescript
 interface MsgBase {
-  tid: string;      // Transaction ID for request/response correlation
-  src: string;      // Source identifier
-  dst: string;      // Destination identifier
-  ttl: number;      // Time-to-live
+  tid: string; // Transaction ID for request/response correlation
+  src: string; // Source identifier
+  dst: string; // Destination identifier
+  ttl: number; // Time-to-live
   payload: unknown; // The actual request/response
 }
 ```
@@ -115,7 +115,9 @@ VibeDiyApi.ensureAppSlug()        →   cf-serve.ts
 ## API Methods
 
 ### `ensureAppSlug()`
+
 Deploy an app with a filesystem. Process:
+
 1. Verify auth token (clerk/device-id)
 2. Create or retrieve user slug binding
 3. Create or retrieve app slug binding
@@ -126,14 +128,18 @@ Deploy an app with a filesystem. Process:
 8. Return `entryPointUrl` for iframe loading
 
 ### `ensureChatContext()`
+
 Create or retrieve a chat session:
+
 1. If `contextId` provided, verify it exists and belongs to user
 2. Otherwise, generate new contextId (12-char ID)
 3. Insert into `ChatContexts` table
 4. Return `contextId`
 
 ### `appendChatSection()`
+
 Add messages to a chat context:
+
 1. Verify context exists and belongs to user
 2. Get max `seq` for context, increment
 3. Insert into `ChatSections` with `origin` ('user' or 'llm')
@@ -149,17 +155,18 @@ The API is bundled into the main vibes.diy Cloudflare Worker (not a separate dep
 `.github/workflows/vibes-diy-deploy.yaml`
 
 **Triggers:**
+
 - Push to `vibes.diy/**/*` paths
 - Tags: `vibes-diy@*`
 - Manual dispatch
 
 ### Environments
 
-| Trigger | Environment | Domain |
-|---------|-------------|--------|
-| Tag `vibes-diy@s*` | staging | `*.dev-v2.vibesdiy.net` |
-| Tag `vibes-diy@p*` | production | `*.prod-v2.vibesdiy.net` |
-| Path push or other tags | dev | `*.dev-v2.vibesdiy.net` |
+| Trigger                 | Environment | Domain                   |
+| ----------------------- | ----------- | ------------------------ |
+| Tag `vibes-diy@s*`      | staging     | `*.dev-v2.vibesdiy.net`  |
+| Tag `vibes-diy@p*`      | production  | `*.prod-v2.vibesdiy.net` |
+| Path push or other tags | dev         | `*.dev-v2.vibesdiy.net`  |
 
 ### Deploy Steps
 
@@ -176,10 +183,10 @@ Do not run these manually - push a tag or merge to trigger the workflow.
 
 ### Infrastructure
 
-| Resource | Binding | Purpose |
-|----------|---------|---------|
-| D1 Database | `DB` | Chat contexts, sections, apps |
-| Static Assets | `ASSETS` | React app build |
+| Resource      | Binding  | Purpose                       |
+| ------------- | -------- | ----------------------------- |
+| D1 Database   | `DB`     | Chat contexts, sections, apps |
+| Static Assets | `ASSETS` | React app build               |
 
 ### Server Context (VibesApiSQLCtx)
 
@@ -187,16 +194,16 @@ All handlers receive a shared context via `ctx.ctx.getOrThrow<VibesApiSQLCtx>("v
 
 ```typescript
 interface VibesApiSQLCtx {
-  sthis: SuperThis;              // Fireproof utilities (logger, nextId, env)
-  db: VibesSqlite;               // Drizzle DB instance
-  tokenApi: Record<string, FPApiToken>;  // Auth verifiers by type
-  deviceCA: DeviceIdCAIf;        // Device ID certificate authority
-  logger: Logger;                // Structured logger
-  params: VibesFPApiParameters;  // Service configuration
-  cache: CfCacheIf;              // Cloudflare cache API
-  fetchPkgVersion(pkg): Promise<string | undefined>;  // npm registry lookup
-  waitUntil<T>(promise): void;   // CF worker lifecycle
-  ensureStorage(...items): Promise<Result<StorageResult[]>>;  // Asset storage
+  sthis: SuperThis; // Fireproof utilities (logger, nextId, env)
+  db: VibesSqlite; // Drizzle DB instance
+  tokenApi: Record<string, FPApiToken>; // Auth verifiers by type
+  deviceCA: DeviceIdCAIf; // Device ID certificate authority
+  logger: Logger; // Structured logger
+  params: VibesFPApiParameters; // Service configuration
+  cache: CfCacheIf; // Cloudflare cache API
+  fetchPkgVersion(pkg): Promise<string | undefined>; // npm registry lookup
+  waitUntil<T>(promise): void; // CF worker lifecycle
+  ensureStorage(...items): Promise<Result<StorageResult[]>>; // Asset storage
 }
 ```
 
@@ -289,16 +296,17 @@ Primary key: `(seq, contextId)`.
 
 Six variants for different content types:
 
-| Type | Content | Use Case |
-|------|---------|----------|
-| `code-block` | Inline string, `lang: 'jsx' \| 'js'` | JSX/JS source code |
-| `code-ref` | `refId` reference | Code stored elsewhere |
-| `str-asset-block` | Inline string | CSS, JSON, text files |
-| `str-asset-ref` | `refId` reference | String assets stored elsewhere |
-| `uint8-asset-block` | `Uint8Array` | Images, fonts, binaries |
-| `uint8-asset-ref` | `refId` reference | Binary assets stored elsewhere |
+| Type                | Content                              | Use Case                       |
+| ------------------- | ------------------------------------ | ------------------------------ |
+| `code-block`        | Inline string, `lang: 'jsx' \| 'js'` | JSX/JS source code             |
+| `code-ref`          | `refId` reference                    | Code stored elsewhere          |
+| `str-asset-block`   | Inline string                        | CSS, JSON, text files          |
+| `str-asset-ref`     | `refId` reference                    | String assets stored elsewhere |
+| `uint8-asset-block` | `Uint8Array`                         | Images, fonts, binaries        |
+| `uint8-asset-ref`   | `refId` reference                    | Binary assets stored elsewhere |
 
 All file types share base properties:
+
 ```typescript
 {
   filename: string;    // Must start with /, no //, /../, /./
@@ -310,6 +318,7 @@ All file types share base properties:
 ### FileSystemItem (stored result)
 
 After processing, files become `FileSystemItem`:
+
 ```typescript
 {
   fileName: string;
@@ -329,12 +338,13 @@ After processing, files become `FileSystemItem`:
 
 ```typescript
 type DashAuthType = {
-  type: 'clerk' | 'device-id';
+  type: "clerk" | "device-id";
   token: string;
-}
+};
 ```
 
 Auth is verified via `tokenApi` which supports:
+
 - **clerk** - Clerk JWT verification using `CLERK_PUB_JWT_KEY` / `CLERK_PUB_JWT_URL` env vars
 - **device-id** - Device certificate verification using `DEVICE_ID_CA_*` keys
 
@@ -352,12 +362,12 @@ import { VibeDiyApi } from "@vibes.diy/api-impl";
 import { Result } from "@adviser/cement";
 
 const api = new VibeDiyApi({
-  apiUrl: "wss://api.vibes.diy/v1/ws",  // Default if omitted
+  apiUrl: "wss://api.vibes.diy/v1/ws", // Default if omitted
   getToken: async () => {
     // Return auth token (Clerk or device-id)
     return Result.Ok({ type: "clerk", token: clerkToken });
   },
-  timeoutMs: 10000,  // Default: 10s request timeout
+  timeoutMs: 10000, // Default: 10s request timeout
 });
 ```
 
@@ -367,15 +377,15 @@ The client uses `KeyedResolvOnce` for connection pooling - multiple `VibeDiyApi`
 
 ```typescript
 const res = await api.ensureAppSlug({
-  mode: "dev",  // 'dev' or 'production'
-  appSlug: "my-app",      // optional, server generates 3-word slug
-  userSlug: "my-user",    // optional, server generates 3-word slug
-  env: { API_KEY: "..." },  // optional, passed to app runtime
+  mode: "dev", // 'dev' or 'production'
+  appSlug: "my-app", // optional, server generates 3-word slug
+  userSlug: "my-user", // optional, server generates 3-word slug
+  env: { API_KEY: "..." }, // optional, passed to app runtime
   fileSystem: [
     {
       type: "code-block",
       lang: "jsx",
-      filename: "/App.jsx",  // Must start with /, becomes entry point
+      filename: "/App.jsx", // Must start with /, becomes entry point
       entryPoint: true,
       content: "export default function App() { return <div>Hello</div>; }",
     },
@@ -392,6 +402,7 @@ if (res.isOk()) {
 ```
 
 **Response includes:**
+
 - `entryPointUrl` - URL to load in iframe (constructed from `VIBES_SVC_*` config)
 - `wrapperUrl` - URL for wrapper page with auth handoff
 - `fsId` - CID of the filesystem manifest
@@ -412,7 +423,7 @@ if (ctx.isOk()) {
   // Append a user message
   const userRes = await api.appendChatSection({
     contextId,
-    origin: "user",  // 'user' | 'llm'
+    origin: "user", // 'user' | 'llm'
     blocks: [
       // BlockMsgs or PromptMsg from @vibes.diy/call-ai-v2
       {
@@ -429,7 +440,7 @@ if (ctx.isOk()) {
   const llmRes = await api.appendChatSection({
     contextId,
     origin: "llm",
-    blocks: sectionBlocks,  // BlockMsgs from call-ai sections stream
+    blocks: sectionBlocks, // BlockMsgs from call-ai sections stream
   });
   // llmRes.Ok().seq -> 1 (second section)
 }
@@ -440,6 +451,7 @@ if (ctx.isOk()) {
 ### Testing
 
 Tests use a local handler directly rather than WebSocket. See `api/tests/api.test.ts` for the full setup including:
+
 - Creating a local D1/libsql database
 - Setting up test device-id auth
 - Calling the handler directly
@@ -468,6 +480,7 @@ https://{appSlug}--{userSlug}.{hostnameBase}/~{fsId}~/
 Example: `https://my-app--fuzzy-purple-elephant.vibes.app/~z4PhNX7vuL~/`
 
 The `extractHostToBindings()` function parses:
+
 - Hostname pattern: `{appSlug}--{userSlug}.{rest}`
 - Path pattern: `/~{fsId}~/` (fsId starts with `z`, 8+ chars)
 - If no fsId in path, serves latest production release
@@ -477,7 +490,7 @@ The `extractHostToBindings()` function parses:
 When `appSlug` or `userSlug` are not provided, the server generates 3-word slugs using the `random-words` package:
 
 ```typescript
-generate({ exactly: 1, wordsPerString: 3, separator: "-" })
+generate({ exactly: 1, wordsPerString: 3, separator: "-" });
 // → "fuzzy-purple-elephant"
 ```
 
@@ -503,8 +516,9 @@ The `write-apps.ts` module applies transforms to uploaded files:
 ### fsId Calculation
 
 The `fsId` is a deterministic CID computed from:
+
 ```typescript
-hash(sortedFilenames + mimetypes + contentCIDs + sortedEnvJSON)
+hash(sortedFilenames + mimetypes + contentCIDs + sortedEnvJSON);
 ```
 
 Same files + same env = same fsId (enables deduplication).
@@ -512,6 +526,7 @@ Same files + same env = same fsId (enables deduplication).
 ### Asset Caching
 
 `serv-entry-point.ts` uses two-tier Cloudflare caching:
+
 1. **Global cache** by CID: `assetCacheUrl/{assetId}`
 2. **Path cache** by request URL
 
@@ -520,5 +535,6 @@ On cache miss: D1 query → populate both caches via `waitUntil()`.
 ### App Eviction
 
 When a user exceeds `MAX_APPS_PER_USER_ID`:
+
 - Oldest `dev` mode apps are evicted first (10% of total + 1)
 - `production` apps are preserved

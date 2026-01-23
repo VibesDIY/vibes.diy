@@ -1,4 +1,4 @@
-import { ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile } from "@vibes.diy/api-pkg";
+import { ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile, FileSystemItem } from "@vibes.diy/api-types";
 import { exception2Result, Result, to_uint8, toSortedObject } from "@adviser/cement";
 import { AppSlugBinding } from "./ensure-slug-binding.js";
 import { ReqWithVerifiedAuth } from "../check-auth.js";
@@ -6,7 +6,6 @@ import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
 import { and, eq, or } from "drizzle-orm";
-import { FileSystemItem } from "@vibes.diy/api-types";
 import mime from "mime";
 import { transform } from "sucrase";
 import { calcCid } from "./ensure-storage.js";

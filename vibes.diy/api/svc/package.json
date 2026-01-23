@@ -9,16 +9,17 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.15",
+    "@adviser/cement": "^0.5.17",
     "@cloudflare/workers-types": "^4.20260109.0",
-    "@fireproof/core-device-id": "0.24.8-dev-test-device-id",
-    "@fireproof/core-protocols-dashboard": "0.24.8-dev-test-device-id",
-    "@fireproof/core-runtime": "0.24.8-dev-test-device-id",
-    "@fireproof/core-types-base": "0.24.8-dev-test-device-id",
-    "@fireproof/core-types-device-id": "0.24.8-dev-test-device-id",
-    "@fireproof/core-types-protocols-cloud": "0.24.8-dev-test-device-id",
-    "@fireproof/core-types-protocols-dashboard": "0.24.8-dev-test-device-id",
+    "@fireproof/core-device-id": "0.24.9",
+    "@fireproof/core-protocols-dashboard": "0.24.9",
+    "@fireproof/core-runtime": "0.24.9",
+    "@fireproof/core-types-base": "0.24.9",
+    "@fireproof/core-types-device-id": "0.24.9",
+    "@fireproof/core-types-protocols-cloud": "0.24.9",
+    "@fireproof/core-types-protocols-dashboard": "0.24.9",
     "@libsql/client": "^0.17.0",
+    "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
@@ -34,7 +35,7 @@
     "sucrase": "^3.35.1"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.8-dev-test-device-id",
+    "@fireproof/core-cli": "0.24.9",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3"
   }

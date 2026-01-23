@@ -1,5 +1,5 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
-import { reqEnsureAppSlug, ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile, VibesDiyError } from "@vibes.diy/api-pkg";
+import { reqEnsureAppSlug, ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile, VibesDiyError } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../api.js";
