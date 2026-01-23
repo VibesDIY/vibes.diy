@@ -34,7 +34,7 @@ export interface StorageResult {
 
 export interface AssetStorage {
   ensureAsset(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
-  fetchAsset(url: string): Promise<Result<Uint8Array>>;
+  fetchAssets(...urls: string[]): Promise<Result<{ url: string; asset: Uint8Array }>[]>;
 }
 
 export interface CfCacheIf {

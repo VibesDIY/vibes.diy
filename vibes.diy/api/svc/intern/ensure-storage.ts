@@ -77,21 +77,27 @@ export function ensureStorage(
 export function createAssetStorage(db: VibesSqlite, r2ForCid?: (cid: string) => R2If, sizeThreshold = 4096): AssetStorage {
   return {
     ensureAsset: ensureStorage(db, r2ForCid, sizeThreshold),
-    async fetchAsset(url: string): Promise<Result<Uint8Array>> {
-      const uri = URI.from(url);
-      const cid = uri.pathname.split("/").pop();
-      if (!cid) {
-        return Result.Err(new Error(`Invalid asset URL: ${url}`));
-      }
-      if (uri.protocol === "sql:") {
-        const a = await db.select().from(sqlAssets).where(eq(sqlAssets.assetId, cid)).get();
-        return a ? Result.Ok(a.content as Uint8Array) : Result.Err(new Error("Not found"));
-      }
-      if (uri.protocol === "r2:" && r2ForCid) {
-        const s = await r2ForCid(cid).get();
-        return s ? Result.Ok(new Uint8Array(await new Response(s).arrayBuffer())) : Result.Err(new Error("Not found"));
-      }
-      return Result.Err(new Error(`Unsupported: ${uri.protocol}`));
+    async fetchAssets(...urls: string[]): Promise<Result<{ url: string; asset: Uint8Array }>[]> {
+      return Promise.all(
+        urls.map(async (url): Promise<Result<{ url: string; asset: Uint8Array }>> => {
+          const uri = URI.from(url);
+          const cid = uri.pathname.split("/").pop();
+          if (!cid) {
+            return Result.Err(new Error(`Invalid asset URL: ${url}`));
+          }
+          if (uri.protocol === "sql:") {
+            const a = await db.select().from(sqlAssets).where(eq(sqlAssets.assetId, cid)).get();
+            return a ? Result.Ok({ url, asset: a.content as Uint8Array }) : Result.Err(new Error("Not found"));
+          }
+          if (uri.protocol === "r2:" && r2ForCid) {
+            const s = await r2ForCid(cid).get();
+            return s
+              ? Result.Ok({ url, asset: new Uint8Array(await new Response(s).arrayBuffer()) })
+              : Result.Err(new Error("Not found"));
+          }
+          return Result.Err(new Error(`Unsupported: ${uri.protocol}`));
+        })
+      );
     },
   };
 }

@@ -60,9 +60,9 @@ export async function fetchContent(
       return Result.Ok(new Uint8Array(arrayBuffer));
     }
   }
-  const rAsset = await vctx.assetStorage.fetchAsset(item.assetURI);
-  if (rAsset.isErr()) return rAsset;
-  const content = rAsset.unwrap();
+  const [rAsset] = await vctx.assetStorage.fetchAssets(item.assetURI);
+  if (rAsset.isErr()) return Result.Err(rAsset.Err());
+  const content = rAsset.unwrap().asset;
   vctx.waitUntil(Promise.all([
     vctx.cache.put(...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), content as BodyInit, item, headers)),
     vctx.cache.put(...pairReqRes(assetCacheCidUrl, content as BodyInit, item, headers)),
