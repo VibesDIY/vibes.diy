@@ -1,4 +1,4 @@
-import { CoerceBinaryInput, exception2Result, Result, to_uint8, URI } from "@adviser/cement";
+import { CoerceBinaryInput, Result, to_uint8, URI } from "@adviser/cement";
 import { AssetStorage, StorageResult } from "../api.js";
 import { eq } from "drizzle-orm";
 import { VibesSqlite } from "../create-handler.js";
@@ -6,11 +6,6 @@ import { sqlAssets } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
 import { SuperThis } from "@fireproof/core-types-base";
-
-export interface R2If {
-  put(data: ReadableStream<Uint8Array>): Promise<void>;
-  get(): Promise<ReadableStream<Uint8Array> | null>;
-}
 
 export interface CalcCidResult {
   cid: string;
@@ -33,69 +28,97 @@ export async function calcCid({ sthis }: { sthis: SuperThis }, content: CoerceBi
   };
 }
 
-export function ensureStorage(
-  db: VibesSqlite,
-  r2ForCid?: (cid: string) => R2If,
-  sizeThreshold = 4096
-): (...items: { cid: string; data: Uint8Array }[]) => Promise<Result<StorageResult[]>> {
-  return async (...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>> => {
-    const now = new Date();
-    const created = now.toISOString();
-    const sqlItems = r2ForCid ? items.filter((i) => i.data.byteLength <= sizeThreshold) : items;
-    const r2Items = r2ForCid ? items.filter((i) => i.data.byteLength > sizeThreshold) : [];
-    const res = await exception2Result(() =>
-      db
-        .insert(sqlAssets)
-        .values(
-          sqlItems.map((item) => ({
-            assetId: item.cid,
-            content: item.data,
-            created,
-          }))
-        )
-        .onConflictDoNothing()
-        .run()
-    );
-    if (res.isErr()) {
-      return Result.Err(res);
-    }
-    if (r2ForCid && r2Items.length) {
-      await Promise.all(r2Items.map((i) => r2ForCid(i.cid).put(new ReadableStream({ start(c) { c.enqueue(i.data); c.close(); } }))));
-    }
-    return Result.Ok(
-      items.map((item) => ({
-        cid: item.cid,
-        getURL: r2ForCid && item.data.byteLength > sizeThreshold ? `r2://Assets/${item.cid}` : `sql://Assets/${item.cid}`,
-        mode: "existing",
-        created: now,
-        size: item.data.byteLength,
-      }))
-    );
-  };
+// --- AssetProvider Architecture ---
+
+export interface AssetProvider {
+  type: string;
+  put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>>; // returns URL
+  get(url: string): Promise<Result<ReadableStream<Uint8Array>>>; // provider parses its own URL
 }
 
-export function createAssetStorage(db: VibesSqlite, r2ForCid?: (cid: string) => R2If, sizeThreshold = 4096): AssetStorage {
+export class SqlAssetProvider implements AssetProvider {
+  type = "sql";
+  constructor(private db: VibesSqlite) {}
+
+  async put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>> {
+    const bytes = new Uint8Array(await new Response(data).arrayBuffer());
+    await this.db
+      .insert(sqlAssets)
+      .values({ assetId: cid, content: bytes, created: new Date().toISOString() })
+      .onConflictDoNothing()
+      .run();
+    return Result.Ok(`sql://Assets/${cid}`);
+  }
+
+  async get(url: string): Promise<Result<ReadableStream<Uint8Array>>> {
+    const cid = URI.from(url).pathname.split("/").pop();
+    if (!cid) return Result.Err(new Error(`Invalid URL: ${url}`));
+    const a = await this.db.select().from(sqlAssets).where(eq(sqlAssets.assetId, cid)).get();
+    if (!a) return Result.Err(new Error("Not found"));
+    const body = new Response(a.content as BodyInit).body;
+    return body ? Result.Ok(body) : Result.Err(new Error("Failed to create stream"));
+  }
+}
+
+export interface R2If {
+  put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<void>>;
+  get(cid: string): Promise<Result<ReadableStream<Uint8Array>>>;
+}
+
+export class R2AssetProvider implements AssetProvider {
+  type = "r2";
+  constructor(private r2: R2If) {}
+
+  async put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>> {
+    const res = await this.r2.put(cid, data);
+    return res.isErr() ? Result.Err(res.Err()) : Result.Ok(`r2://Assets/${cid}`);
+  }
+
+  async get(url: string): Promise<Result<ReadableStream<Uint8Array>>> {
+    const cid = URI.from(url).pathname.split("/").pop();
+    if (!cid) return Result.Err(new Error(`Invalid URL: ${url}`));
+    return this.r2.get(cid);
+  }
+}
+
+export const sizeBasedStrategy =
+  (threshold = 4096) =>
+  (providers: AssetProvider[], _cid: string, data: Uint8Array): AssetProvider =>
+    data.byteLength > threshold ? (providers.find((p) => p.type === "r2") ?? providers[0]) : providers[0];
+
+export function createAssetStorage(
+  providers: AssetProvider[],
+  selectProvider: (providers: AssetProvider[], cid: string, data: Uint8Array) => AssetProvider
+): AssetStorage {
   return {
-    ensureAssets: ensureStorage(db, r2ForCid, sizeThreshold),
-    async fetchAssets(...urls: string[]): Promise<Result<{ url: string; asset: Uint8Array }>[]> {
+    async ensureAssets(...items): Promise<Result<StorageResult[]>> {
+      const results: StorageResult[] = [];
+      for (const item of items) {
+        const provider = selectProvider(providers, item.cid, item.data);
+        const body = new Response(item.data as BodyInit).body;
+        if (!body) return Result.Err(new Error("Failed to create stream"));
+        const rUrl = await provider.put(item.cid, body);
+        if (rUrl.isErr()) return Result.Err(rUrl.Err());
+        results.push({
+          cid: item.cid,
+          getURL: rUrl.unwrap(),
+          mode: "existing",
+          created: new Date(),
+          size: item.data.byteLength,
+        });
+      }
+      return Result.Ok(results);
+    },
+
+    async fetchAssets(...urls): Promise<Result<{ url: string; asset: Uint8Array }>[]> {
       return Promise.all(
-        urls.map(async (url): Promise<Result<{ url: string; asset: Uint8Array }>> => {
-          const uri = URI.from(url);
-          const cid = uri.pathname.split("/").pop();
-          if (!cid) {
-            return Result.Err(new Error(`Invalid asset URL: ${url}`));
-          }
-          if (uri.protocol === "sql:") {
-            const a = await db.select().from(sqlAssets).where(eq(sqlAssets.assetId, cid)).get();
-            return a ? Result.Ok({ url, asset: a.content as Uint8Array }) : Result.Err(new Error("Not found"));
-          }
-          if (uri.protocol === "r2:" && r2ForCid) {
-            const s = await r2ForCid(cid).get();
-            return s
-              ? Result.Ok({ url, asset: new Uint8Array(await new Response(s).arrayBuffer()) })
-              : Result.Err(new Error("Not found"));
-          }
-          return Result.Err(new Error(`Unsupported: ${uri.protocol}`));
+        urls.map(async (url) => {
+          const protocol = URI.from(url).protocol.replace(":", "");
+          const provider = providers.find((p) => p.type === protocol);
+          if (!provider) return Result.Err(new Error(`No provider for ${protocol}`));
+          const rStream = await provider.get(url);
+          if (rStream.isErr()) return Result.Err(rStream.Err());
+          return Result.Ok({ url, asset: new Uint8Array(await new Response(rStream.unwrap()).arrayBuffer()) });
         })
       );
     },
