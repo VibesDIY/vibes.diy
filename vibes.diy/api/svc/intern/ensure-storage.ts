@@ -76,7 +76,7 @@ export function ensureStorage(
 
 export function createAssetStorage(db: VibesSqlite, r2ForCid?: (cid: string) => R2If, sizeThreshold = 4096): AssetStorage {
   return {
-    ensureAsset: ensureStorage(db, r2ForCid, sizeThreshold),
+    ensureAssets: ensureStorage(db, r2ForCid, sizeThreshold),
     async fetchAssets(...urls: string[]): Promise<Result<{ url: string; asset: Uint8Array }>[]> {
       return Promise.all(
         urls.map(async (url): Promise<Result<{ url: string; asset: Uint8Array }>> => {
