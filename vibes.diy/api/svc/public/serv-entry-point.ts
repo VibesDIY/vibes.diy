@@ -13,7 +13,7 @@ import {
 import { DefaultHttpHeaders } from "../create-handler.js";
 import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
 import { VibesApiSQLCtx } from "../api.js";
-import { sqlApps, sqlAssets } from "../sql/vibes-diy-api-schema.js";
+import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, ResponseType } from "@vibes.diy/api-types";
 import { type } from "arktype";
@@ -67,29 +67,14 @@ export async function fetchContent(
       return Result.Ok(new Uint8Array(arrayBuffer));
     }
   }
-  const assetURI = URI.from(item.assetURI);
-  switch (assetURI.protocol) {
-    case "sql:":
-      {
-        const asset = await vctx.db.select().from(sqlAssets).where(eq(sqlAssets.assetId, item.assetId)).get();
-        if (!asset) {
-          return Result.Err(new Error(`Asset not found: ${item.assetId}`));
-        }
-        // inject into cache for assert lookups
-        vctx.waitUntil(
-          Promise.all([
-            vctx.cache.put(
-              ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), asset.content, item, headers)
-            ),
-            vctx.cache.put(...pairReqRes(assetCacheCidUrl, asset.content, item, headers)),
-          ])
-        );
-        return Result.Ok(asset.content as Uint8Array);
-      }
-      break;
-    default:
-      return Result.Err(new Error(`Unsupported assetURI protocol: ${assetURI.protocol}`));
-  }
+  const [rAsset] = await vctx.assetStorage.fetchAssets(item.assetURI);
+  if (rAsset.isErr()) return Result.Err(rAsset.Err());
+  const content = rAsset.unwrap().asset;
+  vctx.waitUntil(Promise.all([
+    vctx.cache.put(...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), content, item, headers)),
+    vctx.cache.put(...pairReqRes(assetCacheCidUrl, content, item, headers)),
+  ]));
+  return Result.Ok(content);
 }
 
 async function renderFromFs(

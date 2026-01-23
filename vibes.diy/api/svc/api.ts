@@ -31,6 +31,11 @@ export interface StorageResult {
   size: number;
 }
 
+export interface AssetStorage {
+  ensureAssets(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
+  fetchAssets(...urls: string[]): Promise<Result<{ url: string; asset: Uint8Array }>[]>;
+}
+
 export interface CfCacheIf {
   delete(request: RequestInfo | URL, options?: CacheQueryOptions): Promise<boolean>;
   match(request: RequestInfo | URL, options?: CacheQueryOptions): Promise<Response | undefined>;
@@ -47,7 +52,7 @@ export interface VibesApiSQLCtx {
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<string | undefined>;
   waitUntil<T>(promise: Promise<T>): void;
-  ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
+  assetStorage: AssetStorage;
 }
 
 export function createVibesFPApiSQLCtx(
