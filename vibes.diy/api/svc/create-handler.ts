@@ -25,7 +25,7 @@ import { appendChatSection } from "./public/append-chat-section.js";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
-import { createAssetStorage } from "./intern/ensure-storage.js";
+import { createAssetStorage, SqlAssetProvider, sizeBasedStrategy } from "./intern/ensure-storage.js";
 import { isResponseType, MsgBase, msgBase, ResponseType, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { servEntryPoint } from "./public/serv-entry-point.js";
 import { D1Result } from "@cloudflare/workers-types";
@@ -347,7 +347,7 @@ export async function createHandler<T extends VibesSqlite>(params: CreateHandler
         clockTolerance: 60,
         deviceIdCA: rDeviceIdCA.Ok(),
       }),
-      assetStorage: createAssetStorage(params.db),
+      assetStorage: createAssetStorage([new SqlAssetProvider(params.db)], sizeBasedStrategy()),
       deviceCA: rDeviceIdCA.Ok(),
       params: svcParams,
     })
