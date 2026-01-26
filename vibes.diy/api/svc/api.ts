@@ -21,6 +21,7 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
   };
   assetCacheUrl: string; // https://asset-cache.vibes.app/{assetId}
   importMapProps: ImportMapProps;
+  openRouterApiKey?: string; // For content moderation
 };
 
 export interface StorageResult {

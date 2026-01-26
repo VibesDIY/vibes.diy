@@ -200,6 +200,8 @@ export async function createHandler<T extends VibesSqlite>(params: CreateHandler
     // VIBES_SVC_HOSTNAME_BASE: "localhost.vibes.app",
     VIBES_SVC_HOSTNAME_BASE: param.REQUIRED,
     VIBES_SVC_PROTOCOL: "https",
+
+    OPENROUTER_API_KEY: param.OPTIONAL,
   });
   if (rEnvVals.isErr()) {
     throw rEnvVals.Err();
@@ -244,6 +246,7 @@ export async function createHandler<T extends VibesSqlite>(params: CreateHandler
         FP: envVals.FP_VERSION,
       },
     },
+    openRouterApiKey: envVals.OPENROUTER_API_KEY,
   };
 
   const vibesApiCtx = new AppContext().set(

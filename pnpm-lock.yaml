@@ -963,6 +963,9 @@ importers:
       '@vibes.diy/api-types':
         specifier: workspace:*
         version: link:../types
+      '@vibes.diy/call-ai-v2':
+        specifier: workspace:*
+        version: link:../../../call-ai/v2
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../../../use-vibes/base
