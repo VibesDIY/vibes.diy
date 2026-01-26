@@ -78,9 +78,6 @@
   "pnpm": {
     "patchedDependencies": {
       "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch"
-    },
-    "overrides": {
-      "@types/node": "^25.0.10"
     }
   }
 }
