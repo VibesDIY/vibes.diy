@@ -155,6 +155,46 @@ export const resAppendChatSection = type({
 });
 export type ResAppendChatSection = typeof resAppendChatSection.infer;
 
+// Profile types
+export const userProfileType = type({
+  type: "'user'",
+  name: "string",
+  "url?": "string",
+});
+export type UserProfileType = typeof userProfileType.infer;
+
+export const profileType = userProfileType; // future: .or(shopProfile)
+export type ProfileType = typeof profileType.infer;
+
+// User slug claim/list types
+export const reqClaimUserSlug = type({
+  type: "'vibes.diy.req-claim-user-slug'",
+  auth: dashAuthType,
+  userSlug: "string",
+  "profile?": profileType,
+});
+export type ReqClaimUserSlug = typeof reqClaimUserSlug.infer;
+
+export const resClaimUserSlug = type({
+  type: "'vibes.diy.res-claim-user-slug'",
+  userSlug: "string",
+  owned: "boolean",
+  "profile?": profileType,
+});
+export type ResClaimUserSlug = typeof resClaimUserSlug.infer;
+
+export const reqListUserSlugs = type({
+  type: "'vibes.diy.req-list-user-slugs'",
+  auth: dashAuthType,
+});
+export type ReqListUserSlugs = typeof reqListUserSlugs.infer;
+
+export const resListUserSlugs = type({
+  type: "'vibes.diy.res-list-user-slugs'",
+  slugs: ["string", "[]"],
+});
+export type ResListUserSlugs = typeof resListUserSlugs.infer;
+
 export type ResError = typeof resError.infer;
 
 export const resEnsureAppSlugError = type({

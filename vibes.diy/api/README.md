@@ -525,16 +525,22 @@ Same files + same env = same fsId (enables deduplication).
 
 ### Asset Caching
 
-`serv-entry-point.ts` uses two-tier Cloudflare caching:
+`serv-entry-point.ts` uses two-tier Cloudflare caching with cross-population:
 
-1. **Global cache** by CID: `assetCacheUrl/{assetId}`
-2. **Path cache** by request URL
+1. **CID cache** (global): `assetCacheUrl/{assetId}` - deduplicates identical content across paths
+2. **Path cache** (URL-specific): keyed by request URL - fast lookup for specific routes
 
-On cache miss: D1 query → populate both caches via `waitUntil()`.
+Lookup strategy:
+- Check both caches in parallel
+- **CID hit, path miss** → return from CID cache, populate path cache via `waitUntil()`
+- **Path hit, CID miss** → return from path cache, populate CID cache via `waitUntil()`
+- **Both miss** → D1 query, populate both caches via `waitUntil()`
+
+This ensures caches stay synchronized - a hit on either cache warms the other.
 
 ### App Eviction
 
-When a user exceeds `MAX_APPS_PER_USER_ID`:
-
-- Oldest `dev` mode apps are evicted first (10% of total + 1)
+When a user's Apps table entries reach `maxAppSlugPerUserId` (from `MAX_APP_SLUG_PER_USER_ID`, default 10):
+- Oldest `dev` mode apps are evicted first (~10% of total + 1)
+- If no dev apps available to evict, deployment fails
 - `production` apps are preserved

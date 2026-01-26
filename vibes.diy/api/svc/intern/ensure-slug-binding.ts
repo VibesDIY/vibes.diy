@@ -32,7 +32,7 @@ async function writeUserSlugBinding(ctx: VibesApiSQLCtx, userId: string, userSlu
   });
 }
 
-async function ensureUserSlug(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam): Promise<Result<string>> {
+export async function ensureUserSlug(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam): Promise<Result<string>> {
   return exception2Result(async (): Promise<Result<string>> => {
     let userSlug: string | undefined = undefined;
     if (!binding.userSlug) {
@@ -53,15 +53,23 @@ async function ensureUserSlug(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam)
       }
       return writeUserSlugBinding(ctx, binding.userId, userSlug);
     }
-    const existing = await ctx.db
+    // Check if slug exists (regardless of who owns it)
+    const existingSlug = await ctx.db
       .select()
       .from(sqlUserSlugBinding)
-      .where(and(eq(sqlUserSlugBinding.userId, binding.userId), eq(sqlUserSlugBinding.userSlug, binding.userSlug)))
+      .where(eq(sqlUserSlugBinding.userSlug, binding.userSlug))
       .get();
-    if (!existing) {
-      return writeUserSlugBinding(ctx, binding.userId, binding.userSlug);
+
+    if (existingSlug) {
+      // Slug exists - check ownership
+      if (existingSlug.userId !== binding.userId) {
+        return Result.Err("userSlug already claimed by another user");
+      }
+      // Current user owns it
+      return Result.Ok(binding.userSlug);
     }
-    return Result.Ok(binding.userSlug);
+    // Slug not taken - claim it
+    return writeUserSlugBinding(ctx, binding.userId, binding.userSlug);
   });
 }
 
@@ -130,6 +138,17 @@ export async function ensureAppSlug(
       appSlug = binding.appSlug;
     }
     return Result.Ok(appSlug);
+  });
+}
+
+export async function listUserSlugs(ctx: VibesApiSQLCtx, userId: string): Promise<Result<string[]>> {
+  return exception2Result(async (): Promise<Result<string[]>> => {
+    const slugs = await ctx.db
+      .select({ userSlug: sqlUserSlugBinding.userSlug })
+      .from(sqlUserSlugBinding)
+      .where(eq(sqlUserSlugBinding.userId, userId))
+      .all();
+    return Result.Ok(slugs.map((s) => s.userSlug));
   });
 }
 

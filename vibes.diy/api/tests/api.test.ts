@@ -313,6 +313,117 @@ describe("VibesDiyApi", () => {
     expect(res.isErr()).toBe(true);
   });
 
+  it("claimUserSlug claims a new slug", async () => {
+    const userSlug = `test-slug-${Date.now()}`;
+    const res = await api.claimUserSlug({ userSlug });
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().userSlug).toBe(userSlug);
+    expect(res.Ok().owned).toBe(true);
+  });
+
+  it("claimUserSlug is idempotent for same user", async () => {
+    const userSlug = `idempotent-slug-${Date.now()}`;
+
+    // Claim first time
+    const res1 = await api.claimUserSlug({ userSlug });
+    expect(res1.isOk()).toBe(true);
+    expect(res1.Ok().userSlug).toBe(userSlug);
+
+    // Claim again - should succeed (idempotent)
+    const res2 = await api.claimUserSlug({ userSlug });
+    expect(res2.isOk()).toBe(true);
+    expect(res2.Ok().userSlug).toBe(userSlug);
+    expect(res2.Ok().owned).toBe(true);
+  });
+
+  it("listUserSlugs returns all owned slugs", async () => {
+    const slug1 = `list-test-a-${Date.now()}`;
+    const slug2 = `list-test-b-${Date.now()}`;
+
+    // Claim two slugs
+    await api.claimUserSlug({ userSlug: slug1 });
+    await api.claimUserSlug({ userSlug: slug2 });
+
+    // List should include both
+    const res = await api.listUserSlugs({});
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().slugs).toContain(slug1);
+    expect(res.Ok().slugs).toContain(slug2);
+  });
+
+  it("ensureAppSlug with userSlug I own works", async () => {
+    const userSlug = `owned-slug-${Date.now()}`;
+
+    // First claim the slug
+    const claimRes = await api.claimUserSlug({ userSlug });
+    expect(claimRes.isOk()).toBe(true);
+
+    // Then publish with it
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      userSlug,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "console.log('hello');",
+        },
+      ],
+    });
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().userSlug).toBe(userSlug);
+  });
+
+  it("claimUserSlug with profile stores it", async () => {
+    const userSlug = `profile-slug-${Date.now()}`;
+    const res = await api.claimUserSlug({
+      userSlug,
+      profile: { type: "user", name: "J Chris Anderson" },
+    });
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().profile?.name).toBe("J Chris Anderson");
+  });
+
+  it("claimUserSlug returns existing profile", async () => {
+    const userSlug = `existing-profile-${Date.now()}`;
+    await api.claimUserSlug({
+      userSlug,
+      profile: { type: "user", name: "Initial Name" },
+    });
+
+    // Call again without profile - should still return it
+    const res = await api.claimUserSlug({ userSlug });
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().profile?.name).toBe("Initial Name");
+  });
+
+  it("claimUserSlug updates profile on subsequent calls", async () => {
+    const userSlug = `update-profile-${Date.now()}`;
+    await api.claimUserSlug({
+      userSlug,
+      profile: { type: "user", name: "Old Name" },
+    });
+
+    const res = await api.claimUserSlug({
+      userSlug,
+      profile: { type: "user", name: "New Name" },
+    });
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().profile?.name).toBe("New Name");
+  });
+
+  it("claimUserSlug with profile and url", async () => {
+    const userSlug = `profile-url-${Date.now()}`;
+    const res = await api.claimUserSlug({
+      userSlug,
+      profile: { type: "user", name: "Chris", url: "https://example.com" },
+    });
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().profile?.name).toBe("Chris");
+    expect(res.Ok().profile?.url).toBe("https://example.com");
+  });
+
   it("repeatable stable ensureAppSlug", async () => {
     const now = Date.now();
     for (let i = 0; i < 2; i++) {

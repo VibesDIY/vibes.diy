@@ -21,6 +21,8 @@ import { ResultSet } from "@libsql/client";
 import { ensureAppSlugItem } from "./public/ensure-app-slug-item.js";
 import { ensureChatContext } from "./public/ensure-chat-context.js";
 import { appendChatSection } from "./public/append-chat-section.js";
+import { claimUserSlug } from "./public/claim-user-slug.js";
+import { listUserSlugs } from "./public/list-user-slugs.js";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
@@ -105,6 +107,8 @@ export const vibesApiEvento = Lazy(() => {
     ensureAppSlugItem,
     ensureChatContext,
     appendChatSection,
+    claimUserSlug,
+    listUserSlugs,
     {
       type: EventoType.WildCard,
       hash: "not-implemented-handler",

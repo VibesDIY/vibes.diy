@@ -70,3 +70,12 @@ export const sqlChatSections = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.seq, table.contextId] })]
 );
+
+export const sqlUserProfiles = sqliteTable("UserProfiles", {
+  userSlug: text()
+    .primaryKey()
+    .references(() => sqlUserSlugBinding.userSlug),
+  profile: text({ mode: "json" }).notNull(), // { type: 'user', name: '...', url?: '...' }
+  created: text().notNull(),
+  updated: text().notNull(),
+});

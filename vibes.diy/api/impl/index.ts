@@ -5,9 +5,13 @@ import {
   ReqEnsureAppSlug,
   ReqEnsureChatContext,
   ReqAppendChatSection,
+  ReqClaimUserSlug,
+  ReqListUserSlugs,
   ResEnsureAppSlug,
   ResEnsureChatContext,
   ResAppendChatSection,
+  ResClaimUserSlug,
+  ResListUserSlugs,
   ResultVibesDiy,
   VibesDiyError,
   MsgBox,
@@ -159,6 +163,18 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     req: Omit<ReqAppendChatSection, "type" | "auth"> & { auth?: DashAuthType }
   ): Promise<Result<ResAppendChatSection, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-append-chat-section" });
+  }
+
+  async claimUserSlug(
+    req: Omit<ReqClaimUserSlug, "type" | "auth"> & { auth?: DashAuthType }
+  ): Promise<Result<ResClaimUserSlug, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-claim-user-slug" });
+  }
+
+  async listUserSlugs(
+    req: Omit<ReqListUserSlugs, "type" | "auth"> & { auth?: DashAuthType }
+  ): Promise<Result<ResListUserSlugs, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-user-slugs" });
   }
 }
 
