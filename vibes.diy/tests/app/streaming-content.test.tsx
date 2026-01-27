@@ -34,7 +34,7 @@ describe("Streaming Content Tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Ensure both segments are rendered
@@ -44,9 +44,7 @@ describe("Streaming Content Tests", () => {
 
   test("shows markdown content immediately when streaming", () => {
     // Arrange: Create a test message with some markdown content
-    const segments = [
-      { type: "markdown", content: "This is a test message" },
-    ] as Segment[];
+    const segments = [{ type: "markdown", content: "This is a test message" }] as Segment[];
 
     // Act: Render the component with streaming flag
     render(
@@ -65,7 +63,7 @@ describe("Streaming Content Tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Assert: The content should be visible

@@ -7,20 +7,9 @@ interface GroupsIconProps {
   height?: number;
 }
 
-export function GroupsIcon({
-  bgFill = "#fff",
-  fill = "#2a2a2a",
-  width = 44,
-  height = 44,
-}: GroupsIconProps) {
+export function GroupsIcon({ bgFill = "#fff", fill = "#2a2a2a", width = 44, height = 44 }: GroupsIconProps) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 44 44"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={width} height={height} viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="22" cy="22" r="22" fill={fill} />
       <g transform="scale(1.8333)">
         <path

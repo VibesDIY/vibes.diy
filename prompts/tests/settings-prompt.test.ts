@@ -15,10 +15,7 @@ vi.mock("@vibes.diy/prompts", async () => {
 
   // Return the actual implementation with our mocked modules
   return {
-    makeBaseSystemPrompt: async (
-      model: string,
-      sessionDoc?: Partial<UserSettings>,
-    ) => {
+    makeBaseSystemPrompt: async (model: string, sessionDoc?: Partial<UserSettings>) => {
       let concatenatedLlmsTxt = "";
       const llmsList = Object.values(llmsModules).map((mod) => mod.default);
 
@@ -121,16 +118,13 @@ describe("Settings and Prompt Integration", () => {
     const result = await makeBaseSystemPrompt(model, settingsDoc);
 
     // Check that the prompt includes the custom style
-    expect(result.systemPrompt).toContain(
-      "have a synthwave (80s digital aesthetic) vibe",
-    );
+    expect(result.systemPrompt).toContain("have a synthwave (80s digital aesthetic) vibe");
     expect(result.systemPrompt).not.toContain("DIY zine");
   });
 
   it("includes user prompt from settings document when provided", async () => {
     const model = "test-model";
-    const userPromptText =
-      "Always include a dark mode toggle in your components";
+    const userPromptText = "Always include a dark mode toggle in your components";
     const settingsDoc = {
       _id: "user_settings",
       userPrompt: userPromptText,

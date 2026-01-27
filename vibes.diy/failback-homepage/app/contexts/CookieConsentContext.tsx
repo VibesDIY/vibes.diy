@@ -6,28 +6,20 @@ interface CookieConsentContextType {
   setMessageHasBeenSent: (value: boolean) => void;
 }
 
-const CookieConsentContext = createContext<
-  CookieConsentContextType | undefined
->(undefined);
+const CookieConsentContext = createContext<CookieConsentContextType | undefined>(undefined);
 
 export function CookieConsentProvider({ children }: { children: ReactNode }) {
   const [messageHasBeenSent, setMessageHasBeenSent] = useState(false);
 
   return (
-    <CookieConsentContext.Provider
-      value={{ messageHasBeenSent, setMessageHasBeenSent }}
-    >
-      {children}
-    </CookieConsentContext.Provider>
+    <CookieConsentContext.Provider value={{ messageHasBeenSent, setMessageHasBeenSent }}>{children}</CookieConsentContext.Provider>
   );
 }
 
 export function useCookieConsent() {
   const context = useContext(CookieConsentContext);
   if (context === undefined) {
-    throw new Error(
-      "useCookieConsent must be used within a CookieConsentProvider",
-    );
+    throw new Error("useCookieConsent must be used within a CookieConsentProvider");
   }
   return context;
 }

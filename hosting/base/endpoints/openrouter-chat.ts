@@ -14,70 +14,28 @@ export class OpenRouterChat extends OpenAPIRoute {
           messages: z
             .array(
               z.object({
-                role: z
-                  .string()
-                  .describe(
-                    "The role of the message author (system, user, assistant)",
-                  ),
+                role: z.string().describe("The role of the message author (system, user, assistant)"),
                 content: z.string().describe("The content of the message"),
-                name: z
-                  .string()
-                  .optional()
-                  .describe("Optional name for the message author"),
-              }),
+                name: z.string().optional().describe("Optional name for the message author"),
+              })
             )
             .describe("A list of messages comprising the conversation so far"),
-          temperature: z
-            .number()
-            .optional()
-            .default(1)
-            .describe("Sampling temperature (0-2)"),
-          top_p: z
-            .number()
-            .optional()
-            .default(1)
-            .describe("Nucleus sampling parameter"),
-          n: z
-            .number()
-            .optional()
-            .default(1)
-            .describe("Number of chat completion choices to generate"),
-          stream: z
-            .boolean()
-            .optional()
-            .default(false)
-            .describe("Stream partial progress"),
-          max_tokens: z
-            .number()
-            .optional()
-            .describe("Maximum number of tokens to generate"),
-          presence_penalty: z
-            .number()
-            .optional()
-            .default(0)
-            .describe("Presence penalty for token selection"),
-          frequency_penalty: z
-            .number()
-            .optional()
-            .default(0)
-            .describe("Frequency penalty for token selection"),
-          logit_bias: z
-            .record(z.string(), z.number())
-            .optional()
-            .describe("Modify likelihood of specific tokens"),
+          temperature: z.number().optional().default(1).describe("Sampling temperature (0-2)"),
+          top_p: z.number().optional().default(1).describe("Nucleus sampling parameter"),
+          n: z.number().optional().default(1).describe("Number of chat completion choices to generate"),
+          stream: z.boolean().optional().default(false).describe("Stream partial progress"),
+          max_tokens: z.number().optional().describe("Maximum number of tokens to generate"),
+          presence_penalty: z.number().optional().default(0).describe("Presence penalty for token selection"),
+          frequency_penalty: z.number().optional().default(0).describe("Frequency penalty for token selection"),
+          logit_bias: z.record(z.string(), z.number()).optional().describe("Modify likelihood of specific tokens"),
           response_format: z
             .object({
-              type: z
-                .string()
-                .describe("Format of the response (json or text)"),
+              type: z.string().describe("Format of the response (json or text)"),
             })
             .optional()
             .describe("Format of the response"),
-          seed: z
-            .number()
-            .optional()
-            .describe("Seed for deterministic sampling"),
-        }),
+          seed: z.number().optional().describe("Seed for deterministic sampling"),
+        })
       ),
     },
     responses: {
@@ -97,14 +55,14 @@ export class OpenRouterChat extends OpenAPIRoute {
                   content: z.string(),
                 }),
                 finish_reason: z.string(),
-              }),
+              })
             ),
             usage: z.object({
               prompt_tokens: z.number(),
               completion_tokens: z.number(),
               total_tokens: z.number(),
             }),
-          }),
+          })
         ),
       },
     },
@@ -121,13 +79,12 @@ export class OpenRouterChat extends OpenAPIRoute {
         return c.json(
           {
             error: {
-              message:
-                "Authentication required. Please log in to use AI features.",
+              message: "Authentication required. Please log in to use AI features.",
               type: "authentication_error",
               code: 401,
             },
           },
-          401,
+          401
         );
       }
 
@@ -142,7 +99,7 @@ export class OpenRouterChat extends OpenAPIRoute {
               code: 500,
             },
           },
-          500,
+          500
         );
       }
 
@@ -161,14 +118,11 @@ export class OpenRouterChat extends OpenAPIRoute {
       };
 
       // Send request to OpenRouter API
-      const response = await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify(requestBody),
-        },
-      );
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+      });
 
       // Handle streaming responses if requested
       if (data.stream) {
@@ -186,7 +140,7 @@ export class OpenRouterChat extends OpenAPIRoute {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
               },
-            },
+            }
           );
         }
 
@@ -227,7 +181,7 @@ export class OpenRouterChat extends OpenAPIRoute {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
             },
-          },
+          }
         );
       }
 
@@ -239,12 +193,9 @@ export class OpenRouterChat extends OpenAPIRoute {
       console.error("Error in OpenRouterChat handler:", error);
       return c.json(
         {
-          error:
-            error instanceof Error
-              ? error.message
-              : "An error occurred processing your request",
+          error: error instanceof Error ? error.message : "An error occurred processing your request",
         },
-        500,
+        500
       );
     }
   }

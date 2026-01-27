@@ -90,10 +90,7 @@ interface FeaturedVibesProps {
   className?: string;
 }
 
-export default function FeaturedVibes({
-  count = 3,
-  className = "",
-}: FeaturedVibesProps) {
+export default function FeaturedVibes({ count = 3, className = "" }: FeaturedVibesProps) {
   const filteredVibes = useMemo(() => {
     // Get random vibes from the publishedVibes array
     const shuffled = [...publishedVibes].sort(() => 0.5 - Math.random());
@@ -104,10 +101,7 @@ export default function FeaturedVibes({
     <div className={`w-full ${className}`}>
       <div className="flex flex-wrap gap-4">
         {filteredVibes.map((vibe) => (
-          <div
-            key={vibe.name}
-            className="flex-1 min-w-full sm:min-w-[calc(33.333%-1rem)]"
-          >
+          <div key={vibe.name} className="flex-1 min-w-full sm:min-w-[calc(33.333%-1rem)]">
             <PublishedVibeCard slug={vibe.slug} name={vibe.name} />
           </div>
         ))}

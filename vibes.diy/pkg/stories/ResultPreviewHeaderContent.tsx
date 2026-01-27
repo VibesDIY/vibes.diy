@@ -5,7 +5,7 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { BrowserRouter } from "react-router-dom";
 
 // Mock state provider for interactive demo
-export interface MockedHeaderProps {
+interface MockedHeaderProps {
   // View state props
   displayView?: ViewType;
   showViewControls?: boolean;
@@ -126,4 +126,3 @@ export const MockedResultPreviewHeaderContent: React.FC<MockedHeaderProps> = ({
 };
 
 // Also export as default for easier importing
-export default MockedResultPreviewHeaderContent;

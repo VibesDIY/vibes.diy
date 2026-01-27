@@ -19,7 +19,5 @@ export const AUTH_REQUIRED_ERROR = "AUTH_REQUIRED";
 export function isAuthErrorMessage(msg: string): boolean {
   const normalized = msg.toLowerCase();
   // Match word boundaries to avoid false positives
-  return /\b(401|unauthorized|authentication|authentication_error)\b/.test(
-    normalized,
-  );
+  return /\b(401|unauthorized|authentication|authentication_error)\b/.test(normalized);
 }

@@ -2,11 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { animate } from "animejs";
 import * as THREE from "three";
 import { useSceneSetup } from "../../hooks/index.js";
-import {
-  COUNTERBOY_POSITIONS,
-  ANIMATION_DURATIONS,
-  CAMERA_VIEW_POSITIONS,
-} from "../../constants/scene.js";
+import { COUNTERBOY_POSITIONS, ANIMATION_DURATIONS, CAMERA_VIEW_POSITIONS } from "../../constants/scene.js";
 import { generateBlockPreset } from "../../factories/sceneObjects.js";
 import { CounterBoy } from "../../classes/CounterBoy.js";
 import { ScreenshotBoy } from "../../classes/ScreenshotBoy.js";
@@ -44,8 +40,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
     const leftCounterBoy = sceneSetup.counterBoyLeftRef.current;
     const rightCounterBoy = sceneSetup.counterBoyRightRef.current;
 
-    const primaryCounterBoy =
-      source === "left" ? leftCounterBoy : rightCounterBoy;
+    const primaryCounterBoy = source === "left" ? leftCounterBoy : rightCounterBoy;
     const syncCounterBoy = source === "left" ? rightCounterBoy : leftCounterBoy;
 
     if (!primaryCounterBoy) return;
@@ -88,10 +83,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
       return [];
     }
 
-    const rotationTargets = [
-      counterBoyLeft.group.rotation,
-      counterBoyRight.group.rotation,
-    ];
+    const rotationTargets = [counterBoyLeft.group.rotation, counterBoyRight.group.rotation];
     const counterBoys = [counterBoyLeft, counterBoyRight];
     const iso1View = CAMERA_VIEW_POSITIONS.isometric1;
 
@@ -173,11 +165,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
           ease: "inOutQuad",
           autoplay: false,
           onRender: () => {
-            camera.position.set(
-              cameraAnimationState.posX,
-              cameraAnimationState.posY,
-              cameraAnimationState.posZ,
-            );
+            camera.position.set(cameraAnimationState.posX, cameraAnimationState.posY, cameraAnimationState.posZ);
             camera.rotation.x = cameraAnimationState.rotX;
             camera.rotation.y = cameraAnimationState.rotY;
             camera.lookAt(0, 0, 0);
@@ -240,8 +228,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
           ease: "inOutQuad",
           autoplay: false,
           onRender: () => {
-            camera.position.x =
-              cameraPanBackState.baseX + cameraPanBackState.offsetX;
+            camera.position.x = cameraPanBackState.baseX + cameraPanBackState.offsetX;
           },
         }),
       },
@@ -282,9 +269,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
               boy.group.traverse((child: THREE.Object3D) => {
                 const mesh = child as THREE.Mesh;
                 if (mesh.material) {
-                  const materials = Array.isArray(mesh.material)
-                    ? mesh.material
-                    : [mesh.material];
+                  const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
                   materials.forEach((mat: THREE.Material) => {
                     mat.transparent = true;
                   });
@@ -299,9 +284,7 @@ export function AnimatedScene({ progress, style }: AnimatedSceneProps) {
               boy.group.traverse((child: THREE.Object3D) => {
                 const mesh = child as THREE.Mesh;
                 if (mesh.material) {
-                  const materials = Array.isArray(mesh.material)
-                    ? mesh.material
-                    : [mesh.material];
+                  const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
                   materials.forEach((mat: THREE.Material) => {
                     mat.opacity = screenshotBoysState.progress;
                   });

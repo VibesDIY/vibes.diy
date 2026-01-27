@@ -6,7 +6,7 @@ export async function saveErrorAsSystemMessage(
   sessionDatabase: Database,
   sessionId: string | undefined,
   error: RuntimeError,
-  category: ErrorCategory,
+  category: ErrorCategory
 ) {
   if (!sessionDatabase) return;
 

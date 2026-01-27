@@ -26,6 +26,4 @@ export const getSessionDatabase = vi.fn().mockImplementation(() => mockDb);
 /**
  * Mock implementation of getSessionDatabaseName
  */
-export const getSessionDatabaseName = vi
-  .fn()
-  .mockImplementation((sessionId: string) => `vibe-${sessionId}`);
+export const getSessionDatabaseName = vi.fn().mockImplementation((sessionId: string) => `vibe-${sessionId}`);

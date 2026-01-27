@@ -23,9 +23,7 @@ export const getTitleStyle = (): CSSProperties => ({
   textAlign: "center",
 });
 
-export const getMessageWrapperStyle = (
-  isCurrentUser: boolean,
-): CSSProperties => ({
+export const getMessageWrapperStyle = (isCurrentUser: boolean): CSSProperties => ({
   display: "flex",
   flexDirection: "column",
   alignItems: isCurrentUser ? "flex-end" : "flex-start",
@@ -44,9 +42,7 @@ export const getUsernameStyle = (isCurrentUser: boolean): CSSProperties => ({
   textAlign: isCurrentUser ? "right" : "left",
 });
 
-export const getMessageBubbleStyle = (
-  isCurrentUser: boolean,
-): CSSProperties => ({
+export const getMessageBubbleStyle = (isCurrentUser: boolean): CSSProperties => ({
   padding: "16px 20px",
   borderRadius: isCurrentUser ? "20px 20px 4px 20px" : "20px 20px 20px 4px",
   background: isCurrentUser ? "#fefff1" : "#5298c8",
@@ -55,9 +51,7 @@ export const getMessageBubbleStyle = (
   fontSize: "15px",
   lineHeight: "1.6",
   fontWeight: "bold",
-  border: isCurrentUser
-    ? "1px solid #000"
-    : "1px solid rgba(255, 255, 255, 0.1)",
+  border: isCurrentUser ? "1px solid #000" : "1px solid rgba(255, 255, 255, 0.1)",
   position: "relative",
 });
 

@@ -14,10 +14,7 @@ export default function VibePage(props: VibePageProps) {
     <html lang="en">
       <head>
         <ImportMap {...props} />
-        <Meta
-          title={`${appSlug} | Vibes DIY`}
-          description={`Vibe: ${appSlug}`}
-        />
+        <Meta title={`${appSlug} | Vibes DIY`} description={`Vibe: ${appSlug}`} />
         <Links />
         <link rel="stylesheet" href="/app/app.css" />
         <script type="module" src="https://esm.sh/@tailwindcss/browser@4" />

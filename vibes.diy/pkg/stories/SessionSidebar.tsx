@@ -18,28 +18,17 @@ export const MockSessionSidebar: React.FC<{
         <div style={{ position: "relative", height: "100vh", width: "100%" }}>
           {/* Backdrop overlay when sidebar is visible */}
           {isVisible && (
-            <div
-              className="bg-opacity-50 fixed inset-0 z-[5] bg-black"
-              onClick={onClose}
-              style={{ backdropFilter: "blur(2px)" }}
-            />
+            <div className="bg-opacity-50 fixed inset-0 z-[5] bg-black" onClick={onClose} style={{ backdropFilter: "blur(2px)" }} />
           )}
 
           {/* The real SessionSidebar component */}
-          <SessionSidebar
-            isVisible={isVisible}
-            onClose={onClose}
-            sessionId="storybook-session"
-          />
+          <SessionSidebar isVisible={isVisible} onClose={onClose} sessionId="storybook-session" />
 
           {/* Mock main content area */}
           <div className="pl-0 transition-all duration-300">
             <div className="min-h-screen bg-gray-50 p-8 dark:bg-gray-900">
               <h1 className="mb-4 text-2xl font-bold">Main Content Area</h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Click the hamburger menu or use the controls to open the
-                sidebar.
-              </p>
+              <p className="text-gray-600 dark:text-gray-400">Click the hamburger menu or use the controls to open the sidebar.</p>
               <div className="mt-4 space-y-2">
                 <p>
                   <strong>isVisible:</strong> {isVisible.toString()}
@@ -48,9 +37,7 @@ export const MockSessionSidebar: React.FC<{
 
               {!isVisible && (
                 <button
-                  onClick={() =>
-                    console.log("This would normally open the sidebar")
-                  }
+                  onClick={() => console.log("This would normally open the sidebar")}
                   className="mt-4 rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
                 >
                   Open Sidebar (use controls above)
@@ -63,5 +50,3 @@ export const MockSessionSidebar: React.FC<{
     </BrowserRouter>
   );
 };
-
-export default MockSessionSidebar;

@@ -102,8 +102,7 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Default state showing the preview view with standard navigation controls.",
+        story: "Default state showing the preview view with standard navigation controls.",
       },
     },
   },
@@ -122,8 +121,7 @@ export const CodeViewWithChanges: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Code view showing the Save button when there are unsaved changes.",
+        story: "Code view showing the Save button when there are unsaved changes.",
       },
     },
   },
@@ -142,8 +140,7 @@ export const CodeViewWithErrors: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Code view with syntax errors. The Save button shows error count and is disabled.",
+        story: "Code view with syntax errors. The Save button shows error count and is disabled.",
       },
     },
   },
@@ -181,8 +178,7 @@ export const StreamingState: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Streaming state where AI is generating content. Preview tab shows loading state.",
+        story: "Streaming state where AI is generating content. Preview tab shows loading state.",
       },
     },
   },
@@ -201,8 +197,7 @@ export const NoControls: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Minimal header with only back button, no view controls (used in chat-only contexts).",
+        story: "Minimal header with only back button, no view controls (used in chat-only contexts).",
       },
     },
   },
@@ -223,8 +218,7 @@ export const PublishedApp: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          'App that has already been published. Share button shows "URL Copied" state.',
+        story: 'App that has already been published. Share button shows "URL Copied" state.',
       },
     },
   },
@@ -244,8 +238,7 @@ export const PublishingInProgress: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Publishing workflow in progress. Share button shows loading spinner.",
+        story: "Publishing workflow in progress. Share button shows loading spinner.",
       },
     },
   },
@@ -265,8 +258,7 @@ export const ShareModalOpen: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Share modal is open, showing publishing options including firehose sharing.",
+        story: "Share modal is open, showing publishing options including firehose sharing.",
       },
     },
   },

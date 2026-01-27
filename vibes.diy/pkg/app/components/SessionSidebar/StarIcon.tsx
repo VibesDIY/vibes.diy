@@ -8,10 +8,7 @@ interface StarIconProps {
 /**
  * Star icon component used for favorites and toggles
  */
-export const StarIcon: React.FC<StarIconProps> = ({
-  filled = false,
-  className = "h-5 w-5",
-}) => {
+export const StarIcon: React.FC<StarIconProps> = ({ filled = false, className = "h-5 w-5" }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

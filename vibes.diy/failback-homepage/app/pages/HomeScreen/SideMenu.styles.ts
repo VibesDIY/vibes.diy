@@ -9,9 +9,7 @@ export const getSideMenuOverlay = (isClosing = false): CSSProperties => ({
   bottom: 0,
   backgroundColor: "rgba(0, 0, 0, 0.6)",
   zIndex: 9998,
-  animation: isClosing
-    ? "fadeOut 0.3s ease-out forwards"
-    : "fadeIn 0.3s ease-out",
+  animation: isClosing ? "fadeOut 0.3s ease-out forwards" : "fadeIn 0.3s ease-out",
 });
 
 // Main container - slides in from right
@@ -92,10 +90,7 @@ export const getSideMenuList = (): CSSProperties => ({
 });
 
 // Menu item animation - 3D flip card entrance
-export const getSideMenuItemAnimation = (
-  index: number,
-  isClosing = false,
-): CSSProperties => ({
+export const getSideMenuItemAnimation = (index: number, isClosing = false): CSSProperties => ({
   animation: isClosing
     ? `slideOutMenuItems 0.6s cubic-bezier(0.6, 0.04, 0.98, 0.335) ${index * 0.05}s forwards`
     : `slideInMenuItems 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${index * 0.07}s forwards`,

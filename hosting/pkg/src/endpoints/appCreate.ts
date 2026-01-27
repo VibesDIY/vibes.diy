@@ -17,11 +17,7 @@ interface Variables {
  * @param keyIdentifier Identifier to use for the screenshot key (usually slug)
  * @returns Updated app data with screenshot information
  */
-async function processScreenshot(
-  kv: KVNamespace,
-  base64Screenshot: string,
-  keyIdentifier: string,
-) {
+async function processScreenshot(kv: KVNamespace, base64Screenshot: string, keyIdentifier: string) {
   try {
     // Remove data:image prefix if present
     const base64Data = base64Screenshot.replace(/^data:image\/\w+;base64,/, "");
@@ -72,7 +68,7 @@ export class AppCreate extends OpenAPIRoute {
           z.object({
             success: Bool(),
             app: App,
-          }),
+          })
         ),
       },
     },
@@ -85,10 +81,9 @@ export class AppCreate extends OpenAPIRoute {
     if (!user || !user.userId) {
       return c.json(
         {
-          error:
-            "Authentication required. Please log in to create or modify apps.",
+          error: "Authentication required. Please log in to create or modify apps.",
         },
-        401,
+        401
       );
     }
 
@@ -118,7 +113,7 @@ export class AppCreate extends OpenAPIRoute {
           {
             error: "Forbidden: You don't have permission to modify this app.",
           },
-          403,
+          403
         );
       }
 
@@ -168,10 +163,7 @@ export class AppCreate extends OpenAPIRoute {
       // Handle custom domain update
       if (app.customDomain !== undefined) {
         // Remove old domain mapping if it exists and is different
-        if (
-          parsedApp.customDomain &&
-          parsedApp.customDomain !== app.customDomain
-        ) {
+        if (parsedApp.customDomain && parsedApp.customDomain !== app.customDomain) {
           await kv.delete(`domain:${parsedApp.customDomain}`);
         }
 
@@ -238,9 +230,7 @@ export class AppCreate extends OpenAPIRoute {
     // The queue consumer will handle generating summary and icon if needed
     try {
       if (!c.env.PUBLISH_QUEUE) {
-        console.warn(
-          "PUBLISH_QUEUE not configured - skipping event publishing",
-        );
+        console.warn("PUBLISH_QUEUE not configured - skipping event publishing");
         return {
           success: true,
           app: savedApp,
@@ -248,10 +238,7 @@ export class AppCreate extends OpenAPIRoute {
       }
 
       const event: z.infer<typeof PublishEvent> = {
-        type:
-          savedApp.updateCount && savedApp.updateCount > 0
-            ? "app_updated"
-            : "app_created",
+        type: savedApp.updateCount && savedApp.updateCount > 0 ? "app_updated" : "app_created",
         app: savedApp,
         metadata: {
           timestamp: Date.now(),

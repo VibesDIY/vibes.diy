@@ -1,9 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("Blur comparison: vibe-control vs mount-vibes-app", async ({ page }) => {
-  console.log(
-    "🔍 Testing blur behavior differences between implementations...",
-  );
+  console.log("🔍 Testing blur behavior differences between implementations...");
 
   // Test vibe-control (correct behavior)
   console.log("📖 Testing vibe-control implementation...");
@@ -103,39 +101,23 @@ test("Blur comparison: vibe-control vs mount-vibes-app", async ({ page }) => {
   console.log("🔬 BLUR ANALYSIS:");
   console.log("✅ Vibe-control menu filter:", vibeControlMenuStyle.filter);
   console.log("❌ Mount-vibes-app menu filter:", mountVibesMenuStyle.filter);
-  console.log(
-    "✅ Vibe-control login button filter:",
-    vibeControlLoginStyle.filter,
-  );
-  console.log(
-    "❌ Mount-vibes-app login button filter:",
-    mountVibesLoginStyle.filter,
-  );
+  console.log("✅ Vibe-control login button filter:", vibeControlLoginStyle.filter);
+  console.log("❌ Mount-vibes-app login button filter:", mountVibesLoginStyle.filter);
 
   // Check if mount-vibes-app has inherited blur (this should NOT happen)
-  const mountVibesHasInheritedBlur =
-    mountVibesMenuStyle.filter !== "none" &&
-    mountVibesMenuStyle.filter.includes("blur");
+  const mountVibesHasInheritedBlur = mountVibesMenuStyle.filter !== "none" && mountVibesMenuStyle.filter.includes("blur");
 
-  const vibeControlHasNoBlur =
-    vibeControlMenuStyle.filter === "none" ||
-    !vibeControlMenuStyle.filter.includes("blur");
+  const vibeControlHasNoBlur = vibeControlMenuStyle.filter === "none" || !vibeControlMenuStyle.filter.includes("blur");
 
   console.log("🚨 PROBLEM DETECTED:");
-  console.log(
-    `   Mount-vibes-app menu has inherited blur: ${mountVibesHasInheritedBlur}`,
-  );
+  console.log(`   Mount-vibes-app menu has inherited blur: ${mountVibesHasInheritedBlur}`);
   console.log(`   Vibe-control menu has no blur: ${vibeControlHasNoBlur}`);
 
   // Document the problem for fixing
   console.log("📝 ROOT CAUSE:");
   console.log("   Mount-vibes-app applies blur to document.body");
-  console.log(
-    "   This causes ALL child elements (including our menu) to inherit blur",
-  );
-  console.log(
-    "   Vibe-control only blurs the content wrapper, not the menu container",
-  );
+  console.log("   This causes ALL child elements (including our menu) to inherit blur");
+  console.log("   Vibe-control only blurs the content wrapper, not the menu container");
 
   console.log("🔧 SOLUTION NEEDED:");
   console.log("   Mount-vibes-app should blur only pre-existing content");

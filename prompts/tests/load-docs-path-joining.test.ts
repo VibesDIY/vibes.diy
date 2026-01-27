@@ -21,9 +21,7 @@ describe("loadDocs simple fetch", () => {
 
     const result = await loadDocs(localPath, baseUrl);
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://esm.sh/@vibes.diy/prompts/llms/callai.json",
-    );
+    expect(mockFetch).toHaveBeenCalledWith("https://esm.sh/@vibes.diy/prompts/llms/callai.json");
     expect(result.isOk()).toBe(true);
     expect(result.Ok()).toBe("mock content");
   });
@@ -73,9 +71,7 @@ describe("loadDocs simple fetch", () => {
 
     const result = await loadDocs(localPath, baseUrl);
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://example.com/custom/test.json",
-    );
+    expect(mockFetch).toHaveBeenCalledWith("https://example.com/custom/test.json");
     expect(result.isOk()).toBe(true);
     expect(result.Ok()).toBe("different content");
   });

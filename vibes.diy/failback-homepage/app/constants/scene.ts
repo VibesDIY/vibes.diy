@@ -330,8 +330,7 @@ export const UI_STYLES = {
 
 // External URLs
 export const EXTERNAL_URLS = {
-  HELVETICA_FONT:
-    "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+  HELVETICA_FONT: "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
 } as const;
 
 // Text content

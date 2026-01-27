@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TSX/TS to JS Transformer</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        color: #333;
+      }
+
+      .panels {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .panel {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .panel h2 {
+        font-size: 16px;
+        margin-bottom: 10px;
+        color: #666;
+      }
+
+      textarea {
+        width: 100%;
+        height: 400px;
+        padding: 12px;
+        font-family: "Monaco", "Menlo", "Courier New", monospace;
+        font-size: 13px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
+
+      .dependencies {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .dependencies h2 {
+        font-size: 16px;
+        margin-bottom: 10px;
+        color: #666;
+      }
+
+      .dep-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .dep-list li {
+        padding: 6px 12px;
+        margin-bottom: 4px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-family: "Monaco", "Menlo", "Courier New", monospace;
+        font-size: 13px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+      }
+
+      .error {
+        background: #ffebee;
+        color: #c62828;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
+
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-bottom: 20px;
+      }
+
+      button:hover {
+        background: #45a049;
+      }
+
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>TSX/TS to JS Transformer</h1>
+
+      <div id="loading" class="loading">Loading SWC compiler...</div>
+      <div id="error" class="error" style="display: none"></div>
+
+      <button id="transformBtn" style="display: none" disabled>Transform</button>
+
+      <div class="panels" style="display: none" id="panels">
+        <div class="panel">
+          <h2>Input (TypeScript/TSX)</h2>
+          <textarea id="input" placeholder="Paste your TypeScript or TSX code here...">
+import React from 'react';
+import { useState } from 'react';
+
+interface Props {
+  name: string;
+}
+
+export function Hello({ name }: Props) {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <h1>Hello {name}!</h1>
+      <button onClick={() => setCount(count + 1)}>
+        Count: {count}
+      </button>
+    </div>
+  );
+}</textarea
+          >
+        </div>
+
+        <div class="panel">
+          <h2>Output (JavaScript)</h2>
+          <textarea id="output" readonly></textarea>
+        </div>
+      </div>
+
+      <div class="dependencies" style="display: none" id="dependencies">
+        <h2>Dependencies</h2>
+        <ul class="dep-list" id="depList"></ul>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeSWC, extractImports, transformString } from "./transform.js";
+
+      let swcReady = false;
+
+      async function init() {
+        try {
+          await initializeSWC();
+          swcReady = true;
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("panels").style.display = "grid";
+          document.getElementById("dependencies").style.display = "block";
+          document.getElementById("transformBtn").style.display = "inline-block";
+          document.getElementById("transformBtn").disabled = false;
+
+          // Auto-transform on load
+          transform();
+        } catch (err) {
+          showError("Failed to initialize SWC: " + err.message);
+        }
+      }
+
+      function showError(message) {
+        const errorDiv = document.getElementById("error");
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+      }
+
+      function transform() {
+        if (!swcReady) return;
+
+        const input = document.getElementById("input").value;
+        const outputEl = document.getElementById("output");
+        const depListEl = document.getElementById("depList");
+        const errorDiv = document.getElementById("error");
+
+        errorDiv.style.display = "none";
+
+        try {
+          // Extract imports
+          const imports = extractImports(input);
+
+          // Transform code
+          const output = transformString(input);
+
+          // Display output
+          outputEl.value = output;
+
+          // Display dependencies
+          depListEl.innerHTML = "";
+          if (imports.length === 0) {
+            depListEl.innerHTML = '<li style="color: #999;">No dependencies found</li>';
+          } else {
+            imports.forEach((dep) => {
+              const li = document.createElement("li");
+              li.textContent = dep;
+              depListEl.appendChild(li);
+            });
+          }
+        } catch (err) {
+          showError(err.message);
+        }
+      }
+
+      // Event listeners
+      document.getElementById("transformBtn").addEventListener("click", transform);
+      document.getElementById("input").addEventListener("input", () => {
+        // Debounce auto-transform
+        clearTimeout(window.transformTimeout);
+        window.transformTimeout = setTimeout(transform, 500);
+      });
+
+      // Initialize
+      init();
+    </script>
+  </body>
+</html>

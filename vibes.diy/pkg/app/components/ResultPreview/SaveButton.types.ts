@@ -6,12 +6,4 @@ export interface SaveButtonProps {
   testId: string;
 }
 
-export type ButtonColor =
-  | "blue"
-  | "electric"
-  | "hot"
-  | "cyber"
-  | "retro"
-  | "cool"
-  | "dream"
-  | "danger";
+export type ButtonColor = "blue" | "electric" | "hot" | "cyber" | "retro" | "cool" | "dream" | "danger";

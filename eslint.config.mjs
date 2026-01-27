@@ -80,7 +80,7 @@ const opts = tseslint.config(
     rules: {
       "no-restricted-globals": ["error"], //, "URL", "TextDecoder", "TextEncoder"],
     },
-  },
+  }
 );
 
 export default opts;

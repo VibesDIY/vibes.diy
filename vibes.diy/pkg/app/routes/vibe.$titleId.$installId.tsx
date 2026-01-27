@@ -1,1 +1,2 @@
-export { meta, default } from "./vibe-viewer.js";
+export { default } from "./vibe-viewer.js";
+export * from "./vibe-viewer.js";

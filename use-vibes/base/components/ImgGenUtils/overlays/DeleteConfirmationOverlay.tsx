@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { combineClasses, defaultClasses, ImgGenClasses } from '../../../utils/style-utils.js';
+import * as React from "react";
+import { combineClasses, defaultClasses, ImgGenClasses } from "../../../utils/style-utils.js";
 
 interface DeleteConfirmationOverlayProps {
   readonly handleDeleteConfirm: () => void;
@@ -24,30 +24,30 @@ export function DeleteConfirmationOverlay({
 
   return (
     <div
-      className={combineClasses('imggen-delete-message', classes.overlay)}
+      className={combineClasses("imggen-delete-message", classes.overlay)}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255, 0, 0, 0.1)',
-        borderRadius: 'var(--imggen-border-radius)',
-        padding: '10px 15px',
-        marginBottom: '8px',
-        textAlign: 'center',
-        width: 'auto',
-        boxSizing: 'border-box',
-        border: '1px solid var(--imggen-error-border)',
-        cursor: 'pointer',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(255, 0, 0, 0.1)",
+        borderRadius: "var(--imggen-border-radius)",
+        padding: "10px 15px",
+        marginBottom: "8px",
+        textAlign: "center",
+        width: "auto",
+        boxSizing: "border-box",
+        border: "1px solid var(--imggen-error-border)",
+        cursor: "pointer",
       }}
       onClick={handleDeleteConfirm} // Click anywhere on the message to confirm delete
       aria-label="Confirm delete"
     >
       <p
         style={{
-          color: '#ff3333',
-          fontSize: '14px',
+          color: "#ff3333",
+          fontSize: "14px",
           margin: 0,
-          fontWeight: 'bold',
+          fontWeight: "bold",
         }}
       >
         Confirm delete? This action cannot be undone.

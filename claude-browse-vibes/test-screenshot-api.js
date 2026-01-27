@@ -30,16 +30,11 @@ async function testScreenshotAPI() {
     // Check the background image URL
     const wrapperElement = await page.$('div[style*="background-image"]');
     if (wrapperElement) {
-      const style = await page.evaluate(
-        (el) => el.style.cssText,
-        wrapperElement,
-      );
+      const style = await page.evaluate((el) => el.style.cssText, wrapperElement);
       console.log(`🖼️  Background style: ${style}`);
 
       // Extract image URL
-      const imageUrlMatch = style.match(
-        /background-image:\s*url\("?([^"]+)"?\)/,
-      );
+      const imageUrlMatch = style.match(/background-image:\s*url\("?([^"]+)"?\)/);
       if (imageUrlMatch) {
         const imageUrl = imageUrlMatch[1];
         console.log(`📸 Image URL: ${imageUrl}`);
@@ -49,21 +44,15 @@ async function testScreenshotAPI() {
 
           // Test if screenshot endpoint responds
           try {
-            const response = await page.goto(
-              "http://localhost:5173/screenshot.png",
-            );
+            const response = await page.goto("http://localhost:5173/screenshot.png");
             console.log(`📊 Screenshot endpoint status: ${response.status()}`);
             if (response.status() === 200) {
               console.log("✅ Screenshot API working");
             } else {
-              console.log(
-                "⚠️  Screenshot API returned non-200, browser should fallback",
-              );
+              console.log("⚠️  Screenshot API returned non-200, browser should fallback");
             }
           } catch (error) {
-            console.log(
-              "⚠️  Screenshot endpoint not available (expected for dev), browser will fallback",
-            );
+            console.log("⚠️  Screenshot endpoint not available (expected for dev), browser will fallback");
           }
         } else {
           console.log("❌ Not using screenshot API - still using old URL");
@@ -78,10 +67,7 @@ async function testScreenshotAPI() {
     // Check if the image loaded successfully or fell back
     const actualImage = await page.$('div[style*="background-image"] img');
     if (actualImage) {
-      const naturalWidth = await page.evaluate(
-        (img) => img.naturalWidth,
-        actualImage,
-      );
+      const naturalWidth = await page.evaluate((img) => img.naturalWidth, actualImage);
       console.log(`📐 Image dimensions: ${naturalWidth}px width`);
 
       if (naturalWidth > 0) {

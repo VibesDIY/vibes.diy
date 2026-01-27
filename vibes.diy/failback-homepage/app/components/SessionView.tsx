@@ -49,12 +49,7 @@ export default function SessionView({
 
   // Show login/loading screen if not authenticated
   if (!isAuthenticated || isLoading) {
-    return (
-      <LoggedOutView
-        isLoaded={!isLoading}
-        trackingEventName="Session View Login"
-      />
-    );
+    return <LoggedOutView isLoaded={!isLoading} trackingEventName="Session View Login" />;
   }
 
   return (
@@ -108,10 +103,7 @@ function AuthenticatedSessionView({
     const navigationState = locationState as {
       pendingMessage?: string;
     } | null;
-    if (
-      navigationState?.pendingMessage &&
-      navigationState.pendingMessage.trim()
-    ) {
+    if (navigationState?.pendingMessage && navigationState.pendingMessage.trim()) {
       setCapturedPrompt(navigationState.pendingMessage);
     }
   }, [urlPrompt, locationState]);
@@ -131,10 +123,7 @@ function AuthenticatedSessionView({
 
           // Place cursor at the end of the text
           const inputLength = chatState.inputRef.current.value.length;
-          chatState.inputRef.current.setSelectionRange(
-            inputLength,
-            inputLength,
-          );
+          chatState.inputRef.current.setSelectionRange(inputLength, inputLength);
         }
       }, 10);
 
@@ -157,9 +146,7 @@ function AuthenticatedSessionView({
 
   // State for code editing
   const [hasCodeChanges, setHasCodeChanges] = useState(false);
-  const [codeSaveHandler, setCodeSaveHandler] = useState<(() => void) | null>(
-    null,
-  );
+  const [codeSaveHandler, setCodeSaveHandler] = useState<(() => void) | null>(null);
   const [syntaxErrorCount, setSyntaxErrorCount] = useState(0);
 
   // Add dependency tracking for useViewState props
@@ -173,8 +160,7 @@ function AuthenticatedSessionView({
     capturedPrompt: capturedPrompt,
   };
 
-  const { displayView, navigateToView, viewControls, showViewControls } =
-    useViewState(viewStateProps, pathname, navigate);
+  const { displayView, navigateToView, viewControls, showViewControls } = useViewState(viewStateProps, pathname, navigate);
 
   // Temporary fallback values for testing
   // const displayView = "chat";
@@ -186,10 +172,7 @@ function AuthenticatedSessionView({
   const handleCodeSave = useCallback(
     async (code: string) => {
       try {
-        const newMessageId = await chatState.saveCodeAsAiMessage(
-          code,
-          chatState.docs,
-        );
+        const newMessageId = await chatState.saveCodeAsAiMessage(code, chatState.docs);
 
         // Select the newly created message
         chatState.setSelectedResponseId(newMessageId);
@@ -199,25 +182,21 @@ function AuthenticatedSessionView({
       } catch (error) {
         chatState.addError({
           type: "error",
-          message:
-            error instanceof Error ? error.message : "Failed to save code",
+          message: error instanceof Error ? error.message : "Failed to save code",
           stack: error instanceof Error ? error.stack : undefined,
           timestamp: Date.now().toString(),
           errorType: "Other",
         });
       }
     },
-    [chatState, navigateToView],
+    [chatState, navigateToView]
   );
 
   // Handle code change notifications from editor
-  const handleCodeChange = useCallback(
-    (hasChanges: boolean, saveHandler: () => void) => {
-      setHasCodeChanges(hasChanges);
-      setCodeSaveHandler(() => saveHandler);
-    },
-    [],
-  );
+  const handleCodeChange = useCallback((hasChanges: boolean, saveHandler: () => void) => {
+    setHasCodeChanges(hasChanges);
+    setCodeSaveHandler(() => saveHandler);
+  }, []);
 
   // Handle syntax error changes from editor
   const handleSyntaxErrorChange = useCallback((errorCount: number) => {
@@ -296,14 +275,7 @@ function AuthenticatedSessionView({
         navigate(newUrl, { replace: true });
       }
     }
-  }, [
-    chatState.title,
-    location.pathname,
-    chatState.sessionId,
-    navigate,
-    capturedPrompt,
-    urlModel,
-  ]);
+  }, [chatState.title, location.pathname, chatState.sessionId, navigate, capturedPrompt, urlModel]);
 
   // We're now passing chatState directly to ChatInput
 
@@ -322,12 +294,7 @@ function AuthenticatedSessionView({
         setMobilePreviewShown(true);
       }
     }
-  }, [
-    previewReady,
-    userClickedBack,
-    chatState.isStreaming,
-    chatState.codeReady,
-  ]);
+  }, [previewReady, userClickedBack, chatState.isStreaming, chatState.codeReady]);
 
   // Update mobilePreviewShown when selectedCode changes
   useEffect(() => {
@@ -360,11 +327,7 @@ function AuthenticatedSessionView({
     // If there's a session and title, but no specific view suffix in the URL, navigate to the 'app' (preview) view.
     // Skip navigation if there's a captured prompt that hasn't been sent yet.
     const targetUrl = `/chat/${chatState.sessionId}/${encodedAppTitle}/app`;
-    const shouldNavigate =
-      !hasTabSuffix &&
-      chatState.sessionId &&
-      encodedAppTitle &&
-      !capturedPrompt;
+    const shouldNavigate = !hasTabSuffix && chatState.sessionId && encodedAppTitle && !capturedPrompt;
 
     if (shouldNavigate) {
       navigate(targetUrl, {

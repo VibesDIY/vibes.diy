@@ -1,9 +1,6 @@
 import React, { ReactElement, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  constructVibeIconUrl,
-  constructVibeScreenshotUrl,
-} from "../../utils/vibeUrls.js";
+import { constructVibeIconUrl, constructVibeScreenshotUrl } from "../../utils/vibeUrls.js";
 import { TexturedPattern } from "../vibes/icons/index.js";
 import {
   getVibeCardLinkStyle,
@@ -26,12 +23,7 @@ interface VibeGalleryCardProps {
   isMobile?: boolean;
 }
 
-export default function VibeGalleryCard({
-  slug,
-  name,
-  IconComponent,
-  isMobile = false,
-}: VibeGalleryCardProps): ReactElement {
+export default function VibeGalleryCard({ slug, name, IconComponent, isMobile = false }: VibeGalleryCardProps): ReactElement {
   // Construct asset URLs
   const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug), [slug]);
   const iconUrl = useMemo(() => constructVibeIconUrl(slug), [slug]);
@@ -42,9 +34,7 @@ export default function VibeGalleryCard({
     setImageSrc(iconUrl);
   }, [iconUrl]);
 
-  const handleImageError: React.ReactEventHandler<HTMLImageElement> = (
-    event,
-  ) => {
+  const handleImageError: React.ReactEventHandler<HTMLImageElement> = (event) => {
     const failedSrc = event.currentTarget.src;
 
     // If the screenshot also fails, don't loop between sources
@@ -75,21 +65,13 @@ export default function VibeGalleryCard({
         >
           {/* Textured shadow background */}
           <div style={getVibeCardTexturedShadowStyle(isHovered, isMobile)}>
-            <TexturedPattern
-              width={iconSize}
-              height={iconSize}
-              borderRadius={borderRadius}
-            />
+            <TexturedPattern width={iconSize} height={iconSize} borderRadius={borderRadius} />
           </div>
 
           {/* Main icon container */}
           <div style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}>
             {IconComponent ? (
-              <IconComponent
-                width={iconInnerSize}
-                height={iconInnerSize}
-                fill="var(--vibes-near-black)"
-              />
+              <IconComponent width={iconInnerSize} height={iconInnerSize} fill="var(--vibes-near-black)" />
             ) : (
               <img
                 src={imageSrc}

@@ -1,11 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
-import type {
-  ChatMessageDocument,
-  ViewState,
-  ViewTypeItem,
-} from "@vibes.diy/prompts";
+import type { ChatMessageDocument, ViewState, ViewTypeItem } from "@vibes.diy/prompts";
 
 // Mock all imports before importing the component to test
 vi.mock("react-router", async () => {
@@ -46,23 +42,15 @@ vi.mock("~/vibes.diy/app/components/ResultPreview/BackButton.js", () => ({
 }));
 
 vi.mock("~/vibes.diy/app/components/ResultPreview/ViewControls.js", () => ({
-  ViewControls: ({
-    viewControls,
-    currentView,
-  }: {
-    viewControls: ViewState;
-    currentView: string;
-  }) => {
+  ViewControls: ({ viewControls, currentView }: { viewControls: ViewState; currentView: string }) => {
     // Handle both the old array format and the new object format
     const controls = Array.isArray(viewControls)
       ? viewControls
-      : Object.entries(viewControls).map(
-          ([key, value]: [string, ViewTypeItem]) => ({
-            id: key,
-            // label: value.label,
-            ...value,
-          }),
-        );
+      : Object.entries(viewControls).map(([key, value]: [string, ViewTypeItem]) => ({
+          id: key,
+          // label: value.label,
+          ...value,
+        }));
 
     return (
       <div data-testid="view-controls" data-view={currentView}>
@@ -105,7 +93,7 @@ vi.mock("~/vibes.diy/app/components/ResultPreview/ShareButton", async () => {
           >
             {isPublishing ? "Publishing..." : urlCopied ? "Copied!" : "Publish"}
           </button>
-        ),
+        )
       ),
   };
 });
@@ -133,15 +121,11 @@ vi.mock("~/vibes.diy/app/components/ResultPreview/ShareModal", async () => {
           <div data-testid="share-modal">
             <span>URL: {publishedAppUrl || "none"}</span>
             <button onClick={onClose}>Close</button>
-            <button
-              onClick={onPublish}
-              disabled={isPublishing}
-              data-testid="modal-publish-button"
-            >
+            <button onClick={onPublish} disabled={isPublishing} data-testid="modal-publish-button">
               {isPublishing ? "Publishing..." : "Publish"}
             </button>
           </div>
-        ) : null,
+        ) : null
     ),
   };
 });
@@ -252,7 +236,7 @@ describe("ResultPreviewHeaderContent", () => {
         code="const App = () => <div>Test</div>"
         setMobilePreviewShown={mockSetMobilePreviewShown}
         sessionId={TEST_SESSION_ID}
-      />,
+      />
     );
 
     // Check for basic elements that should be present
@@ -279,7 +263,7 @@ describe("ResultPreviewHeaderContent", () => {
         setMobilePreviewShown={mockSetMobilePreviewShown}
         sessionId="prop-session-id"
         title="prop-title"
-      />,
+      />
     );
 
     // Should use prop session ID
@@ -310,14 +294,14 @@ describe("ResultPreviewHeaderContent", () => {
         setMobilePreviewShown={mockSetMobilePreviewShown}
         sessionId="prop-session-id"
         title="prop-title"
-      />,
+      />
     );
 
     // Instead of checking useViewState, verify that usePublish gets the correct title
     expect(usePublish).toHaveBeenCalledWith(
       expect.objectContaining({
         title: "prop-title",
-      }),
+      })
     );
   });
 
@@ -341,7 +325,7 @@ describe("ResultPreviewHeaderContent", () => {
         code="const App = () => <div>Test</div>"
         setMobilePreviewShown={mockSetMobilePreviewShown}
         sessionId={TEST_SESSION_ID}
-      />,
+      />
     );
   });
 
@@ -357,7 +341,7 @@ describe("ResultPreviewHeaderContent", () => {
         code="const App = () => <div>Test</div>"
         setMobilePreviewShown={mockSetMobilePreviewShown}
         setUserClickedBack={mockSetUserClickedBack}
-      />,
+      />
     );
 
     // Click the back button
@@ -380,7 +364,7 @@ describe("ResultPreviewHeaderContent", () => {
         code="const App = () => <div>Test</div>"
         setMobilePreviewShown={mockSetMobilePreviewShown}
         setUserClickedBack={mockSetUserClickedBack}
-      />,
+      />
     );
 
     // Click the back button
@@ -404,7 +388,7 @@ describe("ResultPreviewHeaderContent", () => {
         code="const App = () => <div>Test</div>"
         setMobilePreviewShown={mockSetMobilePreviewShown}
         sessionId={TEST_SESSION_ID}
-      />,
+      />
     );
 
     // View controls should not be rendered
@@ -423,7 +407,7 @@ describe("ResultPreviewHeaderContent", () => {
         code="const App = () => <div>Test</div>"
         setMobilePreviewShown={mockSetMobilePreviewShown}
         sessionId={TEST_SESSION_ID}
-      />,
+      />
     );
 
     // Publish button should not be rendered
@@ -467,7 +451,7 @@ describe("ResultPreviewHeaderContent", () => {
         setMobilePreviewShown={mockSetMobilePreviewShown}
         sessionId="test-session"
         title="Test App"
-      />,
+      />
     );
 
     // Check that usePublish was called with the right props

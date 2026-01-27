@@ -1,0 +1,304 @@
+/**
+ * Tailwind Utility Classes
+ * Generated utilities + custom utility classes
+ * Includes animation utilities, accent colors, decorative colors, backgrounds
+ *
+ * Extracted from global-styles.ts lines 437-732
+ */
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.5s ease-out forwards;
+}
+
+.animate-gradient-x {
+  background-size: 200% auto;
+  animation: gradient-x 3s linear infinite;
+}
+
+/* Add the color utility classes */
+.accent-00 {
+  background-color: var(--color-accent-00-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .accent-00 {
+    background-color: var(--color-accent-00-dark);
+  }
+}
+
+.accent-01 {
+  background-color: var(--color-accent-01-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .accent-01 {
+    background-color: var(--color-accent-01-dark);
+  }
+}
+
+.accent-02 {
+  background-color: var(--color-accent-02-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .accent-02 {
+    background-color: var(--color-accent-02-dark);
+  }
+}
+
+.accent-03 {
+  background-color: var(--color-accent-03-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .accent-03 {
+    background-color: var(--color-accent-03-dark);
+  }
+}
+
+.text-accent-00 {
+  color: var(--color-accent-00-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-accent-00 {
+    color: var(--color-accent-00-dark);
+  }
+}
+
+.text-accent-01 {
+  color: var(--color-accent-01-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-accent-01 {
+    color: var(--color-accent-01-dark);
+  }
+}
+
+.text-accent-02 {
+  color: var(--color-accent-02-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-accent-02 {
+    color: var(--color-accent-02-dark);
+  }
+}
+
+.text-accent-03 {
+  color: var(--color-accent-03-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-accent-03 {
+    color: var(--color-accent-03-dark);
+  }
+}
+
+.decorative-00 {
+  background-color: var(--color-light-decorative-00);
+}
+
+@media (prefers-color-scheme: dark) {
+  .decorative-00 {
+    background-color: var(--color-dark-decorative-00);
+  }
+}
+
+.decorative-01 {
+  background-color: var(--color-light-decorative-01);
+}
+
+@media (prefers-color-scheme: dark) {
+  .decorative-01 {
+    background-color: var(--color-dark-decorative-01);
+  }
+}
+
+.decorative-02 {
+  background-color: var(--color-light-decorative-02);
+}
+
+@media (prefers-color-scheme: dark) {
+  .decorative-02 {
+    background-color: var(--color-dark-decorative-02);
+  }
+}
+
+.bg-primary {
+  background-color: var(--color-light-background-00);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bg-primary {
+    background-color: var(--color-dark-background-00);
+  }
+}
+
+.bg-secondary {
+  background-color: var(--color-light-background-01);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bg-secondary {
+    background-color: var(--color-dark-background-01);
+  }
+}
+
+.bg-tertiary {
+  background-color: var(--color-light-background-02);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bg-tertiary {
+    background-color: var(--color-dark-background-02);
+  }
+}
+
+/* Tailwind utility classes for light/dark backgrounds */
+.bg-light-background-00 {
+  background-color: var(--color-light-background-00);
+}
+
+.bg-light-background-01 {
+  background-color: var(--color-light-background-01);
+}
+
+.bg-light-background-02 {
+  background-color: var(--color-light-background-02);
+}
+
+.bg-light-decorative-00 {
+  background-color: var(--color-light-decorative-00);
+}
+
+.bg-light-decorative-01 {
+  background-color: var(--color-light-decorative-01);
+}
+
+.bg-light-decorative-02 {
+  background-color: var(--color-light-decorative-02);
+}
+
+.bg-dark-background-01 {
+  background-color: var(--color-dark-background-01);
+}
+
+.text-light-primary {
+  color: var(--color-light-primary);
+}
+
+.text-light-secondary {
+  color: var(--color-light-secondary);
+}
+
+.border-light-decorative-00 {
+  border-color: var(--color-light-decorative-00);
+}
+
+.border-light-decorative-01 {
+  border-color: var(--color-light-decorative-01);
+}
+
+/* Dark mode variants */
+.dark\\:bg-dark-background-00:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:bg-dark-background-00 {
+    background-color: var(--color-dark-background-00);
+  }
+}
+
+.dark\\:bg-dark-background-01:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:bg-dark-background-01 {
+    background-color: var(--color-dark-background-01);
+  }
+}
+
+.dark\\:bg-dark-background-02:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:bg-dark-background-02 {
+    background-color: var(--color-dark-background-02);
+  }
+}
+
+.dark\\:bg-dark-decorative-00:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:bg-dark-decorative-00 {
+    background-color: var(--color-dark-decorative-00);
+  }
+}
+
+.dark\\:bg-dark-decorative-01:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:bg-dark-decorative-01 {
+    background-color: var(--color-dark-decorative-01);
+  }
+}
+
+.dark\\:text-dark-primary:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:text-dark-primary {
+    color: var(--color-dark-primary);
+  }
+}
+
+.dark\\:text-dark-secondary:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:text-dark-secondary {
+    color: var(--color-dark-secondary);
+  }
+}
+
+.dark\\:border-dark-decorative-00:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:border-dark-decorative-00 {
+    border-color: var(--color-dark-decorative-00);
+  }
+}
+
+.dark\\:border-dark-decorative-01:is(.dark *),
+@media (prefers-color-scheme: dark) {
+  .dark\\:border-dark-decorative-01 {
+    border-color: var(--color-dark-decorative-01);
+  }
+}
+
+/* Hover variants */
+.hover\\:bg-light-background-01:hover,
+.bg-light-background-01:hover {
+  background-color: var(--color-light-background-01);
+}
+
+.hover\\:bg-light-background-02:hover,
+.bg-light-background-02:hover {
+  background-color: var(--color-light-background-02);
+}
+
+.hover\\:bg-light-decorative-01:hover,
+.bg-light-decorative-01:hover {
+  background-color: var(--color-light-decorative-01);
+}
+
+.dark\\:hover\\:bg-dark-decorative-00:is(.dark *):hover,
+@media (prefers-color-scheme: dark) {
+  .dark\\:hover\\:bg-dark-decorative-00:hover {
+    background-color: var(--color-dark-decorative-00);
+  }
+}
+
+.dark\\:hover\\:bg-dark-decorative-01:is(.dark *):hover,
+@media (prefers-color-scheme: dark) {
+  .dark\\:hover\\:bg-dark-decorative-01:hover {
+    background-color: var(--color-dark-decorative-01);
+  }
+}

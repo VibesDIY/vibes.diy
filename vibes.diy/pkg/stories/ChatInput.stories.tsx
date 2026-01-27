@@ -46,12 +46,7 @@ function ChatInputWrapper({
     },
   };
 
-  return (
-    <ChatInput
-      chatState={mockChatState}
-      onSend={() => console.log("onSend called")}
-    />
-  );
+  return <ChatInput chatState={mockChatState} onSend={() => console.log("onSend called")} />;
 }
 
 const meta = {
@@ -180,24 +175,14 @@ export const WithRefActions: Story = {
     return (
       <div className="space-y-4">
         <div className="flex gap-2">
-          <button
-            onClick={handleFocus}
-            className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
-          >
+          <button onClick={handleFocus} className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600">
             Focus Input
           </button>
-          <button
-            onClick={handleClickSubmit}
-            className="rounded bg-green-500 px-3 py-1 text-white hover:bg-green-600"
-          >
+          <button onClick={handleClickSubmit} className="rounded bg-green-500 px-3 py-1 text-white hover:bg-green-600">
             Click Submit
           </button>
         </div>
-        <ChatInput
-          chatState={mockChatState}
-          onSend={() => console.log("onSend called")}
-          ref={inputRef}
-        />
+        <ChatInput chatState={mockChatState} onSend={() => console.log("onSend called")} ref={inputRef} />
       </div>
     );
   },

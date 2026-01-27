@@ -51,7 +51,7 @@ export function getButtonStyle(
   isActive: boolean,
   isMobile = false,
   hasIcon: boolean,
-  buttonType: string,
+  buttonType: string
 ): React.CSSProperties {
   // Use form style for form button type
   if (buttonType === "form") {
@@ -74,31 +74,10 @@ export function getButtonStyle(
   }
 
   return {
-    width:
-      buttonType === "flat-rounded"
-        ? "100%"
-        : !hasIcon
-          ? "auto"
-          : isMobile
-            ? "100%"
-            : "130px",
-    height:
-      buttonType === "flat-rounded"
-        ? "auto"
-        : !hasIcon
-          ? "auto"
-          : isMobile
-            ? "auto"
-            : "135px",
+    width: buttonType === "flat-rounded" ? "100%" : !hasIcon ? "auto" : isMobile ? "100%" : "130px",
+    height: buttonType === "flat-rounded" ? "auto" : !hasIcon ? "auto" : isMobile ? "auto" : "135px",
     minHeight: isMobile ? "60px" : undefined,
-    padding:
-      buttonType === "flat-rounded"
-        ? "0.5rem"
-        : isMobile
-          ? buttonType
-            ? "none"
-            : "0.75rem 1.5rem"
-          : "1rem 2rem",
+    padding: buttonType === "flat-rounded" ? "0.5rem" : isMobile ? (buttonType ? "none" : "0.75rem 1.5rem") : "1rem 2rem",
     borderRadius: "12px",
     fontSize: "1rem",
     fontWeight: 700,
@@ -116,7 +95,7 @@ export function getMergedButtonStyle(
   baseStyle: React.CSSProperties,
   ignoreDarkMode: boolean,
   customStyle?: React.CSSProperties,
-  buttonType?: "square" | "flat" | "flat-rounded" | "form",
+  buttonType?: "square" | "flat" | "flat-rounded" | "form"
 ): React.CSSProperties {
   // Form buttons already have their complete styling, just merge custom styles
   if (buttonType === "form") {
@@ -128,15 +107,9 @@ export function getMergedButtonStyle(
 
   const style: React.CSSProperties = {
     ...baseStyle,
-    background: ignoreDarkMode
-      ? "var(--vibes-button-bg)"
-      : "var(--vibes-button-bg-dark-aware)",
-    color: ignoreDarkMode
-      ? "var(--vibes-button-text)"
-      : "var(--vibes-button-text-dark-aware)",
-    border: ignoreDarkMode
-      ? "2px solid var(--vibes-button-border)"
-      : "2px solid var(--vibes-button-border-dark-aware)",
+    background: ignoreDarkMode ? "var(--vibes-button-bg)" : "var(--vibes-button-bg-dark-aware)",
+    color: ignoreDarkMode ? "var(--vibes-button-text)" : "var(--vibes-button-text-dark-aware)",
+    border: ignoreDarkMode ? "2px solid var(--vibes-button-border)" : "2px solid var(--vibes-button-border-dark-aware)",
   };
 
   // Apply 50% border radius for flat-rounded type
@@ -154,7 +127,7 @@ export function getIconContainerStyle(
   variant: string,
   isMobile: boolean,
   hasIcon: boolean,
-  buttonType: string,
+  buttonType: string
 ): React.CSSProperties {
   if (!hasIcon) return {};
 
@@ -169,52 +142,31 @@ export function getIconContainerStyle(
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    border:
-      buttonType === "flat-rounded" ? "none" : "2px solid var(--vibes-black)",
+    border: buttonType === "flat-rounded" ? "none" : "2px solid var(--vibes-black)",
   };
 }
 
-export function getIconStyle(
-  isMobile: boolean,
-  isHovered: boolean,
-  isActive: boolean,
-): React.CSSProperties {
+export function getIconStyle(isMobile: boolean, isHovered: boolean, isActive: boolean): React.CSSProperties {
   return {
     width: isMobile ? "28px" : "50px",
     height: isMobile ? "28px" : "50px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    animation:
-      isHovered && !isActive
-        ? "vibes-button-bounce 0.8s ease-in-out infinite"
-        : "none",
+    animation: isHovered && !isActive ? "vibes-button-bounce 0.8s ease-in-out infinite" : "none",
   };
 }
 
-export function getContentWrapperStyle(
-  isMobile: boolean,
-  hasIcon: boolean,
-  buttonType: string,
-): React.CSSProperties {
+export function getContentWrapperStyle(isMobile: boolean, hasIcon: boolean, buttonType: string): React.CSSProperties {
   if (!hasIcon) return {};
 
   return {
     display: "flex",
     alignItems: "center",
     gap: isMobile ? "16px" : "6px",
-    flexDirection:
-      buttonType === "flat-rounded"
-        ? ("row" as const)
-        : isMobile
-          ? ("row" as const)
-          : ("column" as const),
+    flexDirection: buttonType === "flat-rounded" ? ("row" as const) : isMobile ? ("row" as const) : ("column" as const),
     justifyContent:
-      buttonType === "flat-rounded"
-        ? ("flex-start" as const)
-        : isMobile
-          ? ("flex-start" as const)
-          : ("center" as const),
+      buttonType === "flat-rounded" ? ("flex-start" as const) : isMobile ? ("flex-start" as const) : ("center" as const),
     width: "100%",
   };
 }

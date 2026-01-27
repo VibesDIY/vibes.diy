@@ -87,10 +87,7 @@ export type SystemChatMessageDocument = BaseChatMessageDocument & {
   errorCategory?: "immediate" | "advisory"; // Category of error
 };
 
-export type ChatMessageDocument =
-  | UserChatMessageDocument
-  | AiChatMessageDocument
-  | SystemChatMessageDocument;
+export type ChatMessageDocument = UserChatMessageDocument | AiChatMessageDocument | SystemChatMessageDocument;
 
 /**
  * Base document interface with common properties
@@ -168,10 +165,7 @@ export interface BaseChatState {
   codeReady: boolean;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
   sendMessage: (text?: string) => Promise<void>;
-  saveCodeAsAiMessage: (
-    code: string,
-    currentMessages: ChatMessageDocument[],
-  ) => Promise<string>;
+  saveCodeAsAiMessage: (code: string, currentMessages: ChatMessageDocument[]) => Promise<string>;
   title: string;
   updateTitle: (title: string, isManual?: boolean) => Promise<void>;
   addScreenshot: (screenshot: string | null) => Promise<void>;

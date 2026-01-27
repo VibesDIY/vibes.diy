@@ -1,10 +1,5 @@
-import { ImageGenOptions } from 'call-ai';
-import type {
-  ModuleState,
-  ImageDocument,
-  VersionInfo,
-  PromptEntry,
-} from '@vibes.diy/use-vibes-types';
+import { ImageGenOptions } from "call-ai";
+import type { ModuleState, ImageDocument, VersionInfo, PromptEntry } from "@vibes.diy/use-vibes-types";
 
 // Module-level state for tracking and preventing duplicate calls
 export const MODULE_STATE: ModuleState = {
@@ -62,7 +57,7 @@ export function hashInput(prompt: string, options?: ImageGenOptions): string {
   }
 
   // Convert to hex string and take first 12 chars
-  const hashHex = (hash >>> 0).toString(16).padStart(8, '0');
+  const hashHex = (hash >>> 0).toString(16).padStart(8, "0");
   const requestId = hashHex.slice(0, 12);
 
   // Add a timestamp to make the ID unique even for identical requests
@@ -79,8 +74,8 @@ export function base64ToFile(base64Data: string, filename: string): File {
     ia[i] = byteString.charCodeAt(i);
   }
 
-  const blob = new Blob([ab], { type: 'image/png' });
-  return new File([blob], filename, { type: 'image/png' });
+  const blob = new Blob([ab], { type: "image/png" });
+  return new File([blob], filename, { type: "image/png" });
 }
 
 /**
@@ -112,7 +107,7 @@ export function getVersionsFromDocument(document: Partial<ImageDocument>): {
   // Legacy document with just an 'image' file - convert to version format
   if (document?._files?.image) {
     return {
-      versions: [{ id: 'v1', created: document.created || Date.now() }],
+      versions: [{ id: "v1", created: document.created || Date.now() }],
       currentVersion: 1,
     };
   }
@@ -153,12 +148,12 @@ export function getPromptsFromDocument(document: Partial<ImageDocument>): {
       prompts: {
         p1: { text: document.prompt, created: document.created || Date.now() },
       },
-      currentPromptKey: 'p1',
+      currentPromptKey: "p1",
     };
   }
 
   // No prompts found
-  return { prompts: {}, currentPromptKey: '' };
+  return { prompts: {}, currentPromptKey: "" };
 }
 
 /**
@@ -168,11 +163,7 @@ export function getPromptsFromDocument(document: Partial<ImageDocument>): {
  * @param newPrompt - Optional new prompt to use for this version
  * @returns Updated document with the new version added
  */
-export function addNewVersion(
-  document: ImageDocument,
-  newImageFile: File,
-  newPrompt?: string
-): ImageDocument {
+export function addNewVersion(document: ImageDocument, newImageFile: File, newPrompt?: string): ImageDocument {
   // Get existing versions or initialize
   const { versions } = getVersionsFromDocument(document);
   const versionCount = versions.length + 1;
@@ -195,8 +186,8 @@ export function addNewVersion(
     };
   } else if (!updatedCurrentPromptKey && document.prompt) {
     // Legacy migration - create p1 from document.prompt
-    updatedCurrentPromptKey = 'p1';
-    updatedPrompts['p1'] = {
+    updatedCurrentPromptKey = "p1";
+    updatedPrompts["p1"] = {
       text: document.prompt,
       created: document.created || Date.now(),
     };
@@ -208,7 +199,7 @@ export function addNewVersion(
 
   // Handle legacy documents by migrating 'image' to 'v1' if needed
   if (versionCount === 1 && document._files?.image) {
-    updatedFiles['v1'] = document._files.image;
+    updatedFiles["v1"] = document._files.image;
     delete updatedFiles.image;
   }
 
@@ -258,20 +249,15 @@ export function generateSafeFilename(promptText: string): string {
   // Clean the prompt by removing special characters and converting to lowercase
   const cleanedPrompt = promptText
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Keep only alphanumeric, spaces, and hyphens
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/[^a-z0-9\s-]/g, "") // Keep only alphanumeric, spaces, and hyphens
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
     .substring(0, maxPromptChars) // Limit length
-    .replace(/-+$/g, ''); // Remove trailing hyphens
+    .replace(/-+$/g, ""); // Remove trailing hyphens
 
   // Generate date part in format YYYYMMDD-HHMM
   const now = new Date();
-  const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(
-    now.getDate()
-  ).padStart(2, '0')}`;
-  const timePart = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(
-    2,
-    '0'
-  )}`;
+  const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const timePart = `${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
 
   // Construct filename
   return `${cleanedPrompt}-${datePart}-${timePart}.png`;

@@ -14,13 +14,11 @@ const mockVibeDoc = {
 const mockGenerateTitle = vi.fn().mockResolvedValue("AI Generated Title");
 
 // Mock the updateTitle function
-const mockUpdateTitle = vi
-  .fn()
-  .mockImplementation(async (title: string, isManual = false) => {
-    mockVibeDoc.title = title;
-    mockVibeDoc.titleSetManually = isManual;
-    mockVibeDoc.encodedTitle = title.toLowerCase().replace(/\s+/g, "-");
-  });
+const mockUpdateTitle = vi.fn().mockImplementation(async (title: string, isManual = false) => {
+  mockVibeDoc.title = title;
+  mockVibeDoc.titleSetManually = isManual;
+  mockVibeDoc.encodedTitle = title.toLowerCase().replace(/\s+/g, "-");
+});
 
 describe("Manual Title Preservation", () => {
   beforeEach(() => {

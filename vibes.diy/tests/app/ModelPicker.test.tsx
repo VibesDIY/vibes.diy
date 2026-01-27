@@ -34,12 +34,8 @@ describe("ModelPicker", () => {
     const onChange = vi.fn();
     render(
       <MockThemeProvider>
-        <ModelPicker
-          currentModel={MODELS[0].id}
-          models={MODELS}
-          onModelChange={onChange}
-        />
-      </MockThemeProvider>,
+        <ModelPicker currentModel={MODELS[0].id} models={MODELS} onModelChange={onChange} />
+      </MockThemeProvider>
     );
 
     const trigger = screen.getByRole("button", { name: /ai model/i });
@@ -64,17 +60,13 @@ describe("ModelPicker", () => {
       () =>
         new Promise<void>((resolve) => {
           resolveSelection = resolve;
-        }),
+        })
     );
 
     render(
       <MockThemeProvider>
-        <ModelPicker
-          currentModel={MODELS[0].id}
-          models={MODELS}
-          onModelChange={onChange}
-        />
-      </MockThemeProvider>,
+        <ModelPicker currentModel={MODELS[0].id} models={MODELS} onModelChange={onChange} />
+      </MockThemeProvider>
     );
 
     const trigger = screen.getByRole("button", { name: /ai model/i });
@@ -123,12 +115,8 @@ describe("ModelPicker", () => {
 
     render(
       <MockThemeProvider>
-        <ModelPicker
-          currentModel={MODELS[0].id}
-          models={MODELS}
-          onModelChange={onChange}
-        />
-      </MockThemeProvider>,
+        <ModelPicker currentModel={MODELS[0].id} models={MODELS} onModelChange={onChange} />
+      </MockThemeProvider>
     );
 
     const trigger = screen.getByRole("button", { name: /ai model/i });
@@ -171,18 +159,12 @@ describe("ModelPicker", () => {
       y: 560,
       toJSON: () => ({}),
     } as DOMRect;
-    const spy = vi
-      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
-      .mockReturnValue(rect);
+    const spy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(rect);
 
     render(
       <MockThemeProvider>
-        <ModelPicker
-          currentModel={MODELS[0].id}
-          models={MODELS}
-          onModelChange={onChange}
-        />
-      </MockThemeProvider>,
+        <ModelPicker currentModel={MODELS[0].id} models={MODELS} onModelChange={onChange} />
+      </MockThemeProvider>
     );
 
     const trigger = screen.getByRole("button", { name: /ai model/i });
@@ -194,9 +176,7 @@ describe("ModelPicker", () => {
     expect(menu).toHaveStyle(`bottom: ${expectedBottom}px`);
 
     // Inner list is capped to available space above the trigger
-    const list = menu.querySelector(
-      'div[style*="max-height"]',
-    ) as HTMLDivElement | null;
+    const list = menu.querySelector('div[style*="max-height"]') as HTMLDivElement | null;
     expect(list).toBeTruthy();
     if (list) {
       const mh = parseInt(list.style.maxHeight, 10);
@@ -214,12 +194,8 @@ describe("ModelPicker", () => {
     const onChange = vi.fn();
     render(
       <MockThemeProvider>
-        <ModelPicker
-          currentModel={MODELS[0].id}
-          models={MODELS}
-          onModelChange={onChange}
-        />
-      </MockThemeProvider>,
+        <ModelPicker currentModel={MODELS[0].id} models={MODELS} onModelChange={onChange} />
+      </MockThemeProvider>
     );
 
     const trigger = screen.getByRole("button", { name: /ai model/i });

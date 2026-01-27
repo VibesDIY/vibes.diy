@@ -62,7 +62,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
                 setTimeout(() => {
                   console.warn(`Timeout for ${modelId.id} (Grade ${modelId.grade}): ${name}`);
                   resolve(undefined);
-                }, timeout || TIMEOUT),
+                }, timeout || TIMEOUT)
               ),
             ]);
             return result;
@@ -73,7 +73,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
             return;
           }
         },
-        timeout,
+        timeout
       );
     };
   }
@@ -122,7 +122,7 @@ describe("Simple callAi integration tests", () => {
                 },
                 required: ["title", "theme", "mood", "songs"],
               },
-            },
+            }
           );
 
           // Get the metadata
@@ -149,7 +149,7 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 typeof data === "object" && data !== null,
-                `Parsed result is not an object in ${modelName} model response`,
+                `Parsed result is not an object in ${modelName} model response`
               );
 
               if (typeof data === "object" && data !== null) {
@@ -175,7 +175,7 @@ describe("Simple callAi integration tests", () => {
                     expectOrWarn(
                       modelId,
                       data.songs.length >= 3 && data.songs.length <= 5,
-                      `Songs count (${data.songs.length}) out of range (3-5) in ${modelName} model response`,
+                      `Songs count (${data.songs.length}) out of range (3-5) in ${modelName} model response`
                     );
 
                     // Check first song
@@ -184,7 +184,7 @@ describe("Simple callAi integration tests", () => {
                       expectOrWarn(
                         modelId,
                         typeof firstSong === "object" && firstSong !== null,
-                        `First song is not an object in ${modelName} model response`,
+                        `First song is not an object in ${modelName} model response`
                       );
 
                       if (typeof firstSong === "object" && firstSong !== null) {
@@ -193,7 +193,7 @@ describe("Simple callAi integration tests", () => {
                         expectOrWarn(
                           modelId,
                           "artist" in firstSong,
-                          `Missing 'artist' in first song in ${modelName} model response`,
+                          `Missing 'artist' in first song in ${modelName} model response`
                         );
 
                         // Check types
@@ -201,7 +201,7 @@ describe("Simple callAi integration tests", () => {
                           expectOrWarn(
                             modelId,
                             typeof firstSong.title === "string",
-                            `Song title is not a string in ${modelName} model response`,
+                            `Song title is not a string in ${modelName} model response`
                           );
                         }
 
@@ -209,7 +209,7 @@ describe("Simple callAi integration tests", () => {
                           expectOrWarn(
                             modelId,
                             typeof firstSong.artist === "string",
-                            `Song artist is not a string in ${modelName} model response`,
+                            `Song artist is not a string in ${modelName} model response`
                           );
                         }
                       }
@@ -222,7 +222,7 @@ describe("Simple callAi integration tests", () => {
             }
           }
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });

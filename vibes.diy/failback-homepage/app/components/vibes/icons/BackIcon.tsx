@@ -7,20 +7,9 @@ interface BackIconProps {
   height?: number;
 }
 
-export function BackIcon({
-  bgFill = "#fff",
-  fill = "#2a2a2a",
-  width = 44,
-  height = 44,
-}: BackIconProps) {
+export function BackIcon({ bgFill = "#fff", fill = "#2a2a2a", width = 44, height = 44 }: BackIconProps) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 44 44"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={width} height={height} viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="22" cy="22" r="22" fill={bgFill} />
       <g transform="translate(0, 5)">
         <path

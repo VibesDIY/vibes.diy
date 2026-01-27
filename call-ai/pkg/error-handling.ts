@@ -20,7 +20,7 @@ async function handleApiError(
     refreshToken?: string;
     updateRefreshToken?: (currentToken: string) => Promise<string>;
     mock?: Mocks;
-  } = {},
+  } = {}
 ): Promise<void> {
   const error = ierror as CallAIErrorParams;
 
@@ -71,7 +71,7 @@ async function handleApiError(
 async function checkForInvalidModelError(
   response: Response,
   model: string,
-  debug: boolean = globalDebug,
+  debug: boolean = globalDebug
 ): Promise<{ isInvalidModel: boolean; errorData?: APIErrorResponse }> {
   // Only check 4xx errors (which could indicate invalid model)
   if (response.status < 400 || response.status >= 500) {

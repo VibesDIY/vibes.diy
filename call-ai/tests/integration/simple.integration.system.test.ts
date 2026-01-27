@@ -62,7 +62,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
                 setTimeout(() => {
                   console.warn(`Timeout for ${modelId.id} (Grade ${modelId.grade}): ${name}`);
                   resolve(undefined);
-                }, timeout || TIMEOUT),
+                }, timeout || TIMEOUT)
               ),
             ]);
             return result;
@@ -73,7 +73,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
             return;
           }
         },
-        timeout,
+        timeout
       );
     };
   }
@@ -117,7 +117,7 @@ describe("Simple callAi integration tests", () => {
             expectOrWarn(
               modelId,
               result.toLowerCase().includes("france"),
-              `Response doesn't mention "France" in ${modelName} model`,
+              `Response doesn't mention "France" in ${modelName} model`
             );
           }
 
@@ -129,7 +129,7 @@ describe("Simple callAi integration tests", () => {
           // Check for metadata - all models should have raw response data
           expect(resultMeta?.rawResponse).toBeDefined();
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });

@@ -29,9 +29,7 @@ export const getBackgroundStyle = (isDarkMode: boolean): CSSProperties => ({
   right: 10,
   bottom: 10,
   borderRadius: "10px",
-  backgroundColor: isDarkMode
-    ? "var(--vibes-near-black)"
-    : "var(--vibes-near-gray)",
+  backgroundColor: isDarkMode ? "var(--vibes-near-black)" : "var(--vibes-near-gray)",
   zIndex: 0, // Below everything
   fontFamily: HomeScreenTheme.fonts.primary,
 });
@@ -173,9 +171,7 @@ export const getInnerContainerStyle = (isMobile: boolean): CSSProperties => ({
   fontFamily: HomeScreenTheme.fonts.primary,
 });
 
-export const getSectionsContainerStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getSectionsContainerStyle = (isMobile: boolean): CSSProperties => ({
   width: "100%",
   minHeight: "100vh",
   fontFamily: HomeScreenTheme.fonts.primary,
@@ -205,9 +201,7 @@ export const getSectionWrapperStyle = (isMobile: boolean): CSSProperties => ({
 });
 
 // First section color background (in scrolling backgrounds container)
-export const getFirstSectionColorBackgroundStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getFirstSectionColorBackgroundStyle = (isMobile: boolean): CSSProperties => ({
   position: "absolute",
   top: isMobile ? "calc(200vh + 64px)" : "calc(110vh + 64px - 85px)", // Start at first section (accounting for menu)
   left: 0,
@@ -226,9 +220,7 @@ export const getFirstSectionColorBackgroundStyle = (
 });
 
 // Second section color background (in scrolling backgrounds container)
-export const getSecondSectionColorBackgroundStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getSecondSectionColorBackgroundStyle = (isMobile: boolean): CSSProperties => ({
   position: "absolute",
   top: isMobile ? "calc(380vh + 64px)" : "calc(210vh + 64px + 370px)", // Start where first section gradient ends (accounting for menu)
   left: 0,
@@ -284,9 +276,7 @@ export const getTitleStyle = (): CSSProperties => ({
   textAlign: "center",
 });
 
-export const getMessageWrapperStyle = (
-  isCurrentUser: boolean,
-): CSSProperties => ({
+export const getMessageWrapperStyle = (isCurrentUser: boolean): CSSProperties => ({
   display: "flex",
   flexDirection: "column",
   alignItems: isCurrentUser ? "flex-end" : "flex-start",
@@ -305,9 +295,7 @@ export const getUsernameStyle = (isCurrentUser: boolean): CSSProperties => ({
   textAlign: isCurrentUser ? "right" : "left",
 });
 
-export const getMessageBubbleStyle = (
-  isCurrentUser: boolean,
-): CSSProperties => ({
+export const getMessageBubbleStyle = (isCurrentUser: boolean): CSSProperties => ({
   padding: "16px 20px",
   borderRadius: isCurrentUser ? "20px 20px 4px 20px" : "20px 20px 20px 4px",
   background: isCurrentUser ? "var(--vibes-cream)" : "#5298c8",
@@ -316,9 +304,7 @@ export const getMessageBubbleStyle = (
   fontSize: "15px",
   lineHeight: "1.6",
   fontWeight: "bold",
-  border: isCurrentUser
-    ? "1px solid #000"
-    : "1px solid rgba(255, 255, 255, 0.1)",
+  border: isCurrentUser ? "1px solid #000" : "1px solid rgba(255, 255, 255, 0.1)",
   position: "relative",
 });
 
@@ -383,7 +369,7 @@ const getAbsoluteTop = (element: HTMLElement): number => {
 export const getSection0BackgroundStyle = (
   ref: React.RefObject<HTMLDivElement | null>,
   containerRef: React.RefObject<HTMLDivElement | null>,
-  isMobile: boolean,
+  isMobile: boolean
 ): CSSProperties => {
   if (!ref.current || !containerRef.current) return { display: "none" };
 
@@ -412,7 +398,7 @@ export const getSection0BackgroundStyle = (
 export const getSection1BackgroundStyle = (
   ref: React.RefObject<HTMLDivElement | null>,
   containerRef: React.RefObject<HTMLDivElement | null>,
-  isMobile: boolean,
+  isMobile: boolean
 ): CSSProperties => {
   if (!ref.current || !containerRef.current) return { display: "none" };
 
@@ -442,7 +428,7 @@ export const getSection1BackgroundStyle = (
 export const getSection3BackgroundStyle = (
   ref: React.RefObject<HTMLDivElement | null>,
   containerRef: React.RefObject<HTMLDivElement | null>,
-  isMobile: boolean,
+  isMobile: boolean
 ): CSSProperties => {
   if (!ref.current || !containerRef.current) return { display: "none" };
 
@@ -471,7 +457,7 @@ export const getSection3BackgroundStyle = (
 export const getSection4BackgroundStyle = (
   ref: React.RefObject<HTMLDivElement | null>,
   containerRef: React.RefObject<HTMLDivElement | null>,
-  isMobile: boolean,
+  isMobile: boolean
 ): CSSProperties => {
   if (!ref.current || !containerRef.current) return { display: "none" };
 
@@ -500,7 +486,7 @@ export const getSection4BackgroundStyle = (
 export const getSection5BackgroundStyle = (
   ref: React.RefObject<HTMLDivElement | null>,
   containerRef: React.RefObject<HTMLDivElement | null>,
-  isMobile: boolean,
+  isMobile: boolean
 ): CSSProperties => {
   if (!ref.current || !containerRef.current) return { display: "none" };
 
@@ -529,7 +515,7 @@ export const getSection5BackgroundStyle = (
 export const getSection6BackgroundStyle = (
   ref: React.RefObject<HTMLDivElement | null>,
   containerRef: React.RefObject<HTMLDivElement | null>,
-  isMobile: boolean,
+  isMobile: boolean
 ): CSSProperties => {
   if (!ref.current || !containerRef.current) return { display: "none" };
 
@@ -557,7 +543,7 @@ export const getSection6BackgroundStyle = (
 export const getSection8BackgroundStyle = (
   ref: React.RefObject<HTMLDivElement | null>,
   containerRef: React.RefObject<HTMLDivElement | null>,
-  isMobile: boolean,
+  isMobile: boolean
 ): CSSProperties => {
   if (!ref.current || !containerRef.current) return { display: "none" };
 
@@ -605,10 +591,7 @@ export const getHeroSubheadingStyle = (): CSSProperties => ({
 });
 
 // Card text paragraph (with optional maxWidth)
-export const getCardTextStyle = (
-  maxWidth?: string,
-  isMobile?: boolean,
-): CSSProperties => ({
+export const getCardTextStyle = (maxWidth?: string, isMobile?: boolean): CSSProperties => ({
   maxWidth: isMobile ? "100%" : maxWidth || undefined,
   fontWeight: "bold",
   fontSize: "20px",
@@ -673,9 +656,7 @@ export const getImageCardStyleSmall = (size?: string): CSSProperties => ({
 });
 
 // Section with AnimatedScene layout styles
-export const getSectionWithAnimatedSceneStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getSectionWithAnimatedSceneStyle = (isMobile: boolean): CSSProperties => ({
   position: "relative",
   display: "flex",
   alignItems: "stretch",
@@ -687,9 +668,7 @@ export const getSectionWithAnimatedSceneStyle = (
 });
 
 // Left column for text content in AnimatedScene sections
-export const getAnimatedSectionTextColumnStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getAnimatedSectionTextColumnStyle = (isMobile: boolean): CSSProperties => ({
   flex: isMobile ? "0 0 auto" : "0 0 33.33%",
   display: "flex",
   alignItems: "center",
@@ -724,12 +703,11 @@ export const get2of3Column = (isMobile: boolean): CSSProperties => ({
 });
 
 // Mobile: Simple container for static AnimatedScene (Section 2)
-export const getStaticAnimatedSceneMobileContainerStyle =
-  (): CSSProperties => ({
-    width: "100%",
-    height: "100vh",
-    position: "relative",
-  });
+export const getStaticAnimatedSceneMobileContainerStyle = (): CSSProperties => ({
+  width: "100%",
+  height: "100vh",
+  position: "relative",
+});
 
 // Desktop: Visual placeholder for right column (2/3 width)
 export const getAnimatedSceneDesktopPlaceholderStyle = (): CSSProperties => ({
@@ -758,22 +736,20 @@ export const getAnimatedSceneDesktopLeftSpacerStyle = (): CSSProperties => ({
 });
 
 // Desktop: AnimatedScene container in right area (2/3)
-export const getAnimatedSceneDesktopRightContainerStyle =
-  (): CSSProperties => ({
-    flex: "0 0 66.66%",
-    position: "relative",
-    height: "100%",
-  });
+export const getAnimatedSceneDesktopRightContainerStyle = (): CSSProperties => ({
+  flex: "0 0 66.66%",
+  position: "relative",
+  height: "100%",
+});
 
 // Mobile: Container for scrollable AnimatedScene (Sections 4 & 6)
-export const getScrollableAnimatedSceneMobileContainerStyle =
-  (): CSSProperties => ({
-    width: "100%",
-    height: "50vh",
-    position: "sticky",
-    bottom: 0,
-    zIndex: 1,
-  });
+export const getScrollableAnimatedSceneMobileContainerStyle = (): CSSProperties => ({
+  width: "100%",
+  height: "50vh",
+  position: "sticky",
+  bottom: 0,
+  zIndex: 1,
+});
 
 // Mobile: Hidden scrollable div (300vh) for slower animation
 export const getHiddenScrollDivStyle = (): CSSProperties => ({
@@ -798,9 +774,7 @@ export const getHiddenScrollDivInnerStyle = (): CSSProperties => ({
 });
 
 // Mobile/Desktop: Scrollable wrapper for AnimatedScene
-export const getScrollableAnimatedSceneWrapperStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getScrollableAnimatedSceneWrapperStyle = (isMobile: boolean): CSSProperties => ({
   position: isMobile ? "relative" : "absolute",
   top: isMobile ? 0 : "50%",
   left: 0,
@@ -841,18 +815,16 @@ export const getStickyAnimatedSceneDesktopStyle = (): CSSProperties => ({
 });
 
 // Desktop: Left spacer for sticky AnimatedScene (no pointer events)
-export const getStickyAnimatedSceneDesktopLeftSpacerStyle =
-  (): CSSProperties => ({
-    flex: "0 0 33.33%",
-    pointerEvents: "none",
-  });
+export const getStickyAnimatedSceneDesktopLeftSpacerStyle = (): CSSProperties => ({
+  flex: "0 0 33.33%",
+  pointerEvents: "none",
+});
 
 // Desktop: Right container for sticky AnimatedScene
-export const getStickyAnimatedSceneDesktopRightContainerStyle =
-  (): CSSProperties => ({
-    flex: "0 0 66.66%",
-    position: "relative",
-  });
+export const getStickyAnimatedSceneDesktopRightContainerStyle = (): CSSProperties => ({
+  flex: "0 0 66.66%",
+  position: "relative",
+});
 
 // Link
 export const getLinkOutStyle = (): CSSProperties => ({

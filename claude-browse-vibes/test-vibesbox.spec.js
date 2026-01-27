@@ -1,8 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("Vibesbox local test - iframe and executeCode functionality", async ({
-  page,
-}) => {
+test("Vibesbox local test - iframe and executeCode functionality", async ({ page }) => {
   // Capture all console logs
   const consoleLogs = [];
   page.on("console", (msg) => {
@@ -19,9 +17,7 @@ test("Vibesbox local test - iframe and executeCode functionality", async ({
 
   // Capture request failures
   page.on("requestfailed", (request) => {
-    console.log(
-      `[REQUEST FAILED] ${request.url()} - ${request.failure().errorText}`,
-    );
+    console.log(`[REQUEST FAILED] ${request.url()} - ${request.failure().errorText}`);
   });
 
   console.log("🚀 Testing Vibesbox at localhost:8989...");
@@ -87,7 +83,7 @@ test("Vibesbox local test - iframe and executeCode functionality", async ({
           sessionId: "test-session",
           debug: "*",
         },
-        "*",
+        "*"
       );
     }, 1000);
   });
@@ -118,7 +114,7 @@ test("Vibesbox local test - iframe and executeCode functionality", async ({
     () => {
       return typeof window.Babel !== "undefined";
     },
-    { timeout: 5000 },
+    { timeout: 5000 }
   );
   console.log("✅ Babel is loaded");
 
@@ -127,7 +123,7 @@ test("Vibesbox local test - iframe and executeCode functionality", async ({
     () => {
       return typeof window.React !== "undefined";
     },
-    { timeout: 5000 },
+    { timeout: 5000 }
   );
   console.log("✅ React is loaded");
 

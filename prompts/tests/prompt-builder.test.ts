@@ -81,7 +81,7 @@ const opts = {
         selected: knownModuleNames,
         instructionalText: true,
         demoData: true,
-      }),
+      })
     ),
   },
 };
@@ -94,9 +94,7 @@ beforeAll(async () => {
   llmsJsonModules = await getJsonDocs(new URL("http://localhost/test"));
 
   orderedLlms = Object.entries(llmsJsonModules)
-    .filter(([path, _]) =>
-      knownModuleNames.some((name) => path.includes(`${name}.json`)),
-    )
+    .filter(([path, _]) => knownModuleNames.some((name) => path.includes(`${name}.json`)))
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([_, mod]) => mod.obj);
 });
@@ -209,15 +207,11 @@ describe("prompt builder (real implementation)", () => {
     });
 
     // The mocked AI call should return our known finite set
-    const chosenLlms = orderedLlms.filter((llm) =>
-      knownModuleNames.includes(llm.name),
-    );
+    const chosenLlms = orderedLlms.filter((llm) => knownModuleNames.includes(llm.name));
     const importBlock = generateImportStatements(chosenLlms);
 
     expect(result.systemPrompt).toContain("```js");
-    expect(result.systemPrompt).toContain(
-      'import React, { ... } from "react"' + importBlock,
-    );
+    expect(result.systemPrompt).toContain('import React, { ... } from "react"' + importBlock);
 
     for (const llm of chosenLlms) {
       expect(result.systemPrompt).toContain(`<${llm.label}-docs>`);
@@ -245,18 +239,12 @@ describe("prompt builder (real implementation)", () => {
       userPrompt: "hello",
     });
 
-    const chosenLlms = orderedLlms.filter((llm) =>
-      knownModuleNames.includes(llm.name),
-    ); // mocked AI call returns finite set
+    const chosenLlms = orderedLlms.filter((llm) => knownModuleNames.includes(llm.name)); // mocked AI call returns finite set
     const importBlock = generateImportStatements(chosenLlms);
-    expect(result.systemPrompt).toContain(
-      'import React, { ... } from "react"' + importBlock,
-    );
+    expect(result.systemPrompt).toContain('import React, { ... } from "react"' + importBlock);
 
     // Custom stylePrompt line replaces default
-    expect(result.systemPrompt).toContain(
-      "Don't use words from the style prompt in your copy: custom",
-    );
+    expect(result.systemPrompt).toContain("Don't use words from the style prompt in your copy: custom");
     expect(result.systemPrompt).not.toContain("Memphis Alchemy");
 
     // User prompt appears verbatim
@@ -283,9 +271,7 @@ describe("prompt builder (real implementation)", () => {
       history: [],
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).not.toMatch(
-      /vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=false to disable demo data", async () => {
@@ -298,9 +284,7 @@ describe("prompt builder (real implementation)", () => {
       demoDataOverride: false,
     });
     expect(result.systemPrompt).not.toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).not.toMatch(
-      /vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=true to force demo data", async () => {
@@ -313,8 +297,6 @@ describe("prompt builder (real implementation)", () => {
       demoDataOverride: true,
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).not.toMatch(
-      /vivid description of the app's purpose/i,
-    );
+    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
   });
 });
