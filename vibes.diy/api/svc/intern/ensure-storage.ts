@@ -32,6 +32,7 @@ export async function calcCid({ sthis }: { sthis: SuperThis }, content: CoerceBi
 
 export interface AssetProvider {
   type: string;
+  canHandle(url: string): boolean; // provider decides if it owns this URL
   put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>>; // returns URL
   get(url: string): Promise<Result<ReadableStream<Uint8Array>>>; // provider parses its own URL
 }
@@ -40,6 +41,10 @@ export class SqlAssetProvider implements AssetProvider {
   type = "sql";
   constructor(private db: VibesSqlite) {}
 
+  canHandle(url: string): boolean {
+    return url.startsWith("sql:");
+  }
+
   async put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>> {
     const bytes = new Uint8Array(await new Response(data).arrayBuffer());
     await this.db
@@ -47,11 +52,11 @@ export class SqlAssetProvider implements AssetProvider {
       .values({ assetId: cid, content: bytes, created: new Date().toISOString() })
       .onConflictDoNothing()
       .run();
-    return Result.Ok(`sql://Assets/${cid}`);
+    return Result.Ok(`sql:?cid=${cid}`);
   }
 
   async get(url: string): Promise<Result<ReadableStream<Uint8Array>>> {
-    const cid = URI.from(url).pathname.split("/").pop();
+    const cid = URI.from(url).getParam("cid");
     if (!cid) return Result.Err(new Error(`Invalid URL: ${url}`));
     const a = await this.db.select().from(sqlAssets).where(eq(sqlAssets.assetId, cid)).get();
     if (!a) return Result.Err(new Error("Not found"));
@@ -69,13 +74,17 @@ export class R2AssetProvider implements AssetProvider {
   type = "r2";
   constructor(private r2: R2If) {}
 
+  canHandle(url: string): boolean {
+    return url.startsWith("r2:");
+  }
+
   async put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>> {
     const res = await this.r2.put(cid, data);
-    return res.isErr() ? Result.Err(res.Err()) : Result.Ok(`r2://Assets/${cid}`);
+    return res.isErr() ? Result.Err(res.Err()) : Result.Ok(`r2:?cid=${cid}`);
   }
 
   async get(url: string): Promise<Result<ReadableStream<Uint8Array>>> {
-    const cid = URI.from(url).pathname.split("/").pop();
+    const cid = URI.from(url).getParam("cid");
     if (!cid) return Result.Err(new Error(`Invalid URL: ${url}`));
     return this.r2.get(cid);
   }
@@ -113,9 +122,8 @@ export function createAssetStorage(
     async fetchAssets(...urls): Promise<Result<{ url: string; asset: Uint8Array }>[]> {
       return Promise.all(
         urls.map(async (url) => {
-          const protocol = URI.from(url).protocol.replace(":", "");
-          const provider = providers.find((p) => p.type === protocol);
-          if (!provider) return Result.Err(new Error(`No provider for ${protocol}`));
+          const provider = providers.find((p) => p.canHandle(url));
+          if (!provider) return Result.Err(new Error(`No provider for ${url}`));
           const rStream = await provider.get(url);
           if (rStream.isErr()) return Result.Err(rStream.Err());
           return Result.Ok({ url, asset: new Uint8Array(await new Response(rStream.unwrap()).arrayBuffer()) });
