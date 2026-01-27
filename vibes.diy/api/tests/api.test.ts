@@ -1,11 +1,14 @@
 import { VibeDiyApi } from "@vibes.diy/api-impl";
-import { createHandler } from "@vibes.diy/api-svc";
 import { createClient } from "@libsql/client/node";
 import { beforeAll, describe, expect, inject, it } from "vitest";
-import { drizzle } from "drizzle-orm/libsql";
-import { BuildURI, HandleTriggerCtx, Result, TestFetchPair, TestWSPair, EventoSendProvider } from "@adviser/cement";
+import { BuildURI, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
+import { cfServe } from "@vibes.diy/api-svc";
+import { Request as CFRequest, D1Database, ExecutionContext } from "@cloudflare/workers-types";
+import { Env as CFEnv } from "@vibes.diy/api-svc/cf-env.ts";
+import { CFInject } from "@vibes.diy/api-svc/cf-serve.ts";
+import { drizzle } from "drizzle-orm/libsql";
 
 const noopCache = {
   put: async (_req: Request, _res: Response) => {
@@ -23,7 +26,7 @@ describe("VibesDiyApi", () => {
   const sthis = ensureSuperThis();
   const url = inject("VIBES_DIY_TEST_SQL_URL" as never) as string;
   const client = createClient({ url });
-  const db = drizzle(client);
+  const drizzleDB = drizzle(client);
 
   // let svc: Awaited<ReturnType<typeof createHandler>>;
   let api: VibeDiyApi;
@@ -57,31 +60,54 @@ describe("VibesDiyApi", () => {
 
     const fetchPair = TestFetchPair.create();
     const wsPair = TestWSPair.create();
-
-    const svc = await createHandler({
-      db,
-      cache: noopCache,
-      env,
+    fetchPair.server.onServe((req: Request) => {
+      console.log("fetchPair.server received request:", req.url);
+      return cfServe(
+        req as unknown as CFRequest,
+        {
+          ...env,
+          DB: null as unknown as D1Database,
+          ENVIRONMENT: "test",
+        } as CFEnv,
+        {
+          cache: noopCache,
+          drizzle: drizzleDB,
+          webSocketPair: () => ({
+            client: wsPair.p1,
+            server: wsPair.p2,
+          }),
+        } as unknown as ExecutionContext & CFInject
+      ) as unknown as Promise<Response>;
     });
-    const svcSendWS = new (class implements EventoSendProvider<Request, unknown, unknown> {
-      readonly responses: Response[] = [];
-      send<IS, OS>(_trigger: HandleTriggerCtx<Request, unknown, unknown>, data: IS): Promise<Result<OS, Error>> {
-        this.responses.push(new Response(JSON.stringify(data), { status: 200, headers: { "Content-Type": "application/json" } }));
-        wsPair.p1.onMessage({ data: JSON.stringify(data) } as MessageEvent<string>);
-        return Promise.resolve(Result.Ok(data as unknown as OS));
-      }
-    })();
-    wsPair.p2.onMessage = async (evt: MessageEvent) => {
-      svc({ type: "MessageEvent", event: evt }, { send: svcSendWS });
+
+    wsPair.p2.onmessage = () => {
+      /* noop */
     };
-    // const svcSendFetch = new (class implements EventoSendProvider<Request, unknown, unknown> {
-    // fetchPair.server.onServe((req: Request) => {
-    //   svc(req)
-    // });
+
+    cfServe(
+      new Request("http://example.com/api", {
+        headers: { Upgrade: "websocket" },
+      }) as unknown as CFRequest,
+      {
+        ...env,
+        DB: null as unknown as D1Database,
+        ENVIRONMENT: "test",
+      } as CFEnv,
+      {
+        cache: noopCache,
+        drizzle: drizzleDB,
+        wsResponse: new Response(null, { status: 200 }),
+        webSocketPair: () => ({
+          client: wsPair.p1,
+          server: wsPair.p2,
+        }),
+      } as unknown as ExecutionContext & CFInject
+    );
 
     api = new VibeDiyApi({
       ws: wsPair.p1 as unknown as WebSocket,
       fetch: fetchPair.client.fetch,
+      timeoutMs: 100000,
       getToken: async () => {
         return Result.Ok(await testUser.getDashBoardToken());
       },
@@ -135,6 +161,7 @@ describe("VibesDiyApi", () => {
         },
       ],
     });
+    // console.log("render iframe content page res:", res);
     const resIframe = await api.cfg.fetch(res.Ok().entryPointUrl);
     expect(resIframe.status).toBe(200);
     const iframeText = await resIframe.text();
@@ -373,8 +400,8 @@ describe("VibesDiyApi", () => {
             },
           },
           {
-            assetId: "z8SQeNpedZd3Tzj4WPTmWYzKPVY9qBnNnJ8TQ8jR3G9GC",
-            assetURI: "sql://Assets/z8SQeNpedZd3Tzj4WPTmWYzKPVY9qBnNnJ8TQ8jR3G9GC",
+            assetId: "z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
+            assetURI: "sql://Assets/z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
             fileName: "/~~calculated~~/import-map.json",
             mimeType: "application/importmap+json",
             size: 6822,

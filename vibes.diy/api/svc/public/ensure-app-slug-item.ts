@@ -1,5 +1,12 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
-import { reqEnsureAppSlug, ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile, VibesDiyError } from "@vibes.diy/api-types";
+import {
+  reqEnsureAppSlug,
+  ReqEnsureAppSlug,
+  ResEnsureAppSlug,
+  VibeFile,
+  VibesDiyError,
+  W3CWebSocketEvent,
+} from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../api.js";
@@ -9,7 +16,7 @@ import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { calcCid } from "../intern/ensure-storage.js";
 
-export const ensureAppSlugItem: EventoHandler<Request, ReqEnsureAppSlug, ResEnsureAppSlug | VibesDiyError> = {
+export const ensureAppSlugItem: EventoHandler<W3CWebSocketEvent, ReqEnsureAppSlug, ResEnsureAppSlug | VibesDiyError> = {
   hash: "ensure-cloud-token",
   validate: unwrapMsgBase(async (payload: unknown) => {
     // async (ctx): Promise<Result<Option<ReqEnsureAppSlug>>> => {
@@ -22,7 +29,7 @@ export const ensureAppSlugItem: EventoHandler<Request, ReqEnsureAppSlug, ResEnsu
   }),
   handle: checkAuth(
     async (
-      ctx: HandleTriggerCtx<Request, ReqWithVerifiedAuth<ReqEnsureAppSlug>, ResEnsureAppSlug | VibesDiyError>
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, ReqWithVerifiedAuth<ReqEnsureAppSlug>, ResEnsureAppSlug | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
       // console.log("handle ensureAppSlugItem", ctx.validated);
       const req = ctx.validated;

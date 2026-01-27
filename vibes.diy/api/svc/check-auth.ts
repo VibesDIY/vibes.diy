@@ -87,10 +87,10 @@ export async function verifyAuth(
   });
 }
 
-export function checkAuth<TReq extends WithAuth & { type: string }, TRes>(
-  fn: (ctx: HandleTriggerCtx<Request, ReqWithVerifiedAuth<TReq>, TRes>) => Promise<Result<EventoResultType>>
-): (ctx: HandleTriggerCtx<Request, TReq, TRes>) => Promise<Result<EventoResultType>> {
-  return async (ctx: HandleTriggerCtx<Request, TReq, TRes>) => {
+export function checkAuth<IReq, TReq extends WithAuth & { type: string }, TRes>(
+  fn: (ctx: HandleTriggerCtx<IReq, ReqWithVerifiedAuth<TReq>, TRes>) => Promise<Result<EventoResultType>>
+): (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => Promise<Result<EventoResultType>> {
+  return async (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => {
     const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), ctx.validated);
     if (rAuth.isErr()) {
       return Result.Err(rAuth.Err());
@@ -100,6 +100,6 @@ export function checkAuth<TReq extends WithAuth & { type: string }, TRes>(
     }
     // not nice but ts way of type narrowing is limited
     (ctx.validated as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
-    return fn(ctx as unknown as HandleTriggerCtx<Request, ReqWithVerifiedAuth<TReq>, TRes>);
+    return fn(ctx as unknown as HandleTriggerCtx<IReq, ReqWithVerifiedAuth<TReq>, TRes>);
   };
 }

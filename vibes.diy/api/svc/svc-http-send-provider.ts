@@ -42,46 +42,41 @@ export class HTTPSendProvider implements EventoSendProvider<Request, unknown, un
         status: 500,
         headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
       });
+      ctx.send.send(ctx, this.response);
       return Result.Err("invalid response type");
     }
-
-    const msg = msgBase(ctx.enRequest);
-    if (msg instanceof type.errors) {
-      this.response = new Response(JSON.stringify({ type: "error", message: "Invalid message base" }), {
-        status: 400,
+    const body = HttpResponseBodyType(res);
+    const json = HttpResponseJsonType(res);
+    if (json instanceof type.errors && body instanceof type.errors) {
+      this.response = new Response(JSON.stringify({ type: "error", message: "Response does not match expected types" }), {
+        status: 500,
         headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
       });
-      return Result.Err("invalid message base");
+      ctx.send.send(ctx, this.response);
+      return Result.Err("response does not match expected types");
     }
-    // need to set src / transactionId ... the optionals to real
-    const defaultRes: MsgBase = {
-      tid: msg.tid,
-      src: msg.dst,
-      dst: msg.src,
-      ttl: 10,
-      payload: res,
-    };
-    return ctx.encoder.decode(defaultRes).then((rStr) => {
-      if (rStr.isErr()) {
-        const x = {
-          type: "error",
-          message: "Failed to decode response",
-          error: rStr.Err(),
-        };
-        this.response = new Response(JSON.stringify(x), {
-          status: 500,
-          headers: DefaultHttpHeaders({ "Content-Type": "application/json" }),
-        });
-        return Result.Err(rStr.Err());
-      }
-      this.response = new Response(rStr.Ok() as string, {
-        status: 200,
+    if (!(json instanceof type.errors)) {
+      this.response = new Response(JSON.stringify(json.json), {
+        status: json.status,
         headers: DefaultHttpHeaders({
           "Content-Type": "application/json",
           "Server-Timing": `total;dur=${(ctx.stats.request.doneTime.getTime() - ctx.stats.request.startTime.getTime()).toFixed(2)}`,
         }),
       });
-      return Result.Ok(defaultRes as T);
-    });
+      ctx.send.send(ctx, this.response);
+      return Result.Ok(json as unknown as T);
+    }
+    if (!(body instanceof type.errors)) {
+      this.response = new Response(body.body as BodyInit, {
+        status: body.status,
+        headers: DefaultHttpHeaders({
+          "Content-Type": body.headers?.["Content-Type"] ?? "application/octet-stream",
+          "Server-Timing": `total;dur=${(ctx.stats.request.doneTime.getTime() - ctx.stats.request.startTime.getTime()).toFixed(2)}`,
+        }),
+      });
+      ctx.send.send(ctx, this.response);
+      return Result.Ok(body as unknown as T);
+    }
+    return Result.Err("unhandled response type");
   }
 }

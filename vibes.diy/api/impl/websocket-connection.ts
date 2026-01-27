@@ -1,4 +1,4 @@
-import { Future, JSONEnDecoderSingleton, KeyedResolvOnce, OnFunc, ToDecoder } from "@adviser/cement";
+import { exception2Result, Future, KeyedResolvOnce, OnFunc, ToDecoder } from "@adviser/cement";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { W3CWebSocketErrorEvent, W3CWebSocketMessageEvent, W3CWebSocketCloseEvent } from "@vibes.diy/api-types";
 
@@ -20,7 +20,7 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
     const onError = OnFunc<(event: W3CWebSocketErrorEvent) => void>();
     const onMessage = OnFunc<(event: W3CWebSocketMessageEvent) => void>();
     const onClose = OnFunc<(event: W3CWebSocketCloseEvent) => void>();
-    const ende = JSONEnDecoderSingleton();
+    // const ende = JSONEnDecoderSingleton();
 
     ws.onopen = () => {
       waitOpen.resolve(ws);
@@ -41,7 +41,9 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
       onError,
       onMessage,
       onClose,
-      send: (data: ToDecoder) => ws.send(ende.stringify(data)),
+      send: (data: ToDecoder) => {
+        ws.send(data as Uint8Array);
+      },
     }));
   });
 }

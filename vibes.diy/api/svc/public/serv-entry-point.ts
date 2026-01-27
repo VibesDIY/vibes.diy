@@ -49,10 +49,8 @@ export async function fetchContent(
       const clone = matched[0].clone();
       const arrayBuffer = await clone.arrayBuffer();
       if (!matched[1]) {
-        vctx.waitUntil(
-          vctx.cache.put(
-            ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), arrayBuffer, item, headers)
-          )
+        await vctx.cache.put(
+          ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), arrayBuffer, item, headers)
         );
       }
       return Result.Ok(new Uint8Array(arrayBuffer));
@@ -61,7 +59,7 @@ export async function fetchContent(
       const clone = matched[1].clone();
       const arrayBuffer = await clone.arrayBuffer();
       if (!matched[0]) {
-        vctx.waitUntil(vctx.cache.put(...pairReqRes(assetCacheCidUrl, arrayBuffer, item, headers)));
+        await vctx.cache.put(...pairReqRes(assetCacheCidUrl, arrayBuffer, item, headers));
       }
       return Result.Ok(new Uint8Array(arrayBuffer));
     }
@@ -75,14 +73,12 @@ export async function fetchContent(
           return Result.Err(new Error(`Asset not found: ${item.assetId}`));
         }
         // inject into cache for assert lookups
-        vctx.waitUntil(
-          Promise.all([
-            vctx.cache.put(
-              ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), asset.content, item, headers)
-            ),
-            vctx.cache.put(...pairReqRes(assetCacheCidUrl, asset.content, item, headers)),
-          ])
-        );
+        await Promise.all([
+          vctx.cache.put(
+            ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), asset.content, item, headers)
+          ),
+          vctx.cache.put(...pairReqRes(assetCacheCidUrl, asset.content, item, headers)),
+        ]);
         return Result.Ok(asset.content as Uint8Array);
       }
       break;

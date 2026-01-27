@@ -12,13 +12,29 @@ import {
   VibesDiyError,
   MsgBox,
   W3CWebSocketEvent,
+  msgBase,
+  resEnsureAppSlug,
+  resError,
 } from "@vibes.diy/api-types";
-import { Evento, EventoSendProvider, Result, TriggerCtx, timeouted } from "@adviser/cement";
+import {
+  Evento,
+  EventoSendProvider,
+  Future,
+  JSONEnDecoderSingleton,
+  Result,
+  Option,
+  TriggerCtx,
+  timeouted,
+  HandleTriggerCtx,
+  EventoResult,
+  ValidateTriggerCtx,
+} from "@adviser/cement";
 import { SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { VibesDiyApiIface, W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
+import { type } from "arktype";
 
 export interface VibesDiyApiParam {
   readonly apiUrl?: string;
@@ -100,8 +116,13 @@ export class VibeDiyApi implements VibesDiyApiIface<{
         auth,
       },
     };
+    // console.log("Prepared message box:", msgBox);
     const conn = await this.getReadyConnection();
-    conn.send(JSON.stringify(msgBox));
+    // console.log("Got ready connection, sending message with tid:", msgParam.tid);
+    const ende = JSONEnDecoderSingleton();
+    const uint8ify = ende.uint8ify(msgBox);
+    // console.log("Encoded message to Uint8Array:", msgParam.tid, uint8ify.length, conn.send.toString());
+    conn.send(uint8ify);
     return Result.Ok(msgBox as MsgBox<T>);
   }
 
@@ -112,6 +133,34 @@ export class VibeDiyApi implements VibesDiyApiIface<{
       async () => {
         const conn = await this.getReadyConnection();
         const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
+        evento.push({
+          hash: tid,
+          validate: async (trigger: ValidateTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
+            const msg = msgBase(trigger.enRequest);
+            if (msg instanceof type.errors) {
+              // console.log("Invalid message received, ignoring:", msg, trigger.enRequest);
+              return Result.Ok(Option.None());
+            }
+            if (msg.tid === tid) {
+              // console.log("Valid event matched for tid:", tid);
+              return Result.Ok(Option.Some(trigger.enRequest));
+            }
+            return Result.Ok(Option.None());
+          },
+          handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
+            // console.log("Handling incoming event for tid:", tid, trigger);
+            const isError = resError(trigger.validated.payload);
+            if (!(isError instanceof type.errors)) {
+              // console.log("Response message is an error for tid:", tid, isError);
+              waitForResponse.resolve(Result.Err<S, VibesDiyError>(isError as VibesDiyError));
+            } else {
+              waitForResponse.resolve(Result.Ok<S, VibesDiyError>(trigger.validated.payload as S));
+            }
+            return Result.Ok(EventoResult.Stop);
+          },
+        });
+        // console.log("Setting up onMessage handler for tid:", tid);
+        const waitForResponse = new Future();
         unreg = conn.onMessage((event) => {
           evento.trigger({
             request: event,
@@ -121,11 +170,13 @@ export class VibeDiyApi implements VibesDiyApiIface<{
             }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
           });
         });
-
+        // console.log("Sending request with tid:", tid);
         const rReq = await this.send(req, { tid });
+        // console.log("Sended request with tid:", tid, rReq);
         if (rReq.isErr()) {
           return Result.Err<S, VibesDiyError>(rReq.Err());
         }
+        return waitForResponse.asPromise();
       },
       {
         timeout: this.cfg.timeoutMs,

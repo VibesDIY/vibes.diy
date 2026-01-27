@@ -1,8 +1,8 @@
 import { EventoSendProvider, HandleTriggerCtx, JSONEnDecoder, JSONEnDecoderSingleton, Result } from "@adviser/cement";
-import { msgBase, MsgBase } from "@vibes.diy/api-types";
+import { msgBase, MsgBase, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
-export class WSSendProvider implements EventoSendProvider<Request, unknown, unknown> {
+export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unknown, unknown> {
   readonly ws: WebSocket;
   readonly ende: JSONEnDecoder;
   constructor(ws: WebSocket, ende?: JSONEnDecoder) {
@@ -10,7 +10,8 @@ export class WSSendProvider implements EventoSendProvider<Request, unknown, unkn
     this.ende = ende ?? JSONEnDecoderSingleton();
   }
 
-  async send<T>(ctx: HandleTriggerCtx<Request, unknown, unknown>, res: unknown): Promise<Result<T>> {
+  async send<T>(ctx: HandleTriggerCtx<W3CWebSocketEvent, unknown, unknown>, res: unknown): Promise<Result<T>> {
+    // console.log("WSSendProvider preparing to send response:", res);
     const msg = msgBase(ctx.enRequest);
     if (msg instanceof type.errors) {
       this.ws.send(this.ende.uint8ify({ type: "error", message: "Invalid message incoming" }));

@@ -10,7 +10,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.5.17",
+    "@adviser/cement": "^0.5.19",
     "@clerk/clerk-react": "^5.59.5",
     "@fireproof/core": "0.24.9",
     "@fireproof/core-keybag": "0.24.9",

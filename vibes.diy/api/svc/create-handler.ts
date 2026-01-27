@@ -1,170 +1,29 @@
 // import { auth } from "./better-auth.js";
-import {
-  Lazy,
-  LoggerImpl,
-  Result,
-  param,
-  Option,
-  Evento,
-  EventoType,
-  AppContext,
-  ValidateTriggerCtx,
-  HandleTriggerCtx,
-  EventoResultType,
-  EventoResult,
-  TriggerResult,
-  EventoSendProvider,
-} from "@adviser/cement";
+import { LoggerImpl, Result, param, AppContext, TriggerResult, EventoSendProvider } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { ResultSet } from "@libsql/client";
-import { ensureAppSlugItem } from "./public/ensure-app-slug-item.js";
-import { ensureChatContext } from "./public/ensure-chat-context.js";
-import { appendChatSection } from "./public/append-chat-section.js";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
 import { ensureStorage } from "./intern/ensure-storage.js";
-import { HttpResponseJsonType, W3CWebSocketEvent } from "@vibes.diy/api-types";
-import { servEntryPoint } from "./public/serv-entry-point.js";
-import { D1Result } from "@cloudflare/workers-types";
-import { CombinedEventoEnDecoder, ReqResEventoEnDecoder, W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
-
+import type { D1Result } from "@cloudflare/workers-types";
+import { defaultFetchPkgVersion } from "./npm-package-version.js";
+import { vibesReqResEvento } from "./vibes-req-res-evento.js";
+import { HTTPSendProvider } from "./svc-http-send-provider.js";
 export interface VerifyApiToken {
   verify(token: string): Promise<Result<VerifiedClaimsResult>>;
 }
 
 export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Record<string, never>>;
-
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
-
-export const vibesApiEvento = Lazy(() => {
-  const evento = new Evento(new CombinedEventoEnDecoder(new ReqResEventoEnDecoder(), new W3CWebSocketEventEventoEnDecoder()));
-  evento.push(
-    {
-      hash: "cors-preflight",
-      validate: (ctx: ValidateTriggerCtx<Request, unknown, unknown>) => {
-        const { request: req } = ctx;
-        if (req && req.method === "OPTIONS") {
-          return Promise.resolve(Result.Ok(Option.Some("Send CORS preflight response")));
-        }
-        return Promise.resolve(Result.Ok(Option.None()));
-      },
-      handle: async (ctx: HandleTriggerCtx<Request, string, unknown>): Promise<Result<EventoResultType>> => {
-        await ctx.send.send(ctx, {
-          type: "http.Response.JSON",
-          status: 200,
-          json: { type: "ok", message: "CORS preflight" },
-        } satisfies HttpResponseJsonType);
-        return Result.Ok(EventoResult.Stop);
-      },
-    },
-    servEntryPoint,
-    // {
-    //   hash: "log-request ",
-    //   validate: async (_ctx: ValidateTriggerCtx<Request, unknown, unknown>): Promise<Result<Option<unknown>>> => {
-    //     return Promise.resolve(Result.Ok(Option.Some("Log request")));
-    //   },
-    //   handle: async (ctx: HandleTriggerCtx<Request, unknown, unknown>): Promise<Result<EventoResultType>> => {
-    //     const { request: req } = ctx;
-    //     if (!["POST", "PUT"].includes(req.method)) {
-    //       await ctx.send.send(ctx, {
-    //         type: "http.Response.JSON",
-    //           status: 503,
-    //           json: {
-    //             type: "error",
-    //             message: "Only POST and PUT methods are supported",
-    //             req: ctx.enRequest,
-    //           },
-    //       } satisfies HttpResponseJsonType);
-    //       return Result.Ok(EventoResult.Stop);
-    //     }
-    //     ctx.ctx
-    //       .getOrThrow<VibesApiSQLCtx>("vibesApiCtx")
-    //       .sthis.logger.Debug()
-    //       .TimerStart(`api-request-${ctx.id}`)
-    //       .Any({
-    //         method: req.method,
-    //         url: req.url,
-    //         headers: HttpHeader.from(req.headers).AsRecordStringString(),
-    //         body: ctx.enRequest,
-    //       })
-    //       .Msg("API Request started");
-    //     return Result.Ok(EventoResult.Continue);
-    //   },
-    //   post: async (ctx: HandleTriggerCtx<Request, unknown, unknown>): Promise<void> => {
-    //     // ctx.send.tranfer(ctx);
-    //     ctx.ctx
-    //       .getOrThrow<VibesApiSQLCtx>("vibesApiCtx")
-    //       .sthis.logger.Debug()
-    //       .TimerEnd(`api-request-${ctx.id}`)
-    //       .Any({ stats: ctx.stats })
-    //       .Msg("API Request ended");
-    //   },
-    // },
-    ensureAppSlugItem,
-    ensureChatContext,
-    appendChatSection,
-    {
-      type: EventoType.WildCard,
-      hash: "not-implemented-handler",
-      handle: async (ctx) => {
-        await ctx.send.send(ctx, {
-          type: "http.Response.JSON",
-          status: 501,
-          json: {
-            type: "error",
-            message: "Not Implemented",
-            req: ctx.enRequest,
-          },
-        } satisfies HttpResponseJsonType);
-        return Result.Ok(EventoResult.Continue);
-      },
-    },
-    {
-      type: EventoType.Error,
-      hash: "error-handler",
-      handle: async (ctx) => {
-        await ctx.send.send(ctx, {
-          type: "http.Response.JSON",
-          status: 500,
-          json: {
-            type: "error",
-            message: "Internal Server Error",
-            error: ctx.error?.toString(),
-          },
-        } satisfies HttpResponseJsonType);
-        return Result.Ok(EventoResult.Continue);
-      },
-    }
-  );
-  return evento;
-});
-
-function defaultFetchPkgVersion(
-  fn?: (pkg: string) => Promise<string | undefined>,
-  url = "https://registry.npmjs.org"
-): (pkg: string) => Promise<string | undefined> {
-  if (fn) {
-    return fn;
-  }
-  return (pkg: string) =>
-    fetch(`${url}/${pkg}/latest`)
-      .then((res) => {
-        if (!res.ok) {
-          return undefined;
-        }
-        return res.json().then((data) => data.version);
-      })
-      .catch(() => undefined);
-}
 
 export interface CreateHandlerParams<T extends VibesSqlite> {
   db: T;
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
-  waitUntil?<T>(promise: Promise<T>): void;
+  // waitUntil?<T>(promise: Promise<T>): void;
 }
 
 export interface SVCParam {
@@ -173,7 +32,7 @@ export interface SVCParam {
 }
 
 // BaseSQLiteDatabase<'async', ResultSet, TSchema>
-export async function createHandler<T extends VibesSqlite>(params: CreateHandlerParams<T>) {
+export async function createAppContext<T extends VibesSqlite>(params: CreateHandlerParams<T>) {
   // const stream = new utils.ConsoleWriterStream();
   const sthis = ensureSuperThis({
     logger: new LoggerImpl(),
@@ -242,14 +101,14 @@ export async function createHandler<T extends VibesSqlite>(params: CreateHandler
     },
   };
 
-  const vibesApiCtx = new AppContext().set(
+  return new AppContext().set(
     "vibesApiCtx",
     createVibesFPApiSQLCtx({
       sthis,
       db: params.db,
       cache: params.cache,
       fetchPkgVersion: defaultFetchPkgVersion(params.fetchPkgVersion),
-      waitUntil: params.waitUntil ?? ((p) => p),
+      // waitUntil: params.waitUntil ?? ((p) => p),
 
       tokenApi: await tokenApi(sthis, {
         clockTolerance: 60,
@@ -260,25 +119,46 @@ export async function createHandler<T extends VibesSqlite>(params: CreateHandler
       params: svcParams,
     })
   );
-  const evento = vibesApiEvento();
-  return async (
-    req: Request | W3CWebSocketEvent,
-    iopts: SVCParam
-  ): Promise<Result<TriggerResult<unknown, unknown, unknown>, Error>> => {
-    const { bindPromise, send } = {
-      ...iopts,
-      bindPromise: iopts.bindPromise ?? (<T>(p: T) => p),
-    };
-    console.log("createHandler.req", req, bindPromise.toString());
-    const triggerCtx = {
-      ctx: vibesApiCtx,
-      send,
-      request: req,
-    };
-    const rTrigger = await bindPromise(evento.trigger(triggerCtx));
-    if (rTrigger.isErr()) {
-      vibesApiCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx").logger.Error().Err(rTrigger).Msg("createhandler-Error");
-    }
-    return rTrigger;
-  };
 }
+
+export async function processRequest(ctx: AppContext, req: Request): Promise<Response> {
+  const webEvento = vibesReqResEvento();
+  const httpSend = new HTTPSendProvider();
+  const res = await webEvento.trigger({
+    ctx, //: vibesApiCtx,
+    send: httpSend,
+    request: req,
+  });
+  if (res.isErr()) {
+    ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx").logger.Error().Err(res).Msg("processRequest-Error");
+    return new Response(
+      JSON.stringify({
+        type: "vibes.diy.error",
+        message: `Internal Server Error: ${res.Err().toString()}`,
+      }),
+      { status: 500 }
+    );
+  }
+  return httpSend.getResponse();
+}
+
+// return async (
+//   req: Request | W3CWebSocketEvent,
+//   iopts: SVCParam
+// ): Promise<Result<TriggerResult<unknown, unknown, unknown>, Error>> => {
+//   const { bindPromise, send } = {
+//     ...iopts,
+//     bindPromise: iopts.bindPromise ?? (<T>(p: T) => p),
+//   };
+//   console.log("createHandler.req", req, bindPromise.toString());
+//   const triggerCtx = {
+//     ctx: vibesApiCtx,
+//     send,
+//     request: req,
+//   };
+//   const rTrigger = await bindPromise(evento.trigger(triggerCtx));
+//   if (rTrigger.isErr()) {
+//     vibesApiCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx").logger.Error().Err(rTrigger).Msg("createhandler-Error");
+//   }
+//   return rTrigger;
+// };

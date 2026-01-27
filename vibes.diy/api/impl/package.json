@@ -9,7 +9,7 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.17",
+    "@adviser/cement": "^0.5.19",
     "@fireproof/core-runtime": "0.24.9",
     "@fireproof/core-types-base": "0.24.9",
     "@vibes.diy/api-pkg": "workspace:*",
