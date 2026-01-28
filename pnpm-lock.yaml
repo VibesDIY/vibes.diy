@@ -1210,8 +1210,8 @@ importers:
         specifier: ^1.30.0
         version: 1.30.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/kubernetes':
-        specifier: ^4.24.1
-        version: 4.24.1(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: ^4.25.0
+        version: 4.25.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pulumi':
         specifier: ^3.216.0
         version: 3.216.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
@@ -3865,8 +3865,8 @@ packages:
   '@pulumi/hcloud@1.30.0':
     resolution: {integrity: sha512-iVvdcIN7fif60RlHbk6Ynb37h7DYNn/ev66GPZHVeA19qcBH6pyb2JMfWP9DeT7fuJLkm3j6ZmWGRRsnjZc46A==}
 
-  '@pulumi/kubernetes@4.24.1':
-    resolution: {integrity: sha512-3KC4fsxniS9W1dUo45MzMDByIWc+wGhOYQdbVe/neSmuRFpu3JmiLHSGukcIGNUGSblqRdVzsfiW5WEtCghbcA==}
+  '@pulumi/kubernetes@4.25.0':
+    resolution: {integrity: sha512-KP/ZJpS7eY58oKoGaMIGQWjM3mLpWlGUnOt+jjdGsqqk/t9OqhJCfAGC2E83usMKjuP312zMC7xi7sEQuJQ7uw==}
 
   '@pulumi/pulumi@3.216.0':
     resolution: {integrity: sha512-trrYuGE76HirIpA8McuomXNSkkccQyQajP9ZNLd0WHqnxXstTjRR+Zxizwo/0NJ3/HTUsA7wJE1Qt5auf7jL2g==}
@@ -15476,7 +15476,7 @@ snapshots:
       - ts-node
       - typescript
 
-  '@pulumi/kubernetes@4.24.1(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/kubernetes@4.25.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@pulumi/pulumi': 3.216.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
       glob: 10.5.0
