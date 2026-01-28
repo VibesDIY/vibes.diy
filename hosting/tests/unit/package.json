@@ -40,7 +40,7 @@
     "@vitest/browser-playwright": "^4.0.17",
     "chanfana": "^3.0.0",
     "hono": "^4.11.4",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.16",

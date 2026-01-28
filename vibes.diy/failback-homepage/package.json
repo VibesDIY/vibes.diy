@@ -96,7 +96,7 @@
     "mime-types": "^3.0.2",
     "netlify": "^23.13.3",
     "netlify-cli": "^23.13.3",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.1",
     "serve": "^14.2.5",
     "shiki": "^3.21.0",
     "storybook": "^10.1.11",
