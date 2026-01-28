@@ -872,8 +872,8 @@ importers:
         specifier: 19.2.3
         version: 19.2.3
       react-cookie-consent:
-        specifier: ^10.0.0
-        version: 10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: ^10.0.1
+        version: 10.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
@@ -1098,8 +1098,8 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3
       react-cookie-consent:
-        specifier: ^10.0.0
-        version: 10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: ^10.0.1
+        version: 10.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
@@ -1261,8 +1261,8 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3
       react-cookie-consent:
-        specifier: ^10.0.0
-        version: 10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: ^10.0.1
+        version: 10.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
@@ -1364,8 +1364,8 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3
       react-cookie-consent:
-        specifier: ^10.0.0
-        version: 10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: ^10.0.1
+        version: 10.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
@@ -10112,8 +10112,8 @@ packages:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
 
-  react-cookie-consent@10.0.0:
-    resolution: {integrity: sha512-VHbS1phMZ+r898KH7aJY/CfWKOXsHYr9W7Z+GuksH90K72iY9HJBMMYPcNNo32BwPOQBJV/dj34bPy2oBlfQWA==}
+  react-cookie-consent@10.0.1:
+    resolution: {integrity: sha512-qgU7Kr+x9/feKZxaIJbMT+R/xD1lnAQy9MzD4yLooVrkhoUR7XFc8Xv8M+GDQYcjoYh6uszslLGo1k+eU2VLtw==}
     engines: {node: '>=20.16'}
     peerDependencies:
       react: '>=18'
@@ -23316,7 +23316,7 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-cookie-consent@10.0.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+  react-cookie-consent@10.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       js-cookie: 3.0.5
       react: 19.2.3
