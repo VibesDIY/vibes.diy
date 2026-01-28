@@ -17,6 +17,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibes } from "../intern/render-vibes.js";
+import { StorageNotFoundError } from "../intern/ensure-storage.js";
 
 function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
   return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
@@ -60,9 +61,18 @@ export async function fetchContent(
       return Result.Ok(new Uint8Array(arrayBuffer));
     }
   }
-  const [rAsset] = await vctx.assetStorage.fetchAssets(item.assetURI);
-  if (rAsset.isErr()) return Result.Err(rAsset.Err());
-  const content = rAsset.unwrap().asset;
+  const stream = vctx.fetchStorage(item.assetURI);
+  let content: Uint8Array;
+  try {
+    // Consume stream - errors (including NotFound) come through here
+    content = new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch (err) {
+    if (err instanceof StorageNotFoundError) {
+      return Result.Err(new Error(`Asset not found: ${err.cid}`));
+    }
+    return Result.Err(err as Error);
+  }
+  // inject into cache for asset lookups
   vctx.waitUntil(Promise.all([
     vctx.cache.put(...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), content as BodyInit, item, headers)),
     vctx.cache.put(...pairReqRes(assetCacheCidUrl, content as BodyInit, item, headers)),
