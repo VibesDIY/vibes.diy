@@ -32,7 +32,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@fireproof/core-cli": "0.24.9",
-    "@types/node": "^25.0.9",
+    "@types/node": "^25.0.10",
     "@vitest/browser-playwright": "^4.0.17",
     "typescript": "^5.9.3"
   },
