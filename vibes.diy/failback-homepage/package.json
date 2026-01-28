@@ -94,7 +94,7 @@
     "deno": "^2.6.5",
     "find-up": "^8.0.0",
     "mime-types": "^3.0.2",
-    "netlify": "^23.13.3",
+    "netlify": "^23.13.5",
     "netlify-cli": "^23.13.3",
     "prettier": "^3.8.0",
     "serve": "^14.2.5",
