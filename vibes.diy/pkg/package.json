@@ -80,7 +80,7 @@
     "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
     "netlify": "^23.13.5",
-    "netlify-cli": "^23.13.3",
+    "netlify-cli": "^23.13.5",
     "prettier": "^3.8.1",
     "shiki": "^3.21.0",
     "storybook": "^10.1.11",

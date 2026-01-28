@@ -95,7 +95,7 @@
     "find-up": "^8.0.0",
     "mime-types": "^3.0.2",
     "netlify": "^23.13.5",
-    "netlify-cli": "^23.13.3",
+    "netlify-cli": "^23.13.5",
     "prettier": "^3.8.1",
     "serve": "^14.2.5",
     "shiki": "^3.21.0",
