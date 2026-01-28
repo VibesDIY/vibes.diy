@@ -833,8 +833,8 @@ importers:
         specifier: workspace:*
         version: link:../../use-vibes/types
       animejs:
-        specifier: ^4.2.2
-        version: 4.2.2
+        specifier: ^4.3.5
+        version: 4.3.5
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -5554,8 +5554,8 @@ packages:
   alien-signals@2.0.6:
     resolution: {integrity: sha512-P3TxJSe31bUHBiblg59oU1PpaWPtmxF9GhJ/cB7OkgJ0qN/ifFSKUI25/v8ZhsT+lIG6ac8DpTOplXxORX6F3Q==}
 
-  animejs@4.2.2:
-    resolution: {integrity: sha512-Ys3RuvLdAeI14fsdKCQy7ytu4057QX6Bb7m4jwmfd6iKmUmLquTwk1ut0e4NtRQgCeq/s2Lv5+oMBjz6c7ZuIg==}
+  animejs@4.3.5:
+    resolution: {integrity: sha512-yuQo/r97TCE+DDu3dTRKjyhBKSEGBcZorWeRW7WCE7EkAQpBoNd2E82dAAD/MDdrbREv7qsw/u7MAqiUX544WQ==}
 
   anser@1.4.10:
     resolution: {integrity: sha512-hCv9AqTQ8ycjpSd3upOJd7vFwW1JaoYQ7tpham03GJ1ca8/65rqn0RpaWpItOAd6ylW9wAw6luXYPJIyPFVOww==}
@@ -17655,7 +17655,7 @@ snapshots:
 
   alien-signals@2.0.6: {}
 
-  animejs@4.2.2: {}
+  animejs@4.3.5: {}
 
   anser@1.4.10: {}
 
