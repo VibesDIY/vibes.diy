@@ -25,7 +25,7 @@ import { appendChatSection } from "./public/append-chat-section.js";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
-import { createAssetStorage, SqlAssetProvider, sizeBasedStrategy } from "./intern/ensure-storage.js";
+import { ensureStorage, fetchStorage } from "./intern/ensure-storage.js";
 import { isResponseType, MsgBase, msgBase, ResponseType, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { servEntryPoint } from "./public/serv-entry-point.js";
 import { D1Result } from "@cloudflare/workers-types";
@@ -261,7 +261,6 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
-  waitUntil?<T>(promise: Promise<T>): void;
 }
 
 // BaseSQLiteDatabase<'async', ResultSet, TSchema>
@@ -341,13 +340,12 @@ export async function createHandler<T extends VibesSqlite>(params: CreateHandler
       db: params.db,
       cache: params.cache,
       fetchPkgVersion: defaultFetchPkgVersion(params.fetchPkgVersion),
-      waitUntil: params.waitUntil ?? ((p) => p),
-
       tokenApi: await tokenApi(sthis, {
         clockTolerance: 60,
         deviceIdCA: rDeviceIdCA.Ok(),
       }),
-      assetStorage: createAssetStorage([new SqlAssetProvider(params.db)], sizeBasedStrategy()),
+      ensureStorage: ensureStorage(params.db),
+      fetchStorage: fetchStorage(params.db),
       deviceCA: rDeviceIdCA.Ok(),
       params: svcParams,
     })

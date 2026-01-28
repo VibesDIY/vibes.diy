@@ -33,7 +33,6 @@ export async function cfWsServe(request: CFRequest, env: Env, ctx: ExecutionCont
     db: drizzle(env.DB),
     cache: ctx.cache,
     env: env as unknown as Record<string, string>,
-    waitUntil: (p) => ctx.waitUntil(p),
   });
 
   const upgradeHeader = request.headers.get("Upgrade");

@@ -18,6 +18,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, ResponseType } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibes } from "../intern/render-vibes.js";
+import { StorageNotFoundError } from "../intern/ensure-storage.js";
 
 function pairReqRes(key: CoerceURI, content: unknown, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
   return [
@@ -50,10 +51,8 @@ export async function fetchContent(
       const clone = matched[0].clone();
       const arrayBuffer = await clone.arrayBuffer();
       if (!matched[1]) {
-        vctx.waitUntil(
-          vctx.cache.put(
-            ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), arrayBuffer, item, headers)
-          )
+        await vctx.cache.put(
+          ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), arrayBuffer, item, headers)
         );
       }
       return Result.Ok(new Uint8Array(arrayBuffer));
@@ -62,18 +61,27 @@ export async function fetchContent(
       const clone = matched[1].clone();
       const arrayBuffer = await clone.arrayBuffer();
       if (!matched[0]) {
-        vctx.waitUntil(vctx.cache.put(...pairReqRes(assetCacheCidUrl, arrayBuffer, item, headers)));
+        await vctx.cache.put(...pairReqRes(assetCacheCidUrl, arrayBuffer, item, headers));
       }
       return Result.Ok(new Uint8Array(arrayBuffer));
     }
   }
-  const [rAsset] = await vctx.assetStorage.fetchAssets(item.assetURI);
-  if (rAsset.isErr()) return Result.Err(rAsset.Err());
-  const content = rAsset.unwrap().asset;
-  vctx.waitUntil(Promise.all([
+  const stream = vctx.fetchStorage(item.assetURI);
+  let content: Uint8Array;
+  try {
+    // Consume stream - errors (including NotFound) come through here
+    content = new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch (err) {
+    if (err instanceof StorageNotFoundError) {
+      return Result.Err(new Error(`Asset not found: ${err.cid}`));
+    }
+    return Result.Err(err as Error);
+  }
+  // inject into cache for asset lookups
+  await Promise.all([
     vctx.cache.put(...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), content, item, headers)),
     vctx.cache.put(...pairReqRes(assetCacheCidUrl, content, item, headers)),
-  ]));
+  ]);
   return Result.Ok(content);
 }
 

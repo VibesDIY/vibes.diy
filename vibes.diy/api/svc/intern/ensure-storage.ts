@@ -1,6 +1,6 @@
-import { CoerceBinaryInput, Result, to_uint8, URI } from "@adviser/cement";
-import { AssetStorage, StorageResult } from "../api.js";
+import { BuildURI, CoerceBinaryInput, exception2Result, Result, to_uint8, URI } from "@adviser/cement";
 import { eq } from "drizzle-orm";
+import { StorageResult } from "../api.js";
 import { VibesSqlite } from "../create-handler.js";
 import { sqlAssets } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";
@@ -28,107 +28,121 @@ export async function calcCid({ sthis }: { sthis: SuperThis }, content: CoerceBi
   };
 }
 
-// --- AssetProvider Architecture ---
-
-export interface AssetProvider {
-  type: string;
-  canHandle(url: string): boolean; // provider decides if it owns this URL
-  put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>>; // returns URL
-  get(url: string): Promise<Result<ReadableStream<Uint8Array>>>; // provider parses its own URL
-}
-
-export class SqlAssetProvider implements AssetProvider {
-  type = "sql";
-  constructor(private db: VibesSqlite) {}
-
-  canHandle(url: string): boolean {
-    return url.startsWith("sql:");
-  }
-
-  async put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>> {
-    const bytes = new Uint8Array(await new Response(data).arrayBuffer());
-    await this.db
-      .insert(sqlAssets)
-      .values({ assetId: cid, content: bytes, created: new Date().toISOString() })
-      .onConflictDoNothing()
-      .run();
-    return Result.Ok(`sql:?cid=${cid}`);
-  }
-
-  async get(url: string): Promise<Result<ReadableStream<Uint8Array>>> {
-    const cid = URI.from(url).getParam("cid");
-    if (!cid) return Result.Err(new Error(`Invalid URL: ${url}`));
-    const a = await this.db.select().from(sqlAssets).where(eq(sqlAssets.assetId, cid)).get();
-    if (!a) return Result.Err(new Error("Not found"));
-    const body = new Response(a.content as BodyInit).body;
-    return body ? Result.Ok(body) : Result.Err(new Error("Failed to create stream"));
+export class StorageNotFoundError extends Error {
+  constructor(public readonly cid: string) {
+    super(`Asset not found: ${cid}`);
+    this.name = "StorageNotFoundError";
   }
 }
 
 export interface R2If {
-  put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<void>>;
-  get(cid: string): Promise<Result<ReadableStream<Uint8Array>>>;
+  put(cid: string, data: Uint8Array): Promise<Result<void>>;
+  get(cid: string): ReadableStream<Uint8Array>; // Returns stream directly
 }
 
-export class R2AssetProvider implements AssetProvider {
-  type = "r2";
-  constructor(private r2: R2If) {}
+export function ensureStorage(
+  db: VibesSqlite,
+  r2?: R2If,
+  sizeThreshold = 4096
+): (...items: { cid: string; data: Uint8Array }[]) => Promise<Result<StorageResult[]>> {
+  return async (...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>> => {
+    const now = new Date();
+    const created = now.toISOString();
+    const results: StorageResult[] = [];
 
-  canHandle(url: string): boolean {
-    return url.startsWith("r2:");
-  }
-
-  async put(cid: string, data: ReadableStream<Uint8Array>): Promise<Result<string>> {
-    const res = await this.r2.put(cid, data);
-    return res.isErr() ? Result.Err(res.Err()) : Result.Ok(`r2:?cid=${cid}`);
-  }
-
-  async get(url: string): Promise<Result<ReadableStream<Uint8Array>>> {
-    const cid = URI.from(url).getParam("cid");
-    if (!cid) return Result.Err(new Error(`Invalid URL: ${url}`));
-    return this.r2.get(cid);
-  }
-}
-
-export const sizeBasedStrategy =
-  (threshold = 4096) =>
-  (providers: AssetProvider[], _cid: string, data: Uint8Array): AssetProvider =>
-    data.byteLength > threshold ? (providers.find((p) => p.type === "r2") ?? providers[0]) : providers[0];
-
-export function createAssetStorage(
-  providers: AssetProvider[],
-  selectProvider: (providers: AssetProvider[], cid: string, data: Uint8Array) => AssetProvider
-): AssetStorage {
-  return {
-    async ensureAssets(...items): Promise<Result<StorageResult[]>> {
-      const results: StorageResult[] = [];
-      for (const item of items) {
-        const provider = selectProvider(providers, item.cid, item.data);
-        const body = new Response(item.data as BodyInit).body;
-        if (!body) return Result.Err(new Error("Failed to create stream"));
-        const rUrl = await provider.put(item.cid, body);
-        if (rUrl.isErr()) return Result.Err(rUrl.Err());
+    for (const item of items) {
+      const useR2 = r2 && item.data.byteLength > sizeThreshold;
+      if (useR2) {
+        const res = await r2.put(item.cid, item.data);
+        if (res.isErr()) return Result.Err(res.Err());
         results.push({
           cid: item.cid,
-          getURL: rUrl.unwrap(),
+          getURL: BuildURI.from("r2:").setParam("cid", item.cid).toString(),
           mode: "existing",
-          created: new Date(),
+          created: now,
+          size: item.data.byteLength,
+        });
+      } else {
+        const res = await exception2Result(() =>
+          db.insert(sqlAssets).values({ assetId: item.cid, content: item.data, created: created }).onConflictDoNothing().run()
+        );
+        if (res.isErr()) return Result.Err(res);
+        results.push({
+          cid: item.cid,
+          getURL: BuildURI.from("sql:").setParam("cid", item.cid).toString(),
+          mode: "existing",
+          created: now,
           size: item.data.byteLength,
         });
       }
-      return Result.Ok(results);
-    },
+    }
+    return Result.Ok(results);
+  };
+}
 
-    async fetchAssets(...urls): Promise<Result<{ url: string; asset: Uint8Array }>[]> {
-      return Promise.all(
-        urls.map(async (url) => {
-          const provider = providers.find((p) => p.canHandle(url));
-          if (!provider) return Result.Err(new Error(`No provider for ${url}`));
-          const rStream = await provider.get(url);
-          if (rStream.isErr()) return Result.Err(rStream.Err());
-          return Result.Ok({ url, asset: new Uint8Array(await new Response(rStream.unwrap()).arrayBuffer()) });
-        })
-      );
-    },
+export function fetchStorage(
+  db: VibesSqlite,
+  r2?: R2If
+): (url: string) => ReadableStream<Uint8Array> {
+  return (url: string): ReadableStream<Uint8Array> => {
+    const rUri = exception2Result(() => URI.from(url));
+    if (rUri.isErr()) {
+      return new ReadableStream({
+        start(controller) {
+          controller.error(rUri.Err());
+        },
+      });
+    }
+    const uri = rUri.Ok();
+    const cid = uri.getParam("cid");
+
+    if (!cid) {
+      return new ReadableStream({
+        start(controller) {
+          controller.error(new Error(`Missing cid param in URL: ${url}`));
+        },
+      });
+    }
+
+    switch (uri.protocol) {
+      case "sql:": {
+        return new ReadableStream({
+          async start(controller) {
+            const rAsset = await exception2Result(() =>
+              db.select().from(sqlAssets).where(eq(sqlAssets.assetId, cid)).get()
+            );
+            if (rAsset.isErr()) {
+              // Non-recoverable error - emit into stream
+              controller.error(rAsset.Err());
+              return;
+            }
+            const asset = rAsset.Ok();
+            if (!asset) {
+              // Not found - distinguishable error type
+              controller.error(new StorageNotFoundError(cid));
+              return;
+            }
+            controller.enqueue(asset.content as Uint8Array);
+            controller.close();
+          },
+        });
+      }
+      case "r2:": {
+        if (!r2) {
+          return new ReadableStream({
+            start(controller) {
+              controller.error(new Error("R2 not configured"));
+            },
+          });
+        }
+        return r2.get(cid); // R2 returns stream directly
+      }
+      default:
+        return new ReadableStream({
+          start(controller) {
+            controller.error(new Error(`Unsupported protocol: ${uri.protocol}`));
+          },
+        });
+    }
   };
 }
