@@ -1207,8 +1207,8 @@ importers:
   vibes.diy/tempo:
     dependencies:
       '@pulumi/hcloud':
-        specifier: ^1.30.0
-        version: 1.30.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: ^1.31.0
+        version: 1.31.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/kubernetes':
         specifier: ^4.25.0
         version: 4.25.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
@@ -3862,8 +3862,8 @@ packages:
   '@protobufjs/utf8@1.1.0':
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
 
-  '@pulumi/hcloud@1.30.0':
-    resolution: {integrity: sha512-iVvdcIN7fif60RlHbk6Ynb37h7DYNn/ev66GPZHVeA19qcBH6pyb2JMfWP9DeT7fuJLkm3j6ZmWGRRsnjZc46A==}
+  '@pulumi/hcloud@1.31.0':
+    resolution: {integrity: sha512-dU5fHdjSOJ8FOqEvTDxJ4TnLtxPLDa+qYD1yv08M04Yzx+3pApujdmYqlt5VxvaesL1+domv+bK8ANTDS8NkpQ==}
 
   '@pulumi/kubernetes@4.25.0':
     resolution: {integrity: sha512-KP/ZJpS7eY58oKoGaMIGQWjM3mLpWlGUnOt+jjdGsqqk/t9OqhJCfAGC2E83usMKjuP312zMC7xi7sEQuJQ7uw==}
@@ -15467,7 +15467,7 @@ snapshots:
 
   '@protobufjs/utf8@1.1.0': {}
 
-  '@pulumi/hcloud@1.30.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/hcloud@1.31.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@pulumi/pulumi': 3.216.0(ts-node@10.9.2(@types/node@25.0.10)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
