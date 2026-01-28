@@ -14,7 +14,8 @@ const opts = tseslint.config(
       },
       parserOptions: {
         tsconfigRootDir: import.meta.dirname,
-        project: true,
+        projectService: true, // Memory-efficient type-aware linting
+        // project: false,
       },
     },
   },
