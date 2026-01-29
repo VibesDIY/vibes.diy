@@ -3,7 +3,7 @@ import { Result } from "@adviser/cement";
 import { type } from "arktype";
 import { vibeEnv } from "@vibes.diy/use-vibes-base";
 import { fileSystemItem } from "./types.js";
-import { BlockMsgs, PromptMsg } from "@vibes.diy/call-ai-v2";
+import { PromptMsg } from "@vibes.diy/call-ai-v2";
 
 // Base types
 export const dashAuthType = type({
@@ -111,20 +111,39 @@ export const reqEnsureAppSlug = type({
 
 export type ReqEnsureAppSlug = typeof reqEnsureAppSlug.infer;
 
-export const reqEnsureChatContext = type({
-  type: "'vibes.diy.req-ensure-chat-context'",
+export const reqOpenChat = type({
+  type: "'vibes.diy.req-open-chat'",
   auth: dashAuthType,
-  "contextId?": "string", // desired context id
+  "appSlug?": "string",
+  "userSlug?": "string",
+  "chatId?": "string",
 });
 
-export type ReqEnsureChatContext = typeof reqEnsureChatContext.infer;
+export type ReqOpenChat = typeof reqOpenChat.infer;
 
-export const resEnsureChatContext = type({
-  type: "'vibes.diy.res-ensure-chat-context'",
-  contextId: "string",
+export const resOpenChat = type({
+  type: "'vibes.diy.res-open-chat'",
+  appSlug: "string",
+  userSlug: "string",
+  chatId: "string",
 });
 
-export type ResEnsureChatContext = typeof resEnsureChatContext.infer;
+export type ResOpenChat = typeof resOpenChat.infer;
+
+// export const reqEnsureChatContext = type({
+//   type: "'vibes.diy.req-ensure-chat-context'",
+//   auth: dashAuthType,
+//   "contextId?": "string", // desired context id
+// });
+
+// export type ReqEnsureChatContext = typeof reqEnsureChatContext.infer;
+
+// export const resEnsureChatContext = type({
+//   type: "'vibes.diy.res-ensure-chat-context'",
+//   contextId: "string",
+// });
+
+// export type ResEnsureChatContext = typeof resEnsureChatContext.infer;
 
 // Error types
 export const resError = type({
@@ -135,25 +154,55 @@ export const resError = type({
   "stack?": "string[]",
 });
 
-const blockMsg = BlockMsgs.or(PromptMsg);
+// const blockMsg = BlockMsgs.or(PromptMsg);
 
-export const reqAppendChatSection = type({
-  type: "'vibes.diy.req-append-chat-section'",
+export const reqPromptChatSection = type({
+  type: "'vibes.diy.req-prompt-chat-section'",
   auth: dashAuthType,
-  contextId: "string",
-  origin: "'user'|'llm'",
-  // Array<{ type: 'origin.prompt' | 'block.xxx'}>
-  blocks: [blockMsg, "[]"],
+  chatId: "string",
+  outerTid: "string", // this is used to emit events to the current chat session
+  prompt: PromptMsg,
 });
-export type ReqAppendChatSection = typeof reqAppendChatSection.infer;
 
-export const resAppendChatSection = type({
-  type: "'vibes.diy.res-append-chat-section'",
-  contextId: "string",
-  seq: "number",
-  origin: "'user'|'llm'",
+export type ReqPromptChatSection = typeof reqPromptChatSection.infer;
+
+export const resPromptChatSection = type({
+  type: "'vibes.diy.res-prompt-chat-section'",
+  chatId: "string",
+  promptId: "string",
+  sectionId: "number",
+  outerTid: "string",
+  prompt: PromptMsg,
 });
-export type ResAppendChatSection = typeof resAppendChatSection.infer;
+export type ResPromptChatSection = typeof resPromptChatSection.infer;
+
+export const sectionEvent = type({
+  type: "'vibes.diy.section-event'",
+  chatId: "string",
+  promptId: "string",
+  sectionId: "number",
+  blocks: [PromptMsg, "[]"],
+});
+
+export type SectionEvent = typeof sectionEvent.infer;
+
+// export const reqAppendChatSection = type({
+//   type: "'vibes.diy.req-append-chat-section'",
+//   auth: dashAuthType,
+//   contextId: "string",
+//   origin: "'user'|'llm'",
+//   // Array<{ type: 'origin.prompt' | 'block.xxx'}>
+//   blocks: [blockMsg, "[]"],
+// });
+// export type ReqAppendChatSection = typeof reqAppendChatSection.infer;
+
+// export const resAppendChatSection = type({
+//   type: "'vibes.diy.res-append-chat-section'",
+//   contextId: "string",
+//   seq: "number",
+//   origin: "'user'|'llm'",
+// });
+// export type ResAppendChatSection = typeof resAppendChatSection.infer;
 
 export type ResError = typeof resError.infer;
 
@@ -195,7 +244,18 @@ export const msgBase = type({
   payload: "unknown",
 });
 
-export type MsgBase = typeof msgBase.infer;
+export type msgBaseType = typeof msgBase.infer;
+export interface MsgBase<T = unknown> extends Omit<msgBaseType, "payload"> {
+  payload: T;
+}
+
+export interface InMsgBase<T> {
+  readonly tid: string;
+  readonly src?: string;
+  readonly dst?: string;
+  readonly ttl?: number;
+  readonly payload: T;
+}
 
 export interface MsgBox<T = unknown> extends Omit<MsgBase, "payload"> {
   payload: T;
@@ -208,7 +268,7 @@ export type VibesDiyError = (ResError | ResEnsureAppSlugError) & Error;
 
 export type ResultVibesDiy<T> = Result<T, VibesDiyError>;
 
-const w3cMessageEventBox = type({
+export const w3cMessageEventBox = type({
   type: "'MessageEvent'",
   event: type({
     data: type("string").or(["instanceof", Uint8Array]),
@@ -219,7 +279,7 @@ const w3cMessageEventBox = type({
   }).partial(),
 });
 
-const w3cCloseEventBox = type({
+export const w3cCloseEventBox = type({
   type: "'CloseEvent'",
   event: type({
     wasClean: "boolean",
@@ -228,7 +288,7 @@ const w3cCloseEventBox = type({
   }),
 });
 
-const w3cErrorEventBox = type({
+export const w3cErrorEventBox = type({
   type: "'ErrorEvent'",
   event: type({
     message: "string",

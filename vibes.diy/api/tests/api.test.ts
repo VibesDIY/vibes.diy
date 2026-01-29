@@ -1,6 +1,6 @@
 import { VibeDiyApi } from "@vibes.diy/api-impl";
 import { createClient } from "@libsql/client/node";
-import { beforeAll, describe, expect, inject, it } from "vitest";
+import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 import { BuildURI, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
@@ -61,7 +61,7 @@ describe("VibesDiyApi", () => {
     const fetchPair = TestFetchPair.create();
     const wsPair = TestWSPair.create();
     fetchPair.server.onServe((req: Request) => {
-      console.log("fetchPair.server received request:", req.url);
+      // console.log("fetchPair.server received request:", req.url);
       return cfServe(
         req as unknown as CFRequest,
         {
@@ -174,172 +174,6 @@ describe("VibesDiyApi", () => {
     }
   });
 
-  it("ensureChatContext creates new context", async () => {
-    const res = await api.ensureChatContext({});
-    expect(res.isOk()).toBe(true);
-    expect(res.Ok().contextId.length).toBeGreaterThan(0);
-
-    // Calling again without contextId should create a new context
-    const res2 = await api.ensureChatContext({});
-    expect(res2.isOk()).toBe(true);
-    expect(res2.Ok().contextId).not.toBe(res.Ok().contextId);
-  });
-
-  it("ensureChatContext reuses existing context", async () => {
-    const res = await api.ensureChatContext({});
-    expect(res.isOk()).toBe(true);
-    const contextId = res.Ok().contextId;
-
-    // Calling with existing contextId should return the same context
-    const res2 = await api.ensureChatContext({ contextId });
-    expect(res2.isOk()).toBe(true);
-    expect(res2.Ok().contextId).toBe(contextId);
-  });
-
-  it("ensureChatContext creates context with provided id", async () => {
-    const contextId = `test-context-${Date.now()}`;
-    const res = await api.ensureChatContext({ contextId });
-    expect(res.isOk()).toBe(true);
-    expect(res.Ok().contextId).toBe(contextId);
-
-    // Verify it can be retrieved again
-    const res2 = await api.ensureChatContext({ contextId });
-    expect(res2.isOk()).toBe(true);
-    expect(res2.Ok().contextId).toBe(contextId);
-  });
-
-  it("appendChatSection adds section with incrementing seq", async () => {
-    // First create a context
-    const contextRes = await api.ensureChatContext({});
-    expect(contextRes.isOk()).toBe(true);
-    const contextId = contextRes.Ok().contextId;
-
-    // Append first section (seq should be 0)
-    const res1 = await api.appendChatSection({
-      contextId,
-      origin: "user",
-      blocks: [
-        {
-          type: "prompt.txt",
-          streamId: "test-stream-1",
-          request: {
-            model: "test-model",
-            messages: [{ role: "user", content: "Hello, world!" }],
-          },
-          timestamp: new Date(),
-        },
-      ],
-    });
-    expect(res1.isOk()).toBe(true);
-    expect(res1.Ok().contextId).toBe(contextId);
-    expect(res1.Ok().seq).toBe(0);
-    expect(res1.Ok().origin).toBe("user");
-
-    // Append second section (seq should be 1)
-    const res2 = await api.appendChatSection({
-      contextId,
-      origin: "llm",
-      blocks: [
-        {
-          type: "block.begin",
-          blockId: "block-1",
-          blockNr: 0,
-          seq: 1,
-          streamId: "test-stream-1",
-          timestamp: new Date(),
-        },
-        {
-          type: "block.toplevel.begin",
-          blockId: "block-1",
-          sectionId: "toplevel-1",
-          blockNr: 0,
-          seq: 1,
-          streamId: "test-stream-1",
-          timestamp: new Date(),
-        },
-        {
-          type: "block.toplevel.line",
-          blockId: "block-1",
-          blockNr: 0,
-          sectionId: "toplevel-1",
-          seq: 2,
-          streamId: "test-stream-1",
-          lineNr: 0,
-          line: "Hello! How can I help?",
-          timestamp: new Date(),
-        },
-        {
-          type: "block.toplevel.end",
-          blockId: "block-1",
-          blockNr: 0,
-          sectionId: "toplevel-1",
-          streamId: "test-stream-1",
-          seq: 3,
-          stats: {
-            lines: 1,
-            bytes: 18,
-          },
-          timestamp: new Date(),
-        },
-        {
-          type: "block.end",
-          blockId: "block-1",
-          blockNr: 0,
-          streamId: "test-stream-1",
-          seq: 4,
-          stats: {
-            toplevel: { lines: 1, bytes: 18 },
-            code: { lines: 0, bytes: 0 },
-            image: { lines: 0, bytes: 0 },
-            total: { lines: 1, bytes: 18 },
-          },
-          timestamp: new Date(),
-        },
-      ],
-    });
-    expect(res2.isOk()).toBe(true);
-    expect(res2.Ok().seq).toBe(1);
-    expect(res2.Ok().origin).toBe("llm");
-
-    // Append third section (seq should be 2)
-    const res3 = await api.appendChatSection({
-      contextId,
-      origin: "user",
-      blocks: [
-        {
-          type: "prompt.txt",
-          streamId: "test-stream-2",
-          request: {
-            model: "test-model",
-            messages: [{ role: "user", content: "Tell me a joke" }],
-          },
-          timestamp: new Date(),
-        },
-      ],
-    });
-    expect(res3.isOk()).toBe(true);
-    expect(res3.Ok().seq).toBe(2);
-  });
-
-  it("appendChatSection fails for non-existent context", async () => {
-    const res = await api.appendChatSection({
-      contextId: "non-existent-context-id",
-      origin: "user",
-      blocks: [
-        {
-          type: "prompt.txt",
-          streamId: "test-stream",
-          request: {
-            model: "test-model",
-            messages: [{ role: "user", content: "Hello" }],
-          },
-          timestamp: new Date(),
-        },
-      ],
-    });
-    expect(res.isErr()).toBe(true);
-  });
-
   it("repeatable stable ensureAppSlug", async () => {
     const now = Date.now();
     for (let i = 0; i < 2; i++) {
@@ -418,5 +252,126 @@ describe("VibesDiyApi", () => {
         wrapperUrl: `https://tbd/immediately-steel-${now}/sand-nose-hope/zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s`,
       });
     }
+  });
+
+  it("can open chat", async () => {
+    const rChatRes = await api.openChat({});
+    expect(rChatRes.isOk()).toBe(true);
+    const chat = rChatRes.Ok();
+    const resp = vi.fn();
+    chat.onResponse((...msg) => {
+      // console.log("chat.onResponse msg:", msg);
+      resp(msg);
+    });
+    const promptIds: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const rPrompt = await chat.prompt({
+        messages: [{ role: "user", content: `Hello world ${i}` }],
+      });
+      expect(rPrompt.isOk()).toBe(true);
+      promptIds.push(rPrompt.Ok().promptId);
+    }
+    const rNext = await api.openChat({
+      chatId: chat.chatId,
+    });
+    const nextFn = vi.fn();
+    rNext.Ok().onResponse(nextFn);
+    const chatId = chat.chatId;
+
+    expect(nextFn.mock.calls).toEqual([
+      [
+        {
+          blocks: [
+            {
+              request: {
+                messages: [
+                  {
+                    content: "Hello world 0",
+                    role: "user",
+                  },
+                ],
+              },
+              timestamp: expect.any(Date),
+              type: "prompt.txt",
+            },
+          ],
+          chatId,
+          promptId: promptIds[0],
+          sectionId: 0,
+          type: "vibes.diy.section-event",
+        },
+      ],
+      [
+        {
+          blocks: [],
+          chatId,
+          promptId: promptIds[0],
+          sectionId: 0,
+          type: "vibes.diy.section-event",
+        },
+      ],
+      [
+        {
+          blocks: [
+            {
+              request: {
+                messages: [
+                  {
+                    content: "Hello world 1",
+                    role: "user",
+                  },
+                ],
+              },
+              timestamp: expect.any(Date),
+              type: "prompt.txt",
+            },
+          ],
+          chatId,
+          promptId: promptIds[1],
+          sectionId: 1,
+          type: "vibes.diy.section-event",
+        },
+      ],
+      [
+        {
+          blocks: [],
+          chatId,
+          promptId: promptIds[1],
+          sectionId: 1,
+          type: "vibes.diy.section-event",
+        },
+      ],
+      [
+        {
+          blocks: [
+            {
+              request: {
+                messages: [
+                  {
+                    content: "Hello world 2",
+                    role: "user",
+                  },
+                ],
+              },
+              timestamp: expect.any(Date),
+              type: "prompt.txt",
+            },
+          ],
+          chatId,
+          promptId: promptIds[2],
+          sectionId: 2,
+          type: "vibes.diy.section-event",
+        },
+      ],
+      [
+        {
+          blocks: [],
+          chatId,
+          promptId: promptIds[2],
+          sectionId: 2,
+          type: "vibes.diy.section-event",
+        },
+      ],
+    ]);
   });
 });

@@ -18,12 +18,8 @@ import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonT
 import { type } from "arktype";
 import { renderVibes } from "../intern/render-vibes.js";
 
-function pairReqRes(key: CoerceURI, content: unknown, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
-  return [
-    new Request(URI.from(key).toString()),
-    // cast is stupid here
-    new Response(content as string, { headers }),
-  ];
+function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
+  return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
 }
 
 export async function fetchContent(
@@ -72,12 +68,19 @@ export async function fetchContent(
         if (!asset) {
           return Result.Err(new Error(`Asset not found: ${item.assetId}`));
         }
+        // sqlite returns a blob symetric to the input is always something like a Uint8Array
+        // we should have a better method to coerce unknown to Uint8Array --- @adviser/cement issue
         // inject into cache for assert lookups
         await Promise.all([
           vctx.cache.put(
-            ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), asset.content, item, headers)
+            ...pairReqRes(
+              BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(),
+              asset.content as never,
+              item,
+              headers
+            )
           ),
-          vctx.cache.put(...pairReqRes(assetCacheCidUrl, asset.content, item, headers)),
+          vctx.cache.put(...pairReqRes(assetCacheCidUrl, asset.content as never, item, headers)),
         ]);
         return Result.Ok(asset.content as Uint8Array);
       }

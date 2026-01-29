@@ -24,7 +24,15 @@
     "skipLibCheck": true,
     "types": ["node", "deno"]
   },
-  "include": ["call-ai/**/*", "use-vibes/**/*", "vibes.diy/**/*", "prompts/**/*", "utils/**/*", "xhosting/**/*"],
+  "include": [
+    "call-ai/**/*",
+    "use-vibes/**/*",
+    "vibes.diy/**/*",
+    "prompts/**/*",
+    "utils/**/*",
+    "xhosting/**/*",
+    "vibes.diy/api/svc/public/.ts"
+  ],
   "exclude": [
     "vibes.diy/tempo/**",
     "vibes.diy/**/slack/**",

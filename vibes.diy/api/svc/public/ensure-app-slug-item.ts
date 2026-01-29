@@ -1,5 +1,6 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
 import {
+  MsgBase,
   reqEnsureAppSlug,
   ReqEnsureAppSlug,
   ResEnsureAppSlug,
@@ -8,31 +9,36 @@ import {
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { unwrapMsgBase } from "../unwrap-msg-base.js";
+import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../api.js";
-import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
+import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { calcCid } from "../intern/ensure-storage.js";
 
-export const ensureAppSlugItem: EventoHandler<W3CWebSocketEvent, ReqEnsureAppSlug, ResEnsureAppSlug | VibesDiyError> = {
+export const ensureAppSlugItem: EventoHandler<W3CWebSocketEvent, MsgBase<ReqEnsureAppSlug>, ResEnsureAppSlug | VibesDiyError> = {
   hash: "ensure-cloud-token",
-  validate: unwrapMsgBase(async (payload: unknown) => {
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
     // async (ctx): Promise<Result<Option<ReqEnsureAppSlug>>> => {
-    const ret = reqEnsureAppSlug(payload);
+    const ret = reqEnsureAppSlug(msg.payload);
     // console.log("validate ensureAppSlugItem", payload, ret);
     if (ret instanceof type.errors) {
       return Result.Ok(Option.None());
     }
-    return Result.Ok(Option.Some(ret));
+    return Result.Ok(
+      Option.Some({
+        ...msg,
+        payload: ret,
+      })
+    );
   }),
   handle: checkAuth(
     async (
-      ctx: HandleTriggerCtx<W3CWebSocketEvent, ReqWithVerifiedAuth<ReqEnsureAppSlug>, ResEnsureAppSlug | VibesDiyError>
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqEnsureAppSlug>>, ResEnsureAppSlug | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
       // console.log("handle ensureAppSlugItem", ctx.validated);
-      const req = ctx.validated;
+      const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const rAppSlugBinding = await ensureSlugBinding(vctx, {
         userId: req.auth.verifiedAuth.claims.userId,

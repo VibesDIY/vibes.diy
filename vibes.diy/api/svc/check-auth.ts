@@ -8,6 +8,7 @@ import {
 } from "@fireproof/core-types-protocols-dashboard";
 import { ClerkClaimSchema } from "@fireproof/core-types-base";
 import { VibesApiSQLCtx } from "./api.js";
+import { MsgBase } from "@vibes.diy/api-types";
 
 export type ReqWithVerifiedAuth<REQ extends { type: string; auth: DashAuthType }> = Omit<REQ, "auth"> & {
   readonly auth: VerifiedAuthResult;
@@ -87,11 +88,11 @@ export async function verifyAuth(
   });
 }
 
-export function checkAuth<IReq, TReq extends WithAuth & { type: string }, TRes>(
-  fn: (ctx: HandleTriggerCtx<IReq, ReqWithVerifiedAuth<TReq>, TRes>) => Promise<Result<EventoResultType>>
+export function checkAuth<IReq, TReq extends MsgBase<X>, TRes, X extends WithAuth & { type: string }>(
+  fn: (ctx: HandleTriggerCtx<IReq, MsgBase<ReqWithVerifiedAuth<X>>, TRes>) => Promise<Result<EventoResultType>>
 ): (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => Promise<Result<EventoResultType>> {
   return async (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => {
-    const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), ctx.validated);
+    const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), ctx.validated.payload);
     if (rAuth.isErr()) {
       return Result.Err(rAuth.Err());
     }
@@ -99,7 +100,7 @@ export function checkAuth<IReq, TReq extends WithAuth & { type: string }, TRes>(
       return Result.Err(`user not found: ${JSON.stringify(rAuth.Ok().inDashAuth)}`);
     }
     // not nice but ts way of type narrowing is limited
-    (ctx.validated as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
-    return fn(ctx as unknown as HandleTriggerCtx<IReq, ReqWithVerifiedAuth<TReq>, TRes>);
+    (ctx.validated.payload as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
+    return fn(ctx as unknown as HandleTriggerCtx<IReq, MsgBase<ReqWithVerifiedAuth<X>>, TRes>);
   };
 }

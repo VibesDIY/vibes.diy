@@ -1,10 +1,11 @@
 import { Result, Option, ValidateTriggerCtx } from "@adviser/cement";
 import { type } from "arktype";
-import { msgBase } from "@vibes.diy/api-types";
+import { InMsgBase, MsgBase, msgBase } from "@vibes.diy/api-types";
+import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 
 // ValidateTriggerCtx<INREQ, REQ, RES>
 export function unwrapMsgBase<INREQ, REQ, RES>(
-  fn: (payload: unknown) => Promise<Result<Option<REQ>>>
+  fn: (payload: MsgBase) => Promise<Result<Option<REQ>>>
 ): (ctx: ValidateTriggerCtx<INREQ, REQ, RES>) => Promise<Result<Option<REQ>>> {
   return (ctx: ValidateTriggerCtx<INREQ, REQ, RES>): Promise<Result<Option<REQ>>> => {
     const ret = msgBase(ctx.enRequest);
@@ -12,6 +13,15 @@ export function unwrapMsgBase<INREQ, REQ, RES>(
     if (ret instanceof type.errors) {
       return Promise.resolve(Result.Ok<Option<REQ>>(Option.None<REQ>()));
     }
-    return fn(ret.payload);
+    return fn(ret);
+  };
+}
+
+export function wrapMsgBase<Q, S>(req: MsgBase<Q>, res: InMsgBase<S>): MsgBase<S> {
+  return {
+    ...req,
+    src: req.dst,
+    ttl: req.ttl ? req.ttl - 1 : 6,
+    ...res,
   };
 }

@@ -51,22 +51,30 @@ export const sqlApps = sqliteTable(
 );
 
 export const sqlChatContexts = sqliteTable("ChatContexts", {
-  contextId: text().notNull().primaryKey(), // uuid v4
+  chatId: text().notNull().primaryKey(), // uuid v4
   userId: text().notNull(),
+  appSlug: text().notNull(),
+  userSlug: text().notNull(),
   created: text().notNull(),
 });
 
 export const sqlChatSections = sqliteTable(
   "ChatSections",
   {
-    contextId: text()
+    chatId: text()
       .notNull()
-      .references(() => sqlChatContexts.contextId),
-    seq: int().notNull(), // incremented per section
-    origin: text().notNull(), // 'user' | 'llm'
+      .references(() => sqlChatContexts.chatId),
+    promptId: text().notNull(), // uuid v4
+    sectionId: int().notNull(), // incremented per section
+    // origin: text().notNull(), // 'user' | 'llm'
     // Array<{ type: 'origin.prompt' | 'block.xxx'}>
     blocks: text({ mode: "json" }).notNull(),
     created: text().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.seq, table.contextId] })]
+  (table) => [
+    primaryKey({ columns: [table.sectionId, table.promptId, table.chatId] }),
+    index("ChatSections_chatId_idx").on(table.chatId),
+    uniqueIndex("ChatSections_chatId_promptId_sectionId_id").on(table.chatId, table.promptId, table.sectionId),
+    index("ChatSections_chatId_created_idx").on(table.chatId, table.created),
+  ]
 );

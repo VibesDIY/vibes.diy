@@ -1,4 +1,4 @@
-import { exception2Result, Future, KeyedResolvOnce, OnFunc, ToDecoder } from "@adviser/cement";
+import { Future, KeyedResolvOnce, OnFunc, ToDecoder } from "@adviser/cement";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { W3CWebSocketErrorEvent, W3CWebSocketMessageEvent, W3CWebSocketCloseEvent } from "@vibes.diy/api-types";
 

@@ -14,7 +14,7 @@ export type ChatMessage = typeof ChatMessage.infer;
 
 // LLM request body (OpenRouter/OpenAI compatible)
 export const LLMRequest = type({
-  model: "string",
+  "model?": "string",
   messages: [ChatMessage, "[]"],
   "stream?": "boolean",
   "temperature?": "number",
@@ -24,6 +24,7 @@ export const LLMRequest = type({
   "presence_penalty?": "number",
   "stop?": "string | string[]",
 });
+
 export type LLMRequest = typeof LLMRequest.infer;
 
 // Type guards
@@ -36,12 +37,11 @@ export const isLLMRequest = (msg: unknown): msg is LLMRequest => !(LLMRequest(ms
 // Prompt message box type
 export const PromptMsg = type({
   type: "'prompt.txt'",
-  streamId: "string",
+  // streamId: "string",
   request: LLMRequest,
   timestamp: CoercedDate,
 });
 export type PromptMsg = typeof PromptMsg.infer;
 
 // Type guard with optional streamId filter
-export const isPromptMsg = (msg: unknown, streamId?: string): msg is PromptMsg =>
-  !(PromptMsg(msg) instanceof type.errors) && (!streamId || (msg as PromptMsg).streamId === streamId);
+export const isPromptMsg = (msg: unknown): msg is PromptMsg => !(PromptMsg(msg) instanceof type.errors); // && (!streamId || (msg as PromptMsg).streamId === streamId);

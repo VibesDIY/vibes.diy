@@ -32,7 +32,7 @@ async function writeUserSlugBinding(ctx: VibesApiSQLCtx, userId: string, userSlu
   });
 }
 
-async function ensureUserSlug(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam): Promise<Result<string>> {
+export async function ensureUserSlug(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam): Promise<Result<string>> {
   return exception2Result(async (): Promise<Result<string>> => {
     let userSlug: string | undefined = undefined;
     if (!binding.userSlug) {
