@@ -28,6 +28,8 @@ import {
   isCodeEnd,
   ToplevelLineMsg,
   CodeLineMsg,
+  isBlockEnd,
+  isBlockBegin,
 } from "./index.js";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import mime from "mime";
@@ -252,6 +254,9 @@ const app = command({
         }
 
         if (full) {
+          if (isBlockBegin(value)) {
+            console.log(JSON.stringify(value));
+          }
           if (isToplevelBegin(value) || isCodeBegin(value)) {
             sectionState.sectionId = value.sectionId;
             sectionState.mode = isToplevelBegin(value) ? "toplevel" : "code";
@@ -272,6 +277,9 @@ const app = command({
             );
           }
           if (isBlockImage(value)) {
+            console.log(JSON.stringify(value));
+          }
+          if (isBlockEnd(value)) {
             console.log(JSON.stringify(value));
           }
         }

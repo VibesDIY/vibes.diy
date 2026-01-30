@@ -6,5 +6,5 @@ export * from "./line-stream.js";
 export * from "./data-stream.js";
 export * from "./sse-stream.js";
 export * from "./delta-stream.js";
-export * from "./sections-stream.js";
+export * from "./block-stream.js";
 export * from "./passthrough.js";

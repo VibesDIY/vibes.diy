@@ -3,8 +3,9 @@ import { CoercedDate } from "./types.js";
 import { isLineBegin, isLineLine, isLineEnd, LineStreamMsg, createLineStream, LineStreamInput } from "./line-stream.js";
 import { isStatsCollect, StatsCollectMsg } from "./stats-stream.js";
 import { passthrough } from "./passthrough.js";
-import { DeltaStreamMsg, isDeltaBegin, isDeltaEnd, isDeltaImage, isDeltaLine } from "./delta-stream.js";
+import { DeltaStreamMsg, isDeltaBegin, isDeltaEnd, isDeltaImage, isDeltaLine, isDeltaUsage } from "./delta-stream.js";
 import { consumeStream, Lazy } from "@adviser/cement";
+import { SseUsage } from "./sse-stream.js";
 
 export const BlockBase = type({
   blockId: "string",
@@ -36,6 +37,10 @@ export const BlockEndMsg = type({
     code: BlockStats,
     image: BlockStats,
     total: BlockStats,
+  },
+  usage: {
+    given: SseUsage.optional(),
+    calculated: SseUsage,
   },
 }).and(BlockBase);
 
@@ -103,17 +108,13 @@ export const BlockStatsMsg = type({
     image: BlockStats,
     total: BlockStats,
   },
+  usage: SseUsage,
 }).and(BlockBase);
 
 // Union types
 export const ToplevelMsg = ToplevelBeginMsg.or(ToplevelLineMsg).or(ToplevelEndMsg);
 export const CodeMsg = CodeBeginMsg.or(CodeLineMsg).or(CodeEndMsg);
-export const BlockStreamMsg = BlockBeginMsg.or(BlockEndMsg)
-  .or(BlockStatsMsg)
-  .or(BlockImageMsg)
-  .or(CodeMsg)
-  .or(ToplevelMsg)
-  .or(BlockImageMsg);
+export const BlockStreamMsg = BlockBeginMsg.or(BlockEndMsg).or(BlockStatsMsg).or(BlockImageMsg).or(CodeMsg).or(ToplevelMsg);
 // export const BlockOutput = BlockStreamMsg.or(ToplevelMsg).or(CodeMsg).or(BlockImageMsg);
 
 export const BlockMsgs = BlockStreamMsg.or(ToplevelMsg).or(CodeMsg);
@@ -170,6 +171,12 @@ function addStat(target: BlockStats, source: BlockStats) {
   target.bytes += source.bytes;
 }
 
+function addSSeUsage(target: SseUsage, source: SseUsage) {
+  target.prompt_tokens += source.prompt_tokens;
+  target.completion_tokens += source.completion_tokens;
+  target.total_tokens += source.total_tokens;
+}
+
 export function createBlockStream(
   filterStreamId: string,
   createId: () => string
@@ -203,10 +210,17 @@ export function createBlockStream(
 
   let beginBlock = Lazy(beginBlockAction);
 
+  let currentUsageSSE: SseUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+  let givenUsageSSE: SseUsage | undefined = undefined;
+  const usageSumByUsage: SseUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
   return new TransformStream<LineStreamMsg | DeltaStreamMsg, BlockStreamMsg>({
     transform(msg, controller) {
       // Handle stats.collect trigger
-      if (isStatsCollect(msg, filterStreamId)) {
+      if (isStatsCollect(msg, filterStreamId) || isDeltaUsage(msg, filterStreamId)) {
+        if (isDeltaUsage(msg, filterStreamId)) {
+          currentUsageSSE = msg.usage;
+          addSSeUsage(usageSumByUsage, msg.usage);
+        }
         controller.enqueue({
           type: "block.stats",
           blockId,
@@ -219,9 +233,17 @@ export function createBlockStream(
             image: imageStat,
             total: totalStat,
           },
+          usage: currentUsageSSE,
           timestamp: new Date(),
         });
         return;
+      }
+      if (isDeltaEnd(msg, filterStreamId)) {
+        const accu = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+        for (const usage of msg.usages) {
+          addSSeUsage(accu, usage);
+        }
+        givenUsageSSE = accu;
       }
 
       if (isDeltaImage(msg, filterStreamId)) {
@@ -412,6 +434,10 @@ export function createBlockStream(
             image: imageStat,
             total: totalStat,
           },
+          usage: {
+            given: givenUsageSSE,
+            calculated: usageSumByUsage,
+          },
         });
       }
     },
@@ -450,6 +476,10 @@ export function createSectionsStream(
           break;
 
         case isDeltaImage(msg, filterStreamId):
+          writer?.write({ ...msg, streamId: blockStreamId });
+          break;
+
+        case isDeltaUsage(msg, filterStreamId):
           writer?.write({ ...msg, streamId: blockStreamId });
           break;
 

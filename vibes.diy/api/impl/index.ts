@@ -14,7 +14,6 @@ import {
   ReqPromptChatSection,
   ResError,
   ReqOpenChat,
-  w3cMessageEventBox,
   SectionEvent,
   sectionEvent,
   ResPromptChatSection,
@@ -31,7 +30,6 @@ import {
   HandleTriggerCtx,
   EventoResult,
   ValidateTriggerCtx,
-  OnFunc,
 } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
@@ -75,8 +73,11 @@ interface LLMChat {
   readonly tid: string;
   readonly chatId: string;
   prompt(req: LLMRequest): Promise<Result<ResPromptChatSection, VibesDiyError>>;
-  onResponse(fn: (msg: OnResponseTypes) => void): void;
-  onError(fn: (err: VibesDiyError) => void): void;
+
+  readonly sectionStream: ReadableStream<OnResponseTypes>;
+  // onResponse(fn: (msg: OnResponseTypes) => void): void;
+  // onError(fn: (err: VibesDiyError) => void): void;
+  close(force?: boolean): Promise<void>;
 }
 
 interface OptionalAuth {
@@ -231,10 +232,13 @@ class LLMChatImpl implements LLMChat {
   readonly api: VibeDiyApi;
   readonly tid: string;
   readonly res: ResOpenChat;
-  readonly sectionEvents: SectionEvent[];
+
+  readonly sectionStream: ReadableStream<OnResponseTypes>;
+
+  readonly #writer: WritableStreamDefaultWriter<OnResponseTypes>;
   // promptId?: string
-  onResponse = OnFunc<(msg: OnResponseTypes) => void>();
-  onError = OnFunc<(err: VibesDiyError) => void>();
+  // onResponse = OnFunc<(msg: OnResponseTypes) => void>();
+  // onError = OnFunc<(err: VibesDiyError) => void>();
 
   get chatId(): string {
     return this.res.chatId;
@@ -244,8 +248,10 @@ class LLMChatImpl implements LLMChat {
     const conn = await api.getReadyConnection();
     const tid = api.cfg.sthis.nextId(12).str;
 
-    const sectionEvents: SectionEvent[] = [];
+    const sectionEvents = new TransformStream<OnResponseTypes, OnResponseTypes>();
 
+    const sectionEventsWriter = sectionEvents.writable.getWriter();
+    // const activePromptIds = new LRUMap<string, void>();
     const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
     evento.push({
       hash: "wait-open-chat-" + tid,
@@ -262,17 +268,26 @@ class LLMChatImpl implements LLMChat {
         return Result.Ok(Option.None());
       },
       handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResOpenChat>) => {
-        // console.log("Handling incoming event for chatId:", req.chatId, trigger);
         const isError = resError(trigger.validated.payload);
         if (!(isError instanceof type.errors)) {
           // console.log("Response message is an error for chatId:", req.chatId, isError);
-          llmChat.onError.invoke(isError as VibesDiyError);
+          return Result.Err(isError as VibesDiyError);
         } else {
           const se = sectionEvent(trigger.validated.payload);
           if (!(se instanceof type.errors)) {
-            sectionEvents.push(se);
-            llmChat.onResponse.invoke(se);
+            await sectionEventsWriter.write(se);
+            // const beginPrompt = se.blocks.find((b) => isPromptBlockBegin(b))
+            // if (beginPrompt) {
+            //   activePromptIds.set(se.promptId, undefined);
+            // }
+            // const closePrompt = se.blocks.find((b) => isPromptBlockEnd(b))
+            // if (closePrompt) {
+            //   activePromptIds.delete(se.promptId);
+            // }
           }
+          // else {
+          //   console.log("LLMChat open succeeded for chatId:", se.summary, trigger.validated.payload);
+          // }
         }
         return Result.Ok(EventoResult.Continue);
       },
@@ -291,12 +306,12 @@ class LLMChatImpl implements LLMChat {
           }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
         })
         .catch((err) => {
-          llmChat.onError.invoke({
+          sectionEventsWriter.write({
             type: "vibes.diy.error",
-            name: "VibesDiyError",
             message: `LLMChat evento trigger error: ${err.message}`,
             code: "llmchat-evento-error",
           });
+          sectionEventsWriter.abort();
         });
     });
     conn.onError(unreg);
@@ -306,32 +321,58 @@ class LLMChatImpl implements LLMChat {
     if (res.isErr()) {
       return Result.Err<LLMChat>(res.Err());
     }
-    const llmChat = new LLMChatImpl(api, tid, res.Ok(), sectionEvents);
+    const llmChat = new LLMChatImpl(api, tid, res.Ok(), sectionEvents.readable, sectionEventsWriter);
     return Result.Ok(llmChat);
   }
 
-  private constructor(api: VibeDiyApi, tid: string, res: ResOpenChat, sectionEvents: SectionEvent[]) {
+  // readonly #activePromptIds: LRUMap<string, void>;
+  private constructor(
+    api: VibeDiyApi,
+    tid: string,
+    res: ResOpenChat,
+    sectionEvents: ReadableStream<OnResponseTypes>,
+    writer: WritableStreamDefaultWriter<OnResponseTypes>
+  ) {
     this.api = api;
     this.tid = tid;
     this.res = res;
-    this.sectionEvents = sectionEvents;
-    this.onResponse.onRegister((fn) => {
-      for (const se of this.sectionEvents) {
-        fn(se);
-      }
-    });
+    this.sectionStream = sectionEvents;
+    this.#writer = writer;
+    // this.#activePromptIds = activePromptIds;
   }
-  prompt(msg: LLMRequest) {
-    return this.api.request<ReqType<ReqPromptChatSection>, MsgBox<ResPromptChatSection>>({
+
+  async prompt(msg: LLMRequest) {
+    const res = await this.api.request<ReqType<ReqPromptChatSection>, ResPromptChatSection>({
       type: "vibes.diy.req-prompt-chat-section",
       chatId: this.res.chatId,
-      outerTid: this.tid,
-      prompt: {
-        type: "prompt.txt",
-        request: msg,
-        timestamp: new Date(),
-      },
+      outerTid: this.tid, //leaking but necessary streaming
+      prompt: msg,
     });
+    // if (res.isOk()) {
+    // this.#activePromptIds.set(res.Ok().promptId, undefined);
+    // }
+    return res;
+  }
+  async close(_force = false) {
+    this.#writer.close();
+    // if (this.#activePromptIds.size === 0 || force) {
+    //   console.log("LLMChat close called, active prompts:", this.chatId, this.#activePromptIds.size, "force:", force);
+    //   this.#writer.close().catch((err) => {
+    //     console.error("Error closing LLMChat section stream writer:", err);
+    //   });
+    //   return;
+    // }
+    // return new Promise<void>((resolve) => {
+    //   this.#activePromptIds.onDelete(() => {
+    //     if (this.#activePromptIds.size <= 1) {
+    //       console.log("LLMChat prompt closed, remaining active prompts:", this.chatId, this.#activePromptIds.size, this.#writer);
+    //       this.#writer.close().catch((err) => {
+    //           console.error("Error Active closing LLMChat section stream writer:", err);
+    //         })
+    //       .finally(resolve)
+    //     }
+    //   })
+    // })
   }
 }
 

@@ -11,6 +11,8 @@ import type { D1Result } from "@cloudflare/workers-types";
 import { defaultFetchPkgVersion } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
 import { HTTPSendProvider } from "./svc-http-send-provider.js";
+import { LLMRequest } from "@vibes.diy/call-ai-v2";
+import { defaultLLMRequest } from "./default-llm-request.ts";
 export interface VerifyApiToken {
   verify(token: string): Promise<Result<VerifiedClaimsResult>>;
 }
@@ -23,6 +25,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
+  llmRequest?(prompt: LLMRequest): Promise<Response>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
 
@@ -52,7 +55,10 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
 
     FP_VERSION: param.REQUIRED,
 
-    // VIBES_SVC_HOSTNAME_BASE: "localhost.vibes.app",
+    LLM_BACKEND_URL: param.REQUIRED,
+    LLM_BACKEND_API_KEY: param.OPTIONAL,
+    LLM_BACKEND_MODEL: "anthropic/claude-sonnet-4",
+
     VIBES_SVC_HOSTNAME_BASE: param.REQUIRED,
     VIBES_SVC_PROTOCOL: "https",
   });
@@ -115,6 +121,11 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
         deviceIdCA: rDeviceIdCA.Ok(),
       }),
       ensureStorage: ensureStorage(params.db),
+      llmRequest: defaultLLMRequest(params.llmRequest, {
+        url: params.env["LLM_BACKEND_URL"],
+        apiKey: params.env["LLM_BACKEND_API_KEY"],
+        model: params.env["LLM_BACKEND_MODEL"],
+      }),
       deviceCA: rDeviceIdCA.Ok(),
       params: svcParams,
     })

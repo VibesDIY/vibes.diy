@@ -1,14 +1,15 @@
 import { VibeDiyApi } from "@vibes.diy/api-impl";
 import { createClient } from "@libsql/client/node";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
-import { BuildURI, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
+import { BuildURI, consumeStream, loadAsset, Result, sleep, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { cfServe } from "@vibes.diy/api-svc";
 import { Request as CFRequest, D1Database, ExecutionContext } from "@cloudflare/workers-types";
-import { Env as CFEnv } from "@vibes.diy/api-svc/cf-env.ts";
-import { CFInject } from "@vibes.diy/api-svc/cf-serve.ts";
+import { Env as CFEnv } from "@vibes.diy/api-svc/cf-env.js";
+import { CFInject } from "@vibes.diy/api-svc/cf-serve.js";
 import { drizzle } from "drizzle-orm/libsql";
+import { isPromptBlockEnd, LLMRequest } from "../../../call-ai/v2/prompt-type.ts";
 
 const noopCache = {
   put: async (_req: Request, _res: Response) => {
@@ -21,6 +22,48 @@ const noopCache = {
     return undefined;
   },
 };
+
+function emptySectorStream(chatId: string, promptIds: string[]) {
+  return promptIds.flatMap((promptId, index) => [
+    [
+      {
+        blocks: [{ type: "prompt.block-begin" }],
+        chatId,
+        promptId,
+        blockSeq: 0,
+        timestamp: expect.any(Date),
+        type: "vibes.diy.section-event",
+      },
+    ],
+    [
+      {
+        blocks: [
+          {
+            request: {
+              messages: [{ content: `Hello world ${index}`, role: "user" }],
+            },
+            type: "prompt.req",
+          },
+        ],
+        chatId,
+        promptId,
+        blockSeq: 1,
+        type: "vibes.diy.section-event",
+        timestamp: expect.any(Date),
+      },
+    ],
+    [
+      {
+        blocks: [{ type: "prompt.block-end" }],
+        chatId,
+        promptId,
+        blockSeq: 2,
+        type: "vibes.diy.section-event",
+        timestamp: expect.any(Date),
+      },
+    ],
+  ]);
+}
 
 describe("VibesDiyApi", () => {
   const sthis = ensureSuperThis();
@@ -56,6 +99,8 @@ describe("VibesDiyApi", () => {
       VIBES_SVC_PROTOCOL: "http",
       CALLAI_API_KEY: "what-ever",
       CALLAI_CHAT_URL: "what-ever",
+
+      LLM_BACKEND_URL: "what-ever",
     };
 
     const fetchPair = TestFetchPair.create();
@@ -97,6 +142,13 @@ describe("VibesDiyApi", () => {
         cache: noopCache,
         drizzle: drizzleDB,
         wsResponse: new Response(null, { status: 200 }),
+        llmRequest: async (prompt: LLMRequest) => {
+          if (prompt.messages[0]?.content?.includes("use fixture response")) {
+            const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
+            return new Response(fixture.Ok(), { status: 200 });
+          }
+          return new Response("", { status: 200 });
+        },
         webSocketPair: () => ({
           client: wsPair.p1,
           server: wsPair.p2,
@@ -259,10 +311,13 @@ describe("VibesDiyApi", () => {
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
     const resp = vi.fn();
-    chat.onResponse((...msg) => {
-      // console.log("chat.onResponse msg:", msg);
+    const toWait = consumeStream(chat.sectionStream, (msg) => {
       resp(msg);
+      if (msg.type === "vibes.diy.section-event" && msg.promptId === promptIds[2] && isPromptBlockEnd(msg.blocks[0])) {
+        rChatRes.Ok().close();
+      }
     });
+
     const promptIds: string[] = [];
     for (let i = 0; i < 3; i++) {
       const rPrompt = await chat.prompt({
@@ -271,107 +326,42 @@ describe("VibesDiyApi", () => {
       expect(rPrompt.isOk()).toBe(true);
       promptIds.push(rPrompt.Ok().promptId);
     }
+    await toWait;
+    expect(resp.mock.calls).toEqual(emptySectorStream(chat.chatId, promptIds));
+
     const rNext = await api.openChat({
       chatId: chat.chatId,
     });
     const nextFn = vi.fn();
-    rNext.Ok().onResponse(nextFn);
+    await consumeStream(rNext.Ok().sectionStream, (msg) => {
+      nextFn(msg);
+      if (msg.type === "vibes.diy.section-event" && msg.promptId === promptIds[2] && isPromptBlockEnd(msg.blocks[0])) {
+        rNext.Ok().close();
+      }
+    });
     const chatId = chat.chatId;
+    expect(nextFn.mock.calls).toEqual(emptySectorStream(chatId, promptIds));
+  });
 
-    expect(nextFn.mock.calls).toEqual([
-      [
-        {
-          blocks: [
-            {
-              request: {
-                messages: [
-                  {
-                    content: "Hello world 0",
-                    role: "user",
-                  },
-                ],
-              },
-              timestamp: expect.any(Date),
-              type: "prompt.txt",
-            },
-          ],
-          chatId,
-          promptId: promptIds[0],
-          sectionId: 0,
-          type: "vibes.diy.section-event",
-        },
-      ],
-      [
-        {
-          blocks: [],
-          chatId,
-          promptId: promptIds[0],
-          sectionId: 0,
-          type: "vibes.diy.section-event",
-        },
-      ],
-      [
-        {
-          blocks: [
-            {
-              request: {
-                messages: [
-                  {
-                    content: "Hello world 1",
-                    role: "user",
-                  },
-                ],
-              },
-              timestamp: expect.any(Date),
-              type: "prompt.txt",
-            },
-          ],
-          chatId,
-          promptId: promptIds[1],
-          sectionId: 1,
-          type: "vibes.diy.section-event",
-        },
-      ],
-      [
-        {
-          blocks: [],
-          chatId,
-          promptId: promptIds[1],
-          sectionId: 1,
-          type: "vibes.diy.section-event",
-        },
-      ],
-      [
-        {
-          blocks: [
-            {
-              request: {
-                messages: [
-                  {
-                    content: "Hello world 2",
-                    role: "user",
-                  },
-                ],
-              },
-              timestamp: expect.any(Date),
-              type: "prompt.txt",
-            },
-          ],
-          chatId,
-          promptId: promptIds[2],
-          sectionId: 2,
-          type: "vibes.diy.section-event",
-        },
-      ],
-      [
-        {
-          blocks: [],
-          chatId,
-          promptId: promptIds[2],
-          sectionId: 2,
-          type: "vibes.diy.section-event",
-        },
-      ],
-    ]);
+  it("queries the llm", async () => {
+    const rChatRes = await api.openChat({});
+    expect(rChatRes.isOk()).toBe(true);
+    const chat = rChatRes.Ok();
+    const rPrompt = await chat.prompt({
+      messages: [{ role: "user", content: `use fixture response` }],
+    });
+    expect(rPrompt.isOk()).toBe(true);
+
+    const rNext = await api.openChat({
+      chatId: chat.chatId,
+    });
+    const nextFn = vi.fn();
+    await consumeStream(rNext.Ok().sectionStream, (msg) => {
+      nextFn(msg);
+      if (msg.type === "vibes.diy.section-event" && msg.promptId === rPrompt.Ok().promptId && isPromptBlockEnd(msg.blocks[0])) {
+        rNext.Ok().close();
+      }
+    });
+    expect(nextFn.mock.calls.length).toBe(43);
   });
 });

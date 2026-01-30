@@ -20,7 +20,7 @@ import {
   CodeBeginMsg,
   CodeLineMsg,
   CodeEndMsg,
-} from "./sections-stream.js";
+} from "./block-stream.js";
 import { LineStreamMsg } from "./line-stream.js";
 import { DeltaImageMsg } from "./delta-stream.js";
 import { StatsCollectMsg } from "./stats-stream.js";

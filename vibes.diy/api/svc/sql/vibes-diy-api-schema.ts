@@ -65,16 +65,15 @@ export const sqlChatSections = sqliteTable(
       .notNull()
       .references(() => sqlChatContexts.chatId),
     promptId: text().notNull(), // uuid v4
-    sectionId: int().notNull(), // incremented per section
+    blockSeq: int().notNull(), // incremented per section
     // origin: text().notNull(), // 'user' | 'llm'
     // Array<{ type: 'origin.prompt' | 'block.xxx'}>
     blocks: text({ mode: "json" }).notNull(),
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.sectionId, table.promptId, table.chatId] }),
+    primaryKey({ columns: [table.chatId, table.promptId, table.blockSeq] }),
+    uniqueIndex("ChatSections_created_promptId_blockSeq_idx").on(table.created, table.promptId, table.blockSeq),
     index("ChatSections_chatId_idx").on(table.chatId),
-    uniqueIndex("ChatSections_chatId_promptId_sectionId_id").on(table.chatId, table.promptId, table.sectionId),
-    index("ChatSections_chatId_created_idx").on(table.chatId, table.created),
   ]
 );

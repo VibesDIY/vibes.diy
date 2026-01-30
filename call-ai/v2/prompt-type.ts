@@ -1,5 +1,4 @@
 import { type } from "arktype";
-import { CoercedDate } from "./types.js";
 
 // Message roles
 export const MessageRole = type("'system' | 'user' | 'assistant'");
@@ -34,14 +33,41 @@ export const isChatMessage = (msg: unknown): msg is ChatMessage => !(ChatMessage
 
 export const isLLMRequest = (msg: unknown): msg is LLMRequest => !(LLMRequest(msg) instanceof type.errors);
 
+export const PromptBase = type({});
+
 // Prompt message box type
-export const PromptMsg = type({
-  type: "'prompt.txt'",
-  // streamId: "string",
+export const PromptReq = type({
+  type: "'prompt.req'",
   request: LLMRequest,
-  timestamp: CoercedDate,
-});
-export type PromptMsg = typeof PromptMsg.infer;
+}).and(PromptBase);
+export type PromptReq = typeof PromptReq.infer;
+
+export const PromptBlockBegin = type({
+  type: "'prompt.block-begin'",
+}).and(PromptBase);
+
+export type PromptBlockBegin = typeof PromptBlockBegin.infer;
+
+export const PromptBlockEnd = type({
+  type: "'prompt.block-end'",
+}).and(PromptBase);
+
+export type PromptBlockEnd = typeof PromptBlockEnd.infer;
+
+export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq);
+export type PromptMsgs = typeof PromptMsgs.infer;
 
 // Type guard with optional streamId filter
-export const isPromptMsg = (msg: unknown): msg is PromptMsg => !(PromptMsg(msg) instanceof type.errors); // && (!streamId || (msg as PromptMsg).streamId === streamId);
+export const isPromptMsg = (msg: unknown): msg is PromptMsgs => !(PromptMsgs(msg) instanceof type.errors); // && (!streamId || (msg as PromptReq).streamId === streamId);
+
+export function isPromptBlockBegin(msg: unknown): msg is PromptBlockBegin {
+  return !(PromptBlockBegin(msg) instanceof type.errors);
+}
+
+export function isPromptBlockEnd(msg: unknown): msg is PromptBlockEnd {
+  return !(PromptBlockEnd(msg) instanceof type.errors);
+}
+
+export function isPromptReq(msg: unknown): msg is PromptReq {
+  return !(PromptReq(msg) instanceof type.errors);
+}

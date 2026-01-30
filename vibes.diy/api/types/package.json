@@ -4,7 +4,7 @@
   "private": "true",
   "type": "module",
   "scripts": {
-    "build": "core-cli build",
+    "build": "core-cli tsc",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build"
   },

@@ -10,7 +10,8 @@ import { drizzle } from "drizzle-orm/d1";
 import { CfCacheIf } from "./api.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
-import { Env } from "./cf-env.ts";
+import { Env } from "./cf-env.js";
+import { LLMRequest } from "@vibes.diy/call-ai-v2";
 
 declare global {
   class WebSocketPair {
@@ -30,6 +31,7 @@ export interface CFInject {
   readonly webSocketPair?: typeof cfWebSocketPair;
   readonly drizzle?: VibesSqlite;
   readonly wsResponse?: Response;
+  readonly llmRequest?: (prompt: LLMRequest) => Promise<Response>;
   // readonly db?: D1Database;
 }
 
@@ -37,6 +39,7 @@ export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContex
   const appCtx = await createAppContext({
     db: ctx.drizzle ?? drizzle(env.DB),
     cache: ctx.cache,
+    llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
   });
   const upgradeHeader = request.headers.get("Upgrade");

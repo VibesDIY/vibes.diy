@@ -1,6 +1,7 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, SendStatItem } from "@adviser/cement";
 import {
   MsgBase,
+  PromptAndBlockMsgs,
   ReqOpenChat,
   reqOpenChat,
   ResOpenChat,
@@ -9,13 +10,12 @@ import {
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { unwrapMsgBase } from "../unwrap-msg-base.ts";
-import { VibesApiSQLCtx } from "../api.ts";
-import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.ts";
-import { sqlChatContexts, sqlChatSections } from "../sql/vibes-diy-api-schema.ts";
+import { unwrapMsgBase } from "../unwrap-msg-base.js";
+import { VibesApiSQLCtx } from "../api.js";
+import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
+import { sqlChatContexts, sqlChatSections } from "../sql/vibes-diy-api-schema.js";
 import { eq } from "drizzle-orm";
-import { ensureAppSlug, ensureUserSlug } from "../intern/ensure-slug-binding.ts";
-import { PromptMsg } from "@vibes.diy/call-ai-v2";
+import { ensureAppSlug, ensureUserSlug } from "../intern/ensure-slug-binding.js";
 
 export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, ResOpenChat | VibesDiyError> = {
   hash: "open-chat-handler",
@@ -91,29 +91,21 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
         .select()
         .from(sqlChatSections)
         .where(eq(sqlChatSections.chatId, chatId))
-        .orderBy(sqlChatSections.created, sqlChatSections.sectionId)
+        // .groupBy(sqlChatSections.chatId, sqlChatSections.promptId)
+        .orderBy(sqlChatSections.created, sqlChatSections.promptId, sqlChatSections.blockSeq)
         .all();
-      let currentMsg: MsgBase<SectionEvent> | undefined = undefined;
       for (const section of sections) {
-        if (currentMsg && currentMsg.payload.promptId !== section.promptId) {
-          ctx.send.send(ctx, {
-            ...currentMsg,
-            payload: {
-              ...currentMsg.payload,
-              blocks: [], // indicate new prompt started
-            },
-          } satisfies MsgBase<SectionEvent>);
-        }
-        const blocks = PromptMsg.array()(section.blocks);
+        const blocks = PromptAndBlockMsgs.array()(section.blocks);
         if (blocks instanceof type.errors) {
-          return Result.Err(`Invalid blocks data for section ${section.sectionId} in chat ${section.chatId}`);
+          return Result.Err(`Invalid blocks data for section ${section.blockSeq} in chat ${section.chatId} - ${blocks.summary}`);
         }
         const rCurrentMsg: Result<SendStatItem<MsgBase<SectionEvent>>> = await ctx.send.send(ctx, {
           payload: {
             type: "vibes.diy.section-event",
             chatId: section.chatId,
             promptId: section.promptId,
-            sectionId: section.sectionId,
+            blockSeq: section.blockSeq,
+            timestamp: new Date(section.created),
             blocks,
           },
           tid: ctx.validated.tid,
@@ -127,16 +119,6 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
         if (rCurrentMsg.Ok().item.isErr()) {
           return Result.Err(rCurrentMsg.Ok().item);
         }
-        currentMsg = rCurrentMsg.Ok().item.Ok();
-      }
-      if (currentMsg) {
-        ctx.send.send(ctx, {
-          ...currentMsg,
-          payload: {
-            ...currentMsg.payload,
-            blocks: [], // indicate new prompt started
-          },
-        } satisfies MsgBase<SectionEvent>);
       }
 
       const resOpenChat = await ctx.send.send(ctx, {

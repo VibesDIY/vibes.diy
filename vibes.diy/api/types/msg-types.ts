@@ -3,7 +3,7 @@ import { Result } from "@adviser/cement";
 import { type } from "arktype";
 import { vibeEnv } from "@vibes.diy/use-vibes-base";
 import { fileSystemItem } from "./types.js";
-import { PromptMsg } from "@vibes.diy/call-ai-v2";
+import { BlockMsgs, CoercedDate, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
 
 // Base types
 export const dashAuthType = type({
@@ -154,14 +154,12 @@ export const resError = type({
   "stack?": "string[]",
 });
 
-// const blockMsg = BlockMsgs.or(PromptMsg);
-
 export const reqPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
   auth: dashAuthType,
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session
-  prompt: PromptMsg,
+  prompt: LLMRequest,
 });
 
 export type ReqPromptChatSection = typeof reqPromptChatSection.infer;
@@ -170,39 +168,24 @@ export const resPromptChatSection = type({
   type: "'vibes.diy.res-prompt-chat-section'",
   chatId: "string",
   promptId: "string",
-  sectionId: "number",
   outerTid: "string",
-  prompt: PromptMsg,
+  // prompt: PromptMsg,
 });
 export type ResPromptChatSection = typeof resPromptChatSection.infer;
+
+export const PromptAndBlockMsgs = PromptMsgs.or(BlockMsgs);
+export type PromptAndBlockMsgs = typeof PromptAndBlockMsgs.infer;
 
 export const sectionEvent = type({
   type: "'vibes.diy.section-event'",
   chatId: "string",
   promptId: "string",
-  sectionId: "number",
-  blocks: [PromptMsg, "[]"],
+  blockSeq: "number",
+  timestamp: CoercedDate,
+  blocks: [PromptAndBlockMsgs, "[]"],
 });
 
 export type SectionEvent = typeof sectionEvent.infer;
-
-// export const reqAppendChatSection = type({
-//   type: "'vibes.diy.req-append-chat-section'",
-//   auth: dashAuthType,
-//   contextId: "string",
-//   origin: "'user'|'llm'",
-//   // Array<{ type: 'origin.prompt' | 'block.xxx'}>
-//   blocks: [blockMsg, "[]"],
-// });
-// export type ReqAppendChatSection = typeof reqAppendChatSection.infer;
-
-// export const resAppendChatSection = type({
-//   type: "'vibes.diy.res-append-chat-section'",
-//   contextId: "string",
-//   seq: "number",
-//   origin: "'user'|'llm'",
-// });
-// export type ResAppendChatSection = typeof resAppendChatSection.infer;
 
 export type ResError = typeof resError.infer;
 

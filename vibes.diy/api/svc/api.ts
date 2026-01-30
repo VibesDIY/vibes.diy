@@ -6,6 +6,7 @@ import { FPApiParameters, FPApiToken } from "@fireproof/core-types-protocols-das
 import { Logger, Result } from "@adviser/cement";
 import { ImportMapProps } from "./intern/import-map.js";
 import { VibesEnv } from "@vibes.diy/use-vibes-base";
+import { LLMRequest } from "@vibes.diy/call-ai-v2";
 
 export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "clerkPublishableKey"> & {
   maxAppSlugPerUserId: number;
@@ -48,6 +49,8 @@ export interface VibesApiSQLCtx {
   fetchPkgVersion(pkg: string): Promise<string | undefined>;
   // waitUntil<T>(promise: Promise<T>): void;
   ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
+
+  llmRequest(prompt: LLMRequest): Promise<Response>;
 }
 
 export function createVibesFPApiSQLCtx(
