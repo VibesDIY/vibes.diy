@@ -74,3 +74,27 @@ describe("QuickSuggestions", () => {
     expect(button).toHaveClass("cursor-pointer");
   });
 });
+
+  it("supports select-all checkbox to auto-fill combined features", () => {
+    const onSelectSuggestion = vi.fn();
+    const { container } = render(
+      <QuickSuggestions onSelectSuggestion={onSelectSuggestion} />,
+    );
+
+    const selectAll = container.querySelector(
+      'input[aria-label="Select all suggested features"]',
+    ) as HTMLInputElement | null;
+    expect(selectAll).not.toBeNull();
+
+    if (selectAll) {
+      // Click the select-all checkbox
+      fireEvent.click(selectAll);
+
+      // Verify callback was invoked with a combined string
+      expect(onSelectSuggestion).toHaveBeenCalled();
+      const arg = onSelectSuggestion.mock.calls[0][0];
+      expect(typeof arg).toBe("string");
+      // Combined prompt should contain multiple lines joined with dashes
+      expect(arg.includes("- ")).toBe(true);
+    }
+  });
