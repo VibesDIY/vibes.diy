@@ -36,7 +36,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@fireproof/core-cli": "0.24.9",
-    "@playwright/test": "^1.57.0",
+    "@playwright/test": "^1.58.1",
     "@types/node": "^25.0.10",
     "@vitest/browser-playwright": "^4.0.17",
     "tsx": "^4.21.0",
