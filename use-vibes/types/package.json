@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.10",
-    "@types/react": "~19.2.8",
+    "@types/react": "~19.2.13",
     "@vitest/browser-playwright": "^4.0.17",
     "typescript": "^5.9.3"
   }
