@@ -28,7 +28,7 @@
     "@cloudflare/workers-types": "^4.20260128.0",
     "@fireproof/core": "0.24.7",
     "@fireproof/core-keybag": "0.24.7",
-    "@fireproof/core-protocols-dashboard": "0.24.7",
+    "@fireproof/core-protocols-dashboard": "0.24.10",
     "@fireproof/core-runtime": "0.24.10",
     "@fireproof/core-types-base": "0.24.9",
     "@fireproof/core-types-protocols-cloud": "0.24.7",
