@@ -3,7 +3,7 @@ import { Result } from "@adviser/cement";
 import { type } from "arktype";
 import { vibeEnv } from "@vibes.diy/use-vibes-base";
 import { fileSystemItem } from "./types.js";
-import { BlockMsgs, CoercedDate, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
+import { BlockMsgs, CoercedDate, FileSystemRef, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
 
 // Base types
 export const dashAuthType = type({
@@ -83,33 +83,9 @@ const uint8AssetRef = type({
 // Union of all file types
 export const vibeFile = type(codeBlock.or(codeRef).or(strAssetBlock).or(strAssetRef).or(uint8AssetBlock).or(uint8AssetRef));
 
-// export const vibeFileRes = type({
-//   type: "'vibe-file-res'",
-//   filename: "string",
-//   entryPoint: "boolean",
-//   mimetype: "string",
-//   storageURI: "string",
-//   storageItem: {
-//     cid: "string",
-//     size: "number"
-//   }
-// })
-
 export type VibeFile = typeof vibeFile.infer;
 
 // Request types
-export const reqEnsureAppSlug = type({
-  type: "'vibes.diy.req-ensure-app-slug'",
-  auth: dashAuthType,
-  "appSlug?": "string", // desired app slug
-  "userSlug?": "string", // desired user slug
-  mode: "'production'|'dev'",
-  // env passed to the app
-  "env?": vibeEnv,
-  fileSystem: [vibeFile, "[]"],
-});
-
-export type ReqEnsureAppSlug = typeof reqEnsureAppSlug.infer;
 
 export const reqOpenChat = type({
   type: "'vibes.diy.req-open-chat'",
@@ -212,19 +188,36 @@ export type ResEnsureAppSlugError = typeof resEnsureAppSlugError.infer;
 export type CodeID = string;
 export type EnvID = string;
 
+export const reqEnsureAppSlug = type({
+  type: "'vibes.diy.req-ensure-app-slug'",
+  auth: dashAuthType,
+  "appSlug?": "string", // desired app slug
+  "userSlug?": "string", // desired user slug
+  "promptId?": "string", // used to emit events to the current chat session
+  "chatId?": "string", // used to emit events to the current chat session
+  mode: "'production'|'dev'",
+  // env passed to the app
+  "env?": vibeEnv,
+  fileSystem: [vibeFile, "[]"],
+});
+
+export type ReqEnsureAppSlug = typeof reqEnsureAppSlug.infer;
+
 // Response types
 export const resEnsureAppSlug = type({
   type: "'vibes.diy.res-ensure-app-slug'",
-  appSlug: "string",
-  userSlug: "string",
-  mode: "'production'|'dev'",
+  // appSlug: "string",
+  // userSlug: "string",
+  // mode: "'production'|'dev'",
   env: vibeEnv,
-  fsId: "string",
+  "promptId?": "string",
+  "chatId?": "string",
+  // fsId: "string",
   fileSystem: [fileSystemItem, "[]"],
   // envRef: "string",
-  wrapperUrl: "string",
-  entryPointUrl: "string",
-});
+  // wrapperUrl: "string",
+  // entryPointUrl: "string",
+}).and(FileSystemRef);
 
 export type ResEnsureAppSlug = typeof resEnsureAppSlug.infer;
 export function isResEnsureAppSlug(obj: unknown): obj is ResEnsureAppSlug {
