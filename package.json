@@ -4,6 +4,7 @@
   "private": true,
   "description": "it contains all elements of vibes.diy web page",
   "type": "module",
+  "packageManager": "pnpm@10.20.0",
   "engines": {
     "node": ">=22"
   },
