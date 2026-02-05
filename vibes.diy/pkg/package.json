@@ -43,7 +43,6 @@
     "call-ai": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "drizzle-kit": "^0.31.8",
     "isbot": "^5.1.25",
     "monaco-editor": "^0.55.1",
     "multiformats": "^13.4.2",
@@ -58,7 +57,7 @@
     "tailwind-merge": "^3.4.0",
     "use-fireproof": "0.24.10",
     "use-vibes": "workspace:*",
-    "wrangler": "^4.62.0"
+    "wrangler": "^4.63.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.0",
@@ -78,13 +77,13 @@
     "arktype": "^2.1.29",
     "concurrently": "^9.1.2",
     "prettier": "^3.8.1",
+    "rollup-plugin-visualizer": "^6.0.5",
     "shiki": "^3.22.0",
     "storybook": "^10.2.6",
-    "prettier": "^3.8.0",
-    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^4.1.18",
     "toml": "^3.0.0",
     "typescript": "^5.9.3",
+    "drizzle-kit": "^0.31.8",
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "^6.0.5",
     "zx": "^8.8.5"

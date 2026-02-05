@@ -119,7 +119,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
         cfg.ws ??
         new WebSocket(
           BuildURI.from(apiUrl)
-            .protocol(URI.from(apiUrl).protocol === "https:" ? "wss:" : "ws:")
+            .protocol(["https", "wss"].find((i) => URI.from(apiUrl).protocol.startsWith(i)) ? "wss:" : "ws:")
             .toString()
         ),
       timeoutMs: cfg.timeoutMs ?? 10000,

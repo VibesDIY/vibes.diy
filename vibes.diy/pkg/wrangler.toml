@@ -38,6 +38,13 @@ head_sampling_rate = 1
 invocation_logs = true
 persist = true
 
+[env.dev.durable_objects]
+bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+
+[[env.dev.migrations]]
+tag = "v1"
+new_classes = ["ChatSessions"]
+
 [[env.dev.d1_databases]]
 binding = "DB"
 database_name = "dev-vibes-diy-v2"
@@ -57,6 +64,13 @@ enabled = true
 head_sampling_rate = 1
 invocation_logs = true
 persist = true
+
+[env.prod.durable_objects]
+bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+
+[[env.prod.migrations]]
+tag = "v1"
+new_classes = ["ChatSessions"]
 
 [[env.prod.d1_databases]]
 binding = "DB"
