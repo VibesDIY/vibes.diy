@@ -29,7 +29,7 @@
     "@fireproof/core-keybag": "0.24.7",
     "@fireproof/core-runtime": "0.24.10",
     "@fireproof/core-types-base": "0.24.9",
-    "@fireproof/core-types-protocols-cloud": "0.24.7",
+    "@fireproof/core-types-protocols-cloud": "0.24.10",
     "@fireproof/use-fireproof": "0.24.7",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*"
