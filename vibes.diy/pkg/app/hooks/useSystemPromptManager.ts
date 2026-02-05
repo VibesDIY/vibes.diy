@@ -15,13 +15,13 @@ import {
  * Hook for managing system prompts based on settings
  * @param settingsDoc - User settings document that may contain model preferences
  * @param vibeDoc - Vibe document containing per-vibe settings
- * @returns ensureSystemPrompt function that builds and returns a fresh system prompt
+ * @returns buildSystemPrompt function that builds and returns a fresh system prompt
  */
 export function useSystemPromptManager(settingsDoc: UserSettings | undefined, vibeDoc?: VibeDocument) {
   const { getToken } = useAuth();
 
   // Stateless builder: always constructs and returns a fresh system prompt
-  const ensureSystemPrompt = useCallback(
+  const buildSystemPrompt = useCallback(
     async (overrides?: {
       userPrompt?: string;
       history?: {
@@ -53,5 +53,5 @@ export function useSystemPromptManager(settingsDoc: UserSettings | undefined, vi
   );
 
   // Export only the builder function
-  return ensureSystemPrompt;
+  return buildSystemPrompt;
 }
