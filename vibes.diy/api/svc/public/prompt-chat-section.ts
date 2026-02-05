@@ -62,7 +62,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       if (resChat.userId !== req.auth.verifiedAuth.claims.userId) {
         return Result.Err(`Chat ID ${req.chatId} does not belong to the user`);
       }
-      const promptId = vctx.sthis.nextId(12).str;
+      const promptId = vctx.sthis.nextId(96 / 8).str;
       // needs to be sent before any block events
       // to allow the client to associate incoming blocks with the promptId
       ctx.send.send(
@@ -71,6 +71,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           payload: {
             type: "vibes.diy.res-prompt-chat-section",
             chatId: req.chatId,
+            userSlug: resChat.userSlug,
+            appSlug: resChat.appSlug,
             promptId,
             outerTid: req.outerTid,
           },
@@ -86,9 +88,17 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         vctx,
         req,
         promptId,
-        blockSeq: blockSeq++,
-        evt: { type: "prompt.block-begin" },
+        blockSeq: blockSeq,
+        evt: {
+          type: "prompt.block-begin",
+          streamId: promptId,
+          chatId: req.chatId,
+          // streamId:
+          seq: blockSeq,
+          timestamp: new Date(),
+        },
       });
+      blockSeq++;
       if (rBegin.isErr()) {
         return Result.Err(rBegin);
       }
@@ -99,12 +109,17 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         vctx,
         req,
         promptId,
-        blockSeq: blockSeq++,
+        blockSeq: blockSeq,
         evt: {
           type: "prompt.req",
+          streamId: promptId,
+          chatId: req.chatId,
+          seq: blockSeq,
           request: req.prompt,
+          timestamp: new Date(),
         },
       });
+      blockSeq++;
       if (r.isErr()) {
         console.error("Failed to append prompt request event:", r.Err());
         return Result.Err(r);
@@ -124,7 +139,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       if (!res.body) {
         return Result.Err(`LLM request returned no body`);
       }
-      // console.log("LLM response:", await res.clone().text());
       const pipeline = res.body
         .pipeThrough(createStatsCollector(promptId, 100000))
         .pipeThrough(createLineStream(promptId))
@@ -142,6 +156,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           break;
         }
         if (isBlockStats(value)) {
+          // console.log("LLM Stats:", value.stats);
           const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
           if (r.isErr()) {
             return Result.Err(r);
@@ -158,6 +173,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           isBlockImage(value) ||
           isBlockEnd(value)
         ) {
+          // console.log("Appending block event:", req);
           const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value });
           if (r.isErr()) {
             return Result.Err(r);
@@ -165,7 +181,22 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         }
       }
       if (blockSeq > 1) {
-        const rEnd = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: { type: "prompt.block-end" } });
+        const rEnd = await appendBlockEvent({
+          ctx,
+          vctx,
+          req,
+          promptId,
+          blockSeq: blockSeq,
+          evt: {
+            type: "prompt.block-end",
+            streamId: promptId,
+            chatId: req.chatId,
+            // streamId:
+            seq: blockSeq,
+            timestamp: new Date(),
+          },
+        });
+        blockSeq++;
         if (rEnd.isErr()) {
           return Result.Err(rEnd);
         }
@@ -197,21 +228,26 @@ async function appendBlockEvent({
 }: AppendBlockEventParams): Promise<Result<void>> {
   const now = new Date();
   // console.log("Appending block event:", { promptId, blockSeq, evt, timestamp: now });
-  await ctx.send.send(
-    ctx,
-    wrapMsgBase(ctx.validated, {
-      payload: {
-        type: "vibes.diy.section-event",
-        chatId: req.chatId,
-        promptId,
-        blockSeq,
-        blocks: [evt],
-        timestamp: now,
-      },
-      tid: req.outerTid,
-      src: "promptChatSection",
-    } satisfies InMsgBase<SectionEvent>)
-  );
+  const msgBase = wrapMsgBase(ctx.validated, {
+    payload: {
+      type: "vibes.diy.section-event",
+      chatId: req.chatId,
+      promptId,
+      blockSeq,
+      blocks: [evt],
+      timestamp: now,
+    },
+    tid: req.outerTid,
+    src: "promptChatSection",
+  } satisfies InMsgBase<SectionEvent>);
+  for (const conn of vctx.connections) {
+    for (const tuple of conn.chatIds) {
+      if (tuple.chatId === req.chatId) {
+        console.log("promptChatSection: Sending blockSeq", blockSeq, "to chatId:", req.chatId, "via tid:", tuple.tid);
+        await conn.send(ctx, { ...msgBase, tid: tuple.tid });
+      }
+    }
+  }
   if (emitMode === "store") {
     // Store block in DB
     const rUpdate = await exception2Result(() =>

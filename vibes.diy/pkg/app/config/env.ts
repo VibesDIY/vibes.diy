@@ -120,14 +120,16 @@ class vibesDiyEnv {
     if (!dashboardUrl) {
       throw new Error("DASHBOARD_URL is required in environment variables");
     }
+    const vibesDiyApiUrl = this.env().get("VIBES_DIY_API_URL");
     return {
       FPCLOUD_URL: fpCloudUrl,
       DASHBOARD_URL: dashboardUrl,
+      VIBES_DIY_API_URL: vibesDiyApiUrl,
       CLERK_PUBLISHABLE_KEY: this.CLERK_PUBLISHABLE_KEY(),
-      API_BASE_URL: this.API_BASE_URL(),
-      CALLAI_API_KEY: this.env().get("VITE_CALLAI_API_KEY") ?? "",
-      CALLAI_CHAT_URL: this.CALLAI_ENDPOINT(),
-      CALLAI_IMG_URL: this.CALLAI_ENDPOINT(),
+      // API_BASE_URL: this.API_BASE_URL(),
+      // CALLAI_API_KEY: this.env().get("VITE_CALLAI_API_KEY") ?? "",
+      // CALLAI_CHAT_URL: this.CALLAI_ENDPOINT(),
+      // CALLAI_IMG_URL: this.CALLAI_ENDPOINT(),
     };
   });
 }

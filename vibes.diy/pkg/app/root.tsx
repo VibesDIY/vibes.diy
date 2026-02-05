@@ -12,6 +12,7 @@ import { ErrorBoundary as AppErrorBoundary } from "./ErrorBoundary.js";
 import GtmNoScript from "./components/GtmNoScript.js";
 
 import "./app.css";
+import { VibeDiyProvider } from "./vibe-diy-provider.js";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -34,7 +35,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
+    <VibeDiyProvider>
       <AppErrorBoundary>
         <ThemeProvider>
           <PostHogProvider
@@ -53,7 +54,7 @@ export default function App() {
           </PostHogProvider>
         </ThemeProvider>
       </AppErrorBoundary>
-    </ClerkProvider>
+    </VibeDiyProvider>
   );
 }
 

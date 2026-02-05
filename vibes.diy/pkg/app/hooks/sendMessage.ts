@@ -15,7 +15,7 @@ import { AUTH_REQUIRED_ERROR } from "../utils/authErrors.js";
 export interface SendMessageContext {
   userMessage: ChatMessageDocument;
   setPendingUserDoc: (doc: ChatMessageDocument) => void;
-  setIsStreaming: (v: boolean) => void;
+  setPromptProcessing: (v: boolean) => void;
   ensureApiKey: () => Promise<{ key: string } | null>;
   setNeedsLogin: (v: boolean) => void;
   ensureSystemPrompt: (overrides?: {
@@ -45,7 +45,7 @@ export async function sendChatMessage(ctx: SendMessageContext, textOverride?: st
   const {
     userMessage,
     setPendingUserDoc,
-    setIsStreaming,
+    setPromptProcessing,
     ensureApiKey,
     setNeedsLogin,
     ensureSystemPrompt,
@@ -83,7 +83,7 @@ export async function sendChatMessage(ctx: SendMessageContext, textOverride?: st
   // Clear the chat input once the user message has been submitted
   setInput("");
 
-  setIsStreaming(true);
+  setPromptProcessing(true);
 
   // Get API key (Clerk session token)
   let currentApiKey = "";
@@ -216,7 +216,7 @@ export async function sendChatMessage(ctx: SendMessageContext, textOverride?: st
       setSelectedResponseId("");
     })
     .finally(() => {
-      setIsStreaming(false);
+      setPromptProcessing(false);
       // Credit checking no longer needed
     });
 }

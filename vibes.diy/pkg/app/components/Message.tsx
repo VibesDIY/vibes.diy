@@ -7,7 +7,7 @@ import { BrutalistCard } from "./vibes/BrutalistCard.js";
 
 interface MessageProps {
   message: ChatMessageDocument;
-  isStreaming: boolean;
+  promptProcessing: boolean;
   setSelectedResponseId: (id: string) => void;
   selectedResponseId: string;
   setMobilePreviewShown: (shown: boolean) => void;
@@ -20,7 +20,7 @@ const AIMessage = memo(
   ({
     message,
     model,
-    isStreaming,
+    promptProcessing,
     setSelectedResponseId,
     selectedResponseId,
     setMobilePreviewShown,
@@ -29,7 +29,7 @@ const AIMessage = memo(
   }: {
     message: AiChatMessageDocument;
     model?: string;
-    isStreaming: boolean;
+    promptProcessing: boolean;
     setSelectedResponseId: (id: string) => void;
     selectedResponseId: string;
     setMobilePreviewShown: (shown: boolean) => void;
@@ -70,7 +70,7 @@ const AIMessage = memo(
         <div className="max-w-[85%]">
           <StructuredMessage
             segments={segments || []}
-            isStreaming={isStreaming}
+            promptProcessing={promptProcessing}
             messageId={message._id}
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
@@ -88,7 +88,7 @@ const AIMessage = memo(
     // Return false to signal React to re-render the component
     if (
       prevProps.message.text !== nextProps.message.text ||
-      prevProps.isStreaming !== nextProps.isStreaming ||
+      prevProps.promptProcessing !== nextProps.promptProcessing ||
       prevProps.setSelectedResponseId !== nextProps.setSelectedResponseId ||
       prevProps.selectedResponseId !== nextProps.selectedResponseId ||
       prevProps.setMobilePreviewShown !== nextProps.setMobilePreviewShown ||
@@ -102,7 +102,7 @@ const AIMessage = memo(
   }
 );
 
-const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
+export const UserMessage = memo(({ message }: { message: ChatMessageDocument }) => {
   return (
     <div className="mb-4 flex flex-row justify-end px-4">
       <BrutalistCard size="md" messageType="user" className="max-w-[85%]">
@@ -142,7 +142,7 @@ const SystemMessage = memo(({ message }: { message: SystemChatMessageDocument })
 const Message = memo(
   ({
     message,
-    isStreaming,
+    promptProcessing,
     setSelectedResponseId,
     selectedResponseId,
     setMobilePreviewShown,
@@ -155,7 +155,7 @@ const Message = memo(
           <AIMessage
             message={message as AiChatMessageDocument}
             model={message.model}
-            isStreaming={isStreaming}
+            promptProcessing={promptProcessing}
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
             setMobilePreviewShown={setMobilePreviewShown}
@@ -177,7 +177,7 @@ const Message = memo(
     }
 
     // Check for streaming state changes
-    if (prevProps.isStreaming !== nextProps.isStreaming) {
+    if (prevProps.promptProcessing !== nextProps.promptProcessing) {
       return false; // State changed, need to re-render
     }
 

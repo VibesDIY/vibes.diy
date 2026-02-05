@@ -4,7 +4,7 @@ import { gtmPush } from "./gtm.js";
 // window.dataLayer so GTM can fan them out to GA4, Mixpanel, HubSpot, etc.
 // No client-side secrets are used here.
 
-type DataLayerEvent = Record<string, unknown> & { event?: string };
+// type DataLayerEvent = Record<string, unknown> & { event?: string };
 
 function hasConsent(): boolean {
   if (typeof document === "undefined") return false;
@@ -39,17 +39,17 @@ export function pageview(path: string): void {
  * @param value - Event value (optional)
  */
 // likely remove
-const event = (category: string, action: string, label?: string, value?: number): void => {
-  // Backward-compatible wrapper that emits a generic event for GTM
-  const payload: DataLayerEvent = {
-    event: action || category,
-    event_category: category,
-    event_action: action,
-  };
-  if (label) payload.event_label = label;
-  if (typeof value === "number") payload.value = value;
-  gtmPush(payload);
-};
+// const event = (category: string, action: string, label?: string, value?: number): void => {
+//   // Backward-compatible wrapper that emits a generic event for GTM
+//   const payload: DataLayerEvent = {
+//     event: action || category,
+//     event_category: category,
+//     event_action: action,
+//   };
+//   if (label) payload.event_label = label;
+//   if (typeof value === "number") payload.value = value;
+//   gtmPush(payload);
+// };
 
 /**
  * Track a Google Ads conversion event
@@ -116,8 +116,8 @@ export const trackErrorEvent = (errorType: string, message: string, details?: Re
  * Identify the current user for downstream tools.
  * We never pass PII – just the stable Fireproof userId.
  */
-function identifyUser(userId: string) {
-  if (!userId) return;
-  if (!hasConsent()) return;
-  gtmPush({ event: "identify", user_id: userId });
-}
+// function identifyUser(userId: string) {
+//   if (!userId) return;
+//   if (!hasConsent()) return;
+//   gtmPush({ event: "identify", user_id: userId });
+// }

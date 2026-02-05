@@ -77,7 +77,7 @@ export function SessionWrapper() {
 
       if (promptParam && promptParam.trim()) {
         // Generate a new session ID
-        const newSessionId = `session-${Date.now()}`;
+        const newSessionId = `xsession-${Date.now()}`;
 
         // Generate a title slug from the prompt (first 50 chars)
         const promptTitle = promptParam.trim().slice(0, 50);

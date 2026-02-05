@@ -47,7 +47,7 @@ This Storybook version uses a mock state provider to simulate the complex state 
       description: "Number of syntax errors in code",
       control: { type: "number", min: 0, max: 10 },
     },
-    isStreaming: {
+    promptProcessing: {
       description: "Whether AI is currently streaming a response",
       control: "boolean",
     },
@@ -97,7 +97,7 @@ export const Default: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
@@ -116,7 +116,7 @@ export const CodeViewWithChanges: Story = {
     previewReady: true,
     hasCodeChanges: true,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
@@ -135,7 +135,7 @@ export const CodeViewWithErrors: Story = {
     previewReady: true,
     hasCodeChanges: true,
     syntaxErrorCount: 3,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
@@ -154,7 +154,7 @@ export const DataView: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
@@ -173,7 +173,7 @@ export const StreamingState: Story = {
     previewReady: false,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: true,
+    promptProcessing: true,
   },
   parameters: {
     docs: {
@@ -192,7 +192,7 @@ export const NoControls: Story = {
     previewReady: false,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
@@ -211,7 +211,7 @@ export const PublishedApp: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
     initialPublishedUrl: "https://vibes.diy/published-app-123456",
     initialUrlCopied: true,
   },
@@ -232,7 +232,7 @@ export const PublishingInProgress: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
     initialIsPublishing: true,
   },
   parameters: {
@@ -252,7 +252,7 @@ export const ShareModalOpen: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
     initialIsShareModalOpen: true,
   },
   parameters: {
@@ -272,7 +272,7 @@ export const InteractivePublishingDemo: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {

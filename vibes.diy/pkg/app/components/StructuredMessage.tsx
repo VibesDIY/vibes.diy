@@ -5,7 +5,7 @@ import { BrutalistCard } from "./vibes/BrutalistCard.js";
 
 interface StructuredMessageProps {
   segments: Segment[];
-  isStreaming?: boolean;
+  promptProcessing?: boolean;
   messageId?: string;
   setSelectedResponseId: (id: string) => void;
   selectedResponseId: string;
@@ -137,7 +137,7 @@ const CodeSegment = ({
  */
 const StructuredMessage = ({
   segments,
-  isStreaming,
+  promptProcessing,
   messageId,
   setSelectedResponseId,
   selectedResponseId,
@@ -149,8 +149,8 @@ const StructuredMessage = ({
   // Ensure segments is an array (defensive)
   const validSegments = Array.isArray(segments) ? segments : [];
 
-  // Calculate local codeReady state based on segments.length > 2 or !isStreaming
-  const codeReady = validSegments.length > 2 || isStreaming === false;
+  // Calculate local codeReady state based on segments.length > 2 or !promptProcessing
+  const codeReady = validSegments.length > 2 || promptProcessing === false;
 
   // Check if this message is currently selected by direct ID comparison
   const isSelected = messageId === selectedResponseId;
@@ -238,7 +238,7 @@ const StructuredMessage = ({
       )}
 
       {/* Show streaming indicator only when this is the latest message, streaming is active, and we already have content */}
-      {isStreaming && hasContent && isLatestMessage && (
+      {promptProcessing && hasContent && isLatestMessage && (
         <span className="bg-light-primary dark:bg-dark-primary ml-1 inline-block h-4 w-2 animate-pulse" />
       )}
     </div>

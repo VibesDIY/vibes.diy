@@ -4,20 +4,20 @@ import { RuntimeError } from "@vibes.diy/use-vibes-types";
 
 interface Params {
   immediateErrors: RuntimeError[];
-  isStreaming: boolean;
+  promptProcessing: boolean;
   userInput: string;
   mergeUserMessage: (doc: Partial<UserChatMessageDocument>) => void;
   setDidSendErrors: (value: boolean) => void;
-  setIsStreaming: (value: boolean) => void;
+  setPromptProcessing: (value: boolean) => void;
 }
 
 export function useImmediateErrorAutoSend({
   immediateErrors,
-  isStreaming,
+  promptProcessing,
   userInput,
   mergeUserMessage,
   setDidSendErrors,
-  setIsStreaming,
+  setPromptProcessing,
 }: Params) {
   const debouncedSendRef = useRef<NodeJS.Timeout | null>(null);
   const sentErrorsRef = useRef<Set<string>>(new Set());
@@ -37,8 +37,8 @@ export function useImmediateErrorAutoSend({
     }
 
     const hasSyntax = immediateErrors.some((e) => e.errorType === "SyntaxError");
-    if (isStreaming && hasSyntax) {
-      setIsStreaming(false);
+    if (promptProcessing && hasSyntax) {
+      setPromptProcessing(false);
     }
 
     if (!debouncedSendRef.current) {
@@ -58,5 +58,5 @@ export function useImmediateErrorAutoSend({
         debouncedSendRef.current = null;
       }
     };
-  }, [immediateErrors, isStreaming, userInput, mergeUserMessage, setDidSendErrors, setIsStreaming]);
+  }, [immediateErrors, promptProcessing, userInput, mergeUserMessage, setDidSendErrors, setPromptProcessing]);
 }

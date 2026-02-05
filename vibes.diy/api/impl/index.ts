@@ -17,6 +17,9 @@ import {
   SectionEvent,
   sectionEvent,
   ResPromptChatSection,
+  isResEnsureAppSlug,
+  isResOpenChat,
+  isResPromptChatSection,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -30,14 +33,18 @@ import {
   HandleTriggerCtx,
   EventoResult,
   ValidateTriggerCtx,
+  BuildURI,
+  URI,
 } from "@adviser/cement";
-import { SuperThis } from "@fireproof/core-types-base";
+import { ClerkClaim, SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { VibesDiyApiIface, W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
+import { ClerkApiToken } from "@fireproof/core-protocols-dashboard";
+import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 
 export interface VibesDiyApiParam {
   readonly apiUrl?: string;
@@ -69,9 +76,15 @@ type OnResponseTypes = ResError | SectionEvent;
 
 // type LLMPrompt = Omit<LLMRequest, "model" | "stream"> & { model?: string; };
 
-interface LLMChat {
-  readonly tid: string;
-  readonly chatId: string;
+export const LLMChatEntry = type({
+  tid: "string",
+  chatId: "string",
+  userSlug: "string",
+  appSlug: "string",
+});
+export type LLMChatEntry = typeof LLMChatEntry.infer;
+
+export interface LLMChat extends LLMChatEntry {
   prompt(req: LLMRequest): Promise<Result<ResPromptChatSection, VibesDiyError>>;
 
   readonly sectionStream: ReadableStream<OnResponseTypes>;
@@ -96,12 +109,19 @@ export class VibeDiyApi implements VibesDiyApiIface<{
 
   constructor(cfg: VibesDiyApiParam) {
     const sthis = cfg.sthis ?? ensureSuperThis();
+    const apiUrl = cfg.apiUrl ?? "wss://api.vibes.diy/v1/ws";
     this.cfg = {
-      apiUrl: cfg.apiUrl ?? "wss://api.vibes.diy/v1/ws",
+      apiUrl,
       me: cfg.me ?? `vibes.diy.client.${sthis.nextId().str}`,
       getToken: cfg.getToken,
       fetch: cfg.fetch ?? fetch.bind(globalThis),
-      ws: cfg.ws ?? new WebSocket("wss://api.vibes.diy/v1/ws"),
+      ws:
+        cfg.ws ??
+        new WebSocket(
+          BuildURI.from(apiUrl)
+            .protocol(["https", "wss"].find((i) => URI.from(apiUrl).protocol.startsWith(i)) ? "wss:" : "ws:")
+            .toString()
+        ),
       timeoutMs: cfg.timeoutMs ?? 10000,
       msg: {
         src: "vibes.diy.client",
@@ -111,6 +131,22 @@ export class VibeDiyApi implements VibesDiyApiIface<{
       },
       sthis,
     };
+  }
+
+  async getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>> {
+    const rToken = await this.cfg.getToken();
+    if (rToken.isErr()) {
+      return Result.Err(rToken);
+    }
+    console.log("VibeDiyApi getTokenClaims token", rToken.Ok().token);
+    const sthis = ensureSuperThis();
+    const tokenapi = new ClerkApiToken(sthis);
+    const rClaims = await tokenapi.verify(rToken.Ok().token);
+    if (rClaims.isErr()) {
+      console.error("getTokenClaims verify failed:", rClaims.Err());
+      return Result.Err(rClaims);
+    }
+    return Result.Ok(rClaims.Ok() as VerifiedClaimsResult & { claims: ClerkClaim });
   }
 
   getReadyConnection(): Promise<VibeDiyApiConnection> {
@@ -151,7 +187,13 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     return Result.Ok(msgBox as MsgBox<WithAuth<T>>);
   }
 
-  async request<Q extends OptionalAuth, S>(req: Q, msgParam?: { tid: string }): Promise<ResultVibesDiy<S>> {
+  async request<Q extends OptionalAuth, S>(
+    req: Q,
+    msgParam: {
+      tid?: string;
+      resMatch: (res: unknown) => boolean;
+    }
+  ): Promise<ResultVibesDiy<S>> {
     const tid = msgParam?.tid ?? this.cfg.sthis.nextId(12).str;
     let unreg: (() => void) | undefined;
     const rtRes = await timeouted(
@@ -166,7 +208,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
               // console.log("Invalid message received, ignoring:", msg, trigger.enRequest);
               return Result.Ok(Option.None());
             }
-            if (msg.tid === tid) {
+            if (msg.tid === tid && msgParam.resMatch(msg.payload as S)) {
               // console.log("Valid event matched for tid:", tid);
               return Result.Ok(Option.Some(trigger.enRequest));
             }
@@ -187,15 +229,18 @@ export class VibeDiyApi implements VibesDiyApiIface<{
         // console.log("Setting up onMessage handler for tid:", tid);
         const waitForResponse = new Future<Result<S, VibesDiyError>>();
         unreg = conn.onMessage((event) => {
+          // console.log("VibeDiyApi request onMessage received", tid);
           evento.trigger({
             request: event,
             send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
-              const res = await this.send(data as Parameters<this["send"]>[0], { tid: "x" });
+              console.log("VibeDiyApi request sending from evento", data);
+              const res = await this.send(data as Parameters<this["send"]>[0], { tid });
               return res;
             }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
           });
         });
         // console.log("Sending request with tid:", tid);
+        // console.log("VibeDiyApi request sending", req, tid);
         const rReq = await this.send(req, { tid });
         // console.log("Sended request with tid:", tid, rReq);
         if (rReq.isErr()) {
@@ -220,7 +265,12 @@ export class VibeDiyApi implements VibesDiyApiIface<{
   }
 
   async ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {
-    return this.request({ ...req, type: "vibes.diy.req-ensure-app-slug" });
+    return this.request(
+      { ...req, type: "vibes.diy.req-ensure-app-slug" },
+      {
+        resMatch: isResEnsureAppSlug,
+      }
+    );
   }
 
   async openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>> {
@@ -242,6 +292,12 @@ class LLMChatImpl implements LLMChat {
 
   get chatId(): string {
     return this.res.chatId;
+  }
+  get userSlug(): string {
+    return this.res.userSlug;
+  }
+  get appSlug(): string {
+    return this.res.appSlug;
   }
 
   static async open(open: ReqType<ReqOpenChat>, api: VibeDiyApi): Promise<Result<LLMChat>> {
@@ -275,6 +331,7 @@ class LLMChatImpl implements LLMChat {
         } else {
           const se = sectionEvent(trigger.validated.payload);
           if (!(se instanceof type.errors)) {
+            // console.log("send to Stream:", tid, trigger.validated.tid, se.type)
             await sectionEventsWriter.write(se);
             // const beginPrompt = se.blocks.find((b) => isPromptBlockBegin(b))
             // if (beginPrompt) {
@@ -317,10 +374,11 @@ class LLMChatImpl implements LLMChat {
     conn.onError(unreg);
     conn.onClose(unreg);
 
-    const res = await api.request<Req<ReqOpenChat>, ResOpenChat>(open, { tid });
+    const res = await api.request<Req<ReqOpenChat>, ResOpenChat>(open, { tid, resMatch: isResOpenChat });
     if (res.isErr()) {
       return Result.Err<LLMChat>(res.Err());
     }
+    // console.log("LLMChat open succeeded for chatId:", res.Ok());
     const llmChat = new LLMChatImpl(api, tid, res.Ok(), sectionEvents.readable, sectionEventsWriter);
     return Result.Ok(llmChat);
   }
@@ -342,12 +400,17 @@ class LLMChatImpl implements LLMChat {
   }
 
   async prompt(msg: LLMRequest) {
-    const res = await this.api.request<ReqType<ReqPromptChatSection>, ResPromptChatSection>({
-      type: "vibes.diy.req-prompt-chat-section",
-      chatId: this.res.chatId,
-      outerTid: this.tid, //leaking but necessary streaming
-      prompt: msg,
-    });
+    const res = await this.api.request<ReqType<ReqPromptChatSection>, ResPromptChatSection>(
+      {
+        type: "vibes.diy.req-prompt-chat-section",
+        chatId: this.res.chatId,
+        outerTid: this.tid, //leaking but necessary streaming
+        prompt: msg,
+      },
+      {
+        resMatch: isResPromptChatSection,
+      }
+    );
     // if (res.isOk()) {
     // this.#activePromptIds.set(res.Ok().promptId, undefined);
     // }

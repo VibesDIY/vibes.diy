@@ -130,6 +130,10 @@ export const resOpenChat = type({
 
 export type ResOpenChat = typeof resOpenChat.infer;
 
+export function isResOpenChat(obj: unknown): obj is ResOpenChat {
+  return !(resOpenChat(obj) instanceof type.errors);
+}
+
 // export const reqEnsureChatContext = type({
 //   type: "'vibes.diy.req-ensure-chat-context'",
 //   auth: dashAuthType,
@@ -167,11 +171,16 @@ export type ReqPromptChatSection = typeof reqPromptChatSection.infer;
 export const resPromptChatSection = type({
   type: "'vibes.diy.res-prompt-chat-section'",
   chatId: "string",
+  userSlug: "string",
+  appSlug: "string",
   promptId: "string",
   outerTid: "string",
   // prompt: PromptMsg,
 });
 export type ResPromptChatSection = typeof resPromptChatSection.infer;
+export function isResPromptChatSection(obj: unknown): obj is ResPromptChatSection {
+  return !(resPromptChatSection(obj) instanceof type.errors);
+}
 
 export const PromptAndBlockMsgs = PromptMsgs.or(BlockMsgs);
 export type PromptAndBlockMsgs = typeof PromptAndBlockMsgs.infer;
@@ -218,6 +227,9 @@ export const resEnsureAppSlug = type({
 });
 
 export type ResEnsureAppSlug = typeof resEnsureAppSlug.infer;
+export function isResEnsureAppSlug(obj: unknown): obj is ResEnsureAppSlug {
+  return !(resEnsureAppSlug(obj) instanceof type.errors);
+}
 
 export const msgBase = type({
   tid: "string",
@@ -254,7 +266,7 @@ export type ResultVibesDiy<T> = Result<T, VibesDiyError>;
 export const w3cMessageEventBox = type({
   type: "'MessageEvent'",
   event: type({
-    data: type("string").or(["instanceof", Uint8Array]),
+    data: "unknown",
     origin: "string|null",
     lastEventId: "string",
     source: "unknown",

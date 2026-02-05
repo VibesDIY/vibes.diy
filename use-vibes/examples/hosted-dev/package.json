@@ -18,16 +18,16 @@
   },
   "dependencies": {
     "call-ai": "workspace:*",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "use-vibes": "workspace:*"
   },
   "devDependencies": {
-    "@types/react": "^19.2.8",
+    "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.1.2",
+    "@vitejs/plugin-react": "^5.1.3",
     "@vitest/browser-playwright": "^4.0.18",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.1",
     "serve": "^14.2.5",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",

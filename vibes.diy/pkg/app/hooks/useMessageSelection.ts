@@ -9,13 +9,13 @@ import { parseContent } from "@vibes.diy/prompts";
  */
 export function useMessageSelection({
   docs,
-  isStreaming,
+  promptProcessing,
   aiMessage,
   selectedResponseId,
   pendingAiMessage,
 }: {
   docs: ChatMessageDocument[];
-  isStreaming: boolean;
+  promptProcessing: boolean;
   aiMessage: ChatMessageDocument;
   selectedResponseId: string;
   pendingAiMessage: ChatMessageDocument | null;
@@ -27,10 +27,10 @@ export function useMessageSelection({
 
   // When streaming and we have text, capture the streaming message
   useEffect(() => {
-    if (isStreaming && aiMessage.text.length > 0) {
+    if (promptProcessing && aiMessage.text.length > 0) {
       setPrevStreamingMessage(aiMessage);
     }
-  }, [isStreaming, aiMessage.text]);
+  }, [promptProcessing, aiMessage.text]);
 
   const messages = useMemo(() => {
     // First filter the docs to get messages we want to display
@@ -39,12 +39,12 @@ export function useMessageSelection({
     ) as unknown as ChatMessageDocument[];
 
     // If currently streaming, include the streaming message
-    if (isStreaming && aiMessage.text.length > 0) {
+    if (promptProcessing && aiMessage.text.length > 0) {
       return [...baseDocs, aiMessage];
     }
 
     // When streaming just ended, check if the last message is in docs
-    if (!isStreaming && prevStreamingMessage) {
+    if (!promptProcessing && prevStreamingMessage) {
       // Look for the message ID in the docs to see if it's been saved
       const messageInDocs = baseDocs.some((doc) => prevStreamingMessage._id && doc._id === prevStreamingMessage._id);
 
@@ -73,7 +73,7 @@ export function useMessageSelection({
 
     // Default case - just use the messages from the database
     return baseDocs;
-  }, [docs, isStreaming, aiMessage, prevStreamingMessage]);
+  }, [docs, promptProcessing, aiMessage, prevStreamingMessage]);
 
   const selectedResponseDoc = useMemo(() => {
     // Priority 1: Explicit user selection (from confirmed docs)
@@ -88,7 +88,7 @@ export function useMessageSelection({
     }
 
     // Priority 3: Streaming message (if no valid user selection and not pending)
-    if (isStreaming) {
+    if (promptProcessing) {
       return aiMessage;
     }
 
@@ -108,7 +108,7 @@ export function useMessageSelection({
 
     const latestAiDocWithCode = sortedDocsWithCode[0];
     return latestAiDocWithCode;
-  }, [selectedResponseId, docs, pendingAiMessage, isStreaming, aiMessage]) as ChatMessageDocument | undefined;
+  }, [selectedResponseId, docs, pendingAiMessage, promptProcessing, aiMessage]) as ChatMessageDocument | undefined;
 
   // Process selected response into segments and code
   const { selectedSegments, selectedCode } = useMemo(() => {

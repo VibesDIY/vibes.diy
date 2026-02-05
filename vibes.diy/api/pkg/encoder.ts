@@ -1,4 +1,4 @@
-import { EventoEnDecoder, Result, JSONEnDecoderSingleton } from "@adviser/cement";
+import { EventoEnDecoder, Result, JSONEnDecoderSingleton, top_uint8 } from "@adviser/cement";
 import { w3CWebSocketEvent, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
@@ -27,10 +27,10 @@ export class W3CWebSocketEventEventoEnDecoder implements EventoEnDecoder<W3CWebS
         if (!arkMatch.event.data) {
           return Result.Ok();
         }
-        return this.jsEncoder.parse(arkMatch.event.data);
+        return this.jsEncoder.parse(await top_uint8(arkMatch.event.data as never));
       case "CloseEvent":
       case "ErrorEvent":
-        console.warn("Not Impl WS Event:", arkMatch);
+        // console.warn("Not Impl WS Event:", arkMatch);
         return Result.Ok();
       default:
         console.error("Unknown WS Event:", arkMatch);

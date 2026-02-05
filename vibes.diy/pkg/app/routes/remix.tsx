@@ -107,6 +107,7 @@ export default function Remix({ onNavigate = (url) => (window.location.href = ur
           targetUrl += `?prompt=${encodeURIComponent(promptParameter.trim())}`;
         }
 
+        console.log(`t-999 ${targetUrl}`);
         onNavigate(targetUrl);
       } catch (error) {
         console.error("Error in remix process:", error);

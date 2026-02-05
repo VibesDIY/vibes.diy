@@ -3,7 +3,6 @@ import {
   Response as CFResponse,
   ExecutionContext,
   WebSocket as CFWebSocket,
-  WebSocketPair,
 } from "@cloudflare/workers-types";
 import { createAppContext, processRequest, VibesSqlite } from "./create-handler.js";
 import { drizzle } from "drizzle-orm/d1";
@@ -13,22 +12,25 @@ import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { Env } from "./cf-env.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 
-declare global {
-  class WebSocketPair {
-    0: WebSocket;
-    1: WebSocket;
-  }
-}
+// declare global {
+//   class WebSocketPair {
+//     0: WebSocket;
+//     1: WebSocket;
+//   }
+// }
 
-function cfWebSocketPair(): { client: CFWebSocket; server: CFWebSocket } {
-  const webSocketPair = new WebSocketPair();
-  const [client, server] = Object.values(webSocketPair) as [CFWebSocket, CFWebSocket];
-  return { client, server };
-}
+// function cfWebSocketPair(): { client: CFWebSocket; server: CFWebSocket } {
+//   console.log("cfWebSocketPair called-1", WebSocketPair);
+//   const webSocketPair = new WebSocketPair();
+//   console.log("cfWebSocketPair called-2", WebSocketPair);
+//   const [client, server] = Object.values(webSocketPair) as [CFWebSocket, CFWebSocket];
+//   return { client, server };
+// }
 
 export interface CFInject {
   readonly cache: CfCacheIf;
-  readonly webSocketPair?: typeof cfWebSocketPair;
+  readonly connections: Set<WSSendProvider>;
+  readonly webSocketPair: () => { client: WebSocket; server: WebSocket };
   readonly drizzle?: VibesSqlite;
   readonly wsResponse?: Response;
   readonly llmRequest?: (prompt: LLMRequest) => Promise<Response>;
@@ -37,6 +39,7 @@ export interface CFInject {
 
 export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContext & CFInject): Promise<CFResponse> {
   const appCtx = await createAppContext({
+    connections: ctx.connections,
     db: ctx.drizzle ?? drizzle(env.DB),
     cache: ctx.cache,
     llmRequest: ctx.llmRequest,
@@ -46,10 +49,13 @@ export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContex
   if (upgradeHeader !== "websocket") {
     return processRequest(appCtx, request as unknown as Request) as unknown as Promise<CFResponse>;
   }
-  const { client, server } = ctx.webSocketPair ? ctx.webSocketPair() : cfWebSocketPair();
-  server.accept();
+  const { client, server } = ctx.webSocketPair(); // ? ctx.webSocketPair() : cfWebSocketPair();
+  (server as unknown as CFWebSocket).accept();
 
   const wsSendProvider = new WSSendProvider(server as unknown as WebSocket);
+  console.log("New WebSocket connection established");
+  ctx.connections.add(wsSendProvider);
+
   const wsEvento = vibesMsgEvento();
 
   server.addEventListener("message", (event) => {
@@ -58,10 +64,12 @@ export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContex
 
   server.addEventListener("close", (event) => {
     wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
+    ctx.connections.delete(wsSendProvider);
   });
 
-  server.addEventListener("error", (event) => {
-    wsEvento.trigger({ ctx: appCtx, request: { type: "ErrorEvent", event }, send: wsSendProvider });
+  server.addEventListener("error", (event: Event) => {
+    wsEvento.trigger({ ctx: appCtx, request: { type: "ErrorEvent", event: event as ErrorEvent }, send: wsSendProvider });
+    ctx.connections.delete(wsSendProvider);
   });
   // cast wiredness don't ask me --- ask Cloudflare
   return (ctx.wsResponse ??

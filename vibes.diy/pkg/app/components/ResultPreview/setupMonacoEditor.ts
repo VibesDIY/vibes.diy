@@ -26,7 +26,7 @@ export interface MonacoDiagnosticsDefaults {
 }
 
 interface Options {
-  isStreaming: boolean;
+  promptProcessing: boolean;
   codeReady: boolean;
   isDarkMode: boolean;
   userScrolledRef: React.MutableRefObject<boolean>;
@@ -55,7 +55,7 @@ export function diagnosticsForCodeReady(codeReady: boolean, previous?: MonacoDia
 export async function setupMonacoEditor(
   editor: monaco.editor.IStandaloneCodeEditor,
   monaco: Monaco,
-  { isStreaming, codeReady, isDarkMode, userScrolledRef, disposablesRef, setRefs, setHighlighter }: Options
+  { promptProcessing, codeReady, isDarkMode, userScrolledRef, disposablesRef, setRefs, setHighlighter }: Options
 ) {
   setRefs(editor, monaco);
 
@@ -92,7 +92,7 @@ export async function setupMonacoEditor(
   monaco.languages.register({ id: "jsx" });
   monaco.languages.register({ id: "javascript" });
 
-  if (isStreaming && !codeReady) {
+  if (promptProcessing && !codeReady) {
     let lastScrollTime = Date.now();
     const scrollThrottleMs = 30;
     const contentDisposable = editor.onDidChangeModelContent(() => {

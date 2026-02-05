@@ -9,8 +9,8 @@ import { useSession } from "./useSession.js";
 
 import { useMessageSelection } from "./useMessageSelection.js";
 // Import our custom hooks
-import type { SendMessageContext } from "./sendMessage.js";
-import { sendChatMessage } from "./sendMessage.js";
+import { sendChatMessage, type SendMessageContext } from "./sendMessage.js";
+// import { sendChatMessage } from "./sendMessage.js";
 import { useSystemPromptManager } from "./useSystemPromptManager.js";
 import { useThrottledUpdates } from "./useThrottledUpdates.js";
 import { RuntimeError } from "@vibes.diy/use-vibes-types";

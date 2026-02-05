@@ -27,6 +27,7 @@ export const vibesMsgEvento = Lazy(() => {
       type: EventoType.Error,
       hash: "error-handler",
       handle: async (ctx) => {
+        console.error("vibesMsgEvento error-handler", ctx.error);
         await ctx.send.send(ctx, {
           type: "vibes.diy.error",
           message: `Error: ${ctx.error?.message?.toString() || "Internal Server Error"}`,

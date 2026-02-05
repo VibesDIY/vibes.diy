@@ -3,19 +3,21 @@ import { LoggerImpl, Result, param, AppContext, TriggerResult, EventoSendProvide
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { ResultSet } from "@libsql/client";
-import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
+// import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
-import { ensureStorage, fetchStorage } from "./intern/ensure-storage.js";
+import { ensureStorage } from "./intern/ensure-storage.js";
 import type { D1Result } from "@cloudflare/workers-types";
 import { defaultFetchPkgVersion } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
 import { HTTPSendProvider } from "./svc-http-send-provider.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { defaultLLMRequest } from "./default-llm-request.ts";
-export interface VerifyApiToken {
-  verify(token: string): Promise<Result<VerifiedClaimsResult>>;
-}
+import { defaultLLMRequest } from "./default-llm-request.js";
+import { WSSendProvider } from "./svc-ws-send-provider.js";
+
+// export interface VerifyApiToken {
+//   verify(token: string): Promise<Result<VerifiedClaimsResult>>;
+// }
 
 export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Record<string, never>>;
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
@@ -24,9 +26,10 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   db: T;
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
+  connections: Set<WSSendProvider>;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
   llmRequest?(prompt: LLMRequest): Promise<Response>;
-  waitUntil?<T>(promise: Promise<T>): void;
+  // waitUntil?<T>(promise: Promise<T>): void;
 }
 
 export interface SVCParam {
@@ -56,7 +59,7 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
     FP_VERSION: param.REQUIRED,
 
     LLM_BACKEND_URL: param.REQUIRED,
-    LLM_BACKEND_API_KEY: param.OPTIONAL,
+    LLM_BACKEND_API_KEY: param.REQUIRED,
     LLM_BACKEND_MODEL: "anthropic/claude-sonnet-4",
 
     VIBES_SVC_HOSTNAME_BASE: param.REQUIRED,
@@ -113,18 +116,17 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
       sthis,
       db: params.db,
       cache: params.cache,
+      connections: params.connections,
       fetchPkgVersion: defaultFetchPkgVersion(params.fetchPkgVersion),
       tokenApi: await tokenApi(sthis, {
         clockTolerance: 60,
         deviceIdCA: rDeviceIdCA.Ok(),
       }),
-      waitUntil: params.waitUntil ?? (<T>(p: Promise<T>) => { p; }),
       ensureStorage: ensureStorage(params.db),
-      fetchStorage: fetchStorage(params.db),
       llmRequest: defaultLLMRequest(params.llmRequest, {
-        url: params.env["LLM_BACKEND_URL"],
-        apiKey: params.env["LLM_BACKEND_API_KEY"],
-        model: params.env["LLM_BACKEND_MODEL"],
+        url: envVals.LLM_BACKEND_URL,
+        apiKey: envVals.LLM_BACKEND_API_KEY,
+        model: envVals.LLM_BACKEND_MODEL,
       }),
       deviceCA: rDeviceIdCA.Ok(),
       params: svcParams,

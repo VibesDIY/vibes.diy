@@ -1,46 +1,33 @@
-import {
-  D1Database,
-  ExecutionContext,
-  ExportedHandler,
-  CacheStorage,
-  Request as CFRequest,
-  Response as CFResponse,
-} from "@cloudflare/workers-types";
+import { ExecutionContext, ExportedHandler, Request as CFRequest, Response as CFResponse } from "@cloudflare/workers-types";
 import { createRequestHandler } from "react-router";
-import { cfServe } from "@vibes.diy/api-svc";
 
 // @ts-expect-error - virtual module provided by React Router
 import * as serverBuild from "virtual:react-router/server-build";
-import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
+import { Env } from "./env.js";
 
-export interface Env {
-  DB: D1Database;
-  ENVIRONMENT: string;
-  VIBES_SVC_HOSTNAME_BASE: string;
-  // Add more bindings here as needed
-  MAX_TENANTS?: number;
-  MAX_ADMIN_USERS?: number;
-  MAX_MEMBER_USERS?: number;
-  MAX_INVITES?: number;
-  MAX_LEDGERS?: number;
-  MAX_APPID_BINDINGS?: number;
+export { ChatSessions } from "./chat-sessions.js";
+// import { cfServe } from "@vibes.diy/api-svc";
+// import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 
-  CLERK_PUBLISHABLE_KEY: string;
-  CLOUD_SESSION_TOKEN_PUBLIC: string;
-}
-
-declare const caches: CacheStorage;
+// declare const caches: CacheStorage;
 const requestHandler = createRequestHandler(serverBuild, import.meta.env.MODE);
+
+// declare const WebSocketPair: typeof WebSocketPairType;
 
 export default {
   async fetch(request: CFRequest, env: Env, ctx: ExecutionContext): Promise<CFResponse> {
     const url = new URL(request.url);
-    // console.log("Request URL:", url.hostname, env);
-    if (url.pathname === "/api" || url.pathname.startsWith("/api/") || url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE)) {
-      const cctx = ctx as unknown as ExecutionContext & { cache: CfCacheIf };
-      cctx.cache = caches.default as unknown as CfCacheIf;
-      console.log("Doing cfServe for", url.href);
-      return cfServe(request, env, cctx);
+    if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
+      const id = env.CHAT_SESSIONS.idFromName("global");
+      const obj = env.CHAT_SESSIONS.get(id);
+      return obj.fetch(request); // Dummy fetch to ensure DO is initialized
+    }
+    if (url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE)) {
+      // const cctx = ctx as unknown as ExecutionContext & { cache: CfCacheIf };
+      // cctx.cache = caches.default as unknown as CfCacheIf;
+      // console.log("Doing cfServe for", url.href);
+      // return cfServe(request, env, cctx);
+      throw new Error("cfServe path disabled in app worker");
     }
 
     // Delegate to React Router for SSR

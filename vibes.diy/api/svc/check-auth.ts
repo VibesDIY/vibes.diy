@@ -92,14 +92,18 @@ export function checkAuth<IReq, TReq extends MsgBase<X>, TRes, X extends WithAut
   fn: (ctx: HandleTriggerCtx<IReq, MsgBase<ReqWithVerifiedAuth<X>>, TRes>) => Promise<Result<EventoResultType>>
 ): (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => Promise<Result<EventoResultType>> {
   return async (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => {
+    // console.log("checkAuth called", ctx.validated.payload);
     const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), ctx.validated.payload);
     if (rAuth.isErr()) {
-      return Result.Err(rAuth.Err());
+      console.error("checkAuth verifyAuth failed:", rAuth.Err());
+      return Result.Err(rAuth);
     }
     if (rAuth.Ok().type !== "VerifiedAuthResult") {
+      console.error("checkAuth invalid VerifiedAuthResult type:", rAuth.Ok().type);
       return Result.Err(`user not found: ${JSON.stringify(rAuth.Ok().inDashAuth)}`);
     }
     // not nice but ts way of type narrowing is limited
+    // console.log("checkAuth verified auth success:", rAuth.Ok());
     (ctx.validated.payload as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
     return fn(ctx as unknown as HandleTriggerCtx<IReq, MsgBase<ReqWithVerifiedAuth<X>>, TRes>);
   };

@@ -1,32 +1,32 @@
-import { getLlmCatalogNames, getDefaultDependencies, getLlmCatalog, LlmCatalogEntry } from "@vibes.diy/prompts";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getLlmCatalogNames, getLlmCatalog, LlmCatalogEntry } from "@vibes.diy/prompts";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { VibesDiyEnv } from "../../config/env.js";
 import { trackEvent } from "../../utils/analytics.js";
 
 interface AppSettingsViewProps {
   title: string;
-  onUpdateTitle: (next: string, isManual?: boolean) => Promise<void>;
-  onDownloadHtml: () => void;
-  selectedDependencies?: string[];
-  dependenciesUserOverride?: boolean;
-  aiSelectedDependencies?: string[];
-  // When saving a manual selection, we set `userOverride` true
-  onUpdateDependencies?: (deps: string[], userOverride: boolean) => Promise<void> | void;
-  // Demo data override settings
-  demoDataOverride?: boolean;
-  onUpdateDemoDataOverride?: (override?: boolean) => Promise<void> | void;
+  // onUpdateTitle: (title: TitleSrc) => void;
+  // onDownloadHtml: () => void;
+  // selectedDependencies?: string[];
+  // dependenciesUserOverride?: boolean;
+  // aiSelectedDependencies?: string[];
+  // // When saving a manual selection, we set `userOverride` true
+  // onUpdateDependencies?: (deps: string[], userOverride: boolean) => Promise<void> | void;
+  // // Demo data override settings
+  // demoDataOverride?: boolean;
+  // onUpdateDemoDataOverride?: (override?: boolean) => Promise<void> | void;
 }
 
 const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   title,
-  onUpdateTitle,
-  onDownloadHtml,
-  selectedDependencies,
-  dependenciesUserOverride,
-  aiSelectedDependencies,
-  onUpdateDependencies,
-  demoDataOverride,
-  onUpdateDemoDataOverride,
+  // onUpdateTitle,
+  // onDownloadHtml,
+  // selectedDependencies,
+  // dependenciesUserOverride,
+  // aiSelectedDependencies,
+  // onUpdateDependencies,
+  // demoDataOverride,
+  // onUpdateDemoDataOverride,
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(title);
@@ -45,29 +45,29 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
     });
   }, []);
 
-  const initialDeps = useMemo(() => {
-    const useManual = !!dependenciesUserOverride;
-    let input: string[];
+  // const initialDeps = useMemo(() => {
+  //   const useManual = !!dependenciesUserOverride;
+  //   let input: string[];
 
-    if (useManual) {
-      // Use user-selected dependencies when there's an override
-      input = Array.isArray(selectedDependencies) ? selectedDependencies : [];
-    } else {
-      // Use AI-selected dependencies when no user override
-      input = Array.isArray(aiSelectedDependencies) ? aiSelectedDependencies : [];
-    }
+  //   if (useManual) {
+  //     // Use user-selected dependencies when there's an override
+  //     input = Array.isArray(selectedDependencies) ? selectedDependencies : [];
+  //   } else {
+  //     // Use AI-selected dependencies when no user override
+  //     input = Array.isArray(aiSelectedDependencies) ? aiSelectedDependencies : [];
+  //   }
 
-    const filtered = input
-      .filter((n): n is string => typeof n === "string")
-      .filter((n) => catalogNames.size === 0 || catalogNames.has(n)); // Don't filter if catalog not loaded yet
+  //   const filtered = input
+  //     .filter((n): n is string => typeof n === "string")
+  //     .filter((n) => catalogNames.size === 0 || catalogNames.has(n)); // Don't filter if catalog not loaded yet
 
-    return filtered;
-  }, [
-    selectedDependencies,
-    aiSelectedDependencies,
-    dependenciesUserOverride,
-    catalogNames, // Need to include this back so we re-run when catalog loads
-  ]);
+  //   return filtered;
+  // }, [
+  //   selectedDependencies,
+  //   aiSelectedDependencies,
+  //   dependenciesUserOverride,
+  //   catalogNames, // Need to include this back so we re-run when catalog loads
+  // ]);
 
   const [deps, setDeps] = useState<string[]>([]);
   const [hasUnsavedDeps, setHasUnsavedDeps] = useState(false);
@@ -84,26 +84,30 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   useEffect(() => {
     // Only sync when external dependencies actually change (not internal state changes)
     // AND when we're not in the middle of user changes (hasUnsavedDeps)
-    const externalDepsChanged = JSON.stringify(previousExternalDepsRef.current) !== JSON.stringify(initialDeps);
-
-    if (externalDepsChanged && !hasUnsavedDeps) {
-      // This is a real external change and user hasn't made unsaved changes
-      setDeps(initialDeps);
-      setHasUnsavedDeps(false);
-      previousExternalDepsRef.current = [...initialDeps];
-    } else if (externalDepsChanged && hasUnsavedDeps) {
-      // External change but user has unsaved changes - just update the reference
-      previousExternalDepsRef.current = [...initialDeps];
-    }
-  }, [initialDeps, hasUnsavedDeps]);
+    // const externalDepsChanged = JSON.stringify(previousExternalDepsRef.current) !== JSON.stringify(initialDeps);
+    // if (externalDepsChanged && !hasUnsavedDeps) {
+    //   // This is a real external change and user hasn't made unsaved changes
+    //   // setDeps(initialDeps);
+    //   setHasUnsavedDeps(false);
+    //   // previousExternalDepsRef.current = [...initialDeps];
+    // } else if (externalDepsChanged && hasUnsavedDeps) {
+    //   // External change but user has unsaved changes - just update the reference
+    //   // previousExternalDepsRef.current = [...initialDeps];
+    // }
+  }, [/* initialDeps, */ hasUnsavedDeps]);
 
   // Initialize on first render
-  useEffect(() => {
-    if (previousExternalDepsRef.current.length === 0) {
-      setDeps(initialDeps);
-      previousExternalDepsRef.current = [...initialDeps];
-    }
-  }, [initialDeps]);
+  useEffect(
+    () => {
+      if (previousExternalDepsRef.current.length === 0) {
+        // setDeps(initialDeps);
+        // previousExternalDepsRef.current = [...initialDeps];
+      }
+    },
+    [
+      /*initialDeps */
+    ]
+  );
 
   const handleEditNameStart = useCallback(() => {
     setIsEditingName(true);
@@ -117,10 +121,10 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
     const trimmedName = editedName.trim();
     if (trimmedName && trimmedName !== title) {
       trackEvent("app_name_edit", { new_name: trimmedName });
-      await onUpdateTitle(trimmedName, true); // Mark as manually set
+      // await onUpdateTitle({ title: trimmedName, src: "user" }); // Mark as manually set
     }
     setIsEditingName(false);
-  }, [editedName, title, onUpdateTitle]);
+  }, [editedName, title /*onUpdateTitle*/]);
 
   const handleNameCancel = useCallback(() => {
     setEditedName(title);
@@ -157,23 +161,25 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   const handleSaveDeps = useCallback(async () => {
     setSaveDepsErr(null);
     try {
-      const valid = deps.filter((n) => catalogNames.has(n));
-      await onUpdateDependencies?.(valid.length ? valid : await getDefaultDependencies(), true);
+      // const valid = deps.filter((n) => catalogNames.has(n));
+      // await onUpdateDependencies?.(valid.length ? valid : await getDefaultDependencies(), true);
       setHasUnsavedDeps(false);
       setSaveDepsOk(true);
       setTimeout(() => setSaveDepsOk(false), 2000);
     } catch (e) {
       setSaveDepsErr((e as Error)?.message || "Failed to save libraries");
     }
-  }, [deps, onUpdateDependencies, catalogNames]);
+  }, [deps, /*onUpdateDependencies,*/ catalogNames]);
   // Demo data override handler
   const handleDemoDataChange = useCallback(
     (value: "llm" | "on" | "off") => {
       trackEvent("demo_data_override", { value });
-      const override = value === "llm" ? undefined : value === "on";
-      onUpdateDemoDataOverride?.(override);
+      // const override = value === "llm" ? undefined : value === "on";
+      // onUpdateDemoDataOverride?.(override);
     },
-    [onUpdateDemoDataOverride]
+    [
+      /*onUpdateDemoDataOverride*/
+    ]
   );
 
   return (
@@ -256,7 +262,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
               className="bg-light-background-00 dark:bg-dark-background-00 border-light-decorative-01 dark:border-dark-decorative-01 hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 flex cursor-pointer items-center rounded-lg border p-4 transition-colors"
               onClick={() => {
                 trackEvent("html_download");
-                onDownloadHtml();
+                // onDownloadHtml();
               }}
             >
               <div className="flex-1">
@@ -294,12 +300,12 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
             <p className="text-accent-01 dark:text-accent-01 mb-3 text-sm">
               Choose which libraries to include in generated apps for this Vibe. This controls imports and docs used in prompts.
             </p>
-            {!dependenciesUserOverride && (
+            {/* {!dependenciesUserOverride && (
               <div className="mb-4 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300">
                 Libraries shown below were chosen by the AI based on your last prompt. Demo data is also chosen by the LLM at
                 runtime. Select different libraries and click Save to set a manual override for this vibe.
               </div>
-            )}
+            )} */}
             {llmsCatalog.length === 0 ? (
               <div className="text-accent-01 dark:text-dark-secondary text-sm">No libraries available.</div>
             ) : (
@@ -338,8 +344,8 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
             <label className="text-light-primary dark:text-dark-primary mb-2 block text-sm font-semibold">Demo Data</label>
             <div className="space-y-2">
               {(["llm", "on", "off"] as const).map((value) => {
-                const currentValue = demoDataOverride === undefined ? "llm" : demoDataOverride ? "on" : "off";
-                const isChecked = currentValue === value;
+                // const currentValue = demoDataOverride === undefined ? "llm" : demoDataOverride ? "on" : "off";
+                // const isChecked = currentValue === value;
                 const labels = {
                   llm: "Let LLM decide",
                   on: "Always include demo data",
@@ -355,7 +361,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
                       type="radio"
                       name="demoData"
                       value={value}
-                      checked={isChecked}
+                      // checked={isChecked}
                       onChange={() => handleDemoDataChange(value)}
                       className="mt-0.5"
                     />

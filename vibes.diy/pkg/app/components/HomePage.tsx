@@ -1,6 +1,5 @@
-import React, { useCallback, useState } from "react";
-import { useNewSessionChat } from "../hooks/useNewSessionChat.js";
-import ChatInput from "./ChatInput.js";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import ChatInput, { ChatInputRef } from "./ChatInput.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
 import { BrutalistCard } from "./vibes/BrutalistCard.js";
@@ -8,39 +7,106 @@ import { VibesButton } from "./vibes/VibesButton/index.js";
 import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
 import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
 import { featuredModels } from "../data/models.js";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
+import { useClerk } from "@clerk/clerk-react";
+import { useVibeDiy } from "../vibe-diy-provider.js";
+import { useNavigate } from "react-router";
+import { LLMChat } from "@vibes.diy/api-impl";
 
-interface NewSessionViewProps {
-  onSessionCreate: (sessionId: string) => void;
-}
-
-export default function NewSessionView({ onSessionCreate }: NewSessionViewProps) {
-  const chatState = useNewSessionChat(onSessionCreate);
-
+export default function HomePage() {
   // Sidebar state
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [prompt, setPrompt] = useState<string | null>(null);
+  const clerk = useClerk();
+  const [chat, setChat] = useState<LLMChat | null>(null);
 
   // Sidebar handler
   const closeSidebar = useCallback(() => {
     setIsSidebarVisible(false);
   }, []);
 
+  // const promptTextRef = useRef<HTMLTextAreaElement>(null)
+
+  const chatInput = useRef<ChatInputRef>(null);
+
   // Handle suggestion selection
   const handleSelectSuggestion = useCallback(
     (suggestion: string) => {
-      chatState.setInput(suggestion);
-
+      if (!chatInput.current) {
+        return;
+      }
+      chatInput.current.setPrompt(suggestion);
       // Focus the input and position cursor at the end
       setTimeout(() => {
-        if (chatState.inputRef.current) {
-          chatState.inputRef.current.focus();
+        if (chatInput.current) {
+          chatInput.current.setFocus();
           // Move cursor to end of text
-          chatState.inputRef.current.selectionStart = chatState.inputRef.current.selectionEnd = suggestion.length;
+          chatInput.current.setSelection(suggestion.length, suggestion.length);
         }
       }, 0);
     },
-    [chatState.setInput, chatState.inputRef]
+    [chatInput]
   );
+
+  const { vibeDiyApi } = useVibeDiy();
+  const navigate = useNavigate();
+  // const [chat, setChat] = useState<LLMChat | null>()
+
+  useEffect(() => {
+    if (!prompt) {
+      return;
+    }
+    if (clerk.isSignedIn) {
+      vibeDiyApi
+        .getTokenClaims()
+        .then((rClaims) => {
+          if (rClaims.isErr()) {
+            console.error("tokenClaims:", rClaims.Err());
+            return Promise.reject();
+          }
+          const { params } = rClaims.Ok().claims;
+          return vibeDiyApi.openChat({
+            userSlug: params.name ?? params.nick ?? params.email.replace(/@[^@]+$/, ""),
+          });
+        })
+        .then((rChat) => {
+          if (rChat.isErr()) {
+            console.error(`Error in useCallAIV2: ${rChat.Err()}`);
+            // setError(rChat.Err())
+            return;
+          }
+          console.log("ready to prompt", rChat.Ok().tid, rChat.Ok().chatId);
+          const chat = rChat.Ok();
+          setChat(chat);
+          chat
+            .prompt({
+              messages: [
+                {
+                  role: "user",
+                  content: [{ type: "text", text: prompt }],
+                },
+              ],
+            })
+            .then((rPrompt) => {
+              if (rPrompt.isErr()) {
+                console.error("sendPrompt failed", rPrompt.Err());
+                return;
+              } else {
+                navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
+              }
+            });
+        });
+      return () => {
+        if (chat) {
+          chat.close().then(() => {
+            console.log(`HomePage --- close`);
+          });
+        }
+      };
+    } else {
+      toast.toast("needs login");
+    }
+  }, [prompt]);
 
   return (
     <>
@@ -98,19 +164,12 @@ export default function NewSessionView({ onSessionCreate }: NewSessionViewProps)
                 Vibe code apps instantly
               </div>
               <ChatInput
-                chatState={chatState}
-                showModelPickerInChat={chatState.showModelPickerInChat}
-                currentModel={chatState.effectiveModel}
-                onModelChange={async (modelId: string) => {
-                  if (chatState.updateSelectedModel) {
-                    await chatState.updateSelectedModel(modelId);
-                  }
-                }}
+                ref={chatInput}
                 models={featuredModels}
-                globalModel={chatState.globalModel}
-                onSend={() => {
-                  // Session creation is handled in chatState.sendMessage
-                }}
+                // promptTextRef={promptTextRef}
+                // globalModel={chatState.globalModel}
+                onSubmit={setPrompt}
+                promptProcessing={false}
               />
             </BrutalistCard>
 

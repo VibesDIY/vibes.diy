@@ -7,6 +7,7 @@ import { Logger, Result } from "@adviser/cement";
 import { ImportMapProps } from "./intern/import-map.js";
 import { VibesEnv } from "@vibes.diy/use-vibes-base";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
+import { WSSendProvider } from "./svc-ws-send-provider.js";
 
 export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "clerkPublishableKey"> & {
   maxAppSlugPerUserId: number;
@@ -42,14 +43,15 @@ export interface VibesApiSQLCtx {
   sthis: SuperThis;
   db: VibesSqlite;
   tokenApi: Record<string, FPApiToken>;
+  connections: Set<WSSendProvider>;
   deviceCA: DeviceIdCAIf;
   logger: Logger;
   params: VibesFPApiParameters;
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<string | undefined>;
-  waitUntil<T>(promise: Promise<T>): void;
+  // waitUntil<T>(promise: Promise<T>): void;
   ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
-  fetchStorage(url: string): ReadableStream<Uint8Array>;
+
   llmRequest(prompt: LLMRequest): Promise<Response>;
 }
 

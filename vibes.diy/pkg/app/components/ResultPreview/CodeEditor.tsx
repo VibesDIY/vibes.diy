@@ -1,37 +1,74 @@
 import { Editor, Monaco } from "@monaco-editor/react";
 import React, { useEffect, useRef, useState } from "react";
-import type { IframeFiles } from "./ResultPreviewTypes.js";
-import { DatabaseListView } from "./DataView/index.js";
 import { diagnosticsForCodeReady, setupMonacoEditor } from "./setupMonacoEditor.js";
 import type { MonacoDiagnosticsDefaults } from "./setupMonacoEditor.js";
 import { editor, Uri } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
-import { InlinePreview } from "./InlinePreview.js";
+import { useTheme } from "../../contexts/ThemeContext.js";
+import { PromptState } from "../../routes/chat.$userSlug.$appSlug.js";
+import { useSearchParams } from "react-router";
+import { isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 
-interface IframeContentProps {
-  activeView: "preview" | "code" | "data" | "chat" | "settings";
-  filesContent: IframeFiles;
-  promptProcessing: boolean;
-  codeReady: boolean;
-  isDarkMode: boolean;
-  sessionId: string;
+interface CodeEditorProps {
+  // activeView: "preview" | "code" | "data" | "chat" | "settings";
+  // filesContent: IframeFiles;
+  // promptProcessing: boolean;
+  // codeReady: boolean;
+  // isDarkMode: boolean;
+  // sessionId: string;
+  promptState: PromptState;
   onCodeSave?: (code: string) => void;
   onCodeChange?: (hasChanges: boolean, saveHandler: () => void) => void;
   onSyntaxErrorChange?: (errorCount: number) => void;
 }
 
-const IframeContent: React.FC<IframeContentProps> = ({
-  activeView,
-  filesContent,
-  promptProcessing,
-  codeReady,
-  isDarkMode,
-  sessionId,
+function getCode(promptState: PromptState, sectionId?: string | null): { code: string; complete: boolean } {
+  const retCode: string[] = [];
+  let complete = false;
+  for (const block of [...promptState.blocks].reverse()) {
+    let foundCode = false;
+    for (const msg of block.msgs) {
+      switch (true) {
+        case isCodeBegin(msg):
+          retCode.splice(0, retCode.length);
+          foundCode = true;
+          complete = false;
+          break;
+        case isCodeEnd(msg):
+          if (sectionId && msg.sectionId === sectionId) {
+            return { code: retCode.join("\n"), complete: true };
+          }
+          complete = true;
+          break;
+
+        case isCodeLine(msg):
+          retCode.push(msg.line);
+          break;
+      }
+    }
+    if (foundCode && !sectionId) {
+      return { code: retCode.join("\n"), complete };
+    }
+  }
+  return { code: retCode.join("\n"), complete };
+}
+
+const CodeEditor: React.FC<CodeEditorProps> = ({
+  // activeView,
+  // filesContent,
+  // promptProcessing,
+  // codeReady,
+  // isDarkMode,
+  // sessionId,
+
+  promptState,
   onCodeSave,
   onCodeChange,
   onSyntaxErrorChange,
 }) => {
   // Theme state is now received from parent via props
+  const { isDarkMode } = useTheme();
+  const [searchParams] = useSearchParams();
 
   // Reference to store the current Monaco editor instance
   const monacoEditorRef = useRef<editor.IStandaloneCodeEditor>(null);
@@ -45,15 +82,16 @@ const IframeContent: React.FC<IframeContentProps> = ({
   const userScrolledRef = useRef<boolean>(false);
 
   // Extract the current app code string
-  const appCode = filesContent["/App.jsx"]?.code || "";
+  const appCode = getCode(promptState, searchParams.get("sectionId"));
+  // console.log(`codeEditor`, appCode)
 
   // State for edited code
-  const [editedCode, setEditedCode] = useState(appCode);
+  const [editedCode, setEditedCode] = useState(appCode.code);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Update edited code when app code changes
   useEffect(() => {
-    setEditedCode(appCode);
+    setEditedCode(appCode.code);
     setHasUnsavedChanges(false);
   }, [appCode]);
 
@@ -66,7 +104,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
     const actualValue = editorCurrentValue.length >= newCode.length ? editorCurrentValue : newCode;
 
     setEditedCode(actualValue);
-    const hasChanges = actualValue !== appCode;
+    const hasChanges = actualValue !== appCode.code;
     setHasUnsavedChanges(hasChanges);
 
     // Notify parent about changes
@@ -95,7 +133,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
       setEditedCode(currentValue);
     }
 
-    if (onCodeSave && (hasUnsavedChanges || currentValue !== appCode)) {
+    if (onCodeSave && (hasUnsavedChanges || currentValue !== appCode.code)) {
       onCodeSave(currentValue);
       setHasUnsavedChanges(false);
       // Notify parent that changes are saved
@@ -146,36 +184,36 @@ const IframeContent: React.FC<IframeContentProps> = ({
 
     const current = typeof defaults.getDiagnosticsOptions === "function" ? defaults.getDiagnosticsOptions() : undefined;
 
-    defaults.setDiagnosticsOptions(diagnosticsForCodeReady(codeReady, current));
-  }, [codeReady]);
+    defaults.setDiagnosticsOptions(diagnosticsForCodeReady(appCode.complete, current));
+  }, [appCode.complete]);
 
   // Reset manual scroll flag when streaming state changes
   useEffect(() => {
-    if (promptProcessing) {
+    if (promptState.running) {
       // Reset the flag when streaming starts
       userScrolledRef.current = false;
     }
-  }, [promptProcessing]);
+  }, [promptState.running]);
 
   // Iframe removed - now using inline rendering with InlinePreview component
 
-  // Determine which view to show based on URL path - gives more stable behavior on refresh
-  const getViewFromPath = () => {
-    const path = window.location.pathname;
-    if (path.endsWith("/code")) return "code";
-    if (path.endsWith("/data")) return "data";
-    if (path.endsWith("/app")) return "preview";
-    if (path.endsWith("/chat")) return "preview"; // Show preview for chat view
-    if (path.endsWith("/settings")) return "settings";
-    return activeView; // Fall back to state if path doesn't have a suffix
-  };
+  // // Determine which view to show based on URL path - gives more stable behavior on refresh
+  // const getViewFromPath = () => {
+  //   const path = window.location.pathname;
+  //   if (path.endsWith("/code")) return "code";
+  //   if (path.endsWith("/data")) return "data";
+  //   if (path.endsWith("/app")) return "preview";
+  //   if (path.endsWith("/chat")) return "preview"; // Show preview for chat view
+  //   if (path.endsWith("/settings")) return "settings";
+  //   return activeView; // Fall back to state if path doesn't have a suffix
+  // };
 
   // Get view from URL path
-  const currentView = getViewFromPath();
+  // const currentView = getViewFromPath();
 
   return (
     <div data-testid="sandpack-provider" className="h-full">
-      <div
+      {/* <div
         style={{
           visibility: currentView === "preview" ? "visible" : "hidden",
           position: currentView === "preview" ? "static" : "absolute",
@@ -187,12 +225,12 @@ const IframeContent: React.FC<IframeContentProps> = ({
         }}
       >
         <InlinePreview code={appCode} sessionId={sessionId} codeReady={codeReady} />
-      </div>
+      </div> */}
       <div
         style={{
-          visibility: currentView === "code" ? "visible" : "hidden",
-          position: currentView === "code" ? "static" : "absolute",
-          zIndex: currentView === "code" ? 1 : 0,
+          visibility: "visible",
+          position: "static",
+          // zIndex: 1,
           height: "100%",
           width: "100%",
           top: 0,
@@ -221,8 +259,8 @@ const IframeContent: React.FC<IframeContentProps> = ({
           }}
           onMount={async (editor, monaco) => {
             await setupMonacoEditor(editor, monaco, {
-              promptProcessing,
-              codeReady,
+              promptProcessing: promptState.running,
+              codeReady: appCode.complete,
               isDarkMode,
               userScrolledRef,
               disposablesRef,
@@ -292,7 +330,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
           }}
         />
       </div>
-      <div
+      {/* <div
         style={{
           visibility: currentView === "data" ? "visible" : "hidden",
           position: currentView === "data" ? "static" : "absolute",
@@ -309,7 +347,7 @@ const IframeContent: React.FC<IframeContentProps> = ({
         <div className="data-container">
           <DatabaseListView appCode={filesContent["/App.jsx"]?.code || ""} sessionId={sessionId || "default-session"} />
         </div>
-      </div>
+      </div> */}
       {/**
        * Settings view is rendered by the parent ResultPreview component, not inside
        * the iframe. We intentionally do not render a placeholder slot here to avoid
@@ -319,4 +357,4 @@ const IframeContent: React.FC<IframeContentProps> = ({
   );
 };
 
-export default IframeContent;
+export default CodeEditor;

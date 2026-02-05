@@ -1,51 +1,51 @@
 import type React from "react";
 
-function getContainerStyle(): React.CSSProperties {
-  return {
-    position: "relative",
-    display: "inline-flex",
-    alignItems: "stretch",
-    width: "auto",
-    marginBottom: "40px",
-  };
-}
+// function getContainerStyle(): React.CSSProperties {
+//   return {
+//     position: "relative",
+//     display: "inline-flex",
+//     alignItems: "stretch",
+//     width: "auto",
+//     marginBottom: "40px",
+//   };
+// }
 
-function getLabelStyle(): React.CSSProperties {
-  return {
-    background: "var(--vibes-card-bg)",
-    border: "2px solid var(--vibes-card-border)",
-    borderLeft: "none",
-    borderTopRightRadius: "8px",
-    borderBottomRightRadius: "8px",
-    padding: "12px 8px",
-    fontWeight: 700,
-    fontSize: "14px",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-    whiteSpace: "nowrap",
-    color: "var(--vibes-card-text)",
-    writingMode: "vertical-rl",
-    transform: "rotate(180deg)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    margin: "32px 0px",
-  };
-}
+// function getLabelStyle(): React.CSSProperties {
+//   return {
+//     background: "var(--vibes-card-bg)",
+//     border: "2px solid var(--vibes-card-border)",
+//     borderLeft: "none",
+//     borderTopRightRadius: "8px",
+//     borderBottomRightRadius: "8px",
+//     padding: "12px 8px",
+//     fontWeight: 700,
+//     fontSize: "14px",
+//     textTransform: "uppercase",
+//     letterSpacing: "1px",
+//     whiteSpace: "nowrap",
+//     color: "var(--vibes-card-text)",
+//     writingMode: "vertical-rl",
+//     transform: "rotate(180deg)",
+//     display: "flex",
+//     alignItems: "center",
+//     justifyContent: "center",
+//     flexShrink: 0,
+//     margin: "32px 0px",
+//   };
+// }
 
-function getButtonWrapperStyle(): React.CSSProperties {
-  return {
-    background: "var(--vibes-card-bg)",
-    border: "2px solid var(--vibes-card-border)",
-    borderRadius: "8px",
-    padding: "24px 24px 32px 24px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "auto",
-  };
-}
+// function getButtonWrapperStyle(): React.CSSProperties {
+//   return {
+//     background: "var(--vibes-card-bg)",
+//     border: "2px solid var(--vibes-card-border)",
+//     borderRadius: "8px",
+//     padding: "24px 24px 32px 24px",
+//     display: "flex",
+//     alignItems: "center",
+//     justifyContent: "center",
+//     width: "auto",
+//   };
+// }
 
 // Media query helpers (use window.matchMedia in component for responsive behavior)
 export function getResponsiveLabelStyle(isMobile: boolean, disappear = false): React.CSSProperties {

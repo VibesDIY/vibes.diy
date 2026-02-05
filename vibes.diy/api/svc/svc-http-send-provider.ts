@@ -1,5 +1,5 @@
 import { CoercedHeadersInit, EventoSendProvider, HandleTriggerCtx, HttpHeader, Lazy, Result } from "@adviser/cement";
-import { HttpResponseBodyType, HttpResponseJsonType, msgBase, MsgBase } from "@vibes.diy/api-types";
+import { HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
 const defaultHttpHeaders = Lazy(() =>

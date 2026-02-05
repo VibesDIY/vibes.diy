@@ -4,21 +4,22 @@ export default [
   index("./routes/home.tsx"),
   // This route is only needed for dev server to prevent 404 flash
   route("index.html", "./routes/home.tsx", { id: "index-html" }),
-  route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
-  route("chat/:sessionId/:title", "./routes/home.tsx", { id: "chat" }),
-  route("chat/:sessionId/:title/app", "./routes/home.tsx", { id: "chat-app" }),
-  route("chat/:sessionId/:title/code", "./routes/home.tsx", {
-    id: "chat-code",
-  }),
-  route("chat/:sessionId/:title/data", "./routes/home.tsx", {
-    id: "chat-data",
-  }),
-  route("chat/:sessionId/:title/chat", "./routes/home.tsx", {
-    id: "chat-chat",
-  }),
-  route("chat/:sessionId/:title/settings", "./routes/home.tsx", {
-    id: "chat-app-settings",
-  }),
+  route("chat/:userSlug/:appSlug", "./routes/chat.$userSlug.$appSlug.tsx", { id: "chat-home" }),
+  // route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
+  // route("chat/:sessionId/:title", "./routes/home.tsx", { id: "chat" }),
+  // route("chat/:sessionId/:title/app", "./routes/home.tsx", { id: "chat-app" }),
+  // route("chat/:sessionId/:title/code", "./routes/home.tsx", {
+  //   id: "chat-code",
+  // }),
+  // route("chat/:sessionId/:title/data", "./routes/home.tsx", {
+  //   id: "chat-data",
+  // }),
+  // route("chat/:sessionId/:title/chat", "./routes/home.tsx", {
+  //   id: "chat-chat",
+  // }),
+  // route("chat/:sessionId/:title/settings", "./routes/home.tsx", {
+  //   id: "chat-app-settings",
+  // }),
   route("vibes/mine", "./routes/mine.tsx", { id: "my-vibes" }),
   route("groups", "./routes/groups.tsx", { id: "groups" }),
 

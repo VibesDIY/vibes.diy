@@ -22,6 +22,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({ viewControls, curren
       {Object.entries(viewControls)
         .filter(([viewType]) => viewType !== "chat")
         .map(([viewType, control]) => {
+          // console.log(`ViewControls`, viewType, currentView )
           const viewTypeKey = viewType as ViewType;
           const isActive = currentView === viewTypeKey;
 

@@ -88,7 +88,7 @@ export function useSimpleChat(sessionId: string): ChatState {
   const modelSelection = useModelSelection();
 
   // State hooks
-  const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [promptProcessing, setPromptProcessing] = useState<boolean>(false);
   const [selectedResponseId, setSelectedResponseId] = useState<string>("");
   const [pendingAiMessage, setPendingAiMessage] = useState<ChatMessageDocument | null>(null);
 
@@ -145,7 +145,7 @@ export function useSimpleChat(sessionId: string): ChatState {
 
   const { messages, selectedResponseDoc, selectedSegments, selectedCode, buildMessageHistory } = useMessageSelection({
     docs: allDocs,
-    isStreaming,
+    promptProcessing,
     aiMessage,
     selectedResponseId,
     pendingAiMessage,
@@ -171,7 +171,7 @@ export function useSimpleChat(sessionId: string): ChatState {
       const ctx: SendMessageContext = {
         userMessage,
         setPendingUserDoc,
-        setIsStreaming,
+        setPromptProcessing,
         ensureApiKey,
         setNeedsLogin: () => {
           // No-op: Clerk handles auth differently
@@ -197,7 +197,7 @@ export function useSimpleChat(sessionId: string): ChatState {
     [
       userMessage.text,
       ensureSystemPrompt,
-      setIsStreaming,
+      setPromptProcessing,
       submitUserMessage,
       buildMessageHistory,
       modelToUse,
@@ -217,9 +217,9 @@ export function useSimpleChat(sessionId: string): ChatState {
   // Login handling no longer needed - proxy handles authentication
 
   // Determine if code is ready for display
-  const codeReady = useMemo(() => {
-    return (!isStreaming && selectedSegments.length > 1) || selectedSegments.length > 2;
-  }, [isStreaming, selectedSegments]);
+  // const codeReady = useMemo(() => {
+  //   return (!promptProcessing && selectedSegments.length > 1) || selectedSegments.length > 2;
+  // }, [promptProcessing, selectedSegments]);
 
   // Effect to clear pending message once it appears in the main docs list
   useEffect(() => {
@@ -234,11 +234,11 @@ export function useSimpleChat(sessionId: string): ChatState {
   // Auto-send for immediate runtime errors
   useImmediateErrorAutoSend({
     immediateErrors,
-    isStreaming,
+    promptProcessing,
     userInput: userMessage.text,
     mergeUserMessage,
     setDidSendErrors,
-    setIsStreaming,
+    setPromptProcessing,
   });
 
   // Function to save edited code as user edit + AI response
@@ -303,13 +303,13 @@ ${code}
   }, [advisoryErrors]);
 
   return {
-    sessionId: session._id,
+    // sessionId: session._id,
     vibeDoc,
     selectedModel: vibeDoc?.selectedModel,
     effectiveModel: effectiveModel[0] || modelSelection.effectiveModel,
     globalModel: modelSelection.globalModel,
     showModelPickerInChat: modelSelection.showModelPickerInChat,
-    addScreenshot,
+    setScreenshot: addScreenshot,
     docs: messages,
     setSelectedResponseId,
     selectedResponseDoc,
@@ -317,18 +317,21 @@ ${code}
     selectedCode,
     input: userMessage.text,
     setInput,
-    isStreaming,
-    codeReady,
-    sendMessage,
+    promptProcessing,
+    // hasCode: codeReady,
+    // codeReady,
+    sendPrompt: sendMessage,
     saveCodeAsAiMessage,
     inputRef,
-    title: vibeDoc?.title || "",
-    updateTitle,
+    title: { title: vibeDoc?.title || "", src: "url" },
+    setTitle: (ts: { title: string; src: "url" | "ai" | "user" }) => {
+      updateTitle(ts.title);
+    },
     // Error tracking
     immediateErrors,
     advisoryErrors,
     addError,
-    isEmpty: docs.length === 0,
+    // isEmpty: docs.length === 0,
     updateSelectedModel,
   };
 }

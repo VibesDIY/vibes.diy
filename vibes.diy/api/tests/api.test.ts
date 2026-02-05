@@ -1,7 +1,7 @@
 import { VibeDiyApi } from "@vibes.diy/api-impl";
 import { createClient } from "@libsql/client/node";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
-import { BuildURI, consumeStream, loadAsset, Result, sleep, TestFetchPair, TestWSPair } from "@adviser/cement";
+import { BuildURI, consumeStream, loadAsset, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { cfServe } from "@vibes.diy/api-svc";
@@ -9,7 +9,7 @@ import { Request as CFRequest, D1Database, ExecutionContext } from "@cloudflare/
 import { Env as CFEnv } from "@vibes.diy/api-svc/cf-env.js";
 import { CFInject } from "@vibes.diy/api-svc/cf-serve.js";
 import { drizzle } from "drizzle-orm/libsql";
-import { isPromptBlockEnd, LLMRequest } from "../../../call-ai/v2/prompt-type.ts";
+import { isPromptBlockEnd, LLMRequest } from "@vibes.diy/call-ai-v2";
 
 const noopCache = {
   put: async (_req: Request, _res: Response) => {
@@ -143,7 +143,7 @@ describe("VibesDiyApi", () => {
         drizzle: drizzleDB,
         wsResponse: new Response(null, { status: 200 }),
         llmRequest: async (prompt: LLMRequest) => {
-          if (prompt.messages[0]?.content?.includes("use fixture response")) {
+          if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
             const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
             return new Response(fixture.Ok(), { status: 200 });
           }
@@ -321,7 +321,7 @@ describe("VibesDiyApi", () => {
     const promptIds: string[] = [];
     for (let i = 0; i < 3; i++) {
       const rPrompt = await chat.prompt({
-        messages: [{ role: "user", content: `Hello world ${i}` }],
+        messages: [{ role: "user", content: [{ type: "text", text: `Hello world ${i}` }] }],
       });
       expect(rPrompt.isOk()).toBe(true);
       promptIds.push(rPrompt.Ok().promptId);
@@ -348,7 +348,7 @@ describe("VibesDiyApi", () => {
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
     const rPrompt = await chat.prompt({
-      messages: [{ role: "user", content: `use fixture response` }],
+      messages: [{ role: "user", content: [{ type: "text", text: `use fixture response` }] }],
     });
     expect(rPrompt.isOk()).toBe(true);
 

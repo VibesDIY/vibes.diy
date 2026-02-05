@@ -69,7 +69,7 @@ export default function SessionView({
 function AuthenticatedSessionView({
   sessionId,
   pathname,
-  search: _search,
+  // search: _search,
   locationState,
   navigate,
   urlPrompt,
@@ -85,11 +85,11 @@ function AuthenticatedSessionView({
   const effectiveModel = urlModel || chatState.effectiveModel;
 
   // Update vibeDoc with URL model on mount (for persistence after URL is cleared)
-  useEffect(() => {
-    if (urlModel && chatState.updateSelectedModel) {
-      chatState.updateSelectedModel(urlModel);
-    }
-  }, [urlModel, chatState.updateSelectedModel]);
+  // useEffect(() => {
+  //   if (urlModel && chatState.updateSelectedModel) {
+  //     chatState.updateSelectedModel(urlModel);
+  //   }
+  // }, [urlModel, chatState.updateSelectedModel]);
 
   // Handle URL prompt for auto-send
   const [capturedPrompt, setCapturedPrompt] = useState<string | null>(null);

@@ -1,13 +1,20 @@
 import { type } from "arktype";
+import { CoercedDate } from "./types.js";
 
 // Message roles
 export const MessageRole = type("'system' | 'user' | 'assistant'");
 export type MessageRole = typeof MessageRole.infer;
 
+export const TextContent = type({
+  type: "'text'",
+  text: "string",
+});
+export type TextContent = typeof TextContent.infer;
+
 // Chat message structure
 export const ChatMessage = type({
   role: MessageRole,
-  content: "string",
+  content: TextContent.array(),
 });
 export type ChatMessage = typeof ChatMessage.infer;
 
@@ -33,7 +40,12 @@ export const isChatMessage = (msg: unknown): msg is ChatMessage => !(ChatMessage
 
 export const isLLMRequest = (msg: unknown): msg is LLMRequest => !(LLMRequest(msg) instanceof type.errors);
 
-export const PromptBase = type({});
+export const PromptBase = type({
+  streamId: "string",
+  chatId: "string",
+  seq: "number",
+  timestamp: CoercedDate,
+});
 
 // Prompt message box type
 export const PromptReq = type({

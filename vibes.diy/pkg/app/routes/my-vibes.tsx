@@ -10,9 +10,9 @@ import { useVibes } from "../hooks/useVibes.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
 import LoggedOutView from "../components/LoggedOutView.js";
 
-function meta() {
-  return [{ title: "My Vibes - Vibes DIY" }, { name: "description", content: "Your created vibes in Vibes DIY" }];
-}
+// function meta() {
+//   return [{ title: "My Vibes - Vibes DIY" }, { name: "description", content: "Your created vibes in Vibes DIY" }];
+// }
 
 function MyVibesContent(): ReactElement {
   const navigate = useNavigate();

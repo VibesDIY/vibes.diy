@@ -2,9 +2,15 @@ import { EventoSendProvider, HandleTriggerCtx, JSONEnDecoder, JSONEnDecoderSingl
 import { msgBase, MsgBase, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
+export interface ChatIdCtx {
+  chatId: string;
+  tid: string;
+}
+
 export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unknown, unknown> {
   readonly ws: WebSocket;
   readonly ende: JSONEnDecoder;
+  readonly chatIds = new Set<ChatIdCtx>();
   constructor(ws: WebSocket, ende?: JSONEnDecoder) {
     this.ws = ws;
     this.ende = ende ?? JSONEnDecoderSingleton();

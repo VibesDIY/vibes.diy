@@ -67,7 +67,7 @@ describe("block-stream", () => {
     };
 
     it("emits block.begin on line.begin", async () => {
-      const events = createLineEvents("test", []);
+      const events = createLineEvents("innerStream", []);
       const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
@@ -75,7 +75,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const beginEvent = chunks.find((c) => isBlockBegin(c)) as BlockBeginMsg;
@@ -85,7 +85,7 @@ describe("block-stream", () => {
     });
 
     it("parses toplevel text sections", async () => {
-      const events = createLineEvents("test", ["This is some text", "More text here"]);
+      const events = createLineEvents("innerStream", ["This is some text", "More text here"]);
       const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
@@ -93,7 +93,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       expect(chunks.some((c) => isToplevelBegin(c))).toBe(true);
@@ -105,7 +105,7 @@ describe("block-stream", () => {
     });
 
     it("parses code blocks", async () => {
-      const events = createLineEvents("test", ["```typescript", "const x = 1;", "const y = 2;", "```"]);
+      const events = createLineEvents("innerStream", ["```typescript", "const x = 1;", "const y = 2;", "```"]);
       const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
@@ -113,7 +113,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const codeBegin = chunks[1] as CodeBeginMsg;
@@ -133,7 +133,7 @@ describe("block-stream", () => {
     });
 
     it("handles code blocks without language", async () => {
-      const events = createLineEvents("test", ["```", "plain code", "```"]);
+      const events = createLineEvents("innerStream", ["```", "plain code", "```"]);
       const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
@@ -141,7 +141,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const codeBegin = chunks.find((c) => isCodeBegin(c)) as CodeBeginMsg;
@@ -149,7 +149,7 @@ describe("block-stream", () => {
     });
 
     it("handles mixed content", async () => {
-      const events = createLineEvents("test", [
+      const events = createLineEvents("innerStream", [
         "Here is some text",
         "```javascript",
         "console.log('hello');",
@@ -163,7 +163,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const toplevelBegins = chunks.filter((c) => isToplevelBegin(c));
@@ -173,7 +173,7 @@ describe("block-stream", () => {
     });
 
     it("emits block.end with correct counts", async () => {
-      const events = createLineEvents("test", ["Text 1", "```js", "code", "```", "Text 2", "```python", "more code", "```"]);
+      const events = createLineEvents("innerStream", ["Text 1", "```js", "code", "```", "Text 2", "```python", "more code", "```"]);
       const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
@@ -181,7 +181,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const endEvent = chunks[chunks.length - 1] as BlockEndMsg;
@@ -191,7 +191,7 @@ describe("block-stream", () => {
     });
 
     it("handles unclosed code block at end", async () => {
-      const events = createLineEvents("test", [
+      const events = createLineEvents("innerStream", [
         "```typescript",
         "const x = 1;",
         // No closing ```
@@ -203,7 +203,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       // Should still emit code.end
@@ -213,7 +213,7 @@ describe("block-stream", () => {
     });
 
     it("blocks upstream events", async () => {
-      const events = createLineEvents("test", ["text"]);
+      const events = createLineEvents("innerStream", ["text"]);
       const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
@@ -221,7 +221,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       expect(isBlockBegin(chunks[0])).toBe(true);
@@ -238,13 +238,13 @@ describe("block-stream", () => {
         timestamp: new Date(),
       };
       const events: (LineStreamMsg | StatsCollectMsg)[] = [
-        { type: "line.begin", streamId: "test", timestamp: new Date() },
-        { type: "line.line", streamId: "test", content: "text", lineNr: 1, timestamp: new Date() },
-        { type: "line.line", streamId: "test", content: "```js", lineNr: 2, timestamp: new Date() },
-        { type: "line.line", streamId: "test", content: "code", lineNr: 3, timestamp: new Date() },
-        { type: "line.line", streamId: "test", content: "```", lineNr: 4, timestamp: new Date() },
+        { type: "line.begin", streamId: "innerStream", timestamp: new Date() },
+        { type: "line.line", streamId: "innerStream", content: "text", lineNr: 1, timestamp: new Date() },
+        { type: "line.line", streamId: "innerStream", content: "```js", lineNr: 2, timestamp: new Date() },
+        { type: "line.line", streamId: "innerStream", content: "code", lineNr: 3, timestamp: new Date() },
+        { type: "line.line", streamId: "innerStream", content: "```", lineNr: 4, timestamp: new Date() },
         statsCollect,
-        { type: "line.end", streamId: "test", totalLines: 4, timestamp: new Date() },
+        { type: "line.end", streamId: "innerStream", totalLines: 4, timestamp: new Date() },
       ];
 
       const input = new ReadableStream<LineStreamMsg | StatsCollectMsg>({
@@ -254,7 +254,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const statsEvents = chunks.filter((c) => isBlockStats(c)) as BlockStatsMsg[];
@@ -265,7 +265,7 @@ describe("block-stream", () => {
     });
 
     it("assigns unique ids to sections", async () => {
-      const events = createLineEvents("test", ["text", "```js", "code", "```", "more text"]);
+      const events = createLineEvents("innerStream", ["text", "```js", "code", "```", "more text"]);
       const input = new ReadableStream<LineStreamMsg>({
         start(controller) {
           events.forEach((e) => controller.enqueue(e));
@@ -273,7 +273,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const blockBegin = chunks.find((c) => isBlockBegin(c)) as BlockBeginMsg;
@@ -313,7 +313,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       // Should emit block.begin (lazily triggered by image)
@@ -332,7 +332,7 @@ describe("block-stream", () => {
     it("tracks image stats in block.end", async () => {
       const imageUrl = "data:image/png;base64,abc123";
       const events: (LineStreamMsg | DeltaImageMsg)[] = [
-        { type: "line.begin", streamId: "test", timestamp: new Date() },
+        { type: "line.begin", streamId: "innerStream", timestamp: new Date() },
         {
           type: "delta.image",
           streamId: "test",
@@ -344,7 +344,7 @@ describe("block-stream", () => {
           index: 0,
           timestamp: new Date(),
         },
-        { type: "line.end", streamId: "test", totalLines: 0, timestamp: new Date() },
+        { type: "line.end", streamId: "innerStream", totalLines: 0, timestamp: new Date() },
       ];
 
       const input = new ReadableStream<LineStreamMsg | DeltaImageMsg>({
@@ -354,7 +354,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const endEvent = chunks.find((c) => isBlockEnd(c)) as BlockEndMsg;
@@ -369,7 +369,7 @@ describe("block-stream", () => {
       const imageUrl1 = "data:image/png;base64,first";
       const imageUrl2 = "data:image/png;base64,second";
       const events: (LineStreamMsg | DeltaImageMsg)[] = [
-        { type: "line.begin", streamId: "test", timestamp: new Date() },
+        { type: "line.begin", streamId: "innerStream", timestamp: new Date() },
         {
           type: "delta.image",
           streamId: "test",
@@ -392,7 +392,7 @@ describe("block-stream", () => {
           index: 0,
           timestamp: new Date(),
         },
-        { type: "line.end", streamId: "test", totalLines: 0, timestamp: new Date() },
+        { type: "line.end", streamId: "innerStream", totalLines: 0, timestamp: new Date() },
       ];
 
       const input = new ReadableStream<LineStreamMsg | DeltaImageMsg>({
@@ -402,7 +402,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       const imageEvents = chunks.filter((c) => isBlockImage(c)) as BlockImageMsg[];
@@ -417,8 +417,8 @@ describe("block-stream", () => {
     it("handles mixed images and text content", async () => {
       const imageUrl = "data:image/png;base64,mixed";
       const events: (LineStreamMsg | DeltaImageMsg)[] = [
-        { type: "line.begin", streamId: "test", timestamp: new Date() },
-        { type: "line.line", streamId: "test", content: "Some text before", lineNr: 1, timestamp: new Date() },
+        { type: "line.begin", streamId: "innerStream", timestamp: new Date() },
+        { type: "line.line", streamId: "innerStream", content: "Some text before", lineNr: 1, timestamp: new Date() },
         {
           type: "delta.image",
           streamId: "test",
@@ -430,8 +430,8 @@ describe("block-stream", () => {
           index: 0,
           timestamp: new Date(),
         },
-        { type: "line.line", streamId: "test", content: "Some text after", lineNr: 2, timestamp: new Date() },
-        { type: "line.end", streamId: "test", totalLines: 2, timestamp: new Date() },
+        { type: "line.line", streamId: "innerStream", content: "Some text after", lineNr: 2, timestamp: new Date() },
+        { type: "line.end", streamId: "innerStream", totalLines: 2, timestamp: new Date() },
       ];
 
       const input = new ReadableStream<LineStreamMsg | DeltaImageMsg>({
@@ -441,7 +441,7 @@ describe("block-stream", () => {
         },
       });
 
-      const output = input.pipeThrough(createBlockStream("test", createId));
+      const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
       const chunks = await collectStream(output);
 
       // Should have toplevel, image, and more toplevel content

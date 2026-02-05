@@ -15,17 +15,20 @@ export function defaultLLMRequest(
   if (fn) {
     return fn;
   }
-  return (req: LLMRequest) =>
-    fetch(url, {
+  return (req: LLMRequest) => {
+    const body = JSON.stringify({
+      model,
+      ...req,
+      stream: true,
+    });
+    // console.log("defaultLLMRequest called with:", req, 'model:', model, 'url:', url, 'body:', body);
+    return fetch(url, {
       method: "POST",
       headers: {
         ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model,
-        ...req,
-        stream: true,
-      }),
+      body,
     });
+  };
 }

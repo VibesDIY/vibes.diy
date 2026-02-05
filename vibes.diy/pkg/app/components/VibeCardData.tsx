@@ -20,6 +20,7 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
 
   // Navigation functions
   const handleEditClick = (id: string, encodedTitle: string) => {
+    console.log(`t-2`, id);
     navigate(`/chat/${id}/${encodedTitle}/app`);
   };
 

@@ -155,20 +155,27 @@ export type SystemChatMessage = ChatMessage & {
   errorCategory?: "immediate" | "advisory";
 };
 
+export interface TitleSrc {
+  title: string;
+  src: "url" | "ai" | "user";
+}
+
 // ===== Component Props =====
 export interface BaseChatState {
-  isEmpty: boolean;
+  // isEmpty: boolean;
   docs: ChatMessageDocument[];
-  input: string;
+  input: string | null;
   setInput: (input: string) => void;
-  isStreaming: boolean;
-  codeReady: boolean;
+  promptProcessing: boolean;
+  sendPrompt: (text: string) => void;
+  // isStreaming: boolean;
+  // codeReady: boolean;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
-  sendMessage: (text?: string) => Promise<void>;
+  // sendMessage: (text?: string) => Promise<void>;
   saveCodeAsAiMessage: (code: string, currentMessages: ChatMessageDocument[]) => Promise<string>;
-  title: string;
-  updateTitle: (title: string, isManual?: boolean) => Promise<void>;
-  addScreenshot: (screenshot: string | null) => Promise<void>;
+  title: TitleSrc;
+  setTitle: (ts: TitleSrc) => void;
+  setScreenshot: (screenshot: string | null) => void;
   setSelectedResponseId: (id: string) => void;
   selectedResponseDoc?: ChatMessageDocument;
   selectedSegments?: Segment[];
@@ -187,9 +194,7 @@ export interface BaseChatState {
   vibeDoc?: VibeDocument;
 }
 
-export interface ChatState extends BaseChatState {
-  sessionId: string;
-}
+export type ChatState = BaseChatState;
 
 export interface NewSessionChatState extends BaseChatState {
   sessionId: null;

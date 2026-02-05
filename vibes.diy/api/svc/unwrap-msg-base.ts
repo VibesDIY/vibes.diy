@@ -1,7 +1,6 @@
 import { Result, Option, ValidateTriggerCtx } from "@adviser/cement";
 import { type } from "arktype";
 import { InMsgBase, MsgBase, msgBase } from "@vibes.diy/api-types";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 
 // ValidateTriggerCtx<INREQ, REQ, RES>
 export function unwrapMsgBase<INREQ, REQ, RES>(

@@ -4,6 +4,7 @@
   "private": true,
   "description": "it contains all elements of vibes.diy web page",
   "type": "module",
+  "packageManager": "pnpm@10.20.0",
   "engines": {
     "node": ">=22"
   },
@@ -20,7 +21,7 @@
     "build": "core-cli tsc",
     "build:prod": "pnpm --filter vibes-diy build",
     "serve:prod": "pnpm exec serve -s vibes.diy/pkg/build/client",
-    "lint": "eslint . && cd hosting/pkg && pnpm lint",
+    "lint": "eslint .",
     "knip": "knip",
     "test": "cross-env DISABLE_REACT_ROUTER=true vitest --run",
     "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage",
@@ -53,55 +54,31 @@
     "Meno Abels"
   ],
   "license": "Apache-2.0",
+  "pnpm": {
+    "patchedDependencies": {
+      "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@fireproof/core-cli": "0.24.9",
-    "@playwright/test": "^1.57.0",
+    "@fireproof/core-cli": "0.24.10",
+    "@playwright/test": "^1.58.1",
     "@types/deno": "^2.5.0",
-    "@types/node": "^25.0.9",
-    "@typescript/native-preview": "7.0.0-dev.20260116.1",
+    "@types/node": "^25.2.0",
+    "@typescript/native-preview": "7.0.0-dev.20260126.1",
     "@vitest/browser-playwright": "^4.0.18",
     "@vitest/coverage-v8": "4.0.18",
     "cross-env": "^10.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
-    "knip": "^5.81.0",
+    "knip": "^5.83.0",
     "playwright": "^1.57.0",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.1",
-    "puppeteer": "^24.35.0",
+    "puppeteer": "^24.36.1",
     "serve": "^14.2.5",
-    "typescript-eslint": "^8.53.0",
+    "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18",
-    "wrangler": "^4.59.2"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch"
-    },
-    "ignoredBuiltDependencies": [
-      "@pulumi/kubernetes",
-      "browser-tabs-lock",
-      "bufferutil",
-      "protobufjs",
-      "puppeteer",
-      "utf-8-validate"
-    ],
-    "onlyBuiltDependencies": [
-      "@clerk/shared",
-      "@parcel/watcher",
-      "@tailwindcss/oxide",
-      "core-js",
-      "deno",
-      "es5-ext",
-      "esbuild",
-      "netlify",
-      "netlify-cli",
-      "playwright-chromium",
-      "sharp",
-      "unix-dgram",
-      "unrs-resolver",
-      "workerd"
-    ]
+    "wrangler": "^4.63.0"
   }
 }

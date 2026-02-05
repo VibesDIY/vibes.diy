@@ -39,7 +39,7 @@ export const BlockEndMsg = type({
     total: BlockStats,
   },
   usage: {
-    given: SseUsage.optional(),
+    "given?": SseUsage.or("undefined"),
     calculated: SseUsage,
   },
 }).and(BlockBase);
@@ -114,6 +114,8 @@ export const BlockStatsMsg = type({
 // Union types
 export const ToplevelMsg = ToplevelBeginMsg.or(ToplevelLineMsg).or(ToplevelEndMsg);
 export const CodeMsg = CodeBeginMsg.or(CodeLineMsg).or(CodeEndMsg);
+export const LineMsg = ToplevelLineMsg.or(CodeLineMsg);
+export const BeginMsg = ToplevelBeginMsg.or(CodeBeginMsg);
 export const BlockStreamMsg = BlockBeginMsg.or(BlockEndMsg).or(BlockStatsMsg).or(BlockImageMsg).or(CodeMsg).or(ToplevelMsg);
 // export const BlockOutput = BlockStreamMsg.or(ToplevelMsg).or(CodeMsg).or(BlockImageMsg);
 
@@ -134,6 +136,8 @@ export type BlockStreamMsg = typeof BlockStreamMsg.infer;
 export type ToplevelMsg = typeof ToplevelMsg.infer;
 export type CodeMsg = typeof CodeMsg.infer;
 export type BlockMsgs = typeof BlockMsgs.infer;
+export type LineMsg = typeof LineMsg.infer;
+export type BeginMsg = typeof BeginMsg.infer;
 
 // Type guards with optional streamId filter
 export const isBlockBegin = (msg: unknown, streamId?: string): msg is BlockBeginMsg =>
@@ -178,7 +182,8 @@ function addSSeUsage(target: SseUsage, source: SseUsage) {
 }
 
 export function createBlockStream(
-  filterStreamId: string,
+  streamId: string,
+  innerStreamId: string,
   createId: () => string
 ): TransformStream<LineStreamMsg | DeltaStreamMsg | StatsCollectMsg, BlockStreamMsg> {
   let blockId = "";
@@ -202,7 +207,7 @@ export function createBlockStream(
       type: "block.begin",
       blockId,
       blockNr: blockNr,
-      streamId: filterStreamId,
+      streamId,
       seq: seq++,
       timestamp: new Date(),
     });
@@ -216,8 +221,8 @@ export function createBlockStream(
   return new TransformStream<LineStreamMsg | DeltaStreamMsg, BlockStreamMsg>({
     transform(msg, controller) {
       // Handle stats.collect trigger
-      if (isStatsCollect(msg, filterStreamId) || isDeltaUsage(msg, filterStreamId)) {
-        if (isDeltaUsage(msg, filterStreamId)) {
+      if (isStatsCollect(msg, streamId) || isDeltaUsage(msg, streamId)) {
+        if (isDeltaUsage(msg, streamId)) {
           currentUsageSSE = msg.usage;
           addSSeUsage(usageSumByUsage, msg.usage);
         }
@@ -225,7 +230,7 @@ export function createBlockStream(
           type: "block.stats",
           blockId,
           seq,
-          streamId: filterStreamId,
+          streamId,
           blockNr,
           stats: {
             toplevel: toplevelStat,
@@ -238,7 +243,7 @@ export function createBlockStream(
         });
         return;
       }
-      if (isDeltaEnd(msg, filterStreamId)) {
+      if (isDeltaEnd(msg, streamId)) {
         const accu = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
         for (const usage of msg.usages) {
           addSSeUsage(accu, usage);
@@ -246,7 +251,7 @@ export function createBlockStream(
         givenUsageSSE = accu;
       }
 
-      if (isDeltaImage(msg, filterStreamId)) {
+      if (isDeltaImage(msg, streamId)) {
         // No-op, block begun on line.begin
         beginBlock(controller);
         imageStat.cnt++;
@@ -258,7 +263,7 @@ export function createBlockStream(
           blockId,
           sectionId: createId(),
           blockNr: blockNr++,
-          streamId: filterStreamId,
+          streamId,
           seq: seq++,
           timestamp: new Date(),
           stats: imageStat,
@@ -266,11 +271,11 @@ export function createBlockStream(
         });
         return;
       }
-      if (isLineBegin(msg, filterStreamId)) {
+      if (isLineBegin(msg, innerStreamId)) {
         beginBlock(controller);
         return;
       }
-      if (isLineLine(msg, filterStreamId)) {
+      if (isLineLine(msg, innerStreamId)) {
         const content = msg.content;
 
         // Check for code fence
@@ -286,7 +291,7 @@ export function createBlockStream(
               toplevelStat.cnt++;
               controller.enqueue({
                 type: "block.toplevel.end",
-                streamId: filterStreamId,
+                streamId,
                 sectionId: currentSectionId,
                 stats: toplevelStat,
                 timestamp: new Date(),
@@ -308,7 +313,7 @@ export function createBlockStream(
               timestamp: new Date(),
               sectionId: currentSectionId,
               blockId,
-              streamId: filterStreamId,
+              streamId,
               seq: seq++,
               blockNr: blockNr,
             });
@@ -320,7 +325,7 @@ export function createBlockStream(
               blockStat = { lines: 0, bytes: 0, cnt: 0 };
               controller.enqueue({
                 type: "block.toplevel.begin",
-                streamId: filterStreamId,
+                streamId,
                 sectionId: currentSectionId,
                 timestamp: new Date(),
                 blockId,
@@ -337,7 +342,7 @@ export function createBlockStream(
               line: content,
               blockId,
               seq: seq++,
-              streamId: filterStreamId,
+              streamId,
               blockNr: blockNr,
             });
           }
@@ -354,7 +359,7 @@ export function createBlockStream(
               type: "block.code.end",
               timestamp: new Date(),
               blockId,
-              streamId: filterStreamId,
+              streamId,
               sectionId: currentSectionId,
               seq: seq++,
               blockNr: blockNr++,
@@ -375,12 +380,12 @@ export function createBlockStream(
               line: content,
               blockId,
               seq: seq++,
-              streamId: filterStreamId,
+              streamId,
               blockNr: blockNr,
             });
           }
         }
-      } else if (isLineEnd(msg, filterStreamId)) {
+      } else if (isLineEnd(msg, innerStreamId)) {
         // Close any open section
         if (sectionStarted) {
           if (mode === "toplevel") {
@@ -392,7 +397,7 @@ export function createBlockStream(
             controller.enqueue({
               type: "block.toplevel.end",
               blockId,
-              streamId: filterStreamId,
+              streamId,
               stats: blockStat,
               sectionId: currentSectionId,
               seq: seq++,
@@ -410,7 +415,7 @@ export function createBlockStream(
             controller.enqueue({
               type: "block.code.end",
               blockId,
-              streamId: filterStreamId,
+              streamId,
               lang: currentLang,
               sectionId: currentSectionId,
               seq: seq++,
@@ -425,7 +430,7 @@ export function createBlockStream(
           type: "block.end",
           timestamp: new Date(),
           blockId,
-          streamId: filterStreamId,
+          streamId,
           seq: seq++,
           blockNr: blockNr++,
           stats: {
@@ -465,7 +470,7 @@ export function createSectionsStream(
           consumePromise = consumeStream(
             transStream.readable
               .pipeThrough(createLineStream(blockStreamId))
-              .pipeThrough(createBlockStream(blockStreamId, createId)), // blockstream is not passthrough
+              .pipeThrough(createBlockStream(filterStreamId, blockStreamId, createId)), // blockstream is not passthrough
             (e) => controller.enqueue(e)
           );
           break;

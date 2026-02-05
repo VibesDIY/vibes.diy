@@ -36,6 +36,9 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
     ws.onmessage = (event) => {
       onMessage.invoke({ type: "MessageEvent", event });
     };
+    if (ws.readyState === WebSocket.OPEN) {
+      waitOpen.resolve(ws);
+    }
     return waitOpen.asPromise().then((ws) => ({
       ctx: ws,
       onError,

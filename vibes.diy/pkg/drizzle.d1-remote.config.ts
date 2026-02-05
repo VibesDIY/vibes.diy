@@ -54,7 +54,6 @@ for (const varName of [".env.local", ".dev.vars", "../frontend/.env.local", "../
   try {
     dotenv.config(varName);
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn(`Could not load environment variables from ${varName}`);
   }
 }
@@ -64,7 +63,6 @@ if (!process.env.CLOUDFLARE_ACCOUNT_ID) {
 }
 
 if (!process.env.CLOUDFLARE_D1_TOKEN && !process.env.CLOUDFLARE_API_TOKEN) {
-  // eslint-disable-next-line no-console
   console.warn("CLOUDFLARE_D1_TOKEN is not set, using CLOUDFLARE_API_TOKEN instead. This may not work as expected.");
 }
 
