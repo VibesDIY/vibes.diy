@@ -395,8 +395,8 @@ importers:
         specifier: ^1.57.0
         version: 1.58.1
       playwright-chromium:
-        specifier: ^1.57.0
-        version: 1.57.0
+        specifier: ^1.58.1
+        version: 1.58.1
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -712,8 +712,8 @@ importers:
         specifier: ^1.57.0
         version: 1.58.1
       playwright-chromium:
-        specifier: ^1.57.0
-        version: 1.57.0
+        specifier: ^1.58.1
+        version: 1.58.1
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -9598,13 +9598,8 @@ packages:
   pkg-types@2.3.0:
     resolution: {integrity: sha512-SIqCzDRg0s9npO5XQ3tNZioRY1uK06lA41ynBC1YmFTmnY6FjUjVt6s4LoADmwoig1qqD0oK8h1p/8mlMx8Oig==}
 
-  playwright-chromium@1.57.0:
-    resolution: {integrity: sha512-GCVVTbmIDrZuBxWYoQ70rehRXMb3Q7ccENe63a+rGTWwypeVAgh/DD5o5QQ898oer5pdIv3vGINUlEkHtOZQEw==}
-    engines: {node: '>=18'}
-    hasBin: true
-
-  playwright-core@1.57.0:
-    resolution: {integrity: sha512-agTcKlMw/mjBWOnD6kFZttAAGHgi/Nw0CZ2o6JqWSbMlI219lAFLZZCyqByTsvVAJq5XA5H8cA6PrvBRpBWEuQ==}
+  playwright-chromium@1.58.1:
+    resolution: {integrity: sha512-IZEji6VuJWIW+oCLp+sUSH7FCDNVGQxJSBMgHXKA/S0S5Ykdek9TO//mVsiWx9GwiOrApOb1WSxUJgK6zo/cUw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -22347,11 +22342,9 @@ snapshots:
       exsolve: 1.0.8
       pathe: 2.0.3
 
-  playwright-chromium@1.57.0:
+  playwright-chromium@1.58.1:
     dependencies:
-      playwright-core: 1.57.0
-
-  playwright-core@1.57.0: {}
+      playwright-core: 1.58.1
 
   playwright-core@1.58.1: {}
 
