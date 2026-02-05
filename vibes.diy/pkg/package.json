@@ -31,7 +31,7 @@
     "@adviser/cement": "^0.5.15",
     "@clerk/clerk-react": "^5.60.0",
     "@cloudflare/workers-types": "^4.20260128.0",
-    "@fireproof/core": "0.24.7",
+    "@fireproof/core": "0.24.10",
     "@fireproof/core-runtime": "0.24.10",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.4",
