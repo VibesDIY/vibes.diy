@@ -68,7 +68,7 @@
   },
   "devDependencies": {
     "@babel/parser": "^7.29.0",
-    "@babel/traverse": "^7.28.6",
+    "@babel/traverse": "^7.29.0",
     "@babel/types": "^7.28.6",
     "@chromatic-com/storybook": "^5.0.0",
     "@cloudflare/vite-plugin": "^1.21.0",
