@@ -75,7 +75,7 @@ importers:
   call-ai/pkg:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@fireproof/core':
         specifier: 0.24.10
@@ -180,7 +180,7 @@ importers:
   hosting/base:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.10
@@ -220,7 +220,7 @@ importers:
   hosting/pkg:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@cloudflare/workers-types':
         specifier: ^4.20260128.0
@@ -312,7 +312,7 @@ importers:
   prompts/pkg:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@fireproof/core':
         specifier: 0.24.10
@@ -365,7 +365,7 @@ importers:
         version: link:../pkg
     devDependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.58.1
@@ -419,7 +419,7 @@ importers:
   use-vibes/base:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@clerk/clerk-react':
         specifier: ^5.60.0
@@ -773,7 +773,7 @@ importers:
   vibes.diy/failback-homepage:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@clerk/clerk-js':
         specifier: ^5.121.1
@@ -1026,7 +1026,7 @@ importers:
   vibes.diy/pkg:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@clerk/clerk-react':
         specifier: ^5.60.0
@@ -1219,7 +1219,7 @@ importers:
   vibes.diy/tests/app:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
@@ -1325,7 +1325,7 @@ importers:
   vibes.diy/tests/simple-chat:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.5.15
+        specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0

@@ -28,7 +28,7 @@
     "format:write": "prettier --write ."
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.15",
+    "@adviser/cement": "^0.5.21",
     "@clerk/clerk-react": "^5.60.0",
     "@cloudflare/workers-types": "^4.20260128.0",
     "@fireproof/core": "0.24.10",
