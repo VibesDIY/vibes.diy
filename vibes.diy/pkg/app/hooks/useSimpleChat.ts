@@ -98,7 +98,7 @@ export function useSimpleChat(sessionId: string): ChatState {
   const modelToUse = effectiveModel;
 
   // Use our custom hooks
-  const baseEnsureSystemPrompt = useSystemPromptManager(modelSelection.settingsDoc, vibeDoc);
+  const buildSystemPrompt = useSystemPromptManager(modelSelection.settingsDoc, vibeDoc);
 
   // Create wrapper that handles dependency updates
   const ensureSystemPrompt = useCallback(
@@ -106,7 +106,7 @@ export function useSimpleChat(sessionId: string): ChatState {
       userPrompt?: string;
       history?: { role: "user" | "assistant" | "system"; content: string }[];
     }): Promise<SystemPromptResult> => {
-      const result = await baseEnsureSystemPrompt(overrides);
+      const result = await buildSystemPrompt(overrides);
 
       // Update dependencies from result (with safety check for tests)
       if (typeof updateAiSelectedDependencies === "function") {
@@ -115,7 +115,7 @@ export function useSimpleChat(sessionId: string): ChatState {
 
       return result;
     },
-    [baseEnsureSystemPrompt, updateAiSelectedDependencies]
+    [buildSystemPrompt, updateAiSelectedDependencies]
   );
 
   const { throttledMergeAiMessage, isProcessingRef } = useThrottledUpdates(mergeAiMessage);
