@@ -61,7 +61,7 @@
     "@types/deno": "^2.5.0",
     "@types/node": "^25.0.10",
     "@typescript/native-preview": "7.0.0-dev.20260126.1",
-    "@vitest/browser-playwright": "^4.0.17",
+    "@vitest/browser-playwright": "^4.0.18",
     "@vitest/coverage-v8": "4.0.18",
     "cross-env": "^10.0.0",
     "eslint": "^9.39.2",
@@ -73,7 +73,7 @@
     "puppeteer": "^24.36.1",
     "serve": "^14.2.5",
     "typescript-eslint": "^8.54.0",
-    "vitest": "^4.0.16",
+    "vitest": "^4.0.18",
     "wrangler": "^4.62.0"
   }
 }
