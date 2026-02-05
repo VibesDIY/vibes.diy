@@ -812,8 +812,8 @@ importers:
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.8)(react@19.2.3)
       '@react-router/node':
-        specifier: ^7.12.0
-        version: 7.12.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
+        specifier: ^7.13.0
+        version: 7.13.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.13.0
         version: 7.13.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
@@ -1047,8 +1047,8 @@ importers:
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.8)(react@19.2.3)
       '@react-router/node':
-        specifier: ^7.12.0
-        version: 7.12.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
+        specifier: ^7.13.0
+        version: 7.13.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.13.0
         version: 7.13.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
@@ -1225,8 +1225,8 @@ importers:
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-router/node':
-        specifier: ^7.12.0
-        version: 7.12.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
+        specifier: ^7.13.0
+        version: 7.13.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.13.0
         version: 7.13.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
@@ -1331,8 +1331,8 @@ importers:
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-router/node':
-        specifier: ^7.12.0
-        version: 7.12.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
+        specifier: ^7.13.0
+        version: 7.13.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
       '@react-router/serve':
         specifier: ^7.13.0
         version: 7.13.0(react-router@7.12.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
@@ -17775,7 +17775,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  chromium-bidi@13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@5.0.10):
+  chromium-bidi@13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3):
     dependencies:
       devtools-protocol: 0.0.1566079
       mitt: 3.0.1
@@ -17784,11 +17784,9 @@ snapshots:
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
-      - bufferutil
       - react-native-b4a
       - supports-color
       - typescript
-      - utf-8-validate
 
   chromium-edge-launcher@0.2.0:
     dependencies:
@@ -22707,10 +22705,10 @@ snapshots:
     dependencies:
       escape-goat: 4.0.0
 
-  puppeteer-core@24.37.0(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+  puppeteer-core@24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10):
     dependencies:
       '@puppeteer/browsers': 2.12.0
-      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      chromium-bidi: 13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3)
       debug: 4.4.3(supports-color@10.2.2)
       devtools-protocol: 0.0.1566079
       typed-query-selector: 2.12.0
@@ -22722,15 +22720,16 @@ snapshots:
       - bufferutil
       - react-native-b4a
       - supports-color
+      - typescript
       - utf-8-validate
 
   puppeteer@24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10):
     dependencies:
       '@puppeteer/browsers': 2.12.0
-      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      chromium-bidi: 13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3)
       cosmiconfig: 9.0.0(typescript@5.9.3)
       devtools-protocol: 0.0.1566079
-      puppeteer-core: 24.37.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      puppeteer-core: 24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-abort-controller
