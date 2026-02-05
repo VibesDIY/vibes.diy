@@ -5,7 +5,15 @@ import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { ResultSet } from "@libsql/client";
 // import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
-import { CfCacheIf, createVibesFPApiSQLCtx, VibesApiSQLCtx, VibesFPApiParameters } from "./api.js";
+import {
+  CfCacheIf,
+  createVibesFPApiSQLCtx,
+  LLMDefault,
+  LLMEnforced,
+  LLMHeaders,
+  VibesApiSQLCtx,
+  VibesFPApiParameters,
+} from "./api.js";
 import { ensureStorage } from "./intern/ensure-storage.js";
 import type { D1Result } from "@cloudflare/workers-types";
 import { defaultFetchPkgVersion } from "./npm-package-version.js";
@@ -28,7 +36,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   env: Record<string, string>; // | Env;
   connections: Set<WSSendProvider>;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
-  llmRequest?(prompt: LLMRequest): Promise<Response>;
+  llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
 
@@ -102,6 +110,13 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
         CALLAI_IMG_URL: "CALLAI_IMG_URL",
       },
     },
+    llm: {
+      default: LLMDefault({
+        ...(envVals.LLM_BACKEND_MODEL ? { model: envVals.LLM_BACKEND_MODEL } : {}),
+      }) as LLMDefault,
+      enforced: LLMEnforced({}) as LLMEnforced,
+      headers: LLMHeaders({}) as LLMHeaders,
+    },
     assetCacheUrl: "https://asset-cache.vibes.app/{assetId}",
     importMapProps: {
       versions: {
@@ -126,7 +141,6 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
       llmRequest: defaultLLMRequest(params.llmRequest, {
         url: envVals.LLM_BACKEND_URL,
         apiKey: envVals.LLM_BACKEND_API_KEY,
-        model: envVals.LLM_BACKEND_MODEL,
       }),
       deviceCA: rDeviceIdCA.Ok(),
       params: svcParams,

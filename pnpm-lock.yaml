@@ -978,6 +978,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
+      '@vibes.diy/prompts':
+        specifier: workspace:*
+        version: link:../../../prompts/pkg
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../../../use-vibes/base

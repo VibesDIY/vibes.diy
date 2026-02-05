@@ -7,11 +7,12 @@ import {
   reqPromptChatSection,
   ResPromptChatSection,
   SectionEvent,
+  VibeFile,
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { VibesApiSQLCtx } from "../api.js";
+import { LLMHeaders, VibesApiSQLCtx } from "../api.js";
 import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
 import { sqlChatContexts, sqlChatSections } from "../sql/vibes-diy-api-schema.js";
@@ -33,7 +34,80 @@ import {
   isToplevelEnd,
   isToplevelLine,
   isBlockStats,
+  LLMRequest,
+  ChatMessage,
+  isPromptReq,
+  CodeMsg,
+  CodeBeginMsg,
+  CodeLineMsg,
+  FileSystemRef,
 } from "@vibes.diy/call-ai-v2";
+import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
+import { ensureAppSlugItem } from "./ensure-app-slug-item.ts";
+
+async function injectSystemPrompt(
+  vctx: VibesApiSQLCtx,
+  chatId: string,
+  model: string
+): Promise<
+  Result<{
+    model: string;
+    messages: ChatMessage[];
+  }>
+> {
+  const sections = await vctx.db
+    .select()
+    .from(sqlChatSections)
+    .where(eq(sqlChatSections.chatId, chatId))
+    .orderBy(sqlChatSections.created)
+    .all();
+  const userMessages: ChatMessage[] = [];
+  for (const rowSection of sections) {
+    const msgs = PromptAndBlockMsgs.array()(rowSection.blocks);
+    if (msgs instanceof type.errors) {
+      return Result.Err(`Failed to parse blocks for section ${rowSection}, with error: ${msgs.summary}`);
+    }
+    for (const msg of msgs) {
+      if (isPromptReq(msg)) {
+        userMessages.push(...msg.request.messages.filter((m) => m.role === "user"));
+      }
+    }
+  }
+  const systemPrompt = await exception2Result(async () =>
+    makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
+      // fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      // callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
+      // userPrompt: overrides?.userPrompt || "",
+      // getAuthToken: async () => (await getToken()) || "",
+      // ...(settingsDoc || {}),
+      // ...(vibeDoc || {}),
+      // ...overrides,
+    })
+  );
+  if (systemPrompt.isErr()) {
+    console.error("Failed to create system prompt:", systemPrompt.Err());
+    return Result.Err(systemPrompt);
+  }
+  if (userMessages.length === 0) {
+    return Result.Err(`No user messages found in the prompt`);
+  }
+
+  return Result.Ok({
+    model,
+    messages: [
+      ...userMessages,
+      {
+        role: "system",
+        content: [
+          {
+            type: "text",
+            text: systemPrompt.Ok().systemPrompt,
+          },
+        ],
+      },
+    ],
+  });
+}
 
 export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPromptChatSection>, never | VibesDiyError> = {
   hash: "prompt-chat-section-handler",
@@ -125,10 +199,27 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         return Result.Err(r);
       }
 
+      const withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
+      if (withSystemPrompt.isErr()) {
+        return Result.Err(withSystemPrompt);
+      }
       // console.log("Sending LLM request for promptId:", promptId);
+      const llmReq: LLMRequest & { headers: LLMHeaders } = {
+        ...vctx.params.llm.default,
+        ...{
+          ...req.prompt,
+          messages: withSystemPrompt.Ok().messages,
+        },
+        ...vctx.params.llm.enforced,
+        model: withSystemPrompt.Ok().model,
+        headers: vctx.params.llm.headers,
+        stream: true,
+      };
+
+      console.log("LLM Request for promptId:", promptId, "with model:", llmReq.model, "and messages:", llmReq.messages);
 
       // add system prompt here
-      const rRes = await exception2Result(() => vctx.llmRequest(req.prompt));
+      const rRes = await exception2Result(() => vctx.llmRequest(llmReq));
       if (rRes.isErr()) {
         return Result.Err(`LLM request failed: ${rRes.Err().message}`);
       }
@@ -149,6 +240,11 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
       const reader = pipeline.getReader();
 
+      const codeBlocks: {
+        begin: CodeBeginMsg;
+        lines: CodeLineMsg[];
+        end?: CodeMsg;
+      }[] = [];
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
@@ -162,6 +258,25 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             return Result.Err(r);
           }
         }
+        if (isCodeBegin(value)) {
+          codeBlocks.push({
+            begin: value,
+            lines: [],
+          });
+        } else if (isCodeLine(value)) {
+          if (codeBlocks.length === 0) {
+            console.warn("Received code line without a preceding code begin:", value);
+          } else {
+            codeBlocks[codeBlocks.length - 1].lines.push(value);
+          }
+        } else if (isCodeEnd(value)) {
+          if (codeBlocks.length === 0) {
+            console.warn("Received code end without a preceding code begin:", value);
+          } else {
+            codeBlocks[codeBlocks.length - 1].end = value;
+          }
+        }
+
         if (
           isBlockBegin(value) ||
           isToplevelBegin(value) ||
@@ -181,27 +296,62 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         }
       }
       if (blockSeq > 1) {
-        const rEnd = await appendBlockEvent({
-          ctx,
-          vctx,
-          req,
-          promptId,
-          blockSeq: blockSeq,
-          evt: {
-            type: "prompt.block-end",
-            streamId: promptId,
-            chatId: req.chatId,
-            // streamId:
-            seq: blockSeq,
-            timestamp: new Date(),
-          },
-        });
-        blockSeq++;
+        let fsRef: FileSystemRef | undefined = undefined;
+        let rEnd: Result<void> = Result.Ok();
+        // Meno don't use try - finally
+        try {
+          if (codeBlocks.length > 0) {
+            // here is where the music plays
+            const rFs = await ensureAppSlugItem(vctx, {
+              type: "vibes.diy.req-ensure-app-slug",
+              mode: "dev",
+              fileSystem: codeBlocks.reduce((acc, block, idx) => {
+                if (block.end) {
+                  const content = block.lines.map((l) => l.line).join("\n");
+                  // console.log("Code to add to file system:", content, block.begin.lang);
+                  acc.push({
+                    type: "code-block",
+                    filename: `${idx == 0 ? "App.jsx" : `File-${block.begin.lang}-${idx}.jsx`}`,
+                    lang: "jsx", // llm think between jsx and js is not a big deal
+                    content,
+                  });
+                }
+                return acc;
+              }, [] as VibeFile[]),
+              auth: req.auth,
+            });
+            if (rFs.isErr()) {
+              console.error("Failed to ensure app slug item for code blocks:", rFs.Err());
+              return Result.Err(rFs);
+            }
+            const tFsRef = type(FileSystemRef).onDeepUndeclaredKey("delete")(rFs.Ok());
+            if (tFsRef instanceof type.errors) {
+              return Result.Err(`Failed to parse FileSystemRef: ${tFsRef.summary}`);
+            }
+            fsRef = tFsRef;
+          }
+        } finally {
+          rEnd = await appendBlockEvent({
+            ctx,
+            vctx,
+            req,
+            promptId,
+            blockSeq: blockSeq,
+            evt: {
+              type: "prompt.block-end",
+              streamId: promptId,
+              chatId: req.chatId,
+              fsRef,
+              seq: blockSeq,
+              timestamp: new Date(),
+            },
+          });
+          blockSeq++;
+        }
         if (rEnd.isErr()) {
           return Result.Err(rEnd);
         }
       }
-
       return Result.Ok(EventoResult.Continue);
     }
   ),

@@ -8,6 +8,25 @@ import { ImportMapProps } from "./intern/import-map.js";
 import { VibesEnv } from "@vibes.diy/use-vibes-base";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
+import { type } from "arktype";
+
+export const LLMEnforced = type({
+  debug: "boolean = false",
+  transforms: type("string[]").default(() => ["middle-out"]),
+});
+export type LLMEnforced = typeof LLMEnforced.infer;
+
+export const LLMHeaders = type({
+  "HTTP-Referer": type("string").default("https://vibes.diy"),
+  "X-Title": type("string").default("Vibes DIY"),
+  "[string]": "string",
+});
+export type LLMHeaders = typeof LLMHeaders.infer;
+
+export const LLMDefault = type({
+  model: "string = 'anthropic/claude-3-opus'",
+});
+export type LLMDefault = typeof LLMDefault.infer;
 
 export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "clerkPublishableKey"> & {
   maxAppSlugPerUserId: number;
@@ -23,6 +42,11 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
   };
   assetCacheUrl: string; // https://asset-cache.vibes.app/{assetId}
   importMapProps: ImportMapProps;
+  llm: {
+    default: LLMDefault;
+    enforced: LLMEnforced;
+    headers: LLMHeaders;
+  };
 };
 
 export interface StorageResult {
@@ -52,7 +76,7 @@ export interface VibesApiSQLCtx {
   // waitUntil<T>(promise: Promise<T>): void;
   ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
 
-  llmRequest(prompt: LLMRequest): Promise<Response>;
+  llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
 }
 
 export function createVibesFPApiSQLCtx(
