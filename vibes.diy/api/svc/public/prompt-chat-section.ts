@@ -268,13 +268,8 @@ async function injectSystemPrompt(
   }
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
-      // fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
-      // callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
-      // userPrompt: overrides?.userPrompt || "",
-      // getAuthToken: async () => (await getToken()) || "",
-      // ...(settingsDoc || {}),
-      // ...(vibeDoc || {}),
-      // ...overrides,
+      dependenciesUserOverride: true,
+      dependencies: ["callai", "image-gen"],
     })
   );
   if (systemPrompt.isErr()) {
