@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
-import type { AiChatMessageDocument, ChatMessageDocument, ChatState, SystemPromptResult } from "@vibes.diy/prompts";
+import type { AiChatMessageDocument, ChatMessageDocument, ChatState } from "@vibes.diy/prompts";
 
 import { saveErrorAsSystemMessage } from "./saveErrorAsSystemMessage.js";
 import { useApiKey } from "./useApiKey.js";
@@ -11,7 +11,7 @@ import { useMessageSelection } from "./useMessageSelection.js";
 // Import our custom hooks
 import type { SendMessageContext } from "./sendMessage.js";
 import { sendChatMessage } from "./sendMessage.js";
-import { useSystemPromptManager } from "./useSystemPromptManager.js";
+import { useSystemPromptSettings } from "./useSystemPromptSettings.js";
 import { useThrottledUpdates } from "./useThrottledUpdates.js";
 import { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ErrorCategory, useRuntimeErrors } from "./useRuntimeErrors.js";
@@ -50,7 +50,6 @@ export function useSimpleChat(sessionId: string): ChatState {
     sessionDatabase,
     aiMessage,
     vibeDoc,
-    updateAiSelectedDependencies,
     effectiveModel,
     updateSelectedModel,
   } = useSession(sessionId);
@@ -97,26 +96,8 @@ export function useSimpleChat(sessionId: string): ChatState {
   // Derive model to use from settings or default
   const modelToUse = effectiveModel;
 
-  // Use our custom hooks
-  const baseEnsureSystemPrompt = useSystemPromptManager(modelSelection.settingsDoc, vibeDoc);
-
-  // Create wrapper that handles dependency updates
-  const ensureSystemPrompt = useCallback(
-    async (overrides?: {
-      userPrompt?: string;
-      history?: { role: "user" | "assistant" | "system"; content: string }[];
-    }): Promise<SystemPromptResult> => {
-      const result = await baseEnsureSystemPrompt(overrides);
-
-      // Update dependencies from result (with safety check for tests)
-      if (typeof updateAiSelectedDependencies === "function") {
-        updateAiSelectedDependencies(result.dependencies);
-      }
-
-      return result;
-    },
-    [baseEnsureSystemPrompt, updateAiSelectedDependencies]
-  );
+  // Get chat settings for V2 API (server builds system prompt)
+  const chatSettings = useSystemPromptSettings(modelSelection.settingsDoc, vibeDoc);
 
   const { throttledMergeAiMessage, isProcessingRef } = useThrottledUpdates(mergeAiMessage);
 
@@ -159,9 +140,6 @@ export function useSimpleChat(sessionId: string): ChatState {
     [mergeUserMessage]
   );
 
-  // No longer needed - proxy handles authentication
-  const boundCheckCredits = useCallback(async (_key: string) => ({ available: 999999, usage: 0, limit: 999999 }), []);
-
   /**
    * Send a message and process the AI response
    * @param textOverride Optional text to use instead of the current userMessage
@@ -176,7 +154,7 @@ export function useSimpleChat(sessionId: string): ChatState {
         setNeedsLogin: () => {
           // No-op: Clerk handles auth differently
         },
-        ensureSystemPrompt,
+        chatSettings,
         submitUserMessage,
         buildMessageHistory,
         modelToUse,
@@ -196,7 +174,7 @@ export function useSimpleChat(sessionId: string): ChatState {
     },
     [
       userMessage.text,
-      ensureSystemPrompt,
+      chatSettings,
       setPromptProcessing,
       submitUserMessage,
       buildMessageHistory,
@@ -208,7 +186,6 @@ export function useSimpleChat(sessionId: string): ChatState {
       setPendingAiMessage,
       setSelectedResponseId,
       updateTitle,
-      boundCheckCredits,
       ensureApiKey,
       isSignedIn,
     ]

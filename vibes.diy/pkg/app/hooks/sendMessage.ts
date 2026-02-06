@@ -4,8 +4,8 @@ import {
   type AiChatMessageDocument,
   type ChatMessageDocument,
   type VibeDocument,
-  type SystemPromptResult,
 } from "@vibes.diy/prompts";
+import type { ChatSettings } from "@vibes.diy/api-types";
 import { trackChatInputClick, trackEvent } from "../utils/analytics.js";
 import { parseContent } from "@vibes.diy/prompts";
 import { streamAI } from "../utils/streamHandler.js";
@@ -18,10 +18,7 @@ export interface SendMessageContext {
   setPromptProcessing: (v: boolean) => void;
   ensureApiKey: () => Promise<{ key: string } | null>;
   setNeedsLogin: (v: boolean) => void;
-  ensureSystemPrompt: (overrides?: {
-    userPrompt?: string;
-    history?: { role: "user" | "assistant" | "system"; content: string }[];
-  }) => Promise<SystemPromptResult>;
+  chatSettings: ChatSettings;
   submitUserMessage: () => Promise<void>;
   buildMessageHistory: () => {
     role: "user" | "assistant" | "system";
@@ -48,7 +45,7 @@ export async function sendChatMessage(ctx: SendMessageContext, textOverride?: st
     setPromptProcessing,
     ensureApiKey,
     setNeedsLogin,
-    ensureSystemPrompt,
+    chatSettings,
     submitUserMessage,
     buildMessageHistory,
     throttledMergeAiMessage,
@@ -100,18 +97,12 @@ export async function sendChatMessage(ctx: SendMessageContext, textOverride?: st
   // Build the history that will be used for the code-writing prompt
   const messageHistory = buildMessageHistory();
 
-  // Compose system prompt with schema-based module selection using prompt + history
-  const promptResult = await ensureSystemPrompt({
-    userPrompt: promptText,
-    history: messageHistory,
-  });
-  const currentSystemPrompt = promptResult.systemPrompt;
-
+  // Server builds system prompt - we send settings
   const modelToUse = await resolveEffectiveModel({ model: ctx.modelToUse?.[0] }, vibeDoc);
 
   return streamAI(
     modelToUse,
-    currentSystemPrompt,
+    chatSettings,
     messageHistory,
     promptText,
     (content) => throttledMergeAiMessage(content),

@@ -12,6 +12,8 @@ import {
   resError,
   ResOpenChat,
   ReqPromptChatSection,
+  ChatSettings,
+  HistoryMessage,
   ResError,
   ReqOpenChat,
   SectionEvent,
@@ -42,7 +44,6 @@ import { VibesDiyApiIface, W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/a
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
 import { type } from "arktype";
-import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { ClerkApiToken } from "@fireproof/core-protocols-dashboard";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 
@@ -85,7 +86,12 @@ export const LLMChatEntry = type({
 export type LLMChatEntry = typeof LLMChatEntry.infer;
 
 export interface LLMChat extends LLMChatEntry {
-  prompt(req: LLMRequest): Promise<Result<ResPromptChatSection, VibesDiyError>>;
+  // Server builds system prompt - client sends raw input + settings
+  prompt(req: {
+    userMessage: string;
+    history: HistoryMessage[];
+    settings: ChatSettings;
+  }): Promise<Result<ResPromptChatSection, VibesDiyError>>;
 
   readonly sectionStream: ReadableStream<OnResponseTypes>;
   // onResponse(fn: (msg: OnResponseTypes) => void): void;
@@ -399,13 +405,16 @@ class LLMChatImpl implements LLMChat {
     // this.#activePromptIds = activePromptIds;
   }
 
-  async prompt(msg: LLMRequest) {
+  // Server builds system prompt - client sends raw input + settings
+  async prompt(msg: { userMessage: string; history: HistoryMessage[]; settings: ChatSettings }) {
     const res = await this.api.request<ReqType<ReqPromptChatSection>, ResPromptChatSection>(
       {
         type: "vibes.diy.req-prompt-chat-section",
         chatId: this.res.chatId,
-        outerTid: this.tid, //leaking but necessary streaming
-        prompt: msg,
+        outerTid: this.tid,
+        userMessage: msg.userMessage,
+        history: msg.history,
+        settings: msg.settings,
       },
       {
         resMatch: isResPromptChatSection,
@@ -416,6 +425,7 @@ class LLMChatImpl implements LLMChat {
     // }
     return res;
   }
+
   async close(_force = false) {
     this.#writer.close();
     // if (this.#activePromptIds.size === 0 || force) {
