@@ -164,6 +164,18 @@ describe("entry-point-utils", () => {
       expect(result.IsNone()).toBe(true);
     });
 
+    it("extracts from bare hostname without dot", () => {
+      const result = extractHostToBindings({
+        matchURL: "https://myapp--myuser/some/path",
+      });
+      expect(result.Unwrap()).toEqual({
+        url: "https://myapp--myuser/some/path",
+        appSlug: "myapp",
+        userSlug: "myuser",
+        path: "/some/path",
+      });
+    });
+
     it("returns None for invalid hostname format", () => {
       const result = extractHostToBindings({
         matchURL: "https://other.domain.com/path",
@@ -195,6 +207,95 @@ describe("entry-point-utils", () => {
         userSlug: "myuser",
         fsId: "zABC123xyz",
         path: "/some/path",
+      });
+    });
+
+    it("extracts grouped appSlug (appSlug contains --)", () => {
+      const result = extractHostToBindings({
+        matchURL: "https://kanban-todo--family--jchris.vibes.app/",
+      });
+      expect(result.Unwrap()).toEqual({
+        url: "https://kanban-todo--family--jchris.vibes.app/",
+        appSlug: "kanban-todo--family",
+        userSlug: "jchris",
+        path: "/",
+      });
+    });
+
+    it("extracts grouped appSlug with fsId", () => {
+      const result = extractHostToBindings({
+        matchURL: "https://kanban-todo--family--jchris.vibes.app/~zabc12345~/",
+      });
+      expect(result.Unwrap()).toEqual({
+        url: "https://kanban-todo--family--jchris.vibes.app/~zabc12345~/",
+        appSlug: "kanban-todo--family",
+        userSlug: "jchris",
+        fsId: "zabc12345",
+        path: "/",
+      });
+    });
+
+    it("extracts multiple -- segments in appSlug (splits on last --)", () => {
+      const result = extractHostToBindings({
+        matchURL: "https://a--b--c--d.vibes.app/",
+      });
+      expect(result.Unwrap()).toEqual({
+        url: "https://a--b--c--d.vibes.app/",
+        appSlug: "a--b--c",
+        userSlug: "d",
+        path: "/",
+      });
+    });
+
+    it("extracts hyphenated grouped appSlug", () => {
+      const result = extractHostToBindings({
+        matchURL: "https://my-cool-app--kj-team--some-user.vibes.app/",
+      });
+      expect(result.Unwrap()).toEqual({
+        url: "https://my-cool-app--kj-team--some-user.vibes.app/",
+        appSlug: "my-cool-app--kj-team",
+        userSlug: "some-user",
+        path: "/",
+      });
+    });
+
+    it("lowercases grouped appSlug", () => {
+      const result = extractHostToBindings({
+        matchURL: "https://KanbanTodo--Family--JChris.vibes.app/",
+      });
+      expect(result.Unwrap()).toEqual({
+        url: "https://KanbanTodo--Family--JChris.vibes.app/",
+        appSlug: "kanbantodo--family",
+        userSlug: "jchris",
+        path: "/",
+      });
+    });
+
+    it("roundtrip: calcEntryPointUrl -> extractHostToBindings with grouped appSlug", () => {
+      const bindings = {
+        appSlug: "kanban-todo--family",
+        userSlug: "jchris",
+        fsId: "zabc12345678",
+      };
+
+      const url = calcEntryPointUrl({
+        hostnameBase: "vibes.app",
+        protocol: "https",
+        bindings,
+      });
+
+      expect(url).toBe("https://kanban-todo--family--jchris.vibes.app/~zabc12345678~/");
+
+      const extracted = extractHostToBindings({
+        matchURL: url,
+      });
+
+      expect(extracted.Unwrap()).toEqual({
+        url,
+        appSlug: "kanban-todo--family",
+        userSlug: "jchris",
+        fsId: "zabc12345678",
+        path: "/",
       });
     });
 

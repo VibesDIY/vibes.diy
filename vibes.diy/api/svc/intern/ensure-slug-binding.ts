@@ -122,7 +122,7 @@ export async function ensureAppSlug(
         .select()
         .from(sqlAppSlugBinding)
         .innerJoin(sqlUserSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
-        .where(and(eq(sqlAppSlugBinding.appSlug, binding.appSlug)))
+        .where(and(eq(sqlAppSlugBinding.appSlug, binding.appSlug), eq(sqlUserSlugBinding.userId, binding.userId)))
         .get();
       if (!existing) {
         return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, binding.appSlug);

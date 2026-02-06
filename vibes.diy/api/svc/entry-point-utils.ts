@@ -24,7 +24,7 @@ export interface ExtractedHostToBindings {
 
 export function extractHostToBindings({ matchURL }: { matchURL: string }): Option<ExtractedHostToBindings> {
   const uri = URI.from(matchURL);
-  const match = /^([a-zA-Z0-9][a-zA-Z0-9-]*?)--([a-zA-Z0-9][a-zA-Z0-9-]+)/.exec(uri.hostname);
+  const match = /^([a-zA-Z0-9][a-zA-Z0-9-]*)--([a-zA-Z0-9][a-zA-Z0-9-]*?)(?=[.:]|$)/.exec(uri.hostname);
   if (!match) {
     return Option.None();
   }
