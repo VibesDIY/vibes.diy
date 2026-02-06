@@ -1,19 +1,16 @@
 /**
  * Utility functions for working with AI models via call-ai library
- * Server builds the system prompt - client sends settings
  */
 
 import { type CallAIOptions, type Message, callAI } from "call-ai";
-import type { ChatSettings } from "@vibes.diy/api-types";
 import { VibesDiyEnv } from "../config/env.js";
 import { AUTH_REQUIRED_ERROR, isAuthErrorMessage } from "./authErrors.js";
 
 /**
  * Stream AI responses with accumulated content callback
- * Server builds the system prompt from settings
  *
  * @param model - The model to use (e.g. "anthropic/claude-sonnet-4.5")
- * @param settings - Chat settings for server-side prompt building
+ * @param systemPrompt - The system prompt
  * @param messageHistory - Array of previous messages
  * @param userMessage - The current user message
  * @param onContent - Callback function that receives the accumulated content so far
@@ -23,7 +20,7 @@ import { AUTH_REQUIRED_ERROR, isAuthErrorMessage } from "./authErrors.js";
  */
 export async function streamAI(
   model: string,
-  settings: ChatSettings,
+  systemPrompt: string,
   messageHistory: {
     role: "user" | "assistant" | "system";
     content: string;
@@ -35,8 +32,9 @@ export async function streamAI(
 ): Promise<string> {
   // Stream process starts
 
-  // Format messages for call-ai - server will inject system prompt based on settings
+  // Format messages for call-ai
   const messages: Message[] = [
+    { role: "system", content: systemPrompt },
     ...messageHistory,
     { role: "user", content: userMessage },
   ];
@@ -53,8 +51,6 @@ export async function streamAI(
     headers: {
       "HTTP-Referer": "https://vibes.diy",
       "X-Title": "Vibes DIY",
-      // Pass settings for server-side prompt building
-      "X-Chat-Settings": JSON.stringify(settings),
     },
   };
 

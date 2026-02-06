@@ -105,8 +105,6 @@ interface LlmSelectionOptions {
   readonly appMode?: "test" | "production";
   readonly callAiEndpoint?: CoerceURI;
   readonly fallBackUrl?: CoerceURI;
-  /** When true, use a model to select dependencies based on user prompt. Defaults to false (use defaults). */
-  readonly useRagSelection?: boolean;
 
   readonly getAuthToken?: () => Promise<string>;
   readonly mock?: Mocks;
@@ -256,8 +254,7 @@ export async function makeBaseSystemPrompt(
     selectedNames = (sessionDoc.dependencies as unknown[])
       .filter((v): v is string => typeof v === "string")
       .filter((name) => llmsCatalogNames.has(name));
-  } else if (sessionDoc.useRagSelection) {
-    // Use model-based RAG selection when explicitly enabled
+  } else {
     const decisions = await selectLlmsAndOptions(RAG_DECISION_MODEL, userPrompt, history, sessionDoc);
     includeDemoData = decisions.demoData;
 
@@ -266,11 +263,6 @@ export async function makeBaseSystemPrompt(
     selectedNames = Array.from(finalNames);
 
     if (selectedNames.length === 0) selectedNames = [...(await getDefaultDependencies())];
-  } else {
-    // Default: use default dependencies + any detected from history
-    const defaults = await getDefaultDependencies();
-    const detected = await detectModulesInHistory(history, sessionDoc);
-    selectedNames = [...new Set([...defaults, ...detected])];
   }
   if (typeof sessionDoc?.demoDataOverride === "boolean") {
     includeDemoData = sessionDoc.demoDataOverride;

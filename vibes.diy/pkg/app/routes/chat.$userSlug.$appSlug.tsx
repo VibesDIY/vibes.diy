@@ -17,8 +17,6 @@ import ChatHeaderContent from "../components/ChatHeaderContent.js";
 import ChatInterface from "../components/ChatInterface.js";
 import ResultPreviewHeaderContent from "../components/ResultPreview/ResultPreviewHeaderContent.js";
 import ResultPreview from "../components/ResultPreview/ResultPreview.js";
-import { useModelSelection } from "../hooks/useModelSelection.js";
-import { useSystemPromptSettings } from "../hooks/useSystemPromptSettings.js";
 
 export interface PromptState {
   chat: LLMChatEntry;
@@ -102,10 +100,6 @@ export default function Chat() {
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
 
-  // Get user settings for prompt building
-  const modelSelection = useModelSelection();
-  const chatSettings = useSystemPromptSettings(modelSelection.settingsDoc, undefined);
-
   const [promptState, dispatch] = useReducer(promptReducer, {
     chat: {} as LLMChatEntry,
     running: false,
@@ -127,9 +121,17 @@ export default function Chat() {
       if (chat && promptToSend?.trim().length) {
         chat
           .prompt({
-            userMessage: promptToSend,
-            history: [],
-            settings: chatSettings,
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: promptToSend,
+                  },
+                ],
+              },
+            ],
           })
           .then((r) => {
             if (r.isErr()) {

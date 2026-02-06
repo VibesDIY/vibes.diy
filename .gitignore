@@ -5,7 +5,6 @@ node_modules
 .claude/
 
 .env*
-.dev.vars
 .netlify/
 .react-router/
 .wrangler/
