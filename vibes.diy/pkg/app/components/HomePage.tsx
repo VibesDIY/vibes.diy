@@ -80,12 +80,9 @@ export default function HomePage() {
           setChat(chat);
           chat
             .prompt({
-              messages: [
-                {
-                  role: "user",
-                  content: [{ type: "text", text: prompt }],
-                },
-              ],
+              userMessage: prompt,
+              history: [],
+              settings: {}, // Empty settings - server uses defaults for new chats
             })
             .then((rPrompt) => {
               if (rPrompt.isErr()) {

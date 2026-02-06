@@ -47,6 +47,8 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
     enforced: LLMEnforced;
     headers: LLMHeaders;
   };
+  // URL for fetching prompt catalog documentation
+  promptFallbackUrl: string;
 };
 
 export interface StorageResult {
