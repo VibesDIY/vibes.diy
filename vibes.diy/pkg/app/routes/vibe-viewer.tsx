@@ -32,7 +32,7 @@ function VibeInstanceViewerContent() {
   const [error, setError] = useState<string | null>(null);
   // Generate unique container ID using crypto.randomUUID
   // Regenerate on each navigation to make debugging easier
-  const [containerId, setContainerId] = useState(() => `vibe-container-${sthis().nextId().str}`);
+  const [containerId, setContainerId] = useState(() => `vibe-container-${sthis().nextId(12).str}`);
 
   // Lazy instance creation: ensure instance exists in database
   const { instances, createInstance, isCreating } = useVibeInstances(titleId || "");

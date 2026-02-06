@@ -35,6 +35,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
   connections: Set<WSSendProvider>;
+  netHash(): string;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
   // waitUntil?<T>(promise: Promise<T>): void;
@@ -130,6 +131,7 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
     createVibesFPApiSQLCtx({
       sthis,
       db: params.db,
+      netHash: params.netHash,
       cache: params.cache,
       connections: params.connections,
       fetchPkgVersion: defaultFetchPkgVersion(params.fetchPkgVersion),

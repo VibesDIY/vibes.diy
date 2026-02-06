@@ -70,6 +70,7 @@ export interface VibesApiSQLCtx {
   connections: Set<WSSendProvider>;
   deviceCA: DeviceIdCAIf;
   logger: Logger;
+  netHash(): string;
   params: VibesFPApiParameters;
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<string | undefined>;

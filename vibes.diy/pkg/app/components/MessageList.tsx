@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 // import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
 import { PromptBlock } from "../routes/chat.$userSlug.$appSlug.js";
 import {
@@ -64,14 +64,15 @@ function Prompt({ msg }: { msg: PromptReq }) {
 
 function CodeMsg({ lines, begin, end }: { begin: CodeBeginMsg; lines: LineMsg[]; end?: CodeEndMsg }) {
   const [_, setSearchParam] = useSearchParams();
-  function handleCodeClick() {
+
+  const handleCodeClick = useCallback(() => {
     console.log(`handleCodeClick`, begin.sectionId);
     setSearchParam((prev) => {
       prev.set("sectionId", begin.sectionId);
       prev.set("view", "code");
       return prev;
     });
-  }
+  }, []);
   // Calculate local codeReady state based on segments.length > 2 or !promptProcessing
   const codeReady = !!end;
 

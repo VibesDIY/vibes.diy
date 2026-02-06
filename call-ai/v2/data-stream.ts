@@ -95,15 +95,17 @@ export function createDataStream(filterStreamId: string): TransformStream<LineSt
       } else if (isLineLine(msg, filterStreamId)) {
         if (msg.content.startsWith("data: ")) {
           try {
-            const json = JSON.parse(msg.content.slice("data: ".length));
-            dataLineNr++;
-            controller.enqueue({
-              type: "data.line",
-              streamId,
-              json,
-              dataLineNr,
-              timestamp: new Date(),
-            });
+            if (msg.content.trim() !== "data: [DONE]") {
+              const json = JSON.parse(msg.content.slice("data: ".length));
+              dataLineNr++;
+              controller.enqueue({
+                type: "data.line",
+                streamId,
+                json,
+                dataLineNr,
+                timestamp: new Date(),
+              });
+            }
           } catch (e) {
             controller.enqueue({
               type: "data.error",

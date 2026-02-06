@@ -30,6 +30,45 @@ export const BlockBeginMsg = type({
   type: "'block.begin'",
 }).and(BlockBase);
 
+export const BlockUsage = type({
+  given: SseUsage.array(),
+  calculated: SseUsage,
+});
+export type BlockUsage = typeof BlockUsage.infer;
+
+export const FileSystemRef = type({
+  appSlug: "string",
+  userSlug: "string",
+  mode: "'production'|'dev'",
+  fsId: "string",
+  wrapperUrl: "string",
+  entryPointUrl: "string",
+});
+export type FileSystemRef = typeof FileSystemRef.infer;
+
+export const PromptContextSql = type({
+  type: "'prompt.usage.sql'",
+  usage: BlockUsage,
+  "fsRef?": FileSystemRef,
+});
+export type PromptContextSql = typeof PromptContextSql.infer;
+
+export const ChatContextSql = type({
+  type: "'chat.context.sql'",
+  userId: "string",
+  chatId: "string",
+  "promptId?": "string",
+  "fsId?": "string",
+  nethash: "string",
+  promptTokens: "number",
+  completionTokens: "number",
+  totalTokens: "number",
+  usage: BlockUsage,
+  created: CoercedDate,
+});
+
+export type ChatContextSql = typeof ChatContextSql.infer;
+
 export const BlockEndMsg = type({
   type: "'block.end'",
   stats: {
@@ -38,10 +77,7 @@ export const BlockEndMsg = type({
     image: BlockStats,
     total: BlockStats,
   },
-  usage: {
-    "given?": SseUsage.or("undefined"),
-    calculated: SseUsage,
-  },
+  usage: BlockUsage,
 }).and(BlockBase);
 
 // Toplevel (non-code) section events
@@ -216,15 +252,16 @@ export function createBlockStream(
   let beginBlock = Lazy(beginBlockAction);
 
   let currentUsageSSE: SseUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
-  let givenUsageSSE: SseUsage | undefined = undefined;
-  const usageSumByUsage: SseUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+  const givenUsageSSE: SseUsage[] = [];
+  // const usageSumByUsage: SseUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
   return new TransformStream<LineStreamMsg | DeltaStreamMsg, BlockStreamMsg>({
     transform(msg, controller) {
       // Handle stats.collect trigger
       if (isStatsCollect(msg, streamId) || isDeltaUsage(msg, streamId)) {
         if (isDeltaUsage(msg, streamId)) {
           currentUsageSSE = msg.usage;
-          addSSeUsage(usageSumByUsage, msg.usage);
+          givenUsageSSE.push(msg.usage);
+          // addSSeUsage(usageSumByUsage, msg.usage);
         }
         controller.enqueue({
           type: "block.stats",
@@ -240,16 +277,16 @@ export function createBlockStream(
           },
           usage: currentUsageSSE,
           timestamp: new Date(),
-        });
+        } satisfies BlockStatsMsg);
         return;
       }
-      if (isDeltaEnd(msg, streamId)) {
-        const accu = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
-        for (const usage of msg.usages) {
-          addSSeUsage(accu, usage);
-        }
-        givenUsageSSE = accu;
-      }
+      // if (isDeltaEnd(msg, streamId)) {
+      //   const accu = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      //   for (const usage of msg.usages) {
+      //     addSSeUsage(accu, usage);
+      //   }
+      //   givenUsageSSE.push(msg.
+      // }
 
       if (isDeltaImage(msg, streamId)) {
         // No-op, block begun on line.begin
@@ -441,7 +478,13 @@ export function createBlockStream(
           },
           usage: {
             given: givenUsageSSE,
-            calculated: usageSumByUsage,
+            calculated: givenUsageSSE.reduce(
+              (accu, usage) => {
+                addSSeUsage(accu, usage);
+                return accu;
+              },
+              { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
+            ),
           },
         });
       }
@@ -480,16 +523,16 @@ export function createSectionsStream(
           writer?.write(txtEndcoder.encode(msg.content));
           break;
 
-        case isDeltaImage(msg, filterStreamId):
-          writer?.write({ ...msg, streamId: blockStreamId });
-          break;
+        // case isDeltaImage(msg, filterStreamId):
+        //   writer?.write({ ...msg});
+        //   break;
 
-        case isDeltaUsage(msg, filterStreamId):
-          writer?.write({ ...msg, streamId: blockStreamId });
-          break;
+        // case isDeltaUsage(msg, filterStreamId):
+        //   writer?.write({ ...msg});
+        //   break;
 
         case isDeltaEnd(msg, filterStreamId):
-          writer?.write({ ...msg, streamId: blockStreamId });
+          writer?.write({ ...msg });
           if (writer) {
             await writer.close().then(() => consumePromise);
           } else {

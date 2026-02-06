@@ -9,6 +9,7 @@ import {
   DeltaLineMsg,
   DeltaEndMsg,
   DeltaStatsMsg,
+  isDeltaUsage,
 } from "./delta-stream.js";
 import { SseChunk, isSseBegin, isSseLine, isSseEnd, SseStreamMsg } from "./sse-stream.js";
 import { StatsCollectMsg } from "./stats-stream.js";
@@ -252,5 +253,61 @@ describe("delta-stream", () => {
       expect(statsEvents[0].stats.deltaSeq).toBe(1);
       expect(statsEvents[0].stats.totalChars).toBe(5);
     });
+  });
+
+  it("test if sse usage emits delta.usage", async () => {
+    const sseChunkWithUsage = {
+      id: "gen-1770372166-US3EkzcxdcK8HI1BKteb",
+      provider: "Google",
+      model: "anthropic/claude-sonnet-4",
+      object: "chat.completion.chunk",
+      created: 1770372167,
+      choices: [
+        {
+          index: 0,
+          delta: { role: "assistant", content: "" },
+          finish_reason: null,
+          native_finish_reason: null,
+          logprobs: null,
+        },
+      ],
+      usage: {
+        prompt_tokens: 1198,
+        completion_tokens: 288,
+        total_tokens: 1486,
+        cost: 0.007914,
+        is_byok: false,
+        prompt_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+        cost_details: {
+          upstream_inference_cost: 0.007914,
+          upstream_inference_prompt_cost: 0.003594,
+          upstream_inference_completions_cost: 0.00432,
+        },
+        completion_tokens_details: { reasoning_tokens: 0 },
+      },
+    };
+    const events: SseStreamMsg[] = [
+      { type: "sse.begin", streamId: "test", timestamp: new Date() },
+      { type: "sse.line", streamId: "test", chunk: sseChunkWithUsage, chunkNr: 1, timestamp: new Date() },
+      {
+        type: "sse.end",
+        streamId: "test",
+        totalChunks: 1,
+        totalErrors: 0,
+        usages: [sseChunkWithUsage.usage],
+        timestamp: new Date(),
+      },
+    ];
+    const input = new ReadableStream<SseStreamMsg>({
+      start(controller) {
+        events.forEach((e) => controller.enqueue(e));
+        controller.close();
+      },
+    });
+
+    const output = input.pipeThrough(createDeltaStream("test", createId));
+    const chunks = await collectStream(output);
+    expect(chunks.filter((i) => isDeltaUsage(i))[0].usage).toEqual(sseChunkWithUsage.usage);
+    expect(chunks.filter((i) => isDeltaEnd(i))[0].usages).toEqual([sseChunkWithUsage.usage]);
   });
 });

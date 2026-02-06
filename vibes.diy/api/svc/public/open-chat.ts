@@ -158,7 +158,17 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       for (const section of sections) {
         const blocks = PromptAndBlockMsgs.array()(section.blocks);
         if (blocks instanceof type.errors) {
-          return Result.Err(`Invalid blocks data for section ${section.blockSeq} in chat ${section.chatId} - ${blocks.summary}`);
+          let idx = 0;
+          for (const block of section.blocks as []) {
+            const pabm = PromptAndBlockMsgs(block);
+            if (pabm instanceof type.errors) {
+              return Result.Err(
+                `Invalid block data for section ${idx} in chat ${section.chatId} - ${pabm.summary} - ${JSON.stringify(block)}`
+              );
+            }
+            idx++;
+          }
+          return Result.Err(`Invalid blocks data in chat ${section.chatId} - ${blocks.summary} - ${JSON.stringify(blocks)}`);
         }
         const rCurrentMsg: Result<SendStatItem<MsgBase<SectionEvent>>> = await ctx.send.send(ctx, {
           payload: {

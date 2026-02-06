@@ -24,18 +24,7 @@ import {
 import { LineStreamMsg } from "./line-stream.js";
 import { DeltaImageMsg } from "./delta-stream.js";
 import { StatsCollectMsg } from "./stats-stream.js";
-
-// Helper to collect all chunks from a stream
-async function collectStream<T>(stream: ReadableStream<T>): Promise<T[]> {
-  const reader = stream.getReader();
-  const chunks: T[] = [];
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-  return chunks;
-}
+import { stream2array } from "@adviser/cement";
 
 describe("block-stream", () => {
   let idCounter = 0;
@@ -76,7 +65,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const beginEvent = chunks.find((c) => isBlockBegin(c)) as BlockBeginMsg;
       expect(beginEvent).toBeDefined();
@@ -94,7 +83,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       expect(chunks.some((c) => isToplevelBegin(c))).toBe(true);
       const lineEvents = chunks.filter((c) => isToplevelLine(c)) as ToplevelLineMsg[];
@@ -114,7 +103,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const codeBegin = chunks[1] as CodeBeginMsg;
       expect(codeBegin).toBeDefined();
@@ -142,7 +131,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const codeBegin = chunks.find((c) => isCodeBegin(c)) as CodeBeginMsg;
       expect(codeBegin.lang).toBe("");
@@ -164,7 +153,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const toplevelBegins = chunks.filter((c) => isToplevelBegin(c));
       const codeBegins = chunks.filter((c) => isCodeBegin(c));
@@ -182,7 +171,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const endEvent = chunks[chunks.length - 1] as BlockEndMsg;
       expect(endEvent.stats.toplevel.cnt).toBe(2);
@@ -204,7 +193,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       // Should still emit code.end
       const codeEnd = chunks.find((c) => isCodeEnd(c)) as CodeEndMsg;
@@ -222,7 +211,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       expect(isBlockBegin(chunks[0])).toBe(true);
       expect(isToplevelBegin(chunks[1])).toBe(true);
@@ -255,7 +244,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const statsEvents = chunks.filter((c) => isBlockStats(c)) as BlockStatsMsg[];
       expect(statsEvents).toHaveLength(1);
@@ -274,7 +263,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const blockBegin = chunks.find((c) => isBlockBegin(c)) as BlockBeginMsg;
       const toplevelBegins = chunks.filter((c) => isToplevelBegin(c)) as ToplevelBeginMsg[];
@@ -314,7 +303,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       // Should emit block.begin (lazily triggered by image)
       expect(chunks[0].type).toBe("block.begin");
@@ -355,7 +344,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const endEvent = chunks.find((c) => isBlockEnd(c)) as BlockEndMsg;
       expect(endEvent).toBeDefined();
@@ -403,7 +392,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       const imageEvents = chunks.filter((c) => isBlockImage(c)) as BlockImageMsg[];
       expect(imageEvents).toHaveLength(2);
@@ -442,7 +431,7 @@ describe("block-stream", () => {
       });
 
       const output = input.pipeThrough(createBlockStream("test", "innerStream", createId));
-      const chunks = await collectStream(output);
+      const chunks = await stream2array(output);
 
       // Should have toplevel, image, and more toplevel content
       const toplevelLines = chunks.filter((c) => isToplevelLine(c)) as ToplevelLineMsg[];

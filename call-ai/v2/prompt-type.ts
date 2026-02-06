@@ -60,19 +60,8 @@ export const PromptBlockBegin = type({
 
 export type PromptBlockBegin = typeof PromptBlockBegin.infer;
 
-export const FileSystemRef = type({
-  appSlug: "string",
-  userSlug: "string",
-  mode: "'production'|'dev'",
-  fsId: "string",
-  wrapperUrl: "string",
-  entryPointUrl: "string",
-});
-export type FileSystemRef = typeof FileSystemRef.infer;
-
 export const PromptBlockEnd = type({
   type: "'prompt.block-end'",
-  "fsRef?": FileSystemRef,
 }).and(PromptBase);
 
 export type PromptBlockEnd = typeof PromptBlockEnd.infer;
