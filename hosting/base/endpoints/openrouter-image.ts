@@ -103,19 +103,9 @@ function transformResponse(openRouterResponse: OpenRouterImageResponse): {
 }
 
 // Core function to generate images using OpenRouter API
-async function generateImage(
-  params: ImageGenerateRequest,
-  apiKey: string,
-  referer: string,
-): Promise<Response> {
+async function generateImage(params: ImageGenerateRequest, apiKey: string, referer: string): Promise<Response> {
   try {
-    const {
-      prompt,
-      model = "google/gemini-2.5-flash-image",
-      n = 1,
-      size = "auto",
-      userId = "anonymous",
-    } = params;
+    const { prompt, model = "google/gemini-2.5-flash-image", n = 1, size = "auto", userId = "anonymous" } = params;
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Prompt is required" }), {
@@ -147,19 +137,16 @@ async function generateImage(
     };
 
     // Send request to OpenRouter API
-    const openRouterResponse = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": referer,
-          "X-Title": "Vibes DIY",
-        },
-        body: JSON.stringify(requestBody),
+    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": referer,
+        "X-Title": "Vibes DIY",
       },
-    );
+      body: JSON.stringify(requestBody),
+    });
 
     // Handle API errors
     if (!openRouterResponse.ok) {
@@ -174,10 +161,7 @@ async function generateImage(
           errorData = { message: errorText };
         }
       } catch (parseError: unknown) {
-        console.error(
-          `❌ OpenRouter Image: Error parsing error response:`,
-          parseError,
-        );
+        console.error(`❌ OpenRouter Image: Error parsing error response:`, parseError);
         errorData = {
           message: `Failed to parse error response: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
         };
@@ -195,13 +179,12 @@ async function generateImage(
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        },
+        }
       );
     }
 
     // Parse and transform response to OpenAI-compatible format
-    const responseData =
-      (await openRouterResponse.json()) as OpenRouterImageResponse;
+    const responseData = (await openRouterResponse.json()) as OpenRouterImageResponse;
     const transformedResponse = transformResponse(responseData);
 
     return new Response(JSON.stringify(transformedResponse), {
@@ -221,24 +204,15 @@ async function generateImage(
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      },
+      }
     );
   }
 }
 
 // Core function to edit images using OpenRouter API
-export async function editImage(
-  c: HonoContext,
-  params: ImageEditRequest,
-  apiKey: string,
-): Promise<Response> {
+export async function editImage(c: HonoContext, params: ImageEditRequest, apiKey: string): Promise<Response> {
   try {
-    const {
-      prompt,
-      model = "google/gemini-2.5-flash-image",
-      size = "auto",
-      userId = "anonymous",
-    } = params;
+    const { prompt, model = "google/gemini-2.5-flash-image", size = "auto", userId = "anonymous" } = params;
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Prompt is required" }), {
@@ -255,13 +229,7 @@ export async function editImage(
     const imageDataUrls: string[] = [];
 
     for (const [name, value] of formData.entries()) {
-      if (
-        (name === "image" ||
-          name === "images[]" ||
-          name === "image[]" ||
-          name.match(/^image_\d+$/)) &&
-        value instanceof File
-      ) {
+      if ((name === "image" || name === "images[]" || name === "image[]" || name.match(/^image_\d+$/)) && value instanceof File) {
         const arrayBuffer = await value.arrayBuffer();
         const base64 = arrayBufferToBase64(arrayBuffer);
         const mimeType = value.type || "image/png";
@@ -270,25 +238,19 @@ export async function editImage(
     }
 
     if (imageDataUrls.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "At least one image must be provided" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
+      return new Response(JSON.stringify({ error: "At least one image must be provided" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
         },
-      );
+      });
     }
 
     const aspectRatio = sizeToAspectRatio(size);
 
     // Build multimodal content with images and text prompt
-    const content: Array<
-      | { type: "image_url"; image_url: { url: string } }
-      | { type: "text"; text: string }
-    > = [];
+    const content: Array<{ type: "image_url"; image_url: { url: string } } | { type: "text"; text: string }> = [];
 
     // Add images first
     for (const dataUrl of imageDataUrls) {
@@ -323,19 +285,16 @@ export async function editImage(
     const referer = c.req.header("Referer") || "https://vibes.diy";
 
     // Send request to OpenRouter API
-    const openRouterResponse = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": referer,
-          "X-Title": "Vibes DIY",
-        },
-        body: JSON.stringify(requestBody),
+    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": referer,
+        "X-Title": "Vibes DIY",
       },
-    );
+      body: JSON.stringify(requestBody),
+    });
 
     // Handle API errors
     if (!openRouterResponse.ok) {
@@ -346,10 +305,7 @@ export async function editImage(
         errorData = await openRouterResponse.json();
       } else {
         const textResponse = await openRouterResponse.text();
-        console.error(
-          `❌ OpenRouter Image: Non-JSON error response:`,
-          textResponse.substring(0, 200),
-        );
+        console.error(`❌ OpenRouter Image: Non-JSON error response:`, textResponse.substring(0, 200));
         errorData = {
           message: `Non-JSON response (${contentType}): ${textResponse.substring(0, 100)}...`,
         };
@@ -367,13 +323,12 @@ export async function editImage(
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        },
+        }
       );
     }
 
     // Parse and transform response to OpenAI-compatible format
-    const responseData =
-      (await openRouterResponse.json()) as OpenRouterImageResponse;
+    const responseData = (await openRouterResponse.json()) as OpenRouterImageResponse;
     const transformedResponse = transformResponse(responseData);
 
     return new Response(JSON.stringify(transformedResponse), {
@@ -394,7 +349,7 @@ export async function editImage(
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      },
+      }
     );
   }
 }
@@ -423,48 +378,15 @@ export class OpenRouterImageGenerate extends OpenAPIRoute {
             .optional()
             .default("google/gemini-2.5-flash-image")
             .describe("The model to use (e.g., google/gemini-2.5-flash-image)"),
-          n: z
-            .number()
-            .optional()
-            .default(1)
-            .describe("Number of images to generate"),
-          quality: z
-            .string()
-            .optional()
-            .default("auto")
-            .describe("Image quality (passed to model if supported)"),
-          size: z
-            .string()
-            .optional()
-            .default("auto")
-            .describe(
-              "Image size: auto, 1024x1024, 1792x1024, 1024x1792, etc.",
-            ),
-          background: z
-            .string()
-            .optional()
-            .default("auto")
-            .describe("Background style (passed to model if supported)"),
-          output_format: z
-            .string()
-            .optional()
-            .default("png")
-            .describe("Output format (model dependent)"),
-          output_compression: z
-            .number()
-            .nullable()
-            .optional()
-            .describe("Compression level (model dependent)"),
-          moderation: z
-            .string()
-            .optional()
-            .default("auto")
-            .describe("Moderation level (model dependent)"),
-          userId: z
-            .string()
-            .optional()
-            .describe("User ID for API billing and tracking"),
-        }),
+          n: z.number().optional().default(1).describe("Number of images to generate"),
+          quality: z.string().optional().default("auto").describe("Image quality (passed to model if supported)"),
+          size: z.string().optional().default("auto").describe("Image size: auto, 1024x1024, 1792x1024, 1024x1792, etc."),
+          background: z.string().optional().default("auto").describe("Background style (passed to model if supported)"),
+          output_format: z.string().optional().default("png").describe("Output format (model dependent)"),
+          output_compression: z.number().nullable().optional().describe("Compression level (model dependent)"),
+          moderation: z.string().optional().default("auto").describe("Moderation level (model dependent)"),
+          userId: z.string().optional().describe("User ID for API billing and tracking"),
+        })
       ),
     },
     responses: {
@@ -478,9 +400,9 @@ export class OpenRouterImageGenerate extends OpenAPIRoute {
                 url: z.string().optional(),
                 b64_json: z.string().optional(),
                 revised_prompt: z.string().optional(),
-              }),
+              })
             ),
-          }),
+          })
         ),
       },
     },
@@ -496,13 +418,12 @@ export class OpenRouterImageGenerate extends OpenAPIRoute {
         return c.json(
           {
             error: {
-              message:
-                "Authentication required. Please log in to use AI features.",
+              message: "Authentication required. Please log in to use AI features.",
               type: "authentication_error",
               code: 401,
             },
           },
-          401,
+          401
         );
       }
 
@@ -514,10 +435,7 @@ export class OpenRouterImageGenerate extends OpenAPIRoute {
         size: data.size || "auto",
         background: data.background || "auto",
         output_format: data.output_format || "png",
-        output_compression:
-          data.output_compression !== undefined
-            ? data.output_compression
-            : null,
+        output_compression: data.output_compression !== undefined ? data.output_compression : null,
         moderation: data.moderation || "auto",
         userId: user?.userId || "anonymous",
       };
@@ -532,7 +450,7 @@ export class OpenRouterImageGenerate extends OpenAPIRoute {
               code: 500,
             },
           },
-          500,
+          500
         );
       }
 
@@ -544,12 +462,9 @@ export class OpenRouterImageGenerate extends OpenAPIRoute {
       console.error("Error in OpenRouterImageGenerate handler:", error);
       return c.json(
         {
-          error:
-            error instanceof Error
-              ? error.message
-              : "An error occurred processing your request",
+          error: error instanceof Error ? error.message : "An error occurred processing your request",
         },
-        500,
+        500
       );
     }
   }
@@ -559,8 +474,7 @@ export class OpenRouterImageGenerate extends OpenAPIRoute {
 export class OpenRouterImageEdit extends OpenAPIRoute {
   schema = {
     tags: ["OpenRouter"],
-    summary:
-      "Edit images using OpenRouter API - accepts multipart/form-data with image files and text parameters",
+    summary: "Edit images using OpenRouter API - accepts multipart/form-data with image files and text parameters",
     description:
       "Upload image file(s) along with editing parameters. Accepts 'image' files plus text fields: prompt, model, size, userId",
     responses: {
@@ -574,9 +488,9 @@ export class OpenRouterImageEdit extends OpenAPIRoute {
                 url: z.string().optional(),
                 b64_json: z.string().optional(),
                 revised_prompt: z.string().optional(),
-              }),
+              })
             ),
-          }),
+          })
         ),
       },
     },
@@ -590,13 +504,12 @@ export class OpenRouterImageEdit extends OpenAPIRoute {
         return c.json(
           {
             error: {
-              message:
-                "Authentication required. Please log in to use AI features.",
+              message: "Authentication required. Please log in to use AI features.",
               type: "authentication_error",
               code: 401,
             },
           },
-          401,
+          401
         );
       }
 
@@ -608,21 +521,15 @@ export class OpenRouterImageEdit extends OpenAPIRoute {
       const formData = await c.req.formData();
 
       requestBody.prompt = formData.get("prompt")?.toString() || "";
-      requestBody.model =
-        formData.get("model")?.toString() || "google/gemini-2.5-flash-image";
+      requestBody.model = formData.get("model")?.toString() || "google/gemini-2.5-flash-image";
       requestBody.n = parseInt(formData.get("n")?.toString() || "1", 10);
       requestBody.quality = formData.get("quality")?.toString() || "auto";
       requestBody.size = formData.get("size")?.toString() || "auto";
       requestBody.background = formData.get("background")?.toString() || "auto";
-      requestBody.output_format =
-        formData.get("output_format")?.toString() || "png";
+      requestBody.output_format = formData.get("output_format")?.toString() || "png";
 
-      const output_compression_str = formData
-        .get("output_compression")
-        ?.toString();
-      requestBody.output_compression = output_compression_str
-        ? parseInt(output_compression_str, 10)
-        : null;
+      const output_compression_str = formData.get("output_compression")?.toString();
+      requestBody.output_compression = output_compression_str ? parseInt(output_compression_str, 10) : null;
 
       requestBody.moderation = formData.get("moderation")?.toString() || "auto";
       requestBody.userId = user?.userId || "anonymous";
@@ -637,7 +544,7 @@ export class OpenRouterImageEdit extends OpenAPIRoute {
               code: 500,
             },
           },
-          500,
+          500
         );
       }
 
@@ -648,12 +555,9 @@ export class OpenRouterImageEdit extends OpenAPIRoute {
       console.error("Error in OpenRouterImageEdit handler:", error);
       return c.json(
         {
-          error:
-            error instanceof Error
-              ? error.message
-              : "An error occurred processing your request",
+          error: error instanceof Error ? error.message : "An error occurred processing your request",
         },
-        500,
+        500
       );
     }
   }

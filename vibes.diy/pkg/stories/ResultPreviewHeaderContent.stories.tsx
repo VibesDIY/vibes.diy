@@ -47,7 +47,7 @@ This Storybook version uses a mock state provider to simulate the complex state 
       description: "Number of syntax errors in code",
       control: { type: "number", min: 0, max: 10 },
     },
-    isStreaming: {
+    promptProcessing: {
       description: "Whether AI is currently streaming a response",
       control: "boolean",
     },
@@ -97,13 +97,12 @@ export const Default: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          "Default state showing the preview view with standard navigation controls.",
+        story: "Default state showing the preview view with standard navigation controls.",
       },
     },
   },
@@ -117,13 +116,12 @@ export const CodeViewWithChanges: Story = {
     previewReady: true,
     hasCodeChanges: true,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          "Code view showing the Save button when there are unsaved changes.",
+        story: "Code view showing the Save button when there are unsaved changes.",
       },
     },
   },
@@ -137,13 +135,12 @@ export const CodeViewWithErrors: Story = {
     previewReady: true,
     hasCodeChanges: true,
     syntaxErrorCount: 3,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          "Code view with syntax errors. The Save button shows error count and is disabled.",
+        story: "Code view with syntax errors. The Save button shows error count and is disabled.",
       },
     },
   },
@@ -157,7 +154,7 @@ export const DataView: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
@@ -176,13 +173,12 @@ export const StreamingState: Story = {
     previewReady: false,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: true,
+    promptProcessing: true,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          "Streaming state where AI is generating content. Preview tab shows loading state.",
+        story: "Streaming state where AI is generating content. Preview tab shows loading state.",
       },
     },
   },
@@ -196,13 +192,12 @@ export const NoControls: Story = {
     previewReady: false,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          "Minimal header with only back button, no view controls (used in chat-only contexts).",
+        story: "Minimal header with only back button, no view controls (used in chat-only contexts).",
       },
     },
   },
@@ -216,15 +211,14 @@ export const PublishedApp: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
     initialPublishedUrl: "https://vibes.diy/published-app-123456",
     initialUrlCopied: true,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          'App that has already been published. Share button shows "URL Copied" state.',
+        story: 'App that has already been published. Share button shows "URL Copied" state.',
       },
     },
   },
@@ -238,14 +232,13 @@ export const PublishingInProgress: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
     initialIsPublishing: true,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          "Publishing workflow in progress. Share button shows loading spinner.",
+        story: "Publishing workflow in progress. Share button shows loading spinner.",
       },
     },
   },
@@ -259,14 +252,13 @@ export const ShareModalOpen: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
     initialIsShareModalOpen: true,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          "Share modal is open, showing publishing options including firehose sharing.",
+        story: "Share modal is open, showing publishing options including firehose sharing.",
       },
     },
   },
@@ -280,7 +272,7 @@ export const InteractivePublishingDemo: Story = {
     previewReady: true,
     hasCodeChanges: false,
     syntaxErrorCount: 0,
-    isStreaming: false,
+    promptProcessing: false,
   },
   parameters: {
     docs: {

@@ -1,5 +1,5 @@
-import type { Database, DocWithId } from '@fireproof/use-fireproof';
-import { ImageGenOptions, ImageResponse } from 'call-ai';
+import type { Database, DocWithId } from "@fireproof/use-fireproof";
+import { ImageGenOptions, ImageResponse } from "call-ai";
 
 // Interface for our image documents in Fireproof
 // Interface for prompt entry
@@ -10,7 +10,7 @@ export interface PromptEntry {
 
 export interface ImageDocumentPlain {
   readonly _rev?: string;
-  readonly type: 'image'; // Document type identifier
+  readonly type: "image"; // Document type identifier
   readonly prompt?: string; // Legacy field, superseded by prompts/currentPromptKey
   readonly prompts?: Record<string, PromptEntry>; // Prompts keyed by ID (p1, p2, etc.)
   readonly created: number;
@@ -31,7 +31,7 @@ export interface VersionInfo {
   readonly promptKey?: string; // Reference to the prompt used for this version (e.g. "p1")
 }
 
-export type GenerationPhase = 'idle' | 'generating' | 'complete' | 'error';
+export type GenerationPhase = "idle" | "generating" | "complete" | "error";
 
 /** Input options for the useImageGen hook */
 export interface UseImageGenOptions {

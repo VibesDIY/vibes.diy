@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  act,
-  fireEvent,
-  screen,
-  render,
-  cleanup,
-} from "@testing-library/react";
+import { act, fireEvent, screen, render, cleanup } from "@testing-library/react";
 // Vitest will automatically use mocks from __mocks__ directory
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SessionSidebar from "~/vibes.diy/app/components/SessionSidebar.js";
@@ -58,7 +52,7 @@ vi.mock("react-router-dom", () => {
           onClick: onClick,
           ...props,
         },
-        children,
+        children
       );
     }),
   };

@@ -4,11 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import ChatHeader from "~/vibes.diy/app/components/ChatHeaderContent.js";
 import MessageList from "~/vibes.diy/app/components/MessageList.js";
 import SessionSidebar from "~/vibes.diy/app/components/SessionSidebar.js";
-import type {
-  AiChatMessage,
-  ChatMessageDocument,
-  UserChatMessage,
-} from "@vibes.diy/prompts";
+import type { AiChatMessage, ChatMessageDocument, UserChatMessage } from "@vibes.diy/prompts";
 import { mockSessionSidebarProps } from "./mockData.js";
 
 const mocks = vi.hoisted(() => {
@@ -23,11 +19,7 @@ vi.mock("react-markdown", async () => {
   return {
     default: vi.fn(({ children }: { children: string }) => {
       // Use React.createElement instead of JSX
-      return React.createElement(
-        "div",
-        { "data-testid": "markdown" },
-        children,
-      );
+      return React.createElement("div", { "data-testid": "markdown" }, children);
     }),
   };
 });
@@ -50,7 +42,7 @@ vi.mock("react-router-dom", async () => {
           onClick: onClick,
           ...props,
         },
-        children,
+        children
       );
     }),
   };
@@ -149,40 +141,17 @@ describe("Component Rendering", () => {
 
   describe("ChatHeader", () => {
     it("renders without crashing", () => {
-      render(
-        <ChatHeader
-          onOpenSidebar={onOpenSidebar}
-          title="Test Chat"
-          isStreaming={false}
-          codeReady={false}
-        />,
-      );
+      render(<ChatHeader onOpenSidebar={onOpenSidebar} title="Test Chat" isStreaming={false} codeReady={false} />);
       expect(screen.getByText("Test Chat")).toBeInTheDocument();
     });
 
     it("applies tooltip classes correctly", () => {
-      render(
-        <ChatHeader
-          onOpenSidebar={onOpenSidebar}
-          title="Test Chat"
-          isStreaming={false}
-          codeReady={false}
-        />,
-      );
-      expect(
-        screen.getByText("New Vibe", { selector: "span.pointer-events-none" }),
-      ).toBeInTheDocument();
+      render(<ChatHeader onOpenSidebar={onOpenSidebar} title="Test Chat" isStreaming={false} codeReady={false} />);
+      expect(screen.getByText("New Vibe", { selector: "span.pointer-events-none" })).toBeInTheDocument();
     });
 
     it("handles new chat button click", () => {
-      render(
-        <ChatHeader
-          onOpenSidebar={onOpenSidebar}
-          title="Test Chat"
-          isStreaming={false}
-          codeReady={false}
-        />,
-      );
+      render(<ChatHeader onOpenSidebar={onOpenSidebar} title="Test Chat" isStreaming={false} codeReady={false} />);
 
       // Just verify the new vibe button exists since we can't easily mock document.location
       const newVibeButton = screen.getByLabelText("New Vibe");
@@ -261,7 +230,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
 
       // Verify the container is rendered but empty
@@ -303,7 +272,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
       expect(screen.getByText("Hello")).toBeInTheDocument();
       expect(screen.getByText("Hi there")).toBeInTheDocument();
@@ -343,7 +312,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
       // The Message component in our test displays "Processing response..." in a markdown element
       // when there's no content but streaming is true
@@ -377,7 +346,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
       expect(screen.getByText("I am thinking...")).toBeInTheDocument();
     });
@@ -397,7 +366,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
     });
 
@@ -429,7 +398,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
     });
 
@@ -461,7 +430,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
     });
 
@@ -492,7 +461,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
     });
 
@@ -525,7 +494,7 @@ describe("Component Rendering", () => {
           navigateToView={() => {
             /* no-op */
           }}
-        />,
+        />
       );
 
       expect(screen.getByText("Hello")).toBeInTheDocument();

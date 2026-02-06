@@ -328,13 +328,13 @@ function prepareRequestParams(prompt: string | Message[], options: CallAIOptions
     for (const message of prompt) {
       if (!message.role || !message.content) {
         throw new Error(
-          `Invalid message format. Each message must have 'role' and 'content' properties. Received: ${JSON.stringify(message)}`,
+          `Invalid message format. Each message must have 'role' and 'content' properties. Received: ${JSON.stringify(message)}`
         );
       }
 
       if (typeof message.role !== "string" || (typeof message.content !== "string" && !Array.isArray(message.content))) {
         throw new Error(
-          `Invalid message format. 'role' must be a string and 'content' must be a string or array. Received role: ${typeof message.role}, content: ${typeof message.content}`,
+          `Invalid message format. 'role' must be a string and 'content' must be a string or array. Received role: ${typeof message.role}, content: ${typeof message.content}`
         );
       }
     }
@@ -343,7 +343,7 @@ function prepareRequestParams(prompt: string | Message[], options: CallAIOptions
   // If provider-specific options are given, check for conflicts
   if (options.provider && options.provider !== "auto" && options.model && !options.model.startsWith(options.provider + "/")) {
     console.warn(
-      `[callAi:${PACKAGE_VERSION}] WARNING: Specified provider '${options.provider}' doesn't match model '${options.model}'. Using model as specified.`,
+      `[callAi:${PACKAGE_VERSION}] WARNING: Specified provider '${options.provider}' doesn't match model '${options.model}'. Using model as specified.`
     );
   }
 

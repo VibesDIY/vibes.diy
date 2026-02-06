@@ -63,7 +63,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
                 setTimeout(() => {
                   console.warn(`Timeout for ${modelId.id} (Grade ${modelId.grade}): ${name}`);
                   resolve(undefined);
-                }, timeout || TIMEOUT),
+                }, timeout || TIMEOUT)
               ),
             ]);
             return result;
@@ -74,7 +74,7 @@ const gradeAwareTest = (modelId: { id: string; grade: string }) => {
             return;
           }
         },
-        timeout,
+        timeout
       );
     };
   }
@@ -144,7 +144,7 @@ describe("Simple callAi integration tests", () => {
               expectOrWarn(
                 modelId,
                 typeof data === "object" && data !== null,
-                `Parsed result is not an object in ${modelName} model response`,
+                `Parsed result is not an object in ${modelName} model response`
               );
 
               if (typeof data === "object" && data !== null) {
@@ -175,7 +175,7 @@ describe("Simple callAi integration tests", () => {
                   expectOrWarn(
                     modelId,
                     typeof data.description === "string",
-                    `'description' is not a string in ${modelName} model response`,
+                    `'description' is not a string in ${modelName} model response`
                   );
                   if (typeof data.description === "string") {
                     expectOrWarn(modelId, data.description.length > 10, `Description too short in ${modelName} model response`);
@@ -186,7 +186,7 @@ describe("Simple callAi integration tests", () => {
                   expectOrWarn(
                     modelId,
                     Array.isArray(data.ingredients),
-                    `'ingredients' is not an array in ${modelName} model response`,
+                    `'ingredients' is not an array in ${modelName} model response`
                   );
                   if (Array.isArray(data.ingredients)) {
                     expectOrWarn(modelId, data.ingredients.length > 0, `No ingredients in ${modelName} model response`);
@@ -197,26 +197,26 @@ describe("Simple callAi integration tests", () => {
                       expectOrWarn(
                         modelId,
                         typeof firstIngredient === "object" && firstIngredient !== null,
-                        `First ingredient is not an object in ${modelName} model response`,
+                        `First ingredient is not an object in ${modelName} model response`
                       );
 
                       if (typeof firstIngredient === "object" && firstIngredient !== null) {
                         expectOrWarn(
                           modelId,
                           "name" in firstIngredient,
-                          `Missing 'name' in first ingredient in ${modelName} model response`,
+                          `Missing 'name' in first ingredient in ${modelName} model response`
                         );
                         expectOrWarn(
                           modelId,
                           "amount" in firstIngredient,
-                          `Missing 'amount' in first ingredient in ${modelName} model response`,
+                          `Missing 'amount' in first ingredient in ${modelName} model response`
                         );
 
                         if ("name" in firstIngredient) {
                           expectOrWarn(
                             modelId,
                             typeof firstIngredient.name === "string",
-                            `Ingredient name is not a string in ${modelName} model response`,
+                            `Ingredient name is not a string in ${modelName} model response`
                           );
                         }
 
@@ -224,7 +224,7 @@ describe("Simple callAi integration tests", () => {
                           expectOrWarn(
                             modelId,
                             typeof firstIngredient.amount === "string",
-                            `Ingredient amount is not a string in ${modelName} model response`,
+                            `Ingredient amount is not a string in ${modelName} model response`
                           );
                         }
                       }
@@ -242,7 +242,7 @@ describe("Simple callAi integration tests", () => {
                       expectOrWarn(
                         modelId,
                         typeof data.steps[0] === "string",
-                        `First step is not a string in ${modelName} model response`,
+                        `First step is not a string in ${modelName} model response`
                       );
                     }
                   }
@@ -255,7 +255,7 @@ describe("Simple callAi integration tests", () => {
                     expectOrWarn(
                       modelId,
                       typeof data[field] === "number",
-                      `'${field}' is not a number in ${modelName} model response`,
+                      `'${field}' is not a number in ${modelName} model response`
                     );
                     if (typeof data[field] === "number") {
                       expectOrWarn(modelId, data[field] > 0, `'${field}' is not positive in ${modelName} model response`);
@@ -268,7 +268,7 @@ describe("Simple callAi integration tests", () => {
             }
           }
         },
-        TIMEOUT,
+        TIMEOUT
       );
     });
   });

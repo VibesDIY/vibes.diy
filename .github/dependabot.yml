@@ -12,13 +12,12 @@ updates:
     open-pull-requests-limit: 20
     ignore:
       - dependency-name: "@adviser/cement"
-        update-types:
-          ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "drizzle-kit"
+        versions: [">0.30.6"]
       - dependency-name: "react"
-        update-types:
-          ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "react-dom"
-        update-types:
-          ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "zod"
         update-types: ["version-update:semver-major"]

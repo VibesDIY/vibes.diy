@@ -21,9 +21,7 @@ vi.mock("~/vibes.diy/app/hooks/useApiKey", async () => {
       isLoading: false,
       error: null,
       refreshKey: vi.fn(),
-      ensureApiKey: vi
-        .fn()
-        .mockResolvedValue({ key: "test-api-key", hash: "test-hash" }),
+      ensureApiKey: vi.fn().mockResolvedValue({ key: "test-api-key", hash: "test-hash" }),
     }),
   };
 });
@@ -141,15 +139,13 @@ describe("Eject Template", () => {
       };
 
       // Track all message event handlers added to window
-      vi.spyOn(window, "addEventListener").mockImplementation(
-        (event, handler) => {
-          // Check for message events with proper type handling
-          if (String(event) === "message") {
-            messageEventHandlers.push(handler);
-          }
-          return undefined as ReturnType<typeof window.addEventListener>;
-        },
-      );
+      vi.spyOn(window, "addEventListener").mockImplementation((event, handler) => {
+        // Check for message events with proper type handling
+        if (String(event) === "message") {
+          messageEventHandlers.push(handler);
+        }
+        return undefined as ReturnType<typeof window.addEventListener>;
+      });
 
       // Create a realistic iframe mock that can receive and send messages
       vi.spyOn(document, "querySelector").mockImplementation((selector) => {
@@ -168,52 +164,50 @@ describe("Eject Template", () => {
               close: vi.fn(),
             },
             // Create a postMessage that triggers parent's message handlers
-            postMessage: vi
-              .fn()
-              .mockImplementation((message, _targetOrigin: string) => {
-                // Simulate the iframe sending a message to the parent
-                messageEventHandlers.forEach((handler) => {
-                  // Create a partial MessageEvent and cast to unknown first to satisfy TypeScript
-                  const mockEvent = {
-                    data: message,
-                    origin: window.location.origin,
-                    source: contentWindowMock,
-                    // Add missing required properties
-                    lastEventId: "",
-                    ports: [],
-                    bubbles: false,
-                    cancelable: false,
-                    composed: false,
-                    currentTarget: window,
-                    defaultPrevented: false,
-                    eventPhase: 0,
-                    isTrusted: true,
-                    returnValue: true,
-                    srcElement: null,
-                    target: window,
-                    timeStamp: Date.now(),
-                    type: "message",
-                    composedPath: () => [],
-                    preventDefault: () => {
-                      /* no-op */
-                    },
-                    stopImmediatePropagation: () => {
-                      /* no-op */
-                    },
-                    stopPropagation: () => {
-                      /* no-op */
-                    },
-                    AT_TARGET: 0,
-                    BUBBLING_PHASE: 0,
-                    CAPTURING_PHASE: 0,
-                    NONE: 0,
-                  } as unknown as MessageEvent;
+            postMessage: vi.fn().mockImplementation((message, _targetOrigin: string) => {
+              // Simulate the iframe sending a message to the parent
+              messageEventHandlers.forEach((handler) => {
+                // Create a partial MessageEvent and cast to unknown first to satisfy TypeScript
+                const mockEvent = {
+                  data: message,
+                  origin: window.location.origin,
+                  source: contentWindowMock,
+                  // Add missing required properties
+                  lastEventId: "",
+                  ports: [],
+                  bubbles: false,
+                  cancelable: false,
+                  composed: false,
+                  currentTarget: window,
+                  defaultPrevented: false,
+                  eventPhase: 0,
+                  isTrusted: true,
+                  returnValue: true,
+                  srcElement: null,
+                  target: window,
+                  timeStamp: Date.now(),
+                  type: "message",
+                  composedPath: () => [],
+                  preventDefault: () => {
+                    /* no-op */
+                  },
+                  stopImmediatePropagation: () => {
+                    /* no-op */
+                  },
+                  stopPropagation: () => {
+                    /* no-op */
+                  },
+                  AT_TARGET: 0,
+                  BUBBLING_PHASE: 0,
+                  CAPTURING_PHASE: 0,
+                  NONE: 0,
+                } as unknown as MessageEvent;
 
-                  if (typeof handler === "function") {
-                    handler(mockEvent);
-                  }
-                });
-              }),
+                if (typeof handler === "function") {
+                  handler(mockEvent);
+                }
+              });
+            }),
           };
 
           // Set contentWindow property on iframe
@@ -262,7 +256,7 @@ describe("Eject Template", () => {
           onPreviewLoaded={onPreviewLoadedMock}
           setMobilePreviewShown={vi.fn()}
           updateTitle={vi.fn().mockResolvedValue(undefined)}
-        />,
+        />
       );
 
       // Get the mock iframe created by our mocks
@@ -288,20 +282,16 @@ describe("Eject Template", () => {
             type: "screenshot",
             data: "data:image/png;base64,fakeScreenshotData",
           },
-          "*",
+          "*"
         );
       });
 
       // Verify screenshot handler was called with screenshot data
-      expect(onScreenshotCapturedMock).toHaveBeenCalledWith(
-        "data:image/png;base64,fakeScreenshotData",
-      );
+      expect(onScreenshotCapturedMock).toHaveBeenCalledWith("data:image/png;base64,fakeScreenshotData");
 
       // Verify no JS errors were generated related to APP_CODE
       const consoleErrorSpy = vi.spyOn(console, "error");
-      expect(consoleErrorSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining("is not defined"),
-      );
+      expect(consoleErrorSpy).not.toHaveBeenCalledWith(expect.stringContaining("is not defined"));
     });
   });
 });

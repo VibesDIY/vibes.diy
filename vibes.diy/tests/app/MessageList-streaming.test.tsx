@@ -12,11 +12,7 @@ beforeEach(() => {
 
 // Mock Message component to simplify testing
 vi.mock("~/vibes.diy/app/components/Message", () => ({
-  default: ({
-    message,
-  }: {
-    message: { text?: string; segments: { type: string; content: string }[] };
-  }) => (
+  default: ({ message }: { message: { text?: string; segments: { type: string; content: string }[] } }) => (
     <div data-testid="mock-message">
       {message.segments &&
         message.segments.map((segment, i: number) => (
@@ -61,7 +57,7 @@ describe("MessageList streaming tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Test that the very basic first character of the stream is visible
@@ -100,7 +96,7 @@ describe("MessageList streaming tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Check that the partial content is visible
@@ -144,7 +140,7 @@ describe("MessageList streaming tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Check that both the markdown and code content are visible

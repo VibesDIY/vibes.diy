@@ -19,12 +19,7 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar/utils", () => {
 });
 
 // Import mocked modules
-import {
-  useNavigate,
-  useParams,
-  useLocation,
-  type NavigateFunction,
-} from "react-router-dom";
+import { useNavigate, useParams, useLocation, type NavigateFunction } from "react-router-dom";
 
 describe("useViewState", () => {
   let mockNavigate: ReturnType<typeof vi.fn>;
@@ -36,9 +31,7 @@ describe("useViewState", () => {
     mockNavigate = vi.fn();
 
     // Setup default mocks
-    vi.mocked(useNavigate).mockReturnValue(
-      mockNavigate as unknown as NavigateFunction,
-    );
+    vi.mocked(useNavigate).mockReturnValue(mockNavigate as unknown as NavigateFunction);
     vi.mocked(useParams).mockReturnValue({
       sessionId: mockSessionId,
       title: mockTitle,
@@ -59,8 +52,8 @@ describe("useViewState", () => {
           previewReady: true,
         },
         "/chat/session123/title/app",
-        mockNavigate as unknown as NavigateFunction,
-      ),
+        mockNavigate as unknown as NavigateFunction
+      )
     );
 
     expect(appResult.current.currentView).toBe("preview");
@@ -78,8 +71,8 @@ describe("useViewState", () => {
           previewReady: true,
         },
         "/chat/session123/title/code",
-        mockNavigate as unknown as NavigateFunction,
-      ),
+        mockNavigate as unknown as NavigateFunction
+      )
     );
 
     expect(codeResult.current.currentView).toBe("code");
@@ -97,8 +90,8 @@ describe("useViewState", () => {
           previewReady: true,
         },
         "/chat/session123/title/data",
-        mockNavigate as unknown as NavigateFunction,
-      ),
+        mockNavigate as unknown as NavigateFunction
+      )
     );
 
     expect(dataResult.current.currentView).toBe("data");
@@ -119,8 +112,8 @@ describe("useViewState", () => {
           previewReady: false,
         },
         "/chat/session123/title/app",
-        mockNavigate as unknown as NavigateFunction,
-      ),
+        mockNavigate as unknown as NavigateFunction
+      )
     );
 
     // Verify initial state
@@ -153,8 +146,8 @@ describe("useViewState", () => {
           previewReady: false,
         },
         "/chat/session123/title/code",
-        mockNavigate as unknown as NavigateFunction,
-      ),
+        mockNavigate as unknown as NavigateFunction
+      )
     );
 
     // Verify initial state
@@ -187,8 +180,8 @@ describe("useViewState", () => {
           previewReady: false,
         },
         "/chat/session123/title/data",
-        mockNavigate as unknown as NavigateFunction,
-      ),
+        mockNavigate as unknown as NavigateFunction
+      )
     );
 
     // Verify initial state
@@ -216,23 +209,15 @@ describe("useViewState", () => {
     const testNavigate = vi.fn();
 
     // Initialize with preview not ready
-    const { rerender } = renderHook(
-      (props) =>
-        useViewState(
-          props,
-          `/chat/${mockSessionId}/${mockTitle}`,
-          testNavigate,
-        ),
-      {
-        initialProps: {
-          sessionId: mockSessionId,
-          title: mockTitle,
-          code: 'console.log("test")',
-          isStreaming: false,
-          previewReady: false,
-        },
+    const { rerender } = renderHook((props) => useViewState(props, `/chat/${mockSessionId}/${mockTitle}`, testNavigate), {
+      initialProps: {
+        sessionId: mockSessionId,
+        title: mockTitle,
+        code: 'console.log("test")',
+        isStreaming: false,
+        previewReady: false,
       },
-    );
+    });
 
     // Verify navigate not called initially
     expect(testNavigate).not.toHaveBeenCalled();
@@ -247,12 +232,9 @@ describe("useViewState", () => {
     });
 
     // Should navigate to /app when on base path
-    expect(testNavigate).toHaveBeenCalledWith(
-      `/chat/${mockSessionId}/${mockTitle}/app`,
-      {
-        replace: true,
-      },
-    );
+    expect(testNavigate).toHaveBeenCalledWith(`/chat/${mockSessionId}/${mockTitle}/app`, {
+      replace: true,
+    });
   });
 
   test("should only redirect once when previewReady transitions from false to true", () => {
@@ -265,23 +247,15 @@ describe("useViewState", () => {
     const testNavigate = vi.fn();
 
     // Initialize with preview not ready
-    const { rerender } = renderHook(
-      (props) =>
-        useViewState(
-          props,
-          `/chat/${mockSessionId}/${mockTitle}`,
-          testNavigate,
-        ),
-      {
-        initialProps: {
-          sessionId: mockSessionId,
-          title: mockTitle,
-          code: 'console.log("test")',
-          isStreaming: false,
-          previewReady: false,
-        },
+    const { rerender } = renderHook((props) => useViewState(props, `/chat/${mockSessionId}/${mockTitle}`, testNavigate), {
+      initialProps: {
+        sessionId: mockSessionId,
+        title: mockTitle,
+        code: 'console.log("test")',
+        isStreaming: false,
+        previewReady: false,
       },
-    );
+    });
 
     // First update - previewReady becomes true, should trigger navigation
     rerender({
@@ -294,12 +268,9 @@ describe("useViewState", () => {
 
     // Should navigate to /app once
     expect(testNavigate).toHaveBeenCalledTimes(1);
-    expect(testNavigate).toHaveBeenCalledWith(
-      `/chat/${mockSessionId}/${mockTitle}/app`,
-      {
-        replace: true,
-      },
-    );
+    expect(testNavigate).toHaveBeenCalledWith(`/chat/${mockSessionId}/${mockTitle}/app`, {
+      replace: true,
+    });
 
     // Reset mock to check if another call happens
     testNavigate.mockReset();
@@ -330,8 +301,8 @@ describe("useViewState", () => {
           previewReady: true,
         },
         "/chat/session123/title/settings",
-        mockNavigate as unknown as NavigateFunction,
-      ),
+        mockNavigate as unknown as NavigateFunction
+      )
     );
 
     expect(result.current.currentView).toBe("settings");

@@ -67,7 +67,7 @@ describe("Vision Model Tests", () => {
         expect(error).toBeDefined(); // Simple assertion to avoid test failure
       }
     },
-    TIMEOUT,
+    TIMEOUT
   );
 
   // Add a note about DALL-E integration

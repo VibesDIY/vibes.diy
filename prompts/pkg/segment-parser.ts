@@ -16,37 +16,26 @@ export function parseContent(text: string): {
   // Format 4: {"dependencies": { multi-line with nested dependencies }}
   const depsFormat1 = text.match(/^({"dependencies":\s*{}})/);
   const depsFormat2 = text.match(/^({(?:"[^"]+"\s*:\s*"[^"]+"(?:,\s*)?)+}})/);
-  const depsFormat3 = text.match(
-    /^({"dependencies":\s*{(?:"[^"]+"\s*:\s*"[^"]+"(?:,\s*)?)+}})/,
-  );
+  const depsFormat3 = text.match(/^({"dependencies":\s*{(?:"[^"]+"\s*:\s*"[^"]+"(?:,\s*)?)+}})/);
   // Handle multi-line dependency format with nested structure
   const depsFormat4 = text.match(/^({"dependencies":\s*{[\s\S]*?^}})/m);
 
   if (depsFormat1 && depsFormat1[1]) {
     // Remove the dependencies part from the text
-    text = text
-      .substring(text.indexOf(depsFormat1[1]) + depsFormat1[1].length)
-      .trim();
+    text = text.substring(text.indexOf(depsFormat1[1]) + depsFormat1[1].length).trim();
   } else if (depsFormat2 && depsFormat2[1]) {
     // Remove the dependencies part from the text
-    text = text
-      .substring(text.indexOf(depsFormat2[1]) + depsFormat2[1].length)
-      .trim();
+    text = text.substring(text.indexOf(depsFormat2[1]) + depsFormat2[1].length).trim();
   } else if (depsFormat3 && depsFormat3[1]) {
     // Remove the dependencies part from the text
-    text = text
-      .substring(text.indexOf(depsFormat3[1]) + depsFormat3[1].length)
-      .trim();
+    text = text.substring(text.indexOf(depsFormat3[1]) + depsFormat3[1].length).trim();
   } else if (depsFormat4 && depsFormat4[1]) {
     // Remove the dependencies part from the text
-    text = text
-      .substring(text.indexOf(depsFormat4[1]) + depsFormat4[1].length)
-      .trim();
+    text = text.substring(text.indexOf(depsFormat4[1]) + depsFormat4[1].length).trim();
   }
 
   // Find all complete code blocks
-  const codeBlockRegex =
-    /(?:^|\n)[ \t]*```(?:js|jsx|javascript|)[ \t]*\n([\s\S]*?)(?:^|\n)[ \t]*```[ \t]*(?:\n|$)/g;
+  const codeBlockRegex = /(?:^|\n)[ \t]*```(?:js|jsx|javascript|)[ \t]*\n([\s\S]*?)(?:^|\n)[ \t]*```[ \t]*(?:\n|$)/g;
   const codeBlocks = [];
 
   // Get all matches
@@ -69,13 +58,8 @@ export function parseContent(text: string): {
   }
 
   // Now check for incomplete code blocks at the end of the file
-  const incompleteCodeBlockMatch = text.match(
-    /(?:^|\n)[ \t]*```(?:js|jsx|javascript|)[ \t]*\n([\s\S]*)$/s,
-  );
-  if (
-    incompleteCodeBlockMatch &&
-    incompleteCodeBlockMatch.index !== undefined
-  ) {
+  const incompleteCodeBlockMatch = text.match(/(?:^|\n)[ \t]*```(?:js|jsx|javascript|)[ \t]*\n([\s\S]*)$/s);
+  if (incompleteCodeBlockMatch && incompleteCodeBlockMatch.index !== undefined) {
     // Check that this isn't just a duplicate of an already found block
     const startIdx = incompleteCodeBlockMatch.index;
     const isDuplicate = codeBlocks.some((block) => block.startIdx === startIdx);
@@ -133,10 +117,7 @@ export function parseContent(text: string): {
         // Add any text between the previous position and the longest block
         beforeContent += text.substring(currentPos, block.startIdx);
         break;
-      } else if (
-        block.startIdx >= currentPos &&
-        block.endIdx <= longestBlock.startIdx
-      ) {
+      } else if (block.startIdx >= currentPos && block.endIdx <= longestBlock.startIdx) {
         // Add text between the current position and this block
         beforeContent += text.substring(currentPos, block.startIdx);
         // Add the code block itself to the markdown

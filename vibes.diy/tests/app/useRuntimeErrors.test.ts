@@ -41,9 +41,7 @@ describe("useRuntimeErrors", () => {
 
     // Check that error was added to immediateErrors
     expect(result.current.immediateErrors.length).toBe(1);
-    expect(result.current.immediateErrors[0].message).toBe(
-      "SyntaxError: Unexpected token",
-    );
+    expect(result.current.immediateErrors[0].message).toBe("SyntaxError: Unexpected token");
     expect(result.current.advisoryErrors.length).toBe(0);
 
     // Verify onSaveError was called with the correct category
@@ -66,9 +64,7 @@ describe("useRuntimeErrors", () => {
 
     // Check that error was added to advisoryErrors
     expect(result.current.advisoryErrors.length).toBe(1);
-    expect(result.current.advisoryErrors[0].message).toBe(
-      "Not found: database key does not exist",
-    );
+    expect(result.current.advisoryErrors[0].message).toBe("Not found: database key does not exist");
     expect(result.current.immediateErrors.length).toBe(0);
 
     // Verify onSaveError was called with the correct category
@@ -94,10 +90,9 @@ describe("useRuntimeErrors", () => {
 
   test("should clear immediate errors when didSendErrors is true", async () => {
     // First add an error
-    const { result, rerender } = renderHook(
-      ({ didSendErrors }) => useRuntimeErrors({ didSendErrors }),
-      { initialProps: { didSendErrors: false } },
-    );
+    const { result, rerender } = renderHook(({ didSendErrors }) => useRuntimeErrors({ didSendErrors }), {
+      initialProps: { didSendErrors: false },
+    });
 
     const typeError: RuntimeError = {
       type: "error",

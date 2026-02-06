@@ -2,11 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import MessageList from "~/vibes.diy/app/components/MessageList.js";
 import { vi, describe, test, expect, beforeEach } from "vitest";
-import type {
-  UserChatMessage,
-  AiChatMessage,
-  ChatMessageDocument,
-} from "@vibes.diy/prompts";
+import type { UserChatMessage, AiChatMessage, ChatMessageDocument } from "@vibes.diy/prompts";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 beforeEach(() => {
@@ -67,7 +63,7 @@ describe("MessageList Real-World Streaming Tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Check if we see the minimal content in the DOM
@@ -75,9 +71,7 @@ describe("MessageList Real-World Streaming Tests", () => {
     expect(messageContent).toBeInTheDocument();
 
     // Log the DOM structure to see what's actually rendered
-    const messageContainer = document.querySelector(
-      '[data-testid="message-1"]',
-    );
+    const messageContainer = document.querySelector('[data-testid="message-1"]');
     if (messageContainer) {
       expect(messageContainer.innerHTML).toContain("{");
     } else {
@@ -89,8 +83,7 @@ describe("MessageList Real-World Streaming Tests", () => {
   });
 
   test("should update UI as more content streams in", () => {
-    const content =
-      '{"dependencies": {}}\n\nThis quiz app allows users to create';
+    const content = '{"dependencies": {}}\n\nThis quiz app allows users to create';
     expect(content.length).toBeGreaterThan(0);
 
     const messages = [
@@ -128,13 +121,11 @@ describe("MessageList Real-World Streaming Tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Check if we see the content
-    expect(
-      screen.getByText(/This quiz app allows users to create/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/This quiz app allows users to create/)).toBeInTheDocument();
   });
 
   test("should display both markdown and code when segments are present", () => {
@@ -182,7 +173,7 @@ describe("MessageList Real-World Streaming Tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Check if we see both types of content
@@ -223,7 +214,7 @@ describe("MessageList Real-World Streaming Tests", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // ... rest of the test ...

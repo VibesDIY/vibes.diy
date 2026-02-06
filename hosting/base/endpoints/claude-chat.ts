@@ -90,9 +90,7 @@ interface OpenAIResponse {
   };
 }
 
-function convertToOpenAIFormat(
-  claudeResponse: ClaudeMessagesResponse,
-): OpenAIResponse {
+function convertToOpenAIFormat(claudeResponse: ClaudeMessagesResponse): OpenAIResponse {
   // Extract text content from Claude response
   const content = claudeResponse.content
     .filter((item) => item.type === "text")
@@ -117,21 +115,15 @@ function convertToOpenAIFormat(
     usage: {
       prompt_tokens: claudeResponse.usage.input_tokens,
       completion_tokens: claudeResponse.usage.output_tokens,
-      total_tokens:
-        claudeResponse.usage.input_tokens + claudeResponse.usage.output_tokens,
+      total_tokens: claudeResponse.usage.input_tokens + claudeResponse.usage.output_tokens,
     },
   };
 }
 
 // Core function to handle chat completions via Claude API
-async function claudeChat(
-  params: ClaudeMessagesRequest,
-  apiKey: string,
-): Promise<Response> {
+async function claudeChat(params: ClaudeMessagesRequest, apiKey: string): Promise<Response> {
   try {
-    const { systemPrompt, claudeMessages } = convertToClaudeFormat(
-      params.messages,
-    );
+    const { systemPrompt, claudeMessages } = convertToClaudeFormat(params.messages);
 
     // Prepare Claude API request body
     const requestBody: {
@@ -196,9 +188,7 @@ async function claudeChat(
                 if (line.startsWith("data:")) {
                   const data = line.slice(5).trim();
                   if (data === "[DONE]") {
-                    controller.enqueue(
-                      new TextEncoder().encode(`data: [DONE]\n\n`),
-                    );
+                    controller.enqueue(new TextEncoder().encode(`data: [DONE]\n\n`));
                     return;
                   }
 
@@ -218,10 +208,7 @@ async function claudeChat(
                       }[],
                     };
 
-                    if (
-                      claudeEvent.type === "content_block_delta" &&
-                      claudeEvent.delta.type === "text"
-                    ) {
+                    if (claudeEvent.type === "content_block_delta" && claudeEvent.delta.type === "text") {
                       openaiEvent.choices.push({
                         index: 0,
                         delta: { content: claudeEvent.delta.text },
@@ -235,11 +222,7 @@ async function claudeChat(
                       });
                     }
 
-                    controller.enqueue(
-                      new TextEncoder().encode(
-                        `data: ${JSON.stringify(openaiEvent)}\n\n`,
-                      ),
-                    );
+                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(openaiEvent)}\n\n`));
                   } catch (e) {
                     console.error("Error parsing Claude event:", e);
                   }
@@ -316,7 +299,7 @@ async function claudeChat(
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        },
+        }
       );
     }
 
@@ -347,7 +330,7 @@ async function claudeChat(
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
-      },
+      }
     );
   }
 }
@@ -360,55 +343,23 @@ export class ClaudeChat extends OpenAPIRoute {
     request: {
       body: contentJson(
         z.object({
-          model: z
-            .string()
-            .describe(
-              "ID of the Claude model to use (e.g., 'claude-3-opus-20240229')",
-            ),
+          model: z.string().describe("ID of the Claude model to use (e.g., 'claude-3-opus-20240229')"),
           messages: z
             .array(
               z.object({
-                role: z
-                  .string()
-                  .describe(
-                    "The role of the message author (system, user, assistant)",
-                  ),
+                role: z.string().describe("The role of the message author (system, user, assistant)"),
                 content: z.string().describe("The content of the message"),
-                name: z
-                  .string()
-                  .optional()
-                  .describe("Optional name for the message author"),
-              }),
+                name: z.string().optional().describe("Optional name for the message author"),
+              })
             )
             .describe("A list of messages comprising the conversation so far"),
-          temperature: z
-            .number()
-            .optional()
-            .default(1)
-            .describe("Sampling temperature (0-1)"),
-          top_p: z
-            .number()
-            .optional()
-            .default(1)
-            .describe("Nucleus sampling parameter"),
-          top_k: z
-            .number()
-            .optional()
-            .describe(
-              "Only sample from the top K options for each subsequent token",
-            ),
-          max_tokens: z
-            .number()
-            .optional()
-            .default(1024)
-            .describe("Maximum number of tokens to generate"),
-          stream: z
-            .boolean()
-            .optional()
-            .default(false)
-            .describe("Stream partial progress"),
+          temperature: z.number().optional().default(1).describe("Sampling temperature (0-1)"),
+          top_p: z.number().optional().default(1).describe("Nucleus sampling parameter"),
+          top_k: z.number().optional().describe("Only sample from the top K options for each subsequent token"),
+          max_tokens: z.number().optional().default(1024).describe("Maximum number of tokens to generate"),
+          stream: z.boolean().optional().default(false).describe("Stream partial progress"),
           user: z.string().optional().describe("User ID for tracking"),
-        }),
+        })
       ),
     },
     responses: {
@@ -428,14 +379,14 @@ export class ClaudeChat extends OpenAPIRoute {
                   content: z.string(),
                 }),
                 finish_reason: z.string(),
-              }),
+              })
             ),
             usage: z.object({
               prompt_tokens: z.number(),
               completion_tokens: z.number(),
               total_tokens: z.number(),
             }),
-          }),
+          })
         ),
       },
     },
@@ -452,13 +403,12 @@ export class ClaudeChat extends OpenAPIRoute {
         return c.json(
           {
             error: {
-              message:
-                "Authentication required. Please log in to use AI features.",
+              message: "Authentication required. Please log in to use AI features.",
               type: "authentication_error",
               code: 401,
             },
           },
-          401,
+          401
         );
       }
 
@@ -486,7 +436,7 @@ export class ClaudeChat extends OpenAPIRoute {
               code: null,
             },
           },
-          500,
+          500
         );
       }
 
@@ -500,16 +450,13 @@ export class ClaudeChat extends OpenAPIRoute {
       return c.json(
         {
           error: {
-            message:
-              error instanceof Error
-                ? error.message
-                : "An error occurred processing your request",
+            message: error instanceof Error ? error.message : "An error occurred processing your request",
             type: "server_error",
             param: null,
             code: null,
           },
         },
-        500,
+        500
       );
     }
   }

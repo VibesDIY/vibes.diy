@@ -250,7 +250,7 @@ describe("callAi", () => {
     expect(body.response_format.json_schema.schema.properties.aliens.type).toBe("array");
     expect(body.response_format.json_schema.schema.properties.aliens.items.type).toBe("object");
     expect(body.response_format.json_schema.schema.properties.aliens.items.properties).toEqual(
-      alienSchema.properties.aliens.items.properties,
+      alienSchema.properties.aliens.items.properties
     );
     expect(body.model).toBe("openai/gpt-4o");
     expect(body.stream).toBe(true);

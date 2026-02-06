@@ -22,13 +22,8 @@ describe("ChatHeader", () => {
   it("renders correctly", () => {
     render(
       <MockThemeProvider>
-        <ChatHeader
-          onOpenSidebar={onOpenSidebar}
-          title="Test Chat"
-          isStreaming={false}
-          codeReady={false}
-        />
-      </MockThemeProvider>,
+        <ChatHeader onOpenSidebar={onOpenSidebar} title="Test Chat" isStreaming={false} codeReady={false} />
+      </MockThemeProvider>
     );
 
     expect(screen.getByLabelText("Open chat history")).toBeDefined();
@@ -38,13 +33,8 @@ describe("ChatHeader", () => {
   it("calls openSidebar when the sidebar button is clicked", () => {
     render(
       <MockThemeProvider>
-        <ChatHeader
-          onOpenSidebar={onOpenSidebar}
-          title="Test Chat"
-          isStreaming={false}
-          codeReady={false}
-        />
-      </MockThemeProvider>,
+        <ChatHeader onOpenSidebar={onOpenSidebar} title="Test Chat" isStreaming={false} codeReady={false} />
+      </MockThemeProvider>
     );
 
     const openButton = screen.getByLabelText("Open chat history");
@@ -56,13 +46,8 @@ describe("ChatHeader", () => {
   it("navigates to home when the new chat button is clicked", () => {
     render(
       <MockThemeProvider>
-        <ChatHeader
-          onOpenSidebar={onOpenSidebar}
-          title="Test Chat"
-          isStreaming={false}
-          codeReady={false}
-        />
-      </MockThemeProvider>,
+        <ChatHeader onOpenSidebar={onOpenSidebar} title="Test Chat" isStreaming={false} codeReady={false} />
+      </MockThemeProvider>
     );
 
     // Just verify the new vibe button exists since we can't easily mock document.location

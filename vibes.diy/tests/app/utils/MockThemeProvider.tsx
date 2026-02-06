@@ -10,13 +10,6 @@ interface MockThemeProviderProps {
 /**
  * A mock ThemeProvider for testing components that use the useTheme hook
  */
-export function MockThemeProvider({
-  isDarkMode = false,
-  children,
-}: MockThemeProviderProps) {
-  return (
-    <ThemeContext.Provider value={{ isDarkMode }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+export function MockThemeProvider({ isDarkMode = false, children }: MockThemeProviderProps) {
+  return <ThemeContext.Provider value={{ isDarkMode }}>{children}</ThemeContext.Provider>;
 }

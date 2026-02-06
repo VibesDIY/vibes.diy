@@ -4,19 +4,14 @@ interface ThemeContextType {
   isDarkMode: boolean;
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(
-  undefined,
-);
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 // Move useThemeDetection here and make it a non-exported function
 function useThemeDetection() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     // Initialize state based on current conditions
     if (typeof window !== "undefined") {
-      return (
-        document.documentElement.classList.contains("dark") ||
-        window.matchMedia("(prefers-color-scheme: dark)").matches
-      );
+      return document.documentElement.classList.contains("dark") || window.matchMedia("(prefers-color-scheme: dark)").matches;
     }
     return false; // Default for SSR
   });
@@ -50,11 +45,7 @@ function useThemeDetection() {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const isDarkMode = useThemeDetection();
 
-  return (
-    <ThemeContext.Provider value={{ isDarkMode }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ isDarkMode }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme(): ThemeContextType {

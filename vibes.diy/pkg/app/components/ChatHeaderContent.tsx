@@ -1,21 +1,15 @@
 import React, { memo } from "react";
 import { MenuIcon, EditIcon } from "./ChatHeaderIcons.js";
 
-export interface ChatHeaderContentProps {
+interface ChatHeaderContentProps {
   onOpenSidebar: () => void;
   title: string;
-  isStreaming: boolean;
+  promptProcessing: boolean;
   codeReady: boolean;
   remixOf?: string;
 }
 
-function ChatHeaderContent({
-  onOpenSidebar,
-  title,
-  isStreaming,
-  codeReady,
-  remixOf,
-}: ChatHeaderContentProps) {
+function ChatHeaderContent({ onOpenSidebar, title, promptProcessing, codeReady, remixOf }: ChatHeaderContentProps) {
   return (
     <div className="flex h-full w-full items-center justify-between p-2 py-4">
       <div className="flex items-center">
@@ -46,7 +40,7 @@ function ChatHeaderContent({
         )}
       </div>
 
-      {(codeReady || isStreaming || title) && (
+      {(codeReady || promptProcessing || title) && (
         <div className="relative px-2">
           <a
             href="/"
@@ -74,7 +68,7 @@ export default memo(ChatHeaderContent, (prevProps, nextProps) => {
     prevProps.remixOf === nextProps.remixOf &&
     prevProps.onOpenSidebar === nextProps.onOpenSidebar &&
     prevProps.title === nextProps.title &&
-    prevProps.isStreaming === nextProps.isStreaming &&
+    prevProps.promptProcessing === nextProps.promptProcessing &&
     prevProps.codeReady === nextProps.codeReady
   );
 });

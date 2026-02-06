@@ -12,8 +12,7 @@ const mocks = vi.hoisted(() => {
 // Mock React Router
 vi.mock("react-router", async () => {
   const { vi } = await import("vitest");
-  const actual =
-    await vi.importActual<typeof import("react-router")>("react-router");
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
     useLocation: () => ({
@@ -70,15 +69,7 @@ vi.mock("~/vibes.diy/app/config/env", () => ({
 
 // Mock react-cookie-consent
 vi.mock("react-cookie-consent", () => ({
-  default: ({
-    children,
-    onAccept,
-    onDecline,
-  }: {
-    children: React.ReactNode;
-    onAccept: () => void;
-    onDecline: () => void;
-  }) => (
+  default: ({ children, onAccept, onDecline }: { children: React.ReactNode; onAccept: () => void; onDecline: () => void }) => (
     <div data-testid="cookie-banner">
       {children}
       <button onClick={onAccept} data-testid="accept-button">
@@ -100,9 +91,7 @@ describe("CookieBanner Hook Ordering", () => {
 
   beforeEach(() => {
     // Spy on console.error to catch React hook violations
-    consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     mocks.mockCookieConsentValue.value = "false";
 
     // Mock sessionStorage
@@ -126,21 +115,19 @@ describe("CookieBanner Hook Ordering", () => {
     const { rerender } = render(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Component should render without errors
     await waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="cookie-banner"]'),
-      ).toBeInTheDocument();
+      expect(document.querySelector('[data-testid="cookie-banner"]')).toBeInTheDocument();
     });
 
     // Force a re-render to ensure hooks are stable
     rerender(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Verify no React hook errors were logged
@@ -148,10 +135,8 @@ describe("CookieBanner Hook Ordering", () => {
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);
@@ -163,29 +148,27 @@ describe("CookieBanner Hook Ordering", () => {
     const { rerender } = render(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Wait for dynamic import to complete
     await waitFor(
       () => {
-        expect(
-          document.querySelector('[data-testid="cookie-banner"]'),
-        ).toBeInTheDocument();
+        expect(document.querySelector('[data-testid="cookie-banner"]')).toBeInTheDocument();
       },
-      { timeout: 1000 },
+      { timeout: 1000 }
     );
 
     // Re-render multiple times to ensure hook stability
     rerender(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     rerender(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Verify no hook ordering violations occurred
@@ -193,10 +176,8 @@ describe("CookieBanner Hook Ordering", () => {
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);
@@ -209,14 +190,12 @@ describe("CookieBanner Hook Ordering", () => {
     const { rerender } = render(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Wait for component to settle
     await waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="cookie-banner"]'),
-      ).toBeInTheDocument();
+      expect(document.querySelector('[data-testid="cookie-banner"]')).toBeInTheDocument();
     });
 
     // Re-render multiple times to stress test hook ordering
@@ -224,25 +203,21 @@ describe("CookieBanner Hook Ordering", () => {
       rerender(
         <MemoryRouter>
           <CookieBanner />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     }
 
     // If hooks are called in wrong order, React would throw an error
     // The fact that we got here means hooks are called consistently
-    expect(
-      document.querySelector('[data-testid="cookie-banner"]'),
-    ).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="cookie-banner"]')).toBeInTheDocument();
 
     // Verify no hook violations
     const hookErrors = consoleErrorSpy.mock.calls.filter((call) =>
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);
@@ -255,21 +230,19 @@ describe("CookieBanner Hook Ordering", () => {
     const { rerender } = render(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Wait for banner to appear
     await waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="cookie-banner"]'),
-      ).toBeInTheDocument();
+      expect(document.querySelector('[data-testid="cookie-banner"]')).toBeInTheDocument();
     });
 
     // Re-render to test stability
     rerender(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Verify no hook violations during transition
@@ -277,10 +250,8 @@ describe("CookieBanner Hook Ordering", () => {
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);
@@ -296,14 +267,12 @@ describe("CookieBanner Hook Ordering", () => {
     render(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Wait for banner to render (XCookieConsent loads asynchronously)
     await waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="cookie-banner"]'),
-      ).toBeInTheDocument();
+      expect(document.querySelector('[data-testid="cookie-banner"]')).toBeInTheDocument();
     });
 
     // Wait for tracking effect to fire (depends on XCookieConsent and messageHasBeenSent)
@@ -319,13 +288,11 @@ describe("CookieBanner Hook Ordering", () => {
     const { rerender } = render(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="cookie-banner"]'),
-      ).toBeInTheDocument();
+      expect(document.querySelector('[data-testid="cookie-banner"]')).toBeInTheDocument();
     });
 
     // Simulate user accepting cookies
@@ -335,19 +302,19 @@ describe("CookieBanner Hook Ordering", () => {
     rerender(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Multiple re-renders to stress test hook ordering
     rerender(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     rerender(
       <MemoryRouter>
         <CookieBanner />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Verify no hook violations
@@ -355,10 +322,8 @@ describe("CookieBanner Hook Ordering", () => {
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);

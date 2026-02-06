@@ -1,6 +1,6 @@
 // Type definitions for ImgGen components
-import type { PartialImageDocument } from '@vibes.diy/use-vibes-types';
-import { ImgGenClasses } from '../../utils/style-utils.js';
+import type { PartialImageDocument } from "@vibes.diy/use-vibes-types";
+import { ImgGenClasses } from "../../utils/style-utils.js";
 
 // Props for the placeholder component
 export interface ImgGenPlaceholderProps {

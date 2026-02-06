@@ -1,10 +1,9 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import React from 'react';
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import React from "react";
 
 // Use vi.hoisted to create mock data that can be safely used in vi.mock factories
 const mockData = vi.hoisted(() => {
-  const mockBase64Image =
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const mockBase64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
   const dbPuts: { _id: string; [key: string]: unknown }[] = [];
 
   return {
@@ -40,7 +39,7 @@ const mockCallImageGen = vi.hoisted(() => {
         {
           b64_json: mockData.mockBase64Image,
           url: null,
-          revised_prompt: 'Generated test image',
+          revised_prompt: "Generated test image",
         },
       ],
     });
@@ -75,7 +74,7 @@ const mockDbPut = vi.hoisted(() => {
     return Promise.resolve({
       id: docWithId._id,
       ok: true,
-      rev: '1-123',
+      rev: "1-123",
     });
   });
 });
@@ -103,14 +102,14 @@ const mockDbGet = vi.hoisted(() => {
 const mockImgFile = vi.hoisted(() => {
   return vi.fn().mockImplementation(({ className, alt, style }) => {
     return React.createElement(
-      'div',
+      "div",
       {
-        'data-testid': 'mock-img-file',
-        className: `img-file ${className || ''}`,
+        "data-testid": "mock-img-file",
+        className: `img-file ${className || ""}`,
         style,
-        'aria-label': alt,
+        "aria-label": alt,
       },
-      'ImgFile (Mocked)'
+      "ImgFile (Mocked)"
     );
   });
 });
@@ -168,7 +167,7 @@ const mockImgFile = vi.hoisted(() => {
 //   };
 // });
 
-vi.mock('use-vibes', (actual) => {
+vi.mock("use-vibes", (actual) => {
   return {
     ...actual,
     useFireproof: () => ({
@@ -186,9 +185,9 @@ vi.mock('use-vibes', (actual) => {
 });
 
 // Import after mocks
-import { MODULE_STATE } from '@vibes.diy/use-vibes-base';
+import { MODULE_STATE } from "@vibes.diy/use-vibes-base";
 
-describe('ImgGen Document Deduplication', () => {
+describe("ImgGen Document Deduplication", () => {
   beforeEach(() => {
     // Clear mocks and tracked state
     vi.clearAllMocks();
@@ -203,22 +202,22 @@ describe('ImgGen Document Deduplication', () => {
     vi.restoreAllMocks();
   });
 
-  it('should prevent duplicate document creation with same prompt', async () => {
+  it("should prevent duplicate document creation with same prompt", async () => {
     // Clear existing data for this test
     mockDbPut.mockClear();
     MODULE_STATE.createdDocuments.clear();
 
     // Create documents directly for testing
-    const prompt = 'test duplicate prevention';
+    const prompt = "test duplicate prevention";
     const stableKey = `${prompt}-${JSON.stringify(undefined)}`;
     const docId = `test-doc-${Date.now()}`;
 
     // Create a document for the first render
     const doc = {
       _id: docId,
-      type: 'imgGen',
+      type: "imgGen",
       prompt,
-      url: 'test-url',
+      url: "test-url",
       b64_json: mockData.mockBase64Image,
     };
 
@@ -233,21 +232,21 @@ describe('ImgGen Document Deduplication', () => {
     expect(MODULE_STATE.createdDocuments.get(stableKey)).toBe(docId);
   });
 
-  it('should create new documents for different prompts', async () => {
+  it("should create new documents for different prompts", async () => {
     // Clear existing data for this test
     mockDbPut.mockClear();
     MODULE_STATE.createdDocuments.clear();
 
     // Create first document
-    const prompt1 = 'first test prompt';
+    const prompt1 = "first test prompt";
     const stableKey1 = `${prompt1}-${JSON.stringify(undefined)}`;
     const docId1 = `test-doc-${Date.now()}`;
 
     const doc1 = {
       _id: docId1,
-      type: 'imgGen',
+      type: "imgGen",
       prompt: prompt1,
-      url: 'test-url',
+      url: "test-url",
       b64_json: mockData.mockBase64Image,
     };
 
@@ -255,15 +254,15 @@ describe('ImgGen Document Deduplication', () => {
     mockDbPut(doc1);
 
     // Create second document with different prompt
-    const prompt2 = 'second test prompt';
+    const prompt2 = "second test prompt";
     const stableKey2 = `${prompt2}-${JSON.stringify(undefined)}`;
     const docId2 = `test-doc-${Date.now()}`;
 
     const doc2 = {
       _id: docId2,
-      type: 'imgGen',
+      type: "imgGen",
       prompt: prompt2,
-      url: 'test-url',
+      url: "test-url",
       b64_json: mockData.mockBase64Image,
     };
 
@@ -282,23 +281,23 @@ describe('ImgGen Document Deduplication', () => {
     expect(MODULE_STATE.createdDocuments.get(stableKey2)).toBe(docId2);
   });
 
-  it('should use the option params in the deduplication key', async () => {
+  it("should use the option params in the deduplication key", async () => {
     // Clear existing data for this test
     mockDbPut.mockClear();
     MODULE_STATE.createdDocuments.clear();
 
     // Create first document with specific options
-    const prompt = 'same prompt';
-    const options1 = { size: '256x256' };
+    const prompt = "same prompt";
+    const options1 = { size: "256x256" };
     const stableKey1 = `${prompt}-${JSON.stringify(options1)}`;
     const docId1 = `test-doc-${Date.now()}`;
 
     const doc1 = {
       _id: docId1,
-      type: 'imgGen',
+      type: "imgGen",
       prompt,
       options: options1,
-      url: 'test-url',
+      url: "test-url",
       b64_json: mockData.mockBase64Image,
     };
 
@@ -306,16 +305,16 @@ describe('ImgGen Document Deduplication', () => {
     mockDbPut(doc1);
 
     // Create second document with same prompt but different options
-    const options2 = { size: '512x512' };
+    const options2 = { size: "512x512" };
     const stableKey2 = `${prompt}-${JSON.stringify(options2)}`;
     const docId2 = `test-doc-${Date.now() + 1}`;
 
     const doc2 = {
       _id: docId2,
-      type: 'imgGen',
+      type: "imgGen",
       prompt,
       options: options2,
-      url: 'test-url',
+      url: "test-url",
       b64_json: mockData.mockBase64Image,
     };
 
@@ -337,15 +336,15 @@ describe('ImgGen Document Deduplication', () => {
     expect(stableKey1).not.toBe(stableKey2);
   });
 
-  it('should fall back to creating a new document if tracked document is not found', async () => {
+  it("should fall back to creating a new document if tracked document is not found", async () => {
     // Clear existing data for this test
     mockDbPut.mockClear();
     MODULE_STATE.createdDocuments.clear();
 
     // First, add an invalid ID to the tracking map
-    const prompt = 'missing document';
+    const prompt = "missing document";
     const stableKey = `${prompt}-${JSON.stringify(undefined)}`;
-    const nonExistentId = 'non-existent-id';
+    const nonExistentId = "non-existent-id";
 
     // Only add to the tracking map, but don't create a real document
     MODULE_STATE.createdDocuments.set(stableKey, nonExistentId);
@@ -359,9 +358,9 @@ describe('ImgGen Document Deduplication', () => {
     const newDocId = `new-doc-${Date.now()}`;
     const newDoc = {
       _id: newDocId,
-      type: 'imgGen',
+      type: "imgGen",
       prompt,
-      url: 'test-url',
+      url: "test-url",
       b64_json: mockData.mockBase64Image,
     };
 

@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import type { DocBase } from 'use-vibes';
-import { useFireproof } from 'use-vibes';
-import './App.css';
+import { useEffect, useState } from "react";
+import type { DocBase } from "use-vibes";
+import { useFireproof } from "use-vibes";
+import "./App.css";
 
 // Define interface for todo documents
 interface TodoDocument extends DocBase {
-  type: 'todo';
+  type: "todo";
   text: string;
   completed: boolean;
   created: number;
@@ -13,31 +13,31 @@ interface TodoDocument extends DocBase {
 }
 
 function TodoListExample() {
-  const [newTodoText, setNewTodoText] = useState('');
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [newTodoText, setNewTodoText] = useState("");
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
 
   // Use Fireproof - starts local-first, then automatically shows sync overlay
-  const { useLiveQuery, database, attach, enableSync, syncEnabled } = useFireproof('TodoApp-100');
+  const { useLiveQuery, database, attach, enableSync, syncEnabled } = useFireproof("TodoApp-100");
 
   // Debug logging for attach state
   useEffect(() => {
-    console.log('Sync enabled:', syncEnabled);
-    console.log('Attach state:', attach?.state);
+    console.log("Sync enabled:", syncEnabled);
+    console.log("Attach state:", attach?.state);
     if (attach?.ctx?.tokenAndClaims) {
-      console.log('Token state:', attach.ctx.tokenAndClaims.state);
+      console.log("Token state:", attach.ctx.tokenAndClaims.state);
     }
   }, [syncEnabled, attach]);
 
   // Get all todos sorted by creation date
-  const { docs: allTodos } = useLiveQuery<TodoDocument>('type', {
-    key: 'todo',
+  const { docs: allTodos } = useLiveQuery<TodoDocument>("type", {
+    key: "todo",
     descending: true,
   });
 
   // Filter todos based on current filter
   const filteredTodos = allTodos.filter((todo) => {
-    if (filter === 'active') return !todo.completed;
-    if (filter === 'completed') return todo.completed;
+    if (filter === "active") return !todo.completed;
+    if (filter === "completed") return todo.completed;
     return true; // 'all'
   });
 
@@ -48,8 +48,8 @@ function TodoListExample() {
     e.preventDefault();
     if (!newTodoText.trim()) return;
 
-    const newTodo: Omit<TodoDocument, '_id'> = {
-      type: 'todo',
+    const newTodo: Omit<TodoDocument, "_id"> = {
+      type: "todo",
       text: newTodoText.trim(),
       completed: false,
       created: Date.now(),
@@ -57,9 +57,9 @@ function TodoListExample() {
 
     try {
       await database.put(newTodo);
-      setNewTodoText('');
+      setNewTodoText("");
     } catch (error) {
-      console.error('Failed to add todo:', error);
+      console.error("Failed to add todo:", error);
     }
   };
 
@@ -71,7 +71,7 @@ function TodoListExample() {
         updated: Date.now(),
       });
     } catch (error) {
-      console.error('Failed to toggle todo:', error);
+      console.error("Failed to toggle todo:", error);
     }
   };
 
@@ -79,7 +79,7 @@ function TodoListExample() {
     try {
       await database.del(todoId);
     } catch (error) {
-      console.error('Failed to delete todo:', error);
+      console.error("Failed to delete todo:", error);
     }
   };
 
@@ -93,7 +93,7 @@ function TodoListExample() {
         updated: Date.now(),
       });
     } catch (error) {
-      console.error('Failed to edit todo:', error);
+      console.error("Failed to edit todo:", error);
     }
   };
 
@@ -102,14 +102,14 @@ function TodoListExample() {
     try {
       await Promise.all(completedTodos.map((todo) => database.del(todo._id)));
     } catch (error) {
-      console.error('Failed to clear completed todos:', error);
+      console.error("Failed to clear completed todos:", error);
     }
   };
 
   return (
     <div className="container">
       <h1>Todo List</h1>
-      <p style={{ marginBottom: '2rem', color: '#666' }}>
+      <p style={{ marginBottom: "2rem", color: "#666" }}>
         A simple todo list using Fireproof for real-time data sync and persistence.
       </p>
 
@@ -117,27 +117,27 @@ function TodoListExample() {
       {!syncEnabled && (
         <div
           style={{
-            marginBottom: '2rem',
-            padding: '1rem',
-            backgroundColor: '#f0f8ff',
-            borderRadius: '4px',
-            border: '1px solid #b0d4ff',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            marginBottom: "2rem",
+            padding: "1rem",
+            backgroundColor: "#f0f8ff",
+            borderRadius: "4px",
+            border: "1px solid #b0d4ff",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <span style={{ color: '#0066cc' }}>Enable sync to share your todos across devices</span>
+          <span style={{ color: "#0066cc" }}>Enable sync to share your todos across devices</span>
           <button
             onClick={enableSync}
             style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#007acc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
+              padding: "0.5rem 1rem",
+              backgroundColor: "#007acc",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "0.9rem",
             }}
           >
             Enable Sync
@@ -146,8 +146,8 @@ function TodoListExample() {
       )}
 
       {/* Add new todo form */}
-      <form onSubmit={handleAddTodo} style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <form onSubmit={handleAddTodo} style={{ marginBottom: "2rem" }}>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
           <input
             type="text"
             value={newTodoText}
@@ -155,23 +155,23 @@ function TodoListExample() {
             placeholder="What needs to be done?"
             style={{
               flex: 1,
-              padding: '0.75rem',
-              border: '2px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '1rem',
+              padding: "0.75rem",
+              border: "2px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "1rem",
             }}
           />
           <button
             type="submit"
             disabled={!newTodoText.trim()}
             style={{
-              padding: '0.75rem 1.5rem',
-              backgroundColor: '#007acc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              cursor: 'pointer',
+              padding: "0.75rem 1.5rem",
+              backgroundColor: "#007acc",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "1rem",
+              cursor: "pointer",
               opacity: !newTodoText.trim() ? 0.5 : 1,
             }}
           >
@@ -184,48 +184,48 @@ function TodoListExample() {
       {allTodos.length > 0 && (
         <div
           style={{
-            display: 'flex',
-            gap: '0.5rem',
-            marginBottom: '1rem',
-            justifyContent: 'center',
+            display: "flex",
+            gap: "0.5rem",
+            marginBottom: "1rem",
+            justifyContent: "center",
           }}
         >
-          {(['all', 'active', 'completed'] as const).map((filterType) => (
+          {(["all", "active", "completed"] as const).map((filterType) => (
             <button
               key={filterType}
               onClick={() => setFilter(filterType)}
               style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid #ddd',
-                backgroundColor: filter === filterType ? '#007acc' : 'white',
-                color: filter === filterType ? 'white' : '#333',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                textTransform: 'capitalize',
+                padding: "0.5rem 1rem",
+                border: "1px solid #ddd",
+                backgroundColor: filter === filterType ? "#007acc" : "white",
+                color: filter === filterType ? "white" : "#333",
+                borderRadius: "4px",
+                cursor: "pointer",
+                textTransform: "capitalize",
               }}
             >
-              {filterType} {filterType === 'active' && `(${activeTodoCount})`}
-              {filterType === 'completed' && `(${completedTodoCount})`}
+              {filterType} {filterType === "active" && `(${activeTodoCount})`}
+              {filterType === "completed" && `(${completedTodoCount})`}
             </button>
           ))}
         </div>
       )}
 
       {/* Todo list */}
-      <div style={{ marginBottom: '2rem' }}>
+      <div style={{ marginBottom: "2rem" }}>
         {filteredTodos.length === 0 ? (
           <div
             style={{
-              textAlign: 'center',
-              color: '#999',
-              padding: '2rem',
-              fontStyle: 'italic',
+              textAlign: "center",
+              color: "#999",
+              padding: "2rem",
+              fontStyle: "italic",
             }}
           >
-            {allTodos.length === 0 ? 'No todos yet. Add one above!' : `No ${filter} todos.`}
+            {allTodos.length === 0 ? "No todos yet. Add one above!" : `No ${filter} todos.`}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {filteredTodos.map((todo) => (
               <TodoItem
                 key={todo._id}
@@ -240,72 +240,70 @@ function TodoListExample() {
       </div>
 
       {/* Sync status indicator */}
-      {syncEnabled &&
-        attach?.state === 'attached' &&
-        attach?.ctx?.tokenAndClaims?.state === 'ready' && (
-          <div
-            style={{
-              marginBottom: '1rem',
-              padding: '0.5rem 1rem',
-              backgroundColor: '#d4edda',
-              borderRadius: '4px',
-              border: '1px solid #c3e6cb',
-              color: '#155724',
-              fontSize: '0.9rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <span>✓ Syncing across devices</span>
-            <button
-              onClick={() => {
-                const tokenAndClaims = attach?.ctx?.tokenAndClaims;
-                if (tokenAndClaims?.state === 'ready' && tokenAndClaims?.reset) {
-                  tokenAndClaims.reset();
-                }
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#155724',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                fontSize: '0.85rem',
-              }}
-            >
-              Sign Out
-            </button>
-          </div>
-        )}
-
-      {/* Sync state indicators */}
-      {syncEnabled && attach?.state === 'attaching' && (
+      {syncEnabled && attach?.state === "attached" && attach?.ctx?.tokenAndClaims?.state === "ready" && (
         <div
           style={{
-            marginBottom: '1rem',
-            padding: '0.5rem 1rem',
-            backgroundColor: '#fff3cd',
-            borderRadius: '4px',
-            border: '1px solid #ffeaa7',
-            color: '#856404',
-            fontSize: '0.9rem',
+            marginBottom: "1rem",
+            padding: "0.5rem 1rem",
+            backgroundColor: "#d4edda",
+            borderRadius: "4px",
+            border: "1px solid #c3e6cb",
+            color: "#155724",
+            fontSize: "0.9rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>✓ Syncing across devices</span>
+          <button
+            onClick={() => {
+              const tokenAndClaims = attach?.ctx?.tokenAndClaims;
+              if (tokenAndClaims?.state === "ready" && tokenAndClaims?.reset) {
+                tokenAndClaims.reset();
+              }
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#155724",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontSize: "0.85rem",
+            }}
+          >
+            Sign Out
+          </button>
+        </div>
+      )}
+
+      {/* Sync state indicators */}
+      {syncEnabled && attach?.state === "attaching" && (
+        <div
+          style={{
+            marginBottom: "1rem",
+            padding: "0.5rem 1rem",
+            backgroundColor: "#fff3cd",
+            borderRadius: "4px",
+            border: "1px solid #ffeaa7",
+            color: "#856404",
+            fontSize: "0.9rem",
           }}
         >
           <span>⏳ Connecting to sync service...</span>
         </div>
       )}
 
-      {syncEnabled && attach?.state === 'error' && (
+      {syncEnabled && attach?.state === "error" && (
         <div
           style={{
-            marginBottom: '1rem',
-            padding: '0.5rem 1rem',
-            backgroundColor: '#f8d7da',
-            borderRadius: '4px',
-            border: '1px solid #f5c6cb',
-            color: '#721c24',
-            fontSize: '0.9rem',
+            marginBottom: "1rem",
+            padding: "0.5rem 1rem",
+            backgroundColor: "#f8d7da",
+            borderRadius: "4px",
+            border: "1px solid #f5c6cb",
+            color: "#721c24",
+            fontSize: "0.9rem",
           }}
         >
           <span>❌ Sync connection failed. Please try again.</span>
@@ -316,28 +314,28 @@ function TodoListExample() {
       {allTodos.length > 0 && (
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '1rem',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            fontSize: '0.9rem',
-            color: '#666',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "1rem",
+            backgroundColor: "#f8f9fa",
+            borderRadius: "4px",
+            fontSize: "0.9rem",
+            color: "#666",
           }}
         >
           <span>
-            {activeTodoCount} {activeTodoCount === 1 ? 'item' : 'items'} left
+            {activeTodoCount} {activeTodoCount === 1 ? "item" : "items"} left
           </span>
           {completedTodoCount > 0 && (
             <button
               onClick={handleClearCompleted}
               style={{
-                background: 'none',
-                border: 'none',
-                color: '#dc3545',
-                cursor: 'pointer',
-                textDecoration: 'underline',
+                background: "none",
+                border: "none",
+                color: "#dc3545",
+                cursor: "pointer",
+                textDecoration: "underline",
               }}
             >
               Clear completed ({completedTodoCount})
@@ -372,9 +370,9 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSave();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       handleCancel();
     }
   };
@@ -382,21 +380,16 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        padding: '0.75rem',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-        backgroundColor: todo.completed ? '#f8f9fa' : 'white',
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+        padding: "0.75rem",
+        border: "1px solid #ddd",
+        borderRadius: "4px",
+        backgroundColor: todo.completed ? "#f8f9fa" : "white",
       }}
     >
-      <input
-        type="checkbox"
-        checked={todo.completed}
-        onChange={onToggle}
-        style={{ cursor: 'pointer' }}
-      />
+      <input type="checkbox" checked={todo.completed} onChange={onToggle} style={{ cursor: "pointer" }} />
 
       {isEditing ? (
         <input
@@ -408,9 +401,9 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
           autoFocus
           style={{
             flex: 1,
-            padding: '0.25rem',
-            border: '1px solid #007acc',
-            borderRadius: '2px',
+            padding: "0.25rem",
+            border: "1px solid #007acc",
+            borderRadius: "2px",
           }}
         />
       ) : (
@@ -418,9 +411,9 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
           onDoubleClick={() => setIsEditing(true)}
           style={{
             flex: 1,
-            textDecoration: todo.completed ? 'line-through' : 'none',
-            color: todo.completed ? '#999' : '#333',
-            cursor: 'pointer',
+            textDecoration: todo.completed ? "line-through" : "none",
+            color: todo.completed ? "#999" : "#333",
+            cursor: "pointer",
           }}
         >
           {todo.text}
@@ -430,27 +423,27 @@ function TodoItem({ todo, onToggle, onDelete, onEdit }: TodoItemProps) {
       <button
         onClick={() => setIsEditing(!isEditing)}
         style={{
-          padding: '0.25rem 0.5rem',
-          border: '1px solid #ddd',
-          backgroundColor: 'white',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          fontSize: '0.8rem',
+          padding: "0.25rem 0.5rem",
+          border: "1px solid #ddd",
+          backgroundColor: "white",
+          borderRadius: "2px",
+          cursor: "pointer",
+          fontSize: "0.8rem",
         }}
       >
-        {isEditing ? '✓' : '✏️'}
+        {isEditing ? "✓" : "✏️"}
       </button>
 
       <button
         onClick={onDelete}
         style={{
-          padding: '0.25rem 0.5rem',
-          border: '1px solid #dc3545',
-          backgroundColor: 'white',
-          color: '#dc3545',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          fontSize: '0.8rem',
+          padding: "0.25rem 0.5rem",
+          border: "1px solid #dc3545",
+          backgroundColor: "white",
+          color: "#dc3545",
+          borderRadius: "2px",
+          cursor: "pointer",
+          fontSize: "0.8rem",
         }}
       >
         ✗

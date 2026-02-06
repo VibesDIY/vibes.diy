@@ -15,7 +15,7 @@ vi.mock("react-router-dom", () => {
           onClick: onClick,
           ...props,
         },
-        children,
+        children
       );
     }),
   };
@@ -24,9 +24,7 @@ vi.mock("react-router-dom", () => {
 describe("QuickSuggestions", () => {
   it("renders multiple suggestion buttons", () => {
     const onSelectSuggestion = vi.fn();
-    const { container } = render(
-      <QuickSuggestions onSelectSuggestion={onSelectSuggestion} />,
-    );
+    const { container } = render(<QuickSuggestions onSelectSuggestion={onSelectSuggestion} />);
 
     // Get all buttons in the component
     const buttons = container.querySelectorAll("button");
@@ -37,9 +35,7 @@ describe("QuickSuggestions", () => {
 
   it("handles suggestion click with correct callback", () => {
     const onSelectSuggestion = vi.fn();
-    const { container } = render(
-      <QuickSuggestions onSelectSuggestion={onSelectSuggestion} />,
-    );
+    const { container } = render(<QuickSuggestions onSelectSuggestion={onSelectSuggestion} />);
 
     // Get the first button (any button would work for this test)
     const buttons = container.querySelectorAll("button");
@@ -62,9 +58,7 @@ describe("QuickSuggestions", () => {
 
   it("renders buttons with appropriate styling", () => {
     const onSelectSuggestion = vi.fn();
-    const { container } = render(
-      <QuickSuggestions onSelectSuggestion={onSelectSuggestion} />,
-    );
+    const { container } = render(<QuickSuggestions onSelectSuggestion={onSelectSuggestion} />);
 
     // Get a sample button
     const button = container.querySelector("button");

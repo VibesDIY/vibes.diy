@@ -1,12 +1,8 @@
-import {
-  ImageGenOptions as BaseImageGenOptions,
-  ImageResponse,
-  imageGen as originalImageGen,
-} from 'call-ai';
-import { MODULE_STATE, getRelevantOptions } from './utils.js';
+import { ImageGenOptions as BaseImageGenOptions, ImageResponse, imageGen as originalImageGen } from "call-ai";
+import { MODULE_STATE, getRelevantOptions } from "./utils.js";
 
 // Import ImageDocument type
-import type { ImageDocument } from '@vibes.diy/use-vibes-types';
+import type { ImageDocument } from "@vibes.diy/use-vibes-types";
 
 // Extend the ImageGenOptions type to include our regeneration ID and other properties
 interface ImageGenOptions extends BaseImageGenOptions {
@@ -20,10 +16,7 @@ interface ImageGenOptions extends BaseImageGenOptions {
  * Wrapper for imageGen that prevents duplicate calls
  * This function maintains a module-level cache to prevent duplicate API calls
  */
-export async function imageGen(
-  prompt: string,
-  options?: Partial<ImageGenOptions>
-): Promise<ImageResponse> {
+export async function imageGen(prompt: string, options?: Partial<ImageGenOptions>): Promise<ImageResponse> {
   // Get the relevant options to form a stable key
   const relevantOptions = getRelevantOptions(options);
 
@@ -57,7 +50,7 @@ export async function imageGen(
     console.log(`[ImgGen Debug] Generating image with prompt: "${prompt}"`, {
       requestId,
       options,
-      hasImages: options.images ? options.images.length + ' files' : 'No',
+      hasImages: options.images ? options.images.length + " files" : "No",
       stableKey,
     });
   }
@@ -74,13 +67,13 @@ export async function imageGen(
 
       // Look for files with keys starting with 'in' (input files) or the 'original' file
       for (const key of Object.keys(enhancedOptions.document._files)) {
-        if (key.startsWith('in') || key === 'original') {
+        if (key.startsWith("in") || key === "original") {
           const file = enhancedOptions.document._files[key];
           if (file) {
             // Handle both direct File objects and Fireproof's DocFileMeta
             if (file instanceof File) {
               imageFiles.push(file);
-            } else if (typeof file.file === 'function') {
+            } else if (typeof file.file === "function") {
               try {
                 // For DocFileMeta objects, we need to call the file() method
                 const fileObj = await file.file();
@@ -100,11 +93,9 @@ export async function imageGen(
         enhancedOptions.images = imageFiles;
 
         if (enhancedOptions.debug) {
-          console.log('[ImgGen Debug] Extracted images from document:', {
+          console.log("[ImgGen Debug] Extracted images from document:", {
             count: imageFiles.length,
-            keys: Object.keys(enhancedOptions.document._files).filter(
-              (k) => k.startsWith('in') || k === 'original'
-            ),
+            keys: Object.keys(enhancedOptions.document._files).filter((k) => k.startsWith("in") || k === "original"),
           });
         }
       }
@@ -132,9 +123,7 @@ export async function imageGen(
     })
     .catch((error) => {
       if (options?.debug) {
-        console.error(
-          `[ImgGen Debug] Request #${requestId} failed [key:${stableKey.slice(0, 12)}...]: ${error}`
-        );
+        console.error(`[ImgGen Debug] Request #${requestId} failed [key:${stableKey.slice(0, 12)}...]: ${error}`);
       }
       // Even on failure, we'll keep the key in pendingPrompts to prevent repeated failures
       // but remove it from processing to allow potential retries after page reload
@@ -149,10 +138,7 @@ export async function imageGen(
  * Create a wrapper function for generating images with logging and tracking
  */
 export function createImageGenerator(requestHash: string) {
-  return async (
-    promptText: string,
-    genOptions?: Partial<ImageGenOptions>
-  ): Promise<ImageResponse> => {
+  return async (promptText: string, genOptions?: Partial<ImageGenOptions>): Promise<ImageResponse> => {
     // Options key no longer used for logging
     JSON.stringify(getRelevantOptions(genOptions)); // Still generate to maintain behavior
 
@@ -160,7 +146,7 @@ export function createImageGenerator(requestHash: string) {
     const debug = genOptions?.debug;
 
     // Look for input files in the document
-    if (genOptions && 'document' in genOptions && genOptions.document) {
+    if (genOptions && "document" in genOptions && genOptions.document) {
       const document = genOptions.document;
       const imageFiles: File[] = [];
 
@@ -168,13 +154,13 @@ export function createImageGenerator(requestHash: string) {
       if (document._files) {
         // Find files with keys starting with 'in' (input files)
         for (const key of Object.keys(document._files)) {
-          if (key.startsWith('in')) {
+          if (key.startsWith("in")) {
             const file = document._files[key];
             if (file) {
               // Handle both direct File objects and Fireproof's DocFileMeta
               if (file instanceof File) {
                 imageFiles.push(file);
-              } else if (typeof file.file === 'function') {
+              } else if (typeof file.file === "function") {
                 try {
                   // For DocFileMeta objects, we need to call the file() method
                   const fileObj = await file.file();
@@ -193,7 +179,7 @@ export function createImageGenerator(requestHash: string) {
       // If we found image files, add them to options
       if (imageFiles.length > 0) {
         if (debug) {
-          console.log('[imageGenerator] Found images to include:', {
+          console.log("[imageGenerator] Found images to include:", {
             count: imageFiles.length,
             fileTypes: imageFiles.map((f) => f.type),
           });
@@ -210,17 +196,11 @@ export function createImageGenerator(requestHash: string) {
     try {
       // Log a debug message if debug is enabled
       if (debug) {
-        console.log(
-          `[imageGenerator] Generating image with prompt: "${promptText.slice(
-            0,
-            30
-          )}...", options:`,
-          {
-            ...genOptions,
-            hasImages: genOptions?.images ? 'Yes' : 'No',
-            imageCount: genOptions?.images ? genOptions.images.length : 0,
-          }
-        );
+        console.log(`[imageGenerator] Generating image with prompt: "${promptText.slice(0, 30)}...", options:`, {
+          ...genOptions,
+          hasImages: genOptions?.images ? "Yes" : "No",
+          imageCount: genOptions?.images ? genOptions.images.length : 0,
+        });
       }
 
       const response = await imageGen(promptText, genOptions);

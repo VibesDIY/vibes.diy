@@ -30,12 +30,15 @@
     "vibes.diy/**/*",
     "prompts/**/*",
     "utils/**/*",
-    "hosting/**/*"
+    "xhosting/**/*",
+    "vibes.diy/api/svc/public/.ts"
   ],
   "exclude": [
     "vibes.diy/tempo/**",
+    "vibes.diy/**/slack/**",
     "vibes.diy/**/root.*",
     "vibes.diy/**/root.test.*",
+    "vibes.diy/failback-homepage/**",
     "**/dist/**",
     "**/node_modules/**",
     "**/examples/**",

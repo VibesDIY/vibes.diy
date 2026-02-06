@@ -5,14 +5,7 @@ import About from "~/vibes.diy/app/routes/about.js";
 
 // Mock react-router-dom
 vi.mock("react-router-dom", () => ({
-  Link: ({
-    to,
-    children,
-    ...props
-  }: {
-    to: string;
-    children: React.ReactNode;
-  }) => (
+  Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => (
     <a href={to} {...props}>
       {children}
     </a>
@@ -42,13 +35,7 @@ vi.mock("@clerk/clerk-react", () => ({
 
 // Mock the SimpleAppLayout component
 vi.mock("~/vibes.diy/app/components/SimpleAppLayout.js", () => ({
-  default: ({
-    headerLeft,
-    children,
-  }: {
-    headerLeft: React.ReactNode;
-    children: React.ReactNode;
-  }) => (
+  default: ({ headerLeft, children }: { headerLeft: React.ReactNode; children: React.ReactNode }) => (
     <div data-testid="simple-app-layout">
       <div data-testid="header-left">{headerLeft}</div>
       <div data-testid="content-area">{children}</div>
@@ -96,9 +83,7 @@ describe("About Route", () => {
     const sectionHeading = res.getByText("What is Vibes DIY?");
     expect(sectionHeading).toBeInTheDocument();
 
-    const description = res.getByText(
-      /An AI-powered app builder that lets you create custom applications/,
-    );
+    const description = res.getByText(/An AI-powered app builder that lets you create custom applications/);
     expect(description).toBeInTheDocument();
   });
 
@@ -110,17 +95,13 @@ describe("About Route", () => {
     // Check for the community link
     const communityLink = res.getByText("community");
     expect(communityLink).toBeInTheDocument();
-    expect(communityLink.getAttribute("href")).toBe(
-      "https://discord.gg/vnpWycj4Ta",
-    );
+    expect(communityLink.getAttribute("href")).toBe("https://discord.gg/vnpWycj4Ta");
     expect(communityLink.getAttribute("target")).toBe("_blank");
 
     // Check for the repo link
     const repoLink = res.getByText("builder repo");
     expect(repoLink).toBeInTheDocument();
-    expect(repoLink.getAttribute("href")).toBe(
-      "https://github.com/fireproof-storage/vibes.diy",
-    );
+    expect(repoLink.getAttribute("href")).toBe("https://github.com/fireproof-storage/vibes.diy");
   });
 
   it('displays the "Key Features" section with bullet points', () => {
@@ -149,14 +130,10 @@ describe("About Route", () => {
     const res = renderAbout();
 
     // Check Fireproof link - use the within scope of the feature list to be more specific
-    const fireproofLink = res.getByText(
-      /Reliable, secure database that syncs across devices/,
-    );
+    const fireproofLink = res.getByText(/Reliable, secure database that syncs across devices/);
     const featureFireproofLink = fireproofLink.querySelector("a");
     expect(featureFireproofLink).toBeInTheDocument();
-    expect(featureFireproofLink?.getAttribute("href")).toBe(
-      "https://use-fireproof.com",
-    );
+    expect(featureFireproofLink?.getAttribute("href")).toBe("https://use-fireproof.com");
 
     // Check OpenRouter link
     const openRouterLink = res.getByText("OpenRouter");

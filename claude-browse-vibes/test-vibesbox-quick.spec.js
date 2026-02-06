@@ -29,10 +29,7 @@ test("Quick vibesbox syntax error check", async ({ page }) => {
   await page.waitForTimeout(1000);
 
   // Check for the specific regex error
-  const hasRegexError = errors.some(
-    (err) =>
-      err.includes("Invalid regular expression") || err.includes("missing /"),
-  );
+  const hasRegexError = errors.some((err) => err.includes("Invalid regular expression") || err.includes("missing /"));
 
   if (hasRegexError) {
     console.log("❌ REGEX SYNTAX ERROR FOUND!");

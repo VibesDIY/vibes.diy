@@ -70,10 +70,7 @@
       <button onclick="captureScreenshot()">Capture Screenshot</button>
     </div>
 
-    <iframe
-      id="vibesFrame"
-      src="http://localhost:8989/vibe/quick-cello-8104"
-    ></iframe>
+    <iframe id="vibesFrame" src="http://localhost:8989/vibe/quick-cello-8104"></iframe>
 
     <h2>Console Output:</h2>
     <div id="console"></div>
@@ -141,18 +138,12 @@
       // Listen for messages from iframe
       window.addEventListener("message", (event) => {
         // Log all messages
-        log(
-          `Message from ${event.origin}: ${JSON.stringify(event.data)}`,
-          "info",
-        );
+        log(`Message from ${event.origin}: ${JSON.stringify(event.data)}`, "info");
 
         // Handle specific message types
         if (event.data) {
           if (event.data.type === "iframe-error") {
-            log(
-              `IFRAME ERROR: ${event.data.error?.message || "Unknown error"}`,
-              "error",
-            );
+            log(`IFRAME ERROR: ${event.data.error?.message || "Unknown error"}`, "error");
           } else if (event.data.type === "execution-success") {
             log("Code execution successful", "success");
           } else if (event.data.type === "screenshot-captured") {
@@ -183,7 +174,7 @@
             sessionId: "test-session",
             debug: "*",
           },
-          "*",
+          "*"
         );
       }
 
@@ -194,7 +185,7 @@
             type: "command",
             command: "capture-screenshot",
           },
-          "*",
+          "*"
         );
       }
 
@@ -205,10 +196,7 @@
 
       // Global error handler
       window.addEventListener("error", (e) => {
-        log(
-          `Window error: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`,
-          "error",
-        );
+        log(`Window error: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`, "error");
       });
 
       // Log initial state

@@ -1,10 +1,10 @@
-name: "prompts-publish"
+name: 'prompts-publish'
 on:
   push:
     paths:
-      - "prompts/**/*"
+      - 'prompts/**/*'
     tags:
-      - "prompts@*"
+      - 'prompts@*'
 
 jobs:
   compile_test:

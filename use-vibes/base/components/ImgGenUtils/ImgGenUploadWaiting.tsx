@@ -1,9 +1,9 @@
-import * as React from 'react';
-import type { PartialImageDocument } from '@vibes.diy/use-vibes-types';
-import { useFireproof, ImgFile, Database } from '@fireproof/use-fireproof';
-import { ImgGenFileDrop } from '../ImgGenUtils/ImgGenFileDrop.js';
-import { ImgGenClasses, combineClasses } from '../../utils/style-utils.js';
-import { imgGenStyles, imgGenTheme } from '../../utils/styles.js';
+import * as React from "react";
+import type { PartialImageDocument } from "@vibes.diy/use-vibes-types";
+import { useFireproof, ImgFile, Database } from "@fireproof/use-fireproof";
+import { ImgGenFileDrop } from "../ImgGenUtils/ImgGenFileDrop.js";
+import { ImgGenClasses, combineClasses } from "../../utils/style-utils.js";
+import { imgGenStyles, imgGenTheme } from "../../utils/styles.js";
 
 interface ImgGenUploadWaitingProps {
   /** Document with uploaded files (optional) */
@@ -39,21 +39,21 @@ export function ImgGenUploadWaiting({
   onDocumentCreated,
   onPromptSubmit,
 }: ImgGenUploadWaitingProps): React.ReactElement {
-  const { database: db } = useFireproof(database || 'ImgGen');
-  const [prompt, setPrompt] = React.useState('');
+  const { database: db } = useFireproof(database || "ImgGen");
+  const [prompt, setPrompt] = React.useState("");
   const [inputFiles, setInputFiles] = React.useState<string[]>([]);
 
   // Get all input files from the document
   React.useEffect(() => {
     if (document?._files) {
       const inFiles = Object.keys(document._files)
-        .filter((key) => key.startsWith('in'))
+        .filter((key) => key.startsWith("in"))
         .sort();
 
       setInputFiles(inFiles);
 
       if (debug) {
-        console.log('[ImgGenUploadWaiting] Found input files:', inFiles);
+        console.log("[ImgGenUploadWaiting] Found input files:", inFiles);
       }
     }
   }, [document, debug]);
@@ -88,7 +88,7 @@ export function ImgGenUploadWaiting({
     try {
       // Create new document to hold the uploaded files
       const newDoc = {
-        type: 'image',
+        type: "image",
         createdAt: new Date().toISOString(),
         _files: {} as Record<string, File>,
       };
@@ -104,7 +104,7 @@ export function ImgGenUploadWaiting({
       const result = await db.put(newDoc);
 
       if (debug) {
-        console.log('[ImgGenUploadWaiting] Created document for uploads:', result.id);
+        console.log("[ImgGenUploadWaiting] Created document for uploads:", result.id);
       }
 
       // Notify parent component that files were uploaded and document created
@@ -112,7 +112,7 @@ export function ImgGenUploadWaiting({
         onDocumentCreated(result.id);
       }
     } catch (error) {
-      console.error('[ImgGenUploadWaiting] Error creating document for uploads:', error);
+      console.error("[ImgGenUploadWaiting] Error creating document for uploads:", error);
     }
   };
 
@@ -124,7 +124,7 @@ export function ImgGenUploadWaiting({
       // Load existing document
       const doc = await db.get(document._id);
       if (!doc) {
-        console.error('[ImgGenUploadWaiting] Document not found:', document._id);
+        console.error("[ImgGenUploadWaiting] Document not found:", document._id);
         return;
       }
 
@@ -132,7 +132,7 @@ export function ImgGenUploadWaiting({
       let maxInputNum = 0;
       if (doc._files) {
         Object.keys(doc._files).forEach((key) => {
-          if (key.startsWith('in')) {
+          if (key.startsWith("in")) {
             const num = parseInt(key.substring(2), 10);
             if (!isNaN(num) && num > maxInputNum) {
               maxInputNum = num;
@@ -161,7 +161,7 @@ export function ImgGenUploadWaiting({
       const result = await db.put(updatedDoc);
 
       if (debug) {
-        console.log('[ImgGenUploadWaiting] Document updated with new files:', result.id);
+        console.log("[ImgGenUploadWaiting] Document updated with new files:", result.id);
       }
 
       // Refresh the document to get the latest version with new files
@@ -169,13 +169,13 @@ export function ImgGenUploadWaiting({
       if (refreshedDoc) {
         // Update input files state with the new files
         const inFiles = Object.keys(refreshedDoc._files || {})
-          .filter((key) => key.startsWith('in'))
+          .filter((key) => key.startsWith("in"))
           .sort();
 
         setInputFiles(inFiles);
 
         if (debug) {
-          console.log('[ImgGenUploadWaiting] Refreshed input files:', inFiles);
+          console.log("[ImgGenUploadWaiting] Refreshed input files:", inFiles);
         }
       }
 
@@ -184,7 +184,7 @@ export function ImgGenUploadWaiting({
         onFilesAdded();
       }
     } catch (error) {
-      console.error('[ImgGenUploadWaiting] Error updating document with new files:', error);
+      console.error("[ImgGenUploadWaiting] Error updating document with new files:", error);
     }
   };
 
@@ -195,13 +195,13 @@ export function ImgGenUploadWaiting({
       // Pass both the prompt and document ID to the parent component if we have a document
       if (document && document._id) {
         if (debug) {
-          console.log('[ImgGenUploadWaiting] Submitting prompt with document ID:', document._id);
+          console.log("[ImgGenUploadWaiting] Submitting prompt with document ID:", document._id);
         }
         onPromptSubmit(prompt.trim(), document._id);
       } else {
         // Submit just the prompt if no document is available
         if (debug) {
-          console.log('[ImgGenUploadWaiting] Submitting prompt with no document');
+          console.log("[ImgGenUploadWaiting] Submitting prompt with no document");
         }
         onPromptSubmit(prompt.trim());
       }
@@ -213,18 +213,12 @@ export function ImgGenUploadWaiting({
 
   return (
     <div
-      className={combineClasses(
-        'imggen-upload-waiting',
-        className || '',
-        classes?.uploadWaiting || ''
-      )}
+      className={combineClasses("imggen-upload-waiting", className || "", classes?.uploadWaiting || "")}
       style={imgGenStyles.uploadWaiting}
     >
       {/* Page title and description */}
-      <div className="imggen-placeholder-content" style={{ textAlign: 'center' }}>
-        <h3 style={{ margin: '0 0 0.5rem 0', color: imgGenTheme.colors.titleText }}>
-          Image Generator
-        </h3>
+      <div className="imggen-placeholder-content" style={{ textAlign: "center" }}>
+        <h3 style={{ margin: "0 0 0.5rem 0", color: imgGenTheme.colors.titleText }}>Image Generator</h3>
       </div>
       <p style={{ color: imgGenTheme.colors.titleText }}>No prompt or file provided</p>
       {/* Prompt input form */}
@@ -244,7 +238,7 @@ export function ImgGenUploadWaiting({
           style={{
             ...imgGenStyles.promptSubmit,
             opacity: !prompt.trim() ? 0.5 : 1,
-            cursor: !prompt.trim() ? 'not-allowed' : 'pointer',
+            cursor: !prompt.trim() ? "not-allowed" : "pointer",
           }}
         >
           Generate
@@ -255,7 +249,7 @@ export function ImgGenUploadWaiting({
       {inputFiles.length > 0 && (
         <div className="imggen-uploaded-previews" style={imgGenStyles.uploadedPreviews}>
           <div className="imggen-upload-count" style={imgGenStyles.uploadCount}>
-            {inputFiles.length} {inputFiles.length === 1 ? 'image' : 'images'} uploaded
+            {inputFiles.length} {inputFiles.length === 1 ? "image" : "images"} uploaded
           </div>
           <div className="imggen-thumbnails" style={imgGenStyles.thumbnails}>
             {inputFiles.slice(0, 4).map((fileKey) => (
@@ -281,7 +275,7 @@ export function ImgGenUploadWaiting({
 
       {/* Drop zone for more files */}
       <ImgGenFileDrop
-        className={classes?.dropZone || ''}
+        className={classes?.dropZone || ""}
         onFilesDropped={handleFilesUploaded}
         isActive={true}
         maxFiles={10}

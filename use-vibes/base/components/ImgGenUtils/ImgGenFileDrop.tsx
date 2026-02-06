@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { combineClasses } from '../../utils/style-utils.js';
-import { imgGenStyles } from '../../utils/styles.js';
+import * as React from "react";
+import { combineClasses } from "../../utils/style-utils.js";
+import { imgGenStyles } from "../../utils/styles.js";
 
 interface ImgGenFileDropProps {
   /** Callback when files are dropped or selected via browse */
@@ -26,7 +26,7 @@ export function ImgGenFileDrop({
   isActive = true,
   maxFiles = 10,
   debug,
-  addFilesMessage = 'Drop images here or click to browse',
+  addFilesMessage = "Drop images here or click to browse",
 }: ImgGenFileDropProps): React.ReactElement {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
@@ -60,13 +60,11 @@ export function ImgGenFileDrop({
       const filesToProcess = files.slice(0, maxFiles);
 
       if (debug) {
-        console.log(
-          `[ImgGenFileDrop] Processing ${filesToProcess.length} files of ${files.length} selected`
-        );
+        console.log(`[ImgGenFileDrop] Processing ${filesToProcess.length} files of ${files.length} selected`);
       }
 
       // Filter out non-image files
-      const imageFiles = filesToProcess.filter((file) => file.type.startsWith('image/'));
+      const imageFiles = filesToProcess.filter((file) => file.type.startsWith("image/"));
 
       if (imageFiles.length > 0) {
         onFilesDropped(imageFiles);
@@ -98,9 +96,9 @@ export function ImgGenFileDrop({
   return (
     <div
       className={combineClasses(
-        'imggen-file-drop',
-        isDragging ? 'imggen-file-drop-active' : '',
-        !isActive ? 'imggen-file-drop-disabled' : '',
+        "imggen-file-drop",
+        isDragging ? "imggen-file-drop-active" : "",
+        !isActive ? "imggen-file-drop-disabled" : "",
         className
       )}
       style={{
@@ -113,14 +111,7 @@ export function ImgGenFileDrop({
       onDrop={handleDrop}
       onClick={handleClick}
     >
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept="image/*"
-        onChange={handleFileInput}
-        multiple
-        style={{ display: 'none' }}
-      />
+      <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileInput} multiple style={{ display: "none" }} />
       <div className="imggen-file-drop-message" style={imgGenStyles.fileDropMessage}>
         {addFilesMessage}
       </div>

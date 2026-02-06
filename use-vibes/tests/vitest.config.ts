@@ -1,11 +1,11 @@
-import { defineConfig } from 'vitest/config';
-import { playwright } from '@vitest/browser-playwright';
+import { defineConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
   test: {
-    name: 'use-vibes',
-    exclude: ['dist/**', 'node_modules/**'],
-    include: ['**/*test.?(c|m)[jt]s?(x)'],
+    name: "use-vibes",
+    exclude: ["dist/**", "node_modules/**"],
+    include: ["**/*test.?(c|m)[jt]s?(x)"],
     testTimeout: 30000,
     hookTimeout: 10000,
     browser: {
@@ -14,7 +14,7 @@ export default defineConfig({
       provider: playwright(),
       instances: [
         {
-          browser: 'chromium',
+          browser: "chromium",
         },
       ],
     },

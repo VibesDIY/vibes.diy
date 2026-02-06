@@ -14,18 +14,10 @@ VibesDiyEnv.env().sets({
 vi.mock("react-router", async () => {
   const { vi } = await import("vitest");
   return {
-    Meta: ({ "data-testid": testId }: { "data-testid"?: string }) => (
-      <meta data-testid={testId} />
-    ),
+    Meta: ({ "data-testid": testId }: { "data-testid"?: string }) => <meta data-testid={testId} />,
     Links: () => <link data-testid="links" />,
-    Scripts: ({ "data-testid": testId }: { "data-testid"?: string }) => (
-      <script data-testid={testId} />
-    ),
-    ScrollRestoration: ({
-      "data-testid": testId,
-    }: {
-      "data-testid"?: string;
-    }) => <div data-testid={testId} />,
+    Scripts: ({ "data-testid": testId }: { "data-testid"?: string }) => <script data-testid={testId} />,
+    ScrollRestoration: ({ "data-testid": testId }: { "data-testid"?: string }) => <div data-testid={testId} />,
     isRouteErrorResponse: vi.fn(),
     useLocation: () => ({ pathname: "/", search: "" }),
     Outlet: () => <div data-testid="outlet" />,
@@ -36,15 +28,7 @@ vi.mock("react-router", async () => {
 vi.mock("react-cookie-consent", async () => {
   const { vi } = await import("vitest");
   return {
-    default: ({
-      children,
-      buttonText,
-      onAccept,
-    }: {
-      children: React.ReactNode;
-      buttonText: string;
-      onAccept: () => void;
-    }) => (
+    default: ({ children, buttonText, onAccept }: { children: React.ReactNode; buttonText: string; onAccept: () => void }) => (
       <div data-testid="cookie-consent">
         {children}
         <button type="button" onClick={onAccept}>
@@ -71,17 +55,13 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", async () => {
       cookieConsent: true,
       setCookieConsent: vi.fn(),
     }),
-    CookieConsentProvider: ({ children }: { children: React.ReactNode }) => (
-      <>{children}</>
-    ),
+    CookieConsentProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   };
 });
 
 // Mock PostHog
 vi.mock("posthog-js/react", () => ({
-  PostHogProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
+  PostHogProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock ClientOnly component
@@ -129,9 +109,7 @@ vi.mock("~/vibes.diy/app/hooks/useSimpleChat", async () => {
 
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", () => ({
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
+  ClerkProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useAuth: () => ({
     userId: "test-user-id",
     isLoaded: true,
@@ -153,7 +131,7 @@ describe("Root Component", () => {
     const html = renderToStaticMarkup(
       <Layout>
         <div data-testid="test-content">Test Child Content</div>
-      </Layout>,
+      </Layout>
     );
 
     expect(html).toContain("Test Child Content");

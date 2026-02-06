@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  CodeIcon,
-  DataIcon,
-  PreviewIcon,
-  SettingsIcon,
-} from "../HeaderContent/SvgIcons.js";
+import { CodeIcon, DataIcon, PreviewIcon, SettingsIcon } from "../HeaderContent/SvgIcons.js";
 import { ViewType } from "@vibes.diy/prompts";
 
 interface ViewControlsProps {
@@ -21,16 +16,13 @@ interface ViewControlsProps {
   onClick?: (view: ViewType) => void;
 }
 
-export const ViewControls: React.FC<ViewControlsProps> = ({
-  viewControls,
-  currentView,
-  onClick,
-}) => {
+export const ViewControls: React.FC<ViewControlsProps> = ({ viewControls, currentView, onClick }) => {
   return (
     <div className="bg-light-decorative-00 dark:bg-dark-decorative-00 flex justify-center gap-1 rounded-md p-1 shadow-sm">
       {Object.entries(viewControls)
         .filter(([viewType]) => viewType !== "chat")
         .map(([viewType, control]) => {
+          // console.log(`ViewControls`, viewType, currentView )
           const viewTypeKey = viewType as ViewType;
           const isActive = currentView === viewTypeKey;
 
@@ -51,23 +43,14 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
                 <PreviewIcon
                   className="h-4 w-4"
                   isLoading={!!control.loading}
-                  title={
-                    control.loading ? "App is fetching data" : "Preview icon"
-                  }
+                  title={control.loading ? "App is fetching data" : "Preview icon"}
                 />
               )}
               {viewTypeKey === "code" && (
-                <CodeIcon
-                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                  isLoading={currentView === "preview" && !!control.loading}
-                />
+                <CodeIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" isLoading={currentView === "preview" && !!control.loading} />
               )}
-              {viewTypeKey === "data" && (
-                <DataIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              )}
-              {viewTypeKey === "settings" && (
-                <SettingsIcon className="h-4 w-4" />
-              )}
+              {viewTypeKey === "data" && <DataIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+              {viewTypeKey === "settings" && <SettingsIcon className="h-4 w-4" />}
               <span className="hidden min-[480px]:inline">{control.label}</span>
             </button>
           );

@@ -1,57 +1,54 @@
 import type React from "react";
 
-export function getContainerStyle(): React.CSSProperties {
-  return {
-    position: "relative",
-    display: "inline-flex",
-    alignItems: "stretch",
-    width: "auto",
-    marginBottom: "40px",
-  };
-}
+// function getContainerStyle(): React.CSSProperties {
+//   return {
+//     position: "relative",
+//     display: "inline-flex",
+//     alignItems: "stretch",
+//     width: "auto",
+//     marginBottom: "40px",
+//   };
+// }
 
-export function getLabelStyle(): React.CSSProperties {
-  return {
-    background: "var(--vibes-card-bg)",
-    border: "2px solid var(--vibes-card-border)",
-    borderLeft: "none",
-    borderTopRightRadius: "8px",
-    borderBottomRightRadius: "8px",
-    padding: "12px 8px",
-    fontWeight: 700,
-    fontSize: "14px",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-    whiteSpace: "nowrap",
-    color: "var(--vibes-card-text)",
-    writingMode: "vertical-rl",
-    transform: "rotate(180deg)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    margin: "32px 0px",
-  };
-}
+// function getLabelStyle(): React.CSSProperties {
+//   return {
+//     background: "var(--vibes-card-bg)",
+//     border: "2px solid var(--vibes-card-border)",
+//     borderLeft: "none",
+//     borderTopRightRadius: "8px",
+//     borderBottomRightRadius: "8px",
+//     padding: "12px 8px",
+//     fontWeight: 700,
+//     fontSize: "14px",
+//     textTransform: "uppercase",
+//     letterSpacing: "1px",
+//     whiteSpace: "nowrap",
+//     color: "var(--vibes-card-text)",
+//     writingMode: "vertical-rl",
+//     transform: "rotate(180deg)",
+//     display: "flex",
+//     alignItems: "center",
+//     justifyContent: "center",
+//     flexShrink: 0,
+//     margin: "32px 0px",
+//   };
+// }
 
-export function getButtonWrapperStyle(): React.CSSProperties {
-  return {
-    background: "var(--vibes-card-bg)",
-    border: "2px solid var(--vibes-card-border)",
-    borderRadius: "8px",
-    padding: "24px 24px 32px 24px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "auto",
-  };
-}
+// function getButtonWrapperStyle(): React.CSSProperties {
+//   return {
+//     background: "var(--vibes-card-bg)",
+//     border: "2px solid var(--vibes-card-border)",
+//     borderRadius: "8px",
+//     padding: "24px 24px 32px 24px",
+//     display: "flex",
+//     alignItems: "center",
+//     justifyContent: "center",
+//     width: "auto",
+//   };
+// }
 
 // Media query helpers (use window.matchMedia in component for responsive behavior)
-export function getResponsiveLabelStyle(
-  isMobile: boolean,
-  disappear = false,
-): React.CSSProperties {
+export function getResponsiveLabelStyle(isMobile: boolean, disappear = false): React.CSSProperties {
   if (isMobile) {
     if (disappear) {
       return {
@@ -111,10 +108,7 @@ export function getResponsiveLabelStyle(
   };
 }
 
-export function getResponsiveButtonWrapperStyle(
-  isMobile: boolean,
-  disappear = false,
-): React.CSSProperties {
+export function getResponsiveButtonWrapperStyle(isMobile: boolean, disappear = false): React.CSSProperties {
   if (isMobile && disappear) {
     return {
       background: "transparent",
@@ -154,9 +148,7 @@ export function getResponsiveButtonWrapperStyle(
   };
 }
 
-export function getResponsiveContainerStyle(
-  isMobile: boolean,
-): React.CSSProperties {
+export function getResponsiveContainerStyle(isMobile: boolean): React.CSSProperties {
   if (isMobile) {
     return {
       position: "relative",

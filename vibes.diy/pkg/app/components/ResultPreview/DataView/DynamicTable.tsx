@@ -1,5 +1,5 @@
 import React from "react";
-import { DocBase } from "use-fireproof";
+import { DocBase } from "@fireproof/use-fireproof";
 
 interface DynamicTableProps {
   dbName: string;
@@ -26,11 +26,7 @@ export default function DynamicTable({
         <thead className="dark:bg-dark-background-00 sticky top-0 z-10 bg-white">
           <tr key={"header" + Math.random()}>
             {headers.map((header: string) => (
-              <th
-                key={header}
-                scope="col"
-                className="text-11 text-accent-01 dark:text-accent-01 px-[15px] py-[8px]"
-              >
+              <th key={header} scope="col" className="text-11 text-accent-01 dark:text-accent-01 px-[15px] py-[8px]">
                 {header === "_id" ? "doc id" : header}
               </th>
             ))}
@@ -38,9 +34,7 @@ export default function DynamicTable({
         </thead>
         <tbody className="text-14 border-light-decorative-01 dark:border-dark-decorative-00 dark:bg-dark-background-01 border bg-white">
           {rows
-            .map(
-              (i) => i as unknown as Record<string, string | null | undefined>,
-            )
+            .map((i) => i as unknown as Record<string, string | null | undefined>)
             .map((fields) => (
               <tr
                 key={fields._id}
@@ -51,11 +45,7 @@ export default function DynamicTable({
               >
                 {headers.map((header: string) =>
                   header === th ? (
-                    <th
-                      key={header}
-                      scope="row"
-                      className="px-[15px] py-[12px] text-xs whitespace-nowrap"
-                    >
+                    <th key={header} scope="row" className="px-[15px] py-[12px] text-xs whitespace-nowrap">
                       {formatTableCellContent(fields[header], header)}
                     </th>
                   ) : (
@@ -75,7 +65,7 @@ export default function DynamicTable({
                     >
                       {formatTableCellContent(fields[header], header)}
                     </td>
-                  ),
+                  )
                 )}
               </tr>
             ))}
@@ -85,13 +75,9 @@ export default function DynamicTable({
   );
 }
 
-function formatTableCellContent(
-  obj: null | undefined | null | string,
-  header: string,
-): string {
+function formatTableCellContent(obj: null | undefined | null | string, header: string): string {
   if (!obj) return "";
-  if (header === "_id")
-    return obj.substring(0, 4) + ".." + obj.substring(obj.length - 4);
+  if (header === "_id") return obj.substring(0, 4) + ".." + obj.substring(obj.length - 4);
   const strOut = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
   return strOut.length > 30 ? `${strOut.substring(0, 25).trim()}...` : strOut;
 }
