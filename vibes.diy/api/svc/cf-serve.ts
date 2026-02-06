@@ -3,6 +3,7 @@ import {
   Response as CFResponse,
   ExecutionContext,
   WebSocket as CFWebSocket,
+  CfProperties,
 } from "@cloudflare/workers-types";
 import { createAppContext, processRequest, VibesSqlite } from "./create-handler.js";
 import { drizzle } from "drizzle-orm/d1";
@@ -11,6 +12,8 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { Env } from "./cf-env.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
+import { Lazy } from "@adviser/cement";
+import { hashObjectSync } from "@fireproof/core-runtime";
 
 // declare global {
 //   class WebSocketPair {
@@ -42,6 +45,37 @@ export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContex
     connections: ctx.connections,
     db: ctx.drizzle ?? drizzle(env.DB),
     cache: ctx.cache,
+    // this help to provide enough uniqueness
+    // to find clients which try to steal tokens
+    netHash: Lazy(() => {
+      const {
+        colo,
+        country,
+        continent,
+        city,
+        postalCode,
+        latitude,
+        longitude,
+        timezone,
+        region,
+        regionCode,
+        metroCode,
+        /* clientTcpRtt segmented */
+      } = request.cf as CfProperties; // <CfHostMetadata>
+      return hashObjectSync({
+        colo,
+        country,
+        continent,
+        city,
+        postalCode,
+        latitude,
+        longitude,
+        timezone,
+        region,
+        regionCode,
+        metroCode,
+      });
+    }),
     llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
   });

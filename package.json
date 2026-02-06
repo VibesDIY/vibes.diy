@@ -65,7 +65,7 @@
     "@playwright/test": "^1.58.1",
     "@types/deno": "^2.5.0",
     "@types/node": "^25.2.0",
-    "@typescript/native-preview": "7.0.0-dev.20260126.1",
+    "@typescript/native-preview": "7.0.0-dev.20260206.1",
     "@vitest/browser-playwright": "^4.0.18",
     "@vitest/coverage-v8": "4.0.18",
     "cross-env": "^10.0.0",

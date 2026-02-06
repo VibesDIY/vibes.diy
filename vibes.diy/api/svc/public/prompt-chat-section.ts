@@ -15,7 +15,7 @@ import { type } from "arktype";
 import { LLMHeaders, VibesApiSQLCtx } from "../api.js";
 import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
-import { sqlChatContexts, sqlChatSections } from "../sql/vibes-diy-api-schema.js";
+import { sqlChatContexts, SqlChatSection, sqlChatSections, sqlPromptContexts } from "../sql/vibes-diy-api-schema.js";
 import { eq } from "drizzle-orm";
 import {
   createStatsCollector,
@@ -24,16 +24,10 @@ import {
   createSseStream,
   createDeltaStream,
   createSectionsStream,
-  isBlockBegin,
   isBlockEnd,
-  isBlockImage,
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
-  isToplevelBegin,
-  isToplevelEnd,
-  isToplevelLine,
-  isBlockStats,
   LLMRequest,
   ChatMessage,
   isPromptReq,
@@ -41,9 +35,208 @@ import {
   CodeBeginMsg,
   CodeLineMsg,
   FileSystemRef,
+  PromptContextSql,
+  BlockEndMsg,
+  BlockMsgs,
+  isBlockSteamMsg,
 } from "@vibes.diy/call-ai-v2";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
-import { ensureAppSlugItem } from "./ensure-app-slug-item.ts";
+import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
+
+interface AppendBlockEventParams {
+  ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
+  vctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqPromptChatSection>;
+  promptId: string;
+  blockSeq: number;
+  evt: PromptAndBlockMsgs;
+  emitMode?: "store" | "emit-only";
+}
+
+interface CodeBlocks {
+  begin: CodeBeginMsg;
+  lines: CodeLineMsg[];
+  end?: CodeMsg;
+}
+
+async function appendBlockEvent({
+  ctx,
+  vctx,
+  req,
+  promptId,
+  blockSeq,
+  evt,
+  emitMode = "store",
+}: AppendBlockEventParams): Promise<Result<void>> {
+  const now = new Date();
+  // console.log("Appending block event:", { promptId, blockSeq, evt, timestamp: now });
+  const msgBase = wrapMsgBase(ctx.validated, {
+    payload: {
+      type: "vibes.diy.section-event",
+      chatId: req.chatId,
+      promptId,
+      blockSeq,
+      blocks: [evt],
+      timestamp: now,
+    },
+    tid: req.outerTid,
+    src: "promptChatSection",
+  } satisfies InMsgBase<SectionEvent>);
+  for (const conn of vctx.connections) {
+    for (const tuple of conn.chatIds) {
+      if (tuple.chatId === req.chatId) {
+        console.log("promptChatSection: Sending blockSeq", blockSeq, "to chatId:", req.chatId, "via tid:", tuple.tid);
+        await conn.send(ctx, { ...msgBase, tid: tuple.tid });
+      }
+    }
+  }
+  if (emitMode === "store") {
+    // Store block in DB
+    const rUpdate = await exception2Result(() =>
+      vctx.db
+        .insert(sqlChatSections)
+        .values({
+          chatId: req.chatId,
+          promptId,
+          blockSeq,
+          blocks: [evt],
+          created: now.toISOString(),
+        })
+        .run()
+    );
+    if (rUpdate.isErr()) {
+      return Result.Err(rUpdate);
+    }
+  }
+  return Result.Ok();
+}
+
+async function handlePromptContext({
+  vctx,
+  req,
+  resChat,
+  promptId,
+  blockSeq,
+  value,
+  collectedMsgs,
+}: {
+  vctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqPromptChatSection>;
+  resChat: { appSlug: string; userSlug: string };
+  promptId: string;
+  blockSeq: number;
+  value: BlockEndMsg;
+  collectedMsgs: BlockMsgs[];
+}): Promise<Result<number>> {
+  let fsRef: Option<FileSystemRef> = Option.None();
+  let sqlVal: SqlChatSection | undefined = undefined;
+  const code: CodeBlocks[] = [];
+  for (const msg of collectedMsgs) {
+    if (!isBlockSteamMsg(msg)) {
+      continue;
+    }
+    if (!sqlVal || sqlVal.blocks.length >= 20) {
+      if (sqlVal) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const rSql = await exception2Result(() => vctx.db.insert(sqlChatSections).values(sqlVal!).run());
+        console.log("Inserted block section into DB for promptId:", sqlVal, rSql);
+        if (rSql.isErr()) {
+          return Result.Err(rSql);
+        }
+      }
+      sqlVal = {
+        chatId: req.chatId,
+        promptId,
+        blockSeq: blockSeq++,
+        blocks: [],
+        created: msg.timestamp.toISOString(),
+      };
+    }
+    sqlVal.blocks.push(msg);
+    if (isCodeBegin(msg)) {
+      code.push({ begin: msg, lines: [] });
+    } else if (isCodeLine(msg)) {
+      if (code.length === 0) {
+        console.warn("Received code line without a preceding code begin:", msg);
+      } else {
+        code[code.length - 1].lines.push(msg);
+      }
+    } else if (isCodeEnd(msg)) {
+      if (code.length === 0) {
+        console.warn("Received code end without a preceding code begin:", msg);
+      } else {
+        code[code.length - 1].end = msg;
+      }
+    }
+  }
+  if (sqlVal && sqlVal.blocks.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const rSql = await exception2Result(() => vctx.db.insert(sqlChatSections).values(sqlVal!).run());
+    console.log("Inserted block section into DB for promptId:", sqlVal, rSql);
+    if (rSql.isErr()) {
+      return Result.Err(rSql);
+    }
+  }
+
+  if (code.length > 0) {
+    // here is where the music plays
+    const rFs = await ensureAppSlugItem(vctx, {
+      type: "vibes.diy.req-ensure-app-slug",
+      mode: "dev",
+      chatId: req.chatId,
+      appSlug: resChat.appSlug,
+      userSlug: resChat.userSlug,
+      fileSystem: code.reduce((acc, block, idx) => {
+        if (block.end) {
+          const content = block.lines.map((l) => l.line).join("\n");
+          // console.log("Code to add to file system:", content, block.begin.lang);
+          acc.push({
+            type: "code-block",
+            filename: `${idx == 0 ? "App.jsx" : `File-${block.begin.lang}-${idx}.jsx`}`,
+            lang: "jsx", // llm think between jsx and js is not a big deal
+            content,
+          });
+        }
+        return acc;
+      }, [] as VibeFile[]),
+      auth: req.auth,
+    });
+    if (rFs.isErr()) {
+      console.error("Failed to ensure app slug item for code blocks:", rFs.Err());
+      return Result.Err(rFs);
+    }
+    const tFsRef = type(FileSystemRef).onDeepUndeclaredKey("delete")(rFs.Ok());
+    if (tFsRef instanceof type.errors) {
+      return Result.Err(`Failed to parse FileSystemRef: ${tFsRef.summary}`);
+    }
+    fsRef = Option.Some(tFsRef);
+  }
+  const rSql = await exception2Result(() =>
+    vctx.db
+      .insert(sqlPromptContexts)
+      .values({
+        userId: req.auth.verifiedAuth.claims.userId,
+        chatId: req.chatId,
+        promptId,
+        fsId: fsRef.IsSome() ? fsRef.unwrap().fsId : undefined,
+        nethash: vctx.netHash(),
+        promptTokens: value.usage.calculated.prompt_tokens,
+        completionTokens: value.usage.calculated.completion_tokens,
+        totalTokens: value.usage.calculated.total_tokens,
+        ref: {
+          type: "prompt.usage.sql",
+          usage: value.usage,
+          fsRef: fsRef.toValue(),
+        } satisfies PromptContextSql, // BlockUsageSql has optional properties, so it can be satisfied by an empty object
+        created: new Date().toISOString(),
+      })
+      .run()
+  );
+  if (rSql.isErr()) {
+    return Result.Err(rSql);
+  }
+  return Result.Ok(blockSeq);
+}
 
 async function injectSystemPrompt(
   vctx: VibesApiSQLCtx,
@@ -177,7 +370,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         return Result.Err(rBegin);
       }
 
-      // console.log("1-Created promptId:", promptId, "for chatId:", req.chatId);
       const r = await appendBlockEvent({
         ctx,
         vctx,
@@ -235,119 +427,49 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         .pipeThrough(createLineStream(promptId))
         .pipeThrough(createDataStream(promptId))
         .pipeThrough(createSseStream(promptId))
-        .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId().str))
-        .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId().str));
+        .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
+        .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
 
       const reader = pipeline.getReader();
 
-      const codeBlocks: {
-        begin: CodeBeginMsg;
-        lines: CodeLineMsg[];
-        end?: CodeMsg;
-      }[] = [];
+      const collectedMsgs: BlockMsgs[] = [];
+      // const codeBlocks: CodeBlocks[] = [];
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          // console.log("Finished reading LLM response stream");
           break;
         }
-        if (isBlockStats(value)) {
-          // console.log("LLM Stats:", value.stats);
-          const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
-          if (r.isErr()) {
-            return Result.Err(r);
-          }
-        }
-        if (isCodeBegin(value)) {
-          codeBlocks.push({
-            begin: value,
-            lines: [],
-          });
-        } else if (isCodeLine(value)) {
-          if (codeBlocks.length === 0) {
-            console.warn("Received code line without a preceding code begin:", value);
-          } else {
-            codeBlocks[codeBlocks.length - 1].lines.push(value);
-          }
-        } else if (isCodeEnd(value)) {
-          if (codeBlocks.length === 0) {
-            console.warn("Received code end without a preceding code begin:", value);
-          } else {
-            codeBlocks[codeBlocks.length - 1].end = value;
-          }
+        collectedMsgs.push(value as BlockEndMsg);
+        const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
+        if (r.isErr()) {
+          return Result.Err(r);
         }
 
-        if (
-          isBlockBegin(value) ||
-          isToplevelBegin(value) ||
-          isCodeBegin(value) ||
-          isToplevelLine(value) ||
-          isCodeLine(value) ||
-          isToplevelEnd(value) ||
-          isCodeEnd(value) ||
-          isBlockImage(value) ||
-          isBlockEnd(value)
-        ) {
-          // console.log("Appending block event:", req);
-          const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value });
+        if (isBlockEnd(value)) {
+          const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
           if (r.isErr()) {
             return Result.Err(r);
           }
+          blockSeq = r.Ok();
+          collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
         }
       }
       if (blockSeq > 1) {
-        let fsRef: FileSystemRef | undefined = undefined;
-        let rEnd: Result<void> = Result.Ok();
-        // Meno don't use try - finally
-        try {
-          if (codeBlocks.length > 0) {
-            // here is where the music plays
-            const rFs = await ensureAppSlugItem(vctx, {
-              type: "vibes.diy.req-ensure-app-slug",
-              mode: "dev",
-              fileSystem: codeBlocks.reduce((acc, block, idx) => {
-                if (block.end) {
-                  const content = block.lines.map((l) => l.line).join("\n");
-                  // console.log("Code to add to file system:", content, block.begin.lang);
-                  acc.push({
-                    type: "code-block",
-                    filename: `${idx == 0 ? "App.jsx" : `File-${block.begin.lang}-${idx}.jsx`}`,
-                    lang: "jsx", // llm think between jsx and js is not a big deal
-                    content,
-                  });
-                }
-                return acc;
-              }, [] as VibeFile[]),
-              auth: req.auth,
-            });
-            if (rFs.isErr()) {
-              console.error("Failed to ensure app slug item for code blocks:", rFs.Err());
-              return Result.Err(rFs);
-            }
-            const tFsRef = type(FileSystemRef).onDeepUndeclaredKey("delete")(rFs.Ok());
-            if (tFsRef instanceof type.errors) {
-              return Result.Err(`Failed to parse FileSystemRef: ${tFsRef.summary}`);
-            }
-            fsRef = tFsRef;
-          }
-        } finally {
-          rEnd = await appendBlockEvent({
-            ctx,
-            vctx,
-            req,
-            promptId,
-            blockSeq: blockSeq,
-            evt: {
-              type: "prompt.block-end",
-              streamId: promptId,
-              chatId: req.chatId,
-              fsRef,
-              seq: blockSeq,
-              timestamp: new Date(),
-            },
-          });
-          blockSeq++;
-        }
+        const rEnd = await appendBlockEvent({
+          ctx,
+          vctx,
+          req,
+          promptId,
+          blockSeq: blockSeq,
+          evt: {
+            type: "prompt.block-end",
+            streamId: promptId,
+            chatId: req.chatId,
+            seq: blockSeq,
+            timestamp: new Date(),
+          },
+        });
+        blockSeq++;
         if (rEnd.isErr()) {
           return Result.Err(rEnd);
         }
@@ -356,65 +478,3 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
     }
   ),
 };
-
-interface AppendBlockEventParams {
-  ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
-  vctx: VibesApiSQLCtx;
-  req: ReqWithVerifiedAuth<ReqPromptChatSection>;
-  promptId: string;
-  blockSeq: number;
-  evt: PromptAndBlockMsgs;
-  emitMode?: "store" | "emit-only";
-}
-
-async function appendBlockEvent({
-  ctx,
-  vctx,
-  req,
-  promptId,
-  blockSeq,
-  evt,
-  emitMode = "store",
-}: AppendBlockEventParams): Promise<Result<void>> {
-  const now = new Date();
-  // console.log("Appending block event:", { promptId, blockSeq, evt, timestamp: now });
-  const msgBase = wrapMsgBase(ctx.validated, {
-    payload: {
-      type: "vibes.diy.section-event",
-      chatId: req.chatId,
-      promptId,
-      blockSeq,
-      blocks: [evt],
-      timestamp: now,
-    },
-    tid: req.outerTid,
-    src: "promptChatSection",
-  } satisfies InMsgBase<SectionEvent>);
-  for (const conn of vctx.connections) {
-    for (const tuple of conn.chatIds) {
-      if (tuple.chatId === req.chatId) {
-        console.log("promptChatSection: Sending blockSeq", blockSeq, "to chatId:", req.chatId, "via tid:", tuple.tid);
-        await conn.send(ctx, { ...msgBase, tid: tuple.tid });
-      }
-    }
-  }
-  if (emitMode === "store") {
-    // Store block in DB
-    const rUpdate = await exception2Result(() =>
-      vctx.db
-        .insert(sqlChatSections)
-        .values({
-          chatId: req.chatId,
-          promptId,
-          blockSeq,
-          blocks: [evt],
-          created: now.toISOString(),
-        })
-        .run()
-    );
-    if (rUpdate.isErr()) {
-      return Result.Err(rUpdate);
-    }
-  }
-  return Result.Ok();
-}

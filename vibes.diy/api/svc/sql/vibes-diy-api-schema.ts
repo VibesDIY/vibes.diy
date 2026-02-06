@@ -1,3 +1,4 @@
+import { PromptAndBlockMsgs } from "@vibes.diy/api-types";
 import { int, sqliteTable, text, blob, primaryKey, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 
 // could be put on R2
@@ -75,5 +76,34 @@ export const sqlChatSections = sqliteTable(
     primaryKey({ columns: [table.chatId, table.promptId, table.blockSeq] }),
     uniqueIndex("ChatSections_created_promptId_blockSeq_idx").on(table.created, table.promptId, table.blockSeq),
     index("ChatSections_chatId_idx").on(table.chatId),
+  ]
+);
+
+type _SqlChatSection = typeof sqlChatSections.$inferInsert;
+export interface SqlChatSection extends _SqlChatSection {
+  blocks: PromptAndBlockMsgs[];
+}
+
+// maps to ChatContextSql
+export const sqlPromptContexts = sqliteTable(
+  "PromptContexts",
+  {
+    userId: text().notNull(),
+    chatId: text().notNull(),
+    promptId: text().notNull(),
+    fsId: text(),
+    nethash: text(),
+    promptTokens: int().notNull(),
+    completionTokens: int().notNull(),
+    totalTokens: int().notNull(),
+    ref: text({ mode: "json" }).notNull(), // BlockUsageSql
+    created: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.chatId, table.promptId] }),
+    index("PromptContext_chatId_idx").on(table.chatId),
+    uniqueIndex("PromptContext_promptId_idx").on(table.promptId),
+    index("PromptContext_created_idx").on(table.created),
+    index("PromptContext_nethash_idx").on(table.nethash),
   ]
 );
