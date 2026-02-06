@@ -321,9 +321,7 @@ describe("VibesDiyApi", () => {
     const promptIds: string[] = [];
     for (let i = 0; i < 3; i++) {
       const rPrompt = await chat.prompt({
-        userMessage: `Hello world ${i}`,
-        history: [],
-        settings: {},
+        messages: [{ role: "user", content: [{ type: "text", text: `Hello world ${i}` }] }],
       });
       expect(rPrompt.isOk()).toBe(true);
       promptIds.push(rPrompt.Ok().promptId);
@@ -350,9 +348,7 @@ describe("VibesDiyApi", () => {
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
     const rPrompt = await chat.prompt({
-      userMessage: `use fixture response`,
-      history: [],
-      settings: {},
+      messages: [{ role: "user", content: [{ type: "text", text: `use fixture response` }] }],
     });
     expect(rPrompt.isOk()).toBe(true);
 

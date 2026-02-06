@@ -35,39 +35,77 @@ import {
   isToplevelLine,
   isBlockStats,
   LLMRequest,
+  ChatMessage,
+  isPromptReq,
   CodeMsg,
   CodeBeginMsg,
   CodeLineMsg,
   FileSystemRef,
 } from "@vibes.diy/call-ai-v2";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
-import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
+import { ensureAppSlugItem } from "./ensure-app-slug-item.ts";
 
-// Build system prompt using client-provided settings and history
-async function buildSystemPromptFromSettings(
+async function injectSystemPrompt(
   vctx: VibesApiSQLCtx,
-  req: ReqWithVerifiedAuth<ReqPromptChatSection>
-): Promise<Result<{ model: string; systemPrompt: string }>> {
-  // Resolve effective model from client settings
-  const model = await resolveEffectiveModel(
-    { model: req.settings.globalModel },
-    { selectedModel: req.settings.selectedModel }
+  chatId: string,
+  model: string
+): Promise<
+  Result<{
+    model: string;
+    messages: ChatMessage[];
+  }>
+> {
+  const sections = await vctx.db
+    .select()
+    .from(sqlChatSections)
+    .where(eq(sqlChatSections.chatId, chatId))
+    .orderBy(sqlChatSections.created)
+    .all();
+  const userMessages: ChatMessage[] = [];
+  for (const rowSection of sections) {
+    const msgs = PromptAndBlockMsgs.array()(rowSection.blocks);
+    if (msgs instanceof type.errors) {
+      return Result.Err(`Failed to parse blocks for section ${rowSection}, with error: ${msgs.summary}`);
+    }
+    for (const msg of msgs) {
+      if (isPromptReq(msg)) {
+        userMessages.push(...msg.request.messages.filter((m) => m.role === "user"));
+      }
+    }
+  }
+  const systemPrompt = await exception2Result(async () =>
+    makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
+      // fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+      // callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
+      // userPrompt: overrides?.userPrompt || "",
+      // getAuthToken: async () => (await getToken()) || "",
+      // ...(settingsDoc || {}),
+      // ...(vibeDoc || {}),
+      // ...overrides,
+    })
   );
-
-  const promptResult = await makeBaseSystemPrompt(model, {
-    userPrompt: "", // Not used for system prompt content injection
-    history: req.history,
-    stylePrompt: req.settings.stylePrompt,
-    dependenciesUserOverride: req.settings.dependenciesUserOverride,
-    dependencies: req.settings.dependencies,
-    demoDataOverride: req.settings.demoDataOverride,
-    useRagSelection: req.settings.useRagSelection,
-    fallBackUrl: vctx.params.promptFallbackUrl,
-  });
+  if (systemPrompt.isErr()) {
+    console.error("Failed to create system prompt:", systemPrompt.Err());
+    return Result.Err(systemPrompt);
+  }
+  if (userMessages.length === 0) {
+    return Result.Err(`No user messages found in the prompt`);
+  }
 
   return Result.Ok({
-    model: promptResult.model,
-    systemPrompt: promptResult.systemPrompt,
+    model,
+    messages: [
+      ...userMessages,
+      {
+        role: "system",
+        content: [
+          {
+            type: "text",
+            text: systemPrompt.Ok().systemPrompt,
+          },
+        ],
+      },
+    ],
   });
 }
 
@@ -139,28 +177,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         return Result.Err(rBegin);
       }
 
-      // Build system prompt using client-provided settings
-      const promptResult = await buildSystemPromptFromSettings(vctx, req);
-      if (promptResult.isErr()) {
-        return Result.Err(promptResult);
-      }
-      const { model, systemPrompt } = promptResult.Ok();
-
-      // Compose full messages array with system prompt
-      const messages = [
-        { role: "system" as const, content: [{ type: "text" as const, text: systemPrompt }] },
-        ...req.history.map((m) => ({ role: m.role, content: [{ type: "text" as const, text: m.content }] })),
-        { role: "user" as const, content: [{ type: "text" as const, text: req.userMessage }] },
-      ];
-
-      // Build LLMRequest with headers
-      const llmRequest: LLMRequest & { headers: LLMHeaders } = {
-        model,
-        messages,
-        stream: true,
-        headers: vctx.params.llm.headers,
-      };
-
+      // console.log("1-Created promptId:", promptId, "for chatId:", req.chatId);
       const r = await appendBlockEvent({
         ctx,
         vctx,
@@ -172,7 +189,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           streamId: promptId,
           chatId: req.chatId,
           seq: blockSeq,
-          request: llmRequest,
+          request: req.prompt,
           timestamp: new Date(),
         },
       });
@@ -182,8 +199,27 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         return Result.Err(r);
       }
 
-      // Send to LLM with the composed messages
-      const rRes = await exception2Result(() => vctx.llmRequest(llmRequest));
+      const withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
+      if (withSystemPrompt.isErr()) {
+        return Result.Err(withSystemPrompt);
+      }
+      // console.log("Sending LLM request for promptId:", promptId);
+      const llmReq: LLMRequest & { headers: LLMHeaders } = {
+        ...vctx.params.llm.default,
+        ...{
+          ...req.prompt,
+          messages: withSystemPrompt.Ok().messages,
+        },
+        ...vctx.params.llm.enforced,
+        model: withSystemPrompt.Ok().model,
+        headers: vctx.params.llm.headers,
+        stream: true,
+      };
+
+      console.log("LLM Request for promptId:", promptId, "with model:", llmReq.model, "and messages:", llmReq.messages);
+
+      // add system prompt here
+      const rRes = await exception2Result(() => vctx.llmRequest(llmReq));
       if (rRes.isErr()) {
         return Result.Err(`LLM request failed: ${rRes.Err().message}`);
       }

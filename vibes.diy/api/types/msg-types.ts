@@ -134,37 +134,12 @@ export const resError = type({
   "stack?": "string[]",
 });
 
-export const HistoryMessage = type({
-  role: "'user' | 'assistant' | 'system'",
-  content: "string",
-});
-export type HistoryMessage = typeof HistoryMessage.infer;
-
-export const ChatSettings = type({
-  // Model selection
-  "selectedModel?": "string",
-  "globalModel?": "string",
-  // Style customization
-  "stylePrompt?": "string",
-  // Dependency overrides
-  "dependencies?": "string[]",
-  "dependenciesUserOverride?": "boolean",
-  // Demo data override
-  "demoDataOverride?": "boolean",
-  // RAG selection toggle (default false - use defaults)
-  "useRagSelection?": "boolean",
-});
-export type ChatSettings = typeof ChatSettings.infer;
-
-// Server builds system prompt - client sends raw input + settings
 export const reqPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
   auth: dashAuthType,
   chatId: "string",
-  outerTid: "string",
-  userMessage: "string",
-  history: [HistoryMessage, "[]"],
-  settings: ChatSettings,
+  outerTid: "string", // this is used to emit events to the current chat session
+  prompt: LLMRequest,
 });
 
 export type ReqPromptChatSection = typeof reqPromptChatSection.infer;
