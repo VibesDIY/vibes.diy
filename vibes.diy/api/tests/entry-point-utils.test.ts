@@ -15,7 +15,7 @@ describe("entry-point-utils", () => {
         protocol: "https",
         bindings,
       });
-      expect(result).toBe("https://myapp--myuser.vibes.app/~abc123~/");
+      expect(result).toBe("https://myuser--myapp.vibes.app/~abc123~/");
     });
 
     it("builds URL from bindings with http", () => {
@@ -24,7 +24,7 @@ describe("entry-point-utils", () => {
         protocol: "http",
         bindings,
       });
-      expect(result).toBe("http://myapp--myuser.localhost:8080/~abc123~/");
+      expect(result).toBe("http://myuser--myapp.localhost:8080/~abc123~/");
     });
 
     it("handles different hostname bases", () => {
@@ -33,29 +33,29 @@ describe("entry-point-utils", () => {
         protocol: "https",
         bindings,
       });
-      expect(result).toBe("https://myapp--myuser.custom.domain.com/~abc123~/");
+      expect(result).toBe("https://myuser--myapp.custom.domain.com/~abc123~/");
     });
   });
 
   describe("extractHostToBindings", () => {
-    it("extracts appSlug and userSlug from hostname", () => {
+    it("extracts userSlug and appSlug from hostname", () => {
       const result = extractHostToBindings({
-        matchURL: "https://myapp--myuser.vibes.app/",
+        matchURL: "https://myuser--myapp.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://myapp--myuser.vibes.app/",
+        url: "https://myuser--myapp.vibes.app/",
         appSlug: "myapp",
         userSlug: "myuser",
         path: "/",
       });
     });
 
-    it("extracts appSlug, userSlug and path", () => {
+    it("extracts userSlug, appSlug and path", () => {
       const result = extractHostToBindings({
-        matchURL: "https://myapp--myuser.vibes.app/some/path",
+        matchURL: "https://myuser--myapp.vibes.app/some/path",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://myapp--myuser.vibes.app/some/path",
+        url: "https://myuser--myapp.vibes.app/some/path",
         appSlug: "myapp",
         userSlug: "myuser",
         path: "/some/path",
@@ -64,10 +64,10 @@ describe("entry-point-utils", () => {
 
     it("extracts fsId from path: /~z...~", () => {
       const result = extractHostToBindings({
-        matchURL: "https://myapp--myuser.vibes.app/~zabc12345~",
+        matchURL: "https://myuser--myapp.vibes.app/~zabc12345~",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://myapp--myuser.vibes.app/~zabc12345~",
+        url: "https://myuser--myapp.vibes.app/~zabc12345~",
         appSlug: "myapp",
         userSlug: "myuser",
         fsId: "zabc12345",
@@ -77,10 +77,10 @@ describe("entry-point-utils", () => {
 
     it("extracts fsId from path: /~z...~/", () => {
       const result = extractHostToBindings({
-        matchURL: "https://myapp--myuser.vibes.app/~zabc12345~/",
+        matchURL: "https://myuser--myapp.vibes.app/~zabc12345~/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://myapp--myuser.vibes.app/~zabc12345~/",
+        url: "https://myuser--myapp.vibes.app/~zabc12345~/",
         appSlug: "myapp",
         userSlug: "myuser",
         fsId: "zabc12345",
@@ -90,10 +90,10 @@ describe("entry-point-utils", () => {
 
     it("extracts fsId from path: /~z...~/some", () => {
       const result = extractHostToBindings({
-        matchURL: "https://myapp--myuser.vibes.app/~zabc12345~/some",
+        matchURL: "https://myuser--myapp.vibes.app/~zabc12345~/some",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://myapp--myuser.vibes.app/~zabc12345~/some",
+        url: "https://myuser--myapp.vibes.app/~zabc12345~/some",
         appSlug: "myapp",
         userSlug: "myuser",
         fsId: "zabc12345",
@@ -103,10 +103,10 @@ describe("entry-point-utils", () => {
 
     it("extracts fsId from path: /~z...~/some/thing", () => {
       const result = extractHostToBindings({
-        matchURL: "https://myapp--myuser.vibes.app/~zabc12345~/some/thing",
+        matchURL: "https://myuser--myapp.vibes.app/~zabc12345~/some/thing",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://myapp--myuser.vibes.app/~zabc12345~/some/thing",
+        url: "https://myuser--myapp.vibes.app/~zabc12345~/some/thing",
         appSlug: "myapp",
         userSlug: "myuser",
         fsId: "zabc12345",
@@ -116,10 +116,10 @@ describe("entry-point-utils", () => {
 
     it("does not extract fsId without ~ delimiters", () => {
       const result = extractHostToBindings({
-        matchURL: "https://myapp--myuser.vibes.app/zabc12345/some",
+        matchURL: "https://myuser--myapp.vibes.app/zabc12345/some",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://myapp--myuser.vibes.app/zabc12345/some",
+        url: "https://myuser--myapp.vibes.app/zabc12345/some",
         appSlug: "myapp",
         userSlug: "myuser",
         path: "/zabc12345/some",
@@ -128,10 +128,10 @@ describe("entry-point-utils", () => {
 
     it("lowercases appSlug and userSlug", () => {
       const result = extractHostToBindings({
-        matchURL: "https://MyApp--MyUser.vibes.app/",
+        matchURL: "https://MyUser--MyApp.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://MyApp--MyUser.vibes.app/",
+        url: "https://MyUser--MyApp.vibes.app/",
         appSlug: "myapp",
         userSlug: "myuser",
         path: "/",
@@ -140,10 +140,10 @@ describe("entry-point-utils", () => {
 
     it("handles hyphenated slugs", () => {
       const result = extractHostToBindings({
-        matchURL: "https://my-cool-app--some-user.vibes.app/",
+        matchURL: "https://some-user--my-cool-app.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://my-cool-app--some-user.vibes.app/",
+        url: "https://some-user--my-cool-app.vibes.app/",
         appSlug: "my-cool-app",
         userSlug: "some-user",
         path: "/",
@@ -166,10 +166,10 @@ describe("entry-point-utils", () => {
 
     it("extracts from bare hostname without dot", () => {
       const result = extractHostToBindings({
-        matchURL: "https://myapp--myuser/some/path",
+        matchURL: "https://myuser--myapp/some/path",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://myapp--myuser/some/path",
+        url: "https://myuser--myapp/some/path",
         appSlug: "myapp",
         userSlug: "myuser",
         path: "/some/path",
@@ -186,10 +186,10 @@ describe("entry-point-utils", () => {
     it("extracts fsId with mixed case (real data)", () => {
       const result = extractHostToBindings({
         matchURL:
-          "http://partly-daily-tropical--negative-learn-generally.localhost.vibesdiy.net/~zFJwyDDJWMu3qBw3ujoQa15bpHrPciZTc1sYuTz7UC8wB~/",
+          "http://negative-learn-generally--partly-daily-tropical.localhost.vibesdiy.net/~zFJwyDDJWMu3qBw3ujoQa15bpHrPciZTc1sYuTz7UC8wB~/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "http://partly-daily-tropical--negative-learn-generally.localhost.vibesdiy.net/~zFJwyDDJWMu3qBw3ujoQa15bpHrPciZTc1sYuTz7UC8wB~/",
+        url: "http://negative-learn-generally--partly-daily-tropical.localhost.vibesdiy.net/~zFJwyDDJWMu3qBw3ujoQa15bpHrPciZTc1sYuTz7UC8wB~/",
         appSlug: "partly-daily-tropical",
         userSlug: "negative-learn-generally",
         fsId: "zFJwyDDJWMu3qBw3ujoQa15bpHrPciZTc1sYuTz7UC8wB",
@@ -199,10 +199,10 @@ describe("entry-point-utils", () => {
 
     it("extracts fsId with mixed case and path", () => {
       const result = extractHostToBindings({
-        matchURL: "http://myapp--myuser.vibes.app/~zABC123xyz~/some/path",
+        matchURL: "http://myuser--myapp.vibes.app/~zABC123xyz~/some/path",
       });
       expect(result.Unwrap()).toEqual({
-        url: "http://myapp--myuser.vibes.app/~zABC123xyz~/some/path",
+        url: "http://myuser--myapp.vibes.app/~zABC123xyz~/some/path",
         appSlug: "myapp",
         userSlug: "myuser",
         fsId: "zABC123xyz",
@@ -212,10 +212,10 @@ describe("entry-point-utils", () => {
 
     it("extracts grouped appSlug (appSlug contains --)", () => {
       const result = extractHostToBindings({
-        matchURL: "https://kanban-todo--family--jchris.vibes.app/",
+        matchURL: "https://jchris--kanban-todo--family.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://kanban-todo--family--jchris.vibes.app/",
+        url: "https://jchris--kanban-todo--family.vibes.app/",
         appSlug: "kanban-todo--family",
         userSlug: "jchris",
         path: "/",
@@ -224,10 +224,10 @@ describe("entry-point-utils", () => {
 
     it("extracts grouped appSlug with fsId", () => {
       const result = extractHostToBindings({
-        matchURL: "https://kanban-todo--family--jchris.vibes.app/~zabc12345~/",
+        matchURL: "https://jchris--kanban-todo--family.vibes.app/~zabc12345~/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://kanban-todo--family--jchris.vibes.app/~zabc12345~/",
+        url: "https://jchris--kanban-todo--family.vibes.app/~zabc12345~/",
         appSlug: "kanban-todo--family",
         userSlug: "jchris",
         fsId: "zabc12345",
@@ -235,24 +235,24 @@ describe("entry-point-utils", () => {
       });
     });
 
-    it("extracts multiple -- segments in appSlug (splits on last --)", () => {
+    it("extracts multiple -- segments in appSlug (splits on first --)", () => {
       const result = extractHostToBindings({
         matchURL: "https://a--b--c--d.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
         url: "https://a--b--c--d.vibes.app/",
-        appSlug: "a--b--c",
-        userSlug: "d",
+        appSlug: "b--c--d",
+        userSlug: "a",
         path: "/",
       });
     });
 
     it("extracts hyphenated grouped appSlug", () => {
       const result = extractHostToBindings({
-        matchURL: "https://my-cool-app--kj-team--some-user.vibes.app/",
+        matchURL: "https://some-user--my-cool-app--kj-team.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://my-cool-app--kj-team--some-user.vibes.app/",
+        url: "https://some-user--my-cool-app--kj-team.vibes.app/",
         appSlug: "my-cool-app--kj-team",
         userSlug: "some-user",
         path: "/",
@@ -261,10 +261,10 @@ describe("entry-point-utils", () => {
 
     it("lowercases grouped appSlug", () => {
       const result = extractHostToBindings({
-        matchURL: "https://KanbanTodo--Family--JChris.vibes.app/",
+        matchURL: "https://JChris--KanbanTodo--Family.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
-        url: "https://KanbanTodo--Family--JChris.vibes.app/",
+        url: "https://JChris--KanbanTodo--Family.vibes.app/",
         appSlug: "kanbantodo--family",
         userSlug: "jchris",
         path: "/",
@@ -284,7 +284,7 @@ describe("entry-point-utils", () => {
         bindings,
       });
 
-      expect(url).toBe("https://kanban-todo--family--jchris.vibes.app/~zabc12345678~/");
+      expect(url).toBe("https://jchris--kanban-todo--family.vibes.app/~zabc12345678~/");
 
       const extracted = extractHostToBindings({
         matchURL: url,
@@ -312,7 +312,7 @@ describe("entry-point-utils", () => {
         bindings,
       });
 
-      expect(url).toBe("https://testapp--testuser.vibes.app/~zabc12345678~/");
+      expect(url).toBe("https://testuser--testapp.vibes.app/~zabc12345678~/");
 
       const extracted = extractHostToBindings({
         matchURL: url,

@@ -9,7 +9,7 @@ export interface CalcEntryPointUrlParams {
 }
 
 export function calcEntryPointUrl({ hostnameBase, protocol, bindings }: CalcEntryPointUrlParams): string {
-  const hostname = `${bindings.appSlug}--${bindings.userSlug}.${hostnameBase}`;
+  const hostname = `${bindings.userSlug}--${bindings.appSlug}.${hostnameBase}`;
   return `${protocol}://${hostname}/~${bindings.fsId}~/`;
 }
 
@@ -24,12 +24,12 @@ export interface ExtractedHostToBindings {
 
 export function extractHostToBindings({ matchURL }: { matchURL: string }): Option<ExtractedHostToBindings> {
   const uri = URI.from(matchURL);
-  const match = /^([a-zA-Z0-9][a-zA-Z0-9-]*)--([a-zA-Z0-9][a-zA-Z0-9-]*?)(?=[.:]|$)/.exec(uri.hostname);
+  const match = /^([a-zA-Z0-9][a-zA-Z0-9-]*?)--([a-zA-Z0-9][a-zA-Z0-9-]*)(?=[.:]|$)/.exec(uri.hostname);
   if (!match) {
     return Option.None();
   }
-  const appSlug = match[1].toLowerCase();
-  const userSlug = match[2].toLowerCase();
+  const userSlug = match[1].toLowerCase();
+  const appSlug = match[2].toLowerCase();
   const restPath = uri.pathname.match(/^\/~(z[a-zA-Z0-9]{8,})~(\/.*)?$/);
   if (restPath) {
     return Option.Some({
