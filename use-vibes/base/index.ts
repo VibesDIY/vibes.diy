@@ -40,9 +40,10 @@ export const vibeEnv = type("Record<string, string>");
 export type VibeEnv = typeof vibeEnv.infer;
 
 const slugPattern = /^(?!.*\/|.*--|.*\.\.)[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$/;
+const appSlugPattern = /^(?!.*\/|.*\.\.)[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/;
 
 export const vibeBindings = type({
-  appSlug: slugPattern,
+  appSlug: appSlugPattern,
   userSlug: slugPattern,
   fsId: slugPattern,
   "groupId?": slugPattern,
