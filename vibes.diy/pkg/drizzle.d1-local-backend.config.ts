@@ -7,7 +7,9 @@ function getLocalD1DB(): string {
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   $.sync`wrangler --config ./wrangler.toml d1 execute dev-vibes-diy-v2 --local --command="select 1"`;
   const basePath = path.resolve(".wrangler");
-  const dbFile = fs.readdirSync(basePath, { encoding: "utf-8", recursive: true }).find((f) => f.endsWith(".sqlite"));
+  const dbFile = fs
+    .readdirSync(basePath, { encoding: "utf-8", recursive: true })
+    .find((f) => f.endsWith(".sqlite") && f.includes("d1/"));
 
   if (!dbFile) {
     throw new Error(`.sqlite file not found in ${basePath}`);

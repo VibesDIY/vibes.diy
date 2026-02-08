@@ -33,7 +33,7 @@ export async function renderVibes(
       if (item.mimeType === "application/javascript") {
         acc.push({
           // import relative to support prod and dev switching
-          importStmt: `import * as V${idx} from ${JSON.stringify(item.fileName.replace(/^\//, ""))};`,
+          importStmt: `import * as V${idx} from ${JSON.stringify(item.fileName.replace(/^\//, "./"))};`,
           var: `V${idx}`,
         });
       }
@@ -71,7 +71,7 @@ export async function renderVibes(
     mountJS: [
       `import { mountVibe } from '@vibes.diy/api-pkg';`,
       ...imports.map((i) => i.importStmt),
-      `mountVibe(${JSON.stringify(imports.map((i) => i.var))}, ${JSON.stringify(env)});`,
+      `mountVibe([${imports.map((i) => `${i.var}.default`).join(", ")}], ${JSON.stringify({ bindings: { appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId }, env })});`,
     ].join("\n"),
   };
   const res = await exception2Result(() =>

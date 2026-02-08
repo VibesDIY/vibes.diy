@@ -206,8 +206,13 @@ export async function svcImportMap(
     "use-vibes": "/dist/use-vibes/pkg/index.js",
     "use-fireproof": "/dist/use-vibes/pkg/index.js",
 
+    "@vibes.diy/api-pkg": "/dist/api-pkg/index.js",
+    "@vibes.diy/api-types": "/dist/api-types/index.js",
+    "@vibes.diy/call-ai-v2": "/dist/call-ai-v2/index.js",
     "@vibes.diy/prompts": "/dist/prompts/pkg/index.js",
     "@vibes.diy/use-vibes-base": "/dist/use-vibes/base/index.js",
+    arktype: "https://esm.sh/arktype",
+    mime: "https://esm.sh/mime",
 
     "@fireproof/core-base": "FP",
     "@fireproof/core-blockstore": "FP",
