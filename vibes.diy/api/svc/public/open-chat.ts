@@ -26,6 +26,7 @@ import { sqlChatContexts, sqlChatSections } from "../sql/vibes-diy-api-schema.js
 import { eq, and } from "drizzle-orm";
 import { ensureAppSlug, ensureUserSlug } from "../intern/ensure-slug-binding.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
+import { isBlockEnd } from "@vibes.diy/call-ai-v2";
 
 // function ensureChatId(chatId: string | undefined): Result<string | undefined> {
 //   if (!chatId) {
@@ -170,6 +171,10 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
           }
           return Result.Err(`Invalid blocks data in chat ${section.chatId} - ${blocks.summary} - ${JSON.stringify(blocks)}`);
         }
+        console.log(
+          `openChat: `,
+          blocks.filter((b) => isBlockEnd(b))
+        );
         const rCurrentMsg: Result<SendStatItem<MsgBase<SectionEvent>>> = await ctx.send.send(ctx, {
           payload: {
             type: "vibes.diy.section-event",

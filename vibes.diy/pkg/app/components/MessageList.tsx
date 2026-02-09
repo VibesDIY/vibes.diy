@@ -69,7 +69,9 @@ function CodeMsg({ lines, begin, end }: { begin: CodeBeginMsg; lines: LineMsg[];
     console.log(`handleCodeClick`, begin.sectionId);
     setSearchParam((prev) => {
       prev.set("sectionId", begin.sectionId);
-      prev.set("view", "code");
+      if (!prev.has("view")) {
+        prev.set("view", "code");
+      }
       return prev;
     });
   }, []);

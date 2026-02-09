@@ -119,6 +119,7 @@ async function handlePromptContext({
   blockSeq,
   value,
   collectedMsgs,
+  blockChunks = 100,
 }: {
   vctx: VibesApiSQLCtx;
   req: ReqWithVerifiedAuth<ReqPromptChatSection>;
@@ -127,30 +128,24 @@ async function handlePromptContext({
   blockSeq: number;
   value: BlockEndMsg;
   collectedMsgs: BlockMsgs[];
-}): Promise<Result<number>> {
+  blockChunks?: number;
+}): Promise<Result<{ blockSeq: number; fsRef: Option<FileSystemRef> }>> {
   let fsRef: Option<FileSystemRef> = Option.None();
-  let sqlVal: SqlChatSection | undefined = undefined;
   const code: CodeBlocks[] = [];
+  const sections: SqlChatSection[] = [];
   for (const msg of collectedMsgs) {
     if (!isBlockSteamMsg(msg)) {
       continue;
     }
-    if (!sqlVal || sqlVal.blocks.length >= 20) {
-      if (sqlVal) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const rSql = await exception2Result(() => vctx.db.insert(sqlChatSections).values(sqlVal!).run());
-        console.log("Inserted block section into DB for promptId:", sqlVal, rSql);
-        if (rSql.isErr()) {
-          return Result.Err(rSql);
-        }
-      }
-      sqlVal = {
+    const sqlVal = sections[sections.length - 1];
+    if (sections.length === 0 || sqlVal.blocks.length >= blockChunks) {
+      sections.push({
         chatId: req.chatId,
         promptId,
         blockSeq: blockSeq++,
         blocks: [],
         created: msg.timestamp.toISOString(),
-      };
+      });
     }
     sqlVal.blocks.push(msg);
     if (isCodeBegin(msg)) {
@@ -169,15 +164,6 @@ async function handlePromptContext({
       }
     }
   }
-  if (sqlVal && sqlVal.blocks.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const rSql = await exception2Result(() => vctx.db.insert(sqlChatSections).values(sqlVal!).run());
-    console.log("Inserted block section into DB for promptId:", sqlVal, rSql);
-    if (rSql.isErr()) {
-      return Result.Err(rSql);
-    }
-  }
-
   if (code.length > 0) {
     // here is where the music plays
     const rFs = await ensureAppSlugItem(vctx, {
@@ -211,6 +197,8 @@ async function handlePromptContext({
     }
     fsRef = Option.Some(tFsRef);
   }
+  // update prompt context with usage and fsRef into sections BlockEndMsg
+  value.fsRef = fsRef.toValue();
   const rSql = await exception2Result(() =>
     vctx.db
       .insert(sqlPromptContexts)
@@ -235,7 +223,14 @@ async function handlePromptContext({
   if (rSql.isErr()) {
     return Result.Err(rSql);
   }
-  return Result.Ok(blockSeq);
+
+  const rSections = await exception2Result(() => vctx.db.insert(sqlChatSections).values(sections).run());
+  console.log("Inserted block section into DB for promptId:", sections, rSections);
+  if (rSections.isErr()) {
+    return Result.Err(rSections);
+  }
+
+  return Result.Ok({ blockSeq, fsRef });
 }
 
 async function injectSystemPrompt(
@@ -434,18 +429,30 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         if (done) {
           break;
         }
-        collectedMsgs.push(value as BlockEndMsg);
-        const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
-        if (r.isErr()) {
-          return Result.Err(r);
-        }
-
-        if (isBlockEnd(value)) {
+        collectedMsgs.push(value);
+        if (!isBlockEnd(value)) {
+          const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
+          if (r.isErr()) {
+            return Result.Err(r);
+          }
+        } else {
           const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
           if (r.isErr()) {
             return Result.Err(r);
           }
-          blockSeq = r.Ok();
+          console.log("Handled prompt context for promptId:", r.Ok());
+          blockSeq = r.Ok().blockSeq;
+          const rEvt = await appendBlockEvent({
+            ctx,
+            vctx,
+            req,
+            promptId,
+            blockSeq: blockSeq++,
+            evt: { ...value, fsRef: r.Ok().fsRef.toValue() },
+          });
+          if (rEvt.isErr()) {
+            return Result.Err(rEvt);
+          }
           collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
         }
       }

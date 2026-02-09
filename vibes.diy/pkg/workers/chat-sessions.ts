@@ -67,7 +67,8 @@ export class ChatSessions implements DurableObject {
 
     const cctx = {} as unknown as ExecutionContext & { cache: CfCacheIf };
     cctx.cache = caches.default as unknown as CfCacheIf;
-    return cfServe(request, this.env, { ...cctx, webSocketPair: cfWebSocketPair, connections: this.connections }); // Pass WebSocketPair constructor
+    return cfServe(request, this.env, { ...cctx, webSocket: { webSocketPair: cfWebSocketPair, connections: this.connections } }); // Pass WebSocketPair constructor
+
     //   console.log("Doing cfServe for", url.href);
 
     // return new Response(null, { status: 101, webSocket: client });
