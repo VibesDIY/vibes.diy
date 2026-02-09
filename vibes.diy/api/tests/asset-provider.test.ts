@@ -126,6 +126,25 @@ describe("AssetProvider", () => {
     expect(() => parseAsSetup("s3://bucket", { db: mockDb })).toThrow("Unknown AS_SETUP backend protocol");
   });
 
+  it("parseAsSetup throws on invalid r2 threshold", () => {
+    const mockDb = {} as VibesSqlite;
+    const mockBucket = {
+      put: async () => {
+        return undefined;
+      },
+      get: async () => null,
+    };
+    expect(() => parseAsSetup("sqlite://local,r2://bucket?threshold=abc", { db: mockDb, r2Bucket: mockBucket })).toThrow(
+      "Invalid r2 threshold"
+    );
+    expect(() => parseAsSetup("sqlite://local,r2://bucket?threshold=-1", { db: mockDb, r2Bucket: mockBucket })).toThrow(
+      "Invalid r2 threshold"
+    );
+    expect(() => parseAsSetup("sqlite://local,r2://bucket?threshold=1.5", { db: mockDb, r2Bucket: mockBucket })).toThrow(
+      "Invalid r2 threshold"
+    );
+  });
+
   it("puts results match argument positions", async () => {
     const backend = createMemoryBackend("sql");
     const ap = createAssetProvider([backend], createFirstSelector());

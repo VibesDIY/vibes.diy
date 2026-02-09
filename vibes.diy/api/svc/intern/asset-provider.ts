@@ -210,8 +210,12 @@ export function parseAsSetup(
         backends.push(createR2Backend(bindings.r2Bucket));
         {
           const t = uri.getParam("threshold");
-          if (t) {
-            sizeThreshold = parseInt(t, 10);
+          if (t != null) {
+            const n = Number(t);
+            if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) {
+              throw new Error(`Invalid r2 threshold (expected non-negative integer bytes): ${t}`);
+            }
+            sizeThreshold = n;
           }
         }
         break;
