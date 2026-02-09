@@ -77,6 +77,7 @@ export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContex
       });
     }),
     llmRequest: ctx.llmRequest,
+    r2Bucket: env.ASSETS_BUCKET,
     env: env as unknown as Record<string, string>,
   });
   const upgradeHeader = request.headers.get("Upgrade");

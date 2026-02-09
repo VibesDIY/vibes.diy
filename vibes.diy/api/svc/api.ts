@@ -3,12 +3,13 @@ import { VibesSqlite } from "./create-handler.js";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { FPApiParameters, FPApiToken } from "@fireproof/core-types-protocols-dashboard";
-import { Logger, Result } from "@adviser/cement";
+import { Logger } from "@adviser/cement";
 import { ImportMapProps } from "./intern/import-map.js";
 import { VibesEnv } from "@vibes.diy/use-vibes-base";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { type } from "arktype";
+import type { AssetProvider } from "./intern/asset-provider.js";
 
 export const LLMEnforced = type({
   debug: "boolean = false",
@@ -49,14 +50,6 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
   };
 };
 
-export interface StorageResult {
-  cid: string;
-  getURL: string;
-  mode: "created" | "existing";
-  created: Date;
-  size: number;
-}
-
 export interface CfCacheIf {
   delete(request: RequestInfo | URL, options?: CacheQueryOptions): Promise<boolean>;
   match(request: RequestInfo | URL, options?: CacheQueryOptions): Promise<Response | undefined>;
@@ -75,7 +68,7 @@ export interface VibesApiSQLCtx {
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<string | undefined>;
   // waitUntil<T>(promise: Promise<T>): void;
-  ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
+  assetProvider: AssetProvider;
 
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
 }

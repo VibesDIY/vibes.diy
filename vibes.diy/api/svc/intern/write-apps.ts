@@ -10,7 +10,8 @@ import mime from "mime";
 import { transform } from "sucrase";
 import { calcCid } from "./ensure-storage.js";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
-import { StorageResult, VibesApiSQLCtx } from "../api.js";
+import { VibesApiSQLCtx } from "../api.js";
+import type { AssetPutResult } from "./asset-provider.js";
 import { svcImportMap } from "./import-map.js";
 
 async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug: string): Promise<Result<number>> {
@@ -33,12 +34,18 @@ async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug:
   return Result.Ok(userApps.filter((app) => app.appSlug === appSlug).reduce((max, app) => Math.max(app.releaseSeq, max), 0));
 }
 
-async function computeFsId(env: Record<string, string>, fs: { vibeFileItem: VibeFile; storage: StorageResult }[]): Promise<string> {
+interface StoredVibeFile {
+  vibeFileItem: VibeFile;
+  putResult: AssetPutResult;
+  size: number;
+}
+
+async function computeFsId(env: Record<string, string>, fs: StoredVibeFile[]): Promise<string> {
   // Better don't change this code it's used to generate a stable fsId
   const fsIdStr = [
     fs
       .sort((a, b) => a.vibeFileItem.filename.localeCompare(b.vibeFileItem.filename))
-      .map((fs) => [fs.vibeFileItem.filename, fs.vibeFileItem.mimetype, fs.storage.cid]),
+      .map((fs) => [fs.vibeFileItem.filename, fs.vibeFileItem.mimetype, fs.putResult.cid]),
     JSON.stringify(toSortedObject(env ?? {})),
   ]
     .flat()
@@ -194,15 +201,15 @@ async function createImportMap(
 }
 async function toFileSystemItems(
   ctx: VibesApiSQLCtx,
-  fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
+  fs: StoredVibeFile[]
 ): Promise<Result<FileSystemItem[]>> {
   const givenFsItems = fs.map((f) => {
     const ret: FileSystemItem = {
       fileName: f.vibeFileItem.filename,
-      assetId: f.storage.cid,
+      assetId: f.putResult.cid,
       mimeType: f.vibeFileItem.mimetype ?? mime.getType(f.vibeFileItem.filename) ?? "application/octet-stream",
-      assetURI: f.storage.getURL,
-      size: f.storage.size,
+      assetURI: f.putResult.url,
+      size: f.size,
     };
     if (f.vibeFileItem.type === "code-block" && f.vibeFileItem.lang === "jsx") {
       ret.transform = {
@@ -226,19 +233,25 @@ async function toFileSystemItems(
   const transformed = await transformJSXAndImports(ctx, givenFsItems);
   transformed.push(...(await createImportMap(ctx, transformed)));
 
-  const rStore = await ctx.ensureStorage(
-    ...transformed
-      .filter((item) => item.prepareStorage)
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      .map((item) => item.prepareStorage!)
-  );
-  if (rStore.isErr()) {
-    return Result.Err(rStore);
+  const toPut = transformed
+    .filter((item) => item.prepareStorage)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    .map((item) => item.prepareStorage!);
+  const putResults = await ctx.assetProvider.puts(toPut);
+  const putError = putResults.find((item) => !item.ok);
+  if (putError && !putError.ok) {
+    return Result.Err(`Asset put failed for cid=${putError.cid}: ${putError.error.message}`);
   }
-  const storeMap = rStore.Ok().reduce((acc, item) => {
-    acc.set(item.cid, item);
+  const storeMap = putResults.reduce((acc, item, idx) => {
+    if (!item.ok) {
+      throw new Error("internal error: missing put result");
+    }
+    acc.set(item.value.cid, {
+      putResult: item.value,
+      size: toPut[idx].data.byteLength,
+    });
     return acc;
-  }, new Map<string, StorageResult>());
+  }, new Map<string, { putResult: AssetPutResult; size: number }>());
 
   const assetUris = transformed.map((item) => {
     if (!item.prepareStorage) {
@@ -252,7 +265,7 @@ async function toFileSystemItems(
       ...item,
       fsItem: {
         ...item.fsItem,
-        assetURI: storeItem.getURL,
+        assetURI: storeItem.putResult.url,
         size: storeItem.size,
       },
     };
@@ -264,7 +277,7 @@ export async function ensureApps(
   ctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqEnsureAppSlug>,
   binding: AppSlugBinding,
-  fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
+  fs: StoredVibeFile[]
 ): Promise<Result<Omit<ResEnsureAppSlug, "type">>> {
   const fsId = await computeFsId(req.env ?? {}, fs);
   const exist = await ctx.db

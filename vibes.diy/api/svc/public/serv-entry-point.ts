@@ -12,11 +12,12 @@ import {
 } from "@adviser/cement";
 import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
 import { VibesApiSQLCtx } from "../api.js";
-import { sqlApps, sqlAssets } from "../sql/vibes-diy-api-schema.js";
+import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibes } from "../intern/render-vibes.js";
+import { AssetNotFoundError } from "../intern/asset-provider.js";
 
 function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
   return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
@@ -60,34 +61,25 @@ export async function fetchContent(
       return Result.Ok(new Uint8Array(arrayBuffer));
     }
   }
-  const assetURI = URI.from(item.assetURI);
-  switch (assetURI.protocol) {
-    case "sql:":
-      {
-        const asset = await vctx.db.select().from(sqlAssets).where(eq(sqlAssets.assetId, item.assetId)).get();
-        if (!asset) {
-          return Result.Err(new Error(`Asset not found: ${item.assetId}`));
-        }
-        // sqlite returns a blob symetric to the input is always something like a Uint8Array
-        // we should have a better method to coerce unknown to Uint8Array --- @adviser/cement issue
-        // inject into cache for assert lookups
-        await Promise.all([
-          vctx.cache.put(
-            ...pairReqRes(
-              BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(),
-              asset.content as never,
-              item,
-              headers
-            )
-          ),
-          vctx.cache.put(...pairReqRes(assetCacheCidUrl, asset.content as never, item, headers)),
-        ]);
-        return Result.Ok(asset.content as Uint8Array);
-      }
-      break;
-    default:
-      return Result.Err(new Error(`Unsupported assetURI protocol: ${assetURI.protocol}`));
+  const getResults = await vctx.assetProvider.gets([item.assetURI]);
+  const getResult = getResults[0];
+  if (!getResult) {
+    return Result.Err(new Error(`Missing asset provider result for ${item.assetURI}`));
   }
+  if (!getResult.ok) {
+    if (getResult.notFound) {
+      return Result.Err(new AssetNotFoundError(getResult.url));
+    }
+    return Result.Err(getResult.error);
+  }
+  const content = getResult.value.data;
+  await Promise.all([
+    vctx.cache.put(
+      ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), content, item, headers)
+    ),
+    vctx.cache.put(...pairReqRes(assetCacheCidUrl, content, item, headers)),
+  ]);
+  return Result.Ok(content);
 }
 
 async function renderFromFs(
@@ -98,12 +90,13 @@ async function renderFromFs(
   if (foundPath) {
     const rContent = await fetchContent(ctx, foundPath);
     if (rContent.isErr()) {
+      const err = rContent.Err();
       await ctx.send.send(ctx, {
         type: "http.Response.JSON",
-        status: 500,
+        status: err instanceof AssetNotFoundError ? 404 : 500,
         json: {
           type: "error",
-          message: `Error fetching content for ${ctx.validated.path}: ${rContent.Err().message}`,
+          message: `Error fetching content for ${ctx.validated.path}: ${err.message}`,
         },
       } satisfies HttpResponseJsonType);
       return Result.Ok(EventoResult.Stop);

@@ -16,6 +16,9 @@ import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { calcCid } from "../intern/ensure-storage.js";
+import type { AssetPutResult } from "../intern/asset-provider.js";
+
+const textEncoder = new TextEncoder();
 
 // ReqWithVerifiedAuth<ReqEnsureAppSlug>
 export async function ensureAppSlugItem(
@@ -37,6 +40,7 @@ export async function ensureAppSlugItem(
       cid: string;
       data: Uint8Array;
     };
+    size: number;
   }[] = [];
   for (const fsItem of req.fileSystem) {
     switch (fsItem.type) {
@@ -47,6 +51,7 @@ export async function ensureAppSlugItem(
           writeAppSlugsOp.push({
             fsItem,
             assetOp: await calcCid(vctx, fsItem.content),
+            size: toUint8Size(fsItem.content),
           });
         }
         break;
@@ -58,18 +63,24 @@ export async function ensureAppSlugItem(
         return Result.Err(`unsupported file system item type: ${fsItem.type}`);
     }
   }
-  const rStorageResult = await vctx.ensureStorage(...writeAppSlugsOp.map((op) => op.assetOp));
-  if (rStorageResult.isErr()) {
-    return Result.Err(rStorageResult);
+  const putResults = await vctx.assetProvider.puts(writeAppSlugsOp.map((op) => op.assetOp));
+  const firstError = putResults.find((r) => !r.ok);
+  if (firstError && !firstError.ok) {
+    return Result.Err(`Asset put failed for cid=${firstError.cid}: ${firstError.error.message}`);
   }
-  if (rStorageResult.Ok().length !== writeAppSlugsOp.length) {
-    return Result.Err("storage result count mismatch");
-  }
-  const storageResults = rStorageResult.Ok();
-  const fullFileSystem = writeAppSlugsOp.map((op, idx) => ({
-    vibeFileItem: op.fsItem,
-    storage: storageResults[idx],
-  }));
+  const fullFileSystem: { vibeFileItem: VibeFile; putResult: AssetPutResult; size: number }[] = writeAppSlugsOp.map(
+    (op, idx) => {
+      const result = putResults[idx];
+      if (!result?.ok) {
+        throw new Error("internal error: missing or invalid put result");
+      }
+      return {
+        vibeFileItem: op.fsItem,
+        putResult: result.value,
+        size: op.size,
+      };
+    }
+  );
   const res = await ensureApps(vctx, req, rAppSlugBinding.Ok(), fullFileSystem);
   if (res.isErr()) {
     return Result.Err(res);
@@ -101,6 +112,13 @@ export async function ensureAppSlugItem(
     wrapperUrl,
     entryPointUrl,
   });
+}
+
+function toUint8Size(content: string | Uint8Array): number {
+  if (typeof content === "string") {
+    return textEncoder.encode(content).byteLength;
+  }
+  return content.byteLength;
 }
 
 export const ensureAppSlugItemEvento: EventoHandler<

@@ -264,7 +264,7 @@ describe("VibesDiyApi", () => {
         fileSystem: [
           {
             assetId: "zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
-            assetURI: "sql://Assets/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
+            assetURI: "sql:?cid=zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
             fileName: "/App.jsx",
             mimeType: "text/jsx",
             size: expect.any(Number),
@@ -275,7 +275,7 @@ describe("VibesDiyApi", () => {
           },
           {
             assetId: "zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
-            assetURI: "sql://Assets/zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
+            assetURI: "sql:?cid=zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
             fileName: "/~~transformed~~/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
             mimeType: "application/javascript",
             size: 276,
@@ -287,7 +287,7 @@ describe("VibesDiyApi", () => {
           },
           {
             assetId: "z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
-            assetURI: "sql://Assets/z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
+            assetURI: "sql:?cid=z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
             fileName: "/~~calculated~~/import-map.json",
             mimeType: "application/importmap+json",
             size: 6822,

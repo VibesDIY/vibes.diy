@@ -1,7 +1,8 @@
-import { D1Database } from "@cloudflare/workers-types";
+import type { D1Database, R2Bucket } from "@cloudflare/workers-types";
 
 export interface Env {
   DB: D1Database;
+  ASSETS_BUCKET?: R2Bucket;
   ENVIRONMENT: string;
   VIBES_SVC_HOSTNAME_BASE: string;
   // Add more bindings here as needed

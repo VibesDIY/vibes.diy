@@ -14,7 +14,8 @@ import {
   VibesApiSQLCtx,
   VibesFPApiParameters,
 } from "./api.js";
-import { ensureStorage } from "./intern/ensure-storage.js";
+import { createAssetProviderFromEnv } from "./intern/asset-provider.js";
+import type { R2BucketIf } from "./intern/asset-provider.js";
 import type { D1Result } from "@cloudflare/workers-types";
 import { defaultFetchPkgVersion } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
@@ -34,6 +35,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   db: T;
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
+  r2Bucket?: R2BucketIf;
   connections: Set<WSSendProvider>;
   netHash(): string;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
@@ -73,6 +75,7 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
 
     VIBES_SVC_HOSTNAME_BASE: param.REQUIRED,
     VIBES_SVC_PROTOCOL: "https",
+    AS_SETUP: "sqlite://local",
   });
   if (rEnvVals.isErr()) {
     throw rEnvVals.Err();
@@ -139,7 +142,14 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
         clockTolerance: 60,
         deviceIdCA: rDeviceIdCA.Ok(),
       }),
-      ensureStorage: ensureStorage(params.db),
+      assetProvider: createAssetProviderFromEnv(
+        params.db,
+        {
+          ...(params.env as Record<string, string>),
+          AS_SETUP: envVals.AS_SETUP,
+        },
+        params.r2Bucket
+      ),
       llmRequest: defaultLLMRequest(params.llmRequest, {
         url: envVals.LLM_BACKEND_URL,
         apiKey: envVals.LLM_BACKEND_API_KEY,
