@@ -242,16 +242,21 @@ async function toFileSystemItems(
   if (putError && !putError.ok) {
     return Result.Err(`Asset put failed for cid=${putError.cid}: ${putError.error.message}`);
   }
-  const storeMap = putResults.reduce((acc, item, idx) => {
+  const sizeByCid = new Map(toPut.map((i) => [i.cid, i.data.byteLength] as const));
+  const storeMap = new Map<string, { putResult: AssetPutResult; size: number }>();
+  for (const item of putResults) {
     if (!item.ok) {
       throw new Error("internal error: missing put result");
     }
-    acc.set(item.value.cid, {
+    const size = sizeByCid.get(item.value.cid);
+    if (size == null) {
+      throw new Error(`internal error: size not found for cid=${item.value.cid}`);
+    }
+    storeMap.set(item.value.cid, {
       putResult: item.value,
-      size: toPut[idx].data.byteLength,
+      size,
     });
-    return acc;
-  }, new Map<string, { putResult: AssetPutResult; size: number }>());
+  }
 
   const assetUris = transformed.map((item) => {
     if (!item.prepareStorage) {
