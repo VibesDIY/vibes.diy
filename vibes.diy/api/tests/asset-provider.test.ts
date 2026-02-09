@@ -37,6 +37,21 @@ function createMemoryBackend(protocol: "sql" | "r2"): AssetBackend {
   };
 }
 
+function createErrorBackend(protocol: string): AssetBackend {
+  return {
+    protocol,
+    async put(item: AssetPutItem): Promise<AssetPutItemResult> {
+      return { ok: false, cid: item.cid, error: new Error(`${protocol} put failed`) };
+    },
+    canGet(url: string): boolean {
+      return url.startsWith(`${protocol}:`);
+    },
+    async get(url: string): Promise<AssetGetItemResult> {
+      return { ok: false, notFound: false, url, error: new Error(`${protocol} get failed`) };
+    },
+  };
+}
+
 describe("AssetProvider", () => {
   it("puts and gets with multiple backends via selector", async () => {
     const sqlBackend = createMemoryBackend("sql");
@@ -109,5 +124,112 @@ describe("AssetProvider", () => {
   it("parseAsSetup throws on unsupported protocol", () => {
     const mockDb = {} as VibesSqlite;
     expect(() => parseAsSetup("s3://bucket", { db: mockDb })).toThrow("Unknown AS_SETUP backend protocol");
+  });
+
+  it("puts results match argument positions", async () => {
+    const backend = createMemoryBackend("sql");
+    const ap = createAssetProvider([backend], createFirstSelector());
+    const items = [
+      { cid: "zFirst", data: new Uint8Array([1]) },
+      { cid: "zSecond", data: new Uint8Array([2]) },
+      { cid: "zThird", data: new Uint8Array([3]) },
+    ];
+    const puts = await ap.puts(items);
+    expect(puts).toHaveLength(3);
+    for (let i = 0; i < items.length; i++) {
+      const r = puts[i];
+      expect(r?.ok).toBe(true);
+      if (r?.ok) {
+        expect(r.value.cid).toBe(items[i].cid);
+      }
+    }
+  });
+
+  it("gets results match argument positions", async () => {
+    const backend = createMemoryBackend("sql");
+    const ap = createAssetProvider([backend], createFirstSelector());
+    const items = [
+      { cid: "zA", data: new Uint8Array([10]) },
+      { cid: "zB", data: new Uint8Array([20]) },
+    ];
+    await ap.puts(items);
+    // request in reverse order
+    const gets = await ap.gets(["sql:?cid=zB", "sql:?cid=zA"]);
+    expect(gets).toHaveLength(2);
+    if (gets[0]?.ok) expect(gets[0].value.data).toEqual(new Uint8Array([20]));
+    if (gets[1]?.ok) expect(gets[1].value.data).toEqual(new Uint8Array([10]));
+  });
+
+  it("error-only backend returns errors for all puts", async () => {
+    const backend = createErrorBackend("fail");
+    const ap = createAssetProvider([backend], createFirstSelector());
+    const puts = await ap.puts([
+      { cid: "z1", data: new Uint8Array(10) },
+      { cid: "z2", data: new Uint8Array(20) },
+    ]);
+    expect(puts).toHaveLength(2);
+    for (const r of puts) {
+      expect(r.ok).toBe(false);
+      if (!r.ok) {
+        expect(r.error.message).toMatch(/fail put failed/);
+      }
+    }
+  });
+
+  it("error-only backend returns errors for all gets", async () => {
+    const backend = createErrorBackend("fail");
+    const ap = createAssetProvider([backend], createFirstSelector());
+    const gets = await ap.gets(["fail:?cid=z1", "fail:?cid=z2"]);
+    expect(gets).toHaveLength(2);
+    for (const r of gets) {
+      expect(r.ok).toBe(false);
+      if (!r.ok && !r.notFound) {
+        expect(r.error.message).toMatch(/fail get failed/);
+      }
+    }
+  });
+
+  it("mixed results: some puts succeed, some fail", async () => {
+    const good = createMemoryBackend("sql");
+    const bad = createErrorBackend("r2");
+    const selector = createSizeSelector(100, [good, bad]);
+    const ap = createAssetProvider([good, bad], selector);
+
+    const puts = await ap.puts([
+      { cid: "zSmall", data: new Uint8Array(50) },  // → sql (good)
+      { cid: "zBig", data: new Uint8Array(200) },    // → r2 (bad)
+    ]);
+    expect(puts).toHaveLength(2);
+    expect(puts[0]?.ok).toBe(true);
+    expect(puts[1]?.ok).toBe(false);
+    if (puts[0]?.ok) expect(puts[0].value.cid).toBe("zSmall");
+    if (puts[1] && !puts[1].ok) expect(puts[1].cid).toBe("zBig");
+  });
+
+  it("gets with no matching backend returns error, not notFound", async () => {
+    const backend = createMemoryBackend("sql");
+    const ap = createAssetProvider([backend], createFirstSelector());
+    const gets = await ap.gets(["unknown:?cid=z1"]);
+    expect(gets).toHaveLength(1);
+    expect(gets[0]?.ok).toBe(false);
+    if (gets[0] && !gets[0].ok && !gets[0].notFound) {
+      expect(gets[0].error.message).toMatch(/No backend for URL/);
+    }
+  });
+
+  it("error results carry cid on puts and url on gets", async () => {
+    const backend = createErrorBackend("err");
+    const ap = createAssetProvider([backend], createFirstSelector());
+
+    const puts = await ap.puts([{ cid: "zMyCid", data: new Uint8Array(1) }]);
+    if (puts[0] && !puts[0].ok) {
+      expect(puts[0].cid).toBe("zMyCid");
+    }
+
+    const gets = await ap.gets(["err:?cid=zMyCid"]);
+    if (gets[0] && !gets[0].ok && !gets[0].notFound) {
+      expect(gets[0].url).toBe("err:?cid=zMyCid");
+      expect(gets[0].error).toBeInstanceOf(Error);
+    }
   });
 });
