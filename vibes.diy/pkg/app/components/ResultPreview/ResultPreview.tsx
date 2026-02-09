@@ -3,6 +3,7 @@ import { animationStyles } from "./ResultPreviewTemplates.js";
 import type { ResultPreviewProps } from "./ResultPreviewTypes.js";
 import AppSettingsView from "./AppSettingsView.js";
 import CodeEditor from "./CodeEditor.js";
+import { PreviewApp } from "./PreviewApp.js";
 // import { useTheme } from "../../contexts/ThemeContext.js";
 
 function ResultPreview({
@@ -116,6 +117,9 @@ function ResultPreview({
       // console.log(`ToRender:code`);
       break;
     case currentView === "preview":
+      console.log(`PreviewApp`, promptState);
+      previewArea = <PreviewApp promptState={promptState} />;
+      break;
     case currentView === "chat":
     case currentView === "data":
     case currentView === "settings":

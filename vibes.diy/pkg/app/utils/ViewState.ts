@@ -140,8 +140,11 @@ export function useViewState(promptState: PromptState): ViewState {
   // Navigate to a view (explicit user action)
   function navigateToView(view: ViewType) {
     // Skip navigation for chat view or if control doesn't exist/isn't enabled
-    if (view === "chat" || !viewControls[view as keyof typeof viewControls]?.enabled) return;
-    setSearchParams({ view });
+    // if (view === "chat" || !viewControls[view as keyof typeof viewControls]?.enabled) return;
+    setSearchParams((prev) => {
+      prev.set("view", view);
+      return prev;
+    });
 
     // if (sessionId && encodedTitle) {
     //   const suffix = view === "preview" ? "app" : view;

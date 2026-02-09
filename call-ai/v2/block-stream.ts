@@ -78,6 +78,7 @@ export const BlockEndMsg = type({
     total: BlockStats,
   },
   usage: BlockUsage,
+  "fsRef?": FileSystemRef,
 }).and(BlockBase);
 
 // Toplevel (non-code) section events

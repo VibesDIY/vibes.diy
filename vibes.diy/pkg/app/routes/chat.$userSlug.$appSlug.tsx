@@ -68,7 +68,7 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
       };
     }
     case isPromptBlockEnd(block):
-      console.log(`PromptBlock-End`, block);
+      // console.log(`PromptBlock-End`, block);
       return { ...state, running: false };
     case isCodeBegin(block):
       if (!state.current) return state;
@@ -81,6 +81,9 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
     default:
       if (!state.current) return state;
       // console.log("reqs", state.current?.reqs)
+      // if (isBlockEnd(block)) {
+      //   console.log(`recv:`, block)
+      // }
       return {
         ...state,
         current: { ...state.current, msgs: [...state.current.msgs, block] },

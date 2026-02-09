@@ -32,8 +32,10 @@ import { hashObjectSync } from "@fireproof/core-runtime";
 
 export interface CFInject {
   readonly cache: CfCacheIf;
-  readonly connections: Set<WSSendProvider>;
-  readonly webSocketPair: () => { client: WebSocket; server: WebSocket };
+  readonly webSocket?: {
+    readonly connections: Set<WSSendProvider>;
+    readonly webSocketPair: () => { client: WebSocket; server: WebSocket };
+  };
   readonly drizzle?: VibesSqlite;
   readonly wsResponse?: Response;
   readonly llmRequest?: (prompt: LLMRequest) => Promise<Response>;
@@ -42,7 +44,7 @@ export interface CFInject {
 
 export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContext & CFInject): Promise<CFResponse> {
   const appCtx = await createAppContext({
-    connections: ctx.connections,
+    connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
     db: ctx.drizzle ?? drizzle(env.DB),
     cache: ctx.cache,
     // this help to provide enough uniqueness
@@ -83,12 +85,15 @@ export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContex
   if (upgradeHeader !== "websocket") {
     return processRequest(appCtx, request as unknown as Request) as unknown as Promise<CFResponse>;
   }
-  const { client, server } = ctx.webSocketPair(); // ? ctx.webSocketPair() : cfWebSocketPair();
+  if (!ctx.webSocket) {
+    throw new Error("WebSocket upgrade requested but no webSocketPair function provided in context");
+  }
+  const ws = ctx.webSocket;
+  const { client, server } = ctx.webSocket.webSocketPair(); // ? ctx.webSocketPair() : cfWebSocketPair();
   (server as unknown as CFWebSocket).accept();
 
   const wsSendProvider = new WSSendProvider(server as unknown as WebSocket);
-  console.log("New WebSocket connection established");
-  ctx.connections.add(wsSendProvider);
+  ws.connections.add(wsSendProvider);
 
   const wsEvento = vibesMsgEvento();
 
@@ -98,12 +103,12 @@ export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContex
 
   server.addEventListener("close", (event) => {
     wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
-    ctx.connections.delete(wsSendProvider);
+    ws.connections.delete(wsSendProvider);
   });
 
   server.addEventListener("error", (event: Event) => {
     wsEvento.trigger({ ctx: appCtx, request: { type: "ErrorEvent", event: event as ErrorEvent }, send: wsSendProvider });
-    ctx.connections.delete(wsSendProvider);
+    ws.connections.delete(wsSendProvider);
   });
   // cast wiredness don't ask me --- ask Cloudflare
   return (ctx.wsResponse ??
