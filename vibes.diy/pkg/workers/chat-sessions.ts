@@ -41,36 +41,8 @@ export class ChatSessions implements DurableObject {
     if (upgradeHeader !== "websocket") {
       return new Response("Expected WebSocket", { status: 426 });
     }
-
-    // Create WebSocket pair
-    // const pair = new WebSocketPair();
-    // const [client, server] = Object.values(pair) as [CFWebSocket, CFWebSocket];
-
-    // // Accept the WebSocket connection
-    // server.accept();
-    // this.connections.add(server);
-
-    // // Handle incoming messages
-    // server.addEventListener("message", (event) => {
-    //   // Broadcast to all connected clients
-    //   for (const conn of this.connections) {
-    //     if (conn.readyState === CFWebSocket.OPEN) {
-    //       conn.send(event.data);
-    //     }
-    //   }
-    // });
-
-    // // Handle close
-    // server.addEventListener("close", () => {
-    //   this.connections.delete(server);
-    // });
-
     const cctx = {} as unknown as ExecutionContext & { cache: CfCacheIf };
     cctx.cache = caches.default as unknown as CfCacheIf;
     return cfServe(request, this.env, { ...cctx, webSocket: { webSocketPair: cfWebSocketPair, connections: this.connections } }); // Pass WebSocketPair constructor
-
-    //   console.log("Doing cfServe for", url.href);
-
-    // return new Response(null, { status: 101, webSocket: client });
   }
 }

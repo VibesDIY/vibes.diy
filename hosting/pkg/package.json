@@ -58,8 +58,8 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.5.33",
-    "@cloudflare/workers-types": "^4.20260317.1",
+    "@adviser/cement": "^0.5.22",
+    "@cloudflare/workers-types": "^4.20260128.0",
     "@hono/clerk-auth": "^3.1.0",
     "@vibes.diy/hosting-base": "workspace:*",
     "call-ai": "workspace:*",

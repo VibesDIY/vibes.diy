@@ -1,6 +1,6 @@
 import React from "react";
 import { getResponsiveContainerStyle, getResponsiveLabelStyle, getResponsiveButtonWrapperStyle } from "./LabelContainer.styles.js";
-import { useMobile } from "@vibes.diy/use-vibes-base";
+import { useMobile } from "../../hooks/useMobile.js";
 
 export interface LabelContainerProps {
   /** The label text to display on the side of the container */

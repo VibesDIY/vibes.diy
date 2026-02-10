@@ -4,7 +4,6 @@ import { ensureLogger } from "@fireproof/core-runtime";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { FPApiParameters, FPApiToken } from "@fireproof/core-types-protocols-dashboard";
 import { Logger, Result } from "@adviser/cement";
-import { ImportMapProps } from "./intern/import-map.js";
 import { VibesEnv } from "@vibes.diy/use-vibes-base";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
@@ -32,6 +31,7 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
   maxAppSlugPerUserId: number;
   maxUserSlugPerUserId: number;
   maxAppsPerUserId: number;
+  npmUrl: string;
   wrapperBaseUrl: string; // relative should be access to Clerk-Auth to provide the entrypoint via postmessage the tokens to access FPCloud
   vibes: {
     svc: {
@@ -41,7 +41,7 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
     env: VibesEnv;
   };
   assetCacheUrl: string; // https://asset-cache.vibes.app/{assetId}
-  importMapProps: ImportMapProps;
+  // importMapProps: ImportMapProps;
   llm: {
     default: LLMDefault;
     enforced: LLMEnforced;

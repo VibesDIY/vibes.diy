@@ -1,10 +1,4 @@
-import {
-  CacheStorage,
-  ExecutionContext,
-  ExportedHandler,
-  Request as CFRequest,
-  Response as CFResponse,
-} from "@cloudflare/workers-types";
+import { ExecutionContext, ExportedHandler, Request as CFRequest, Response as CFResponse } from "@cloudflare/workers-types";
 import { createRequestHandler } from "react-router";
 
 // @ts-expect-error - virtual module provided by React Router
@@ -17,10 +11,25 @@ export { ChatSessions } from "./chat-sessions.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 
-declare const caches: CacheStorage;
+// declare const caches: CacheStorage;
 const requestHandler = createRequestHandler(serverBuild, import.meta.env.MODE);
 
 // declare const WebSocketPair: typeof WebSocketPairType;
+
+class NoCache implements CfCacheIf {
+  async match() {
+    return undefined;
+  }
+  async put() {
+    // no-op
+  }
+  async delete() {
+    return false;
+  }
+  async keys() {
+    return [];
+  }
+}
 
 export default {
   async fetch(request: CFRequest, env: Env, ctx: ExecutionContext): Promise<CFResponse> {
@@ -32,8 +41,8 @@ export default {
     }
     if (url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE)) {
       const cctx = ctx as unknown as ExecutionContext & { cache: CfCacheIf };
-      cctx.cache = caches.default as unknown as CfCacheIf;
-      console.log("Doing cfServe for", url.href);
+      // cctx.cache = caches.default as unknown as CfCacheIf;
+      cctx.cache = new NoCache() as unknown as CfCacheIf; // Disable caching for now - can implement custom caching logic in the future if needed
       return cfServe(request, env, cctx);
       // throw new Error("cfServe path disabled in app worker");
     }

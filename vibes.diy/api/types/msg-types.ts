@@ -1,9 +1,9 @@
 // Should be compatible with FP Dashboard's auth types
 import { Result } from "@adviser/cement";
 import { type } from "arktype";
-import { vibeEnv } from "@vibes.diy/use-vibes-base";
 import { fileSystemItem } from "./types.js";
 import { BlockMsgs, CoercedDate, FileSystemRef, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
+import { vibeEnv } from "./vibe.js";
 
 // Base types
 export const dashAuthType = type({
@@ -193,8 +193,8 @@ export const reqEnsureAppSlug = type({
   auth: dashAuthType,
   "appSlug?": "string", // desired app slug
   "userSlug?": "string", // desired user slug
-  "promptId?": "string", // used to emit events to the current chat session
-  "chatId?": "string", // used to emit events to the current chat session
+  // "promptId?": "string", // used to emit events to the current chat session
+  // "chatId?": "string", // used to emit events to the current chat session
   mode: "'production'|'dev'",
   // env passed to the app
   "env?": vibeEnv,
@@ -210,8 +210,8 @@ export const resEnsureAppSlug = type({
   // userSlug: "string",
   // mode: "'production'|'dev'",
   env: vibeEnv,
-  "promptId?": "string",
-  "chatId?": "string",
+  // "promptId?": "string",
+  // "chatId?": "string",
   // fsId: "string",
   fileSystem: [fileSystemItem, "[]"],
   // envRef: "string",

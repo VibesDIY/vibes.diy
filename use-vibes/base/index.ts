@@ -28,10 +28,11 @@ export type * as Fireproof from "@fireproof/use-fireproof";
 export const vibesEnvSchema = type({
   FPCLOUD_URL: "string",
   DASHBOARD_URL: "string",
-  CLERK_PUBLISHABLE_KEY: "string",
-  CALLAI_API_KEY: "string",
-  CALLAI_CHAT_URL: "string",
-  CALLAI_IMG_URL: "string",
+  // CLERK_PUBLISHABLE_KEY: "string",
+  // CALLAI_API_KEY: "string",
+  // CALLAI_CHAT_URL: "string",
+  // CALLAI_IMG_URL: "string",
+  VIBES_DIY_STYLES_URL: "string",
 });
 
 export type VibesEnv = typeof vibesEnvSchema.infer;

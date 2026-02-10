@@ -5,6 +5,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { visualizer } from "rollup-plugin-visualizer";
 import { $ } from "zx";
+import { workspacePackagesPlugin } from "./vite-plugin-workspace-packages.js";
 
 function setupSqlPlugin() {
   return {
@@ -20,6 +21,7 @@ function setupSqlPlugin() {
 
 export default defineConfig({
   plugins: [
+    workspacePackagesPlugin(),
     tailwindcss(),
     tsconfigPaths({
       configNames: ["tsconfig.dev.json"],

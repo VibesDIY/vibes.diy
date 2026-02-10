@@ -24,6 +24,11 @@ function LiveCycleVibeDiyProvider({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   const clerk = useClerk();
+
+  let npmUrl = import.meta.env["VITE_NPM_URL"] || import.meta.env["NPM_URL"];
+  if (!npmUrl) {
+    npmUrl = BuildURI.from(window.location.origin).appendRelative("/dev-npm");
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   realCtx.dashApi = clerkDashApi(clerk as any, {
     apiUrl: VibesDiyEnv.VibesEnv().DASHBOARD_URL,
@@ -39,6 +44,7 @@ function LiveCycleVibeDiyProvider({ children }: { children: React.ReactNode }) {
     console.log("VibeDiyApi for", apiUrl);
     return new VibeDiyApi({
       apiUrl,
+      npmUrl,
       getToken: async () => {
         const ot = await clerk.session?.getToken({ template: "with-email" });
         if (!ot) {

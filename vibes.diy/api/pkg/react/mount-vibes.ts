@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import { type } from "arktype";
 import { HiddenMenuWrapper } from "./components/HiddenMenuWrapper.jsx";
 import { VibesPanel } from "./components/VibesPanel.jsx";
-import { VibeContextProvider, vibesDiyMountParams } from "@vibes.diy/use-vibes-base";
+import { VibeContextProvider } from "./VibeContext.jsx";
+import { vibesDiyMountParams } from "@vibes.diy/api-types";
 
 // runs on client side
 export function mountVibe(
@@ -15,11 +16,11 @@ export function mountVibe(
   if (props instanceof type.errors) {
     throw new Error(`Invalid mount params: ${props.toLocaleString()}`);
   }
-  const element = document.getElementById(props.bindings.appSlug);
-  if (!element) {
-    throw new Error(`Can't find the dom element ${props.bindings.appSlug}`);
+  const element = document.getElementsByClassName("vibe-app-container");
+  if (!element || element.length !== 1) {
+    throw new Error(`Can't find the dom element root`);
   }
-  const root = createRoot(element);
+  const root = createRoot(element[0]);
   // Wrap in VibeContextProvider if we have metadata
 
   const vibeElement = React.createElement(Fragment, null, ...comps.map((Comp, index) => React.createElement(Comp, { key: index })));

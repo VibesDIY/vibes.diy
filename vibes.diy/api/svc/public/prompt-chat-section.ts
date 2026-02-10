@@ -1,4 +1,4 @@
-import { EventoHandler, Result, Option, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
+import { EventoHandler, Result, Option, HandleTriggerCtx, EventoResult, exception2Result, chunkyAsync } from "@adviser/cement";
 import {
   InMsgBase,
   MsgBase,
@@ -137,7 +137,7 @@ async function handlePromptContext({
     if (!isBlockSteamMsg(msg)) {
       continue;
     }
-    const sqlVal = sections[sections.length - 1];
+    let sqlVal = sections[sections.length - 1];
     if (sections.length === 0 || sqlVal.blocks.length >= blockChunks) {
       sections.push({
         chatId: req.chatId,
@@ -146,6 +146,7 @@ async function handlePromptContext({
         blocks: [],
         created: msg.timestamp.toISOString(),
       });
+      sqlVal = sections[sections.length - 1];
     }
     sqlVal.blocks.push(msg);
     if (isCodeBegin(msg)) {
@@ -169,7 +170,7 @@ async function handlePromptContext({
     const rFs = await ensureAppSlugItem(vctx, {
       type: "vibes.diy.req-ensure-app-slug",
       mode: "dev",
-      chatId: req.chatId,
+      // chatId: req.chatId,
       appSlug: resChat.appSlug,
       userSlug: resChat.userSlug,
       fileSystem: code.reduce((acc, block, idx) => {
@@ -224,11 +225,14 @@ async function handlePromptContext({
     return Result.Err(rSql);
   }
 
-  const rSections = await exception2Result(() => vctx.db.insert(sqlChatSections).values(sections).run());
-  console.log("Inserted block section into DB for promptId:", sections, rSections);
-  if (rSections.isErr()) {
-    return Result.Err(rSections);
-  }
+  await chunkyAsync({
+    input: sections,
+    splitCondition: (secChunk) => secChunk.length >= 20,
+    commit: async (secChunk) => {
+      const rSections = await exception2Result(() => vctx.db.insert(sqlChatSections).values(sections).run());
+      console.log("Inserted block section into DB for promptId:", secChunk, rSections);
+    },
+  });
 
   return Result.Ok({ blockSeq, fsRef });
 }
