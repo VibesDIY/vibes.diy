@@ -72,6 +72,7 @@ export class HTTPSendProvider implements EventoSendProvider<Request, unknown, un
         headers: DefaultHttpHeaders({
           "Content-Type": body.headers?.["Content-Type"] ?? "application/octet-stream",
           "Server-Timing": `total;dur=${(ctx.stats.request.doneTime.getTime() - ctx.stats.request.startTime.getTime()).toFixed(2)}`,
+          ...body.headers,
         }),
       });
       ctx.send.send(ctx, this.response);

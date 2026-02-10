@@ -11,7 +11,6 @@ import { transform } from "sucrase";
 import { calcCid } from "./ensure-storage.js";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
 import { StorageResult, VibesApiSQLCtx } from "../api.js";
-import { svcImportMap } from "./import-map.js";
 
 async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug: string): Promise<Result<number>> {
   const userApps = await ctx.db.select().from(sqlApps).where(eq(sqlApps.userId, userId)).orderBy(sqlApps.created).all();
@@ -129,6 +128,7 @@ async function transformJSXAndImports(
 
 async function createImportMap(
   ctx: VibesApiSQLCtx,
+  _mode: ReqEnsureAppSlug["mode"], // controls locked vs unlocked import map
   transformed: {
     vibeFileItem: VibeFile;
     prepareStorage?: Awaited<ReturnType<typeof calcCid>>;
@@ -163,8 +163,13 @@ async function createImportMap(
     { imports: new Set<string>(), files: [] as string[] }
   );
   if (importFiles.imports.size >= 0) {
-    const imap = await svcImportMap(Array.from(importFiles.imports), ctx.params.importMapProps, ctx.fetchPkgVersion);
-    const imapStr = JSON.stringify(imap);
+    // const imap = await svcImportMap(Array.from(importFiles.imports), {
+    //   mode,
+    //   ...ctx.params.importMapProps
+    // }, ctx.fetchPkgVersion)
+    const imapStr = JSON.stringify({
+      imports: Object.fromEntries(Array.from(importFiles.imports).map((imp) => [imp, `vibed:${importFiles.files.join(",")}`])),
+    });
     const dataCid = await calcCid(ctx, imapStr);
     return [
       {
@@ -194,6 +199,7 @@ async function createImportMap(
 }
 async function toFileSystemItems(
   ctx: VibesApiSQLCtx,
+  mode: ReqEnsureAppSlug["mode"],
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<FileSystemItem[]>> {
   const givenFsItems = fs.map((f) => {
@@ -224,7 +230,7 @@ async function toFileSystemItems(
 
   // do transforms
   const transformed = await transformJSXAndImports(ctx, givenFsItems);
-  transformed.push(...(await createImportMap(ctx, transformed)));
+  transformed.push(...(await createImportMap(ctx, mode, transformed)));
 
   const rStore = await ctx.ensureStorage(
     ...transformed
@@ -280,7 +286,7 @@ export async function ensureApps(
         .set({ mode: req.mode })
         .where(and(eq(sqlApps.userId, binding.userId), eq(sqlApps.fsId, fsId)));
     }
-    const rFileSystem = await toFileSystemItems(ctx, fs);
+    const rFileSystem = await toFileSystemItems(ctx, req.mode, fs);
     if (rFileSystem.isErr()) {
       return Result.Err(rFileSystem);
     }
@@ -300,7 +306,7 @@ export async function ensureApps(
   if (rMaxSeq.isErr()) {
     return Result.Err(rMaxSeq);
   }
-  const rFileSystem = await toFileSystemItems(ctx, fs);
+  const rFileSystem = await toFileSystemItems(ctx, req.mode, fs);
   if (rFileSystem.isErr()) {
     return Result.Err(rFileSystem);
   }

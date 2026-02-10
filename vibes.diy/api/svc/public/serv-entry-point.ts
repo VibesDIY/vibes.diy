@@ -17,9 +17,34 @@ import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibes } from "../intern/render-vibes.js";
+import { parse } from "cookie";
 
 function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
   return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
+}
+
+export interface NpmUrlCapture {
+  readonly npmURL: string;
+  readonly fromCookie: boolean;
+  readonly fromURL: boolean;
+  readonly fromEnv: boolean;
+  readonly fromDef: boolean;
+}
+
+export function captureNpmUrl(req: Request): NpmUrlCapture {
+  const url = URI.from(req.url).getParam("npmUrl");
+  if (url) {
+    return { npmURL: url, fromCookie: false, fromURL: true, fromEnv: false, fromDef: false };
+  }
+  const cookies = parse(req.headers.get("Cookie") || "");
+  if (cookies["Vibes-Npm-Url"]) {
+    return { npmURL: cookies["Vibes-Npm-Url"], fromCookie: true, fromURL: false, fromEnv: false, fromDef: false };
+  }
+  const envUrl = import.meta.env["VITE_NPM_URL"] || import.meta.env["NPM_URL"];
+  if (envUrl) {
+    return { npmURL: envUrl, fromCookie: false, fromURL: false, fromEnv: true, fromDef: false };
+  }
+  return { npmURL: "https://esm.sh/", fromCookie: false, fromURL: false, fromEnv: false, fromDef: true };
 }
 
 export async function fetchContent(
@@ -140,6 +165,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
   },
   handle: async (ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+
     let fs: typeof sqlApps.$inferSelect | undefined = undefined;
     if (ctx.validated.fsId) {
       fs = await vctx.db
@@ -202,7 +228,15 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Stop);
     }
     if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
-      const rVibesEntryPoint = await renderVibes(ctx, fs, fileSystem);
+      const npmUrl = captureNpmUrl(ctx.request);
+      const rVibesEntryPoint = await renderVibes({
+        ctx,
+        fs,
+        fsItems: fileSystem,
+        pkgRepos: {
+          private: npmUrl,
+        },
+      });
       if (rVibesEntryPoint.isErr()) {
         return rVibesEntryPoint;
       }

@@ -48,6 +48,7 @@ import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard"
 
 export interface VibesDiyApiParam {
   readonly apiUrl?: string;
+  readonly npmUrl?: string;
   readonly me?: string;
   fetch?(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   readonly ws?: WebSocket;
@@ -59,6 +60,7 @@ export interface VibesDiyApiParam {
 
 interface VibesDiyApiConfig {
   readonly apiUrl: string;
+  readonly npmUrl: string;
   readonly me: string;
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   readonly ws?: WebSocket;
@@ -110,8 +112,10 @@ export class VibeDiyApi implements VibesDiyApiIface<{
   constructor(cfg: VibesDiyApiParam) {
     const sthis = cfg.sthis ?? ensureSuperThis();
     const apiUrl = cfg.apiUrl ?? "wss://api.vibes.diy/v1/ws";
+    const npmUrl = cfg.npmUrl ?? `https://esm.sh/`;
     this.cfg = {
       apiUrl,
+      npmUrl,
       me: cfg.me ?? `vibes.diy.client.${sthis.nextId().str}`,
       getToken: cfg.getToken,
       fetch: cfg.fetch ?? fetch.bind(globalThis),

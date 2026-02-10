@@ -52,6 +52,7 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
   const sthis = ensureSuperThis({
     logger: new LoggerImpl(),
   });
+  // console.log("createAppContext called with params:", params.env);
   sthis.env.sets(params.env as unknown as Record<string, string>);
   const rEnvVals = sthis.env.gets({
     CLOUD_SESSION_TOKEN_PUBLIC: param.REQUIRED,
@@ -70,6 +71,12 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
     LLM_BACKEND_URL: param.REQUIRED,
     LLM_BACKEND_API_KEY: param.REQUIRED,
     LLM_BACKEND_MODEL: "anthropic/claude-sonnet-4",
+
+    NPM_URL: param.OPTIONAL,
+
+    FPCLOUD_URL: param.REQUIRED,
+    DASHBOARD_URL: param.REQUIRED,
+    VIBES_DIY_STYLES_URL: param.REQUIRED,
 
     VIBES_SVC_HOSTNAME_BASE: param.REQUIRED,
     VIBES_SVC_PROTOCOL: "https",
@@ -97,18 +104,20 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
     maxUserSlugPerUserId: parseInt(envVals.MAX_USER_SLUG_PER_USER_ID, 10),
     maxAppsPerUserId: parseInt(envVals.MAX_APPS_PER_USER_ID, 10),
     wrapperBaseUrl: envVals.WRAPPER_BASE_URL,
+    npmUrl: envVals.NPM_URL,
     vibes: {
       svc: {
         hostnameBase: envVals.VIBES_SVC_HOSTNAME_BASE,
         protocol: envVals.VIBES_SVC_PROTOCOL as "https" | "http",
       },
       env: {
-        FPCLOUD_URL: "FPCLOUD_URL",
-        DASHBOARD_URL: "DASHBOARD_URL",
-        CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
-        CALLAI_API_KEY: "CALLAI_API_KEY",
-        CALLAI_CHAT_URL: "CALLAI_CHAT_URL",
-        CALLAI_IMG_URL: "CALLAI_IMG_URL",
+        FPCLOUD_URL: envVals.FPCLOUD_URL,
+        DASHBOARD_URL: envVals.DASHBOARD_URL,
+        VIBES_DIY_STYLES_URL: envVals.VIBES_DIY_STYLES_URL,
+        // CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
+        // CALLAI_API_KEY: "CALLAI_API_KEY",
+        // CALLAI_CHAT_URL: "CALLAI_CHAT_URL",
+        // CALLAI_IMG_URL: "CALLAI_IMG_URL",
       },
     },
     llm: {
@@ -119,11 +128,11 @@ export async function createAppContext<T extends VibesSqlite>(params: CreateHand
       headers: LLMHeaders({}) as LLMHeaders,
     },
     assetCacheUrl: "https://asset-cache.vibes.app/{assetId}",
-    importMapProps: {
-      versions: {
-        FP: envVals.FP_VERSION,
-      },
-    },
+    // importMapProps: {
+    //   versions: {
+    //     FP: envVals.FP_VERSION,
+    //   },
+    // },
   };
 
   return new AppContext().set(

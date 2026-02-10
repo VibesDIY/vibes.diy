@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { vibeEnv, vibesDiyMountParams } from "@vibes.diy/use-vibes-base";
+import { vibeEnv, vibesDiyMountParams } from "./vibe.js";
 
 const metaProps = type({
   title: "string",

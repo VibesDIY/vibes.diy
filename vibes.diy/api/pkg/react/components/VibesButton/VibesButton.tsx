@@ -8,7 +8,7 @@ import {
   bounceKeyframes,
 } from "./VibesButton.styles.js";
 import { LoginIcon, RemixIcon, InviteIcon, SettingsIcon, BackIcon } from "../icons/index.js";
-import { useMobile } from "@vibes.diy/use-vibes-base";
+import { useMobile } from "../../hooks/useMobile.js";
 
 // Variant constants
 export const BLUE = "blue" as const;

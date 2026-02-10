@@ -5,8 +5,9 @@ export function defaultFetchPkgVersion(
   if (fn) {
     return fn;
   }
-  return (pkg: string) =>
-    fetch(`${url}/${pkg}/latest`)
+  return (pkg: string) => {
+    console.log(`[defaultFetchPkgVersion] using default with url: ${url}/${pkg}/latest`);
+    return fetch(`${url}/${pkg}/latest`)
       .then((res) => {
         if (!res.ok) {
           return undefined;
@@ -14,4 +15,5 @@ export function defaultFetchPkgVersion(
         return res.json().then((data) => data.version);
       })
       .catch(() => undefined);
+  };
 }

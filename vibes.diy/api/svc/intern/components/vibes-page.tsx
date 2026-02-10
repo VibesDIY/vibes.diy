@@ -1,3 +1,4 @@
+import { BuildURI } from "@adviser/cement";
 import { VibesDiyServCtx } from "@vibes.diy/api-types";
 
 import React from "react";
@@ -34,20 +35,24 @@ function MountVibe(props: VibesDiyServCtx) {
   return <script type="module" dangerouslySetInnerHTML={{ __html: props.mountJS }} />;
 }
 
+function vibesStyles(props: VibesDiyServCtx, path: string) {
+  return BuildURI.from(props.env.VIBES_DIY_STYLES_URL).appendRelative(path).toString();
+}
+
 export function VibePage(props: VibesDiyServCtx) {
-  const { appSlug } = props.bindings;
+  // const { appSlug } = props.bindings;
   return (
     <html lang="en">
       <head>
         <ImportMap {...props} />
         <Meta {...props} />
         <Links />
-        <link rel="stylesheet" href="/app/app.css" />
-        <link rel="stylesheet" href="/serve/vibes-controls/styles.css" />
+        <link rel="stylesheet" href={vibesStyles(props, "/app/app.css")} />
+        <link rel="stylesheet" href={vibesStyles(props, "/vibes-controls/styles.css")} />
         <script type="module" src="https://esm.sh/@tailwindcss/browser@4" />
       </head>
       <body className="grid-background">
-        <div id={appSlug} className="vibe-app-container" />
+        <div className="vibe-app-container" />
         <MountVibe {...props} />
         {/* <VibeControls {...props} /> */}
       </body>
