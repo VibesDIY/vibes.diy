@@ -1,8 +1,8 @@
 import React from "react";
-import { VibesDiyEnv } from "../config/env.js";
+import { VibeDiySvcVars } from "../vibe-diy-provider.js";
 
-export default function GtmNoScript() {
-  const id = VibesDiyEnv.GTM_CONTAINER_ID();
+export default function GtmNoScript({ svcVars }: { svcVars?: VibeDiySvcVars }) {
+  const id = svcVars?.env.GTM_CONTAINER_ID;
   if (!id) return null;
   return (
     <noscript>

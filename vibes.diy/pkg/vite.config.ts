@@ -1,6 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
+import { defineConfig, ViteDevServer } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { visualizer } from "rollup-plugin-visualizer";
@@ -19,8 +19,21 @@ function setupSqlPlugin() {
   };
 }
 
+let viteDevServer: ViteDevServer | null = null;
+function exposeDevServerInfo() {
+  return {
+    enforce: "pre" as const,
+    name: "expose-dev-server-info",
+    configureServer(server: ViteDevServer) {
+      viteDevServer = server;
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
+    setupSqlPlugin(),
+    exposeDevServerInfo(),
     workspacePackagesPlugin(),
     tailwindcss(),
     tsconfigPaths({
@@ -28,9 +41,18 @@ export default defineConfig({
     }),
     cloudflare({
       configPath: "wrangler.toml",
+      config(workerConfig) {
+        // Inject dev server info as vars
+        return {
+          vars: {
+            ...workerConfig.vars,
+            DEV_SERVER_HOST: viteDevServer?.config.server.host?.toString() || "localhost",
+            DEV_SERVER_PORT: viteDevServer?.config.server.port?.toString() || "8888",
+          },
+        };
+      },
     }),
     reactRouter(),
-    setupSqlPlugin(),
     visualizer({
       filename: "dist/stats.html",
       open: false,

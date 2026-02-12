@@ -1,4 +1,4 @@
-import { CfCacheIf } from "./api.js";
+import { CfCacheIf } from "./types.js";
 
 export class NoopCache implements CfCacheIf {
   async delete(): Promise<boolean> {

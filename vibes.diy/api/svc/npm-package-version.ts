@@ -1,7 +1,14 @@
-export function defaultFetchPkgVersion(
-  fn?: (pkg: string) => Promise<string | undefined>,
-  url = "https://registry.npmjs.org"
-): (pkg: string) => Promise<string | undefined> {
+import { CfCacheIf } from "./types.js";
+export interface DafaultFetchPkgVersionOptions {
+  url?: string;
+  fn?: (pkg: string) => Promise<string | undefined>;
+  cache?: CfCacheIf;
+}
+
+export function defaultFetchPkgVersion({
+  fn,
+  url = "https://registry.npmjs.org",
+}: DafaultFetchPkgVersionOptions): (pkg: string) => Promise<string | undefined> {
   if (fn) {
     return fn;
   }

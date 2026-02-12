@@ -1,10 +1,17 @@
 import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result, BuildURI } from "@adviser/cement";
-import { FileSystemItem, HttpResponseBodyType, VibesDiyServCtx, vibesImportMap } from "@vibes.diy/api-types";
+import {
+  FileSystemItem,
+  HttpResponseBodyType,
+  VibeEnv,
+  VibesDiyServCtx,
+  vibesEnvSchema,
+  vibesImportMap,
+} from "@vibes.diy/api-types";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { fetchContent, NpmUrlCapture } from "../public/serv-entry-point.js";
-import { VibesApiSQLCtx } from "../api.js";
+import { VibesApiSQLCtx } from "../types.js";
 import { type } from "arktype";
-import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
+// import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
 import { VibePage } from "./components/vibes-page.js";
 import { renderToReadableStream } from "react-dom/server";
@@ -35,7 +42,7 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
   if (genImport instanceof type.errors) {
     return Result.Err(genImportMap.toLocaleString());
   }
-  console.log("raw import-map", vctx.sthis.txt.decode(rImportMapUint8.Ok()), genImport);
+
   const importMap = await genImportMap({
     genImport,
     version: {
@@ -74,7 +81,7 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
       return `pkg(${pkg})->version(${iversion})`;
     },
   });
-  console.log(`importMap:`, importMap);
+  // console.log(`importMap:`, importMap);
   const imports = fsItems.reduce(
     (acc, item, idx) => {
       if (item.mimeType === "application/javascript") {
@@ -91,6 +98,7 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
       var: string;
     }[]
   );
+  console.log("Pre Env", fs.env, vctx.params.vibes.env);
   const env = vibesEnvSchema({
     ...(fs.env as VibeEnv),
     ...vctx.params.vibes.env,

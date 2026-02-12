@@ -8,7 +8,18 @@ export const vibesEnvSchema = type({
   // CALLAI_CHAT_URL: "string",
   // CALLAI_IMG_URL: "string",
   VIBES_DIY_STYLES_URL: "string",
+  VIBES_DIY_API_URL: "string",
 });
+
+export const vibesSvcEnv = type({
+  DEV_SERVER_HOST: "string",
+  DEV_SERVER_PORT: "string",
+  GTM_CONTAINER_ID: "string",
+  POSTHOG_KEY: "string",
+  POSTHOG_HOST: "string",
+}).and(vibesEnvSchema);
+
+export type VibesSvcEnv = typeof vibesSvcEnv.infer;
 
 export type VibesEnv = typeof vibesEnvSchema.infer;
 

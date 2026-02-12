@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useClerk } from "@clerk/clerk-react";
-import { LabelContainer } from "../components/vibes/LabelContainer/index.js";
-import { useMobile } from "@vibes.diy/use-vibes-base";
 import {
   getButtonStyle,
   getMergedButtonStyle,
   getIconContainerStyle,
   getIconStyle,
   getContentWrapperStyle,
-} from "../components/vibes/VibesButton/VibesButton.styles.js";
+  useMobile,
+  LabelContainer,
+} from "@vibes.diy/api-pkg";
 
 // Tornado/Wormhole icon for logout - similar to LoginIcon pattern
 function LogoutIcon({

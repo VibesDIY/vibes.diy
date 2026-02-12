@@ -7,13 +7,13 @@ import {
 } from "@cloudflare/workers-types";
 import { createAppContext, processRequest, VibesSqlite } from "./create-handler.js";
 import { drizzle } from "drizzle-orm/d1";
-import { CfCacheIf } from "./api.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { Env } from "./cf-env.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { Lazy } from "@adviser/cement";
+import { AppContext, Lazy } from "@adviser/cement";
 import { hashObjectSync } from "@fireproof/core-runtime";
+import { CfCacheIf } from "./types.js";
 
 // declare global {
 //   class WebSocketPair {
@@ -30,57 +30,65 @@ import { hashObjectSync } from "@fireproof/core-runtime";
 //   return { client, server };
 // }
 
-export interface CFInject {
-  readonly cache: CfCacheIf;
-  readonly webSocket?: {
-    readonly connections: Set<WSSendProvider>;
-    readonly webSocketPair: () => { client: WebSocket; server: WebSocket };
+export interface CFInjectMutable {
+  appCtx: AppContext;
+  cache: CfCacheIf;
+  webSocket?: {
+    connections: Set<WSSendProvider>;
+    webSocketPair: () => { client: WebSocket; server: WebSocket };
   };
-  readonly drizzle?: VibesSqlite;
-  readonly wsResponse?: Response;
-  readonly llmRequest?: (prompt: LLMRequest) => Promise<Response>;
+  drizzle?: VibesSqlite;
+  wsResponse?: Response;
+  llmRequest?: (prompt: LLMRequest) => Promise<Response>;
   // readonly db?: D1Database;
 }
+export type CFInject = Readonly<CFInjectMutable>;
 
-export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContext & CFInject): Promise<CFResponse> {
-  const appCtx = await createAppContext({
+function netHashFn({
+  colo,
+  country,
+  continent,
+  city,
+  postalCode,
+  latitude,
+  longitude,
+  timezone,
+  region,
+  regionCode,
+  metroCode,
+  /* clientTcpRtt segmented */
+}: CfProperties): string {
+  return hashObjectSync({
+    colo,
+    country,
+    continent,
+    city,
+    postalCode,
+    latitude,
+    longitude,
+    timezone,
+    region,
+    regionCode,
+    metroCode,
+  });
+}
+
+export async function cfServeAppCtx(request: CFRequest, env: Env, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
+  const netHash = Lazy(() => netHashFn(request.cf as CfProperties));
+  return createAppContext({
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
     db: ctx.drizzle ?? drizzle(env.DB),
     cache: ctx.cache,
     // this help to provide enough uniqueness
     // to find clients which try to steal tokens
-    netHash: Lazy(() => {
-      const {
-        colo,
-        country,
-        continent,
-        city,
-        postalCode,
-        latitude,
-        longitude,
-        timezone,
-        region,
-        regionCode,
-        metroCode,
-        /* clientTcpRtt segmented */
-      } = request.cf as CfProperties; // <CfHostMetadata>
-      return hashObjectSync({
-        colo,
-        country,
-        continent,
-        city,
-        postalCode,
-        latitude,
-        longitude,
-        timezone,
-        region,
-        regionCode,
-        metroCode,
-      });
-    }),
+    netHash,
     llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
   });
+}
+
+export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResponse> {
+  const appCtx = ctx.appCtx;
   const upgradeHeader = request.headers.get("Upgrade");
   if (upgradeHeader !== "websocket") {
     return processRequest(appCtx, request as unknown as Request) as unknown as Promise<CFResponse>;
@@ -94,6 +102,7 @@ export async function cfServe(request: CFRequest, env: Env, ctx: ExecutionContex
 
   const wsSendProvider = new WSSendProvider(server as unknown as WebSocket);
   ws.connections.add(wsSendProvider);
+  console.log("New WebSocket connection accepted", ws.connections.size);
 
   const wsEvento = vibesMsgEvento();
 

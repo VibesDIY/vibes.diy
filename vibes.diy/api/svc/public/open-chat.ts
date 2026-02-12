@@ -20,37 +20,12 @@ import {
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
-import { VibesApiSQLCtx } from "../api.js";
+import { VibesApiSQLCtx } from "../types.js";
 import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
 import { sqlChatContexts, sqlChatSections } from "../sql/vibes-diy-api-schema.js";
 import { eq, and } from "drizzle-orm";
 import { ensureAppSlug, ensureUserSlug } from "../intern/ensure-slug-binding.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
-import { isBlockEnd } from "@vibes.diy/call-ai-v2";
-
-// function ensureChatId(chatId: string | undefined): Result<string | undefined> {
-//   if (!chatId) {
-//     return Result.Ok(undefined);
-//   }
-//   if (typeof chatId !== "string") {
-//     return Result.Err(new VibesDiyError(`Invalid chatId type: ${typeof chatId}`));
-//   }
-
-//         if (!chatId) {
-//         chatId = vctx.sthis.nextId(12).str;
-//         await vctx.db
-//           .insert(sqlChatContexts)
-//           .values({
-//             chatId,
-//             userId: req.auth.verifiedAuth.claims.userId,
-//             appSlug,
-//             userSlug,
-//             created: new Date().toISOString(),
-//           })
-//           .run();
-//       }
-
-// }
 
 export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, ResOpenChat | VibesDiyError> = {
   hash: "open-chat-handler",
@@ -146,7 +121,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
         }
       }
       const wsp = ctx.send.provider as WSSendProvider;
-      console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
+      // console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
       wsp.chatIds.add({ chatId, tid: ctx.validated.tid });
 
       const sections = await vctx.db
@@ -171,10 +146,10 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
           }
           return Result.Err(`Invalid blocks data in chat ${section.chatId} - ${blocks.summary} - ${JSON.stringify(blocks)}`);
         }
-        console.log(
-          `openChat: `,
-          blocks.filter((b) => isBlockEnd(b))
-        );
+        // console.log(
+        //   `openChat: `,
+        //   blocks.filter((b) => isBlockEnd(b))
+        // );
         const rCurrentMsg: Result<SendStatItem<MsgBase<SectionEvent>>> = await ctx.send.send(ctx, {
           payload: {
             type: "vibes.diy.section-event",

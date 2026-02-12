@@ -3,7 +3,6 @@ import ChatInput, { ChatInputRef } from "./ChatInput.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
 import { BrutalistCard } from "./vibes/BrutalistCard.js";
-import { VibesButton } from "./vibes/VibesButton/index.js";
 import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
 import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
 import { featuredModels } from "../data/models.js";
@@ -12,6 +11,7 @@ import { useClerk } from "@clerk/clerk-react";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { useNavigate } from "react-router";
 import { LLMChat } from "@vibes.diy/api-impl";
+import { VibesButton } from "@vibes.diy/api-pkg";
 
 export default function HomePage() {
   // Sidebar state

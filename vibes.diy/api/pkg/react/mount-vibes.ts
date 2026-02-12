@@ -23,6 +23,10 @@ export function mountVibe(
   const root = createRoot(element[0]);
   // Wrap in VibeContextProvider if we have metadata
 
+  console.log(
+    "Mounting vibe with props:",
+    comps.map((c) => c)
+  );
   const vibeElement = React.createElement(Fragment, null, ...comps.map((Comp, index) => React.createElement(Comp, { key: index })));
   const wrappedVibe = React.createElement(HiddenMenuWrapper, {
     menuContent: React.createElement(VibesPanel),

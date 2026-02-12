@@ -4,9 +4,8 @@ import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 import { BuildURI, consumeStream, loadAsset, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
-import { cfServe } from "@vibes.diy/api-svc";
-import { Request as CFRequest, D1Database, ExecutionContext } from "@cloudflare/workers-types";
-import { Env as CFEnv } from "@vibes.diy/api-svc/cf-env.js";
+import { cfServe, createAppContext, VibesSqlite } from "@vibes.diy/api-svc";
+import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { CFInject } from "@vibes.diy/api-svc/cf-serve.js";
 import { drizzle } from "drizzle-orm/libsql";
 import { isPromptBlockEnd, LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -101,20 +100,30 @@ describe("VibesDiyApi", () => {
       CALLAI_CHAT_URL: "what-ever",
 
       LLM_BACKEND_URL: "what-ever",
+      ENVIRONMENT: "test",
+
+      LLM_BACKEND_API_KEY: "llm-api-key",
+      FPCLOUD_URL: "fpcloud-url",
+      DASHBOARD_URL: "dashboard-url",
+      DEV_SERVER_HOST: "localhost",
+      DEV_SERVER_PORT: "8787",
     };
 
     const fetchPair = TestFetchPair.create();
     const wsPair = TestWSPair.create();
+    const appCtx = await createAppContext({
+      netHash: () => "test-hash",
+      connections: new Set(),
+      env,
+      db: null as unknown as VibesSqlite,
+      cache: noopCache,
+    });
     fetchPair.server.onServe((req: Request) => {
       // console.log("fetchPair.server received request:", req.url);
       return cfServe(
         req as unknown as CFRequest,
         {
-          ...env,
-          DB: null as unknown as D1Database,
-          ENVIRONMENT: "test",
-        } as CFEnv,
-        {
+          appCtx,
           cache: noopCache,
           drizzle: drizzleDB,
           webSocketPair: () => ({
@@ -134,11 +143,7 @@ describe("VibesDiyApi", () => {
         headers: { Upgrade: "websocket" },
       }) as unknown as CFRequest,
       {
-        ...env,
-        DB: null as unknown as D1Database,
-        ENVIRONMENT: "test",
-      } as CFEnv,
-      {
+        appCtx,
         cache: noopCache,
         drizzle: drizzleDB,
         wsResponse: new Response(null, { status: 200 }),
@@ -157,6 +162,7 @@ describe("VibesDiyApi", () => {
     );
 
     api = new VibeDiyApi({
+      apiUrl: "http://localhost:8787/api",
       ws: wsPair.p1 as unknown as WebSocket,
       fetch: fetchPair.client.fetch,
       timeoutMs: 100000,

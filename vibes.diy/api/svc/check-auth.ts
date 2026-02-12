@@ -7,7 +7,7 @@ import {
   WithAuth,
 } from "@fireproof/core-types-protocols-dashboard";
 import { ClerkClaimSchema } from "@fireproof/core-types-base";
-import { VibesApiSQLCtx } from "./api.js";
+import { VibesApiSQLCtx } from "./types.js";
 import { MsgBase } from "@vibes.diy/api-types";
 
 export type ReqWithVerifiedAuth<REQ extends { type: string; auth: DashAuthType }> = Omit<REQ, "auth"> & {

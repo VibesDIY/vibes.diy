@@ -8,10 +8,10 @@ import {
   CacheStorage,
   DurableObjectState,
 } from "@cloudflare/workers-types";
-import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
-import { cfServe } from "@vibes.diy/api-svc/cf-serve.js";
+import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { Env } from "./env.js";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
+import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
 
 declare const caches: CacheStorage;
 declare const Response: typeof CFResponse;
@@ -28,11 +28,11 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
 
 export class ChatSessions implements DurableObject {
   private connections: Set<WSSendProvider> = new Set<WSSendProvider>();
-  private state: DurableObjectState;
+  // private state: DurableObjectState;
   private env: Env;
 
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
+  constructor(_state: DurableObjectState, env: Env) {
+    // this.state = state;
     this.env = env;
   }
 
@@ -41,8 +41,14 @@ export class ChatSessions implements DurableObject {
     if (upgradeHeader !== "websocket") {
       return new Response("Expected WebSocket", { status: 426 });
     }
-    const cctx = {} as unknown as ExecutionContext & { cache: CfCacheIf };
-    cctx.cache = caches.default as unknown as CfCacheIf;
-    return cfServe(request, this.env, { ...cctx, webSocket: { webSocketPair: cfWebSocketPair, connections: this.connections } }); // Pass WebSocketPair constructor
+    const cctx = {} as unknown as ExecutionContext & CFInjectMutable;
+    // cctx.cache = new NoCache() as unknown as CfCacheIf; // Disable caching for now - can implement custom caching logic in the future if needed
+    cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache
+    cctx.webSocket = {
+      connections: this.connections,
+      webSocketPair: cfWebSocketPair,
+    };
+    cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx)).appCtx;
+    return cfServe(request, cctx);
   }
 }

@@ -314,9 +314,9 @@ export default memo(MessageList, (prevProps, nextProps) => {
   // Check if navigateToView changed
   // const navigateToViewEqual = prevProps.navigateToView === nextProps.navigateToView;
 
-  if (!(streamingStateEqual && promptBlocks && msgs)) {
-    console.log("MessageList needs update", prevProps, nextProps, streamingStateEqual, promptBlocks, msgs);
-  }
+  // if (!(streamingStateEqual && promptBlocks && msgs)) {
+  //   console.log("MessageList needs update", prevProps, nextProps, streamingStateEqual, promptBlocks, msgs);
+  // }
   return (
     streamingStateEqual && promptBlocks && msgs
 

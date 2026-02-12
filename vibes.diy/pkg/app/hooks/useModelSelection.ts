@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { useFireproof } from "@fireproof/use-fireproof";
 import { DEFAULT_CODING_MODEL, type UserSettings } from "@vibes.diy/prompts";
-import { VibesDiyEnv } from "../config/env.js";
+// import { VibesDiyEnv } from "../config/env.js";
 
 /**
  * Hook to manage model selection with global settings fallback
  * Shared by useNewSessionChat and useSimpleChat
  */
 export function useModelSelection() {
-  const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
-  const { doc: settingsDoc } = useDocument<UserSettings>({
-    _id: "user_settings",
-  });
+  // const { useDocument } = useFireproof(VibesDiyEnv.SETTINGS_DBNAME());
+  // const { doc: settingsDoc } = useDocument<UserSettings>({
+  //   _id: "user_settings",
+  // });
+  const [settingsDoc] = useState<UserSettings | undefined>(undefined);
 
   const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
 
