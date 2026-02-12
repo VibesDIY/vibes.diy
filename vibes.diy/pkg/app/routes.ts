@@ -1,10 +1,15 @@
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+import { type RouteConfig, index, route, layout } from "@react-router/dev/routes";
 
 export default [
   index("./routes/home.tsx"),
   // This route is only needed for dev server to prevent 404 flash
   route("index.html", "./routes/home.tsx", { id: "index-html" }),
-  route("chat/:userSlug/:appSlug", "./routes/chat.$userSlug.$appSlug.tsx", { id: "chat-home" }),
+
+  // Protected routes - wrapped by auth layout (no path segment added)
+  layout("./routes/auth.tsx", [
+    route("chat/prompt", "./routes/chat/prompt.tsx"),
+    route("chat/:userSlug/:appSlug", "./routes/chat.$userSlug.$appSlug.tsx"),
+  ]),
   // route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
   // route("chat/:sessionId/:title", "./routes/home.tsx", { id: "chat" }),
   // route("chat/:sessionId/:title/app", "./routes/home.tsx", { id: "chat-app" }),

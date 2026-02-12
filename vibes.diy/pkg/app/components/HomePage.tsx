@@ -6,19 +6,16 @@ import { BrutalistCard } from "./vibes/BrutalistCard.js";
 import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
 import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
 import { featuredModels } from "../data/models.js";
-import toast, { Toaster } from "react-hot-toast";
-import { useClerk } from "@clerk/clerk-react";
+import { Toaster } from "react-hot-toast";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { useNavigate } from "react-router";
-import { LLMChat } from "@vibes.diy/api-impl";
 import { VibesButton } from "@vibes.diy/api-pkg";
+import { BuildURI } from "@adviser/cement";
 
 export default function HomePage() {
   // Sidebar state
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [prompt, setPrompt] = useState<string | null>(null);
-  const clerk = useClerk();
-  const [chat, setChat] = useState<LLMChat | null>(null);
 
   // Sidebar handler
   const closeSidebar = useCallback(() => {
@@ -48,64 +45,15 @@ export default function HomePage() {
     [chatInput]
   );
 
-  const { vibeDiyApi } = useVibeDiy();
+  const { sthis } = useVibeDiy();
   const navigate = useNavigate();
   // const [chat, setChat] = useState<LLMChat | null>()
 
   useEffect(() => {
-    if (!prompt) {
+    if (!prompt?.trim()) {
       return;
     }
-    if (clerk.isSignedIn) {
-      vibeDiyApi
-        .getTokenClaims()
-        .then((rClaims) => {
-          if (rClaims.isErr()) {
-            console.error("tokenClaims:", rClaims.Err());
-            return Promise.reject();
-          }
-          const { params } = rClaims.Ok().claims;
-          return vibeDiyApi.openChat({
-            userSlug: params.name ?? params.nick ?? params.email.replace(/@[^@]+$/, ""),
-          });
-        })
-        .then((rChat) => {
-          if (rChat.isErr()) {
-            console.error(`Error in useCallAIV2: ${rChat.Err()}`);
-            // setError(rChat.Err())
-            return;
-          }
-          console.log("ready to prompt", rChat.Ok().tid, rChat.Ok().chatId);
-          const chat = rChat.Ok();
-          setChat(chat);
-          chat
-            .prompt({
-              messages: [
-                {
-                  role: "user",
-                  content: [{ type: "text", text: prompt }],
-                },
-              ],
-            })
-            .then((rPrompt) => {
-              if (rPrompt.isErr()) {
-                console.error("sendPrompt failed", rPrompt.Err());
-                return;
-              } else {
-                navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
-              }
-            });
-        });
-      return () => {
-        if (chat) {
-          chat.close().then(() => {
-            console.log(`HomePage --- close`);
-          });
-        }
-      };
-    } else {
-      toast.toast("needs login");
-    }
+    navigate(BuildURI.from(location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(prompt)).withoutHostAndSchema)
   }, [prompt]);
 
   return (

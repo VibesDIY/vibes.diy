@@ -111,10 +111,8 @@ export default function Chat() {
     blocks: [],
   });
 
+  // Auth is handled by parent AuthLayout - user is always signed in here
   useEffect(() => {
-    if (!clerk.isSignedIn) {
-      return;
-    }
     if (chat || openingRef.current) {
       setSearchParam((prev) => {
         prev.delete("sectionId");
@@ -194,10 +192,6 @@ export default function Chat() {
     }
     // if (promptState.current)
   }, [promptState.running]);
-
-  if (!clerk.isSignedIn) {
-    return <>Waiting to sign in</>;
-  }
 
   return (
     <>

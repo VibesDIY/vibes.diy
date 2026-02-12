@@ -6,6 +6,8 @@ import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
 import { BuildURI, KeyedResolvOnce, Result } from "@adviser/cement";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos } from "@vibes.diy/api-types";
+import { SuperThis } from "@fireproof/use-fireproof";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
 export interface VibeDiySvcVars {
@@ -23,12 +25,14 @@ export interface VibeDiySvcVars {
 }
 
 export interface VibeDiy {
+  sthis: SuperThis
   dashApi: FPApiInterface;
   vibeDiyApi: VibeDiyApi;
   svcVars: VibeDiySvcVars;
 }
 
 const realCtx: VibeDiy = {
+  sthis: ensureSuperThis(),
   dashApi: {} as FPApiInterface,
   vibeDiyApi: {} as VibeDiyApi,
   svcVars: {} as VibeDiySvcVars,
