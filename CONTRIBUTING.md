@@ -58,4 +58,4 @@ Open an issue with:
 
 ## License
 
-By contributing, you agree your contributions are licensed under the project license in [LICENSE.md](LICENSE.md) (`Apache-2.0 OR MIT`).
+By contributing, you agree your contributions are licensed under the project license in [LICENSE.md](LICENSE.md) (`Apache-2.0`).

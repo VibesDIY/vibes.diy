@@ -4,4 +4,4 @@ This project adopts the [Contributor Covenant Code of Conduct](https://www.contr
 
 For any concerns, incidents, or unacceptable behavior, contact the maintainers at **help@vibes.diy**.
 
-Project licensing is documented separately in `LICENSE.md` (Apache-2.0 OR MIT).
+Project licensing is documented separately in `LICENSE.md` (Apache-2.0).
