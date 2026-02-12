@@ -13,7 +13,6 @@ import {
 import { getSessionDatabaseName } from "../utils/databaseManager.js";
 import { Database, DocResponse, DocWithId, useFireproof } from "@fireproof/use-fireproof";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
-import { VibesDiyEnv } from "../config/env.js";
 
 interface SessionView {
   _id: string;

@@ -11,7 +11,7 @@ import {
   CoerceURI,
 } from "@adviser/cement";
 import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
-import { VibesApiSQLCtx } from "../api.js";
+import { VibesApiSQLCtx } from "../types.js";
 import { sqlApps, sqlAssets } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
@@ -31,7 +31,7 @@ export interface NpmUrlCapture {
   readonly fromDef: boolean;
 }
 
-export function captureNpmUrl(req: Request): NpmUrlCapture {
+export function captureNpmUrl(vctx: VibesApiSQLCtx, req: Request): NpmUrlCapture {
   const url = URI.from(req.url).getParam("npmUrl");
   if (url) {
     return { npmURL: url, fromCookie: false, fromURL: true, fromEnv: false, fromDef: false };
@@ -40,11 +40,7 @@ export function captureNpmUrl(req: Request): NpmUrlCapture {
   if (cookies["Vibes-Npm-Url"]) {
     return { npmURL: cookies["Vibes-Npm-Url"], fromCookie: true, fromURL: false, fromEnv: false, fromDef: false };
   }
-  const envUrl = import.meta.env["VITE_NPM_URL"] || import.meta.env["NPM_URL"];
-  if (envUrl) {
-    return { npmURL: envUrl, fromCookie: false, fromURL: false, fromEnv: true, fromDef: false };
-  }
-  return { npmURL: "https://esm.sh/", fromCookie: false, fromURL: false, fromEnv: false, fromDef: true };
+  return { npmURL: vctx.params.pkgRepos.workspace, fromCookie: false, fromURL: false, fromEnv: true, fromDef: false };
 }
 
 export async function fetchContent(
@@ -165,7 +161,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
   },
   handle: async (ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-
+    console.log("servEntryPoint triggered with URL:", ctx.validated.url);
     let fs: typeof sqlApps.$inferSelect | undefined = undefined;
     if (ctx.validated.fsId) {
       fs = await vctx.db
@@ -228,7 +224,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Stop);
     }
     if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
-      const npmUrl = captureNpmUrl(ctx.request);
+      const npmUrl = captureNpmUrl(vctx, ctx.request);
       const rVibesEntryPoint = await renderVibes({
         ctx,
         fs,
@@ -237,6 +233,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
           private: npmUrl,
         },
       });
+      // console.log("3-servEntryPoint triggered with URL:", ctx.validated.url, rVibesEntryPoint);
       if (rVibesEntryPoint.isErr()) {
         return rVibesEntryPoint;
       }

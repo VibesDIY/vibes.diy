@@ -20,8 +20,8 @@ export default function PublishedVibeCard({
   children,
 }: PublishedVibeCardProps): ReactElement {
   // Construct asset URLs with query parameters
-  const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug), [slug]);
-  const iconUrl = useMemo(() => constructVibeIconUrl(slug), [slug]);
+  const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug, ""), [slug]);
+  const iconUrl = useMemo(() => constructVibeIconUrl(slug, ""), [slug]);
   const [imageSrc, setImageSrc] = useState(iconUrl);
   const [usingIcon, setUsingIcon] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);

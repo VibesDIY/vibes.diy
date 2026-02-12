@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PublishedVibeCard from "./PublishedVibeCard.js";
 
 // Featured vibes data
@@ -91,11 +91,22 @@ interface FeaturedVibesProps {
 }
 
 export default function FeaturedVibes({ count = 3, className = "" }: FeaturedVibesProps) {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const filteredVibes = useMemo(() => {
-    // Get random vibes from the publishedVibes array
-    const shuffled = [...publishedVibes].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  }, [count]);
+    const vibes = [...publishedVibes];
+
+    // Only shuffle on client after hydration
+    if (isHydrated) {
+      vibes.sort(() => 0.5 - Math.random());
+    }
+
+    return vibes.slice(0, count);
+  }, [count, isHydrated]);
 
   return (
     <div className={`w-full ${className}`}>

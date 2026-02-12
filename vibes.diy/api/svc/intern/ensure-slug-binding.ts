@@ -1,5 +1,5 @@
 import { exception2Result, Result } from "@adviser/cement";
-import { VibesApiSQLCtx } from "../api.js";
+import { VibesApiSQLCtx } from "../types.js";
 import { generate } from "random-words";
 import { and, eq } from "drizzle-orm";
 import { sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";

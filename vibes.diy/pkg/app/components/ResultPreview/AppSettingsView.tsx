@@ -1,7 +1,7 @@
-import { getLlmCatalogNames, getLlmCatalog, LlmCatalogEntry } from "@vibes.diy/prompts";
+// import { getLlmCatalogNames, getLlmCatalog, LlmCatalogEntry } from "@vibes.diy/prompts";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { VibesDiyEnv } from "../../config/env.js";
 import { trackEvent } from "../../utils/analytics.js";
+import { LlmCatalogEntry } from "@vibes.diy/prompts";
 
 interface AppSettingsViewProps {
   title: string;
@@ -32,18 +32,18 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   const [editedName, setEditedName] = useState(title);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  const [catalogNames, setCatalogNames] = useState<Set<string>>(new Set());
-  const [llmsCatalog, setLlmsCatalog] = useState<LlmCatalogEntry[]>([]);
+  const [catalogNames] = useState<Set<string>>(new Set());
+  const [llmsCatalog] = useState<LlmCatalogEntry[]>([]);
 
   // Per‑vibe libraries selection state
-  useEffect(() => {
-    getLlmCatalogNames(VibesDiyEnv.PROMPT_FALL_BACKURL()).then((names) => {
-      setCatalogNames(names);
-    });
-    getLlmCatalog(VibesDiyEnv.PROMPT_FALL_BACKURL()).then((catalog) => {
-      setLlmsCatalog(catalog);
-    });
-  }, []);
+  // useEffect(() => {
+  //   getLlmCatalogNames(VibesDiyEnv.PROMPT_FALL_BACKURL()).then((names) => {
+  //     setCatalogNames(names);
+  //   });
+  //   getLlmCatalog(VibesDiyEnv.PROMPT_FALL_BACKURL()).then((catalog) => {
+  //     setLlmsCatalog(catalog);
+  //   });
+  // }, []);
 
   // const initialDeps = useMemo(() => {
   //   const useManual = !!dependenciesUserOverride;

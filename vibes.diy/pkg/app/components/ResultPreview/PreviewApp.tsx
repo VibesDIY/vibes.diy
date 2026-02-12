@@ -18,7 +18,7 @@ function findApp(promptState: PromptState, _sectionId?: string | null) {
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const [searchParams] = useSearchParams();
-  const { vibeDiyApi } = useVibeDiy();
+  const { svcVars } = useVibeDiy();
 
   const sectionId = searchParams.get("sectionId");
   const endBlock = findApp(promptState, sectionId);
@@ -30,7 +30,8 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const myUrl = URI.from(window.location.href);
   const previewUrl = BuildURI.from(endBlock.fsRef.entryPointUrl)
     .port(myUrl.port)
-    .setParam("npmUrl", vibeDiyApi.cfg.npmUrl)
+    .setParam("npmUrl", svcVars.pkgRepos.workspace)
+    .setParam("preview", "yes")
     .toString();
   console.log(`iframe src=`, previewUrl);
 

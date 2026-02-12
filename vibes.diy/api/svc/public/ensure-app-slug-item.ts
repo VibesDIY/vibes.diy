@@ -10,7 +10,7 @@ import {
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
-import { VibesApiSQLCtx } from "../api.js";
+import { VibesApiSQLCtx } from "../types.js";
 import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";

@@ -46,9 +46,14 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { ClerkApiToken } from "@fireproof/core-protocols-dashboard";
 import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 
+// interface PkgRepos {
+//   readonly private: string;
+//   readonly public: string;
+// }
+
 export interface VibesDiyApiParam {
-  readonly apiUrl?: string;
-  readonly npmUrl?: string;
+  readonly apiUrl: string;
+  // readonly pkgRepos?: Partial<PkgRepos>;
   readonly me?: string;
   fetch?(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   readonly ws?: WebSocket;
@@ -60,7 +65,7 @@ export interface VibesDiyApiParam {
 
 interface VibesDiyApiConfig {
   readonly apiUrl: string;
-  readonly npmUrl: string;
+  // readonly pkgRepos: PkgRepos;
   readonly me: string;
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   readonly ws?: WebSocket;
@@ -111,11 +116,14 @@ export class VibeDiyApi implements VibesDiyApiIface<{
 
   constructor(cfg: VibesDiyApiParam) {
     const sthis = cfg.sthis ?? ensureSuperThis();
-    const apiUrl = cfg.apiUrl ?? "wss://api.vibes.diy/v1/ws";
-    const npmUrl = cfg.npmUrl ?? `https://esm.sh/`;
+    const apiUrl = cfg.apiUrl; // ?? "wss://api.vibes.diy/v1/ws";
+    // const pkgRepos: PkgRepos = {
+    //   private: cfg.pkgRepos?.private ?? "https://esm.sh/",
+    //   public: cfg.pkgRepos?.public ?? BuildURI.from(window.location.origin).appendRelative("/dev-npm").toString(),
+    // };
     this.cfg = {
       apiUrl,
-      npmUrl,
+      // pkgRepos,
       me: cfg.me ?? `vibes.diy.client.${sthis.nextId().str}`,
       getToken: cfg.getToken,
       fetch: cfg.fetch ?? fetch.bind(globalThis),
@@ -145,7 +153,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     console.log("VibeDiyApi getTokenClaims token", rToken.Ok().token);
     const sthis = ensureSuperThis();
     const tokenapi = new ClerkApiToken(sthis);
-    const rClaims = await tokenapi.verify(rToken.Ok().token);
+    const rClaims = await tokenapi.decode(rToken.Ok().token);
     if (rClaims.isErr()) {
       console.error("getTokenClaims verify failed:", rClaims.Err());
       return Result.Err(rClaims);

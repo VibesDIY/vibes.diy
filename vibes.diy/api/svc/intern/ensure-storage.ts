@@ -1,5 +1,5 @@
 import { CoerceBinaryInput, exception2Result, Result, to_uint8 } from "@adviser/cement";
-import { StorageResult } from "../api.js";
+import { StorageResult } from "../types.js";
 import { VibesSqlite } from "../create-handler.js";
 import { sqlAssets } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";

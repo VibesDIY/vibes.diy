@@ -3,7 +3,7 @@ import { LLMChat } from "@vibes.diy/api-impl";
 import { resError, sectionEvent } from "@vibes.diy/api-types";
 import { isPromptBlockBegin, isPromptBlockEnd, isCodeBegin } from "@vibes.diy/call-ai-v2";
 import { TitleSrc } from "@vibes.diy/prompts";
-import { RuntimeError } from "@vibes.diy/use-vibes-types";
+// import { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { type } from "arktype";
 import { useState, useEffect, useRef } from "react";
 import { UseCallAIV2Params } from "../types/models.js";
@@ -14,7 +14,7 @@ export function useCallAIV2({ title: givenTitle, model: givenModel }: UseCallAIV
   const [title, setTitle] = useState<TitleSrc>({ title: givenTitle ?? "", src: "url" });
   const [model, setModel] = useState(givenModel);
   const [chat, setChat] = useState<null | LLMChat>(null);
-  const [error, setError] = useState<null | Error | RuntimeError>(null);
+  const [error, setError] = useState<null | Error /* | RuntimeError */>(null);
   const [hasCode, setHasCode] = useState<boolean>(false);
   const [promptProcessing, setPromptProcessing] = useState(false);
 

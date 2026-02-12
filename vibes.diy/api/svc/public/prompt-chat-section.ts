@@ -1,6 +1,7 @@
 import { EventoHandler, Result, Option, HandleTriggerCtx, EventoResult, exception2Result, chunkyAsync } from "@adviser/cement";
 import {
   InMsgBase,
+  LLMHeaders,
   MsgBase,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
@@ -12,7 +13,7 @@ import {
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { LLMHeaders, VibesApiSQLCtx } from "../api.js";
+import { VibesApiSQLCtx } from "../types.js";
 import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
 import { sqlChatContexts, SqlChatSection, sqlChatSections, sqlPromptContexts } from "../sql/vibes-diy-api-schema.js";
@@ -402,10 +403,10 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         stream: true,
       };
 
-      console.log("LLM Request for promptId:", promptId, "with model:", llmReq.model, "and messages:", llmReq.messages);
-
       // add system prompt here
+      // console.log("Final LLM request for promptId:", promptId, llmReq);
       const rRes = await exception2Result(() => vctx.llmRequest(llmReq));
+
       if (rRes.isErr()) {
         return Result.Err(`LLM request failed: ${rRes.Err().message}`);
       }
@@ -417,7 +418,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         return Result.Err(`LLM request returned no body`);
       }
       const pipeline = res.body
-        .pipeThrough(createStatsCollector(promptId, 100000))
+        .pipeThrough(createStatsCollector(promptId, 1000))
         .pipeThrough(createLineStream(promptId))
         .pipeThrough(createDataStream(promptId))
         .pipeThrough(createSseStream(promptId))
@@ -435,6 +436,10 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         }
         collectedMsgs.push(value);
         if (!isBlockEnd(value)) {
+          if (!isBlockSteamMsg(value)) {
+            continue;
+          }
+          console.log("Handled prompt context for promptId:", value.type);
           const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
           if (r.isErr()) {
             return Result.Err(r);
@@ -444,7 +449,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           if (r.isErr()) {
             return Result.Err(r);
           }
-          console.log("Handled prompt context for promptId:", r.Ok());
           blockSeq = r.Ok().blockSeq;
           const rEvt = await appendBlockEvent({
             ctx,

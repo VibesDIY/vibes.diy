@@ -1,5 +1,5 @@
+import { LLMHeaders } from "@vibes.diy/api-types";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { LLMHeaders } from "./api.js";
 import { type } from "arktype";
 
 export function defaultLLMRequest(
@@ -21,6 +21,7 @@ export function defaultLLMRequest(
       throw new Error(`Invalid LLMRequest: ${stripLLMRequest.summary}`);
     }
     const body = JSON.stringify(stripLLMRequest);
+    // console.log(`Making LLM request to ${url} with body:`, apiKey);
     return fetch(url, {
       method: "POST",
       headers: {

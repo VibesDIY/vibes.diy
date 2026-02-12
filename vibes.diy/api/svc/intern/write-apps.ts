@@ -10,7 +10,7 @@ import mime from "mime";
 import { transform } from "sucrase";
 import { calcCid } from "./ensure-storage.js";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
-import { StorageResult, VibesApiSQLCtx } from "../api.js";
+import { StorageResult, VibesApiSQLCtx } from "../types.js";
 
 async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug: string): Promise<Result<number>> {
   const userApps = await ctx.db.select().from(sqlApps).where(eq(sqlApps.userId, userId)).orderBy(sqlApps.created).all();

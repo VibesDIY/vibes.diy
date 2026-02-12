@@ -8,6 +8,7 @@ import {
   getInnerContentWrapperStyle,
 } from "./HiddenMenuWrapper.styles.js";
 import { VibesSwitch } from "./VibesSwitch/VibesSwitch.js";
+import { URI } from "@adviser/cement";
 
 export interface HiddenMenuWrapperProps {
   children: React.ReactNode;
@@ -223,6 +224,10 @@ export function HiddenMenuWrapper({ children, menuContent, triggerBounce, showVi
       setMenuHeight((prev) => (prev !== next ? next : prev));
     });
   }, [menuOpen]);
+
+  if (URI.from(window.location.href).getParam("preview")) {
+    return <>{children}</>;
+  }
 
   return (
     <div style={getWrapperStyle()}>

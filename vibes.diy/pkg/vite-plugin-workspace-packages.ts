@@ -101,7 +101,7 @@ export function workspacePackagesPlugin(): Plugin {
     const code = chunk.code;
     buildCache.set(pkgName, { code, timestamp: Date.now() });
 
-    console.log(`✅ Built ${pkgName} (${code.length} bytes)`);
+    // console.log(`✅ Built ${pkgName} (${code.length} bytes)`);
     return code;
   }
 

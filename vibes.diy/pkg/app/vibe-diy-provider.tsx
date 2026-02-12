@@ -3,38 +3,67 @@ import { FPApiInterface } from "@fireproof/core-types-protocols-dashboard";
 import React, { createContext, useContext } from "react";
 import { ClerkProvider, useClerk } from "@clerk/clerk-react";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
-import { VibesDiyEnv } from "./config/env.js";
 import { BuildURI, KeyedResolvOnce, Result } from "@adviser/cement";
+import { PostHogProvider } from "posthog-js/react";
+import { PkgRepos } from "@vibes.diy/api-types";
+// import { PkgRepos } from "@vibes.diy/api-types";
+
+export interface VibeDiySvcVars {
+  readonly pkgRepos: PkgRepos;
+  readonly env: {
+    GTM_CONTAINER_ID?: string;
+    POSTHOG_KEY?: string;
+    POSTHOG_HOST?: string;
+    // WORKSPACE_NPM_URL: string;
+    // PUBLIC_NPM_URL: string;
+    DASHBOARD_URL: string;
+    VIBES_DIY_API_URL: string;
+    CLERK_PUBLISHABLE_KEY: string;
+  };
+}
 
 export interface VibeDiy {
   dashApi: FPApiInterface;
   vibeDiyApi: VibeDiyApi;
+  svcVars: VibeDiySvcVars;
 }
 
 const realCtx: VibeDiy = {
   dashApi: {} as FPApiInterface,
   vibeDiyApi: {} as VibeDiyApi,
+  svcVars: {} as VibeDiySvcVars,
 };
+
 const VibeDiyContext = createContext<VibeDiy>(realCtx as Readonly<VibeDiy>);
 
 const vibesDiyApis = new KeyedResolvOnce();
 
-function LiveCycleVibeDiyProvider({ children }: { children: React.ReactNode }) {
-  if (!globalThis.window) {
-    return <>{children}</>;
-  }
+// const VibesDiyEnv = {
+//   POSTHOG_KEY(): string {
+//     return "";
+//   },
+//   POSTHOG_HOST(): string {
+//     return "";
+//   },
+//   CLERK_PUBLISHABLE_KEY(): string {
+//     return "";
+//   },
+//   VibesEnv(): Record<string, string> {
+//     return {};
+//   },
+// };
+
+function LiveCycleVibeDiyProvider({ children, svcVars: vibeDiySvcVars }: { children: React.ReactNode; svcVars: VibeDiySvcVars }) {
   const clerk = useClerk();
 
-  let npmUrl = import.meta.env["VITE_NPM_URL"] || import.meta.env["NPM_URL"];
-  if (!npmUrl) {
-    npmUrl = BuildURI.from(window.location.origin).appendRelative("/dev-npm");
-  }
+  realCtx.svcVars = vibeDiySvcVars;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   realCtx.dashApi = clerkDashApi(clerk as any, {
-    apiUrl: VibesDiyEnv.VibesEnv().DASHBOARD_URL,
+    apiUrl: realCtx.svcVars.env.DASHBOARD_URL,
   });
   const apiUrl =
-    VibesDiyEnv.VibesEnv().VIBES_DIY_API_URL ??
+    realCtx.svcVars.env.VIBES_DIY_API_URL ??
     BuildURI.from(window.location.href)
       .protocol(window.location.protocol.startsWith("https") ? "wss" : "ws")
       .pathname("/api")
@@ -44,7 +73,10 @@ function LiveCycleVibeDiyProvider({ children }: { children: React.ReactNode }) {
     console.log("VibeDiyApi for", apiUrl);
     return new VibeDiyApi({
       apiUrl,
-      npmUrl,
+      // pkgRepos: {
+      //   private: VibesDiyEnv.VibesEnv().PRIVATE_NPM_URL,
+      //   public: VibesDiyEnv.VibesEnv().PUBLIC_NPM_URL,
+      // },
       getToken: async () => {
         const ot = await clerk.session?.getToken({ template: "with-email" });
         if (!ot) {
@@ -61,11 +93,29 @@ function LiveCycleVibeDiyProvider({ children }: { children: React.ReactNode }) {
   return <VibeDiyContext.Provider value={realCtx}>{children}</VibeDiyContext.Provider>;
 }
 
-export function VibeDiyProvider({ children }: { children: React.ReactNode }) {
-  // const dashApi = clerkDashApi(clerk, { apiUrl: mountParams.env.DASHBOARD_URL })
+function ConditionalPostHog({ children, svcVars }: { children: React.ReactNode; svcVars: VibeDiySvcVars }) {
+  if (svcVars.env.POSTHOG_KEY && svcVars.env.POSTHOG_HOST) {
+    return (
+      <PostHogProvider
+        apiKey={svcVars.env.POSTHOG_KEY}
+        options={{
+          api_host: svcVars.env.POSTHOG_HOST,
+          opt_out_capturing_by_default: true,
+        }}
+      >
+        {children}
+      </PostHogProvider>
+    );
+  }
+  return <>{children}</>;
+}
+
+export function VibeDiyProvider({ children, svcVars }: { children: React.ReactNode; svcVars: VibeDiySvcVars }) {
   return (
-    <ClerkProvider publishableKey={VibesDiyEnv.CLERK_PUBLISHABLE_KEY()}>
-      <LiveCycleVibeDiyProvider>{children}</LiveCycleVibeDiyProvider>
+    <ClerkProvider publishableKey={svcVars.env.CLERK_PUBLISHABLE_KEY}>
+      <LiveCycleVibeDiyProvider svcVars={svcVars}>
+        <ConditionalPostHog svcVars={svcVars}>{children}</ConditionalPostHog>
+      </LiveCycleVibeDiyProvider>
     </ClerkProvider>
   );
 }

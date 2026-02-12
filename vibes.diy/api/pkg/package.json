@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.22",
-    "@fireproof/core-device-id": "0.24.10",
-    "@fireproof/core-protocols-dashboard": "0.24.10",
-    "@fireproof/core-runtime": "0.24.10",
-    "@fireproof/core-types-base": "0.24.10",
-    "@fireproof/core-types-device-id": "0.24.10",
-    "@fireproof/core-types-protocols-cloud": "0.24.10",
-    "@fireproof/core-types-protocols-dashboard": "0.24.10",
+    "@fireproof/core-device-id": "0.24.11",
+    "@fireproof/core-protocols-dashboard": "0.24.11",
+    "@fireproof/core-runtime": "0.24.11",
+    "@fireproof/core-types-base": "0.24.11",
+    "@fireproof/core-types-device-id": "0.24.11",
+    "@fireproof/core-types-protocols-cloud": "0.24.11",
+    "@fireproof/core-types-protocols-dashboard": "0.24.11",
     "@vibes.diy/api-types": "workspace:*",
     "acorn": "^8.15.0",
     "arktype": "^2.1.29",
@@ -25,7 +25,7 @@
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.10",
+    "@fireproof/core-cli": "0.24.11",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3"
   }

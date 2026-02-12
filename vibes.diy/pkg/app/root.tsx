@@ -1,20 +1,49 @@
-import React from "react";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+/// <reference types="vite/client" />
 
-import { ClerkProvider } from "@clerk/clerk-react";
-import { PostHogProvider } from "posthog-js/react";
-import { VibesDiyEnv } from "./config/env.js";
+import React from "react";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { ErrorBoundary as AppErrorBoundary } from "./ErrorBoundary.js";
 import GtmNoScript from "./components/GtmNoScript.js";
-
+import { VibeDiyProvider, VibeDiySvcVars } from "./vibe-diy-provider.js";
+import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import "./app.css";
-import { VibeDiyProvider } from "./vibe-diy-provider.js";
+
+// Loader for root route
+export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
+  // const env = await fetch("/api/clientEnv")
+  // console.log(`loader-invoke from root.tsx`, loaderCtx.context.vibeDiyAppParams.vibes.env);
+  const params = loaderCtx.context.vibeDiyAppParams;
+  return new Response(
+    JSON.stringify({
+      // pkgRepos: params.pkgRepos,
+      env: {
+        GTM_CONTAINER_ID: params.vibes.env.GTM_CONTAINER_ID,
+        POSTHOG_KEY: params.vibes.env.POSTHOG_KEY,
+        POSTHOG_HOST: params.vibes.env.POSTHOG_HOST,
+
+        DASHBOARD_URL: params.vibes.env.DASHBOARD_URL,
+        CLERK_PUBLISHABLE_KEY: params.clerkPublishableKey,
+        VIBES_DIY_API_URL: params.vibes.env.VIBES_DIY_API_URL,
+      },
+      pkgRepos: params.pkgRepos,
+    } satisfies VibeDiySvcVars),
+    {
+      headers: {
+        "Content-type": "application/json",
+      },
+    }
+  );
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const svcEnv = useLoaderData<typeof loader>();
+  if (!svcEnv) {
+    return <></>;
+  }
   return (
     <html lang="en">
       <head>
@@ -24,7 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body suppressHydrationWarning>
-        <GtmNoScript />
+        <GtmNoScript svcVars={svcEnv} />
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -34,34 +63,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const svcVars = useLoaderData<typeof loader>();
+  if (!svcVars) {
+    return <></>;
+  }
   return (
-    <VibeDiyProvider>
+    <VibeDiyProvider svcVars={svcVars}>
       <AppErrorBoundary>
         <ThemeProvider>
-          <PostHogProvider
-            apiKey={VibesDiyEnv.POSTHOG_KEY()}
-            options={{
-              api_host: VibesDiyEnv.POSTHOG_HOST(),
-              opt_out_capturing_by_default: true,
-            }}
-          >
-            <CookieConsentProvider>
-              <Outlet />
-              <ClientOnly>
-                <CookieBanner />
-              </ClientOnly>
-            </CookieConsentProvider>
-          </PostHogProvider>
+          <CookieConsentProvider>
+            <Outlet />
+            <ClientOnly>
+              <CookieBanner />
+            </ClientOnly>
+          </CookieConsentProvider>
         </ThemeProvider>
       </AppErrorBoundary>
     </VibeDiyProvider>
-  );
-}
-
-export function HydrateFallback() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-pulse text-lg">Loading...</div>
-    </div>
   );
 }
