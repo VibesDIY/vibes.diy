@@ -19,6 +19,12 @@ Create beautiful, interactive mini apps with zero setup. Your creations are auto
    - Install with `pnpm i`
    - Run `pnpm dev`
 
+## Community
+
+We are committed to providing a welcoming and inclusive environment for all contributors. Please review our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
+
+Interested in contributing? Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
+
 ## Your Work is Always Safe
 
 Every app you create is automatically saved, so you can:
