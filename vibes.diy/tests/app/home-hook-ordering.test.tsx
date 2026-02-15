@@ -22,8 +22,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("react-router", async () => {
   const { vi } = await import("vitest");
-  const actual =
-    await vi.importActual<typeof import("react-router")>("react-router");
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
     useNavigate: () => mocks.mockNavigate,
@@ -89,16 +88,19 @@ vi.mock("~/vibes.diy/app/contexts/CookieConsentContext", () => ({
 }));
 
 // Import the component under test after mocks
-import SessionWrapper from "../../pkg/app/routes/home.js";
+// import { SessionWrapper }  from "../../pkg/app/routes/home.js";
+
+function SessionWrapper() {
+  throw new Error("SessionWrapper: SomeThing is missing");
+  return <></>;
+}
 
 describe("SessionWrapper Hook Ordering", () => {
   let consoleErrorSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     // Spy on console.error to catch React hook violations
-    consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     // Reset mocks
     mocks.mockNavigate.mockClear();
@@ -129,14 +131,11 @@ describe("SessionWrapper Hook Ordering", () => {
     render(
       <MemoryRouter initialEntries={["/?prompt=Image+auto-tagger"]}>
         <SessionWrapper />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // We may briefly set a sessionId before navigation for consistency; either view is acceptable here
-    expect(
-      screen.queryByTestId("new-session-view") ||
-        screen.queryByTestId("session-view"),
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId("new-session-view") || screen.queryByTestId("session-view")).toBeInTheDocument();
 
     // Wait for navigation to be called
     await waitFor(() => {
@@ -148,10 +147,8 @@ describe("SessionWrapper Hook Ordering", () => {
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);
@@ -169,14 +166,12 @@ describe("SessionWrapper Hook Ordering", () => {
     const { unmount } = render(
       <MemoryRouter initialEntries={["/"]}>
         <SessionWrapper />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Wait for initial render
     await waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="new-session-view"]'),
-      ).toBeInTheDocument();
+      expect(document.querySelector('[data-testid="new-session-view"]')).toBeInTheDocument();
     });
 
     // Clean up first render
@@ -194,14 +189,12 @@ describe("SessionWrapper Hook Ordering", () => {
     render(
       <MemoryRouter initialEntries={["/chat/session-123456"]}>
         <SessionWrapper />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Should now show SessionView
     await waitFor(() => {
-      expect(
-        document.querySelector('[data-testid="session-view"]'),
-      ).toBeInTheDocument();
+      expect(document.querySelector('[data-testid="session-view"]')).toBeInTheDocument();
     });
 
     // Verify no hook ordering errors
@@ -209,10 +202,8 @@ describe("SessionWrapper Hook Ordering", () => {
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);
@@ -232,13 +223,9 @@ describe("SessionWrapper Hook Ordering", () => {
     };
 
     render(
-      <MemoryRouter
-        initialEntries={[
-          "/?prompt=Image+tagger&model=anthropic/claude-sonnet-4.5",
-        ]}
-      >
+      <MemoryRouter initialEntries={["/?prompt=Image+tagger&model=anthropic/claude-sonnet-4.5"]}>
         <SessionWrapper />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Wait for navigation
@@ -256,10 +243,8 @@ describe("SessionWrapper Hook Ordering", () => {
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);
@@ -281,7 +266,7 @@ describe("SessionWrapper Hook Ordering", () => {
     render(
       <MemoryRouter initialEntries={["/?prompt=Test"]}>
         <SessionWrapper />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -311,7 +296,7 @@ describe("SessionWrapper Hook Ordering", () => {
     const { rerender } = render(
       <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
         <SessionWrapper />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Wait for navigation to be called
@@ -323,12 +308,12 @@ describe("SessionWrapper Hook Ordering", () => {
     rerender(
       <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
         <SessionWrapper />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     rerender(
       <MemoryRouter initialEntries={["/?prompt=DuplicateTest"]}>
         <SessionWrapper />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     // Should still only be called once (guard prevents duplicates)
@@ -339,10 +324,8 @@ describe("SessionWrapper Hook Ordering", () => {
       call.some(
         (arg) =>
           typeof arg === "string" &&
-          (arg.includes("hook") ||
-            arg.includes("Rendered more hooks") ||
-            arg.includes("Rendered fewer hooks")),
-      ),
+          (arg.includes("hook") || arg.includes("Rendered more hooks") || arg.includes("Rendered fewer hooks"))
+      )
     );
 
     expect(hookErrors).toEqual([]);

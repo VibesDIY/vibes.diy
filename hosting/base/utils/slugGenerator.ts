@@ -148,18 +148,7 @@ const cities = [
   "nairobi",
 ];
 
-const musicians = [
-  "beethoven",
-  "mozart",
-  "vivaldi",
-  "chopin",
-  "debussy",
-  "handel",
-  "bach",
-  "coltrane",
-  "ellington",
-  "satie",
-];
+const musicians = ["beethoven", "mozart", "vivaldi", "chopin", "debussy", "handel", "bach", "coltrane", "ellington", "satie"];
 
 export function generateVibeSlug(): string {
   const numberDictionary = NumberDictionary.generate({
@@ -168,11 +157,7 @@ export function generateVibeSlug(): string {
   });
 
   return uniqueNamesGenerator({
-    dictionaries: [
-      [...musicians, ...cities, ...adjectives],
-      [...nouns, ...tech, ...legends],
-      numberDictionary,
-    ],
+    dictionaries: [[...musicians, ...cities, ...adjectives], [...nouns, ...tech, ...legends], numberDictionary],
     length: 3,
     separator: "-",
   });

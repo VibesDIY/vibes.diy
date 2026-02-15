@@ -1,16 +1,5 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  MockInstance,
-  vi,
-} from "vitest";
-import {
-  generateStandaloneHtml,
-  downloadTextFile,
-} from "~/vibes.diy/app/utils/exportHtml.js";
+import { afterEach, beforeEach, describe, expect, it, MockInstance, vi } from "vitest";
+import { generateStandaloneHtml, downloadTextFile } from "~/vibes.diy/app/utils/exportHtml.js";
 import { ejectTemplateWithPlaceholders } from "~/vibes.diy/app/utils/eject-template.js";
 
 describe("exportHtml utilities", () => {
@@ -39,8 +28,7 @@ describe("exportHtml utilities", () => {
 
       // Environment tokens should be replaced with values from env.ts fallbacks
       // In test environment, API_BASE_URL returns preview URL (not production)
-      const expectedEndpoint =
-        "https://vibes-hosting-v2-preview.jchris.workers.dev/";
+      const expectedEndpoint = "https://vibes-hosting-v2-preview.jchris.workers.dev/";
       expect(html).toContain(`window.CALLAI_CHAT_URL = "${expectedEndpoint}"`);
       expect(html).toContain(`window.CALLAI_IMG_URL = "${expectedEndpoint}"`);
       expect(html).not.toContain("{{CALLAI_ENDPOINT}}");
@@ -85,10 +73,7 @@ describe("exportHtml utilities", () => {
       appendSpy = vi.spyOn(document.body, "appendChild");
 
       // Spy on document.createElement to return our prepared <a>
-      vi.spyOn(document, "createElement").mockImplementation(((
-        tagName: string,
-        options?: ElementCreationOptions,
-      ) => {
+      vi.spyOn(document, "createElement").mockImplementation(((tagName: string, options?: ElementCreationOptions) => {
         if (tagName.toLowerCase() === "a") return anchorEl as HTMLAnchorElement;
         // fallback to the real implementation for everything else
         return realCreateElement.call(document, tagName, options);

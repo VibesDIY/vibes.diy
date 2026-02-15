@@ -1,16 +1,5 @@
-import {
-  getLlmCatalogNames,
-  getDefaultDependencies,
-  getLlmCatalog,
-  LlmCatalogEntry,
-} from "@vibes.diy/prompts";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { getLlmCatalogNames, getDefaultDependencies, getLlmCatalog, LlmCatalogEntry } from "@vibes.diy/prompts";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VibesDiyEnv } from "../../config/env.js";
 import { trackEvent } from "../../utils/analytics.js";
 
@@ -22,10 +11,7 @@ interface AppSettingsViewProps {
   dependenciesUserOverride?: boolean;
   aiSelectedDependencies?: string[];
   // When saving a manual selection, we set `userOverride` true
-  onUpdateDependencies?: (
-    deps: string[],
-    userOverride: boolean,
-  ) => Promise<void> | void;
+  onUpdateDependencies?: (deps: string[], userOverride: boolean) => Promise<void> | void;
   // Demo data override settings
   demoDataOverride?: boolean;
   onUpdateDemoDataOverride?: (override?: boolean) => Promise<void> | void;
@@ -68,9 +54,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
       input = Array.isArray(selectedDependencies) ? selectedDependencies : [];
     } else {
       // Use AI-selected dependencies when no user override
-      input = Array.isArray(aiSelectedDependencies)
-        ? aiSelectedDependencies
-        : [];
+      input = Array.isArray(aiSelectedDependencies) ? aiSelectedDependencies : [];
     }
 
     const filtered = input
@@ -100,9 +84,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   useEffect(() => {
     // Only sync when external dependencies actually change (not internal state changes)
     // AND when we're not in the middle of user changes (hasUnsavedDeps)
-    const externalDepsChanged =
-      JSON.stringify(previousExternalDepsRef.current) !==
-      JSON.stringify(initialDeps);
+    const externalDepsChanged = JSON.stringify(previousExternalDepsRef.current) !== JSON.stringify(initialDeps);
 
     if (externalDepsChanged && !hasUnsavedDeps) {
       // This is a real external change and user hasn't made unsaved changes
@@ -153,7 +135,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
         handleNameCancel();
       }
     },
-    [handleNameSave, handleNameCancel],
+    [handleNameSave, handleNameCancel]
   );
 
   // Libraries handlers
@@ -176,10 +158,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
     setSaveDepsErr(null);
     try {
       const valid = deps.filter((n) => catalogNames.has(n));
-      await onUpdateDependencies?.(
-        valid.length ? valid : await getDefaultDependencies(),
-        true,
-      );
+      await onUpdateDependencies?.(valid.length ? valid : await getDefaultDependencies(), true);
       setHasUnsavedDeps(false);
       setSaveDepsOk(true);
       setTimeout(() => setSaveDepsOk(false), 2000);
@@ -194,32 +173,22 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
       const override = value === "llm" ? undefined : value === "on";
       onUpdateDemoDataOverride?.(override);
     },
-    [onUpdateDemoDataOverride],
+    [onUpdateDemoDataOverride]
   );
 
   return (
-    <div
-      className="flex h-full justify-center overflow-y-scroll p-8"
-      style={{ position: "relative" }}
-    >
+    <div className="flex h-full justify-center overflow-y-scroll p-8" style={{ position: "relative" }}>
       <div className="w-full max-w-2xl">
-        <h2 className="text-light-primary dark:text-dark-primary mb-6 text-center text-2xl font-semibold">
-          App Settings
-        </h2>
+        <h2 className="text-light-primary dark:text-dark-primary mb-6 text-center text-2xl font-semibold">App Settings</h2>
 
         <div className="space-y-6">
           <div className="bg-light-background-01 dark:bg-dark-background-01 border-light-decorative-01 dark:border-dark-decorative-01 rounded-lg border p-6">
-            <h3 className="text-light-primary dark:text-dark-primary mb-4 text-lg font-medium">
-              General Settings
-            </h3>
+            <h3 className="text-light-primary dark:text-dark-primary mb-4 text-lg font-medium">General Settings</h3>
             <p className="text-light-primary dark:text-dark-primary mb-4 opacity-60">
-              You are in <strong>dev mode</strong>. Data is temporary until you
-              publish your app with the share button at top right. You can set
-              the name of your app here or continue to autogenerate names.
+              You are in <strong>dev mode</strong>. Data is temporary until you publish your app with the share button at top right.
+              You can set the name of your app here or continue to autogenerate names.
             </p>
-            <label className="text-light-primary dark:text-dark-primary mb-2 block text-sm font-semibold">
-              App Name
-            </label>
+            <label className="text-light-primary dark:text-dark-primary mb-2 block text-sm font-semibold">App Name</label>
             {isEditingName ? (
               <div className="mb-6 flex items-center gap-2">
                 <input
@@ -237,18 +206,8 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
                   className="hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 rounded p-1 text-green-600 dark:text-green-400"
                   title="Save"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </button>
                 <button
@@ -256,18 +215,8 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
                   className="hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 rounded p-1 text-red-600 dark:text-red-400"
                   title="Cancel"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
@@ -296,17 +245,13 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
                 </span>
               </div>
               <div className="text-light-primary/70 dark:text-dark-primary/70 text-sm">
-                {title !== "Untitled App"
-                  ? `${title.toLowerCase().replace(/\s+/g, "-")}.vibesdiy.app`
-                  : "app-name.vibesdiy.app"}
+                {title !== "Untitled App" ? `${title.toLowerCase().replace(/\s+/g, "-")}.vibesdiy.app` : "app-name.vibesdiy.app"}
               </div>
             </div>
           </div>
 
           <div className="bg-light-background-01 dark:bg-dark-background-01 border-light-decorative-01 dark:border-dark-decorative-01 rounded-lg border p-6">
-            <h3 className="text-light-primary dark:text-dark-primary mb-4 text-lg font-medium">
-              Export Options
-            </h3>
+            <h3 className="text-light-primary dark:text-dark-primary mb-4 text-lg font-medium">Export Options</h3>
             <div
               className="bg-light-background-00 dark:bg-dark-background-00 border-light-decorative-01 dark:border-dark-decorative-01 hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 flex cursor-pointer items-center rounded-lg border p-4 transition-colors"
               onClick={() => {
@@ -315,21 +260,15 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
               }}
             >
               <div className="flex-1">
-                <div className="text-light-primary dark:text-dark-primary font-medium">
-                  Download html
-                </div>
-                <div className="text-light-primary/70 dark:text-dark-primary/70 text-sm">
-                  Just open it in your browser.
-                </div>
+                <div className="text-light-primary dark:text-dark-primary font-medium">Download html</div>
+                <div className="text-light-primary/70 dark:text-dark-primary/70 text-sm">Just open it in your browser.</div>
               </div>
             </div>
           </div>
 
           <div className="bg-light-background-01 dark:bg-dark-background-01 border-light-decorative-01 dark:border-dark-decorative-01 rounded-lg border p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-light-primary dark:text-dark-primary text-lg font-medium">
-                Libraries
-              </h3>
+              <h3 className="text-light-primary dark:text-dark-primary text-lg font-medium">Libraries</h3>
               <button
                 onClick={handleSaveDeps}
                 disabled={!hasUnsavedDeps}
@@ -353,21 +292,16 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
               </div>
             )}
             <p className="text-accent-01 dark:text-accent-01 mb-3 text-sm">
-              Choose which libraries to include in generated apps for this Vibe.
-              This controls imports and docs used in prompts.
+              Choose which libraries to include in generated apps for this Vibe. This controls imports and docs used in prompts.
             </p>
             {!dependenciesUserOverride && (
               <div className="mb-4 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300">
-                Libraries shown below were chosen by the AI based on your last
-                prompt. Demo data is also chosen by the LLM at runtime. Select
-                different libraries and click Save to set a manual override for
-                this vibe.
+                Libraries shown below were chosen by the AI based on your last prompt. Demo data is also chosen by the LLM at
+                runtime. Select different libraries and click Save to set a manual override for this vibe.
               </div>
             )}
             {llmsCatalog.length === 0 ? (
-              <div className="text-accent-01 dark:text-dark-secondary text-sm">
-                No libraries available.
-              </div>
+              <div className="text-accent-01 dark:text-dark-secondary text-sm">No libraries available.</div>
             ) : (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {llmsCatalog.map((mod) => {
@@ -381,16 +315,12 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
                         type="checkbox"
                         className="mt-0.5"
                         checked={checked}
-                        onChange={(e) =>
-                          toggleDependency(mod.name, e.target.checked)
-                        }
+                        onChange={(e) => toggleDependency(mod.name, e.target.checked)}
                       />
                       <span>
                         <span className="font-medium">{mod.label}</span>
                         {mod.description ? (
-                          <span className="text-accent-01 dark:text-dark-secondary block text-xs">
-                            {mod.description}
-                          </span>
+                          <span className="text-accent-01 dark:text-dark-secondary block text-xs">{mod.description}</span>
                         ) : null}
                       </span>
                     </label>
@@ -401,24 +331,14 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
           </div>
 
           <div className="bg-light-background-01 dark:bg-dark-background-01 border-light-decorative-01 dark:border-dark-decorative-01 rounded-lg border p-6">
-            <h3 className="text-light-primary dark:text-dark-primary mb-4 text-lg font-medium">
-              Prompt Options
-            </h3>
+            <h3 className="text-light-primary dark:text-dark-primary mb-4 text-lg font-medium">Prompt Options</h3>
             <p className="text-accent-01 dark:text-accent-01 mb-4 text-sm">
-              Control how the AI generates code for this Vibe. You can let the
-              LLM decide or override specific settings.
+              Control how the AI generates code for this Vibe. You can let the LLM decide or override specific settings.
             </p>
-            <label className="text-light-primary dark:text-dark-primary mb-2 block text-sm font-semibold">
-              Demo Data
-            </label>
+            <label className="text-light-primary dark:text-dark-primary mb-2 block text-sm font-semibold">Demo Data</label>
             <div className="space-y-2">
               {(["llm", "on", "off"] as const).map((value) => {
-                const currentValue =
-                  demoDataOverride === undefined
-                    ? "llm"
-                    : demoDataOverride
-                      ? "on"
-                      : "off";
+                const currentValue = demoDataOverride === undefined ? "llm" : demoDataOverride ? "on" : "off";
                 const isChecked = currentValue === value;
                 const labels = {
                   llm: "Let LLM decide",
@@ -439,9 +359,7 @@ const AppSettingsView: React.FC<AppSettingsViewProps> = ({
                       onChange={() => handleDemoDataChange(value)}
                       className="mt-0.5"
                     />
-                    <span className="text-light-primary dark:text-dark-primary">
-                      {labels[value]}
-                    </span>
+                    <span className="text-light-primary dark:text-dark-primary">{labels[value]}</span>
                   </label>
                 );
               })}

@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  parseSubdomain,
-  isValidSubdomain,
-  generateInstallId,
-  constructSubdomain,
-  type ParsedSubdomain,
-} from "@vibes.diy/hosting";
+import { parseSubdomain, isValidSubdomain, generateInstallId, constructSubdomain, type ParsedSubdomain } from "@vibes.diy/hosting";
 
 describe("Subdomain Parser", () => {
   describe("parseSubdomain", () => {
@@ -39,9 +33,7 @@ describe("Subdomain Parser", () => {
     });
 
     it("should handle UUID install IDs", () => {
-      const result = parseSubdomain(
-        "todo-app_550e8400-e29b-41d4-a716-446655440000.vibesdiy.app",
-      );
+      const result = parseSubdomain("todo-app_550e8400-e29b-41d4-a716-446655440000.vibesdiy.app");
 
       expect(result.appSlug).toBe("todo-app");
       expect(result.installId).toBe("550e8400-e29b-41d4-a716-446655440000");
@@ -91,9 +83,7 @@ describe("Subdomain Parser", () => {
     });
 
     it("should parse new format with complex install ID", () => {
-      const result = parseSubdomain(
-        "v-weather-dashboard--550e8400-e29b-41d4-a716-446655440000.vibesdiy.net",
-      );
+      const result = parseSubdomain("v-weather-dashboard--550e8400-e29b-41d4-a716-446655440000.vibesdiy.net");
 
       expect(result.appSlug).toBe("weather-dashboard");
       expect(result.installId).toBe("550e8400-e29b-41d4-a716-446655440000");
@@ -263,31 +253,19 @@ describe("Subdomain Parser", () => {
     });
 
     it("should handle complex slugs and IDs", () => {
-      const result = constructSubdomain(
-        "weather-dashboard-v2",
-        "550e8400-e29b-41d4-a716-446655440000",
-        "vibesdiy.net",
-      );
+      const result = constructSubdomain("weather-dashboard-v2", "550e8400-e29b-41d4-a716-446655440000", "vibesdiy.net");
 
-      expect(result).toBe(
-        "v-weather-dashboard-v2--550e8400-e29b-41d4-a716-446655440000",
-      );
+      expect(result).toBe("v-weather-dashboard-v2--550e8400-e29b-41d4-a716-446655440000");
     });
 
     it("should work with install IDs containing underscores", () => {
-      const result = constructSubdomain(
-        "my-app",
-        "user_special-id",
-        "vibesdiy.net",
-      );
+      const result = constructSubdomain("my-app", "user_special-id", "vibesdiy.net");
 
       expect(result).toBe("v-my-app--user_special-id");
     });
 
     it("should throw error for empty string install ID", () => {
-      expect(() => constructSubdomain("my-app", "")).toThrow(
-        "Install ID cannot be empty string - would create invalid subdomain",
-      );
+      expect(() => constructSubdomain("my-app", "")).toThrow("Install ID cannot be empty string - would create invalid subdomain");
     });
   });
 
@@ -295,10 +273,7 @@ describe("Subdomain Parser", () => {
     it("should parse and reconstruct catalog title correctly", () => {
       const original = "my-awesome-app";
       const parsed = parseSubdomain(`${original}.vibesdiy.app`);
-      const reconstructed = constructSubdomain(
-        parsed.appSlug,
-        parsed.installId,
-      );
+      const reconstructed = constructSubdomain(parsed.appSlug, parsed.installId);
 
       expect(reconstructed).toBe(original);
     });
@@ -306,11 +281,7 @@ describe("Subdomain Parser", () => {
     it("should parse legacy format and generate new format", () => {
       const original = "todo-app_abc-123";
       const parsed = parseSubdomain(`${original}.vibesdiy.app`);
-      const reconstructed = constructSubdomain(
-        parsed.appSlug,
-        parsed.installId,
-        "vibesdiy.net",
-      );
+      const reconstructed = constructSubdomain(parsed.appSlug, parsed.installId, "vibesdiy.net");
 
       // Should parse correctly from old format
       expect(parsed.appSlug).toBe("todo-app");
@@ -358,11 +329,7 @@ describe("Subdomain Parser", () => {
 
       testCases.forEach((testCase) => {
         const parsed = parseSubdomain(`${testCase.input}.vibesdiy.app`);
-        const reconstructed = constructSubdomain(
-          parsed.appSlug,
-          parsed.installId,
-          "vibesdiy.net",
-        );
+        const reconstructed = constructSubdomain(parsed.appSlug, parsed.installId, "vibesdiy.net");
 
         expect(parsed.isInstance).toBe(testCase.isInstance);
         if (testCase.isInstance) {

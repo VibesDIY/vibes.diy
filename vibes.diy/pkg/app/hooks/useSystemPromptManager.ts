@@ -17,10 +17,7 @@ import {
  * @param vibeDoc - Vibe document containing per-vibe settings
  * @returns ensureSystemPrompt function that builds and returns a fresh system prompt
  */
-export function useSystemPromptManager(
-  settingsDoc: UserSettings | undefined,
-  vibeDoc?: VibeDocument,
-) {
+export function useSystemPromptManager(settingsDoc: UserSettings | undefined, vibeDoc?: VibeDocument) {
   const { getToken } = useAuth();
 
   // Stateless builder: always constructs and returns a fresh system prompt
@@ -40,22 +37,19 @@ export function useSystemPromptManager(
           model: "test-model",
         } satisfies SystemPromptResult;
       }
-      const result = await makeBaseSystemPrompt(
-        await resolveEffectiveModel(settingsDoc, vibeDoc),
-        {
-          fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
-          callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
-          userPrompt: overrides?.userPrompt || "",
-          getAuthToken: async () => (await getToken()) || "",
-          ...(settingsDoc || {}),
-          ...(vibeDoc || {}),
-          ...overrides,
-        },
-      );
+      const result = await makeBaseSystemPrompt(await resolveEffectiveModel(settingsDoc, vibeDoc), {
+        fallBackUrl: VibesDiyEnv.PROMPT_FALL_BACKURL(),
+        callAiEndpoint: VibesDiyEnv.CALLAI_ENDPOINT(),
+        userPrompt: overrides?.userPrompt || "",
+        getAuthToken: async () => (await getToken()) || "",
+        ...(settingsDoc || {}),
+        ...(vibeDoc || {}),
+        ...overrides,
+      });
 
       return result;
     },
-    [settingsDoc, vibeDoc, getToken],
+    [settingsDoc, vibeDoc, getToken]
   );
 
   // Export only the builder function

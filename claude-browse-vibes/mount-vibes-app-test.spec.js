@@ -1,9 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { promises as fs } from "node:fs";
 
-test("MountVibesApp behavior test - mock_login + click switch", async ({
-  page,
-}) => {
+test("MountVibesApp behavior test - mock_login + click switch", async ({ page }) => {
   // Listen for console logs
   page.on("console", (msg) => {
     console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`);
@@ -37,9 +35,7 @@ test("MountVibesApp behavior test - mock_login + click switch", async ({
     console.log(`📋 Found auth wall with title: "${titleText}"`);
 
     // Assert body has a background image
-    const backgroundImage = await page.evaluate(
-      () => getComputedStyle(document.body).backgroundImage,
-    );
+    const backgroundImage = await page.evaluate(() => getComputedStyle(document.body).backgroundImage);
     console.log(`🖼️  Auth wall background: ${backgroundImage}`);
     expect(backgroundImage).not.toBe("none");
   } else {
@@ -67,11 +63,7 @@ test("MountVibesApp behavior test - mock_login + click switch", async ({
   // Save full HTML for inspection in test output dir
   console.log("📝 Capturing page HTML...");
   const html = await page.content();
-  await fs.writeFile(
-    test.info().outputPath("mount-vibes-app-innerHTML.html"),
-    html,
-    "utf8",
-  );
+  await fs.writeFile(test.info().outputPath("mount-vibes-app-innerHTML.html"), html, "utf8");
 
   console.log("✅ Test completed successfully!");
   console.log("📁 Files saved:");
@@ -86,9 +78,7 @@ test("MountVibesApp behavior test - mock_login + click switch", async ({
   }
 
   if (onAuthWall) {
-    console.log(
-      "ℹ️ On auth wall – verified background present; skipped menu assertions.",
-    );
+    console.log("ℹ️ On auth wall – verified background present; skipped menu assertions.");
   } else {
     console.log("🎯 Assertions passed: VibesSwitch visible and menu visible.");
   }

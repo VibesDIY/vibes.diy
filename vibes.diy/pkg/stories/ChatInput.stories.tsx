@@ -1,57 +1,54 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import ChatInput, { ChatInputRef } from "../app/components/ChatInput.js";
-import type { ChatState } from "@vibes.diy/prompts";
+// import type { ChatState } from "@vibes.diy/prompts";
 
 // Mock wrapper component for Storybook
 function ChatInputWrapper({
-  initialInput = "",
-  isStreaming = false,
+  // initialInput = "",
+  promptProcessing = false,
   // placeholder = "I want to build...",
 }: {
   initialInput?: string;
-  isStreaming?: boolean;
+  promptProcessing?: boolean;
   placeholder?: string;
 }) {
-  const [input, setInput] = useState(initialInput);
-  const inputRef = useRef<ChatInputRef>(null);
+  // const [input, setInput] = useState(initialInput);
+  // const inputRef = useRef<ChatInputRef>(null);
 
-  const mockChatState: ChatState = {
-    isEmpty: input.length === 0,
-    docs: [],
-    input,
-    setInput,
-    isStreaming,
-    codeReady: false,
-    inputRef,
-    sendMessage: async (text?: string) => {
-      console.log("Mock sendMessage called with:", text || input);
-    },
-    saveCodeAsAiMessage: async () => "mock-id",
-    title: "",
-    addScreenshot: async () => {
-      /* no-op */
-    },
-    sessionId: "mock-session",
-    setSelectedResponseId: () => {
-      /* no-op */
-    },
-    immediateErrors: [],
-    advisoryErrors: [],
-    addError: () => {
-      /* no-op */
-    },
-    updateTitle: (_title: string, _isManual?: boolean): Promise<void> => {
-      throw new Error("Function not implemented.");
-    },
-  };
+  // const mockChatState: ChatState = {
+  //   // isEmpty: input.length === 0,
+  //   docs: [],
+  //   input,
+  //   setInput,
+  //   promptProcessing,
+  //   // codeReady: false,
+  //   inputRef,
+  //   sendPrompt: async (text?: string) => {
+  //     console.log("Mock sendMessage called with:", text || input);
+  //   },
+  //   saveCodeAsAiMessage: async () => "mock-id",
+  //   title: { title: "ai-ish-title", src: "ai" },
+  //   setScreenshot: () => {
+  //     /* no-op */
+  //   },
+  //   // chat: {
+  //   //   chatId: "mock-session",
+  //   // } as Base,
+  //   setSelectedResponseId: () => {
+  //     /* no-op */
+  //   },
+  //   immediateErrors: [],
+  //   advisoryErrors: [],
+  //   addError: () => {
+  //     /* no-op */
+  //   },
+  //   setTitle: (): void => {
+  //     throw new Error("Function not implemented.");
+  //   },
+  // };
 
-  return (
-    <ChatInput
-      chatState={mockChatState}
-      onSend={() => console.log("onSend called")}
-    />
-  );
+  return <ChatInput promptProcessing={promptProcessing} onSubmit={() => console.log("onSend called")} />;
 }
 
 const meta = {
@@ -72,7 +69,7 @@ const meta = {
       description: "Initial input text value",
       control: "text",
     },
-    isStreaming: {
+    promptProcessing: {
       description: "Whether the component is in streaming/loading state",
       control: "boolean",
     },
@@ -105,7 +102,7 @@ export const WithValue: Story = {
 export const Streaming: Story = {
   args: {
     initialInput: "Building your app...",
-    isStreaming: true,
+    promptProcessing: true,
     placeholder: "I want to build...",
   },
 };
@@ -135,39 +132,39 @@ export const LongText: Story = {
 
 // Interactive example with ref
 export const WithRefActions: Story = {
-  render: (args: { isStreaming?: boolean }) => {
+  render: (args: { promptProcessing?: boolean }) => {
     const inputRef = useRef<ChatInputRef>(null);
-    const [input, setInput] = useState("");
+    // const [input, setInput] = useState("");
 
-    const mockChatState: ChatState = {
-      isEmpty: input.length === 0,
-      docs: [],
-      input,
-      setInput,
-      isStreaming: args.isStreaming || false,
-      codeReady: false,
-      inputRef,
-      sendMessage: async (text?: string) => {
-        console.log("Mock sendMessage called with:", text || input);
-      },
-      saveCodeAsAiMessage: async () => "mock-id",
-      title: "",
-      addScreenshot: async () => {
-        /* no-op */
-      },
-      sessionId: "mock-session",
-      setSelectedResponseId: () => {
-        /* no-op */
-      },
-      immediateErrors: [],
-      advisoryErrors: [],
-      addError: () => {
-        /* no-op */
-      },
-      updateTitle: (_title: string, _isManual?: boolean): Promise<void> => {
-        throw new Error("Function not implemented.");
-      },
-    };
+    // const mockChatState: ChatState = {
+    //   // isEmpty: input.length === 0,
+    //   docs: [],
+    //   input,
+    //   setInput,
+    //   promptProcessing: args.promptProcessing || false,
+    //   // codeReady: false,
+    //   inputRef,
+    //   sendPrompt: async (text?: string) => {
+    //     console.log("Mock sendMessage called with:", text || input);
+    //   },
+    //   saveCodeAsAiMessage: async () => "mock-id",
+    //   title: { title: "ai-ish-title", src: "ai" },
+    //   setScreenshot: () => {
+    //     /* no-op */
+    //   },
+    //   // sessionId: "mock-session",
+    //   setSelectedResponseId: () => {
+    //     /* no-op */
+    //   },
+    //   immediateErrors: [],
+    //   advisoryErrors: [],
+    //   addError: () => {
+    //     /* no-op */
+    //   },
+    //   setTitle: (): Promise<void> => {
+    //     throw new Error("Function not implemented.");
+    //   },
+    // };
 
     const handleFocus = () => {
       inputRef.current?.focus();
@@ -180,24 +177,14 @@ export const WithRefActions: Story = {
     return (
       <div className="space-y-4">
         <div className="flex gap-2">
-          <button
-            onClick={handleFocus}
-            className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
-          >
+          <button onClick={handleFocus} className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600">
             Focus Input
           </button>
-          <button
-            onClick={handleClickSubmit}
-            className="rounded bg-green-500 px-3 py-1 text-white hover:bg-green-600"
-          >
+          <button onClick={handleClickSubmit} className="rounded bg-green-500 px-3 py-1 text-white hover:bg-green-600">
             Click Submit
           </button>
         </div>
-        <ChatInput
-          chatState={mockChatState}
-          onSend={() => console.log("onSend called")}
-          ref={inputRef}
-        />
+        <ChatInput promptProcessing={args.promptProcessing || false} onSubmit={() => console.log("onSend called")} ref={inputRef} />
       </div>
     );
   },

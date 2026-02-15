@@ -273,8 +273,7 @@ img {
   z-index: 2;
   background-size: var(--grid-size) var(--grid-size);
   background-image:
-    linear-gradient(var(--vibes-cream) 1px, transparent 1px),
-    linear-gradient(90deg, var(--vibes-cream) 1px, transparent 1px);
+    linear-gradient(var(--vibes-cream) 1px, transparent 1px), linear-gradient(90deg, var(--vibes-cream) 1px, transparent 1px);
 }
 
 /* Scrolling color backgrounds container */
@@ -299,11 +298,7 @@ img {
 }
 
 .section-bg-0 {
-  background: linear-gradient(
-    oklch(0.8461 0.0069 115.73) 0%,
-    oklch(0.8461 0.0069 115.73) 70%,
-    oklch(0.8461 0.0069 115.73) 100%
-  );
+  background: linear-gradient(oklch(0.8461 0.0069 115.73) 0%, oklch(0.8461 0.0069 115.73) 70%, oklch(0.8461 0.0069 115.73) 100%);
 }
 
 .section-bg-1 {
@@ -968,13 +963,7 @@ img {
   left: 0;
   right: 0;
   bottom: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.15),
-    rgba(0, 0, 0, 0.15) 1px,
-    transparent 1px,
-    transparent 2px
-  );
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px);
   pointer-events: none;
   z-index: 1;
 }

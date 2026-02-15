@@ -21,9 +21,7 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
       console.log(`🔑 CREDENTIALS:`);
       console.log(`   Authorization: ${headers["authorization"] || "NOT SET"}`);
       console.log(`   X-VIBES-Token: ${headers["x-vibes-token"] || "NOT SET"}`);
-      console.log(
-        `   API Key (if in header): ${headers["api-key"] || headers["x-api-key"] || "NOT SET"}`,
-      );
+      console.log(`   API Key (if in header): ${headers["api-key"] || headers["x-api-key"] || "NOT SET"}`);
       console.log(`   All Headers:`, JSON.stringify(headers, null, 2));
 
       apiRequests.push({
@@ -95,9 +93,7 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
   console.log(`Found ${iframes.length} frames`);
 
   for (const frame of iframes) {
-    const frameInputs = await frame
-      .locator('textarea, input[type="text"]')
-      .count();
+    const frameInputs = await frame.locator('textarea, input[type="text"]').count();
     if (frameInputs > 0) {
       console.log(`✅ Found ${frameInputs} input(s) in iframe`);
       inputField = frame.locator('textarea, input[type="text"]').first();
@@ -117,19 +113,12 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
   // Check if button is in iframe - try multiple selectors
   for (const frame of iframes) {
     // Try different button selectors in order of preference
-    const selectors = [
-      'button[type="submit"]',
-      'button:has-text("Submit")',
-      'button:has-text("Send")',
-      "button",
-    ];
+    const selectors = ['button[type="submit"]', 'button:has-text("Submit")', 'button:has-text("Send")', "button"];
 
     for (const selector of selectors) {
       const count = await frame.locator(selector).count();
       if (count > 0) {
-        console.log(
-          `✅ Found ${count} button(s) matching "${selector}" in iframe`,
-        );
+        console.log(`✅ Found ${count} button(s) matching "${selector}" in iframe`);
         submitButton = frame.locator(selector).first();
         break;
       }
@@ -178,21 +167,14 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
   if (apiRequests.length > 0) {
     console.log(`✅ Captured ${apiRequests.length} API request(s)`);
   } else {
-    console.log(
-      `ℹ️  No API requests captured (vibe may not trigger AI calls in this test)`,
-    );
+    console.log(`ℹ️  No API requests captured (vibe may not trigger AI calls in this test)`);
   }
 
   // Check that request goes to vibes-diy-api.com (NOT OpenRouter) if any requests were made
   if (apiRequests.length > 0) {
     const requestUrls = apiRequests.map((req) => req.url);
-    const usesVibesApi = requestUrls.some(
-      (url) =>
-        url.includes("vibes-diy-api.com") || url.includes("vibesdiy.net"),
-    );
-    const usesOpenRouter = requestUrls.some((url) =>
-      url.includes("openrouter"),
-    );
+    const usesVibesApi = requestUrls.some((url) => url.includes("vibes-diy-api.com") || url.includes("vibesdiy.net"));
+    const usesOpenRouter = requestUrls.some((url) => url.includes("openrouter"));
 
     console.log(`vibes-diy-api.com used: ${usesVibesApi}`);
     console.log(`openrouter.ai used: ${usesOpenRouter}`);
@@ -200,9 +182,7 @@ test("Vibesbox auth endpoint debug", async ({ page }) => {
     // Verify requests go to correct endpoint
     expect(usesVibesApi).toBe(true);
     expect(usesOpenRouter).toBe(false);
-    console.log(
-      "✅ Requests go to correct endpoint (vibes-diy-api.com, not OpenRouter)",
-    );
+    console.log("✅ Requests go to correct endpoint (vibes-diy-api.com, not OpenRouter)");
   }
 
   // Check for 401 errors

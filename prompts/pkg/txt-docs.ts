@@ -8,22 +8,12 @@ export interface TxtDoc {
   readonly txt: string;
 }
 
-const files = [
-  "callai.txt",
-  "fireproof.txt",
-  "image-gen.txt",
-  "web-audio.txt",
-  "d3.md",
-  "three-js.md",
-];
+const files = ["callai.txt", "fireproof.txt", "image-gen.txt", "web-audio.txt", "d3.md", "three-js.md"];
 
 // Lazy loading per file instead of eager loading all files
 const fileLoaders = new Map<string, ResolveOnce<TxtDoc | undefined>>();
 
-function getFileLoader(
-  file: string,
-  fallBackUrl: CoerceURI,
-): ResolveOnce<TxtDoc | undefined> {
+function getFileLoader(file: string, fallBackUrl: CoerceURI): ResolveOnce<TxtDoc | undefined> {
   const key = `${fallBackUrl?.toString() || ""}:${file}`;
   if (!fileLoaders.has(key)) {
     fileLoaders.set(key, new ResolveOnce<TxtDoc | undefined>());
@@ -35,10 +25,7 @@ function getFileLoader(
   return loader;
 }
 
-async function loadTxtDoc(
-  file: string,
-  fallBackUrl: CoerceURI,
-): Promise<TxtDoc | undefined> {
+async function loadTxtDoc(file: string, fallBackUrl: CoerceURI): Promise<TxtDoc | undefined> {
   const loader = getFileLoader(file, fallBackUrl);
   return loader.once(async () => {
     const rAsset = await loadDocs(file, fallBackUrl);
@@ -50,10 +37,7 @@ async function loadTxtDoc(
   });
 }
 
-export async function getTexts(
-  name: string,
-  fallBackUrl: CoerceURI,
-): Promise<string | undefined> {
+export async function getTexts(name: string, fallBackUrl: CoerceURI): Promise<string | undefined> {
   name = name.toLocaleLowerCase().trim();
 
   // Try exact match first by looking for the file directly

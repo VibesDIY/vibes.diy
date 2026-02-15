@@ -1,8 +1,8 @@
-import { makeBaseSystemPrompt, parseContent } from '@vibes.diy/prompts';
-import type { UseVibesOptions, UseVibesResult, UseVibesState } from '@vibes.diy/use-vibes-types';
-import { callAI as defaultCallAI } from 'call-ai';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import IframeVibesComponent from './IframeVibesComponent.js';
+import { makeBaseSystemPrompt, parseContent } from "@vibes.diy/prompts";
+import type { UseVibesOptions, UseVibesResult, UseVibesState } from "@vibes.diy/use-vibes-types";
+import { callAI as defaultCallAI } from "call-ai";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import IframeVibesComponent from "./IframeVibesComponent.js";
 
 /**
  * useVibes hook - Cycle 1 implementation
@@ -38,10 +38,7 @@ export function useVibes(
       setState((prev) => ({ ...prev, progress: newProgress }));
 
       if (newProgress < 90) {
-        progressTimerRef.current = setTimeout(
-          () => simulateProgress(newProgress),
-          100 + Math.random() * 200
-        );
+        progressTimerRef.current = setTimeout(() => simulateProgress(newProgress), 100 + Math.random() * 200);
       }
     }
   }, []);
@@ -58,11 +55,11 @@ export function useVibes(
     if (!mountedRef.current) return;
 
     // Validate inputs - set error state instead of early return
-    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+    if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
       setState((prev) => ({
         ...prev,
         loading: false,
-        error: new Error('Prompt required'),
+        error: new Error("Prompt required"),
         App: null,
         code: null,
         progress: 0,
@@ -110,10 +107,10 @@ export function useVibes(
         // Use the full orchestrator for two-stage generation
         let result;
         try {
-          result = await makeBaseSystemPrompt(options.model || 'anthropic/claude-sonnet-4.5', {
+          result = await makeBaseSystemPrompt(options.model || "anthropic/claude-sonnet-4.5", {
             userPrompt: prompt,
             history: [],
-            fallBackUrl: 'https://esm.sh/@vibes.diy/prompts/llms',
+            fallBackUrl: "https://esm.sh/@vibes.diy/prompts/llms",
             // Pass through any user overrides
             dependencies: options.dependencies,
             dependenciesUserOverride: !!options.dependencies,
@@ -124,9 +121,9 @@ export function useVibes(
             systemPrompt: `You are a React component generator. Generate a complete React component based on the user's prompt. 
 Use Fireproof for data persistence. Begin the component with the import statements.
 Return only the JSX code with a default export. Use modern React patterns with hooks if needed.`,
-            dependencies: options.dependencies || ['useFireproof'],
+            dependencies: options.dependencies || ["useFireproof"],
             demoData: false,
-            model: options.model || 'anthropic/claude-sonnet-4.5',
+            model: options.model || "anthropic/claude-sonnet-4.5",
           };
         }
 
@@ -141,8 +138,8 @@ Return only the JSX code with a default export. Use modern React patterns with h
 
         // Generate the actual component using the system prompt
         const messages = [
-          { role: 'system' as const, content: systemPrompt },
-          { role: 'user' as const, content: prompt },
+          { role: "system" as const, content: systemPrompt },
+          { role: "user" as const, content: prompt },
         ];
 
         const aiResponse = await callAI(messages, {
@@ -155,14 +152,14 @@ Return only the JSX code with a default export. Use modern React patterns with h
           return;
         }
 
-        const rawResponse = typeof aiResponse === 'string' ? aiResponse : '';
+        const rawResponse = typeof aiResponse === "string" ? aiResponse : "";
 
         // Parse the AI response to extract code segments
         const { segments } = parseContent(rawResponse);
 
         // Find the first code block
-        const codeSegment = segments.find((segment) => segment.type === 'code');
-        const extractedCode = codeSegment ? codeSegment.content : '';
+        const codeSegment = segments.find((segment) => segment.type === "code");
+        const extractedCode = codeSegment ? codeSegment.content : "";
 
         // Use extracted code for compilation, fallback to raw response if no code found
         const codeToUse = extractedCode || rawResponse;
@@ -193,7 +190,7 @@ Return only the JSX code with a default export. Use modern React patterns with h
             _id: `vibe-${Date.now()}`,
             prompt,
             code: codeToUse,
-            title: 'Generated Component',
+            title: "Generated Component",
             // Include all metadata from the orchestrator
             ...metadata,
             created_at: Date.now(),
@@ -209,7 +206,7 @@ Return only the JSX code with a default export. Use modern React patterns with h
         setState((prev) => ({
           ...prev,
           loading: false,
-          error: error instanceof Error ? error : new Error('Generation failed'),
+          error: error instanceof Error ? error : new Error("Generation failed"),
           progress: 0,
         }));
       }

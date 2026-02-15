@@ -27,9 +27,7 @@ export function ShareModal({
   const [showUpdateSuccess, setShowUpdateSuccess] = useState(false);
   const [shareToFirehose, setShareToFirehose] = useState(isFirehoseShared);
 
-  const publishedSubdomain = iframeUrl
-    ? new URL(iframeUrl).hostname.split(".")[0]
-    : "";
+  const publishedSubdomain = iframeUrl ? new URL(iframeUrl).hostname.split(".")[0] : "";
   useEffect(() => {
     // Reset state when modal opens/closes
     if (isOpen) {
@@ -39,9 +37,7 @@ export function ShareModal({
     }
   }, [isOpen, isFirehoseShared]);
 
-  const publishedAppUrl = publishedSubdomain
-    ? `https://vibes.diy/vibe/${publishedSubdomain}`
-    : "";
+  const publishedAppUrl = publishedSubdomain ? `https://vibes.diy/vibe/${publishedSubdomain}` : "";
 
   if (!isOpen || !buttonRef.current) return null;
 
@@ -92,16 +88,10 @@ export function ShareModal({
         onClick={(e) => e.stopPropagation()}
         className="ring-opacity-5 dark:bg-dark-background-01 w-80 rounded bg-white p-4 shadow-lg ring-1 ring-black"
       >
-        <div
-          className="py-1"
-          role="menu"
-          aria-orientation="vertical"
-          aria-labelledby="share-menu"
-        >
+        <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="share-menu">
           <p className="mb-4 text-xs text-blue-700 italic dark:text-blue-200">
-            You are in <strong>dev mode</strong>. Data is temporary until you
-            publish your app. Publishing allows anyone with the link to share,
-            remix, and install their own copy. Selected apps are featured in{" "}
+            You are in <strong>dev mode</strong>. Data is temporary until you publish your app. Publishing allows anyone with the
+            link to share, remix, and install their own copy. Selected apps are featured in{" "}
             <a
               href="https://discord.gg/vnpWycj4Ta"
               target="_blank"
@@ -117,11 +107,7 @@ export function ShareModal({
               <div className="text-center font-medium">
                 <strong>
                   Published{" "}
-                  <a
-                    className="text-blue-600 hover:underline dark:text-blue-400"
-                    target="_blank"
-                    href={publishedAppUrl}
-                  >
+                  <a className="text-blue-600 hover:underline dark:text-blue-400" target="_blank" href={publishedAppUrl}>
                     {publishedSubdomain}
                   </a>
                 </strong>
@@ -129,10 +115,7 @@ export function ShareModal({
 
               {/* Show vibe icon/screenshot preview */}
               <div className="mt-3 mb-3">
-                <PublishedVibeCard
-                  slug={publishedSubdomain}
-                  name={title || publishedSubdomain}
-                />
+                <PublishedVibeCard slug={publishedSubdomain} name={title || publishedSubdomain} />
               </div>
 
               <div className="mt-2">
@@ -149,9 +132,7 @@ export function ShareModal({
                       }}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:focus:ring-blue-600"
                     />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Share to firehose
-                    </span>
+                    <span className="text-gray-700 dark:text-gray-300">Share to firehose</span>
                   </label>
                   <p className="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
                     <a
@@ -226,9 +207,7 @@ export function ShareModal({
                     }}
                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:focus:ring-blue-600"
                   />
-                  <span className="text-gray-700 dark:text-gray-300">
-                    Share to firehose
-                  </span>
+                  <span className="text-gray-700 dark:text-gray-300">Share to firehose</span>
                 </label>
                 <p className="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
                   <a
@@ -264,6 +243,6 @@ export function ShareModal({
         </div>
       </div>
     </div>,
-    document.body,
+    document.body
   );
 }

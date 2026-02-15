@@ -14,15 +14,9 @@ interface InlinePreviewProps {
   codeReady: boolean;
 }
 
-export function InlinePreview({
-  code,
-  sessionId,
-  codeReady,
-}: InlinePreviewProps) {
+export function InlinePreview({ code, sessionId, codeReady }: InlinePreviewProps) {
   const { getToken } = useAuth();
-  const [containerId] = useState(
-    () => `preview-container-${sthis().nextId().str}`,
-  );
+  const [containerId] = useState(() => `preview-container-${sthis().nextId().str}`);
   const [_error, setError] = useState<string | null>(null);
   const unmountVibeRef = useRef<(() => void) | null>(null);
 

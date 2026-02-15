@@ -31,11 +31,7 @@ test("Debug infinite re-renders on session page", async ({ page }) => {
     });
 
     // Print important messages in real-time
-    if (
-      text.includes("SessionWrapper") ||
-      text.includes("SessionView") ||
-      text.includes("useViewState")
-    ) {
+    if (text.includes("SessionWrapper") || text.includes("SessionView") || text.includes("useViewState")) {
       console.log(`[${message.type()}] ${text}`);
     }
 
@@ -49,9 +45,7 @@ test("Debug infinite re-renders on session page", async ({ page }) => {
       const recentMessages = consoleMessages.slice(-10);
       console.log("📋 Last 10 console messages:");
       recentMessages.forEach((msg, index) => {
-        console.log(
-          `  ${index + 1}. [${msg.type}] ${msg.text.substring(0, 100)}...`,
-        );
+        console.log(`  ${index + 1}. [${msg.type}] ${msg.text.substring(0, 100)}...`);
       });
     }
   });
@@ -85,10 +79,7 @@ test("Debug infinite re-renders on session page", async ({ page }) => {
     messageTypes[msg.type] = (messageTypes[msg.type] || 0) + 1;
 
     // Collect render-related patterns
-    if (
-      msg.text.includes("render #") ||
-      msg.text.includes("SessionWrapper render")
-    ) {
+    if (msg.text.includes("render #") || msg.text.includes("SessionWrapper render")) {
       renderPatterns.push({
         message: msg.text.substring(0, 100),
         timestamp: msg.timestamp,
@@ -128,8 +119,6 @@ test("Debug infinite re-renders on session page", async ({ page }) => {
   console.log("Raw data available in test artifacts");
 
   // Keep browser open for manual inspection
-  console.log(
-    "\n🔍 Keeping browser open for 10 seconds for manual inspection...",
-  );
+  console.log("\n🔍 Keeping browser open for 10 seconds for manual inspection...");
   await page.waitForTimeout(10000);
 });

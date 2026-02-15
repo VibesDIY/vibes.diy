@@ -24,9 +24,7 @@ function App() {
 export default App;
 `;
 
-    expect(
-      normalizeComponentExports(input).replace(/\s+/g, " ").trim(),
-    ).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
+    expect(normalizeComponentExports(input).replace(/\s+/g, " ").trim()).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
   });
 
   // Case 2: RecipeGenerator pattern - direct export default function
@@ -72,9 +70,7 @@ class App extends React.Component {
 export default App;
 `;
 
-    expect(
-      normalizeComponentExports(input).replace(/\s+/g, " ").trim(),
-    ).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
+    expect(normalizeComponentExports(input).replace(/\s+/g, " ").trim()).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
   });
 
   // Case 4: Arrow function component with named variable
@@ -98,9 +94,7 @@ const Counter = () => {
 
 export default App;`;
 
-    expect(
-      normalizeComponentExports(input).replace(/\s+/g, " ").trim(),
-    ).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
+    expect(normalizeComponentExports(input).replace(/\s+/g, " ").trim()).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
   });
 
   // Case 5: Direct arrow function export
@@ -120,9 +114,7 @@ const App = () => {
 }; 
 export default App;`;
 
-    expect(
-      normalizeComponentExports(input).replace(/\s+/g, " ").trim(),
-    ).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
+    expect(normalizeComponentExports(input).replace(/\s+/g, " ").trim()).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
   });
 
   // Case 6: Higher-order component wrapping (memo)
@@ -145,9 +137,7 @@ const UserProfile = () => {
 
 const App = memo(UserProfile); export default App;`;
 
-    expect(
-      normalizeComponentExports(input).replace(/\s+/g, " ").trim(),
-    ).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
+    expect(normalizeComponentExports(input).replace(/\s+/g, " ").trim()).toEqual(expectedOutput.replace(/\s+/g, " ").trim());
   });
 
   // Case 7: Object literal export
@@ -164,9 +154,7 @@ export default {
 };`;
 
     // Using includes instead of exact match since regex replacements vary slightly
-    const normalized = normalizeComponentExports(input)
-      .replace(/\s+/g, " ")
-      .trim();
+    const normalized = normalizeComponentExports(input).replace(/\s+/g, " ").trim();
     expect(normalized).toContain("const AppObject =");
     expect(normalized).toContain("const App = AppObject.default || AppObject");
     expect(normalized).toContain("export default App");
@@ -196,8 +184,6 @@ export default function SymbioticCreatureGenerator() {
     expect(normalized).not.toContain("function SymbioticCreatureGenerator");
     expect(normalized).toContain("symbiotic-creatures");
     expect(normalized).toContain("Symbiotic Creature Lab");
-    expect(normalized).toContain(
-      "import { useFireproof } from 'use-fireproof'",
-    );
+    expect(normalized).toContain("import { useFireproof } from 'use-fireproof'");
   });
 });

@@ -21,20 +21,15 @@ export function useRuntimeErrors({
       // Handle Babel syntax errors which often come as 'Script error.' with limited info
       // Check for Babel errors in source or stack which may contain more useful information
       if (
-        (error.message === "Script error." ||
-          error.message?.includes("Script error")) &&
+        (error.message === "Script error." || error.message?.includes("Script error")) &&
         (error.stack?.includes("Babel") || error.stack?.includes("parse-error"))
       ) {
         error.errorType = "SyntaxError";
         // Enhance the message with more details from the stack if possible
         if (error.stack && error.message === "Script error.") {
           // Extract more meaningful information from the stack trace
-          const babelErrorMatch = error.stack.match(
-            /Babel\s+script:\s+([^\n]+)/i,
-          );
-          const parseErrorMatch = error.stack.match(
-            /parse-error\.ts:[\d]+:[\d]+\)([^\n]+)/i,
-          );
+          const babelErrorMatch = error.stack.match(/Babel\s+script:\s+([^\n]+)/i);
+          const parseErrorMatch = error.stack.match(/parse-error\.ts:[\d]+:[\d]+\)([^\n]+)/i);
           if (babelErrorMatch?.[1]) {
             error.message = `Babel Syntax Error: ${babelErrorMatch[1].trim()}`;
           } else if (parseErrorMatch?.[1]) {
@@ -78,11 +73,7 @@ export function useRuntimeErrors({
     }
 
     // Categorize based on error type
-    if (
-      error.errorType === "SyntaxError" ||
-      error.errorType === "ReferenceError" ||
-      error.errorType === "TypeError"
-    ) {
+    if (error.errorType === "SyntaxError" || error.errorType === "ReferenceError" || error.errorType === "TypeError") {
       return "immediate";
     }
 
@@ -126,7 +117,7 @@ export function useRuntimeErrors({
         }
       }
     },
-    [categorizeError, onSaveError],
+    [categorizeError, onSaveError]
   );
 
   // Clear errors based on didSendErrors event

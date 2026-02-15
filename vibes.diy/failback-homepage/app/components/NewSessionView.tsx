@@ -9,9 +9,7 @@ interface NewSessionViewProps {
   onSessionCreate: (sessionId: string) => void;
 }
 
-export default function NewSessionView({
-  onSessionCreate,
-}: NewSessionViewProps) {
+export default function NewSessionView({ onSessionCreate }: NewSessionViewProps) {
   const chatState = useNewSessionChat(onSessionCreate);
 
   // Sidebar state
@@ -36,12 +34,11 @@ export default function NewSessionView({
         if (chatState.inputRef.current) {
           chatState.inputRef.current.focus();
           // Move cursor to end of text
-          chatState.inputRef.current.selectionStart =
-            chatState.inputRef.current.selectionEnd = suggestion.length;
+          chatState.inputRef.current.selectionStart = chatState.inputRef.current.selectionEnd = suggestion.length;
         }
       }, 0);
     },
-    [chatState.setInput, chatState.inputRef],
+    [chatState.setInput, chatState.inputRef]
   );
 
   return (
@@ -65,17 +62,10 @@ export default function NewSessionView({
 
         {/* Main content section */}
         <div className="flex-1 px-8 pb-8">
-          <NewSessionContent
-            chatState={chatState}
-            handleSelectSuggestion={handleSelectSuggestion}
-          />
+          <NewSessionContent chatState={chatState} handleSelectSuggestion={handleSelectSuggestion} />
         </div>
       </div>
-      <SessionSidebar
-        isVisible={isSidebarVisible}
-        onClose={closeSidebar}
-        sessionId=""
-      />
+      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
     </>
   );
 }

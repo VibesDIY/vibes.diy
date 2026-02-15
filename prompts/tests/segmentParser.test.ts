@@ -171,16 +171,11 @@ Final markdown
       "prefix-easy.txt": ["markdown", "code"],
     };
 
-    for (const [filename, expectedTypes] of Object.entries(
-      fixtureExpectations,
-    )) {
-      const content = await loadAsset(
-        pathOps.join("tests", "fixtures", filename),
-        {
-          basePath: () => urlDirname(import.meta.url).toString(),
-          fallBackUrl: urlDirname(import.meta.url).toString(),
-        },
-      );
+    for (const [filename, expectedTypes] of Object.entries(fixtureExpectations)) {
+      const content = await loadAsset(pathOps.join("tests", "fixtures", filename), {
+        basePath: () => urlDirname(import.meta.url).toString(),
+        fallBackUrl: urlDirname(import.meta.url).toString(),
+      });
       const resolvedContent = await resolveContent(content.Ok());
       const result = parseContent(resolvedContent);
       const actualTypes = result.segments.map((segment) => segment.type);

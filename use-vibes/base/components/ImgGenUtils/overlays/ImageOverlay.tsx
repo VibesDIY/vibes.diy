@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { combineClasses, defaultClasses, ImgGenClasses } from '../../../utils/style-utils.js';
-import { imgGenStyles } from '../../../utils/styles.js';
-import { PromptBar } from '../../../components/PromptBar.js';
-import { ControlsBar } from '../../../components/ControlsBar.js';
+import * as React from "react";
+import { combineClasses, defaultClasses, ImgGenClasses } from "../../../utils/style-utils.js";
+import { imgGenStyles } from "../../../utils/styles.js";
+import { PromptBar } from "../../../components/PromptBar.js";
+import { ControlsBar } from "../../../components/ControlsBar.js";
 
 interface ImageOverlayProps {
   readonly promptText: string;
@@ -52,7 +52,7 @@ export function ImageOverlay({
 }: ImageOverlayProps) {
   // Normal overlay content regardless of delete confirmation state
   return (
-    <div className={combineClasses('imggen-overlay', classes.overlay)} style={imgGenStyles.overlay}>
+    <div className={combineClasses("imggen-overlay", classes.overlay)} style={imgGenStyles.overlay}>
       {
         <>
           {/* Prompt bar component */}

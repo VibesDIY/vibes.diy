@@ -1,8 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("VibeControl correct behavior test - mock_login + click switch", async ({
-  page,
-}) => {
+test("VibeControl correct behavior test - mock_login + click switch", async ({ page }) => {
   // Listen for console logs
   page.on("console", (msg) => {
     console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`);

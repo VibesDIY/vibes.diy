@@ -1,12 +1,12 @@
-name: 'use-vibes-publish'
-description: 'publish-the-use-vibes'
+name: "use-vibes-publish"
+description: "publish-the-use-vibes"
 inputs:
   NPM_TOKEN:
-    description: 'NPM token for publishing packages'
+    description: "NPM token for publishing packages"
     required: true
 # your inputs here
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: publish-prompts
       id: prompts

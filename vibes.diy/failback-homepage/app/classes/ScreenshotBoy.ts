@@ -21,9 +21,7 @@ export class ScreenshotBoy {
   private chrome!: THREE.Mesh;
 
   constructor(config: ScreenshotBoyConfig = {}) {
-    this.id =
-      config.id ||
-      `screenshotboy-${Math.random().toString(36).substring(2, 11)}`;
+    this.id = config.id || `screenshotboy-${Math.random().toString(36).substring(2, 11)}`;
     this.color = config.color ?? 0xffff00; // Default to yellow
     this.screenshotPath = config.screenshotPath;
     this.group = new THREE.Group();
@@ -45,11 +43,9 @@ export class ScreenshotBoy {
   private createObjects() {
     // Create colored mesh (same dimensions as enclosure)
     const yellowMeshGeometry = new THREE.BoxGeometry(
-      SCENE_DIMENSIONS.ENCLOSURE.WIDTH +
-        SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
-      SCENE_DIMENSIONS.ENCLOSURE.HEIGHT +
-        SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
-      SCENE_DIMENSIONS.ENCLOSURE.DEPTH,
+      SCENE_DIMENSIONS.ENCLOSURE.WIDTH + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
+      SCENE_DIMENSIONS.ENCLOSURE.HEIGHT + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH,
+      SCENE_DIMENSIONS.ENCLOSURE.DEPTH
     );
 
     // Create materials - use array if screenshot is provided
@@ -57,42 +53,32 @@ export class ScreenshotBoy {
 
     if (this.screenshotPath) {
       // Calculate dimensions of the large face (top/bottom face)
-      const faceWidth =
-        SCENE_DIMENSIONS.ENCLOSURE.WIDTH +
-        SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH;
-      const faceHeight =
-        SCENE_DIMENSIONS.ENCLOSURE.HEIGHT +
-        SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH;
+      const faceWidth = SCENE_DIMENSIONS.ENCLOSURE.WIDTH + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH;
+      const faceHeight = SCENE_DIMENSIONS.ENCLOSURE.HEIGHT + SCENE_DIMENSIONS.ENCLOSURE.BORDER_WIDTH;
       const faceAspect = faceWidth / faceHeight;
 
       // Load screenshot texture
       const textureLoader = new THREE.TextureLoader();
-      const texture = textureLoader.load(
-        this.screenshotPath,
-        (loadedTexture: THREE.Texture) => {
-          const image = loadedTexture.image as
-            | HTMLImageElement
-            | HTMLCanvasElement
-            | ImageBitmap;
-          if (!image) return;
+      const texture = textureLoader.load(this.screenshotPath, (loadedTexture: THREE.Texture) => {
+        const image = loadedTexture.image as HTMLImageElement | HTMLCanvasElement | ImageBitmap;
+        if (!image) return;
 
-          // Configure texture to crop (not stretch) after image loads
-          const imgAspect = image.width / image.height;
+        // Configure texture to crop (not stretch) after image loads
+        const imgAspect = image.width / image.height;
 
-          if (imgAspect > faceAspect) {
-            // Image is wider - crop sides
-            const scale = imgAspect / faceAspect;
-            loadedTexture.repeat.set(1 / scale, 1);
-            loadedTexture.offset.set((1 - 1 / scale) / 2, 0);
-          } else {
-            // Image is taller - crop top/bottom
-            const scale = faceAspect / imgAspect;
-            loadedTexture.repeat.set(1, 1 / scale);
-            loadedTexture.offset.set(0, (1 - 1 / scale) / 2);
-          }
-          loadedTexture.needsUpdate = true;
-        },
-      );
+        if (imgAspect > faceAspect) {
+          // Image is wider - crop sides
+          const scale = imgAspect / faceAspect;
+          loadedTexture.repeat.set(1 / scale, 1);
+          loadedTexture.offset.set((1 - 1 / scale) / 2, 0);
+        } else {
+          // Image is taller - crop top/bottom
+          const scale = faceAspect / imgAspect;
+          loadedTexture.repeat.set(1, 1 / scale);
+          loadedTexture.offset.set(0, (1 - 1 / scale) / 2);
+        }
+        loadedTexture.needsUpdate = true;
+      });
 
       // Create material array for each face
       const colorMaterial = new THREE.MeshToonMaterial({ color: this.color });
@@ -121,9 +107,7 @@ export class ScreenshotBoy {
     this.chrome = makeChrome();
 
     // Position chrome at the back, similar to CounterBoy
-    this.chrome.position.z =
-      EXPLOSION.NORMAL_POSITIONS.ENCLOSURE_BACK_Z +
-      EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET;
+    this.chrome.position.z = EXPLOSION.NORMAL_POSITIONS.ENCLOSURE_BACK_Z + EXPLOSION.NORMAL_POSITIONS.CHROME_OFFSET;
   }
 
   private buildHierarchy() {

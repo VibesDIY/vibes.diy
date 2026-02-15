@@ -15,20 +15,14 @@ interface BasicVibespaceProps {
   isLoading: boolean;
 }
 
-export default function Basic({
-  userId,
-  vibes,
-  isLoading,
-}: BasicVibespaceProps): ReactElement {
+export default function Basic({ userId, vibes, isLoading }: BasicVibespaceProps): ReactElement {
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="mb-4 text-2xl font-bold">Space: {userId}</h2>
-            <p className="text-accent-01 dark:text-accent-01 mb-6">
-              View vibes in this space
-            </p>
+            <p className="text-accent-01 dark:text-accent-01 mb-6">View vibes in this space</p>
           </div>
         </div>
 
@@ -48,9 +42,7 @@ export default function Basic({
                 className="border-light-decorative-01 dark:border-dark-decorative-01 rounded-md border p-4 transition-colors hover:border-blue-500"
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="mb-1 text-lg font-medium">
-                    {doc.title || doc._id}
-                  </h3>
+                  <h3 className="mb-1 text-lg font-medium">{doc.title || doc._id}</h3>
                 </div>
 
                 {doc.publishedUrl && (

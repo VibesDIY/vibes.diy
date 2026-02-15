@@ -1,0 +1,75 @@
+import {
+  DurableObject,
+  WebSocketPair as WebSocketPairType,
+  WebSocket as CFWebSocket,
+  ExecutionContext,
+  Request as CFRequest,
+  Response as CFResponse,
+  CacheStorage,
+  DurableObjectState,
+} from "@cloudflare/workers-types";
+import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
+import { cfServe } from "@vibes.diy/api-svc/cf-serve.js";
+import { Env } from "./env.js";
+import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
+
+declare const caches: CacheStorage;
+declare const Response: typeof CFResponse;
+// declare const DurableObject: typeof DurableObject;
+declare const WebSocketPair: typeof WebSocketPairType;
+
+function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
+  // console.log("cfWebSocketPair called-1", WebSocketPair);
+  const webSocketPair = new WebSocketPair();
+  // console.log("cfWebSocketPair called-2", WebSocketPair);
+  const [client, server] = Object.values(webSocketPair) as [CFWebSocket, CFWebSocket];
+  return { client: client as unknown as WebSocket, server: server as unknown as WebSocket };
+}
+
+export class ChatSessions implements DurableObject {
+  private connections: Set<WSSendProvider> = new Set<WSSendProvider>();
+  private state: DurableObjectState;
+  private env: Env;
+
+  constructor(state: DurableObjectState, env: Env) {
+    this.state = state;
+    this.env = env;
+  }
+
+  async fetch(request: CFRequest): Promise<CFResponse> {
+    const upgradeHeader = request.headers.get("Upgrade");
+    if (upgradeHeader !== "websocket") {
+      return new Response("Expected WebSocket", { status: 426 });
+    }
+
+    // Create WebSocket pair
+    // const pair = new WebSocketPair();
+    // const [client, server] = Object.values(pair) as [CFWebSocket, CFWebSocket];
+
+    // // Accept the WebSocket connection
+    // server.accept();
+    // this.connections.add(server);
+
+    // // Handle incoming messages
+    // server.addEventListener("message", (event) => {
+    //   // Broadcast to all connected clients
+    //   for (const conn of this.connections) {
+    //     if (conn.readyState === CFWebSocket.OPEN) {
+    //       conn.send(event.data);
+    //     }
+    //   }
+    // });
+
+    // // Handle close
+    // server.addEventListener("close", () => {
+    //   this.connections.delete(server);
+    // });
+
+    const cctx = {} as unknown as ExecutionContext & { cache: CfCacheIf };
+    cctx.cache = caches.default as unknown as CfCacheIf;
+    return cfServe(request, this.env, { ...cctx, webSocketPair: cfWebSocketPair, connections: this.connections }); // Pass WebSocketPair constructor
+    //   console.log("Doing cfServe for", url.href);
+
+    // return new Response(null, { status: 101, webSocket: client });
+  }
+}

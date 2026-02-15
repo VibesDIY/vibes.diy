@@ -2,12 +2,9 @@
  * Utilities for publishing apps to the server
  */
 
-import { DocFileMeta, fireproof } from "use-fireproof";
+import { DocFileMeta, fireproof } from "@fireproof/use-fireproof";
 import { VibesDiyEnv } from "../config/env.js";
-import {
-  getSessionDatabaseName,
-  updateUserVibespaceDoc,
-} from "./databaseManager.js";
+import { getSessionDatabaseName, updateUserVibespaceDoc } from "./databaseManager.js";
 import { normalizeComponentExports, VibeDocument } from "@vibes.diy/prompts";
 import { joinUrlParts } from "call-ai";
 
@@ -92,12 +89,7 @@ export async function publishApp({
         _files: { screenshot: DocFileMeta & { file: () => Promise<File> } };
       } {
         const o = obj as { _files: { screenshot: DocFileMeta } };
-        return !!(
-          o &&
-          o._files &&
-          o._files.screenshot &&
-          o._files.screenshot.file
-        );
+        return !!(o && o._files && o._files.screenshot && o._files.screenshot.file);
       }
       // Check if the screenshot document has a file in _files.screenshot
       if (isDocFileMeta(screenshotDoc)) {
@@ -137,24 +129,21 @@ export async function publishApp({
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await (fetch ? fetch : globalThis.fetch)(
-      joinUrlParts(VibesDiyEnv.API_BASE_URL(), "/api/apps"),
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          chatId: sessionId,
-          userId,
-          raw: code,
-          prompt,
-          code: transformedCode,
-          title,
-          remixOf, // Include information about the original app if this is a remix
-          screenshot: screenshotBase64, // Include the base64 screenshot if available
-          shareToFirehose, // Include the firehose sharing preference
-        }),
-      },
-    );
+    const response = await (fetch ? fetch : globalThis.fetch)(joinUrlParts(VibesDiyEnv.API_BASE_URL(), "/api/apps"), {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        chatId: sessionId,
+        userId,
+        raw: code,
+        prompt,
+        code: transformedCode,
+        title,
+        remixOf, // Include information about the original app if this is a remix
+        screenshot: screenshotBase64, // Include the base64 screenshot if available
+        shareToFirehose, // Include the firehose sharing preference
+      }),
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -164,11 +153,7 @@ export async function publishApp({
 
     // Type guard for PublishResponse
     const isValidPublishResponse = (data: unknown): data is PublishResponse => {
-      return (
-        typeof data === "object" &&
-        data !== null &&
-        typeof (data as PublishResponse).success === "boolean"
-      );
+      return typeof data === "object" && data !== null && typeof (data as PublishResponse).success === "boolean";
     };
 
     if (!isValidPublishResponse(rawData)) {
@@ -178,18 +163,14 @@ export async function publishApp({
     const data = rawData;
     if (data.success && data.app?.slug) {
       // Construct the app URL from the response data
-      const appUrl =
-        data.appUrl ||
-        `https://${data.app.slug}.${new URL(VibesDiyEnv.APP_HOST_BASE_URL()).hostname}`;
+      const appUrl = data.appUrl || `https://${data.app.slug}.${new URL(VibesDiyEnv.APP_HOST_BASE_URL()).hostname}`;
 
       // Get the user's vibespace database to check for existing data
       const userVibespaceDb = fireproof(`vu-${userId}`);
       const docId = `app-${data.app.slug}`;
 
       // Try to get the existing document to preserve metadata like favorite status
-      const existingDoc = await userVibespaceDb
-        .get<{ favorite?: boolean; remixOf?: string }>(docId)
-        .catch(() => null);
+      const existingDoc = await userVibespaceDb.get<{ favorite?: boolean; remixOf?: string }>(docId).catch(() => null);
 
       // Use the shared utility function to update the user's vibespace
       if (userId) {

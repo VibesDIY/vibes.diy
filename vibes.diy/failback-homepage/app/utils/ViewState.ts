@@ -21,7 +21,7 @@ export interface ViewStateProps {
 export function useViewState(
   props: Partial<ViewStateProps>,
   pathname: string,
-  navigate: (to: string, options?: { replace?: boolean }) => void,
+  navigate: (to: string, options?: { replace?: boolean }) => void
 ): Partial<ViewState> {
   const { sessionId: paramSessionId, title: paramTitle } = useParams<{
     sessionId: string;
@@ -89,8 +89,7 @@ export function useViewState(
     if (props.previewReady && !wasPreviewReadyRef.current) {
       const isInDataView = pathname.endsWith("/data");
       const isInCodeView = pathname.endsWith("/code");
-      const hasCapturedPrompt =
-        props.capturedPrompt && props.capturedPrompt.trim().length > 0;
+      const hasCapturedPrompt = props.capturedPrompt && props.capturedPrompt.trim().length > 0;
       if (!isInDataView && !isInCodeView && !hasCapturedPrompt) {
         navigate(`/chat/${sessionId}/${encodedTitle}/app`, { replace: true });
       }
@@ -100,14 +99,7 @@ export function useViewState(
     wasStreamingRef.current = props.isStreaming;
     hadCodeRef.current = props.code && props.code.length > 0;
     wasPreviewReadyRef.current = props.previewReady;
-  }, [
-    props.isStreaming,
-    props.previewReady,
-    props.code,
-    sessionId,
-    encodedTitle,
-    navigate,
-  ]);
+  }, [props.isStreaming, props.previewReady, props.code, sessionId, encodedTitle, navigate]);
 
   // We handle the initial view display without changing the URL
   // This allows for proper auto-navigation to app view when preview is ready
@@ -119,10 +111,7 @@ export function useViewState(
   // Access control data
   const viewControls: ViewControlsType = {
     preview: {
-      enabled:
-        props.previewReady ||
-        !!(props.code && props.code.length > 0) ||
-        !!(sessionId && sessionId.length > 0),
+      enabled: props.previewReady || !!(props.code && props.code.length > 0) || !!(sessionId && sessionId.length > 0),
       icon: "app-icon",
       label: "App",
       loading: props.isIframeFetching,
@@ -131,12 +120,7 @@ export function useViewState(
       enabled: true,
       icon: "code-icon",
       label: "Code",
-      loading: !!(
-        props.isStreaming &&
-        !props.previewReady &&
-        props.code &&
-        props.code?.length > 0
-      ),
+      loading: !!(props.isStreaming && !props.previewReady && props.code && props.code?.length > 0),
     },
     data: {
       enabled: !props.isStreaming,
@@ -155,11 +139,7 @@ export function useViewState(
   // Navigate to a view (explicit user action)
   const navigateToView = (view: ViewType) => {
     // Skip navigation for chat view or if control doesn't exist/isn't enabled
-    if (
-      view === "chat" ||
-      !viewControls[view as keyof typeof viewControls]?.enabled
-    )
-      return;
+    if (view === "chat" || !viewControls[view as keyof typeof viewControls]?.enabled) return;
 
     if (sessionId && encodedTitle) {
       const suffix = view === "preview" ? "app" : view;
@@ -168,20 +148,14 @@ export function useViewState(
   };
 
   // Only show view controls when we have content or a valid session
-  const showViewControls = !!(
-    (props.code && props.code.length > 0) ||
-    (sessionId && sessionId.length > 0)
-  );
+  const showViewControls = !!((props.code && props.code.length > 0) || (sessionId && sessionId.length > 0));
 
   // Determine what view should be displayed (may differ from URL-based currentView)
   // If user has explicitly navigated to a view (indicated by URL path), respect that choice
   // Otherwise, if preview is ready, prioritize showing it
   // Finally, during streaming on desktop (without explicit navigation), show code view
   const hasExplicitViewInURL =
-    pathname.endsWith("/app") ||
-    pathname.endsWith("/code") ||
-    pathname.endsWith("/data") ||
-    pathname.endsWith("/settings");
+    pathname.endsWith("/app") || pathname.endsWith("/code") || pathname.endsWith("/data") || pathname.endsWith("/settings");
 
   const displayView = hasExplicitViewInURL
     ? currentView // Respect user's explicit view choice from URL

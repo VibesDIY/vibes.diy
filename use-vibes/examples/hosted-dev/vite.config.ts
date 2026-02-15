@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
@@ -9,7 +9,7 @@ export default defineConfig({
     host: true, // Allow external connections for testing
     fs: {
       // Allow serving files from workspace packages
-      allow: ['..', '../..', '../../..'],
+      allow: ["..", "../..", "../../.."],
     },
   },
   define: {
@@ -18,7 +18,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Exclude workspace dependencies from pre-bundling to enable HMR
-    exclude: ['use-vibes', '@vibes.diy/use-vibes-base', 'call-ai'],
+    exclude: ["use-vibes", "@vibes.diy/use-vibes-base", "call-ai"],
   },
   build: {
     sourcemap: true,

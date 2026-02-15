@@ -1,8 +1,6 @@
 import type React from "react";
 
-export function getOuterContainerStyle(
-  customStyle?: React.CSSProperties,
-): React.CSSProperties {
+export function getOuterContainerStyle(customStyle?: React.CSSProperties): React.CSSProperties {
   return {
     padding: "12px",
     display: "flex",
@@ -61,9 +59,7 @@ export function getButtonWrapperStyle(): React.CSSProperties {
   };
 }
 
-export function getButtonContainerStyle(
-  isMobile: boolean,
-): React.CSSProperties {
+export function getButtonContainerStyle(isMobile: boolean): React.CSSProperties {
   return {
     display: "flex",
     flexDirection: "row",
@@ -118,9 +114,7 @@ export function getInviteStatusStyle(): React.CSSProperties {
 }
 
 // Media query helpers (use window.matchMedia in component for responsive behavior)
-export function getResponsiveLabelStyle(
-  isMobile: boolean,
-): React.CSSProperties {
+export function getResponsiveLabelStyle(isMobile: boolean): React.CSSProperties {
   if (isMobile) {
     return {
       display: "none",
@@ -129,9 +123,7 @@ export function getResponsiveLabelStyle(
   return getLabelStyle();
 }
 
-export function getResponsiveButtonWrapperStyle(
-  isMobile: boolean,
-): React.CSSProperties {
+export function getResponsiveButtonWrapperStyle(isMobile: boolean): React.CSSProperties {
   if (isMobile) {
     return {
       background: "transparent",
@@ -148,9 +140,7 @@ export function getResponsiveButtonWrapperStyle(
   return getButtonWrapperStyle();
 }
 
-export function getResponsiveContainerStyle(
-  isMobile: boolean,
-): React.CSSProperties {
+export function getResponsiveContainerStyle(isMobile: boolean): React.CSSProperties {
   if (isMobile) {
     return {
       ...getContainerStyle(),
@@ -171,10 +161,7 @@ export function getInviteRowStyle(isMobile: boolean): React.CSSProperties {
 }
 
 // Animation styles for invite mode transitions
-export function getButtonAnimationStyle(
-  isVisible: boolean,
-  delay = 0,
-): React.CSSProperties {
+export function getButtonAnimationStyle(isVisible: boolean, delay = 0): React.CSSProperties {
   return {
     opacity: isVisible ? 1 : 0,
     visibility: isVisible ? "visible" : "hidden",
@@ -183,9 +170,7 @@ export function getButtonAnimationStyle(
   };
 }
 
-export function getInviteFormContainerStyle(
-  isVisible: boolean,
-): React.CSSProperties {
+export function getInviteFormContainerStyle(isVisible: boolean): React.CSSProperties {
   return {
     display: "flex",
     flexDirection: "row",

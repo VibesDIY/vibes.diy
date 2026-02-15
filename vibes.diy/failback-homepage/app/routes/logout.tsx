@@ -23,21 +23,10 @@ function LogoutIcon({
   height?: number;
 }) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 44 44"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={width} height={height} viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="22" cy="22" r="22" fill={bgFill} />
       {/* Tornado/vortex spiral shape */}
-      <path
-        d="M8 12H36M11 18H33M14 24H30M17 30H27M20 36H24"
-        stroke={fill}
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
+      <path d="M8 12H36M11 18H33M14 24H30M17 30H27M20 36H24" stroke={fill} strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -114,29 +103,15 @@ export function Logout() {
             <div
               style={{
                 ...getMergedButtonStyle(
-                  getButtonStyle(
-                    "gray",
-                    false,
-                    false,
-                    isMobile,
-                    true,
-                    "square",
-                  ),
+                  getButtonStyle("gray", false, false, isMobile, true, "square"),
                   false,
                   { cursor: "default", pointerEvents: "none" },
-                  "square",
+                  "square"
                 ),
               }}
             >
               <div style={getContentWrapperStyle(isMobile, true, "square")}>
-                <div
-                  style={getIconContainerStyle(
-                    "gray",
-                    isMobile,
-                    true,
-                    "square",
-                  )}
-                >
+                <div style={getIconContainerStyle("gray", isMobile, true, "square")}>
                   <div style={getIconStyle(isMobile, false, false)}>
                     <LogoutIcon
                       bgFill="var(--vibes-button-icon-bg)"
@@ -150,10 +125,7 @@ export function Logout() {
               </div>
             </div>
             <div style={{ width: "300px" }}>
-              <h1
-                className="mb-4 text-3xl font-bold"
-                style={{ color: "var(--vibes-text-primary)" }}
-              >
+              <h1 className="mb-4 text-3xl font-bold" style={{ color: "var(--vibes-text-primary)" }}>
                 {displayedText}
                 <span
                   style={{
@@ -176,10 +148,7 @@ export function Logout() {
                   `,
                 }}
               />
-              <p
-                className="mb-6 text-lg"
-                style={{ color: "var(--vibes-text-primary)" }}
-              >
+              <p className="mb-6 text-lg" style={{ color: "var(--vibes-text-primary)" }}>
                 Signing out...
               </p>
             </div>

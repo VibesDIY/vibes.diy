@@ -29,10 +29,7 @@ interface NewSessionContentProps {
   handleSelectSuggestion: (suggestion: string) => void;
 }
 
-export default function NewSessionContent({
-  chatState,
-  handleSelectSuggestion,
-}: NewSessionContentProps) {
+export default function NewSessionContent({ chatState, handleSelectSuggestion }: NewSessionContentProps) {
   const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -54,9 +51,7 @@ export default function NewSessionContent({
           const visibleButtons = isMobile ? 1 : 3;
           const totalGaps = isMobile ? 0 : 2; // 1 button = 0 gaps, 3 buttons = 2 gaps
           // Calculate button width
-          const calculatedButtonWidth =
-            (viewportWidth - gap * totalGaps - horizontalPadding * 2) /
-            visibleButtons;
+          const calculatedButtonWidth = (viewportWidth - gap * totalGaps - horizontalPadding * 2) / visibleButtons;
           setButtonWidth(calculatedButtonWidth);
           setSlideDistance(calculatedButtonWidth + gap);
         }
@@ -96,9 +91,7 @@ export default function NewSessionContent({
 
     // After animation, update index and reset offset
     setTimeout(() => {
-      setCurrentIndex((prev) =>
-        prev === 0 ? quickSuggestions.length - 1 : prev - 1,
-      );
+      setCurrentIndex((prev) => (prev === 0 ? quickSuggestions.length - 1 : prev - 1));
       setAnimationOffset(0);
       setIsAnimating(false);
     }, 400); // Match transition duration
@@ -127,12 +120,8 @@ export default function NewSessionContent({
     if (isMobile) {
       return [
         {
-          suggestion:
-            quickSuggestions[
-              (currentIndex - 1 + totalSuggestions) % totalSuggestions
-            ], // hidden left
-          originalIndex:
-            (currentIndex - 1 + totalSuggestions) % totalSuggestions,
+          suggestion: quickSuggestions[(currentIndex - 1 + totalSuggestions) % totalSuggestions], // hidden left
+          originalIndex: (currentIndex - 1 + totalSuggestions) % totalSuggestions,
         },
         {
           suggestion: quickSuggestions[currentIndex], // visible 1
@@ -148,10 +137,7 @@ export default function NewSessionContent({
     // Desktop: 5 items
     return [
       {
-        suggestion:
-          quickSuggestions[
-            (currentIndex - 1 + totalSuggestions) % totalSuggestions
-          ], // hidden left
+        suggestion: quickSuggestions[(currentIndex - 1 + totalSuggestions) % totalSuggestions], // hidden left
         originalIndex: (currentIndex - 1 + totalSuggestions) % totalSuggestions,
       },
       {
@@ -227,23 +213,12 @@ export default function NewSessionContent({
 
       {/* Carousel with navigation */}
       <div style={getCarouselWrapperStyle(isMobile)}>
-        <button
-          style={getCarouselNavButtonStyle(isMobile)}
-          onClick={handlePrevious}
-          aria-label="Previous suggestions"
-        >
-          <ArrowRightIcon
-            width={isMobile ? 20 : 24}
-            height={isMobile ? 20 : 24}
-            fill="var(--vibes-near-black)"
-          />
+        <button style={getCarouselNavButtonStyle(isMobile)} onClick={handlePrevious} aria-label="Previous suggestions">
+          <ArrowRightIcon width={isMobile ? 20 : 24} height={isMobile ? 20 : 24} fill="var(--vibes-near-black)" />
         </button>
 
         <div ref={viewportRef} style={getSuggestionsContainerStyle()}>
-          <div
-            ref={containerRef}
-            style={getSuggestionsInnerStyle(totalOffset, isAnimating)}
-          >
+          <div ref={containerRef} style={getSuggestionsInnerStyle(totalOffset, isAnimating)}>
             {slidingWindow.map(({ suggestion, originalIndex }, index) => {
               // Assign color based on original position in quickSuggestions array
               const variant = buttonVariants[originalIndex % 3];
@@ -265,16 +240,8 @@ export default function NewSessionContent({
           </div>
         </div>
 
-        <button
-          style={getCarouselNavButtonStyle(isMobile)}
-          onClick={handleNext}
-          aria-label="Next suggestions"
-        >
-          <ArrowLeftIcon
-            width={isMobile ? 20 : 24}
-            height={isMobile ? 20 : 24}
-            fill="var(--vibes-near-black)"
-          />
+        <button style={getCarouselNavButtonStyle(isMobile)} onClick={handleNext} aria-label="Next suggestions">
+          <ArrowLeftIcon width={isMobile ? 20 : 24} height={isMobile ? 20 : 24} fill="var(--vibes-near-black)" />
         </button>
       </div>
 
@@ -283,9 +250,7 @@ export default function NewSessionContent({
         <div style={getGalleryLabelStyle(isMobile)}>Gallery</div>
         <div style={getGalleryContentStyle()}>
           <VibeGallery count={4} isMobile={isMobile} />
-          <p style={getGalleryDescriptionStyle()}>
-            The vibes are strong with these four top picks.
-          </p>
+          <p style={getGalleryDescriptionStyle()}>The vibes are strong with these four top picks.</p>
         </div>
       </div>
     </div>

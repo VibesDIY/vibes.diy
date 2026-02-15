@@ -9,10 +9,7 @@ export default function Index(props: any) {
     <html lang="en">
       <head>
         <ImportMap {...props} />
-        <script
-          type="module"
-          src="https://esm.sh/@tailwindcss/browser@4"
-        ></script>
+        <script type="module" src="https://esm.sh/@tailwindcss/browser@4"></script>
 
         <link rel="stylesheet" href="/app/app.css"></link>
 
@@ -22,10 +19,7 @@ export default function Index(props: any) {
         <Links />
       </head>
       <body>
-        <script
-          type="module"
-          src="/dist/vibes.diy/failback-homepage/app/vibes.diy.js"
-        ></script>
+        <script type="module" src="/dist/vibes.diy/failback-homepage/app/vibes.diy.js"></script>
 
         <div id="vibes.diy"></div>
       </body>

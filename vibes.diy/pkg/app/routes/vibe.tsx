@@ -10,11 +10,7 @@ function getHostnameFromUrl(url: string): string {
   }
 }
 
-export function VibeIframeContainerComponent({
-  vibeSlug,
-}: {
-  vibeSlug: string;
-}) {
+export function VibeIframeContainerComponent({ vibeSlug }: { vibeSlug: string }) {
   const hostname = getHostnameFromUrl(VibesDiyEnv.APP_HOST_BASE_URL());
   const iframeUrl = `https://${vibeSlug}.${hostname}/${location.search}`;
   return (
@@ -30,16 +26,10 @@ export function VibeIframeContainerComponent({
 }
 
 function callReplace(replaceFn?: (url: string) => void) {
-  return replaceFn
-    ? replaceFn
-    : (url: string) => globalThis.window.location.replace(url);
+  return replaceFn ? replaceFn : (url: string) => globalThis.window.location.replace(url);
 }
 
-export default function VibeIframeContainer({
-  replace,
-}: {
-  replace: (url: string) => void;
-}) {
+export default function VibeIframeContainer({ replace }: { replace: (url: string) => void }) {
   const { vibeSlug } = useParams<{ vibeSlug: string }>();
 
   useEffect(() => {

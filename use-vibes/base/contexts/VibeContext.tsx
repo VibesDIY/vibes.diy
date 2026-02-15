@@ -1,21 +1,21 @@
-import React, { createContext, useContext, type ReactNode } from 'react';
-import { injectDefaultVibesCtx, VibesEnv } from '../index.js';
-import { clerkDashApi, DashboardApiImpl } from '@fireproof/core-protocols-dashboard';
-import { ClerkProvider, useClerk } from '@clerk/clerk-react';
-import { ToCloudOpts, TokenAndClaims, TokenStrategie } from '@fireproof/core-types-protocols-cloud';
-import { Database, SuperThis } from '@fireproof/use-fireproof';
-import { Lazy, Logger, OnFunc, OnFuncReturn, ReturnOnFunc } from '@adviser/cement';
-import z from 'zod';
+import React, { createContext, useContext, type ReactNode } from "react";
+import { type } from "arktype";
+import { injectDefaultVibesCtx, VibeBindings, VibesDiyMountParams, VibesEnv } from "../index.js";
+import { clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard";
+import { ClerkProvider, useClerk } from "@clerk/clerk-react";
+import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-types-protocols-cloud";
+import { Database, SuperThis } from "@fireproof/use-fireproof";
+import { Lazy, Logger, OnFunc, OnFuncReturn, ReturnOnFunc } from "@adviser/cement";
 
 /**
  * Error codes for VibeMetadata validation failures.
  * Preserved for backward compatibility.
  */
 export const VIBE_METADATA_ERROR_CODES = {
-  TITLEID_EMPTY: 'TITLEID_EMPTY',
-  INSTALLID_EMPTY: 'INSTALLID_EMPTY',
-  TITLEID_INVALID_CHARS: 'TITLEID_INVALID_CHARS',
-  INSTALLID_INVALID_CHARS: 'INSTALLID_INVALID_CHARS',
+  TITLEID_EMPTY: "TITLEID_EMPTY",
+  INSTALLID_EMPTY: "INSTALLID_EMPTY",
+  TITLEID_INVALID_CHARS: "TITLEID_INVALID_CHARS",
+  INSTALLID_INVALID_CHARS: "INSTALLID_INVALID_CHARS",
 } as const;
 
 /**
@@ -27,19 +27,19 @@ export class VibeMetadataValidationError extends Error {
 
   constructor(message: string, code: string) {
     super(message);
-    this.name = 'VibeMetadataValidationError';
+    this.name = "VibeMetadataValidationError";
     this.code = code;
   }
 }
 
-export interface MountVibeParams {
-  readonly appSlug: string;
-  readonly titleId: string;
-  readonly installId: string;
-  readonly env: VibesEnv;
-}
+// export interface MountVibeParams {
+//   readonly appSlug: string;
+//   readonly titleId: string;
+//   readonly installId: string;
+//   readonly env: VibesEnv;
+// }
 
-export interface Vibe extends MountVibeParams {
+export interface Vibe extends VibesDiyMountParams {
   readonly dashApi: DashboardApiImpl<unknown>;
   readonly clerk: ReturnType<typeof useClerk>;
   sessionReady(): boolean;
@@ -48,57 +48,60 @@ export interface Vibe extends MountVibeParams {
 }
 
 class DefVibe implements Vibe {
+  get bindings(): VibeBindings {
+    throw new Error(`Vibe Provider is not Ready: bindings`);
+  }
   #notReady<R>(action: string): R {
     throw new Error(`Vibe Provider is not Ready: ${action}`);
   }
 
   fpCloudStrategie(): TokenStrategie {
-    return this.#notReady('fpCloudStrategie');
+    return this.#notReady("fpCloudStrategie");
   }
 
   onDatabaseOpen = ((_fn: (...a: Database[]) => OnFuncReturn): (() => unknown) => {
-    return this.#notReady('onDatabaseOpen');
+    return this.#notReady("onDatabaseOpen");
   }) as ReturnOnFunc<[_db: Database], unknown>;
   //   return this.#notReady("onDatabaseOpen")
   // } as unknown as ReturnOnFunc<[_db: Database], unknown>
 
   sessionReady(): boolean {
-    return this.#notReady('sessionReady');
+    return this.#notReady("sessionReady");
   }
 
-  get clerk(): Vibe['clerk'] {
-    return this.#notReady('clerk');
+  get clerk(): Vibe["clerk"] {
+    return this.#notReady("clerk");
   }
 
   get dashApi(): DashboardApiImpl<unknown> {
-    return this.#notReady('dashApi');
+    return this.#notReady("dashApi");
   }
 
   get appSlug(): string {
-    return this.#notReady('appSlug');
+    return this.#notReady("appSlug");
   }
 
   get titleId(): string {
-    return this.#notReady('titleId');
+    return this.#notReady("titleId");
   }
   get installId(): string {
-    return this.#notReady('installId');
+    return this.#notReady("installId");
   }
   get env(): VibesEnv {
-    return this.#notReady('env');
+    return this.#notReady("env");
   }
 }
 
 const VibeContext = createContext<Vibe>(new DefVibe());
 
 export interface VibeContextProviderProps {
-  readonly mountParams: MountVibeParams;
+  readonly mountParams: VibesDiyMountParams;
   readonly children: ReactNode;
 }
 
 class UseVibesStrategie implements TokenStrategie {
-  readonly ctx: Pick<Vibe, 'dashApi' | 'env'>;
-  constructor(ctx: Pick<Vibe, 'dashApi' | 'env'>) {
+  readonly ctx: Pick<Vibe, "dashApi" | "env">;
+  constructor(ctx: Pick<Vibe, "dashApi" | "env">) {
     this.ctx = ctx;
   }
 
@@ -113,14 +116,9 @@ class UseVibesStrategie implements TokenStrategie {
     return Promise.resolve(undefined);
   }
 
-  async waitForToken(
-    sthis: SuperThis,
-    logger: Logger,
-    deviceId: string,
-    opts: ToCloudOpts
-  ): Promise<TokenAndClaims | undefined> {
+  async waitForToken(sthis: SuperThis, logger: Logger, deviceId: string, opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
     const rRes = await this.ctx.dashApi.ensureCloudToken({
-      appId: opts.context.get('UseVibes.AppId') || deviceId,
+      appId: opts.context.get("UseVibes.AppId") || deviceId,
     });
     if (rRes.isErr()) {
       logger.Error().Err(rRes).Msg();
@@ -133,16 +131,14 @@ class UseVibesStrategie implements TokenStrategie {
     };
   }
   stop(): void {
-    throw new Error('Method not implemented.');
+    throw new Error("Method not implemented.");
   }
 }
 
-const lazyFpCloudStrategie = Lazy(
-  (ctx: Pick<Vibe, 'dashApi' | 'env'>) => new UseVibesStrategie(ctx)
-);
+const lazyFpCloudStrategie = Lazy((ctx: Pick<Vibe, "dashApi" | "env">) => new UseVibesStrategie(ctx));
 
 function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProviderProps) {
-  console.log('LiveCycleVibeContextProvider', mountParams);
+  console.log("LiveCycleVibeContextProvider", mountParams);
   const clerk = useClerk();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dashApi = clerkDashApi(clerk as any, {
@@ -160,7 +156,7 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
     fpCloudStrategie: () => fpCloudStrategie,
     onDatabaseOpen,
     sessionReady: () => {
-      return clerk.session?.status === 'active';
+      return clerk.session?.status === "active";
     },
     ...mountParams,
   };
@@ -172,9 +168,7 @@ export function VibeContextProvider({ mountParams, children }: VibeContextProvid
   // const dashApi = clerkDashApi(clerk, { apiUrl: mountParams.env.DASHBOARD_URL })
   return (
     <ClerkProvider publishableKey={mountParams.env.CLERK_PUBLISHABLE_KEY}>
-      <LiveCycleVibeContextProvider mountParams={mountParams}>
-        {children}
-      </LiveCycleVibeContextProvider>
+      <LiveCycleVibeContextProvider mountParams={mountParams}>{children}</LiveCycleVibeContextProvider>
     </ClerkProvider>
   );
 }
@@ -184,67 +178,47 @@ export function useVibeContext(): Vibe {
 }
 
 /**
- * Zod schema for VibeMetadata validation.
+ * ArkType schema for VibeMetadata validation.
  * Enforces alphanumeric characters and hyphens only to prevent heavy mangling
  * during ledger name generation.
  */
-const VibeMetadataSchema = z.object({
-  titleId: z
-    .string()
-    .trim()
-    .min(1, 'VibeMetadata.titleId must be a non-empty string')
-    .regex(
-      /^[a-z0-9-]+$/i,
-      'VibeMetadata.titleId must contain only alphanumeric characters and hyphens'
-    ),
-  installId: z
-    .string()
-    .trim()
-    .min(1, 'VibeMetadata.installId must be a non-empty string')
-    .regex(
-      /^[a-z0-9-]+$/i,
-      'VibeMetadata.installId must contain only alphanumeric characters and hyphens'
-    ),
+const VibeMetadataSchema = type({
+  titleId: /^[a-z0-9-]+$/i,
+  installId: /^[a-z0-9-]+$/i,
 });
 
 /**
- * Type inference from Zod schema
+ * Type inference from ArkType schema
  */
-export type VibeMetadata = z.infer<typeof VibeMetadataSchema>;
+export type VibeMetadata = typeof VibeMetadataSchema.infer;
 
 /**
  * Validates that VibeMetadata contains non-empty titleId and installId with valid characters.
- * Uses Zod for validation but preserves backward-compatible error codes.
+ * Uses ArkType for validation but preserves backward-compatible error codes.
  *
  * @param metadata - The VibeMetadata object to validate
  * @throws {VibeMetadataValidationError} If titleId or installId are missing, empty, or contain invalid characters
  */
 export function validateVibeMetadata(metadata: unknown): asserts metadata is VibeMetadata {
-  try {
-    VibeMetadataSchema.parse(metadata);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      // Map Zod errors to our custom error codes for backward compatibility
-      const firstIssue = error.issues[0];
-      let code: string;
-      const message: string = firstIssue.message;
+  const result = VibeMetadataSchema(metadata);
+  if (result instanceof type.errors) {
+    // Map ArkType errors to our custom error codes for backward compatibility
+    // const firstError = result
+    // const path = firstError.path.toString();
+    // let code: string;
 
-      if (firstIssue.path[0] === 'titleId') {
-        code =
-          firstIssue.code === 'too_small'
-            ? VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY
-            : VIBE_METADATA_ERROR_CODES.TITLEID_INVALID_CHARS;
-      } else if (firstIssue.path[0] === 'installId') {
-        code =
-          firstIssue.code === 'too_small'
-            ? VIBE_METADATA_ERROR_CODES.INSTALLID_EMPTY
-            : VIBE_METADATA_ERROR_CODES.INSTALLID_INVALID_CHARS;
-      } else {
-        code = 'UNKNOWN_ERROR';
-      }
+    // if (path === 'titleId') {
+    //   code = firstError.code === 'missing'
+    //     ? VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY
+    //     : VIBE_METADATA_ERROR_CODES.TITLEID_INVALID_CHARS;
+    // } else if (path === 'installId') {
+    //   code = firstError.code === 'missing'
+    //     ? VIBE_METADATA_ERROR_CODES.INSTALLID_EMPTY
+    //     : VIBE_METADATA_ERROR_CODES.INSTALLID_INVALID_CHARS;
+    // } else {
+    //   code = 'UNKNOWN_ERROR';
+    // }
 
-      throw new VibeMetadataValidationError(message, code);
-    }
-    throw error;
+    throw new VibeMetadataValidationError(result.toLocaleString(), VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY);
   }
 }

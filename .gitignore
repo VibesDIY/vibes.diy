@@ -14,6 +14,7 @@ node_modules
 
 ## Debug and test files
 claude-browse-vibes/*.png
+*.sse
 test-results/
 playwright-report/
 playwright/.cache/
