@@ -19,6 +19,7 @@
   "scripts": {
     "xbuild:base": "pnpm --filter use-vibes-base build",
     "build": "core-cli tsc",
+    "debug-ts": "cd vibes.diy/pkg ; pnpm run debug-ts",
     "build:prod": "pnpm --filter vibes-diy build",
     "serve:prod": "pnpm exec serve -s vibes.diy/pkg/build/client",
     "lint": "eslint .",
@@ -74,6 +75,6 @@
     "serve": "^14.2.5",
     "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18",
-    "wrangler": "^4.62.0"
+    "wrangler": "^4.65.0"
   }
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "tsc": "core-cli tsc",
     "typecheck": "core-cli tsc --noEmit",
-    "build": "core-cli tsc && react-router build",
+    "build": "rm -rf dist ; core-cli tsc; ls -l dist",
+    "debug-ts": "FP_TSC=tsc pnpm run build ; FP_TSC=tsgo pnpm run build",
     "dev": "react-router dev",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build",
@@ -58,7 +59,7 @@
     "tailwind-merge": "^3.4.0",
     "use-fireproof": "0.24.10",
     "use-vibes": "workspace:*",
-    "wrangler": "^4.62.0"
+    "wrangler": "^4.65.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.0",
@@ -78,10 +79,9 @@
     "arktype": "^2.1.29",
     "concurrently": "^9.1.2",
     "prettier": "^3.8.1",
+    "rollup-plugin-visualizer": "^6.0.5",
     "shiki": "^3.22.0",
     "storybook": "^10.2.6",
-    "prettier": "^3.8.0",
-    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^4.1.18",
     "toml": "^3.0.0",
     "typescript": "^5.9.3",
