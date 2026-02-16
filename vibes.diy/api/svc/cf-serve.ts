@@ -73,11 +73,16 @@ function netHashFn({
   });
 }
 
+export function cfDrizzle<T extends VibesSqlite>(env: Env, ctxDrizzle?: T): { db: T } {
+  return { db: (ctxDrizzle ?? drizzle(env.DB)) as T };
+}
+
 export async function cfServeAppCtx(request: CFRequest, env: Env, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
   const netHash = Lazy(() => netHashFn(request.cf as CfProperties));
   return createAppContext({
+    ...cfDrizzle(env, ctx.drizzle),
+    // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
-    db: ctx.drizzle ?? drizzle(env.DB),
     cache: ctx.cache,
     // this help to provide enough uniqueness
     // to find clients which try to steal tokens

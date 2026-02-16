@@ -112,7 +112,7 @@ export function workspacePackagesPlugin(): Plugin {
       await discoverPackages();
 
       server.middlewares.use(async (req, res, next) => {
-        if (!req.url?.startsWith("/dev-npm/")) {
+        if (!req.url?.startsWith("/vibe-pkg/")) {
           return next();
         }
 
@@ -127,7 +127,7 @@ export function workspacePackagesPlugin(): Plugin {
         }
 
         // Extract package name (handle scoped packages like @vibes.diy/api-impl)
-        const urlPath = req.url.replace("/dev-npm/", "");
+        const urlPath = req.url.replace("/vibe-pkg/", "");
         const parts = urlPath.split("/");
         const pkgName = parts[0].startsWith("@")
           ? `${parts[0]}/${parts[1]}` // Scoped package: @scope/name

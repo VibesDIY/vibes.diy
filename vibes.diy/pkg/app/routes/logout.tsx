@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import {
-  getButtonStyle,
-  getMergedButtonStyle,
-  getIconContainerStyle,
-  getIconStyle,
-  getContentWrapperStyle,
+
+  VibesButtonStyles,
   useMobile,
   LabelContainer,
-} from "@vibes.diy/api-pkg";
+} from "@vibes.diy/base";
 
 // Tornado/Wormhole icon for logout - similar to LoginIcon pattern
 function LogoutIcon({
@@ -102,15 +99,15 @@ export function Logout() {
             {/* Grey non-clickable button with wormhole/tornado icon - using VibesButton styling */}
             <div
               style={{
-                ...getMergedButtonStyle(getButtonStyle("gray", false, false, isMobile, true), false, {
+                ...VibesButtonStyles.getMergedButtonStyle(VibesButtonStyles.getButtonStyle("gray", false, false, isMobile, true), false, {
                   cursor: "default",
                   pointerEvents: "none",
                 }),
               }}
             >
-              <div style={getContentWrapperStyle(isMobile, true)}>
-                <div style={getIconContainerStyle("gray", isMobile, true)}>
-                  <div style={getIconStyle(isMobile, false, false)}>
+              <div style={VibesButtonStyles.getContentWrapperStyle(isMobile, true)}>
+                <div style={VibesButtonStyles.getIconContainerStyle("gray", isMobile, true)}>
+                  <div style={VibesButtonStyles.getIconStyle(isMobile, false, false)}>
                     <LogoutIcon
                       bgFill="var(--vibes-button-icon-bg)"
                       fill="var(--vibes-button-icon-fill)"

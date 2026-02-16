@@ -2,7 +2,7 @@
 // import { TitleSrc, ViewType } from "@vibes.diy/prompts";
 // import { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ViewType } from "@vibes.diy/prompts";
-import { PromptState } from "../../routes/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 
 export interface ResultPreviewProps {
   promptState: PromptState;

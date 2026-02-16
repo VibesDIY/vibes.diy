@@ -29,6 +29,37 @@ export const fileSystemItem = type({
 
 export type FileSystemItem = typeof fileSystemItem.infer;
 
+export const MetaScreenShotRef = type({
+  type: "'screen-shot-ref'",
+  assetId: "string",
+}); 
+
+export type MetaScreenShot = typeof MetaScreenShotRef.infer;
+
+export function isMetaScreenShot(obj: unknown): obj is MetaScreenShot {
+  return !(MetaScreenShotRef(obj) instanceof type.errors);
+}
+
+export const MetaTitle = type({
+  type: "'title'",
+  title: "string",
+});
+
+export type MetaTitle = typeof MetaTitle.infer;
+
+export function isMetaTitle(obj: unknown): obj is MetaTitle {
+  return !(MetaTitle(obj) instanceof type.errors);
+}
+
+export const MetaItem = MetaScreenShotRef.or(MetaTitle);
+
+export type MetaItem = typeof MetaItem.infer;
+
+export function isMetaItem(obj: unknown): obj is MetaItem {
+  return !(MetaItem(obj) instanceof type.errors);
+}
+
+
 // export interface ResponseType {
 //   type: "Response";
 //   payload: {

@@ -1,6 +1,6 @@
 import { type } from "arktype";
-import { VibesSvcEnv } from "./vibe.js";
 import { FPApiParameters } from "@fireproof/core-types-protocols-dashboard";
+import { VibesSvcEnv } from "./vibes-diy-serv-ctx.js";
 
 export interface PkgRepos {
   readonly workspace: string;

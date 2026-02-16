@@ -44,7 +44,7 @@ export const vibesReqResEvento = Lazy(() => {
           status: 501,
           json: {
             type: "error",
-            message: "Not Implemented",
+            message: "vibesReqResEvento: Not Implemented",
             req: ctx.enRequest,
           },
         } satisfies HttpResponseJsonType);

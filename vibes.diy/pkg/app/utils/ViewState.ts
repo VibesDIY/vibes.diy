@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ViewControlsType, ViewType } from "@vibes.diy/prompts";
-import { PromptState } from "../routes/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
 
 // Helper to detect mobile viewport
 export const isMobileViewport = () => {
@@ -103,10 +103,10 @@ export function useViewState(promptState: PromptState): ViewState {
 
   // We handle the initial view display without changing the URL
   // This allows for proper auto-navigation to app view when preview is ready
-  useEffect(() => {
-    // The actual display of code view is handled by the component that uses this hook
-    // We don't navigate to /code on initial load anymore
-  }, []);
+  // useEffect(() => {
+  //   // The actual display of code view is handled by the component that uses this hook
+  //   // We don't navigate to /code on initial load anymore
+  // }, []);
 
   // Access control data
   const viewControls: ViewControlsType = {
@@ -142,6 +142,7 @@ export function useViewState(promptState: PromptState): ViewState {
     // Skip navigation for chat view or if control doesn't exist/isn't enabled
     // if (view === "chat" || !viewControls[view as keyof typeof viewControls]?.enabled) return;
     setSearchParams((prev) => {
+      console.log(`Navigating to view: ${view}`);
       prev.set("view", view);
       return prev;
     });

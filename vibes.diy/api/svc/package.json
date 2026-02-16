@@ -42,6 +42,8 @@
     "@fireproof/core-cli": "0.24.11",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
-    "@types/ws": "^8.18.1"
+    "@types/semver": "^7.7.1",
+    "@types/ws": "^8.18.1",
+    "semver": "^7.7.4"
   }
 }

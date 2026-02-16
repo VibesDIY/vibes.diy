@@ -3,13 +3,14 @@ import { type RouteConfig, index, route, layout } from "@react-router/dev/routes
 export default [
   index("./routes/home.tsx"),
   // This route is only needed for dev server to prevent 404 flash
-  route("index.html", "./routes/home.tsx", { id: "index-html" }),
+  // route("index.html", "./routes/home.tsx", { id: "index-html" }),
 
   // Protected routes - wrapped by auth layout (no path segment added)
   layout("./routes/auth.tsx", [
     route("chat/prompt", "./routes/chat/prompt.tsx"),
-    route("chat/:userSlug/:appSlug", "./routes/chat.$userSlug.$appSlug.tsx"),
+    route("chat/:userSlug/:appSlug", "./routes/chat/chat.$userSlug.$appSlug.tsx"),
   ]),
+
   // route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
   // route("chat/:sessionId/:title", "./routes/home.tsx", { id: "chat" }),
   // route("chat/:sessionId/:title/app", "./routes/home.tsx", { id: "chat-app" }),
@@ -28,6 +29,8 @@ export default [
   // route("vibes/mine", "./routes/mine.tsx", { id: "my-vibes" }),
   // route("groups", "./routes/groups.tsx", { id: "groups" }),
 
+  route("vibe/:userSlug/:appSlug", "./routes/vibe.$userSlug.$appSlug.tsx"),
+
   // route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
   route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
@@ -43,6 +46,8 @@ export default [
     id: "privacy-policy",
   }),
   route("legal/tos", "./routes/legal/tos.tsx", { id: "terms-of-service" }),
+
+
   // 404 catch-all route - must be last
   route("*", "./routes/$.tsx", { id: "not-found" }),
 ] satisfies RouteConfig;

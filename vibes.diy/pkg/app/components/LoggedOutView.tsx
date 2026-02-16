@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { trackAuthClick } from "../utils/analytics.js";
-import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
-import { useMobile, LabelContainer, VibesButton } from "@vibes.diy/api-pkg";
+import { useMobile, LabelContainer, VibesButton, VibesSwitch } from "@vibes.diy/base";
 
 interface LoggedOutViewProps {
   /** Whether Clerk has finished loading */

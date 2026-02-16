@@ -20,6 +20,9 @@ import {
   isResEnsureAppSlug,
   isResOpenChat,
   isResPromptChatSection,
+  ReqGetByUserSlugAppSlug,
+  ResGetByUserSlugAppSlug,
+  isResGetByUserSlugAppSlug,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -285,6 +288,15 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
+  async getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-by-user-slug-app-slug" },
+      {
+        resMatch: isResGetByUserSlugAppSlug,
+      }
+    );
+  }
+
   async openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>> {
     return LLMChatImpl.open({ ...req, type: "vibes.diy.req-open-chat" }, this);
   }
@@ -430,6 +442,7 @@ class LLMChatImpl implements LLMChat {
   }
   async close(_force = false) {
     this.#writer.close();
+    console.log("LLMChat close called for chatId:", this.chatId, this.tid); 
     // if (this.#activePromptIds.size === 0 || force) {
     //   console.log("LLMChat close called, active prompts:", this.chatId, this.#activePromptIds.size, "force:", force);
     //   this.#writer.close().catch((err) => {

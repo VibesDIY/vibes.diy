@@ -1,0 +1,79 @@
+
+export const lockedVersions = {
+      FP: "0.24.10",
+      REACT: "19.2.1",
+      ADVISER_CEMENT: "0.5.22",
+      CBORG: "4.5.8",
+      ZOD: "4.3.6",
+      ARKTYPE: "2.1.29",
+      JOSE: "6.1.3",
+      DOMPURIFY: "3.3.1",
+      MULTIFORMATS: "13.4.2",
+      YAML: "2.8.2",
+      TAILWINDCSS: "4.1.18",
+    }
+
+export const lockedGroupsVersions = {
+  tailwindcss: {
+    tailwindcss: "version:TAILWINDCSS",
+  },
+  fireproof: {
+    "@adviser/cement": "version:ADVISER_CEMENT",
+    yaml: "version:YAML",
+    multiformats: "version:MULTIFORMATS",
+    cborg: "version:CBORG",
+    "cborg/json": "version:CBORG",
+    "cborg/length": "version:CBORG",
+    zod: "version:ZOD",
+    arktype: "version:ARKTYPE",
+    jose: "version:JOSE",
+    "jose/jwt/decode": "version:JOSE",
+    dompurify: "version:DOMPURIFY",
+    "@fireproof/core-base": "version:FP",
+    "@fireproof/core-blockstore": "version:FP",
+    "@fireproof/core-cli": "version:FP",
+    "@fireproof/core-device-id": "version:FP",
+    "@fireproof/core-gateways-base": "version:FP",
+    "@fireproof/core-gateways-cloud": "version:FP",
+    "@fireproof/core-gateways-file-deno": "version:FP",
+    "@fireproof/core-gateways-file-node": "version:FP",
+    "@fireproof/core-gateways-file": "version:FP",
+    "@fireproof/core-gateways-indexeddb": "version:FP",
+    "@fireproof/core-gateways-memory": "version:FP",
+    "@fireproof/core-keybag": "version:FP",
+    "@fireproof/core-protocols-cloud": "version:FP",
+    "@fireproof/core-protocols-dashboard": "version:FP",
+    "@fireproof/core-runtime": "version:FP",
+    "@fireproof/core-types-base": "version:FP",
+    "@fireproof/core-types-blockstore": "version:FP",
+    "@fireproof/core-types-protocols-cloud": "version:FP",
+    "@fireproof/core-types-runtime": "version:FP",
+    "@fireproof/core": "version:FP",
+    "@fireproof/vendor": "version:FP",
+    "@fireproof/use-fireproof": "version:FP,deps:react",
+    "use-fireproof": "version:FP,deps:react",
+
+    // deps=react@19.2.1,react-dom@19.2.1
+  },
+  react: {
+    react: "version:REACT",
+    "react-dom": "version:REACT",
+  },
+  "react-dom-helpers": {
+    "react-dom/client": "version:REACT",
+    "react/jsx-runtime": "version:REACT",
+    "react/jsx-dev-runtime": "version:REACT",
+  },
+  "vibe-runtime": {
+    "@vibes.diy/base": "privateNpm:",
+    "@vibes.diy/vibe-runtime": "privateNpm:",
+
+    // "@vibes.diy/call-ai-v2": "privateNpm:",
+    // "use-vibes": "privateNpm:",
+    // "use-fireproof": "privateNpm:",
+    // "@vibes.diy/prompts": "privateNpm:",
+    // what the fuck
+    // "@vibes.diy/use-vibes-base": "privateNpm:",
+    // "call-ai": "privateNpm:",
+  },
+};

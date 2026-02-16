@@ -5,7 +5,7 @@ import type { MonacoDiagnosticsDefaults } from "./setupMonacoEditor.js";
 import { editor, Uri } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useTheme } from "../../contexts/ThemeContext.js";
-import { PromptState } from "../../routes/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import { useSearchParams } from "react-router";
 import { isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 

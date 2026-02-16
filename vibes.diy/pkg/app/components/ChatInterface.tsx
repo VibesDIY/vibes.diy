@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 // import type { ChatInterfaceProps } from "@vibes.diy/prompts";
 import MessageList from "./MessageList.js";
 import WelcomeScreen from "./WelcomeScreen.js";
-import { PromptState } from "../routes/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
 
 function ChatInterface({
   promptState,

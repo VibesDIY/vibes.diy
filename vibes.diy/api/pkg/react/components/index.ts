@@ -1,1 +1,1 @@
-export * from "./vibes-control.jsx";
+export * from "./vibes-control.js";

@@ -1,6 +1,6 @@
 import React, { memo, useCallback } from "react";
 // import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
-import { PromptBlock } from "../routes/chat.$userSlug.$appSlug.js";
+import { PromptBlock } from "../routes/chat/chat.$userSlug.$appSlug.js";
 import {
   CodeBeginMsg,
   CodeEndMsg,
@@ -16,7 +16,7 @@ import {
   ToplevelBeginMsg,
   ToplevelEndMsg,
 } from "@vibes.diy/call-ai-v2";
-import { BrutalistCard } from "./vibes/BrutalistCard.js";
+import { BrutalistCard } from "@vibes.diy/base"
 import ReactMarkdown from "react-markdown";
 import { useSearchParams } from "react-router";
 
@@ -63,10 +63,9 @@ function Prompt({ msg }: { msg: PromptReq }) {
 }
 
 function CodeMsg({ lines, begin, end }: { begin: CodeBeginMsg; lines: LineMsg[]; end?: CodeEndMsg }) {
-  const [_, setSearchParam] = useSearchParams();
+  const [searchParams, setSearchParam] = useSearchParams();
 
   const handleCodeClick = useCallback(() => {
-    console.log(`handleCodeClick`, begin.sectionId);
     setSearchParam((prev) => {
       prev.set("sectionId", begin.sectionId);
       if (!prev.has("view")) {
@@ -74,11 +73,11 @@ function CodeMsg({ lines, begin, end }: { begin: CodeBeginMsg; lines: LineMsg[];
       }
       return prev;
     });
-  }, []);
-  // Calculate local codeReady state based on segments.length > 2 or !promptProcessing
-  const codeReady = !!end;
+  }, [searchParams, begin.sectionId, setSearchParam]);
 
-  // const isSelected = messageId === selectedResponseId;
+  const codeReady = !!end;
+  console.log(`codeReady`, codeReady)
+
 
   return (
     <div className="mb-4 flex flex-row justify-start px-4" key={begin.sectionId}>
@@ -251,19 +250,23 @@ function MessageList({
 
         case isCodeBegin(msg):
           collectedMsg = [];
+          console.log(`CodeBegin`, msg)
           codeBegin = msg;
           break;
         case isToplevelBegin(msg):
           collectedMsg = [];
+          console.log(`TopLevelBegin`, msg)
           toplevelBegin = msg;
           break;
         case isToplevelLine(msg):
         case isCodeLine(msg):
           collectedMsg.push(msg);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          // acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} />);
           break;
         case isCodeEnd(msg):
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} />);
+          acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} end={msg} />);
           collectedMsg = [];
           break;
         case isToplevelEnd(msg):

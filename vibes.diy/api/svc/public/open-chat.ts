@@ -121,7 +121,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
         }
       }
       const wsp = ctx.send.provider as WSSendProvider;
-      // console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
+      console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
       wsp.chatIds.add({ chatId, tid: ctx.validated.tid });
 
       const sections = await vctx.db

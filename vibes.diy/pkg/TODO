@@ -1,0 +1,18 @@
+vibe.$userSlug.$appSlug -> 
+        nice:  loading app
+	nice:  console.error....
+
+chat.$userSlug.$appSlug ->
+	nice:   console.error(`PromptSend failed`, r.Ok());
+                console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
+
+chat.prompt -> 
+	nice: <div>Preparing AI - Session</div>
+	nice: console.error.....
+
+login -> 
+	do not jump that far away more like (dashboard)
+
+
+
+     
