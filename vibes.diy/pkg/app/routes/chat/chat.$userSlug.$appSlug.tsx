@@ -1,4 +1,4 @@
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { LLMChat, LLMChatEntry } from "@vibes.diy/api-impl";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
@@ -189,10 +189,9 @@ export default function Chat() {
   const [mobilePreviewShown, setMobilePreviewShown] = useState(false);
   const { navigateToView, viewControls, currentView } = useViewState(promptState);
 
-  const navigate = useNavigate()
   const openVibe = useCallback(() => {
-    navigate(`/vibe/${userSlug}/${appSlug}?sectionId=${searchParams.get('sectionId')}`)
-  }, [navigate, searchParams, setSearchParam])
+    window.open(`/vibe/${userSlug}/${appSlug}?sectionId=${searchParams.get('sectionId')}`, '_blank')
+  }, [searchParams, userSlug, appSlug])
 
   useEffect(() => {
     if (isMobileViewport()) {
