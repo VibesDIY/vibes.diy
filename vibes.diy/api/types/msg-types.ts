@@ -3,13 +3,15 @@ import { Result } from "@adviser/cement";
 import { type } from "arktype";
 import { fileSystemItem } from "./types.js";
 import { BlockMsgs, CoercedDate, FileSystemRef, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
-import { vibeEnv } from "./vibe.js";
 
 // Base types
 export const dashAuthType = type({
   type: "'clerk'|'device-id'|'ucan'",
   token: "string",
 });
+
+export const vibeUserEnv = type("Record<string, string>")
+
 
 export type DashAuthType = typeof dashAuthType.infer;
 
@@ -197,7 +199,7 @@ export const reqEnsureAppSlug = type({
   // "chatId?": "string", // used to emit events to the current chat session
   mode: "'production'|'dev'",
   // env passed to the app
-  "env?": vibeEnv,
+  "env?": vibeUserEnv,
   fileSystem: [vibeFile, "[]"],
 });
 
@@ -209,7 +211,7 @@ export const resEnsureAppSlug = type({
   // appSlug: "string",
   // userSlug: "string",
   // mode: "'production'|'dev'",
-  env: vibeEnv,
+  env: vibeUserEnv,
   // "promptId?": "string",
   // "chatId?": "string",
   // fsId: "string",
@@ -223,6 +225,35 @@ export type ResEnsureAppSlug = typeof resEnsureAppSlug.infer;
 export function isResEnsureAppSlug(obj: unknown): obj is ResEnsureAppSlug {
   return !(resEnsureAppSlug(obj) instanceof type.errors);
 }
+
+
+export const reqGetByUserSlugAppSlug = type({
+  type: "'vibes.diy.req-get-by-user-slug-app-slug'",
+  auth: dashAuthType,
+  userSlug: "string",
+  appSlug: "string",
+  "sectionId?": "string",
+});
+export type ReqGetByUserSlugAppSlug = typeof reqGetByUserSlugAppSlug.infer;
+export function isReqGetByUserSlugAppSlug(obj: unknown): obj is ReqGetByUserSlugAppSlug {
+  return !(reqGetByUserSlugAppSlug(obj) instanceof type.errors);
+}
+
+export const resGetByUserSlugAppSlug = type({
+  type: "'vibes.diy.res-get-by-user-slug-app-slug'",
+  "sectionId?": "string",
+}).and(FileSystemRef);
+
+export type ResGetByUserSlugAppSlug = typeof resGetByUserSlugAppSlug.infer;
+export function isResGetByUserSlugAppSlug(obj: unknown): obj is ResGetByUserSlugAppSlug {
+  const res = resGetByUserSlugAppSlug(obj);
+  if (res instanceof type.errors) {
+    console.error(`Invalid resGetByUserSlugAppSlug:`, obj, res.summary);
+  }
+  return !(resGetByUserSlugAppSlug(obj) instanceof type.errors);
+}
+
+
 
 export const msgBase = type({
   tid: "string",

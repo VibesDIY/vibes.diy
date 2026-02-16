@@ -1,389 +1,393 @@
-import { exception2Result } from "@adviser/cement";
-import { VibesImportMap } from "@vibes.diy/api-types";
+import { BuildURI, Result, toSortedObject } from "@adviser/cement";
+import * as semver from "semver";
+import { defaultFetchPkgVersion } from "../npm-package-version.js";
 
-const lockedGroupsVersions = {
-  tailwindcss: {
-    tailwindcss: "version:TAILWINDCSS",
-  },
-  fireproof: {
-    "@adviser/cement": "version:ADVISER_CEMENT",
-    yaml: "version:YAML",
-    multiformats: "version:MULTIFORMATS",
-    cborg: "version:CBORG",
-    "cborg/json": "version:CBORG",
-    "cborg/length": "version:CBORG",
-    zod: "version:ZOD",
-    arktype: "version:ARKTYPE",
-    jose: "version:JOSE",
-    "jose/jwt/decode": "version:JOSE",
-    dompurify: "version:DOMPURIFY",
-    "@fireproof/core-base": "version:FP",
-    "@fireproof/core-blockstore": "version:FP",
-    "@fireproof/core-cli": "version:FP",
-    "@fireproof/core-device-id": "version:FP",
-    "@fireproof/core-gateways-base": "version:FP",
-    "@fireproof/core-gateways-cloud": "version:FP",
-    "@fireproof/core-gateways-file-deno": "version:FP",
-    "@fireproof/core-gateways-file-node": "version:FP",
-    "@fireproof/core-gateways-file": "version:FP",
-    "@fireproof/core-gateways-indexeddb": "version:FP",
-    "@fireproof/core-gateways-memory": "version:FP",
-    "@fireproof/core-keybag": "version:FP",
-    "@fireproof/core-protocols-cloud": "version:FP",
-    "@fireproof/core-protocols-dashboard": "version:FP",
-    "@fireproof/core-runtime": "version:FP",
-    "@fireproof/core-types-base": "version:FP",
-    "@fireproof/core-types-blockstore": "version:FP",
-    "@fireproof/core-types-protocols-cloud": "version:FP",
-    "@fireproof/core-types-runtime": "version:FP",
-    "@fireproof/core": "version:FP",
-    "@fireproof/vendor": "version:FP",
-    "@fireproof/use-fireproof": "version:FP",
-  },
-  react: {
-    react: "version:REACT",
-    "react-dom": "version:REACT",
-    "react-dom/client": "version:REACT",
-    "react/jsx-runtime": "version:REACT",
-    "react/jsx-dev-runtime": "version:REACT",
-  },
-  "vibe-runtime": {
-    "@vibes.diy/api-types": "privateNpm:",
-    "@vibes.diy/api-pkg": "privateNpm:",
-    "@vibes.diy/call-ai-v2": "privateNpm:",
-    "use-vibes": "privateNpm:",
-    "use-fireproof": "privateNpm:",
-    "@vibes.diy/prompts": "privateNpm:",
-    // what the fuck
-    "@vibes.diy/use-vibes-base": "privateNpm:",
-    "call-ai": "privateNpm:",
-  },
-};
+interface NoneVersion {
+  type: "NONE";
+}
+
+interface SymbolicOrSemVersion {
+  type: "SYMBOLIC" | "SEMVER";
+  value: string; // e.g., "LATEST"
+}
+
+interface ResolvedVersion {
+  type: "RESOLVED";
+  value: string; // e.g., "1.2.3"
+  result: { src: string; version: string }; // the result from fetchVersion
+  prev: VersionType; // the original version type before resolution, e.g., { type: "SYMBOLIC", value: "LATEST" }
+}
+
+interface ErrorVersion {
+  type: "ERROR";
+  value: string; // e.g., "1.2.3"
+  error: Error;
+  prev: VersionType; // the original version type before resolution, e.g., { type: "SYMBOLIC", value: "LATEST" }
+}
+
+type VersionType = NoneVersion | SymbolicOrSemVersion | ResolvedVersion | ErrorVersion;
+
+interface MutableVersionEntity {
+  givenVersion: string; // the original version string provided, e.g., "version:1.2.3,deps:react,privateNpm"
+  version: VersionType;
+  privateNpm: boolean; // true if "privateNpm:" is present
+  deps: string[]; // array of dependencies, e.g., ["deps:react", "deps:react-dom"]
+}
+
+export class Version implements Readonly<MutableVersionEntity> {
+  public readonly givenVersion: string;
+  public readonly version: MutableVersionEntity["version"];
+  public readonly privateNpm: boolean; // true if "privateNpm:" is present
+  public readonly deps: string[]; // always an array, e.g., ["react", "react-dom"]
+
+  static parse(givenVersion: string): Version {
+    const parts = givenVersion.split(",");
+    const result: MutableVersionEntity = {
+      givenVersion,
+      version: { type: "NONE" },
+      privateNpm: false,
+      deps: [],
+    };
+
+    for (const part of parts) {
+      const trimmed = part.trim();
+      const colonIndex = trimmed.indexOf(":");
+      if (colonIndex === -1) {
+        if (!trimmed) continue;
+        // No colon, might be a semver string
+        const parsed = semver.valid(trimmed);
+        if (parsed) {
+          result.version = { type: "SEMVER", value: parsed };
+        } else {
+          // Bare non-semver token treated as a dependency
+          result.deps.push(trimmed);
+        }
+        continue;
+      }
+
+      const key = trimmed.slice(0, colonIndex);
+      const value = trimmed.slice(colonIndex + 1);
+
+      if (key === "deps") {
+        result.deps.push(value);
+      } else if (key === "version") {
+        const versionValue = value || "LATEST";
+        if (versionValue === "LATEST") {
+          result.version = { type: "SYMBOLIC", value: "LATEST" };
+        } else {
+          result.version = { type: "SYMBOLIC", value: versionValue };
+        }
+        // Also check if it's a semver
+        try {
+          const parsed = semver.valid(versionValue);
+          if (parsed) {
+            result.version = { type: "SEMVER", value: parsed };
+          }
+        } catch {
+          // Not a valid semver, ignore
+        }
+      } else if (key === "privateNpm") {
+        result.privateNpm = true;
+      }
+    }
+    if (result.privateNpm && result.version.type !== "NONE") {
+      throw new Error(`Cannot combine version: and privateNpm: in ${JSON.stringify(givenVersion)}`);
+    }
+    return new Version(result);
+  }
+
+  constructor({ givenVersion, version, privateNpm, deps }: Readonly<MutableVersionEntity>) {
+    this.givenVersion = givenVersion;
+    this.version = version;
+    this.privateNpm = privateNpm;
+    this.deps = deps;
+  }
+}
 
 const reScopedPkg = /^(@[^/]+\/[^/]+)(\/.*)?$/;
 const rePkg = /^([^/@]+)(\/.*)?$/;
 
-interface ImportMap {
-  imports: Record<string, string>;
-}
+export class Package {
+  readonly givenPkg: string; // the original package string provided, e.g., "react" or "@scope/package/extra"
+  readonly pkg: string; // e.g., "react" or "@scope/package"
+  readonly suffix?: string; // e.g., "/extra/path" if the package string has more segments
 
-function lockedGroupsVersions2ImportMap(lockedGroupsVersions: Record<string, Record<string, string>>): ImportMap {
-  const imports: Record<string, string> = {};
-
-  for (const group of Object.values(lockedGroupsVersions)) {
-    for (const [pkg, version] of Object.entries(group)) {
-      imports[pkg] = version;
+  static parse(pkgStr: string): Package {
+    // For scoped packages, return the first two segments, otherwise return the first segment
+    const scopedMatch = reScopedPkg.exec(pkgStr);
+    if (scopedMatch) {
+      return new Package({ givenPkg: pkgStr, pkg: scopedMatch[1], suffix: scopedMatch[2] }); // Returns @scope/package
     }
+    const unscopedMatch = rePkg.exec(pkgStr);
+    if (unscopedMatch) {
+      return new Package({ givenPkg: pkgStr, pkg: unscopedMatch[1], suffix: unscopedMatch[2] }); // Returns package
+    }
+    throw new Error(`Invalid package string: ${JSON.stringify(pkgStr)}`);
   }
-
-  return { imports };
+  constructor({ givenPkg, pkg, suffix }: { givenPkg: string; pkg: string; suffix?: string }) {
+    this.givenPkg = givenPkg;
+    this.pkg = pkg;
+    this.suffix = suffix;
+  }
 }
 
-export function packageName(key: string): { pkg: string; suffix?: string } {
-  // For scoped packages, return the first two segments, otherwise return the first segment
-  const scopedMatch = reScopedPkg.exec(key);
-  if (scopedMatch) {
-    return { pkg: scopedMatch[1], suffix: scopedMatch[2] }; // Returns @scope/package
+export class Dependency {
+  public readonly pkg: string;
+  public readonly pkgs = new Map<
+    string,
+    {
+      pkg: Package;
+      version: {
+        ver: Version;
+        dependencies: Map<string, Dependency>;
+      };
+    }
+  >(); // Map of full givenPkg to Package object for all variants of this package
+  public readonly groups = new Set<string>();
+
+  constructor(pkg: string) {
+    this.pkg = pkg;
   }
-  const unscopedMatch = rePkg.exec(key);
-  if (unscopedMatch) {
-    return { pkg: unscopedMatch[1], suffix: unscopedMatch[2] }; // Returns package
+
+  addPkg(pkg: Package, version: Version) {
+    if (pkg.pkg !== this.pkg) {
+      throw new Error(`Package mismatch: expected ${this.pkg}, got ${pkg.pkg}`);
+    }
+    this.pkgs.set(pkg.givenPkg, { pkg, version: { ver: version, dependencies: new Map() } });
   }
-  return { pkg: key }; // Fallback to the original key if no match
+
+  addGroup(group: string) {
+    this.groups.add(group);
+  }
 }
 
-interface ImportMapOptions {
-  genImport: VibesImportMap;
-  version: Record<string, string>;
-  fetchPkgVersion(pkg: string): Promise<string | undefined>;
-  resolveVersionInportMap(pkg: string, version: string): string;
-}
+export class Dependencies {
+  #byDeps = new Map<string, Dependency>();
+  #byGroups = new Map<string, Map<string, Dependency>>();
 
-export async function genImportMap(opts: ImportMapOptions): Promise<ImportMap> {
-  const lockedImportMap = lockedGroupsVersions2ImportMap(lockedGroupsVersions);
-  // console.log("Locked import map:", lockedImportMap, "genImport:", opts.genImport.imports);
-  for (const [pkg, ver] of Object.entries(opts.genImport.imports)) {
-    if (ver.startsWith("vibed:")) {
-      const { pkg: pkgName } = packageName(pkg);
-      if (lockedImportMap.imports[pkgName]) {
-        opts.genImport.imports[pkg] = lockedImportMap.imports[pkg];
-      } else {
-        opts.genImport.imports[pkg] = "version:LATEST";
+  static from(deps: Record<string, string | Record<string, string>>): Dependencies {
+    const dependencies = new Dependencies();
+    for (const [key, val] of Object.entries(deps)) {
+      if (typeof val === "string") {
+        dependencies.add(key, val);
       }
-    }
-  }
-  const mergedImports = { ...lockedImportMap.imports, ...opts.genImport.imports };
-  // console.log("Merged import map:", "genImport:", opts.genImport.imports);
-  for (const [pkg, ver] of Object.entries(mergedImports)) {
-    if (ver.startsWith("version:")) {
-      const splitted = ver.split(":");
-      const verKey = (splitted[1] ? splitted[1] : "LATEST").toUpperCase();
-      if (opts.version[verKey]) {
-        mergedImports[pkg] = opts.resolveVersionInportMap(pkg, `npm:${opts.version[verKey]}`);
-      } else {
-        const { pkg: pkgName } = packageName(pkg);
-        if (!mergedImports[pkgName].startsWith("version:")) {
-          mergedImports[pkg] = mergedImports[pkgName];
-        } else {
-          const fetched = await exception2Result(() => opts.fetchPkgVersion(pkgName));
-          if (fetched.isErr()) {
-            console.error(`Failed to fetch version for package ${pkgName}:`, fetched.Err());
-          }
-          mergedImports[pkgName] = mergedImports[pkg] = opts.resolveVersionInportMap(pkg, `npm:${fetched.Ok() ?? "latest"}`);
+      if (typeof val === "object") {
+        for (const [gkey, gval] of Object.entries(val)) {
+          dependencies.add(gkey, gval, key);
         }
       }
-    } else {
-      mergedImports[pkg] = opts.resolveVersionInportMap(pkg, ver);
+    }
+    return dependencies;
+  }
+
+  addDep(dep: Dependency): Dependency {
+    let existing = this.#byDeps.get(dep.pkg);
+    if (!existing) {
+      this.#byDeps.set(dep.pkg, dep);
+      existing = dep;
+    }
+    return existing;
+  }
+  add(pkg: string, versionStr: string, group?: string): Dependency {
+    const pkgParsed = Package.parse(pkg);
+    const versionParsed = Version.parse(versionStr);
+
+    let dependency = this.#byDeps.get(pkgParsed.pkg);
+    if (!dependency) {
+      dependency = new Dependency(pkgParsed.pkg);
+      this.#byDeps.set(pkgParsed.pkg, dependency);
+    }
+    dependency.addPkg(pkgParsed, versionParsed);
+    if (group) {
+      let groupMap = this.#byGroups.get(group);
+      if (!groupMap) {
+        groupMap = new Map<string, Dependency>();
+        this.#byGroups.set(group, groupMap);
+      }
+      groupMap.set(pkgParsed.pkg, dependency);
+      dependency.addGroup(group);
+    }
+    return dependency;
+  }
+
+  async resolveVersion(
+    resolveFn: (pkg: { pkg: Package; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>>
+  ) {
+    this.resolveVersionDeps();
+    const fetches: Promise<ResolvedVersion | ErrorVersion>[] = [];
+    for (const dep of this.#byDeps.values()) {
+      for (const { pkg, version } of dep.pkgs.values()) {
+        if (version.ver.version.type === "SYMBOLIC") {
+          fetches.push(
+            resolveFn({
+              pkg,
+              version: version,
+            }).then((result) => {
+              if (result.isErr()) {
+                (version.ver as { version: ErrorVersion }).version = {
+                  type: "ERROR",
+                  value: (version.ver.version as SymbolicOrSemVersion).value,
+                  error: result.Err(),
+                  prev: version.ver.version,
+                };
+                return version.ver.version as ErrorVersion;
+              }
+              (version.ver as { version: ResolvedVersion }).version = {
+                type: "RESOLVED",
+                value: result.Ok().version,
+                result: result.Ok(),
+                prev: version.ver.version,
+              };
+              return version.ver.version as ResolvedVersion;
+            })
+          );
+        }
+      }
+    }
+    return Promise.all(fetches);
+  }
+
+  resolveVersionDeps() {
+    for (const dep of this.#byDeps.values()) {
+      for (const { version } of dep.pkgs.values()) {
+        // console.log(`Resolving dependencies for ${dep.pkg} version ${version.ver.deps} -- ${version.ver.givenVersion}`);
+        for (const verDep of version.ver.deps) {
+          const isGroup = this.#byGroups.get(verDep);
+          if (isGroup) {
+            for (const groupItem of isGroup.values()) {
+              version.dependencies.set(groupItem.pkg, groupItem);
+            }
+          }
+          let isPkg = this.#byDeps.get(verDep);
+          if (!isPkg) {
+            isPkg = this.add(verDep, "version:");
+          }
+          version.dependencies.set(isPkg.pkg, isPkg);
+        }
+      }
     }
   }
-  return { imports: mergedImports };
+
+  async renderImportMap({
+    resolveFn,
+    renderRHS,
+  }: {
+    resolveFn: (dep: { pkg: Package; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>>;
+    renderRHS: (
+      pkg: Package,
+      version: {
+        ver: Version;
+        dependencies: Map<string, Dependency>;
+      }
+    ) => string;
+  }): Promise<Record<string, string>> {
+    const results = await this.resolveVersion(resolveFn);
+    if (results.some((res) => res.type === "ERROR")) {
+      const errors = results.filter((res): res is ErrorVersion => res.type === "ERROR");
+      throw new Error(
+        `Failed to resolve versions:\n${errors.map((e) => `- ${e.value} for ${e.prev.type} version ${e.prev} (error: ${e.error.message})`).join("\n")}`
+      );
+    }
+
+    const importMap: Record<string, string> = {};
+    for (const dep of this.#byDeps.values()) {
+      for (const { pkg, version } of dep.pkgs.values()) {
+        importMap[pkg.givenPkg] = renderRHS(pkg, version);
+      }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return toSortedObject(importMap)!;
+  }
+
+  getByPkg(pkg: string): Dependency | undefined {
+    return this.#byDeps.get(pkg);
+  }
+
+  *byPkg() {
+    for (const dep of this.#byDeps.values()) {
+      yield dep;
+    }
+  }
+  *byGroups() {
+    for (const [grp, groupMap] of this.#byGroups.entries()) {
+      for (const dep of groupMap.values()) {
+        yield { grp, dep };
+      }
+    }
+  }
 }
 
-// function enhance(
-//   importMap: Record<string, string | undefined>,
-//   ver: Record<string, string>,
-//   localServe?: string
-// ): Record<string, string> {
-//   const enhancedMap: Record<string, string> = {};
+interface RenderEsmShOpts {
+  baseUrl?: string; // default to "https://esm.sh/"
+  privateUrl?: string; // default to "https://registry.npmjs.org/"
+}
+export function render_esm_sh(opts: RenderEsmShOpts = {}) {  
+  return (pkg: Package, version: { ver: Version; dependencies: Map<string, Dependency> }) => {
+    const buildURI = BuildURI.from(opts.baseUrl || "https://esm.sh/");
 
-//   for (const [key, value] of Object.entries(importMap)) {
-//     if (value === undefined) {
-//       continue;
-//     }
+    let versionStr = pkg.pkg;
+    switch (version.ver.version.type) {
+      case "RESOLVED":
+      case "SYMBOLIC":
+      case "SEMVER":
+        versionStr += `@${version.ver.version.value}`;
+        break;
+      default:
+        if (version.ver.privateNpm) {
+          return BuildURI.from(opts.privateUrl ?? opts.baseUrl ?? "https://esm.sh/").appendRelative(pkg.givenPkg).toString(); 
+        }
+        break;
+    }
+    buildURI.appendRelative(versionStr);
 
-//     // Replace version placeholders
-//     let enhancedValue = value;
-//     for (const [verKey, verValue] of Object.entries(ver)) {
-//       if (enhancedValue === verKey) {
-//         // Use the actual package name from the key
-//         if (key.endsWith("/")) {
-//           enhancedValue = `https://esm.sh/${key}${verValue}/`;
-//         } else {
-//           enhancedValue = `https://esm.sh/${key}@${verValue}`;
-//         }
-//         break;
-//       }
-//     }
-//     if (localServe && enhancedValue.startsWith("/")) {
-//       const buri = BuildURI.from(localServe);
-//       buri.appendRelative(enhancedValue);
-//       enhancedValue = buri.toString();
-//     }
-//     enhancedMap[key] = enhancedValue;
-//   }
-//   return enhancedMap;
+    if (pkg.suffix) {
+      buildURI.appendRelative(pkg.suffix);
+    }
+    if (version.dependencies.size > 0) {
+      buildURI.setParam(
+        "deps",
+        Array.from(version.dependencies.entries())
+          .map(([pkg, dep]) => {
+            const my = dep.pkgs.get(pkg);
+            if (!my) {
+              throw new Error(`Cannot render dependency with no pkgs`);
+            }
+            if (my.version.ver.version.type === "ERROR" || my.version.ver.version.type === "NONE") {
+              throw new Error(`Cannot render dependency with unresolved version: ${JSON.stringify(my.version.ver.version)}`);
+            }
+            return `${pkg}@${my.version.ver.version.value}`;
+          })
+          .join(",")
+      );
+    }
+    return buildURI.toString();
+  };
+}
+
+// fetchPkgVersion: (pkg: string) => Promise<string | undefined>
+
+export function resolveVersionRegistry({
+  symbol2Version,
+  fetch = defaultFetchPkgVersion(),
+}: {
+  symbol2Version?: Record<string, string>;
+  fetch?: (pkg: string, semVersion?: string) => Promise<Result<{ src: string; version: string }>>;
+}): (pkg: { pkg: Package; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>> {
+  return async ({ pkg, version }) => {
+    if (version.ver.version.type === "SYMBOLIC") {
+      const sym = version.ver.version.value;
+      if (symbol2Version && symbol2Version[sym]) {
+        return Result.Ok({ src: `symbol2Version:${sym}`, version: symbol2Version[sym] });
+      }
+      return fetch(pkg.pkg, sym);
+    }
+    return Result.Err(`Cannot resolve version for ${pkg.pkg} with version type ${version.ver.version.type}`);
+  };
+}
+// interface Dependencies {
+//   [dependencyName: string]: Version;
 // }
 
-// export interface ImportMapProps {
-//   versions?: {
-//     FP: string; // Fireproof version URL
-//   };
-//   PUB_NPM_URL?: string; // Optional URL to fetch npm packages from, defaults to https://esm.sh/
-//   PRIV_NPM_URL?: string; // Optional URL to fetch npm packages from, defaults to https://esm.sh/ -
-//   // can be different from PUB_NPM_URL and only used server-side to avoid exposing certain packages to the client
-// }
-
-// export async function toEsmSh(
-//   myImports: string[],
-//   predefined: Record<string, string>,
-//   urlBase: string,
-//   fetchPkgVersion: (pkg: string) => Promise<string | undefined>
-// ) {
-//   return (
-//     await Promise.all(
-//       myImports
-//         .filter((imp) => !predefined[imp])
-//         .map(async (imp): Promise<{ pkg: string; version: string; subpath?: string } | undefined> => {
-//           const scopedVersionMatch = reScopedPkgWithVersion.exec(imp);
-//           if (scopedVersionMatch) {
-//             return {
-//               pkg: scopedVersionMatch[1],
-//               version: scopedVersionMatch[2],
-//               subpath: scopedVersionMatch[3],
-//             };
-//           }
-//           const unscopedVersionMatch = rePkgWithVersion.exec(imp);
-//           if (unscopedVersionMatch) {
-//             return {
-//               pkg: unscopedVersionMatch[1],
-//               version: unscopedVersionMatch[2],
-//               subpath: unscopedVersionMatch[3],
-//             };
-//           }
-
-//           const scopedMatch = reScopedPkg.exec(imp);
-//           if (scopedMatch) {
-//             const res = await fetchPkgVersion(scopedMatch[1]);
-//             if (res) {
-//               return {
-//                 pkg: scopedMatch[1],
-//                 version: res,
-//                 subpath: scopedMatch[2],
-//               };
-//             }
-//             return;
-//           }
-//           const unscopedMatch = rePkg.exec(imp);
-//           if (unscopedMatch) {
-//             const res = await fetchPkgVersion(unscopedMatch[1]);
-//             if (res) {
-//               return {
-//                 pkg: unscopedMatch[1],
-//                 version: res,
-//                 subpath: unscopedMatch[2],
-//               };
-//             }
-//             return;
-//           }
-//         })
-//     )
-//   )
-//     .filter((r): r is { pkg: string; version: string; subpath?: string } => r !== undefined)
-//     .reduce(
-//       (acc, cur) => {
-//         const buri = BuildURI.from("https://esm.sh").appendRelative(`${cur.pkg}${cur.version ? "@" + cur.version : ""}`);
-//         if (cur.subpath && cur.subpath !== "/") {
-//           buri.appendRelative(cur.subpath);
-//         }
-//         acc[cur.pkg] = buri.toString();
-//         return acc;
-//       },
-//       {} as Record<string, string>
-//     );
-// }
-
-// export async function svcImportMap(
-//   myImports: string[],
-//   prop: (Partial<ImportMapProps> & { mode: ReqEnsureAppSlug["mode"] }) | undefined,
-//   fetchPkgVersion: (pkg: string) => Promise<string | undefined>
-// ): Promise<VibesImportMap> {
-//   if (!(prop && prop.versions)) {
-//     throw "WE need the Fireproof Version to be set";
-//   }
-//   const { versions } = {
-//     versions: {
-//       FP: `${prop.versions.FP}?deps=react@19.2.1,react-dom@19.2.1`,
-//     },
-//   };
-
-//   let importMap = {};
-//   if (prop.mode === "production") {
-//     importMap = {
-//       tailwindcss: "https://esm.sh/tailwindcss",
-//       "dequal/lite": "https://esm.sh/dequal@2.0.3/lite",
-//       "use-sync-external-store": "https://esm.sh/use-sync-external-store@1.6.0",
-//       "@adviser/cement": "https://esm.sh/@adviser/cement@0.5.5",
-//       "@clerk/clerk-react": "https://esm.sh/@clerk/clerk-react?deps=react@19.2.1,react-dom@19.2.1",
-//       "@clerk/clerk-js": "https://esm.sh/@clerk/clerk-js@5",
-//       multiformats: "https://esm.sh/multiformats",
-//       cborg: "https://esm.sh/cborg",
-//       "cborg/json": "https://esm.sh/cborg/json",
-//       "cborg/length": "https://esm.sh/cborg/length",
-//       zod: "https://esm.sh/zod",
-//       jose: "https://esm.sh/jose",
-//       "jose/jwt/decode": "https://esm.sh/jose/jwt/decode",
-//       dompurify: "https://esm.sh/dompurify",
-//       yaml: "https://esm.sh/yaml",
-//       "posthog-js": "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
-//       "posthog-js@1.302.2": "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
-//       "posthog-js/react": "https://esm.sh/posthog-js/react?deps=react@19.2.1,react-dom@19.2.1",
-
-//       react: "https://esm.sh/react@19.2.1",
-
-//       "/react": "https://esm.sh/react@19.2.1",
-
-//       "react?target=es2022": "https://esm.sh/react@19.2.1",
-//       "/react?target=es2022": "https://esm.sh/react@19.2.1",
-
-//       "react@^=18?target=es2022": "https://esm.sh/react@19.2.1",
-//       "/react@^=18?target=es2022": "https://esm.sh/react@19.2.1",
-
-//       "react@%3E=18?target=es2022": "https://esm.sh/react@19.2.1",
-//       "/react@%3E=18?target=es2022": "https://esm.sh/react@19.2.1",
-//       "react@>=18?target=es2022": "https://esm.sh/react@19.2.1",
-//       "/react@>=18?target=es2022": "https://esm.sh/react@19.2.1",
-
-//       "react@%3E=18": "https://esm.sh/react@19.2.1",
-//       "/react@%3E=18": "https://esm.sh/react@19.2.1",
-//       "react@>=18": "https://esm.sh/react@19.2.1",
-//       "/react@>=18": "https://esm.sh/react@19.2.1",
-
-//       "/react@^19.2.0?target=es2022": "https://esm.sh/react@19.2.1",
-//       "/react@19.2.1/es2022/react.mjs": "https://esm.sh/react@19.2.1",
-//       "react@19.3.0-canary-fd524fe0-20251121": "https://esm.sh/react@19.2.1",
-//       "/react@19.3.0-canary-fd524fe0-20251121": "https://esm.sh/react@19.2.1",
-//       "react-dom": "https://esm.sh/react-dom@19.2.1",
-//       "react-dom/client": "https://esm.sh/react-dom@19.2.1/client",
-//       "react/jsx-runtime": "https://esm.sh/react@19.2.1/jsx-runtime",
-//       "react/jsx-dev-runtime": "https://esm.sh/react@19.2.1/jsx-dev-runtime",
-//       "react-router": "https://esm.sh/react-router?deps=react@19.2.1,react-dom@19.2.1",
-//       "react-router-dom": "https://esm.sh/react-router-dom?deps=react@19.2.1,react-dom@19.2.1",
-//       "call-ai": "https://esm.sh/call-ai@v0.14.5",
-
-//       "react-hot-toast": "https://esm.sh/react-hot-toast?deps=react@19.2.1,react-dom@19.2.1",
-//       "@radix-ui/react-slot": "https://esm.sh/@radix-ui/react-slot",
-//       "class-variance-authority": "https://esm.sh/class-variance-authority",
-//       clsx: "https://esm.sh/clsx",
-//       "react-markdown": "https://esm.sh/react-markdown",
-
-//       "tailwind-merge": "https://esm.sh/tailwind-merge",
-//       "@monaco-editor/react": "https://esm.sh/@monaco-editor/react?deps=react@19.2.1,react-dom@19.2.1",
-//       "@shikijs/monaco": "https://esm.sh/@shikijs/monaco",
-//       "shiki/core": "https://esm.sh/shiki/core",
-//       "shiki/langs/javascript.mjs": "https://esm.sh/shiki/langs/javascript.mjs",
-//       "shiki/langs/typescript.mjs": "https://esm.sh/shiki/langs/typescript.mjs",
-//       "shiki/langs/jsx.mjs": "https://esm.sh/shiki/langs/jsx.mjs",
-//       "shiki/langs/tsx.mjs": "https://esm.sh/shiki/langs/tsx.mjs",
-//       "shiki/themes/github-dark-default.mjs": "https://esm.sh/shiki/themes/github-dark-default.mjs",
-//       "shiki/themes/github-light-default.mjs": "https://esm.sh/shiki/themes/github-light-default.mjs",
-//       "shiki/engine/oniguruma": "https://esm.sh/shiki/engine/oniguruma",
-//       "shiki/wasm": "https://esm.sh/shiki/wasm",
-//       "react-cookie-consent": "https://esm.sh/react-cookie-consent?deps=react@19.2.1,react-dom@19.2.1",
-
-//       "use-vibes": "/dist/use-vibes/pkg/index.js",
-//       "use-fireproof": "/dist/use-vibes/pkg/index.js",
-
-//       "@vibes.diy/prompts": "/dist/prompts/pkg/index.js",
-//       "@vibes.diy/use-vibes-base": "/dist/use-vibes/base/index.js",
-
-//       "@fireproof/core-base": "FP",
-//       "@fireproof/core-blockstore": "FP",
-//       "@fireproof/core-cli": "FP",
-//       "@fireproof/core-device-id": "FP",
-//       "@fireproof/core-gateways-base": "FP",
-//       "@fireproof/core-gateways-cloud": "FP",
-//       "@fireproof/core-gateways-file-deno": "FP",
-//       "@fireproof/core-gateways-file-node": "FP",
-//       "@fireproof/core-gateways-file": "FP",
-//       "@fireproof/core-gateways-indexeddb": "FP",
-//       "@fireproof/core-gateways-memory": "FP",
-//       "@fireproof/core-keybag": "FP",
-//       "@fireproof/core-protocols-cloud": "FP",
-//       "@fireproof/core-protocols-dashboard": "FP",
-//       "@fireproof/core-runtime": "FP",
-//       "@fireproof/core-types-base": "FP",
-//       "@fireproof/core-types-blockstore": "FP",
-//       "@fireproof/core-types-protocols-cloud": "FP",
-//       "@fireproof/core-types-runtime": "FP",
-//       "@fireproof/core": "FP",
-//       "@fireproof/vendor": "FP",
-//       "@fireproof/use-fireproof": "FP",
-
-//       "@vibes.diy/api-pkg": "http://localhost:8888/dev-npm/@vibes.diy/api-pkg",
-//       "@vibes.diy/api-types": "http://localhost:8888/dev-npm/@vibes.diy/api-types",
-//       "@vibes-diy/pkg/styles.css": "http://localhost:8888/vibes-controls/styles.css",
-//     };
-//   }
-
-//   return {
-//     imports: toSortedObject(
-//       enhance(
-//         {
-//           ...(await toEsmSh(myImports, importMap, "https://esm.sh", fetchPkgVersion)),
-//           ...importMap,
-//         },
-//         versions
-//       )
-//     ) as Record<string, string>,
-//   };
+// interface Grouped {
+//   [groupName: string]: Dependencies;
 // }

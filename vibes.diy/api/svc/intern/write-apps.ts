@@ -318,6 +318,7 @@ export async function ensureApps(
     fsId,
     env: req.env ?? {},
     fileSystem: rFileSystem.Ok(),
+    meta: [], // keep meta for existing apps, can be updated later by another API
     mode: req.mode,
     created: new Date().toISOString(),
   };

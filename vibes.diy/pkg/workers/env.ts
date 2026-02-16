@@ -1,4 +1,4 @@
-import { D1Database, DurableObjectNamespace } from "@cloudflare/workers-types";
+import { D1Database, DurableObjectNamespace, Queue, Fetcher } from "@cloudflare/workers-types";
 
 export interface Env {
   DB: D1Database;
@@ -16,4 +16,6 @@ export interface Env {
   CLOUD_SESSION_TOKEN_PUBLIC: string;
 
   CHAT_SESSIONS: DurableObjectNamespace;
+  VIBES_SERVICE: Queue;
+  BROWSER: Fetcher;
 }

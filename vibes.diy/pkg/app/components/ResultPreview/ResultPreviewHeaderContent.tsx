@@ -4,7 +4,7 @@ import type { ViewControlsType, ViewType } from "@vibes.diy/prompts";
 import { BackButton } from "./BackButton.js";
 import { SaveButton } from "./SaveButton.js";
 import { ViewControls } from "./ViewControls.js";
-import { PromptState } from "../../routes/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 
 interface ResultPreviewHeaderContentProps {
   promptState: PromptState;
@@ -13,6 +13,7 @@ interface ResultPreviewHeaderContentProps {
   currentView: ViewType;
   hasCodeChanges: boolean;
   onCodeSave?: () => void;
+  openVibe?: () => void
   // // Props from useViewState (lifted to home.tsx)
   // displayView: ViewType;
   // navigateToView: (view: ViewType) => void;
@@ -34,13 +35,14 @@ interface ResultPreviewHeaderContentProps {
   syntaxErrorCount?: number;
 }
 
-const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
+function ResultPreviewHeaderContent({
   viewControls,
   navigateToView,
   currentView,
   hasCodeChanges,
   onCodeSave,
   syntaxErrorCount,
+  openVibe
 
   // displayView,
   // navigateToView,
@@ -55,7 +57,7 @@ const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
   // hasCodeChanges,
   // onCodeSave,
   // syntaxErrorCount,
-}) => {
+}: React.PropsWithChildren<ResultPreviewHeaderContentProps>)  {
   // const { sessionId: urlSessionId, view: urlView } = useParams();
   // const publishButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -104,6 +106,7 @@ const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
           viewControls={viewControls}
           currentView={currentView} // Use displayView for the currently active button highlight
           onClick={navigateToView}
+          onDoubleClick={(view) => view == 'preview' && openVibe?.()}
         />
       </div>
       {/* Right side - Save and Publish buttons */}

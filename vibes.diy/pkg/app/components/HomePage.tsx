@@ -2,15 +2,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import ChatInput, { ChatInputRef } from "./ChatInput.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
-import { BrutalistCard } from "./vibes/BrutalistCard.js";
-import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
 import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
 import { featuredModels } from "../data/models.js";
 import { Toaster } from "react-hot-toast";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { useNavigate } from "react-router";
-import { VibesButton } from "@vibes.diy/api-pkg";
 import { BuildURI } from "@adviser/cement";
+import { VibesSwitch, BrutalistCard, VibesButton } from "@vibes.diy/base";
 
 export default function HomePage() {
   // Sidebar state

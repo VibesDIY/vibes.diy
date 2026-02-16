@@ -1,28 +1,37 @@
 import { useSearchParams } from "react-router";
-import { PromptState } from "../../routes/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import React from "react";
-import { isBlockEnd } from "@vibes.diy/call-ai-v2";
+import { BlockEndMsg, CodeEndMsg, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
 
-function findApp(promptState: PromptState, _sectionId?: string | null) {
-  for (const block of [...promptState.blocks].reverse()) {
-    for (const msg of [...block.msgs].reverse()) {
+function findApp(promptState: PromptState, sectionId?: string | null) {
+  let lastBlock: BlockEndMsg | undefined;
+  let foundCodeSection: CodeEndMsg | undefined;
+  for (const block of promptState.blocks) {
+    for (const msg of block.msgs) {
+      if (isCodeEnd(msg)) {
+        if (msg.sectionId === sectionId) {
+          foundCodeSection = msg
+        }
+      }
       if (isBlockEnd(msg)) {
-        return msg;
+        if (foundCodeSection) {
+          return msg
+        }
+        lastBlock = msg
       }
     }
   }
-  return undefined;
+  return lastBlock;
 }
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const [searchParams] = useSearchParams();
-  const { svcVars } = useVibeDiy();
+  const { webVars: svcVars } = useVibeDiy();
 
   const sectionId = searchParams.get("sectionId");
   const endBlock = findApp(promptState, sectionId);
-  // console.log(`endblock`, endBlock)
   if (!endBlock || !endBlock.fsRef) {
     return <>No App Found</>;
   }
@@ -32,8 +41,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     .port(myUrl.port)
     .setParam("npmUrl", svcVars.pkgRepos.workspace)
     .setParam("preview", "yes")
-    .toString();
-  console.log(`iframe src=`, previewUrl);
+  console.log(`iframe src=`, previewUrl.asObj())
 
   return (
     <div
@@ -42,7 +50,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     >
       {/* <pre>{JSON.stringify({ sectionId, ends: findApp(promptState)}, null, 2)}</pre> */}
       <iframe
-        src={previewUrl}
+        src={previewUrl.toString()}
         className="relative w-full h-full"
         sandbox="allow-scripts allow-same-origin allow-forms"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}

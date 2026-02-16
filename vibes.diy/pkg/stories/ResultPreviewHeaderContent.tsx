@@ -3,7 +3,7 @@ import ResultPreviewHeaderContent from "../app/components/ResultPreview/ResultPr
 import type { ViewType, ViewControlsType } from "@vibes.diy/prompts";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { BrowserRouter } from "react-router-dom";
-import { PromptState } from "../app/routes/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../app/routes/chat/chat.$userSlug.$appSlug.js";
 
 // Mock state provider for interactive demo
 interface MockedHeaderProps {

@@ -1,7 +1,7 @@
 import React from "react";
 import { useAllGroups } from "../hooks/useAllGroups.js";
 import PublishedVibeCard from "../components/PublishedVibeCard.js";
-import { BrutalistCard } from "../components/vibes/BrutalistCard.js";
+import { BrutalistCard } from "@vibes.diy/base"
 import { useAuth } from "@clerk/clerk-react";
 import LoggedOutView from "../components/LoggedOutView.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";

@@ -7,7 +7,7 @@ import { ResultSet } from "@libsql/client";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
 import { ensureStorage } from "./intern/ensure-storage.js";
 import type { D1Result } from "@cloudflare/workers-types";
-import { defaultFetchPkgVersion } from "./npm-package-version.js";
+import { defaultFetchPkgVersion, ResolveFunction } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
 import { HTTPSendProvider } from "./svc-http-send-provider.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -26,7 +26,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   env: Record<string, string>; // | Env;
   connections: Set<WSSendProvider>;
   netHash(): string;
-  fetchPkgVersion?(pkg: string): Promise<string | undefined>;
+  fetchPkgVersion?: ResolveFunction
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
@@ -119,7 +119,7 @@ export async function createAppContext<T extends VibesSqlite>(
       envVals.VIBES_DIY_STYLES_URL = `http://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/`;
     }
     if (!envVals.WORKSPACE_NPM_URL) {
-      envVals.WORKSPACE_NPM_URL = `http://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/dev-npm/`;
+      envVals.WORKSPACE_NPM_URL = `http://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/vibe-pkg/`;
     }
     if (!envVals.VIBES_DIY_API_URL) {
       envVals.VIBES_DIY_API_URL = `http://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/api/`;
@@ -159,6 +159,7 @@ export async function createAppContext<T extends VibesSqlite>(
         protocol: envVals.VIBES_SVC_PROTOCOL as "https" | "http",
       },
       env: {
+        CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
         FPCLOUD_URL: envVals.FPCLOUD_URL,
         DASHBOARD_URL: envVals.DASHBOARD_URL,
         VIBES_DIY_STYLES_URL: envVals.VIBES_DIY_STYLES_URL,
@@ -198,8 +199,10 @@ export async function createAppContext<T extends VibesSqlite>(
     cache: params.cache,
     connections: params.connections,
     fetchPkgVersion: defaultFetchPkgVersion({
-      fn: params.fetchPkgVersion,
-      cache: params.cache,
+      presetFn: params.fetchPkgVersion,
+      defaults: {
+        cache: params.cache,
+      }
     }),
     tokenApi: await tokenApi(sthis, {
       clockTolerance: 60,

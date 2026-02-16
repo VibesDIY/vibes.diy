@@ -8,7 +8,7 @@ import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { ErrorBoundary as AppErrorBoundary } from "./ErrorBoundary.js";
 import GtmNoScript from "./components/GtmNoScript.js";
-import { VibeDiyProvider, VibeDiySvcVars } from "./vibe-diy-provider.js";
+import { VibeDiyProvider, VibeDiyWebVars } from "./vibe-diy-provider.js";
 import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import "./app.css";
 
@@ -30,7 +30,7 @@ export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPAp
         VIBES_DIY_API_URL: params.vibes.env.VIBES_DIY_API_URL,
       },
       pkgRepos: params.pkgRepos,
-    } satisfies VibeDiySvcVars),
+    } satisfies VibeDiyWebVars),
     {
       headers: {
         "Content-type": "application/json",
@@ -63,12 +63,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const svcVars = useLoaderData<typeof loader>();
-  if (!svcVars) {
+  const webVars = useLoaderData<typeof loader>();
+  if (!webVars) {
     return <></>;
   }
   return (
-    <VibeDiyProvider svcVars={svcVars}>
+    <VibeDiyProvider webVars={webVars}>
       <AppErrorBoundary>
         <ThemeProvider>
           <CookieConsentProvider>

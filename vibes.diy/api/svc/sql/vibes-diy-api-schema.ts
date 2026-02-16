@@ -38,9 +38,12 @@ export const sqlApps = sqliteTable(
     userSlug: text().notNull(), // .references(() => sqlAppSlugBinding.userSlug),
     releaseSeq: int().notNull(), // incremented on each publish
     // appId: text().notNull(), // FP app id
-    fsId: text().notNull(), //CID of filenames+mimetypes+cid
+    fsId: text().notNull(), // CID of filenames+mimetypes+cid
     env: text({ mode: "json" }).notNull(), // serialized env key-values
     fileSystem: text({ mode: "json" }).notNull(), // [FileSystemItem]
+
+    meta: text({ mode: "json" }).notNull(), // [MetaItem]
+
     mode: text().notNull(), // 'publish' | 'dev'
     created: text().notNull(),
   },

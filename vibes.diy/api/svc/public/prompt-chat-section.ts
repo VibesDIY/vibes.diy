@@ -86,7 +86,7 @@ async function appendBlockEvent({
   for (const conn of vctx.connections) {
     for (const tuple of conn.chatIds) {
       if (tuple.chatId === req.chatId) {
-        console.log("promptChatSection: Sending blockSeq", blockSeq, "to chatId:", req.chatId, "via tid:", tuple.tid);
+        // console.log("promptChatSection: Sending blockSeq", blockSeq, "to chatId:", req.chatId, "via tid:", tuple.tid);
         await conn.send(ctx, { ...msgBase, tid: tuple.tid });
       }
     }
@@ -230,8 +230,8 @@ async function handlePromptContext({
     input: sections,
     splitCondition: (secChunk) => secChunk.length >= 20,
     commit: async (secChunk) => {
-      const rSections = await exception2Result(() => vctx.db.insert(sqlChatSections).values(sections).run());
-      console.log("Inserted block section into DB for promptId:", secChunk, rSections);
+      await exception2Result(() => vctx.db.insert(sqlChatSections).values(secChunk).run());
+      // console.log("Inserted block section into DB for promptId:", secChunk, rSections);
     },
   });
 
@@ -439,7 +439,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           if (!isBlockSteamMsg(value)) {
             continue;
           }
-          console.log("Handled prompt context for promptId:", value.type);
+          // console.log("Handled prompt context for promptId:", value.type);
           const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
           if (r.isErr()) {
             return Result.Err(r);

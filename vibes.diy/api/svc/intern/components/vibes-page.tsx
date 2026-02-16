@@ -36,7 +36,7 @@ function MountVibe(props: VibesDiyServCtx) {
 }
 
 function vibesStyles(props: VibesDiyServCtx, path: string) {
-  return BuildURI.from(props.env.VIBES_DIY_STYLES_URL).appendRelative(path).toString();
+  return BuildURI.from(props.svcEnv.VIBES_DIY_STYLES_URL).appendRelative(path).toString();
 }
 
 export function VibePage(props: VibesDiyServCtx) {

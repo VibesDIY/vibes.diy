@@ -15,7 +15,7 @@ export default function CookieBanner() {
   const [hasConsent, setHasConsent] = useState(false);
   const { messageHasBeenSent } = useCookieConsent();
   const { isDarkMode } = useTheme();
-  const { svcVars } = useVibeDiy();
+  const { webVars: svcVars } = useVibeDiy();
 
   // Dynamic import for client-side only
   const [XCookieConsent, setXCookieConsent] = useState<typeof CookieConsent | null>(null);

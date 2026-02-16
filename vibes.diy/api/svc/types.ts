@@ -31,7 +31,7 @@ export interface VibesApiSQLCtx {
   netHash(): string;
   params: VibesFPApiParameters;
   cache: CfCacheIf;
-  fetchPkgVersion(pkg: string): Promise<string | undefined>;
+  fetchPkgVersion(pkg: string): Promise<Result<{ src: string; version: string }>>;
   // waitUntil<T>(promise: Promise<T>): void;
   ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
 

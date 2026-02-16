@@ -5,12 +5,12 @@ import { ClerkProvider, useClerk } from "@clerk/clerk-react";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
 import { BuildURI, KeyedResolvOnce, Result } from "@adviser/cement";
 import { PostHogProvider } from "posthog-js/react";
-import { PkgRepos } from "@vibes.diy/api-types";
+import { PkgRepos  } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
-export interface VibeDiySvcVars {
+export interface VibeDiyWebVars {
   readonly pkgRepos: PkgRepos;
   readonly env: {
     GTM_CONTAINER_ID?: string;
@@ -24,21 +24,21 @@ export interface VibeDiySvcVars {
   };
 }
 
-export interface VibeDiy {
+export interface VibesDiyCtx {
   sthis: SuperThis
   dashApi: FPApiInterface;
   vibeDiyApi: VibeDiyApi;
-  svcVars: VibeDiySvcVars;
+  webVars: VibeDiyWebVars
 }
 
-const realCtx: VibeDiy = {
+const realCtx: VibesDiyCtx = {
   sthis: ensureSuperThis(),
   dashApi: {} as FPApiInterface,
   vibeDiyApi: {} as VibeDiyApi,
-  svcVars: {} as VibeDiySvcVars,
+  webVars: {} as VibesDiyCtx["webVars"],
 };
 
-const VibeDiyContext = createContext<VibeDiy>(realCtx as Readonly<VibeDiy>);
+const VibeDiyContext = createContext<VibesDiyCtx>(realCtx as Readonly<VibesDiyCtx>);
 
 const vibesDiyApis = new KeyedResolvOnce();
 
@@ -57,17 +57,17 @@ const vibesDiyApis = new KeyedResolvOnce();
 //   },
 // };
 
-function LiveCycleVibeDiyProvider({ children, svcVars: vibeDiySvcVars }: { children: React.ReactNode; svcVars: VibeDiySvcVars }) {
+function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibeDiyWebVars }) {
   const clerk = useClerk();
 
-  realCtx.svcVars = vibeDiySvcVars;
+  realCtx.webVars = webVars;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   realCtx.dashApi = clerkDashApi(clerk as any, {
-    apiUrl: realCtx.svcVars.env.DASHBOARD_URL,
+    apiUrl: realCtx.webVars.env.DASHBOARD_URL,
   });
   const apiUrl =
-    realCtx.svcVars.env.VIBES_DIY_API_URL ??
+    realCtx.webVars.env.VIBES_DIY_API_URL ??
     BuildURI.from(window.location.href)
       .protocol(window.location.protocol.startsWith("https") ? "wss" : "ws")
       .pathname("/api")
@@ -97,13 +97,13 @@ function LiveCycleVibeDiyProvider({ children, svcVars: vibeDiySvcVars }: { child
   return <VibeDiyContext.Provider value={realCtx}>{children}</VibeDiyContext.Provider>;
 }
 
-function ConditionalPostHog({ children, svcVars }: { children: React.ReactNode; svcVars: VibeDiySvcVars }) {
-  if (svcVars.env.POSTHOG_KEY && svcVars.env.POSTHOG_HOST) {
+function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; webVars: VibeDiyWebVars }) {
+  if (webVars.env.POSTHOG_KEY && webVars.env.POSTHOG_HOST) {
     return (
       <PostHogProvider
-        apiKey={svcVars.env.POSTHOG_KEY}
+        apiKey={webVars.env.POSTHOG_KEY}
         options={{
-          api_host: svcVars.env.POSTHOG_HOST,
+          api_host: webVars.env.POSTHOG_HOST,
           opt_out_capturing_by_default: true,
         }}
       >
@@ -114,16 +114,16 @@ function ConditionalPostHog({ children, svcVars }: { children: React.ReactNode; 
   return <>{children}</>;
 }
 
-export function VibeDiyProvider({ children, svcVars }: { children: React.ReactNode; svcVars: VibeDiySvcVars }) {
+export function VibeDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibeDiyWebVars }) {
   return (
-    <ClerkProvider publishableKey={svcVars.env.CLERK_PUBLISHABLE_KEY}>
-      <LiveCycleVibeDiyProvider svcVars={svcVars}>
-        <ConditionalPostHog svcVars={svcVars}>{children}</ConditionalPostHog>
+    <ClerkProvider publishableKey={webVars.env.CLERK_PUBLISHABLE_KEY}>
+      <LiveCycleVibeDiyProvider webVars={webVars}>
+        <ConditionalPostHog webVars={webVars}>{children}</ConditionalPostHog>
       </LiveCycleVibeDiyProvider>
     </ClerkProvider>
   );
 }
 
-export function useVibeDiy(): VibeDiy {
+export function useVibeDiy(): VibesDiyCtx {
   return useContext(VibeDiyContext);
 }

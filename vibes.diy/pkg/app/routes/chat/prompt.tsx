@@ -32,7 +32,6 @@ export default function ChatPrompt() {
           // setError(rChat.Err())
           return;
         }
-        console.log("ready to prompt", rChat.Ok().tid, rChat.Ok().chatId);
         const chat = rChat.Ok();
         chat
           .prompt({
@@ -44,6 +43,7 @@ export default function ChatPrompt() {
             ],
           })
           .then((rPrompt) => {
+            // chat.close()
             if (rPrompt.isErr()) {
               console.error("sendPrompt failed", rPrompt.Err());
               return;
