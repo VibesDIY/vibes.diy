@@ -41,8 +41,7 @@ import { VibeMountParams } from "./vibe.js";
 // }
 
 export interface Vibe {
-  readonly mountParams: VibeMountParams
-
+  readonly mountParams: VibeMountParams;
 }
 
 // class DefVibe implements Vibe {
@@ -91,7 +90,7 @@ export interface Vibe {
 // }
 
 const VibeContext = createContext<Vibe>({
-  mountParams: { usrEnv: {}}
+  mountParams: { usrEnv: {} },
 });
 
 export interface VibeContextProviderProps {
@@ -156,7 +155,7 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
   // });
   // const onDatabaseOpen = OnFunc<(_db: Database) => unknown>();
   const ctx: Vibe = {
-    mountParams: { usrEnv: {}}
+    mountParams: { usrEnv: {} },
   };
   // injectDefaultVibesCtx(ctx);
   return <VibeContext.Provider value={ctx}>{children}</VibeContext.Provider>;

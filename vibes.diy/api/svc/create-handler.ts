@@ -26,7 +26,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   env: Record<string, string>; // | Env;
   connections: Set<WSSendProvider>;
   netHash(): string;
-  fetchPkgVersion?: ResolveFunction
+  fetchPkgVersion?: ResolveFunction;
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
@@ -202,7 +202,7 @@ export async function createAppContext<T extends VibesSqlite>(
       presetFn: params.fetchPkgVersion,
       defaults: {
         cache: params.cache,
-      }
+      },
     }),
     tokenApi: await tokenApi(sthis, {
       clockTolerance: 60,

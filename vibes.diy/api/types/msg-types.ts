@@ -10,8 +10,7 @@ export const dashAuthType = type({
   token: "string",
 });
 
-export const vibeUserEnv = type("Record<string, string>")
-
+export const vibeUserEnv = type("Record<string, string>");
 
 export type DashAuthType = typeof dashAuthType.infer;
 
@@ -226,7 +225,6 @@ export function isResEnsureAppSlug(obj: unknown): obj is ResEnsureAppSlug {
   return !(resEnsureAppSlug(obj) instanceof type.errors);
 }
 
-
 export const reqGetByUserSlugAppSlug = type({
   type: "'vibes.diy.req-get-by-user-slug-app-slug'",
   auth: dashAuthType,
@@ -252,8 +250,6 @@ export function isResGetByUserSlugAppSlug(obj: unknown): obj is ResGetByUserSlug
   }
   return !(resGetByUserSlugAppSlug(obj) instanceof type.errors);
 }
-
-
 
 export const msgBase = type({
   tid: "string",

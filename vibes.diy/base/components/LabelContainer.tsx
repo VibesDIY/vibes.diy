@@ -1,6 +1,6 @@
 import React from "react";
 import { LabelContainerStyles } from "./LabelContainer.styles.js";
-import { useMobile } from "../hooks/useMobile.js"
+import { useMobile } from "../hooks/useMobile.js";
 
 export interface LabelContainerProps {
   /** The label text to display on the side of the container */

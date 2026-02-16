@@ -3,9 +3,9 @@ import { FPApiInterface } from "@fireproof/core-types-protocols-dashboard";
 import React, { createContext, useContext } from "react";
 import { ClerkProvider, useClerk } from "@clerk/clerk-react";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
-import { BuildURI, KeyedResolvOnce, Result } from "@adviser/cement";
+import { BuildURI, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
 import { PostHogProvider } from "posthog-js/react";
-import { PkgRepos  } from "@vibes.diy/api-types";
+import { PkgRepos } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 // import { PkgRepos } from "@vibes.diy/api-types";
@@ -25,14 +25,14 @@ export interface VibeDiyWebVars {
 }
 
 export interface VibesDiyCtx {
-  sthis: SuperThis
+  sthis: SuperThis;
   dashApi: FPApiInterface;
   vibeDiyApi: VibeDiyApi;
-  webVars: VibeDiyWebVars
+  webVars: VibeDiyWebVars;
 }
 
 const realCtx: VibesDiyCtx = {
-  sthis: ensureSuperThis(),
+  sthis: {} as SuperThis,
   dashApi: {} as FPApiInterface,
   vibeDiyApi: {} as VibeDiyApi,
   webVars: {} as VibesDiyCtx["webVars"],
@@ -57,10 +57,14 @@ const vibesDiyApis = new KeyedResolvOnce();
 //   },
 // };
 
+const lazySuperThis = Lazy(() => ensureSuperThis());
+
 function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibeDiyWebVars }) {
   const clerk = useClerk();
 
   realCtx.webVars = webVars;
+
+  realCtx.sthis = lazySuperThis();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   realCtx.dashApi = clerkDashApi(clerk as any, {

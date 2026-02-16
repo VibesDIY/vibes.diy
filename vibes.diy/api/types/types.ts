@@ -32,7 +32,7 @@ export type FileSystemItem = typeof fileSystemItem.infer;
 export const MetaScreenShotRef = type({
   type: "'screen-shot-ref'",
   assetId: "string",
-}); 
+});
 
 export type MetaScreenShot = typeof MetaScreenShotRef.infer;
 
@@ -58,7 +58,6 @@ export type MetaItem = typeof MetaItem.infer;
 export function isMetaItem(obj: unknown): obj is MetaItem {
   return !(MetaItem(obj) instanceof type.errors);
 }
-
 
 // export interface ResponseType {
 //   type: "Response";

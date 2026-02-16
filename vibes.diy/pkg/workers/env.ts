@@ -2,6 +2,7 @@ import { D1Database, DurableObjectNamespace, Queue, Fetcher } from "@cloudflare/
 
 export interface Env {
   DB: D1Database;
+  ASSETS: Fetcher;
   ENVIRONMENT: string;
   VIBES_SVC_HOSTNAME_BASE: string;
   // Add more bindings here as needed
@@ -17,5 +18,5 @@ export interface Env {
 
   CHAT_SESSIONS: DurableObjectNamespace;
   VIBES_SERVICE: Queue;
-  BROWSER: Fetcher;
+  // BROWSER: Fetcher;
 }

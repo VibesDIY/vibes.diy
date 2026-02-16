@@ -321,7 +321,7 @@ interface RenderEsmShOpts {
   baseUrl?: string; // default to "https://esm.sh/"
   privateUrl?: string; // default to "https://registry.npmjs.org/"
 }
-export function render_esm_sh(opts: RenderEsmShOpts = {}) {  
+export function render_esm_sh(opts: RenderEsmShOpts = {}) {
   return (pkg: Package, version: { ver: Version; dependencies: Map<string, Dependency> }) => {
     const buildURI = BuildURI.from(opts.baseUrl || "https://esm.sh/");
 
@@ -334,7 +334,9 @@ export function render_esm_sh(opts: RenderEsmShOpts = {}) {
         break;
       default:
         if (version.ver.privateNpm) {
-          return BuildURI.from(opts.privateUrl ?? opts.baseUrl ?? "https://esm.sh/").appendRelative(pkg.givenPkg).toString(); 
+          return BuildURI.from(opts.privateUrl ?? opts.baseUrl ?? "https://esm.sh/")
+            .appendRelative(pkg.givenPkg)
+            .toString();
         }
         break;
     }

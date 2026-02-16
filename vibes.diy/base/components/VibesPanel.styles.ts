@@ -185,5 +185,5 @@ export const VibesPanelStyles = {
     return {
       textAlign: "center",
     };
-  }
+  },
 };

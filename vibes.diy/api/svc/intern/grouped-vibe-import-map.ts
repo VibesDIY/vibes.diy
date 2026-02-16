@@ -1,17 +1,16 @@
-
 export const lockedVersions = {
-      FP: "0.24.10",
-      REACT: "19.2.1",
-      ADVISER_CEMENT: "0.5.22",
-      CBORG: "4.5.8",
-      ZOD: "4.3.6",
-      ARKTYPE: "2.1.29",
-      JOSE: "6.1.3",
-      DOMPURIFY: "3.3.1",
-      MULTIFORMATS: "13.4.2",
-      YAML: "2.8.2",
-      TAILWINDCSS: "4.1.18",
-    }
+  FP: "0.24.10",
+  REACT: "19.2.1",
+  ADVISER_CEMENT: "0.5.22",
+  CBORG: "4.5.8",
+  ZOD: "4.3.6",
+  ARKTYPE: "2.1.29",
+  JOSE: "6.1.3",
+  DOMPURIFY: "3.3.1",
+  MULTIFORMATS: "13.4.2",
+  YAML: "2.8.2",
+  TAILWINDCSS: "4.1.18",
+};
 
 export const lockedGroupsVersions = {
   tailwindcss: {

@@ -13,7 +13,7 @@ export default function ChatPrompt() {
     if (!prompt64) {
       return;
     }
-    const prompt = sthis.txt.base64.decode(prompt64)
+    const prompt = sthis.txt.base64.decode(prompt64);
     vibeDiyApi
       .getTokenClaims()
       .then((rClaims) => {
@@ -53,5 +53,5 @@ export default function ChatPrompt() {
           });
       });
   }, [prompt64]);
-  return <div>Preparing AI - Session</div>
+  return <div>Preparing AI - Session</div>;
 }

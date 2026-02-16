@@ -66,11 +66,11 @@ database_name = "dev-vibes-diy-v2"
 database_id = "105530de-9900-435b-92f4-15347af604f6"
 
 [[env.dev.queues.producers]]
-queue = "vibes-service"
+queue = "vibes-service-dev"
 binding = "VIBES_SERVICE"
 
 [[env.dev.queues.consumers]]
-queue = "vibes-service"
+queue = "vibes-service-dev"
 max_batch_size = 10
 max_batch_timeout = 30
 
@@ -104,11 +104,11 @@ database_name = "prod-vibes-diy-v2"
 database_id = "0f783eae-91cf-49c4-a706-6e4d2498cb4a"
 
 [[env.prod.queues.producers]]
-queue = "vibes-service"
+queue = "vibes-service-prod"
 binding = "VIBES_SERVICE"
 
 [[env.prod.queues.consumers]]
-queue = "vibes-service"
+queue = "vibes-service-prod"
 max_batch_size = 10
 max_batch_timeout = 30
 

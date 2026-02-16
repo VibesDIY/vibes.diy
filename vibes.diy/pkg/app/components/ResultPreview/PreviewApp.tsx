@@ -12,14 +12,14 @@ function findApp(promptState: PromptState, sectionId?: string | null) {
     for (const msg of block.msgs) {
       if (isCodeEnd(msg)) {
         if (msg.sectionId === sectionId) {
-          foundCodeSection = msg
+          foundCodeSection = msg;
         }
       }
       if (isBlockEnd(msg)) {
         if (foundCodeSection) {
-          return msg
+          return msg;
         }
-        lastBlock = msg
+        lastBlock = msg;
       }
     }
   }
@@ -40,8 +40,8 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const previewUrl = BuildURI.from(endBlock.fsRef.entryPointUrl)
     .port(myUrl.port)
     .setParam("npmUrl", svcVars.pkgRepos.workspace)
-    .setParam("preview", "yes")
-  console.log(`iframe src=`, previewUrl.asObj())
+    .setParam("preview", "yes");
+  console.log(`iframe src=`, previewUrl.asObj());
 
   return (
     <div

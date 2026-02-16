@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { BrutalistCard, VibesSwitch } from "@vibes.diy/base"
+import { BrutalistCard, VibesSwitch } from "@vibes.diy/base";
 import SessionSidebar from "./SessionSidebar.js";
 
 interface BrutalistLayoutProps {

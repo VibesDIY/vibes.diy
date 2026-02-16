@@ -442,7 +442,7 @@ class LLMChatImpl implements LLMChat {
   }
   async close(_force = false) {
     this.#writer.close();
-    console.log("LLMChat close called for chatId:", this.chatId, this.tid); 
+    console.log("LLMChat close called for chatId:", this.chatId, this.tid);
     // if (this.#activePromptIds.size === 0 || force) {
     //   console.log("LLMChat close called, active prompts:", this.chatId, this.#activePromptIds.size, "force:", force);
     //   this.#writer.close().catch((err) => {

@@ -84,21 +84,21 @@ export const HiddenMenuWrapperStyles = {
 
   getMenuStyle(): CSSProperties {
     return {
-  position: "fixed",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  zIndex: hiddenMenuTheme.zIndex.menu,
-  color: hiddenMenuTheme.colors.menuText,
-  padding: hiddenMenuTheme.dimensions.padding,
-  boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
-  backgroundColor: hiddenMenuTheme.colors.menuBg,
-  backgroundImage: `
+      position: "fixed",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: hiddenMenuTheme.zIndex.menu,
+      color: hiddenMenuTheme.colors.menuText,
+      padding: hiddenMenuTheme.dimensions.padding,
+      boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
+      backgroundColor: hiddenMenuTheme.colors.menuBg,
+      backgroundImage: `
     linear-gradient(${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px),
     linear-gradient(90deg, ${hiddenMenuTheme.colors.gridLineColor} 1px, transparent 1px)
   `,
-  backgroundSize: hiddenMenuTheme.dimensions.gridSize + " " + hiddenMenuTheme.dimensions.gridSize,
-}
+      backgroundSize: hiddenMenuTheme.dimensions.gridSize + " " + hiddenMenuTheme.dimensions.gridSize,
+    };
   },
 
   getContentStyle(): CSSProperties {
@@ -116,20 +116,21 @@ export const HiddenMenuWrapperStyles = {
       left: 0,
       right: 0,
       bottom: 0,
-  zIndex: hiddenMenuTheme.zIndex.content,
-  transition: isBouncing
-    ? `filter 0.3s ${hiddenMenuTheme.animation.easing}`
-    : `transform ${hiddenMenuTheme.animation.duration} ${hiddenMenuTheme.animation.easing}, filter 0.3s ${hiddenMenuTheme.animation.easing}`,
-  transform: menuOpen ? `translateY(-${menuHeight}px)` : "translateY(0)",
-  overflowY: "auto",
-  borderTopColor: hiddenMenuTheme.colors.menuBg,
-  borderTopWidth: "1px",
-  borderTopStyle: "solid",
-  boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
-  backgroundColor: hiddenMenuTheme.colors.contentBg,
-  animation: isBouncing ? "vibes-drop-to-close 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)" : undefined,
-  willChange: isBouncing ? "transform" : undefined,
-}},
+      zIndex: hiddenMenuTheme.zIndex.content,
+      transition: isBouncing
+        ? `filter 0.3s ${hiddenMenuTheme.animation.easing}`
+        : `transform ${hiddenMenuTheme.animation.duration} ${hiddenMenuTheme.animation.easing}, filter 0.3s ${hiddenMenuTheme.animation.easing}`,
+      transform: menuOpen ? `translateY(-${menuHeight}px)` : "translateY(0)",
+      overflowY: "auto",
+      borderTopColor: hiddenMenuTheme.colors.menuBg,
+      borderTopWidth: "1px",
+      borderTopStyle: "solid",
+      boxShadow: `0 -2px 10px ${hiddenMenuTheme.colors.shadow}`,
+      backgroundColor: hiddenMenuTheme.colors.contentBg,
+      animation: isBouncing ? "vibes-drop-to-close 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)" : undefined,
+      willChange: isBouncing ? "transform" : undefined,
+    };
+  },
 
   getInnerContentWrapperStyle(menuOpen: boolean): CSSProperties {
     return {

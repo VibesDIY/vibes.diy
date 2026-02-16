@@ -82,13 +82,7 @@ export const VibesButtonStyles = {
   /**
    * Get the button style
    */
-  getButtonStyle(
-    variant: string,
-    isHovered: boolean,
-    isActive: boolean,
-    isMobile = false,
-    hasIcon: boolean
-  ): CSSProperties {
+  getButtonStyle(variant: string, isHovered: boolean, isActive: boolean, isMobile = false, hasIcon: boolean): CSSProperties {
     return {
       ...this.getDimensions(isMobile, hasIcon),
       padding: this.getPadding(isMobile),
@@ -108,11 +102,7 @@ export const VibesButtonStyles = {
   /**
    * Merge button style with background/color/border that respect dark mode settings
    */
-  getMergedButtonStyle(
-    baseStyle: CSSProperties,
-    ignoreDarkMode: boolean,
-    customStyle?: CSSProperties
-  ): CSSProperties {
+  getMergedButtonStyle(baseStyle: CSSProperties, ignoreDarkMode: boolean, customStyle?: CSSProperties): CSSProperties {
     return {
       ...baseStyle,
       background: ignoreDarkMode ? "var(--vibes-button-bg)" : "var(--vibes-button-bg-dark-aware)",
@@ -171,5 +161,5 @@ export const VibesButtonStyles = {
       justifyContent: isMobile ? ("flex-start" as const) : ("center" as const),
       width: "100%",
     };
-  }
+  },
 };

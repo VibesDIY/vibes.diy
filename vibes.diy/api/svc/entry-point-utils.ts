@@ -9,7 +9,7 @@ export interface CalcEntryPointUrlParams {
 }
 
 export function calcEntryPointUrl({ hostnameBase, protocol, bindings }: CalcEntryPointUrlParams): string {
-  const hostname = `${bindings.appSlug}--${bindings.userSlug}.${hostnameBase}`;
+  const hostname = `${bindings.appSlug}--${bindings.userSlug}.${hostnameBase.replace(/^\./, "")}`;
   return `${protocol}://${hostname}/~${bindings.fsId}~/`;
 }
 

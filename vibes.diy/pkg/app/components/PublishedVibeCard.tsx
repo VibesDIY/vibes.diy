@@ -1,5 +1,5 @@
 import React, { ReactElement, useEffect, useMemo, useState } from "react";
-import { BrutalistCard } from "@vibes.diy/base"
+import { BrutalistCard } from "@vibes.diy/base";
 import { DocFileMeta } from "@fireproof/use-fireproof";
 import { ImgFile } from "./SessionSidebar/ImgFile.js";
 import { constructVibeIconUrl, constructVibeScreenshotUrl } from "../utils/vibeUrls.js";
