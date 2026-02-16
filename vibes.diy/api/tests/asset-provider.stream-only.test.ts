@@ -16,10 +16,6 @@ async function stream2string(stream: ReadableStream<Uint8Array>): Promise<string
   return new Response(stream).text();
 }
 
-function sizeOf(value: string): number {
-  return to_uint8(value).byteLength;
-}
-
 interface PutRow {
   readonly cid: string;
   readonly url: string;
@@ -40,9 +36,10 @@ class TestImpl {
     this.protocol = protocol;
   }
 
-  async put(stream: ReadableStream<Uint8Array>, size: number): Promise<Result<PutRow, Error>> {
+  async put(stream: ReadableStream<Uint8Array>): Promise<Result<PutRow, Error>> {
     const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
     const cid = `${this.seq++}`;
+    const size = bytes.byteLength;
     this.byCid.set(cid, bytes);
     const url = BuildURI.from(this.protocol + "//").setParam("cid", cid).toString();
     return Result.Ok({ cid, url, size });
@@ -71,36 +68,46 @@ class TestImpl {
   }
 }
 
-class TestSelector {
-  private readonly small: TestImpl;
-  private readonly big: TestImpl;
+class SlowPutImpl {
+  readonly protocol: string;
+  private seq = 0;
+  private inflight = 0;
+  private maxInflight = 0;
 
-  constructor(small: TestImpl, big: TestImpl) {
-    this.small = small;
-    this.big = big;
+  constructor(protocol: string) {
+    this.protocol = protocol;
   }
 
-  select(writeSize: number): TestImpl {
-    switch (true) {
-      case writeSize <= 16:
-        return this.small;
-      default:
-        return this.big;
-    }
+  get peakInflight(): number {
+    return this.maxInflight;
+  }
+
+  async put(stream: ReadableStream<Uint8Array>): Promise<Result<PutRow, Error>> {
+    this.inflight += 1;
+    this.maxInflight = Math.max(this.maxInflight, this.inflight);
+    const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+    await new Promise<void>(function resolveAfterDelay(resolve) {
+      setTimeout(resolve, 10);
+    });
+    this.inflight -= 1;
+    const cid = `${this.seq++}`;
+    const url = BuildURI.from(this.protocol + "//").setParam("cid", cid).toString();
+    return Result.Ok({ cid, url, size: bytes.byteLength });
+  }
+
+  async get(_url: string): Promise<Result<Option<GetRow>, Error>> {
+    return Result.Ok(Option.None());
   }
 }
 
 describe("AssetProvider", () => {
-  it("routes by size and round-trips stream content", async () => {
-    const ti1 = new TestImpl("small:");
-    const ti2 = new TestImpl("big:");
-    const selector = new TestSelector(ti1, ti2);
-
-    const ap = new AssetProvider([ti1, ti2], selector);
+  it("stores and round-trips stream content", async () => {
+    const backend = new TestImpl("small:");
+    const ap = new AssetProvider([backend]);
 
     const putResults = await ap.puts([
-      { stream: string2stream("smallString"), size: sizeOf("smallString") },
-      { stream: string2stream("longString........."), size: sizeOf("longString.........") },
+      { stream: string2stream("smallString") },
+      { stream: string2stream("longString.........") },
     ]);
 
     expect(putResults).toHaveLength(2);
@@ -111,10 +118,10 @@ describe("AssetProvider", () => {
     const put1 = putResults[1].Ok();
     expect(URI.from(put0.url).protocol).toBe("small:");
     expect(URI.from(put0.url).getParam("cid")).toBe(put0.cid);
-    expect(URI.from(put1.url).protocol).toBe("big:");
+    expect(URI.from(put1.url).protocol).toBe("small:");
     expect(URI.from(put1.url).getParam("cid")).toBe(put1.cid);
-    expect(put0.size).toBe(sizeOf("smallString"));
-    expect(put1.size).toBe(sizeOf("longString........."));
+    expect(put0.size).toBe(to_uint8("smallString").byteLength);
+    expect(put1.size).toBe(to_uint8("longString.........").byteLength);
 
     const getResults = await ap.gets([put0.url, put1.url]);
     expect(getResults).toHaveLength(2);
@@ -130,5 +137,21 @@ describe("AssetProvider", () => {
     expect(get1.cid).toBe(put1.cid);
     expect(await stream2string(get0.stream)).toBe("smallString");
     expect(await stream2string(get1.stream)).toBe("longString.........");
+  });
+
+  it("runs puts in parallel", async () => {
+    const backend = new SlowPutImpl("small:");
+    const ap = new AssetProvider([backend]);
+
+    const putResults = await ap.puts([
+      { stream: string2stream("one") },
+      { stream: string2stream("two") },
+      { stream: string2stream("three") },
+    ]);
+
+    expect(putResults[0].isOk()).toBe(true);
+    expect(putResults[1].isOk()).toBe(true);
+    expect(putResults[2].isOk()).toBe(true);
+    expect(backend.peakInflight).toBeGreaterThan(1);
   });
 });
