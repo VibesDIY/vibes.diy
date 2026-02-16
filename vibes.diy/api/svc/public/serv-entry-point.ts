@@ -12,11 +12,11 @@ import {
 } from "@adviser/cement";
 import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { sqlApps, sqlAssets } from "../sql/vibes-diy-api-schema.js";
+import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { renderVibes } from "../intern/render-vibes.js";
+import { isReadableStreamContent, renderVibes } from "../intern/render-vibes.js";
 import { parse } from "cookie";
 
 function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
@@ -47,7 +47,7 @@ export async function fetchContent(
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>,
   item: FileSystemItem,
   iheaders?: HeadersInit
-): Promise<Result<Uint8Array>> {
+): Promise<Result<Option<Uint8Array | ReadableStream<Uint8Array>>>> {
   const headers: HeadersInit = {
     ...iheaders,
     "X-Vibes-Asset-Id": item.assetId,
@@ -70,7 +70,7 @@ export async function fetchContent(
           ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), arrayBuffer, item, headers)
         );
       }
-      return Result.Ok(new Uint8Array(arrayBuffer));
+      return Result.Ok(Option.Some(new Uint8Array(arrayBuffer)));
     }
     if (matched[1]) {
       const clone = matched[1].clone();
@@ -78,37 +78,34 @@ export async function fetchContent(
       if (!matched[0]) {
         await vctx.cache.put(...pairReqRes(assetCacheCidUrl, arrayBuffer, item, headers));
       }
-      return Result.Ok(new Uint8Array(arrayBuffer));
+      return Result.Ok(Option.Some(new Uint8Array(arrayBuffer)));
     }
   }
-  const assetURI = URI.from(item.assetURI);
-  switch (assetURI.protocol) {
-    case "sql:":
-      {
-        const asset = await vctx.db.select().from(sqlAssets).where(eq(sqlAssets.assetId, item.assetId)).get();
-        if (!asset) {
-          return Result.Err(new Error(`Asset not found: ${item.assetId}`));
-        }
-        // sqlite returns a blob symetric to the input is always something like a Uint8Array
-        // we should have a better method to coerce unknown to Uint8Array --- @adviser/cement issue
-        // inject into cache for assert lookups
-        await Promise.all([
-          vctx.cache.put(
-            ...pairReqRes(
-              BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(),
-              asset.content as never,
-              item,
-              headers
-            )
-          ),
-          vctx.cache.put(...pairReqRes(assetCacheCidUrl, asset.content as never, item, headers)),
-        ]);
-        return Result.Ok(asset.content as Uint8Array);
-      }
-      break;
-    default:
-      return Result.Err(new Error(`Unsupported assetURI protocol: ${assetURI.protocol}`));
+  const rGetResults = await vctx.assetProvider.gets([item.assetURI]);
+  if (rGetResults.isErr()) {
+    return Result.Err(rGetResults.Err());
   }
+  const getResult = rGetResults.Ok()[0];
+  if (!getResult || getResult.isErr()) {
+    return Result.Err(getResult?.Err() ?? new Error(`Missing asset provider result for ${item.assetURI}`));
+  }
+  const maybeStream = getResult.Ok();
+  if (maybeStream.IsNone()) {
+    return Result.Ok(Option.None());
+  }
+
+  const content = maybeStream.unwrap();
+  if (isReadableStreamContent(content)) {
+    return Result.Ok(Option.Some(content));
+  }
+
+  await Promise.all([
+    vctx.cache.put(
+      ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), content, item, headers)
+    ),
+    vctx.cache.put(...pairReqRes(assetCacheCidUrl, content, item, headers)),
+  ]);
+  return Result.Ok(Option.Some(content));
 }
 
 async function renderFromFs(
@@ -129,7 +126,19 @@ async function renderFromFs(
       } satisfies HttpResponseJsonType);
       return Result.Ok(EventoResult.Stop);
     }
-    const content = rContent.unwrap();
+    const maybeContent = rContent.Ok();
+    if (maybeContent.IsNone()) {
+      await ctx.send.send(ctx, {
+        type: "http.Response.JSON",
+        status: 404,
+        json: {
+          type: "error",
+          message: `Asset not found for ${ctx.validated.path}`,
+        },
+      } satisfies HttpResponseJsonType);
+      return Result.Ok(EventoResult.Stop);
+    }
+    const content = maybeContent.unwrap();
     await ctx.send.send(ctx, {
       type: "http.Response.Body",
       headers: {

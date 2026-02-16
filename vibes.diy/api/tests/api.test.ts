@@ -9,6 +9,7 @@ import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-type
 import { CFInject } from "@vibes.diy/api-svc/cf-serve.js";
 import { drizzle } from "drizzle-orm/libsql";
 import { isPromptBlockEnd, LLMRequest } from "@vibes.diy/call-ai-v2";
+import type { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 
 const noopCache = {
   put: async (_req: Request, _res: Response) => {
@@ -111,13 +112,19 @@ describe("VibesDiyApi", () => {
 
     const fetchPair = TestFetchPair.create();
     const wsPair = TestWSPair.create();
-    const appCtx = await createAppContext({
+    const connections = new Set<WSSendProvider>();
+    const rAppCtx = await createAppContext({
       netHash: () => "test-hash",
-      connections: new Set(),
+      connections,
       env,
       db: null as unknown as VibesSqlite,
       cache: noopCache,
     });
+    expect(rAppCtx.isOk()).toBe(true);
+    if (rAppCtx.isErr()) {
+      return;
+    }
+    const appCtx = rAppCtx.Ok().appCtx;
     fetchPair.server.onServe((req: Request) => {
       // console.log("fetchPair.server received request:", req.url);
       return cfServe(
@@ -126,10 +133,13 @@ describe("VibesDiyApi", () => {
           appCtx,
           cache: noopCache,
           drizzle: drizzleDB,
-          webSocketPair: () => ({
-            client: wsPair.p1,
-            server: wsPair.p2,
-          }),
+          webSocket: {
+            connections,
+            webSocketPair: () => ({
+              client: wsPair.p1,
+              server: wsPair.p2,
+            }),
+          },
         } as unknown as ExecutionContext & CFInject
       ) as unknown as Promise<Response>;
     });
@@ -154,10 +164,13 @@ describe("VibesDiyApi", () => {
           }
           return new Response("", { status: 200 });
         },
-        webSocketPair: () => ({
-          client: wsPair.p1,
-          server: wsPair.p2,
-        }),
+        webSocket: {
+          connections,
+          webSocketPair: () => ({
+            client: wsPair.p1,
+            server: wsPair.p2,
+          }),
+        },
       } as unknown as ExecutionContext & CFInject
     );
 
@@ -270,7 +283,7 @@ describe("VibesDiyApi", () => {
         fileSystem: [
           {
             assetId: "zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
-            assetURI: "sql://Assets/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
+            assetURI: "sql://?cid=zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
             fileName: "/App.jsx",
             mimeType: "text/jsx",
             size: expect.any(Number),
@@ -281,7 +294,7 @@ describe("VibesDiyApi", () => {
           },
           {
             assetId: "zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
-            assetURI: "sql://Assets/zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
+            assetURI: "sql://?cid=zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
             fileName: "/~~transformed~~/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
             mimeType: "application/javascript",
             size: 276,
@@ -293,7 +306,7 @@ describe("VibesDiyApi", () => {
           },
           {
             assetId: "z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
-            assetURI: "sql://Assets/z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
+            assetURI: "sql://?cid=z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
             fileName: "/~~calculated~~/import-map.json",
             mimeType: "application/importmap+json",
             size: 6822,

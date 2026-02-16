@@ -3,9 +3,10 @@ import { FPApiToken } from "@fireproof/core-types-protocols-dashboard";
 import { VibesSqlite } from "./create-handler.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
-import { Logger, Result } from "@adviser/cement";
+import { Logger } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { LLMHeaders, VibesFPApiParameters } from "@vibes.diy/api-types";
+import type { AssetProvider } from "./intern/asset-provider.js";
 
 export interface StorageResult {
   cid: string;
@@ -33,7 +34,6 @@ export interface VibesApiSQLCtx {
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<string | undefined>;
   // waitUntil<T>(promise: Promise<T>): void;
-  ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
-
+  assetProvider: AssetProvider;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
 }

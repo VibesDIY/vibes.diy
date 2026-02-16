@@ -10,12 +10,13 @@ import {
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
-import { VibesApiSQLCtx } from "../types.js";
+import { VibesApiSQLCtx, StorageResult } from "../types.js";
 import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { calcCid } from "../intern/ensure-storage.js";
+import { collectSuccessfulAssetPutRows } from "../intern/asset-provider.js";
 
 // ReqWithVerifiedAuth<ReqEnsureAppSlug>
 export async function ensureAppSlugItem(
@@ -37,6 +38,7 @@ export async function ensureAppSlugItem(
       cid: string;
       data: Uint8Array;
     };
+    size: number;
   }[] = [];
   for (const fsItem of req.fileSystem) {
     switch (fsItem.type) {
@@ -44,9 +46,11 @@ export async function ensureAppSlugItem(
       case "str-asset-block":
       case "uint8-asset-block":
         {
+          const assetOp = await calcCid(vctx, fsItem.content);
           writeAppSlugsOp.push({
             fsItem,
-            assetOp: await calcCid(vctx, fsItem.content),
+            assetOp,
+            size: assetOp.data.byteLength,
           });
         }
         break;
@@ -55,31 +59,36 @@ export async function ensureAppSlugItem(
       case "str-asset-ref":
       default:
         // needs to rewind content from ref
-        return Result.Err(`unsupported file system item type: ${fsItem.type}`);
+        return Result.Err(new Error(`unsupported file system item type: ${fsItem.type}`));
     }
   }
-  const rStorageResult = await vctx.ensureStorage(...writeAppSlugsOp.map((op) => op.assetOp));
-  if (rStorageResult.isErr()) {
-    return Result.Err(rStorageResult);
+  const rPutResults = await vctx.assetProvider.puts(writeAppSlugsOp.map((op) => op.assetOp));
+  if (rPutResults.isErr()) {
+    return Result.Err(rPutResults.Err());
   }
-  if (rStorageResult.Ok().length !== writeAppSlugsOp.length) {
-    return Result.Err("storage result count mismatch");
+  const putResults = rPutResults.Ok();
+  const rRows = collectSuccessfulAssetPutRows(writeAppSlugsOp, putResults, (op) => op.assetOp.cid);
+  if (rRows.isErr()) {
+    return Result.Err(rRows.Err());
   }
-  const storageResults = rStorageResult.Ok();
-  const fullFileSystem = writeAppSlugsOp.map((op, idx) => ({
+  const rows = rRows.Ok();
+
+  const now = new Date();
+  const fullFileSystem: { vibeFileItem: VibeFile; storage: StorageResult }[] = rows.map(({ input: op, result }) => ({
     vibeFileItem: op.fsItem,
-    storage: storageResults[idx],
+    storage: {
+      cid: op.assetOp.cid,
+      getURL: result.value.url,
+      mode: "created" as const,
+      created: now,
+      size: op.size,
+    },
   }));
   const res = await ensureApps(vctx, req, rAppSlugBinding.Ok(), fullFileSystem);
   if (res.isErr()) {
     return Result.Err(res);
   }
-  let wrapperUrl: string;
-  if (req.mode === "production") {
-    wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
-  } else {
-    wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
-  }
+  const wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
   const entryPointUrl = calcEntryPointUrl({
     ...vctx.params.vibes.svc,
     bindings: {

@@ -9,6 +9,7 @@ import { and, eq, or } from "drizzle-orm";
 import mime from "mime";
 import { transform } from "sucrase";
 import { calcCid } from "./ensure-storage.js";
+import { collectSuccessfulAssetPutRows } from "./asset-provider.js";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
 import { StorageResult, VibesApiSQLCtx } from "../types.js";
 
@@ -32,7 +33,12 @@ async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug:
   return Result.Ok(userApps.filter((app) => app.appSlug === appSlug).reduce((max, app) => Math.max(app.releaseSeq, max), 0));
 }
 
-async function computeFsId(env: Record<string, string>, fs: { vibeFileItem: VibeFile; storage: StorageResult }[]): Promise<string> {
+interface StoredVibeFile {
+  vibeFileItem: VibeFile;
+  storage: StorageResult;
+}
+
+async function computeFsId(env: Record<string, string>, fs: StoredVibeFile[]): Promise<string> {
   // Better don't change this code it's used to generate a stable fsId
   const fsIdStr = [
     fs
@@ -232,45 +238,50 @@ async function toFileSystemItems(
   const transformed = await transformJSXAndImports(ctx, givenFsItems);
   transformed.push(...(await createImportMap(ctx, mode, transformed)));
 
-  const rStore = await ctx.ensureStorage(
-    ...transformed
-      .filter((item) => item.prepareStorage)
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      .map((item) => item.prepareStorage!)
-  );
-  if (rStore.isErr()) {
-    return Result.Err(rStore);
+  const toPut = transformed
+    .filter((item) => item.prepareStorage)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    .map((item) => item.prepareStorage!);
+  const rPutResults = await ctx.assetProvider.puts(toPut);
+  if (rPutResults.isErr()) {
+    return Result.Err(rPutResults.Err());
   }
-  const storeMap = rStore.Ok().reduce((acc, item) => {
-    acc.set(item.cid, item);
-    return acc;
-  }, new Map<string, StorageResult>());
+  const putResults = rPutResults.Ok();
+  const rRows = collectSuccessfulAssetPutRows(toPut, putResults, (item) => item.cid);
+  if (rRows.isErr()) {
+    return Result.Err(rRows.Err());
+  }
+  const rows = rRows.Ok();
 
-  const assetUris = transformed.map((item) => {
-    if (!item.prepareStorage) {
-      return item;
+  const fsItems: FileSystemItem[] = [];
+  let putIndex = 0;
+  for (const item of transformed) {
+    if (item.prepareStorage === undefined) {
+      fsItems.push(item.fsItem);
+      continue;
     }
-    const storeItem = storeMap.get(item.prepareStorage.cid);
-    if (!storeItem) {
-      throw new Error("internal error: storage result not found");
+    const row = rows[putIndex];
+    if (row === undefined) {
+      return Result.Err(new Error(`internal error: storage result not found at index=${putIndex}`));
     }
-    return {
-      ...item,
-      fsItem: {
-        ...item.fsItem,
-        assetURI: storeItem.getURL,
-        size: storeItem.size,
-      },
-    };
-  });
-  return Result.Ok(assetUris.map((item) => item.fsItem));
+    fsItems.push({
+      ...item.fsItem,
+      assetURI: row.result.value.url,
+      size: row.input.data.byteLength,
+    });
+    putIndex += 1;
+  }
+  if (putIndex !== rows.length) {
+    return Result.Err(new Error(`internal error: consumed ${putIndex} put results for ${rows.length} prepared items`));
+  }
+  return Result.Ok(fsItems);
 }
 
 export async function ensureApps(
   ctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqEnsureAppSlug>,
   binding: AppSlugBinding,
-  fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
+  fs: StoredVibeFile[]
 ): Promise<Result<Omit<ResEnsureAppSlug, "type">>> {
   const fsId = await computeFsId(req.env ?? {}, fs);
   const exist = await ctx.db

@@ -1,4 +1,12 @@
-import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result, BuildURI } from "@adviser/cement";
+import {
+  HandleTriggerCtx,
+  Result,
+  EventoResultType,
+  EventoResult,
+  exception2Result,
+  BuildURI,
+  stream2array,
+} from "@adviser/cement";
 import {
   FileSystemItem,
   HttpResponseBodyType,
@@ -28,9 +36,35 @@ export interface RenderVibesOpts {
   };
 }
 
+export function isReadableStreamContent(
+  content: Uint8Array | ReadableStream<Uint8Array>
+): content is ReadableStream<Uint8Array> {
+  return "getReader" in content;
+}
+
+/**
+ * Converts content (either Uint8Array or ReadableStream) to Uint8Array.
+ * Handles both SQL assets (already buffered) and R2 assets (streamed).
+ */
+export async function bufferContent(content: ReadableStream<Uint8Array> | Uint8Array): Promise<Uint8Array> {
+  if (isReadableStreamContent(content)) {
+    // Buffer the stream
+    const chunks = await stream2array(content);
+    const totalLen = chunks.reduce((n, c) => n + c.length, 0);
+    const buffered = new Uint8Array(totalLen);
+    let offset = 0;
+    for (const c of chunks) {
+      buffered.set(c, offset);
+      offset += c.length;
+    }
+    return buffered;
+  }
+  return content;
+}
+
 export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts): Promise<Result<EventoResultType>> {
   const fsIportMap = fsItems.find((i) => i.transform?.type === "import-map");
-  if (!fsIportMap) {
+  if (fsIportMap === undefined) {
     return Result.Err(new Error("No import-map found in file system"));
   }
   const rImportMapUint8 = await fetchContent(ctx, fsIportMap);
@@ -38,7 +72,16 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
     return Result.Err(rImportMapUint8);
   }
   const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-  const genImport = vibesImportMap(JSON.parse(vctx.sthis.txt.decode(rImportMapUint8.Ok())));
+  const maybeContent = rImportMapUint8.Ok();
+  if (maybeContent.IsNone()) {
+    return Result.Err("Import map content not found");
+  }
+  const content = maybeContent.unwrap();
+
+  // Handle both Uint8Array (SQL) and ReadableStream (R2)
+  const uint8Data = await bufferContent(content);
+
+  const genImport = vibesImportMap(JSON.parse(vctx.sthis.txt.decode(uint8Data)));
   if (genImport instanceof type.errors) {
     return Result.Err(genImportMap.toLocaleString());
   }

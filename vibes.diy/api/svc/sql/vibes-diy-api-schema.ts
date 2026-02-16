@@ -3,7 +3,7 @@ import { int, sqliteTable, text, blob, primaryKey, uniqueIndex, index } from "dr
 
 // could be put on R2
 export const sqlAssets = sqliteTable("Assets", {
-  assetId: text().primaryKey(), // sql://Assets.assetId (CID of content)
+  assetId: text().primaryKey(), // CID of content, served as sql://?cid={assetId}
   content: blob().notNull(), // actual code content
   created: text().notNull(),
 });

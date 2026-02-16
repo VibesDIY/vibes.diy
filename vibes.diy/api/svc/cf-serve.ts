@@ -11,9 +11,9 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { Env } from "./cf-env.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { AppContext, Lazy } from "@adviser/cement";
+import { AppContext, Lazy, Result } from "@adviser/cement";
 import { hashObjectSync } from "@fireproof/core-runtime";
-import { CfCacheIf } from "./types.js";
+import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
 
 // declare global {
 //   class WebSocketPair {
@@ -73,7 +73,11 @@ function netHashFn({
   });
 }
 
-export async function cfServeAppCtx(request: CFRequest, env: Env, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
+export async function cfServeAppCtx(
+  request: CFRequest,
+  env: Env,
+  ctx: ExecutionContext & Omit<CFInject, "appCtx">
+): Promise<Result<{ appCtx: AppContext; vibesCtx: VibesApiSQLCtx }>> {
   const netHash = Lazy(() => netHashFn(request.cf as CfProperties));
   return createAppContext({
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
@@ -83,6 +87,7 @@ export async function cfServeAppCtx(request: CFRequest, env: Env, ctx: Execution
     // to find clients which try to steal tokens
     netHash,
     llmRequest: ctx.llmRequest,
+    r2Bucket: env.ASSETS_BUCKET,
     env: env as unknown as Record<string, string>,
   });
 }

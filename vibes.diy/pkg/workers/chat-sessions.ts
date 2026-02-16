@@ -11,10 +11,10 @@ import {
 import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { Env } from "./env.js";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
-import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
+import { CFInjectMutable } from "@vibes.diy/api-svc/cf-serve.js";
+import { withWorkerBoundaryContext, workerInternalErrorResponse } from "./boundary.js";
 
 declare const caches: CacheStorage;
-declare const Response: typeof CFResponse;
 // declare const DurableObject: typeof DurableObject;
 declare const WebSocketPair: typeof WebSocketPairType;
 
@@ -48,7 +48,12 @@ export class ChatSessions implements DurableObject {
       connections: this.connections,
       webSocketPair: cfWebSocketPair,
     };
-    cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx)).appCtx;
-    return cfServe(request, cctx);
+    return withWorkerBoundaryContext({
+      request,
+      env: this.env,
+      cctx,
+      onError: workerInternalErrorResponse,
+      onContext: async () => cfServe(request, cctx),
+    });
   }
 }

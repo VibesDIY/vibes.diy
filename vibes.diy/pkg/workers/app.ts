@@ -13,7 +13,12 @@ import { createRequestHandler } from "react-router";
 import * as serverBuild from "virtual:react-router/server-build";
 import { Env } from "./env.js";
 import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
-import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
+import { CFInjectMutable } from "@vibes.diy/api-svc/cf-serve.js";
+import {
+  cloneWebResponseAsCfResponse,
+  withWorkerBoundaryContext,
+  workerInternalErrorResponse,
+} from "./boundary.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 // import { cfServe } from "@vibes.diy/api-svc";
@@ -52,18 +57,21 @@ export default {
     const cctx = ctx as unknown as ExecutionContext & CFInjectMutable;
     // cctx.cache = new NoCache() as unknown as CfCacheIf; // Disable caching for now - can implement custom caching logic in the future if needed
     cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache
-    const cfCtx = await cfServeAppCtx(request, env, cctx);
-    cctx.appCtx = cfCtx.appCtx;
+    return withWorkerBoundaryContext({
+      request,
+      env,
+      cctx,
+      onError: workerInternalErrorResponse,
+      onContext: async (cfCtx) => {
+        if (url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE)) {
+          return cfServe(request, cctx);
+        }
 
-    if (url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE)) {
-      return cfServe(request, cctx);
-    }
-
-    // console.log("Handling request for", cfCtx.vibesCtx.params);
-
-    // Delegate to React Router for SSR
-    return requestHandler(request as unknown as Parameters<typeof requestHandler>[0], {
-      vibeDiyAppParams: cfCtx.vibesCtx.params,
-    }) as unknown as CFResponse;
+        // Delegate to React Router for SSR
+        // In Cloudflare Workers, CFRequest is the runtime Request object.
+        const response = await requestHandler(request, { vibeDiyAppParams: cfCtx.vibesCtx.params });
+        return await cloneWebResponseAsCfResponse(response);
+      },
+    });
   },
 } satisfies ExportedHandler<Env>;

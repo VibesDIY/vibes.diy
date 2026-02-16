@@ -5,7 +5,8 @@ import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { ResultSet } from "@libsql/client";
 // import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
-import { ensureStorage } from "./intern/ensure-storage.js";
+import { createAssetProviderFromEnv } from "./intern/asset-provider.js";
+import type { R2BucketIf } from "./intern/asset-provider.js";
 import type { D1Result } from "@cloudflare/workers-types";
 import { defaultFetchPkgVersion } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
@@ -24,6 +25,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   logger?: Logger;
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
+  r2Bucket?: R2BucketIf;
   connections: Set<WSSendProvider>;
   netHash(): string;
   fetchPkgVersion?(pkg: string): Promise<string | undefined>;
@@ -39,7 +41,7 @@ export interface SVCParam {
 // BaseSQLiteDatabase<'async', ResultSet, TSchema>
 export async function createAppContext<T extends VibesSqlite>(
   params: CreateHandlerParams<T>
-): Promise<{ appCtx: AppContext; vibesCtx: VibesApiSQLCtx }> {
+): Promise<Result<{ appCtx: AppContext; vibesCtx: VibesApiSQLCtx }>> {
   // const stream = new utils.ConsoleWriterStream();
   const sthis = ensureSuperThis({
     logger: new LoggerImpl(),
@@ -78,6 +80,7 @@ export async function createAppContext<T extends VibesSqlite>(
 
     VIBES_SVC_HOSTNAME_BASE: param.OPTIONAL,
     VIBES_SVC_PROTOCOL: "https",
+    AS_SETUP: "sqlite://local",
 
     GTM_CONTAINER_ID: param.OPTIONAL,
     POSTHOG_KEY: param.OPTIONAL,
@@ -190,6 +193,18 @@ export async function createAppContext<T extends VibesSqlite>(
     // },
   };
 
+  const rAssetProvider = createAssetProviderFromEnv(
+    params.db,
+    {
+      ...(params.env as Record<string, string>),
+      AS_SETUP: envVals.AS_SETUP,
+    },
+    params.r2Bucket
+  );
+  if (rAssetProvider.isErr()) {
+    return rAssetProvider;
+  }
+
   const vibesCtx = {
     sthis,
     logger: params.logger ?? ensureLogger(sthis, "VibesApiSQLCtx"),
@@ -205,7 +220,7 @@ export async function createAppContext<T extends VibesSqlite>(
       clockTolerance: 60,
       deviceIdCA: rDeviceIdCA.Ok(),
     }),
-    ensureStorage: ensureStorage(params.db),
+    assetProvider: rAssetProvider.Ok(),
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,
       apiKey: envVals.LLM_BACKEND_API_KEY,
@@ -214,10 +229,10 @@ export async function createAppContext<T extends VibesSqlite>(
     params: svcParams,
   } satisfies VibesApiSQLCtx;
 
-  return {
+  return Result.Ok({
     appCtx: new AppContext().set("vibesApiCtx", vibesCtx),
     vibesCtx,
-  };
+  });
 }
 
 export async function processRequest(ctx: AppContext, req: Request): Promise<Response> {
