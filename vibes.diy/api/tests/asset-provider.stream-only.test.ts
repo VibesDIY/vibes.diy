@@ -105,10 +105,12 @@ describe("AssetProvider", () => {
     const backend = new TestImpl("small:");
     const ap = new AssetProvider([backend]);
 
-    const putResults = await ap.puts([
+    const rPutResults = await ap.puts([
       { stream: string2stream("smallString") },
       { stream: string2stream("longString.........") },
     ]);
+    expect(rPutResults.isOk()).toBe(true);
+    const putResults = rPutResults.Ok();
 
     expect(putResults).toHaveLength(2);
     expect(putResults[0].isOk()).toBe(true);
@@ -123,7 +125,9 @@ describe("AssetProvider", () => {
     expect(put0.size).toBe(to_uint8("smallString").byteLength);
     expect(put1.size).toBe(to_uint8("longString.........").byteLength);
 
-    const getResults = await ap.gets([put0.url, put1.url]);
+    const rGetResults = await ap.gets([put0.url, put1.url]);
+    expect(rGetResults.isOk()).toBe(true);
+    const getResults = rGetResults.Ok();
     expect(getResults).toHaveLength(2);
     expect(getResults[0].isOk()).toBe(true);
     expect(getResults[1].isOk()).toBe(true);
@@ -143,15 +147,29 @@ describe("AssetProvider", () => {
     const backend = new SlowPutImpl("small:");
     const ap = new AssetProvider([backend]);
 
-    const putResults = await ap.puts([
+    const rPutResults = await ap.puts([
       { stream: string2stream("one") },
       { stream: string2stream("two") },
       { stream: string2stream("three") },
     ]);
+    expect(rPutResults.isOk()).toBe(true);
+    const putResults = rPutResults.Ok();
 
     expect(putResults[0].isOk()).toBe(true);
     expect(putResults[1].isOk()).toBe(true);
     expect(putResults[2].isOk()).toBe(true);
     expect(backend.peakInflight).toBeGreaterThan(1);
+  });
+
+  it("returns outer error when no backend configured", async () => {
+    const ap = new AssetProvider([]);
+
+    const rPutResults = await ap.puts([{ stream: string2stream("one") }]);
+    expect(rPutResults.isErr()).toBe(true);
+    expect(rPutResults.Err().message).toContain("no asset backend configured");
+
+    const rGetResults = await ap.gets(["small://?cid=1"]);
+    expect(rGetResults.isErr()).toBe(true);
+    expect(rGetResults.Err().message).toContain("no asset backend configured");
   });
 });

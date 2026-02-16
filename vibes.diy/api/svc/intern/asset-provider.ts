@@ -1,4 +1,4 @@
-import { Option, Result, URI } from "@adviser/cement";
+import { exception2Result, Option, Result, URI } from "@adviser/cement";
 
 export interface AssetPutRow {
   readonly cid: string;
@@ -21,6 +21,9 @@ export interface AssetBackend {
   get(url: string): Promise<Result<Option<AssetGetRow>, Error>>;
 }
 
+export type AssetPutItemResult = Result<AssetPutRow, Error>;
+export type AssetGetItemResult = Result<Option<AssetGetRow>, Error>;
+
 export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
   private readonly backendByProtocol: Map<string, TBackend>;
   private readonly putBackend: TBackend | undefined;
@@ -38,21 +41,24 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
     this.putBackend = putBackend;
   }
 
-  async puts(items: readonly AssetPutInput[]): Promise<Result<AssetPutRow, Error>[]> {
+  async puts(items: readonly AssetPutInput[]): Promise<Result<AssetPutItemResult[], Error>> {
     if (this.putBackend === undefined) {
-      return items.map(function noBackend() {
-        return Result.Err(new Error("no asset backend configured"));
-      });
+      return Result.Err(new Error("no asset backend configured"));
     }
-    const pending: Promise<Result<AssetPutRow, Error>>[] = [];
+    const pending: Promise<AssetPutItemResult>[] = [];
     for (const item of items) {
       pending.push(this.putBackend.put(item.stream));
     }
-    return Promise.all(pending);
+    return exception2Result(function waitForAllPuts() {
+      return Promise.all(pending);
+    });
   }
 
-  async gets(urls: readonly string[]): Promise<Result<Option<AssetGetRow>, Error>[]> {
-    const pending: Promise<Result<Option<AssetGetRow>, Error>>[] = [];
+  async gets(urls: readonly string[]): Promise<Result<AssetGetItemResult[], Error>> {
+    if (this.backendByProtocol.size === 0 && urls.length > 0) {
+      return Result.Err(new Error("no asset backend configured"));
+    }
+    const pending: Promise<AssetGetItemResult>[] = [];
     for (const url of urls) {
       const protocol = URI.from(url).protocol;
       const backend = this.backendByProtocol.get(protocol);
@@ -62,6 +68,8 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
       }
       pending.push(backend.get(url));
     }
-    return Promise.all(pending);
+    return exception2Result(function waitForAllGets() {
+      return Promise.all(pending);
+    });
   }
 }
