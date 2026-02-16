@@ -13,7 +13,6 @@ packages:
   - "vibes.diy/pkg"
   - "vibes.diy/vibe/runtime"
   - "vibes.diy/api/*"
-  - "vibes.diy/tempo"
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"
   - "vibes.diy/failback-homepage"

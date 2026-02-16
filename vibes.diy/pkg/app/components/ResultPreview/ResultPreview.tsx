@@ -6,11 +6,7 @@ import CodeEditor from "./CodeEditor.js";
 import { PreviewApp } from "./PreviewApp.js";
 // import { useTheme } from "../../contexts/ThemeContext.js";
 
-function ResultPreview({
-  promptState,
-  currentView,
-  children,
-}: ResultPreviewProps & { children?: React.ReactNode }) {
+function ResultPreview({ promptState, currentView, children }: ResultPreviewProps & { children?: React.ReactNode }) {
   const showWelcome = !promptState.running && !promptState.hasCode;
 
   let previewArea: React.ReactElement;
@@ -41,9 +37,7 @@ function ResultPreview({
             left: 0,
           }}
         >
-          <AppSettingsView
-            title={`${promptState.chat.userSlug} -- ${promptState.chat.appSlug}`}
-          />
+          <AppSettingsView title={`${promptState.chat.userSlug} -- ${promptState.chat.appSlug}`} />
         </div>
       );
       break;

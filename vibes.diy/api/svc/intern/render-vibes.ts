@@ -1,11 +1,5 @@
 import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result } from "@adviser/cement";
-import {
-  FileSystemItem,
-  HttpResponseBodyType,
-  VibesDiyServCtx,
-  vibesImportMap,
-  vibeUserEnv,
-} from "@vibes.diy/api-types";
+import { FileSystemItem, HttpResponseBodyType, VibesDiyServCtx, vibesImportMap, vibeUserEnv } from "@vibes.diy/api-types";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { fetchContent, NpmUrlCapture } from "../public/serv-entry-point.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -46,22 +40,22 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
 
   const deps = Dependencies.from({
     ...genImport.imports,
-    ...lockedGroupsVersions
-  })
+    ...lockedGroupsVersions,
+  });
 
   const importMap = await deps.renderImportMap({
     resolveFn: resolveVersionRegistry({
-        fetch: defaultFetchPkgVersion({
-          defaults: {
-            cache: vctx.cache
-          }
-        }),
-        symbol2Version: lockedVersions,
+      fetch: defaultFetchPkgVersion({
+        defaults: {
+          cache: vctx.cache,
+        },
       }),
-       renderRHS: render_esm_sh({
-        privateUrl: pkgRepos.private.npmURL
-       }),
-    })
+      symbol2Version: lockedVersions,
+    }),
+    renderRHS: render_esm_sh({
+      privateUrl: pkgRepos.private.npmURL,
+    }),
+  });
 
   // console.log(`importMap:`, importMap);
   const imports = fsItems.reduce(
@@ -81,11 +75,11 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
     }[]
   );
 
-  const usrEnv = vibeUserEnv(fs.env)
+  const usrEnv = vibeUserEnv(fs.env);
   if (usrEnv instanceof type.errors) {
-    return Result.Err(`fs.env failure: ${usrEnv.summary}`)
+    return Result.Err(`fs.env failure: ${usrEnv.summary}`);
   }
-  
+
   // console.log("Pre Env", fs.env, vctx.params.vibes.env);
   // const env = vibesEnvSchema({
   //   ...fsEnv,
@@ -118,7 +112,7 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
       ...imports.map((i) => i.importStmt),
       `mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({ usrEnv })});`,
     ].join("\n"),
-  } satisfies VibesDiyServCtx ;
+  } satisfies VibesDiyServCtx;
   const optionalHeader: Record<string, string> = {};
   if (pkgRepos.private.fromURL) {
     optionalHeader["Set-Cookie"] = cookieSerialize("Vibes-Npm-Url", pkgRepos.private.npmURL, {

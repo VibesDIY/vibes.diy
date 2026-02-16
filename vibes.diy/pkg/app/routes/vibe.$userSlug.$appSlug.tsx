@@ -15,15 +15,15 @@ export default function VibeIframeWrapper() {
 
   useEffect(() => {
     if (!session.isSignedIn) {
-      return
+      return;
     }
     const sectionId = searchParam.get("sectionId");
-    if (sectionId && userSlug && appSlug) {
+    if (userSlug && appSlug) {
       vctx.vibeDiyApi
         .getByUserSlugAppSlug({
           userSlug,
           appSlug,
-          sectionId,
+          sectionId: sectionId ?? "last",
         })
         .then((res) => {
           if (res.isErr()) {
@@ -41,10 +41,7 @@ export default function VibeIframeWrapper() {
     console.log(`iframe src=`, previewUrl.asObj());
 
     return (
-      <div
-        className="fixed inset-0 bg-gray-900"
-        style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
-      >
+      <div className="fixed inset-0 bg-gray-900" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
         {/* <pre>{JSON.stringify({ sectionId, ends: findApp(promptState)}, null, 2)}</pre> */}
         <iframe
           src={previewUrl.toString()}
@@ -56,7 +53,7 @@ export default function VibeIframeWrapper() {
     );
   }
   if (searchParam.get("sectionId") && !session.isSignedIn) {
-    return <div>to use sectionId you need to be logged in</div>
+    return <div>to use sectionId you need to be logged in</div>;
   }
   return <div>loading app</div>;
 }

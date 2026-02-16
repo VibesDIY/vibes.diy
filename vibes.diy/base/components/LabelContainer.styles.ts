@@ -141,5 +141,5 @@ export const LabelContainerStyles = {
       };
     }
     return this.getButtonLabelWrapperStyle();
-  }
+  },
 };

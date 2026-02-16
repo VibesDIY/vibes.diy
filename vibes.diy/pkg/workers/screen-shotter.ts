@@ -9,10 +9,7 @@ import { cfDrizzle } from "@vibes.diy/api-svc/cf-serve.js";
 /**
  * Takes a screenshot of a URL using Cloudflare Browser Rendering API
  */
-export async function takeScreenshot(
-  event: ScreenShotEvent,
-  env: Env
-): Promise<Uint8Array> {
+export async function takeScreenshot(event: ScreenShotEvent, env: Env): Promise<Uint8Array> {
   console.log(`Taking screenshot for ${event.shotUrl} (fsId: ${event.fsId})`);
 
   const browser = await puppeteer.launch(env.BROWSER as never);
@@ -48,15 +45,12 @@ export async function takeScreenshot(
 /**
  * Process a screenshot event from the queue
  */
-export async function processScreenShotEvent(
-  message: unknown,
-  env: Env
-): Promise<void> {
+export async function processScreenShotEvent(message: unknown, env: Env): Promise<void> {
   // Validate the message is a ScreenShotEvent
   if (!isScreenShotEvent(message)) {
     console.error("Invalid ScreenShotEvent:", message);
     // throw new Error("Invalid ScreenShotEvent structure");
-    return
+    return;
   }
 
   console.log("Processing ScreenShotEvent:", {
@@ -81,7 +75,7 @@ export async function processScreenShotEvent(
 
   if (result.isErr()) {
     console.error(`Failed to store screenshot: ${result.Err()}`);
-    return
+    return;
   }
 
   console.log(`Screenshot stored with assetId: ${result.Ok().assetId}`);

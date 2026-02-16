@@ -1,7 +1,6 @@
 import React from "react";
 import { BrutalistCardStyles, BrutalistCardSize, BrutalistCardVariant } from "./BrutalistCard.styles.js";
 
-
 export interface BrutalistCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Content to render inside the card */
   children: React.ReactNode;

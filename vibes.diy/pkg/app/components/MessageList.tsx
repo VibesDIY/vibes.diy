@@ -16,7 +16,7 @@ import {
   ToplevelBeginMsg,
   ToplevelEndMsg,
 } from "@vibes.diy/call-ai-v2";
-import { BrutalistCard } from "@vibes.diy/base"
+import { BrutalistCard } from "@vibes.diy/base";
 import ReactMarkdown from "react-markdown";
 import { useSearchParams } from "react-router";
 
@@ -76,8 +76,6 @@ function CodeMsg({ lines, begin, end }: { begin: CodeBeginMsg; lines: LineMsg[];
   }, [searchParams, begin.sectionId, setSearchParam]);
 
   const codeReady = !!end;
-  console.log(`codeReady`, codeReady)
-
 
   return (
     <div className="mb-4 flex flex-row justify-start px-4" key={begin.sectionId}>
@@ -250,18 +248,15 @@ function MessageList({
 
         case isCodeBegin(msg):
           collectedMsg = [];
-          console.log(`CodeBegin`, msg)
           codeBegin = msg;
           break;
         case isToplevelBegin(msg):
           collectedMsg = [];
-          console.log(`TopLevelBegin`, msg)
           toplevelBegin = msg;
           break;
         case isToplevelLine(msg):
         case isCodeLine(msg):
           collectedMsg.push(msg);
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           // acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} />);
           break;
         case isCodeEnd(msg):

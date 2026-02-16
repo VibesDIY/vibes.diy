@@ -13,7 +13,7 @@ interface ResultPreviewHeaderContentProps {
   currentView: ViewType;
   hasCodeChanges: boolean;
   onCodeSave?: () => void;
-  openVibe?: () => void
+  openVibe?: () => void;
   // // Props from useViewState (lifted to home.tsx)
   // displayView: ViewType;
   // navigateToView: (view: ViewType) => void;
@@ -42,7 +42,7 @@ function ResultPreviewHeaderContent({
   hasCodeChanges,
   onCodeSave,
   syntaxErrorCount,
-  openVibe
+  openVibe,
 
   // displayView,
   // navigateToView,
@@ -57,7 +57,7 @@ function ResultPreviewHeaderContent({
   // hasCodeChanges,
   // onCodeSave,
   // syntaxErrorCount,
-}: React.PropsWithChildren<ResultPreviewHeaderContentProps>)  {
+}: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
   // const { sessionId: urlSessionId, view: urlView } = useParams();
   // const publishButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -106,7 +106,7 @@ function ResultPreviewHeaderContent({
           viewControls={viewControls}
           currentView={currentView} // Use displayView for the currently active button highlight
           onClick={navigateToView}
-          onDoubleClick={(view) => view == 'preview' && openVibe?.()}
+          onDoubleClick={(view) => view == "preview" && openVibe?.()}
         />
       </div>
       {/* Right side - Save and Publish buttons */}
@@ -146,6 +146,6 @@ function ResultPreviewHeaderContent({
       )} */}
     </div>
   );
-};
+}
 
 export default ResultPreviewHeaderContent;

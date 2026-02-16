@@ -171,9 +171,9 @@ export default function Chat() {
     });
     return () => {
       if (chat) {
-        (chat as LLMChat).close()
+        (chat as LLMChat).close();
       }
-    }
+    };
   }, [userSlug, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
@@ -190,8 +190,8 @@ export default function Chat() {
   const { navigateToView, viewControls, currentView } = useViewState(promptState);
 
   const openVibe = useCallback(() => {
-    window.open(`/vibe/${userSlug}/${appSlug}?sectionId=${searchParams.get('sectionId')}`, '_blank')
-  }, [searchParams, userSlug, appSlug])
+    window.open(`/vibe/${userSlug}/${appSlug}?sectionId=${searchParams.get("sectionId")}`, "_blank");
+  }, [searchParams, userSlug, appSlug]);
 
   useEffect(() => {
     if (isMobileViewport()) {

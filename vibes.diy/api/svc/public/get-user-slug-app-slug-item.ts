@@ -8,10 +8,10 @@ import {
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.ts";
-import { VibesApiSQLCtx } from "../types.ts";
-import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.ts";
-import { sqlAppSlugBinding, sqlChatContexts, sqlChatSections, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.ts";
+import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
+import { VibesApiSQLCtx } from "../types.js";
+import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
+import { sqlAppSlugBinding, sqlChatContexts, sqlChatSections, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { eq, and } from "drizzle-orm";
 import { BlockEndMsg, BlockMsgs, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 
@@ -52,40 +52,56 @@ export const getByUserSlugAppSlugItemEvento: EventoHandler<
           .select()
           .from(sqlUserSlugBinding)
           .innerJoin(sqlAppSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
-          .innerJoin(sqlChatContexts, and(
-            eq(sqlChatContexts.userSlug, sqlUserSlugBinding.userSlug), 
-            eq(sqlChatContexts.appSlug, sqlAppSlugBinding.appSlug)))
-          .innerJoin(sqlChatSections,eq(sqlChatSections.chatId, sqlChatContexts.chatId))
-          .where(and(
-            eq(sqlUserSlugBinding.userSlug, req.userSlug), 
-            eq(sqlAppSlugBinding.appSlug, req.appSlug),
-            eq(sqlUserSlugBinding.userId, req.auth.verifiedAuth.claims.userId)
-          ))
+          .innerJoin(
+            sqlChatContexts,
+            and(eq(sqlChatContexts.userSlug, sqlUserSlugBinding.userSlug), eq(sqlChatContexts.appSlug, sqlAppSlugBinding.appSlug))
+          )
+          .innerJoin(sqlChatSections, eq(sqlChatSections.chatId, sqlChatContexts.chatId))
+          .where(
+            and(
+              eq(sqlUserSlugBinding.userSlug, req.userSlug),
+              eq(sqlAppSlugBinding.appSlug, req.appSlug),
+              eq(sqlUserSlugBinding.userId, req.auth.verifiedAuth.claims.userId)
+            )
+          )
           // .groupBy(sqlChatSections.chatId, sqlChatSections.promptId)
           .orderBy(sqlChatSections.blockSeq)
-            .all()
-          
+          .all();
+
         let foundBlockEnd: BlockEndMsg | undefined = undefined;
         let waitBlockEnd = false;
+        let waitLastBlockEnd = false;
+        let lastBlockEnd: BlockEndMsg | undefined = undefined;
         for (const { ChatSections } of chat) {
           // console.log(`checking chat context`, ChatSections)
           for (const block of ChatSections.blocks as BlockMsgs[]) {
-            if (isCodeEnd(block) && block.sectionId === req.sectionId) {
-              console.log(`checking codeblock`, block)
-              waitBlockEnd = true
+            if (isCodeEnd(block)) {
+              if (block.sectionId === req.sectionId) {
+                console.log(`checking codeblock`, block);
+                waitBlockEnd = true;
+              }
+              waitLastBlockEnd = true;
             }
             if (waitBlockEnd && isBlockEnd(block)) {
-              console.log(`checking blockend`, block)
+              console.log(`checking blockend`, block);
               foundBlockEnd = block;
               break;
+            }
+            if (waitLastBlockEnd && isBlockEnd(block)) {
+              console.log(`checking last blockend`, block);
+              lastBlockEnd = block;
             }
           }
           if (foundBlockEnd) {
             break;
           }
         }
+        if (!foundBlockEnd && lastBlockEnd) {
+          console.log(`falling back to last block end`, lastBlockEnd);
+          foundBlockEnd = lastBlockEnd;
+        }
         if (foundBlockEnd && foundBlockEnd.fsRef) {
-          console.log(`foundBlockEnd`, foundBlockEnd)
+          console.log(`foundBlockEnd`, foundBlockEnd);
           await ctx.send.send(ctx, {
             entryPointUrl: foundBlockEnd.fsRef.entryPointUrl,
             type: "vibes.diy.res-get-by-user-slug-app-slug",

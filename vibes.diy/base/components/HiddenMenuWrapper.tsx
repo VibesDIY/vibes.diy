@@ -1,7 +1,5 @@
 import React, { useRef, useState, useEffect, useLayoutEffect } from "react";
-import {
-  HiddenMenuWrapperStyles
-} from "./HiddenMenuWrapper.styles.js";
+import { HiddenMenuWrapperStyles } from "./HiddenMenuWrapper.styles.js";
 import { VibesSwitch } from "./VibesSwitch.js";
 import { URI } from "@adviser/cement";
 

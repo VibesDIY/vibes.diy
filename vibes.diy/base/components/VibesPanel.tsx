@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useId } from "react";
 import { VibesButton, BLUE, RED, YELLOW, GRAY } from "./VibesButton.js";
 // import { runtimeFn } from "@fireproof/core-runtime";
-import { BrutalistCard } from "./BrutalistCard.js"
+import { BrutalistCard } from "./BrutalistCard.js";
 // import { generateFreshDataUrl, generateRemixUrl } from "../../utils/appSlug.js";
 import { LabelContainer } from "./LabelContainer.js";
 import { VibesPanelStyles } from "./VibesPanel.styles.js";

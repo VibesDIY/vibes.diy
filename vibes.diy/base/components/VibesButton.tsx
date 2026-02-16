@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { VibesButtonStyles, bounceKeyframes } from "./VibesButton.styles.js";
-import { LoginIcon, RemixIcon, InviteIcon, SettingsIcon, BackIcon, } from "./icons/index.js"
+import { LoginIcon, RemixIcon, InviteIcon, SettingsIcon, BackIcon } from "./icons/index.js";
 import { useMobile } from "../hooks/useMobile.js";
 
 // Variant constants

@@ -47,6 +47,6 @@ export const vibesDiyServCtx = type({
   importMap: vibesImportMap,
   metaProps,
   mountJS: "string",
-})// .and(vibesDiyMountParams);
+}); // .and(vibesDiyMountParams);
 
 export type VibesDiyServCtx = typeof vibesDiyServCtx.infer;

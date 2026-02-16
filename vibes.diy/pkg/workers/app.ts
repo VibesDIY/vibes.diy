@@ -50,6 +50,29 @@ export default {
       return obj.fetch(request); // handle WebSocket upgrade and API requests in the chat sessions Durable Object
     }
 
+    if (url.pathname.startsWith("/vibe-pkg/")) {
+      if (request.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+          },
+        }) as unknown as CFResponse;
+      }
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = assetUrl.pathname.replace("/vibe-pkg/", "/_vibe-pkg/");
+      // request.url = assetUrl.toString();
+      const assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString()) as unknown as CFRequest);
+      const headers = new Headers(Object.fromEntries(assetResponse.headers.entries()));
+      headers.set("Content-Type", "application/javascript");
+      headers.set("Access-Control-Allow-Origin", "*");
+      headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+      headers.set("Access-Control-Allow-Headers", "Content-Type");
+      return new Response(assetResponse.body as BodyInit, { status: assetResponse.status, headers }) as unknown as CFResponse;
+    }
+
     const cctx = ctx as unknown as ExecutionContext & CFInjectMutable;
     // cctx.cache = new NoCache() as unknown as CfCacheIf; // Disable caching for now - can implement custom caching logic in the future if needed
     cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache

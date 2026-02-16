@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { readFile, access } from "fs/promises";
 import { resolve, join } from "path";
 import { parse } from "yaml";
 import { build } from "vite";
@@ -53,6 +53,14 @@ export function workspacePackagesPlugin(): Plugin {
     const pkgPath = packages.get(pkgName);
     if (!pkgPath) {
       throw new Error(`Package ${pkgName} not found in workspace`);
+    }
+
+    // Check that index.ts exists before attempting build
+    const entryFile = join(pkgPath, "index.ts");
+    try {
+      await access(entryFile);
+    } catch {
+      throw new Error(`No index.ts found in ${pkgName}`);
     }
 
     // Check cache (simple timestamp-based, could be more sophisticated)
@@ -147,6 +155,35 @@ export function workspacePackagesPlugin(): Plugin {
           res.end(`Failed to build package: ${error instanceof Error ? error.message : String(error)}`);
         }
       });
+    },
+
+    async generateBundle(_options, bundle) {
+      const outDir = _options.dir || "";
+      if (!outDir.includes("client")) return;
+
+      if (packages.size === 0) {
+        await discoverPackages();
+      }
+
+      for (const [pkgName] of packages) {
+        try {
+          const code = await buildPackage(pkgName);
+          const fileName = `_vibe-pkg/${pkgName}`;
+          bundle[fileName] = {
+            type: "asset",
+            fileName,
+            name: pkgName,
+            names: [pkgName],
+            originalFileName: "",
+            originalFileNames: [],
+            needsCodeReference: false,
+            source: code,
+          };
+          console.log(`📦 Emitted ${fileName} (${code.length} bytes)`);
+        } catch {
+          console.log(`⏭️ Skipped ${pkgName}`);
+        }
+      }
     },
   };
 }

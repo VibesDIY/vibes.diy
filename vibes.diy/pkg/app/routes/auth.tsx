@@ -11,7 +11,7 @@ export default function AuthLayout() {
   const clerk = useClerk();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams ] = useSearchParams()
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     // Wait for Clerk to load
@@ -19,11 +19,11 @@ export default function AuthLayout() {
 
     // If not signed in, redirect to login with return URL
     if (!clerk.isSignedIn) {
-      const hasPrompt = searchParams.get("prompt64")
+      const hasPrompt = searchParams.get("prompt64");
       if (hasPrompt) {
         clerk.redirectToSignIn({
           redirectUrl: BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", hasPrompt).toString(),
-        })
+        });
       } else {
         const redirectTo = encodeURIComponent(location.pathname + location.search);
         navigate(`/login?redirectTo=${redirectTo}`);
@@ -44,5 +44,3 @@ export default function AuthLayout() {
   // User is authenticated - render child routes
   return <Outlet />;
 }
-
-

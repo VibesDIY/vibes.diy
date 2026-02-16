@@ -15,4 +15,26 @@ login ->
 
 
 
-     
+note this is the env needed now
+
+CLERK_PUB_JWT_URL=https://trusted-glowworm-5.clerk.accounts.dev/.well-known/jwks.json,https://precise-colt-49.clerk.accounts.dev,https://sincere-cheetah-30.clerk.accounts.dev \
+VIBES_DIY_API_URL=https://dev-v2.vibesdiy.net/api \
+WORKSPACE_NPM_URL=https://dev-v2.vibesdiy.net/vibe-pkg/ \
+VIBES_DIY_STYLES_URL=https://dev-v2.vibesdiy.net/ \
+ pnpm exec core-cli writeEnv --out - --json \
+--fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
+--fromEnv CLERK_PUBLISHABLE_KEY \
+--fromEnv DEVICE_ID_CA_PRIV_KEY \
+--fromEnv DEVICE_ID_CA_CERT \
+--fromEnv WRAPPER_BASE_URL \
+--fromEnv FP_VERSION \
+--fromEnv LLM_BACKEND_URL \
+--fromEnv LLM_BACKEND_API_KEY \
+--fromEnv FPCLOUD_URL \
+--fromEnv DASHBOARD_URL \
+--fromEnv VIBES_DIY_API_URL \
+--fromEnv CLERK_PUB_JWT_URL \
+--fromEnv WORKSPACE_NPM_URL \
+--fromEnv VIBES_DIY_STYLES_URL \
+         | tee -a out.tee | pnpm exec wrangler -c ./wrangler.toml secret --env dev bulk 
+

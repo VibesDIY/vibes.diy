@@ -1,6 +1,6 @@
 import React from "react";
 import BrutalistLayout from "../components/BrutalistLayout.js";
-import { BrutalistCard } from "@vibes.diy/base"
+import { BrutalistCard } from "@vibes.diy/base";
 
 export function meta() {
   return [{ title: "About - Vibes DIY" }, { name: "description", content: "About Vibes DIY - AI App Builder" }];
