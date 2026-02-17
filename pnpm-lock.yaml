@@ -198,8 +198,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       hono:
-        specifier: ^4.11.4
-        version: 4.11.7
+        specifier: ^4.11.9
+        version: 4.11.9
       unique-names-generator:
         specifier: ^4.7.1
         version: 4.7.1
@@ -227,7 +227,7 @@ importers:
         version: 4.20260217.0
       '@hono/clerk-auth':
         specifier: ^3.1.0
-        version: 3.1.0(hono@4.11.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 3.1.0(hono@4.11.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@vibes.diy/hosting-base':
         specifier: workspace:*
         version: link:../base
@@ -238,8 +238,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       hono:
-        specifier: ^4.11.4
-        version: 4.11.7
+        specifier: ^4.11.9
+        version: 4.11.9
       jose:
         specifier: ^6.1.3
         version: 6.1.3
@@ -291,8 +291,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       hono:
-        specifier: ^4.11.4
-        version: 4.11.7
+        specifier: ^4.11.9
+        version: 4.11.9
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
@@ -7526,6 +7526,10 @@ packages:
     resolution: {integrity: sha512-l7qMiNee7t82bH3SeyUCt9UF15EVmaBvsppY2zQtrbIhl/yzBTny+YUxsVjSjQ6gaqaeVtZmGocom8TzBlA4Yw==}
     engines: {node: '>=16.9.0'}
 
+  hono@4.11.9:
+    resolution: {integrity: sha512-Eaw2YTGM6WOxA6CXbckaEvslr2Ne4NFsKrvc0v97JD5awbmeBLO5w9Ho9L9kmKonrwF9RJlW6BxT1PVv/agBHQ==}
+    engines: {node: '>=16.9.0'}
+
   hosted-git-info@7.0.2:
     resolution: {integrity: sha512-puUZAUKT5m8Zzvs72XWy3HtvVbTWljRE66cP60bxJzAqf2DgICo7lYTY2IHUmLnNpjYvw5bvmoHvPc0QO2a62w==}
     engines: {node: ^16.14.0 || >=18.0.0}
@@ -13189,11 +13193,11 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
-  '@hono/clerk-auth@3.1.0(hono@4.11.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@hono/clerk-auth@3.1.0(hono@4.11.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@clerk/backend': 2.29.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@clerk/shared': 3.44.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      hono: 4.11.7
+      hono: 4.11.9
     transitivePeerDependencies:
       - react
       - react-dom
@@ -19305,6 +19309,8 @@ snapshots:
       react-is: 16.13.1
 
   hono@4.11.7: {}
+
+  hono@4.11.9: {}
 
   hosted-git-info@7.0.2:
     dependencies:
