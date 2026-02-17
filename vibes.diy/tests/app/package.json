@@ -16,7 +16,7 @@
     "publish": "echo core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.21",
+    "@adviser/cement": "^0.5.22",
     "@monaco-editor/react": "^4.7.0",
     "@react-router/node": "^7.12.0",
     "@react-router/serve": "^7.13.0",
@@ -37,12 +37,12 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.13.0",
     "react-router-dom": "^7.12.0",
-    "use-fireproof": "0.24.10",
+    "use-fireproof": "0.24.11",
     "use-vibes": "workspace:*",
     "vibes-diy": "workspace:*"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.10",
+    "@fireproof/core-cli": "0.24.11",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "~19.2.13",

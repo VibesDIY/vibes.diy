@@ -1,5 +1,6 @@
 packages:
   - "call-ai/pkg"
+  - "call-ai/v2"
   - "call-ai/tests/unit"
   - "call-ai/tests/integration"
   - "use-vibes/types"
@@ -8,8 +9,10 @@ packages:
   - "use-vibes/tests"
   - "use-vibes/examples/react-example"
   - "use-vibes/examples/hosted-dev"
+  - "vibes.diy/base"
   - "vibes.diy/pkg"
-  - "vibes.diy/tempo"
+  - "vibes.diy/vibe/runtime"
+  - "vibes.diy/api/*"
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"
   - "vibes.diy/failback-homepage"

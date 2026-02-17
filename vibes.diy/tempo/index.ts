@@ -304,7 +304,7 @@ const server = new hcloud.Server(
       },
     ],
   },
-  { dependsOn: [subnet] },
+  { dependsOn: [subnet] }
 );
 
 // Exports

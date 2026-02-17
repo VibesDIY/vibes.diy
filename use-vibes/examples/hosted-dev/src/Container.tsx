@@ -1,4 +1,4 @@
-import App from './App';
+import App from "./App";
 
 // Container component that provides the background and contains <App/>
 export default function Container() {

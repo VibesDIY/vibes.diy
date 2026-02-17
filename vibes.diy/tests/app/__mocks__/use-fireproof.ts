@@ -5,9 +5,7 @@ const mockDb = {
   put: vi.fn().mockResolvedValue({ id: "test-id" }),
   get: vi.fn().mockResolvedValue({ _id: "test-id", title: "Test Document" }),
   query: vi.fn().mockResolvedValue({
-    rows: [
-      { id: "session1", key: "session1", value: { title: "Test Session" } },
-    ],
+    rows: [{ id: "session1", key: "session1", value: { title: "Test Session" } }],
   }),
   delete: vi.fn().mockResolvedValue({ ok: true }),
 };

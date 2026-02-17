@@ -87,13 +87,7 @@ describe("ShareModal", () => {
 
   it("renders nothing when closed", () => {
     render(
-      <ShareModal
-        isOpen={false}
-        onClose={mockOnClose}
-        buttonRef={mockButtonRef}
-        onPublish={mockOnPublish}
-        isPublishing={false}
-      />,
+      <ShareModal isOpen={false} onClose={mockOnClose} buttonRef={mockButtonRef} onPublish={mockOnPublish} isPublishing={false} />
     );
 
     // Modal should not be in the document
@@ -102,13 +96,7 @@ describe("ShareModal", () => {
 
   it("renders the publish button when no published URL exists", () => {
     render(
-      <ShareModal
-        isOpen={true}
-        onClose={mockOnClose}
-        buttonRef={mockButtonRef}
-        onPublish={mockOnPublish}
-        isPublishing={false}
-      />,
+      <ShareModal isOpen={true} onClose={mockOnClose} buttonRef={mockButtonRef} onPublish={mockOnPublish} isPublishing={false} />
     );
 
     // Modal should be in the document
@@ -121,11 +109,7 @@ describe("ShareModal", () => {
     expect(publishButton).toBeInTheDocument();
 
     // Should have the community message
-    expect(
-      screen.getByText(
-        /Publishing allows anyone with the link to share, remix, and install/i,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Publishing allows anyone with the link to share, remix, and install/i)).toBeInTheDocument();
     expect(screen.getByText(/our community/i)).toBeInTheDocument();
   });
 
@@ -140,16 +124,13 @@ describe("ShareModal", () => {
         publishedAppUrl={testUrl}
         onPublish={mockOnPublish}
         isPublishing={false}
-      />,
+      />
     );
 
     // Should show the subdomain link (test-app) - check for the link specifically
     const subdomainLink = screen.getByRole("link", { name: "test-app" });
     expect(subdomainLink).toBeInTheDocument();
-    expect(subdomainLink).toHaveAttribute(
-      "href",
-      "https://vibes.diy/vibe/test-app",
-    );
+    expect(subdomainLink).toHaveAttribute("href", "https://vibes.diy/vibe/test-app");
 
     // Should show the update code button
     const updateButton = screen.getByText("Update Code");
@@ -158,13 +139,7 @@ describe("ShareModal", () => {
 
   it("shows loading state when publishing", () => {
     render(
-      <ShareModal
-        isOpen={true}
-        onClose={mockOnClose}
-        buttonRef={mockButtonRef}
-        onPublish={mockOnPublish}
-        isPublishing={true}
-      />,
+      <ShareModal isOpen={true} onClose={mockOnClose} buttonRef={mockButtonRef} onPublish={mockOnPublish} isPublishing={true} />
     );
 
     // Should show animated gradient class
@@ -189,7 +164,7 @@ describe("ShareModal", () => {
         publishedAppUrl="https://test-app.vibesdiy.app"
         onPublish={mockOnPublish}
         isPublishing={true}
-      />,
+      />
     );
 
     // Should show animated gradient class
@@ -197,21 +172,13 @@ describe("ShareModal", () => {
     expect(updateButton).toHaveClass("animate-gradient-x");
 
     // Update button should be disabled
-    const updateButtonDisabled = screen
-      .getByText("Update Code")
-      .closest("button");
+    const updateButtonDisabled = screen.getByText("Update Code").closest("button");
     expect(updateButtonDisabled).toBeDisabled();
   });
 
   it("calls onClose when clicking outside the modal", () => {
     render(
-      <ShareModal
-        isOpen={true}
-        onClose={mockOnClose}
-        buttonRef={mockButtonRef}
-        onPublish={mockOnPublish}
-        isPublishing={false}
-      />,
+      <ShareModal isOpen={true} onClose={mockOnClose} buttonRef={mockButtonRef} onPublish={mockOnPublish} isPublishing={false} />
     );
 
     // Click the backdrop
@@ -224,13 +191,7 @@ describe("ShareModal", () => {
 
   it("calls onClose when pressing Escape key", () => {
     render(
-      <ShareModal
-        isOpen={true}
-        onClose={mockOnClose}
-        buttonRef={mockButtonRef}
-        onPublish={mockOnPublish}
-        isPublishing={false}
-      />,
+      <ShareModal isOpen={true} onClose={mockOnClose} buttonRef={mockButtonRef} onPublish={mockOnPublish} isPublishing={false} />
     );
 
     // Press Escape key
@@ -243,13 +204,7 @@ describe("ShareModal", () => {
 
   it("does not close when clicking inside the modal", () => {
     render(
-      <ShareModal
-        isOpen={true}
-        onClose={mockOnClose}
-        buttonRef={mockButtonRef}
-        onPublish={mockOnPublish}
-        isPublishing={false}
-      />,
+      <ShareModal isOpen={true} onClose={mockOnClose} buttonRef={mockButtonRef} onPublish={mockOnPublish} isPublishing={false} />
     );
 
     // Click inside the modal content
@@ -262,13 +217,7 @@ describe("ShareModal", () => {
 
   it("calls onPublish when clicking the publish button", async () => {
     render(
-      <ShareModal
-        isOpen={true}
-        onClose={mockOnClose}
-        buttonRef={mockButtonRef}
-        onPublish={mockOnPublish}
-        isPublishing={false}
-      />,
+      <ShareModal isOpen={true} onClose={mockOnClose} buttonRef={mockButtonRef} onPublish={mockOnPublish} isPublishing={false} />
     );
 
     // Click the publish button - wrap in act since it causes a state update
@@ -292,7 +241,7 @@ describe("ShareModal", () => {
         publishedAppUrl="https://test-app.vibesdiy.app"
         onPublish={mockOnPublish}
         isPublishing={false}
-      />,
+      />
     );
 
     // Click the update button - wrap in act since it causes a state update
@@ -319,7 +268,7 @@ describe("ShareModal", () => {
         publishedAppUrl="https://test-app.vibesdiy.app"
         onPublish={mockOnPublish}
         isPublishing={false}
-      />,
+      />
     );
 
     // Click the update button
@@ -345,7 +294,7 @@ describe("ShareModal", () => {
         publishedAppUrl={testUrl}
         onPublish={mockOnPublish}
         isPublishing={false}
-      />,
+      />
     );
 
     // Find the update code button
@@ -370,7 +319,7 @@ describe("ShareModal", () => {
         publishedAppUrl="https://test-app.vibesdiy.app"
         onPublish={mockOnPublish}
         isPublishing={false}
-      />,
+      />
     );
 
     // Verify modal is open and has content (check for the Published text which is unique)
@@ -386,7 +335,7 @@ describe("ShareModal", () => {
           publishedAppUrl="https://test-app.vibesdiy.app"
           onPublish={mockOnPublish}
           isPublishing={false}
-        />,
+        />
       );
     });
 
@@ -403,7 +352,7 @@ describe("ShareModal", () => {
           publishedAppUrl="https://test-app.vibesdiy.app"
           onPublish={mockOnPublish}
           isPublishing={false}
-        />,
+        />
       );
     });
 

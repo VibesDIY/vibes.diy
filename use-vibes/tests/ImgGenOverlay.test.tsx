@@ -1,17 +1,17 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import React from "react";
+import { render, fireEvent } from "@testing-library/react";
 
 // Use vi.hoisted to define mocks that need to be referenced in vi.mock
 const mockImgFile = vi.hoisted(() =>
   vi.fn().mockImplementation(({ className, alt, style, ...rest }) => {
     return React.createElement(
-      'div',
+      "div",
       {
-        'data-testid': 'mock-img-file',
-        className: `img-file ${className || ''}`,
+        "data-testid": "mock-img-file",
+        className: `img-file ${className || ""}`,
         style,
-        'aria-label': alt,
+        "aria-label": alt,
         ...rest,
         onClick:
           rest.onClick ||
@@ -19,13 +19,13 @@ const mockImgFile = vi.hoisted(() =>
             /* no-op */
           }),
       },
-      'Image Content'
+      "Image Content"
     );
   })
 );
 
 // Mock use-fireproof module (placed before imports that use it)
-vi.mock('use-fireproof', async (importOriginal) => {
+vi.mock("use-fireproof", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
@@ -36,11 +36,11 @@ vi.mock('use-fireproof', async (importOriginal) => {
 });
 
 // Import the components directly to test them individually
-import { ControlsBar, ImageOverlay } from '@vibes.diy/use-vibes-base';
+import { ControlsBar, ImageOverlay } from "@vibes.diy/use-vibes-base";
 
-describe('ImageOverlay Component', () => {
+describe("ImageOverlay Component", () => {
   beforeEach(() => {
-    globalThis.document.body.innerHTML = ''; // Clear any existing modals in the document
+    globalThis.document.body.innerHTML = ""; // Clear any existing modals in the document
     vi.clearAllMocks();
   });
 
@@ -49,9 +49,9 @@ describe('ImageOverlay Component', () => {
   });
 
   // Test that controls are properly displayed
-  it('should show proper controls and classes', async () => {
+  it("should show proper controls and classes", async () => {
     const mockProps = {
-      promptText: 'Test prompt',
+      promptText: "Test prompt",
       editedPrompt: null,
       setEditedPrompt: vi.fn(),
       handlePromptEdit: vi.fn(),
@@ -71,13 +71,13 @@ describe('ImageOverlay Component', () => {
     const { container } = render(<ImageOverlay {...mockProps} />);
 
     // Check that the prompt text is displayed
-    expect(container.textContent).toContain('Test prompt');
+    expect(container.textContent).toContain("Test prompt");
 
     // Check for the delete button
     const deleteButton = container.querySelector('[aria-label="Delete image"]');
     expect(deleteButton).toBeInTheDocument();
-    expect(deleteButton).toHaveClass('imggen-button');
-    expect(deleteButton).toHaveClass('imggen-delete-button');
+    expect(deleteButton).toHaveClass("imggen-button");
+    expect(deleteButton).toHaveClass("imggen-delete-button");
 
     // In the actual implementation, the first click shows the confirmation, not triggers handleDeleteConfirm
     // The handleDeleteConfirm is only called when the button is clicked while confirmation is showing
@@ -102,13 +102,13 @@ describe('ImageOverlay Component', () => {
     expect(refreshButton).toBeInTheDocument();
 
     // Check for version indicator
-    const versionIndicator = container.querySelector('.version-indicator');
+    const versionIndicator = container.querySelector(".version-indicator");
     expect(versionIndicator).toBeInTheDocument();
-    expect(versionIndicator?.textContent).toContain('2 / 3');
+    expect(versionIndicator?.textContent).toContain("2 / 3");
   });
 
   // Test delete confirmation in ControlsBar
-  it('should handle delete confirmation in ControlsBar', () => {
+  it("should handle delete confirmation in ControlsBar", () => {
     const mockProps = {
       handleDeleteConfirm: vi.fn(),
       handlePrevVersion: vi.fn(),
@@ -117,7 +117,7 @@ describe('ImageOverlay Component', () => {
       versionIndex: 1,
       totalVersions: 3,
       editedPrompt: null,
-      promptText: 'Test prompt',
+      promptText: "Test prompt",
       showDelete: true,
     };
 
@@ -133,18 +133,18 @@ describe('ImageOverlay Component', () => {
       fireEvent.click(deleteButton);
 
       // Confirmation text should now be visible
-      const confirmText = getByText('Delete image?');
+      const confirmText = getByText("Delete image?");
       expect(confirmText).toBeInTheDocument();
 
       // Click the confirm delete button
-      const confirmButton = getByLabelText('Confirm delete');
+      const confirmButton = getByLabelText("Confirm delete");
       fireEvent.click(confirmButton);
       expect(mockProps.handleDeleteConfirm).toHaveBeenCalled();
     }
   });
 
   // Test auto-cancel of delete confirmation in ControlsBar - skipping for now as the test is flaky
-  it.skip('should auto-cancel delete confirmation after timeout', () => {
+  it.skip("should auto-cancel delete confirmation after timeout", () => {
     // This test is currently skipped as there are timing issues between the mock timers and React state updates
     // The functionality works in the actual app, but the test is flaky
   });

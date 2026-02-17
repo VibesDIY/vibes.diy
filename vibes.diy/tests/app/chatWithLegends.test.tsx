@@ -46,12 +46,8 @@ export default MyComponentWithSemicolons;`;
     const normalizedOutput = result.replace(/\s+/g, " ").trim();
 
     // Verify the core requirements for runnable code with proper semicolons
-    expect(normalizedOutput).toContain(
-      "const MyComponentWithSemicolons = () =>",
-    ); // Original component preserved
-    expect(normalizedOutput).toContain(
-      "const App = MyComponentWithSemicolons;",
-    ); // Proper reference created
+    expect(normalizedOutput).toContain("const MyComponentWithSemicolons = () =>"); // Original component preserved
+    expect(normalizedOutput).toContain("const App = MyComponentWithSemicolons;"); // Proper reference created
     expect(normalizedOutput).toContain("export default App;"); // Correct export statement
   });
 });

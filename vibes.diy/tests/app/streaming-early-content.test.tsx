@@ -47,16 +47,14 @@ describe("Early Streaming Content Display", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Assert: The single character content should be visible
     expect(screen.getByText("I")).toBeInTheDocument();
 
     // The component should not show a placeholder when content exists
-    expect(
-      screen.queryByText("Processing response..."),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Processing response...")).not.toBeInTheDocument();
   });
 
   test("should not show placeholder when minimal content is available", () => {
@@ -83,7 +81,7 @@ describe("Early Streaming Content Display", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Assert: Even with minimal content, we should see the content not a placeholder
@@ -114,7 +112,7 @@ describe("Early Streaming Content Display", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Should show the "Processing response..." placeholder when no segments
@@ -141,7 +139,7 @@ describe("Early Streaming Content Display", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Should still show placeholder with empty content
@@ -168,13 +166,11 @@ describe("Early Streaming Content Display", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
 
     // Should NOT show placeholder when there's content
-    expect(
-      screen.queryByText("Processing response..."),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Processing response...")).not.toBeInTheDocument();
     // Should show the actual content instead
     expect(screen.getByText("Hello")).toBeInTheDocument();
   });
@@ -200,7 +196,7 @@ describe("Early Streaming Content Handling", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
     // ... rest of test ...
   });
@@ -224,7 +220,7 @@ describe("Early Streaming Content Handling", () => {
             /* no-op */
           }}
         />
-      </MockThemeProvider>,
+      </MockThemeProvider>
     );
     // ... rest of test ...
   });

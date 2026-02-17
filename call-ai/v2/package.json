@@ -1,0 +1,33 @@
+{
+  "name": "@vibes.diy/call-ai-v2",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "core-cli tsc",
+    "cli": "tsx cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "AFL",
+  "packageManager": "pnpm@10.20.0",
+  "dependencies": {
+    "@adviser/cement": "^0.5.22",
+    "@fireproof/core-runtime": "0.24.11",
+    "arktype": "^2.1.29",
+    "cmd-ts": "^0.14.3",
+    "mime": "^4.1.0",
+    "zx": "^8.8.5"
+  },
+  "devDependencies": {
+    "@vitest/browser": "^4.0.18",
+    "@vitest/browser-playwright": "^4.0.18",
+    "eslint": "^9.39.2",
+    "playwright": "^1.57.0",
+    "tsx": "^4.21.0",
+    "vitest": "^4.0.18"
+  }
+}

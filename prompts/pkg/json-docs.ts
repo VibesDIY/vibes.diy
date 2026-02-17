@@ -23,12 +23,8 @@ export interface JsonDocs {
 
 export const jsonDocs = new ResolveOnce<JsonDocs>();
 
-export function getLlmCatalogNames(
-  fallBackUrl: CoerceURI,
-): Promise<Set<string>> {
-  return getLlmCatalog(fallBackUrl).then(
-    (catalog) => new Set(catalog.map((i) => i.name)),
-  );
+export function getLlmCatalogNames(fallBackUrl: CoerceURI): Promise<Set<string>> {
+  return getLlmCatalog(fallBackUrl).then((catalog) => new Set(catalog.map((i) => i.name)));
 }
 
 export function getLlmCatalog(fallBackUrl: CoerceURI): Promise<LlmConfig[]> {

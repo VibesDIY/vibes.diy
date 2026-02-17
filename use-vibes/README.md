@@ -11,7 +11,7 @@ pnpm add use-vibes
 ## Basic Usage
 
 ```jsx
-import { ImgGen } from 'use-vibes';
+import { ImgGen } from "use-vibes";
 
 function MyComponent() {
   // You can use ImgGen without any props - it includes its own form UI
@@ -25,10 +25,10 @@ function MyComponent() {
 For image manipulation using base64 data:
 
 ```jsx
-import { base64ToFile } from 'use-vibes';
+import { base64ToFile } from "use-vibes";
 
 // Convert API response to a File object
-const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
+const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
 ```
 
 ## Core Features
@@ -91,7 +91,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
 - **Image Quality Control**: Set quality levels for output images
 
   ```jsx
-  <ImgGen prompt="Detailed artwork" options={{ quality: 'high' }} />
+  <ImgGen prompt="Detailed artwork" options={{ quality: "high" }} />
   ```
 
 - **Image Editing with Uploads**: Process existing images with AI
@@ -127,7 +127,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
   <ImgGen
     prompt="Test error handling"
     onError={(error) => {
-      console.error('Generation failed:', error.message);
+      console.error("Generation failed:", error.message);
     }}
   />
   ```
@@ -142,10 +142,10 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
 - **Base64 Conversion**: Convert between base64 and File objects
 
   ```jsx
-  import { base64ToFile } from 'use-vibes';
+  import { base64ToFile } from "use-vibes";
 
   // Convert API response to a File object
-  const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
+  const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
   ```
 
 ## Integration Features
@@ -156,8 +156,8 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
   ```jsx
   <ImgGen
     prompt="Track this generation"
-    onComplete={() => console.log('Generation complete!')}
-    onError={(error) => console.error('Generation failed:', error)}
+    onComplete={() => console.log("Generation complete!")}
+    onError={(error) => console.error("Generation failed:", error)}
     onDelete={(id) => console.log(`Document ${id} deleted`)}
     onDocumentCreated={(id) => console.log(`New document created: ${id}`)}
   />
@@ -196,10 +196,10 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
   <ImgGen
     prompt="Styled component"
     classes={{
-      root: 'my-custom-container',
-      image: 'rounded-xl shadow-lg',
-      overlay: 'bg-slate-800/70 text-white',
-      progress: 'h-2 bg-green-500',
+      root: "my-custom-container",
+      image: "rounded-xl shadow-lg",
+      overlay: "bg-slate-800/70 text-white",
+      progress: "h-2 bg-green-500",
     }}
   />
   ```
@@ -280,7 +280,7 @@ The ImgGen component uses inline styles with centralized theme constants, so **n
 Add AI image generation to any React app with minimal code:
 
 ```jsx
-import { ImgGen } from 'use-vibes';
+import { ImgGen } from "use-vibes";
 
 function MyComponent() {
   return (
@@ -299,9 +299,9 @@ Configure image generation with the `options` prop:
 <ImgGen
   prompt="A detailed cityscape"
   options={{
-    model: 'gpt-image-1',
-    quality: 'high',
-    size: '1024x1024',
+    model: "gpt-image-1",
+    quality: "high",
+    size: "1024x1024",
     debug: false,
   }}
 />
@@ -369,7 +369,7 @@ The component supports one-click regeneration, preserving document history while
 Set quality levels for output images:
 
 ```jsx
-<ImgGen prompt="Detailed artwork" options={{ quality: 'high' }} />
+<ImgGen prompt="Detailed artwork" options={{ quality: "high" }} />
 ```
 
 #### Image Editing with Uploads
@@ -407,8 +407,8 @@ Track the complete generation process with lifecycle events:
 ```jsx
 <ImgGen
   prompt="Track this generation"
-  onComplete={() => console.log('Generation complete!')}
-  onError={(error) => console.error('Generation failed:', error)}
+  onComplete={() => console.log("Generation complete!")}
+  onError={(error) => console.error("Generation failed:", error)}
   onDelete={(id) => console.log(`Document ${id} deleted`)}
   onDocumentCreated={(id) => console.log(`New document created: ${id}`)}
 />
@@ -437,10 +437,10 @@ The overlay includes:
 Convert between base64 and File objects:
 
 ```jsx
-import { base64ToFile } from 'use-vibes';
+import { base64ToFile } from "use-vibes";
 
 // Convert API response to a File object
-const imageFile = base64ToFile(imageResponse.data[0].b64_json, 'my-image.png');
+const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
 ```
 
 ## Styling and Customization
@@ -457,11 +457,11 @@ For more granular control, provide a `classes` object with custom CSS classes fo
 <ImgGen
   prompt="Styled component"
   classes={{
-    root: 'my-custom-container',
-    image: 'rounded-xl shadow-lg',
-    overlay: 'bg-slate-800/70 text-white',
-    progress: 'h-2 bg-green-500',
-    button: 'hover:bg-blue-600',
+    root: "my-custom-container",
+    image: "rounded-xl shadow-lg",
+    overlay: "bg-slate-800/70 text-white",
+    progress: "h-2 bg-green-500",
+    button: "hover:bg-blue-600",
   }}
 />
 ```

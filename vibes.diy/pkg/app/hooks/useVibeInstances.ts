@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useFireproof } from "use-fireproof";
+import { useFireproof } from "@fireproof/use-fireproof";
 import { useUser } from "@clerk/clerk-react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
 
@@ -7,9 +7,7 @@ import type { VibeInstanceDocument } from "@vibes.diy/prompts";
  * Generate a short random install ID (8 hex characters)
  */
 function generateInstallId(): string {
-  return Array.from({ length: 8 }, () =>
-    Math.floor(Math.random() * 16).toString(16),
-  ).join("");
+  return Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
 }
 
 /**
@@ -39,11 +37,7 @@ export function useVibeInstances(titleId: string) {
    * @param installId - Optional specific install ID (for lazy creation from URLs)
    */
   const createInstance = useCallback(
-    async (
-      description: string,
-      options?: Record<string, unknown>,
-      installId?: string,
-    ) => {
+    async (description: string, options?: Record<string, unknown>, installId?: string) => {
       setIsCreating(true);
       setError(null);
 
@@ -75,17 +69,14 @@ export function useVibeInstances(titleId: string) {
         throw error;
       }
     },
-    [database, titleId, userId],
+    [database, titleId, userId]
   );
 
   /**
    * Update an instance's description or options
    */
   const updateInstance = useCallback(
-    async (
-      installId: string,
-      updates: { description?: string; options?: Record<string, unknown> },
-    ) => {
+    async (installId: string, updates: { description?: string; options?: Record<string, unknown> }) => {
       setError(null);
 
       // Get existing document
@@ -110,7 +101,7 @@ export function useVibeInstances(titleId: string) {
 
       await database.put(updated);
     },
-    [database, titleId, userId],
+    [database, titleId, userId]
   );
 
   /**
@@ -135,7 +126,7 @@ export function useVibeInstances(titleId: string) {
       // Delete from Fireproof
       await database.del(installId);
     },
-    [database, titleId, userId],
+    [database, titleId, userId]
   );
 
   /**
@@ -176,7 +167,7 @@ export function useVibeInstances(titleId: string) {
       // Also call Fireproof share API (TODO: implement)
       // This would use the share() function from useFireproof
     },
-    [database, titleId, userId],
+    [database, titleId, userId]
   );
 
   return {

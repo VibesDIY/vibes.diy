@@ -55,35 +55,35 @@ describe("Claude Streaming JSON Property Splitting Test", () => {
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\""}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\""}}\n\n`
               ),
             })
             // Second chunk: continues with : "Paris", then partial "popul"
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":":\\\"Paris\\\", \\\"popul"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":":\\\"Paris\\\", \\\"popul"}}\n\n`
               ),
             })
             // Third chunk: finishes "ation": 67.5
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"ation\\\":67.5"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"ation\\\":67.5"}}\n\n`
               ),
             })
             // Fourth chunk: starts with "lang"
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"lang"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"lang"}}\n\n`
               ),
             })
             // Fifth chunk: finishes "uages":["French"]}
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"uages\\\":[\\\"French\\\"]}"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"uages\\\":[\\\"French\\\"]}"}}\n\n`
               ),
             })
             // Final chunk with finish reason "tool_calls"
@@ -155,28 +155,28 @@ describe("Claude Streaming JSON Property Splitting Test", () => {
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\": \\\"Par"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\": \\\"Par"}}\n\n`
               ),
             })
             // Second chunk: continues with "is", "population": 67
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"is\\\", \\\"population\\\": 67"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"is\\\", \\\"population\\\": 67"}}\n\n`
               ),
             })
             // Third chunk: completes with .5 and languages
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":".5, \\\"languages\\\": [\\\"Fren"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":".5, \\\"languages\\\": [\\\"Fren"}}\n\n`
               ),
             })
             // Fourth chunk: completes with "ch"]}
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"ch\\\"]}"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"ch\\\"]}"}}\n\n`
               ),
             })
             // Final chunk with finish reason "tool_calls"
@@ -246,21 +246,21 @@ describe("Claude Streaming JSON Property Splitting Test", () => {
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\": "}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":"{\\\"capital\\\": "}}\n\n`
               ),
             })
             // Second chunk: continues with , "population": 67.5
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"population\\\": 67.5"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"population\\\": 67.5"}}\n\n`
               ),
             })
             // Third chunk: completes with languages
             .mockResolvedValueOnce({
               done: false,
               value: new TextEncoder().encode(
-                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"languages\\\": [\\\"French\\\"]}"}}\n\n`,
+                `data: {"id":"123","type":"content_block_delta","delta":{"type":"text_delta","text":", \\\"languages\\\": [\\\"French\\\"]}"}}\n\n`
               ),
             })
             // Final chunk with finish reason "tool_calls"

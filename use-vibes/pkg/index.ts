@@ -27,4 +27,4 @@ export {
 
   // Hooks (kept for compatibility)
   useMobile,
-} from '@vibes.diy/use-vibes-base';
+} from "@vibes.diy/use-vibes-base";

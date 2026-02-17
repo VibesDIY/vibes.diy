@@ -1,0 +1,32 @@
+{
+  "name": "@vibes.diy/api-pkg",
+  "version": "0.0.0",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "build": "core-cli tsc",
+    "pack": "core-cli build --doPack",
+    "publish": "core-cli build"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.22",
+    "@fireproof/core-device-id": "0.24.11",
+    "@fireproof/core-protocols-dashboard": "0.24.11",
+    "@fireproof/core-runtime": "0.24.11",
+    "@fireproof/core-types-base": "0.24.11",
+    "@fireproof/core-types-device-id": "0.24.11",
+    "@fireproof/core-types-protocols-cloud": "0.24.11",
+    "@fireproof/core-types-protocols-dashboard": "0.24.11",
+    "@vibes.diy/api-types": "workspace:*",
+    "acorn": "^8.15.0",
+    "arktype": "^2.1.29",
+    "random-words": "^2.0.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@fireproof/core-cli": "0.24.11",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3"
+  }
+}

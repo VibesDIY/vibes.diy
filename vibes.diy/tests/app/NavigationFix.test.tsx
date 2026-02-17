@@ -5,39 +5,27 @@ import { ViewControls } from "~/vibes.diy/app/components/ResultPreview/ViewContr
 
 // Mock the SVG icons
 
-vi.mock(
-  "~/vibes.diy/app/components/HeaderContent/SvgIcons.js",
-  async (original) => {
-    const actual =
-      await original<
-        typeof import("~/vibes.diy/app/components/HeaderContent/SvgIcons.js")
-      >();
-    return {
-      ...actual,
-      PreviewIcon: ({
-        className,
-      }: {
-        className: string;
-        isLoading?: boolean;
-        title?: string;
-      }) => (
-        <span data-testid="preview-icon" className={className}>
-          Preview Icon
-        </span>
-      ),
-      CodeIcon: ({ className }: { className: string; isLoading?: boolean }) => (
-        <span data-testid="code-icon" className={className}>
-          Code Icon
-        </span>
-      ),
-      DataIcon: ({ className }: { className: string }) => (
-        <span data-testid="data-icon" className={className}>
-          Data Icon
-        </span>
-      ),
-    };
-  },
-);
+vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons.js", async (original) => {
+  const actual = await original<typeof import("~/vibes.diy/app/components/HeaderContent/SvgIcons.js")>();
+  return {
+    ...actual,
+    PreviewIcon: ({ className }: { className: string; isLoading?: boolean; title?: string }) => (
+      <span data-testid="preview-icon" className={className}>
+        Preview Icon
+      </span>
+    ),
+    CodeIcon: ({ className }: { className: string; isLoading?: boolean }) => (
+      <span data-testid="code-icon" className={className}>
+        Code Icon
+      </span>
+    ),
+    DataIcon: ({ className }: { className: string }) => (
+      <span data-testid="data-icon" className={className}>
+        Data Icon
+      </span>
+    ),
+  };
+});
 
 describe("Navigation Fix Tests", () => {
   // Test data for the view controls
@@ -67,13 +55,7 @@ describe("Navigation Fix Tests", () => {
   it("properly passes onClick handler to buttons", () => {
     const mockNavigateToView = vi.fn();
 
-    render(
-      <ViewControls
-        viewControls={mockViewControls}
-        currentView="preview"
-        onClick={mockNavigateToView}
-      />,
-    );
+    render(<ViewControls viewControls={mockViewControls} currentView="preview" onClick={mockNavigateToView} />);
 
     // Verify all buttons are rendered
     expect(screen.getByText("App")).toBeInTheDocument();
@@ -91,13 +73,7 @@ describe("Navigation Fix Tests", () => {
     const mockNavigateToView = vi.fn();
 
     // Start with preview as current view
-    const { unmount } = render(
-      <ViewControls
-        viewControls={mockViewControls}
-        currentView="preview"
-        onClick={mockNavigateToView}
-      />,
-    );
+    const { unmount } = render(<ViewControls viewControls={mockViewControls} currentView="preview" onClick={mockNavigateToView} />);
 
     // Click the Data button
     fireEvent.click(screen.getByText("Data"));
@@ -106,13 +82,7 @@ describe("Navigation Fix Tests", () => {
 
     // Unmount and remount with code as current view
     unmount();
-    render(
-      <ViewControls
-        viewControls={mockViewControls}
-        currentView="code"
-        onClick={mockNavigateToView}
-      />,
-    );
+    render(<ViewControls viewControls={mockViewControls} currentView="code" onClick={mockNavigateToView} />);
 
     // Click the App button
     fireEvent.click(screen.getByText("App"));
@@ -134,13 +104,7 @@ describe("Navigation Fix Tests", () => {
       },
     };
 
-    render(
-      <ViewControls
-        viewControls={disabledControls}
-        currentView="preview"
-        onClick={mockNavigateToView}
-      />,
-    );
+    render(<ViewControls viewControls={disabledControls} currentView="preview" onClick={mockNavigateToView} />);
 
     // Verify the Data button is disabled
     const dataButton = screen.getByText("Data").closest("button");

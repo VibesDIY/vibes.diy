@@ -24,11 +24,7 @@ export interface QueueEnv {
   OPENAI_API_KEY?: string;
 }
 
-const AI_API_KEY_ENV_VARS = [
-  "CALLAI_API_KEY",
-  "OPENROUTER_API_KEY",
-  "SERVER_OPENROUTER_API_KEY",
-] as const;
+const AI_API_KEY_ENV_VARS = ["CALLAI_API_KEY", "OPENROUTER_API_KEY", "SERVER_OPENROUTER_API_KEY"] as const;
 
 type AiApiKeyEnvVar = (typeof AI_API_KEY_ENV_VARS)[number];
 
@@ -45,9 +41,7 @@ function getCallAiApiKey(env: QueueEnv): string | undefined {
 
 function base64ToArrayBuffer(base64Data: string) {
   if (typeof atob !== "function") {
-    throw new Error(
-      "base64ToArrayBuffer: atob is not available in this runtime",
-    );
+    throw new Error("base64ToArrayBuffer: atob is not available in this runtime");
   }
 
   const binaryData = atob(base64Data);
@@ -59,14 +53,9 @@ function base64ToArrayBuffer(base64Data: string) {
   return bytes.buffer;
 }
 
-async function generateAppSummary(
-  app: z.infer<typeof App>,
-  apiKey?: string,
-): Promise<string | null> {
+async function generateAppSummary(app: z.infer<typeof App>, apiKey?: string): Promise<string | null> {
   if (!apiKey) {
-    console.warn(
-      `⚠️ AI API key not set (${AI_API_KEY_ENV_VARS.join(", ")}) - skipping app summary generation`,
-    );
+    console.warn(`⚠️ AI API key not set (${AI_API_KEY_ENV_VARS.join(", ")}) - skipping app summary generation`);
     return null;
   }
 
@@ -101,11 +90,7 @@ async function generateAppSummary(
   }
 }
 
-async function generateAppIcon(
-  app: z.infer<typeof App>,
-  kv: KVNamespace,
-  openaiApiKey?: string,
-): Promise<string | null> {
+async function generateAppIcon(app: z.infer<typeof App>, kv: KVNamespace, openaiApiKey?: string): Promise<string | null> {
   if (!openaiApiKey) {
     console.warn(`⚠️ OPENAI_API_KEY not set - skipping app icon generation`);
     return null;
@@ -162,10 +147,7 @@ export default {
   },
 };
 
-async function processAppEvent(
-  event: z.infer<typeof PublishEvent>,
-  env: QueueEnv,
-) {
+async function processAppEvent(event: z.infer<typeof PublishEvent>, env: QueueEnv) {
   const { type, app } = event;
 
   // Reload app from KV to ensure freshness, as other processes (like re-deploy) might have updated it
@@ -181,10 +163,7 @@ async function processAppEvent(
       }
     }
   } catch (error) {
-    console.warn(
-      `⚠️ Failed to reload app from KV for ${app.slug}, using event data:`,
-      error,
-    );
+    console.warn(`⚠️ Failed to reload app from KV for ${app.slug}, using event data:`, error);
   }
 
   // Handle icon repair events separately
@@ -201,10 +180,7 @@ async function processAppEvent(
         await env.KV.put(currentApp.slug, JSON.stringify(currentApp));
         console.log(`✅ Repaired icon for app ${currentApp.slug}`);
       } catch (error) {
-        console.error(
-          `❌ Failed to save repaired app ${currentApp.slug} to KV:`,
-          error,
-        );
+        console.error(`❌ Failed to save repaired app ${currentApp.slug} to KV:`, error);
       }
 
       // Clear the under-repair flag
@@ -223,9 +199,7 @@ async function processAppEvent(
   const openaiApiKey = env.OPENAI_API_KEY;
   let appUpdated = false;
 
-  const hasSummary =
-    typeof currentApp.summary === "string" &&
-    currentApp.summary.trim().length > 0;
+  const hasSummary = typeof currentApp.summary === "string" && currentApp.summary.trim().length > 0;
 
   if (!hasSummary) {
     const summary = await generateAppSummary(currentApp, callAiApiKey);
@@ -252,10 +226,7 @@ async function processAppEvent(
       await env.KV.put(currentApp.slug, JSON.stringify(currentApp));
       console.log(`✅ Updated app ${currentApp.slug} with AI content`);
     } catch (error) {
-      console.error(
-        `❌ Failed to save updated app ${currentApp.slug} to KV:`,
-        error,
-      );
+      console.error(`❌ Failed to save updated app ${currentApp.slug} to KV:`, error);
       // We continue with posting even if saving failed, using the enriched object in memory
     }
   }
@@ -263,11 +234,7 @@ async function processAppEvent(
   const tasks = [postToDiscord(currentApp, env)];
 
   // Add Bluesky posting if shareToFirehose is enabled
-  if (
-    currentApp.shareToFirehose &&
-    env.BLUESKY_HANDLE &&
-    env.BLUESKY_APP_PASSWORD
-  ) {
+  if (currentApp.shareToFirehose && env.BLUESKY_HANDLE && env.BLUESKY_APP_PASSWORD) {
     tasks.push(postToBluesky(currentApp, env));
   } else if (currentApp.shareToFirehose) {
     console.warn(`⚠️ shareToFirehose enabled but Bluesky credentials missing`);
@@ -294,20 +261,14 @@ async function postToDiscord(app: z.infer<typeof App>, env: QueueEnv) {
   const webhookUrl = env.DISCORD_WEBHOOK_URL;
 
   if (!webhookUrl) {
-    console.error(
-      "Discord webhook URL not configured - skipping Discord notification",
-    );
+    console.error("Discord webhook URL not configured - skipping Discord notification");
     return;
   }
 
   const appUrl = `https://vibes.diy/vibe/${app.slug}`;
-  const remixOfUrl = app.remixOf
-    ? `https://vibes.diy/vibe/${app.remixOf}`
-    : null;
+  const remixOfUrl = app.remixOf ? `https://vibes.diy/vibe/${app.remixOf}` : null;
   const screenshotUrl = `https://${app.slug}.vibesdiy.work/screenshot.png`;
-  const remixScreenshotUrl = app.remixOf
-    ? `https://${app.remixOf}.vibesdiy.work/screenshot.png`
-    : null;
+  const remixScreenshotUrl = app.remixOf ? `https://${app.remixOf}.vibesdiy.work/screenshot.png` : null;
 
   try {
     const promptField = app.prompt
@@ -355,9 +316,7 @@ ${app.prompt}
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Discord webhook failed: ${response.status} ${response.statusText}`,
-      );
+      throw new Error(`Discord webhook failed: ${response.status} ${response.statusText}`);
     }
   } catch (error) {
     console.error("Error posting to Discord:", error);
@@ -372,23 +331,18 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
 
   try {
     // Step 1: Create session
-    const sessionResponse = await fetch(
-      "https://bsky.social/xrpc/com.atproto.server.createSession",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identifier: env.BLUESKY_HANDLE,
-          password: env.BLUESKY_APP_PASSWORD,
-        }),
-      },
-    );
+    const sessionResponse = await fetch("https://bsky.social/xrpc/com.atproto.server.createSession", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        identifier: env.BLUESKY_HANDLE,
+        password: env.BLUESKY_APP_PASSWORD,
+      }),
+    });
 
     if (!sessionResponse.ok) {
       const errorText = await sessionResponse.text();
-      throw new Error(
-        `Failed to create Bluesky session: ${sessionResponse.status} ${errorText}`,
-      );
+      throw new Error(`Failed to create Bluesky session: ${sessionResponse.status} ${errorText}`);
     }
 
     const session = (await sessionResponse.json()) as {
@@ -405,25 +359,20 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
     try {
       const screenshotData = await env.KV.get(screenshotKey, "arrayBuffer");
       if (screenshotData) {
-        const blobResponse = await fetch(
-          "https://bsky.social/xrpc/com.atproto.repo.uploadBlob",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${session.accessJwt}`,
-              "Content-Type": "image/png",
-            },
-            body: screenshotData,
+        const blobResponse = await fetch("https://bsky.social/xrpc/com.atproto.repo.uploadBlob", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.accessJwt}`,
+            "Content-Type": "image/png",
           },
-        );
+          body: screenshotData,
+        });
 
         if (blobResponse.ok) {
           const blobResult = (await blobResponse.json()) as AtProtoBlobResponse;
           thumbnailBlob = blobResult.blob;
         } else {
-          console.warn(
-            `⚠️ Failed to upload screenshot blob: ${blobResponse.status}`,
-          );
+          console.warn(`⚠️ Failed to upload screenshot blob: ${blobResponse.status}`);
         }
       }
     } catch (error) {
@@ -457,27 +406,22 @@ async function postToBluesky(app: z.infer<typeof App>, env: QueueEnv) {
       embed: externalEmbed,
     };
 
-    const postResponse = await fetch(
-      "https://bsky.social/xrpc/com.atproto.repo.createRecord",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.accessJwt}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          repo: session.did,
-          collection: "app.bsky.feed.post",
-          record: post,
-        }),
+    const postResponse = await fetch("https://bsky.social/xrpc/com.atproto.repo.createRecord", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.accessJwt}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        repo: session.did,
+        collection: "app.bsky.feed.post",
+        record: post,
+      }),
+    });
 
     if (!postResponse.ok) {
       const errorText = await postResponse.text();
-      throw new Error(
-        `Failed to create Bluesky post: ${postResponse.status} ${errorText}`,
-      );
+      throw new Error(`Failed to create Bluesky post: ${postResponse.status} ${errorText}`);
     }
   } catch (error) {
     console.error("Error posting to Bluesky:", error);

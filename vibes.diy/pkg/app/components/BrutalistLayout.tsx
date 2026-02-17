@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { BrutalistCard } from "./vibes/BrutalistCard.js";
-import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
+import { BrutalistCard, VibesSwitch } from "@vibes.diy/base";
 import SessionSidebar from "./SessionSidebar.js";
 
 interface BrutalistLayoutProps {
@@ -14,12 +13,7 @@ interface BrutalistLayoutProps {
  * Shared layout for brutalist-styled pages (Groups, Settings, Vibe Instances)
  * Provides consistent page structure with SessionSidebar integration
  */
-export default function BrutalistLayout({
-  children,
-  title,
-  subtitle,
-  headerActions,
-}: BrutalistLayoutProps) {
+export default function BrutalistLayout({ children, title, subtitle, headerActions }: BrutalistLayoutProps) {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
   const closeSidebar = useCallback(() => {
@@ -34,12 +28,7 @@ export default function BrutalistLayout({
       <div className="px-8 pt-0">
         {/* Hamburger menu button - top left in normal flow with z-index */}
         <div className="mb-8 ml-0 relative z-20">
-          <VibesSwitch
-            size={75}
-            isActive={isSidebarVisible}
-            onToggle={setIsSidebarVisible}
-            className="cursor-pointer"
-          />
+          <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
         </div>
         <div
           style={{
@@ -58,19 +47,14 @@ export default function BrutalistLayout({
               <div className="flex-1">
                 <h1 className="text-4xl font-bold mb-2">{title}</h1>
                 {subtitle && (
-                  <p
-                    className="text-lg"
-                    style={{ color: "var(--vibes-text-secondary)" }}
-                  >
+                  <p className="text-lg" style={{ color: "var(--vibes-text-secondary)" }}>
                     {subtitle}
                   </p>
                 )}
               </div>
 
               {/* Header actions */}
-              {headerActions && (
-                <div className="flex items-center gap-3">{headerActions}</div>
-              )}
+              {headerActions && <div className="flex items-center gap-3">{headerActions}</div>}
             </div>
           </BrutalistCard>
 

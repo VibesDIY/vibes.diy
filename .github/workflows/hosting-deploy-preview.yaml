@@ -4,7 +4,7 @@ on:
   # Deploy preview worker whenever production deploys
   push:
     paths:
-      - "hosting/**/*"
+      - 'hosting/**/*'
     branches:
       - main
 

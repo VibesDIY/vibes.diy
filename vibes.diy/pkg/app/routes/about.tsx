@@ -1,12 +1,9 @@
 import React from "react";
 import BrutalistLayout from "../components/BrutalistLayout.js";
-import { BrutalistCard } from "../components/vibes/BrutalistCard.js";
+import { BrutalistCard } from "@vibes.diy/base";
 
 export function meta() {
-  return [
-    { title: "About - Vibes DIY" },
-    { name: "description", content: "About Vibes DIY - AI App Builder" },
-  ];
+  return [{ title: "About - Vibes DIY" }, { name: "description", content: "About Vibes DIY - AI App Builder" }];
 }
 
 export default function About() {
@@ -16,9 +13,8 @@ export default function About() {
       <BrutalistCard size="md">
         <h2 className="text-xl font-bold mb-3">What is Vibes DIY?</h2>
         <p>
-          An AI-powered app builder that lets you create custom applications
-          with your preferred style and functionality. No extensive coding
-          knowledge required.
+          An AI-powered app builder that lets you create custom applications with your preferred style and functionality. No
+          extensive coding knowledge required.
         </p>
       </BrutalistCard>
 
@@ -53,32 +49,24 @@ export default function About() {
         <h2 className="text-xl font-bold mb-3">Key Features</h2>
         <ul className="ml-5 list-disc space-y-2">
           <li>
-            <span className="font-medium">AI-Powered Generation</span> - Create
-            applications using natural language prompts
+            <span className="font-medium">AI-Powered Generation</span> - Create applications using natural language prompts
           </li>
           <li>
-            <span className="font-medium">Custom Styling</span> - Choose from
-            various design styles or create your own
+            <span className="font-medium">Custom Styling</span> - Choose from various design styles or create your own
           </li>
           <li>
-            <span className="font-medium">Local-First Architecture</span> - Your
-            data is managed on your device
+            <span className="font-medium">Local-First Architecture</span> - Your data is managed on your device
           </li>
           <li>
             <span className="font-medium">
-              <a
-                href="https://use-fireproof.com"
-                target="_blank"
-                className="text-blue-600 hover:underline dark:text-blue-400"
-              >
+              <a href="https://use-fireproof.com" target="_blank" className="text-blue-600 hover:underline dark:text-blue-400">
                 Fireproof
               </a>
             </span>{" "}
             - Reliable, secure database that syncs across devices
           </li>
           <li>
-            <span className="font-medium">Choose Your Model</span> - Access to a
-            variety of AI models through{" "}
+            <span className="font-medium">Choose Your Model</span> - Access to a variety of AI models through{" "}
             <a
               href="https://openrouter.ai"
               target="_blank"
@@ -94,33 +82,20 @@ export default function About() {
       {/* Footer */}
       <BrutalistCard size="sm">
         <p className="text-center text-xs">
-          Copyright © 2026{" "}
-          <a
-            href="https://fireproof.storage"
-            target="_blank"
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
+          Copyright © 2025{" "}
+          <a href="https://fireproof.storage" target="_blank" className="text-blue-600 hover:underline dark:text-blue-400">
             Fireproof
           </a>
           {" · "}
-          <a
-            href="mailto:help@vibes.diy"
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
+          <a href="mailto:help@vibes.diy" className="text-blue-600 hover:underline dark:text-blue-400">
             Email Support
           </a>
           {" · "}
-          <a
-            href="/legal/privacy"
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
+          <a href="/legal/privacy" className="text-blue-600 hover:underline dark:text-blue-400">
             Privacy Policy
           </a>
           {" · "}
-          <a
-            href="/legal/tos"
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
+          <a href="/legal/tos" className="text-blue-600 hover:underline dark:text-blue-400">
             Terms of Service
           </a>
         </p>

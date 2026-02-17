@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
-import {
-  listLocalVibes,
-  deleteVibeDatabase,
-} from "~/vibes.diy/app/utils/vibeUtils.js";
+import { listLocalVibes, deleteVibeDatabase } from "~/vibes.diy/app/utils/vibeUtils.js";
 import type { LocalVibe } from "~/vibes.diy/app/utils/vibeUtils.js";
 
 // Mock vibeUtils module
@@ -33,10 +30,7 @@ const mockVibes: LocalVibe[] = [
     slug: "original-vibe",
     created: new Date(1713632400000).toISOString(),
     screenshot: {
-      file: () =>
-        Promise.resolve(
-          new File(["test"], "screenshot.png", { type: "image/png" }),
-        ),
+      file: () => Promise.resolve(new File(["test"], "screenshot.png", { type: "image/png" })),
       type: "image/png",
     },
   },
@@ -47,10 +41,7 @@ const mockVibes: LocalVibe[] = [
     slug: "original-vibe",
     created: new Date(1713632400000).toISOString(),
     screenshot: {
-      file: () =>
-        Promise.resolve(
-          new File(["test"], "screenshot.png", { type: "image/png" }),
-        ),
+      file: () => Promise.resolve(new File(["test"], "screenshot.png", { type: "image/png" })),
       type: "image/png",
     },
   },
@@ -116,14 +107,10 @@ describe("vibeUtils", () => {
 
     it("should handle errors and rethrow them", async () => {
       // Arrange
-      (deleteVibeDatabase as Mock).mockRejectedValueOnce(
-        new Error("Delete error"),
-      );
+      (deleteVibeDatabase as Mock).mockRejectedValueOnce(new Error("Delete error"));
 
       // Act & Assert
-      await expect(deleteVibeDatabase("test-vibe-id")).rejects.toThrow(
-        "Delete error",
-      );
+      await expect(deleteVibeDatabase("test-vibe-id")).rejects.toThrow("Delete error");
     });
   });
 });

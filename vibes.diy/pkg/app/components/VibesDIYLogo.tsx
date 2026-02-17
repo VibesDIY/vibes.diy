@@ -1,5 +1,5 @@
 import React from "react";
-import { VibesSwitch } from "./vibes/VibesSwitch/VibesSwitch.js";
+import { VibesSwitch } from "@vibes.diy/base";
 
 interface VibesDIYLogoProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: number;
@@ -8,13 +8,7 @@ interface VibesDIYLogoProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 // Logo component using the VibesSwitch from use-vibes-base
-const VibesDIYLogo: React.FC<VibesDIYLogoProps> = ({
-  className,
-  width,
-  height,
-  size,
-  ...props
-}) => {
+const VibesDIYLogo: React.FC<VibesDIYLogoProps> = ({ className, width, height, size, ...props }) => {
   // Use size if provided, otherwise calculate from width/height
   const effectiveSize = size || width || height || 24;
 

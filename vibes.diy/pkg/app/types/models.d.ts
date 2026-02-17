@@ -13,3 +13,9 @@ declare module "../data/models.json" {
   const models: ModelInfo[];
   export default models;
 }
+
+export interface UseCallAIV2Params {
+  title?: string | null;
+  // sessionId: string
+  model?: string | null;
+}

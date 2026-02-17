@@ -20,9 +20,7 @@ function QuickSuggestions({ onSelectSuggestion }: QuickSuggestionsProps) {
 
   return (
     <div className="mb-8">
-      <h3 className="mb-4 text-center text-sm font-medium text-gray-600">
-        Create custom vibes from a prompt
-      </h3>
+      <h3 className="mb-4 text-center text-sm font-medium text-gray-600">Create custom vibes from a prompt</h3>
       <div className="flex flex-wrap justify-center gap-2">
         {randomSuggestions.map((suggestion, index) => (
           <button

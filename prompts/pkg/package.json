@@ -24,13 +24,13 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.5.21",
-    "@fireproof/core": "0.24.10",
-    "@fireproof/core-keybag": "0.24.10",
-    "@fireproof/core-runtime": "0.24.10",
-    "@fireproof/core-types-base": "0.24.10",
-    "@fireproof/core-types-protocols-cloud": "0.24.10",
-    "@fireproof/use-fireproof": "0.24.10",
+    "@adviser/cement": "^0.5.22",
+    "@fireproof/core": "0.24.11",
+    "@fireproof/core-keybag": "0.24.11",
+    "@fireproof/core-runtime": "0.24.11",
+    "@fireproof/core-types-base": "0.24.11",
+    "@fireproof/core-types-protocols-cloud": "0.24.11",
+    "@fireproof/use-fireproof": "0.24.11",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "call-ai": "workspace:*"
   },
@@ -38,7 +38,7 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.10",
+    "@fireproof/core-cli": "0.24.11",
     "@vitest/browser-playwright": "^4.0.18",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0",

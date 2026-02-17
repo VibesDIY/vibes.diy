@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { ImgGenPlaceholderProps } from './types.js';
-import { combineClasses, defaultClasses } from '../../utils/style-utils.js';
-import { imgGenStyles, imgGenTheme } from '../../utils/styles.js';
-import { ImageOverlay } from './overlays/ImageOverlay.js';
+import * as React from "react";
+import { ImgGenPlaceholderProps } from "./types.js";
+import { combineClasses, defaultClasses } from "../../utils/style-utils.js";
+import { imgGenStyles, imgGenTheme } from "../../utils/styles.js";
+import { ImageOverlay } from "./overlays/ImageOverlay.js";
 
 // Component for loading/placeholder state
 export function ImgGenDisplayPlaceholder({
@@ -33,31 +33,28 @@ export function ImgGenDisplayPlaceholder({
   // Extract error information from the error object
   const parseErrorInfo = (error: Error) => {
     const errorMsg = error.message;
-    let title = 'Image Generation Failed';
+    let title = "Image Generation Failed";
     let body = errorMsg;
-    let code = '';
+    let code = "";
 
     // Try to parse JSON error details if present
-    if (errorMsg.includes('{')) {
+    if (errorMsg.includes("{")) {
       try {
-        const jsonStart = errorMsg.indexOf('{');
+        const jsonStart = errorMsg.indexOf("{");
         const jsonStr = errorMsg.substring(jsonStart);
         const jsonObj = JSON.parse(jsonStr);
 
         // Get error code if it exists
         if (errorMsg.match(/\d{3}/)) {
-          code = errorMsg.match(/\d{3}/)?.[0] || '';
+          code = errorMsg.match(/\d{3}/)?.[0] || "";
         }
 
         // Special handling for moderation blocked errors
-        if (
-          jsonObj.details?.error?.code === 'moderation_blocked' ||
-          jsonObj.code === 'moderation_blocked'
-        ) {
+        if (jsonObj.details?.error?.code === "moderation_blocked" || jsonObj.code === "moderation_blocked") {
           // Include error code in title but avoid duplication
-          title = code ? `${code} - Failed to generate image` : 'Failed to generate image';
+          title = code ? `${code} - Failed to generate image` : "Failed to generate image";
           body =
-            'Your request was rejected as a result of our safety system. Your request may contain content that is not allowed by our safety system.';
+            "Your request was rejected as a result of our safety system. Your request may contain content that is not allowed by our safety system.";
           return { title, body, code };
         }
 
@@ -84,12 +81,12 @@ export function ImgGenDisplayPlaceholder({
   if (error) {
     return (
       <div
-        className={combineClasses('imggen-error-container', className, classes.placeholder)}
+        className={combineClasses("imggen-error-container", className, classes.placeholder)}
         style={{
           ...imgGenStyles.errorContainer,
-          minHeight: '512px', // Standard image height
+          minHeight: "512px", // Standard image height
         }}
-        aria-label={alt || 'Error display'}
+        aria-label={alt || "Error display"}
         role="img"
       >
         <div className={combineClasses(classes.error)} style={imgGenStyles.error}>
@@ -111,13 +108,13 @@ export function ImgGenDisplayPlaceholder({
   return (
     <div
       className={combineClasses(className, classes.placeholder)}
-      aria-label={alt || prompt || 'Image placeholder'}
+      aria-label={alt || prompt || "Image placeholder"}
       role="img"
       style={{
         ...imgGenStyles.placeholder,
-        flexDirection: 'column',
-        textAlign: 'center',
-        color: '#eee', // Light text color
+        flexDirection: "column",
+        textAlign: "center",
+        color: "#eee", // Light text color
       }}
     >
       {/* Progress bar at the very top */}
@@ -139,8 +136,8 @@ export function ImgGenDisplayPlaceholder({
         <div
           style={{
             ...imgGenStyles.statusText,
-            color: '#eee',
-            padding: '20px',
+            color: "#eee",
+            padding: "20px",
           }}
         >
           Waiting for prompt
@@ -153,21 +150,21 @@ export function ImgGenDisplayPlaceholder({
         <>
           <div
             style={{
-              color: '#eee',
+              color: "#eee",
               fontSize: imgGenTheme.typography.fontSize,
-              padding: '20px',
-              maxWidth: '90%',
-              wordBreak: 'break-word',
+              padding: "20px",
+              maxWidth: "90%",
+              wordBreak: "break-word",
               fontWeight: imgGenTheme.typography.fontWeight,
-              textAlign: 'center',
+              textAlign: "center",
             }}
           >
             {prompt}
           </div>
 
-          <div style={{ display: 'none' }}>
+          <div style={{ display: "none" }}>
             <ImageOverlay
-              promptText={prompt || ''}
+              promptText={prompt || ""}
               editedPrompt={null}
               setEditedPrompt={() => {
                 /* noop */

@@ -13,7 +13,7 @@ function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
         ok: true,
         text: () =>
           Promise.resolve(
-            "<callAI-docs>\n# CallAI Documentation\nReal callAI docs content from pkg/llms/callai.txt\n</callAI-docs>",
+            "<callAI-docs>\n# CallAI Documentation\nReal callAI docs content from pkg/llms/callai.txt\n</callAI-docs>"
           ),
       } as Response);
     }
@@ -23,7 +23,7 @@ function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
         ok: true,
         text: () =>
           Promise.resolve(
-            "<useFireproof-docs>\n# Fireproof Documentation\nReal Fireproof docs content from pkg/llms/fireproof.txt\n</useFireproof-docs>",
+            "<useFireproof-docs>\n# Fireproof Documentation\nReal Fireproof docs content from pkg/llms/fireproof.txt\n</useFireproof-docs>"
           ),
       } as Response);
     }
@@ -33,7 +33,7 @@ function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
         ok: true,
         text: () =>
           Promise.resolve(
-            "<imageGen-docs>\n# Image Generation Documentation\nReal ImageGen docs content from pkg/llms/image-gen.txt\n</imageGen-docs>",
+            "<imageGen-docs>\n# Image Generation Documentation\nReal ImageGen docs content from pkg/llms/image-gen.txt\n</imageGen-docs>"
           ),
       } as Response);
     }
@@ -43,7 +43,7 @@ function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
         ok: true,
         text: () =>
           Promise.resolve(
-            "<webAudio-docs>\n# Web Audio Documentation\nReal Web Audio docs content from pkg/llms/web-audio.txt\n</webAudio-docs>",
+            "<webAudio-docs>\n# Web Audio Documentation\nReal Web Audio docs content from pkg/llms/web-audio.txt\n</webAudio-docs>"
           ),
       } as Response);
     }
@@ -51,10 +51,7 @@ function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
     if (url.includes("d3.txt") || url.includes("d3.md")) {
       return Promise.resolve({
         ok: true,
-        text: () =>
-          Promise.resolve(
-            "<D3.js-docs>\n# D3.js Documentation\nReal D3 docs content from pkg/llms/d3.md\n</D3.js-docs>",
-          ),
+        text: () => Promise.resolve("<D3.js-docs>\n# D3.js Documentation\nReal D3 docs content from pkg/llms/d3.md\n</D3.js-docs>"),
       } as Response);
     }
 
@@ -63,7 +60,7 @@ function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
         ok: true,
         text: () =>
           Promise.resolve(
-            "<Three.js-docs>\n# Three.js Documentation\nReal Three.js docs content from pkg/llms/three-js.md\n</Three.js-docs>",
+            "<Three.js-docs>\n# Three.js Documentation\nReal Three.js docs content from pkg/llms/three-js.md\n</Three.js-docs>"
           ),
       } as Response);
     }
@@ -71,10 +68,7 @@ function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
     // Default response for other text files - fallback mock
     return Promise.resolve({
       ok: true,
-      text: () =>
-        Promise.resolve(
-          "<mock-docs>\n# Mock Documentation\nMock docs content\n</mock-docs>",
-        ),
+      text: () => Promise.resolve("<mock-docs>\n# Mock Documentation\nMock docs content\n</mock-docs>"),
     } as Response);
   };
 }
@@ -108,7 +102,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
         onUpdateDependencies={onUpdateDependencies}
         selectedDependencies={undefined}
         dependenciesUserOverride={false}
-      />,
+      />
     );
 
     // Labels come from llms catalog JSON: useFireproof and callAI
@@ -124,11 +118,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
     expect(callai).not.toBeChecked();
 
     // LLM-driven banner is visible
-    expect(
-      res.getByText(
-        /Libraries shown below were chosen by the AI based on your last prompt/i,
-      ),
-    ).toBeInTheDocument();
+    expect(res.getByText(/Libraries shown below were chosen by the AI based on your last prompt/i)).toBeInTheDocument();
   });
 
   it("renders checkboxes correctly for selected dependencies", async () => {
@@ -139,7 +129,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
         onUpdateDependencies={onUpdateDependencies}
         selectedDependencies={["fireproof", "callai"]}
         dependenciesUserOverride={true}
-      />,
+      />
     );
 
     // Wait for catalog to load and checkboxes to be properly initialized
@@ -165,7 +155,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
         onUpdateDependencies={onUpdateDependencies}
         selectedDependencies={["fireproof"]}
         dependenciesUserOverride={true}
-      />,
+      />
     );
 
     const fireproof = await res.findByLabelText(/useFireproof/i, {
@@ -200,7 +190,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
           onUpdateDependencies={vi.fn()}
           onUpdateDemoDataOverride={onUpdateDemoDataOverride}
           demoDataOverride={undefined}
-        />,
+        />
       );
 
       // Check that Prompt Options section exists
@@ -209,9 +199,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
       // Check demo data controls
       expect(res.getByText("Demo Data")).toBeInTheDocument();
       const radios = res.getAllByDisplayValue("llm");
-      const llmDecideDemo = radios.find(
-        (input) => (input as HTMLInputElement).name === "demoData",
-      ) as HTMLInputElement;
+      const llmDecideDemo = radios.find((input) => (input as HTMLInputElement).name === "demoData") as HTMLInputElement;
       expect(llmDecideDemo).toBeChecked();
     });
 
@@ -224,7 +212,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
           onUpdateDependencies={vi.fn()}
           onUpdateDemoDataOverride={onUpdateDemoDataOverride}
           demoDataOverride={undefined}
-        />,
+        />
       );
 
       const alwaysIncludeDemo = res.getByLabelText("Always include demo data");
@@ -243,7 +231,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
           onUpdateDependencies={vi.fn()}
           onUpdateDemoDataOverride={onUpdateDemoDataOverride}
           demoDataOverride={undefined}
-        />,
+        />
       );
 
       const neverIncludeDemo = res.getByLabelText("Never include demo data");
@@ -260,7 +248,7 @@ describe("AppSettingsView Libraries (per‑vibe dependency chooser)", () => {
           onUpdateDependencies={vi.fn()}
           onUpdateDemoDataOverride={vi.fn()}
           demoDataOverride={false}
-        />,
+        />
       );
 
       // Demo data should show "always off"

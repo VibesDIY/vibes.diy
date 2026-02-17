@@ -28,12 +28,7 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
       });
 
       // This should not throw an error
-      await expect(
-        result.current.saveCodeAsAiMessage(
-          'console.log("test");',
-          result.current.docs,
-        ),
-      ).resolves.not.toThrow();
+      await expect(result.current.saveCodeAsAiMessage('console.log("test");', result.current.docs)).resolves.not.toThrow();
     });
 
     it("handles empty code input", async () => {
@@ -47,9 +42,7 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
       });
 
       // This should not throw an error with empty string
-      await expect(
-        result.current.saveCodeAsAiMessage("", result.current.docs),
-      ).resolves.not.toThrow();
+      await expect(result.current.saveCodeAsAiMessage("", result.current.docs)).resolves.not.toThrow();
     });
 
     it("handles complex code with special characters", async () => {
@@ -75,9 +68,7 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
 }`;
 
       // This should not throw an error with complex code
-      await expect(
-        result.current.saveCodeAsAiMessage(complexCode, result.current.docs),
-      ).resolves.not.toThrow();
+      await expect(result.current.saveCodeAsAiMessage(complexCode, result.current.docs)).resolves.not.toThrow();
     });
   });
 
@@ -93,10 +84,7 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
       });
 
       // Call saveCodeAsAiMessage
-      await result.current.saveCodeAsAiMessage(
-        'console.log("Hello World");',
-        result.current.docs,
-      );
+      await result.current.saveCodeAsAiMessage('console.log("Hello World");', result.current.docs);
 
       // Verify the function executed successfully (basic smoke test)
       expect(true).toBe(true);
@@ -115,10 +103,7 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
       const beforeCall = Date.now();
 
       // Call saveCodeAsAiMessage
-      await result.current.saveCodeAsAiMessage(
-        'console.log("Timestamp test");',
-        result.current.docs,
-      );
+      await result.current.saveCodeAsAiMessage('console.log("Timestamp test");', result.current.docs);
 
       const afterCall = Date.now();
 
@@ -179,9 +164,7 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
       const testCode = 'console.log("Testing user requirements");';
 
       // Call the function and verify it completes without error
-      await expect(
-        result.current.saveCodeAsAiMessage(testCode, result.current.docs),
-      ).resolves.not.toThrow();
+      await expect(result.current.saveCodeAsAiMessage(testCode, result.current.docs)).resolves.not.toThrow();
 
       // The detailed testing of message creation logic and timestamp ordering
       // would require more complex mocking of the database state and message history
@@ -199,10 +182,7 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
       });
 
       // First edit - should create new messages
-      await result.current.saveCodeAsAiMessage(
-        'console.log("first edit");',
-        result.current.docs,
-      );
+      await result.current.saveCodeAsAiMessage('console.log("first edit");', result.current.docs);
       const afterFirstEdit = Date.now();
 
       // Wait a bit to ensure different timestamps
@@ -210,10 +190,7 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
 
       // Second edit - should create new messages with newer timestamps
       const beforeSecondEdit = Date.now();
-      await result.current.saveCodeAsAiMessage(
-        'console.log("second edit");',
-        result.current.docs,
-      );
+      await result.current.saveCodeAsAiMessage('console.log("second edit");', result.current.docs);
       const afterSecondEdit = Date.now();
 
       // This test verifies the function doesn't throw and can be called multiple times
@@ -243,14 +220,8 @@ describe("useSimpleChat - saveCodeAsAiMessage", () => {
 
       // This is a behavioral verification - the function should not throw
       // and should handle the scenario correctly by creating new messages
-      await result.current.saveCodeAsAiMessage(
-        'console.log("first edit");',
-        result.current.docs,
-      );
-      await result.current.saveCodeAsAiMessage(
-        'console.log("second edit");',
-        result.current.docs,
-      );
+      await result.current.saveCodeAsAiMessage('console.log("first edit");', result.current.docs);
+      await result.current.saveCodeAsAiMessage('console.log("second edit");', result.current.docs);
 
       expect(true).toBe(true); // Test passes if no errors thrown
     });

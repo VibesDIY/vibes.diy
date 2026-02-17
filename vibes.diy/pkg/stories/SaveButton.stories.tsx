@@ -38,13 +38,11 @@ const meta = {
       action: "clicked",
     },
     hasChanges: {
-      description:
-        "Whether there are unsaved changes. Button only renders when true.",
+      description: "Whether there are unsaved changes. Button only renders when true.",
       control: "boolean",
     },
     syntaxErrorCount: {
-      description:
-        "Number of syntax errors. When > 0, button shows error count and becomes disabled.",
+      description: "Number of syntax errors. When > 0, button shows error count and becomes disabled.",
       control: { type: "number", min: 0, max: 10 },
     },
     color: {
@@ -72,8 +70,7 @@ export const Default: _Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "The default neobrutalist save button state when there are changes to save and no syntax errors.",
+        story: "The default neobrutalist save button state when there are changes to save and no syntax errors.",
       },
     },
   },
@@ -81,15 +78,7 @@ export const Default: _Story = {
 
 const colorNames: {
   name: string;
-  value:
-    | "blue"
-    | "electric"
-    | "hot"
-    | "cyber"
-    | "retro"
-    | "cool"
-    | "dream"
-    | "danger";
+  value: "blue" | "electric" | "hot" | "cyber" | "retro" | "cool" | "dream" | "danger";
 }[] = [
   { name: "Default Blue", value: "blue" },
   { name: "Electric Yellow", value: "electric" },
@@ -110,8 +99,7 @@ export const WithErrors: _Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "The error state showing syntax error count. The button is disabled and uses destructive styling.",
+        story: "The error state showing syntax error count. The button is disabled and uses destructive styling.",
       },
     },
   },
@@ -126,8 +114,7 @@ export const SingleError: _Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          'Error state with singular grammar (shows "1 Error" instead of "1 Errors").',
+        story: 'Error state with singular grammar (shows "1 Error" instead of "1 Errors").',
       },
     },
   },
@@ -174,10 +161,7 @@ Try clicking the button to see the characteristic neobrutalism active state anim
         <div className="space-y-4">
           <h3 className="text-lg font-bold">Neobrutalism Design Elements</h3>
           <div className="border-border bg-secondary-background rounded-[--radius-base] border-2 p-4">
-            <p className="mb-4 text-sm">
-              Click the button to see the signature neobrutalism "press"
-              animation!
-            </p>
+            <p className="mb-4 text-sm">Click the button to see the signature neobrutalism "press" animation!</p>
             <Story />
           </div>
         </div>
@@ -205,10 +189,8 @@ export const ColorSystem: _Story = {
         <div className="space-y-6">
           <h3 className="text-lg font-bold">Neobrutalism Color System</h3>
           <p className="max-w-2xl text-sm text-gray-600">
-            This demonstrates the foundation for the themeable component system:
-            "neobrutalism → rainbow mode → other themes later". All colors are
-            from the official neobrutalism.dev palette with proper React
-            component integration.
+            This demonstrates the foundation for the themeable component system: "neobrutalism → rainbow mode → other themes later".
+            All colors are from the official neobrutalism.dev palette with proper React component integration.
           </p>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             {colorNames.map((color) => (

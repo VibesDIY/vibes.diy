@@ -1,12 +1,12 @@
 import { usePostHog } from "posthog-js/react";
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router";
-import { VibesDiyEnv } from "../config/env.js";
+import { useLocation } from "react-router-dom";
 import { useCookieConsent } from "../contexts/CookieConsentContext.js";
 import { useTheme } from "../contexts/ThemeContext.js";
 import { pageview, trackEvent } from "../utils/analytics.js";
 import { initGTM } from "../utils/gtm.js";
 import { CookieConsent, getCookieConsentValue } from "react-cookie-consent";
+import { useVibeDiy } from "../vibe-diy-provider.js";
 
 // We'll use any type for dynamic imports to avoid TypeScript errors with the cookie consent component
 
@@ -15,14 +15,11 @@ export default function CookieBanner() {
   const [hasConsent, setHasConsent] = useState(false);
   const { messageHasBeenSent } = useCookieConsent();
   const { isDarkMode } = useTheme();
+  const { webVars: svcVars } = useVibeDiy();
 
   // Dynamic import for client-side only
-  const [XCookieConsent, setXCookieConsent] = useState<
-    typeof CookieConsent | null
-  >(null);
-  const [getXCookieConsentValue, setXGetCookieConsentValue] = useState<
-    typeof getCookieConsentValue | null
-  >(null);
+  const [XCookieConsent, setXCookieConsent] = useState<typeof CookieConsent | null>(null);
+  const [getXCookieConsentValue, setXGetCookieConsentValue] = useState<typeof getCookieConsentValue | null>(null);
 
   const posthog = usePostHog();
 
@@ -31,9 +28,7 @@ export default function CookieBanner() {
   // Load the cookie consent library on client side only
   useEffect(() => {
     import("react-cookie-consent").then((module) => {
-      setXCookieConsent(
-        () => module.default as unknown as typeof CookieConsent,
-      );
+      setXCookieConsent(() => module.default as unknown as typeof CookieConsent);
       setXGetCookieConsentValue(() => module.getCookieConsentValue);
     });
   }, []);
@@ -56,7 +51,7 @@ export default function CookieBanner() {
   }, [location, hasConsent]);
 
   // Initialize GTM if consent is given
-  const gtmId = VibesDiyEnv.GTM_CONTAINER_ID();
+  const gtmId = svcVars.env.GTM_CONTAINER_ID;
   useEffect(() => {
     if (gtmId && hasConsent && typeof document !== "undefined") {
       // Opt in to PostHog
@@ -96,9 +91,7 @@ export default function CookieBanner() {
       style={{
         background: isDarkMode ? "#1a1a1a" : "#ffffff",
         color: "#808080",
-        boxShadow: isDarkMode
-          ? "0 -1px 10px rgba(255, 255, 255, 0.1)"
-          : "0 -1px 10px rgba(0, 0, 0, 0.1)",
+        boxShadow: isDarkMode ? "0 -1px 10px rgba(255, 255, 255, 0.1)" : "0 -1px 10px rgba(0, 0, 0, 0.1)",
       }}
       buttonStyle={{
         color: isDarkMode ? "#ffffff" : "#000000",
@@ -125,8 +118,7 @@ export default function CookieBanner() {
         trackEvent("cookie_decline");
       }}
     >
-      This website uses cookies to enhance the user experience and analyze site
-      traffic.
+      This website uses cookies to enhance the user experience and analyze site traffic.
     </XCookieConsent>
   );
 }

@@ -21,7 +21,7 @@
     "build": "core-cli tsc",
     "build:prod": "pnpm --filter vibes-diy build",
     "serve:prod": "pnpm exec serve -s vibes.diy/pkg/build/client",
-    "lint": "eslint . && cd hosting/pkg && pnpm lint",
+    "lint": "eslint .",
     "knip": "knip",
     "test": "cross-env DISABLE_REACT_ROUTER=true vitest --run",
     "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage",
@@ -35,7 +35,7 @@
     "dev:router": "cd vibes.diy/pkg && pnpm run dev:router",
     "pack": "echo skip pack",
     "publish": "echo skip publish",
-    "check": "pnpm format && pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test",
+    "check": "pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test",
     "storybook": "cd vibes.diy/pkg && cross-env DISABLE_REACT_ROUTER=true pnpm run storybook",
     "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook"
   },
@@ -54,13 +54,18 @@
     "Meno Abels"
   ],
   "license": "Apache-2.0",
+  "pnpm": {
+    "patchedDependencies": {
+      "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@fireproof/core-cli": "0.24.10",
+    "@fireproof/core-cli": "0.24.11",
     "@playwright/test": "^1.58.1",
     "@types/deno": "^2.5.0",
-    "@types/node": "^25.2.0",
-    "@typescript/native-preview": "7.0.0-dev.20260126.1",
+    "@types/node": "^25.2.3",
+    "@typescript/native-preview": "7.0.0-dev.20260206.1",
     "@vitest/browser-playwright": "^4.0.18",
     "@vitest/coverage-v8": "4.0.18",
     "cross-env": "^10.0.0",
@@ -74,6 +79,6 @@
     "serve": "^14.2.5",
     "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18",
-    "wrangler": "^4.62.0"
+    "wrangler": "^4.64.0"
   }
 }

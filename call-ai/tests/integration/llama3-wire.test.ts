@@ -164,7 +164,7 @@ describe("Llama3 Wire Protocol Tests", () => {
       {
         apiKey: "test-api-key",
         model: "meta-llama/llama-3.3-70b-instruct",
-      },
+      }
     );
 
     // Verify the result

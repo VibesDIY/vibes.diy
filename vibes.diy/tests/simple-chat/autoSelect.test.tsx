@@ -11,9 +11,7 @@ describe("useSimpleChat", () => {
         start(controller) {
           const chunks = ["Auto-selected ", "response."];
           const sseChunks = formatAsSSE(chunks);
-          sseChunks.forEach((chunk) =>
-            controller.enqueue(encoder.encode(chunk)),
-          );
+          sseChunks.forEach((chunk) => controller.enqueue(encoder.encode(chunk)));
           controller.close();
         },
       });

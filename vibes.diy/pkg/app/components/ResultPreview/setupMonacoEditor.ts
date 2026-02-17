@@ -26,15 +26,12 @@ export interface MonacoDiagnosticsDefaults {
 }
 
 interface Options {
-  isStreaming: boolean;
+  promptProcessing: boolean;
   codeReady: boolean;
   isDarkMode: boolean;
   userScrolledRef: React.MutableRefObject<boolean>;
   disposablesRef: React.MutableRefObject<{ dispose: () => void }[]>;
-  setRefs: (
-    editor: monaco.editor.IStandaloneCodeEditor,
-    monaco: Monaco,
-  ) => void;
+  setRefs: (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) => void;
   setHighlighter: (highlighter: HighlighterCore) => void;
 }
 
@@ -45,15 +42,8 @@ interface Options {
  * `noSyntaxValidation` based on `codeReady`, while preserving any
  * other existing diagnostics flags from `previous`.
  */
-export function diagnosticsForCodeReady(
-  codeReady: boolean,
-  previous?: MonacoDiagnosticsOptions,
-): MonacoDiagnosticsOptions {
-  const {
-    noSemanticValidation: _prevSemantic,
-    noSyntaxValidation: _prevSyntax,
-    ...rest
-  } = previous ?? {};
+export function diagnosticsForCodeReady(codeReady: boolean, previous?: MonacoDiagnosticsOptions): MonacoDiagnosticsOptions {
+  const { noSemanticValidation: _prevSemantic, noSyntaxValidation: _prevSyntax, ...rest } = previous ?? {};
 
   return {
     ...rest,
@@ -65,15 +55,7 @@ export function diagnosticsForCodeReady(
 export async function setupMonacoEditor(
   editor: monaco.editor.IStandaloneCodeEditor,
   monaco: Monaco,
-  {
-    isStreaming,
-    codeReady,
-    isDarkMode,
-    userScrolledRef,
-    disposablesRef,
-    setRefs,
-    setHighlighter,
-  }: Options,
+  { promptProcessing, codeReady, isDarkMode, userScrolledRef, disposablesRef, setRefs, setHighlighter }: Options
 ) {
   setRefs(editor, monaco);
 
@@ -99,9 +81,7 @@ export async function setupMonacoEditor(
   const jsDefaults = ts.javascriptDefaults as MonacoDiagnosticsDefaults;
   const currentDiagnostics = jsDefaults.getDiagnosticsOptions?.();
 
-  jsDefaults.setDiagnosticsOptions(
-    diagnosticsForCodeReady(codeReady, currentDiagnostics),
-  );
+  jsDefaults.setDiagnosticsOptions(diagnosticsForCodeReady(codeReady, currentDiagnostics));
 
   editor.updateOptions({
     tabSize: 2,
@@ -112,7 +92,7 @@ export async function setupMonacoEditor(
   monaco.languages.register({ id: "jsx" });
   monaco.languages.register({ id: "javascript" });
 
-  if (isStreaming && !codeReady) {
+  if (promptProcessing && !codeReady) {
     let lastScrollTime = Date.now();
     const scrollThrottleMs = 30;
     const contentDisposable = editor.onDidChangeModelContent(() => {
@@ -138,9 +118,7 @@ export async function setupMonacoEditor(
     });
     setHighlighter(highlighter);
     await shikiToMonaco(highlighter, monaco);
-    const currentTheme = isDarkMode
-      ? "github-dark-default"
-      : "github-light-default";
+    const currentTheme = isDarkMode ? "github-dark-default" : "github-light-default";
     monaco.editor.setTheme(currentTheme);
     const model = editor.getModel();
     if (model) {

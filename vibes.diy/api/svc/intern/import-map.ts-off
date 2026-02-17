@@ -1,0 +1,405 @@
+import { exception2Result } from "@adviser/cement";
+import { VibesImportMap } from "@vibes.diy/api-types";
+import * as semver from "semver";
+
+const lockedGroupsVersions = {
+  tailwindcss: {
+    tailwindcss: "version:TAILWINDCSS",
+  },
+  fireproof: {
+    "@adviser/cement": "version:ADVISER_CEMENT",
+    yaml: "version:YAML",
+    multiformats: "version:MULTIFORMATS",
+    cborg: "version:CBORG",
+    "cborg/json": "version:CBORG",
+    "cborg/length": "version:CBORG",
+    zod: "version:ZOD",
+    arktype: "version:ARKTYPE",
+    jose: "version:JOSE",
+    "jose/jwt/decode": "version:JOSE",
+    dompurify: "version:DOMPURIFY",
+    "@fireproof/core-base": "version:FP",
+    "@fireproof/core-blockstore": "version:FP",
+    "@fireproof/core-cli": "version:FP",
+    "@fireproof/core-device-id": "version:FP",
+    "@fireproof/core-gateways-base": "version:FP",
+    "@fireproof/core-gateways-cloud": "version:FP",
+    "@fireproof/core-gateways-file-deno": "version:FP",
+    "@fireproof/core-gateways-file-node": "version:FP",
+    "@fireproof/core-gateways-file": "version:FP",
+    "@fireproof/core-gateways-indexeddb": "version:FP",
+    "@fireproof/core-gateways-memory": "version:FP",
+    "@fireproof/core-keybag": "version:FP",
+    "@fireproof/core-protocols-cloud": "version:FP",
+    "@fireproof/core-protocols-dashboard": "version:FP",
+    "@fireproof/core-runtime": "version:FP",
+    "@fireproof/core-types-base": "version:FP",
+    "@fireproof/core-types-blockstore": "version:FP",
+    "@fireproof/core-types-protocols-cloud": "version:FP",
+    "@fireproof/core-types-runtime": "version:FP",
+    "@fireproof/core": "version:FP",
+    "@fireproof/vendor": "version:FP",
+    "@fireproof/use-fireproof": "version:FP,dep:react",
+    "use-fireproof": "version:FP",
+
+    // deps=react@19.2.1,react-dom@19.2.1
+  },
+  react: {
+    react: "version:REACT",
+    "react-dom": "version:REACT",
+  },
+  "react-dom-helpers": {
+    "react-dom/client": "version:REACT",
+    "react/jsx-runtime": "version:REACT",
+    "react/jsx-dev-runtime": "version:REACT",
+  },
+  "vibe-runtime": {
+    "@vibes.diy/base": "privateNpm:,dep:react",
+    "@vibes.diy/vibe-runtime": "privateNpm:,dep:react",
+
+    // "@vibes.diy/call-ai-v2": "privateNpm:",
+    // "use-vibes": "privateNpm:",
+    // "use-fireproof": "privateNpm:",
+    // "@vibes.diy/prompts": "privateNpm:",
+    // what the fuck
+    // "@vibes.diy/use-vibes-base": "privateNpm:",
+    // "call-ai": "privateNpm:",
+  },
+};
+
+const reScopedPkg = /^(@[^/]+\/[^/]+)(\/.*)?$/;
+const rePkg = /^([^/@]+)(\/.*)?$/;
+
+interface ImportMap {
+  imports: Record<string, string>;
+}
+
+interface ParsedVersion {
+  version: string; // defaults to "LATEST" if not set or empty
+  privateNpm: boolean; // true if "privateNpm:" is present
+  dep: string[]; // always an array, e.g., ["react", "react-dom"]
+  semVersion?: string; // if a semver version is detected
+}
+
+
+function lockedGroupsVersions2ImportMap(lockedGroupsVersions: Record<string, Record<string, string>>): ImportMap {
+  const imports: Record<string, string> = {};
+
+  for (const group of Object.values(lockedGroupsVersions)) {
+    for (const [pkg, version] of Object.entries(group)) {
+      imports[pkg] = version;
+    }
+  }
+
+  return { imports };
+}
+
+export function packageName(key: string): { pkg: string; suffix?: string } {
+  // For scoped packages, return the first two segments, otherwise return the first segment
+  const scopedMatch = reScopedPkg.exec(key);
+  if (scopedMatch) {
+    return { pkg: scopedMatch[1], suffix: scopedMatch[2] }; // Returns @scope/package
+  }
+  const unscopedMatch = rePkg.exec(key);
+  if (unscopedMatch) {
+    return { pkg: unscopedMatch[1], suffix: unscopedMatch[2] }; // Returns package
+  }
+  return { pkg: key }; // Fallback to the original key if no match
+}
+
+interface ImportMapOptions {
+  genImport: VibesImportMap;
+  version: Record<string, string>;
+  fetchPkgVersion(pkg: string): Promise<string | undefined>;
+  resolveVersionImportMap(pkg: string, version: string, deps: Record<string, string>): string;
+}
+
+export async function genImportMap(opts: ImportMapOptions): Promise<ImportMap> {
+  const lockedImportMap = lockedGroupsVersions2ImportMap(lockedGroupsVersions);
+  // console.log("Locked import map:", lockedImportMap, "genImport:", opts.genImport.imports);
+  for (const [pkg, ver] of Object.entries(opts.genImport.imports)) {
+    if (ver.startsWith("vibed:")) {
+      const { pkg: pkgName } = packageName(pkg);
+      if (lockedImportMap.imports[pkgName]) {
+        opts.genImport.imports[pkg] = lockedImportMap.imports[pkg];
+      } else {
+        opts.genImport.imports[pkg] = "version:LATEST";
+      }
+    }
+  }
+  const mergedImports = { ...lockedImportMap.imports, ...opts.genImport.imports };
+  // console.log("Merged import map:", "genImport:", opts.genImport.imports);
+  for (const [pkg, ver] of Object.entries(mergedImports)) {
+    const parsed = parseVersionString(ver);
+    if (!parsed.semVersion) {
+      if (opts.version[parsed.version]) {
+        mergedImports[pkg] = opts.resolveVersionImportMap(pkg, `npm:${opts.version[parsed.version]}`, {});
+      } else {
+        const { pkg: pkgName } = packageName(pkg);
+        const pkgParsed = parseVersionString(mergedImports[pkgName]);
+        if (!pkgParsed.semVersion && pkgParsed.version !== "LATEST") {
+          const fetched = await exception2Result(() => opts.fetchPkgVersion(pkgName));
+          if (fetched.isErr()) {
+            console.error(`Failed to fetch version for package ${pkgName}:`, fetched.Err());
+          }
+          mergedImports[pkgName] = mergedImports[pkg] = opts.resolveVersionImportMap(pkg, `npm:${fetched.Ok() ?? "latest"}`, {});
+        } else {
+          mergedImports[pkg] = mergedImports[pkgName];
+        }
+      }
+    } else {
+      // Has semVersion, use it directly
+      mergedImports[pkg] = opts.resolveVersionImportMap(pkg, `npm:${parsed.semVersion}`, {});
+    }
+  }
+  return { imports: mergedImports };
+}
+
+// function enhance(
+//   importMap: Record<string, string | undefined>,
+//   ver: Record<string, string>,
+//   localServe?: string
+// ): Record<string, string> {
+//   const enhancedMap: Record<string, string> = {};
+
+//   for (const [key, value] of Object.entries(importMap)) {
+//     if (value === undefined) {
+//       continue;
+//     }
+
+//     // Replace version placeholders
+//     let enhancedValue = value;
+//     for (const [verKey, verValue] of Object.entries(ver)) {
+//       if (enhancedValue === verKey) {
+//         // Use the actual package name from the key
+//         if (key.endsWith("/")) {
+//           enhancedValue = `https://esm.sh/${key}${verValue}/`;
+//         } else {
+//           enhancedValue = `https://esm.sh/${key}@${verValue}`;
+//         }
+//         break;
+//       }
+//     }
+//     if (localServe && enhancedValue.startsWith("/")) {
+//       const buri = BuildURI.from(localServe);
+//       buri.appendRelative(enhancedValue);
+//       enhancedValue = buri.toString();
+//     }
+//     enhancedMap[key] = enhancedValue;
+//   }
+//   return enhancedMap;
+// }
+
+// export interface ImportMapProps {
+//   versions?: {
+//     FP: string; // Fireproof version URL
+//   };
+//   PUB_NPM_URL?: string; // Optional URL to fetch npm packages from, defaults to https://esm.sh/
+//   PRIV_NPM_URL?: string; // Optional URL to fetch npm packages from, defaults to https://esm.sh/ -
+//   // can be different from PUB_NPM_URL and only used server-side to avoid exposing certain packages to the client
+// }
+
+// export async function toEsmSh(
+//   myImports: string[],
+//   predefined: Record<string, string>,
+//   urlBase: string,
+//   fetchPkgVersion: (pkg: string) => Promise<string | undefined>
+// ) {
+//   return (
+//     await Promise.all(
+//       myImports
+//         .filter((imp) => !predefined[imp])
+//         .map(async (imp): Promise<{ pkg: string; version: string; subpath?: string } | undefined> => {
+//           const scopedVersionMatch = reScopedPkgWithVersion.exec(imp);
+//           if (scopedVersionMatch) {
+//             return {
+//               pkg: scopedVersionMatch[1],
+//               version: scopedVersionMatch[2],
+//               subpath: scopedVersionMatch[3],
+//             };
+//           }
+//           const unscopedVersionMatch = rePkgWithVersion.exec(imp);
+//           if (unscopedVersionMatch) {
+//             return {
+//               pkg: unscopedVersionMatch[1],
+//               version: unscopedVersionMatch[2],
+//               subpath: unscopedVersionMatch[3],
+//             };
+//           }
+
+//           const scopedMatch = reScopedPkg.exec(imp);
+//           if (scopedMatch) {
+//             const res = await fetchPkgVersion(scopedMatch[1]);
+//             if (res) {
+//               return {
+//                 pkg: scopedMatch[1],
+//                 version: res,
+//                 subpath: scopedMatch[2],
+//               };
+//             }
+//             return;
+//           }
+//           const unscopedMatch = rePkg.exec(imp);
+//           if (unscopedMatch) {
+//             const res = await fetchPkgVersion(unscopedMatch[1]);
+//             if (res) {
+//               return {
+//                 pkg: unscopedMatch[1],
+//                 version: res,
+//                 subpath: unscopedMatch[2],
+//               };
+//             }
+//             return;
+//           }
+//         })
+//     )
+//   )
+//     .filter((r): r is { pkg: string; version: string; subpath?: string } => r !== undefined)
+//     .reduce(
+//       (acc, cur) => {
+//         const buri = BuildURI.from("https://esm.sh").appendRelative(`${cur.pkg}${cur.version ? "@" + cur.version : ""}`);
+//         if (cur.subpath && cur.subpath !== "/") {
+//           buri.appendRelative(cur.subpath);
+//         }
+//         acc[cur.pkg] = buri.toString();
+//         return acc;
+//       },
+//       {} as Record<string, string>
+//     );
+// }
+
+// export async function svcImportMap(
+//   myImports: string[],
+//   prop: (Partial<ImportMapProps> & { mode: ReqEnsureAppSlug["mode"] }) | undefined,
+//   fetchPkgVersion: (pkg: string) => Promise<string | undefined>
+// ): Promise<VibesImportMap> {
+//   if (!(prop && prop.versions)) {
+//     throw "WE need the Fireproof Version to be set";
+//   }
+//   const { versions } = {
+//     versions: {
+//       FP: `${prop.versions.FP}?deps=react@19.2.1,react-dom@19.2.1`,
+//     },
+//   };
+
+//   let importMap = {};
+//   if (prop.mode === "production") {
+//     importMap = {
+//       tailwindcss: "https://esm.sh/tailwindcss",
+//       "dequal/lite": "https://esm.sh/dequal@2.0.3/lite",
+//       "use-sync-external-store": "https://esm.sh/use-sync-external-store@1.6.0",
+//       "@adviser/cement": "https://esm.sh/@adviser/cement@0.5.5",
+//       "@clerk/clerk-react": "https://esm.sh/@clerk/clerk-react?deps=react@19.2.1,react-dom@19.2.1",
+//       "@clerk/clerk-js": "https://esm.sh/@clerk/clerk-js@5",
+//       multiformats: "https://esm.sh/multiformats",
+//       cborg: "https://esm.sh/cborg",
+//       "cborg/json": "https://esm.sh/cborg/json",
+//       "cborg/length": "https://esm.sh/cborg/length",
+//       zod: "https://esm.sh/zod",
+//       jose: "https://esm.sh/jose",
+//       "jose/jwt/decode": "https://esm.sh/jose/jwt/decode",
+//       dompurify: "https://esm.sh/dompurify",
+//       yaml: "https://esm.sh/yaml",
+//       "posthog-js": "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
+//       "posthog-js@1.302.2": "https://esm.sh/posthog-js?deps=react@19.2.1,react-dom@19.2.1",
+//       "posthog-js/react": "https://esm.sh/posthog-js/react?deps=react@19.2.1,react-dom@19.2.1",
+
+//       react: "https://esm.sh/react@19.2.1",
+
+//       "/react": "https://esm.sh/react@19.2.1",
+
+//       "react?target=es2022": "https://esm.sh/react@19.2.1",
+//       "/react?target=es2022": "https://esm.sh/react@19.2.1",
+
+//       "react@^=18?target=es2022": "https://esm.sh/react@19.2.1",
+//       "/react@^=18?target=es2022": "https://esm.sh/react@19.2.1",
+
+//       "react@%3E=18?target=es2022": "https://esm.sh/react@19.2.1",
+//       "/react@%3E=18?target=es2022": "https://esm.sh/react@19.2.1",
+//       "react@>=18?target=es2022": "https://esm.sh/react@19.2.1",
+//       "/react@>=18?target=es2022": "https://esm.sh/react@19.2.1",
+
+//       "react@%3E=18": "https://esm.sh/react@19.2.1",
+//       "/react@%3E=18": "https://esm.sh/react@19.2.1",
+//       "react@>=18": "https://esm.sh/react@19.2.1",
+//       "/react@>=18": "https://esm.sh/react@19.2.1",
+
+//       "/react@^19.2.0?target=es2022": "https://esm.sh/react@19.2.1",
+//       "/react@19.2.1/es2022/react.mjs": "https://esm.sh/react@19.2.1",
+//       "react@19.3.0-canary-fd524fe0-20251121": "https://esm.sh/react@19.2.1",
+//       "/react@19.3.0-canary-fd524fe0-20251121": "https://esm.sh/react@19.2.1",
+//       "react-dom": "https://esm.sh/react-dom@19.2.1",
+//       "react-dom/client": "https://esm.sh/react-dom@19.2.1/client",
+//       "react/jsx-runtime": "https://esm.sh/react@19.2.1/jsx-runtime",
+//       "react/jsx-dev-runtime": "https://esm.sh/react@19.2.1/jsx-dev-runtime",
+//       "react-router": "https://esm.sh/react-router?deps=react@19.2.1,react-dom@19.2.1",
+//       "react-router-dom": "https://esm.sh/react-router-dom?deps=react@19.2.1,react-dom@19.2.1",
+//       "call-ai": "https://esm.sh/call-ai@v0.14.5",
+
+//       "react-hot-toast": "https://esm.sh/react-hot-toast?deps=react@19.2.1,react-dom@19.2.1",
+//       "@radix-ui/react-slot": "https://esm.sh/@radix-ui/react-slot",
+//       "class-variance-authority": "https://esm.sh/class-variance-authority",
+//       clsx: "https://esm.sh/clsx",
+//       "react-markdown": "https://esm.sh/react-markdown",
+
+//       "tailwind-merge": "https://esm.sh/tailwind-merge",
+//       "@monaco-editor/react": "https://esm.sh/@monaco-editor/react?deps=react@19.2.1,react-dom@19.2.1",
+//       "@shikijs/monaco": "https://esm.sh/@shikijs/monaco",
+//       "shiki/core": "https://esm.sh/shiki/core",
+//       "shiki/langs/javascript.mjs": "https://esm.sh/shiki/langs/javascript.mjs",
+//       "shiki/langs/typescript.mjs": "https://esm.sh/shiki/langs/typescript.mjs",
+//       "shiki/langs/jsx.mjs": "https://esm.sh/shiki/langs/jsx.mjs",
+//       "shiki/langs/tsx.mjs": "https://esm.sh/shiki/langs/tsx.mjs",
+//       "shiki/themes/github-dark-default.mjs": "https://esm.sh/shiki/themes/github-dark-default.mjs",
+//       "shiki/themes/github-light-default.mjs": "https://esm.sh/shiki/themes/github-light-default.mjs",
+//       "shiki/engine/oniguruma": "https://esm.sh/shiki/engine/oniguruma",
+//       "shiki/wasm": "https://esm.sh/shiki/wasm",
+//       "react-cookie-consent": "https://esm.sh/react-cookie-consent?deps=react@19.2.1,react-dom@19.2.1",
+
+//       "use-vibes": "/dist/use-vibes/pkg/index.js",
+//       "use-fireproof": "/dist/use-vibes/pkg/index.js",
+
+//       "@vibes.diy/prompts": "/dist/prompts/pkg/index.js",
+//       "@vibes.diy/use-vibes-base": "/dist/use-vibes/base/index.js",
+
+//       "@fireproof/core-base": "FP",
+//       "@fireproof/core-blockstore": "FP",
+//       "@fireproof/core-cli": "FP",
+//       "@fireproof/core-device-id": "FP",
+//       "@fireproof/core-gateways-base": "FP",
+//       "@fireproof/core-gateways-cloud": "FP",
+//       "@fireproof/core-gateways-file-deno": "FP",
+//       "@fireproof/core-gateways-file-node": "FP",
+//       "@fireproof/core-gateways-file": "FP",
+//       "@fireproof/core-gateways-indexeddb": "FP",
+//       "@fireproof/core-gateways-memory": "FP",
+//       "@fireproof/core-keybag": "FP",
+//       "@fireproof/core-protocols-cloud": "FP",
+//       "@fireproof/core-protocols-dashboard": "FP",
+//       "@fireproof/core-runtime": "FP",
+//       "@fireproof/core-types-base": "FP",
+//       "@fireproof/core-types-blockstore": "FP",
+//       "@fireproof/core-types-protocols-cloud": "FP",
+//       "@fireproof/core-types-runtime": "FP",
+//       "@fireproof/core": "FP",
+//       "@fireproof/vendor": "FP",
+//       "@fireproof/use-fireproof": "FP",
+
+//       "@vibes.diy/api-pkg": "http://localhost:8888/dev-npm/@vibes.diy/api-pkg",
+//       "@vibes.diy/api-types": "http://localhost:8888/dev-npm/@vibes.diy/api-types",
+//       "@vibes-diy/pkg/styles.css": "http://localhost:8888/vibes-controls/styles.css",
+//     };
+//   }
+
+//   return {
+//     imports: toSortedObject(
+//       enhance(
+//         {
+//           ...(await toEsmSh(myImports, importMap, "https://esm.sh", fetchPkgVersion)),
+//           ...importMap,
+//         },
+//         versions
+//       )
+//     ) as Record<string, string>,
+//   };
+// }

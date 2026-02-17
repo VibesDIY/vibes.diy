@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { combineClasses, defaultClasses, ImgGenClasses } from '../utils/style-utils.js';
-import { imgGenStyles } from '../utils/styles.js';
+import * as React from "react";
+import { combineClasses, defaultClasses, ImgGenClasses } from "../utils/style-utils.js";
+import { imgGenStyles } from "../utils/styles.js";
 
 interface PromptBarProps {
   readonly promptText: string;
@@ -32,10 +32,10 @@ export function PromptBar({
             value={editedPrompt}
             onChange={(e) => setEditedPrompt(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 e.preventDefault();
                 handlePromptEdit(editedPrompt);
-              } else if (e.key === 'Escape') {
+              } else if (e.key === "Escape") {
                 setEditedPrompt(null); // Exit edit mode
               }
             }}

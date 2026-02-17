@@ -97,8 +97,7 @@ export const PublishingInProgress: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Publishing state showing animated loading effects on the publish button.",
+        story: "Publishing state showing animated loading effects on the publish button.",
       },
     },
   },
@@ -153,8 +152,7 @@ export const PublishedWithFirehose: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Published state with firehose sharing enabled. Shows how the checkbox state is preserved.",
+        story: "Published state with firehose sharing enabled. Shows how the checkbox state is preserved.",
       },
     },
   },
@@ -172,8 +170,7 @@ export const UpdatingPublishedApp: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          'Updating an already-published app. Shows loading state on the "Update Code" button.',
+        story: 'Updating an already-published app. Shows loading state on the "Update Code" button.',
       },
     },
   },
@@ -221,16 +218,14 @@ export const LongSubdomainExample: Story = {
   args: {
     isOpen: true,
     isPublishing: false,
-    publishedAppUrl:
-      "https://vibes.diy/published-app-super-long-subdomain-name-example/iframe",
+    publishedAppUrl: "https://vibes.diy/published-app-super-long-subdomain-name-example/iframe",
     isFirehoseShared: true,
     showCloseButton: true,
   },
   parameters: {
     docs: {
       description: {
-        story:
-          "Published state with a longer subdomain to test text wrapping and link display.",
+        story: "Published state with a longer subdomain to test text wrapping and link display.",
       },
     },
   },
@@ -248,8 +243,7 @@ export const CleanScreenshot: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          "Clean initial state without demo controls, perfect for screenshots and documentation.",
+        story: "Clean initial state without demo controls, perfect for screenshots and documentation.",
       },
     },
   },

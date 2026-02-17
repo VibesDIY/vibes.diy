@@ -14,7 +14,8 @@ const opts = tseslint.config(
       },
       parserOptions: {
         tsconfigRootDir: import.meta.dirname,
-        project: true,
+        projectService: true, // Memory-efficient type-aware linting
+        // project: false,
       },
     },
   },
@@ -24,6 +25,7 @@ const opts = tseslint.config(
       "jest.config.js",
       "**/.netlify/**",
       "**/.react-router/**",
+      "**/slack/**",
       "**/dist/",
       "**/pubdir/",
       "**/node_modules/",
@@ -80,7 +82,7 @@ const opts = tseslint.config(
     rules: {
       "no-restricted-globals": ["error"], //, "URL", "TextDecoder", "TextEncoder"],
     },
-  },
+  }
 );
 
 export default opts;

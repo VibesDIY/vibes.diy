@@ -16,9 +16,7 @@ describe("useSimpleChat", () => {
         start(controller) {
           const chunks = ["This is the final ", "AI response."];
           const sseChunks = formatAsSSE(chunks);
-          sseChunks.forEach((chunk) =>
-            controller.enqueue(encoder.encode(chunk)),
-          );
+          sseChunks.forEach((chunk) => controller.enqueue(encoder.encode(chunk)));
           controller.close();
         },
       });
@@ -36,9 +34,7 @@ describe("useSimpleChat", () => {
       wrapper,
     });
 
-    const mockPut = vi.fn<
-      ReturnType<typeof useSession>["sessionDatabase"]["put"]
-    >(async () => {
+    const mockPut = vi.fn<ReturnType<typeof useSession>["sessionDatabase"]["put"]>(async () => {
       return Promise.resolve({ id: generatedId } as DocResponse);
     });
     sharedSessionDatabase.put = mockPut;
