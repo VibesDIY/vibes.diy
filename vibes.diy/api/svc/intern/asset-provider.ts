@@ -27,7 +27,6 @@ export type AssetGetItemResult = Result<Option<AssetGetRow>, Error>;
 export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
   private readonly backend: TBackend;
 
-  // Future multi can use constructor(backend, ...additionalBackends).
   constructor(backend: TBackend) {
     this.backend = backend;
   }
