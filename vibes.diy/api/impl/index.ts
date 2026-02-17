@@ -23,6 +23,15 @@ import {
   ReqGetByUserSlugAppSlug,
   ResGetByUserSlugAppSlug,
   isResGetByUserSlugAppSlug,
+  ReqListUserSlugAppSlug,
+  ResListUserSlugAppSlug,
+  isResListUserSlugAppSlug,
+  ReqGetChatDetails,
+  ResGetChatDetails,
+  isResGetChatDetails,
+  ReqGetAppByFsId,
+  ResGetAppByFsId,
+  isResGetAppByFsId,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -153,7 +162,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     if (rToken.isErr()) {
       return Result.Err(rToken);
     }
-    console.log("VibeDiyApi getTokenClaims token", rToken.Ok().token);
+    // console.log("VibeDiyApi getTokenClaims token", rToken.Ok().token);
     const sthis = ensureSuperThis();
     const tokenapi = new ClerkApiToken(sthis);
     const rClaims = await tokenapi.decode(rToken.Ok().token);
@@ -293,6 +302,33 @@ export class VibeDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-get-by-user-slug-app-slug" },
       {
         resMatch: isResGetByUserSlugAppSlug,
+      }
+    );
+  }
+
+  async listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-list-user-slug-app-slug" },
+      {
+        resMatch: isResListUserSlugAppSlug,
+      }
+    );
+  }
+
+  async getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-chat-details" },
+      {
+        resMatch: isResGetChatDetails,
+      }
+    );
+  }
+
+  async getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-app-by-fsid" },
+      {
+        resMatch: isResGetAppByFsId,
       }
     );
   }

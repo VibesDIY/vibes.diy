@@ -9,6 +9,7 @@ export default [
   layout("./routes/auth.tsx", [
     route("chat/prompt", "./routes/chat/prompt.tsx"),
     route("chat/:userSlug/:appSlug", "./routes/chat/chat.$userSlug.$appSlug.tsx"),
+    route("vibes/mine", "./routes/vibes/mine.tsx"),
   ]),
 
   // route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
@@ -26,10 +27,9 @@ export default [
   // route("chat/:sessionId/:title/settings", "./routes/home.tsx", {
   //   id: "chat-app-settings",
   // }),
-  // route("vibes/mine", "./routes/mine.tsx", { id: "my-vibes" }),
   // route("groups", "./routes/groups.tsx", { id: "groups" }),
 
-  route("vibe/:userSlug/:appSlug", "./routes/vibe.$userSlug.$appSlug.tsx"),
+  route("vibe/:userSlug/:appSlug/:fsId?", "./routes/vibe.$userSlug.$appSlug.tsx"),
 
   // route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),

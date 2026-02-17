@@ -3,9 +3,10 @@ import { useParams, useSearchParams } from "react-router";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { useSession } from "@clerk/clerk-react";
+import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 
 export default function VibeIframeWrapper() {
-  const { userSlug, appSlug } = useParams<{ userSlug: string; appSlug: string }>();
+  const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
   const [searchParam] = useSearchParams();
   const vctx = useVibeDiy();
   const [iframeUrl, setIframeUrl] = useState<string | null>();
@@ -14,6 +15,26 @@ export default function VibeIframeWrapper() {
   const session = useSession();
 
   useEffect(() => {
+    if (fsId && userSlug && appSlug) {
+      vctx.vibeDiyApi.getAppByFsId({ fsId }).then((res) => {
+        if (res.isErr()) {
+          console.error(`getAppByFsId failed with:`, res.Err());
+          return;
+        }
+        const app = res.Ok();
+        const protocol = window.location.protocol === "https:" ? "https" : "http";
+        const port =
+          window.location.port && window.location.port !== "80" && window.location.port !== "443" ? `:${window.location.port}` : "";
+        setIframeUrl(
+          calcEntryPointUrl({
+            hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE + port,
+            protocol,
+            bindings: { appSlug: app.appSlug, userSlug: app.userSlug, fsId: app.fsId },
+          })
+        );
+      });
+      return;
+    }
     if (!session.isSignedIn) {
       return;
     }
@@ -33,7 +54,7 @@ export default function VibeIframeWrapper() {
           }
         });
     }
-  }, [userSlug, appSlug, searchParam.get("sectionId"), session]);
+  }, [userSlug, appSlug, fsId, searchParam.get("sectionId"), session]);
 
   if (iframeUrl) {
     const myUrl = URI.from(window.location.href);

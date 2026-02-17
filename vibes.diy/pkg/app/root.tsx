@@ -28,6 +28,7 @@ export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPAp
         DASHBOARD_URL: params.vibes.env.DASHBOARD_URL,
         CLERK_PUBLISHABLE_KEY: params.clerkPublishableKey,
         VIBES_DIY_API_URL: params.vibes.env.VIBES_DIY_API_URL,
+        VIBES_SVC_HOSTNAME_BASE: params.vibes.svc.hostnameBase,
       },
       pkgRepos: params.pkgRepos,
     } satisfies VibeDiyWebVars),

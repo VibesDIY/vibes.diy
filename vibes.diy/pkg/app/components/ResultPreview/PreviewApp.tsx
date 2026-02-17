@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
-import React from "react";
+import React, { useMemo } from "react";
 import { BlockEndMsg, CodeEndMsg, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
@@ -30,18 +30,25 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const [searchParams] = useSearchParams();
   const { webVars: svcVars } = useVibeDiy();
 
-  const sectionId = searchParams.get("sectionId");
-  const endBlock = findApp(promptState, sectionId);
-  if (!endBlock || !endBlock.fsRef) {
+  const previewUrl = useMemo(() => {
+    const sectionId = searchParams.get("sectionId");
+    const endBlock = findApp(promptState, sectionId);
+    if (!endBlock || !endBlock.fsRef) {
+      return null;
+    }
+
+    const myUrl = URI.from(window.location.href);
+    const previewUrl = BuildURI.from(endBlock.fsRef.entryPointUrl)
+      .port(myUrl.port)
+      .setParam("npmUrl", svcVars.pkgRepos.workspace)
+      .setParam("preview", "yes");
+    console.log(`iframe src=`, previewUrl.asObj());
+    return previewUrl;
+  }, [searchParams.get("sectionId")]);
+
+  if (!previewUrl) {
     return <>No App Found</>;
   }
-
-  const myUrl = URI.from(window.location.href);
-  const previewUrl = BuildURI.from(endBlock.fsRef.entryPointUrl)
-    .port(myUrl.port)
-    .setParam("npmUrl", svcVars.pkgRepos.workspace)
-    .setParam("preview", "yes");
-  console.log(`iframe src=`, previewUrl.asObj());
 
   return (
     <div
