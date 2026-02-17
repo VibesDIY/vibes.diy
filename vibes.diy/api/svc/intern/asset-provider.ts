@@ -25,39 +25,22 @@ export type AssetPutItemResult = Result<AssetPutRow, Error>;
 export type AssetGetItemResult = Result<Option<AssetGetRow>, Error>;
 
 export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
-  private readonly backend: TBackend | undefined;
+  private readonly backend: TBackend;
 
-  constructor(backend: TBackend | undefined) {
+  // Future multi can use constructor(backend, ...additionalBackends).
+  constructor(backend: TBackend) {
     this.backend = backend;
   }
 
   async puts(items: readonly AssetPutInput[]): Promise<Result<AssetPutItemResult[], Error>> {
-    if (this.backend === undefined) {
-      return Result.Err(new Error("no asset backend configured"));
-    }
-    if (items.length === 0) {
-      return Result.Ok([]);
-    }
-    const pending: Promise<AssetPutItemResult>[] = [];
-    for (const item of items) {
-      pending.push(this.backend.put(item.stream));
-    }
+    const pending = items.map((item) => this.backend.put(item.stream));
     return exception2Result(function waitForAllPuts() {
       return Promise.all(pending);
     });
   }
 
   async gets(urls: readonly string[]): Promise<Result<AssetGetItemResult[], Error>> {
-    if (this.backend === undefined) {
-      return Result.Err(new Error("no asset backend configured"));
-    }
-    if (urls.length === 0) {
-      return Result.Ok([]);
-    }
-    const pending: Promise<AssetGetItemResult>[] = [];
-    for (const url of urls) {
-      pending.push(this.backend.get(url));
-    }
+    const pending = urls.map((url) => this.backend.get(url));
     return exception2Result(function waitForAllGets() {
       return Promise.all(pending);
     });

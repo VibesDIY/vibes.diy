@@ -161,30 +161,6 @@ describe("AssetProvider", () => {
     expect(backend.peakInflight).toBeGreaterThan(1);
   });
 
-  it("returns outer error when no backend configured", async () => {
-    const ap = new AssetProvider(undefined);
-
-    const rPutResults = await ap.puts([{ stream: string2stream("one") }]);
-    expect(rPutResults.isErr()).toBe(true);
-    expect(rPutResults.Err().message).toContain("no asset backend configured");
-
-    const rGetResults = await ap.gets(["small://?cid=1"]);
-    expect(rGetResults.isErr()).toBe(true);
-    expect(rGetResults.Err().message).toContain("no asset backend configured");
-  });
-
-  it("returns outer error for empty batches without backend", async () => {
-    const ap = new AssetProvider(undefined);
-
-    const rPutResults = await ap.puts([]);
-    expect(rPutResults.isErr()).toBe(true);
-    expect(rPutResults.Err().message).toContain("no asset backend configured");
-
-    const rGetResults = await ap.gets([]);
-    expect(rGetResults.isErr()).toBe(true);
-    expect(rGetResults.Err().message).toContain("no asset backend configured");
-  });
-
   it("returns empty ok for empty batches with backend", async () => {
     const ap = new AssetProvider(new TestImpl("small:"));
 
