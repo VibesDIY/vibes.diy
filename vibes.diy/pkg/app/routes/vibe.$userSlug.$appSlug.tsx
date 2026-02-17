@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
@@ -9,12 +9,16 @@ export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
   const [searchParam] = useSearchParams();
   const vctx = useVibeDiy();
-  const [iframeUrl, setIframeUrl] = useState<string | null>();
+  const iframeUrlRef = useRef<string | null>(null);
+  const [ready, setReady] = useState(false);
 
   // this is optional locked in
   const session = useSession();
 
   useEffect(() => {
+    if (iframeUrlRef.current) {
+      return;
+    }
     if (fsId && userSlug && appSlug) {
       vctx.vibeDiyApi.getAppByFsId({ fsId }).then((res) => {
         if (res.isErr()) {
@@ -24,14 +28,17 @@ export default function VibeIframeWrapper() {
         const app = res.Ok();
         const protocol = window.location.protocol === "https:" ? "https" : "http";
         const port =
-          window.location.port && window.location.port !== "80" && window.location.port !== "443" ? `:${window.location.port}` : "";
-        setIframeUrl(
-          calcEntryPointUrl({
-            hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE + port,
-            protocol,
-            bindings: { appSlug: app.appSlug, userSlug: app.userSlug, fsId: app.fsId },
-          })
-        );
+          window.location.port && window.location.port !== "80" && window.location.port !== "443"
+            ? window.location.port
+            : undefined;
+        iframeUrlRef.current = calcEntryPointUrl({
+          hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
+          protocol,
+          bindings: { appSlug: app.appSlug, userSlug: app.userSlug, fsId: app.fsId },
+          port,
+        });
+        // console.log('xxxxxxx', iframeUrlRef.current)
+        setReady(true);
       });
       return;
     }
@@ -50,20 +57,20 @@ export default function VibeIframeWrapper() {
           if (res.isErr()) {
             console.error(`getByUserSlugAppSlug failed with:`, res.Err());
           } else {
-            setIframeUrl(res.Ok().entryPointUrl);
+            iframeUrlRef.current = res.Ok().entryPointUrl;
+            setReady(true);
           }
         });
     }
-  }, [userSlug, appSlug, fsId, searchParam.get("sectionId"), session]);
+  }, [userSlug, appSlug, fsId, searchParam.get("sectionId"), session.isSignedIn]);
 
-  if (iframeUrl) {
+  if (ready && iframeUrlRef.current) {
     const myUrl = URI.from(window.location.href);
-    const previewUrl = BuildURI.from(iframeUrl).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
-    console.log(`iframe src=`, previewUrl.asObj());
+    const previewUrl = BuildURI.from(iframeUrlRef.current).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
+    // console.log(`iframe src=`, previewUrl.asObj());
 
     return (
       <div className="fixed inset-0 bg-gray-900" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
-        {/* <pre>{JSON.stringify({ sectionId, ends: findApp(promptState)}, null, 2)}</pre> */}
         <iframe
           src={previewUrl.toString()}
           className="w-full h-full border-none"

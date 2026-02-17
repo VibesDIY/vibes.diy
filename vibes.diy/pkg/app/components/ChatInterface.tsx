@@ -6,12 +6,14 @@ import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
 
 function ChatInterface({
   promptState,
+  onClick,
   // selectedResponseDoc,
   // setSelectedResponseId,
   // setMobilePreviewShown,
   // navigateToView,
 }: {
   promptState: PromptState;
+  onClick: (a: { fsId: string; appSlug: string; userSlug: string }) => void;
 }) {
   const { running, blocks } = promptState;
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -40,9 +42,11 @@ function ChatInterface({
       {blocks.length > 0 ? (
         <div ref={messagesContainerRef} className="flex flex-grow flex-col-reverse overflow-y-auto">
           <MessageList
+            onClick={onClick}
             promptBlocks={blocks}
             promptProcessing={running}
             chatId={promptState.chat.chatId}
+
             // setSelectedResponseId={setSelectedResponseId}
             // selectedResponseId={selectedResponseDoc?._id || ""}
             // setMobilePreviewShown={setMobilePreviewShown}

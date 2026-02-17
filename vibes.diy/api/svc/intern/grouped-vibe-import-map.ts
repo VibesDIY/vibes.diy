@@ -7,7 +7,7 @@ export const lockedVersions = {
   ARKTYPE: "2.1.29",
   JOSE: "6.1.3",
   DOMPURIFY: "3.3.1",
-  MULTIFORMATS: "13.4.2",
+  MULTIFORMATS: "13.4.0",
   YAML: "2.8.2",
   TAILWINDCSS: "4.1.18",
 };
@@ -42,7 +42,7 @@ export const lockedGroupsVersions = {
     "@fireproof/core-keybag": "version:FP",
     "@fireproof/core-protocols-cloud": "version:FP",
     "@fireproof/core-protocols-dashboard": "version:FP",
-    "@fireproof/core-runtime": "version:FP",
+    "@fireproof/core-runtime": "version:FP,deps:multiformats",
     "@fireproof/core-types-base": "version:FP",
     "@fireproof/core-types-blockstore": "version:FP",
     "@fireproof/core-types-protocols-cloud": "version:FP",

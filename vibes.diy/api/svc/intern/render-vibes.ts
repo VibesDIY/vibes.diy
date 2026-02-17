@@ -63,7 +63,7 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
       if (item.mimeType === "application/javascript") {
         acc.push({
           // import relative to support prod and dev switching
-          importStmt: `import V${idx} from ${JSON.stringify(item.fileName.replace(/^/, "."))};`,
+          importStmt: `import V${idx} from ${JSON.stringify(`/~${fs.fsId}~${item.fileName}`)};`,
           var: `V${idx}`,
         });
       }

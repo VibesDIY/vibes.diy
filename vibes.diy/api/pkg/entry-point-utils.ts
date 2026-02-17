@@ -1,15 +1,20 @@
-import { Option, URI } from "@adviser/cement";
+import { BuildURI, Option, URI } from "@adviser/cement";
 import { VibeBindings } from "@vibes.diy/api-types";
 
 export interface CalcEntryPointUrlParams {
   hostnameBase: string;
   bindings: VibeBindings;
-  protocol: "https" | "http";
+  protocol: string; // "https" | "http";
+  port?: string;
 }
 
-export function calcEntryPointUrl({ hostnameBase, protocol, bindings }: CalcEntryPointUrlParams): string {
+export function calcEntryPointUrl({ hostnameBase, protocol, bindings, port }: CalcEntryPointUrlParams): string {
   const hostname = `${bindings.appSlug}--${bindings.userSlug}.${hostnameBase.replace(/^\./, "")}`;
-  return `${protocol}://${hostname}/~${bindings.fsId}~/`;
+  const buri = BuildURI.from(`http://template`);
+  if (port && port !== "80" && port !== "443") {
+    buri.port(port);
+  }
+  return buri.protocol(protocol).hostname(hostname).pathname(`~${bindings.fsId}~`).toString();
 }
 
 export interface ExtractedHostToBindings {

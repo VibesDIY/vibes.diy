@@ -7,7 +7,7 @@ import Wild from "./vibespace/Wild.js";
 import ExplodingBrain from "./vibespace/ExplodingBrain.js";
 import Cyberpunk from "./vibespace/Cyberpunk.js";
 import type { ReactElement } from "react";
-import { useFireproof } from "@fireproof/use-fireproof";
+// import { useFireproof } from "@fireproof/use-fireproof";
 
 // Define the structure of our vibe documents
 interface VibeDocument {
@@ -335,26 +335,26 @@ export default function VibespaceComponent({ tildeId, atId }: VibespaceComponent
   }
 
   // Use Fireproof with the user-specific database
-  console.log("VibespaceComponent->", userId);
-  const { useAllDocs } = useFireproof(`vu-${userId}`);
+  // console.log("VibespaceComponent->", userId);
+  // const { useAllDocs } = useFireproof(`vu-${userId}`);
 
   // Query all documents in the database
-  const allDocsResult = useAllDocs() as { docs: VibeDocument[] };
-  const docs = allDocsResult.docs || [];
-  const isLoading = !allDocsResult.docs; // If docs is undefined, it's still loading
+  // const allDocsResult = useAllDocs() as { docs: VibeDocument[] };
+  // const docs = allDocsResult.docs || [];
+  // const isLoading = !allDocsResult.docs; // If docs is undefined, it's still loading
 
   // Type the documents properly
-  const vibes = docs.sort((b, a) => (a.createdAt || 0) - (b.createdAt || 0)) as VibeDocument[];
+  // const vibes = docs.sort((b, a) => (a.createdAt || 0) - (b.createdAt || 0)) as VibeDocument[];
 
   // If we have a userId from the path, assume the user exists
   // The database will be created when they first create a vibe
-  const userExists = true;
-  const hasVibes = vibes.length > 0;
+  // const userExists = true;
+  // const hasVibes = vibes.length > 0;
 
   // If user has no vibes, show starfield
-  if (!isLoading && !hasVibes) {
-    return <StarfieldEmpty userId={userId} prefix={prefix} userExists={userExists} />;
-  }
+  // if (!isLoading && !hasVibes) {
+  // return <StarfieldEmpty userId={userId} prefix={prefix} userExists={userExists} />;
+  // }
 
   // Create URL for theme switching
   const createThemeUrl = (themeParam: string | null) => {
@@ -407,7 +407,8 @@ export default function VibespaceComponent({ tildeId, atId }: VibespaceComponent
         </div>
       }
     >
-      {isExplodingBrain ? (
+      What is this?
+      {/* {isExplodingBrain ? (
         <ExplodingBrain userId={userId} vibes={vibes} isLoading={isLoading} />
       ) : isWild ? (
         <Wild userId={userId} vibes={vibes} isLoading={isLoading} />
@@ -415,7 +416,7 @@ export default function VibespaceComponent({ tildeId, atId }: VibespaceComponent
         <Cyberpunk userId={userId} vibes={vibes} isLoading={isLoading} />
       ) : (
         <Basic userId={userId} vibes={vibes} isLoading={isLoading} />
-      )}
+      )} */}
     </SimpleAppLayout>
   );
 }

@@ -21,3 +21,5 @@ playwright/.cache/
 coverage/
 
 .DS_Store
+
+**/_wildcard.localhost.vibesdiy.net*

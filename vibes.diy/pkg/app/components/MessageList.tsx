@@ -1,9 +1,11 @@
-import React, { memo, useCallback } from "react";
+import React, { memo } from "react";
 // import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
 import { PromptBlock } from "../routes/chat/chat.$userSlug.$appSlug.js";
 import {
   CodeBeginMsg,
   CodeEndMsg,
+  isBlockBegin,
+  isBlockEnd,
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
@@ -18,12 +20,12 @@ import {
 } from "@vibes.diy/call-ai-v2";
 import { BrutalistCard } from "@vibes.diy/base";
 import ReactMarkdown from "react-markdown";
-import { useSearchParams } from "react-router";
 
 interface MessageListProps {
   promptBlocks: PromptBlock[];
   promptProcessing: boolean;
   chatId: string;
+  onClick: (fsRes: { userSlug: string; appSlug: string; fsId: string }) => void;
   // setSelectedResponseId: (id: string) => void;
   // selectedResponseId: string;
   // setMobilePreviewShown: (shown: boolean) => void;
@@ -62,18 +64,18 @@ function Prompt({ msg }: { msg: PromptReq }) {
   );
 }
 
-function CodeMsg({ lines, begin, end }: { begin: CodeBeginMsg; lines: LineMsg[]; end?: CodeEndMsg }) {
-  const [searchParams, setSearchParam] = useSearchParams();
+function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: LineMsg[]; end?: CodeEndMsg; onClick: () => void }) {
+  // const [searchParams, setSearchParam] = useSearchParams();
 
-  const handleCodeClick = useCallback(() => {
-    setSearchParam((prev) => {
-      prev.set("sectionId", begin.sectionId);
-      if (!prev.has("view")) {
-        prev.set("view", "code");
-      }
-      return prev;
-    });
-  }, [searchParams, begin.sectionId, setSearchParam]);
+  // const handleCodeClick = useCallback(() => {
+  //   setSearchParam((prev) => {
+  //     prev.set("sectionId", begin.sectionId);
+  //     if (!prev.has("view")) {
+  //       prev.set("view", "code");
+  //     }
+  //     return prev;
+  //   });
+  // }, [searchParams, begin.sectionId, setSearchParam]);
 
   const codeReady = !!end;
 
@@ -117,7 +119,7 @@ function CodeMsg({ lines, begin, end }: { begin: CodeBeginMsg; lines: LineMsg[];
             zIndex: 10,
           }}
           className="sticky-active relative mx-3 my-4 cursor-pointer transition-all"
-          onClick={handleCodeClick}
+          onClick={onClick}
         >
           <div
             className={`absolute -top-1 left-1 text-lg ${
@@ -212,9 +214,25 @@ function fixCurrentStreaming(promptBlock: PromptBlock) {
   return promptBlock;
 }
 
+interface CodeBlock {
+  type: "Code";
+  begin: CodeBeginMsg;
+  lines: LineMsg[];
+  end: CodeEndMsg;
+}
+interface TopLevelBlock {
+  type: "TopLevel";
+  begin: ToplevelBeginMsg;
+  lines: LineMsg[];
+  end: ToplevelEndMsg;
+}
+
+type BlockedMsg = CodeBlock | TopLevelBlock;
+
 function MessageList({
   promptBlocks,
   chatId,
+  onClick,
   // setSelectedResponseId,
   // selectedResponseId,
   // setMobilePreviewShown,
@@ -231,6 +249,8 @@ function MessageList({
   // promptBlocks.length === 1 // && promptBlocks[0]?.type === "user";
 
   // Handle special case for waiting state
+  const blockMsgs: BlockedMsg[] = [];
+
   const messageElements = promptBlocks.reduce((acc, promptBlock) => {
     // Only show the streaming indicator on the latest AI message
     // const isLatestAiMessage = promptProcessing && i === latestAiMessageIndex && msg.type === "ai";
@@ -244,6 +264,42 @@ function MessageList({
         // case isPromptBlockEnd(msg):
         case isPromptReq(msg):
           acc.push(<Prompt key={msg.streamId} msg={msg} />);
+          break;
+
+        case isBlockBegin(msg):
+          blockMsgs.splice(0, blockMsgs.length);
+          break;
+        case isBlockEnd(msg):
+          // console.log(`Completed a Chat --- need to register the clicks`, msg);
+          for (const block of blockMsgs) {
+            if (block.type === "Code") {
+              if (msg.fsRef) {
+                // give the ui an update to the last
+                onClick({ fsId: msg.fsRef.fsId, appSlug: msg.fsRef.appSlug, userSlug: msg.fsRef.userSlug });
+              }
+              acc.push(
+                <CodeMsg
+                  key={block.begin.sectionId}
+                  begin={block.begin}
+                  lines={block.lines}
+                  end={block.end}
+                  onClick={() => {
+                    if (msg.fsRef) {
+                      onClick({
+                        fsId: msg.fsRef.fsId,
+                        appSlug: msg.fsRef.appSlug,
+                        userSlug: msg.fsRef.userSlug,
+                      });
+                    }
+                  }}
+                />
+              );
+            }
+            if (block.type === "TopLevel") {
+              acc.push(<TopLevelMsg key={block.begin.sectionId} begin={block.begin} lines={block.lines} />);
+            }
+          }
+          blockMsgs.splice(0, blockMsgs.length);
           break;
 
         case isCodeBegin(msg):
@@ -260,13 +316,23 @@ function MessageList({
           // acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} />);
           break;
         case isCodeEnd(msg):
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} end={msg} />);
+          blockMsgs.push({
+            type: "Code",
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            begin: codeBegin!,
+            lines: collectedMsg,
+            end: msg,
+          });
           collectedMsg = [];
           break;
         case isToplevelEnd(msg):
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          acc.push(<TopLevelMsg key={toplevelBegin!.sectionId} begin={toplevelBegin!} lines={collectedMsg} />);
+          blockMsgs.push({
+            type: "TopLevel",
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            begin: toplevelBegin!,
+            lines: collectedMsg,
+            end: msg,
+          });
           collectedMsg = [];
           break;
       }
