@@ -77,61 +77,90 @@ export default function VibesMine(): ReactElement {
           </div>
         </BrutalistCard>
       ) : (
-        <div className="flex w-full flex-col gap-4">
+        <div className="flex w-full flex-col gap-6">
           {vibeItems.map((item) => (
             <BrutalistCard key={item.userSlug} size="md">
-              <h3 className="mb-3 text-lg font-bold">{item.userSlug}</h3>
+              <h3 className="mb-4 text-lg font-bold">{item.userSlug}</h3>
               {item.appSlugs.length === 0 ? (
                 <p className="text-sm text-gray-500">No apps yet</p>
               ) : (
-                <ul className="space-y-1">
+                <div className="grid gap-3">
                   {item.appSlugs.map((appSlug) => {
                     const key = `${item.userSlug}/${appSlug}`;
                     const isSelected = chatDetails?.userSlug === item.userSlug && chatDetails?.appSlug === appSlug;
                     const isLoadingThis = loadingDetails === key;
                     return (
-                      <li key={appSlug}>
+                      <div
+                        key={appSlug}
+                        className={`rounded-lg border transition-all ${isSelected ? "border-blue-400 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-950/30" : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-400"}`}
+                      >
                         <button
                           onClick={() => fetchChatDetails(item.userSlug, appSlug)}
-                          className={`text-sm hover:underline ${isSelected ? "font-bold text-blue-700" : "text-blue-500 hover:text-blue-600"}`}
+                          className="flex w-full items-center justify-between px-4 py-3 text-left"
                         >
-                          {appSlug}
+                          <span
+                            className={`font-medium ${isSelected ? "text-blue-700 dark:text-blue-300" : "text-gray-800 dark:text-gray-200"}`}
+                          >
+                            {appSlug}
+                          </span>
+                          {isLoadingThis ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
+                          ) : (
+                            <span className={`text-sm text-gray-400 transition-transform ${isSelected ? "rotate-180" : ""}`}>
+                              ▼
+                            </span>
+                          )}
                         </button>
-                        {isLoadingThis && (
-                          <div className="ml-2 mt-1 inline-block h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
-                        )}
                         {isSelected && chatDetails && (
-                          <div className="mt-2 rounded border bg-gray-50 p-2">
-                            <div className="mb-1 text-xs text-gray-500">chat: {chatDetails.chatId}</div>
+                          <div className="border-t border-gray-200 dark:border-gray-600 px-4 py-3">
                             {chatDetails.prompts.length === 0 ? (
                               <p className="text-sm text-gray-500">No prompts yet</p>
                             ) : (
-                              <ul className="space-y-2">
+                              <div className="space-y-3">
                                 {chatDetails.prompts.map((p, i) => (
-                                  <li key={i} className="rounded border bg-white p-2">
-                                    <p className="text-sm">{p.prompt}</p>
-                                    <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
-                                      <a
-                                        href={`/vibe/${chatDetails.userSlug}/${chatDetails.appSlug}/${p.fsId}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 hover:text-blue-600 hover:underline"
-                                      >
-                                        {p.fsId.slice(0, 12)}...
-                                      </a>
-                                      <pre>{p.prompt}</pre>
-                                      <span>{p.created}</span>
+                                  <div
+                                    key={i}
+                                    className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-3"
+                                  >
+                                    <p className="mb-2 text-sm text-gray-800 dark:text-gray-200">{p.prompt}</p>
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <a
+                                          href={`/vibe/${chatDetails.userSlug}/${chatDetails.appSlug}/${p.fsId}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 rounded-md bg-blue-100 dark:bg-blue-900/50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors"
+                                        >
+                                          Open App ↗
+                                        </a>
+                                        <button
+                                          onClick={() =>
+                                            navigate(`/chat/${chatDetails.userSlug}/${chatDetails.appSlug}?fsId=${p.fsId}`)
+                                          }
+                                          className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                        >
+                                          Continue Chat →
+                                        </button>
+                                      </div>
+                                      <span className="text-xs text-gray-400">
+                                        {new Date(p.created).toLocaleDateString(undefined, {
+                                          month: "short",
+                                          day: "numeric",
+                                          hour: "numeric",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
                                     </div>
-                                  </li>
+                                  </div>
                                 ))}
-                              </ul>
+                              </div>
                             )}
                           </div>
                         )}
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
             </BrutalistCard>
           ))}

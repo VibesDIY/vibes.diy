@@ -200,7 +200,8 @@ export default function Chat() {
   );
 
   const openVibe = useCallback(() => {
-    window.open(`/vibe/${userSlug}/${appSlug}/${searchParams.get("fsId")}}`, "_blank");
+    const openUrl = `/vibe/${userSlug}/${appSlug}/${searchParams.get("fsId")}`;
+    window.open(openUrl, "_blank");
   }, [searchParams, userSlug, appSlug]);
 
   useEffect(() => {
