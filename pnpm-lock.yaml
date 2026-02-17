@@ -477,8 +477,8 @@ importers:
         specifier: 0.24.10
         version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@storybook/addon-a11y':
-        specifier: ^10.1.7
-        version: 10.1.11(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
+        specifier: ^10.2.9
+        version: 10.2.9(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
       '@storybook/addon-docs':
         specifier: ^10.2.6
         version: 10.2.6(@types/react@19.2.13)(esbuild@0.27.3)(rollup@4.55.1)(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -930,8 +930,8 @@ importers:
         specifier: ^7.13.0
         version: 7.13.0(@react-router/dev@7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.2.3)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.66.0(@cloudflare/workers-types@4.20260217.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.2))(typescript@5.9.3)
       '@storybook/addon-a11y':
-        specifier: ^10.1.7
-        version: 10.1.11(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
+        specifier: ^10.2.9
+        version: 10.2.9(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
       '@storybook/addon-docs':
         specifier: ^10.2.6
         version: 10.2.6(@types/react@19.2.13)(esbuild@0.27.2)(rollup@4.55.1)(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -1138,8 +1138,8 @@ importers:
         specifier: ^7.13.0
         version: 7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.2.3)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.66.0(@cloudflare/workers-types@4.20260217.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.2)
       '@storybook/addon-a11y':
-        specifier: ^10.1.11
-        version: 10.1.11(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
+        specifier: ^10.2.9
+        version: 10.2.9(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
       '@storybook/addon-docs':
         specifier: ^10.2.6
         version: 10.2.6(@types/react@19.2.13)(esbuild@0.27.3)(rollup@4.55.1)(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -4412,10 +4412,10 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@storybook/addon-a11y@10.1.11':
-    resolution: {integrity: sha512-3sr6HmcDgW1+TQAV9QtWBE3HlGyfFXVZY3RECTNLNH6fRC+rYQCItisvQIVxQpyftLSQ8EAMN9JQzs495MjWNg==}
+  '@storybook/addon-a11y@10.2.9':
+    resolution: {integrity: sha512-oWho1jJXS1QfjShin9yC2o60pvkPskgpqUDB5Of4XHFpOaV4hVfoqS1HjhZBQyjWZkN64EE42X3HVlwUwToPfg==}
     peerDependencies:
-      storybook: ^10.1.11
+      storybook: ^10.2.9
 
   '@storybook/addon-docs@10.2.6':
     resolution: {integrity: sha512-7a37fu2hdOJRCITS+EimhVN9xVVvSeodmX6QdfxOim+2ECYnvMC9YVYpJ0et3XC8xnl9/3AbQ4y670Uw1hXcmg==}
@@ -5521,8 +5521,8 @@ packages:
   aws4fetch@1.0.20:
     resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
-  axe-core@4.11.0:
-    resolution: {integrity: sha512-ilYanEU8vxxBexpJd8cWM4ElSQq4QctCLKih0TSfjIfCQTeyH/6zVrmIJfLPrKTKJRbiG+cfnZbQIjAlJmF1jQ==}
+  axe-core@4.11.1:
+    resolution: {integrity: sha512-BASOg+YwO2C+346x3LZOeoovTIoTrRqEsqMa6fmfAV0P+U9mFr9NsyOEpiYvFjbc64NMrSswhV50WdXzdb/Z5A==}
     engines: {node: '>=4'}
 
   b4a@1.7.3:
@@ -15561,10 +15561,10 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@storybook/addon-a11y@10.1.11(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))':
+  '@storybook/addon-a11y@10.2.9(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))':
     dependencies:
       '@storybook/global': 5.0.0
-      axe-core: 4.11.0
+      axe-core: 4.11.1
       storybook: 10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10)
 
   '@storybook/addon-docs@10.2.6(@types/react@19.2.13)(esbuild@0.27.2)(rollup@4.55.1)(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
@@ -16944,7 +16944,7 @@ snapshots:
 
   aws4fetch@1.0.20: {}
 
-  axe-core@4.11.0: {}
+  axe-core@4.11.1: {}
 
   b4a@1.7.3: {}
 
