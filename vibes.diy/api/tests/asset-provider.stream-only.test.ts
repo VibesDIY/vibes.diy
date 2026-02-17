@@ -103,7 +103,7 @@ class SlowPutImpl {
 describe("AssetProvider", () => {
   it("stores and round-trips stream content", async () => {
     const backend = new TestImpl("small:");
-    const ap = new AssetProvider([backend]);
+    const ap = new AssetProvider(backend);
 
     const rPutResults = await ap.puts([
       { stream: string2stream("smallString") },
@@ -145,7 +145,7 @@ describe("AssetProvider", () => {
 
   it("runs puts in parallel", async () => {
     const backend = new SlowPutImpl("small:");
-    const ap = new AssetProvider([backend]);
+    const ap = new AssetProvider(backend);
 
     const rPutResults = await ap.puts([
       { stream: string2stream("one") },
@@ -162,7 +162,7 @@ describe("AssetProvider", () => {
   });
 
   it("returns outer error when no backend configured", async () => {
-    const ap = new AssetProvider([]);
+    const ap = new AssetProvider(undefined);
 
     const rPutResults = await ap.puts([{ stream: string2stream("one") }]);
     expect(rPutResults.isErr()).toBe(true);
@@ -171,5 +171,29 @@ describe("AssetProvider", () => {
     const rGetResults = await ap.gets(["small://?cid=1"]);
     expect(rGetResults.isErr()).toBe(true);
     expect(rGetResults.Err().message).toContain("no asset backend configured");
+  });
+
+  it("returns outer error for empty batches without backend", async () => {
+    const ap = new AssetProvider(undefined);
+
+    const rPutResults = await ap.puts([]);
+    expect(rPutResults.isErr()).toBe(true);
+    expect(rPutResults.Err().message).toContain("no asset backend configured");
+
+    const rGetResults = await ap.gets([]);
+    expect(rGetResults.isErr()).toBe(true);
+    expect(rGetResults.Err().message).toContain("no asset backend configured");
+  });
+
+  it("returns empty ok for empty batches with backend", async () => {
+    const ap = new AssetProvider(new TestImpl("small:"));
+
+    const rPutResults = await ap.puts([]);
+    expect(rPutResults.isOk()).toBe(true);
+    expect(rPutResults.Ok()).toEqual([]);
+
+    const rGetResults = await ap.gets([]);
+    expect(rGetResults.isOk()).toBe(true);
+    expect(rGetResults.Ok()).toEqual([]);
   });
 });
