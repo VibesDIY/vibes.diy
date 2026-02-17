@@ -115,7 +115,7 @@ export default function Chat() {
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
         setSearchParam((prev) => {
-          prev.delete("sectionId");
+          prev.delete("fsId");
           if (!prev.has("view")) {
             prev.set("view", "code");
           }
@@ -189,8 +189,18 @@ export default function Chat() {
   const [mobilePreviewShown, setMobilePreviewShown] = useState(false);
   const { navigateToView, viewControls, currentView } = useViewState(promptState);
 
+  const fsIdClick = useCallback(
+    ({ fsId }: { fsId: string; appSlug: string; userSlug: string }) => {
+      setSearchParam((prev) => {
+        prev.set("fsId", fsId);
+        return prev;
+      });
+    },
+    [searchParams, setSearchParam]
+  );
+
   const openVibe = useCallback(() => {
-    window.open(`/vibe/${userSlug}/${appSlug}?sectionId=${searchParams.get("sectionId")}`, "_blank");
+    window.open(`/vibe/${userSlug}/${appSlug}/${searchParams.get("fsId")}}`, "_blank");
   }, [searchParams, userSlug, appSlug]);
 
   useEffect(() => {
@@ -227,7 +237,7 @@ export default function Chat() {
             openVibe={openVibe}
           />
         }
-        chatPanel={<ChatInterface promptState={promptState} />}
+        chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} />}
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>

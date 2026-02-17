@@ -116,13 +116,13 @@ export async function createAppContext<T extends VibesSqlite>(
       throw new Error("DEV_SERVER_HOST and DEV_SERVER_PORT are required in development if VIBES_DIY_STYLES_URL is not set");
     }
     if (!envVals.VIBES_DIY_STYLES_URL) {
-      envVals.VIBES_DIY_STYLES_URL = `http://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/`;
+      envVals.VIBES_DIY_STYLES_URL = `https://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/`;
     }
     if (!envVals.WORKSPACE_NPM_URL) {
-      envVals.WORKSPACE_NPM_URL = `http://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/vibe-pkg/`;
+      envVals.WORKSPACE_NPM_URL = `https://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/vibe-pkg/`;
     }
     if (!envVals.VIBES_DIY_API_URL) {
-      envVals.VIBES_DIY_API_URL = `http://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/api/`;
+      envVals.VIBES_DIY_API_URL = `https://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/api/`;
     }
     if (!envVals.VIBES_SVC_HOSTNAME_BASE) {
       envVals.VIBES_SVC_HOSTNAME_BASE = `localhost.vibesdiy.net`;

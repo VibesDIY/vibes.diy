@@ -3,7 +3,7 @@ import { FPApiInterface } from "@fireproof/core-types-protocols-dashboard";
 import React, { createContext, useContext } from "react";
 import { ClerkProvider, useClerk } from "@clerk/clerk-react";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
-import { BuildURI, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
+import { BuildURI, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/use-fireproof";
@@ -79,7 +79,16 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
       .pathname("/api")
       .cleanParams()
       .toString();
+  // console.log(`apiUrl`, apiUrl, realCtx.webVars.env.VIBES_DIY_API_URL)
+
   realCtx.vibeDiyApi = vibesDiyApis.get(apiUrl).once(() => {
+    let clerkReady: undefined | Future<void> = new Future();
+    clerk.addListener(() => {
+      if (clerk.isSignedIn) {
+        // console.log("clerk-evt", clerk.isSignedIn)
+        clerkReady?.resolve(undefined);
+      }
+    });
     console.log("VibeDiyApi for", apiUrl);
     return new VibeDiyApi({
       apiUrl,
@@ -88,6 +97,11 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
       //   public: VibesDiyEnv.VibesEnv().PUBLIC_NPM_URL,
       // },
       getToken: async () => {
+        if (clerkReady) {
+          console.log("getToken-wait-clerkReady");
+          await clerkReady.asPromise();
+          clerkReady = undefined;
+        }
         const ot = await clerk.session?.getToken({ template: "with-email" });
         if (!ot) {
           return Result.Err(`no token`);

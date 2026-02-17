@@ -82,7 +82,12 @@ export default {
     const cfCtx = await cfServeAppCtx(request, env, cctx);
     cctx.appCtx = cfCtx.appCtx;
 
-    if (url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE)) {
+    // console.log("Handling request for", url, "base", env.VIBES_SVC_HOSTNAME_BASE, Object.fromEntries(request.headers.entries()));
+    if (
+      url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE) &&
+      url.hostname.slice(0, -env.VIBES_SVC_HOSTNAME_BASE.length).includes("--")
+    ) {
+      // console.log("Handling API request for", url);
       return cfServe(request, cctx);
     }
 

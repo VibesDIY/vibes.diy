@@ -1,7 +1,6 @@
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import VibesDIYLogo from "../components/VibesDIYLogo.js";
-import VibespaceComponent from "../components/VibespaceComponent.js";
 
 export function meta({ location }: { location: { pathname: string } }) {
   const path = location.pathname;
@@ -21,21 +20,21 @@ export function meta({ location }: { location: { pathname: string } }) {
 }
 
 export default function CatchAll() {
-  const location = useLocation();
-  const path = location.pathname;
+  // const location = useLocation();
+  // const path = location.pathname;
 
-  // Check if this is a user space route (~username or @username)
-  const userSpaceMatch = path.match(/^\/([~@])(.+)$/);
+  // // Check if this is a user space route (~username or @username)
+  // const userSpaceMatch = path.match(/^\/([~@])(.+)$/);
 
-  if (userSpaceMatch) {
-    const [, prefix, cleanUserId] = userSpaceMatch;
+  // if (userSpaceMatch) {
+  //   const [, prefix, cleanUserId] = userSpaceMatch;
 
-    if (prefix === "~") {
-      return <VibespaceComponent tildeId={cleanUserId} />;
-    } else if (prefix === "@") {
-      return <VibespaceComponent atId={cleanUserId} />;
-    }
-  }
+  //   if (prefix === "~") {
+  //     return <VibespaceComponent tildeId={cleanUserId} />;
+  //   } else if (prefix === "@") {
+  //     return <VibespaceComponent atId={cleanUserId} />;
+  //   }
+  // }
 
   // Otherwise, render the 404 page
   return <NotFoundPage />;
