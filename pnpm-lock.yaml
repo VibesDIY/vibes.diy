@@ -936,8 +936,8 @@ importers:
         specifier: ^10.2.6
         version: 10.2.6(@types/react@19.2.13)(esbuild@0.27.2)(rollup@4.55.1)(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/addon-onboarding':
-        specifier: ^10.2.6
-        version: 10.2.6(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
+        specifier: ^10.2.9
+        version: 10.2.9(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
       '@storybook/react':
         specifier: ^10.0.8
         version: 10.2.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
@@ -1144,8 +1144,8 @@ importers:
         specifier: ^10.2.6
         version: 10.2.6(@types/react@19.2.13)(esbuild@0.27.3)(rollup@4.55.1)(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/addon-onboarding':
-        specifier: ^10.2.6
-        version: 10.2.6(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
+        specifier: ^10.2.9
+        version: 10.2.9(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
       '@storybook/react':
         specifier: ^10.1.11
         version: 10.2.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
@@ -4422,10 +4422,10 @@ packages:
     peerDependencies:
       storybook: ^10.2.6
 
-  '@storybook/addon-onboarding@10.2.6':
-    resolution: {integrity: sha512-ddz0iXHydMK3/Im+uO/gcZFHPtJjbEctXw1F53HAvF2PLVoM/+86H/4d5ek6idXql9Zflrpeef//hM1unQZ+GQ==}
+  '@storybook/addon-onboarding@10.2.9':
+    resolution: {integrity: sha512-ekYwAGhcBr+aZQXiDTaqVY2ThegVnLG9PR6EpUAR9at+8NrVP7tIPgGUFPBjBY0ChLaHCIjNYKDJcMgEacL3eA==}
     peerDependencies:
-      storybook: ^10.2.6
+      storybook: ^10.2.9
 
   '@storybook/builder-vite@10.2.9':
     resolution: {integrity: sha512-01DvThkchYqHh2GzqFTNrrNsrn3URuHXfHlDt2u+ggqiBKjObxeRhlgZN0ntG9w41Y05mhWH9pRAKbPMGDBIwQ==}
@@ -15601,7 +15601,7 @@ snapshots:
       - vite
       - webpack
 
-  '@storybook/addon-onboarding@10.2.6(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))':
+  '@storybook/addon-onboarding@10.2.9(storybook@10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))':
     dependencies:
       storybook: 10.2.6(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10)
 
