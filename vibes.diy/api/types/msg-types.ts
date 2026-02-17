@@ -1,7 +1,7 @@
 // Should be compatible with FP Dashboard's auth types
 import { Result } from "@adviser/cement";
 import { type } from "arktype";
-import { fileSystemItem } from "./types.js";
+import { fileSystemItem, MetaItem } from "./types.js";
 import { BlockMsgs, CoercedDate, FileSystemRef, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
 
 // Base types
@@ -225,6 +225,57 @@ export function isResEnsureAppSlug(obj: unknown): obj is ResEnsureAppSlug {
   return !(resEnsureAppSlug(obj) instanceof type.errors);
 }
 
+export const reqGetChatDetails = type({
+  type: "'vibes.diy.req-get-chat-details'",
+  auth: dashAuthType,
+  userSlug: "string",
+  appSlug: "string",
+});
+export type ReqGetChatDetails = typeof reqGetChatDetails.infer;
+
+export const resChatDetailsPrompt = type({
+  prompt: "string",
+  fsId: "string",
+  created: "string",
+});
+export type ResChatDetailsPrompt = typeof resChatDetailsPrompt.infer;
+
+export const resGetChatDetails = type({
+  type: "'vibes.diy.res-get-chat-details'",
+  chatId: "string",
+  userSlug: "string",
+  appSlug: "string",
+  prompts: resChatDetailsPrompt.array(),
+});
+export type ResGetChatDetails = typeof resGetChatDetails.infer;
+export function isResGetChatDetails(obj: unknown): obj is ResGetChatDetails {
+  return !(resGetChatDetails(obj) instanceof type.errors);
+}
+
+export const reqGetAppByFsId = type({
+  type: "'vibes.diy.req-get-app-by-fsid'",
+  "auth?": dashAuthType,
+  fsId: "string",
+});
+export type ReqGetAppByFsId = typeof reqGetAppByFsId.infer;
+
+export const resGetAppByFsId = type({
+  type: "'vibes.diy.res-get-app-by-fsid'",
+  appSlug: "string",
+  userSlug: "string",
+  fsId: "string",
+  mode: "'production'|'dev'",
+  releaseSeq: "number",
+  env: vibeUserEnv,
+  fileSystem: [fileSystemItem, "[]"],
+  meta: MetaItem.array(),
+  created: "string",
+});
+export type ResGetAppByFsId = typeof resGetAppByFsId.infer;
+export function isResGetAppByFsId(obj: unknown): obj is ResGetAppByFsId {
+  return !(resGetAppByFsId(obj) instanceof type.errors);
+}
+
 export const reqGetByUserSlugAppSlug = type({
   type: "'vibes.diy.req-get-by-user-slug-app-slug'",
   auth: dashAuthType,
@@ -232,6 +283,33 @@ export const reqGetByUserSlugAppSlug = type({
   appSlug: "string",
   "sectionId?": "string",
 });
+
+export const reqListUserSlugAppSlug = type({
+  type: "'vibes.diy.req-list-user-slug-app-slug'",
+  auth: dashAuthType,
+  "userSlug?": "string",
+  "appSlug?": "string",
+});
+export type ReqListUserSlugAppSlug = typeof reqListUserSlugAppSlug.infer;
+export function isReqListUserSlugAppSlug(obj: unknown): obj is ReqListUserSlugAppSlug {
+  return !(reqListUserSlugAppSlug(obj) instanceof type.errors);
+}
+
+export const resListUserSlugAppSlugItem = type({
+  userId: "string",
+  userSlug: "string",
+  appSlugs: type("string").array(),
+});
+export type ResListUserSlugAppSlugItem = typeof resListUserSlugAppSlugItem.infer;
+
+export const resListUserSlugAppSlug = type({
+  type: "'vibes.diy.res-list-user-slug-app-slug'",
+  items: resListUserSlugAppSlugItem.array(),
+});
+export type ResListUserSlugAppSlug = typeof resListUserSlugAppSlug.infer;
+export function isResListUserSlugAppSlug(obj: unknown): obj is ResListUserSlugAppSlug {
+  return !(resListUserSlugAppSlug(obj) instanceof type.errors);
+}
 export type ReqGetByUserSlugAppSlug = typeof reqGetByUserSlugAppSlug.infer;
 export function isReqGetByUserSlugAppSlug(obj: unknown): obj is ReqGetByUserSlugAppSlug {
   return !(reqGetByUserSlugAppSlug(obj) instanceof type.errors);

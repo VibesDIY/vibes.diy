@@ -1,5 +1,15 @@
 import { type } from "arktype";
 
+const slugPattern = /^(?!.*\/|.*--|.*\.\.)[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$/;
+
+export const vibeBindings = type({
+  appSlug: slugPattern,
+  userSlug: slugPattern,
+  fsId: slugPattern,
+  "groupId?": slugPattern,
+});
+export type VibeBindings = typeof vibeBindings.infer;
+
 export const fileSystemItem = type({
   fileName: "string",
   mimeType: "string",

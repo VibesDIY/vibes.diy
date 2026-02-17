@@ -14,6 +14,10 @@ export type ReqWithVerifiedAuth<REQ extends { type: string; auth: DashAuthType }
   readonly auth: VerifiedAuthResult;
 };
 
+export type ReqWithOptionalAuth<REQ extends { type: string; auth?: DashAuthType }> = Omit<REQ, "auth"> & {
+  readonly auth?: VerifiedAuthResult;
+};
+
 export async function verifyExtractClaims(
   ctx: VibesApiSQLCtx,
   req: { readonly auth: DashAuthType }
@@ -88,23 +92,33 @@ export async function verifyAuth(
   });
 }
 
+export function optAuth<IReq, TReq extends MsgBase<X>, TRes, X extends { type: string; auth?: DashAuthType }>(
+  fn: (ctx: HandleTriggerCtx<IReq, MsgBase<ReqWithOptionalAuth<X>>, TRes>) => Promise<Result<EventoResultType>>
+): (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => Promise<Result<EventoResultType>> {
+  return async (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => {
+    const payload = ctx.validated.payload;
+    if (payload.auth) {
+      const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), payload as WithAuth);
+      if (rAuth.isOk() && rAuth.Ok().type === "VerifiedAuthResult") {
+        (payload as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
+      } else {
+        // Auth provided but invalid — treat as unauthenticated
+        (payload as unknown as { auth: undefined }).auth = undefined;
+      }
+    }
+    return fn(ctx as unknown as HandleTriggerCtx<IReq, MsgBase<ReqWithOptionalAuth<X>>, TRes>);
+  };
+}
+
 export function checkAuth<IReq, TReq extends MsgBase<X>, TRes, X extends WithAuth & { type: string }>(
   fn: (ctx: HandleTriggerCtx<IReq, MsgBase<ReqWithVerifiedAuth<X>>, TRes>) => Promise<Result<EventoResultType>>
 ): (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => Promise<Result<EventoResultType>> {
-  return async (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => {
-    // console.log("checkAuth called", ctx.validated.payload);
-    const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), ctx.validated.payload);
-    if (rAuth.isErr()) {
-      console.error("checkAuth verifyAuth failed:", rAuth.Err());
-      return Result.Err(rAuth);
+  return optAuth<IReq, TReq, TRes, X>((async (ctx) => {
+    const payload = ctx.validated.payload;
+    if (!payload.auth) {
+      console.error("checkAuth: auth required but not verified");
+      return Result.Err("authentication required");
     }
-    if (rAuth.Ok().type !== "VerifiedAuthResult") {
-      console.error("checkAuth invalid VerifiedAuthResult type:", rAuth.Ok().type);
-      return Result.Err(`user not found: ${JSON.stringify(rAuth.Ok().inDashAuth)}`);
-    }
-    // not nice but ts way of type narrowing is limited
-    // console.log("checkAuth verified auth success:", rAuth.Ok());
-    (ctx.validated.payload as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
     return fn(ctx as unknown as HandleTriggerCtx<IReq, MsgBase<ReqWithVerifiedAuth<X>>, TRes>);
-  };
+  }) as (ctx: HandleTriggerCtx<IReq, MsgBase<ReqWithOptionalAuth<X>>, TRes>) => Promise<Result<EventoResultType>>);
 }

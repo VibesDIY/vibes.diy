@@ -20,6 +20,8 @@ export interface VibeDiyWebVars {
     // PUBLIC_NPM_URL: string;
     DASHBOARD_URL: string;
     VIBES_DIY_API_URL: string;
+    VIBES_SVC_HOSTNAME_BASE: string;
+
     CLERK_PUBLISHABLE_KEY: string;
   };
 }

@@ -70,7 +70,10 @@ export default {
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
       headers.set("Access-Control-Allow-Headers", "Content-Type");
-      return new Response(assetResponse.body as BodyInit, { status: assetResponse.status, headers }) as unknown as CFResponse;
+      return new Response(assetResponse.body as unknown as BodyInit, {
+        status: assetResponse.status,
+        headers,
+      }) as unknown as CFResponse;
     }
 
     const cctx = ctx as unknown as ExecutionContext & CFInjectMutable;
