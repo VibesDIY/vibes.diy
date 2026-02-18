@@ -12,16 +12,29 @@ export interface AssetGetRow {
 }
 
 export interface AssetPutInput {
-  stream: ReadableStream<Uint8Array>;
+  readonly stream: ReadableStream<Uint8Array>;
 }
 
 export interface AssetPutOptions {
-  signal?: AbortSignal;
+  readonly signal?: AbortSignal;
 }
+
+export interface AssetPutStored {
+  readonly type: "stored";
+  readonly row: AssetPutRow;
+}
+
+export interface AssetPutAborted {
+  readonly type: "aborted";
+  readonly protocol: string;
+  readonly reason: string;
+}
+
+export type AssetBackendPutOutcome = AssetPutStored | AssetPutAborted;
 
 export interface AssetBackend {
   readonly protocol: string;
-  put(stream: ReadableStream<Uint8Array>, options?: AssetPutOptions): Promise<Result<AssetPutRow, Error>>;
+  put(stream: ReadableStream<Uint8Array>, options?: AssetPutOptions): Promise<Result<AssetBackendPutOutcome, Error>>;
   get(url: string): Promise<Result<Option<AssetGetRow>, Error>>;
 }
 
@@ -52,13 +65,13 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
   constructor(backends: [TBackend, ...TBackend[]]) {
     this.backends = backends;
 
-    for (const item of backends) {
-      const protocol = URI.from(item.protocol + "//").protocol;
+    for (const backend of backends) {
+      const protocol = URI.from(backend.protocol + "//").protocol;
       if (this.backendByProtocol.has(protocol)) {
         this.setupError = new Error(`AssetProvider misconfigured: duplicate protocol=${protocol}`);
         return;
       }
-      this.backendByProtocol.set(protocol, item);
+      this.backendByProtocol.set(protocol, backend);
     }
   }
 
@@ -68,20 +81,54 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
     const pending = this.backends.map((backend, index) =>
       backend.put(branches[index], { signal: controllers[index].signal }),
     );
+
     const errorParts: string[] = [];
+    const abortParts: string[] = [];
+
     for (let index = 0; index < pending.length; index++) {
       const result = await pending[index];
-      if (result.isOk()) {
+      const backend = this.backends[index];
+
+      if (result.isErr()) {
+        errorParts.push(`protocol=${backend.protocol} error=${result.Err().message}`);
+        continue;
+      }
+
+      const outcome = result.Ok();
+      if (outcome.type === "stored") {
         for (let i = index + 1; i < controllers.length; i++) {
           controllers[i].abort({ type: "asset-provider-tier-abort", winnerIndex: index });
         }
         await Promise.allSettled(pending.slice(index + 1));
-        return result;
+        return Result.Ok(outcome.row);
       }
-      const backend = this.backends[index];
-      errorParts.push(`protocol=${backend.protocol} error=${result.Err().message}`);
+
+      abortParts.push(`protocol=${outcome.protocol} reason=${outcome.reason}`);
     }
-    return Result.Err(`all backends failed: ${errorParts.join("; ")}`) as AssetPutItemResult;
+
+    switch (true) {
+      case errorParts.length === 0:
+        return Result.Err(new Error(`all backends declined: ${abortParts.join("; ")}`));
+      case abortParts.length === 0:
+        return Result.Err(new Error(`all backends failed: ${errorParts.join("; ")}`));
+      default:
+        return Result.Err(
+          new Error(`no backend stored item: aborts=[${abortParts.join("; ")}] errors=[${errorParts.join("; ")}]`),
+        );
+    }
+  }
+
+  private async getOne(url: string): Promise<AssetGetItemResult> {
+    try {
+      const protocol = URI.from(url).protocol;
+      const backend = this.backendByProtocol.get(protocol);
+      if (!backend) {
+        return Result.Err(new Error(`No backend configured for protocol=${protocol}`));
+      }
+      return backend.get(url);
+    } catch {
+      return Result.Err(new Error(`invalid url: ${url}`));
+    }
   }
 
   async puts(items: AssetPutInput[]): Promise<Result<AssetPutItemResult[], Error>> {
@@ -99,18 +146,7 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
     if (this.setupError) {
       return Result.Err(this.setupError);
     }
-    const pending = urls.map(async (url): Promise<AssetGetItemResult> => {
-      try {
-        const protocol = URI.from(url).protocol;
-        const backend = this.backendByProtocol.get(protocol);
-        if (!backend) {
-          return Result.Err(`No backend configured for protocol=${protocol}`) as AssetGetItemResult;
-        }
-        return backend.get(url);
-      } catch (err) {
-        return Result.Err(`invalid url: ${url}`) as AssetGetItemResult;
-      }
-    });
+    const pending = urls.map((url) => this.getOne(url));
     const results = await Promise.allSettled(pending);
     return Result.Ok(
       results.map((r) => (r.status === "fulfilled" ? r.value : Result.Err(r.reason))),
