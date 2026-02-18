@@ -1,6 +1,6 @@
 import { BuildURI, Option, Result, URI } from "@adviser/cement";
 import { describe, expect, it } from "vitest";
-import { AssetProvider } from "@vibes.diy/api-svc/intern/asset-provider.js";
+import { AssetProvider, type AssetBackend, type AssetGetRow, type AssetPutRow } from "@vibes.diy/api-svc/intern/asset-provider.js";
 import { InMemoryTestBackend, stream2string, string2stream } from "./asset-provider.test-utils.js";
 
 describe("AssetProvider two-tier", () => {
@@ -38,15 +38,15 @@ describe("AssetProvider two-tier", () => {
   });
 
   it("uses overflow backend when primary put fails", async () => {
-    class FailingPrimaryBackend {
-      readonly protocol = "small:";
+    class FailingPrimaryBackend implements AssetBackend {
+      readonly protocol: string = "small:";
 
-      async put(_stream: ReadableStream<Uint8Array>) {
-        return Promise.resolve(Result.Err(new Error("primary put failed")));
+      async put(_stream: ReadableStream<Uint8Array>): Promise<Result<AssetPutRow, Error>> {
+        return Result.Err("primary put failed");
       }
 
-      async get(_url: string) {
-        return Promise.resolve(Result.Ok(Option.None()));
+      async get(_url: string): Promise<Result<Option<AssetGetRow>, Error>> {
+        return Result.Ok(Option.None());
       }
     }
 
@@ -74,34 +74,22 @@ describe("AssetProvider two-tier", () => {
     expect(rGets.isErr()).toBe(true);
   });
 
-  it("returns top-level errors when backend protocol is missing ':'", async () => {
-    const invalid = new InMemoryTestBackend("same");
-    const ap = new AssetProvider([invalid]);
-
-    const rPuts = await ap.puts([{ stream: string2stream("smallString") }]);
-    expect(rPuts.isErr()).toBe(true);
-
-    const url = BuildURI.from("same://").setParam("cid", "missing").toString();
-    const rGets = await ap.gets([url]);
-    expect(rGets.isErr()).toBe(true);
-  });
-
   it("aggregates all backend put errors when every backend fails", async () => {
-    class AlwaysFailBackend {
+    class AlwaysFailBackend implements AssetBackend {
       readonly protocol: string;
-      private readonly errorMessage: string;
+      private errorMessage: string;
 
       constructor(protocol: string, errorMessage: string) {
         this.protocol = protocol;
         this.errorMessage = errorMessage;
       }
 
-      async put(_stream: ReadableStream<Uint8Array>) {
-        return Promise.resolve(Result.Err(new Error(this.errorMessage)));
+      async put(_stream: ReadableStream<Uint8Array>): Promise<Result<AssetPutRow, Error>> {
+        return Result.Err(this.errorMessage);
       }
 
-      async get(_url: string) {
-        return Promise.resolve(Result.Ok(Option.None()));
+      async get(_url: string): Promise<Result<Option<AssetGetRow>, Error>> {
+        return Result.Ok(Option.None());
       }
     }
 

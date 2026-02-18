@@ -1,4 +1,4 @@
-import { exception2Result, Option, Result, URI } from "@adviser/cement";
+import { Option, Result, URI } from "@adviser/cement";
 
 export interface AssetPutRow {
   readonly cid: string;
@@ -12,11 +12,11 @@ export interface AssetGetRow {
 }
 
 export interface AssetPutInput {
-  readonly stream: ReadableStream<Uint8Array>;
+  stream: ReadableStream<Uint8Array>;
 }
 
 export interface AssetPutOptions {
-  readonly signal?: AbortSignal;
+  signal?: AbortSignal;
 }
 
 export interface AssetBackend {
@@ -28,21 +28,7 @@ export interface AssetBackend {
 export type AssetPutItemResult = Result<AssetPutRow, Error>;
 export type AssetGetItemResult = Result<Option<AssetGetRow>, Error>;
 
-function validateProtocols(backends: readonly [AssetBackend, ...AssetBackend[]]): Error | undefined {
-  const seen = new Set<string>();
-  for (const backend of backends) {
-    if (!backend.protocol.endsWith(":")) {
-      return new Error(`AssetProvider misconfigured: protocol must end with ':' (${backend.protocol})`);
-    }
-    if (seen.has(backend.protocol)) {
-      return new Error(`AssetProvider misconfigured: duplicate protocol=${backend.protocol}`);
-    }
-    seen.add(backend.protocol);
-  }
-  return undefined;
-}
-
-function splitPutStream(stream: ReadableStream<Uint8Array>, copies: number): readonly ReadableStream<Uint8Array>[] {
+function splitPutStream(stream: ReadableStream<Uint8Array>, copies: number): ReadableStream<Uint8Array>[] {
   if (copies === 1) {
     return [stream];
   }
@@ -59,79 +45,75 @@ function splitPutStream(stream: ReadableStream<Uint8Array>, copies: number): rea
 }
 
 export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
-  private readonly backends: readonly TBackend[];
-  private readonly backendByProtocol: Map<string, TBackend>;
-  private readonly setupError: Error | undefined;
+  private backends: TBackend[];
+  private backendByProtocol = new Map<string, TBackend>();
+  private setupError?: Error;
 
-  constructor(backends: readonly [TBackend, ...TBackend[]]) {
+  constructor(backends: [TBackend, ...TBackend[]]) {
     this.backends = backends;
-    this.setupError = validateProtocols(backends);
 
-    const backendByProtocol = new Map<string, TBackend>();
     for (const item of backends) {
-      backendByProtocol.set(item.protocol, item);
+      const protocol = URI.from(item.protocol + "//").protocol;
+      if (this.backendByProtocol.has(protocol)) {
+        this.setupError = new Error(`AssetProvider misconfigured: duplicate protocol=${protocol}`);
+        return;
+      }
+      this.backendByProtocol.set(protocol, item);
     }
-    this.backendByProtocol = backendByProtocol;
   }
 
   private async putOne(item: AssetPutInput): Promise<AssetPutItemResult> {
     const branches = splitPutStream(item.stream, this.backends.length);
-    const controllers: readonly (AbortController | undefined)[] = this.backends.map(function createController(
-      _backend,
-      index,
-    ) {
-      if (index === 0) {
-        return undefined;
-      }
-      return new AbortController();
-    });
-    const pending: readonly Promise<AssetPutItemResult>[] = this.backends.map((backend, index) =>
-      backend.put(branches[index], { signal: controllers[index]?.signal }),
+    const controllers = this.backends.map(() => new AbortController());
+    const pending = this.backends.map((backend, index) =>
+      backend.put(branches[index], { signal: controllers[index].signal }),
     );
     const errorParts: string[] = [];
     for (let index = 0; index < pending.length; index++) {
       const result = await pending[index];
       if (result.isOk()) {
-        const loserPending = pending.slice(index + 1);
-        for (const controller of controllers.slice(index + 1)) {
-          if (controller === undefined) {
-            continue;
-          }
-          controller.abort({ type: "asset-provider-tier-abort", winnerIndex: index });
+        for (let i = index + 1; i < controllers.length; i++) {
+          controllers[i].abort({ type: "asset-provider-tier-abort", winnerIndex: index });
         }
-        await Promise.allSettled(loserPending);
+        await Promise.allSettled(pending.slice(index + 1));
         return result;
       }
       const backend = this.backends[index];
       errorParts.push(`protocol=${backend.protocol} error=${result.Err().message}`);
     }
-    return Result.Err(new Error(`all backends failed: ${errorParts.join("; ")}`));
+    return Result.Err(`all backends failed: ${errorParts.join("; ")}`) as AssetPutItemResult;
   }
 
-  async puts(items: readonly AssetPutInput[]): Promise<Result<AssetPutItemResult[], Error>> {
-    if (this.setupError !== undefined) {
+  async puts(items: AssetPutInput[]): Promise<Result<AssetPutItemResult[], Error>> {
+    if (this.setupError) {
       return Result.Err(this.setupError);
     }
     const pending = items.map((item) => this.putOne(item));
-    return exception2Result(function waitForAllPuts() {
-      return Promise.all(pending);
-    });
+    const results = await Promise.allSettled(pending);
+    return Result.Ok(
+      results.map((r) => (r.status === "fulfilled" ? r.value : Result.Err(r.reason))),
+    );
   }
 
-  async gets(urls: readonly string[]): Promise<Result<AssetGetItemResult[], Error>> {
-    if (this.setupError !== undefined) {
+  async gets(urls: string[]): Promise<Result<AssetGetItemResult[], Error>> {
+    if (this.setupError) {
       return Result.Err(this.setupError);
     }
     const pending = urls.map(async (url): Promise<AssetGetItemResult> => {
-      const protocol = URI.from(url).protocol;
-      const backend = this.backendByProtocol.get(protocol);
-      if (backend === undefined) {
-        return Result.Err(new Error(`No backend configured for protocol=${protocol}`));
+      try {
+        const protocol = URI.from(url).protocol;
+        const backend = this.backendByProtocol.get(protocol);
+        if (!backend) {
+          return Result.Err(`No backend configured for protocol=${protocol}`) as AssetGetItemResult;
+        }
+        return backend.get(url);
+      } catch (err) {
+        return Result.Err(`invalid url: ${url}`) as AssetGetItemResult;
       }
-      return backend.get(url);
     });
-    return exception2Result(function waitForAllGets() {
-      return Promise.all(pending);
-    });
+    const results = await Promise.allSettled(pending);
+    return Result.Ok(
+      results.map((r) => (r.status === "fulfilled" ? r.value : Result.Err(r.reason))),
+    );
   }
 }

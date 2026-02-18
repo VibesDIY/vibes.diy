@@ -1,74 +1,9 @@
 import { BuildURI, Option, Result, to_uint8, URI } from "@adviser/cement";
 import { describe, expect, it } from "vitest";
-import { AssetProvider } from "@vibes.diy/api-svc/intern/asset-provider.js";
+import { AssetProvider, type AssetBackend, type AssetGetRow, type AssetPutRow } from "@vibes.diy/api-svc/intern/asset-provider.js";
+import { InMemoryTestBackend, stream2string, string2stream } from "./asset-provider.test-utils.js";
 
-function string2stream(value: string): ReadableStream<Uint8Array> {
-  const data = to_uint8(value);
-  return new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(data);
-      controller.close();
-    },
-  });
-}
-
-async function stream2string(stream: ReadableStream<Uint8Array>): Promise<string> {
-  return new Response(stream).text();
-}
-
-interface PutRow {
-  readonly cid: string;
-  readonly url: string;
-  readonly size: number;
-}
-
-interface GetRow {
-  readonly cid: string;
-  readonly stream: ReadableStream<Uint8Array>;
-}
-
-class TestImpl {
-  readonly protocol: string;
-  private seq = 0;
-  private readonly byCid = new Map<string, Uint8Array>();
-
-  constructor(protocol: string) {
-    this.protocol = protocol;
-  }
-
-  async put(stream: ReadableStream<Uint8Array>): Promise<Result<PutRow, Error>> {
-    const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
-    const cid = `${this.seq++}`;
-    const size = bytes.byteLength;
-    this.byCid.set(cid, bytes);
-    const url = BuildURI.from(this.protocol + "//").setParam("cid", cid).toString();
-    return Result.Ok({ cid, url, size });
-  }
-
-  async get(url: string): Promise<Result<Option<GetRow>, Error>> {
-    const parsed = URI.from(url);
-    if (parsed.protocol !== this.protocol) {
-      return Result.Err(new Error(`unsupported url for protocol=${this.protocol}: ${url}`));
-    }
-    const cid = parsed.getParam("cid");
-    if (cid === undefined) {
-      return Result.Err(new Error(`missing cid in url: ${url}`));
-    }
-    const bytes = this.byCid.get(cid);
-    if (bytes === undefined) {
-      return Result.Ok(Option.None());
-    }
-    const stream = new ReadableStream<Uint8Array>({
-      start(controller) {
-        controller.enqueue(bytes);
-        controller.close();
-      },
-    });
-    return Result.Ok(Option.Some({ cid, stream }));
-  }
-}
-
-class SlowPutImpl {
+class SlowPutBackend implements AssetBackend {
   readonly protocol: string;
   private seq = 0;
   private inflight = 0;
@@ -82,27 +17,25 @@ class SlowPutImpl {
     return this.maxInflight;
   }
 
-  async put(stream: ReadableStream<Uint8Array>): Promise<Result<PutRow, Error>> {
+  async put(stream: ReadableStream<Uint8Array>): Promise<Result<AssetPutRow, Error>> {
     this.inflight += 1;
     this.maxInflight = Math.max(this.maxInflight, this.inflight);
     const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
-    await new Promise<void>(function resolveAfterDelay(resolve) {
-      setTimeout(resolve, 10);
-    });
+    await new Promise<void>((resolve) => setTimeout(resolve, 10));
     this.inflight -= 1;
     const cid = `${this.seq++}`;
     const url = BuildURI.from(this.protocol + "//").setParam("cid", cid).toString();
     return Result.Ok({ cid, url, size: bytes.byteLength });
   }
 
-  async get(_url: string): Promise<Result<Option<GetRow>, Error>> {
+  async get(_url: string): Promise<Result<Option<AssetGetRow>, Error>> {
     return Result.Ok(Option.None());
   }
 }
 
 describe("AssetProvider", () => {
   it("stores and round-trips stream content", async () => {
-    const backend = new TestImpl("small:");
+    const backend = new InMemoryTestBackend("small:");
     const ap = new AssetProvider([backend]);
 
     const rPutResults = await ap.puts([
@@ -144,7 +77,7 @@ describe("AssetProvider", () => {
   });
 
   it("runs puts in parallel", async () => {
-    const backend = new SlowPutImpl("small:");
+    const backend = new SlowPutBackend("small:");
     const ap = new AssetProvider([backend]);
 
     const rPutResults = await ap.puts([
@@ -162,7 +95,7 @@ describe("AssetProvider", () => {
   });
 
   it("returns empty ok for empty batches with backend", async () => {
-    const ap = new AssetProvider([new TestImpl("small:")]);
+    const ap = new AssetProvider([new InMemoryTestBackend("small:")]);
 
     const rPutResults = await ap.puts([]);
     expect(rPutResults.isOk()).toBe(true);

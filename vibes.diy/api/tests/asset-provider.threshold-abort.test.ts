@@ -2,17 +2,18 @@ import { BuildURI, Option, Result, URI, to_uint8 } from "@adviser/cement";
 import { describe, expect, it } from "vitest";
 import {
   AssetProvider,
+  type AssetBackend,
   type AssetPutOptions,
   type AssetGetRow,
   type AssetPutRow,
 } from "@vibes.diy/api-svc/intern/asset-provider.js";
 import { string2stream } from "./asset-provider.test-utils.js";
 
-class ThresholdCancelBackend {
+class ThresholdCancelBackend implements AssetBackend {
   readonly protocol: string;
 
   private seq = 0;
-  private readonly maxBytes: number | undefined;
+  private maxBytes: number | undefined;
   private putCallsCount = 0;
   private cancelCallsCount = 0;
 
@@ -48,7 +49,7 @@ class ThresholdCancelBackend {
           seen,
           maxBytes: this.maxBytes,
         });
-        return Result.Err(new Error(`max-bytes exceeded protocol=${this.protocol}`));
+        return Result.Err(`max-bytes exceeded protocol=${this.protocol}`);
       }
     }
 
@@ -62,11 +63,11 @@ class ThresholdCancelBackend {
   }
 }
 
-class SlowDrainBackend {
+class SlowDrainBackend implements AssetBackend {
   readonly protocol: string;
 
   private seq = 0;
-  private readonly delayMs: number;
+  private delayMs: number;
   private bytesReadCount = 0;
 
   constructor(protocol: string, delayMs: number) {
@@ -81,19 +82,16 @@ class SlowDrainBackend {
   async put(stream: ReadableStream<Uint8Array>, options?: AssetPutOptions): Promise<Result<AssetPutRow, Error>> {
     const reader = stream.getReader();
     while (true) {
-      if (options?.signal?.aborted === true) {
+      if (options?.signal?.aborted) {
         await reader.cancel(options.signal.reason);
-        return Result.Err(new Error(`aborted protocol=${this.protocol}`));
+        return Result.Err(`aborted protocol=${this.protocol}`);
       }
       const next = await reader.read();
       if (next.done) {
         break;
       }
       this.bytesReadCount += next.value.byteLength;
-      const delayMs = this.delayMs;
-      await new Promise<void>(function resolveAfterDelay(resolve) {
-        setTimeout(resolve, delayMs);
-      });
+      await new Promise<void>((resolve) => setTimeout(resolve, this.delayMs));
     }
 
     const cid = `${this.seq++}`;
@@ -106,20 +104,20 @@ class SlowDrainBackend {
   }
 }
 
-function createChunkedStream(args: { readonly chunk: string; readonly count: number }): {
-  readonly stream: ReadableStream<Uint8Array>;
-  readonly totalBytes: number;
+function createChunkedStream(chunk: string, count: number): {
+  stream: ReadableStream<Uint8Array>;
+  totalBytes: number;
 } {
-  const chunk = to_uint8(args.chunk);
-  const totalBytes = chunk.byteLength * args.count;
+  const bytes = to_uint8(chunk);
+  const totalBytes = bytes.byteLength * count;
   let emitted = 0;
   const stream = new ReadableStream<Uint8Array>({
     pull(controller) {
-      if (emitted >= args.count) {
+      if (emitted >= count) {
         controller.close();
         return;
       }
-      controller.enqueue(chunk.slice());
+      controller.enqueue(bytes.slice());
       emitted += 1;
     },
   });
@@ -142,7 +140,6 @@ describe("AssetProvider threshold-abort", () => {
     const put = puts[0].Ok();
     expect(URI.from(put.url).protocol).toBe("small:");
 
-    // Desired behavior: both tiers begin processing; larger tier is canceled later.
     expect(small.putCalls).toBe(1);
     expect(big.putCalls).toBe(1);
   });
@@ -162,7 +159,6 @@ describe("AssetProvider threshold-abort", () => {
     const put = puts[0].Ok();
     expect(URI.from(put.url).protocol).toBe("big:");
 
-    // Desired behavior: small tier starts and self-cancels once threshold is exceeded.
     expect(small.putCalls).toBe(1);
     expect(small.cancelCalls).toBe(1);
     expect(big.putCalls).toBe(1);
@@ -192,7 +188,7 @@ describe("AssetProvider threshold-abort", () => {
     const big = new SlowDrainBackend("big:", 2);
     const ap = new AssetProvider([small, big]);
 
-    const payload = createChunkedStream({ chunk: "abcdefgh", count: 64 });
+    const payload = createChunkedStream("abcdefgh", 64);
     const rPuts = await ap.puts([{ stream: payload.stream }]);
 
     expect(rPuts.isOk()).toBe(true);
@@ -200,7 +196,6 @@ describe("AssetProvider threshold-abort", () => {
     expect(puts[0].isOk()).toBe(true);
     expect(URI.from(puts[0].Ok().url).protocol).toBe("small:");
 
-    // Desired behavior: once smallest tier succeeds at EOF, larger tiers should be canceled.
     expect(big.bytesRead).toBeLessThan(payload.totalBytes);
   });
 
@@ -210,7 +205,7 @@ describe("AssetProvider threshold-abort", () => {
     const large = new SlowDrainBackend("large:", 2);
     const ap = new AssetProvider([small, medium, large]);
 
-    const payload = createChunkedStream({ chunk: "abcdefgh", count: 8 });
+    const payload = createChunkedStream("abcdefgh", 8);
     const rPuts = await ap.puts([{ stream: payload.stream }]);
 
     expect(rPuts.isOk()).toBe(true);
@@ -219,7 +214,6 @@ describe("AssetProvider threshold-abort", () => {
     expect(URI.from(puts[0].Ok().url).protocol).toBe("medium:");
     expect(small.cancelCalls).toBe(1);
 
-    // Desired behavior: once medium tier succeeds at EOF, larger tiers should be canceled.
     expect(large.bytesRead).toBeLessThan(payload.totalBytes);
   });
 });
