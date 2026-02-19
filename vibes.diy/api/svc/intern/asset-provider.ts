@@ -75,9 +75,20 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
     }
   }
 
-  private async putOne(item: AssetPutInput): Promise<AssetPutItemResult> {
+  private async putOne(item: AssetPutInput, options?: AssetPutOptions): Promise<AssetPutItemResult> {
     const branches = splitPutStream(item.stream, this.backends.length);
     const controllers = this.backends.map(() => new AbortController());
+
+    if (options?.signal) {
+      const callerSignal = options.signal;
+      const onAbort = () => controllers.forEach((c) => c.abort(callerSignal.reason));
+      if (callerSignal.aborted) {
+        onAbort();
+      } else {
+        callerSignal.addEventListener("abort", onAbort, { once: true });
+      }
+    }
+
     const pending = this.backends.map((backend, index) =>
       backend.put(branches[index], { signal: controllers[index].signal }),
     );
@@ -85,6 +96,8 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
     const errorParts: string[] = [];
     const abortParts: string[] = [];
 
+    // We start all tier puts in parallel, but resolve in tier order so the
+    // canonical winner is the lowest tier that can store the full payload.
     for (let index = 0; index < pending.length; index++) {
       const result = await pending[index];
       const backend = this.backends[index];
@@ -132,11 +145,11 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
     }
   }
 
-  async puts(items: AssetPutInput[]): Promise<Result<AssetPutItemResult[], Error>> {
+  async puts(items: AssetPutInput[], options?: AssetPutOptions): Promise<Result<AssetPutItemResult[], Error>> {
     if (this.setupError) {
       return Result.Err(this.setupError);
     }
-    const pending = items.map((item) => this.putOne(item));
+    const pending = items.map((item) => this.putOne(item, options));
     const results = await Promise.allSettled(pending);
     return Result.Ok(
       results.map((r) => (r.status === "fulfilled" ? r.value : Result.Err(r.reason))),

@@ -124,6 +124,53 @@ describe("AssetProvider real tests", () => {
       }
     });
 
+    it("propagates caller abort signal to all backends", async () => {
+      const backends = createTieredBackends({
+        count: 3,
+        stepBytes: 100,
+        delayByIndex() {
+          return 5;
+        },
+      });
+      const ap = new AssetProvider(backends);
+
+      const controller = new AbortController();
+      setTimeout(() => controller.abort("caller-canceled"), 10);
+
+      const content = createTestContent({ sizeBytes: 50 });
+      const rPuts = await ap.puts(
+        [{ stream: createRebufferedStream({ content, chunkSize: 4 }) }],
+        { signal: controller.signal },
+      );
+      expect(rPuts.isOk()).toBe(true);
+      const putResult = rPuts.Ok()[0];
+
+      // With 5ms delay per chunk and abort after 10ms, backends should get aborted
+      // before they finish reading all chunks. At least some should report signal abort.
+      const after = await waitForOutcomeSettles({
+        backends,
+        before: backends.map(() => ({
+          putCalls: 0,
+          storedCount: 0,
+          thresholdAbortCount: 0,
+          signalAbortCount: 0,
+        })),
+        expectedDelta: 1,
+      });
+
+      const totalSignalAborts = after.reduce((sum, s) => sum + s.signalAbortCount, 0);
+      // Either the put finished before abort (stored) or got aborted (signal abort).
+      // With 5ms per chunk and 13 chunks of 4 bytes for 50 bytes, ~65ms total vs 10ms abort.
+      // All backends should be signal-aborted.
+      expect(totalSignalAborts).toBeGreaterThan(0);
+
+      // If it was aborted, we get an Err; if it raced through, we get Ok — either is valid
+      // but the signal must have reached the backends
+      if (putResult.isErr()) {
+        expect(putResult.Err().message).toContain("declined");
+      }
+    });
+
     it("keeps gets per-item behavior for empty, missing, and invalid urls", async () => {
       const backends = createTieredBackends({
         count: 2,
