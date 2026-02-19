@@ -17,6 +17,10 @@ interface BackendSnapshot {
   readonly signalAbortCount: number;
 }
 
+function totalOutcomes(snapshot: BackendSnapshot): number {
+  return snapshot.storedCount + snapshot.thresholdAbortCount + snapshot.signalAbortCount;
+}
+
 function captureSnapshot(backends: readonly ThresholdTestBackend[]): readonly BackendSnapshot[] {
   return backends.map(function toSnapshot(backend): BackendSnapshot {
     return {
@@ -26,6 +30,27 @@ function captureSnapshot(backends: readonly ThresholdTestBackend[]): readonly Ba
       signalAbortCount: backend.signalAbortCount,
     };
   });
+}
+
+async function waitForOutcomeSettles(args: {
+  readonly backends: readonly ThresholdTestBackend[];
+  readonly before: readonly BackendSnapshot[];
+  readonly expectedDelta: number;
+}): Promise<readonly BackendSnapshot[]> {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const after = captureSnapshot(args.backends);
+    const settled = after.every(function isSettled(snapshot, index): boolean {
+      const delta = totalOutcomes(snapshot) - totalOutcomes(args.before[index]);
+      return delta >= args.expectedDelta;
+    });
+    if (settled === true) {
+      return after;
+    }
+    await new Promise<void>(function resolveAfterDelay(resolve) {
+      setTimeout(resolve, 2);
+    });
+  }
+  return captureSnapshot(args.backends);
 }
 
 function createDeterministicRandom(seed: number): () => number {
@@ -70,7 +95,11 @@ describe("AssetProvider real tests", () => {
         const put = putResult.Ok();
         expect(URI.from(put.url).protocol).toBe(`tier${winnerIndex}:`);
 
-        const after = captureSnapshot(backends);
+        const after = await waitForOutcomeSettles({
+          backends,
+          before,
+          expectedDelta: 1,
+        });
         for (let backendIndex = 0; backendIndex < count; backendIndex++) {
           expect(after[backendIndex].putCalls - before[backendIndex].putCalls).toBe(1);
           switch (true) {

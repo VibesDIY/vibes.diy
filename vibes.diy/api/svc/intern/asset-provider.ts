@@ -96,10 +96,11 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
 
       const outcome = result.Ok();
       if (outcome.type === "stored") {
+        const loserPending = pending.slice(index + 1);
         for (let i = index + 1; i < controllers.length; i++) {
           controllers[i].abort({ type: "asset-provider-tier-abort", winnerIndex: index });
         }
-        await Promise.allSettled(pending.slice(index + 1));
+        void Promise.allSettled(loserPending);
         return Result.Ok(outcome.row);
       }
 
