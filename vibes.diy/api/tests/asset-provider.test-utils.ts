@@ -229,7 +229,7 @@ export class ThresholdTestBackend implements AssetBackend {
   }
 }
 
-export function createTieredBackends(args: TieredBackendArgs): readonly [ThresholdTestBackend, ...ThresholdTestBackend[]] {
+export function createTieredBackends(args: TieredBackendArgs): [ThresholdTestBackend, ...ThresholdTestBackend[]] {
   const count = args.count < 1 ? 1 : args.count;
   const prefix = args.protocolPrefix ?? "tier";
   const unboundedLast = args.unboundedLast ?? false;
