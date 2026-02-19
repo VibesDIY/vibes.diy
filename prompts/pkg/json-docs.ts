@@ -1,4 +1,4 @@
-import { CoerceURI, ResolveOnce } from "@adviser/cement";
+import { Lazy } from "@adviser/cement";
 import { allConfigs } from "./llms/index.js";
 import type { LlmConfig } from "./llms/index.js";
 
@@ -21,32 +21,27 @@ export interface JsonDocs {
   [key: string]: JsonDoc;
 }
 
-export const jsonDocs = new ResolveOnce<JsonDocs>();
-
-export function getLlmCatalogNames(fallBackUrl: CoerceURI): Promise<Set<string>> {
-  return getLlmCatalog(fallBackUrl).then((catalog) => new Set(catalog.map((i) => i.name)));
+export function getLlmCatalogNames(): Promise<Set<string>> {
+  return getLlmCatalog().then((catalog) => new Set(catalog.map((i) => i.name)));
 }
 
-export function getLlmCatalog(fallBackUrl: CoerceURI): Promise<LlmConfig[]> {
-  return getJsonDocArray(fallBackUrl).then((docs) => docs.map((i) => i.obj));
+export function getLlmCatalog(): Promise<LlmConfig[]> {
+  return getJsonDocArray().then((docs) => docs.map((i) => i.obj));
 }
 
-export function getJsonDocArray(_fallBackUrl: CoerceURI): Promise<JsonDoc[]> {
-  return getJsonDocs(_fallBackUrl).then((docs) => {
+export function getJsonDocArray(): Promise<JsonDoc[]> {
+  return getJsonDocs().then((docs) => {
     return Object.values(docs);
   });
 }
 
-export async function getJsonDocs(_fallBackUrl: CoerceURI): Promise<JsonDocs> {
-  return jsonDocs.once(async () => {
-    const m: JsonDocs = {} as JsonDocs;
+export const getJsonDocs = Lazy(async (): Promise<JsonDocs> => {
+  const m: JsonDocs = {} as JsonDocs;
 
-    // Load configs from TypeScript modules instead of fetching JSON
-    for (const config of allConfigs) {
-      const filename = `${config.name}.json`;
-      m[filename] = { name: filename, obj: config };
-    }
-
-    return m;
-  });
-}
+  // Load configs from TypeScript modules instead of fetching JSON
+  for (const config of allConfigs) {
+    const filename = `${config.name}.json`;
+    m[filename] = { name: filename, obj: config };
+  }
+  return m;
+});

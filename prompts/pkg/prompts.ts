@@ -1,11 +1,12 @@
-import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
+// import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
 
 import type { HistoryMessage, UserSettings } from "./settings.js";
-import { CoerceURI, Lazy, URI } from "@adviser/cement";
-import { getJsonDocs, getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
+import { exception2Result, loadAsset, Result } from "@adviser/cement";
+import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
 
-import { getTexts } from "./txt-docs.js";
+// import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
+import { ChatMessage } from "@vibes.diy/call-ai-v2";
 
 // Single source of truth for the default coding model used across the repo.
 export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
@@ -53,45 +54,45 @@ export interface SystemPromptResult {
   model: string;
 }
 
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+// function escapeRegExp(str: string): string {
+//   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// }
 
-const llmImportRegexes = Lazy((fallBackUrl: CoerceURI) => {
-  return getJsonDocs(fallBackUrl).then((docs) =>
-    Object.values(docs)
-      .map((d) => d.obj)
-      .filter((l) => l.importModule && l.importName)
-      .map((l) => {
-        const mod = escapeRegExp(l.importModule);
-        const name = escapeRegExp(l.importName);
-        const importType = l.importType || "named";
+// const llmImportRegexes = Lazy(() => {
+//   return getJsonDocs().then((docs) =>
+//     Object.values(docs)
+//       .map((d) => d.obj)
+//       .filter((l) => l.importModule && l.importName)
+//       .map((l) => {
+//         const mod = escapeRegExp(l.importModule);
+//         const name = escapeRegExp(l.importName);
+//         const importType = l.importType || "named";
 
-        return {
-          name: l.name,
-          // Matches: import { ..., <name>, ... } from '<module>'
-          named: new RegExp(`import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['\\"]${mod}['\\"]`),
-          // Matches: import <name> from '<module>'
-          def: new RegExp(`import\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`),
-          // Matches: import * as <name> from '<module>'
-          namespace: new RegExp(`import\\s*\\*\\s*as\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`),
-          importType,
-        } as const;
-      })
-  );
-});
+//         return {
+//           name: l.name,
+//           // Matches: import { ..., <name>, ... } from '<module>'
+//           named: new RegExp(`import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['\\"]${mod}['\\"]`),
+//           // Matches: import <name> from '<module>'
+//           def: new RegExp(`import\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`),
+//           // Matches: import * as <name> from '<module>'
+//           namespace: new RegExp(`import\\s*\\*\\s*as\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`),
+//           importType,
+//         } as const;
+//       })
+//   );
+// });
 
-async function detectModulesInHistory(history: HistoryMessage[], opts: LlmSelectionOptions): Promise<Set<string>> {
+async function detectModulesInHistory(history: HistoryMessage[], _opts: LlmSelectionOptions): Promise<Set<string>> {
   const detected = new Set<string>();
   if (!Array.isArray(history)) return detected;
   for (const msg of history) {
     const content = msg?.content || "";
     if (!content || typeof content !== "string") continue;
-    for (const { name, named, def, namespace } of await llmImportRegexes(opts.fallBackUrl)) {
-      if (named.test(content) || def.test(content) || namespace.test(content)) {
-        detected.add(name);
-      }
-    }
+    // for (const { name, named, def, namespace } of await llmImportRegexes()) {
+    //   if (named.test(content) || def.test(content) || namespace.test(content)) {
+    //     detected.add(name);
+    //   }
+    // }
   }
   return detected;
 }
@@ -103,21 +104,25 @@ interface LlmSelectionDecisions {
 
 interface LlmSelectionOptions {
   readonly appMode?: "test" | "production";
-  readonly callAiEndpoint?: CoerceURI;
-  readonly fallBackUrl?: CoerceURI;
+  // readonly callAiEndpoint?: CoerceURI;
+  fetchText?(pkg: string, path: string): Promise<Result<string>>;
 
-  readonly getAuthToken?: () => Promise<string>;
-  readonly mock?: Mocks;
+  readonly callAi: {
+    ModuleAndOptionsSelection(msgs: ChatMessage[]): Promise<Result<string>>;
+  };
+
+  // readonly getAuthToken?: () => Promise<string>;
+  // readonly mock?: Mocks;
 }
 
-type LlmSelectionWithFallbackUrl = Omit<Omit<LlmSelectionOptions, "fallBackUrl">, "callAiEndpoint"> & {
-  readonly fallBackUrl: CoerceURI;
-  readonly callAiEndpoint?: CoerceURI;
-};
+// type LlmSelectionWithoutGetTextUrl = Omit<LlmSelectionOptions, "getTextUrl" | "callAiEndpoint"> & {
+//   readonly fallBackUrl: CoerceURI;
+//   // readonly callAiEndpoint?: CoerceURI;
+// };
 
-async function sleepReject<T>(ms: number) {
-  return new Promise<T>((_, rj) => setTimeout(rj, ms));
-}
+// async function sleepReject<T>(ms: number) {
+//   return new Promise<T>((_, rj) => setTimeout(rj, ms));
+// }
 
 // move this to the other file along with referenced types
 async function selectLlmsAndOptions(
@@ -126,14 +131,18 @@ async function selectLlmsAndOptions(
   history: HistoryMessage[],
   iopts: LlmSelectionOptions
 ): Promise<LlmSelectionDecisions> {
-  const opts: LlmSelectionWithFallbackUrl = {
-    appMode: "production",
+  const opts = {
     ...iopts,
-    callAiEndpoint: iopts.callAiEndpoint ? iopts.callAiEndpoint : undefined,
-    fallBackUrl: URI.from(iopts.fallBackUrl ?? "https://esm.sh/use-vibes@0.18.9/prompt-catalog/llms").toString(),
-    getAuthToken: iopts.getAuthToken,
+    mode: iopts.appMode === "test" ? "test" : "production",
   };
-  const llmsCatalog = await getLlmCatalog(opts.fallBackUrl);
+  // const opts: LlmSelectionWithoutGetTextUrl = {
+  //   appMode: "production",
+  //   ...iopts,
+  //   callAiEndpoint: iopts.callAiEndpoint ? iopts.callAiEndpoint : undefined,
+  //   // fallBackUrl: URI.from(iopts.fallBackUrl ?? "https://esm.sh/use-vibes@0.18.9/prompt-catalog/llms").toString(),
+  //   // getAuthToken: iopts.getAuthToken,
+  // };
+  const llmsCatalog = await getLlmCatalog();
   const catalog = llmsCatalog.map((l) => ({
     name: l.name,
     description: l.description || "",
@@ -144,68 +153,91 @@ async function selectLlmsAndOptions(
     history: history || [],
   };
 
-  const messages: Message[] = [
+  const messages: ChatMessage[] = [
     {
       role: "system",
-      content:
-        'You select which library modules from a catalog should be included AND whether to include a demo-data button. First analyze if the user prompt describes specific look & feel requirements. For demo data: include it only when asked for. Read the JSON payload and return JSON with properties: "selected" (array of catalog "name" strings) and "demoData" (boolean). Only choose modules from the catalog. Include any libraries already used in history. Respond with JSON only.',
+      content: [
+        {
+          type: "text",
+          text: `You select which library modules from a catalog should 
+         be included AND whether to include a demo-data button. 
+         First analyze if the user prompt describes specific 
+         look & feel requirements. For demo data: include it 
+         only when asked for. Read the JSON payload and return 
+         JSON with properties: 
+         "selected" (array of catalog "name" strings) and "demoData" (boolean). 
+         Only choose modules from the catalog. Include any 
+         libraries already used in history. Respond with JSON only.`,
+        },
+      ],
     },
-    { role: "user", content: JSON.stringify(payload) },
+    { role: "user", content: [{ type: "text", text: JSON.stringify(payload) }] },
   ];
 
-  const options: CallAIOptions = {
-    chatUrl: opts.callAiEndpoint ? opts.callAiEndpoint.toString().replace(/\/+$/, "") : undefined,
-    apiKey: (await opts.getAuthToken?.()) || "",
-    model,
-    schema: {
-      name: "module_and_options_selection",
-      properties: {
-        selected: { type: "array", items: { type: "string" } },
-        demoData: { type: "boolean" },
-      },
-    },
-    max_tokens: 2000,
-    headers: {
-      "HTTP-Referer": "https://vibes.diy",
-      "X-Title": "Vibes DIY",
-    },
-    mock: opts.mock,
-  };
+  // const options: CallAIOptions = {
+  //   chatUrl: opts.callAiEndpoint ? opts.callAiEndpoint.toString().replace(/\/+$/, "") : undefined,
+  //   apiKey: (await opts.getAuthToken?.()) || "",
+  //   model,
+  //   schema: {
+  //     name: "module_and_options_selection",
+  //     properties: {
+  //       selected: { type: "array", items: { type: "string" } },
+  //       demoData: { type: "boolean" },
+  //     },
+  //   },
+  //   max_tokens: 2000,
+  //   headers: {
+  //     "HTTP-Referer": "https://vibes.diy",
+  //     "X-Title": "Vibes DIY",
+  //   },
+  //   mock: opts.mock,
+  // };
 
-  try {
-    const withTimeout = <T>(p: Promise<T>, ms = 4000): Promise<T> =>
-      Promise.race([
-        sleepReject<T>(ms).then((val) => {
-          console.warn("Module/options selection: API call timed out after", ms, "ms");
-          return val;
-        }),
-        p
-          .then((val) => {
-            return val;
-          })
-          .catch((err) => {
-            console.warn("Module/options selection: API call failed with error:", err);
-            throw err;
-          }),
-      ]);
-
-    const raw = (await withTimeout((options.mock?.callAI || callAI)(messages, options))) as string;
-
-    if (raw === undefined || raw === null) {
-      console.warn("Module/options selection: call-ai returned undefined with schema present");
-      console.warn("This is a known issue in the prompts package environment");
-      return { selected: [], demoData: true };
-    }
-
-    const parsed = JSON.parse(raw) ?? {};
-    const selected = Array.isArray(parsed?.selected) ? parsed.selected.filter((v: unknown) => typeof v === "string") : [];
-    const demoData = typeof parsed?.demoData === "boolean" ? parsed.demoData : true;
-
-    return { selected, demoData };
-  } catch (err) {
-    console.warn("Module/options selection call failed:", err);
+  const rRaw = await opts.callAi.ModuleAndOptionsSelection(messages);
+  if (rRaw.isErr()) {
+    console.warn("Module/options selection call failed:", rRaw.Err());
     return { selected: [], demoData: true };
   }
+
+  // try {
+  // const withTimeout = <T>(p: Promise<T>, ms = 4000): Promise<T> =>
+  //   Promise.race([
+  //     sleepReject<T>(ms).then((val) => {
+  //       console.warn("Module/options selection: API call timed out after", ms, "ms");
+  //       return val;
+  //     }),
+  //     p
+  //       .then((val) => {
+  //         return val;
+  //       })
+  //       .catch((err) => {
+  //         console.warn("Module/options selection: API call failed with error:", err);
+  //         throw err;
+  //       }),
+  //   ]);
+
+  // const raw = (await withTimeout((options.mock?.callAI || callAI)(messages, options))) as string;
+
+  // if (raw === undefined || raw === null) {
+  //   console.warn("Module/options selection: call-ai returned undefined with schema present");
+  //   console.warn("This is a known issue in the prompts package environment");
+  //   return { selected: [], demoData: true };
+  // }
+
+  const rParsed = exception2Result(() => JSON.parse(rRaw.Ok()) ?? {});
+  if (rParsed.isErr()) {
+    console.warn("Module/options selection: Failed to parse JSON response:", rRaw.Ok());
+    return { selected: [], demoData: true };
+  }
+  const parsed = rParsed.Ok();
+  const selected = Array.isArray(parsed?.selected) ? parsed.selected.filter((v: unknown) => typeof v === "string") : [];
+  const demoData = typeof parsed?.demoData === "boolean" ? parsed.demoData : true;
+
+  return { selected, demoData };
+  // } catch (err) {
+  //   console.warn("Module/options selection call failed:", err);
+  //   return { selected: [], demoData: true };
+  // }
 }
 
 export function generateImportStatements(llms: LlmCatalogEntry[]) {
@@ -247,11 +279,11 @@ export async function makeBaseSystemPrompt(
   let selectedNames: string[] = [];
   let includeDemoData = true;
 
-  const llmsCatalog = await getLlmCatalog(sessionDoc.fallBackUrl);
-  const llmsCatalogNames = await getLlmCatalogNames(sessionDoc.fallBackUrl);
+  const llmsCatalog = await getLlmCatalog();
+  const llmsCatalogNames = await getLlmCatalogNames();
 
-  if (useOverride && Array.isArray(sessionDoc?.dependencies)) {
-    selectedNames = (sessionDoc.dependencies as unknown[])
+  if (useOverride) {
+    selectedNames = (sessionDoc.dependencies ?? [])
       .filter((v): v is string => typeof v === "string")
       .filter((name) => llmsCatalogNames.has(name));
   } else {
@@ -270,20 +302,41 @@ export async function makeBaseSystemPrompt(
 
   const chosenLlms = llmsCatalog.filter((l) => selectedNames.includes(l.name));
 
-  let concatenatedLlmsTxt = "";
+  const concatenatedLlmsTxts: string[] = [];
   for (const llm of chosenLlms) {
-    const text = await getTexts(llm.name, sessionDoc.fallBackUrl);
-    if (!text) {
-      console.warn("Failed to load raw LLM text for:", llm.name, sessionDoc.fallBackUrl);
+    const rText = await loadAsset(`./llms/${llm.name}.txt`, {
+      fallBackUrl: import.meta.url,
+      basePath: () => "https://esm.sh/@vibes/prompts/package.json",
+      mock: {
+        fetch:
+          sessionDoc.fetchText &&
+          (async (): Promise<Response> => {
+            if (!sessionDoc.fetchText) {
+              console.warn("No fetchText function provided in sessionDoc for loading LLM text assets");
+              return new Response(null, { status: 404 });
+            }
+            const r = await sessionDoc.fetchText("@vibes.diy/prompts", `./llms/${llm.name}.txt`);
+            if (r.isErr()) {
+              return new Response(null, { status: 404 });
+            }
+            return new Response(r.Ok(), { status: 200 });
+          }),
+      },
+    });
+    if (rText.isErr()) {
+      console.warn(`Failed to load text for LLM ${llm.name} at path ${import.meta.dirname}/./llms/${llm.name}.txt:`, rText.Err());
       continue;
     }
-
-    concatenatedLlmsTxt += `
-<${llm.label}-docs>
-${text || ""}
-</${llm.label}-docs>
-`;
+    // const text = await getTexts(llm.name, sessionDoc.fallBackUrl);
+    // if (!text) {
+    //   console.warn("Failed to load raw LLM text for:", llm.name, sessionDoc.fallBackUrl);
+    //   continue;
+    // }
+    concatenatedLlmsTxts.push(`<${llm.label}-docs>`);
+    concatenatedLlmsTxts.push(rText.Ok() ?? "");
+    concatenatedLlmsTxts.push(`</${llm.label}-docs>`);
   }
+  const concatenatedLlmsTxt = concatenatedLlmsTxts.join("\n");
 
   // defaultStylePrompt is now imported from style-prompts.js
 
@@ -293,54 +346,53 @@ ${text || ""}
     ? `- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app.\n`
     : "";
 
-  const systemPrompt = `
-You are an AI assistant tasked with creating React components. You should create components that:
-- Use modern React practices and follow the rules of hooks
-- Don't use any TypeScript, just use JavaScript
-- Use Tailwind CSS for mobile-first accessible styling
-- Don't use words from the style prompt in your copy: ${stylePrompt}
-- For dynamic components, like autocomplete, don't use external libraries, implement your own
-- Avoid using external libraries unless they are essential for the component to function
-- Always import the libraries you need at the top of the file
-- Use Fireproof for data persistence
-- Use \`callAI\` to fetch AI (set \`stream: true\` to enable streaming), use Structured JSON Outputs like this: \`callAI(prompt, { schema: { properties: { todos: { type: 'array', items: { type: 'string' } } } } })\` and save final responses as individual Fireproof documents.
-- For file uploads use drag and drop and store using the \`doc._files\` API
-- Don't try to generate png or base64 data, use placeholder image APIs instead, like https://picsum.photos/400 where 400 is the square size
-- Consider and potentially reuse/extend code from previous responses if relevant
-- Always output the full component code, keep the explanation short and concise
-- Never also output a small snippet to change, just the full component code
-- Keep your component file as short as possible for fast updates
-- Keep the database name stable as you edit the code
-- The system can send you crash reports, fix them by simplifying the affected code
-- List data items on the main page of your app so users don't have to hunt for them
-- If you save data, make sure it is browseable in the app, eg lists should be clickable for more details
-${demoDataLines}
+  const systemPromptLines = [
+    "You are an AI assistant tasked with creating React components. You should create components that:",
+    "- Use modern React practices and follow the rules of hooks",
+    "- Don't use any TypeScript, just use JavaScript",
+    "- Use Tailwind CSS for mobile-first accessible styling",
+    `- Don't use words from the style prompt in your copy: ${stylePrompt}`,
+    "- For dynamic components, like autocomplete, don't use external libraries, implement your own",
+    "- Avoid using external libraries unless they are essential for the component to function",
+    "- Always import the libraries you need at the top of the file",
+    "- Use Fireproof for data persistence",
+    "- Use `callAI` to fetch AI (set `stream: true` to enable streaming), use Structured JSON Outputs like this: `callAI(prompt, { schema: { properties: { todos: { type: 'array', items: { type: 'string' } } } } })` and save final responses as individual Fireproof documents.",
+    "- For file uploads use drag and drop and store using the `doc._files` API",
+    "- Don't try to generate png or base64 data, use placeholder image APIs instead, like https://picsum.photos/400 where 400 is the square size",
+    "- Consider and potentially reuse/extend code from previous responses if relevant",
+    "- Always output the full component code, keep the explanation short and concise",
+    "- Never also output a small snippet to change, just the full component code",
+    "- Keep your component file as short as possible for fast updates",
+    "- Keep the database name stable as you edit the code",
+    "- The system can send you crash reports, fix them by simplifying the affected code",
+    "- List data items on the main page of your app so users don't have to hunt for them",
+    "- If you save data, make sure it is browseable in the app, eg lists should be clickable for more details",
+    demoDataLines,
+  ];
 
-${concatenatedLlmsTxt}
-
-## ImgGen Component
-
-You should use this component in all cases where you need to generate or edit images. It is a React component that provides a UI for image generation and editing. Make sure to pass the database prop to the component. If you generate images, use a live query to list them (with type 'image') in the UI. The best usage is to save a document with a string field called \`prompt\` (which is sent to the generator) and an optional \`doc._files.original\` image and pass the \`doc._id\` to the component via the  \`_id\` prop. It will handle the rest.
-
-${
-  userPrompt
-    ? `${userPrompt}
-
-`
-    : ""
-}IMPORTANT: You are working in one JavaScript file, use tailwind classes for styling. Remember to use brackets like bg-[#242424] for custom colors.
-
-Provide a title and brief explanation followed by the component code. The component should demonstrate proper Fireproof integration with real-time updates and proper data persistence.
-
-Begin the component with the import statements. Use react and the following libraries:
-
-\`\`\`js
-import React, { ... } from "react"${generateImportStatements(chosenLlms)}
-
-// other imports only when requested
-\`\`\`
-
-`;
+  const systemPrompt = [
+    systemPromptLines.join("\n"),
+    "",
+    concatenatedLlmsTxt,
+    "",
+    "## ImgGen Component",
+    "",
+    "You should use this component in all cases where you need to generate or edit images. It is a React component that provides a UI for image generation and editing. Make sure to pass the database prop to the component. If you generate images, use a live query to list them (with type 'image') in the UI. The best usage is to save a document with a string field called `prompt` (which is sent to the generator) and an optional `doc._files.original` image and pass the `doc._id` to the component via the  `_id` prop. It will handle the rest.",
+    "",
+    ...(userPrompt ? [userPrompt, ""] : []),
+    "IMPORTANT: You are working in one JavaScript file, use tailwind classes for styling. Remember to use brackets like bg-[#242424] for custom colors.",
+    "",
+    "Provide a title and brief explanation followed by the component code. The component should demonstrate proper Fireproof integration with real-time updates and proper data persistence.",
+    "",
+    "Begin the component with the import statements. Use react and the following libraries:",
+    "",
+    "```js",
+    `import React, { ... } from "react"${generateImportStatements(chosenLlms)}`,
+    "",
+    "// other imports only when requested",
+    "```",
+    "",
+  ].join("\n");
 
   return {
     systemPrompt,

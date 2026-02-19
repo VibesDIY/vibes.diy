@@ -112,6 +112,9 @@ describe("VibesDiyApi", () => {
     const fetchPair = TestFetchPair.create();
     const wsPair = TestWSPair.create();
     const appCtx = await createAppContext({
+      fetchAsset: async (url: string) => {
+        throw new Error(`fetchAsset not implemented in test for url: ${url}`);
+      },
       netHash: () => "test-hash",
       connections: new Set(),
       env,

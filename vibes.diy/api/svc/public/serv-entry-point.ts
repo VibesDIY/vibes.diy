@@ -134,9 +134,8 @@ async function renderFromFs(
       type: "http.Response.Body",
       headers: {
         "Content-Type": foundPath.mimeType,
-        "X-Vibes-Asset-Id": foundPath.assetId,
+        "Cache-Control": "public, max-age=86400",
         ETag: foundPath.assetId,
-        "Cache-Control": "no-cache",
       },
       body: content,
     } satisfies HttpResponseBodyType);
@@ -149,7 +148,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
   hash: "serv-entry-point",
   validate: (ctx: ValidateTriggerCtx<Request, ExtractedHostToBindings, unknown>) => {
     const { request: req } = ctx;
-    if (req && req.method === "GET") {
+    if (req && (req.method === "GET" || req.method === "HEAD")) {
       const matchHost = extractHostToBindings({
         matchURL: req?.url ?? "",
       });

@@ -218,6 +218,8 @@ export default function Chat() {
   return (
     <>
       <AppLayout
+        isSidebarVisible={isSidebarVisible}
+        setIsSidebarVisible={setIsSidebarVisible}
         fullWidthChat={isMobileViewport()}
         headerLeft={
           <ChatHeaderContent

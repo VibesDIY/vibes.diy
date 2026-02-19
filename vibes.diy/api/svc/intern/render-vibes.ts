@@ -129,11 +129,11 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
       status: 200,
       headers: {
         "Content-Type": "text/html",
-        "X-Vibes-Asset-Id": fs.fsId,
+        "Cache-Control": "public, max-age=86400",
         ETag: fs.fsId,
         ...optionalHeader,
       },
-      body: (await renderToReadableStream(VibePage(vsctx))) as BodyInit,
+      body: ctx.request.method === "HEAD" ? "" : ((await renderToReadableStream(VibePage(vsctx))) as BodyInit),
     } satisfies HttpResponseBodyType)
   );
   if (res.isErr()) {

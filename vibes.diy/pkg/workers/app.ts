@@ -15,6 +15,7 @@ import { Env } from "./env.js";
 import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
 import { processScreenShotEvent } from "./screen-shotter.js";
+import { NPMPackage } from "@adviser/cement";
 
 export { ChatSessions } from "./chat-sessions.js";
 // import { cfServe } from "@vibes.diy/api-svc";
@@ -51,8 +52,10 @@ export default {
     }
 
     if (url.pathname.startsWith("/vibe-pkg/")) {
+      console.log("Handling package vibe-pkg request for", url.pathname);
+      const cache = caches.default;
       if (request.method === "OPTIONS") {
-        return new Response(null, {
+        const response = new Response(null, {
           status: 204,
           headers: {
             "Access-Control-Allow-Origin": "*",
@@ -60,20 +63,34 @@ export default {
             "Access-Control-Allow-Headers": "Content-Type",
           },
         }) as unknown as CFResponse;
+        await cache.put(
+          new Request(request.url, { method: "OPTIONS" }) as unknown as CFRequest,
+          response.clone() as unknown as CFResponse
+        );
+        return response;
       }
       const assetUrl = new URL(request.url);
       assetUrl.pathname = assetUrl.pathname.replace("/vibe-pkg/", "/_vibe-pkg/");
-      // request.url = assetUrl.toString();
+      // request.url = assjetUrl.toString();
+      const pkg = NPMPackage.parse(assetUrl.pathname.replace("/_vibe-pkg/", ""));
+      if (!pkg.suffix) {
+        assetUrl.pathname = `/_vibe-pkg/${pkg.pkg}/index.js`;
+      }
       const assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString()) as unknown as CFRequest);
       const headers = new Headers(Object.fromEntries(assetResponse.headers.entries()));
       headers.set("Content-Type", "application/javascript");
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
       headers.set("Access-Control-Allow-Headers", "Content-Type");
-      return new Response(assetResponse.body as unknown as BodyInit, {
+      const response = new Response(assetResponse.body as unknown as BodyInit, {
         status: assetResponse.status,
         headers,
       }) as unknown as CFResponse;
+      await cache.put(
+        new Request(request.url, { method: "GET" }) as unknown as CFRequest,
+        response.clone() as unknown as CFResponse
+      );
+      return response;
     }
 
     const cctx = ctx as unknown as ExecutionContext & CFInjectMutable;
@@ -87,8 +104,10 @@ export default {
       url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE) &&
       url.hostname.slice(0, -env.VIBES_SVC_HOSTNAME_BASE.length).includes("--")
     ) {
-      // console.log("Handling API request for", url);
-      return cfServe(request, cctx);
+      console.log("Handling Hostname-based API request for", url.hostname, url.pathname);
+      const res = await cfServe(request, cctx);
+      caches.default.put(request.url, res.clone() as unknown as CFResponse);
+      return res;
     }
 
     // console.log("Handling request for", cfCtx.vibesCtx.params);

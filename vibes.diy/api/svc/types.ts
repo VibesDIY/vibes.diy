@@ -32,6 +32,7 @@ export interface VibesApiSQLCtx {
   params: VibesFPApiParameters;
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<Result<{ src: string; version: string }>>;
+  fetchAsset(url: string): Promise<Result<string>>;
   // waitUntil<T>(promise: Promise<T>): void;
   ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
 

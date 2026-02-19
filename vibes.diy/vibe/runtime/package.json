@@ -9,8 +9,8 @@
     "publish": "core-cli build"
   },
   "dependencies": {
+    "@adviser/cement": "^0.5.23",
     "@vibes.diy/base": "workspace:*",
-    "@adviser/cement": "^0.5.22",
     "arktype": "^2.1.29",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"

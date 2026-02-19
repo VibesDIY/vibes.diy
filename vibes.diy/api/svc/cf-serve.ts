@@ -11,7 +11,7 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { Env } from "./cf-env.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { AppContext, Lazy } from "@adviser/cement";
+import { AppContext, Lazy, Result, URI } from "@adviser/cement";
 import { hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
 
@@ -84,6 +84,20 @@ export async function cfServeAppCtx(request: CFRequest, env: Env, ctx: Execution
     // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
     cache: ctx.cache,
+    fetchAsset: async (url: string) => {
+      const uri = URI.from(url);
+      // const assetUrl = uri.build().pathname(uri.pathname.replace(/^\//, "/_")).toString();
+      const assetUrl = uri.toString();
+      // console.log("Fetching asset from URL:", url, "assetUrl:", assetUrl);
+      const res = await env.ASSETS.fetch(assetUrl);
+      // console.log("Received response for asset fetch:", res);
+      if (!res.ok) {
+        return Result.Err(`Failed to fetch asset from ${assetUrl}: ${res.status} ${res.statusText}`);
+      }
+      const text = await res.text();
+      // console.log("Fetching asset from URL:", assetUrl, '->', text);
+      return Result.Ok(text);
+    },
     // this help to provide enough uniqueness
     // to find clients which try to steal tokens
     netHash,
@@ -116,11 +130,13 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
   });
 
   server.addEventListener("close", (event) => {
+    console.log("WebSocket connection closed", ws.connections.size - 1);
     wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
     ws.connections.delete(wsSendProvider);
   });
 
   server.addEventListener("error", (event: Event) => {
+    console.error("WebSocket error", event);
     wsEvento.trigger({ ctx: appCtx, request: { type: "ErrorEvent", event: event as ErrorEvent }, send: wsSendProvider });
     ws.connections.delete(wsSendProvider);
   });
