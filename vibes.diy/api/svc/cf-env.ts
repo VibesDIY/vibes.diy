@@ -1,6 +1,7 @@
-import { D1Database } from "@cloudflare/workers-types";
+import { D1Database, Fetcher } from "@cloudflare/workers-types";
 
 export interface Env {
+  ASSETS: Fetcher;
   DB: D1Database;
   ENVIRONMENT: string;
   VIBES_SVC_HOSTNAME_BASE: string;

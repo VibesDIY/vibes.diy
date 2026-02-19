@@ -1,4 +1,4 @@
-import { BuildURI, Result, toSortedObject } from "@adviser/cement";
+import { BuildURI, NPMPackage, Result, toSortedObject } from "@adviser/cement";
 import * as semver from "semver";
 import { defaultFetchPkgVersion } from "../npm-package-version.js";
 
@@ -104,52 +104,25 @@ export class Version implements Readonly<MutableVersionEntity> {
   }
 }
 
-const reScopedPkg = /^(@[^/]+\/[^/]+)(\/.*)?$/;
-const rePkg = /^([^/@]+)(\/.*)?$/;
-
-export class Package {
-  readonly givenPkg: string; // the original package string provided, e.g., "react" or "@scope/package/extra"
-  readonly pkg: string; // e.g., "react" or "@scope/package"
-  readonly suffix?: string; // e.g., "/extra/path" if the package string has more segments
-
-  static parse(pkgStr: string): Package {
-    // For scoped packages, return the first two segments, otherwise return the first segment
-    const scopedMatch = reScopedPkg.exec(pkgStr);
-    if (scopedMatch) {
-      return new Package({ givenPkg: pkgStr, pkg: scopedMatch[1], suffix: scopedMatch[2] }); // Returns @scope/package
-    }
-    const unscopedMatch = rePkg.exec(pkgStr);
-    if (unscopedMatch) {
-      return new Package({ givenPkg: pkgStr, pkg: unscopedMatch[1], suffix: unscopedMatch[2] }); // Returns package
-    }
-    throw new Error(`Invalid package string: ${JSON.stringify(pkgStr)}`);
-  }
-  constructor({ givenPkg, pkg, suffix }: { givenPkg: string; pkg: string; suffix?: string }) {
-    this.givenPkg = givenPkg;
-    this.pkg = pkg;
-    this.suffix = suffix;
-  }
-}
-
 export class Dependency {
   public readonly pkg: string;
   public readonly pkgs = new Map<
     string,
     {
-      pkg: Package;
+      pkg: NPMPackage;
       version: {
         ver: Version;
         dependencies: Map<string, Dependency>;
       };
     }
-  >(); // Map of full givenPkg to Package object for all variants of this package
+  >(); // Map of full givenPkg to NPMPackage object for all variants of this package
   public readonly groups = new Set<string>();
 
   constructor(pkg: string) {
     this.pkg = pkg;
   }
 
-  addPkg(pkg: Package, version: Version) {
+  addPkg(pkg: NPMPackage, version: Version) {
     if (pkg.pkg !== this.pkg) {
       throw new Error(`Package mismatch: expected ${this.pkg}, got ${pkg.pkg}`);
     }
@@ -189,7 +162,7 @@ export class Dependencies {
     return existing;
   }
   add(pkg: string, versionStr: string, group?: string): Dependency {
-    const pkgParsed = Package.parse(pkg);
+    const pkgParsed = NPMPackage.parse(pkg);
     const versionParsed = Version.parse(versionStr);
 
     let dependency = this.#byDeps.get(pkgParsed.pkg);
@@ -211,7 +184,7 @@ export class Dependencies {
   }
 
   async resolveVersion(
-    resolveFn: (pkg: { pkg: Package; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>>
+    resolveFn: (pkg: { pkg: NPMPackage; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>>
   ) {
     this.resolveVersionDeps();
     const fetches: Promise<ResolvedVersion | ErrorVersion>[] = [];
@@ -272,9 +245,9 @@ export class Dependencies {
     resolveFn,
     renderRHS,
   }: {
-    resolveFn: (dep: { pkg: Package; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>>;
+    resolveFn: (dep: { pkg: NPMPackage; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>>;
     renderRHS: (
-      pkg: Package,
+      pkg: NPMPackage,
       version: {
         ver: Version;
         dependencies: Map<string, Dependency>;
@@ -322,7 +295,7 @@ interface RenderEsmShOpts {
   privateUrl?: string; // default to "https://registry.npmjs.org/"
 }
 export function render_esm_sh(opts: RenderEsmShOpts = {}) {
-  return (pkg: Package, version: { ver: Version; dependencies: Map<string, Dependency> }) => {
+  return (pkg: NPMPackage, version: { ver: Version; dependencies: Map<string, Dependency> }) => {
     const buildURI = BuildURI.from(opts.baseUrl || "https://esm.sh/");
 
     let versionStr = pkg.pkg;
@@ -374,7 +347,7 @@ export function resolveVersionRegistry({
 }: {
   symbol2Version?: Record<string, string>;
   fetch?: (pkg: string, semVersion?: string) => Promise<Result<{ src: string; version: string }>>;
-}): (pkg: { pkg: Package; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>> {
+}): (pkg: { pkg: NPMPackage; version: { ver: Version } }) => Promise<Result<{ src: string; version: string }>> {
   return async ({ pkg, version }) => {
     if (version.ver.version.type === "SYMBOLIC") {
       const sym = version.ver.version.value;

@@ -15,7 +15,7 @@
   "license": "AFL",
   "packageManager": "pnpm@10.20.0",
   "dependencies": {
-    "@adviser/cement": "^0.5.22",
+    "@adviser/cement": "^0.5.23",
     "@fireproof/core-runtime": "0.24.11",
     "arktype": "^2.1.29",
     "cmd-ts": "^0.14.3",

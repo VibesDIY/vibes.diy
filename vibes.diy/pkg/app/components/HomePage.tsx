@@ -12,9 +12,9 @@ import { VibesSwitch, BrutalistCard, VibesButton } from "@vibes.diy/base";
 
 export default function HomePage() {
   // Sidebar state
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [prompt, setPrompt] = useState<string | null>(null);
 
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   // Sidebar handler
   const closeSidebar = useCallback(() => {
     setIsSidebarVisible(false);

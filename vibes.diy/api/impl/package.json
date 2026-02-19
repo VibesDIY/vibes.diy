@@ -9,7 +9,7 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.22",
+    "@adviser/cement": "^0.5.23",
     "@fireproof/core-protocols-dashboard": "0.24.11",
     "@fireproof/core-runtime": "0.24.11",
     "@fireproof/core-types-base": "0.24.11",

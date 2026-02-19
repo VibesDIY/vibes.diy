@@ -1,4 +1,13 @@
-import { EventoHandler, Result, Option, HandleTriggerCtx, EventoResult, exception2Result, chunkyAsync } from "@adviser/cement";
+import {
+  EventoHandler,
+  Result,
+  Option,
+  HandleTriggerCtx,
+  EventoResult,
+  exception2Result,
+  chunkyAsync,
+  BuildURI,
+} from "@adviser/cement";
 import {
   InMsgBase,
   LLMHeaders,
@@ -270,6 +279,17 @@ async function injectSystemPrompt(
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       dependenciesUserOverride: true,
       dependencies: ["callai", "image-gen"],
+      fetchText: async (pkg, path) => {
+        const rRes = await vctx.fetchAsset(
+          BuildURI.from(vctx.params.pkgRepos.workspace).appendRelative(pkg).appendRelative(path).toString()
+        );
+        return rRes;
+      },
+      callAi: {
+        ModuleAndOptionsSelection: async (_msgs: ChatMessage[]) => {
+          return Result.Err(`Module and options selection is not supported in system prompts at this time`);
+        },
+      },
     })
   );
   if (systemPrompt.isErr()) {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { loadDocs } from "../pkg/load-docs.js";
+// import { loadDocs } from "../pkg/load-docs.js";
 
 // Mock global fetch for testing
 const mockFetch = vi.fn();

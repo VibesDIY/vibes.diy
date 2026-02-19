@@ -1,3 +1,4 @@
+import { VibesSwitch } from "@vibes.diy/base";
 import React from "react";
 import type { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
@@ -11,6 +12,8 @@ interface AppLayoutProps {
   suggestionsComponent?: ReactNode;
   mobilePreviewShown?: boolean;
   appInfo?: ReactNode;
+  isSidebarVisible: boolean;
+  setIsSidebarVisible: (x: boolean) => void;
   fullWidthChat?: boolean;
 }
 
@@ -22,6 +25,8 @@ export default function AppLayout({
   chatInput,
   suggestionsComponent,
   mobilePreviewShown = false,
+  isSidebarVisible,
+  setIsSidebarVisible,
   appInfo,
   fullWidthChat = false,
 }: AppLayoutProps) {
@@ -37,7 +42,12 @@ export default function AppLayout({
           mobilePreviewShown ? "hidden md:flex md:h-full" : "h-full"
         } relative z-10 transition-all duration-300 ease-in-out`}
       >
-        <div className="flex h-[4rem] items-center p-2">{headerLeft}</div>
+        <div className="flex h-[4rem] items-center p-2">
+          <div className="mb-8 ml-6 relative z-20">
+            <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+          </div>
+          {headerLeft}
+        </div>
 
         <div className="flex-grow overflow-auto">{chatPanel}</div>
 

@@ -79,6 +79,6 @@
     "serve": "^14.2.5",
     "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18",
-    "wrangler": "^4.64.0"
+    "wrangler": "^4.66.0"
   }
 }

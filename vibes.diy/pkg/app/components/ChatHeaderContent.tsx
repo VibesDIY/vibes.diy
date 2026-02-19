@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { MenuIcon, EditIcon } from "./ChatHeaderIcons.js";
+import { MenuIcon } from "./ChatHeaderIcons.js";
 
 interface ChatHeaderContentProps {
   onOpenSidebar: () => void;
@@ -42,7 +42,7 @@ function ChatHeaderContent({ onOpenSidebar, title, promptProcessing, codeReady, 
 
       {(codeReady || promptProcessing || title) && (
         <div className="relative px-2">
-          <a
+          {/* <a
             href="/"
             className="peer bg-accent-02-light dark:bg-accent-02-dark hover:bg-accent-03-light dark:hover:bg-accent-03-dark flex cursor-pointer items-center justify-center rounded-full p-2.5 text-white transition-colors"
             aria-label="New Vibe"
@@ -50,7 +50,7 @@ function ChatHeaderContent({ onOpenSidebar, title, promptProcessing, codeReady, 
           >
             <span className="sr-only">New Vibe</span>
             <EditIcon />
-          </a>
+          </a> */}
           <span className="bg-dark-background-01 pointer-events-none absolute top-full right-0 z-100 mt-1 rounded-sm px-2 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity peer-hover:opacity-100">
             New Vibe
           </span>

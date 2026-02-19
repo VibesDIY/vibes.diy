@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   Version,
-  Package,
   Dependencies,
   Dependency,
   render_esm_sh,
@@ -95,58 +94,6 @@ describe("Version.parse", () => {
   it("detects bare semver token without version: prefix", () => {
     const v = Version.parse("1.2.3");
     expect(v.version).toEqual({ type: "SEMVER", value: "1.2.3" });
-  });
-});
-
-describe("Package.parse", () => {
-  it("parses simple package name", () => {
-    const p = Package.parse("react");
-    expect(p.pkg).toBe("react");
-    expect(p.suffix).toBeUndefined();
-    expect(p.givenPkg).toBe("react");
-  });
-
-  it("parses package with subpath", () => {
-    const p = Package.parse("react/jsx-runtime");
-    expect(p.pkg).toBe("react");
-    expect(p.suffix).toBe("/jsx-runtime");
-    expect(p.givenPkg).toBe("react/jsx-runtime");
-  });
-
-  it("parses scoped package", () => {
-    const p = Package.parse("@scope/package");
-    expect(p.pkg).toBe("@scope/package");
-    expect(p.suffix).toBeUndefined();
-  });
-
-  it("parses scoped package with subpath", () => {
-    const p = Package.parse("@scope/package/dist/index");
-    expect(p.pkg).toBe("@scope/package");
-    expect(p.suffix).toBe("/dist/index");
-  });
-
-  it("preserves givenPkg", () => {
-    const input = "@vibes.diy/use-vibes-base/hooks";
-    const p = Package.parse(input);
-    expect(p.givenPkg).toBe(input);
-    expect(p.pkg).toBe("@vibes.diy/use-vibes-base");
-    expect(p.suffix).toBe("/hooks");
-  });
-
-  it("handles package with deep nested subpath", () => {
-    const p = Package.parse("lodash/fp/get");
-    expect(p.pkg).toBe("lodash");
-    expect(p.suffix).toBe("/fp/get");
-  });
-
-  it("handles scoped package with no extra segments", () => {
-    const p = Package.parse("@fireproof/core");
-    expect(p.pkg).toBe("@fireproof/core");
-    expect(p.suffix).toBeUndefined();
-  });
-
-  it("throws on invalid package string", () => {
-    expect(() => Package.parse("")).toThrow("Invalid package string");
   });
 });
 

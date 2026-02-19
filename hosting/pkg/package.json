@@ -58,7 +58,7 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.5.22",
+    "@adviser/cement": "^0.5.23",
     "@cloudflare/workers-types": "^4.20260128.0",
     "@hono/clerk-auth": "^3.1.0",
     "@vibes.diy/hosting-base": "workspace:*",
@@ -74,7 +74,7 @@
     "@vitest/browser-playwright": "^4.0.18",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
-    "wrangler": "^4.63.0"
+    "wrangler": "^4.66.0"
   },
   "engines": {
     "node": ">=20.0.0"

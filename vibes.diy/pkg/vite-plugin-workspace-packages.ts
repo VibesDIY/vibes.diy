@@ -4,6 +4,8 @@ import { parse } from "yaml";
 import { build } from "vite";
 import type { Plugin } from "vite";
 import { glob } from "zx";
+import mime from "mime";
+import { NPMPackage } from "@adviser/cement";
 
 interface PackageJson {
   name: string;
@@ -14,6 +16,8 @@ interface PackageJson {
 //   name: string;
 //   path: string;
 // }
+
+const SKIP_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 
 export function workspacePackagesPlugin(): Plugin {
   const packages = new Map<string, string>();
@@ -113,6 +117,19 @@ export function workspacePackagesPlugin(): Plugin {
     return code;
   }
 
+  async function getAssetFiles(pkgPath: string): Promise<string[]> {
+    const files = await glob("**/*", {
+      cwd: pkgPath,
+      absolute: false,
+      gitignore: true,
+      ignore: ["**/node_modules/**", "**/dist/**", "package.json", "tsconfig.json"],
+    });
+    return files.filter((f) => {
+      const dot = f.lastIndexOf(".");
+      return dot !== -1 && !SKIP_EXTENSIONS.has(f.slice(dot));
+    });
+  }
+
   return {
     name: "workspace-packages",
 
@@ -134,25 +151,36 @@ export function workspacePackagesPlugin(): Plugin {
           return;
         }
 
-        // Extract package name (handle scoped packages like @vibes.diy/api-impl)
         const urlPath = req.url.replace("/vibe-pkg/", "");
-        const parts = urlPath.split("/");
-        const pkgName = parts[0].startsWith("@")
-          ? `${parts[0]}/${parts[1]}` // Scoped package: @scope/name
-          : parts[0]; // Regular package: name
+        const parsed = NPMPackage.parse(urlPath);
+        const pkgName = parsed.pkg;
+        const subpath = parsed.suffix?.replace(/^\//, "") ?? "";
+
+        const pkgPath = packages.get(pkgName);
+        if (!pkgPath) {
+          res.statusCode = 404;
+          res.end(`Package ${pkgName} not found`);
+          return;
+        }
+
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
 
         try {
-          const code = await buildPackage(pkgName);
-
-          res.setHeader("Content-Type", "application/javascript");
-          res.setHeader("Cache-Control", "no-cache");
-          res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-          res.end(code);
+          if (!subpath || subpath === "index.js") {
+            const code = await buildPackage(pkgName);
+            res.setHeader("Content-Type", "application/javascript");
+            res.end(code);
+          } else {
+            const content = await readFile(join(pkgPath, subpath));
+            res.setHeader("Content-Type", mime.getType(subpath) ?? "application/octet-stream");
+            res.end(content);
+          }
         } catch (error) {
-          console.error(`Failed to build ${pkgName}:`, error);
+          console.error(`Failed to serve ${pkgName}/${subpath}:`, error);
           res.statusCode = 500;
-          res.end(`Failed to build package: ${error instanceof Error ? error.message : String(error)}`);
+          res.end(`Error: ${error instanceof Error ? error.message : String(error)}`);
         }
       });
     },
@@ -165,13 +193,14 @@ export function workspacePackagesPlugin(): Plugin {
         await discoverPackages();
       }
 
-      for (const [pkgName] of packages) {
+      for (const [pkgName, pkgPath] of packages) {
         try {
+          // Emit bundled JS as index.js inside a per-package directory
           const code = await buildPackage(pkgName);
-          const fileName = `_vibe-pkg/${pkgName}`;
-          bundle[fileName] = {
+          const jsFileName = `_vibe-pkg/${pkgName}/index.js`;
+          bundle[jsFileName] = {
             type: "asset",
-            fileName,
+            fileName: jsFileName,
             name: pkgName,
             names: [pkgName],
             originalFileName: "",
@@ -179,7 +208,25 @@ export function workspacePackagesPlugin(): Plugin {
             needsCodeReference: false,
             source: code,
           };
-          console.log(`📦 Emitted ${fileName} (${code.length} bytes)`);
+          console.log(`📦 Emitted ${jsFileName} (${code.length} bytes)`);
+
+          // Copy non-JS/TS asset files (txt, md, json, …) into the same directory
+          const assetFiles = await getAssetFiles(pkgPath);
+          for (const relativePath of assetFiles) {
+            const assetFileName = `_vibe-pkg/${pkgName}/${relativePath}`;
+            const content = await readFile(join(pkgPath, relativePath));
+            bundle[assetFileName] = {
+              type: "asset",
+              fileName: assetFileName,
+              name: relativePath,
+              names: [relativePath],
+              originalFileName: join(pkgPath, relativePath),
+              originalFileNames: [join(pkgPath, relativePath)],
+              needsCodeReference: false,
+              source: content,
+            };
+            console.log(`📄 Emitted ${assetFileName} (${content.length} bytes)`);
+          }
         } catch {
           console.log(`⏭️ Skipped ${pkgName}`);
         }
