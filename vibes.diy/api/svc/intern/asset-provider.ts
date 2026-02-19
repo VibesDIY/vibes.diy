@@ -81,11 +81,13 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
 
     if (options?.signal) {
       const callerSignal = options.signal;
-      const onAbort = () => controllers.forEach((c) => c.abort(callerSignal.reason));
+      function onCallerAbort() {
+        controllers.forEach((c) => c.abort(callerSignal.reason));
+      }
       if (callerSignal.aborted) {
-        onAbort();
+        onCallerAbort();
       } else {
-        callerSignal.addEventListener("abort", onAbort, { once: true });
+        callerSignal.addEventListener("abort", onCallerAbort, { once: true });
       }
     }
 
@@ -133,16 +135,16 @@ export class AssetProvider<TBackend extends AssetBackend = AssetBackend> {
   }
 
   private async getOne(url: string): Promise<AssetGetItemResult> {
-    try {
-      const protocol = URI.from(url).protocol;
-      const backend = this.backendByProtocol.get(protocol);
-      if (!backend) {
-        return Result.Err(new Error(`No backend configured for protocol=${protocol}`));
-      }
-      return backend.get(url);
-    } catch {
+    const rParsed = URI.fromResult(url);
+    if (rParsed.isErr()) {
       return Result.Err(new Error(`invalid url: ${url}`));
     }
+    const protocol = rParsed.Ok().protocol;
+    const backend = this.backendByProtocol.get(protocol);
+    if (backend === undefined) {
+      return Result.Err(new Error(`No backend configured for protocol=${protocol}`));
+    }
+    return backend.get(url);
   }
 
   async puts(items: AssetPutInput[], options?: AssetPutOptions): Promise<Result<AssetPutItemResult[], Error>> {

@@ -6,6 +6,7 @@ import {
   rebuffer,
   stream2string,
   string2stream,
+  uint8array2stream,
   URI,
 } from "@adviser/cement";
 import { AssetProvider, type AssetBackend, type AssetBackendPutOutcome, type AssetGetRow } from "@vibes.diy/api-svc/intern/asset-provider.js";
@@ -51,14 +52,6 @@ function concatParts(parts: readonly Uint8Array[]): Uint8Array {
   return out;
 }
 
-function bytes2stream(bytes: Uint8Array): ReadableStream<Uint8Array> {
-  return new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(bytes);
-      controller.close();
-    },
-  });
-}
 
 function createSeededRandom(seed: number): () => number {
   let state = seed >>> 0;
@@ -207,9 +200,7 @@ export class ThresholdTestBackend implements AssetBackend {
   }
 
   async get(url: string): Promise<Result<Option<AssetGetRow>, Error>> {
-    const rParsed = await exception2Result(async function parseUrl() {
-      return URI.from(url);
-    });
+    const rParsed = URI.fromResult(url);
     if (rParsed.isErr()) {
       return Result.Err(new Error(`invalid url: ${url}`));
     }
@@ -232,7 +223,7 @@ export class ThresholdTestBackend implements AssetBackend {
     return Result.Ok(
       Option.Some({
         cid,
-        stream: bytes2stream(bytes),
+        stream: uint8array2stream(bytes),
       }),
     );
   }

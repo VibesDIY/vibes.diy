@@ -202,6 +202,7 @@ describe("AssetProvider real tests", () => {
       expect(gets[1].isOk()).toBe(true);
       expect(gets[1].Ok().IsSome()).toBe(false);
       expect(gets[2].isErr()).toBe(true);
+      expect(gets[2].Err().message).toBe("No backend configured for protocol=file:");
     });
   });
 
