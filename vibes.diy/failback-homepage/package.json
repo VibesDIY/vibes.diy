@@ -70,7 +70,7 @@
     "@babel/parser": "^7.29.0",
     "@babel/traverse": "^7.28.6",
     "@babel/types": "^7.28.6",
-    "@chromatic-com/storybook": "^5.0.0",
+    "@chromatic-com/storybook": "^5.0.1",
     "@cloudflare/vite-plugin": "^1.23.0",
     "@fireproof/core-cli": "0.24.10",
     "@pnpm/lockfile-file": "^9.1.3",

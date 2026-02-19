@@ -30,7 +30,7 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^5.0.0",
+    "@chromatic-com/storybook": "^5.0.1",
     "@clerk/clerk-js": "^5.121.1",
     "@fireproof/core-cli": "0.24.10",
     "@storybook/addon-a11y": "^10.2.9",
