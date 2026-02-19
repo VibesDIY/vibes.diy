@@ -63,7 +63,7 @@
     "use-vibes": "workspace:*"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^5.0.0",
+    "@chromatic-com/storybook": "^5.0.1",
     "@cloudflare/vite-plugin": "^1.23.0",
     "@fireproof/core-cli": "0.24.10",
     "@react-router/dev": "^7.13.0",
