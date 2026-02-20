@@ -8,7 +8,6 @@ import {
   CodeEndMsg,
   isBlockBegin,
   isBlockEnd,
-  isBlockSteamMsg,
   isCodeBegin,
   isCodeEnd,
   isCodeLine,

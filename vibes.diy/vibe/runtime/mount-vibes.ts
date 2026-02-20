@@ -10,12 +10,12 @@ export function mountVibe(
   comps: FunctionComponent[],
   iprops: unknown // should be VibesDiyMountParams
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (globalThis as any)[Symbol.for("FP_PRESET_ENV")] = {
-    FP_DEBUG: "*",
-    FP_STACK: "true",
-  };
-  console.log("mountVibe", comps, iprops, "FP-DEBUG");
+  // // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // (globalThis as any)[Symbol.for("FP_PRESET_ENV")] = {
+  //   FP_DEBUG: "*",
+  //   FP_STACK: "true",
+  // };
+  // console.log("mountVibe", comps, iprops, "FP-DEBUG");
 
   const props = vibeMountParams(iprops);
   if (props instanceof type.errors) {

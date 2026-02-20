@@ -1,5 +1,5 @@
 {
-  "name": "@vibes.diy/vibe-runtime",
+  "name": "@vibes.diy/vibe-types",
   "version": "0.0.0",
   "private": "true",
   "type": "module",
@@ -11,7 +11,6 @@
   "dependencies": {
     "@adviser/cement": "^0.5.23",
     "@vibes.diy/base": "workspace:*",
-    "@vibes.diy/vibe-types": "workspace:*",
     "arktype": "^2.1.29",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

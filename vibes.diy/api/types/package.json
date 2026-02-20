@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.23",
-    "@fireproof/core-runtime": "^0.24.11",
-    "@fireproof/core-types-base": "^0.24.11",
-    "@fireproof/core-types-protocols-dashboard": "^0.24.11",
+    "@fireproof/core-runtime": "^0.24.12",
+    "@fireproof/core-types-base": "^0.24.12",
+    "@fireproof/core-types-protocols-dashboard": "^0.24.12",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "arktype": "^2.1.29"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.11"
+    "@fireproof/core-cli": "0.24.12"
   }
 }

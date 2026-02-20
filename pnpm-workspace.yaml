@@ -11,7 +11,7 @@ packages:
   - "use-vibes/examples/hosted-dev"
   - "vibes.diy/base"
   - "vibes.diy/pkg"
-  - "vibes.diy/vibe/runtime"
+  - "vibes.diy/vibe/*"
   - "vibes.diy/api/*"
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"

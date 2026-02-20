@@ -1,5 +1,5 @@
 export const lockedVersions = {
-  FP: "0.24.10",
+  FP: "0.24.12",
   REACT: "19.2.1",
   ADVISER_CEMENT: "0.5.22",
   CBORG: "4.5.8",
@@ -66,6 +66,7 @@ export const lockedGroupsVersions = {
   "vibe-runtime": {
     "@vibes.diy/base": "privateNpm:",
     "@vibes.diy/vibe-runtime": "privateNpm:",
+    "@vibes.diy/vibe-types": "privateNpm:",
 
     // "@vibes.diy/call-ai-v2": "privateNpm:",
     // "use-vibes": "privateNpm:",

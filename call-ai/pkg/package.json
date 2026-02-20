@@ -31,7 +31,7 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.11",
+    "@fireproof/core-cli": "0.24.12",
     "@types/node": "^25.2.3",
     "@vitest/browser-playwright": "^4.0.18",
     "typescript": "^5.9.3"
@@ -41,12 +41,12 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.23",
-    "@fireproof/core": "0.24.11",
-    "@fireproof/core-keybag": "0.24.11",
-    "@fireproof/core-runtime": "0.24.11",
-    "@fireproof/core-types-base": "0.24.11",
-    "@fireproof/core-types-protocols-cloud": "0.24.11",
-    "@fireproof/use-fireproof": "0.24.11",
+    "@fireproof/core": "0.24.12",
+    "@fireproof/core-keybag": "0.24.12",
+    "@fireproof/core-runtime": "0.24.12",
+    "@fireproof/core-types-base": "0.24.12",
+    "@fireproof/core-types-protocols-cloud": "0.24.12",
+    "@fireproof/use-fireproof": "0.24.12",
     "mime": "^4.1.0"
   }
 }
