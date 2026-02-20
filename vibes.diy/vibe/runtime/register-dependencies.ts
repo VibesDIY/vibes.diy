@@ -1,5 +1,18 @@
-import { isResVibeRegisterFPDb, ReqVibeRegisterFPDb, ResVibeRegisterFPDb } from "@vibes.diy/vibe-types";
-import { Future, OnFunc, Result, timeouted } from "@adviser/cement";
+import {
+  FPDbData,
+  isResErrorVibeRegisterFPDb,
+  isResFetchCloudToken,
+  isResOkVibeRegisterFPDb,
+  isResVibeRegisterFPDb,
+  ReqFetchCloudToken,
+  ReqVibeRegisterFPDb,
+  ResFetchCloudToken,
+  ResVibeRegisterFPDb,
+} from "@vibes.diy/vibe-types";
+import { Future, KeyedResolvOnce, Logger, OnFunc, Result, timeouted } from "@adviser/cement";
+import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-types-protocols-cloud";
+import { SuperThis, toCloud } from "use-fireproof";
+import { type } from "arktype";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -61,6 +74,70 @@ class VibeSandboxApi {
       isResVibeRegisterFPDb
     );
   }
+
+  readonly tokenCache = new KeyedResolvOnce();
+  fetchCloudToken(req: Omit<ReqFetchCloudToken, "type" | "tid">): Promise<Result<ResFetchCloudToken>> {
+    const key = `vibe-${req.data.dbName}-${req.data.userSlug}-${req.data.appSlug}`;
+    return this.tokenCache.get(key).once(async (opts) => {
+      const rRes = await this.request<ReqFetchCloudToken, ResFetchCloudToken>(
+        {
+          type: "vibe.req.fetchCloudToken",
+          data: req.data,
+        },
+        isResFetchCloudToken
+      );
+      opts.self.setResetAfter(100)
+      if (rRes.isErr()) {
+        console.error("Failed to fetch cloud token from vibe sandbox", rRes.Err());
+        return rRes;
+      }
+      const res = rRes.Ok();
+      const isValidRes = ResFetchCloudToken(res);
+      if (isValidRes instanceof type.errors) {
+        console.error("Failed to fetch cloud token from vibe sandbox", isValidRes.summary);
+        return Result.Err(isValidRes.summary);
+      }
+      opts.self.setResetAfter(isValidRes.token.expiresAfter - ~~(isValidRes.token.expiresAfter*0.05));
+      return rRes
+    });
+  }
+}
+
+class VibeTokenStrategie implements TokenStrategie {
+  readonly vibeApi: VibeSandboxApi;
+  readonly my: FPDbData;
+  constructor(vibeApi: VibeSandboxApi, my: FPDbData) {
+    this.vibeApi = vibeApi;
+    this.my = my;
+  }
+
+  hash(): string {
+    return "vibe-token-strategie";
+  }
+  open(_sthis: SuperThis, _logger: Logger, _deviceId: string, _opts: ToCloudOpts): void {
+    return;
+  }
+  tryToken(_sthis: SuperThis, _logger: Logger, _opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
+    return Promise.resolve(undefined);
+  }
+  async waitForToken(_sthis: SuperThis, _logger: Logger, _deviceId: string, opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
+    const resToken = await this.vibeApi.fetchCloudToken({
+      data: this.my,
+    });
+    if (resToken.isErr()) {
+      console.error("Failed to fetch cloud token from vibe sandbox", resToken.Err());
+      return undefined;
+    }
+    const token = resToken.Ok();
+    return {
+      token: token.token.token,
+      claims: JSON.parse(token.token.claims) as unknown as TokenAndClaims["claims"],
+    };
+    return Promise.resolve(undefined);
+  }
+  stop(): void {
+    console.log("VibeTokenStrategie stop called");
+  }
 }
 
 export async function registerDependencies(vibeApp: VibeApp, deps: Record<string, string>): Promise<void> {
@@ -79,11 +156,25 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
           userSlug: vibeApp.userSlug,
           fsId: vibeApp.fsId,
         })
-        .then((res) => {
-          if (res.isErr()) {
-            console.error("Failed to register FPDb with vibe sandbox", res.Err());
+        .then((rResMsg) => {
+          if (rResMsg.isErr()) {
+            console.error("Failed to register FPDb with vibe sandbox", rResMsg.Err());
           }
-          console.log("Registered FPDb with vibe sandbox", res.Ok());
+          const res = rResMsg.Ok();
+          if (isResErrorVibeRegisterFPDb(res)) {
+            console.error("Failed to register FPDb with vibe sandbox", res.message);
+          }
+          if (isResOkVibeRegisterFPDb(res)) {
+            console.log("Registered FPDb with vibe sandbox", res);
+            ledger.attach(
+              toCloud({
+                name: `vibe-${res.dbName}-${res.userSlug}-${res.appSlug}`,
+                strategy: new VibeTokenStrategie(vibeApi),
+                ledger: res.ledger,
+                tenant: res.tenant,
+              })
+            );
+          }
         });
     });
   }

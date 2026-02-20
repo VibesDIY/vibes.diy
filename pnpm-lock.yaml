@@ -1534,6 +1534,9 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.23
         version: 0.5.23(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: ^0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@vibes.diy/base':
         specifier: workspace:*
         version: link:../../base
@@ -1568,6 +1571,9 @@ importers:
       '@fireproof/core-protocols-dashboard':
         specifier: ^0.24.12
         version: 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+      '@fireproof/core-types-protocols-cloud':
+        specifier: ^0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-protocols-dashboard':
         specifier: ^0.24.12
         version: 0.24.12(typescript@5.9.3)
@@ -14684,11 +14690,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  chromium-bidi@14.0.0(devtools-protocol@0.0.1581282):
+  chromium-bidi@13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3):
     dependencies:
       devtools-protocol: 0.0.1581282
       mitt: 3.0.1
       zod: 3.25.76
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - react-native-b4a
+      - supports-color
+      - typescript
 
   chromium-edge-launcher@0.2.0:
     dependencies:
@@ -18191,10 +18203,10 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@24.37.0(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+  puppeteer-core@24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10):
     dependencies:
       '@puppeteer/browsers': 2.12.0
-      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      chromium-bidi: 13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3)
       debug: 4.4.3
       devtools-protocol: 0.0.1566079
       typed-query-selector: 2.12.0
@@ -18206,16 +18218,17 @@ snapshots:
       - bufferutil
       - react-native-b4a
       - supports-color
+      - typescript
       - utf-8-validate
 
   puppeteer@24.40.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6):
     dependencies:
-      '@puppeteer/browsers': 2.13.0
-      chromium-bidi: 14.0.0(devtools-protocol@0.0.1581282)
-      cosmiconfig: 9.0.1(typescript@5.9.3)
-      devtools-protocol: 0.0.1581282
-      puppeteer-core: 24.40.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      typed-query-selector: 2.12.1
+      '@puppeteer/browsers': 2.12.0
+      chromium-bidi: 13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3)
+      cosmiconfig: 9.0.0(typescript@5.9.3)
+      devtools-protocol: 0.0.1566079
+      puppeteer-core: 24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer

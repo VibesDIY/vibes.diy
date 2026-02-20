@@ -1,5 +1,5 @@
 {
-  "name": "@vibes.diy/vibe-runtime",
+  "name": "@vibes.diy/vibe-srv-sandbox",
   "version": "0.0.0",
   "private": "true",
   "type": "module",
@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.23",
+    "@fireproof/core-types-protocols-dashboard": "^0.24.12",
+    "@fireproof/core-protocols-dashboard": "^0.24.12",
     "@fireproof/core-types-protocols-cloud": "^0.24.12",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",
