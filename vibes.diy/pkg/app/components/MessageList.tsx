@@ -1,11 +1,14 @@
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 // import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
 import { PromptBlock } from "../routes/chat/chat.$userSlug.$appSlug.js";
 import {
+  BlockBeginMsg,
+  BlockEndMsg,
   CodeBeginMsg,
   CodeEndMsg,
   isBlockBegin,
   isBlockEnd,
+  isBlockSteamMsg,
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
@@ -179,39 +182,95 @@ function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: L
   );
 }
 
-function fixCurrentStreaming(promptBlock: PromptBlock) {
-  let lineNr = 0;
-  for (const block of [...promptBlock.msgs].reverse()) {
+function fixCurrentStreaming(promptBlock: PromptBlock): PromptBlock {
+  const topLevelStat = { lines: 0, bytes: 0 };
+  const codeLevelStat = { lines: 0, bytes: 0 };
+  let inBlock: BlockBeginMsg | undefined = undefined;
+  let inTopLevel: ToplevelBeginMsg | undefined = undefined;
+  let inCodeBlock: CodeBeginMsg | undefined = undefined;
+  for (const block of promptBlock.msgs) {
     switch (true) {
-      case isToplevelEnd(block):
-      case isCodeEnd(block):
-        return promptBlock;
-
-      case isCodeLine(block):
-      case isToplevelLine(block):
-        lineNr++;
+      case isBlockBegin(block):
+        inBlock = block;
+        break;
+      case isBlockEnd(block):
+        inBlock = undefined;
         break;
 
       case isToplevelBegin(block):
+        inTopLevel = block;
+        break;
+      case isToplevelEnd(block):
+        inTopLevel = undefined;
+        break;
       case isCodeBegin(block):
-        return {
-          ...promptBlock,
-          msgs: [
-            ...promptBlock.msgs,
-            {
-              ...block,
-              type: "block.toplevel.end",
-              timestamp: new Date(),
-              stats: {
-                lines: lineNr,
-                bytes: NaN,
-              },
-            } satisfies ToplevelEndMsg,
-          ],
-        };
+        inCodeBlock = block;
+        break;
+
+      case isCodeEnd(block):
+        inCodeBlock = undefined;
+        break;
+
+      case isCodeLine(block):
+        codeLevelStat.bytes = block.line.length;
+        codeLevelStat.lines++;
+        break;
+      case isToplevelLine(block):
+        topLevelStat.bytes = block.line.length;
+        topLevelStat.lines++;
+        break;
     }
   }
-  return promptBlock;
+  // if (!!inTopLevel || !!inCodeBlock && !!inBlock) {
+  //   console.log(`fixCurrentStreaming-open-blocks`, !!inTopLevel, !!inCodeBlock, !!inBlock)
+  // }
+  const closeUnclosed: (BlockEndMsg | ToplevelEndMsg | CodeEndMsg)[] = [];
+  if (inTopLevel) {
+    closeUnclosed.push({
+      ...inTopLevel,
+      type: "block.toplevel.end",
+      timestamp: new Date(),
+      stats: topLevelStat,
+    } satisfies ToplevelEndMsg);
+  }
+  if (inCodeBlock) {
+    closeUnclosed.push({
+      ...inCodeBlock,
+      type: "block.code.end",
+      timestamp: new Date(),
+      stats: codeLevelStat,
+    } satisfies CodeEndMsg);
+  }
+  if (inBlock) {
+    closeUnclosed.push({
+      ...inBlock,
+      type: "block.end",
+      stats: {
+        toplevel: topLevelStat,
+        code: codeLevelStat,
+        image: {
+          lines: 0,
+          bytes: 0,
+        },
+        total: {
+          lines: codeLevelStat.lines + topLevelStat.lines,
+          bytes: codeLevelStat.bytes + topLevelStat.bytes,
+        },
+      },
+      usage: {
+        given: [],
+        calculated: {
+          prompt_tokens: 0,
+          completion_tokens: 0,
+          total_tokens: 0,
+        },
+      },
+    } satisfies BlockEndMsg);
+  }
+  return {
+    ...promptBlock,
+    msgs: [...promptBlock.msgs, ...closeUnclosed],
+  };
 }
 
 interface CodeBlock {
@@ -250,6 +309,7 @@ function MessageList({
 
   // Handle special case for waiting state
   const blockMsgs: BlockedMsg[] = [];
+  let lastFsRef: { fsId: string; appSlug: string; userSlug: string } | undefined;
 
   const messageElements = promptBlocks.reduce((acc, promptBlock) => {
     // Only show the streaming indicator on the latest AI message
@@ -257,8 +317,23 @@ function MessageList({
     let collectedMsg: LineMsg[] = [];
     let codeBegin: CodeBeginMsg;
     let toplevelBegin: ToplevelBeginMsg;
-    for (const msg of fixCurrentStreaming(promptBlock).msgs) {
-      // console.log(">>>>>", msg)
+    // let traceBlockId: BlockEndMsg | undefined
+    const nprompt = fixCurrentStreaming(promptBlock);
+    // if (promptBlock.msgs.length !== nprompt.msgs.length) {
+    //   const last = nprompt.msgs[nprompt.msgs.length -1]
+    //   if (isBlockEnd(last)) {
+    //     traceBlockId = last
+    //   }
+    //   console.log(`nprompt`, promptBlock.msgs.length, nprompt.msgs.length,
+    //     nprompt.msgs.slice(promptBlock.msgs.length),
+    //     traceBlockId?.blockId
+    //   )
+    // }
+    // console.log(`inreduce`, blockMsgs.length, promptBlock.msgs.length, nprompt.msgs.length)
+    for (const msg of nprompt.msgs) {
+      // if (isBlockSteamMsg(msg) && traceBlockId?.blockId === msg.blockId) {
+      //   console.log(`nprompt---`, msg)
+      // }
       switch (true) {
         // case isPromptBlockBegin(msg):
         // case isPromptBlockEnd(msg):
@@ -272,10 +347,11 @@ function MessageList({
         case isBlockEnd(msg):
           // console.log(`Completed a Chat --- need to register the clicks`, msg);
           for (const block of blockMsgs) {
+            // console.log(">>>>>", block.type, block.begin.sectionId, block.lines.length)
             if (block.type === "Code") {
+              // console.log(`code rendered`, block.begin.sectionId, block.lines)
               if (msg.fsRef) {
-                // give the ui an update to the last
-                onClick({ fsId: msg.fsRef.fsId, appSlug: msg.fsRef.appSlug, userSlug: msg.fsRef.userSlug });
+                lastFsRef = { fsId: msg.fsRef.fsId, appSlug: msg.fsRef.appSlug, userSlug: msg.fsRef.userSlug };
               }
               acc.push(
                 <CodeMsg
@@ -296,10 +372,14 @@ function MessageList({
               );
             }
             if (block.type === "TopLevel") {
+              // console.log(`top rendered`, block.begin.sectionId, block.lines)
+              // if (isNaN(msg.stats.code.bytes)) {
+              // console.log(`toplevel rendered`, block.lines)
+              // }
               acc.push(<TopLevelMsg key={block.begin.sectionId} begin={block.begin} lines={block.lines} />);
             }
           }
-          blockMsgs.splice(0, blockMsgs.length);
+          // blockMsgs.splice(0, blockMsgs.length);
           break;
 
         case isCodeBegin(msg):
@@ -339,6 +419,13 @@ function MessageList({
     }
     return acc;
   }, [] as React.ReactElement[]);
+  useEffect(() => {
+    if (lastFsRef) {
+      onClick(lastFsRef);
+    }
+  }, [lastFsRef?.fsId]);
+
+  // console.log("Render-React-C", messageElements.length)
 
   return (
     <div className="flex-1" key={chatId}>
@@ -348,7 +435,10 @@ function MessageList({
     </div>
   );
 }
+
 export default memo(MessageList, (prevProps, nextProps) => {
+  // console.log(`promptState:`, promptState.blocks.length, promptState.blocks.map(i => i.msgs.length))
+
   // Reference equality check for promptProcessing flag
   const streamingStateEqual = prevProps.promptProcessing === nextProps.promptProcessing;
 
@@ -356,6 +446,11 @@ export default memo(MessageList, (prevProps, nextProps) => {
 
   const msgs =
     nextProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0) === prevProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0);
+
+  // console.log(">>>>>>>>",
+  //   nextProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0),
+  //   prevProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0)
+  // )
 
   // // Check if setSelectedResponseId changed
   // const setSelectedResponseIdEqual = prevProps.setSelectedResponseId === nextProps.setSelectedResponseId;
@@ -381,6 +476,10 @@ export default memo(MessageList, (prevProps, nextProps) => {
   // if (!(streamingStateEqual && promptBlocks && msgs)) {
   //   console.log("MessageList needs update", prevProps, nextProps, streamingStateEqual, promptBlocks, msgs);
   // }
+  // console.log(`promptState:`, msgs,
+  //     prevProps.promptBlocks.length, prevProps.promptBlocks.map(i => i.msgs.length),
+  //     nextProps.promptBlocks.length, nextProps.promptBlocks.map(i => i.msgs.length)
+  //   )
   return (
     streamingStateEqual && promptBlocks && msgs
 
