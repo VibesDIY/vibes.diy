@@ -26,6 +26,7 @@ import { sqlChatContexts, sqlChatSections } from "../sql/vibes-diy-api-schema.js
 import { eq, and } from "drizzle-orm";
 import { ensureAppSlug, ensureUserSlug } from "../intern/ensure-slug-binding.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
+import { BlockEndMsg, isBlockEnd } from "@vibes.diy/call-ai-v2";
 
 export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, ResOpenChat | VibesDiyError> = {
   hash: "open-chat-handler",
@@ -124,6 +125,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
       wsp.chatIds.add({ chatId, tid: ctx.validated.tid });
 
+      let fixDoubleBlockEnd: BlockEndMsg | undefined = undefined;
       const sections = await vctx.db
         .select()
         .from(sqlChatSections)
@@ -146,29 +148,41 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
           }
           return Result.Err(`Invalid blocks data in chat ${section.chatId} - ${blocks.summary} - ${JSON.stringify(blocks)}`);
         }
-        // console.log(
-        //   `openChat: `,
-        //   blocks.filter((b) => isBlockEnd(b))
-        // );
-        const rCurrentMsg: Result<SendStatItem<MsgBase<SectionEvent>>> = await ctx.send.send(ctx, {
-          payload: {
-            type: "vibes.diy.section-event",
-            chatId: section.chatId,
-            promptId: section.promptId,
-            blockSeq: section.blockSeq,
-            timestamp: new Date(section.created),
-            blocks,
-          },
-          tid: ctx.validated.tid,
-          src: "openChat",
-          dst: ctx.validated.src,
-          ttl: 6,
-        } satisfies MsgBase<SectionEvent>);
-        if (rCurrentMsg.isErr()) {
-          return Result.Err(rCurrentMsg);
+        // Might be removed in future
+        const toSplice: number[] = [];
+        blocks.forEach((block, index) => {
+          if (isBlockEnd(block)) {
+            if (fixDoubleBlockEnd && block.blockId === fixDoubleBlockEnd.blockId) {
+              toSplice.push(index);
+            }
+            fixDoubleBlockEnd = block;
+          }
+        });
+        for (const index of toSplice.reverse()) {
+          blocks.splice(index, 1);
         }
-        if (rCurrentMsg.Ok().item.isErr()) {
-          return Result.Err(rCurrentMsg.Ok().item);
+        // Might be removed in future
+        if (blocks.length > 0) {
+          const rCurrentMsg: Result<SendStatItem<MsgBase<SectionEvent>>> = await ctx.send.send(ctx, {
+            payload: {
+              type: "vibes.diy.section-event",
+              chatId: section.chatId,
+              promptId: section.promptId,
+              blockSeq: section.blockSeq,
+              timestamp: new Date(section.created),
+              blocks,
+            },
+            tid: ctx.validated.tid,
+            src: "openChat",
+            dst: ctx.validated.src,
+            ttl: 6,
+          } satisfies MsgBase<SectionEvent>);
+          if (rCurrentMsg.isErr()) {
+            return Result.Err(rCurrentMsg);
+          }
+          if (rCurrentMsg.Ok().item.isErr()) {
+            return Result.Err(rCurrentMsg.Ok().item);
+          }
         }
       }
 

@@ -49,6 +49,9 @@ import {
   BlockEndMsg,
   BlockMsgs,
   isBlockSteamMsg,
+  isLineBegin,
+  isLineMsg,
+  isLineLine,
 } from "@vibes.diy/call-ai-v2";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
@@ -477,6 +480,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             promptId,
             blockSeq: blockSeq++,
             evt: { ...value, fsRef: r.Ok().fsRef.toValue() },
+            emitMode: "emit-only",
           });
           if (rEvt.isErr()) {
             return Result.Err(rEvt);
