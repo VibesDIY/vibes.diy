@@ -16,7 +16,7 @@
   "packageManager": "pnpm@10.20.0",
   "dependencies": {
     "@adviser/cement": "^0.5.23",
-    "@fireproof/core-runtime": "0.24.11",
+    "@fireproof/core-runtime": "0.24.12",
     "arktype": "^2.1.29",
     "cmd-ts": "^0.14.3",
     "mime": "^4.1.0",

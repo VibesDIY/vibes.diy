@@ -1,7 +1,8 @@
 import { VibesSwitch } from "@vibes.diy/base";
-import React from "react";
+import React, { useEffect } from "react";
 import type { ReactNode } from "react";
-import { Toaster } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
+import { useVibeDiy } from "../vibe-diy-provider.js";
 
 interface AppLayoutProps {
   chatPanel: ReactNode;
@@ -30,6 +31,13 @@ export default function AppLayout({
   appInfo,
   fullWidthChat = false,
 }: AppLayoutProps) {
+  const { srvVibeSandbox } = useVibeDiy();
+  useEffect(() => {
+    srvVibeSandbox.shareableDBs.onSet((_k, v) => {
+      toast(`Shareable DB for: ${v.dbName} - (${v.appSlug})`);
+    });
+  }, [srvVibeSandbox.shareableDBs.size]);
+
   return (
     <div className="page-grid-background grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden">
       <div>

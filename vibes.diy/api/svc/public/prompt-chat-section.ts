@@ -49,9 +49,6 @@ import {
   BlockEndMsg,
   BlockMsgs,
   isBlockSteamMsg,
-  isLineBegin,
-  isLineMsg,
-  isLineLine,
 } from "@vibes.diy/call-ai-v2";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";

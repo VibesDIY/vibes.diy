@@ -6,6 +6,7 @@ import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
 import { BuildURI, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos } from "@vibes.diy/api-types";
+import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 // import { PkgRepos } from "@vibes.diy/api-types";
@@ -31,6 +32,7 @@ export interface VibesDiyCtx {
   dashApi: FPApiInterface;
   vibeDiyApi: VibeDiyApi;
   webVars: VibeDiyWebVars;
+  srvVibeSandbox: vibesDiySrvSandbox;
 }
 
 const realCtx: VibesDiyCtx = {
@@ -38,26 +40,12 @@ const realCtx: VibesDiyCtx = {
   dashApi: {} as FPApiInterface,
   vibeDiyApi: {} as VibeDiyApi,
   webVars: {} as VibesDiyCtx["webVars"],
+  srvVibeSandbox: {} as VibesDiyCtx["srvVibeSandbox"],
 };
 
 const VibeDiyContext = createContext<VibesDiyCtx>(realCtx as Readonly<VibesDiyCtx>);
 
 const vibesDiyApis = new KeyedResolvOnce();
-
-// const VibesDiyEnv = {
-//   POSTHOG_KEY(): string {
-//     return "";
-//   },
-//   POSTHOG_HOST(): string {
-//     return "";
-//   },
-//   CLERK_PUBLISHABLE_KEY(): string {
-//     return "";
-//   },
-//   VibesEnv(): Record<string, string> {
-//     return {};
-//   },
-// };
 
 const lazySuperThis = Lazy(() => ensureSuperThis());
 
@@ -81,6 +69,8 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
       .toString();
   // console.log(`apiUrl`, apiUrl, realCtx.webVars.env.VIBES_DIY_API_URL)
 
+  realCtx.srvVibeSandbox = VibesDiySrvSandbox(realCtx.dashApi, globalThis.window);
+
   realCtx.vibeDiyApi = vibesDiyApis.get(apiUrl).once(() => {
     let clerkReady: undefined | Future<void> = new Future();
     clerk.addListener(() => {
@@ -92,10 +82,6 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
     console.log("VibeDiyApi for", apiUrl);
     return new VibeDiyApi({
       apiUrl,
-      // pkgRepos: {
-      //   private: VibesDiyEnv.VibesEnv().PRIVATE_NPM_URL,
-      //   public: VibesDiyEnv.VibesEnv().PUBLIC_NPM_URL,
-      // },
       getToken: async () => {
         if (clerkReady) {
           console.log("getToken-wait-clerkReady");

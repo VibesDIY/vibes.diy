@@ -108,9 +108,11 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
       description: "we need a description",
     },
     mountJS: [
-      `import { mountVibe } from '@vibes.diy/vibe-runtime';`,
+      `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
       ...imports.map((i) => i.importStmt),
-      `mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({ usrEnv })});`,
+      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId })}, ${JSON.stringify(importMap)}
+      )`,
+      `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({ usrEnv })}));`,
     ].join("\n"),
   } satisfies VibesDiyServCtx;
   const optionalHeader: Record<string, string> = {};

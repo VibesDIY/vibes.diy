@@ -4,6 +4,7 @@ import { useVibeDiy } from "../vibe-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { useSession } from "@clerk/clerk-react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
+import { toast, Toaster } from "react-hot-toast";
 
 export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
@@ -64,20 +65,30 @@ export default function VibeIframeWrapper() {
     }
   }, [userSlug, appSlug, fsId, searchParam.get("sectionId"), session.isSignedIn]);
 
+  const { srvVibeSandbox } = useVibeDiy();
+  useEffect(() => {
+    srvVibeSandbox.shareableDBs.onSet((_k, v) => {
+      toast(`Shareable DB for: ${v.dbName} - (${v.appSlug})`);
+    });
+  }, [srvVibeSandbox]);
+
   if (ready && iframeUrlRef.current) {
     const myUrl = URI.from(window.location.href);
     const previewUrl = BuildURI.from(iframeUrlRef.current).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
     // console.log(`iframe src=`, previewUrl.asObj());
 
     return (
-      <div className="fixed inset-0 bg-gray-900" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
-        <iframe
-          src={previewUrl.toString()}
-          className="w-full h-full border-none"
-          sandbox="allow-scripts allow-same-origin allow-forms"
-          style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
-        />
-      </div>
+      <>
+        <Toaster />
+        <div className="fixed inset-0 bg-gray-900" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
+          <iframe
+            src={previewUrl.toString()}
+            className="w-full h-full border-none"
+            sandbox="allow-scripts allow-same-origin allow-forms"
+            style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
+          />
+        </div>
+      </>
     );
   }
   if (searchParam.get("sectionId") && !session.isSignedIn) {
