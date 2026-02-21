@@ -180,75 +180,72 @@ export const HomeScreen = (_props: HomeScreenProps) => {
   // 🧩 Define your 3 chat scenarios
   const scenarios = [
     {
-      title: `JChris named the conversation "Friendsgiving 2: Mac n Cheese Redemption"`,
+      title: `Custom Apps`,
       arrayOfMessages: [
-        { user: "JChris", message: "Who’s coming to Friendsgiving this year?" },
-        { user: "Megan", message: "yes please rescue me from my family 🥲" },
+        { user: "JChris", message: "I'm so tired of apps that almost do what I want" },
+        { user: "Megan", message: "same, I just want a simple meal planner that works MY way" },
         {
           user: "JChris",
-          message: "can we not repeat last year’s mac n cheese disaster tho",
+          message: "what if you could just describe it and have it built for you?",
         },
-        { user: "Megan", message: "I’m still recovering!" },
-        { user: "Mike", message: "Should I make a spreadsheet?" },
-        { user: "Megan", message: "Zzzzzzzzz" },
-        { user: "You", message: "buds I got this!" },
-        { user: "You", message: "lemme just make us a festive lil app:" },
-        { user: "You", message: "https://bright-shango-4087.vibesdiy.app/" },
-        { user: "JChris", message: "nice! dibs on the mac" },
+        { user: "Megan", message: "like... talk to an AI and get an app?" },
+        { user: "Mike", message: "that sounds too good to be true" },
+        { user: "You", message: "it's real, check this out:" },
+        { user: "You", message: "https://github.com/VibesDIY/vibes-cli" },
+        { user: "Megan", message: "wait I just made a meal planner in like 2 minutes" },
+        { user: "JChris", message: "ok this changes everything" },
         {
-          user: "Marcus",
-          message: "I’m a *coder* now\n*tries Vibes DIY once* 🤓",
+          user: "Mike",
+          message: "I made a workout tracker that actually makes sense to me",
         },
       ],
     },
     {
-      title: `Roomies`,
+      title: `AI Agents`,
       arrayOfMessages: [
         {
-          user: "James",
-          message:
-            "sorry roomies, I didn’t have time to tackle Dish Mountain last night",
+          user: "Lola",
+          message: "has anyone tried making their own AI agent?",
         },
-        { user: "James", message: "will absolutely get to it after work" },
-        { user: "Lola", message: "Pretty sure it’s my turn, no?" },
-        { user: "Jordan", message: "Huge if true!!" },
+        { user: "Jordan", message: "like a chatbot? been there" },
+        { user: "Lola", message: "no like a real agent that remembers things and takes actions" },
         {
           user: "James",
-          message:
-            "@Lola if you do the dishes I’ll take out the trash tomorrow AM!",
+          message: "that sounds like it requires a CS degree",
         },
-        { user: "You", message: "ok hear me out:" },
-        { user: "You", message: "chore chart, but make it fun?" },
-        { user: "You", message: "https://coltrane-oshun-9477.vibesdiy.app/" },
-        { user: "Jordan", message: "Did we just…solve dishes?" },
-        { user: "James", message: "Chore quest!!!" },
+        { user: "You", message: "actually it's way easier than you'd think" },
+        { user: "You", message: "you literally just describe what you want:" },
+        { user: "You", message: "https://github.com/VibesDIY/vibes-cli" },
+        { user: "Jordan", message: "I just made one that tracks my reading list" },
+        { user: "James", message: "mine helps me plan my week, this is wild" },
+        { user: "Lola", message: "ok I'm making one for every part of my life now" },
       ],
     },
     {
-      title: `Trivia Night`,
+      title: `Personal Agents`,
       arrayOfMessages: [
-        { user: "Bobby", message: "never felt dumber than last night 🥲" },
+        { user: "Bobby", message: "ok I finally made my own agent and it's kinda wild" },
         {
           user: "Bobby",
-          message: "they should make trivia night for people with brainrot",
+          message: "it remembers that Lindsay hates surprises and Nikki is always late",
         },
+        {
+          user: "Lindsay",
+          message: "wait it knows I hate surprises?? that's actually sweet",
+        },
+        { user: "Nikki", message: "I'm not ALWAYS late... ok fair" },
         {
           user: "You",
-          message: "“I’ll take Real Housewives of SLC for $500, Alex!”",
+          message: "the best part is it learns your friends' vibes over time",
         },
-        { user: "Lindsay", message: "Bravo Brainteasters lol" },
-        {
-          user: "Nikki",
-          message: "to be fair, the reality TV lore is deeeeeep",
-        },
-        { user: "Lindsay", message: "actually I’d probably watch that" },
-        { user: "Bobby", message: "imagine Andy Cohen as a host" },
+        { user: "Lindsay", message: "mine suggested a gift for Bobby and nailed it" },
+        { user: "Bobby", message: "YOUR agent got me that?! I loved that!" },
         {
           user: "You",
           message:
-            "I kinda think you might have something with this:\nhttps://chromatic-fader-4248.vibesdiy.app/",
+            "try building one, it's so quick:\nhttps://github.com/VibesDIY/vibes-cli",
         },
-        { user: "Bobby", message: "oh it’s so over for all of you!!!!" },
+        { user: "Bobby", message: "mine is gonna guess your sign!" },
       ],
     },
   ];
