@@ -88,7 +88,7 @@
     "@types/react": "~19.2.13",
     "@types/react-dom": "~19.2.2",
     "@types/three": "^0.182.0",
-    "cmd-ts": "^0.14.3",
+    "cmd-ts": "^0.15.0",
     "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
     "deno": "^2.6.8",
