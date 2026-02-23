@@ -276,8 +276,8 @@ importers:
         version: link:../../base
     devDependencies:
       '@cloudflare/vitest-pool-workers':
-        specifier: ^0.12.13
-        version: 0.12.13(@cloudflare/workers-types@4.20260217.0)(@vitest/runner@4.0.18)(@vitest/snapshot@4.0.18)(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vitest@4.0.18)
+        specifier: ^0.12.16
+        version: 0.12.16(@cloudflare/workers-types@4.20260217.0)(@vitest/runner@4.0.18)(@vitest/snapshot@4.0.18)(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vitest@4.0.18)
       '@cloudflare/workers-types':
         specifier: ^4.20260217.0
         version: 4.20260217.0
@@ -1773,8 +1773,8 @@ packages:
       vite: ^6.1.0 || ^7.0.0
       wrangler: ^4.62.0
 
-  '@cloudflare/vitest-pool-workers@0.12.13':
-    resolution: {integrity: sha512-jErjx0HPVNm+c6sRXG+OOGqO8Xb8OfpnKQ8ufpH1b6IrmuLtNvuSl45euHZR5eE1R+4p3ZTozVd8dZHWXZZzgw==}
+  '@cloudflare/vitest-pool-workers@0.12.16':
+    resolution: {integrity: sha512-jkktlOxwaBg445bTP3WFLHtTtLfyqMNISONcgq0HvOqPN+5O5ch3fGUDGzlwx2o88qPvTfMm77sR9xUy2Gq00w==}
     peerDependencies:
       '@vitest/runner': 2.0.x - 3.2.x
       '@vitest/snapshot': 2.0.x - 3.2.x
@@ -12251,15 +12251,15 @@ snapshots:
       - utf-8-validate
       - workerd
 
-  '@cloudflare/vitest-pool-workers@0.12.13(@cloudflare/workers-types@4.20260217.0)(@vitest/runner@4.0.18)(@vitest/snapshot@4.0.18)(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vitest@4.0.18)':
+  '@cloudflare/vitest-pool-workers@0.12.16(@cloudflare/workers-types@4.20260217.0)(@vitest/runner@4.0.18)(@vitest/snapshot@4.0.18)(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vitest@4.0.18)':
     dependencies:
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18
       cjs-module-lexer: 1.4.3
       esbuild: 0.27.3
-      miniflare: 4.20260217.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      miniflare: 4.20260302.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.0)(@vitest/browser-playwright@4.0.18)(@vitest/ui@4.0.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
-      wrangler: 4.66.0(@cloudflare/workers-types@4.20260217.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      wrangler: 4.68.0(@cloudflare/workers-types@4.20260217.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - bufferutil
