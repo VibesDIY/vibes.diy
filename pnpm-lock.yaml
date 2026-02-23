@@ -966,8 +966,8 @@ importers:
         specifier: ^0.182.0
         version: 0.182.0
       cmd-ts:
-        specifier: ^0.14.3
-        version: 0.14.3
+        specifier: ^0.15.0
+        version: 0.15.0
       concurrently:
         specifier: ^9.1.2
         version: 9.2.1
@@ -5943,6 +5943,9 @@ packages:
 
   cmd-ts@0.14.3:
     resolution: {integrity: sha512-i9miaLBHGPn4T4vUFUdAdWoQ9HI8ato6usFrhubO21o/MQGqI6Nsqyd4ncZusT2chvPetNMmTt0JWkbaAOdWPg==}
+
+  cmd-ts@0.15.0:
+    resolution: {integrity: sha512-ASyAx+P6DNzNEZ6OYmvjjaLAQeI3L+4lm5rX2Jg8tondXdj06o9JTxi9mfC92KoVbrVFKhZ+j2TfBF8fcura6g==}
 
   co@4.6.0:
     resolution: {integrity: sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==}
@@ -17516,6 +17519,15 @@ snapshots:
   cmd-shim@8.0.0: {}
 
   cmd-ts@0.14.3:
+    dependencies:
+      chalk: 5.6.2
+      debug: 4.4.3(supports-color@10.2.2)
+      didyoumean: 1.2.2
+      strip-ansi: 7.1.2
+    transitivePeerDependencies:
+      - supports-color
+
+  cmd-ts@0.15.0:
     dependencies:
       chalk: 5.6.2
       debug: 4.4.3(supports-color@10.2.2)
