@@ -84,8 +84,8 @@ importers:
         specifier: 0.24.12
         version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.10
-        version: 0.24.10(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.10
         version: 0.24.10(typescript@5.9.3)
@@ -183,8 +183,8 @@ importers:
         specifier: ^0.5.21
         version: 0.5.21(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.10
-        version: 0.24.10(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -321,8 +321,8 @@ importers:
         specifier: 0.24.12
         version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.10
-        version: 0.24.10(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.10
         version: 0.24.10(typescript@5.9.3)
@@ -434,8 +434,8 @@ importers:
         specifier: 0.24.12
         version: 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.10
-        version: 0.24.10(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.10
         version: 0.24.10(typescript@5.9.3)
@@ -617,8 +617,8 @@ importers:
         specifier: 0.24.12
         version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.10
-        version: 0.24.10(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.10
         version: 0.24.10(typescript@5.9.3)
@@ -739,8 +739,8 @@ importers:
         specifier: 0.24.12
         version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.10
-        version: 0.24.10(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.10
         version: 0.24.10(typescript@5.9.3)
@@ -794,8 +794,8 @@ importers:
         specifier: 0.24.12
         version: 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       '@fireproof/core-runtime':
-        specifier: 0.24.10
-        version: 0.24.10(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base':
         specifier: 0.24.10
         version: 0.24.10(typescript@5.9.3)
@@ -1038,8 +1038,8 @@ importers:
         specifier: 0.24.10
         version: 0.24.10(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-runtime':
-        specifier: 0.24.10
-        version: 0.24.10(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -12995,7 +12995,7 @@ snapshots:
 
   '@fireproof/core-gateways-cloud@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.23(typescript@5.9.3)
+      '@adviser/cement': 0.5.25(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-protocols-cloud': 0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
@@ -13150,7 +13150,7 @@ snapshots:
 
   '@fireproof/core-protocols-dashboard@0.24.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
+      '@adviser/cement': 0.5.25(typescript@5.9.3)
       '@clerk/shared': 3.44.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@fireproof/core-device-id': 0.24.10(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
@@ -13202,7 +13202,7 @@ snapshots:
 
   '@fireproof/core-runtime@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.23(typescript@5.9.3)
+      '@adviser/cement': 0.5.25(typescript@5.9.3)
       '@adviser/ts-xxhash': 1.0.2
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
@@ -13231,7 +13231,7 @@ snapshots:
 
   '@fireproof/core-types-base@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.23(typescript@5.9.3)
+      '@adviser/cement': 0.5.25(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
       '@fireproof/vendor': 0.24.12(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
@@ -13244,7 +13244,7 @@ snapshots:
 
   '@fireproof/core-types-blockstore@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.23(typescript@5.9.3)
+      '@adviser/cement': 0.5.25(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-runtime': 0.24.10(typescript@5.9.3)
       '@fireproof/vendor': 0.24.10(typescript@5.9.3)
@@ -13324,7 +13324,7 @@ snapshots:
 
   '@fireproof/core-types-runtime@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.23(typescript@5.9.3)
+      '@adviser/cement': 0.5.25(typescript@5.9.3)
       '@fireproof/vendor': 0.24.10(typescript@5.9.3)
       multiformats: 13.4.2
     transitivePeerDependencies:
@@ -13404,7 +13404,7 @@ snapshots:
 
   '@fireproof/vendor@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.23(typescript@5.9.3)
+      '@adviser/cement': 0.5.25(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
