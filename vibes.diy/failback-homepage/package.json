@@ -85,7 +85,7 @@
     "@types/babel__standalone": "^7.1.9",
     "@types/babel__traverse": "^7.28.0",
     "@types/mime-types": "^3.0.1",
-    "@types/react": "~19.2.13",
+    "@types/react": "~19.2.14",
     "@types/react-dom": "~19.2.2",
     "@types/three": "^0.182.0",
     "cmd-ts": "^0.15.0",
