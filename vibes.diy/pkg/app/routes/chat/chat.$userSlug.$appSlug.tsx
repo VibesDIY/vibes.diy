@@ -118,7 +118,7 @@ export default function Chat() {
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
         setSearchParams((prev) => {
-          // prev.delete("fsId");
+          prev.delete("fsId");
           if (!prev.has("view")) {
             prev.set("view", "code");
           }

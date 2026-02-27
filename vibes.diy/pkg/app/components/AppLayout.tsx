@@ -1,8 +1,9 @@
 import { VibesSwitch } from "@vibes.diy/base";
-import React, { useEffect } from "react";
+import React from "react";
 import type { ReactNode } from "react";
-import { toast, Toaster } from "react-hot-toast";
-import { useVibeDiy } from "../vibe-diy-provider.js";
+import { Toaster } from "react-hot-toast";
+import { useShareableDB } from "../hooks/useShareableDB.js";
+import { AllowFireproofSharing } from "./AllowFireproofSharing.js";
 
 interface AppLayoutProps {
   chatPanel: ReactNode;
@@ -31,12 +32,7 @@ export default function AppLayout({
   appInfo,
   fullWidthChat = false,
 }: AppLayoutProps) {
-  const { srvVibeSandbox } = useVibeDiy();
-  useEffect(() => {
-    return srvVibeSandbox.shareableDBs.onSet((_k, v, meta) => {
-      if (!meta.update) toast(`Shareable DB for: ${v.data.dbName} - (${v.data.appSlug})`);
-    });
-  }, []);
+  const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
   return (
     <div className="page-grid-background grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden">
@@ -87,6 +83,16 @@ export default function AppLayout({
 
         <div className="w-full">{appInfo}</div>
       </div>
+
+      {sharingState && (
+        <AllowFireproofSharing
+          state={sharingState}
+          dbRef={dbRef}
+          onResult={onResult}
+          onDismiss={onDismiss}
+          onLoginRedirect={onLoginRedirect}
+        />
+      )}
     </div>
   );
 }

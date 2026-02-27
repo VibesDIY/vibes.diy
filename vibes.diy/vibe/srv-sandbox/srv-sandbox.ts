@@ -11,16 +11,20 @@ import {
   EventoSendProvider,
   LRUMap,
   processStream,
+  EventoHandler,
 } from "@adviser/cement";
 import {
   isReqVibeRegisterFPDb,
   ReqVibeRegisterFPDb,
-  ResErrorVibeRegisterFPDb,
   ResOkVibeRegisterFPDb,
   isReqCallAI,
   ReqCallAI,
   ResErrorCallAI,
   ResOkCallAI,
+  EvtAttachFPDb,
+  ReqFetchCloudToken,
+  isReqFetchCloudToken,
+  ResFetchCloudToken,
 } from "@vibes.diy/vibe-types";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
 import { isSectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
@@ -54,16 +58,211 @@ export class PostMsgSendProvider implements EventoSendProvider<MessageEvent, unk
 interface VibesDiySrvSandboxArgs {
   dashApi: ReturnType<typeof clerkDashApi>;
   vibeDiyApi: VibesDiyApiIface;
+  errorLogger: (r: string | Result<unknown> | Error) => void;
   eventListeners: {
     addEventListener: typeof window.addEventListener;
     removeEventListener: typeof window.removeEventListener;
   };
 }
 
+interface ShareableDBInfo {
+  key: string;
+  data: ResOkVibeRegisterFPDb["data"];
+  attachAction: "attach" | "detach" | "none";
+}
+
+function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const {
+    shareableDBs,
+    args: { dashApi },
+  } = sandbox;
+  return {
+    hash: "vibe.register.fpdb",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqVibeRegisterFPDb(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqVibeRegisterFPDb, unknown>): Promise<Result<EventoResultType>> => {
+      const key = `${ctx.validated.userSlug}-${ctx.validated.appSlug}-${ctx.validated.dbName}`;
+      shareableDBs.onSet(async (k, v, meta) => {
+        if (k !== key || !meta.update) {
+          return;
+        }
+        if (v.attachAction !== "attach") {
+          return;
+        }
+        const rUser = await dashApi.ensureUser({});
+        if (rUser.isErr()) {
+          sandbox.args.errorLogger(`Failed to ensure user: ${rUser.Err().message}`);
+        }
+        const rCloudToken = await dashApi.ensureCloudToken({ appId: key });
+        if (rCloudToken.isErr()) {
+          sandbox.args.errorLogger(`Failed to ensure cloud token: ${rCloudToken.Err().message}`);
+        }
+        void ctx.send.send(ctx, {
+          // tid: ctx.validated.tid,
+          type: "vibe.evt.attach.fpdb",
+          // status: "ok",
+          data: v.data,
+        } satisfies EvtAttachFPDb);
+      });
+
+      const ok = {
+        tid: ctx.validated.tid,
+        type: "vibe.res.register.fpdb",
+        status: "ok",
+        data: {
+          appSlug: ctx.validated.appSlug,
+          userSlug: ctx.validated.userSlug,
+          dbName: ctx.validated.dbName,
+          fsId: ctx.validated.fsId,
+          // appId: rCloudToken.Ok().appId,
+          // tenant: rCloudToken.Ok().tenant,
+          // ledger: rCloudToken.Ok().ledger,
+        },
+      } satisfies ResOkVibeRegisterFPDb;
+      await ctx.send.send(ctx, ok);
+      shareableDBs.set(key, {
+        key,
+        data: ok.data,
+        attachAction: "none",
+      });
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeFetchCloudToken(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { dashApi } = sandbox.args;
+  return {
+    hash: "vibe.fetchCloudToken",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqFetchCloudToken(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqFetchCloudToken, unknown>): Promise<Result<EventoResultType>> => {
+      const { data } = ctx.validated;
+      dashApi.ensureCloudToken({ appId: `${data.dbName}-${data.userSlug}-${data.appSlug}` }).then((rCloudToken) => {
+        if (rCloudToken.isErr()) {
+          sandbox.args.errorLogger(`Failed to ensure cloud token: ${rCloudToken.Err().message}`);
+          return rCloudToken;
+        }
+        const token = rCloudToken.Ok();
+        ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibe.res.fetchCloudToken",
+          data,
+          token,
+        } satisfies ResFetchCloudToken);
+      });
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.callAI",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqCallAI(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqCallAI, unknown>): Promise<Result<EventoResultType>> => {
+      console.log(`Handling vibe.callAI event with validated data`, ctx);
+      await vibeDiyApi
+        .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "application" })
+        .then(async (rChat) => {
+          console.log(`openChat result in callAI handler`, rChat);
+          if (rChat.isErr()) {
+            return ctx.send.send(ctx, {
+              tid: ctx.validated.tid,
+              type: "vibe.res.callAI",
+              status: "error",
+              message: rChat.Err().message,
+            } satisfies ResErrorCallAI);
+          }
+          const codeParts: string[] = [];
+          void processStream(rChat.Ok().sectionStream, (msg) => {
+            if (isSectionEvent(msg)) {
+              for (const block of msg.blocks) {
+                if (isCodeBegin(block) && block.lang.toLocaleUpperCase() === "JSON") {
+                  codeParts.splice(0, codeParts.length); // clear previous code parts
+                }
+                if (isCodeLine(block)) {
+                  codeParts.push(block.line);
+                }
+                if (isCodeEnd(block)) {
+                  ctx.send.send(ctx, {
+                    tid: ctx.validated.tid,
+                    type: "vibe.res.callAI",
+                    status: "ok",
+                    promptId: msg.promptId,
+                    result: codeParts.join("\n"),
+                  } satisfies ResOkCallAI);
+                }
+              }
+            }
+          });
+          // console.log(`Sending prompt to chat`, ctx.validated.prompt);
+          const generateSchema: ChatMessage[] = [];
+          if (ctx.validated.schema) {
+            console.log(`Prompt has schema, sending schema`, ctx.validated.schema);
+            generateSchema.push({
+              role: "system",
+              content: [
+                {
+                  type: "text",
+                  text: `Here is the JSON schema for the expected response. 
+                    Please generate one result that conforms to this schema.
+                    Output like Code Blocks and like \`\`\`JSON 
+                    ${JSON.stringify(ctx.validated.schema)}`,
+                },
+              ],
+            });
+          }
+          const rPrompt = await rChat.Ok().prompt({
+            messages: [
+              ...generateSchema,
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: ctx.validated.prompt,
+                  },
+                ],
+              },
+            ],
+          });
+
+          if (rPrompt.isErr()) {
+            return ctx.send.send(ctx, {
+              tid: ctx.validated.tid,
+              type: "vibe.res.callAI",
+              status: "error",
+              message: rPrompt.Err().message,
+            } satisfies ResErrorCallAI);
+          }
+        });
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
-  readonly shareableDBs = new LRUMap<string, ResOkVibeRegisterFPDb>();
+  readonly shareableDBs = new LRUMap<string, ShareableDBInfo>();
 
   readonly handleMessage = (event: MessageEvent): void => {
     // console.log(`Received message event in vibesDiySrvSandbox`, event);
@@ -78,155 +277,17 @@ export class vibesDiySrvSandbox implements Disposable {
   };
 
   readonly removeEventListeners: typeof window.removeEventListener;
+  readonly args: VibesDiySrvSandboxArgs;
 
-  constructor({ dashApi, vibeDiyApi, eventListeners }: VibesDiySrvSandboxArgs) {
+  constructor(args: VibesDiySrvSandboxArgs) {
+    this.args = args;
     this.evento = new Evento(new MessageEventEventoEnDecoder());
-    this.evento.push({
-      hash: "vibe.register.fpdb",
-      validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
-        const { request: req } = ctx;
-        if (isReqVibeRegisterFPDb(req?.data)) {
-          return Promise.resolve(Result.Ok(Option.Some(req.data)));
-        }
-        return Promise.resolve(Result.Ok(Option.None()));
-      },
-      handle: async (ctx: HandleTriggerCtx<Request, ReqVibeRegisterFPDb, unknown>): Promise<Result<EventoResultType>> => {
-        const key = `${ctx.validated.userSlug}-${ctx.validated.appSlug}-${ctx.validated.dbName}`;
-        const rUser = await dashApi.ensureUser({});
-        if (rUser.isErr()) {
-          console.error("Failed to ensure user", rUser.Err());
-          await ctx.send.send(ctx, {
-            tid: ctx.validated.tid,
-            type: "vibe.res.register.fpdb",
-            status: "error",
-            message: `Failed to ensure user ${rUser.Err().message}`,
-          } satisfies ResErrorVibeRegisterFPDb);
-          return Result.Ok(EventoResult.Stop);
-        }
-        const rCloudToken = await dashApi.ensureCloudToken({ appId: key });
-        if (rCloudToken.isErr()) {
-          console.error("Failed to ensure cloud token", rCloudToken.Err());
-          await ctx.send.send(ctx, {
-            tid: ctx.validated.tid,
-            type: "vibe.res.register.fpdb",
-            status: "error",
-            message: `Failed to ensure cloud token ${rCloudToken.Err().message}`,
-          } satisfies ResErrorVibeRegisterFPDb);
-          return Result.Ok(EventoResult.Stop);
-        }
-        const ok = {
-          tid: ctx.validated.tid,
-          type: "vibe.res.register.fpdb",
-          status: "ok",
-          data: {
-            appSlug: ctx.validated.appSlug,
-            userSlug: ctx.validated.userSlug,
-            dbName: ctx.validated.dbName,
-            fsId: ctx.validated.fsId,
-            appId: rCloudToken.Ok().appId,
-            tenant: rCloudToken.Ok().tenant,
-            ledger: rCloudToken.Ok().ledger,
-          },
-        } satisfies ResOkVibeRegisterFPDb;
-        await ctx.send.send(ctx, ok);
-        if (!this.shareableDBs.has(key)) {
-          this.shareableDBs.set(key, ok);
-        }
-        return Result.Ok(EventoResult.Stop);
-      },
-    });
-    this.evento.push({
-      hash: "vibe.callAI",
-      validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
-        const { request: req } = ctx;
-        if (isReqCallAI(req?.data)) {
-          return Promise.resolve(Result.Ok(Option.Some(req.data)));
-        }
-        return Promise.resolve(Result.Ok(Option.None()));
-      },
-      handle: async (ctx: HandleTriggerCtx<Request, ReqCallAI, unknown>): Promise<Result<EventoResultType>> => {
-        console.log(`Handling vibe.callAI event with validated data`, ctx);
-        await vibeDiyApi
-          .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "application" })
-          .then(async (rChat) => {
-            console.log(`openChat result in callAI handler`, rChat);
-            if (rChat.isErr()) {
-              return ctx.send.send(ctx, {
-                tid: ctx.validated.tid,
-                type: "vibe.res.callAI",
-                status: "error",
-                message: rChat.Err().message,
-              } satisfies ResErrorCallAI);
-            }
-            const codeParts: string[] = [];
-            void processStream(rChat.Ok().sectionStream, (msg) => {
-              if (isSectionEvent(msg)) {
-                for (const block of msg.blocks) {
-                  if (isCodeBegin(block) && block.lang.toLocaleUpperCase() === "JSON") {
-                    codeParts.splice(0, codeParts.length); // clear previous code parts
-                  }
-                  if (isCodeLine(block)) {
-                    codeParts.push(block.line);
-                  }
-                  if (isCodeEnd(block)) {
-                    ctx.send.send(ctx, {
-                      tid: ctx.validated.tid,
-                      type: "vibe.res.callAI",
-                      status: "ok",
-                      promptId: msg.promptId,
-                      result: codeParts.join("\n"),
-                    } satisfies ResOkCallAI);
-                  }
-                }
-              }
-            });
-            // console.log(`Sending prompt to chat`, ctx.validated.prompt);
-            const generateSchema: ChatMessage[] = [];
-            if (ctx.validated.schema) {
-              console.log(`Prompt has schema, sending schema`, ctx.validated.schema);
-              generateSchema.push({
-                role: "system",
-                content: [
-                  {
-                    type: "text",
-                    text: `Here is the JSON schema for the expected response. 
-                    Please generate one result that conforms to this schema.
-                    Output like Code Blocks and like \`\`\`JSON 
-                    ${JSON.stringify(ctx.validated.schema)}`,
-                  },
-                ],
-              });
-            }
-            const rPrompt = await rChat.Ok().prompt({
-              messages: [
-                ...generateSchema,
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "text",
-                      text: ctx.validated.prompt,
-                    },
-                  ],
-                },
-              ],
-            });
-
-            if (rPrompt.isErr()) {
-              return ctx.send.send(ctx, {
-                tid: ctx.validated.tid,
-                type: "vibe.res.callAI",
-                status: "error",
-                message: rPrompt.Err().message,
-              } satisfies ResErrorCallAI);
-            }
-          });
-        return Result.Ok(EventoResult.Stop);
-      },
-    });
+    this.evento.push(vibeRegisterFPDB(this));
+    this.evento.push(vibeCallAI(this));
+    this.evento.push(vibeFetchCloudToken(this));
     // console.log(`Adding event listener for vibesDiySrvSandbox`, this.handleMessage);
-    eventListeners.addEventListener("message", this.handleMessage);
-    this.removeEventListeners = eventListeners.removeEventListener;
+    this.args.eventListeners.addEventListener("message", this.handleMessage);
+    this.removeEventListeners = this.args.eventListeners.removeEventListener;
   }
 
   [Symbol.dispose](): void {

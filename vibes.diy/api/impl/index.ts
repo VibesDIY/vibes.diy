@@ -35,6 +35,9 @@ import {
   Req,
   LLMChat,
   OnResponseTypes,
+  ReqEnsureUserSettings,
+  ResEnsureUserSettings,
+  isResEnsureUserSettings,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -268,7 +271,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     return rtRes.value; // as ResultVibesDiy<S>;
   }
 
-  async ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {
+  ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {
     return this.request(
       { ...req, type: "vibes.diy.req-ensure-app-slug" },
       {
@@ -277,7 +280,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
-  async getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>> {
+  getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>> {
     return this.request(
       { ...req, type: "vibes.diy.req-get-by-user-slug-app-slug" },
       {
@@ -286,7 +289,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
-  async listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>> {
+  listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>> {
     return this.request(
       { ...req, type: "vibes.diy.req-list-user-slug-app-slug" },
       {
@@ -295,7 +298,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
-  async getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>> {
+  getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>> {
     return this.request(
       { ...req, type: "vibes.diy.req-get-chat-details" },
       {
@@ -304,7 +307,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
-  async getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>> {
+  getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>> {
     return this.request(
       { ...req, type: "vibes.diy.req-get-app-by-fsid" },
       {
@@ -313,7 +316,16 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
-  async openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>> {
+  ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-ensure-user-settings" },
+      {
+        resMatch: isResEnsureUserSettings,
+      }
+    );
+  }
+
+  openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>> {
     return LLMChatImpl.open({ ...req, type: "vibes.diy.req-open-chat" }, this);
   }
 }

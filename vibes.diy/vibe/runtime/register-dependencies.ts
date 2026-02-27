@@ -11,10 +11,12 @@ import {
   ReqVibeRegisterFPDb,
   ResFetchCloudToken,
   ResVibeRegisterFPDb,
+  EvtVibeAttachStatusFPDb,
+  isEvtAttachFPDb,
 } from "@vibes.diy/vibe-types";
-import { Future, KeyedResolvOnce, Lazy, Logger, OnFunc, Result, timeouted } from "@adviser/cement";
+import { Future, KeyedResolvOnce, Lazy, Logger, OnFunc, ResolveOnce, Result, timeouted } from "@adviser/cement";
 import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-types-protocols-cloud";
-import { SuperThis, toCloud } from "use-fireproof";
+import { Ledger, SuperThis, toCloud } from "use-fireproof";
 import { type } from "arktype";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 
@@ -91,21 +93,31 @@ export class VibeSandboxApi {
     );
   }
 
-  sendRegisterFPDbMessage(data: Omit<ReqVibeRegisterFPDb, "type" | "tid">) {
+  sendRegisterFPDbMessage(req: Omit<ReqVibeRegisterFPDb, "type" | "tid">) {
     // console.log("VibeSandboxApi sending register FPDb message", data);
     return this.request<ReqVibeRegisterFPDb, ResVibeRegisterFPDb>(
       {
         type: "vibe.req.register.fpdb",
-        ...data,
+        ...req,
       },
       { wait: isResVibeRegisterFPDb }
     );
   }
 
+  sendAttachStatusFPDbMessage(evt: Omit<EvtVibeAttachStatusFPDb, "type" | "tid">) {
+    this.svc.postMessage(
+      {
+        type: "vibe.evt.attach.status.fpdb",
+        ...evt,
+      } satisfies EvtVibeAttachStatusFPDb,
+      "*"
+    );
+  }
   readonly tokenCache = new KeyedResolvOnce();
   fetchCloudToken(req: Omit<ReqFetchCloudToken, "type" | "tid">): Promise<Result<ResFetchCloudToken>> {
     const key = `vibe-${req.data.dbName}-${req.data.userSlug}-${req.data.appSlug}`;
     return this.tokenCache.get(key).once(async (opts) => {
+      console.log("Fetching cloud token with key", key);
       const rRes = await this.request<ReqFetchCloudToken, ResFetchCloudToken>(
         {
           type: "vibe.req.fetchCloudToken",
@@ -124,7 +136,7 @@ export class VibeSandboxApi {
         console.error("Failed to fetch cloud token from vibe sandbox", isValidRes.summary);
         return Result.Err(isValidRes.summary);
       }
-      opts.self.setResetAfter(isValidRes.token.expiresAfter - ~~(isValidRes.token.expiresAfter * 0.05));
+      opts.self.setResetAfter(1000 * (isValidRes.token.expiresInSec - ~~(isValidRes.token.expiresInSec * 0.05)));
       return rRes;
     });
   }
@@ -162,8 +174,8 @@ class VibeTokenStrategie implements TokenStrategie {
     }
     const token = resToken.Ok();
     return {
-      token: token.token.token,
-      claims: JSON.parse(token.token.claims) as unknown as TokenAndClaims["claims"],
+      token: token.token.cloudToken,
+      claims: token.token.claims as unknown as TokenAndClaims["claims"],
     };
     return Promise.resolve(undefined);
   }
@@ -188,6 +200,38 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
     //   addEventListener: window.addEventListener.bind(window),
     //   postMessage: window.parent.postMessage.bind(window.parent),
     // });
+
+    const attachables = new Map<
+      string,
+      {
+        key: string;
+        ledger: Ledger;
+        attach: ResolveOnce<void>;
+      }
+    >();
+    ctxVibeApi.onMsg((event) => {
+      // console.log("Received message event in vibeApi onMsg handler", event);
+      if (isEvtAttachFPDb(event.data)) {
+        const key = `${event.data.data.dbName}-${event.data.data.userSlug}-${event.data.data.appSlug}`;
+        const attabable = attachables.get(key);
+        if (attabable) {
+          attabable.attach.once(async () => {
+            console.log("Attaching FPDb with key", event.data.data);
+            const result = await attabable.ledger.attach(
+              toCloud({
+                name: `vibe-${event.data.data.dbName}-${event.data.data.userSlug}-${event.data.data.appSlug}`,
+                strategy: new VibeTokenStrategie(ctxVibeApi, event.data.data),
+              })
+            );
+            ctxVibeApi.sendAttachStatusFPDbMessage({
+              data: event.data.data,
+              status: result.status(),
+            });
+          });
+        }
+      }
+    });
+
     fp.getLedgerSvc().onCreate((ledger) => {
       ctxVibeApi
         .sendRegisterFPDbMessage({
@@ -206,14 +250,12 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
           }
           if (isResOkVibeRegisterFPDb(res)) {
             console.log("Registered FPDb with vibe sandbox", res);
-            ledger.attach(
-              toCloud({
-                name: `vibe-${res.data.dbName}-${res.data.userSlug}-${res.data.appSlug}`,
-                strategy: new VibeTokenStrategie(ctxVibeApi, res.data),
-                ledger: res.data.ledger,
-                tenant: res.data.tenant,
-              })
-            );
+            const key = `${res.data.dbName}-${res.data.userSlug}-${res.data.appSlug}`;
+            attachables.set(key, {
+              key,
+              ledger,
+              attach: new ResolveOnce<void>(),
+            });
           }
         });
     });
