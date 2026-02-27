@@ -27,6 +27,7 @@ interface MessageListProps {
   promptBlocks: PromptBlock[];
   promptProcessing: boolean;
   chatId: string;
+  selectedFsId?: string;
   onClick: (fsRes: { userSlug: string; appSlug: string; fsId: string }) => void;
   // setSelectedResponseId: (id: string) => void;
   // selectedResponseId: string;
@@ -290,6 +291,7 @@ type BlockedMsg = CodeBlock | TopLevelBlock;
 function MessageList({
   promptBlocks,
   chatId,
+  selectedFsId,
   onClick,
   // setSelectedResponseId,
   // selectedResponseId,
@@ -419,7 +421,7 @@ function MessageList({
     return acc;
   }, [] as React.ReactElement[]);
   useEffect(() => {
-    if (lastFsRef) {
+    if (lastFsRef && !selectedFsId) {
       onClick(lastFsRef);
     }
   }, [lastFsRef?.fsId]);

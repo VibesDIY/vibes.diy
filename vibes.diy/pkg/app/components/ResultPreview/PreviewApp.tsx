@@ -43,7 +43,7 @@ export function PreviewApp({ promptState: _p }: { promptState: PromptState }) {
         bindings: { appSlug, userSlug, fsId },
       });
       const previewUrl = BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
-      console.log(`iframe src=`, previewUrl.asObj());
+      // console.log(`iframe src=`, previewUrl.asObj());
       return previewUrl;
     }
     return null;

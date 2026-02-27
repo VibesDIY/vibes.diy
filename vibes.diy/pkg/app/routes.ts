@@ -46,6 +46,7 @@ export default [
     id: "privacy-policy",
   }),
   route("legal/tos", "./routes/legal/tos.tsx", { id: "terms-of-service" }),
+  route("login", "./routes/login.tsx", { id: "login" }),
 
   // 404 catch-all route - must be last
   route("*", "./routes/$.tsx", { id: "not-found" }),

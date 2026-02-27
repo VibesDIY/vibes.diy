@@ -16,7 +16,7 @@
     "publish": "echo core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.23",
+    "@adviser/cement": "^0.5.26",
     "@monaco-editor/react": "^4.7.0",
     "@react-router/node": "^7.13.1",
     "@react-router/serve": "^7.13.1",

@@ -94,6 +94,7 @@ export const reqOpenChat = type({
   "appSlug?": "string",
   "userSlug?": "string",
   "chatId?": "string",
+  mode: "'creation'|'application'",
 });
 
 export type ReqOpenChat = typeof reqOpenChat.infer;
@@ -103,6 +104,7 @@ export const resOpenChat = type({
   appSlug: "string",
   userSlug: "string",
   chatId: "string",
+  mode: "'creation'|'application'",
 });
 
 export type ResOpenChat = typeof resOpenChat.infer;
@@ -135,18 +137,39 @@ export const resError = type({
   "stack?": "string[]",
 });
 
-export const reqPromptChatSection = type({
+export const reqCreationPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
+  mode: "'creation'",
   auth: dashAuthType,
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session
   prompt: LLMRequest,
 });
 
+export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqCreationPromptChatSection.infer {
+  return !(reqCreationPromptChatSection(obj) instanceof type.errors);
+}
+
+export const reqPromptApplicationChatSection = type({
+  type: "'vibes.diy.req-prompt-chat-section'",
+  mode: "'application'",
+  auth: dashAuthType,
+  chatId: "string",
+  outerTid: "string", // this is used to emit events to the current chat session
+  prompt: LLMRequest,
+});
+
+export function isReqPromptApplicationChatSection(obj: unknown): obj is typeof reqPromptApplicationChatSection.infer {
+  return !(reqPromptApplicationChatSection(obj) instanceof type.errors);
+}
+
+export const reqPromptChatSection = reqCreationPromptChatSection.or(reqPromptApplicationChatSection);
+
 export type ReqPromptChatSection = typeof reqPromptChatSection.infer;
 
 export const resPromptChatSection = type({
   type: "'vibes.diy.res-prompt-chat-section'",
+  mode: "'creation'|'application'",
   chatId: "string",
   userSlug: "string",
   appSlug: "string",
@@ -154,6 +177,7 @@ export const resPromptChatSection = type({
   outerTid: "string",
   // prompt: PromptMsg,
 });
+
 export type ResPromptChatSection = typeof resPromptChatSection.infer;
 export function isResPromptChatSection(obj: unknown): obj is ResPromptChatSection {
   return !(resPromptChatSection(obj) instanceof type.errors);
@@ -172,6 +196,10 @@ export const sectionEvent = type({
 });
 
 export type SectionEvent = typeof sectionEvent.infer;
+
+export function isSectionEvent(obj: unknown): obj is SectionEvent {
+  return !(sectionEvent(obj) instanceof type.errors);
+}
 
 export type ResError = typeof resError.infer;
 

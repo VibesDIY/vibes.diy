@@ -10,6 +10,7 @@ function ResultPreview({ promptState, currentView, children }: ResultPreviewProp
   const showWelcome = !promptState.running && !promptState.hasCode;
 
   let previewArea: React.ReactElement;
+  // console.log(`ResultPreview:`, currentView, promptState.searchParams.toString())
   switch (true) {
     case showWelcome:
       previewArea = <div className="h-full">{/* empty div to prevent layout shift */}</div>;

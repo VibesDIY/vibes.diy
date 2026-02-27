@@ -4,3 +4,5 @@ export * from "./msg-types.js";
 export * from "./vibes-types.js";
 
 export * from "./screen-shotter.js";
+
+export * from "./vibes-diy-api.js";

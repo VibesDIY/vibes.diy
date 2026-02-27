@@ -25,7 +25,12 @@ interface ErrorVersion {
   prev: VersionType; // the original version type before resolution, e.g., { type: "SYMBOLIC", value: "LATEST" }
 }
 
-type VersionType = NoneVersion | SymbolicOrSemVersion | ResolvedVersion | ErrorVersion;
+interface AliasVersion {
+  type: "ALIAS";
+  target: string; // the package name this entry should resolve to, e.g., "@vibes.diy/vibe-runtime"
+}
+
+type VersionType = NoneVersion | SymbolicOrSemVersion | ResolvedVersion | ErrorVersion | AliasVersion;
 
 interface MutableVersionEntity {
   givenVersion: string; // the original version string provided, e.g., "version:1.2.3,deps:react,privateNpm"
@@ -88,6 +93,8 @@ export class Version implements Readonly<MutableVersionEntity> {
         }
       } else if (key === "privateNpm") {
         result.privateNpm = true;
+      } else if (key === "alias") {
+        result.version = { type: "ALIAS", target: value };
       }
     }
     if (result.privateNpm && result.version.type !== "NONE") {
@@ -263,10 +270,22 @@ export class Dependencies {
     }
 
     const importMap: Record<string, string> = {};
+    const aliases = new Map<string, string>(); // givenPkg -> target package name
     for (const dep of this.#byDeps.values()) {
       for (const { pkg, version } of dep.pkgs.values()) {
-        importMap[pkg.givenPkg] = renderRHS(pkg, version);
+        if (version.ver.version.type === "ALIAS") {
+          aliases.set(pkg.givenPkg, version.ver.version.target);
+        } else {
+          importMap[pkg.givenPkg] = renderRHS(pkg, version);
+        }
       }
+    }
+    for (const [aliasPkg, target] of aliases) {
+      const resolved = importMap[target];
+      if (resolved === undefined) {
+        throw new Error(`Alias target "${target}" not found in import map for "${aliasPkg}"`);
+      }
+      importMap[aliasPkg] = resolved;
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return toSortedObject(importMap)!;
@@ -327,7 +346,11 @@ export function render_esm_sh(opts: RenderEsmShOpts = {}) {
             if (!my) {
               throw new Error(`Cannot render dependency with no pkgs`);
             }
-            if (my.version.ver.version.type === "ERROR" || my.version.ver.version.type === "NONE") {
+            if (
+              my.version.ver.version.type === "ERROR" ||
+              my.version.ver.version.type === "NONE" ||
+              my.version.ver.version.type === "ALIAS"
+            ) {
               throw new Error(`Cannot render dependency with unresolved version: ${JSON.stringify(my.version.ver.version)}`);
             }
             return `${pkg}@${my.version.ver.version.value}`;

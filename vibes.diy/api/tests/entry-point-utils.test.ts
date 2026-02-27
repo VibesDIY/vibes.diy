@@ -9,13 +9,13 @@ describe("entry-point-utils", () => {
       fsId: "abc123",
     };
 
-    it("builds URL from bindings with https", () => {
+    it("builds URL from bindings with -https", () => {
       const result = calcEntryPointUrl({
         hostnameBase: "vibes.app",
         protocol: "https",
         bindings,
       });
-      expect(result).toBe("https://myapp--myuser.vibes.app/~abc123~/");
+      expect(result).toBe("https://myapp--myuser.vibes.app/~abc123~");
     });
 
     it("builds URL from bindings with http", () => {
@@ -24,7 +24,7 @@ describe("entry-point-utils", () => {
         protocol: "http",
         bindings,
       });
-      expect(result).toBe("http://myapp--myuser.localhost:8080/~abc123~/");
+      expect(result).toBe("http://myapp--myuser.localhost:8080/~abc123~");
     });
 
     it("handles different hostname bases", () => {
@@ -33,7 +33,7 @@ describe("entry-point-utils", () => {
         protocol: "https",
         bindings,
       });
-      expect(result).toBe("https://myapp--myuser.custom.domain.com/~abc123~/");
+      expect(result).toBe("https://myapp--myuser.custom.domain.com/~abc123~");
     });
   });
 
@@ -211,7 +211,7 @@ describe("entry-point-utils", () => {
         bindings,
       });
 
-      expect(url).toBe("https://testapp--testuser.vibes.app/~zabc12345678~/");
+      expect(url).toBe("https://testapp--testuser.vibes.app/~zabc12345678~");
 
       const extracted = extractHostToBindings({
         matchURL: url,

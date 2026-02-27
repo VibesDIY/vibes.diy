@@ -74,6 +74,6 @@ export const lockedGroupsVersions = {
     // "@vibes.diy/prompts": "privateNpm:",
     // what the fuck
     // "@vibes.diy/use-vibes-base": "privateNpm:",
-    // "call-ai": "privateNpm:",
+    "call-ai": "alias:@vibes.diy/vibe-runtime",
   },
 };

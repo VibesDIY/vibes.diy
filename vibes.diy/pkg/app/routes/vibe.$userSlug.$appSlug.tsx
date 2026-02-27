@@ -1,10 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
-import { useSession } from "@clerk/clerk-react";
+import { SignIn, useAuth, useSession } from "@clerk/clerk-react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-import { toast, Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
+import { createPortal } from "react-dom";
+import SessionSidebar from "../components/SessionSidebar.js";
+import { VibesSwitch } from "@vibes.diy/base";
 
 export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
@@ -12,6 +15,18 @@ export default function VibeIframeWrapper() {
   const vctx = useVibeDiy();
   const iframeUrlRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
+  const { isSignedIn: authSignedIn, isLoaded } = useAuth();
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
+
+  useEffect(() => {
+    if (isLoaded && !authSignedIn && fsId && userSlug && appSlug) {
+      setIsSidebarVisible(true);
+    }
+    if (authSignedIn) {
+      setIsSidebarVisible(false);
+    }
+  }, [isLoaded, authSignedIn, fsId, userSlug, appSlug]);
 
   // this is optional locked in
   const session = useSession();
@@ -21,6 +36,9 @@ export default function VibeIframeWrapper() {
       return;
     }
     if (fsId && userSlug && appSlug) {
+      if (!authSignedIn) {
+        return;
+      }
       vctx.vibeDiyApi.getAppByFsId({ fsId }).then((res) => {
         if (res.isErr()) {
           console.error(`getAppByFsId failed with:`, res.Err());
@@ -63,14 +81,15 @@ export default function VibeIframeWrapper() {
           }
         });
     }
-  }, [userSlug, appSlug, fsId, searchParam.get("sectionId"), session.isSignedIn]);
+  }, [userSlug, appSlug, fsId, searchParam.get("sectionId"), session.isSignedIn, authSignedIn]);
 
-  const { srvVibeSandbox } = useVibeDiy();
-  useEffect(() => {
-    srvVibeSandbox.shareableDBs.onSet((_k, v) => {
-      toast(`Shareable DB for: ${v.dbName} - (${v.appSlug})`);
-    });
-  }, [srvVibeSandbox]);
+  // const { srvVibeSandbox } = useVibeDiy();
+  // useEffect(() => {
+  //   srvVibeSandbox.shareableDBs.onSet((_k, v, meta) => {
+  //     console.log('Shareable DB for', v, meta)
+  //     toast(`Shareable DB for: ${v.data.dbName} - (${v.data.appSlug})`);
+  //   });
+  // }, [srvVibeSandbox]);
 
   if (ready && iframeUrlRef.current) {
     const myUrl = URI.from(window.location.href);
@@ -88,11 +107,42 @@ export default function VibeIframeWrapper() {
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
         </div>
+        {createPortal(
+          <div className="fixed bottom-4 right-4 z-50">
+            <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+          </div>,
+          document.body
+        )}
+        <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
       </>
     );
   }
+  const showLoginOverlay = !authSignedIn && isLoaded && !!(fsId && userSlug && appSlug);
+  const loginOverlay = showLoginOverlay
+    ? createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <SignIn routing="hash" fallbackRedirectUrl={window.location.href} />
+        </div>,
+        document.body
+      )
+    : null;
+
   if (searchParam.get("sectionId") && !session.isSignedIn) {
     return <div>to use sectionId you need to be logged in</div>;
   }
-  return <div>loading app</div>;
+  return (
+    <>
+      <div className="grid-background flex h-screen w-screen items-center justify-center">
+        {showLoginOverlay ? (
+          <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
+            Login required to view this page
+          </div>
+        ) : (
+          <div style={{ color: "var(--vibes-text-primary)" }}>Loading app…</div>
+        )}
+      </div>
+      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+      {loginOverlay}
+    </>
+  );
 }
