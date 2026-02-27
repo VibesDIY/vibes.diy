@@ -21,9 +21,8 @@ export const sqlUserSlugBinding = sqliteTable(
 export const sqlAppSlugBinding = sqliteTable(
   "AppSlugBindings",
   {
-    userSlug: text()
-      .notNull()
-      .references(() => sqlUserSlugBinding.userSlug), // max bindings per userId
+    userSlug: text().notNull(),
+    //.references(() => sqlUserSlugBinding.userSlug), // max bindings per userId
     appSlug: text().notNull(), // human friendly app id
     created: text().notNull(),
   },
@@ -128,3 +127,10 @@ export const sqlApplicationChats = sqliteTable(
     index("ApplicationChats_userId_appSlug_userSlug_created_idx").on(table.userId, table.appSlug, table.userSlug, table.created),
   ]
 );
+
+export const sqlUserSettings = sqliteTable("UserSettings", {
+  userId: text().notNull().primaryKey(), // from Clerk
+  settings: text({ mode: "json" }).notNull(), // UserSettingsData
+  updated: text().notNull(),
+  created: text().notNull(),
+});

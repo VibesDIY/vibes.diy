@@ -31,9 +31,9 @@ export const FPDbData = type({
   appSlug: "string",
   userSlug: "string",
   fsId: "string",
-  appId: "string",
-  tenant: "string",
-  ledger: "string",
+  // appId: "string",
+  // tenant: "string",
+  // ledger: "string",
 });
 
 export type FPDbData = typeof FPDbData.infer;
@@ -43,6 +43,24 @@ export const ResOkVibeRegisterFPDb = type({
   status: "'ok'",
   data: FPDbData,
 }).and(Base);
+
+export const EvtVibeAttachStatusFPDb = type({
+  type: "'vibe.evt.attach.status.fpdb'",
+  data: FPDbData,
+  status: "'error' | 'attached' | 'loading' | 'loaded' | 'detached' | 'syncing' | 'idle'",
+});
+
+export type EvtVibeAttachStatusFPDb = typeof EvtVibeAttachStatusFPDb.infer;
+
+export const EvtAttachFPDb = type({
+  type: "'vibe.evt.attach.fpdb'",
+  data: FPDbData,
+});
+export function isEvtAttachFPDb(x: unknown): x is typeof EvtAttachFPDb.infer {
+  return !(EvtAttachFPDb(x) instanceof type.errors);
+}
+
+export type EvtAttachFPDb = typeof EvtAttachFPDb.infer;
 
 export type ResOkVibeRegisterFPDb = typeof ResOkVibeRegisterFPDb.infer;
 
@@ -75,9 +93,13 @@ export const ResFetchCloudToken = type({
   type: "'vibe.res.fetchCloudToken'",
   data: FPDbData,
   token: {
-    token: "string",
-    claims: "string",
-    expiresAfter: "number",
+    cloudToken: "string",
+    appId: "string",
+    tenant: "string",
+    ledger: "string",
+    expiresInSec: "number",
+    expiresDate: "string",
+    claims: "Record<string, unknown>",
   },
 }).and(Base);
 

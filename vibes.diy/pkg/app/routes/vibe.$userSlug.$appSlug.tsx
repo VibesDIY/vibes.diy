@@ -8,6 +8,8 @@ import { Toaster } from "react-hot-toast";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { VibesSwitch } from "@vibes.diy/base";
+import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
+import { useShareableDB } from "../hooks/useShareableDB.js";
 
 export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
@@ -83,13 +85,7 @@ export default function VibeIframeWrapper() {
     }
   }, [userSlug, appSlug, fsId, searchParam.get("sectionId"), session.isSignedIn, authSignedIn]);
 
-  // const { srvVibeSandbox } = useVibeDiy();
-  // useEffect(() => {
-  //   srvVibeSandbox.shareableDBs.onSet((_k, v, meta) => {
-  //     console.log('Shareable DB for', v, meta)
-  //     toast(`Shareable DB for: ${v.data.dbName} - (${v.data.appSlug})`);
-  //   });
-  // }, [srvVibeSandbox]);
+  const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
   if (ready && iframeUrlRef.current) {
     const myUrl = URI.from(window.location.href);
@@ -114,6 +110,15 @@ export default function VibeIframeWrapper() {
           document.body
         )}
         <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+        {sharingState && (
+          <AllowFireproofSharing
+            state={sharingState}
+            dbRef={dbRef}
+            onResult={onResult}
+            onDismiss={onDismiss}
+            onLoginRedirect={onLoginRedirect}
+          />
+        )}
       </>
     );
   }
@@ -143,6 +148,15 @@ export default function VibeIframeWrapper() {
       </div>
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
       {loginOverlay}
+      {sharingState && (
+        <AllowFireproofSharing
+          state={sharingState}
+          dbRef={dbRef}
+          onResult={onResult}
+          onDismiss={onDismiss}
+          onLoginRedirect={onLoginRedirect}
+        />
+      )}
     </>
   );
 }

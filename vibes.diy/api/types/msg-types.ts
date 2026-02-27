@@ -425,3 +425,39 @@ export type W3CWebSocketEvent = typeof w3CWebSocketEvent.infer;
 export type W3CWebSocketErrorEvent = typeof w3cErrorEventBox.infer;
 export type W3CWebSocketMessageEvent = typeof w3cMessageEventBox.infer;
 export type W3CWebSocketCloseEvent = typeof w3cCloseEventBox.infer;
+
+export const userSettingShareing = type({
+  type: "'sharing'",
+  grants: type({
+    grant: "'allow' | 'deny'",
+    appSlug: "string",
+    userSlug: "string",
+    dbName: "string", // could be "*" for all databases
+  }).array(),
+});
+export function isUserSettingSharing(obj: unknown): obj is typeof userSettingShareing.infer {
+  return !(userSettingShareing(obj) instanceof type.errors);
+}
+
+export const userSettingItem = userSettingShareing;
+
+export type UserSettingItem = typeof userSettingItem.infer;
+
+export const reqEnsureUserSettings = type({
+  type: "'vibes.diy.req-ensure-user-settings'",
+  auth: dashAuthType,
+  settings: userSettingItem.array(),
+});
+export type ReqEnsureUserSettings = typeof reqEnsureUserSettings.infer;
+
+export const resEnsureUserSettings = type({
+  type: "'vibes.diy.res-ensure-user-settings'",
+  userId: "string",
+  settings: userSettingItem.array(),
+  updated: "string",
+  created: "string",
+});
+export type ResEnsureUserSettings = typeof resEnsureUserSettings.infer;
+export function isResEnsureUserSettings(obj: unknown): obj is ResEnsureUserSettings {
+  return !(resEnsureUserSettings(obj) instanceof type.errors);
+}

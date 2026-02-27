@@ -42,6 +42,7 @@
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/vibe-srv-sandbox": "workspace:*",
+    "@vibes.diy/vibe-types": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cookie": "^1.1.1",

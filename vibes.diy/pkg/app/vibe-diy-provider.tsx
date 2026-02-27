@@ -9,6 +9,7 @@ import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
 import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
+import { toast } from "react-hot-toast";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
 export interface VibeDiyWebVars {
@@ -105,6 +106,19 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
   });
 
   realCtx.srvVibeSandbox = VibesDiySrvSandbox({
+    errorLogger: (r) => {
+      let txt = "unknown error";
+      if (typeof r === "string") {
+        txt = r;
+      }
+      if (Result.Is(r)) {
+        txt = r.Err().message;
+      }
+      if (r?.toString()) {
+        txt = r.toString();
+      }
+      toast.error(txt);
+    },
     dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
     vibeDiyApi: realCtx.vibeDiyApi,
     eventListeners: globalThis.window,
