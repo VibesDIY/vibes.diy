@@ -46,6 +46,7 @@ function ChatInterface({
             promptBlocks={blocks}
             promptProcessing={running}
             chatId={promptState.chat.chatId}
+            selectedFsId={promptState.searchParams.get("fsId") ?? undefined}
 
             // setSelectedResponseId={setSelectedResponseId}
             // selectedResponseId={selectedResponseDoc?._id || ""}

@@ -316,7 +316,9 @@ describe("VibesDiyApi", () => {
   });
 
   it("can open chat", async () => {
-    const rChatRes = await api.openChat({});
+    const rChatRes = await api.openChat({
+      mode: "creation",
+    });
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
     const resp = vi.fn();
@@ -340,6 +342,7 @@ describe("VibesDiyApi", () => {
 
     const rNext = await api.openChat({
       chatId: chat.chatId,
+      mode: "creation",
     });
     const nextFn = vi.fn();
     await consumeStream(rNext.Ok().sectionStream, (msg) => {
@@ -353,7 +356,9 @@ describe("VibesDiyApi", () => {
   });
 
   it("queries the llm", async () => {
-    const rChatRes = await api.openChat({});
+    const rChatRes = await api.openChat({
+      mode: "creation",
+    });
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
     const rPrompt = await chat.prompt({
@@ -363,6 +368,7 @@ describe("VibesDiyApi", () => {
 
     const rNext = await api.openChat({
       chatId: chat.chatId,
+      mode: "creation",
     });
     const nextFn = vi.fn();
     await consumeStream(rNext.Ok().sectionStream, (msg) => {

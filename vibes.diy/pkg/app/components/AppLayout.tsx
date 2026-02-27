@@ -33,10 +33,10 @@ export default function AppLayout({
 }: AppLayoutProps) {
   const { srvVibeSandbox } = useVibeDiy();
   useEffect(() => {
-    srvVibeSandbox.shareableDBs.onSet((_k, v) => {
-      toast(`Shareable DB for: ${v.dbName} - (${v.appSlug})`);
+    return srvVibeSandbox.shareableDBs.onSet((_k, v, meta) => {
+      if (!meta.update) toast(`Shareable DB for: ${v.data.dbName} - (${v.data.appSlug})`);
     });
-  }, [srvVibeSandbox.shareableDBs.size]);
+  }, []);
 
   return (
     <div className="page-grid-background grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden">

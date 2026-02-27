@@ -27,21 +27,21 @@ export const ResErrorVibeRegisterFPDb = type({
 export type ResErrorVibeRegisterFPDb = typeof ResErrorVibeRegisterFPDb.infer;
 
 export const FPDbData = type({
-    dbName: "string",
+  dbName: "string",
   appSlug: "string",
   userSlug: "string",
   fsId: "string",
   appId: "string",
   tenant: "string",
   ledger: "string",
-})
+});
 
 export type FPDbData = typeof FPDbData.infer;
 
 export const ResOkVibeRegisterFPDb = type({
   type: "'vibe.res.register.fpdb'",
   status: "'ok'",
-  data: FPDbData, 
+  data: FPDbData,
 }).and(Base);
 
 export type ResOkVibeRegisterFPDb = typeof ResOkVibeRegisterFPDb.infer;
@@ -60,10 +60,9 @@ export function isResErrorVibeRegisterFPDb(x: unknown): x is ResErrorVibeRegiste
   return !(ResErrorVibeRegisterFPDb(x) instanceof type.errors);
 }
 
-
 export const ReqFetchCloudToken = type({
   type: "'vibe.req.fetchCloudToken'",
-  data: FPDbData
+  data: FPDbData,
 }).and(Base);
 
 export type ReqFetchCloudToken = typeof ReqFetchCloudToken.infer;
@@ -79,11 +78,105 @@ export const ResFetchCloudToken = type({
     token: "string",
     claims: "string",
     expiresAfter: "number",
-  }
+  },
 }).and(Base);
 
 export type ResFetchCloudToken = typeof ResFetchCloudToken.infer;
 
 export function isResFetchCloudToken(x: unknown): x is ResFetchCloudToken {
   return !(ResFetchCloudToken(x) instanceof type.errors);
+}
+
+// JSONSchema — recursive fields use unknown to avoid arktype cyclic-type constraints
+export const JSONSchema = type({
+  "type?": "string | string[]",
+  "title?": "string",
+  "description?": "string",
+  "default?": "unknown",
+  "examples?": "unknown[]",
+  "enum?": "unknown[]",
+  "const?": "unknown",
+  // String
+  "minLength?": "number",
+  "maxLength?": "number",
+  "pattern?": "string",
+  "format?": "string",
+  // Number / integer
+  "minimum?": "number",
+  "maximum?": "number",
+  "exclusiveMinimum?": "number",
+  "exclusiveMaximum?": "number",
+  "multipleOf?": "number",
+  // Array
+  "items?": "unknown",
+  "minItems?": "number",
+  "maxItems?": "number",
+  "uniqueItems?": "boolean",
+  // Object
+  "properties?": "Record<string, unknown>",
+  "required?": "string[]",
+  "additionalProperties?": "boolean | Record<string, unknown>",
+  "minProperties?": "number",
+  "maxProperties?": "number",
+  // Composition
+  "allOf?": "unknown[]",
+  "anyOf?": "unknown[]",
+  "oneOf?": "unknown[]",
+  "not?": "unknown",
+  // References
+  "$ref?": "string",
+  "$defs?": "Record<string, unknown>",
+});
+
+export type JSONSchema = typeof JSONSchema.infer;
+
+export function isJSONSchema(x: unknown): x is JSONSchema {
+  return !(JSONSchema(x) instanceof type.errors);
+}
+
+export const ReqCallAI = type({
+  type: "'vibe.req.callAI'",
+  userSlug: "string",
+  appSlug: "string",
+  prompt: "string",
+  schema: JSONSchema,
+}).and(Base);
+
+export type ReqCallAI = typeof ReqCallAI.infer;
+
+export function isReqCallAI(x: unknown): x is ReqCallAI {
+  return !(ReqCallAI(x) instanceof type.errors);
+}
+
+export const ResOkCallAI = type({
+  type: "'vibe.res.callAI'",
+  status: "'ok'",
+  promptId: "string",
+  result: "string",
+}).and(Base);
+
+export type ResOkCallAI = typeof ResOkCallAI.infer;
+
+export const ResErrorCallAI = type({
+  type: "'vibe.res.callAI'",
+  status: "'error'",
+  message: "string",
+}).and(Base);
+
+export type ResErrorCallAI = typeof ResErrorCallAI.infer;
+
+const ResCallAI = ResOkCallAI.or(ResErrorCallAI);
+
+export type ResCallAI = typeof ResCallAI.infer;
+
+export function isResCallAI(x: unknown): x is ResCallAI {
+  return !(ResCallAI(x) instanceof type.errors);
+}
+
+export function isResOkCallAI(x: unknown): x is ResOkCallAI {
+  return !(ResOkCallAI(x) instanceof type.errors);
+}
+
+export function isResErrorCallAI(x: unknown): x is ResErrorCallAI {
+  return !(ResErrorCallAI(x) instanceof type.errors);
 }

@@ -4,15 +4,19 @@ import {
   isResFetchCloudToken,
   isResOkVibeRegisterFPDb,
   isResVibeRegisterFPDb,
+  isResCallAI,
+  ReqCallAI,
+  ResCallAI,
   ReqFetchCloudToken,
   ReqVibeRegisterFPDb,
   ResFetchCloudToken,
   ResVibeRegisterFPDb,
 } from "@vibes.diy/vibe-types";
-import { Future, KeyedResolvOnce, Logger, OnFunc, Result, timeouted } from "@adviser/cement";
+import { Future, KeyedResolvOnce, Lazy, Logger, OnFunc, Result, timeouted } from "@adviser/cement";
 import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-types-protocols-cloud";
 import { SuperThis, toCloud } from "use-fireproof";
 import { type } from "arktype";
+import { CallAIOpts, registerCallAI } from "./call-ai.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -20,21 +24,32 @@ export interface VibeApp {
   readonly fsId: string;
 }
 
-class VibeSandboxApi {
-  readonly svc: { addEventListener: typeof window.addEventListener; postMessage: typeof window.postMessage };
+export interface VibeSandboxApiOptions {
+  vibeApp: VibeApp;
+  addEventListener: typeof window.addEventListener;
+  postMessage: typeof window.postMessage;
+}
+
+interface RequestOpts {
+  timeout?: number;
+  wait(x: unknown): boolean;
+}
+
+export class VibeSandboxApi {
+  readonly svc: VibeSandboxApiOptions;
 
   readonly handleMessage = (event: MessageEvent): void => {
     this.onMsg.invoke(event);
   };
 
-  async request<Q, S>(msg: Omit<Q, "tid">, wait: (x: unknown) => boolean): Promise<Result<S>> {
+  async request<Q, S>(msg: Omit<Q, "tid">, opts: RequestOpts): Promise<Result<S>> {
     const res = await timeouted(
       () => {
         const tid = crypto.randomUUID();
         const result = new Future<ResVibeRegisterFPDb>();
         this.onMsg((event) => {
-          console.log("Received message event in request", event);
-          if (wait(event.data) && event.data.tid === tid) {
+          // console.log("Received message event in request", event);
+          if (opts.wait(event.data) && event.data.tid === tid) {
             result.resolve(event.data);
           }
         });
@@ -47,7 +62,7 @@ class VibeSandboxApi {
         );
         return result.asPromise();
       },
-      { timeout: 5000 }
+      { timeout: opts.timeout ?? 5000 }
     );
     if (res.isSuccess()) {
       return Result.Ok(res.value as S);
@@ -59,9 +74,21 @@ class VibeSandboxApi {
 
   readonly onMsg = OnFunc<(event: MessageEvent) => void>();
 
-  constructor(svc: { addEventListener: typeof window.addEventListener; postMessage: typeof window.postMessage }) {
+  constructor(svc: VibeSandboxApiOptions) {
     this.svc = svc;
     this.svc.addEventListener("message", this.handleMessage);
+  }
+
+  callAI(prompt: string, opts: CallAIOpts): Promise<Result<ResCallAI>> {
+    return this.request<ReqCallAI, ResCallAI>(
+      {
+        type: "vibe.req.callAI",
+        prompt,
+        ...this.svc.vibeApp,
+        schema: opts.schema,
+      },
+      { wait: isResCallAI, timeout: 60000 }
+    );
   }
 
   sendRegisterFPDbMessage(data: Omit<ReqVibeRegisterFPDb, "type" | "tid">) {
@@ -71,7 +98,7 @@ class VibeSandboxApi {
         type: "vibe.req.register.fpdb",
         ...data,
       },
-      isResVibeRegisterFPDb
+      { wait: isResVibeRegisterFPDb }
     );
   }
 
@@ -84,9 +111,9 @@ class VibeSandboxApi {
           type: "vibe.req.fetchCloudToken",
           data: req.data,
         },
-        isResFetchCloudToken
+        { wait: isResFetchCloudToken }
       );
-      opts.self.setResetAfter(100)
+      opts.self.setResetAfter(100);
       if (rRes.isErr()) {
         console.error("Failed to fetch cloud token from vibe sandbox", rRes.Err());
         return rRes;
@@ -97,8 +124,8 @@ class VibeSandboxApi {
         console.error("Failed to fetch cloud token from vibe sandbox", isValidRes.summary);
         return Result.Err(isValidRes.summary);
       }
-      opts.self.setResetAfter(isValidRes.token.expiresAfter - ~~(isValidRes.token.expiresAfter*0.05));
-      return rRes
+      opts.self.setResetAfter(isValidRes.token.expiresAfter - ~~(isValidRes.token.expiresAfter * 0.05));
+      return rRes;
     });
   }
 }
@@ -120,7 +147,12 @@ class VibeTokenStrategie implements TokenStrategie {
   tryToken(_sthis: SuperThis, _logger: Logger, _opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
     return Promise.resolve(undefined);
   }
-  async waitForToken(_sthis: SuperThis, _logger: Logger, _deviceId: string, opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
+  async waitForToken(
+    _sthis: SuperThis,
+    _logger: Logger,
+    _deviceId: string,
+    _opts: ToCloudOpts
+  ): Promise<TokenAndClaims | undefined> {
     const resToken = await this.vibeApi.fetchCloudToken({
       data: this.my,
     });
@@ -140,16 +172,24 @@ class VibeTokenStrategie implements TokenStrategie {
   }
 }
 
+export const vibeApi = Lazy((svc: VibeSandboxApiOptions) => new VibeSandboxApi(svc));
+
 export async function registerDependencies(vibeApp: VibeApp, deps: Record<string, string>): Promise<void> {
   const useFireproofDep = deps["use-fireproof"];
+  // bind vibeApi to runtime
+  const ctxVibeApi = vibeApi({
+    vibeApp,
+    addEventListener: window.addEventListener.bind(window),
+    postMessage: window.parent.postMessage.bind(window.parent),
+  });
   if (useFireproofDep && window.parent !== window) {
     const fp = (await import(useFireproofDep)) as typeof import("use-fireproof");
-    const vibeApi = new VibeSandboxApi({
-      addEventListener: window.addEventListener.bind(window),
-      postMessage: window.parent.postMessage.bind(window.parent),
-    });
+    // const vibeApi = ({
+    //   addEventListener: window.addEventListener.bind(window),
+    //   postMessage: window.parent.postMessage.bind(window.parent),
+    // });
     fp.getLedgerSvc().onCreate((ledger) => {
-      vibeApi
+      ctxVibeApi
         .sendRegisterFPDbMessage({
           dbName: ledger.name,
           appSlug: vibeApp.appSlug,
@@ -168,15 +208,19 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
             console.log("Registered FPDb with vibe sandbox", res);
             ledger.attach(
               toCloud({
-                name: `vibe-${res.dbName}-${res.userSlug}-${res.appSlug}`,
-                strategy: new VibeTokenStrategie(vibeApi),
-                ledger: res.ledger,
-                tenant: res.tenant,
+                name: `vibe-${res.data.dbName}-${res.data.userSlug}-${res.data.appSlug}`,
+                strategy: new VibeTokenStrategie(ctxVibeApi, res.data),
+                ledger: res.data.ledger,
+                tenant: res.data.tenant,
               })
             );
           }
         });
     });
+    const callAI = deps["call-ai"];
+    if (callAI && window.parent !== window) {
+      registerCallAI(ctxVibeApi);
+    }
   }
   return;
 }

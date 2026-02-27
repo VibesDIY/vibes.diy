@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { ViewControlsType, ViewType } from "@vibes.diy/prompts";
 import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
 
@@ -142,7 +142,7 @@ export function useViewState(promptState: PromptState): ViewState {
     // Skip navigation for chat view or if control doesn't exist/isn't enabled
     // if (view === "chat" || !viewControls[view as keyof typeof viewControls]?.enabled) return;
     setSearchParams((prev) => {
-      console.log(`Navigating to view: ${view}`);
+      console.log(`Navigating to view: ${view}:${searchParams.toString()}`);
       prev.set("view", view);
       return prev;
     });

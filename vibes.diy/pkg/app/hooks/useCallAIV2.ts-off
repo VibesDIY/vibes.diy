@@ -1,6 +1,5 @@
 import { consumeStream } from "@adviser/cement";
-import { LLMChat } from "@vibes.diy/api-impl";
-import { resError, sectionEvent } from "@vibes.diy/api-types";
+import { LLMChat, resError, sectionEvent } from "@vibes.diy/api-types";
 import { isPromptBlockBegin, isPromptBlockEnd, isCodeBegin } from "@vibes.diy/call-ai-v2";
 import { TitleSrc } from "@vibes.diy/prompts";
 // import { RuntimeError } from "@vibes.diy/use-vibes-types";

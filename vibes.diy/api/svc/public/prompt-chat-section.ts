@@ -10,6 +10,8 @@ import {
 } from "@adviser/cement";
 import {
   InMsgBase,
+  isReqCreationPromptChatSection,
+  isReqPromptApplicationChatSection,
   LLMHeaders,
   MsgBase,
   PromptAndBlockMsgs,
@@ -25,8 +27,14 @@ import { type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
 import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
-import { sqlChatContexts, SqlChatSection, sqlChatSections, sqlPromptContexts } from "../sql/vibes-diy-api-schema.js";
-import { eq } from "drizzle-orm";
+import {
+  sqlApplicationChats,
+  sqlChatContexts,
+  SqlChatSection,
+  sqlChatSections,
+  sqlPromptContexts,
+} from "../sql/vibes-diy-api-schema.js";
+import { and, eq } from "drizzle-orm";
 import {
   createStatsCollector,
   createLineStream,
@@ -133,7 +141,7 @@ async function handlePromptContext({
 }: {
   vctx: VibesApiSQLCtx;
   req: ReqWithVerifiedAuth<ReqPromptChatSection>;
-  resChat: { appSlug: string; userSlug: string };
+  resChat: { appSlug: string; userSlug: string; mode: "creation" | "application" };
   promptId: string;
   blockSeq: number;
   value: BlockEndMsg;
@@ -175,7 +183,7 @@ async function handlePromptContext({
       }
     }
   }
-  if (code.length > 0) {
+  if (code.length > 0 && resChat.mode === "creation") {
     // here is where the music plays
     const rFs = await ensureAppSlugItem(vctx, {
       type: "vibes.diy.req-ensure-app-slug",
@@ -320,11 +328,12 @@ async function injectSystemPrompt(
 export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPromptChatSection>, never | VibesDiyError> = {
   hash: "prompt-chat-section-handler",
   validate: unwrapMsgBase(async (msg: MsgBase) => {
-    // console.log("Validating promptChatSection with payload:", ctx.enRequest);
+    // console.log("Validating promptChatSection with payload:", msg.payload);
     const ret = reqPromptChatSection(msg.payload);
     if (ret instanceof type.errors) {
       return Result.Ok(Option.None());
     }
+    // console.log("Validation successful for promptChatSection, payload:", ret);
     return Result.Ok(
       Option.Some({
         ...msg,
@@ -334,15 +343,40 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
   }),
   handle: checkAuth(
     async (ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>) => {
+      // console.log("Handling promptChatSection with validated payload:", ctx.validated.payload);
       const req = ctx.validated.payload;
+      const orig = (ctx.enRequest as MsgBase<ReqPromptChatSection>).payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      const resChat = await vctx.db.select().from(sqlChatContexts).where(eq(sqlChatContexts.chatId, req.chatId)).get();
-      if (!resChat) {
-        return Result.Err(`Chat ID ${req.chatId} not found`);
+      let resChat!: { appSlug: string; userSlug: string; mode: "creation" | "application" };
+      if (isReqCreationPromptChatSection(orig)) {
+        const iResChat = await vctx.db
+          .select()
+          .from(sqlChatContexts)
+          .where(and(eq(sqlChatContexts.chatId, req.chatId), eq(sqlChatContexts.userId, req.auth.verifiedAuth.claims.userId)))
+          .get();
+        if (!iResChat) {
+          return Result.Err(`Creation Chat ID ${req.chatId} not found`);
+        }
+        resChat = { ...iResChat, mode: "creation" };
       }
-      if (resChat.userId !== req.auth.verifiedAuth.claims.userId) {
-        return Result.Err(`Chat ID ${req.chatId} does not belong to the user`);
+      if (isReqPromptApplicationChatSection(orig)) {
+        const iResChat = await vctx.db
+          .select()
+          .from(sqlApplicationChats)
+          .where(
+            and(eq(sqlApplicationChats.userId, req.auth.verifiedAuth.claims.userId), eq(sqlApplicationChats.chatId, req.chatId))
+          )
+          .get();
+        if (!iResChat) {
+          return Result.Err(`Application Chat ID ${req.chatId} not found`);
+        }
+        resChat = { ...iResChat, mode: "application" };
+      }
+      if (!resChat) {
+        return Result.Err(
+          `Chat ID ${req.chatId} not found: ${req.mode}: ${isReqCreationPromptChatSection(orig) ? "creation" : isReqPromptApplicationChatSection(orig) ? "application" : "unknown"}`
+        );
       }
       const promptId = vctx.sthis.nextId(96 / 8).str;
       // needs to be sent before any block events
@@ -357,6 +391,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             appSlug: resChat.appSlug,
             promptId,
             outerTid: req.outerTid,
+            mode: req.mode,
           },
           tid: ctx.validated.tid,
           src: "promptChatSection",
@@ -406,7 +441,15 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         return Result.Err(r);
       }
 
-      const withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
+      let withSystemPrompt = Result.Ok({ model: req.prompt.model ?? vctx.params.llm.default.model, messages: [] as ChatMessage[] });
+      if (req.mode === "creation") {
+        withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
+      } else if (req.mode === "application") {
+        withSystemPrompt = Result.Ok({
+          model: req.prompt.model ?? vctx.params.llm.default.model,
+          messages: req.prompt.messages,
+        });
+      }
       if (withSystemPrompt.isErr()) {
         return Result.Err(withSystemPrompt);
       }
@@ -454,6 +497,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         if (done) {
           break;
         }
+        // console.log("Received value from LLM stream for promptId:", promptId, "value:", value);
         collectedMsgs.push(value);
         if (!isBlockEnd(value)) {
           if (!isBlockSteamMsg(value)) {

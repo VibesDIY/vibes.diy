@@ -5,6 +5,8 @@ import { BackButton } from "./BackButton.js";
 import { SaveButton } from "./SaveButton.js";
 import { ViewControls } from "./ViewControls.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import { ShareButton } from "./ShareButton.js";
+import { useParams } from "react-router";
 
 interface ResultPreviewHeaderContentProps {
   promptState: PromptState;
@@ -58,6 +60,11 @@ function ResultPreviewHeaderContent({
   // onCodeSave,
   // syntaxErrorCount,
 }: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
+  const { userSlug, appSlug } = useParams<{ userSlug: string; appSlug: string; fsId: string }>();
+  function genUrl(userSlug: string, appSlug: string): Promise<string> {
+    return Promise.resolve(`${window.location.origin}/vibe/${userSlug}/${appSlug}`);
+  }
+
   // const { sessionId: urlSessionId, view: urlView } = useParams();
   // const publishButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -121,15 +128,18 @@ function ResultPreviewHeaderContent({
               testId="header-save-button"
             />
           )}
-
-          <div>Share is not impl</div>
-          {/* <ShareButton
-            ref={publishButtonRef}
-            onClick={toggleShareModal}
-            isPublishing={isPublishing}
-            urlCopied={urlCopied}
-            hasPublishedUrl={!!publishedAppUrl}
-          /> */}
+          {userSlug && appSlug && (
+            <ShareButton
+              initialUserSlug={userSlug}
+              initialAppSlug={appSlug}
+              genUrl={genUrl}
+              // ref={publishButtonRef}
+              // onClick={toggleShareModal}
+              // isPublishing={isPublishing}
+              // urlCopied={urlCopied}
+              // hasPublishedUrl={!!publishedAppUrl}
+            />
+          )}
         </div>
       </div>
       {/* {isShareModalOpen && (

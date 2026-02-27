@@ -7,7 +7,7 @@ import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useTheme } from "../../contexts/ThemeContext.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import { useSearchParams } from "react-router";
-import { isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
+import { isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 
 interface CodeEditorProps {
   // activeView: "preview" | "code" | "data" | "chat" | "settings";
@@ -22,10 +22,16 @@ interface CodeEditorProps {
   onSyntaxErrorChange?: (errorCount: number) => void;
 }
 
-function getCode(promptState: PromptState, sectionId?: string | null): { code: string; complete: boolean } {
+function getCode(promptState: PromptState, fsId?: string | null): { code: string; complete: boolean } {
   const retCode: string[] = [];
   let complete = false;
   for (const block of [...promptState.blocks].reverse()) {
+    if (fsId) {
+      const blockEnd = block.msgs.find((msg) => isBlockEnd(msg));
+      if (!blockEnd || !isBlockEnd(blockEnd) || blockEnd.fsRef?.fsId !== fsId) {
+        continue;
+      }
+    }
     let foundCode = false;
     for (const msg of block.msgs) {
       switch (true) {
@@ -35,18 +41,14 @@ function getCode(promptState: PromptState, sectionId?: string | null): { code: s
           complete = false;
           break;
         case isCodeEnd(msg):
-          if (sectionId && msg.sectionId === sectionId) {
-            return { code: retCode.join("\n"), complete: true };
-          }
           complete = true;
           break;
-
         case isCodeLine(msg):
           retCode.push(msg.line);
           break;
       }
     }
-    if (foundCode && !sectionId) {
+    if (foundCode) {
       return { code: retCode.join("\n"), complete };
     }
   }
@@ -82,7 +84,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const userScrolledRef = useRef<boolean>(false);
 
   // Extract the current app code string
-  const appCode = getCode(promptState, searchParams.get("sectionId"));
+  const appCode = getCode(promptState, searchParams.get("fsId"));
   // console.log(`codeEditor`, appCode)
 
   // State for edited code

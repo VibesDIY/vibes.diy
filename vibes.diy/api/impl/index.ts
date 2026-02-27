@@ -12,9 +12,7 @@ import {
   resError,
   ResOpenChat,
   ReqPromptChatSection,
-  ResError,
   ReqOpenChat,
-  SectionEvent,
   sectionEvent,
   ResPromptChatSection,
   isResEnsureAppSlug,
@@ -32,6 +30,11 @@ import {
   ReqGetAppByFsId,
   ResGetAppByFsId,
   isResGetAppByFsId,
+  VibesDiyApiIface,
+  OptionalAuth,
+  Req,
+  LLMChat,
+  OnResponseTypes,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -50,7 +53,7 @@ import {
 } from "@adviser/cement";
 import { ClerkClaim, SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
-import { VibesDiyApiIface, W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
+import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
 import { type } from "arktype";
@@ -91,31 +94,8 @@ interface PendingRequest<S> {
   resolve: (result: ResultVibesDiy<S>) => void;
 }
 
-type OnResponseTypes = ResError | SectionEvent;
-
 // type LLMPrompt = Omit<LLMRequest, "model" | "stream"> & { model?: string; };
 
-export const LLMChatEntry = type({
-  tid: "string",
-  chatId: "string",
-  userSlug: "string",
-  appSlug: "string",
-});
-export type LLMChatEntry = typeof LLMChatEntry.infer;
-
-export interface LLMChat extends LLMChatEntry {
-  prompt(req: LLMRequest): Promise<Result<ResPromptChatSection, VibesDiyError>>;
-
-  readonly sectionStream: ReadableStream<OnResponseTypes>;
-  // onResponse(fn: (msg: OnResponseTypes) => void): void;
-  // onError(fn: (err: VibesDiyError) => void): void;
-  close(force?: boolean): Promise<void>;
-}
-
-interface OptionalAuth {
-  readonly auth?: DashAuthType;
-}
-type Req<T> = Omit<T, "type" | "auth"> & OptionalAuth;
 type ReqType<T> = Omit<T, "auth"> & OptionalAuth;
 type WithAuth<T> = Omit<T, "auth"> & { readonly auth: DashAuthType };
 
@@ -463,6 +443,7 @@ class LLMChatImpl implements LLMChat {
     const res = await this.api.request<ReqType<ReqPromptChatSection>, ResPromptChatSection>(
       {
         type: "vibes.diy.req-prompt-chat-section",
+        mode: this.res.mode,
         chatId: this.res.chatId,
         outerTid: this.tid, //leaking but necessary streaming
         prompt: msg,

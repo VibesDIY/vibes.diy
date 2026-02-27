@@ -1,6 +1,7 @@
-import React, { memo, useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
+import { SignIn, useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
@@ -18,15 +19,11 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const clerk = useClerk();
   const { user } = useUser();
   const userEmail = user?.primaryEmailAddress?.emailAddress;
+  const [showSignIn, setShowSignIn] = useState(false);
 
   // Clerk doesn't have polling state like the old auth system
   const isPolling = false;
   const pollError = null;
-  const initiateLogin = async () => {
-    await clerk.redirectToSignIn({
-      redirectUrl: window.location.href,
-    });
-  };
 
   // Handle clicks outside the sidebar to close it
   useEffect(() => {
@@ -156,10 +153,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                   <li>
                     <button
                       type="button"
-                      onClick={async () => {
-                        await initiateLogin();
-                        onClose();
-                      }}
+                      onClick={() => setShowSignIn(true)}
                       className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
                     >
                       <span>Log in</span>
@@ -171,6 +165,16 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
           </nav>
         </div>
       </div>
+
+      {showSignIn &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSignIn(false)}>
+            <div onClick={(e) => e.stopPropagation()}>
+              <SignIn routing="hash" fallbackRedirectUrl={window.location.href} />
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -1,46 +1,40 @@
-import React, { useEffect } from "react";
-import { Outlet, useNavigate, useLocation, useSearchParams } from "react-router";
-import { useClerk } from "@clerk/clerk-react";
-import { BuildURI } from "@adviser/cement";
+import React, { useCallback, useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router";
+import { SignIn, useAuth } from "@clerk/clerk-react";
+import { createPortal } from "react-dom";
+import SessionSidebar from "../components/SessionSidebar.js";
 
 /**
- * Auth layout route - wraps all protected routes
- * Checks authentication and redirects to login if not signed in
+ * Auth layout route - wraps all protected routes.
+ * Shows a Clerk SignIn overlay (and open sidebar) when not authenticated.
  */
 export default function AuthLayout() {
-  const clerk = useClerk();
-  const navigate = useNavigate();
+  const { isSignedIn, isLoaded } = useAuth();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [isSidebarVisible, setIsSidebarVisible] = useState(!isSignedIn);
+  const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
 
   useEffect(() => {
-    // Wait for Clerk to load
-    if (!clerk.loaded) return;
-
-    // If not signed in, redirect to login with return URL
-    if (!clerk.isSignedIn) {
-      const hasPrompt = searchParams.get("prompt64");
-      if (hasPrompt) {
-        clerk.redirectToSignIn({
-          redirectUrl: BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", hasPrompt).toString(),
-        });
-      } else {
-        const redirectTo = encodeURIComponent(location.pathname + location.search);
-        navigate(`/login?redirectTo=${redirectTo}`);
-      }
+    if (isSignedIn) {
+      setIsSidebarVisible(false);
     }
-  }, [clerk.loaded, clerk.user, navigate, location.pathname, location.search]);
+  }, [isSignedIn]);
 
-  // Show loading state while checking auth
-  if (!clerk.loaded) {
+  if (!isLoaded) {
     return <div>Loading...</div>;
   }
 
-  // Show loading if redirecting
-  if (!clerk.isSignedIn) {
-    return <div>Redirecting to login...</div>;
-  }
-
-  // User is authenticated - render child routes
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+      {!isSignedIn &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <SignIn routing="hash" fallbackRedirectUrl={location.pathname + location.search} />
+          </div>,
+          document.body
+        )}
+    </>
+  );
 }

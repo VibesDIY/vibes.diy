@@ -24,6 +24,7 @@ export default function ChatPrompt() {
         const { params } = rClaims.Ok().claims;
         return vibeDiyApi.openChat({
           userSlug: params.name ?? params.nick ?? params.email.replace(/@[^@]+$/, ""),
+          mode: "creation",
         });
       })
       .then((rChat) => {

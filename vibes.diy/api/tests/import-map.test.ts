@@ -220,6 +220,7 @@ describe("Test Dependencies", () => {
       },
       "@vibes.diy/base": "privateNpm:",
       "@vibes.diy/vibe-runtime": "privateNpm:",
+      "call-ai": "alias:@vibes.diy/vibe-runtime",
     });
 
     const im = await deps.renderImportMap({
@@ -258,6 +259,7 @@ describe("Test Dependencies", () => {
       "react-dom": "https://esm.sh/react-dom@11.0.0",
       "react/jsx-runtime": "https://esm.sh/react@11.0.0/jsx-runtime",
       "react/jsx-runtime-1": "https://esm.sh/react@11.0.0/jsx-runtime-1",
+      "call-ai": "http://localhost:8888/vibe-pkg/@vibes.diy/vibe-runtime",
     });
   });
 });

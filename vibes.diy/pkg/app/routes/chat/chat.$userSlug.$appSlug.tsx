@@ -1,10 +1,9 @@
-import { useParams, useSearchParams } from "react-router";
+import { SetURLSearchParams, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
-import { LLMChat, LLMChatEntry } from "@vibes.diy/api-impl";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
 // import { useClerk } from "@clerk/clerk-react";
-import { consumeStream } from "@adviser/cement";
-import { PromptAndBlockMsgs, sectionEvent } from "@vibes.diy/api-types";
+import { processStream } from "@adviser/cement";
+import { LLMChat, LLMChatEntry, PromptAndBlockMsgs, sectionEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
@@ -25,6 +24,8 @@ export interface PromptState {
   blocks: PromptBlock[];
   hasCode: boolean;
   title: string;
+  searchParams: URLSearchParams;
+  setSearchParams: SetURLSearchParams;
 }
 
 export interface PromptBlock {
@@ -94,7 +95,7 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 
 export default function Chat() {
   const { userSlug, appSlug } = useParams<{ userSlug: string; appSlug: string }>();
-  const [searchParams, setSearchParam] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [chat, setChat] = useState<LLMChat | null>(null);
   const openingRef = useRef(false);
   const { vibeDiyApi } = useVibeDiy();
@@ -109,12 +110,14 @@ export default function Chat() {
     hasCode: false,
     title: "Title-Feature-Missing",
     blocks: [],
+    searchParams,
+    setSearchParams,
   });
 
   useEffect(() => {
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
-        setSearchParam((prev) => {
+        setSearchParams((prev) => {
           // prev.delete("fsId");
           if (!prev.has("view")) {
             prev.set("view", "code");
@@ -148,7 +151,7 @@ export default function Chat() {
       return; // Already opened or opening
     }
     openingRef.current = true;
-    vibeDiyApi.openChat({ userSlug, appSlug }).then((rChat) => {
+    vibeDiyApi.openChat({ userSlug, appSlug, mode: "creation" }).then((rChat) => {
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
         return;
@@ -157,7 +160,7 @@ export default function Chat() {
       setChat(rChat.Ok());
       // console.log(`dispatch-initChat`, rChat.Ok())
       dispatch({ type: "initChat", chat: rChat.Ok() });
-      consumeStream(rChat.Ok().sectionStream, (msg) => {
+      void processStream(rChat.Ok().sectionStream, (msg) => {
         const se = sectionEvent(msg);
         if (se instanceof type.errors) {
           console.error(se.summary);
@@ -191,12 +194,13 @@ export default function Chat() {
 
   const fsIdClick = useCallback(
     ({ fsId }: { fsId: string; appSlug: string; userSlug: string }) => {
-      setSearchParam((prev) => {
+      console.log(`fsIdClick:`, fsId, searchParams.toString());
+      setSearchParams((prev) => {
         prev.set("fsId", fsId);
         return prev;
       });
     },
-    [searchParams, setSearchParam]
+    [searchParams, setSearchParams]
   );
 
   const openVibe = useCallback(() => {

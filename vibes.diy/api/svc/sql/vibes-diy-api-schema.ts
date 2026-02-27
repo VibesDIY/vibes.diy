@@ -65,9 +65,8 @@ export const sqlChatContexts = sqliteTable("ChatContexts", {
 export const sqlChatSections = sqliteTable(
   "ChatSections",
   {
-    chatId: text()
-      .notNull()
-      .references(() => sqlChatContexts.chatId),
+    chatId: text().notNull(),
+    // .references(() => sqlChatContexts.chatId),
     promptId: text().notNull(), // uuid v4
     blockSeq: int().notNull(), // incremented per section
     // origin: text().notNull(), // 'user' | 'llm'
@@ -108,5 +107,24 @@ export const sqlPromptContexts = sqliteTable(
     uniqueIndex("PromptContext_promptId_idx").on(table.promptId),
     index("PromptContext_created_idx").on(table.created),
     index("PromptContext_nethash_idx").on(table.nethash),
+  ]
+);
+
+export const sqlApplicationChats = sqliteTable(
+  "ApplicationChats",
+  {
+    userId: text().notNull(), // usally from Clerk
+    appSlug: text().notNull(), // reverenced from the calling Page
+    userSlug: text().notNull(), // reverenced from the calling Page
+    chatId: text().notNull(), // uuid v4
+    blocks: text({ mode: "json" }).notNull(),
+    created: text().notNull(),
+  },
+  (table) => [
+    uniqueIndex("ApplicationChats_chatId_idx").on(table.chatId),
+    uniqueIndex("ApplicationChats_userId_chatIdidx").on(table.userId, table.chatId),
+    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.chatId] }),
+    // query for all chats of an app: appSlug + userSlug + created desc
+    index("ApplicationChats_userId_appSlug_userSlug_created_idx").on(table.userId, table.appSlug, table.userSlug, table.created),
   ]
 );
