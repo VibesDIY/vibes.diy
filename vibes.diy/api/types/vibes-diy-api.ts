@@ -18,6 +18,8 @@ import {
   SectionEvent,
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
+  ReqListApplicationChats,
+  ResListApplicationChats,
 } from "./msg-types.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -56,6 +58,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>>;
   ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>>;
+  listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>>;
 
   getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>>;
 }

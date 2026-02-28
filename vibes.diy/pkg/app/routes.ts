@@ -8,8 +8,9 @@ export default [
   // Protected routes - wrapped by auth layout (no path segment added)
   layout("./routes/auth.tsx", [
     route("chat/prompt", "./routes/chat/prompt.tsx"),
-    route("chat/:userSlug/:appSlug", "./routes/chat/chat.$userSlug.$appSlug.tsx"),
-    route("vibes/mine", "./routes/vibes/mine.tsx"),
+    route("chat/:userSlug/:appSlug/:fsId?", "./routes/chat/chat.$userSlug.$appSlug.tsx"),
+    route("vibes/mine/:userSlug?/:appSlug?", "./routes/vibes/mine.tsx"),
+    route("settings", "./routes/settings.tsx", { id: "settings" }),
   ]),
 
   // route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
@@ -31,7 +32,6 @@ export default [
 
   route("vibe/:userSlug/:appSlug/:fsId?", "./routes/vibe.$userSlug.$appSlug.tsx"),
 
-  // route("settings", "./routes/settings.tsx", { id: "settings" }),
   route("about", "./routes/about.tsx", { id: "about" }),
   route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
   // route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),

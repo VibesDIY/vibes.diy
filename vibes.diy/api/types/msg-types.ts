@@ -461,3 +461,31 @@ export type ResEnsureUserSettings = typeof resEnsureUserSettings.infer;
 export function isResEnsureUserSettings(obj: unknown): obj is ResEnsureUserSettings {
   return !(resEnsureUserSettings(obj) instanceof type.errors);
 }
+
+export const reqListApplicationChats = type({
+  type: "'vibes.diy.req-list-application-chats'",
+  auth: dashAuthType,
+  "appSlug?": "string",
+  "userSlug?": "string",
+  "limit?": "number", // default 20, max 100
+  "cursor?": "string", // ISO timestamp cursor for next page (exclusive)
+});
+export type ReqListApplicationChats = typeof reqListApplicationChats.infer;
+
+export const resListApplicationChatsItem = type({
+  chatId: "string",
+  appSlug: "string",
+  userSlug: "string",
+  created: "string",
+});
+export type ResListApplicationChatsItem = typeof resListApplicationChatsItem.infer;
+
+export const resListApplicationChats = type({
+  type: "'vibes.diy.res-list-application-chats'",
+  items: resListApplicationChatsItem.array(),
+  "nextCursor?": "string", // present only when more pages exist
+});
+export type ResListApplicationChats = typeof resListApplicationChats.infer;
+export function isResListApplicationChats(obj: unknown): obj is ResListApplicationChats {
+  return !(resListApplicationChats(obj) instanceof type.errors);
+}

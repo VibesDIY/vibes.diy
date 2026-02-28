@@ -12,6 +12,7 @@ import {
   LRUMap,
   processStream,
   EventoHandler,
+  Future,
 } from "@adviser/cement";
 import {
   isReqVibeRegisterFPDb,
@@ -27,8 +28,8 @@ import {
   ResFetchCloudToken,
 } from "@vibes.diy/vibe-types";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
-import { isSectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
-import { ChatMessage, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
+import { isSectionEvent, SectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
+import { ChatMessage, CodeEndMsg, isCodeBegin, isCodeEnd, isCodeLine, isPromptReq, PromptReq } from "@vibes.diy/call-ai-v2";
 
 export class MessageEventEventoEnDecoder implements EventoEnDecoder<MessageEvent, unknown> {
   async encode(me: MessageEvent): Promise<Result<unknown>> {
@@ -135,6 +136,36 @@ function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+export function getCodeBlock(stream: ReadableStream<unknown>): Promise<{
+  code: string;
+  sectionEvt: SectionEvent;
+  promptReq: PromptReq;
+  codeEnd: CodeEndMsg;
+}> {
+  const codeParts: string[] = [];
+  let promptReq!: PromptReq;
+  const firstCodeBlock = new Future<{ code: string; sectionEvt: SectionEvent; promptReq: PromptReq; codeEnd: CodeEndMsg }>();
+  processStream(stream, (msg) => {
+    if (isSectionEvent(msg)) {
+      for (const block of msg.blocks) {
+        if (isPromptReq(block)) {
+          promptReq = block;
+        }
+        if (isCodeBegin(block) && block.lang.toLocaleUpperCase() === "JSON") {
+          codeParts.splice(0, codeParts.length); // clear previous code parts
+        }
+        if (isCodeLine(block)) {
+          codeParts.push(block.line);
+        }
+        if (isCodeEnd(block)) {
+          firstCodeBlock.resolve({ code: codeParts.join("\n"), sectionEvt: msg, promptReq, codeEnd: block });
+        }
+      }
+    }
+  });
+  return firstCodeBlock.asPromise();
+}
+
 function vibeFetchCloudToken(sandbox: vibesDiySrvSandbox): EventoHandler {
   const { dashApi } = sandbox.args;
   return {
@@ -191,27 +222,14 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
               message: rChat.Err().message,
             } satisfies ResErrorCallAI);
           }
-          const codeParts: string[] = [];
-          void processStream(rChat.Ok().sectionStream, (msg) => {
-            if (isSectionEvent(msg)) {
-              for (const block of msg.blocks) {
-                if (isCodeBegin(block) && block.lang.toLocaleUpperCase() === "JSON") {
-                  codeParts.splice(0, codeParts.length); // clear previous code parts
-                }
-                if (isCodeLine(block)) {
-                  codeParts.push(block.line);
-                }
-                if (isCodeEnd(block)) {
-                  ctx.send.send(ctx, {
-                    tid: ctx.validated.tid,
-                    type: "vibe.res.callAI",
-                    status: "ok",
-                    promptId: msg.promptId,
-                    result: codeParts.join("\n"),
-                  } satisfies ResOkCallAI);
-                }
-              }
-            }
+          getCodeBlock(rChat.Ok().sectionStream).then(({ code, sectionEvt: msg }) => {
+            ctx.send.send(ctx, {
+              tid: ctx.validated.tid,
+              type: "vibe.res.callAI",
+              status: "ok",
+              promptId: msg.promptId,
+              result: code,
+            } satisfies ResOkCallAI);
           });
           // console.log(`Sending prompt to chat`, ctx.validated.prompt);
           const generateSchema: ChatMessage[] = [];

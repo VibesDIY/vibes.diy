@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import { BrutalistCard, VibesButton } from "@vibes.diy/base";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
@@ -12,41 +12,38 @@ export function meta() {
 
 export default function VibesMine(): ReactElement {
   const navigate = useNavigate();
+  const { userSlug: paramUserSlug, appSlug: paramAppSlug } = useParams<{ userSlug?: string; appSlug?: string }>();
   const { vibeDiyApi } = useVibeDiy();
 
   const [isLoading, setIsLoading] = useState(true);
   const [vibeItems, setVibeItems] = useState<ResListUserSlugAppSlugItem[]>([]);
   const [chatDetails, setChatDetails] = useState<ResGetChatDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
-  const pendingRef = useRef<string | null>(null);
+  const cancelledRef = useRef(false);
 
-  const fetchChatDetails = useCallback(
-    (userSlug: string, appSlug: string) => {
-      const key = `${userSlug}/${appSlug}`;
-      if (pendingRef.current === key) return;
-      // Toggle off if clicking the same appSlug again
-      if (chatDetails && chatDetails.userSlug === userSlug && chatDetails.appSlug === appSlug) {
-        setChatDetails(null);
-        setLoadingDetails(null);
-        return;
-      }
-      pendingRef.current = key;
-      setLoadingDetails(key);
+  // Fetch chat details whenever the URL params change
+  useEffect(() => {
+    if (!paramUserSlug || !paramAppSlug) {
       setChatDetails(null);
-      vibeDiyApi
-        .getChatDetails({ userSlug, appSlug })
-        .then((res) => {
-          if (res.isOk()) {
-            setChatDetails(res.Ok());
-          }
-        })
-        .finally(() => {
-          setLoadingDetails(null);
-          pendingRef.current = null;
-        });
-    },
-    [vibeDiyApi, chatDetails]
-  );
+      setLoadingDetails(null);
+      return;
+    }
+    const key = `${paramUserSlug}/${paramAppSlug}`;
+    cancelledRef.current = false;
+    setLoadingDetails(key);
+    setChatDetails(null);
+    vibeDiyApi
+      .getChatDetails({ userSlug: paramUserSlug, appSlug: paramAppSlug })
+      .then((res) => {
+        if (!cancelledRef.current && res.isOk()) setChatDetails(res.Ok());
+      })
+      .finally(() => {
+        if (!cancelledRef.current) setLoadingDetails(null);
+      });
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [paramUserSlug, paramAppSlug, vibeDiyApi]);
 
   useEffect(() => {
     vibeDiyApi
@@ -87,7 +84,7 @@ export default function VibesMine(): ReactElement {
                 <div className="grid gap-3">
                   {item.appSlugs.map((appSlug) => {
                     const key = `${item.userSlug}/${appSlug}`;
-                    const isSelected = chatDetails?.userSlug === item.userSlug && chatDetails?.appSlug === appSlug;
+                    const isSelected = paramUserSlug === item.userSlug && paramAppSlug === appSlug;
                     const isLoadingThis = loadingDetails === key;
                     return (
                       <div
@@ -95,7 +92,11 @@ export default function VibesMine(): ReactElement {
                         className={`rounded-lg border transition-all ${isSelected ? "border-blue-400 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-950/30" : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-400"}`}
                       >
                         <button
-                          onClick={() => fetchChatDetails(item.userSlug, appSlug)}
+                          onClick={() =>
+                            isSelected
+                              ? navigate("/vibes/mine", { replace: true, preventScrollReset: true })
+                              : navigate(`/vibes/mine/${item.userSlug}/${appSlug}`, { replace: true, preventScrollReset: true })
+                          }
                           className="flex w-full items-center justify-between px-4 py-3 text-left"
                         >
                           <span
@@ -134,9 +135,7 @@ export default function VibesMine(): ReactElement {
                                           Open App ↗
                                         </a>
                                         <button
-                                          onClick={() =>
-                                            navigate(`/chat/${chatDetails.userSlug}/${chatDetails.appSlug}?fsId=${p.fsId}`)
-                                          }
+                                          onClick={() => navigate(`/chat/${chatDetails.userSlug}/${chatDetails.appSlug}/${p.fsId}`)}
                                           className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                                         >
                                           Continue Chat →

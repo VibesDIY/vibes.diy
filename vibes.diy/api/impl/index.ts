@@ -38,6 +38,9 @@ import {
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
   isResEnsureUserSettings,
+  ReqListApplicationChats,
+  ResListApplicationChats,
+  isResListApplicationChats,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -321,6 +324,15 @@ export class VibeDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-ensure-user-settings" },
       {
         resMatch: isResEnsureUserSettings,
+      }
+    );
+  }
+
+  listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-list-application-chats" },
+      {
+        resMatch: isResListApplicationChats,
       }
     );
   }

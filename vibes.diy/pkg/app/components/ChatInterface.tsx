@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useParams } from "react-router";
 // import type { ChatInterfaceProps } from "@vibes.diy/prompts";
 import MessageList from "./MessageList.js";
 import WelcomeScreen from "./WelcomeScreen.js";
@@ -15,6 +16,7 @@ function ChatInterface({
   promptState: PromptState;
   onClick: (a: { fsId: string; appSlug: string; userSlug: string }) => void;
 }) {
+  const { fsId } = useParams<{ fsId?: string }>();
   const { running, blocks } = promptState;
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +48,7 @@ function ChatInterface({
             promptBlocks={blocks}
             promptProcessing={running}
             chatId={promptState.chat.chatId}
-            selectedFsId={promptState.searchParams.get("fsId") ?? undefined}
+            selectedFsId={fsId}
 
             // setSelectedResponseId={setSelectedResponseId}
             // selectedResponseId={selectedResponseDoc?._id || ""}

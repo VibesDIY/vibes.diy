@@ -10,25 +10,19 @@ interface EnsureChatIdPResult {
   chatId: string;
   blocks: PromptAndBlockMsgs[];
   created: Date;
+  appSlug: string;
+  userSlug: string;
 }
 
 export async function ensureApplicationChatId(
   ctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqOpenChat>
 ): Promise<Result<EnsureChatIdPResult>> {
-  const { appSlug, userSlug, chatId } = req;
-  if (!(appSlug && userSlug)) {
-    return Result.Err("appSlug and userSlug are required to ensure application chat ID");
-  }
+  const { chatId } = req;
+  const appSlug = req.appSlug;
+  const userSlug = req.userSlug;
   if (chatId) {
-    const condition = [
-      eq(sqlApplicationChats.appSlug, appSlug),
-      eq(sqlApplicationChats.userSlug, userSlug),
-      eq(sqlApplicationChats.userId, req.auth.verifiedAuth.claims.userId),
-    ];
-    if (chatId) {
-      condition.push(eq(sqlApplicationChats.chatId, chatId));
-    }
+    const condition = [eq(sqlApplicationChats.userId, req.auth.verifiedAuth.claims.userId), eq(sqlApplicationChats.chatId, chatId)];
     const rResult = await exception2Result(() =>
       ctx.db
         .select()
@@ -54,7 +48,17 @@ export async function ensureApplicationChatId(
     if (blocks instanceof type.errors) {
       return Result.Err(`Failed to parse blocks for existing application chat: ${blocks.summary}`);
     }
-    return Result.Ok({ chatId: result.ApplicationChats.chatId, blocks, created: new Date(result.ApplicationChats.created) });
+    return Result.Ok({
+      appSlug: result.ApplicationChats.appSlug,
+      userSlug: result.ApplicationChats.userSlug,
+      chatId: result.ApplicationChats.chatId,
+      blocks,
+      created: new Date(result.ApplicationChats.created),
+    });
+  } else {
+    if (!(appSlug && userSlug)) {
+      return Result.Err("appSlug and userSlug are required if chatId is not provided");
+    }
   }
   const rHasAppUserSlug = await exception2Result(() =>
     ctx.db
@@ -83,5 +87,11 @@ export async function ensureApplicationChatId(
   if (rInsert.isErr()) {
     return Result.Err(`Error Creating new app: ${rInsert.Err().message}`);
   }
-  return Result.Ok({ chatId: newChatId, blocks: [], created: created });
+  return Result.Ok({
+    appSlug,
+    userSlug,
+    chatId: newChatId,
+    blocks: [],
+    created: created,
+  });
 }

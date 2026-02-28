@@ -54,6 +54,10 @@ export const PromptReq = type({
 }).and(PromptBase);
 export type PromptReq = typeof PromptReq.infer;
 
+export function isPromptReq(msg: unknown): msg is PromptReq {
+  return !(PromptReq(msg) instanceof type.errors);
+}
+
 export const PromptBlockBegin = type({
   type: "'prompt.block-begin'",
 }).and(PromptBase);
@@ -78,8 +82,4 @@ export function isPromptBlockBegin(msg: unknown): msg is PromptBlockBegin {
 
 export function isPromptBlockEnd(msg: unknown): msg is PromptBlockEnd {
   return !(PromptBlockEnd(msg) instanceof type.errors);
-}
-
-export function isPromptReq(msg: unknown): msg is PromptReq {
-  return !(PromptReq(msg) instanceof type.errors);
 }

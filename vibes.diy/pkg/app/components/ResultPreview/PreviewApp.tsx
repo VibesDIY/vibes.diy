@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import React, { useMemo } from "react";
 // import { BlockEndMsg, CodeEndMsg, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
@@ -28,12 +28,10 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 // }
 
 export function PreviewApp({ promptState: _p }: { promptState: PromptState }) {
-  const { userSlug, appSlug } = useParams<{ userSlug: string; appSlug: string }>();
-  const [searchParams] = useSearchParams();
+  const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
   const { webVars: svcVars } = useVibeDiy();
 
   const previewUrl = useMemo(() => {
-    const fsId = searchParams.get("fsId");
     if (fsId && appSlug && userSlug) {
       const myUrl = URI.from(window.location.href);
       const baseUrl = calcEntryPointUrl({
@@ -47,7 +45,7 @@ export function PreviewApp({ promptState: _p }: { promptState: PromptState }) {
       return previewUrl;
     }
     return null;
-  }, [searchParams.get("fsId"), userSlug, appSlug]);
+  }, [fsId, userSlug, appSlug]);
 
   if (!previewUrl) {
     return <>No App Found</>;
