@@ -9,6 +9,7 @@ import { listUserSlugAppSlugEvento } from "./public/list-user-slug-app-slug.js";
 import { getChatDetailsEvento } from "./public/get-chat-details.js";
 import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
+import { listApplicationChats } from "./public/list-application-chats.js";
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
   evento.push(
@@ -20,6 +21,7 @@ export const vibesMsgEvento = Lazy(() => {
     openChat,
     promptChatSection,
     ensureUserSettingsEvento,
+    listApplicationChats,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

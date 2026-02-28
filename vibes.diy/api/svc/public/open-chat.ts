@@ -1,4 +1,4 @@
-import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, SendStatItem } from "@adviser/cement";
+import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
 import {
   MsgBase,
   ReqOpenChat,
@@ -40,93 +40,52 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      if (req.mode === "creation") {
-        // this path is for in dev-mode where a new chat in dev console
-        const rChatId = await ensureChatId(vctx, req);
-        if (rChatId.isErr()) {
-          return Result.Err(rChatId);
-        }
-        const { appSlug, userSlug, chatId } = rChatId.Ok();
-
-        const wsp = ctx.send.provider as WSSendProvider;
-        console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
-        wsp.chatIds.add({ chatId, tid: ctx.validated.tid });
-
-        const rReSend = await resendChatSectionsPrevMsg({
-          vctx,
-          chatId,
-          tid: ctx.validated.tid,
-          dst: ctx.validated.src,
-          send: (msg: MsgBase<SectionEvent>) => {
-            return ctx.send.send(ctx, msg);
-          },
-        });
-        if (rReSend.isErr()) {
-          console.error("Error in resendChatSectionsPrevMsg", rReSend.Err());
-          // We can choose to continue even if resending previous messages fails
-          // return Result.Err(rReSend.Err());
-        }
-        const resOpenChat = await ctx.send.send(ctx, {
-          type: "vibes.diy.res-open-chat",
-          chatId,
-          appSlug,
-          userSlug,
-          mode: req.mode,
-        } satisfies ResOpenChat);
-        if (resOpenChat.isErr()) {
-          return Result.Err(resOpenChat);
-        }
-        return Result.Ok(EventoResult.Continue);
+      let chatPromise: Promise<Result<{ appSlug: string; userSlug: string; chatId: string }>>;
+      switch (req.mode) {
+        case "creation":
+          chatPromise = ensureChatId(vctx, req);
+          break;
+        case "application":
+          chatPromise = ensureApplicationChatId(vctx, req);
+          break;
+        default:
+          return Result.Err(`Invalid mode: ${req.mode}`);
       }
-      if (req.mode === "application") {
-        const { appSlug, userSlug } = ctx.validated.payload;
-        if (!appSlug || !userSlug) {
-          return Result.Err(`appSlug and userSlug are required for application mode`);
-        }
-        // is are prompts from the application which will run
-        // in the userId context which could be different from
-        // the creator of the app
-        const rChatId = await ensureApplicationChatId(vctx, req);
-        if (rChatId.isErr()) {
-          return Result.Err(rChatId);
-        }
-        const { chatId: newChatId, blocks, created } = rChatId.Ok();
-        const rCurrentMsg: Result<SendStatItem<MsgBase<SectionEvent>>> = await ctx.send.send(ctx, {
-          payload: {
-            type: "vibes.diy.section-event",
-            chatId: newChatId,
-            promptId: newChatId, // for simplicity we use chatId as promptId for the first section
-            blockSeq: 0,
-            timestamp: created,
-            blocks,
-          },
-          tid: ctx.validated.tid,
-          src: "openChat",
-          dst: ctx.validated.src,
-          ttl: 6,
-        } satisfies MsgBase<SectionEvent>);
-        if (rCurrentMsg.isErr()) {
-          return Result.Err(rCurrentMsg);
-        }
-
-        const wsp = ctx.send.provider as WSSendProvider;
-        console.log("openChat: Adding chatId to WSSendProvider", newChatId, ctx.validated.tid);
-        wsp.chatIds.add({ chatId: newChatId, tid: ctx.validated.tid });
-
-        const resOpenChat = await ctx.send.send(ctx, {
-          type: "vibes.diy.res-open-chat",
-          chatId: newChatId,
-          appSlug,
-          userSlug,
-          mode: req.mode,
-        } satisfies ResOpenChat);
-        if (resOpenChat.isErr()) {
-          return Result.Err(resOpenChat);
-        }
-
-        return Result.Ok(EventoResult.Continue);
+      const rChatId = await chatPromise;
+      if (rChatId.isErr()) {
+        return Result.Err(rChatId);
       }
-      return Result.Err(`Invalid mode: ${req.mode}`);
+      const { appSlug, userSlug, chatId } = rChatId.Ok();
+
+      const wsp = ctx.send.provider as WSSendProvider;
+      console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
+      wsp.chatIds.add({ chatId, tid: ctx.validated.tid });
+
+      const rReSend = await resendChatSectionsPrevMsg({
+        vctx,
+        chatId,
+        tid: ctx.validated.tid,
+        dst: ctx.validated.src,
+        send: (msg: MsgBase<SectionEvent>) => {
+          return ctx.send.send(ctx, msg);
+        },
+      });
+      if (rReSend.isErr()) {
+        console.error("Error in resendChatSectionsPrevMsg", rReSend.Err());
+        // We can choose to continue even if resending previous messages fails
+        // return Result.Err(rReSend.Err());
+      }
+      const resOpenChat = await ctx.send.send(ctx, {
+        type: "vibes.diy.res-open-chat",
+        chatId,
+        appSlug,
+        userSlug,
+        mode: req.mode,
+      } satisfies ResOpenChat);
+      if (resOpenChat.isErr()) {
+        return Result.Err(resOpenChat);
+      }
+      return Result.Ok(EventoResult.Continue);
     }
   ),
 };

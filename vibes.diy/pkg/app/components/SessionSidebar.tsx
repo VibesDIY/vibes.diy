@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { SignIn, useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
@@ -8,13 +8,24 @@ import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
 import { StarIcon } from "./SessionSidebar/StarIcon.js";
 import { GroupsIcon } from "./SessionSidebar/GroupsIcon.js";
+import { DevBoxIcon } from "./SessionSidebar/DevBoxIcon.js";
 
 /**
  * Component that displays a navigation sidebar with menu items
  */
+function parseDevBoxContext(pathname: string): { userSlug: string; appSlug: string; fsId?: string } | null {
+  const chat = pathname.match(/^\/chat\/([^/]+)\/([^/]+)(?:\/([^/]+))?/);
+  if (chat) return { userSlug: chat[1], appSlug: chat[2], fsId: chat[3] };
+  const vibe = pathname.match(/^\/vibe\/([^/]+)\/([^/]+)(?:\/([^/]+))?/);
+  if (vibe) return { userSlug: vibe[1], appSlug: vibe[2], fsId: vibe[3] };
+  return null;
+}
+
 function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { isSignedIn: isAuthenticated, isLoaded } = useAuth();
+  const { pathname } = useLocation();
+  const devBox = parseDevBoxContext(pathname);
   const isLoading = !isLoaded;
   const clerk = useClerk();
   const { user } = useUser();
@@ -65,6 +76,23 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                 <span>Home</span>
               </a>
             </li>
+            {devBox && (
+              <li>
+                <Link
+                  to={`/chat/${devBox.userSlug}/${devBox.appSlug}`}
+                  onClick={() => onClose()}
+                  className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
+                >
+                  <DevBoxIcon className="text-accent-01 mr-3 h-5 w-5" />
+                  <span className="flex flex-col min-w-0">
+                    <span>DevBox</span>
+                    <span className="text-xs font-normal truncate opacity-60">
+                      {devBox.userSlug}/{devBox.appSlug}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            )}
             <li>
               <Link
                 to="/vibes/mine"

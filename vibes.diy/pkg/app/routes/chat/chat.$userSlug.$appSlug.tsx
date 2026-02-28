@@ -1,4 +1,4 @@
-import { SetURLSearchParams, useParams, useSearchParams } from "react-router";
+import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
 // import { useClerk } from "@clerk/clerk-react";
@@ -94,8 +94,9 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 }
 
 export default function Chat() {
-  const { userSlug, appSlug } = useParams<{ userSlug: string; appSlug: string }>();
+  const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [chat, setChat] = useState<LLMChat | null>(null);
   const openingRef = useRef(false);
   const { vibeDiyApi } = useVibeDiy();
@@ -117,13 +118,11 @@ export default function Chat() {
   useEffect(() => {
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
-        setSearchParams((prev) => {
-          prev.delete("fsId");
-          if (!prev.has("view")) {
-            prev.set("view", "code");
-          }
-          return prev;
-        });
+        const newSearch = new URLSearchParams(searchParams);
+        if (!newSearch.has("view")) {
+          newSearch.set("view", "code");
+        }
+        navigate({ pathname: `/chat/${userSlug}/${appSlug}`, search: newSearch.toString() }, { replace: true });
         console.log(`promptToSend:`);
         chat
           .prompt({
@@ -193,20 +192,15 @@ export default function Chat() {
   const { navigateToView, viewControls, currentView } = useViewState(promptState);
 
   const fsIdClick = useCallback(
-    ({ fsId }: { fsId: string; appSlug: string; userSlug: string }) => {
-      console.log(`fsIdClick:`, fsId, searchParams.toString());
-      setSearchParams((prev) => {
-        prev.set("fsId", fsId);
-        return prev;
-      });
+    ({ fsId: newFsId }: { fsId: string; appSlug: string; userSlug: string }) => {
+      navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: searchParams.toString() });
     },
-    [searchParams, setSearchParams]
+    [navigate, userSlug, appSlug, searchParams]
   );
 
   const openVibe = useCallback(() => {
-    const openUrl = `/vibe/${userSlug}/${appSlug}/${searchParams.get("fsId")}`;
-    window.open(openUrl, "_blank");
-  }, [searchParams, userSlug, appSlug]);
+    window.open(`/vibe/${userSlug}/${appSlug}/${fsId}`, "_blank");
+  }, [fsId, userSlug, appSlug]);
 
   useEffect(() => {
     if (isMobileViewport()) {

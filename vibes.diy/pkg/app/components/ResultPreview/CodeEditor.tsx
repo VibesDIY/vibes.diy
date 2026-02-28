@@ -6,7 +6,7 @@ import { editor, Uri } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useTheme } from "../../contexts/ThemeContext.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
-import { useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import { isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 
 interface CodeEditorProps {
@@ -70,7 +70,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 }) => {
   // Theme state is now received from parent via props
   const { isDarkMode } = useTheme();
-  const [searchParams] = useSearchParams();
+  const { fsId } = useParams<{ fsId?: string }>();
 
   // Reference to store the current Monaco editor instance
   const monacoEditorRef = useRef<editor.IStandaloneCodeEditor>(null);
@@ -84,7 +84,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const userScrolledRef = useRef<boolean>(false);
 
   // Extract the current app code string
-  const appCode = getCode(promptState, searchParams.get("fsId"));
+  const appCode = getCode(promptState, fsId);
   // console.log(`codeEditor`, appCode)
 
   // State for edited code
