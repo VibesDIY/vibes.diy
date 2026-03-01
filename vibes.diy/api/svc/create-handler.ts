@@ -14,7 +14,7 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { defaultLLMRequest } from "./default-llm-request.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
-import { LLMDefault, LLMEnforced, LLMHeaders, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { LLMDefault, LLMEnforced, LLMHeaders, MsgBase, VibesFPApiParameters } from "@vibes.diy/api-types";
 
 export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Record<string, never>>;
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
@@ -25,8 +25,9 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
   connections: Set<WSSendProvider>;
+  postQueue: (msg: MsgBase) => Promise<void>;
   netHash(): string;
-  fetchAsset(url: string): Promise<Result<string>>;
+  fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   fetchPkgVersion?: ResolveFunction;
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
   // waitUntil?<T>(promise: Promise<T>): void;
@@ -79,6 +80,7 @@ export async function createAppContext<T extends VibesSqlite>(
 
     VIBES_SVC_HOSTNAME_BASE: param.OPTIONAL,
     VIBES_SVC_PROTOCOL: "https",
+    VIBES_SVC_PORT: param.OPTIONAL,
 
     GTM_CONTAINER_ID: param.OPTIONAL,
     POSTHOG_KEY: param.OPTIONAL,
@@ -129,7 +131,10 @@ export async function createAppContext<T extends VibesSqlite>(
       envVals.VIBES_SVC_HOSTNAME_BASE = `localhost.vibesdiy.net`;
     }
     if (!envVals.VIBES_SVC_PROTOCOL) {
-      envVals.VIBES_SVC_PROTOCOL = "http";
+      envVals.VIBES_SVC_PROTOCOL = "https";
+    }
+    if (!envVals.VIBES_SVC_PORT && envVals.DEV_SERVER_PORT) {
+      envVals.VIBES_SVC_PORT = envVals.DEV_SERVER_PORT;
     }
   } else {
     if (!envVals.WORKSPACE_NPM_URL) {
@@ -158,6 +163,7 @@ export async function createAppContext<T extends VibesSqlite>(
       svc: {
         hostnameBase: envVals.VIBES_SVC_HOSTNAME_BASE,
         protocol: envVals.VIBES_SVC_PROTOCOL as "https" | "http",
+        port: envVals.VIBES_SVC_PORT,
       },
       env: {
         CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
@@ -205,12 +211,13 @@ export async function createAppContext<T extends VibesSqlite>(
         cache: params.cache,
       },
     }),
+    postQueue: params.postQueue,
     fetchAsset: params.fetchAsset,
     tokenApi: await tokenApi(sthis, {
       clockTolerance: 60,
       deviceIdCA: rDeviceIdCA.Ok(),
     }),
-    ensureStorage: ensureStorage(params.db),
+    storage: ensureStorage(params.db),
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,
       apiKey: envVals.LLM_BACKEND_API_KEY,

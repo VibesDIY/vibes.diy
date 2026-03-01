@@ -5,7 +5,7 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { LLMHeaders, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { LLMHeaders, MsgBase, VibesFPApiParameters } from "@vibes.diy/api-types";
 
 export interface StorageResult {
   cid: string;
@@ -28,13 +28,15 @@ export interface VibesApiSQLCtx {
   connections: Set<WSSendProvider>;
   deviceCA: DeviceIdCAIf;
   logger: Logger;
+  postQueue(msg: MsgBase): Promise<void>;
   netHash(): string;
   params: VibesFPApiParameters;
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<Result<{ src: string; version: string }>>;
-  fetchAsset(url: string): Promise<Result<string>>;
-  // waitUntil<T>(promise: Promise<T>): void;
-  ensureStorage(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
-
+  fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
+  storage: {
+    fetch(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
+    ensure(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
+  };
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
 }

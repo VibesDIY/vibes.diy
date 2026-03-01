@@ -286,6 +286,20 @@ export const reqGetAppByFsId = type({
   fsId: "string",
 });
 export type ReqGetAppByFsId = typeof reqGetAppByFsId.infer;
+export function isReqGetAppByFsId(obj: unknown): obj is ReqGetAppByFsId {
+  return !(reqGetAppByFsId(obj) instanceof type.errors);
+}
+
+export const reqGetAppByAppSlug = type({
+  type: "'vibes.diy.req-get-app-by-app-slug'",
+  auth: dashAuthType,
+  userSlug: "string",
+  appSlug: "string",
+});
+export type ReqGetAppByAppSlug = typeof reqGetAppByAppSlug.infer;
+export function isReqGetAppByAppSlug(obj: unknown): obj is ReqGetAppByAppSlug {
+  return !(reqGetAppByAppSlug(obj) instanceof type.errors);
+}
 
 export const resGetAppByFsId = type({
   type: "'vibes.diy.res-get-app-by-fsid'",
@@ -366,6 +380,11 @@ export const msgBase = type({
 });
 
 export type msgBaseType = typeof msgBase.infer;
+
+export function isMsgBase(obj: unknown): obj is msgBaseType {
+  return !(msgBase(obj) instanceof type.errors);
+}
+
 export interface MsgBase<T = unknown> extends Omit<msgBaseType, "payload"> {
   payload: T;
 }
@@ -488,4 +507,18 @@ export const resListApplicationChats = type({
 export type ResListApplicationChats = typeof resListApplicationChats.infer;
 export function isResListApplicationChats(obj: unknown): obj is ResListApplicationChats {
   return !(resListApplicationChats(obj) instanceof type.errors);
+}
+
+export const evtNewFsId = type({
+  type: "'vibes.diy.evt-new-fs-id'",
+  userSlug: "string",
+  appSlug: "string",
+  fsId: "string",
+  sessionToken: "string",
+  vibeUrl: "string",
+});
+export type EvtNewFsId = typeof evtNewFsId.infer;
+
+export function isEvtNewFsId(obj: unknown): obj is EvtNewFsId {
+  return !(evtNewFsId(obj) instanceof type.errors);
 }

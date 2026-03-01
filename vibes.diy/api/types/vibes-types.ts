@@ -35,6 +35,7 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
     svc: {
       hostnameBase: string; // localhost.vibes.app
       protocol: "https" | "http";
+      port?: string; // optional, default to 443 for https and 80 for http
     };
     env: VibesSvcEnv;
   };

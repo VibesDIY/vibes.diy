@@ -8,6 +8,7 @@ import { getByUserSlugAppSlugItemEvento } from "./public/get-user-slug-app-slug-
 import { listUserSlugAppSlugEvento } from "./public/list-user-slug-app-slug.js";
 import { getChatDetailsEvento } from "./public/get-chat-details.js";
 import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
+import { getAppByAppSlugEvento } from "./public/get-app-by-app-slug.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
 import { listApplicationChats } from "./public/list-application-chats.js";
 export const vibesMsgEvento = Lazy(() => {
@@ -18,6 +19,7 @@ export const vibesMsgEvento = Lazy(() => {
     listUserSlugAppSlugEvento,
     getChatDetailsEvento,
     getAppByFsIdEvento,
+    getAppByAppSlugEvento,
     openChat,
     promptChatSection,
     ensureUserSettingsEvento,

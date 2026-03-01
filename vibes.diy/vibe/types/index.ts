@@ -44,6 +44,16 @@ export const ResOkVibeRegisterFPDb = type({
   data: FPDbData,
 }).and(Base);
 
+export const EvtRuntimeReady = type({
+  type: "'vibe.evt.runtime.ready'",
+  deps: "string[]",
+});
+export type EvtRuntimeReady = typeof EvtRuntimeReady.infer;
+
+export function isEvtRuntimeReady(x: unknown): x is EvtRuntimeReady {
+  return !(EvtRuntimeReady(x) instanceof type.errors);
+}
+
 export const EvtVibeAttachStatusFPDb = type({
   type: "'vibe.evt.attach.status.fpdb'",
   data: FPDbData,

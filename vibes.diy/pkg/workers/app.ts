@@ -101,8 +101,9 @@ export default {
 
     // console.log("Handling request for", url, "base", env.VIBES_SVC_HOSTNAME_BASE, Object.fromEntries(request.headers.entries()));
     if (
-      url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE) &&
-      url.hostname.slice(0, -env.VIBES_SVC_HOSTNAME_BASE.length).includes("--")
+      (url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE) &&
+        url.hostname.slice(0, -env.VIBES_SVC_HOSTNAME_BASE.length).includes("--")) ||
+      url.pathname.startsWith("/assets/cid")
     ) {
       console.log("Handling Hostname-based API request for", url.hostname, url.pathname);
       const res = await cfServe(request, cctx);
@@ -122,8 +123,13 @@ export default {
     // Queue consumer handler - processes messages from VIBES_SERVICE queue
     for (const message of batch.messages) {
       try {
-        console.log("Queue message received:", message.id);
-        await processScreenShotEvent(message.body, env);
+        console.log("Queue message received:", message.id, typeof message.body);
+        let body = message.body;
+        if (typeof message.body === "string") {
+          body = JSON.parse(message.body);
+          console.log("Message body:", body);
+        }
+        await processScreenShotEvent(body, env);
         message.ack();
       } catch (error) {
         console.error("Failed to process queue message:", error);

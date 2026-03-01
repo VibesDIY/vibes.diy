@@ -291,7 +291,10 @@ async function injectSystemPrompt(
         const rRes = await vctx.fetchAsset(
           BuildURI.from(vctx.params.pkgRepos.workspace).appendRelative(pkg).appendRelative(path).toString()
         );
-        return rRes;
+        if (rRes.isErr()) {
+          return Result.Err(rRes);
+        }
+        return Result.Ok(await new Response(rRes.Ok()).text());
       },
       callAi: {
         ModuleAndOptionsSelection: async (_msgs: ChatMessage[]) => {

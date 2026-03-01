@@ -232,7 +232,7 @@ async function toFileSystemItems(
   const transformed = await transformJSXAndImports(ctx, givenFsItems);
   transformed.push(...(await createImportMap(ctx, mode, transformed)));
 
-  const rStore = await ctx.ensureStorage(
+  const rStore = await ctx.storage.ensure(
     ...transformed
       .filter((item) => item.prepareStorage)
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

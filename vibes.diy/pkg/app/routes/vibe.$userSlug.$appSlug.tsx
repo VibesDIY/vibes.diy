@@ -17,6 +17,7 @@ export default function VibeIframeWrapper() {
   const vctx = useVibeDiy();
   const iframeUrlRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [runtimeReady, setRuntimeReady] = useState(false);
   const { isSignedIn: authSignedIn, isLoaded } = useAuth();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
@@ -85,12 +86,32 @@ export default function VibeIframeWrapper() {
     }
   }, [userSlug, appSlug, fsId, searchParam.get("sectionId"), session.isSignedIn, authSignedIn]);
 
+  useEffect(() => {
+    if (!ready) return;
+    return vctx.srvVibeSandbox.onRuntimeReady(() => {
+      setRuntimeReady(true);
+    }) as () => void;
+  }, [ready, vctx.srvVibeSandbox]);
+
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
+
+  const showLoginOverlay = !authSignedIn && isLoaded && !!(fsId && userSlug && appSlug);
+  const loginOverlay = showLoginOverlay
+    ? createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <SignIn routing="hash" fallbackRedirectUrl={window.location.href} />
+        </div>,
+        document.body
+      )
+    : null;
+
+  // if (searchParam.get("sectionId") && !session.isSignedIn) {
+  //   return <div>to use sectionId you need to be logged in</div>;
+  // }
 
   if (ready && iframeUrlRef.current) {
     const myUrl = URI.from(window.location.href);
     const previewUrl = BuildURI.from(iframeUrlRef.current).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
-    // console.log(`iframe src=`, previewUrl.asObj());
 
     return (
       <>
@@ -102,6 +123,11 @@ export default function VibeIframeWrapper() {
             sandbox="allow-scripts allow-same-origin allow-forms"
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
+          {!runtimeReady && (
+            <div className="grid-background absolute inset-0 flex h-full w-full items-center justify-center">
+              <div style={{ color: "var(--vibes-text-primary)" }}>Loading…</div>
+            </div>
+          )}
         </div>
         {createPortal(
           <div className="fixed bottom-4 right-4 z-50">
@@ -122,19 +148,7 @@ export default function VibeIframeWrapper() {
       </>
     );
   }
-  const showLoginOverlay = !authSignedIn && isLoaded && !!(fsId && userSlug && appSlug);
-  const loginOverlay = showLoginOverlay
-    ? createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <SignIn routing="hash" fallbackRedirectUrl={window.location.href} />
-        </div>,
-        document.body
-      )
-    : null;
 
-  if (searchParam.get("sectionId") && !session.isSignedIn) {
-    return <div>to use sectionId you need to be logged in</div>;
-  }
   return (
     <>
       <div className="grid-background flex h-screen w-screen items-center justify-center">
@@ -143,7 +157,7 @@ export default function VibeIframeWrapper() {
             Login required to view this page
           </div>
         ) : (
-          <div style={{ color: "var(--vibes-text-primary)" }}>Loading app…</div>
+          <div style={{ color: "var(--vibes-text-primary)" }}>Preparing…</div>
         )}
       </div>
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />

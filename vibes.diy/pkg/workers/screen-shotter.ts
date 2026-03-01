@@ -1,16 +1,17 @@
 import puppeteer from "@cloudflare/puppeteer";
-import { isScreenShotEvent, ScreenShotEvent } from "@vibes.diy/api-types";
+import { EvtNewFsId, isEvtNewFsId, isMsgBase, msgBase } from "@vibes.diy/api-types";
 import { storeScreenshot } from "@vibes.diy/api-svc";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { LoggerImpl } from "@adviser/cement";
 import { Env } from "./env.js";
 import { cfDrizzle } from "@vibes.diy/api-svc/cf-serve.js";
+import { type } from "arktype";
 
 /**
  * Takes a screenshot of a URL using Cloudflare Browser Rendering API
  */
-export async function takeScreenshot(event: ScreenShotEvent, env: Env): Promise<Uint8Array> {
-  console.log(`Taking screenshot for ${event.shotUrl} (fsId: ${event.fsId})`);
+export async function takeScreenshot(event: EvtNewFsId, env: Env): Promise<Uint8Array> {
+  console.log(`Taking screenshot for ${event.vibeUrl} (fsId: ${event.fsId})`);
 
   const browser = await puppeteer.launch(env.BROWSER as never);
   try {
@@ -24,7 +25,7 @@ export async function takeScreenshot(event: ScreenShotEvent, env: Env): Promise<
     });
 
     // Navigate to the URL
-    await page.goto(event.shotUrl, {
+    await page.goto(event.vibeUrl, {
       waitUntil: "networkidle0",
       timeout: 30000,
     });
@@ -46,37 +47,43 @@ export async function takeScreenshot(event: ScreenShotEvent, env: Env): Promise<
  * Process a screenshot event from the queue
  */
 export async function processScreenShotEvent(message: unknown, env: Env): Promise<void> {
-  // Validate the message is a ScreenShotEvent
-  if (!isScreenShotEvent(message)) {
-    console.error("Invalid ScreenShotEvent:", message);
-    // throw new Error("Invalid ScreenShotEvent structure");
+  if (!isMsgBase(message)) {
+    const x = msgBase(message);
+    if (x instanceof type.errors) {
+      console.error("Received message that is not MsgBase but matches MsgBase structure:", x.summary, message);
+    } else {
+      console.error("Received message that is not MsgBase:", message);
+    }
     return;
   }
+  const payload = message.payload;
+  if (isEvtNewFsId(payload)) {
+    console.log("Processing ScreenShotEvent:", {
+      shotUrl: payload.vibeUrl,
+      fsId: payload.fsId,
+    });
+    // Take the screenshot
+    const screenshot = await takeScreenshot(payload, env);
 
-  console.log("Processing ScreenShotEvent:", {
-    shotUrl: message.shotUrl,
-    fsId: message.fsId,
-  });
+    // Convert ArrayBuffer to Uint8Array
+    const screenshotData = new Uint8Array(screenshot);
 
-  // Take the screenshot
-  const screenshot = await takeScreenshot(message, env);
+    console.log(`Screenshot taken for ${payload.fsId}: ${screenshotData.byteLength} bytes`);
 
-  // Convert ArrayBuffer to Uint8Array
-  const screenshotData = new Uint8Array(screenshot);
+    const { db } = await cfDrizzle(env);
+    // Initialize sthis and db for storage
+    const sthis = ensureSuperThis({ logger: new LoggerImpl() });
 
-  console.log(`Screenshot taken for ${message.fsId}: ${screenshotData.byteLength} bytes`);
+    // Store the screenshot in the database
+    const result = await storeScreenshot({ sthis, db }, payload.fsId, screenshotData);
 
-  const { db } = await cfDrizzle(env);
-  // Initialize sthis and db for storage
-  const sthis = ensureSuperThis({ logger: new LoggerImpl() });
+    if (result.isErr()) {
+      console.error(`Failed to store screenshot: ${result.Err()}`);
+      return;
+    }
 
-  // Store the screenshot in the database
-  const result = await storeScreenshot({ sthis, db }, message.fsId, screenshotData);
-
-  if (result.isErr()) {
-    console.error(`Failed to store screenshot: ${result.Err()}`);
+    console.log(`Screenshot stored with assetId: ${result.Ok().assetUrl}`);
     return;
   }
-
-  console.log(`Screenshot stored with assetId: ${result.Ok().assetId}`);
+  console.error("Received message with unrecognized payload:", payload);
 }
