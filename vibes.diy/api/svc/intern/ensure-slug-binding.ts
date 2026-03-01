@@ -1,6 +1,6 @@
 import { exception2Result, Result } from "@adviser/cement";
 import { VibesApiSQLCtx } from "../types.js";
-import { generate } from "random-words";
+import { generateSlug } from "./slug-words.js";
 import { and, eq } from "drizzle-orm";
 import { sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 
@@ -37,11 +37,7 @@ export async function ensureUserSlug(ctx: VibesApiSQLCtx, binding: AppSlugBindin
     let userSlug: string | undefined = undefined;
     if (!binding.userSlug) {
       for (let attempts = 0; attempts < 5; attempts++) {
-        const tryUserSlug = generate({
-          exactly: 1,
-          wordsPerString: 3,
-          separator: "-",
-        })[0];
+        const tryUserSlug = generateSlug();
         const existing = await ctx.db.select().from(sqlUserSlugBinding).where(eq(sqlUserSlugBinding.userSlug, tryUserSlug)).get();
         if (!existing) {
           userSlug = tryUserSlug;
@@ -102,11 +98,7 @@ export async function ensureAppSlug(
     if (!binding.appSlug) {
       // should be a transaction but CF - oh well
       for (let attempts = 0; attempts < 5; attempts++) {
-        const tryAppSlug = generate({
-          exactly: 1,
-          wordsPerString: 3,
-          separator: "-",
-        })[0];
+        const tryAppSlug = generateSlug();
         const existing = await ctx.db.select().from(sqlAppSlugBinding).where(eq(sqlAppSlugBinding.appSlug, tryAppSlug)).get();
         if (!existing) {
           appSlug = tryAppSlug;
