@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useSearchParams } from "react-router";
 import { ViewControlsType, ViewType } from "@vibes.diy/prompts";
 import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
@@ -46,67 +45,8 @@ export function useViewState(promptState: PromptState): ViewState {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentView = getViewFromPath(searchParams);
 
-  // Track previous states to determine transitions
-  // const wasStreamingRef = useRef(props.promptProcessing);
-  // const hadCodeRef = useRef(props.code && props.code.length > 0);
-  // const wasPreviewReadyRef = useRef(props.previewReady);
-  // const initialNavigationDoneRef = useRef(false);
-
-  // Auto-navigate based on app state changes
-  useEffect(
-    () => {
-      // Don't auto-navigate if we don't have session and title info for URLs
-      // if (promptState.) return;
-
-      // First message (no previous code), show code view when code starts streaming
-      // We don't change the URL path so it can later auto-navigate to app view
-      if (
-        promptState.running &&
-        promptState.hasCode &&
-        // Don't auto-switch on mobile
-        !isMobileViewport()
-      ) {
-        // For the initial code streaming, we want to display code without changing URL
-        // This is handled by the component that uses this hook
-        // initialNavigationDoneRef.current = true;
-        // Only if we're already at a specific view (app, code, data), should we navigate
-        // const path = pathname;
-        // const basePath = path.replace(/\/(app|code|data|settings)$/, "");
-        // If current path has a view suffix, remove it for auto-navigation to work
-        // if (path !== basePath) {
-        //   console.log("t-3", sessionId);
-        //   navigate(`/chat/${sessionId}/${encodedTitle}`);
-        // }
-      }
-
-      // As soon as previewReady becomes true, jump to preview view (app), UNLESS user is explicitly in data or code view
-      // Removed mobile check to allow consistent behavior across all devices
-      // Also skip if there's a capturedPrompt (URL prompt that hasn't been sent yet)
-      // if (props.previewReady && !wasPreviewReadyRef.current) {
-      //   const isInDataView = pathname.endsWith("/data");
-      //   const isInCodeView = pathname.endsWith("/code");
-      //   const hasCapturedPrompt = props.capturedPrompt && props.capturedPrompt.trim().length > 0;
-      //   if (!isInDataView && !isInCodeView && !hasCapturedPrompt) {
-      //     navigate(`/chat/${sessionId}/${encodedTitle}/app`, { replace: true });
-      //   }
-      // }
-
-      // Update refs for next comparison
-      // wasStreamingRef.current = props.promptProcessing;
-      // hadCodeRef.current = props.code && props.code.length > 0;
-      // wasPreviewReadyRef.current = props.previewReady;
-    },
-    [
-      /*props.promptProcessing, props.previewReady, props.code, sessionId, encodedTitle, navigate*/
-    ]
-  );
-
-  // We handle the initial view display without changing the URL
-  // This allows for proper auto-navigation to app view when preview is ready
-  // useEffect(() => {
-  //   // The actual display of code view is handled by the component that uses this hook
-  //   // We don't navigate to /code on initial load anymore
-  // }, []);
+  // Note: switch to app view happens in fsIdClick (chat route) when the
+  // fsId arrives, so both pathname and view update atomically
 
   // Access control data
   const viewControls: ViewControlsType = {

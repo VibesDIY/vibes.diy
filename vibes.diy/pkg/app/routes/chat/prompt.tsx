@@ -3,7 +3,7 @@ import { useVibeDiy } from "../../vibe-diy-provider.js";
 import { useNavigate, useSearchParams } from "react-router";
 
 export default function ChatPrompt() {
-  const { vibeDiyApi, sthis } = useVibeDiy();
+  const { vibeDiyApi } = useVibeDiy();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -13,7 +13,6 @@ export default function ChatPrompt() {
     if (!prompt64) {
       return;
     }
-    const prompt = sthis.txt.base64.decode(prompt64);
     vibeDiyApi
       .getTokenClaims()
       .then((rClaims) => {
@@ -30,28 +29,16 @@ export default function ChatPrompt() {
       .then((rChat) => {
         if (rChat.isErr()) {
           console.error(`Error in useCallAIV2: ${rChat.Err()}`);
-          // setError(rChat.Err())
           return;
         }
         const chat = rChat.Ok();
-        chat
-          .prompt({
-            messages: [
-              {
-                role: "user",
-                content: [{ type: "text", text: prompt }],
-              },
-            ],
-          })
-          .then((rPrompt) => {
-            // chat.close()
-            if (rPrompt.isErr()) {
-              console.error("sendPrompt failed", rPrompt.Err());
-              return;
-            } else {
-              navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
-            }
-          });
+        const prompt = atob(prompt64);
+        // Send prompt (fire-and-forget) — chat route will pick up the stream
+        chat.prompt({
+          messages: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+        });
+        // Navigate immediately without prompt64
+        navigate(`/chat/${chat.userSlug}/${chat.appSlug}?view=code`);
       });
   }, [prompt64]);
   return <div>Preparing AI - Session</div>;

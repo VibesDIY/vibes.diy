@@ -193,7 +193,9 @@ export default function Chat() {
 
   const fsIdClick = useCallback(
     ({ fsId: newFsId }: { fsId: string; appSlug: string; userSlug: string }) => {
-      navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: searchParams.toString() });
+      const newSearch = new URLSearchParams(searchParams);
+      newSearch.set("view", "app");
+      navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: newSearch.toString() });
     },
     [navigate, userSlug, appSlug, searchParams]
   );

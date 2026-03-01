@@ -12,12 +12,11 @@ function ResultPreview({ promptState, currentView, children }: ResultPreviewProp
   let previewArea: React.ReactElement;
   // console.log(`ResultPreview:`, currentView, promptState.searchParams.toString())
   switch (true) {
-    case showWelcome:
-      previewArea = <div className="h-full">{/* empty div to prevent layout shift */}</div>;
-      break;
     case currentView === "code":
       previewArea = <CodeEditor promptState={promptState} />;
-      // console.log(`ToRender:code`);
+      break;
+    case showWelcome:
+      previewArea = <div className="h-full">{/* empty div to prevent layout shift */}</div>;
       break;
     case currentView === "preview":
       // console.log(`PreviewApp`, currentView, promptState);
