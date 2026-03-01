@@ -384,6 +384,8 @@ export async function makeBaseSystemPrompt(
     "",
     "Provide a title and brief explanation followed by the component code. The component should demonstrate proper Fireproof integration with real-time updates and proper data persistence.",
     "",
+    "After the code block, suggest one short idea for how the app could be enhanced next. Make it style not Fireproof.",
+    "",
     "Begin the component with the import statements. Use react and the following libraries:",
     "",
     "```js",
