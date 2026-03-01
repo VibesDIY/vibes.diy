@@ -56,15 +56,15 @@ export async function createAppContext<T extends VibesSqlite>(
     WRAPPER_BASE_URL: param.REQUIRED,
     // ENTRY_POINT_TEMPLATE_URL: param.REQUIRED,
 
-    MAX_APP_SLUG_PER_USER_ID: "10",
+    MAX_APP_SLUG_PER_USER_ID: "1000",
     MAX_USER_SLUG_PER_USER_ID: "10",
-    MAX_APPS_PER_USER_ID: "50",
+    MAX_APPS_PER_USER_ID: "500",
 
     FP_VERSION: param.REQUIRED,
 
     LLM_BACKEND_URL: param.REQUIRED,
     LLM_BACKEND_API_KEY: param.REQUIRED,
-    LLM_BACKEND_MODEL: "anthropic/claude-sonnet-4",
+    LLM_BACKEND_MODEL: "anthropic/claude-sonnet-4.6",
 
     WORKSPACE_NPM_URL: param.OPTIONAL,
     PUBLIC_NPM_URL: param.OPTIONAL,

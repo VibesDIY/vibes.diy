@@ -1,15 +1,27 @@
 [
   {
-    "id": "anthropic/claude-opus-4.5",
-    "name": "Claude Opus 4.5 (Default)",
-    "description": "Claude Opus 4.5 is Anthropic's most powerful model, offering the best performance for complex reasoning, coding, and creative tasks",
+    "id": "anthropic/claude-sonnet-4.6",
+    "name": "Claude Sonnet 4.6 (Default)",
+    "description": "Claude Sonnet 4.6 is Anthropic's most capable Sonnet model, with frontier performance across coding, agents, and professional work",
+    "featured": true
+  },
+  {
+    "id": "anthropic/claude-opus-4.6",
+    "name": "Claude Opus 4.6",
+    "description": "Claude Opus 4.6 is Anthropic's most powerful model, offering frontier intelligence for complex reasoning, coding, and creative tasks",
     "featured": true
   },
   {
     "id": "anthropic/claude-sonnet-4.5",
     "name": "Claude Sonnet 4.5",
-    "description": "Claude Sonnet 4.5 is Anthropic's most advanced Sonnet model to date, optimized for real-world agents and coding workflows",
-    "featured": true
+    "description": "Claude Sonnet 4.5 is optimized for real-world agents and coding workflows",
+    "featured": false
+  },
+  {
+    "id": "anthropic/claude-opus-4.5",
+    "name": "Claude Opus 4.5",
+    "description": "Claude Opus 4.5 is Anthropic's previous-gen flagship, optimized for complex software engineering and agentic workflows",
+    "featured": false
   },
   {
     "id": "x-ai/grok-4-fast",
