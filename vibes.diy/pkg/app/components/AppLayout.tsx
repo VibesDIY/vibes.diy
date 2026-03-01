@@ -2,7 +2,7 @@ import { VibesSwitch } from "@vibes.diy/base";
 import React from "react";
 import type { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
-import { useShareableDB } from "../hooks/useShareableDB.js";
+import { useShareableDB, type RouteContext } from "../hooks/useShareableDB.js";
 import { AllowFireproofSharing } from "./AllowFireproofSharing.js";
 
 interface AppLayoutProps {
@@ -17,6 +17,7 @@ interface AppLayoutProps {
   isSidebarVisible: boolean;
   setIsSidebarVisible: (x: boolean) => void;
   fullWidthChat?: boolean;
+  routeContext?: RouteContext;
 }
 
 export default function AppLayout({
@@ -31,8 +32,9 @@ export default function AppLayout({
   setIsSidebarVisible,
   appInfo,
   fullWidthChat = false,
+  routeContext,
 }: AppLayoutProps) {
-  const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
+  const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB(routeContext);
 
   return (
     <div className="page-grid-background grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden">

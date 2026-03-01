@@ -93,7 +93,9 @@ export default function VibeIframeWrapper() {
     }) as () => void;
   }, [ready, vctx.srvVibeSandbox]);
 
-  const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
+  const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB(
+    userSlug && appSlug ? { userSlug, appSlug } : undefined
+  );
 
   const showLoginOverlay = !authSignedIn && isLoaded && !!(fsId && userSlug && appSlug);
   const loginOverlay = showLoginOverlay

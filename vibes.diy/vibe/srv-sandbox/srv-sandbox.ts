@@ -14,6 +14,7 @@ import {
   EventoHandler,
   Future,
   OnFunc,
+  URI,
 } from "@adviser/cement";
 import {
   isReqVibeRegisterFPDb,
@@ -63,10 +64,38 @@ interface VibesDiySrvSandboxArgs {
   dashApi: ReturnType<typeof clerkDashApi>;
   vibeDiyApi: VibesDiyApiIface;
   errorLogger: (r: string | Result<unknown> | Error) => void;
+  hostnameBase: string;
   eventListeners: {
     addEventListener: typeof window.addEventListener;
     removeEventListener: typeof window.removeEventListener;
   };
+}
+
+export function verifyRegistrationOrigin(params: {
+  readonly origin: string;
+  readonly appSlug: string;
+  readonly userSlug: string;
+  readonly hostnameBase: string;
+}): boolean {
+  const parsedOrigin = URI.fromResult(params.origin);
+  if (parsedOrigin.isErr()) {
+    return false;
+  }
+  let originHostname = "";
+  try {
+    originHostname = parsedOrigin.Ok().hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  const expectedAppSlug = params.appSlug.toLowerCase();
+  const expectedUserSlug = params.userSlug.toLowerCase();
+  const expectedBase = params.hostnameBase.replace(/^\./, "").toLowerCase();
+  const hostMatch = /^([a-z0-9][a-z0-9-]*?)--([a-z0-9][a-z0-9-]+)\.(.+)$/i.exec(originHostname);
+  if (!hostMatch) {
+    return false;
+  }
+  const [, originAppSlug, originUserSlug, originBase] = hostMatch;
+  return originAppSlug === expectedAppSlug && originUserSlug === expectedUserSlug && originBase === expectedBase;
 }
 
 interface ShareableDBInfo {
@@ -103,6 +132,21 @@ function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
       const { request: req } = ctx;
       if (isReqVibeRegisterFPDb(req?.data)) {
+        // Defense-in-depth: verify the iframe's browser-enforced origin matches
+        // the claimed appSlug/userSlug identity and trusted hostname base.
+        const { appSlug, userSlug } = req.data;
+        const isOriginValid = verifyRegistrationOrigin({
+          origin: req.origin,
+          appSlug,
+          userSlug,
+          hostnameBase: sandbox.args.hostnameBase,
+        });
+        if (!isOriginValid) {
+          sandbox.args.errorLogger(
+            `Origin mismatch in vibe.register.fpdb: expected ${appSlug}--${userSlug}.${sandbox.args.hostnameBase}, got ${req.origin}`
+          );
+          return Promise.resolve(Result.Ok(Option.None()));
+        }
         return Promise.resolve(Result.Ok(Option.Some(req.data)));
       }
       return Promise.resolve(Result.Ok(Option.None()));

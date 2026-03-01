@@ -121,6 +121,7 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
     },
     dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
     vibeDiyApi: realCtx.vibeDiyApi,
+    hostnameBase: webVars.env.VIBES_SVC_HOSTNAME_BASE,
     eventListeners: globalThis.window,
   });
 

@@ -219,6 +219,7 @@ export default function Chat() {
         isSidebarVisible={isSidebarVisible}
         setIsSidebarVisible={setIsSidebarVisible}
         fullWidthChat={isMobileViewport()}
+        routeContext={userSlug && appSlug ? { userSlug, appSlug } : undefined}
         headerLeft={
           <ChatHeaderContent
             remixOf={/*chatState.vibeDoc?.remixOf*/ undefined}
