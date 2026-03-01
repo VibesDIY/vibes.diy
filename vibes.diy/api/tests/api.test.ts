@@ -9,6 +9,7 @@ import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-type
 import { CFInject } from "@vibes.diy/api-svc/cf-serve.js";
 import { drizzle } from "drizzle-orm/libsql";
 import { isPromptBlockEnd, LLMRequest } from "@vibes.diy/call-ai-v2";
+import { MsgBase } from "@vibes.diy/api-types";
 
 const noopCache = {
   put: async (_req: Request, _res: Response) => {
@@ -114,6 +115,9 @@ describe("VibesDiyApi", () => {
     const appCtx = await createAppContext({
       fetchAsset: async (url: string) => {
         throw new Error(`fetchAsset not implemented in test for url: ${url}`);
+      },
+      postQueue: async (msg: MsgBase) => {
+        throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
       },
       netHash: () => "test-hash",
       connections: new Set(),

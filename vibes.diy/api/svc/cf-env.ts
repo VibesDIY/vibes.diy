@@ -1,10 +1,16 @@
-import { D1Database, Fetcher } from "@cloudflare/workers-types";
+import { D1Database, Fetcher, Queue } from "@cloudflare/workers-types";
 
 export interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
   ENVIRONMENT: string;
+
+  VIBES_SERVICE: Queue;
+
   VIBES_SVC_HOSTNAME_BASE: string;
+  VIBES_SVC_PROTOCOL: string;
+  VIBES_SVC_PORT?: string;
+
   // Add more bindings here as needed
   MAX_TENANTS?: number;
   MAX_ADMIN_USERS?: number;

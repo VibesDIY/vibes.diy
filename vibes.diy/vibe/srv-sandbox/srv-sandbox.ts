@@ -13,6 +13,7 @@ import {
   processStream,
   EventoHandler,
   Future,
+  OnFunc,
 } from "@adviser/cement";
 import {
   isReqVibeRegisterFPDb,
@@ -26,6 +27,8 @@ import {
   ReqFetchCloudToken,
   isReqFetchCloudToken,
   ResFetchCloudToken,
+  isEvtRuntimeReady,
+  EvtRuntimeReady,
 } from "@vibes.diy/vibe-types";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
 import { isSectionEvent, SectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
@@ -70,6 +73,24 @@ interface ShareableDBInfo {
   key: string;
   data: ResOkVibeRegisterFPDb["data"];
   attachAction: "attach" | "detach" | "none";
+}
+
+function vibeRuntimeReady(sandbox: vibesDiySrvSandbox): EventoHandler {
+  return {
+    hash: "vibe.runtime.ready",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, EvtRuntimeReady, unknown>) => {
+      const { request: req } = ctx;
+      if (isEvtRuntimeReady(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<MessageEvent, EvtRuntimeReady, unknown>): Promise<Result<EventoResultType>> => {
+      sandbox.onRuntimeReady.invoke(ctx.validated);
+      // console.log(`Received vibe.runtime.ready event`, ctx);
+      return Result.Ok(EventoResult.Continue);
+    },
+  };
 }
 
 function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
@@ -282,6 +303,8 @@ export class vibesDiySrvSandbox implements Disposable {
 
   readonly shareableDBs = new LRUMap<string, ShareableDBInfo>();
 
+  readonly onRuntimeReady = OnFunc<(evt: EvtRuntimeReady) => void>();
+
   readonly handleMessage = (event: MessageEvent): void => {
     // console.log(`Received message event in vibesDiySrvSandbox`, event);
     this.evento.trigger<MessageEvent, unknown, unknown>({
@@ -300,6 +323,7 @@ export class vibesDiySrvSandbox implements Disposable {
   constructor(args: VibesDiySrvSandboxArgs) {
     this.args = args;
     this.evento = new Evento(new MessageEventEventoEnDecoder());
+    this.evento.push(vibeRuntimeReady(this));
     this.evento.push(vibeRegisterFPDB(this));
     this.evento.push(vibeCallAI(this));
     this.evento.push(vibeFetchCloudToken(this));

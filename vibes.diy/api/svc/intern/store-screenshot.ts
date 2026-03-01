@@ -10,7 +10,7 @@ import { SuperThis } from "@fireproof/core-types-base";
 // Define MetaItem array type
 export interface StoreScreenshotResult {
   readonly fsId: string;
-  readonly assetId: string;
+  readonly assetUrl: string;
 }
 
 /**
@@ -44,7 +44,7 @@ export async function storeScreenshot(
   const cidResult = await calcCid({ sthis }, screenshotData);
 
   // 3. Store screenshot using ensureStorage
-  const storageResult = await ensureStorage(db)({ cid: cidResult.cid, data: cidResult.data });
+  const storageResult = await ensureStorage(db).ensure({ cid: cidResult.cid, data: cidResult.data });
 
   if (storageResult.isErr()) {
     return Result.Err(`Failed to store screenshot: ${storageResult.Err()}`);
@@ -58,7 +58,8 @@ export async function storeScreenshot(
   // Push new screenshot ref
   meta.push({
     type: "screen-shot-ref",
-    assetId: cidResult.cid,
+    mime: "image/jpeg",
+    assetUrl: storageResult.Ok()[0].getURL,
   });
 
   // Update the app's meta in the database
@@ -66,6 +67,6 @@ export async function storeScreenshot(
 
   return Result.Ok({
     fsId,
-    assetId: cidResult.cid,
+    assetUrl: storageResult.Ok()[0].getURL,
   });
 }

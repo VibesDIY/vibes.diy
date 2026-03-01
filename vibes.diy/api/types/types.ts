@@ -41,7 +41,8 @@ export type FileSystemItem = typeof fileSystemItem.infer;
 
 export const MetaScreenShotRef = type({
   type: "'screen-shot-ref'",
-  assetId: "string",
+  assetUrl: "string",
+  mime: "string",
 });
 
 export type MetaScreenShot = typeof MetaScreenShotRef.infer;

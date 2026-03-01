@@ -1,5 +1,6 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
 import {
+  EvtNewFsId,
   MsgBase,
   reqEnsureAppSlug,
   ReqEnsureAppSlug,
@@ -58,7 +59,7 @@ export async function ensureAppSlugItem(
         return Result.Err(`unsupported file system item type: ${fsItem.type}`);
     }
   }
-  const rStorageResult = await vctx.ensureStorage(...writeAppSlugsOp.map((op) => op.assetOp));
+  const rStorageResult = await vctx.storage.ensure(...writeAppSlugsOp.map((op) => op.assetOp));
   if (rStorageResult.isErr()) {
     return Result.Err(rStorageResult);
   }
@@ -88,6 +89,22 @@ export async function ensureAppSlugItem(
       fsId: res.Ok().fsId,
     },
   });
+  if (res.Ok().fsId) {
+    vctx.postQueue({
+      payload: {
+        type: "vibes.diy.evt-new-fs-id",
+        userSlug: res.Ok().userSlug,
+        appSlug: res.Ok().appSlug,
+        fsId: res.Ok().fsId,
+        vibeUrl: entryPointUrl,
+        sessionToken: "offline",
+      },
+      tid: "queue-event",
+      src: "ensureAppSlugItem",
+      dst: "vibes-service",
+      ttl: 1,
+    } satisfies MsgBase<EvtNewFsId>);
+  }
   return Result.Ok({
     type: "vibes.diy.res-ensure-app-slug",
     appSlug: rAppSlugBinding.Ok().appSlug,

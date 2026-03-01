@@ -11,9 +11,10 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { Env } from "./cf-env.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { AppContext, Lazy, Result, URI } from "@adviser/cement";
+import { AppContext, Lazy, Result } from "@adviser/cement";
 import { hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
+import { MsgBase } from "@vibes.diy/api-types";
 
 // declare global {
 //   class WebSocketPair {
@@ -84,19 +85,27 @@ export async function cfServeAppCtx(request: CFRequest, env: Env, ctx: Execution
     // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
     cache: ctx.cache,
+
+    postQueue: async (msg: MsgBase) => {
+      console.log("Posting message to queue:", msg);
+      await env.VIBES_SERVICE.send(JSON.stringify(msg));
+    },
     fetchAsset: async (url: string) => {
-      const uri = URI.from(url);
+      // const uri = URI.from(url);
       // const assetUrl = uri.build().pathname(uri.pathname.replace(/^\//, "/_")).toString();
-      const assetUrl = uri.toString();
+      // const assetUrl = uri.toString();
       // console.log("Fetching asset from URL:", url, "assetUrl:", assetUrl);
-      const res = await env.ASSETS.fetch(assetUrl);
+      const res = await env.ASSETS.fetch(url);
       // console.log("Received response for asset fetch:", res);
       if (!res.ok) {
-        return Result.Err(`Failed to fetch asset from ${assetUrl}: ${res.status} ${res.statusText}`);
+        return Result.Err(`Failed to fetch asset from ${url}: ${res.status} ${res.statusText}`);
       }
-      const text = await res.text();
+      if (!res.body) {
+        return Result.Err(`No body in response when fetching asset from ${url}`);
+      }
+      // const text = await res.text();
       // console.log("Fetching asset from URL:", assetUrl, '->', text);
-      return Result.Ok(text);
+      return Result.Ok(res.body as unknown as ReadableStream<Uint8Array>);
     },
     // this help to provide enough uniqueness
     // to find clients which try to steal tokens

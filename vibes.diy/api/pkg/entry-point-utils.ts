@@ -14,6 +14,7 @@ export function calcEntryPointUrl({ hostnameBase, protocol, bindings, port }: Ca
   if (port && port !== "80" && port !== "443") {
     buri.port(port);
   }
+  console.log("calcEntryPointUrl", { hostname, protocol, bindings, port, fsid: bindings.fsId });
   return buri.protocol(protocol).hostname(hostname).pathname(`~${bindings.fsId}~`).toString();
 }
 

@@ -28,6 +28,7 @@ import {
   ResGetChatDetails,
   isResGetChatDetails,
   ReqGetAppByFsId,
+  ReqGetAppByAppSlug,
   ResGetAppByFsId,
   isResGetAppByFsId,
   VibesDiyApiIface,
@@ -313,6 +314,15 @@ export class VibeDiyApi implements VibesDiyApiIface<{
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>> {
     return this.request(
       { ...req, type: "vibes.diy.req-get-app-by-fsid" },
+      {
+        resMatch: isResGetAppByFsId,
+      }
+    );
+  }
+
+  getAppByAppSlug(req: Req<ReqGetAppByAppSlug>): Promise<Result<ResGetAppByFsId, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-app-by-app-slug" },
       {
         resMatch: isResGetAppByFsId,
       }

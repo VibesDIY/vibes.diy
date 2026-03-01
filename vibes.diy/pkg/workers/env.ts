@@ -5,6 +5,8 @@ export interface Env {
   ASSETS: Fetcher;
   ENVIRONMENT: string;
   VIBES_SVC_HOSTNAME_BASE: string;
+  VIBES_SVC_PROTOCOL: string;
+  VIBES_SVC_PORT?: string;
   // Add more bindings here as needed
   MAX_TENANTS?: number;
   MAX_ADMIN_USERS?: number;

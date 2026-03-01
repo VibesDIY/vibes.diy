@@ -104,6 +104,16 @@ export class VibeSandboxApi {
     );
   }
 
+  sendRuntimeReady(deps: string[]) {
+    this.svc.postMessage(
+      {
+        type: "vibe.evt.runtime.ready",
+        deps,
+      },
+      "*"
+    );
+  }
+
   sendAttachStatusFPDbMessage(evt: Omit<EvtVibeAttachStatusFPDb, "type" | "tid">) {
     this.svc.postMessage(
       {
@@ -187,14 +197,17 @@ class VibeTokenStrategie implements TokenStrategie {
 export const vibeApi = Lazy((svc: VibeSandboxApiOptions) => new VibeSandboxApi(svc));
 
 export async function registerDependencies(vibeApp: VibeApp, deps: Record<string, string>): Promise<void> {
-  const useFireproofDep = deps["use-fireproof"];
   // bind vibeApi to runtime
   const ctxVibeApi = vibeApi({
     vibeApp,
     addEventListener: window.addEventListener.bind(window),
     postMessage: window.parent.postMessage.bind(window.parent),
   });
+
+  const runTimeReady: string[] = [];
+  const useFireproofDep = deps["use-fireproof"];
   if (useFireproofDep && window.parent !== window) {
+    runTimeReady.push("use-fireproof");
     const fp = (await import(useFireproofDep)) as typeof import("use-fireproof");
     // const vibeApi = ({
     //   addEventListener: window.addEventListener.bind(window),
@@ -259,10 +272,12 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
           }
         });
     });
-    const callAI = deps["call-ai"];
-    if (callAI && window.parent !== window) {
-      registerCallAI(ctxVibeApi);
-    }
   }
+  const callAI = deps["call-ai"];
+  if (callAI && window.parent !== window) {
+    runTimeReady.push("call-ai");
+    registerCallAI(ctxVibeApi);
+  }
+  ctxVibeApi.sendRuntimeReady(runTimeReady);
   return;
 }
