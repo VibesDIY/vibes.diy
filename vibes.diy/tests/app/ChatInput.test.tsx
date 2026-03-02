@@ -2,171 +2,117 @@ import React from "react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import ChatInput from "~/vibes.diy/app/components/ChatInput.js";
-import type { ChatState } from "@vibes.diy/prompts";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
 
 // Create mock functions we can control
-const onSend = vi.fn();
-const setInput = vi.fn();
-const sendMessage = vi.fn();
-
-// Create a ref we can use
-const inputRef = { current: null };
+const onSubmit = vi.fn();
 
 describe("ChatInput Component", () => {
-  // Create a base mock chatState object
-  let mockChatState: ChatState;
-
   beforeEach(() => {
     globalThis.document.body.innerHTML = "";
-    // Reset mocks and values before each test
     vi.resetAllMocks();
-
-    // Initialize mockChatState for each test with all required properties
-    mockChatState = {
-      isEmpty: true,
-      input: "",
-      isStreaming: false,
-      inputRef: inputRef,
-      docs: [],
-      setInput: setInput,
-      sendMessage: sendMessage,
-      saveCodeAsAiMessage: vi.fn().mockResolvedValue("test-message-id"),
-      codeReady: false,
-      title: "",
-      updateTitle: vi.fn().mockResolvedValue(undefined),
-      addScreenshot: vi.fn().mockResolvedValue(undefined),
-      setSelectedResponseId: vi.fn(),
-      selectedSegments: [],
-      immediateErrors: [],
-      advisoryErrors: [],
-      addError: vi.fn(),
-      sessionId: "test-session-id",
-    };
   });
 
   it("renders without crashing", () => {
     render(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
+        <ChatInput promptProcessing={false} onSubmit={onSubmit} />
       </MockThemeProvider>
     );
     expect(screen.getByPlaceholderText("I want to build...")).toBeDefined();
   });
 
-  it("calls chatState.setInput when text is entered", () => {
+  it("calls onSubmit when send button is clicked", () => {
     render(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
+        <ChatInput promptProcessing={false} onSubmit={onSubmit} />
       </MockThemeProvider>
     );
 
+    // Must type text before submit — component requires non-empty prompt
     const textArea = screen.getByPlaceholderText("I want to build...");
     fireEvent.change(textArea, { target: { value: "Hello world" } });
-
-    expect(setInput).toHaveBeenCalledWith("Hello world");
-  });
-
-  it("calls sendMessage and onSend when send button is clicked", () => {
-    render(
-      <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
-      </MockThemeProvider>
-    );
 
     const sendButton = screen.getByLabelText("Send message");
     fireEvent.click(sendButton);
 
-    expect(sendMessage).toHaveBeenCalledWith("");
-    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledWith("Hello world");
   });
 
-  it("disables send button when isStreaming is true", () => {
-    // Set isStreaming to true for this test
-    mockChatState.isStreaming = true;
-
+  it("disables send button when promptProcessing is true", () => {
     render(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
+        <ChatInput promptProcessing={true} onSubmit={onSubmit} />
       </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("Continue coding...");
     const sendButton = screen.getByLabelText("Generating");
 
-    expect(textArea).not.toBeDisabled();
+    expect(textArea).toBeDisabled();
     expect(sendButton).toBeDisabled();
 
     fireEvent.click(sendButton);
-    expect(onSend).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("calls sendMessage and onSend when Enter is pressed", () => {
+  it("calls onSubmit when Enter is pressed", () => {
     render(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
+        <ChatInput promptProcessing={false} onSubmit={onSubmit} />
       </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("I want to build...");
+    fireEvent.change(textArea, { target: { value: "Hello world" } });
     fireEvent.keyDown(textArea, { key: "Enter", shiftKey: false });
 
-    expect(sendMessage).toHaveBeenCalledWith("");
-    expect(onSend).toHaveBeenCalled();
+    expect(onSubmit).toHaveBeenCalledWith("Hello world");
   });
 
-  it("does not call sendMessage or onSend when Enter is pressed with Shift", () => {
+  it("does not call onSubmit when Enter is pressed with Shift", () => {
     render(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
+        <ChatInput promptProcessing={false} onSubmit={onSubmit} />
       </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("I want to build...");
     fireEvent.keyDown(textArea, { key: "Enter", shiftKey: true });
 
-    expect(sendMessage).not.toHaveBeenCalled();
-    expect(onSend).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("does not call sendMessage or onSend when Enter is pressed while streaming", () => {
-    // Set isStreaming to true for this test
-    mockChatState.isStreaming = true;
-
+  it("does not call onSubmit when Enter is pressed while processing", () => {
     render(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
+        <ChatInput promptProcessing={true} onSubmit={onSubmit} />
       </MockThemeProvider>
     );
 
     const textArea = screen.getByPlaceholderText("Continue coding...");
     fireEvent.keyDown(textArea, { key: "Enter", shiftKey: false });
 
-    expect(sendMessage).not.toHaveBeenCalled();
-    expect(onSend).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("does not call sendMessage or onSend when button is clicked while streaming", () => {
-    mockChatState.isStreaming = true;
-
+  it("does not call onSubmit when button is clicked while processing", () => {
     render(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
+        <ChatInput promptProcessing={true} onSubmit={onSubmit} />
       </MockThemeProvider>
     );
 
-    // The button should be disabled, but let's try to click it anyway
     const sendButton = screen.getByLabelText("Generating");
     fireEvent.click(sendButton);
 
-    expect(sendMessage).not.toHaveBeenCalled();
-    expect(onSend).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("does not render the model picker when models are missing or empty", () => {
     const { rerender } = render(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} />
+        <ChatInput promptProcessing={false} onSubmit={onSubmit} />
       </MockThemeProvider>
     );
     expect(screen.queryByRole("button", { name: /ai model/i })).toBeNull();
@@ -178,7 +124,7 @@ describe("ChatInput Component", () => {
     }[] = [];
     rerender(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} models={emptyModels} onModelChange={vi.fn()} showModelPickerInChat />
+        <ChatInput promptProcessing={false} onSubmit={onSubmit} models={emptyModels} onModelChange={vi.fn()} showModelPickerInChat />
       </MockThemeProvider>
     );
     expect(screen.queryByRole("button", { name: /ai model/i })).toBeNull();
@@ -194,8 +140,8 @@ describe("ChatInput Component", () => {
     const { rerender } = render(
       <MockThemeProvider>
         <ChatInput
-          chatState={mockChatState}
-          onSend={onSend}
+          promptProcessing={false}
+          onSubmit={onSubmit}
           models={models}
           onModelChange={vi.fn()}
           showModelPickerInChat={false}
@@ -207,7 +153,7 @@ describe("ChatInput Component", () => {
     // Flag true → picker renders
     rerender(
       <MockThemeProvider>
-        <ChatInput chatState={mockChatState} onSend={onSend} models={models} onModelChange={vi.fn()} showModelPickerInChat />
+        <ChatInput promptProcessing={false} onSubmit={onSubmit} models={models} onModelChange={vi.fn()} showModelPickerInChat />
       </MockThemeProvider>
     );
     expect(screen.getByRole("button", { name: /ai model/i })).toBeInTheDocument();

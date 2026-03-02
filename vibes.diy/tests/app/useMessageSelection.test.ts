@@ -29,7 +29,7 @@ describe("useMessageSelection", () => {
     const { result } = renderHook(() =>
       useMessageSelection({
         docs: messages,
-        isStreaming: false,
+        promptProcessing: false,
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "",
         pendingAiMessage: null,
@@ -69,7 +69,7 @@ describe("useMessageSelection", () => {
     const { result } = renderHook(() =>
       useMessageSelection({
         docs: messages,
-        isStreaming: false,
+        promptProcessing: false,
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "",
         pendingAiMessage: null,
@@ -86,7 +86,7 @@ describe("useMessageSelection", () => {
     const { result } = renderHook(() =>
       useMessageSelection({
         docs: messages,
-        isStreaming: false,
+        promptProcessing: false,
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "ai-message-0", // Explicitly select the oldest
         pendingAiMessage: null,
@@ -126,7 +126,7 @@ describe("useMessageSelection", () => {
     const { result } = renderHook(() =>
       useMessageSelection({
         docs: messages,
-        isStreaming: false,
+        promptProcessing: false,
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "",
         pendingAiMessage: null,
@@ -142,7 +142,7 @@ describe("useMessageSelection", () => {
     const { result, rerender } = renderHook((props) => useMessageSelection(props), {
       initialProps: {
         docs: [] as ChatMessageDocument[],
-        isStreaming: false,
+        promptProcessing: false,
         aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
         selectedResponseId: "",
         pendingAiMessage: null,
@@ -157,7 +157,7 @@ describe("useMessageSelection", () => {
 
     rerender({
       docs: messages,
-      isStreaming: false,
+      promptProcessing: false,
       aiMessage: { text: "", type: "ai" } as ChatMessageDocument,
       selectedResponseId: "",
       pendingAiMessage: null,

@@ -1,4 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { Result } from "@adviser/cement";
 import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
 
 // We need to mock the module properly, not test the real implementation yet
@@ -16,10 +17,8 @@ vi.mock("@vibes.diy/prompts", async () => {
 
 describe("Prompts Utility", () => {
   const opts = {
-    fallBackUrl: new URL("https://example.com/fallback"),
-    callAiEndpoint: "https://example.com/call-ai",
-    mock: {
-      fetch: () => Promise.resolve(new Response("xxx")),
+    callAi: {
+      ModuleAndOptionsSelection: vi.fn().mockResolvedValue(Result.Ok("{}")),
     },
   };
   beforeEach(() => {
