@@ -18,9 +18,6 @@ import {
   isResEnsureAppSlug,
   isResOpenChat,
   isResPromptChatSection,
-  ReqGetByUserSlugAppSlug,
-  ResGetByUserSlugAppSlug,
-  isResGetByUserSlugAppSlug,
   ReqListUserSlugAppSlug,
   ResListUserSlugAppSlug,
   isResListUserSlugAppSlug,
@@ -284,14 +281,14 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
-  getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>> {
-    return this.request(
-      { ...req, type: "vibes.diy.req-get-by-user-slug-app-slug" },
-      {
-        resMatch: isResGetByUserSlugAppSlug,
-      }
-    );
-  }
+  // getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>> {
+  //   return this.request(
+  //     { ...req, type: "vibes.diy.req-get-by-user-slug-app-slug" },
+  //     {
+  //       resMatch: isResGetByUserSlugAppSlug,
+  //     }
+  //   );
+  // }
 
   listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>> {
     return this.request(

@@ -1,0 +1,46 @@
+derivated from dashboard
+
+and does not use anything from vibes.diy
+
+live in vibes.diy/vibe/db-explore
+
+use @adviser/cement URI
+
+use our Design
+it should be usable on Mobile in VerticalMode
+
+analyse if there a table component for displaying mobile
+jsons with nested objects:
+{
+ id: x
+ nestlist: [{id:y}]
+ nestobj: {id:y, data: [{d:y}] }
+}
+
+ask if you want to use dependencies like react-toast...
+
+vite
+
+resizable -- it will run in iframe in future
+
+do not try to integrate that!!!!!
+should run on react-router dev
+
+
+it's an SPA
+REACT App
+REACT Router
+/dbexplore/dbname
+Receive the list of DBS later
+
+useFireProof(dbname)
+
+
+List-Pageing
+Delete Doc
+Update Doc
+Insert Doc
+
+
+
+

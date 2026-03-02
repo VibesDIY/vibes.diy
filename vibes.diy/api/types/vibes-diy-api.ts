@@ -2,8 +2,6 @@ import { Result } from "@adviser/cement";
 import {
   ReqEnsureAppSlug,
   ResEnsureAppSlug,
-  ReqGetByUserSlugAppSlug,
-  ResGetByUserSlugAppSlug,
   ReqListUserSlugAppSlug,
   ResListUserSlugAppSlug,
   ReqGetChatDetails,
@@ -53,7 +51,7 @@ export type Req<T> = Omit<T, "type" | "auth"> & OptionalAuth;
 
 export interface VibesDiyApiIface<_T = unknown> {
   ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>>;
-  getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>>;
+  // getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>>;
   listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>>;
   getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>>;
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;

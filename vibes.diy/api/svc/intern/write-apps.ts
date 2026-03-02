@@ -1,5 +1,5 @@
 import { ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile, FileSystemItem } from "@vibes.diy/api-types";
-import { exception2Result, Result, to_uint8, toSortedObject } from "@adviser/cement";
+import { exception2Result, Result, string2stream, to_uint8, toSortedObject } from "@adviser/cement";
 import { AppSlugBinding } from "./ensure-slug-binding.js";
 import { ReqWithVerifiedAuth } from "../check-auth.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
@@ -8,7 +8,6 @@ import { sha256 } from "multiformats/hashes/sha2";
 import { and, eq, or } from "drizzle-orm";
 import mime from "mime";
 import { transform } from "sucrase";
-import { calcCid } from "./ensure-storage.js";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
 import { StorageResult, VibesApiSQLCtx } from "../types.js";
 
@@ -77,131 +76,117 @@ interface GivenFsItem {
 
 async function transformJSXAndImports(
   ctx: VibesApiSQLCtx,
-  givenFsItems: GivenFsItem[]
-): Promise<
-  {
-    vibeFileItem: VibeFile;
-    prepareStorage?: Awaited<ReturnType<typeof calcCid>>;
-    fsItem: FileSystemItem;
-  }[]
-> {
-  const acc: {
-    vibeFileItem: VibeFile;
-    prepareStorage?: Awaited<ReturnType<typeof calcCid>>;
-    fsItem: FileSystemItem;
-  }[] = [];
-  for (const item of givenFsItems) {
-    if (item.fsItem.transform?.type === "jsx-to-js" && item.vibeFileItem.type == "code-block") {
-      const jsStr = transformJSXToJS(item.vibeFileItem.content);
-      const dataCid = await calcCid(ctx, jsStr);
-      // reference original item to set transformedAssetId
-      acc.push({
-        ...item,
-        fsItem: {
-          ...item.fsItem,
-          transform: { type: "jsx-to-js", transformedAssetId: dataCid.cid },
-        },
-      });
-      // new entry for import calculation
-      acc.push({
-        ...item,
-        fsItem: {
-          fileName: `/~~transformed~~/${item.fsItem.assetId}`,
-          mimeType: "application/javascript",
-          assetId: dataCid.cid,
-          assetURI: `unk://${dataCid.cid}`,
-          transform: {
-            type: "transformed",
-            action: "jsx-to-js",
-            transformedAssetId: item.fsItem.assetId,
-          },
-          size: jsStr.length,
-        },
-        prepareStorage: dataCid,
-      });
-    } else {
-      acc.push(item);
-    }
-  }
+  givenFsItems: GivenFsItem[],
+  imports: Map<string, string[]>
+): Promise<Result<FileSystemItem>[]> 
+ {
+  const acc: Result<FileSystemItem>[] = [];
+  //   vibeFileItem: VibeFile;
+  //   // prepareStorage?: Awaited<ReturnType<typeof calcCid>>;
+  //   fsItem: FileSystemItem;
+  // }>[] = [];
+  await Promise.all(
+    givenFsItems.map(async (item) => {
+      if (item.fsItem.transform?.type === "jsx-to-js" && item.vibeFileItem.type == "code-block") {
+        const jsStr = transformJSXToJS(item.vibeFileItem.content);
+        // const dataCid = await calcCid(ctx, jsStr);
+        // reference original item to set transformedAssetId
+        acc.push(
+          Result.Ok({
+              ...item.fsItem,
+              transform: { type: "jsx-to-js", transformedAssetId: "later" },
+          })
+        );
+        const rImports = importsFromJS(jsStr);
+        rImports.forEach((imp) => {
+          if (!imports.has(imp)) {
+            imports.set(imp, []);
+          }
+          imports.get(imp)?.push(item.fsItem.assetId);
+        });
+
+        const [rStore] = await ctx.storage.ensure(string2stream(jsStr));
+        if (rStore.isErr()) {
+          acc.push(Result.Err(new Error(`Failed to store transformed JS: ${rStore.Err()}`)));
+          return;
+        }
+        // new entry for import calculation
+        acc.push(
+          Result.Ok({
+              fileName: `/~~transformed~~/${item.fsItem.assetId}`,
+              mimeType: "application/javascript",
+              assetId: rStore.Ok().cid,
+              assetURI: rStore.Ok().getURL,
+              transform: {
+                type: "transformed",
+                action: "jsx-to-js",
+                transformedAssetId: item.fsItem.assetId,
+              },
+              size: jsStr.length,
+            // prepareStorage: dataCid,
+          })
+        );
+      } else if (item.vibeFileItem.type == "code-block" && item.vibeFileItem.lang === "js") {
+        const rImports = importsFromJS(item.vibeFileItem.filename);
+        rImports.forEach((imp) => {
+          if (!imports.has(imp)) {
+            imports.set(imp, []);
+          }
+          imports.get(imp)?.push(item.fsItem.assetId);
+        });
+        acc.push(Result.Ok(item.fsItem));
+      }
+    })
+  );
   return acc;
 }
 
 async function createImportMap(
   ctx: VibesApiSQLCtx,
   _mode: ReqEnsureAppSlug["mode"], // controls locked vs unlocked import map
-  transformed: {
-    vibeFileItem: VibeFile;
-    prepareStorage?: Awaited<ReturnType<typeof calcCid>>;
-    fsItem: FileSystemItem;
-  }[]
-): Promise<
-  {
-    vibeFileItem: VibeFile;
-    prepareStorage?: Awaited<ReturnType<typeof calcCid>>;
-    fsItem: FileSystemItem;
-  }[]
-> {
-  const importFiles = transformed.reduce(
-    (acc, item) => {
-      let res: string[];
-      if (item.vibeFileItem.type == "code-block" && item.vibeFileItem.lang === "js") {
-        res = importsFromJS(item.vibeFileItem.content);
-      } else if (
-        item.prepareStorage &&
-        item.fsItem.transform?.type === "transformed" &&
-        item.fsItem.transform.action === "jsx-to-js"
-      ) {
-        res = importsFromJS(item.prepareStorage.dataStr());
-        // console.log("imports from", item.vibeFileItem.filename, res)
-        if (res.length > 0) {
-          res.forEach((imp) => acc.imports.add(imp));
-          acc.files.push(item.vibeFileItem.filename);
-        }
-      }
-      return acc;
-    },
-    { imports: new Set<string>(), files: [] as string[] }
-  );
-  if (importFiles.imports.size >= 0) {
-    // const imap = await svcImportMap(Array.from(importFiles.imports), {
-    //   mode,
-    //   ...ctx.params.importMapProps
-    // }, ctx.fetchPkgVersion)
-    const imapStr = JSON.stringify({
-      imports: Object.fromEntries(Array.from(importFiles.imports).map((imp) => [imp, `vibed:${importFiles.files.join(",")}`])),
-    });
-    const dataCid = await calcCid(ctx, imapStr);
-    return [
-      {
-        vibeFileItem: {
-          type: "str-asset-block" as const,
-          filename: `/~~calculated~~/import-map.json`,
-          mimetype: "application/importmap+json",
-
-          content: imapStr,
-        },
-        prepareStorage: dataCid,
-        fsItem: {
-          fileName: `/~~calculated~~/import-map.json`,
-          mimeType: "application/importmap+json",
-          assetId: dataCid.cid,
-          assetURI: `unk://${dataCid.cid}`,
-          transform: {
-            type: "import-map",
-            fromAssetIds: importFiles.files,
-          },
-          size: imapStr.length,
-        },
-      },
-    ];
+  // transformed: {
+  //   vibeFileItem: VibeFile;
+  //   fsItem: FileSystemItem;
+  // }[],
+  imports: Map<string, string[]>
+): Promise<Result<FileSystemItem>[]> {
+  const imapStr = JSON.stringify({
+    imports: Object.fromEntries(Array.from(imports.entries()).map(([imp, files]) => [imp, `vibed:${files.join(",")}`])),
+  });
+  const [rStore] = await ctx.storage.ensure(string2stream(imapStr));
+  if (rStore.isErr()) {
+    return [Result.Err(rStore)];
   }
-  return [];
+  return [
+    Result.Ok(
+    {
+      // vibeFileItem: {
+      //   type: "str-asset-block" as const,
+      //   filename: `/~~calculated~~/import-map.json`,
+      //   mimetype: "application/importmap+json",
+      //   content: imapStr,
+      // },
+      // prepareStorage: dataCid,
+      // fsItem: {
+        fileName: `/~~calculated~~/import-map.json`,
+        mimeType: "application/importmap+json",
+        assetId: rStore.Ok().cid,
+        assetURI: rStore.Ok().getURL,
+        transform: {
+          type: "import-map",
+          fromAssetIds: Array.from(new Set(Array.from(imports.values()).flat())),
+        },
+        size: imapStr.length,
+      // },
+    }),
+  ];
 }
+
 async function toFileSystemItems(
   ctx: VibesApiSQLCtx,
   mode: ReqEnsureAppSlug["mode"],
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
-): Promise<Result<FileSystemItem[]>> {
+): Promise<Result<FileSystemItem>[]> {
   const givenFsItems = fs.map((f) => {
     const ret: FileSystemItem = {
       fileName: f.vibeFileItem.filename,
@@ -228,42 +213,63 @@ async function toFileSystemItems(
     return { ...f, fsItem: ret };
   });
 
+  // lhs import -> array of CIDs which refer to that import
+  const imports = new Map<string, string[]>();
   // do transforms
-  const transformed = await transformJSXAndImports(ctx, givenFsItems);
-  transformed.push(...(await createImportMap(ctx, mode, transformed)));
-
-  const rStore = await ctx.storage.ensure(
-    ...transformed
-      .filter((item) => item.prepareStorage)
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      .map((item) => item.prepareStorage!)
+  const transformed = await transformJSXAndImports(ctx, givenFsItems, imports);
+  // if (transformed.some((item) => item.isErr())) {
+  //   return Result.Err(
+  //     new Error(
+  //       `Failed to transform files: ${transformed
+  //         .filter((item) => item.isErr())
+  //         .map((item) => item.Err().message)
+  //         .join(", ")}`
+  //     )
+  //   );
+  // }
+  transformed.push(
+    ...(await createImportMap(
+      ctx,
+      mode,
+      // transformed.filter((item) => item.isOk()).map((item) => item.Ok())
+      imports 
+    ))
   );
-  if (rStore.isErr()) {
-    return Result.Err(rStore);
-  }
-  const storeMap = rStore.Ok().reduce((acc, item) => {
-    acc.set(item.cid, item);
-    return acc;
-  }, new Map<string, StorageResult>());
 
-  const assetUris = transformed.map((item) => {
-    if (!item.prepareStorage) {
-      return item;
-    }
-    const storeItem = storeMap.get(item.prepareStorage.cid);
-    if (!storeItem) {
-      throw new Error("internal error: storage result not found");
-    }
-    return {
-      ...item,
-      fsItem: {
-        ...item.fsItem,
-        assetURI: storeItem.getURL,
-        size: storeItem.size,
-      },
-    };
-  });
-  return Result.Ok(assetUris.map((item) => item.fsItem));
+  // const rStore = await ctx.storage.ensure(
+  //   ...transformed
+  //     .filter((item) => item.prepareStorage)
+  //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  //     .map((item) => item.prepareStorage!)
+  // );
+  // if (rStore.isErr()) {
+  //   return Result.Err(rStore);
+  // }
+  // const storeMap = rStore.Ok().reduce((acc, item) => {
+  //   acc.set(item.cid, item);
+  //   return acc;
+  // }, new Map<string, StorageResult>());
+
+  // const assetUris = transformed.filter(item => item.isErr()).map((rItem) => {
+  //   const item = rItem.Ok();
+
+  // //   if (!item.prepareStorage) {
+  // //     return item;
+  // //   }
+  // //   const storeItem = storeMap.get(item.prepareStorage.cid);
+  // //   if (!storeItem) {
+  // //     throw new Error("internal error: storage result not found");
+  // //   }
+  //   return {
+  //     ...item,
+  //     fsItem: {
+  //       ...item.fsItem,
+  //       // assetURI: storeItem.getURL,
+  //       // size: storeItem.size,
+  //     },
+  //   };
+  // });
+  return transformed
 }
 
 export async function ensureApps(
@@ -286,18 +292,18 @@ export async function ensureApps(
         .set({ mode: req.mode })
         .where(and(eq(sqlApps.userId, binding.userId), eq(sqlApps.fsId, fsId)));
     }
-    const rFileSystem = await toFileSystemItems(ctx, req.mode, fs);
-    if (rFileSystem.isErr()) {
-      return Result.Err(rFileSystem);
+    const rFileSystems = await toFileSystemItems(ctx, req.mode, fs);
+    if (rFileSystems.some((item) => item.isErr())) {
+      return Result.Err(`Failed to process file system items: ${rFileSystems.filter((item) => item.isErr()).map((item) => item.Err().message).join(", ")}`);
     }
     return Result.Ok({
       ...binding,
       mode: req.mode,
       fsId,
       env: req.env ?? {},
-      fileSystem: rFileSystem.Ok(),
-      wrapperUrl: "string",
-      entryPointUrl: "string",
+      fileSystem: rFileSystems.map((item) => item.Ok()),
+      // wrapperUrl: "string",
+      // entryPointUrl: "string",
     });
   }
 
@@ -306,10 +312,10 @@ export async function ensureApps(
   if (rMaxSeq.isErr()) {
     return Result.Err(rMaxSeq);
   }
-  const rFileSystem = await toFileSystemItems(ctx, req.mode, fs);
-  if (rFileSystem.isErr()) {
-    return Result.Err(rFileSystem);
-  }
+  const rFileSystems = await toFileSystemItems(ctx, req.mode, fs);
+   if (rFileSystems.some((item) => item.isErr())) {
+      return Result.Err(`Failed to process file system items: ${rFileSystems.filter((item) => item.isErr()).map((item) => item.Err().message).join(", ")}`);
+    }
   const sqlVal = {
     appSlug: binding.appSlug,
     userId: binding.userId,
@@ -317,7 +323,7 @@ export async function ensureApps(
     releaseSeq: rMaxSeq.Ok() + 1,
     fsId,
     env: req.env ?? {},
-    fileSystem: rFileSystem.Ok(),
+    fileSystem: rFileSystems.map((item) => item.Ok()),
     meta: [], // keep meta for existing apps, can be updated later by another API
     mode: req.mode,
     created: new Date().toISOString(),
@@ -338,7 +344,7 @@ export async function ensureApps(
     mode: req.mode,
     fsId,
     env: req.env ?? {},
-    fileSystem: rFileSystem.Ok(),
+    fileSystem: rFileSystems.map((item) => item.Ok()),
     wrapperUrl: "string",
     entryPointUrl: "string",
   });

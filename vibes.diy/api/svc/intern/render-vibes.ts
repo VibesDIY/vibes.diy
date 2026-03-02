@@ -1,8 +1,8 @@
-import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result } from "@adviser/cement";
+import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result, stream2string, stream2uint8array } from "@adviser/cement";
 import { FileSystemItem, HttpResponseBodyType, VibesDiyServCtx, vibesImportMap, vibeUserEnv } from "@vibes.diy/api-types";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
-import { fetchContent, NpmUrlCapture } from "../public/serv-entry-point.js";
-import { VibesApiSQLCtx } from "../types.js";
+import { NpmUrlCapture } from "../public/serv-entry-point.js";
+import { isFetchErrResult, isFetchNotFoundResult, VibesApiSQLCtx } from "../types.js";
 import { type } from "arktype";
 // import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
@@ -28,12 +28,16 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
   if (!fsIportMap) {
     return Result.Err(new Error("No import-map found in file system"));
   }
-  const rImportMapUint8 = await fetchContent(ctx, fsIportMap);
-  if (rImportMapUint8.isErr()) {
-    return Result.Err(rImportMapUint8);
-  }
   const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-  const genImport = vibesImportMap(JSON.parse(vctx.sthis.txt.decode(rImportMapUint8.Ok())));
+  const rImportMapUint8 = await vctx.storage.fetch(fsIportMap.assetURI);
+  // (ctx, fsIportMap);
+  if (isFetchErrResult(rImportMapUint8)) {
+    return Result.Err(rImportMapUint8.error);
+  }
+  if (isFetchNotFoundResult(rImportMapUint8)) {
+    return Result.Err(new Error(`Import map not found for URI ${fsIportMap.assetURI}`));
+  }
+  const genImport = vibesImportMap(JSON.parse(vctx.sthis.txt.decode(await stream2uint8array(rImportMapUint8.data))));
   if (genImport instanceof type.errors) {
     return Result.Err(genImport.summary);
   }

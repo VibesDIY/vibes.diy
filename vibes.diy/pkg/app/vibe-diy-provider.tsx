@@ -23,6 +23,8 @@ export interface VibeDiyWebVars {
     DASHBOARD_URL: string;
     VIBES_DIY_API_URL: string;
     VIBES_SVC_HOSTNAME_BASE: string;
+    VIBES_SVC_PROTOCOL: string;
+    VIBES_SVC_PORT: string;
 
     CLERK_PUBLISHABLE_KEY: string;
   };

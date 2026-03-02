@@ -1,79 +1,136 @@
-import { CoerceBinaryInput, exception2Result, Result, to_uint8, uint8array2stream, URI } from "@adviser/cement";
-import { StorageResult } from "../types.js";
+import { Result, URI, teeWriter, processStream, Lazy, PeerStream, Peer } from "@adviser/cement";
+import { FetchResult, StorageResult, Storage } from "../types.js";
 import { VibesSqlite } from "../create-handler.js";
-import { sqlAssets } from "../sql/vibes-diy-api-schema.js";
-import { base58btc } from "multiformats/bases/base58";
-import { sha256 } from "multiformats/hashes/sha2";
-import { SuperThis } from "@fireproof/core-types-base";
-import { eq } from "drizzle-orm";
+import { SQLitePeer, SQLitePeerFetch } from "../peers/sql.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { CID } from "multiformats";
+import { create as createDigest } from "multiformats/hashes/digest";
 
 export interface CalcCidResult {
   cid: string;
-  data: Uint8Array;
-  dataStr(): string;
-}
-export async function calcCid({ sthis }: { sthis: SuperThis }, content: CoerceBinaryInput): Promise<CalcCidResult> {
-  const uint8Content = to_uint8(content);
-  const hash = await sha256.digest(uint8Content);
-  return {
-    cid: base58btc.encode(hash.digest),
-    data: uint8Content,
-    dataStr: () => {
-      if (typeof content === "string") {
-        return content;
-      } else {
-        return sthis.txt.decode(uint8Content);
-      }
-    },
-  };
+  size: number;
 }
 
-export function ensureStorage(db: VibesSqlite): {
-  fetch: (url: string) => Promise<Result<ReadableStream<Uint8Array>>>;
-  ensure: (...items: { cid: string; data: Uint8Array }[]) => Promise<Result<StorageResult[]>>;
-} {
-  return {
-    fetch: async (iurl: string): Promise<Result<ReadableStream<Uint8Array>>> => {
-      const url = URI.from(iurl);
-      if (url.protocol === "sql:") {
-        const assetId = url.pathname.slice("Assets/".length);
-        console.log("Fetching asset with ID from SQL storage:", assetId, "from URL:", url.pathname);
-        const asset = await db.select().from(sqlAssets).where(eq(sqlAssets.assetId, assetId)).get();
-        if (!asset) {
-          return Result.Err(`Asset with CID ${assetId} not found in storage`);
+export type PeerStreamWithCommit = PeerStream & {
+  commit: (iname?: string) => Promise<{ url: string }>;
+};
+
+export interface PeerWithCommit extends Peer {
+  begin: () => Promise<PeerStreamWithCommit>;
+}
+
+const SHA2_256 = 0x12;
+
+export class Cider {
+  readonly h: ReturnType<typeof sha256.create>;
+  size = 0;
+  readonly processStreamPromise: Promise<void>;
+  constructor(inStream: ReadableStream<Uint8Array>) {
+    this.h = sha256.create();
+    this.processStreamPromise = processStream(inStream, (chunk) => {
+      this.h.update(chunk);
+      this.size += chunk.length;
+    });
+  }
+
+  readonly getCID = Lazy((): Promise<CalcCidResult> => {
+    return this.processStreamPromise.then(() => {
+      const cid = CID.create(1, 0x55, createDigest(SHA2_256, this.h.digest()));
+      return {
+        cid: cid.toString(),
+        size: this.size,
+      };
+    });
+  });
+}
+
+function coerceStreamUint8(stream: ReadableStream<Uint8Array | string>): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      processStream(stream, (chunk) => {
+        if (typeof chunk === "string") {
+          controller.enqueue(encoder.encode(chunk));
+        } else {
+          controller.enqueue(chunk);
         }
-        return Result.Ok(uint8array2stream(asset.content as Uint8Array));
-      }
-      return Result.Err(`Unsupported URL protocol for storage fetch: ${url.protocol}`);
+      })
+        .then(() => {
+          controller.close();
+        })
+        .catch((err) => {
+          controller.error(err);
+        });
     },
-    ensure: async (...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>> => {
-      const now = new Date();
-      const created = now.toISOString();
-      const res = await exception2Result(() =>
-        db
-          .insert(sqlAssets)
-          .values(
-            items.map((item) => ({
-              assetId: item.cid,
-              content: item.data,
-              created,
-            }))
-          )
-          .onConflictDoNothing()
-          .run()
-      );
-      if (res.isErr()) {
-        return Result.Err(res);
+  });
+}
+
+export function ensureStorage(db: VibesSqlite): Storage {
+  return {
+    fetch: async (iurl: string): Promise<FetchResult> => {
+      const peers = [new SQLitePeerFetch(db)];
+      const url = URI.from(iurl);
+      for (const peer of peers) {
+        const res = await peer.fetch(url);
+        if (res.IsSome()) {
+          return res.unwrap();
+        }
       }
-      return Result.Ok(
-        items.map((item) => ({
-          cid: item.cid,
-          getURL: `sql://Assets/${item.cid}`,
-          mode: "existing",
-          created: now,
-          size: item.data.byteLength,
-        }))
+      return {
+        type: "fetch.notfound",
+        url: url.toString(),
+      };
+    },
+    ensure: async (...items: ReadableStream<Uint8Array | string>[]): Promise<Result<StorageResult>[]> => {
+      const tees = await Promise.allSettled(
+        items.map(
+          (
+            item
+          ): Promise<
+            Result<{
+              cid: string;
+              url: string;
+              size: number;
+            }>
+          > => {
+            const [lag1, lag2] = coerceStreamUint8(item).tee();
+            const cider = new Cider(lag1);
+            const peers = [new SQLitePeer(db, cider)];
+            const rTee = teeWriter(peers, lag2);
+            return Promise.allSettled([rTee]).then(async ([rTee]) => {
+              if (rTee.status === "rejected") {
+                return Result.Err(new Error(`Failed to write to peer: ${rTee.reason}`));
+              }
+              return cider.getCID().then(({ cid, size }) => {
+                const tok = rTee.value.Ok().peer as PeerStreamWithCommit;
+                return tok.commit(cid).then((r) => {
+                  return Result.Ok({
+                    cid,
+                    url: r.url,
+                    size,
+                  });
+                });
+              });
+            });
+          }
+        )
       );
+      return tees.map((res) => {
+        if (res.status !== "fulfilled") {
+          return Result.Err(new Error(`Failed to process item: ${res.reason}`));
+        }
+        if (res.value.isErr()) {
+          return Result.Err(new Error(`Failed to write to peer: ${res.value.Err()}`));
+        }
+        const { cid, url, size } = res.value.Ok();
+        return Result.Ok({
+          cid,
+          getURL: url,
+          mode: "created",
+          created: new Date(),
+          size,
+        });
+      });
     },
   };
 }

@@ -9,14 +9,14 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.26",
+    "@adviser/cement": "^0.5.29",
     "@fireproof/core-protocols-dashboard": "^0.24.12",
     "@fireproof/core-types-protocols-cloud": "^0.24.12",
     "@fireproof/core-types-protocols-dashboard": "^0.24.12",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/base": "workspace:*",
-    "@vibes.diy/vibe-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "@vibes.diy/vibe-types": "workspace:*",
     "arktype": "^2.1.29",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

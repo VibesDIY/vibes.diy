@@ -61,6 +61,7 @@ export default {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
+            "Cache-Control": "public, max-age=86400",
           },
         }) as unknown as CFResponse;
         await cache.put(
@@ -82,6 +83,7 @@ export default {
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
       headers.set("Access-Control-Allow-Headers", "Content-Type");
+      headers.set("Cache-Control", "public, max-age=3600");
       const response = new Response(assetResponse.body as unknown as BodyInit, {
         status: assetResponse.status,
         headers,
@@ -105,7 +107,7 @@ export default {
         url.hostname.slice(0, -env.VIBES_SVC_HOSTNAME_BASE.length).includes("--")) ||
       url.pathname.startsWith("/assets/cid")
     ) {
-      console.log("Handling Hostname-based API request for", url.hostname, url.pathname);
+      // console.log("Handling Hostname-based API request for", url.hostname, url.pathname);
       const res = await cfServe(request, cctx);
       caches.default.put(request.url, res.clone() as unknown as CFResponse);
       return res;

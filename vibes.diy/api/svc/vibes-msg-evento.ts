@@ -4,7 +4,7 @@ import { ResError } from "@vibes.diy/api-types";
 import { ensureAppSlugItemEvento } from "./public/ensure-app-slug-item.js";
 import { openChat } from "./public/open-chat.js";
 import { promptChatSection } from "./public/prompt-chat-section.js";
-import { getByUserSlugAppSlugItemEvento } from "./public/get-user-slug-app-slug-item.js";
+// import { getByUserSlugAppSlugItemEvento } from "./public/get-user-slug-app-slug-item.js";
 import { listUserSlugAppSlugEvento } from "./public/list-user-slug-app-slug.js";
 import { getChatDetailsEvento } from "./public/get-chat-details.js";
 import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
@@ -15,7 +15,7 @@ export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
   evento.push(
     ensureAppSlugItemEvento,
-    getByUserSlugAppSlugItemEvento,
+    // getByUserSlugAppSlugItemEvento,
     listUserSlugAppSlugEvento,
     getChatDetailsEvento,
     getAppByFsIdEvento,
