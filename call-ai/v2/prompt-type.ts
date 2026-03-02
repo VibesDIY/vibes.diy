@@ -18,6 +18,20 @@ export const ChatMessage = type({
 });
 export type ChatMessage = typeof ChatMessage.infer;
 
+// JSON schema for structured output via response_format
+export const JsonSchemaFormat = type({
+  name: "string",
+  "strict?": "boolean",
+  schema: "Record<string, unknown>",
+});
+export type JsonSchemaFormat = typeof JsonSchemaFormat.infer;
+
+export const ResponseFormat = type({
+  type: "'json_object' | 'json_schema'",
+  "json_schema?": JsonSchemaFormat,
+});
+export type ResponseFormat = typeof ResponseFormat.infer;
+
 // LLM request body (OpenRouter/OpenAI compatible)
 export const LLMRequest = type({
   "model?": "string",
@@ -29,6 +43,7 @@ export const LLMRequest = type({
   "frequency_penalty?": "number",
   "presence_penalty?": "number",
   "stop?": "string | string[]",
+  "response_format?": ResponseFormat,
 });
 
 export type LLMRequest = typeof LLMRequest.infer;

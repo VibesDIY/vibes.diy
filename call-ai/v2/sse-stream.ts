@@ -45,6 +45,40 @@ export const SseChunk = type({
   "+": "delete",
 });
 
+// Direct OpenAI format: same shape but without provider and native_finish_reason
+const OpenAiDirectChunk = type({
+  id: "string",
+  model: "string",
+  object: "string",
+  created: "number",
+  choices: type({
+    index: "number",
+    delta: {
+      "role?": "string",
+      "content?": "string",
+      "reasoning?": "string|null",
+      "reasoning_details?": "unknown[]",
+      "+": "delete",
+    },
+    finish_reason: "string|null",
+    logprobs: "unknown",
+  }).array(),
+  "system_fingerprint?": "string",
+  "usage?": SseUsage,
+  "+": "delete",
+});
+
+function openaiDirectToSseChunk(validated: typeof OpenAiDirectChunk.infer): SseChunk {
+  return {
+    ...validated,
+    provider: "openai",
+    choices: validated.choices.map((c) => ({
+      ...c,
+      native_finish_reason: c.finish_reason,
+    })),
+  };
+}
+
 export type SseChunk = typeof SseChunk.infer;
 
 export const SseBeginMsg = type({
@@ -114,11 +148,122 @@ export const isSseMsg = (msg: unknown, streamId?: string): msg is SseStreamMsg =
 
 // Combined output type (passthrough + own events)
 
+// Anthropic SSE format detection and translation
+// Detects events like message_start, content_block_delta, message_delta
+// and translates them into OpenAI-shaped SseChunk objects
+
+interface AnthropicState {
+  id: string;
+  model: string;
+  created: number;
+}
+
+function isAnthropicEvent(json: unknown): json is Record<string, unknown> & { type: string } {
+  return typeof json === "object" && json !== null && "type" in json && typeof json.type === "string";
+}
+
+function obj(v: unknown): Record<string, unknown> | undefined {
+  if (typeof v !== "object" || v === null) return undefined;
+  return Object.fromEntries(Object.entries(v));
+}
+
+function str(v: unknown, fallback = ""): string {
+  return typeof v === "string" ? v : fallback;
+}
+
+function num(v: unknown, fallback = 0): number {
+  return typeof v === "number" ? v : fallback;
+}
+
+function anthropicToSseChunk(
+  json: Record<string, unknown> & { type: string },
+  state: AnthropicState
+): SseChunk | "skip" | null {
+  const base = () => ({
+    id: state.id,
+    provider: "anthropic",
+    model: state.model,
+    object: "chat.completion.chunk",
+    created: state.created,
+  });
+
+  switch (json.type) {
+    case "message_start": {
+      const msg = obj(json.message);
+      if (msg === undefined) return null;
+      state.id = str(msg.id);
+      state.model = str(msg.model);
+      return {
+        ...base(),
+        choices: [
+          {
+            index: 0,
+            delta: { role: str(msg.role, "assistant"), content: "" },
+            finish_reason: null,
+            native_finish_reason: null,
+            logprobs: null,
+          },
+        ],
+      };
+    }
+
+    case "content_block_delta": {
+      const delta = obj(json.delta);
+      if (delta === undefined || delta.type !== "text_delta" || typeof delta.text !== "string") return "skip";
+      return {
+        ...base(),
+        choices: [
+          {
+            index: 0,
+            delta: { content: delta.text },
+            finish_reason: null,
+            native_finish_reason: null,
+            logprobs: null,
+          },
+        ],
+      };
+    }
+
+    case "message_delta": {
+      const delta = obj(json.delta);
+      const usage = obj(json.usage);
+      const chunk: SseChunk = {
+        ...base(),
+        choices: [
+          {
+            index: 0,
+            delta: { content: "" },
+            finish_reason: delta ? str(delta.stop_reason, "stop") : "stop",
+            native_finish_reason: delta ? str(delta.stop_reason, "stop") : "stop",
+            logprobs: null,
+          },
+        ],
+      };
+      if (usage) {
+        const inp = num(usage.input_tokens);
+        const out = num(usage.output_tokens);
+        chunk.usage = { prompt_tokens: inp, completion_tokens: out, total_tokens: inp + out };
+      }
+      return chunk;
+    }
+
+    case "content_block_start":
+    case "content_block_stop":
+    case "ping":
+    case "message_stop":
+      return "skip";
+
+    default:
+      return null;
+  }
+}
+
 export function createSseStream(filterStreamId: string): TransformStream<DataStreamMsg, SseStreamMsg> {
   let chunkNr = 0;
   let errorNr = 0;
   const usages: SseUsage[] = [];
   let streamId = "";
+  const anthropicState: AnthropicState = { id: "", model: "", created: Math.floor(Date.now() / 1000) };
 
   return new TransformStream<DataStreamMsg, SseStreamMsg>({
     transform: passthrough((msg, controller) => {
@@ -146,28 +291,69 @@ export function createSseStream(filterStreamId: string): TransformStream<DataStr
           timestamp: new Date(),
         });
       } else if (isDataLine(msg, filterStreamId)) {
+        // Try OpenRouter format first (has provider + native_finish_reason)
         const result = SseChunk(msg.json);
-        if (result instanceof type.errors) {
-          errorNr++;
+        if (!("summary" in result)) {
+          chunkNr++;
+          if (result.usage) {
+            usages.push(result.usage);
+          }
           controller.enqueue({
-            type: "sse.error",
+            type: "sse.line",
             streamId,
-            error: result.summary,
-            json: msg.json,
-            errorNr,
+            chunk: result,
+            chunkNr,
             timestamp: new Date(),
           });
           return;
         }
-        chunkNr++;
-        if (result.usage) {
-          usages.push(result.usage);
+
+        // Try direct OpenAI format (no provider/native_finish_reason)
+        const directResult = OpenAiDirectChunk(msg.json);
+        if (!("summary" in directResult)) {
+          const chunk = openaiDirectToSseChunk(directResult);
+          chunkNr++;
+          if (chunk.usage) {
+            usages.push(chunk.usage);
+          }
+          controller.enqueue({
+            type: "sse.line",
+            streamId,
+            chunk,
+            chunkNr,
+            timestamp: new Date(),
+          });
+          return;
         }
+
+        // Try Anthropic format
+        if (isAnthropicEvent(msg.json)) {
+          const translated = anthropicToSseChunk(msg.json, anthropicState);
+          if (translated === "skip") return;
+          if (translated !== null) {
+            chunkNr++;
+            if (translated.usage) {
+              usages.push(translated.usage);
+            }
+            controller.enqueue({
+              type: "sse.line",
+              streamId,
+              chunk: translated,
+              chunkNr,
+              timestamp: new Date(),
+            });
+            return;
+          }
+        }
+
+        // Neither format matched
+        errorNr++;
         controller.enqueue({
-          type: "sse.line",
+          type: "sse.error",
           streamId,
-          chunk: result,
-          chunkNr,
+          error: result.summary,
+          json: msg.json,
+          errorNr,
           timestamp: new Date(),
         });
       } else if (isDataEnd(msg, filterStreamId)) {
