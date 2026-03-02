@@ -1,6 +1,16 @@
 import * as mod from "@vibes.diy/prompts";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { Result } from "@adviser/cement";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
+
+// Create a fetchText mock that delegates to the mock fetch helper
+const mockFetchImpl = createMockFetchFromPkgFiles();
+function mockFetchText(_pkg: string, path: string): Promise<Result<string>> {
+  return mockFetchImpl(path).then(async (res) => {
+    if (res.ok) return Result.Ok(await res.text());
+    return Result.Err(new Error(`fetch failed for path: ${path}`));
+  });
+}
 
 // Mock global fetch for the integration tests
 const mockFetch = vi.fn();
@@ -28,13 +38,14 @@ beforeEach(() => {
 });
 
 const opts = {
-  fallBackUrl: new URL("https://example.com/fallback"),
-  callAiEndpoint: "https://example.com/call-ai",
-  mock: {
-    callAI: vi.fn().mockResolvedValue(
-      JSON.stringify({
-        choices: [{ message: { content: "Mocked response" } }],
-      })
+  fetchText: mockFetchText,
+  callAi: {
+    ModuleAndOptionsSelection: vi.fn().mockResolvedValue(
+      Result.Ok(
+        JSON.stringify({
+          choices: [{ message: { content: "Mocked response" } }],
+        })
+      )
     ),
   },
 };
