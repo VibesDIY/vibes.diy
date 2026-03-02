@@ -323,7 +323,7 @@ export const reqGetByUserSlugAppSlug = type({
   auth: dashAuthType,
   userSlug: "string",
   appSlug: "string",
-  "sectionId?": "string",
+  // "sectionId?": "string",
 });
 
 export const reqListUserSlugAppSlug = type({
@@ -359,7 +359,7 @@ export function isReqGetByUserSlugAppSlug(obj: unknown): obj is ReqGetByUserSlug
 
 export const resGetByUserSlugAppSlug = type({
   type: "'vibes.diy.res-get-by-user-slug-app-slug'",
-  "sectionId?": "string",
+  // "sectionId?": "string",
 }).and(FileSystemRef);
 
 export type ResGetByUserSlugAppSlug = typeof resGetByUserSlugAppSlug.infer;

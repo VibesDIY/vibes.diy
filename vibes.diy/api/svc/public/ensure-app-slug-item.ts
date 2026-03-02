@@ -16,7 +16,6 @@ import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
-import { calcCid } from "../intern/ensure-storage.js";
 
 // ReqWithVerifiedAuth<ReqEnsureAppSlug>
 export async function ensureAppSlugItem(
@@ -35,8 +34,7 @@ export async function ensureAppSlugItem(
   const writeAppSlugsOp: {
     fsItem: VibeFile;
     assetOp: {
-      cid: string;
-      data: Uint8Array;
+      data: string | Uint8Array;
     };
   }[] = [];
   for (const fsItem of req.fileSystem) {
@@ -47,7 +45,7 @@ export async function ensureAppSlugItem(
         {
           writeAppSlugsOp.push({
             fsItem,
-            assetOp: await calcCid(vctx, fsItem.content),
+            assetOp: { data: fsItem.content },
           });
         }
         break;
@@ -59,28 +57,34 @@ export async function ensureAppSlugItem(
         return Result.Err(`unsupported file system item type: ${fsItem.type}`);
     }
   }
-  const rStorageResult = await vctx.storage.ensure(...writeAppSlugsOp.map((op) => op.assetOp));
-  if (rStorageResult.isErr()) {
-    return Result.Err(rStorageResult);
+  const rStorageResults = await vctx.storage.ensure(
+    ...writeAppSlugsOp.map(
+      (op) =>
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(op.assetOp.data);
+            controller.close();
+          },
+        })
+    )
+  );
+  if (rStorageResults.some((r) => r.isErr())) {
+    return Result.Err(`failed to store one or more assets: ${rStorageResults.map((r) => (r.isErr() ? r.Err().message : "ok")).join(", ")}`);
   }
-  if (rStorageResult.Ok().length !== writeAppSlugsOp.length) {
-    return Result.Err("storage result count mismatch");
-  }
-  const storageResults = rStorageResult.Ok();
-  const fullFileSystem = writeAppSlugsOp.map((op, idx) => ({
-    vibeFileItem: op.fsItem,
-    storage: storageResults[idx],
+  const fullFileSystem = rStorageResults.map((op, idx) => ({
+    vibeFileItem: writeAppSlugsOp[idx].fsItem,
+    storage: op.Ok(),
   }));
   const res = await ensureApps(vctx, req, rAppSlugBinding.Ok(), fullFileSystem);
   if (res.isErr()) {
     return Result.Err(res);
   }
-  let wrapperUrl: string;
-  if (req.mode === "production") {
-    wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
-  } else {
-    wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
-  }
+  // let wrapperUrl: string;
+  // if (req.mode === "production") {
+  //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
+  // } else {
+  //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
+  // }
   const entryPointUrl = calcEntryPointUrl({
     ...vctx.params.vibes.svc,
     bindings: {
@@ -115,7 +119,7 @@ export async function ensureAppSlugItem(
     fsId: res.Ok().fsId,
     env: req.env ?? {},
     fileSystem: res.Ok().fileSystem,
-    wrapperUrl,
+    // wrapperUrl,
     entryPointUrl,
   });
 }

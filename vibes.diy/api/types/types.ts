@@ -6,7 +6,7 @@ export const vibeBindings = type({
   appSlug: slugPattern,
   userSlug: slugPattern,
   fsId: slugPattern,
-  "groupId?": slugPattern,
+  // "groupId?": slugPattern,
 });
 export type VibeBindings = typeof vibeBindings.infer;
 

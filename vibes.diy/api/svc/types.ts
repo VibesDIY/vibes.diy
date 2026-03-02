@@ -21,6 +21,37 @@ export interface CfCacheIf {
   put(request: RequestInfo | URL, response: Response): Promise<void>;
 }
 
+export interface FetchOkResult {
+  type: "fetch.ok";
+  url: string;
+  data: ReadableStream<Uint8Array>;
+}
+
+export function isFetchOkResult(result: FetchResult): result is FetchOkResult {
+  return result.type === "fetch.ok";
+}
+export function isFetchErrResult(result: FetchResult): result is FetchErrResult {
+  return result.type === "fetch.err";
+}
+export interface FetchErrResult {
+  type: "fetch.err";
+  url: string;
+  error: Error;
+}
+export interface FetchNotFoundResult {
+  type: "fetch.notfound";
+  url: string;
+}
+export function isFetchNotFoundResult(result: FetchResult): result is FetchNotFoundResult {
+  return result.type === "fetch.notfound";
+}
+
+export type FetchResult = FetchOkResult | FetchErrResult | FetchNotFoundResult;
+
+export interface Storage {
+  fetch: (url: string) => Promise<FetchResult>;
+  ensure: (...items: ReadableStream<Uint8Array|string>[]) => Promise<Result<StorageResult>[]>;
+}
 export interface VibesApiSQLCtx {
   sthis: SuperThis;
   db: VibesSqlite;
@@ -34,9 +65,6 @@ export interface VibesApiSQLCtx {
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<Result<{ src: string; version: string }>>;
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
-  storage: {
-    fetch(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
-    ensure(...items: { cid: string; data: Uint8Array }[]): Promise<Result<StorageResult[]>>;
-  };
+  storage: Storage;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
 }

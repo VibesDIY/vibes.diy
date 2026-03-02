@@ -41,8 +41,8 @@ export const FileSystemRef = type({
   userSlug: "string",
   mode: "'production'|'dev'",
   fsId: "string",
-  wrapperUrl: "string",
-  entryPointUrl: "string",
+  // wrapperUrl: "string",
+  // entryPointUrl: "string",
 });
 export type FileSystemRef = typeof FileSystemRef.infer;
 

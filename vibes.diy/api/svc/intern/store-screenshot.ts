@@ -1,11 +1,10 @@
-import { Result } from "@adviser/cement";
+import { Result, uint8array2stream } from "@adviser/cement";
 import { eq } from "drizzle-orm";
 import { type } from "arktype";
 import { VibesSqlite } from "../create-handler.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { isMetaScreenShot, MetaItem } from "@vibes.diy/api-types";
-import { calcCid, ensureStorage } from "./ensure-storage.js";
-import { SuperThis } from "@fireproof/core-types-base";
+import { ensureStorage } from "./ensure-storage.js";
 
 // Define MetaItem array type
 export interface StoreScreenshotResult {
@@ -20,8 +19,7 @@ export interface StoreScreenshotResult {
  * 3. Stores screenshot using ensureStorage
  * 4. Removes existing MetaScreenShot (if any) and adds new one
  */
-export async function storeScreenshot(
-  { sthis, db }: { sthis: SuperThis; db: VibesSqlite },
+export async function storeScreenshot( { db }: { db: VibesSqlite },
   fsId: string,
   screenshotData: Uint8Array
 ): Promise<Result<StoreScreenshotResult>> {
@@ -41,12 +39,11 @@ export async function storeScreenshot(
   }
 
   // 2. Calculate CID for the screenshot
-  const cidResult = await calcCid({ sthis }, screenshotData);
+  // const cidResult = await calcCid({ sthis }, screenshotData);
 
   // 3. Store screenshot using ensureStorage
-  const storageResult = await ensureStorage(db).ensure({ cid: cidResult.cid, data: cidResult.data });
-
-  if (storageResult.isErr()) {
+  const [storageResult] = await ensureStorage(db).ensure(uint8array2stream(screenshotData))
+  if (!storageResult || storageResult.isErr()) {
     return Result.Err(`Failed to store screenshot: ${storageResult.Err()}`);
   }
   // 4. Remove existing screenshot ref (if any)
@@ -59,7 +56,7 @@ export async function storeScreenshot(
   meta.push({
     type: "screen-shot-ref",
     mime: "image/jpeg",
-    assetUrl: storageResult.Ok()[0].getURL,
+    assetUrl: storageResult.Ok().getURL,
   });
 
   // Update the app's meta in the database
@@ -67,6 +64,6 @@ export async function storeScreenshot(
 
   return Result.Ok({
     fsId,
-    assetUrl: storageResult.Ok()[0].getURL,
+    assetUrl: storageResult.Ok().getURL,
   });
 }

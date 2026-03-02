@@ -7,7 +7,6 @@ import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
 import { StarIcon } from "./SessionSidebar/StarIcon.js";
-import { GroupsIcon } from "./SessionSidebar/GroupsIcon.js";
 import { DevBoxIcon } from "./SessionSidebar/DevBoxIcon.js";
 
 /**
@@ -101,16 +100,6 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
               >
                 <StarIcon className="text-accent-01 mr-3 h-5 w-5" />
                 <span>My Vibes</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/groups"
-                onClick={() => onClose()}
-                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-              >
-                <GroupsIcon className="text-accent-01 mr-3 h-5 w-5" />
-                <span>Groups</span>
               </Link>
             </li>
             <li>

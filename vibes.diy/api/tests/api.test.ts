@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 import { BuildURI, consumeStream, loadAsset, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
-import { cfServe, createAppContext, VibesSqlite } from "@vibes.diy/api-svc";
+import { calcEntryPointUrl, cfServe, createAppContext, VibesSqlite } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { CFInject } from "@vibes.diy/api-svc/cf-serve.js";
 import { drizzle } from "drizzle-orm/libsql";
@@ -96,6 +96,7 @@ describe("VibesDiyApi", () => {
       FP_VERSION: "0.24.8-dev-test-device-id",
 
       VIBES_SVC_HOSTNAME_BASE: "localhost.vibesdiy.net",
+      VIBES_SVC_PORT: "8787",
       VIBES_SVC_PROTOCOL: "http",
       CALLAI_API_KEY: "what-ever",
       CALLAI_CHAT_URL: "what-ever",
@@ -226,13 +227,23 @@ describe("VibesDiyApi", () => {
         },
       ],
     });
+    const url = calcEntryPointUrl({
+              hostnameBase: ".nowhere",
+              protocol: "http",
+              port: "4711",
+              bindings: {
+                  appSlug: res.Ok().appSlug,
+                  userSlug: res.Ok().userSlug,
+                  fsId: res.Ok().fsId
+              },
+     })
     // console.log("render iframe content page res:", res);
-    const resIframe = await api.cfg.fetch(res.Ok().entryPointUrl);
+    const resIframe = await api.cfg.fetch(url);
     expect(resIframe.status).toBe(200);
     const iframeText = await resIframe.text();
     const imports = [...iframeText.matchAll(/^import \* as V\d+ from "(~~transformed~~\/[^"]*)"/gm)];
     for (const imp of imports || []) {
-      const importFile = await api.cfg.fetch(BuildURI.from(res.Ok().entryPointUrl).appendRelative(imp[1]).toString());
+      const importFile = await api.cfg.fetch(BuildURI.from(url).appendRelative(imp[1]).toString());
       expect(importFile.status).toBe(200);
       const importText = await importFile.text();
       expect(importText).toContain(`console.log('hello world');`);

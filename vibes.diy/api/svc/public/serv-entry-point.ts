@@ -6,22 +6,20 @@ import {
   Result,
   ValidateTriggerCtx,
   Option,
-  BuildURI,
   URI,
-  CoerceURI,
 } from "@adviser/cement";
 import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
-import { VibesApiSQLCtx } from "../types.js";
-import { sqlApps, sqlAssets } from "../sql/vibes-diy-api-schema.js";
+import { FetchResult, isFetchErrResult, isFetchOkResult, VibesApiSQLCtx } from "../types.js";
+import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibes } from "../intern/render-vibes.js";
 import { parse } from "cookie";
 
-function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
-  return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
-}
+// function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
+//   return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
+// }
 
 export interface NpmUrlCapture {
   readonly npmURL: string;
@@ -43,101 +41,99 @@ export function captureNpmUrl(vctx: VibesApiSQLCtx, req: Request): NpmUrlCapture
   return { npmURL: vctx.params.pkgRepos.workspace, fromCookie: false, fromURL: false, fromEnv: true, fromDef: false };
 }
 
-export async function fetchContent(
+// async function renderFromFs(ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>): Promise<FetchResult> {
+//   const foundPath = pred();
+//   if (foundPath) {
+//     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+//     return vctx.storage.fetch(foundPath.assetURI);
+//     // const headers: HeadersInit = {
+//     //   "content-type": foundPath.mimeType,
+//     //   "content-length": foundPath.size.toString(),
+//     // };
+//   }
+//   return {
+//     type: "fetch.notfound",
+//     url: "none://",
+//   };
+
+//   //   switch (true) {
+//   //     case isFetchErrResult(rContent):
+//   //       await ctx.send.send(ctx, {
+//   //         type: "http.Response.JSON",
+//   //         status: 500,
+//   //         headers: {
+//   //           ...headers,
+//   //           "Cache-Control": "public, max-age=60",
+//   //         },
+//   //         json: {
+//   //           type: "error",
+//   //           message: `Error fetching content for ${ctx.validated.path}: ${rContent.error.message}`,
+//   //         },
+//   //       } satisfies HttpResponseJsonType);
+//   //       break;
+
+//   //     case isFetchNotFoundResult(rContent):
+//   //       await ctx.send.send(ctx, {
+//   //         type: "http.Response.JSON",
+//   //         status: 404,
+//   //         headers: {
+//   //           ...headers,
+//   //           "Cache-Control": "public, max-age=86400",
+//   //         },
+//   //         json: {
+//   //           type: "error",
+//   //           message: `AssetNotFound not found for ${ctx.validated.path}`,
+//   //         },
+//   //       } satisfies HttpResponseJsonType);
+//   //       break;
+
+//   //     case isFetchOkResult(rContent):
+//   //       await ctx.send.send(ctx, {
+//   //         type: "http.Response.Body",
+//   //         status: 200,
+//   //         headers: {
+//   //           ...headers,
+//   //           "Cache-Control": "public, max-age=31536000, immutable",
+//   //           ETag: foundPath.assetId,
+//   //         },
+//   //         body: rContent.data,
+//   //       } satisfies HttpResponseBodyType);
+//   //       break;
+//   //     default:
+//   //       throw new Error(`Unexpected fetch result type for ${ctx.validated.path}`);
+//   //   }
+//   // } else {
+//   //   await ctx.send.send(ctx, {
+//   //     type: "http.Response.JSON",
+//   //     status: 404,
+//   //     headers: {
+//   //       "Cache-Control": "public, max-age=86400",
+//   //     },
+//   //     json: {
+//   //       type: "error",
+//   //       message: `Content not found for ${ctx.validated.path}`,
+//   //     },
+//   //   } satisfies HttpResponseJsonType);
+//   // }
+//   // return Result.Ok(EventoResult.Continue);
+// }
+
+async function sendFetchOk(
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>,
   item: FileSystemItem,
-  iheaders?: HeadersInit
-): Promise<Result<Uint8Array>> {
-  const headers: HeadersInit = {
-    ...iheaders,
-    "X-Vibes-Asset-Id": item.assetId,
-    ETag: item.assetId,
-    "Cache-Control": "no-cache",
-    "content-type": item.mimeType,
-  };
-  const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-  const assetCacheCidUrl = BuildURI.from(vctx.params.assetCacheUrl).appendRelative(item.assetId).toString();
-  const matched = await Promise.all([
-    vctx.cache.match(new Request(assetCacheCidUrl)),
-    vctx.cache.match(new Request(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString())),
-  ]);
-  if (matched[0] || matched[1]) {
-    if (matched[0]) {
-      const clone = matched[0].clone();
-      const arrayBuffer = await clone.arrayBuffer();
-      if (!matched[1]) {
-        await vctx.cache.put(
-          ...pairReqRes(BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(), arrayBuffer, item, headers)
-        );
-      }
-      return Result.Ok(new Uint8Array(arrayBuffer));
-    }
-    if (matched[1]) {
-      const clone = matched[1].clone();
-      const arrayBuffer = await clone.arrayBuffer();
-      if (!matched[0]) {
-        await vctx.cache.put(...pairReqRes(assetCacheCidUrl, arrayBuffer, item, headers));
-      }
-      return Result.Ok(new Uint8Array(arrayBuffer));
-    }
-  }
-  const assetURI = URI.from(item.assetURI);
-  switch (assetURI.protocol) {
-    case "sql:":
-      {
-        const asset = await vctx.db.select().from(sqlAssets).where(eq(sqlAssets.assetId, item.assetId)).get();
-        if (!asset) {
-          return Result.Err(new Error(`Asset not found: ${item.assetId}`));
-        }
-        // sqlite returns a blob symetric to the input is always something like a Uint8Array
-        // we should have a better method to coerce unknown to Uint8Array --- @adviser/cement issue
-        // inject into cache for assert lookups
-        await Promise.all([
-          vctx.cache.put(
-            ...pairReqRes(
-              BuildURI.from(ctx.validated.url).appendRelative(item.fileName).toString(),
-              asset.content as never,
-              item,
-              headers
-            )
-          ),
-          vctx.cache.put(...pairReqRes(assetCacheCidUrl, asset.content as never, item, headers)),
-        ]);
-        return Result.Ok(asset.content as Uint8Array);
-      }
-      break;
-    default:
-      return Result.Err(new Error(`Unsupported assetURI protocol: ${assetURI.protocol}`));
-  }
-}
-
-async function renderFromFs(
-  ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>,
-  pred: () => FileSystemItem | undefined
-): Promise<Result<EventoResultType>> {
-  const foundPath = pred();
-  if (foundPath) {
-    const rContent = await fetchContent(ctx, foundPath);
-    if (rContent.isErr()) {
-      await ctx.send.send(ctx, {
-        type: "http.Response.JSON",
-        status: 500,
-        json: {
-          type: "error",
-          message: `Error fetching content for ${ctx.validated.path}: ${rContent.Err().message}`,
-        },
-      } satisfies HttpResponseJsonType);
-      return Result.Ok(EventoResult.Stop);
-    }
-    const content = rContent.unwrap();
+  fRes: FetchResult
+) {
+  if (isFetchOkResult(fRes)) {
     await ctx.send.send(ctx, {
       type: "http.Response.Body",
+      status: 200,
       headers: {
-        "Content-Type": foundPath.mimeType,
-        "Cache-Control": "public, max-age=86400",
-        ETag: foundPath.assetId,
+        "Content-Type": item.mimeType,
+        "Content-Length": item.size.toString(),
+        "Cache-Control": "public, max-age=31536000, immutable",
+        ETag: item.assetId,
       },
-      body: content,
+      body: fRes.data,
     } satisfies HttpResponseBodyType);
     return Result.Ok(EventoResult.Stop);
   }
@@ -208,19 +204,25 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Err(`Invalid filesystem data ${ctx.validated.fsId}`);
     }
 
-    const possiblePath = await renderFromFs(ctx, () => fileSystem.find((i) => i.fileName === ctx.validated.path));
-    if (possiblePath.isErr()) {
-      return possiblePath;
+    const selectedFsItem = fileSystem.find((i) => i.entryPoint);
+    if (selectedFsItem) {
+      const possiblePath = await vctx.storage.fetch(selectedFsItem.assetURI);
+      if (isFetchErrResult(possiblePath)) {
+        return Result.Err(possiblePath.error);
+      }
+      if (isFetchOkResult(possiblePath)) {
+        return sendFetchOk(ctx, selectedFsItem, possiblePath);
+      }
     }
-    if (possiblePath.unwrap() === EventoResult.Stop) {
-      return Result.Ok(EventoResult.Stop);
-    }
-    const entryPointPath = await renderFromFs(ctx, () => fileSystem.find((i) => i.entryPoint));
-    if (entryPointPath.isErr()) {
-      return entryPointPath;
-    }
-    if (entryPointPath.unwrap() === EventoResult.Stop) {
-      return Result.Ok(EventoResult.Stop);
+    const selectedEntryPoint = fileSystem.find((i) => i.entryPoint);
+    if (selectedEntryPoint) {
+      const entryPointPath = await vctx.storage.fetch(selectedEntryPoint.assetURI);
+      if (isFetchErrResult(entryPointPath)) {
+        return Result.Err(entryPointPath.error);
+      }
+      if (isFetchOkResult(entryPointPath)) {
+        return sendFetchOk(ctx, selectedEntryPoint, entryPointPath);
+      }
     }
     if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
       const npmUrl = captureNpmUrl(vctx, ctx.request);

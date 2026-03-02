@@ -9,7 +9,7 @@ import {
   URI,
 } from "@adviser/cement";
 import { HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
-import { VibesApiSQLCtx } from "../types.js";
+import { isFetchErrResult, isFetchNotFoundResult, isFetchOkResult, VibesApiSQLCtx } from "../types.js";
 
 export const cidAsset: EventoHandler<Request, { url: string; mime: string }, unknown> = {
   hash: "cid-asset",
@@ -36,22 +36,48 @@ export const cidAsset: EventoHandler<Request, { url: string; mime: string }, unk
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
     console.log("asset/cid triggered with URL:", ctx.validated.url);
     const rAsset = await vctx.storage.fetch(ctx.validated.url);
-    if (rAsset.isErr()) {
-      ctx.send.send(ctx, {
-        type: "http.Response.JSON",
-        status: 404,
-        json: {
-          type: "error",
-          message: `Asset not found for URL ${ctx.validated.url}: ${rAsset.Err().message}`,
-        },
-      } satisfies HttpResponseJsonType);
+    switch (true) {
+      case isFetchErrResult(rAsset):
+        ctx.send.send(ctx, {
+          type: "http.Response.JSON",
+          status: 500,
+          json: {
+            type: "error",
+            message: rAsset.error.message,
+          },
+        } satisfies HttpResponseJsonType);
+        break;
+      case isFetchNotFoundResult(rAsset):
+        ctx.send.send(ctx, {
+          type: "http.Response.JSON",
+          status: 404,
+          json: {
+            type: "error",
+            message: `Asset not found for URL ${ctx.validated.url}`,
+          },
+        } satisfies HttpResponseJsonType);
+        break;
+      case isFetchOkResult(rAsset):
+        ctx.send.send(ctx, {
+          type: "http.Response.Body",
+          status: 200,
+          headers: {
+            "Content-Type": ctx.validated.mime,
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+          body: rAsset.data,
+        } satisfies HttpResponseBodyType);
+        break;
+      default:
+        ctx.send.send(ctx, {
+          type: "http.Response.JSON",
+          status: 500,
+          json: {
+            type: "error",
+            message: `Unexpected fetch result type for URL ${ctx.validated.url}`,
+          },
+        } satisfies HttpResponseJsonType);
     }
-    ctx.send.send(ctx, {
-      type: "http.Response.Body",
-      status: 200,
-      headers: { "Content-Type": ctx.validated.mime },
-      body: rAsset.Ok(),
-    } satisfies HttpResponseBodyType);
     return Result.Ok(EventoResult.Stop);
   },
 };

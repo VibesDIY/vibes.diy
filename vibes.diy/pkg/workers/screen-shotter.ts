@@ -72,10 +72,10 @@ export async function processScreenShotEvent(message: unknown, env: Env): Promis
 
     const { db } = await cfDrizzle(env);
     // Initialize sthis and db for storage
-    const sthis = ensureSuperThis({ logger: new LoggerImpl() });
+    // const sthis = ensureSuperThis({ logger: new LoggerImpl() });
 
     // Store the screenshot in the database
-    const result = await storeScreenshot({ sthis, db }, payload.fsId, screenshotData);
+    const result = await storeScreenshot({ db }, payload.fsId, screenshotData);
 
     if (result.isErr()) {
       console.error(`Failed to store screenshot: ${result.Err()}`);

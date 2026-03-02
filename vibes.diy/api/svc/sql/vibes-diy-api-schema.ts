@@ -13,9 +13,15 @@ export const sqlUserSlugBinding = sqliteTable(
   {
     userId: text().notNull(), // max bindings per userId
     userSlug: text().notNull(),
+    tenant: text().notNull(), // cryptograhic Id
     created: text().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userSlug, table.userId] }), uniqueIndex("UserSlug_userSlug").on(table.userSlug)]
+  (table) => [
+    primaryKey({ columns: [table.userSlug, table.userId] }), 
+    // uniqueIndex("UserSlug_tenant").on(table.tenant), 
+    uniqueIndex("UserSlug_userSlug").on(table.userSlug)
+  ]
+
 );
 
 export const sqlAppSlugBinding = sqliteTable(
@@ -24,9 +30,13 @@ export const sqlAppSlugBinding = sqliteTable(
     userSlug: text().notNull(),
     //.references(() => sqlUserSlugBinding.userSlug), // max bindings per userId
     appSlug: text().notNull(), // human friendly app id
+    ledger: text().notNull(), // cryptograhic Id
     created: text().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.appSlug, table.userSlug] })]
+  (table) => [
+    primaryKey({ columns: [table.appSlug, table.userSlug] }) ,
+    // uniqueIndex("AppSlug_ledger_idx").on(table.ledger)
+    ]
 );
 
 export const sqlApps = sqliteTable(
@@ -134,3 +144,25 @@ export const sqlUserSettings = sqliteTable("UserSettings", {
   updated: text().notNull(),
   created: text().notNull(),
 });
+
+export const sqlInviteTokens = sqliteTable('InviteTokens', {
+  token: text().notNull().primaryKey(),
+  appSlug: text().notNull(),
+  userSlug: text().notNull(),
+  ownerUserId: text().notNull(),
+  validUntil: text().notNull(),
+  created: text().notNull(),
+  style: text({ mode: "json" }).notNull(), // InviteEmailToken.or(InviteLinkToken)
+})
+
+export const sqlAcceptInvites = sqliteTable('AcceptInvites', {
+  acceptId: text().notNull().primaryKey(), // uuid v4
+  token: text().notNull(),
+  acceptUserId: text().notNull(),
+  acceptedInfo: text({ mode: "json" }).notNull(), // InviteToken info at time of accept
+  created: text().notNull(),
+}, (table) => [
+  uniqueIndex("AcceptInvites_token_acceptedUserId_idx").on(table.token, table.acceptUserId),
+]);
+
+
