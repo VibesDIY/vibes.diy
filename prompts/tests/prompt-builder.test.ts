@@ -7,7 +7,17 @@ import {
   defaultStylePrompt,
 } from "@vibes.diy/prompts";
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import { Result } from "@adviser/cement";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
+
+// Create a fetchText mock that delegates to the mock fetch helper
+const mockFetchImpl = createMockFetchFromPkgFiles();
+function mockFetchText(_pkg: string, path: string): Promise<Result<string>> {
+  return mockFetchImpl(path).then(async (res) => {
+    if (res.ok) return Result.Ok(await res.text());
+    return Result.Err(new Error(`fetch failed for path: ${path}`));
+  });
+}
 
 // Mock global fetch for the tests
 const mockFetch = vi.fn();
@@ -73,25 +83,26 @@ let orderedLlms: LlmCatalogEntry[];
 // }
 
 const opts = {
-  fallBackUrl: new URL("http://localhost/test"),
-  callAiEndpoint: "http://localhost/test/call-ai",
-  mock: {
-    callAI: vi.fn().mockResolvedValue(
-      JSON.stringify({
-        selected: knownModuleNames,
-        instructionalText: true,
-        demoData: true,
-      })
+  fetchText: mockFetchText,
+  callAi: {
+    ModuleAndOptionsSelection: vi.fn().mockResolvedValue(
+      Result.Ok(
+        JSON.stringify({
+          selected: knownModuleNames,
+          instructionalText: true,
+          demoData: true,
+        })
+      )
     ),
   },
 };
 
 beforeAll(async () => {
-  // Set up mock using real files from pkg directory
-  mockFetch.mockImplementation(createMockFetchFromPkgFiles());
+  // Set up mock using the same mock fetch helper used by mockFetchText
+  mockFetch.mockImplementation(mockFetchImpl);
 
   // Now load the data after mocks are set up
-  llmsJsonModules = await getJsonDocs(new URL("http://localhost/test"));
+  llmsJsonModules = await getJsonDocs();
 
   orderedLlms = Object.entries(llmsJsonModules)
     .filter(([path, _]) => knownModuleNames.some((name) => path.includes(`${name}.json`)))

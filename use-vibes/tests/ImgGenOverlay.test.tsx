@@ -143,9 +143,5 @@ describe("ImageOverlay Component", () => {
     }
   });
 
-  // Test auto-cancel of delete confirmation in ControlsBar - skipping for now as the test is flaky
-  it.skip("should auto-cancel delete confirmation after timeout", () => {
-    // This test is currently skipped as there are timing issues between the mock timers and React state updates
-    // The functionality works in the actual app, but the test is flaky
-  });
+
 });
