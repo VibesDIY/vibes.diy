@@ -134,10 +134,13 @@ describe("VibesDiyApi", () => {
           appCtx,
           cache: noopCache,
           drizzle: drizzleDB,
-          webSocketPair: () => ({
-            client: wsPair.p1,
-            server: wsPair.p2,
-          }),
+          webSocket: {
+            connections: new Set(),
+            webSocketPair: () => ({
+              client: wsPair.p1,
+              server: wsPair.p2,
+            }),
+          },
         } as unknown as ExecutionContext & CFInject
       ) as unknown as Promise<Response>;
     });
@@ -162,10 +165,13 @@ describe("VibesDiyApi", () => {
           }
           return new Response("", { status: 200 });
         },
-        webSocketPair: () => ({
-          client: wsPair.p1,
-          server: wsPair.p2,
-        }),
+        webSocket: {
+          connections: new Set(),
+          webSocketPair: () => ({
+            client: wsPair.p1,
+            server: wsPair.p2,
+          }),
+        },
       } as unknown as ExecutionContext & CFInject
     );
 
