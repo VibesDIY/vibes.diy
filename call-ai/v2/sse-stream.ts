@@ -38,7 +38,7 @@ export const SseChunk = type({
     },
     finish_reason: "string|null",
     native_finish_reason: "string|null",
-    logprobs: "unknown",
+    "logprobs?": "unknown",
   }).array(),
   "system_fingerprint?": "string",
   "usage?": SseUsage,
@@ -61,7 +61,7 @@ const OpenAiDirectChunk = type({
       "+": "delete",
     },
     finish_reason: "string|null",
-    logprobs: "unknown",
+    "logprobs?": "unknown",
   }).array(),
   "system_fingerprint?": "string",
   "usage?": SseUsage,
@@ -209,13 +209,21 @@ function anthropicToSseChunk(
 
     case "content_block_delta": {
       const delta = obj(json.delta);
-      if (delta === undefined || delta.type !== "text_delta" || typeof delta.text !== "string") return "skip";
+      if (delta === undefined) return "skip";
+      let content: string;
+      if (delta.type === "text_delta" && typeof delta.text === "string") {
+        content = delta.text;
+      } else if (delta.type === "input_json_delta" && typeof delta.partial_json === "string") {
+        content = delta.partial_json;
+      } else {
+        return "skip";
+      }
       return {
         ...base(),
         choices: [
           {
             index: 0,
-            delta: { content: delta.text },
+            delta: { content },
             finish_reason: null,
             native_finish_reason: null,
             logprobs: null,

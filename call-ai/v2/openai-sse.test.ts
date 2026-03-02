@@ -14,7 +14,7 @@ import { createDeltaStream } from "./delta-stream.js";
 import { createLineStream } from "./line-stream.js";
 import { createSseStream } from "./sse-stream.js";
 import { createStatsCollector } from "./stats-stream.js";
-import { lines as openaiSseLines } from "./fixtures/openai-schema-stream.js";
+import { lines as openaiSseLines } from "./fixtures/openai-json-schema.js";
 
 describe("openai SSE format through v2 pipeline", () => {
   it("full pipeline produces valid sandwich JSON from OpenAI SSE", async () => {

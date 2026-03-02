@@ -4,18 +4,17 @@ import {
   createSectionsStream,
   isBlockEnd,
   isToplevelLine,
-  isCodeLine,
   isSseError,
   isSseEnd,
 } from "./index.js";
-import type { ToplevelLineMsg, CodeLineMsg, SseEndMsg } from "./index.js";
+import type { ToplevelLineMsg, SseEndMsg } from "./index.js";
 import { createDataStream } from "./data-stream.js";
 import { createDeltaStream } from "./delta-stream.js";
 import { createLineStream } from "./line-stream.js";
 import { createSseStream } from "./sse-stream.js";
 import { createStatsCollector } from "./stats-stream.js";
-import { lines as gptLines } from "./fixtures/openrouter-gpt-schema-stream.js";
-import { lines as claudeLines } from "./fixtures/openrouter-claude-schema-stream.js";
+import { lines as gptLines } from "./fixtures/openrouter-gpt-json-schema.js";
+import { lines as claudeLines } from "./fixtures/openrouter-claude-json-schema.js";
 
 function runFullPipeline(lines: string[]) {
   let id = 1;
@@ -71,7 +70,7 @@ describe("OpenRouter GPT-4o-mini with json_schema", () => {
   });
 });
 
-describe("OpenRouter Claude with json_object", () => {
+describe("OpenRouter Claude with json_schema", () => {
   it("sse-stream accepts all chunks without errors", async () => {
     const res = await runSsePipeline(claudeLines);
     const errors = res.filter((i) => isSseError(i));
@@ -84,13 +83,8 @@ describe("OpenRouter Claude with json_object", () => {
 
   it("full pipeline produces valid sandwich JSON", async () => {
     const res = await runFullPipeline(claudeLines);
-
-    // Claude via OpenRouter with json_object may wrap in code fences
-    // Check both toplevel and code lines
-    const toplevelLines = res.filter((i): i is ToplevelLineMsg => isToplevelLine(i)).map((i) => i.line);
-    const codeLines = res.filter((i): i is CodeLineMsg => isCodeLine(i)).map((i) => i.line);
-
-    const text = toplevelLines.join("\n") || codeLines.join("\n");
+    const textLines = res.filter((i): i is ToplevelLineMsg => isToplevelLine(i)).map((i) => i.line);
+    const text = textLines.join("\n");
 
     const parsed = JSON.parse(text);
     expect(parsed).toHaveProperty("name");

@@ -14,10 +14,10 @@ import { createDeltaStream } from "./delta-stream.js";
 import { createLineStream } from "./line-stream.js";
 import { createSseStream } from "./sse-stream.js";
 import { createStatsCollector } from "./stats-stream.js";
-import { lines as anthropicSseLines } from "./fixtures/anthropic-schema-stream.js";
+import { lines as anthropicSseLines } from "./fixtures/anthropic-json-schema.js";
 
-describe("anthropic SSE format through v2 pipeline", () => {
-  it("full pipeline produces valid sandwich JSON from Anthropic SSE", async () => {
+describe("Anthropic direct with tool_use (input_json_delta)", () => {
+  it("full pipeline produces valid sandwich JSON", async () => {
     let id = 1;
     const streamId = `test-${id++}`;
     const res = await stream2array(
@@ -47,7 +47,7 @@ describe("anthropic SSE format through v2 pipeline", () => {
     expect(endEvents.length).toBe(1);
   });
 
-  it("delta-stream produces correct content from Anthropic SSE", async () => {
+  it("delta-stream produces correct content from Anthropic tool_use", async () => {
     let id = 1;
     const streamId = `test-${id++}`;
     const res = await stream2array(
@@ -68,7 +68,7 @@ describe("anthropic SSE format through v2 pipeline", () => {
     expect(parsed).toHaveProperty("layers");
   });
 
-  it("sse-stream translates Anthropic events into valid SseChunks", async () => {
+  it("sse-stream translates Anthropic tool_use events into valid SseChunks", async () => {
     let id = 1;
     const streamId = `test-${id++}`;
     const res = await stream2array(
