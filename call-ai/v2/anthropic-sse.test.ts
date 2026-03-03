@@ -1,5 +1,5 @@
-import { array2stream, stream2array } from "@adviser/cement";
-import { describe, it, expect } from "vitest";
+import { array2stream, stream2array, loadAsset } from "@adviser/cement";
+import { describe, it, expect, beforeAll } from "vitest";
 import {
   createSectionsStream,
   isBlockEnd,
@@ -14,7 +14,30 @@ import { createDeltaStream } from "./delta-stream.js";
 import { createLineStream } from "./line-stream.js";
 import { createSseStream } from "./sse-stream.js";
 import { createStatsCollector } from "./stats-stream.js";
-import { lines as anthropicSseLines } from "./fixtures/anthropic-json-schema.js";
+
+async function resolveContent(content: string): Promise<string> {
+  const match = content.match(/^export default "([^"]+)"/);
+  if (match && match[1]) {
+    const response = await fetch(match[1]);
+    return response.text();
+  }
+  return content;
+}
+
+async function loadFixtureLines(filename: string): Promise<string[]> {
+  const result = await loadAsset(`fixtures/${filename}`, {
+    basePath: () => import.meta.url,
+    fallBackUrl: import.meta.url,
+  });
+  const content = await resolveContent(result.Ok());
+  return content.split("\n");
+}
+
+let anthropicSseLines: string[] = [];
+
+beforeAll(async () => {
+  anthropicSseLines = await loadFixtureLines("anthropic-json-schema.llm.txt");
+});
 
 describe("Anthropic direct with tool_use (input_json_delta)", () => {
   it("full pipeline produces valid sandwich JSON", async () => {
