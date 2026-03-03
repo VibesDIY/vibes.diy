@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     name: "browser",
     include: ["**/*.test.ts"],
+    exclude: ["**/*.node.test.ts"],
     browser: {
       enabled: true,
       headless: true,

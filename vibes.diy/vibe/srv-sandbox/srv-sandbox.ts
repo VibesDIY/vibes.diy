@@ -32,7 +32,17 @@ import {
 } from "@vibes.diy/vibe-types";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
 import { isSectionEvent, SectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
-import { ChatMessage, CodeEndMsg, isCodeBegin, isCodeEnd, isCodeLine, isPromptReq, PromptReq } from "@vibes.diy/call-ai-v2";
+import {
+  ChatMessage,
+  CodeEndMsg,
+  isCodeBegin,
+  isCodeEnd,
+  isCodeLine,
+  isPromptReq,
+  isToplevelLine,
+  PromptReq,
+  type ResponseFormat,
+} from "@vibes.diy/call-ai-v2";
 
 export class MessageEventEventoEnDecoder implements EventoEnDecoder<MessageEvent, unknown> {
   async encode(me: MessageEvent): Promise<Result<unknown>> {
@@ -187,6 +197,33 @@ export function getCodeBlock(stream: ReadableStream<unknown>): Promise<{
   return firstCodeBlock.asPromise();
 }
 
+export function getTextContent(stream: ReadableStream<unknown>): Promise<{
+  text: string;
+  sectionEvt: SectionEvent;
+  promptReq: PromptReq;
+}> {
+  const textParts: string[] = [];
+  let promptReq!: PromptReq;
+  let lastSectionEvt!: SectionEvent;
+  const result = new Future<{ text: string; sectionEvt: SectionEvent; promptReq: PromptReq }>();
+  processStream(stream, (msg) => {
+    if (isSectionEvent(msg)) {
+      lastSectionEvt = msg;
+      for (const block of msg.blocks) {
+        if (isPromptReq(block)) {
+          promptReq = block;
+        }
+        if (isToplevelLine(block)) {
+          textParts.push(block.line);
+        }
+      }
+    }
+  }).then(() => {
+    result.resolve({ text: textParts.join("\n"), sectionEvt: lastSectionEvt, promptReq });
+  });
+  return result.asPromise();
+}
+
 function vibeFetchCloudToken(sandbox: vibesDiySrvSandbox): EventoHandler {
   const { dashApi } = sandbox.args;
   return {
@@ -243,35 +280,51 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
               message: rChat.Err().message,
             } satisfies ResErrorCallAI);
           }
-          getCodeBlock(rChat.Ok().sectionStream).then(({ code, sectionEvt: msg }) => {
-            ctx.send.send(ctx, {
-              tid: ctx.validated.tid,
-              type: "vibe.res.callAI",
-              status: "ok",
-              promptId: msg.promptId,
-              result: code,
-            } satisfies ResOkCallAI);
-          });
-          // console.log(`Sending prompt to chat`, ctx.validated.prompt);
-          const generateSchema: ChatMessage[] = [];
+
+          // Build response_format and schema system message when schema is provided
+          // OpenRouter supports json_object for Claude (json_schema only works for OpenAI)
+          let responseFormat: ResponseFormat | undefined;
+          const schemaMessages: ChatMessage[] = [];
           if (ctx.validated.schema) {
-            console.log(`Prompt has schema, sending schema`, ctx.validated.schema);
-            generateSchema.push({
+            console.log(`Prompt has schema, using json_object mode`, ctx.validated.schema);
+            responseFormat = { type: "json_object" };
+            schemaMessages.push({
               role: "system",
               content: [
                 {
                   type: "text",
-                  text: `Here is the JSON schema for the expected response. 
-                    Please generate one result that conforms to this schema.
-                    Output like Code Blocks and like \`\`\`JSON 
-                    ${JSON.stringify(ctx.validated.schema)}`,
+                  text: `Return a JSON object conforming to this schema: ${JSON.stringify(ctx.validated.schema)}`,
                 },
               ],
             });
           }
+
+          // Use getTextContent for structured output (raw JSON), getCodeBlock for legacy
+          if (responseFormat) {
+            getTextContent(rChat.Ok().sectionStream).then(({ text, sectionEvt: msg }) => {
+              ctx.send.send(ctx, {
+                tid: ctx.validated.tid,
+                type: "vibe.res.callAI",
+                status: "ok",
+                promptId: msg.promptId,
+                result: text,
+              } satisfies ResOkCallAI);
+            });
+          } else {
+            getCodeBlock(rChat.Ok().sectionStream).then(({ code, sectionEvt: msg }) => {
+              ctx.send.send(ctx, {
+                tid: ctx.validated.tid,
+                type: "vibe.res.callAI",
+                status: "ok",
+                promptId: msg.promptId,
+                result: code,
+              } satisfies ResOkCallAI);
+            });
+          }
+
           const rPrompt = await rChat.Ok().prompt({
             messages: [
-              ...generateSchema,
+              ...schemaMessages,
               {
                 role: "user",
                 content: [
@@ -282,6 +335,7 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
                 ],
               },
             ],
+            ...(responseFormat ? { response_format: responseFormat } : {}),
           });
 
           if (rPrompt.isErr()) {
