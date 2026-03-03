@@ -257,7 +257,7 @@ Integration plans (not part of this package):
 
 - vibes.diy chat using advanced API
 - Auth for vibes iframe runtime
-- Generated vibes legacy callAI wrapper
+- Generated vibes structured callAI wrapper
 
 ## TODO
 
