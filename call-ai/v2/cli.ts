@@ -1,6 +1,7 @@
 import { command, run, string, option, flag } from "cmd-ts";
 import { dotenv, path } from "zx";
 import { promises as fs } from "node:fs";
+import { buildRequestBody, getHeaders, resolveApiStyle, SchemaInput } from "./build-request.js";
 import {
   createStatsCollector,
   createLineStream,
@@ -141,6 +142,27 @@ const app = command({
       description: "Directory to save decoded images (enables image saving)",
       defaultValue: () => "",
     }),
+    schema: option({
+      type: string,
+      long: "schema",
+      description: "JSON file with schema for structured output (adds response_format: json_schema)",
+      defaultValue: () => "",
+    }),
+    apiStyle: option({
+      type: string,
+      long: "api-style",
+      description: "API style: openai (default, auto-detected) or anthropic",
+      defaultValue: () => "",
+    }),
+    text: flag({
+      long: "text",
+      short: "t",
+      description: "Output just the accumulated text content (no JSON wrapper)",
+    }),
+    dryRun: flag({
+      long: "dry-run",
+      description: "Print the request body as JSON and exit (don't call API)",
+    }),
   },
   handler: async ({
     prompt,
@@ -160,7 +182,18 @@ const app = command({
     statsInterval,
     image,
     imageDir,
+    schema: schemaPath,
+    apiStyle: apiStyleArg,
+    text,
+    dryRun,
   }) => {
+    // Load schema if provided
+    let schemaObj: SchemaInput | undefined;
+    if (schemaPath) {
+      const schemaJson = await fs.readFile(schemaPath, "utf-8");
+      schemaObj = JSON.parse(schemaJson);
+    }
+
     let body: ReadableStream<Uint8Array>;
 
     if (src) {
@@ -177,28 +210,28 @@ const app = command({
         },
       });
     } else {
-      if (!apiKey) {
-        console.error("Error: API key required. Use --api-key or set OPENROUTER_API_KEY in .env");
-        process.exit(1);
-      }
-
       if (!prompt) {
         console.error("Error: Prompt required. Use --prompt or --src");
         process.exit(1);
       }
 
+      const style = resolveApiStyle(url, apiStyleArg === "openai" || apiStyleArg === "anthropic" ? apiStyleArg : undefined);
+      const requestBody = buildRequestBody({ model, prompt, schema: schemaObj, apiStyle: style, url });
+
+      if (dryRun) {
+        console.log(JSON.stringify(requestBody, null, 2));
+        process.exit(0);
+      }
+
+      if (!apiKey) {
+        console.error("Error: API key required. Use --api-key or set OPENROUTER_API_KEY in .env");
+        process.exit(1);
+      }
+
       const response = await fetch(url, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: "user", content: prompt }],
-          logprobs: true,
-          stream: true,
-        }),
+        headers: getHeaders(style, apiKey),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -216,7 +249,7 @@ const app = command({
     }
     const sthis = ensureSuperThis();
 
-    if (all || line || data || sse || delta || full || block || stats || image || imageDir) {
+    if (all || line || data || sse || delta || full || block || stats || image || imageDir || text) {
       const streamId = sthis.nextId().str;
       const intervalMs = parseInt(statsInterval, 10) || 1000;
       const pipeline = body
@@ -231,6 +264,7 @@ const app = command({
 
       const reader = pipeline.getReader();
 
+      let textNeedsNewline = false;
       const sectionState = {
         sectionId: "",
         mode: "" as "toplevel" | "code" | "",
@@ -292,6 +326,12 @@ const app = command({
           }
         }
 
+        if (text && isToplevelLine(value)) {
+          if (textNeedsNewline) process.stdout.write("\n");
+          process.stdout.write(value.line);
+          textNeedsNewline = true;
+        }
+
         if (image && isBlockImage(value)) {
           const response = await fetch(value.url);
           const blob = await response.blob();
@@ -325,6 +365,7 @@ const app = command({
           console.log(JSON.stringify(value));
         }
       }
+      if (text && textNeedsNewline) process.stdout.write("\n");
     } else {
       const reader = body.getReader();
       const decoder = new TextDecoder();
