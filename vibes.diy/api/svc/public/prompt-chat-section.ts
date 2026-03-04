@@ -7,6 +7,8 @@ import {
   exception2Result,
   chunkyAsync,
   BuildURI,
+  pathOps,
+  URI,
 } from "@adviser/cement";
 import {
   InMsgBase,
@@ -100,7 +102,9 @@ async function appendBlockEvent({
     tid: req.outerTid,
     src: "promptChatSection",
   } satisfies InMsgBase<SectionEvent>);
+  // console.log("Emitting block event for promptId:", promptId, "blockSeq:", blockSeq, "connections:", vctx.connections);
   for (const conn of vctx.connections) {
+    // console.log("Emitting block event for promptId:", promptId, "blockSeq:", blockSeq, "to clients", conn.chatIds);
     for (const tuple of conn.chatIds) {
       if (tuple.chatId === req.chatId) {
         // console.log("promptChatSection: Sending blockSeq", blockSeq, "to chatId:", req.chatId, "via tid:", tuple.tid);
@@ -195,10 +199,17 @@ async function handlePromptContext({
         if (block.end) {
           const content = block.lines.map((l) => l.line).join("\n");
           // console.log("Code to add to file system:", content, block.begin.lang);
+          let filename!: string;
+          if (idx === 0) {
+            filename = `/App`;
+          } else {
+            filename = `/File-${idx}`;
+          }
+          filename += block.begin.lang ? `.${block.begin.lang}` : "";
           acc.push({
             type: "code-block",
-            filename: `${idx == 0 ? "App.jsx" : `File-${block.begin.lang}-${idx}.jsx`}`,
-            lang: "jsx", // llm think between jsx and js is not a big deal
+            filename,
+            lang: block.begin.lang, // llm think between jsx and js is not a big deal
             content,
           });
         }
@@ -287,14 +298,25 @@ async function injectSystemPrompt(
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       dependenciesUserOverride: true,
       dependencies: ["callai", "image-gen"],
-      fetchText: async (pkg, path) => {
-        const rRes = await vctx.fetchAsset(
-          BuildURI.from(vctx.params.pkgRepos.workspace).appendRelative(pkg).appendRelative(path).toString()
-        );
+      fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
+        const promptTxtUrl = BuildURI.from(vctx.params.pkgRepos.workspace)
+          .appendRelative("@vibes.diy/prompts")
+          .appendRelative("llms")
+          .appendRelative(pathOps.basename(URI.from(url).pathname))
+          .toString();
+        // console.log("Fetching asset for system prompt from URL:", url, promptTxtUrl);
+        const rRes = await vctx.fetchAsset(promptTxtUrl);
         if (rRes.isErr()) {
-          return Result.Err(rRes);
+          console.error("Failed to fetch asset for system prompt from URL:", url.toString(), "with error:", rRes.Err());
+          return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
+          // return Result.Err(rRes);
         }
-        return Result.Ok(await new Response(rRes.Ok()).text());
+        const res = new Response(rRes.Ok());
+        // res.clone().text().then((text) => {
+        //   console.log("Fetched asset for system prompt from URL:", url.toString(), "with content:", text);
+        // })
+        return res;
+        //   return Result.Ok(await new Response(rRes.Ok()).text());
       },
       callAi: {
         ModuleAndOptionsSelection: async (_msgs: ChatMessage[]) => {
@@ -346,7 +368,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
   }),
   handle: checkAuth(
     async (ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>) => {
-      // console.log("Handling promptChatSection with validated payload:", ctx.validated.payload);
       const req = ctx.validated.payload;
       const orig = (ctx.enRequest as MsgBase<ReqPromptChatSection>).payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
@@ -466,13 +487,12 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         ...vctx.params.llm.enforced,
         model: withSystemPrompt.Ok().model,
         headers: vctx.params.llm.headers,
+        logprobs: true,
         stream: true,
       };
 
       // add system prompt here
-      // console.log("Final LLM request for promptId:", promptId, llmReq);
       const rRes = await exception2Result(() => vctx.llmRequest(llmReq));
-
       if (rRes.isErr()) {
         return Result.Err(`LLM request failed: ${rRes.Err().message}`);
       }
@@ -500,18 +520,17 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         if (done) {
           break;
         }
-        // console.log("Received value from LLM stream for promptId:", promptId, "value:", value);
-        collectedMsgs.push(value);
         if (!isBlockEnd(value)) {
           if (!isBlockSteamMsg(value)) {
             continue;
           }
-          // console.log("Handled prompt context for promptId:", value.type);
+          collectedMsgs.push(value);
           const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
           if (r.isErr()) {
             return Result.Err(r);
           }
         } else {
+          collectedMsgs.push(value);
           const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
           if (r.isErr()) {
             return Result.Err(r);

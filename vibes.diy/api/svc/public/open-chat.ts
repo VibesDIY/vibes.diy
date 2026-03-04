@@ -20,7 +20,6 @@ import { ensureApplicationChatId } from "../intern/ensure-application-chat-id.js
 export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, ResOpenChat | VibesDiyError> = {
   hash: "open-chat-handler",
   validate: unwrapMsgBase(async (msg: MsgBase) => {
-    // console.log("openChat validate called", msg);
     const ret = reqOpenChat(msg.payload);
     if (ret instanceof type.errors) {
       return Result.Ok(Option.None());
@@ -58,7 +57,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       const { appSlug, userSlug, chatId } = rChatId.Ok();
 
       const wsp = ctx.send.provider as WSSendProvider;
-      console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
+      // console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
       wsp.chatIds.add({ chatId, tid: ctx.validated.tid });
 
       const rReSend = await resendChatSectionsPrevMsg({

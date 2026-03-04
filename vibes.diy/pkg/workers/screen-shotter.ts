@@ -1,8 +1,6 @@
 import puppeteer from "@cloudflare/puppeteer";
 import { EvtNewFsId, isEvtNewFsId, isMsgBase, msgBase } from "@vibes.diy/api-types";
 import { storeScreenshot } from "@vibes.diy/api-svc";
-import { ensureSuperThis } from "@fireproof/core-runtime";
-import { LoggerImpl } from "@adviser/cement";
 import { Env } from "./env.js";
 import { cfDrizzle } from "@vibes.diy/api-svc/cf-serve.js";
 import { type } from "arktype";

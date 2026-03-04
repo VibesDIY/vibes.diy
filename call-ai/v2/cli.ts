@@ -34,7 +34,14 @@ import {
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import mime from "mime";
 
-const env = dotenv.load(".env");
+const env = (() => {
+  try {
+    return dotenv.load(".env");
+  } catch (e) {
+    console.warn("can't load .env");
+    return {};
+  }
+})();
 
 const app = command({
   name: "call-ai",
@@ -189,6 +196,7 @@ const app = command({
         body: JSON.stringify({
           model,
           messages: [{ role: "user", content: prompt }],
+          logprobs: true,
           stream: true,
         }),
       });

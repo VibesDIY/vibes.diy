@@ -3,8 +3,7 @@ import { FetchResult, StorageResult, Storage } from "../types.js";
 import { VibesSqlite } from "../create-handler.js";
 import { SQLitePeer, SQLitePeerFetch } from "../peers/sql.js";
 import { sha256 } from "@noble/hashes/sha2.js";
-import { CID } from "multiformats";
-import { create as createDigest } from "multiformats/hashes/digest";
+import { base58btc } from "multiformats/bases/base58";
 
 export interface CalcCidResult {
   cid: string;
@@ -19,7 +18,7 @@ export interface PeerWithCommit extends Peer {
   begin: () => Promise<PeerStreamWithCommit>;
 }
 
-const SHA2_256 = 0x12;
+// const SHA2_256 = 0x12;
 
 export class Cider {
   readonly h: ReturnType<typeof sha256.create>;
@@ -35,9 +34,10 @@ export class Cider {
 
   readonly getCID = Lazy((): Promise<CalcCidResult> => {
     return this.processStreamPromise.then(() => {
-      const cid = CID.create(1, 0x55, createDigest(SHA2_256, this.h.digest()));
+      const cid = base58btc.encode(this.h.digest());
+      // const cid = CID.create(1, 0x55, createDigest(SHA2_256, this.h.digest()));
       return {
-        cid: cid.toString(),
+        cid,
         size: this.size,
       };
     });
@@ -82,6 +82,7 @@ export function ensureStorage(db: VibesSqlite): Storage {
       };
     },
     ensure: async (...items: ReadableStream<Uint8Array | string>[]): Promise<Result<StorageResult>[]> => {
+      // console.log("Ensuring storage for items, count:", items.length);
       const tees = await Promise.allSettled(
         items.map(
           (
@@ -115,6 +116,7 @@ export function ensureStorage(db: VibesSqlite): Storage {
           }
         )
       );
+      // console.log("Ensuring storage for tee:", tees.length);
       return tees.map((res) => {
         if (res.status !== "fulfilled") {
           return Result.Err(new Error(`Failed to process item: ${res.reason}`));

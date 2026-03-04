@@ -38,7 +38,7 @@ export const SseChunk = type({
     },
     finish_reason: "string|null",
     native_finish_reason: "string|null",
-    logprobs: "unknown",
+    "logprobs?": "unknown",
   }).array(),
   "system_fingerprint?": "string",
   "usage?": SseUsage,

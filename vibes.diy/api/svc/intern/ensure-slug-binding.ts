@@ -19,7 +19,7 @@ async function writeUserSlugBinding(ctx: VibesApiSQLCtx, userId: string, userSlu
     if (existing.length >= ctx.params.maxUserSlugPerUserId) {
       return Result.Err("maximum userSlug bindings reached for this userId");
     }
-    const tenant = ctx.sthis.nextId(12).str
+    const tenant = ctx.sthis.nextId(12).str;
     await ctx.db
       .insert(sqlUserSlugBinding)
       .values({

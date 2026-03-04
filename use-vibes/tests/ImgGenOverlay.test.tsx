@@ -142,6 +142,4 @@ describe("ImageOverlay Component", () => {
       expect(mockProps.handleDeleteConfirm).toHaveBeenCalled();
     }
   });
-
-
 });

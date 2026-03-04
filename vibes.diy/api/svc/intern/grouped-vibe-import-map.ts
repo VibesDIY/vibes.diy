@@ -75,5 +75,6 @@ export const lockedGroupsVersions = {
     // what the fuck
     // "@vibes.diy/use-vibes-base": "privateNpm:",
     "call-ai": "alias:@vibes.diy/vibe-runtime",
+    "use-vibes": "alias:@vibes.diy/vibe-runtime",
   },
 };

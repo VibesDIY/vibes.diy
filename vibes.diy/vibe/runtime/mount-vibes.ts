@@ -15,7 +15,7 @@ export function mountVibe(
   //   FP_DEBUG: "*",
   //   FP_STACK: "true",
   // };
-  // console.log("mountVibe", comps, iprops, "FP-DEBUG");
+  console.log("mountVibe-1", comps);
 
   const props = vibeMountParams(iprops);
   if (props instanceof type.errors) {

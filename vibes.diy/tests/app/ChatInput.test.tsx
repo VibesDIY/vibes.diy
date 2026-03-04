@@ -124,7 +124,13 @@ describe("ChatInput Component", () => {
     }[] = [];
     rerender(
       <MockThemeProvider>
-        <ChatInput promptProcessing={false} onSubmit={onSubmit} models={emptyModels} onModelChange={vi.fn()} showModelPickerInChat />
+        <ChatInput
+          promptProcessing={false}
+          onSubmit={onSubmit}
+          models={emptyModels}
+          onModelChange={vi.fn()}
+          showModelPickerInChat
+        />
       </MockThemeProvider>
     );
     expect(screen.queryByRole("button", { name: /ai model/i })).toBeNull();

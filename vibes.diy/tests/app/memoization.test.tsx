@@ -131,5 +131,4 @@ describe("Component Memoization", () => {
       expect(screen.getByTestId("test-component")).toHaveTextContent("Generating");
     });
   });
-
 });

@@ -50,7 +50,7 @@ export type FetchResult = FetchOkResult | FetchErrResult | FetchNotFoundResult;
 
 export interface Storage {
   fetch: (url: string) => Promise<FetchResult>;
-  ensure: (...items: ReadableStream<Uint8Array|string>[]) => Promise<Result<StorageResult>[]>;
+  ensure: (...items: ReadableStream<Uint8Array | string>[]) => Promise<Result<StorageResult>[]>;
 }
 export interface VibesApiSQLCtx {
   sthis: SuperThis;

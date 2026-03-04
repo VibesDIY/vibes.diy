@@ -15,7 +15,7 @@ export const vibeUserEnv = type("Record<string, string>");
 export type DashAuthType = typeof dashAuthType.infer;
 
 // Base file properties - used for composition
-const baseFileProps = {
+const baseFileProps = type({
   // including path within the filesystem - absolute from root, no .. or .
   // must start with / and not contain .. or relative path segments
   filename: type("string").narrow((s) => {
@@ -31,58 +31,60 @@ const baseFileProps = {
   }),
   "entryPoint?": "boolean" as const, // last wins should only set once per filesystem
   "mimetype?": "string" as const, // derived from filename if not set
-};
-
-// Code types
-const codeBlock = type({
-  ...baseFileProps,
-  type: "'code-block'",
-  // currently supported languages
-  lang: "'jsx'|'js'",
-  // the actual code content
-  content: "string",
 });
 
-const codeRef = type({
-  ...baseFileProps,
+// Code types
+export const VibeCodeBlock = type({
+  type: "'code-block'",
+  // currently supported languages
+  lang: "string", // "'jsx'|'js'",
+  // the actual code content
+  content: "string",
+}).and(baseFileProps);
+
+export type VibeCodeBlock = typeof VibeCodeBlock.infer;
+
+export function isVibeCodeBlock(obj: unknown): obj is VibeCodeBlock {
+  return !(VibeCodeBlock(obj) instanceof type.errors);
+}
+
+export const VibeCodeRef = type({
   type: "'code-ref'",
   // reference id to code stored elsewhere
   // if call-ai will store the result somewhere
   refId: "string",
-});
+}).and(baseFileProps);
 
 // Asset types - string content
-const strAssetBlock = type({
-  ...baseFileProps,
+export const VibeStrAssetBlock = type({
   type: "'str-asset-block'",
   // the actual asset content as string
   content: "string",
-});
+}).and(baseFileProps);
 
-const strAssetRef = type({
-  ...baseFileProps,
+export const VibeStrAssetRef = type({
   type: "'str-asset-ref'",
   // reference id to asset stored elsewhere
   refId: "string",
-});
+}).and(baseFileProps);
 
 // Asset types - binary content
-const uint8AssetBlock = type({
-  ...baseFileProps,
+export const VibeUint8AssetBlock = type({
   type: "'uint8-asset-block'",
   // the actual asset content as binary
   content: type.instanceOf(Uint8Array),
-});
+}).and(baseFileProps);
 
-const uint8AssetRef = type({
-  ...baseFileProps,
+export const VibeUint8AssetRef = type({
   type: "'uint8-asset-ref'",
   // reference id to asset stored elsewhere
   refId: "string",
-});
+}).and(baseFileProps);
 
 // Union of all file types
-export const vibeFile = type(codeBlock.or(codeRef).or(strAssetBlock).or(strAssetRef).or(uint8AssetBlock).or(uint8AssetRef));
+export const vibeFile = type(
+  VibeCodeBlock.or(VibeCodeRef).or(VibeStrAssetBlock).or(VibeStrAssetRef).or(VibeUint8AssetBlock).or(VibeUint8AssetRef)
+);
 
 export type VibeFile = typeof vibeFile.infer;
 

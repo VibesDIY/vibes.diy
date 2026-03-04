@@ -1,4 +1,4 @@
-import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result, stream2string, stream2uint8array } from "@adviser/cement";
+import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result, stream2uint8array } from "@adviser/cement";
 import { FileSystemItem, HttpResponseBodyType, VibesDiyServCtx, vibesImportMap, vibeUserEnv } from "@vibes.diy/api-types";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { NpmUrlCapture } from "../public/serv-entry-point.js";
@@ -23,7 +23,7 @@ export interface RenderVibesOpts {
   };
 }
 
-export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts): Promise<Result<EventoResultType>> {
+export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts): Promise<Result<EventoResultType>> {
   const fsIportMap = fsItems.find((i) => i.transform?.type === "import-map");
   if (!fsIportMap) {
     return Result.Err(new Error("No import-map found in file system"));
@@ -61,9 +61,9 @@ export async function renderVibes({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpt
     }),
   });
 
-  // console.log(`importMap:`, importMap);
   const imports = fsItems.reduce(
     (acc, item, idx) => {
+      // console.log(`fsItem:`, item);
       if (item.mimeType === "application/javascript") {
         acc.push({
           // import relative to support prod and dev switching

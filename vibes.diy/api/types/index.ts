@@ -6,4 +6,4 @@ export * from "./vibes-types.js";
 export * from "./screen-shotter.js";
 
 export * from "./vibes-diy-api.js";
-export * from "./invite.js"
+export * from "./invite.js";

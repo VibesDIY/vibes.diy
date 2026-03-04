@@ -14,7 +14,7 @@ import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
 import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { renderVibes } from "../intern/render-vibes.js";
+import { renderVibe } from "../intern/render-vibe.js";
 import { parse } from "cookie";
 
 // function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
@@ -123,7 +123,17 @@ async function sendFetchOk(
   item: FileSystemItem,
   fRes: FetchResult
 ) {
+  console.log(
+    `Fetch ok for ${item.fileName} with MIME type ${item.mimeType} and size ${item.size}: fetch result type ${fRes.type}`
+  );
   if (isFetchOkResult(fRes)) {
+    console.log(`Fetch ok for ${item.fileName} with MIME type ${item.mimeType} and size ${item.size}`);
+    const assetRes = new Response(fRes.data);
+    const asset = await assetRes.arrayBuffer();
+    console.log(
+      `Fetch ok for ${item.fileName} with MIME type ${item.mimeType} and size ${item.size}, asset size: ${asset.byteLength}`
+    );
+
     await ctx.send.send(ctx, {
       type: "http.Response.Body",
       status: 200,
@@ -133,7 +143,7 @@ async function sendFetchOk(
         "Cache-Control": "public, max-age=31536000, immutable",
         ETag: item.assetId,
       },
-      body: fRes.data,
+      body: asset,
     } satisfies HttpResponseBodyType);
     return Result.Ok(EventoResult.Stop);
   }
@@ -204,7 +214,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Err(`Invalid filesystem data ${ctx.validated.fsId}`);
     }
 
-    const selectedFsItem = fileSystem.find((i) => i.entryPoint);
+    const selectedFsItem = fileSystem.find((i) => i.fileName === ctx.validated.path);
     if (selectedFsItem) {
       const possiblePath = await vctx.storage.fetch(selectedFsItem.assetURI);
       if (isFetchErrResult(possiblePath)) {
@@ -226,7 +236,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     }
     if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
       const npmUrl = captureNpmUrl(vctx, ctx.request);
-      const rVibesEntryPoint = await renderVibes({
+      const rVibesEntryPoint = await renderVibe({
         ctx,
         fs,
         fsItems: fileSystem,

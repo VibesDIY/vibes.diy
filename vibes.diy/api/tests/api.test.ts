@@ -4,12 +4,11 @@ import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 import { BuildURI, consumeStream, loadAsset, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
-import { calcEntryPointUrl, cfServe, createAppContext, VibesSqlite } from "@vibes.diy/api-svc";
+import { calcEntryPointUrl, CFInject, cfServe, createAppContext, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
-import { CFInject } from "@vibes.diy/api-svc/cf-serve.js";
 import { drizzle } from "drizzle-orm/libsql";
 import { isPromptBlockEnd, LLMRequest } from "@vibes.diy/call-ai-v2";
-import { MsgBase } from "@vibes.diy/api-types";
+import { MsgBase, PromptAndBlockMsgs, SectionEvent } from "@vibes.diy/api-types";
 
 const noopCache = {
   put: async (_req: Request, _res: Response) => {
@@ -23,46 +22,49 @@ const noopCache = {
   },
 };
 
-function emptySectorStream(chatId: string, promptIds: string[]) {
-  return promptIds.flatMap((promptId, index) => [
-    [
-      {
-        blocks: [{ type: "prompt.block-begin" }],
-        chatId,
-        promptId,
-        blockSeq: 0,
-        timestamp: expect.any(Date),
-        type: "vibes.diy.section-event",
+function toByPromptIds(calls: unknown[][]): Record<string, PromptAndBlockMsgs[]> {
+  return calls.reduce(
+    (acc, call) => {
+      const msg = call[0] as SectionEvent;
+      if (!acc[msg.promptId]) {
+        acc[msg.promptId] = [];
+      }
+      for (const block of msg.blocks) {
+        acc[msg.promptId].push(block);
+      }
+      return acc;
+    },
+    {} as Record<string, PromptAndBlockMsgs[]>
+  );
+}
+
+function emptySectorStream(chatId: string, promptId: string, index: number) {
+  return [
+    {
+      chatId,
+      seq: 0,
+      streamId: expect.any(String),
+      timestamp: expect.any(Date),
+      type: "prompt.block-begin",
+    },
+    {
+      chatId,
+      seq: 1,
+      streamId: expect.any(String),
+      timestamp: expect.any(Date),
+      request: {
+        messages: [{ content: [{ type: "text", text: `Hello world ${index}` }], role: "user" }],
       },
-    ],
-    [
-      {
-        blocks: [
-          {
-            request: {
-              messages: [{ content: `Hello world ${index}`, role: "user" }],
-            },
-            type: "prompt.req",
-          },
-        ],
-        chatId,
-        promptId,
-        blockSeq: 1,
-        type: "vibes.diy.section-event",
-        timestamp: expect.any(Date),
-      },
-    ],
-    [
-      {
-        blocks: [{ type: "prompt.block-end" }],
-        chatId,
-        promptId,
-        blockSeq: 2,
-        type: "vibes.diy.section-event",
-        timestamp: expect.any(Date),
-      },
-    ],
-  ]);
+      type: "prompt.req",
+    },
+    {
+      type: "prompt.block-end",
+      chatId,
+      seq: 2,
+      streamId: expect.any(String),
+      timestamp: expect.any(Date),
+    },
+  ];
 }
 
 describe("VibesDiyApi", () => {
@@ -101,7 +103,7 @@ describe("VibesDiyApi", () => {
       CALLAI_API_KEY: "what-ever",
       CALLAI_CHAT_URL: "what-ever",
 
-      LLM_BACKEND_URL: "what-ever",
+      LLM_BACKEND_URL: "http://what-ever",
       ENVIRONMENT: "test",
 
       LLM_BACKEND_API_KEY: "llm-api-key",
@@ -117,21 +119,31 @@ describe("VibesDiyApi", () => {
       fetchAsset: async (url: string) => {
         throw new Error(`fetchAsset not implemented in test for url: ${url}`);
       },
-      postQueue: async (msg: MsgBase) => {
-        throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
+      postQueue: async (_msg: MsgBase) => {
+        // throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
+      },
+      llmRequest: async (prompt: LLMRequest) => {
+        // console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages.filter((m) => m.content.some((c) => c.type === "text")).map((m) => m.content.filter((c) => c.type === "text").map((c) => c.text).join("\n")).join("\n---\n"));
+        if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
+          const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
+          return new Response(fixture.Ok(), { status: 200 });
+        }
+        // console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages);
+        return new Response("", { status: 200 });
       },
       netHash: () => "test-hash",
       connections: new Set(),
       env,
-      db: null as unknown as VibesSqlite,
+      db: drizzleDB, // as unknown as VibesSqlite,
       cache: noopCache,
     });
-    fetchPair.server.onServe((req: Request) => {
-      // console.log("fetchPair.server received request:", req.url);
+
+    fetchPair.server.onServe(async (req: Request) => {
+      // console.log("fetchPair.server received request:", req.url, Object.fromEntries(req.headers.entries()));
       return cfServe(
         req as unknown as CFRequest,
         {
-          appCtx,
+          appCtx: appCtx.appCtx,
           cache: noopCache,
           drizzle: drizzleDB,
           webSocket: {
@@ -143,37 +155,47 @@ describe("VibesDiyApi", () => {
           },
         } as unknown as ExecutionContext & CFInject
       ) as unknown as Promise<Response>;
+      // console.log("fetchPair.server received request:", req);
+      // return
     });
 
-    wsPair.p2.onmessage = () => {
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      // console.log("wsPair.p2 received message", event.data.length);
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
       /* noop */
     };
 
-    cfServe(
-      new Request("http://example.com/api", {
-        headers: { Upgrade: "websocket" },
-      }) as unknown as CFRequest,
-      {
-        appCtx,
-        cache: noopCache,
-        drizzle: drizzleDB,
-        wsResponse: new Response(null, { status: 200 }),
-        llmRequest: async (prompt: LLMRequest) => {
-          if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
-            const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
-            return new Response(fixture.Ok(), { status: 200 });
-          }
-          return new Response("", { status: 200 });
-        },
-        webSocket: {
-          connections: new Set(),
-          webSocketPair: () => ({
-            client: wsPair.p1,
-            server: wsPair.p2,
-          }),
-        },
-      } as unknown as ExecutionContext & CFInject
-    );
+    // cfServe(
+    //   new Request("http://example.com/api", {
+    //     headers: { Upgrade: "websocket" },
+    //   }) as unknown as CFRequest,
+    //   {
+    //     appCtx: appCtx.appCtx,
+    //     cache: noopCache,
+    //     drizzle: drizzleDB,
+    //     wsResponse: new Response(null, { status: 200 }),
+    //     llmRequest: async (prompt: LLMRequest) => {
+    //       console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages);
+    //       if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
+    //         const fixture = await loadAsset("./fixture.llm", { basePath: () => sthis.pathOps.dirname(import.meta.url) });
+    //         return new Response(fixture.Ok(), { status: 200 });
+    //       }
+    //       return new Response("", { status: 200 });
+    //     },
+    //     webSocket: {
+    //       connections: new Set<WSSendProvider>(),
+    //       webSocketPair: () => ({
+    //         client: wsPair.p1,
+    //         server: wsPair.p2,
+    //       }),
+    //     },
+    //   } as unknown as ExecutionContext & CFInject
+    // );
 
     api = new VibeDiyApi({
       apiUrl: "http://localhost:8787/api",
@@ -234,15 +256,15 @@ describe("VibesDiyApi", () => {
       ],
     });
     const url = calcEntryPointUrl({
-              hostnameBase: ".nowhere",
-              protocol: "http",
-              port: "4711",
-              bindings: {
-                  appSlug: res.Ok().appSlug,
-                  userSlug: res.Ok().userSlug,
-                  fsId: res.Ok().fsId
-              },
-     })
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: {
+        appSlug: res.Ok().appSlug,
+        userSlug: res.Ok().userSlug,
+        fsId: res.Ok().fsId,
+      },
+    });
     // console.log("render iframe content page res:", res);
     const resIframe = await api.cfg.fetch(url);
     expect(resIframe.status).toBe(200);
@@ -287,16 +309,16 @@ describe("VibesDiyApi", () => {
       // console.log("ensureAppSlug res", res);
       expect(res.Ok()).toEqual({
         appSlug: "sand-nose-hope",
-        entryPointUrl: `http://sand-nose-hope--immediately-steel-${now}.localhost.vibesdiy.net/~zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s~/`,
+        entryPointUrl: `http://sand-nose-hope--immediately-steel-${now}.localhost.vibesdiy.net:8787/~zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s~`,
         env: {
           TEST_ENV_VAR: "hello world",
         },
         fileSystem: [
           {
             assetId: "zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
-            assetURI: "sql://Assets/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
+            assetURI: "sqlite://Assets/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
             fileName: "/App.jsx",
-            mimeType: "text/jsx",
+            mimeType: "text/javascript",
             size: expect.any(Number),
             transform: {
               type: "jsx-to-js",
@@ -305,9 +327,9 @@ describe("VibesDiyApi", () => {
           },
           {
             assetId: "zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
-            assetURI: "sql://Assets/zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
+            assetURI: "sqlite://Assets/zAVHPsNUCbx2Kz6h4Z59bCx4XWiN9MtqDBRWePf282dcK",
             fileName: "/~~transformed~~/zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s",
-            mimeType: "application/javascript",
+            mimeType: "text/javascript",
             size: 276,
             transform: {
               action: "jsx-to-js",
@@ -316,13 +338,13 @@ describe("VibesDiyApi", () => {
             },
           },
           {
-            assetId: "z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
-            assetURI: "sql://Assets/z71nQH7rHPLA584UiHGeodUeRV19eVVADjxmam986JXGW",
+            assetId: "zBKasKKmW2a3imcye1bbJvbZJRFF87V1vTsBZ12MEeUq1",
+            assetURI: "sqlite://Assets/zBKasKKmW2a3imcye1bbJvbZJRFF87V1vTsBZ12MEeUq1",
             fileName: "/~~calculated~~/import-map.json",
             mimeType: "application/importmap+json",
-            size: 6822,
+            size: 153,
             transform: {
-              fromAssetIds: ["/App.jsx"],
+              fromAssetIds: ["zALtCJe12EFVgLEg6YDxtpba7jPHLRYEojT6aP8rtG3s"],
               type: "import-map",
             },
           },
@@ -331,15 +353,17 @@ describe("VibesDiyApi", () => {
         mode: "dev",
         type: "vibes.diy.res-ensure-app-slug",
         userSlug: `immediately-steel-${now}`,
-        wrapperUrl: `https://tbd/immediately-steel-${now}/sand-nose-hope/zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s`,
+        // wrapperUrl: `https://tbd/immediately-steel-${now}/sand-nose-hope/zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s`,
       });
     }
   });
 
   it("can open chat", async () => {
+    // console.log("Testing openChat");
     const rChatRes = await api.openChat({
       mode: "creation",
     });
+    // console.log("openChat res", rChatRes);
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
     const resp = vi.fn();
@@ -349,6 +373,7 @@ describe("VibesDiyApi", () => {
         rChatRes.Ok().close();
       }
     });
+    // console.log("Chat opened, sending prompts");
 
     const promptIds: string[] = [];
     for (let i = 0; i < 3; i++) {
@@ -358,8 +383,13 @@ describe("VibesDiyApi", () => {
       expect(rPrompt.isOk()).toBe(true);
       promptIds.push(rPrompt.Ok().promptId);
     }
+    // console.log("Prompts sent, waiting for responses");
     await toWait;
-    expect(resp.mock.calls).toEqual(emptySectorStream(chat.chatId, promptIds));
+    // console.log("Prompts sent, waited for responses");
+
+    Array.from(Object.entries(toByPromptIds(resp.mock.calls))).forEach(([promptId, blocks], idx) => {
+      expect(blocks).toEqual(emptySectorStream(chat.chatId, promptId, idx));
+    });
 
     const rNext = await api.openChat({
       chatId: chat.chatId,
@@ -372,8 +402,10 @@ describe("VibesDiyApi", () => {
         rNext.Ok().close();
       }
     });
-    const chatId = chat.chatId;
-    expect(nextFn.mock.calls).toEqual(emptySectorStream(chatId, promptIds));
+
+    Array.from(Object.entries(toByPromptIds(nextFn.mock.calls))).forEach(([promptId, blocks], idx) => {
+      expect(blocks).toEqual(emptySectorStream(chat.chatId, promptId, idx));
+    });
   });
 
   it("queries the llm", async () => {
@@ -398,6 +430,6 @@ describe("VibesDiyApi", () => {
         rNext.Ok().close();
       }
     });
-    expect(nextFn.mock.calls.length).toBe(43);
+    expect(nextFn.mock.calls.flatMap((call) => call[0].blocks).length).toEqual(44);
   });
 });

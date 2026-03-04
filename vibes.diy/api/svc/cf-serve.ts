@@ -87,7 +87,7 @@ export async function cfServeAppCtx(request: CFRequest, env: Env, ctx: Execution
     cache: ctx.cache,
 
     postQueue: async (msg: MsgBase) => {
-      console.log("Posting message to queue:", msg);
+      // console.log("Posting message to queue:", msg);
       await env.VIBES_SERVICE.send(JSON.stringify(msg));
     },
     fetchAsset: async (url: string) => {

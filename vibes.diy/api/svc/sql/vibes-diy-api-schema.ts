@@ -17,11 +17,10 @@ export const sqlUserSlugBinding = sqliteTable(
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userSlug, table.userId] }), 
-    // uniqueIndex("UserSlug_tenant").on(table.tenant), 
-    uniqueIndex("UserSlug_userSlug").on(table.userSlug)
+    primaryKey({ columns: [table.userSlug, table.userId] }),
+    // uniqueIndex("UserSlug_tenant").on(table.tenant),
+    uniqueIndex("UserSlug_userSlug").on(table.userSlug),
   ]
-
 );
 
 export const sqlAppSlugBinding = sqliteTable(
@@ -34,9 +33,9 @@ export const sqlAppSlugBinding = sqliteTable(
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.appSlug, table.userSlug] }) ,
+    primaryKey({ columns: [table.appSlug, table.userSlug] }),
     // uniqueIndex("AppSlug_ledger_idx").on(table.ledger)
-    ]
+  ]
 );
 
 export const sqlApps = sqliteTable(
@@ -145,7 +144,7 @@ export const sqlUserSettings = sqliteTable("UserSettings", {
   created: text().notNull(),
 });
 
-export const sqlInviteTokens = sqliteTable('InviteTokens', {
+export const sqlInviteTokens = sqliteTable("InviteTokens", {
   token: text().notNull().primaryKey(),
   appSlug: text().notNull(),
   userSlug: text().notNull(),
@@ -153,16 +152,16 @@ export const sqlInviteTokens = sqliteTable('InviteTokens', {
   validUntil: text().notNull(),
   created: text().notNull(),
   style: text({ mode: "json" }).notNull(), // InviteEmailToken.or(InviteLinkToken)
-})
+});
 
-export const sqlAcceptInvites = sqliteTable('AcceptInvites', {
-  acceptId: text().notNull().primaryKey(), // uuid v4
-  token: text().notNull(),
-  acceptUserId: text().notNull(),
-  acceptedInfo: text({ mode: "json" }).notNull(), // InviteToken info at time of accept
-  created: text().notNull(),
-}, (table) => [
-  uniqueIndex("AcceptInvites_token_acceptedUserId_idx").on(table.token, table.acceptUserId),
-]);
-
-
+export const sqlAcceptInvites = sqliteTable(
+  "AcceptInvites",
+  {
+    acceptId: text().notNull().primaryKey(), // uuid v4
+    token: text().notNull(),
+    acceptUserId: text().notNull(),
+    acceptedInfo: text({ mode: "json" }).notNull(), // InviteToken info at time of accept
+    created: text().notNull(),
+  },
+  (table) => [uniqueIndex("AcceptInvites_token_acceptedUserId_idx").on(table.token, table.acceptUserId)]
+);

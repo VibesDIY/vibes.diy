@@ -1,4 +1,5 @@
 import { type } from "arktype";
+export * from "./img-gen.js";
 
 const Base = type({
   tid: "string",
