@@ -8,7 +8,7 @@ import { calcEntryPointUrl, CFInject, cfServe, createAppContext, vibesMsgEvento,
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/libsql";
 import { isPromptBlockEnd, LLMRequest } from "@vibes.diy/call-ai-v2";
-import { MsgBase, PromptAndBlockMsgs, SectionEvent } from "@vibes.diy/api-types";
+import { FetchResult, MsgBase, PromptAndBlockMsgs, S3Api, SectionEvent } from "@vibes.diy/api-types";
 
 const noopCache = {
   put: async (_req: Request, _res: Response) => {
@@ -116,6 +116,21 @@ describe("VibesDiyApi", () => {
     const fetchPair = TestFetchPair.create();
     const wsPair = TestWSPair.create();
     const appCtx = await createAppContext({
+      sthis,
+      s3Api: new (class implements S3Api {
+        genId(): string {
+          throw new Error("Method not implemented.");
+        }
+        get(_iurl: string): Promise<FetchResult> {
+          throw new Error("Method not implemented.");
+        }
+        put(_iurl: string): Promise<WritableStream<Uint8Array>> {
+          throw new Error("Method not implemented.");
+        }
+        rename(_fromUrl: string, _toUrl: string): Promise<Result<void>> {
+          throw new Error("Method not implemented.");
+        }
+      })(),
       fetchAsset: async (url: string) => {
         throw new Error(`fetchAsset not implemented in test for url: ${url}`);
       },

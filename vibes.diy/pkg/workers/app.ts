@@ -11,11 +11,11 @@ import { createRequestHandler } from "react-router";
 
 // @ts-expect-error - virtual module provided by React Router
 import * as serverBuild from "virtual:react-router/server-build";
-import { Env } from "./env.js";
 import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
 import { processScreenShotEvent } from "./screen-shotter.js";
 import { NPMPackage } from "@adviser/cement";
+import { CFEnv } from "@vibes.diy/api-types";
 
 export { ChatSessions } from "./chat-sessions.js";
 // import { cfServe } from "@vibes.diy/api-svc";
@@ -43,7 +43,7 @@ const requestHandler = createRequestHandler(serverBuild, import.meta.env.MODE);
 // }
 
 export default {
-  async fetch(request: CFRequest, env: Env, ctx: ExecutionContext): Promise<CFResponse> {
+  async fetch(request: CFRequest, env: CFEnv, ctx: ExecutionContext): Promise<CFResponse> {
     const url = new URL(request.url);
     if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
       const id = env.CHAT_SESSIONS.idFromName("global");
@@ -121,7 +121,7 @@ export default {
     }) as unknown as CFResponse;
   },
 
-  async queue(batch, env: Env) {
+  async queue(batch, env: CFEnv) {
     // Queue consumer handler - processes messages from VIBES_SERVICE queue
     for (const message of batch.messages) {
       try {
@@ -139,4 +139,4 @@ export default {
       }
     }
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<CFEnv>;

@@ -9,10 +9,18 @@ import {
   URI,
 } from "@adviser/cement";
 import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
-import { FetchResult, isFetchErrResult, isFetchOkResult, VibesApiSQLCtx } from "../types.js";
+import { VibesApiSQLCtx } from "../types.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
-import { FileSystemItem, fileSystemItem, HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
+import {
+  FetchResult,
+  FileSystemItem,
+  fileSystemItem,
+  HttpResponseBodyType,
+  HttpResponseJsonType,
+  isFetchErrResult,
+  isFetchOkResult,
+} from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibe } from "../intern/render-vibe.js";
 import { parse } from "cookie";
@@ -139,7 +147,7 @@ async function sendFetchOk(
       status: 200,
       headers: {
         "Content-Type": item.mimeType,
-        "Content-Length": item.size.toString(),
+        // "Content-Length": item.size.toString(),
         "Cache-Control": "public, max-age=31536000, immutable",
         ETag: item.assetId,
       },
