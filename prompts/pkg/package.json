@@ -5,7 +5,7 @@
   "description": "",
   "scripts": {
     "build": "core-cli tsc",
-    "test": "vitest run",
+    "test": "vitest run --config ../tests/vitest.config.ts",
     "pack": "core-cli build -x '^' --doPack",
     "publish": "core-cli build -x '^'"
   },

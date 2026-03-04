@@ -6,84 +6,17 @@ import {
   makeBaseSystemPrompt,
   defaultStylePrompt,
 } from "@vibes.diy/prompts";
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import { Result } from "@adviser/cement";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
-
-// Create a fetchText mock that delegates to the mock fetch helper
-const mockFetchImpl = createMockFetchFromPkgFiles();
-function mockFetchText(_pkg: string, path: string): Promise<Result<string>> {
-  return mockFetchImpl(path).then(async (res) => {
-    if (res.ok) return Result.Ok(await res.text());
-    return Result.Err(new Error(`fetch failed for path: ${path}`));
-  });
-}
-
-// Mock global fetch for the tests
-const mockFetch = vi.fn();
-globalThis.fetch = mockFetch;
-// await import("~/vibes.diy/app/llms/catalog.js");
-
-// import * as mod from "~/vibes.diy/app/prompts.js";
 
 // Use a known finite set for testing, excluding three-js to keep tests stable
 const knownModuleNames = ["callai", "fireproof", "image-gen", "web-audio"];
 
-// Ensure we use the real implementation of ../app/prompts in this file only
-// Some tests and the global setup mock this module; undo that here before importing it.
-// (vi as any).doUnmock?.("~/vibes.diy/app/prompts");
-// vi.unmock("~/vibes.diy/app/prompts");
-// Reset the module registry and mock env before importing the module under test.
-// vi.resetModules();
-
-// vi.mock("~/vibes.diy/app/config/env.js", () => ({
-//   CALLAI_ENDPOINT: "http://localhost/test",
-//   APP_MODE: "test",
-// }));
-
-// Mock the callAI function to return our known finite set for testing
-// vi.mock("call-ai", () => ({
-//   callAI: vi.fn().mockResolvedValue(
-//     JSON.stringify({
-//       selected: knownModuleNames,
-//       instructionalText: true,
-//       demoData: true,
-//     }),
-//   ),
-// }));
-
-// Will be assigned in beforeAll after we unmock and re-import the module
-// let generateImportStatements: typeof generateImportStatements; // (llms: unknown[]) => string;
-// let makeBaseSystemPrompt: typeof makeBaseSystemPrompt;
-// let preloadLlmsText: () => Promise<void>;
-// no-op vars (past defaults not needed with schema-based selection)
-
-// Load actual LLM configs and txt content from app/llms
-// Use eager glob so it's resolved at import time in Vitest/Vite environment
-let llmsJsonModules: JsonDocs;
-// import.meta.glob("~/vibes.diy/app/llms/*.json", {
-//   eager: true,
-// }) as Record<string, { default: unknown }>;
-
-// Filter to only include our known set, deterministic order by name
-let orderedLlms: LlmCatalogEntry[];
-
-// Load the raw text files; key by filepath, value is file contents
-// let llmsTxtModules: TxtDocs;
-//  import.meta.glob("~/vibes.diy/app/llms/*.txt", {
-//   eager: true,
-//   as: "raw",
-// }) as Record<string, string>;
-
-// function textForName(name: string): string {
-//   const entry = Object.entries(llmsTxtModules).find(([p]) =>
-//     p.endsWith(`${name}.txt`)
-//   );
-//   return entry ? (entry[1] as unknown as string) : "";
-// }
+const mockFetchImpl = createMockFetchFromPkgFiles();
 
 const opts = {
-  fetchText: mockFetchText,
+  fetch: mockFetchImpl,
   callAi: {
     ModuleAndOptionsSelection: vi.fn().mockResolvedValue(
       Result.Ok(
@@ -97,21 +30,21 @@ const opts = {
   },
 };
 
-beforeAll(async () => {
-  // Set up mock using the same mock fetch helper used by mockFetchText
-  mockFetch.mockImplementation(mockFetchImpl);
+// Will be assigned in beforeAll after JSON docs load
+let llmsJsonModules: JsonDocs;
+let orderedLlms: LlmCatalogEntry[];
 
-  // Now load the data after mocks are set up
+beforeAll(async () => {
+  // getJsonDocs uses globalThis.fetch internally — mock it for this setup
+  const origFetch = globalThis.fetch;
+  globalThis.fetch = mockFetchImpl;
   llmsJsonModules = await getJsonDocs();
+  globalThis.fetch = origFetch;
 
   orderedLlms = Object.entries(llmsJsonModules)
     .filter(([path, _]) => knownModuleNames.some((name) => path.includes(`${name}.json`)))
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([_, mod]) => mod.obj);
-});
-
-beforeEach(() => {
-  mockFetch.mockClear();
 });
 
 describe("prompt builder (real implementation)", () => {
@@ -208,9 +141,6 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: in test mode, non-override path includes all catalog imports and docs; default stylePrompt", async () => {
-    // Warm cache so docs are available via raw imports
-    // await preloadLlmsText();
-
     const result = await makeBaseSystemPrompt("test-model", {
       stylePrompt: undefined,
       userPrompt: undefined,
@@ -228,22 +158,12 @@ describe("prompt builder (real implementation)", () => {
       expect(result.systemPrompt).toContain(`<${llm.label}-docs>`);
       expect(result.systemPrompt).toContain(`</${llm.label}-docs>`);
     }
-    // Concatenated docs for chosen LLMs in the same order
-    // const expectedDocs = chosenLlms
-    //   .map(
-    //     (llm) =>
-    //       `\n<${llm.label}-docs>\n${textForName(llm.name) || ""}\n</${llm.label}-docs>\n`
-    //   )
-    //   .join("");
-    // expect(prompt).toContain(expectedDocs);
 
     // Default style prompt appears when undefined; assert against explicit export
     expect(result.systemPrompt).toContain(defaultStylePrompt);
   });
 
   it("makeBaseSystemPrompt: supports custom stylePrompt and userPrompt", async () => {
-    // await preloadLlmsText();
-
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
       stylePrompt: "custom",
@@ -263,7 +183,6 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: honors explicit dependencies only when override=true", async () => {
-    // await preloadLlmsText();
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
       dependencies: ["fireproof"],
@@ -274,7 +193,6 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: includes demo-data guidance when selector enables it (test mode)", async () => {
-    // await preloadLlmsText();
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
       stylePrompt: undefined,
@@ -286,7 +204,6 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=false to disable demo data", async () => {
-    // await preloadLlmsText();
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
       stylePrompt: undefined,
@@ -299,7 +216,6 @@ describe("prompt builder (real implementation)", () => {
   });
 
   it("makeBaseSystemPrompt: respects demoDataOverride=true to force demo data", async () => {
-    // await preloadLlmsText();
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
       stylePrompt: undefined,

@@ -1,44 +1,10 @@
 import * as mod from "@vibes.diy/prompts";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Result } from "@adviser/cement";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
 
-// Create a fetchText mock that delegates to the mock fetch helper
-const mockFetchImpl = createMockFetchFromPkgFiles();
-function mockFetchText(_pkg: string, path: string): Promise<Result<string>> {
-  return mockFetchImpl(path).then(async (res) => {
-    if (res.ok) return Result.Ok(await res.text());
-    return Result.Err(new Error(`fetch failed for path: ${path}`));
-  });
-}
-
-// Mock global fetch for the integration tests
-const mockFetch = vi.fn();
-globalThis.fetch = mockFetch;
-
-// Ensure real implementation
-// (vi as any).doUnmock?.("~/vibes.diy/app/prompts");
-//vi.unmock("~/vibes.diy/app/prompts.js");
-// vi.resetModules();
-
-// let makeBaseSystemPrompt: typeof mod.makeBaseSystemPrompt;
-// let preloadLlmsText: () => Promise<void>;
-
-beforeAll(async () => {
-  // const mod = await import("~/vibes.diy/app/prompts.js");
-  // makeBaseSystemPrompt = mod.makeBaseSystemPrompt;
-  // preloadLlmsText = mod.preloadLlmsText;
-});
-
-beforeEach(() => {
-  mockFetch.mockClear();
-
-  // Set up mock using real files from pkg directory
-  mockFetch.mockImplementation(createMockFetchFromPkgFiles());
-});
-
 const opts = {
-  fetchText: mockFetchText,
+  fetch: createMockFetchFromPkgFiles(),
   callAi: {
     ModuleAndOptionsSelection: vi.fn().mockResolvedValue(
       Result.Ok(
@@ -52,7 +18,6 @@ const opts = {
 
 describe("makeBaseSystemPrompt dependency selection", () => {
   it("when override is false/absent, uses schema-driven selection (test mode => all); includes core libs", async () => {
-    // await preloadLlmsText();
     const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
       ...opts,
       _id: "user_settings",
@@ -66,7 +31,6 @@ describe("makeBaseSystemPrompt dependency selection", () => {
   });
 
   it("honors explicit dependencies only when override=true", async () => {
-    // await preloadLlmsText();
     const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
       _id: "user_settings",
       dependencies: ["fireproof"],
@@ -81,7 +45,6 @@ describe("makeBaseSystemPrompt dependency selection", () => {
   });
 
   it("ignores explicit dependencies when override=false (still schema-driven)", async () => {
-    // await preloadLlmsText();
     const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
       _id: "user_settings",
       dependencies: ["fireproof"],
