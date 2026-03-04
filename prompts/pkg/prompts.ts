@@ -307,45 +307,18 @@ export async function makeBaseSystemPrompt(
   const concatenatedLlmsTxts: string[] = [];
   for (const llm of chosenLlms) {
     const rText = await keyedLoadAsset.get(llm.name).once(async () => {
-      // console.log("Loading text asset for LLM:", llm.name, urlDirname(import.meta.url), import.meta.url);
       return loadAsset(`./llms/${llm.name}.txt`, {
         fallBackUrl: "https://esm.sh/prompts/",
-        basePath: () => {
-          const dir = import.meta.url;
-          // console.log("Base path for loading LLM text asset:", dir);
-          return dir;
-        },
+        basePath: () => import.meta.url,
         mock: {
           fetch: sessionDoc.fetch,
         },
-        // mock: {
-        //   fetch:
-        //     sessionDoc.fetchText &&
-        //     (async (): Promise<Response> => {
-        //       if (!sessionDoc.fetchText) {
-        //         console.warn("No fetchText function provided in sessionDoc for loading LLM text assets");
-        //         return new Response(null, { status: 404 });
-        //       }
-        //       console.log(`pre-Fetched text for LLM ${llm.name} with result:`, r);
-        //       const r = await sessionDoc.fetchText("prompts", `./llms/${llm.name}.txt`);
-        //       console.log(`post-Fetched text for LLM ${llm.name} with result:`, r);
-        //       if (r.isErr()) {
-        //         return new Response(null, { status: 404 });
-        //       }
-        //       return new Response(r.Ok(), { status: 200 });
-        //     }),
-        // },
       });
     });
     if (rText.isErr()) {
-      console.warn(`Failed to load text for LLM ${llm.name} at path ${import.meta.dirname}/./llms/${llm.name}.txt:`, rText.Err());
+      console.warn(`Failed to load text for LLM ${llm.name}:`, rText.Err());
       continue;
     }
-    // const text = await getTexts(llm.name, sessionDoc.fallBackUrl);
-    // if (!text) {
-    //   console.warn("Failed to load raw LLM text for:", llm.name, sessionDoc.fallBackUrl);
-    //   continue;
-    // }
     concatenatedLlmsTxts.push(`<${llm.label}-docs>`);
     concatenatedLlmsTxts.push(rText.Ok() ?? "");
     concatenatedLlmsTxts.push(`</${llm.label}-docs>`);

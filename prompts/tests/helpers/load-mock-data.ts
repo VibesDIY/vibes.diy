@@ -1,74 +1,48 @@
-// Simplified mock helper - only mocks text files now
-// JSON configs are imported directly as TypeScript modules
-
 /**
- * Creates a mock fetch implementation that serves only text documentation files.
- * JSON configs are now loaded directly as TypeScript imports, no mocking needed.
+ * Creates a mock fetch implementation that serves text documentation files.
+ * Accepts string, URL, or Request (matching the real fetch signature) since
+ * loadAsset from @adviser/cement calls fetch with URL objects.
  */
-export function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
-  return (url: string) => {
-    // Mock text files - serve actual text file contents (abbreviated for tests)
-    if (url.includes("callai.txt")) {
-      return Promise.resolve({
-        ok: true,
-        text: () =>
-          Promise.resolve(
-            "<callAI-docs>\n# CallAI Documentation\nReal callAI docs content from pkg/llms/callai.txt\n</callAI-docs>"
-          ),
-      } as Response);
+export function createMockFetchFromPkgFiles(): typeof fetch {
+  function getInputUrl(input: Parameters<typeof fetch>[0]): string {
+    if (typeof input === "string") return input;
+    if (typeof input === "object" && input !== null) {
+      const requestUrl = Reflect.get(input, "url");
+      if (typeof requestUrl === "string") return requestUrl;
+      const href = Reflect.get(input, "href");
+      if (typeof href === "string") return href;
+    }
+    return String(input);
+  }
+
+  async function mockFetch(input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]): Promise<Response> {
+    const url = getInputUrl(input);
+
+    const mockDocs: Record<string, string> = {
+      "callai.txt": "<callAI-docs>\n# CallAI Documentation\nReal callAI docs content from pkg/llms/callai.txt\n</callAI-docs>",
+      "fireproof.txt":
+        "<useFireproof-docs>\n# Fireproof Documentation\nReal Fireproof docs content from pkg/llms/fireproof.txt\n</useFireproof-docs>",
+      "image-gen.txt":
+        "<imageGen-docs>\n# Image Generation Documentation\nReal ImageGen docs content from pkg/llms/image-gen.txt\n</imageGen-docs>",
+      "web-audio.txt":
+        "<webAudio-docs>\n# Web Audio Documentation\nReal Web Audio docs content from pkg/llms/web-audio.txt\n</webAudio-docs>",
+      "d3.txt": "<D3.js-docs>\n# D3.js Documentation\nReal D3 docs content from pkg/llms/d3.md\n</D3.js-docs>",
+      "d3.md": "<D3.js-docs>\n# D3.js Documentation\nReal D3 docs content from pkg/llms/d3.md\n</D3.js-docs>",
+      "three-js.txt":
+        "<Three.js-docs>\n# Three.js Documentation\nReal Three.js docs content from pkg/llms/three-js.md\n</Three.js-docs>",
+      "three-js.md":
+        "<Three.js-docs>\n# Three.js Documentation\nReal Three.js docs content from pkg/llms/three-js.md\n</Three.js-docs>",
+    };
+
+    for (const [pattern, content] of Object.entries(mockDocs)) {
+      if (url.includes(pattern)) {
+        return new Response(content, { status: 200 });
+      }
     }
 
-    if (url.includes("fireproof.txt")) {
-      return Promise.resolve({
-        ok: true,
-        text: () =>
-          Promise.resolve(
-            "<useFireproof-docs>\n# Fireproof Documentation\nReal Fireproof docs content from pkg/llms/fireproof.txt\n</useFireproof-docs>"
-          ),
-      } as Response);
-    }
+    // Default fallback for unmatched text files
+    return new Response("<mock-docs>\n# Mock Documentation\nMock docs content\n</mock-docs>", { status: 200 });
+  }
 
-    if (url.includes("image-gen.txt")) {
-      return Promise.resolve({
-        ok: true,
-        text: () =>
-          Promise.resolve(
-            "<imageGen-docs>\n# Image Generation Documentation\nReal ImageGen docs content from pkg/llms/image-gen.txt\n</imageGen-docs>"
-          ),
-      } as Response);
-    }
-
-    if (url.includes("web-audio.txt")) {
-      return Promise.resolve({
-        ok: true,
-        text: () =>
-          Promise.resolve(
-            "<webAudio-docs>\n# Web Audio Documentation\nReal Web Audio docs content from pkg/llms/web-audio.txt\n</webAudio-docs>"
-          ),
-      } as Response);
-    }
-
-    if (url.includes("d3.txt") || url.includes("d3.md")) {
-      return Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve("<D3.js-docs>\n# D3.js Documentation\nReal D3 docs content from pkg/llms/d3.md\n</D3.js-docs>"),
-      } as Response);
-    }
-
-    if (url.includes("three-js.txt") || url.includes("three-js.md")) {
-      return Promise.resolve({
-        ok: true,
-        text: () =>
-          Promise.resolve(
-            "<Three.js-docs>\n# Three.js Documentation\nReal Three.js docs content from pkg/llms/three-js.md\n</Three.js-docs>"
-          ),
-      } as Response);
-    }
-
-    // Default response for other text files - fallback mock
-    return Promise.resolve({
-      ok: true,
-      text: () => Promise.resolve("<mock-docs>\n# Mock Documentation\nMock docs content\n</mock-docs>"),
-    } as Response);
-  };
+  return mockFetch;
 }
