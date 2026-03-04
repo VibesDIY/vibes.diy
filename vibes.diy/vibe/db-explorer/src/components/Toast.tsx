@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { S } from "../lib/styles";
-import { useMobile } from "./MobileProvider";
+import React, { useEffect } from "react";
+import { S } from "../lib/styles.js";
+import { useMobile } from "./MobileProvider.js";
 
 interface ToastProps {
   message: string;

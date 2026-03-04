@@ -1,5 +1,6 @@
-import { TC, S } from "../lib/styles";
-import { getType } from "../lib/utils";
+import React from "react";
+import { TC, S } from "../lib/styles.js";
+import { getType } from "../lib/utils.js";
 
 interface ValProps {
   value: unknown;

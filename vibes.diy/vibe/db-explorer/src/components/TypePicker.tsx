@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { S } from "../lib/styles";
-import { TypeBadge } from "./TypeBadge";
-import { useMobile } from "../components/MobileProvider";
+import React, { useState, useEffect, useRef } from "react";
+import { S } from "../lib/styles.js";
+import { TypeBadge } from "./TypeBadge.js";
+import { useMobile } from "../components/MobileProvider.js";
 
 interface TypePickerProps {
   currentType: string;

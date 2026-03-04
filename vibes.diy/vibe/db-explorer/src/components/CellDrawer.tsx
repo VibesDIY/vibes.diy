@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { S, TC } from "../lib/styles";
-import { getType, isTabular } from "../lib/utils";
-import { TypeBadge } from "./TypeBadge";
-import { Val } from "./Val";
-import { Btn } from "./Btn";
-import { NestedTable } from "./NestedTable";
-import { useMobile } from "./MobileProvider";
+import React, { useState } from "react";
+import { S, TC } from "../lib/styles.js";
+import { getType, isTabular } from "../lib/utils.js";
+import { TypeBadge } from "./TypeBadge.js";
+import { Val } from "./Val.js";
+import { Btn } from "./Btn.js";
+import { NestedTable } from "./NestedTable.js";
+import { useMobile } from "./MobileProvider.js";
 
 interface CellDrawerProps {
   value: unknown;

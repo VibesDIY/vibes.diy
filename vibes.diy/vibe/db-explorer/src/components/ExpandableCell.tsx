@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { S } from "../lib/styles";
-import { getType, isTabular, smartPreview } from "../lib/utils";
-import { TypeBadge } from "./TypeBadge";
-import { Val } from "./Val";
-import { NestedTable } from "./NestedTable";
+import React, { useState } from "react";
+import { S } from "../lib/styles.js";
+import { getType, isTabular, smartPreview } from "../lib/utils.js";
+import { TypeBadge } from "./TypeBadge.js";
+import { Val } from "./Val.js";
+import { NestedTable } from "./NestedTable.js";
 
 interface ExpandableCellProps {
   value: unknown;

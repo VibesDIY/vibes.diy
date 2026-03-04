@@ -1,5 +1,5 @@
 import React from "react";
-import { S } from "../lib/styles";
+import { S } from "../lib/styles.js";
 
 interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   color?: string;

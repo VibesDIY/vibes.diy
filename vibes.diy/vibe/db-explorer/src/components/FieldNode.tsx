@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { S, TC } from "../lib/styles";
-import { getType, isTabular, smartPreview } from "../lib/utils";
-import { deepSet, deepDelete, deepRename, deepMove, convertType } from "../lib/deepOps";
-import { EditCtx, META_KEYS } from "../lib/EditCtx";
-import { TypeBadge } from "./TypeBadge";
-import { TypePicker } from "./TypePicker";
-import { Val } from "./Val";
-import { ValueInput } from "./ValueInput";
+import { S, TC } from "../lib/styles.js";
+import { getType, isTabular, smartPreview } from "../lib/utils.js";
+import { deepSet, deepDelete, deepRename, deepMove, convertType } from "../lib/deepOps.js";
+import { EditCtx, META_KEYS } from "../lib/EditCtx.js";
+import { TypeBadge } from "./TypeBadge.js";
+import { TypePicker } from "./TypePicker.js";
+import { Val } from "./Val.js";
+import { ValueInput } from "./ValueInput.js";
 
 interface FieldNodeProps {
   keyName: string | number;
@@ -27,7 +27,10 @@ export function FieldNode({
   isFirst,
   isLast,
 }: FieldNodeProps) {
-  const ctx = React.useContext(EditCtx)!;
+  const ctx = React.useContext(EditCtx);
+  if (!ctx) {
+    throw new Error("EditCtx is missing");
+  }
   const { doc, change, onTableJump, expandDepth, mob, focusKey, setFocusKey } = ctx;
   const t = getType(value);
   const isExp = t === "object" || t === "array";

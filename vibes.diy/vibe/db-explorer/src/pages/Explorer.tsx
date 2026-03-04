@@ -1,7 +1,8 @@
+import React from "react";
 import { useParams } from "react-router-dom";
-import { useFireproofDB } from "../hooks/useFireproofDB";
-import { DocDBViewer, DocRecord } from "../components/DocDBViewer";
-import { MobileProvider } from "../components/MobileProvider";
+import { useFireproofDB } from "../hooks/useFireproofDB.js";
+import { DocDBViewer, DocRecord } from "../components/DocDBViewer.js";
+import { MobileProvider } from "../components/MobileProvider.js";
 
 export function Explorer() {
   const { dbname } = useParams<{ dbname: string }>();

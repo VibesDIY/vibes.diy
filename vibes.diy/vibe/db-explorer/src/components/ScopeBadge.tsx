@@ -1,4 +1,5 @@
-import { S } from "../lib/styles";
+import React from "react";
+import { S } from "../lib/styles.js";
 
 interface ScopeBadgeProps {
   label: string;

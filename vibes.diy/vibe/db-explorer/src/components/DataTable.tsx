@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
-import { S, TC } from "../lib/styles";
-import { getType, flattenRow, smartPreview } from "../lib/utils";
-import { TypeBadge } from "./TypeBadge";
-import { Val } from "./Val";
-import { ExpandableCell } from "./ExpandableCell";
-import { CellDrawer } from "./CellDrawer";
-import { useMobile } from "./MobileProvider";
+import React, { useState, useMemo } from "react";
+import { S, TC } from "../lib/styles.js";
+import { getType, flattenRow, smartPreview } from "../lib/utils.js";
+import { TypeBadge } from "./TypeBadge.js";
+import { Val } from "./Val.js";
+import { ExpandableCell } from "./ExpandableCell.js";
+import { CellDrawer } from "./CellDrawer.js";
+import { useMobile } from "./MobileProvider.js";
 
 interface DataTableProps {
   data: Record<string, unknown>[];
@@ -62,10 +62,11 @@ export function DataTable({
 
   const rows = useMemo(() => {
     let a = flattened.map((r, i) => ({ row: r, origIdx: i }));
-    if (filter.col && filter.val) {
+    const col = filter.col;
+    if (col && filter.val) {
       const lc = filter.val.toLowerCase();
       a = a.filter(({ row }) => {
-        const v = row[filter.col!];
+        const v = row[col];
         if (v == null) return false;
         return (typeof v === "object" ? JSON.stringify(v) : String(v))
           .toLowerCase()
@@ -135,9 +136,10 @@ export function DataTable({
     page !== undefined &&
     totalDocs !== undefined &&
     pageSize !== undefined &&
-    onPageChange;
+    onPageChange !== undefined &&
+    onPageSizeChange !== undefined;
   const totalPages = hasPagination
-    ? Math.max(1, Math.ceil(totalDocs! / pageSize!))
+    ? Math.max(1, Math.ceil(totalDocs / pageSize))
     : 1;
 
   return (
@@ -499,7 +501,11 @@ export function DataTable({
                         <span
                           onClick={() => {
                             const n = new Set(pinnedCols);
-                            n.has(c) ? n.delete(c) : n.add(c);
+                            if (n.has(c)) {
+                              n.delete(c);
+                            } else {
+                              n.add(c);
+                            }
                             setPinnedCols(n);
                           }}
                           style={{
@@ -528,11 +534,12 @@ export function DataTable({
                             cursor: "pointer",
                           }}
                           onClick={() => {
-                            sortKey === c
-                              ? setSortDir((d) =>
-                                  d === "asc" ? "desc" : "asc"
-                                )
-                              : (setSortKey(c), setSortDir("asc"));
+                            if (sortKey === c) {
+                              setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+                            } else {
+                              setSortKey(c);
+                              setSortDir("asc");
+                            }
                           }}
                         >
                           {c}{" "}
@@ -709,7 +716,7 @@ export function DataTable({
               }}
             >
               <button
-                onClick={() => onPageChange!(page! - 1)}
+                onClick={() => onPageChange?.((page ?? 0) - 1)}
                 disabled={page === 0}
                 style={{
                   background: "transparent",
@@ -727,10 +734,10 @@ export function DataTable({
                 prev
               </button>
               <span>
-                {page! + 1}/{totalPages}
+                {(page ?? 0) + 1}/{totalPages}
               </span>
               <button
-                onClick={() => onPageChange!(page! + 1)}
+                onClick={() => onPageChange?.((page ?? 0) + 1)}
                 disabled={page === totalPages - 1}
                 style={{
                   background: "transparent",

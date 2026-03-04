@@ -1,6 +1,7 @@
-import { S } from "../lib/styles";
-import { Btn } from "./Btn";
-import { useMobile } from "./MobileProvider";
+import React from "react";
+import { S } from "../lib/styles.js";
+import { Btn } from "./Btn.js";
+import { useMobile } from "./MobileProvider.js";
 
 interface ConfirmDialogProps {
   title: string;

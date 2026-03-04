@@ -1,6 +1,6 @@
-import { useMemo } from "react";
-import { S } from "../lib/styles";
-import { Val } from "./Val";
+import React, { useMemo } from "react";
+import { S } from "../lib/styles.js";
+import { Val } from "./Val.js";
 
 interface NestedTableProps {
   data: Record<string, unknown>[];

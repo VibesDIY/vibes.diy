@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { S, TC } from "../lib/styles";
+import React, { useState } from "react";
+import { S, TC } from "../lib/styles.js";
 
 interface ValueInputProps {
   value: unknown;

@@ -6,10 +6,10 @@ import React, {
   useImperativeHandle,
   useRef,
 } from "react";
-import { S } from "../lib/styles";
-import { EditCtx } from "../lib/EditCtx";
-import { FieldNode } from "./FieldNode";
-import { useMobile } from "./MobileProvider";
+import { S } from "../lib/styles.js";
+import { EditCtx } from "../lib/EditCtx.js";
+import { FieldNode } from "./FieldNode.js";
+import { useMobile } from "./MobileProvider.js";
 
 export interface LiveDocTreeHandle {
   undo: () => void;

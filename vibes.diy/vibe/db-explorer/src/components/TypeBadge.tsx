@@ -1,4 +1,5 @@
-import { TC, TL, S } from "../lib/styles";
+import React from "react";
+import { TC, TL, S } from "../lib/styles.js";
 
 export function TypeBadge({ type }: { type: string }) {
   return (

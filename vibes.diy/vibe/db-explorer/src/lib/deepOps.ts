@@ -27,9 +27,9 @@ export function deepDelete(obj: DeepNode, path: PathKey[]): DeepNode {
       c.splice(Number(path[0]), 1);
       return c;
     }
-    const c = { ...obj };
-    delete c[path[0] as string];
-    return c;
+    const key = String(path[0]);
+    const { [key]: _deleted, ...rest } = obj as Record<string, unknown>;
+    return rest;
   }
   const c = clone(obj);
   setChild(c, path[0], deepDelete(child(obj, path[0]), path.slice(1)));

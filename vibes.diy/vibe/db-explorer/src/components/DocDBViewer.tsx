@@ -1,13 +1,13 @@
-import { useState, useCallback, useRef } from "react";
-import { S, TC } from "../lib/styles";
-import { isTabular, byteSize } from "../lib/utils";
-import { Btn } from "./Btn";
-import { ScopeBadge } from "./ScopeBadge";
-import { LiveDocTree, LiveDocTreeHandle } from "./LiveDocTree";
-import { DataTable } from "./DataTable";
-import { ConfirmDialog } from "./ConfirmDialog";
-import { Toast } from "./Toast";
-import { useMobile } from "./MobileProvider";
+import React, { useState, useCallback, useRef } from "react";
+import { S, TC } from "../lib/styles.js";
+import { isTabular, byteSize } from "../lib/utils.js";
+import { Btn } from "./Btn.js";
+import { ScopeBadge } from "./ScopeBadge.js";
+import { LiveDocTree, LiveDocTreeHandle } from "./LiveDocTree.js";
+import { DataTable } from "./DataTable.js";
+import { ConfirmDialog } from "./ConfirmDialog.js";
+import { Toast } from "./Toast.js";
+import { useMobile } from "./MobileProvider.js";
 
 export interface DocRecord {
   _id?: string;
@@ -29,13 +29,17 @@ interface DocDBViewerProps {
   onPageSizeChange: (size: number) => void;
 }
 
-interface NavEntry {
-  type: "doc" | "nested";
-  idx?: number;
-  id?: string;
-  data?: unknown[];
-  label?: string;
-}
+type NavEntry =
+  | {
+      type: "doc";
+      idx: number;
+      id: string;
+    }
+  | {
+      type: "nested";
+      data: unknown[];
+      label: string;
+    };
 
 export function DocDBViewer({
   docs,
@@ -76,11 +80,15 @@ export function DocDBViewer({
           ? "doc"
           : "nested"
         : "db";
-  const docEntry = navStack.find((n) => n.type === "doc");
-  const sourceDoc = docEntry ? docs[docEntry.idx!] : null;
+  const docEntry = navStack.find(
+    (n): n is Extract<NavEntry, { type: "doc" }> => n.type === "doc"
+  );
+  const sourceDoc = docEntry ? docs[docEntry.idx] : null;
   const doc = editDraft ?? sourceDoc;
   const nestedEntry =
-    navStack.length > 1 ? navStack[navStack.length - 1] : null;
+    navStack.length > 1 && navStack[navStack.length - 1]?.type === "nested"
+      ? (navStack[navStack.length - 1] as Extract<NavEntry, { type: "nested" }>)
+      : null;
 
   const navigateHome = useCallback(() => {
     setNavStack([]);
@@ -571,10 +579,10 @@ export function DocDBViewer({
             />
           ))}
 
-        {scope === "doc" && doc && (
+        {scope === "doc" && doc && docEntry && (
           <LiveDocTree
             ref={treeRef}
-            key={docEntry!.idx}
+            key={docEntry.idx}
             doc={doc as Record<string, unknown>}
             expandDepth={expandDepth}
             onTableJump={pushNested}
@@ -596,7 +604,11 @@ export function DocDBViewer({
           danger
           title={`Delete ${doc._id}?`}
           message={`Permanently remove "${doc._id}" from the database. This cannot be undone.`}
-          onConfirm={() => deleteDoc(docEntry!.idx!)}
+          onConfirm={() => {
+            if (docEntry) {
+              deleteDoc(docEntry.idx);
+            }
+          }}
           onCancel={() => setConfirmDelete(false)}
         />
       )}
