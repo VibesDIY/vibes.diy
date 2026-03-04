@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { S, TC } from "../lib/styles";
 import { getType, isTabular } from "../lib/utils";
-import { TypeBadge } from "../atoms/TypeBadge";
-import { Val } from "../atoms/Val";
-import { Btn } from "../atoms/Btn";
+import { TypeBadge } from "./TypeBadge";
+import { Val } from "./Val";
+import { Btn } from "./Btn";
 import { NestedTable } from "./NestedTable";
 import { useMobile } from "./MobileProvider";
 

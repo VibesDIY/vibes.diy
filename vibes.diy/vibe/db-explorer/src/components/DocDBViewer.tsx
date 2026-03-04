@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 import { S, TC } from "../lib/styles";
 import { isTabular, byteSize } from "../lib/utils";
-import { Btn } from "../atoms/Btn";
-import { ScopeBadge } from "../atoms/ScopeBadge";
+import { Btn } from "./Btn";
+import { ScopeBadge } from "./ScopeBadge";
 import { LiveDocTree, LiveDocTreeHandle } from "./LiveDocTree";
 import { DataTable } from "./DataTable";
 import { ConfirmDialog } from "./ConfirmDialog";

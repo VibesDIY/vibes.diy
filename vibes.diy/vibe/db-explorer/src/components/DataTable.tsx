@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { S, TC } from "../lib/styles";
 import { getType, flattenRow, smartPreview } from "../lib/utils";
-import { TypeBadge } from "../atoms/TypeBadge";
-import { Val } from "../atoms/Val";
+import { TypeBadge } from "./TypeBadge";
+import { Val } from "./Val";
 import { ExpandableCell } from "./ExpandableCell";
 import { CellDrawer } from "./CellDrawer";
 import { useMobile } from "./MobileProvider";

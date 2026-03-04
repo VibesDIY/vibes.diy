@@ -1,5 +1,5 @@
 import { S } from "../lib/styles";
-import { Btn } from "../atoms/Btn";
+import { Btn } from "./Btn";
 import { useMobile } from "./MobileProvider";
 
 interface ConfirmDialogProps {

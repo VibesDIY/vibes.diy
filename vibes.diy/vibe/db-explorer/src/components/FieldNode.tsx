@@ -3,10 +3,10 @@ import { S, TC } from "../lib/styles";
 import { getType, isTabular, smartPreview } from "../lib/utils";
 import { deepSet, deepDelete, deepRename, deepMove, convertType } from "../lib/deepOps";
 import { EditCtx, META_KEYS } from "../lib/EditCtx";
-import { TypeBadge } from "../atoms/TypeBadge";
-import { TypePicker } from "../atoms/TypePicker";
-import { Val } from "../atoms/Val";
-import { ValueInput } from "../atoms/ValueInput";
+import { TypeBadge } from "./TypeBadge";
+import { TypePicker } from "./TypePicker";
+import { Val } from "./Val";
+import { ValueInput } from "./ValueInput";
 
 interface FieldNodeProps {
   keyName: string | number;

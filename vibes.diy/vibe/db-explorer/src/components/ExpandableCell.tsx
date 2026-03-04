@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { S } from "../lib/styles";
 import { getType, isTabular, smartPreview } from "../lib/utils";
-import { TypeBadge } from "../atoms/TypeBadge";
-import { Val } from "../atoms/Val";
+import { TypeBadge } from "./TypeBadge";
+import { Val } from "./Val";
 import { NestedTable } from "./NestedTable";
 
 interface ExpandableCellProps {
