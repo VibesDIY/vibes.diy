@@ -1,7 +1,7 @@
 // import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
 
 import type { HistoryMessage, UserSettings } from "./settings.js";
-import { exception2Result, loadAsset, Result } from "@adviser/cement";
+import { exception2Result, loadAsset, Result, KeyedResolvOnce } from "@adviser/cement";
 import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
 
 // import { getTexts } from "./txt-docs.js";
@@ -105,7 +105,7 @@ interface LlmSelectionDecisions {
 interface LlmSelectionOptions {
   readonly appMode?: "test" | "production";
   // readonly callAiEndpoint?: CoerceURI;
-  fetchText?(pkg: string, path: string): Promise<Result<string>>;
+  fetch?: typeof fetch;
 
   readonly callAi: {
     ModuleAndOptionsSelection(msgs: ChatMessage[]): Promise<Result<string>>;
@@ -267,6 +267,8 @@ export function generateImportStatements(llms: LlmCatalogEntry[]) {
     .join("");
 }
 
+const keyedLoadAsset = new KeyedResolvOnce();
+
 // move this function to its own file along with generateImportStatements and selectLlmsAndOptions, and rexport from here
 export async function makeBaseSystemPrompt(
   model: string,
@@ -304,24 +306,36 @@ export async function makeBaseSystemPrompt(
 
   const concatenatedLlmsTxts: string[] = [];
   for (const llm of chosenLlms) {
-    const rText = await loadAsset(`./llms/${llm.name}.txt`, {
-      fallBackUrl: import.meta.url,
-      basePath: () => "https://esm.sh/@vibes/prompts/package.json",
-      mock: {
-        fetch:
-          sessionDoc.fetchText &&
-          (async (): Promise<Response> => {
-            if (!sessionDoc.fetchText) {
-              console.warn("No fetchText function provided in sessionDoc for loading LLM text assets");
-              return new Response(null, { status: 404 });
-            }
-            const r = await sessionDoc.fetchText("@vibes.diy/prompts", `./llms/${llm.name}.txt`);
-            if (r.isErr()) {
-              return new Response(null, { status: 404 });
-            }
-            return new Response(r.Ok(), { status: 200 });
-          }),
-      },
+    const rText = await keyedLoadAsset.get(llm.name).once(async () => {
+      // console.log("Loading text asset for LLM:", llm.name, urlDirname(import.meta.url), import.meta.url);
+      return loadAsset(`./llms/${llm.name}.txt`, {
+        fallBackUrl: "https://esm.sh/prompts/",
+        basePath: () => {
+          const dir = import.meta.url;
+          // console.log("Base path for loading LLM text asset:", dir);
+          return dir;
+        },
+        mock: {
+          fetch: sessionDoc.fetch,
+        },
+        // mock: {
+        //   fetch:
+        //     sessionDoc.fetchText &&
+        //     (async (): Promise<Response> => {
+        //       if (!sessionDoc.fetchText) {
+        //         console.warn("No fetchText function provided in sessionDoc for loading LLM text assets");
+        //         return new Response(null, { status: 404 });
+        //       }
+        //       console.log(`pre-Fetched text for LLM ${llm.name} with result:`, r);
+        //       const r = await sessionDoc.fetchText("prompts", `./llms/${llm.name}.txt`);
+        //       console.log(`post-Fetched text for LLM ${llm.name} with result:`, r);
+        //       if (r.isErr()) {
+        //         return new Response(null, { status: 404 });
+        //       }
+        //       return new Response(r.Ok(), { status: 200 });
+        //     }),
+        // },
+      });
     });
     if (rText.isErr()) {
       console.warn(`Failed to load text for LLM ${llm.name} at path ${import.meta.dirname}/./llms/${llm.name}.txt:`, rText.Err());

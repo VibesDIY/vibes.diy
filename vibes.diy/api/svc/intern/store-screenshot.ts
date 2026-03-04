@@ -19,7 +19,8 @@ export interface StoreScreenshotResult {
  * 3. Stores screenshot using ensureStorage
  * 4. Removes existing MetaScreenShot (if any) and adds new one
  */
-export async function storeScreenshot( { db }: { db: VibesSqlite },
+export async function storeScreenshot(
+  { db }: { db: VibesSqlite },
   fsId: string,
   screenshotData: Uint8Array
 ): Promise<Result<StoreScreenshotResult>> {
@@ -42,7 +43,7 @@ export async function storeScreenshot( { db }: { db: VibesSqlite },
   // const cidResult = await calcCid({ sthis }, screenshotData);
 
   // 3. Store screenshot using ensureStorage
-  const [storageResult] = await ensureStorage(db).ensure(uint8array2stream(screenshotData))
+  const [storageResult] = await ensureStorage(db).ensure(uint8array2stream(screenshotData));
   if (!storageResult || storageResult.isErr()) {
     return Result.Err(`Failed to store screenshot: ${storageResult.Err()}`);
   }

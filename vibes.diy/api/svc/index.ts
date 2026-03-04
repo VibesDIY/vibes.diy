@@ -7,3 +7,6 @@ export * from "./types.js";
 export { storeScreenshot } from "./intern/store-screenshot.js";
 export * from "./npm-package-version.js";
 export * from "./intern/import-map.js";
+export * from "./vibes-msg-evento.js";
+export * from "./cf-serve.js";
+export * from "./svc-ws-send-provider.js";

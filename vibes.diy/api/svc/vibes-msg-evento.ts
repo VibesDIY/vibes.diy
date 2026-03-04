@@ -11,6 +11,7 @@ import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
 import { getAppByAppSlugEvento } from "./public/get-app-by-app-slug.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
 import { listApplicationChats } from "./public/list-application-chats.js";
+
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
   evento.push(

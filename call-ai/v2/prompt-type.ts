@@ -26,6 +26,8 @@ export const LLMRequest = type({
   "temperature?": "number",
   "max_tokens?": "number",
   "top_p?": "number",
+  "logprobs?": "boolean",
+  "top_logsprobs?": "number",
   "frequency_penalty?": "number",
   "presence_penalty?": "number",
   "stop?": "string | string[]",

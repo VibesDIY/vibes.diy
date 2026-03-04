@@ -120,6 +120,7 @@ export function createDeltaStream(
         return;
       }
 
+      // console.log("DeltaStream received message", isSseLine(msg) ? "SSE Line" : "Other");
       if (isSseLine(msg, filterStreamId)) {
         if (!started) {
           started = true;

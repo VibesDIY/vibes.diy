@@ -1,4 +1,13 @@
-import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import {
+  EventoHandler,
+  Result,
+  Option,
+  EventoResultType,
+  HandleTriggerCtx,
+  EventoResult,
+  uint8array2stream,
+  to_uint8,
+} from "@adviser/cement";
 import {
   EvtNewFsId,
   MsgBase,
@@ -38,6 +47,7 @@ export async function ensureAppSlugItem(
     };
   }[] = [];
   for (const fsItem of req.fileSystem) {
+    // console.log(`ensureAppSlugItem fsItem:`, fsItem);
     switch (fsItem.type) {
       case "code-block":
       case "str-asset-block":
@@ -57,24 +67,17 @@ export async function ensureAppSlugItem(
         return Result.Err(`unsupported file system item type: ${fsItem.type}`);
     }
   }
-  const rStorageResults = await vctx.storage.ensure(
-    ...writeAppSlugsOp.map(
-      (op) =>
-        new ReadableStream({
-          start(controller) {
-            controller.enqueue(op.assetOp.data);
-            controller.close();
-          },
-        })
-    )
-  );
+  const rStorageResults = await vctx.storage.ensure(...writeAppSlugsOp.map((op) => uint8array2stream(to_uint8(op.assetOp.data))));
   if (rStorageResults.some((r) => r.isErr())) {
-    return Result.Err(`failed to store one or more assets: ${rStorageResults.map((r) => (r.isErr() ? r.Err().message : "ok")).join(", ")}`);
+    return Result.Err(
+      `failed to store one or more assets: ${rStorageResults.map((r) => (r.isErr() ? r.Err().message : "ok")).join(", ")}`
+    );
   }
   const fullFileSystem = rStorageResults.map((op, idx) => ({
     vibeFileItem: writeAppSlugsOp[idx].fsItem,
     storage: op.Ok(),
   }));
+
   const res = await ensureApps(vctx, req, rAppSlugBinding.Ok(), fullFileSystem);
   if (res.isErr()) {
     return Result.Err(res);

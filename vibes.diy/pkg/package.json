@@ -20,7 +20,7 @@
     "format:write": "prettier --write ."
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.29",
+    "@adviser/cement": "^0.5.31",
     "@clerk/clerk-react": "^5.59.5",
     "@cloudflare/puppeteer": "^1.0.6",
     "@cloudflare/workers-types": "^4.20260128.0",

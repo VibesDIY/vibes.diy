@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, } from "react-router";
+import { useParams } from "react-router";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { SignIn, useAuth, useSession } from "@clerk/clerk-react";
@@ -68,34 +68,34 @@ export default function VibeIframeWrapper() {
       return;
     }
     // TODO find public
-    
+
     // const sectionId = searchParam.get("sectionId");
-  //   if (userSlug && appSlug) {
-  //     vctx.vibeDiyApi
-  //       .getByUserSlugAppSlug({
-  //         userSlug,
-  //         appSlug,
-  //         // sectionId: sectionId ?? "last",
-  //       })
-  //       .then((res) => {
-  //         if (res.isErr()) {
-  //           console.error(`getByUserSlugAppSlug failed with:`, res.Err());
-  //         } else {
-  //           const url = calcEntryPointUrl({
-  //             hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
-  //             protocol: vctx.webVars.env.VIBES_SVC_PROTOCOL,
-  //             port: vctx.webVars.env.VIBES_SVC_PORT,
-  //             bindings: {
-  //                 appSlug,
-  //                 userSlug,
-  //                 fsId: res.Ok().fsId
-  //             },
-  //           });
-  //           iframeUrlRef.current = url
-  //           setReady(true);
-  //         }
-  //       });
-  //   }
+    //   if (userSlug && appSlug) {
+    //     vctx.vibeDiyApi
+    //       .getByUserSlugAppSlug({
+    //         userSlug,
+    //         appSlug,
+    //         // sectionId: sectionId ?? "last",
+    //       })
+    //       .then((res) => {
+    //         if (res.isErr()) {
+    //           console.error(`getByUserSlugAppSlug failed with:`, res.Err());
+    //         } else {
+    //           const url = calcEntryPointUrl({
+    //             hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
+    //             protocol: vctx.webVars.env.VIBES_SVC_PROTOCOL,
+    //             port: vctx.webVars.env.VIBES_SVC_PORT,
+    //             bindings: {
+    //                 appSlug,
+    //                 userSlug,
+    //                 fsId: res.Ok().fsId
+    //             },
+    //           });
+    //           iframeUrlRef.current = url
+    //           setReady(true);
+    //         }
+    //       });
+    //   }
   }, [userSlug, appSlug, fsId, session.isSignedIn, authSignedIn]);
 
   useEffect(() => {

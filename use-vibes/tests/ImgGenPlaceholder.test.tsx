@@ -63,9 +63,7 @@ describe("ImgGenDisplayPlaceholder Component", () => {
     });
 
     it("renders progress bar when prompt is provided", () => {
-      const { container } = render(
-        <ImgGenDisplayPlaceholder prompt="Test prompt" progress={75} error={undefined} />
-      );
+      const { container } = render(<ImgGenDisplayPlaceholder prompt="Test prompt" progress={75} error={undefined} />);
       // Progress bar width is set after a 20ms setTimeout
       act(() => {
         vi.advanceTimersByTime(25);
@@ -76,9 +74,7 @@ describe("ImgGenDisplayPlaceholder Component", () => {
     });
 
     it("enforces minimum 5% progress", () => {
-      const { container } = render(
-        <ImgGenDisplayPlaceholder prompt="Test prompt" progress={2} error={undefined} />
-      );
+      const { container } = render(<ImgGenDisplayPlaceholder prompt="Test prompt" progress={2} error={undefined} />);
       act(() => {
         vi.advanceTimersByTime(25);
       });
@@ -88,9 +84,7 @@ describe("ImgGenDisplayPlaceholder Component", () => {
     });
 
     it("does not render progress bar without a prompt", () => {
-      const { container } = render(
-        <ImgGenDisplayPlaceholder prompt={undefined} progress={50} error={undefined} />
-      );
+      const { container } = render(<ImgGenDisplayPlaceholder prompt={undefined} progress={50} error={undefined} />);
       const progressBar = container.querySelector('[aria-hidden="true"]');
       expect(progressBar).toBeNull();
     });
