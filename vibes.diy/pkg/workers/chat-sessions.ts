@@ -9,9 +9,9 @@ import {
   DurableObjectState,
 } from "@cloudflare/workers-types";
 import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
-import { Env } from "./env.js";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
+import { CFEnv } from "@vibes.diy/api-types";
 
 declare const caches: CacheStorage;
 declare const Response: typeof CFResponse;
@@ -29,9 +29,9 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
 export class ChatSessions implements DurableObject {
   private connections: Set<WSSendProvider> = new Set<WSSendProvider>();
   // private state: DurableObjectState;
-  private env: Env;
+  private env: CFEnv;
 
-  constructor(_state: DurableObjectState, env: Env) {
+  constructor(_state: DurableObjectState, env: CFEnv) {
     // this.state = state;
     this.env = env;
   }

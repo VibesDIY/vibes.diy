@@ -4,17 +4,19 @@ import {
   ExecutionContext,
   WebSocket as CFWebSocket,
   CfProperties,
+  R2Bucket,
 } from "@cloudflare/workers-types";
 import { createAppContext, processRequest, VibesSqlite } from "./create-handler.js";
 import { drizzle } from "drizzle-orm/d1";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
-import { Env } from "./cf-env.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { AppContext, Lazy, Result } from "@adviser/cement";
-import { hashObjectSync } from "@fireproof/core-runtime";
+import { AppContext, Lazy, LoggerImpl, Result } from "@adviser/cement";
+import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
-import { MsgBase } from "@vibes.diy/api-types";
+import { CFEnv, MsgBase } from "@vibes.diy/api-types";
+import { R2ToS3Api } from "./peers/r2-to-s3api.js";
+import { SuperThis } from "@fireproof/core-types-base";
 
 // declare global {
 //   class WebSocketPair {
@@ -32,13 +34,15 @@ import { MsgBase } from "@vibes.diy/api-types";
 // }
 
 export interface CFInjectMutable {
+  sthis?: SuperThis;
   appCtx: AppContext;
   cache: CfCacheIf;
   webSocket?: {
     connections: Set<WSSendProvider>;
     webSocketPair: () => { client: WebSocket; server: WebSocket };
   };
-  drizzle?: VibesSqlite;
+  drizzle: VibesSqlite;
+  assetBucket: R2Bucket;
   wsResponse?: Response;
   llmRequest?: (prompt: LLMRequest) => Promise<Response>;
   // readonly db?: D1Database;
@@ -74,14 +78,22 @@ function netHashFn({
   });
 }
 
-export function cfDrizzle<T extends VibesSqlite>(env: Env, ctxDrizzle?: T): { db: T } {
+export function cfDrizzle<T extends VibesSqlite>(env: CFEnv, ctxDrizzle?: T): { db: T } {
   return { db: (ctxDrizzle ?? drizzle(env.DB)) as T };
 }
 
-export async function cfServeAppCtx(request: CFRequest, env: Env, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
+export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
   const netHash = Lazy(() => netHashFn(request.cf as CfProperties));
+  const sthis =
+    ctx.sthis ??
+    ensureSuperThis({
+      logger: new LoggerImpl(),
+    });
+  console.log("Creating app context with netHash:", sthis.nextId(12).str)
   return createAppContext({
+    sthis,
     ...cfDrizzle(env, ctx.drizzle),
+    s3Api: new R2ToS3Api(ctx.assetBucket, sthis),
     // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
     cache: ctx.cache,

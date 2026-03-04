@@ -1,14 +1,15 @@
 import puppeteer from "@cloudflare/puppeteer";
-import { EvtNewFsId, isEvtNewFsId, isMsgBase, msgBase } from "@vibes.diy/api-types";
-import { storeScreenshot } from "@vibes.diy/api-svc";
-import { Env } from "./env.js";
+import { CFEnv, EvtNewFsId, isEvtNewFsId, isMsgBase, msgBase } from "@vibes.diy/api-types";
+import { R2ToS3Api, storeScreenshot } from "@vibes.diy/api-svc";
 import { cfDrizzle } from "@vibes.diy/api-svc/cf-serve.js";
 import { type } from "arktype";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import { LoggerImpl } from "@adviser/cement";
 
 /**
  * Takes a screenshot of a URL using Cloudflare Browser Rendering API
  */
-export async function takeScreenshot(event: EvtNewFsId, env: Env): Promise<Uint8Array> {
+export async function takeScreenshot(event: EvtNewFsId, env: CFEnv): Promise<Uint8Array> {
   console.log(`Taking screenshot for ${event.vibeUrl} (fsId: ${event.fsId})`);
 
   const browser = await puppeteer.launch(env.BROWSER as never);
@@ -44,7 +45,7 @@ export async function takeScreenshot(event: EvtNewFsId, env: Env): Promise<Uint8
 /**
  * Process a screenshot event from the queue
  */
-export async function processScreenShotEvent(message: unknown, env: Env): Promise<void> {
+export async function processScreenShotEvent(message: unknown, env: CFEnv): Promise<void> {
   if (!isMsgBase(message)) {
     const x = msgBase(message);
     if (x instanceof type.errors) {
@@ -70,10 +71,10 @@ export async function processScreenShotEvent(message: unknown, env: Env): Promis
 
     const { db } = await cfDrizzle(env);
     // Initialize sthis and db for storage
-    // const sthis = ensureSuperThis({ logger: new LoggerImpl() });
+    const sthis = ensureSuperThis({ logger: new LoggerImpl() });
 
     // Store the screenshot in the database
-    const result = await storeScreenshot({ db }, payload.fsId, screenshotData);
+    const result = await storeScreenshot({ db, s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis) }, payload.fsId, screenshotData);
 
     if (result.isErr()) {
       console.error(`Failed to store screenshot: ${result.Err()}`);

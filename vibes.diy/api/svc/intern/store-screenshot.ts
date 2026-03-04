@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { type } from "arktype";
 import { VibesSqlite } from "../create-handler.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
-import { isMetaScreenShot, MetaItem } from "@vibes.diy/api-types";
+import { isMetaScreenShot, MetaItem, S3Api } from "@vibes.diy/api-types";
 import { ensureStorage } from "./ensure-storage.js";
 
 // Define MetaItem array type
@@ -20,7 +20,13 @@ export interface StoreScreenshotResult {
  * 4. Removes existing MetaScreenShot (if any) and adds new one
  */
 export async function storeScreenshot(
-  { db }: { db: VibesSqlite },
+  {
+    db,
+    s3Api,
+  }: {
+    s3Api: S3Api;
+    db: VibesSqlite;
+  },
   fsId: string,
   screenshotData: Uint8Array
 ): Promise<Result<StoreScreenshotResult>> {
@@ -43,7 +49,7 @@ export async function storeScreenshot(
   // const cidResult = await calcCid({ sthis }, screenshotData);
 
   // 3. Store screenshot using ensureStorage
-  const [storageResult] = await ensureStorage(db).ensure(uint8array2stream(screenshotData));
+  const [storageResult] = await ensureStorage(db, s3Api).ensure(uint8array2stream(screenshotData));
   if (!storageResult || storageResult.isErr()) {
     return Result.Err(`Failed to store screenshot: ${storageResult.Err()}`);
   }

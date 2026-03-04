@@ -1,8 +1,16 @@
 import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result, stream2uint8array } from "@adviser/cement";
-import { FileSystemItem, HttpResponseBodyType, VibesDiyServCtx, vibesImportMap, vibeUserEnv } from "@vibes.diy/api-types";
+import {
+  FileSystemItem,
+  HttpResponseBodyType,
+  isFetchErrResult,
+  isFetchNotFoundResult,
+  VibesDiyServCtx,
+  vibesImportMap,
+  vibeUserEnv,
+} from "@vibes.diy/api-types";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { NpmUrlCapture } from "../public/serv-entry-point.js";
-import { isFetchErrResult, isFetchNotFoundResult, VibesApiSQLCtx } from "../types.js";
+import { VibesApiSQLCtx } from "../types.js";
 import { type } from "arktype";
 // import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
@@ -24,29 +32,36 @@ export interface RenderVibesOpts {
 }
 
 export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts): Promise<Result<EventoResultType>> {
+  console.log("renderVibe-8")
   const fsIportMap = fsItems.find((i) => i.transform?.type === "import-map");
   if (!fsIportMap) {
     return Result.Err(new Error("No import-map found in file system"));
   }
+  console.log("renderVibe-7")
   const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
   const rImportMapUint8 = await vctx.storage.fetch(fsIportMap.assetURI);
   // (ctx, fsIportMap);
+  console.log("renderVibe-6")
   if (isFetchErrResult(rImportMapUint8)) {
     return Result.Err(rImportMapUint8.error);
   }
+  console.log("renderVibe-5")
   if (isFetchNotFoundResult(rImportMapUint8)) {
     return Result.Err(new Error(`Import map not found for URI ${fsIportMap.assetURI}`));
   }
+  console.log("renderVibe-4")
   const genImport = vibesImportMap(JSON.parse(vctx.sthis.txt.decode(await stream2uint8array(rImportMapUint8.data))));
   if (genImport instanceof type.errors) {
     return Result.Err(genImport.summary);
   }
+  console.log("renderVibe-3")
 
   const deps = Dependencies.from({
     ...genImport.imports,
     ...lockedGroupsVersions,
   });
 
+  console.log("renderVibe-2")
   const importMap = await deps.renderImportMap({
     resolveFn: resolveVersionRegistry({
       fetch: defaultFetchPkgVersion({
@@ -60,11 +75,12 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
       privateUrl: pkgRepos.private.npmURL,
     }),
   });
+  console.log("renderVibe-1")
 
   const imports = fsItems.reduce(
     (acc, item, idx) => {
-      // console.log(`fsItem:`, item);
-      if (item.mimeType === "application/javascript") {
+      console.log(`fsItem:`, item);
+      if (["text/javascript", "application/javascript"].includes(item.mimeType) && item.transform?.type !== "jsx-to-js") {
         acc.push({
           // import relative to support prod and dev switching
           importStmt: `import V${idx} from ${JSON.stringify(`/~${fs.fsId}~${item.fileName}`)};`,
