@@ -16,6 +16,7 @@ export function JsonEditor({ doc, onSave, onDiscard }: JsonEditorProps) {
   const [isValid, setIsValid] = useState(true);
 
   const isDirty = text !== original;
+  const canSave = isValid && isDirty;
 
   const handleChange = useCallback((value: string) => {
     setText(value);
@@ -81,11 +82,12 @@ export function JsonEditor({ doc, onSave, onDiscard }: JsonEditorProps) {
         <Btn
           onClick={handleSave}
           disabled={!isValid || !isDirty}
-          bg={S.success + "12"}
-          border={S.success + "35"}
-          color={S.success}
+          bg={canSave ? S.accent : S.accent + "15"}
+          border={canSave ? S.accent : S.accent + "25"}
+          color={canSave ? "#fff" : S.accent + "50"}
           style={{
-            opacity: isValid && isDirty ? 1 : 0.35,
+            fontWeight: 600,
+            cursor: canSave ? "pointer" : "default",
           }}
         >
           Save

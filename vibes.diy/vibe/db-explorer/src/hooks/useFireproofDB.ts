@@ -4,6 +4,7 @@ import type { DocBase } from "@fireproof/use-fireproof";
 
 interface UseFireproofDBResult {
   docs: DocBase[];
+  docById: Map<string, DocBase>;
   loading: boolean;
   totalDocs: number;
   page: number;
@@ -28,6 +29,14 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
   const [pageSize, setPageSize] = useState(25);
 
   const totalDocs = allDocs.length;
+
+  const docById = useMemo(() => {
+    const map = new Map<string, DocBase>();
+    for (const d of allDocs) {
+      if (d._id) map.set(d._id, d);
+    }
+    return map;
+  }, [allDocs]);
 
   const docs = useMemo(() => {
     const start = page * pageSize;
@@ -106,6 +115,7 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
 
   return {
     docs,
+    docById,
     loading,
     totalDocs,
     page,

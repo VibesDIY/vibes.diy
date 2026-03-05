@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { NavigateFunction } from "react-router-dom";
 import { S, TC } from "../lib/styles.js";
 import { Btn } from "./Btn.js";
 import { JsonEditor } from "./JsonEditor.js";
@@ -15,8 +16,11 @@ export interface DocRecord {
 
 interface DocDBViewerProps {
   docs: DocRecord[];
+  docById: Map<string, DocRecord>;
   loading: boolean;
   dbName: string;
+  docId?: string;
+  navigate: NavigateFunction;
   onSave: (doc: DocRecord) => Promise<void>;
   onDelete: (docId: string) => Promise<void>;
   onCreate: (doc: Record<string, unknown>) => Promise<string>;
@@ -28,15 +32,13 @@ interface DocDBViewerProps {
   onPageSizeChange: (size: number) => void;
 }
 
-interface NavEntry {
-  type: "doc";
-  id: string;
-}
-
 export function DocDBViewer({
   docs,
+  docById,
   loading,
   dbName,
+  docId,
+  navigate,
   onSave,
   onDelete,
   onCreate,
@@ -48,7 +50,6 @@ export function DocDBViewer({
   onPageSizeChange,
 }: DocDBViewerProps) {
   const mob = useMobile();
-  const [navStack, setNavStack] = useState<NavEntry[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
@@ -58,22 +59,25 @@ export function DocDBViewer({
   // Only used for newly created docs before live query catches up
   const [editDraft, setEditDraft] = useState<DocRecord | null>(null);
 
-  const scope = navStack.length === 0 ? "db" : "doc";
-  const docEntry = navStack[0] ?? null;
-  const doc = editDraft ?? docs.find((d) => d._id === docEntry?.id) ?? null;
+  const scope = docId ? "doc" : "db";
+  const doc = docId
+    ? (editDraft && editDraft._id === docId ? editDraft : docById.get(docId) ?? null)
+    : null;
+
+  const dbPath = `/dbexplore/${encodeURIComponent(dbName)}`;
 
   const navigateHome = useCallback(() => {
-    setNavStack([]);
     setEditDraft(null);
-  }, []);
+    navigate(dbPath);
+  }, [navigate, dbPath]);
 
   const openDoc = useCallback(
     (idx: number) => {
       const id = docs[idx]?._id as string | undefined;
       if (!id) return;
-      setNavStack([{ type: "doc", id }]);
+      navigate(`${dbPath}/${encodeURIComponent(id)}`);
     },
-    [docs]
+    [docs, navigate, dbPath]
   );
 
   const saveDoc = useCallback(
@@ -81,7 +85,7 @@ export function DocDBViewer({
       try {
         await onSave(docToSave as DocRecord);
         setEditDraft(null);
-        setNavStack([]);
+        navigate(dbPath);
         setToast({
           message: `${docToSave._id || "doc"} saved`,
           type: "success",
@@ -93,16 +97,16 @@ export function DocDBViewer({
         });
       }
     },
-    [onSave]
+    [onSave, navigate, dbPath]
   );
 
   const deleteDoc = useCallback(
     async (id: string) => {
       try {
         await onDelete(id);
-        setNavStack([]);
         setConfirmDelete(false);
         setEditDraft(null);
+        navigate(dbPath);
         setToast({ message: `${id} deleted`, type: "success" });
       } catch (e) {
         setConfirmDelete(false);
@@ -112,14 +116,14 @@ export function DocDBViewer({
         });
       }
     },
-    [onDelete]
+    [onDelete, navigate, dbPath]
   );
 
   const newDoc = useCallback(async () => {
     try {
       const id = await onCreate({});
-      setNavStack([{ type: "doc", id }]);
       setEditDraft({ _id: id });
+      navigate(`${dbPath}/${encodeURIComponent(id)}`);
       setToast({ message: "Document created", type: "success" });
     } catch (e) {
       setToast({
@@ -127,7 +131,7 @@ export function DocDBViewer({
         type: "error",
       });
     }
-  }, [onCreate]);
+  }, [onCreate, navigate, dbPath]);
 
   if (loading && docs.length === 0) {
     return (
@@ -225,13 +229,13 @@ export function DocDBViewer({
           <span
             onClick={navigateHome}
             style={{
-              color: navStack.length === 0 ? S.text : S.accent,
+              color: scope === "db" ? S.text : S.accent,
               cursor: "pointer",
-              fontWeight: navStack.length === 0 ? 600 : 400,
+              fontWeight: scope === "db" ? 600 : 400,
               whiteSpace: "nowrap",
             }}
             onMouseEnter={(e) => {
-              if (navStack.length > 0)
+              if (scope === "doc")
                 e.currentTarget.style.textDecoration = "underline";
             }}
             onMouseLeave={(e) =>
@@ -250,7 +254,7 @@ export function DocDBViewer({
               {totalDocs}
             </span>
           </span>
-          {docEntry && (
+          {docId && (
             <span
               style={{
                 display: "flex",
@@ -276,7 +280,7 @@ export function DocDBViewer({
                   textOverflow: "ellipsis",
                 }}
               >
-                {docEntry.id}
+                {docId}
               </span>
             </span>
           )}
@@ -284,7 +288,7 @@ export function DocDBViewer({
       </div>
 
       {/* Toolbar */}
-      {scope === "doc" && doc ? (
+      {scope === "doc" ? (
         <div
           style={{
             display: "flex",
@@ -297,18 +301,20 @@ export function DocDBViewer({
           }}
         >
           <div style={{ flex: 1 }} />
-          <Btn
-            onClick={() => setConfirmDelete(true)}
-            color={S.danger}
-            border={S.danger + "30"}
-            bg={S.danger + "08"}
-            style={{
-              fontSize: 10,
-              padding: mob ? "6px 12px" : "4px 10px",
-            }}
-          >
-            Delete
-          </Btn>
+          {doc && (
+            <Btn
+              onClick={() => setConfirmDelete(true)}
+              color={S.danger}
+              border={S.danger + "30"}
+              bg={S.danger + "08"}
+              style={{
+                fontSize: 10,
+                padding: mob ? "6px 12px" : "4px 10px",
+              }}
+            >
+              Delete
+            </Btn>
+          )}
         </div>
       ) : (
         <div
@@ -334,34 +340,30 @@ export function DocDBViewer({
             </span>
           )}
           <div style={{ flex: 1 }} />
-          {scope === "db" && (
-            <>
-              <Btn
-                onClick={onSeedData}
-                border={S.border}
-                color={S.textDim}
-                style={{
-                  fontSize: 10,
-                  padding: mob ? "6px 12px" : "4px 10px",
-                }}
-              >
-                Load 100 docs
-              </Btn>
-              <Btn
-                onClick={newDoc}
-                bg={S.accent + "15"}
-                border={S.accent + "40"}
-                color={S.accent}
-                style={{
-                  fontSize: 10,
-                  padding: mob ? "6px 12px" : "4px 10px",
-                  fontWeight: 600,
-                }}
-              >
-                + New Document
-              </Btn>
-            </>
-          )}
+          <Btn
+            onClick={onSeedData}
+            border={S.border}
+            color={S.textDim}
+            style={{
+              fontSize: 10,
+              padding: mob ? "6px 12px" : "4px 10px",
+            }}
+          >
+            Load 100 docs
+          </Btn>
+          <Btn
+            onClick={newDoc}
+            bg={S.accent + "15"}
+            border={S.accent + "40"}
+            color={S.accent}
+            style={{
+              fontSize: 10,
+              padding: mob ? "6px 12px" : "4px 10px",
+              fontWeight: 600,
+            }}
+          >
+            + New Document
+          </Btn>
         </div>
       )}
 
@@ -370,7 +372,7 @@ export function DocDBViewer({
         style={{
           flex: 1,
           overflow: "auto",
-          padding: mob ? 10 : 16,
+          padding: scope === "doc" ? (mob ? 10 : 16) : 0,
           WebkitOverflowScrolling: "touch",
           overscrollBehavior: "contain",
         }}
@@ -412,11 +414,47 @@ export function DocDBViewer({
 
         {scope === "doc" && doc && (
           <JsonEditor
-            key={docEntry?.id}
+            key={docId}
             doc={doc as Record<string, unknown>}
             onSave={saveDoc}
             onDiscard={navigateHome}
           />
+        )}
+
+        {scope === "doc" && !doc && loading && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: 40,
+              color: S.textMuted,
+              fontFamily: S.mono,
+              fontSize: 12,
+            }}
+          >
+            Loading document...
+          </div>
+        )}
+
+        {scope === "doc" && !doc && !loading && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: 40,
+              color: S.textMuted,
+            }}
+          >
+            <div style={{ fontSize: 12, fontFamily: S.mono, marginBottom: 12 }}>
+              Document not found
+            </div>
+            <Btn
+              onClick={navigateHome}
+              border={S.border}
+              color={S.accent}
+              style={{ display: "inline-flex" }}
+            >
+              Back to table
+            </Btn>
+          </div>
         )}
       </div>
 
@@ -426,8 +464,8 @@ export function DocDBViewer({
           title={`Delete ${doc._id}?`}
           message={`Permanently remove "${doc._id}" from the database. This cannot be undone.`}
           onConfirm={() => {
-            if (docEntry) {
-              deleteDoc(docEntry.id);
+            if (docId) {
+              deleteDoc(docId);
             }
           }}
           onCancel={() => setConfirmDelete(false)}

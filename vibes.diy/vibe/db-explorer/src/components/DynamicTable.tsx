@@ -25,7 +25,7 @@ export function DynamicTable({
     totalDocs !== undefined && pageSize ? Math.ceil(totalDocs / pageSize) : 1;
 
   return (
-    <div style={{ position: "relative", overflowX: "auto", overflowY: "auto" }}>
+    <div style={{ position: "relative" }}>
       <table
         style={{
           width: "100%",
@@ -80,18 +80,7 @@ export function DynamicTable({
                 ) : (
                   <td
                     key={header}
-                    title="Click to copy"
                     style={{ padding: "12px 15px", fontSize: 12 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const val = fields[header];
-                      const text = val === null || val === undefined
-                        ? ""
-                        : typeof val === "string"
-                          ? val
-                          : JSON.stringify(val);
-                      navigator.clipboard.writeText(text);
-                    }}
                   >
                     {formatTableCellContent(fields[header], header)}
                   </td>
