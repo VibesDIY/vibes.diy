@@ -1,10 +1,9 @@
-import React, { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { S, TC } from "../lib/styles.js";
-import { isTabular, byteSize } from "../lib/utils.js";
 import { Btn } from "./Btn.js";
-import { ScopeBadge } from "./ScopeBadge.js";
-import { LiveDocTree, LiveDocTreeHandle } from "./LiveDocTree.js";
-import { DataTable } from "./DataTable.js";
+import { JsonEditor } from "./JsonEditor.js";
+import { DynamicTable } from "./DynamicTable.js";
+import { headersForDocs } from "./dynamicTableHelpers.js";
 import { ConfirmDialog } from "./ConfirmDialog.js";
 import { Toast } from "./Toast.js";
 import { useMobile } from "./MobileProvider.js";
@@ -29,17 +28,10 @@ interface DocDBViewerProps {
   onPageSizeChange: (size: number) => void;
 }
 
-type NavEntry =
-  | {
-      type: "doc";
-      idx: number;
-      id: string;
-    }
-  | {
-      type: "nested";
-      data: unknown[];
-      label: string;
-    };
+interface NavEntry {
+  type: "doc";
+  id: string;
+}
 
 export function DocDBViewer({
   docs,
@@ -57,38 +49,18 @@ export function DocDBViewer({
 }: DocDBViewerProps) {
   const mob = useMobile();
   const [navStack, setNavStack] = useState<NavEntry[]>([]);
-  const [expandDepth] = useState(2);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error" | "info";
   } | null>(null);
-  const treeRef = useRef<LiveDocTreeHandle>(null);
-  const [treeState, setTreeState] = useState({
-    isDirty: false,
-    canUndo: false,
-  });
 
-  // Local edit draft for doc view
+  // Only used for newly created docs before live query catches up
   const [editDraft, setEditDraft] = useState<DocRecord | null>(null);
 
-  const scope =
-    navStack.length === 0
-      ? "db"
-      : navStack[0].type === "doc"
-        ? navStack.length === 1
-          ? "doc"
-          : "nested"
-        : "db";
-  const docEntry = navStack.find(
-    (n): n is Extract<NavEntry, { type: "doc" }> => n.type === "doc"
-  );
-  const sourceDoc = docEntry ? docs[docEntry.idx] : null;
-  const doc = editDraft ?? sourceDoc;
-  const nestedEntry =
-    navStack.length > 1 && navStack[navStack.length - 1]?.type === "nested"
-      ? (navStack[navStack.length - 1] as Extract<NavEntry, { type: "nested" }>)
-      : null;
+  const scope = navStack.length === 0 ? "db" : "doc";
+  const docEntry = navStack[0] ?? null;
+  const doc = editDraft ?? docs.find((d) => d._id === docEntry?.id) ?? null;
 
   const navigateHome = useCallback(() => {
     setNavStack([]);
@@ -97,69 +69,35 @@ export function DocDBViewer({
 
   const openDoc = useCallback(
     (idx: number) => {
-      setNavStack([
-        {
-          type: "doc",
-          idx,
-          id: (docs[idx]?._id as string) || `doc_${idx}`,
-        },
-      ]);
-      setEditDraft({ ...docs[idx] });
+      const id = docs[idx]?._id as string | undefined;
+      if (!id) return;
+      setNavStack([{ type: "doc", id }]);
     },
     [docs]
   );
 
-  const pushNested = useCallback((data: unknown[], label: string) => {
-    setNavStack((s) => [
-      ...s,
-      { type: "nested", data, label: String(label || "nested") },
-    ]);
-  }, []);
-
-  const navigateBack = useCallback(
-    (toIndex: number) => {
-      setNavStack((s) => s.slice(0, toIndex));
-      if (toIndex === 0) setEditDraft(null);
+  const saveDoc = useCallback(
+    async (docToSave: Record<string, unknown>) => {
+      try {
+        await onSave(docToSave as DocRecord);
+        setEditDraft(null);
+        setNavStack([]);
+        setToast({
+          message: `${docToSave._id || "doc"} saved`,
+          type: "success",
+        });
+      } catch (e) {
+        setToast({
+          message: `Save failed: ${(e as Error).message}`,
+          type: "error",
+        });
+      }
     },
-    []
+    [onSave]
   );
-
-  const liveUpdateDoc = useCallback(
-    (newDoc: Record<string, unknown>) => {
-      setEditDraft(newDoc as DocRecord);
-      setNavStack((s) =>
-        s.map((n) =>
-          n.type === "doc" && n.idx === docEntry?.idx
-            ? { ...n, id: (newDoc._id as string) || n.id }
-            : n
-        )
-      );
-    },
-    [docEntry]
-  );
-
-  const saveDoc = useCallback(async () => {
-    if (!doc) return;
-    try {
-      await onSave(doc);
-      setEditDraft(null);
-      setNavStack([]);
-      setToast({
-        message: `${doc._id || "doc"} saved`,
-        type: "success",
-      });
-    } catch (e) {
-      setToast({
-        message: `Save failed: ${(e as Error).message}`,
-        type: "error",
-      });
-    }
-  }, [doc, onSave]);
 
   const deleteDoc = useCallback(
-    async (idx: number) => {
-      const id = docs[idx]?._id;
-      if (!id) return;
+    async (id: string) => {
       try {
         await onDelete(id);
         setNavStack([]);
@@ -174,13 +112,13 @@ export function DocDBViewer({
         });
       }
     },
-    [docs, onDelete]
+    [onDelete]
   );
 
   const newDoc = useCallback(async () => {
     try {
       const id = await onCreate({});
-      setNavStack([{ type: "doc", idx: 0, id }]);
+      setNavStack([{ type: "doc", id }]);
       setEditDraft({ _id: id });
       setToast({ message: "Document created", type: "success" });
     } catch (e) {
@@ -190,9 +128,6 @@ export function DocDBViewer({
       });
     }
   }, [onCreate]);
-
-  const scopeColor =
-    scope === "db" ? S.accent : scope === "doc" ? S.docAccent : TC.array;
 
   if (loading && docs.length === 0) {
     return (
@@ -228,15 +163,6 @@ export function DocDBViewer({
         WebkitOverflowScrolling: "touch",
       }}
     >
-      <style>{`
-        [class="row-actions"]{opacity:0;transition:opacity 0.12s}
-        *:hover>[class="row-actions"]{opacity:1!important}
-        @media(max-width:639px){
-          [class="row-actions"]{opacity:1!important}
-          .mob-card:active{background:${S.bgHover}!important}
-        }
-      `}</style>
-
       {/* Top Bar */}
       <div
         style={{
@@ -324,9 +250,8 @@ export function DocDBViewer({
               {totalDocs}
             </span>
           </span>
-          {navStack.map((n, i) => (
+          {docEntry && (
             <span
-              key={i}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -343,33 +268,18 @@ export function DocDBViewer({
                 /
               </span>
               <span
-                onClick={() => navigateBack(i + 1)}
                 style={{
-                  color:
-                    i === navStack.length - 1
-                      ? S.text
-                      : n.type === "doc"
-                        ? S.docAccent
-                        : TC.array,
-                  cursor: "pointer",
-                  fontWeight:
-                    i === navStack.length - 1 ? 600 : 400,
+                  color: S.text,
+                  fontWeight: 600,
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
-                onMouseEnter={(e) => {
-                  if (i < navStack.length - 1)
-                    e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.textDecoration = "none")
-                }
               >
-                {n.type === "doc" ? n.id : n.label}
+                {docEntry.id}
               </span>
             </span>
-          ))}
+          )}
         </div>
       </div>
 
@@ -386,56 +296,7 @@ export function DocDBViewer({
             flexShrink: 0,
           }}
         >
-          <Btn
-            onClick={() => treeRef.current?.undo()}
-            border={S.border}
-            color={treeState.canUndo ? S.textDim : S.textMuted}
-            style={{
-              opacity: treeState.canUndo ? 1 : 0.35,
-              padding: mob ? "6px 12px" : "4px 10px",
-              fontSize: 10,
-            }}
-            disabled={!treeState.canUndo}
-          >
-            {"\u21B6"} Undo
-          </Btn>
-          <Btn
-            onClick={() => treeRef.current?.discard()}
-            border={S.border}
-            color={treeState.isDirty ? S.textDim : S.textMuted}
-            style={{
-              opacity: treeState.isDirty ? 1 : 0.35,
-              padding: mob ? "6px 12px" : "4px 10px",
-              fontSize: 10,
-            }}
-            disabled={!treeState.isDirty}
-          >
-            Discard
-          </Btn>
           <div style={{ flex: 1 }} />
-          {treeState.isDirty && (
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: S.docAccent,
-                flexShrink: 0,
-              }}
-            />
-          )}
-          <Btn
-            onClick={saveDoc}
-            bg={S.success + "12"}
-            border={S.success + "35"}
-            color={S.success}
-            style={{
-              fontSize: 10,
-              padding: mob ? "6px 12px" : "4px 10px",
-            }}
-          >
-            Save
-          </Btn>
           <Btn
             onClick={() => setConfirmDelete(true)}
             color={S.danger}
@@ -461,35 +322,16 @@ export function DocDBViewer({
             flexShrink: 0,
           }}
         >
-          <ScopeBadge
-            label={scope === "db" ? "database" : "nested"}
-            color={scopeColor}
-          />
           {!mob && (
-            <>
-              {scope === "db" && (
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontFamily: S.mono,
-                    color: S.textMuted,
-                  }}
-                >
-                  {totalDocs} docs {"\u00B7"} {byteSize(docs)}
-                </span>
-              )}
-              {scope === "nested" && nestedEntry && (
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontFamily: S.mono,
-                    color: S.textMuted,
-                  }}
-                >
-                  {(nestedEntry.data as unknown[]).length} rows
-                </span>
-              )}
-            </>
+            <span
+              style={{
+                fontSize: 9,
+                fontFamily: S.mono,
+                color: S.textMuted,
+              }}
+            >
+              {totalDocs} docs
+            </span>
           )}
           <div style={{ flex: 1 }} />
           {scope === "db" && (
@@ -555,21 +397,10 @@ export function DocDBViewer({
                 No documents yet. Click + New Document to create one.
               </div>
             </div>
-          ) : isTabular(docs) ? (
-            <DataTable
-              data={docs}
-              label="All documents"
-              onRowClick={openDoc}
-              page={page}
-              totalDocs={totalDocs}
-              pageSize={pageSize}
-              onPageChange={onPageChange}
-              onPageSizeChange={onPageSizeChange}
-            />
           ) : (
-            <DataTable
-              data={docs}
-              label="All documents"
+            <DynamicTable
+              headers={headersForDocs(docs)}
+              rows={docs}
               onRowClick={openDoc}
               page={page}
               totalDocs={totalDocs}
@@ -579,22 +410,12 @@ export function DocDBViewer({
             />
           ))}
 
-        {scope === "doc" && doc && docEntry && (
-          <LiveDocTree
-            ref={treeRef}
-            key={docEntry.idx}
+        {scope === "doc" && doc && (
+          <JsonEditor
+            key={docEntry?.id}
             doc={doc as Record<string, unknown>}
-            expandDepth={expandDepth}
-            onTableJump={pushNested}
-            onDocChange={liveUpdateDoc}
-            onStateChange={setTreeState}
-          />
-        )}
-
-        {scope === "nested" && nestedEntry && (
-          <DataTable
-            data={nestedEntry.data as Record<string, unknown>[]}
-            label={nestedEntry.label}
+            onSave={saveDoc}
+            onDiscard={navigateHome}
           />
         )}
       </div>
@@ -606,7 +427,7 @@ export function DocDBViewer({
           message={`Permanently remove "${doc._id}" from the database. This cannot be undone.`}
           onConfirm={() => {
             if (docEntry) {
-              deleteDoc(docEntry.idx);
+              deleteDoc(docEntry.id);
             }
           }}
           onCancel={() => setConfirmDelete(false)}
