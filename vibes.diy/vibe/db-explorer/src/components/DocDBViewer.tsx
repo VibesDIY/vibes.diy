@@ -190,23 +190,17 @@ export function DocDBViewer({
             flexShrink: 0,
           }}
         >
-          <div
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: 4,
-              background: `linear-gradient(135deg, ${S.accent}, ${TC.array})`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 10,
-              fontWeight: 700,
-              color: S.bg,
-              fontFamily: S.mono,
-            }}
+          <svg
+            width="22"
+            height="22"
+            viewBox="6000 6000 5000 5000"
+            style={{ flexShrink: 0 }}
           >
-            db
-          </div>
+            <polygon fill="#F16C12" points="8997,7183 8391,7021 7669,7184 7006,8333 7006,8333 7489,8468 8333,8333" />
+            <path fill="#EE521C" d="M7669 7183l647 0 681 0c0,-491 -267,-920 -663,-1149l-1 0 -664 1149z" />
+            <path fill="#F58709" d="M8333 8333l-1327 0c0,0 0,0 0,1 0,0 -1,0 -1,0l-663 1149 775 257 552 -257 664 -1149 0 -1zm664 1150l594 230 733 -230 1 0c0,-491 -267,-920 -664,-1150l0 0 -664 1150z" />
+            <path fill="#F9A100" d="M7669 9483l-1327 0 664 1150 0 0 1327 0c-397,-230 -664,-659 -664,-1150l0 0zm2656 0l-1328 0 -664 1150 1328 0 664 -1150z" />
+          </svg>
           {!mob && (
             <span style={{ fontSize: 13, fontWeight: 600 }}>{dbName}</span>
           )}
