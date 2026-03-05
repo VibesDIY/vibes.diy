@@ -31,8 +31,8 @@ export function DynamicTable({
           width: "100%",
           borderCollapse: "collapse",
           textAlign: "left",
-          fontFamily: S.mono,
-          fontSize: 12,
+          fontFamily: S.sans,
+          fontSize: 14,
           color: S.text,
         }}
       >
@@ -43,10 +43,10 @@ export function DynamicTable({
                 key={header}
                 scope="col"
                 style={{
-                  padding: "8px 15px",
-                  fontSize: 11,
+                  padding: "12px 24px",
+                  fontSize: 12,
                   color: S.textMuted,
-                  fontWeight: 500,
+                  fontWeight: 700,
                   position: "sticky",
                   top: 0,
                   zIndex: 10,
@@ -73,14 +73,14 @@ export function DynamicTable({
                   <th
                     key={header}
                     scope="row"
-                    style={{ padding: "12px 15px", fontSize: 12, whiteSpace: "nowrap", fontWeight: 600 }}
+                    style={{ padding: "16px 24px", fontSize: 14, whiteSpace: "nowrap", fontWeight: 600, color: S.accent, textDecoration: "underline" }}
                   >
                     {formatTableCellContent(fields[header], header)}
                   </th>
                 ) : (
                   <td
                     key={header}
-                    style={{ padding: "12px 15px", fontSize: 12 }}
+                    style={{ padding: "16px 24px", fontSize: 14, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                   >
                     {formatTableCellContent(fields[header], header)}
                   </td>
@@ -97,9 +97,9 @@ export function DynamicTable({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "8px 15px",
-            fontFamily: S.mono,
-            fontSize: 11,
+            padding: "8px 24px",
+            fontFamily: S.sans,
+            fontSize: 12,
             color: S.textDim,
             borderTop: `1px solid ${S.border}`,
           }}
@@ -164,7 +164,7 @@ export function DynamicTable({
 
 function formatTableCellContent(obj: unknown, header: string): string {
   if (obj === null || obj === undefined) return "";
-  const str = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+  const str = typeof obj === "string" ? obj : JSON.stringify(obj);
   if (header === "_id") return str.substring(0, 4) + ".." + str.substring(str.length - 4);
-  return str.length > 30 ? `${str.substring(0, 25).trim()}...` : str;
+  return str.length > 40 ? `${str.substring(0, 35).trim()}...` : str;
 }

@@ -218,8 +218,8 @@ export function DocDBViewer({
             display: "flex",
             alignItems: "center",
             gap: 0,
-            fontFamily: S.mono,
-            fontSize: mob ? 12 : 11,
+            fontFamily: S.sans,
+            fontSize: mob ? 13 : 13,
             flex: 1,
             minWidth: 0,
             overflow: "hidden",
@@ -331,8 +331,8 @@ export function DocDBViewer({
           {!mob && (
             <span
               style={{
-                fontSize: 9,
-                fontFamily: S.mono,
+                fontSize: 11,
+                fontFamily: S.sans,
                 color: S.textMuted,
               }}
             >
