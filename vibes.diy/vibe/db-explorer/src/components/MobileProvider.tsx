@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 
 const MobileCtx = createContext(false);
 
@@ -8,7 +9,7 @@ export function MobileProvider({
   children,
   bp = 640,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   bp?: number;
 }) {
   const mqRef = useRef(

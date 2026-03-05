@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { S } from "../lib/styles.js";
 import { useMobile } from "./MobileProvider.js";
 

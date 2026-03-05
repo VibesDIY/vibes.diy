@@ -1,4 +1,3 @@
-import React from "react";
 import { S } from "../lib/styles.js";
 import { Btn } from "./Btn.js";
 import { useMobile } from "./MobileProvider.js";

@@ -1,4 +1,3 @@
-import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useFireproofDB } from "../hooks/useFireproofDB.js";
 import { DocDBViewer, DocRecord } from "../components/DocDBViewer.js";

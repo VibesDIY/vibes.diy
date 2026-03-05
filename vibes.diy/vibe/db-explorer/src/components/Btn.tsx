@@ -1,7 +1,7 @@
-import React from "react";
+import type { ButtonHTMLAttributes } from "react";
 import { S } from "../lib/styles.js";
 
-interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface BtnProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   color?: string;
   bg?: string;
   border?: string;
