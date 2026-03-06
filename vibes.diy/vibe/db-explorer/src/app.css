@@ -166,4 +166,7 @@ a,
   textarea {
     font-size: 16px !important;
   }
+  textarea.code-editor {
+    font-size: 14px !important;
+  }
 }
