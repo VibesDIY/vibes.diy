@@ -8,9 +8,9 @@ Any AI agent can go from zero to deployed app:
 
 ```bash
 use-vibes slices                           # read slice catalog (fireproof, d3, etc.)
-use-vibes system --slices fireproof,d3     # get assembled system prompt
-use-vibes edit "build a sales dashboard"   # AI-generate App.jsx
-use-vibes dev                              # push to dev, get HTTPS URL
+use-vibes system --slices fireproof,d3     # get assembled system prompt for local generation
+use-vibes edit "build a sales dashboard"   # Vibe code App.jsx via the cloud API
+use-vibes dev                              # same as `use-vibes live dev` get HTTPS URL
 use-vibes publish demo                     # freeze snapshot for sharing
 ```
 
