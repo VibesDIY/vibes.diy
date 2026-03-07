@@ -50,7 +50,8 @@ use-vibes invite work-lunch             # share a join link
 
 ## Docs
 
-- [mvp-web.md](mvp-web.md) — Simplest web-only path to working invite links (start here)
+- [mvp-web.md](mvp-web.md) — Simplest web-only path to working invite links
+- [mvp-cli.md](mvp-cli.md) — First steps to build the CLI (features, interface, logic)
 - [code-mvp-lite.md](code-mvp-lite.md) — Domain model + task summary
 - [mvp-invites.md](mvp-invites.md) — Instant join links, permissions, group sharing model
 - [cli-architecture.md](cli-architecture.md) — Implementation constraints: no cmd-ts, build-free tsx, no fs.*Sync
