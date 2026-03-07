@@ -50,6 +50,7 @@ use-vibes invite work-lunch             # share a join link
 
 ## Docs
 
+- [cli-architecture.md](cli-architecture.md) — Implementation constraints: no cmd-ts, build-free tsx, no fs.*Sync
 - [cli-design.md](cli-design.md) — Full architecture: domain model, targets, vibes.json, commands
 - [cli-parts.md](cli-parts.md) — Existing repo infrastructure reusable for the CLI
 - [code-mvp.md](code-mvp.md) — Task list with CLI section (L0-L5)

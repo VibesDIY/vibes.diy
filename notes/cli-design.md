@@ -4,7 +4,7 @@
 
 ### `create-vibe` — One-shot scaffolder
 
-Published on npm, runs via `npm create vibe`. Generates a project directory and exits.
+Already published on npm as `create-vibe`, runs via `npm create vibe`. Currently lives in its own repo — work here is moving it into the monorepo and doing a fresh release. **Comes after `use-vibes` CLI is solid.**
 
 ```bash
 npm create vibe                          # interactive scaffold
@@ -350,9 +350,18 @@ npm registry
 │   └── scaffolds project with use-vibes as devDependency
 └── use-vibes          → library (import) + CLI (bin)
     ├── import: React hooks, useFireproof, etc.
-    └── bin: file watcher + cloud uploader
+    └── bin: cli.ts (tsx shebang, process.argv router)
 
 monorepo (existing)
 ├── use-vibes/pkg      → library + new bin entry point
-└── (create-vibe TBD)  → scaffolder package
+│   ├── cli.ts         → shebang entry, argv router
+│   ├── commands/      → one file per command
+│   └── lib/           → config, api-client, auth
+└── (create-vibe)      → move from own repo into monorepo, fresh release (after use-vibes CLI is solid)
 ```
+
+Architecture constraints (see [cli-architecture.md](cli-architecture.md)):
+- **Build-free**: tsx runs TypeScript directly, no compile step
+- **No cmd-ts**: process.argv + tiny router, each command parses its own args
+- **No fs.\*Sync**: `fs/promises` only, including config loading
+- **No chokidar**: native `fs/promises.watch` (Node 20+ recursive)

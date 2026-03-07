@@ -4,9 +4,9 @@ What's already in the repo that the `create-vibe` and `use-vibes` CLI packages c
 
 ---
 
-## CLI Framework: `cmd-ts`
+## Existing CLI Usage: `cmd-ts`
 
-Already used in two places — lightweight, type-safe, zero-config CLI builder.
+Used in call-ai and build scripts — but **not adopted for `use-vibes` CLI** (see [cli-architecture.md](cli-architecture.md) for rationale: process.argv router, no build step, no fs.*Sync).
 
 ### call-ai/v2/cli.ts — AI streaming CLI
 ```bash
@@ -103,8 +103,8 @@ Deploy scripts in `vibes.diy/pkg/package.json`:
 ## Key Dependencies Available
 
 ```
-cmd-ts           — CLI framework (already in use)
-zx               — Shell scripting in JS
+zx               — Shell scripting in JS (used for subprocess calls)
+tsx              — Run TypeScript directly, no build step (CLI entry point)
 esbuild          — Fast bundling
 @babel/parser    — AST analysis
 random-words     — Slug generation
@@ -112,6 +112,8 @@ drizzle-orm      — Database schema
 dotenv           — .env loading
 find-up          — Config file discovery
 ```
+
+Note: `cmd-ts` is available but intentionally not used for `use-vibes` CLI — see [cli-architecture.md](cli-architecture.md).
 
 ---
 
@@ -131,25 +133,31 @@ find-up          — Config file discovery
 
 ## What the CLI Packages Need to Build On
 
-### `create-vibe` (scaffolder)
+### `create-vibe` (scaffolder — move into monorepo last)
+Already published from its own repo. Work here is moving it into the monorepo cleanly and doing a fresh release **after `use-vibes` CLI is solid**.
 - **call-ai streaming** from `call-ai/v2/cli.ts` for AI generation mode
-- **cmd-ts** for arg parsing
+- **process.argv** for arg parsing (no cmd-ts)
 - Template files (App.jsx skeleton, package.json with `use-vibes` devDep)
 
 ### `use-vibes` (runtime CLI)
+
+Architecture: build-free tsx, process.argv router, `fs/promises` only — see [cli-architecture.md](cli-architecture.md).
+
+- **tsx shebang** — `#!/usr/bin/env npx tsx`, no compile step
+- **process.argv router** — ~10 commands, no parsing library needed
+- **`fs/promises` only** — no `fs.*Sync` anywhere
+- **Native `fs/promises.watch`** — Node 20+ recursive watcher, no chokidar
 - **ensureAppSlug API** for pushing code to cloud targets
-- **File watching** (chokidar or fs.watch — not yet in repo, needs adding)
 - **ESLint** integration for pre-push linting
 - **Device-code auth** flow (not yet built)
-- **cmd-ts** for subcommands (`live`, `publish`, `invite`; `dev` is sugar for `live dev`)
 - **dotenv** for config
 - **vibes.json** parsing for app identity and target resolution
 
 ### Not yet built (new work)
-- File watcher for `use-vibes live`
-- Target resolution (`group` → `owner/app/group` via vibes.json)
-- Cloud push protocol (API client for ensureAppSlug from CLI context)
-- Device-code login flow
+- `cli.ts` entry point with argv router + `commands/` directory
+- `lib/config.ts` — vibes.json loading + target resolution (`group` → `owner/app/group`)
+- `lib/api-client.ts` — cloud push protocol (API client for ensureAppSlug from CLI context)
+- `lib/auth.ts` — device-code login flow + credential storage
 - SSE/polling live reload injection (server-side)
 - Invite API client (`createInviteToken` from CLI)
 - Cross-user target permissions

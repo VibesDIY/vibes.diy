@@ -153,15 +153,15 @@ Prevent unbounded growth of published vibes and assets.
 
 See [cli-design.md](cli-design.md) for full architecture.
 
-### L0. Claim CLI package names
-Both npm names are available and we own `create-vibe`. Publish `create-vibe` (scaffolder, runs via `npm create vibe`) and `use-vibes` (runtime CLI, runs via `npx use-vibes dev`).
-- **Tech**: `use-vibes` already exists as a workspace package (`use-vibes/pkg`). Add `bin` entry for CLI commands. `create-vibe` is a separate scaffolder package. `npm create vibe` is one char from `npm create vite`
-- **Dependencies**: None. Unlocks: L1 scaffolding
+### L0. Bootstrap `use-vibes` CLI
+Add CLI to the existing `use-vibes` workspace package.
+- **Tech**: Add `bin` entry pointing to `cli.ts` with tsx shebang — build-free, no cmd-ts, no fs.\*Sync (see [cli-architecture.md](cli-architecture.md)). Create `commands/` and `lib/` directories per architecture spec
+- **Dependencies**: None. Unlocks: L2a auth, L3b slices/system
 
-### L1. CLI generate vibe (`npm create vibe`)
-Developers get a working app directory in one command — no config, no bundler.
-- **Tech**: `create-vibe` package. Scaffolds `App.jsx`, `vibes.json` (app identity + targets), `package.json` (scripts wired to `use-vibes`). Supports AI generation: `npm create vibe "kanban board with tags"` uses call-ai to generate App.jsx
-- **Dependencies**: L0 (package names). Unlocks: L2 live command
+### L1. Move `create-vibe` into monorepo
+Already published from its own repo. Move it in and do a fresh release **after `use-vibes` CLI is solid**.
+- **Tech**: Move `create-vibe` scaffolder into monorepo workspace. Update to generate `vibes.json` (app identity + targets) and `package.json` (scripts wired to `use-vibes`). AI generation via call-ai stays as-is
+- **Dependencies**: L2b, L3 (use-vibes CLI must be working first). Unlocks: `npm create vibe` with proper use-vibes integration
 
 ### L2a. CLI auth (`use-vibes login` / `use-vibes whoami`)
 Authenticate and identify the current user. Owner defaults to `whoami` result for all target resolution.
@@ -170,8 +170,8 @@ Authenticate and identify the current user. Owner defaults to `whoami` result fo
 
 ### L2b. CLI live (`use-vibes live <group>`)
 Watch files, push every save to a target group. `use-vibes dev` is sugar for `use-vibes live dev`. No localhost.
-- **Tech**: File watcher → debounce → lint → push to target via API → print group URL. Requires login. Keep last-good-version live on lint failure. Target resolved from vibes.json: bare group → `{whoami}/{app}/{group}`, fully-qualified used as-is. URL: `{owner}--{app}--{group}.vibecode.garden`
-- **Dependencies**: L1, L2a, ensureAppSlug API (working). Unlocks: L3 publish, the "deploy as save" experience
+- **Tech**: Native `fs/promises.watch` (Node 20+ recursive) → debounce → lint → push to target via API → print group URL. No chokidar. Requires login. Keep last-good-version live on lint failure. Target resolved from vibes.json: bare group → `{whoami}/{app}/{group}`, fully-qualified used as-is. URL: `{owner}--{app}--{group}.vibecode.garden`
+- **Dependencies**: L0, L2a, ensureAppSlug API (working). Unlocks: L3 publish, the "deploy as save" experience
 
 ### L3. CLI publish (`use-vibes publish <group>`)
 One-time push of current code to a target group.
