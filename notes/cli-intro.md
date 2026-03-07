@@ -7,14 +7,14 @@ Two npm packages. No localhost. Cloud-first. Agent-native.
 Any AI agent can go from zero to deployed app:
 
 ```bash
-use-vibes slices                           # read slice catalog (fireproof, d3, etc.)
-use-vibes system --slices fireproof,d3     # get assembled system prompt for local generation
-use-vibes edit "build a sales dashboard"   # Vibe code App.jsx via the cloud API
+use-vibes skills                           # read skill catalog (fireproof, d3, etc.)
+use-vibes system --skills fireproof,d3     # get assembled system prompt for local generation
+use-vibes generate my-app "build a sales dashboard"  # AI-generate my-app.jsx
 use-vibes dev                              # same as `use-vibes live dev` get HTTPS URL
 use-vibes publish demo                     # freeze snapshot for sharing
 ```
 
-The agent picks slices, gets the system prompt, generates code, and deploys — all from stdout/stdin. The URL is immediately shareable: paste it in a PR, Slack, or pass to another agent for verification.
+The agent picks skills, gets the system prompt, generates code, and deploys — all from stdout/stdin. The URL is immediately shareable: paste it in a PR, Slack, or pass to another agent for verification.
 
 ## Human Workflow
 
@@ -33,19 +33,20 @@ use-vibes invite work-lunch             # share a join link
 | Package | Install | Purpose |
 |---|---|---|
 | `create-vibe` | `npm create vibe` | One-shot scaffolder (with AI generation) |
-| `use-vibes` | `npm i -D use-vibes` | Library + CLI: `slices`, `system`, `edit`, `live`, `publish`, `invite`, `login`, `whoami` |
+| `use-vibes` | `npm i -D use-vibes` | Library + CLI: `skills`, `system`, `generate`, `edit`, `live`, `publish`, `invite`, `login`, `whoami` |
 
 ## Key Concepts
 
-- **Agent-native**: `slices → system → edit → live/publish` — designed for AI agents, not just humans
+- **Agent-native**: `skills → system → generate → live/publish` — designed for AI agents, not just humans
 - **Target** = `owner/app/group` (e.g., `jchris/coffee-order/work-lunch`)
 - **Owner** defaults to `use-vibes whoami` result
 - **App** comes from `vibes.json`
 - **Group** is the audience: `dev`, `work-lunch`, `family-reunion`, etc.
 - `use-vibes dev` is sugar for `use-vibes live dev`
-- `live` = continuous file-watch push. `edit` = AI rewrite. `publish` = one-time snapshot.
+- `live` = continuous file-watch push. `edit` = AI rewrite. `generate` = AI create new vibe. `publish` = one-time snapshot.
 - `edit` + `live` = full AI dev loop (edit writes file, live pushes it)
-- `slices` = list RAG slices for LLM decision-making. `system` = emit assembled system prompt.
+- `skills` = list RAG skills for LLM decision-making. `system` = emit assembled system prompt.
+- **One directory, many vibes**: each vibe gets its own `slug.jsx` file, all managed from one `vibes.json`
 - Every environment is a cloud deploy with HTTPS. No local server.
 
 ## Docs

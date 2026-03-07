@@ -89,7 +89,8 @@ The URL always serves whatever fsId the group currently points to. When `live` p
 - **L2a. CLI auth** — Authenticate and identify the current user
 - **L2b. CLI live** — Watch files, push every save to a target group
 - **L3. CLI publish** — One-time push of current code to a target group
-- **L3b. CLI slices + system** — List RAG slices; emit assembled system prompt to stdout
-- **L3c. CLI edit** — AI-edit a file from the terminal, stream diff to stdout
+- **L3b. CLI skills + system** — List RAG skills; emit assembled system prompt to stdout
+- **L3c. CLI generate** — AI-create a new vibe (`slug.jsx`) from the terminal
+- **L3d. CLI edit** — AI-edit an existing vibe from the terminal, stream diff to stdout
 - **L4. CLI invite** — Generate a join link for a target group from the terminal
 - **L5. Live reload for group URLs** — Group URLs auto-refresh when new code is pushed

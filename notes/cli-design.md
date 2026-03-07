@@ -63,8 +63,9 @@ use-vibes publish family-reunion  # one-time push to family-reunion group
 use-vibes invite work-lunch            # join link (collaborative default: writer + inviteWriter)
 use-vibes invite work-lunch --reader   # reader + inviteReader (viral read-only)
 use-vibes invite work-lunch --no-invite  # writer, no invite powers
-use-vibes edit "make the header dark"          # AI-edit App.jsx (default file)
-use-vibes edit Nav.jsx "add a search bar"      # AI-edit a specific file
+use-vibes generate my-app "build a sales dashboard"  # AI-generate my-app.jsx (new vibe)
+use-vibes edit my-app "make the header dark"         # AI-edit my-app.jsx
+use-vibes edit my-app.jsx "add a search bar"         # AI-edit by filename
 ```
 
 ---
@@ -165,30 +166,44 @@ use-vibes live work-lunch    # push live edits to work-lunch (risky — audience
 
 Using `live` on a non-dev group is a conscious choice: your audience sees every save. Useful for demos, pair programming, or when you want someone watching over your shoulder.
 
-### `use-vibes edit [file] "prompt"` — AI edit
+### `use-vibes generate <slug> "prompt"` — AI create new vibe
 
-Reads the file (defaults to `App.jsx`), sends it to call-ai with the prompt, writes the result back. Streams the diff to stdout so you see what changed.
+Creates a new vibe file (`<slug>.jsx`) from a natural language prompt. The slug controls the filename and becomes the vibe's identity in vibes.json.
 
 ```bash
-use-vibes edit "make the header dark"              # edits App.jsx
-use-vibes edit components/Nav.jsx "add search bar" # edits a specific file
+use-vibes generate my-app "build a sales dashboard"       # creates my-app.jsx
+use-vibes generate todo "a collaborative todo list"        # creates todo.jsx
 ```
 
-Uses the same system prompt from `@vibes.diy/prompts` as the browser editor. If `live` is running in another terminal, the saved file triggers the normal watch → lint → push cycle automatically.
+This enables **one directory, many vibes** — each `generate` call creates a new `slug.jsx` file, and vibes.json tracks all of them at the top level. Rapid-fire generation of lots of vibes from a single workspace.
+
+Uses the same system prompt from `@vibes.diy/prompts` as the browser editor. If `live` is running, the new file triggers the watch → lint → push cycle automatically.
+
+### `use-vibes edit <slug|file> "prompt"` — AI edit
+
+Reads an existing vibe file, sends it to call-ai with the prompt, writes the result back. Streams the diff to stdout so you see what changed.
+
+```bash
+use-vibes edit my-app "make the header dark"       # edits my-app.jsx (by slug)
+use-vibes edit my-app.jsx "add a search bar"       # edits by filename
+```
+
+If `live` is running in another terminal, the saved file triggers the normal watch → lint → push cycle automatically.
 
 Pairs naturally with `live` for a full AI dev loop from the terminal:
 ```bash
 # terminal 1: use-vibes dev
-# terminal 2: use-vibes edit "add a shopping cart sidebar"
-#             use-vibes edit "make cart totals update in real time"
+# terminal 2: use-vibes generate todo "a collaborative todo list"
+#             use-vibes edit todo "add drag-and-drop reordering"
+#             use-vibes edit todo "make it real-time collaborative"
 ```
 
-### `use-vibes slices` — List available slices
+### `use-vibes skills` — List available skills
 
-Prints the slice catalog: name + description for each available slice. The descriptions are the same ones used by the RAG decision model in the browser — designed to help an LLM decide which slices to request.
+Prints the skill catalog: name + description for each available skill. The descriptions are the same ones used by the RAG decision model in the browser — designed to help an LLM decide which skills to request.
 
 ```bash
-$ use-vibes slices
+$ use-vibes skills
 fireproof   Local-first database with encrypted live sync
 callai      Easy API for LLM requests with streaming support
 image-gen   Generate and edit images
@@ -197,19 +212,19 @@ d3          D3.js data visualization library
 three-js    Three.js 3D graphics library
 ```
 
-An agent can call `use-vibes slices`, read the descriptions, decide which ones are relevant to its task, then call `use-vibes system --slices fireproof,d3` to get the full system prompt. This is the same decision loop the browser does automatically via GPT-4o, but decomposed for CLI agents to control.
+An agent can call `use-vibes skills`, read the descriptions, decide which ones are relevant to its task, then call `use-vibes system --skills fireproof,d3` to get the full system prompt. This is the same decision loop the browser does automatically via GPT-4o, but decomposed for CLI agents to control.
 
 ### `use-vibes system` — Emit system prompt
 
-Echoes the full assembled system prompt to stdout for a given set of slices. This is the bridge for CLI users who bring their own AI tokens — they need the system prompt to feed to their own model calls.
+Echoes the full assembled system prompt to stdout for a given set of skills. This is the bridge for CLI users who bring their own AI tokens — they need the system prompt to feed to their own model calls.
 
 ```bash
-use-vibes system                                    # default slices (fireproof, callai)
-use-vibes system --slices fireproof,d3              # specific slices
-use-vibes system --slices fireproof,three-js,callai # multiple slices
+use-vibes system                                    # default skills (fireproof, callai)
+use-vibes system --skills fireproof,d3              # specific skills
+use-vibes system --skills fireproof,three-js,callai # multiple skills
 ```
 
-Available slices (from `@vibes.diy/prompts`):
+Available skills (from `@vibes.diy/prompts`):
 
 | Slice | What it adds |
 |---|---|
@@ -220,19 +235,19 @@ Available slices (from `@vibes.diy/prompts`):
 | `d3` | D3.js data visualization |
 | `three-js` | Three.js 3D graphics |
 
-Under the hood: loads the `.txt` documentation for each selected slice, wraps them in `<label-docs>` tags, and assembles the full system prompt via `makeBaseSystemPrompt()`. The output is piped directly to stdout so it can be composed:
+Under the hood: loads the `.txt` documentation for each selected skill, wraps them in `<label-docs>` tags, and assembles the full system prompt via `makeBaseSystemPrompt()`. The output is piped directly to stdout so it can be composed:
 
 ```bash
 # copy to clipboard for pasting into any AI tool
-use-vibes system --slices fireproof,d3 | pbcopy
+use-vibes system --skills fireproof,d3 | pbcopy
 
 # save to file for use with any model client
-use-vibes system --slices fireproof > .system-prompt.txt
+use-vibes system --skills fireproof > .system-prompt.txt
 ```
 
 **Note:** `call-ai` does not currently accept a system prompt file — `--src` means "read a saved stream from file (skip API call)." To use the system prompt with call-ai, pipe it or load it in your own wrapper. Adding a `--system` flag to call-ai is a natural future addition.
 
-In the browser, vibes.diy owns the tokens and does RAG selection automatically (via a GPT-4o call that picks slices based on the user's prompt). In CLI land, the user picks slices explicitly because they're paying for their own tokens.
+In the browser, vibes.diy owns the tokens and does RAG selection automatically (via a GPT-4o call that picks skills based on the user's prompt). In CLI land, the user picks skills explicitly because they're paying for their own tokens.
 
 ### `use-vibes publish [group]` — One-time push
 
@@ -253,7 +268,7 @@ The help text is designed to be read by both humans and agents. The agent workfl
 ```
 use-vibes — build and deploy React + Fireproof apps
 
-  Agent workflow:  slices → system → edit → live/publish
+  Agent workflow:  skills → system → generate → live/publish
   Human workflow:  login → dev → edit → publish
 
 Auth:
@@ -263,11 +278,12 @@ Auth:
 Develop:
   dev                        Live-push to dev group (sugar for: live dev)
   live <group>               Watch files, push every save to target group
-  edit [file] "prompt"       AI-edit a file (default: App.jsx), stream diff
+  generate <slug> "prompt"   AI-create a new vibe (slug.jsx)
+  edit <slug|file> "prompt"  AI-edit an existing vibe, stream diff
 
 Prompts:
-  slices                     List available RAG slices with descriptions
-  system [--slices ...]      Emit assembled system prompt to stdout
+  skills                     List available RAG skills with descriptions
+  system [--skills ...]      Emit assembled system prompt to stdout
 
 Deploy:
   publish [group]            One-time push to target group (default: 'default')
@@ -280,9 +296,9 @@ Targets:
 
 Example — agent building an app from scratch:
 
-  $ use-vibes slices                           # read slice catalog
-  $ use-vibes system --slices fireproof,d3     # get system prompt
-  $ use-vibes edit "build a sales dashboard"   # AI-generate App.jsx
+  $ use-vibes skills                           # read skill catalog
+  $ use-vibes system --skills fireproof,d3     # get system prompt
+  $ use-vibes generate dashboard "sales dashboard"  # AI-create dashboard.jsx
   $ use-vibes dev                              # push to dev, get URL
   $ use-vibes publish demo                     # freeze for sharing
 ```
@@ -346,9 +362,10 @@ An agent in any framework (Claude Code, Agent SDK, OpenAI Agents, LangGraph) can
 | `use-vibes whoami` | Print the logged-in user (used as default owner) |
 | `use-vibes dev` | Sugar for `use-vibes live dev` |
 | `use-vibes live <group>` | Watch files, push every save to target group |
-| `use-vibes edit [file] "prompt"` | AI-edit a file (default: App.jsx), stream diff to stdout |
-| `use-vibes slices` | List available slices with descriptions (for LLM decision-making) |
-| `use-vibes system [--slices ...]` | Emit assembled system prompt to stdout for given slices |
+| `use-vibes generate <slug> "prompt"` | AI-create a new vibe (`slug.jsx`), register in vibes.json |
+| `use-vibes edit <slug\|file> "prompt"` | AI-edit an existing vibe, stream diff to stdout |
+| `use-vibes skills` | List available skills with descriptions (for LLM decision-making) |
+| `use-vibes system [--skills ...]` | Emit assembled system prompt to stdout for given skills |
 | `use-vibes publish [group]` | One-time push of current code to target group. No arg = `default` group (shortest URL) |
 | `use-vibes invite <group> [flags]` | Generate a join link. Default: writer + inviteWriter. Flags: `--reader`, `--no-invite`, `--invite-reader`, `--invite-writer`. See [mvp-invites.md](mvp-invites.md) for full flag semantics |
 

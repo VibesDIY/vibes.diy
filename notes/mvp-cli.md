@@ -10,7 +10,7 @@ Bootstrap the `use-vibes` CLI from zero to a working `dev` → `publish` loop. F
 - **No arg parsing library**: `process.argv` + a tiny router, each command parses its own flags
 - **No sync I/O**: `fs/promises` everywhere, including config and credential loading
 - **No localhost**: every environment is a cloud deploy with HTTPS
-- **Stdout is the API**: commands that produce data (`slices`, `system`, `whoami`) write to stdout for piping
+- **Stdout is the API**: commands that produce data (`skills`, `system`, `whoami`) write to stdout for piping
 
 ---
 
@@ -43,8 +43,6 @@ Run: use-vibes help
 - Router: `const [cmd, ...args] = process.argv.slice(2)` → lookup in commands map → call handler → fallback to help
 - Each command is `async (args: string[]) => Promise<void>`
 - Exit codes: 0 for success, 1 for errors
-
-now PAUSE, review and ask for advice before committing
 
 ---
 
@@ -176,38 +174,66 @@ Published to work-lunch → https://coffee-order-work-lunch--jchris.vibecode.gar
 
 ---
 
-## Step 7: `slices` and `system`
+## Step 7: `skills` and `system`
 
-**Goal:** Agents and humans can read the slice catalog and get assembled system prompts.
+**Goal:** Agents and humans can read the skill catalog and get assembled system prompts.
 
 **What to build:**
-- `slices` command — list available RAG slices with name + description
-- `system` command — assemble and print the full system prompt for selected slices
+- `skills` command — list available RAG skills with name + description
+- `system` command — assemble and print the full system prompt for selected skills
 
 **Interface:**
 ```
-$ use-vibes slices
+$ use-vibes skills
 fireproof   Local-first database with encrypted live sync
 callai      Easy API for LLM requests with streaming support
 d3          D3.js data visualization library
 ...
 
-$ use-vibes system --slices fireproof,d3
+$ use-vibes system --skills fireproof,d3
 [full system prompt to stdout]
 ```
 
 **Logic:**
-- `slices`: read the config catalog from `@vibes.diy/prompts`, print name + description for each
-- `system`: parse `--slices` flag, load `.txt` docs for each slice, assemble via the prompt builder, write to stdout
+- `skills`: read the config catalog from `@vibes.diy/prompts`, print name + description for each
+- `system`: parse `--skills` flag, load `.txt` docs for each skill, assemble via the prompt builder, write to stdout
 - Both are pure stdout — no side effects, no auth required
-- Composable: `use-vibes system --slices fireproof | pbcopy`
+- Composable: `use-vibes system --skills fireproof | pbcopy`
+
+---
+
+## Step 8: `generate` and `edit`
+
+**Goal:** Agents and humans can create and iterate on vibes from the terminal.
+
+**What to build:**
+- `generate` command — AI-create a new vibe file (`slug.jsx`) from a prompt
+- `edit` command — AI-edit an existing vibe by slug or filename
+
+**Interface:**
+```
+$ use-vibes generate todo "a collaborative todo list"
+Created todo.jsx
+
+$ use-vibes edit todo "add drag-and-drop reordering"
+Edited todo.jsx
+[streamed diff to stdout]
+
+$ use-vibes edit todo.jsx "add a search bar"
+Edited todo.jsx
+```
+
+**Logic:**
+- `generate`: slug → `slug.jsx` filename. Fail if file already exists. Call call-ai with system prompt (from `use-vibes system` internally) + user prompt. Write result to `slug.jsx`. Register in vibes.json
+- `edit`: resolve slug to `slug.jsx` (or use filename directly). Read file, send to call-ai with prompt, write result back, stream diff to stdout
+- If `live` is running in another terminal, saved files trigger the normal watch → lint → push cycle
+- Enables one directory, many vibes — rapid-fire generation from a single workspace
 
 ---
 
 ## What comes after
 
-Once steps 1-7 are solid:
-- **`edit`** — AI-edit files using call-ai + system prompt (pairs with `live` for full dev loop)
+Once steps 1-8 are solid:
 - **`invite`** — generate join links (needs API handlers from web MVP)
 - **`create-vibe`** — move scaffolder into monorepo, wire to `use-vibes`
 - **Live reload** — group URLs auto-refresh on new pushes (SSE or version polling)

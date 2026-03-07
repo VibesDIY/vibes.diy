@@ -58,8 +58,9 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
   dev,
   live,
   publish,
+  generate,
   edit,
-  slices,
+  skills,
   system,
   invite,
   help,
@@ -69,7 +70,7 @@ const handler = commands[cmd] ?? help;
 await handler(args);
 ```
 
-No parsing library. Each command destructures its own args. `--slices fireproof,d3` is just `args.find(a => a.startsWith('--slices='))?.split('=')[1]` or a 10-line `parseFlags()` helper.
+No parsing library. Each command destructures its own args. `--skills fireproof,d3` is just `args.find(a => a.startsWith('--skills='))?.split('=')[1]` or a 10-line `parseFlags()` helper.
 
 If we outgrow this, [citty](https://github.com/unjs/citty) is a modern alternative — tree-shakeable, async-first, no decorators.
 
@@ -143,8 +144,9 @@ use-vibes/pkg/
 │   ├── dev.ts          # live dev — extension point (calls into live)
 │   ├── live.ts         # file watch → push
 │   ├── publish.ts      # one-time push
-│   ├── edit.ts         # AI-edit via call-ai
-│   ├── slices.ts       # list RAG slice catalog
+│   ├── generate.ts     # AI-create new vibe (slug.jsx)
+│   ├── edit.ts         # AI-edit existing vibe via call-ai
+│   ├── skills.ts       # list RAG skill catalog
 │   ├── system.ts       # emit assembled system prompt
 │   ├── invite.ts       # generate join link
 │   └── help.ts         # help text
@@ -160,7 +162,7 @@ use-vibes/pkg/
 1. **zx for shell commands** — already in the monorepo, cleaner than `child_process`
 2. **Streaming output** — `edit` command should stream diffs like quick-silver streams results
 3. **`fs/promises` everywhere** — 10 of 13 fireproof commands prove this works fine
-4. **Stdout as API** — `system` and `slices` commands write to stdout for piping, like `well-known-cmd.ts`
+4. **Stdout as API** — `system` and `skills` commands write to stdout for piping, like `well-known-cmd.ts`
 
 ### What we skip
 

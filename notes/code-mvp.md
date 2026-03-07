@@ -156,7 +156,7 @@ See [cli-design.md](cli-design.md) for full architecture.
 ### L0. Bootstrap `use-vibes` CLI
 Add CLI to the existing `use-vibes` workspace package.
 - **Tech**: Add `bin` entry pointing to `cli.ts` with tsx shebang — build-free, no cmd-ts, no fs.\*Sync (see [cli-architecture.md](cli-architecture.md)). Create `commands/` and `lib/` directories per architecture spec
-- **Dependencies**: None. Unlocks: L2a auth, L3b slices/system
+- **Dependencies**: None. Unlocks: L2a auth, L3b skills/system
 
 ### L1. Move `create-vibe` into monorepo
 Already published from its own repo. Move it in and do a fresh release **after `use-vibes` CLI is solid**.
@@ -178,15 +178,20 @@ One-time push of current code to a target group. No arg = `default` group (short
 - **Tech**: Resolve target from vibes.json, call `ensureAppSlug` with `mode: 'production'`, pin release tag. `releaseSeq` in DB handles versioning. Can override app: `use-vibes publish jchris/soup-order/work-lunch`
 - **Dependencies**: L2b. Unlocks: production deployments from CLI
 
-### L3b. CLI slices + system prompt (`use-vibes slices` / `use-vibes system`)
-Two commands: `slices` lists the catalog with descriptions (for LLM decision-making), `system` emits the full assembled prompt for selected slices.
-- **Tech**: `use-vibes slices` prints name + description from `allConfigs` in `@vibes.diy/prompts`. `use-vibes system --slices fireproof,d3` loads `.txt` docs, assembles via `makeBaseSystemPrompt()`, prints to stdout. Composable: agent reads `slices`, picks relevant ones, calls `system`
-- **Dependencies**: L0, `@vibes.diy/prompts` package. Unlocks: L3c edit (needs system prompt), BYO-token workflows
+### L3b. CLI skills + system prompt (`use-vibes skills` / `use-vibes system`)
+Two commands: `skills` lists the catalog with descriptions (for LLM decision-making), `system` emits the full assembled prompt for selected skills.
+- **Tech**: `use-vibes skills` prints name + description from `allConfigs` in `@vibes.diy/prompts`. `use-vibes system --skills fireproof,d3` loads `.txt` docs, assembles via `makeBaseSystemPrompt()`, prints to stdout. Composable: agent reads `skills`, picks relevant ones, calls `system`
+- **Dependencies**: L0, `@vibes.diy/prompts` package. Unlocks: L3c generate/edit (needs system prompt), BYO-token workflows
 
-### L3c. CLI edit (`use-vibes edit [file] "prompt"`)
-AI-edit a file from the terminal. Reads file (default: App.jsx), sends to call-ai with prompt, writes result back, streams diff to stdout.
-- **Tech**: Uses call-ai streaming + system prompt from `use-vibes system` internally. If `live` is running, saved file triggers watch → lint → push automatically. Composable: `edit` + `live` = full AI dev loop from terminal
-- **Dependencies**: L3b (system prompt), call-ai. Unlocks: agent-driven development from CLI
+### L3c. CLI generate (`use-vibes generate <slug> "prompt"`)
+AI-create a new vibe from the terminal. Creates `slug.jsx` from a natural language prompt. The slug controls the filename and becomes the vibe's identity in vibes.json.
+- **Tech**: Uses call-ai streaming + system prompt from `use-vibes system` internally. Slug must not already exist as a file. Registers the new vibe in vibes.json. If `live` is running, the new file triggers watch → lint → push automatically. Enables one directory, many vibes — rapid-fire generation from a single workspace
+- **Dependencies**: L3b (system prompt), call-ai. Unlocks: L3d edit, agent-driven development from CLI
+
+### L3d. CLI edit (`use-vibes edit <slug|file> "prompt"`)
+AI-edit an existing vibe from the terminal. Reads the file by slug (resolves to `slug.jsx`) or filename, sends to call-ai with prompt, writes result back, streams diff to stdout.
+- **Tech**: Uses call-ai streaming + system prompt from `use-vibes system` internally. If `live` is running, saved file triggers watch → lint → push automatically. Composable: `generate` + `edit` + `live` = full AI dev loop from terminal
+- **Dependencies**: L3b (system prompt), call-ai. Unlocks: iterative AI development from CLI
 
 ### L4. CLI invite (`use-vibes invite <group> [flags]`)
 Generate a join link for a target group from the terminal.
