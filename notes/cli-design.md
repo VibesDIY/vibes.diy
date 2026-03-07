@@ -60,7 +60,9 @@ use-vibes whoami                  # print current user (e.g., "jchris")
 use-vibes dev                     # live-push to dev group (sugar for: use-vibes live dev)
 use-vibes live work-lunch         # live-push to work-lunch group
 use-vibes publish family-reunion  # one-time push to family-reunion group
-use-vibes invite work-lunch       # generate join link for a group
+use-vibes invite work-lunch            # join link (collaborative default: writer + inviteWriter)
+use-vibes invite work-lunch --reader   # reader + inviteReader (viral read-only)
+use-vibes invite work-lunch --no-invite  # writer, no invite powers
 use-vibes edit "make the header dark"          # AI-edit App.jsx (default file)
 use-vibes edit Nav.jsx "add a search bar"      # AI-edit a specific file
 ```
@@ -111,7 +113,9 @@ The project's `vibes.json` stores the app name and known targets:
 }
 ```
 
-Each target tracks an `fs` array of `{ id, ts }` entries — the fsIds it has been deployed with.
+Each target tracks an `fs` array of `{ id, ts }` entries — the fsIds it has been deployed with. Targets can also carry an `invite` object — the default permissions granted by invite links for that group.
+
+- **`invite`** (optional) overrides the default permissions for `use-vibes invite <group>`. When omitted, the default is collaborative: `access: "write"`, `inviteWriter: true`. The owner can add an explicit `invite` object to lock down a group (e.g., `{ "access": "read", "inviteReader": true }`), or override per-invite on the command line (`use-vibes invite work-lunch --reader`).
 
 - **`publish`** appends to `fs` history (newest first). Full history of what was pushed to this group.
 - **`live`** replaces its single `fs` entry on each push — only the current state matters. Old fsIds are discarded as new ones arrive during the session.
@@ -124,10 +128,13 @@ Each target tracks an `fs` array of `{ id, ts }` entries — the fsIds it has be
 
 The CLI resolves targets by counting slashes:
 
-| You type | Slashes | Resolves to |
-|---|---|---|
-| `use-vibes publish work-lunch` | 0 | `{whoami}/{app}/work-lunch` → `jchris/coffee-order/work-lunch` |
-| `use-vibes publish jchris/soup-order/work-lunch` | 2 | `jchris/soup-order/work-lunch` (fully qualified, used as-is) |
+| You type | Resolves to |
+|---|---|
+| `use-vibes publish` | `{whoami}/{app}/default` — the `default` group (no group segment in URL) |
+| `use-vibes publish work-lunch` | `{whoami}/{app}/work-lunch` → `jchris/coffee-order/work-lunch` |
+| `use-vibes publish jchris/soup-order/work-lunch` | `jchris/soup-order/work-lunch` (fully qualified, used as-is) |
+
+The `default` group is special only in URL handling: browsing to a target without a group segment serves the `default` group. This gives the shortest shareable URL (e.g., `coffee-order--jchris.vibecode.garden` with no group in the path). All other groups require their name in the URL.
 
 ### Permissions
 
@@ -216,21 +223,23 @@ Available slices (from `@vibes.diy/prompts`):
 Under the hood: loads the `.txt` documentation for each selected slice, wraps them in `<label-docs>` tags, and assembles the full system prompt via `makeBaseSystemPrompt()`. The output is piped directly to stdout so it can be composed:
 
 ```bash
-# use with any AI tool
+# copy to clipboard for pasting into any AI tool
 use-vibes system --slices fireproof,d3 | pbcopy
-use-vibes system --slices fireproof > .system-prompt.txt
 
-# pipe to your own model call (requires call-ai --src flag for system prompt file)
-use-vibes system --slices fireproof > .system-prompt.txt && call-ai --src .system-prompt.txt --prompt "build a todo app"
+# save to file for use with any model client
+use-vibes system --slices fireproof > .system-prompt.txt
 ```
+
+**Note:** `call-ai` does not currently accept a system prompt file — `--src` means "read a saved stream from file (skip API call)." To use the system prompt with call-ai, pipe it or load it in your own wrapper. Adding a `--system` flag to call-ai is a natural future addition.
 
 In the browser, vibes.diy owns the tokens and does RAG selection automatically (via a GPT-4o call that picks slices based on the user's prompt). In CLI land, the user picks slices explicitly because they're paying for their own tokens.
 
-### `use-vibes publish <group>` — One-time push
+### `use-vibes publish [group]` — One-time push
 
 Pushes current code to the target group once and exits. The group gets a stable snapshot.
 
 ```bash
+use-vibes publish                  # deploy to 'default' group (shortest URL, no group segment)
 use-vibes publish family-reunion   # deploy current code to family-reunion
 use-vibes publish dev              # also works — one-time push to dev
 ```
@@ -261,8 +270,9 @@ Prompts:
   system [--slices ...]      Emit assembled system prompt to stdout
 
 Deploy:
-  publish <group>            One-time push of current code to target group
-  invite <group>             Generate a join link for a group
+  publish [group]            One-time push to target group (default: 'default')
+  invite <group> [flags]     Generate a join link (default: writer + inviteWriter)
+                             --reader, --no-invite, --invite-reader, --invite-writer
 
 Targets:
   Bare name:      work-lunch             → {whoami}/{app}/work-lunch
@@ -293,12 +303,14 @@ There is no local dev server. Every environment is a cloud deploy with HTTPS.
 
 ### URLs
 
-Target URLs encode the full target path:
+Target URLs use `appSlug--userSlug` (one double-dash):
 
 ```
-https://jchris--coffee-order--work-lunch.vibecode.garden
-       └owner─┘ └───app────┘ └─group──┘
+https://coffee-order-work-lunch--jchris.vibecode.garden
+       └───────appSlug──────────┘ └user┘
 ```
+
+The CLI's three-part target (`owner/app/group`) resolves to `appSlug--userSlug` at the API boundary — `appSlug` absorbs both app identity and group name. The fsId lives in the path: `/~zFJwy...~/`.
 
 ---
 
@@ -337,8 +349,8 @@ An agent in any framework (Claude Code, Agent SDK, OpenAI Agents, LangGraph) can
 | `use-vibes edit [file] "prompt"` | AI-edit a file (default: App.jsx), stream diff to stdout |
 | `use-vibes slices` | List available slices with descriptions (for LLM decision-making) |
 | `use-vibes system [--slices ...]` | Emit assembled system prompt to stdout for given slices |
-| `use-vibes publish <group>` | One-time push of current code to target group |
-| `use-vibes invite <group>` | Generate a join link for a group |
+| `use-vibes publish [group]` | One-time push of current code to target group. No arg = `default` group (shortest URL) |
+| `use-vibes invite <group> [flags]` | Generate a join link. Default: writer + inviteWriter. Flags: `--reader`, `--no-invite`, `--invite-reader`, `--invite-writer`. See [mvp-invites.md](mvp-invites.md) for full flag semantics |
 
 ---
 

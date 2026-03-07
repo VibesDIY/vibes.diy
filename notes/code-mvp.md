@@ -170,11 +170,11 @@ Authenticate and identify the current user. Owner defaults to `whoami` result fo
 
 ### L2b. CLI live (`use-vibes live <group>`)
 Watch files, push every save to a target group. `use-vibes dev` is sugar for `use-vibes live dev`. No localhost.
-- **Tech**: Native `fs/promises.watch` (Node 20+ recursive) → debounce → lint → push to target via API → print group URL. No chokidar. Requires login. Keep last-good-version live on lint failure. Target resolved from vibes.json: bare group → `{whoami}/{app}/{group}`, fully-qualified used as-is. URL: `{owner}--{app}--{group}.vibecode.garden`
+- **Tech**: Native `fs/promises.watch` (Node 20+ recursive) → debounce → lint → push to target via API → print group URL. No chokidar. Requires login. Keep last-good-version live on lint failure. Target resolved from vibes.json: bare group → `{whoami}/{app}/{group}`, fully-qualified used as-is. URL: `{appSlug}--{userSlug}.vibecode.garden` (appSlug absorbs app+group)
 - **Dependencies**: L0, L2a, ensureAppSlug API (working). Unlocks: L3 publish, the "deploy as save" experience
 
-### L3. CLI publish (`use-vibes publish <group>`)
-One-time push of current code to a target group.
+### L3. CLI publish (`use-vibes publish [group]`)
+One-time push of current code to a target group. No arg = `default` group (shortest URL, no group segment).
 - **Tech**: Resolve target from vibes.json, call `ensureAppSlug` with `mode: 'production'`, pin release tag. `releaseSeq` in DB handles versioning. Can override app: `use-vibes publish jchris/soup-order/work-lunch`
 - **Dependencies**: L2b. Unlocks: production deployments from CLI
 
@@ -188,9 +188,9 @@ AI-edit a file from the terminal. Reads file (default: App.jsx), sends to call-a
 - **Tech**: Uses call-ai streaming + system prompt from `use-vibes system` internally. If `live` is running, saved file triggers watch → lint → push automatically. Composable: `edit` + `live` = full AI dev loop from terminal
 - **Dependencies**: L3b (system prompt), call-ai. Unlocks: agent-driven development from CLI
 
-### L4. CLI invite (`use-vibes invite <group>`)
+### L4. CLI invite (`use-vibes invite <group> [flags]`)
 Generate a join link for a target group from the terminal.
-- **Tech**: Call `createInviteToken` API with `style: 'link'`, print URL to stdout. Full target path enables cross-user permissions (e.g., joe can deploy to `jchris/foo-bar/amaze` if granted)
+- **Tech**: Call `createInviteToken` API with `style: 'link'`, print URL to stdout. Default permissions come from the target's `invite` field in vibes.json, falling back to collaborative default (`access: "write"`, `inviteWriter: true`). Flags: `--reader`, `--no-invite`, `--invite-reader`, `--invite-writer` (see [mvp-invites.md](mvp-invites.md)). Full target path enables cross-user permissions (e.g., joe can deploy to `jchris/foo-bar/amaze` if granted)
 - **Dependencies**: A1 (invite handler). Unlocks: sharing from CLI without opening browser
 
 ### L5. Live reload for group URLs
