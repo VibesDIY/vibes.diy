@@ -9,6 +9,9 @@
   "scripts": {
     "build": "core-cli tsc",
     "test": "vitest run",
+    "test:cli": "deno task --config ./deno.json test-cli",
+    "check:cli": "deno task --config ./deno.json check-cli",
+    "run:cli:deno": "deno task --config ./deno.json run-cli",
     "pack": "core-cli build -x '^' --doPack",
     "publish": "core-cli build -x '^'"
   },

@@ -2,31 +2,35 @@
 
 ## Design decisions
 
-**cmd-ts** for subcommand routing. Initially planned to use a manual `process.argv` router, but Meno's PR review (see [cli-mvp-code-review.md](cli-mvp-code-review.md)) pushed toward cmd-ts — it handles unknown commands, option parsing, `--help`/`-h`, and type-safe args. The friend-of-Meno escape hatch: if features are missing, ask.
+**cmd-ts** for subcommand routing. Initially planned to use a manual `process.argv` router, but Meno's PR review (see [cli-mvp-code-review.md](cli-mvp-code-review.md)) pushed toward cmd-ts.
 
-**Build-free**: `cli.js` spawns `node --import tsx cli.ts` — no compile step. Edit `.ts`, run it.
+**Deno-first runtime**: `main.deno.ts` is now the primary entrypoint in development and CI. Node keeps a compatibility wrapper for `npx use-vibes`.
 
-**No `fs.*Sync`**: `fs/promises` everywhere, including config and credential loading.
+**Runtime-neutral orchestration**: `run-cli.ts` owns command wiring and dispatch. Host-specific entrypoints only provide stdout/stderr and exit-code hooks.
 
-**cement Result pattern**: All commands return `Result<void>` from `@adviser/cement`. Errors propagate as values, not exceptions. `emitResult()` in `cli.ts` maps `Result.Err` to stderr + exitCode 1.
+**No `fs.*Sync`**: `fs/promises` everywhere for filesystem work.
 
-**Injectable `CliOutput`**: Commands accept a `CliOutput` parameter (`stdout`/`stderr` functions) with a process-based default. Tests capture output without spawning processes. Enables future browser execution.
+**cement Result pattern**: All commands return `Result<void>` from `@adviser/cement`. Errors propagate as values, not exceptions.
 
-**`loadAsset` for text files**: Help text lives in `help.txt`, loaded at runtime via cement `loadAsset` with `import.meta.url` as basePath. Same pattern as `prompts/pkg/llms/*.txt`.
+**Injectable `CliOutput`**: Commands accept a `CliOutput` parameter (`stdout`/`stderr` functions), so tests can capture output without process forking.
+
+**`loadAsset` for text files**: Help text lives in `help.txt`, loaded via cement `loadAsset` with `import.meta.url` as base path.
 
 ---
 
-## Entry point: two-file bootstrap
+## Entry points
 
 ```
-cli.js   ← npm bin entry (plain JS, Node builtins only)
-  └─ spawns: node --import tsx cli.ts
-cli.ts   ← cmd-ts subcommands, Result pattern, all logic
+main.deno.ts  ← Deno-first CLI entrypoint
+  └─ calls runCli(Deno.args, runtime)
+
+cli.ts        ← Node compatibility entrypoint
+  └─ calls runCli(process.argv.slice(2), runtime)
+
+run-cli.ts    ← shared cmd-ts app and dispatch logic
 ```
 
-**Why two files:** npm bin linking runs files with `node <path>`, which can't execute `.ts` without a loader. `cli.js` resolves tsx from the package's own node_modules via `createRequire`, then spawns `cli.ts` with the tsx loader registered. One extra process spawn at startup is the cost of staying build-free while working everywhere npm does.
-
-`cli.js` uses only Node builtins (`node:child_process`, `node:path`, `node:module`). zx and cement are deferred for this file until deno is the primary runtime (at which point cli.js goes away entirely).
+`cli.js` remains the npm bin wrapper during transition. It exists only to execute TypeScript in Node environments that use `npx use-vibes`.
 
 ---
 
@@ -34,47 +38,38 @@ cli.ts   ← cmd-ts subcommands, Result pattern, all logic
 
 ```
 use-vibes/pkg/
-├── cli.js              # JS bootstrap — resolves tsx, spawns cli.ts
-├── cli.ts              # cmd-ts subcommands, emitResult, no-args→help
+├── main.deno.ts           # Deno entrypoint
+├── cli.js                 # npm bin wrapper (transition)
+├── cli.ts                 # Node entrypoint
+├── run-cli.ts             # shared runtime-neutral orchestrator
+├── deno.json              # Deno tasks + local import mappings
 ├── commands/
-│   ├── cli-output.ts   # CliOutput interface + defaultCliOutput
-│   ├── help.ts         # loads help.txt via loadAsset
-│   ├── help.txt        # extracted help text
-│   ├── whoami.ts       # returns Result.Err (auth not yet implemented)
-│   ├── skills.ts       # lists RAG skill catalog via @vibes.diy/prompts
-│   ├── system.ts       # assembles system prompt for selected skills
-│   └── not-implemented.ts  # factory for stub commands
-└── index.ts            # library exports (existing)
+│   ├── cli-output.ts      # CliOutput interface + Node default output
+│   ├── cli-output-deno.ts # Deno stdout/stderr implementation
+│   ├── help.ts
+│   ├── help.txt
+│   ├── whoami.ts
+│   ├── skills.ts
+│   ├── system.ts
+│   └── not-implemented.ts
+└── index.ts               # library exports
 ```
-
----
-
-## Patterns
-
-### cmd-ts usage
-
-- `subcommands` for top-level routing (rejects unknown commands natively)
-- `command` + `option` for each subcommand
-- `restPositionals` on stub commands so they accept positional args (e.g., `generate foo bar` → "not yet implemented" instead of parse error)
-- `defaultValue: () => ""` for optional `--skills` flag; empty string = "not provided"
-- No-args and `-h`/`--help` detected before `run(app, ...)` to show help
-
-### Fireproof CLI patterns worth adopting
-
-1. **zx for shell commands** — already in the monorepo, cleaner than `child_process` (used in cli.ts commands, not cli.js bootstrap)
-2. **Streaming output** — `edit` command should stream diffs
-3. **`fs/promises` everywhere** — no sync I/O
-4. **Stdout as API** — `system` and `skills` write to stdout for piping
 
 ---
 
 ## Testing
 
-**Unit tests** (14): Direct import of command functions with `captureOutput()` — no process spawning, no pnpm store scanning, no `fs.*Sync`.
+CLI tests are now `deno test` based:
 
-**Smoke tests** (8): Spawn `cli.js` to verify the full bootstrap pipeline (cli.js → tsx → cli.ts → cmd-ts → command → stdout/stderr).
+- **Unit tests**: direct import of command functions with captured output
+- **Smoke tests**: spawn `deno run main.deno.ts` and assert exit codes/stdout/stderr
 
-Both run via `pnpm exec vitest run --project use-vibes-cli`.
+Run with:
+
+```bash
+deno task --config use-vibes/pkg/deno.json check-cli
+deno task --config use-vibes/pkg/deno.json test-cli
+```
 
 ---
 
@@ -82,5 +77,5 @@ Both run via `pnpm exec vitest run --project use-vibes-cli`.
 
 - `cmd-ts` — subcommand routing, option parsing, help generation
 - `@adviser/cement` — `Result`, `exception2Result`, `loadAsset`
-- `@vibes.diy/prompts` — skill catalog, system prompt assembly
-- `tsx` — TypeScript execution without build step
+- `@vibes.diy/prompts` — skill catalog and system prompt assembly
+- `deno` — primary CLI runtime and test runner

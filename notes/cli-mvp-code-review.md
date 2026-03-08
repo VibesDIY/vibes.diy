@@ -47,7 +47,7 @@
 ### `use-vibes/tests/cli/cli.test.ts:31` — injectable stdout avoids forking
 > if you have a injectable stdout you don't need to fork a new process in tests
 
-### `use-vibes/tests/cli/vitest.config.ts:5` — ESM
+### `use-vibes/tests/cli/cli.test.ts:1` — ESM
 > esm !
 
 ### Meno's review summary

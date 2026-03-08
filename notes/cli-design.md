@@ -379,19 +379,21 @@ npm registry
 │   └── scaffolds project with use-vibes as devDependency
 └── use-vibes          → library (import) + CLI (bin)
     ├── import: React hooks, useFireproof, etc.
-    └── bin: cli.js → spawns cli.ts via tsx loader
+    └── bin: cli.js → Node compatibility wrapper; Deno entrypoint is main.deno.ts
 
 monorepo (existing)
 ├── use-vibes/pkg      → library + CLI entry points
-│   ├── cli.js         → JS bootstrap (resolves tsx, spawns cli.ts)
-│   ├── cli.ts         → cmd-ts subcommands, Result pattern
+│   ├── main.deno.ts   → Deno-first CLI entrypoint
+│   ├── run-cli.ts     → shared cmd-ts routing + Result handling
+│   ├── cli.ts         → Node compatibility entrypoint
+│   ├── cli.js         → npm bin wrapper (transition path)
 │   ├── commands/      → one file per command + cli-output.ts
 │   └── lib/           → config, api-client, auth (future)
 └── (create-vibe)      → move from own repo into monorepo, fresh release (after use-vibes CLI is solid)
 ```
 
 Architecture (see [cli-architecture.md](cli-architecture.md)):
-- **Build-free**: cli.js bootstraps tsx, which runs cli.ts directly
+- **Deno-first**: main.deno.ts is the primary CLI runtime
 - **cmd-ts**: subcommand routing, option parsing, help generation
 - **cement Result pattern**: all commands return `Result<void>`
 - **Injectable CliOutput**: stdout/stderr functions for testability

@@ -15,8 +15,9 @@
   "scripts": {
     "build": "core-cli tsc",
     "test": "vitest --run",
+    "test:cli": "deno task --config ../pkg/deno.json test-cli",
     "test:integration": "vitest simple.integration",
-    "test:all": "pnpm test && pnpm test:integration",
+    "test:all": "pnpm test && pnpm test:cli && pnpm test:integration",
     "pack": "echo nothing to pack",
     "publish": "echo nothing to publish"
   },

@@ -2,14 +2,9 @@
 
 // Why this file exists:
 //
-// npm bin linking runs files with `node <path>`, which cannot execute .ts
-// files without a loader. This thin JS wrapper resolves tsx from the
-// package's own node_modules, then re-executes cli.ts with the tsx loader
-// registered. One extra process spawn at startup is the cost of staying
-// build-free while working everywhere npm does.
-//
-// TODO: migrate to zx/cement when deno is primary runtime — bootstrap kept
-// minimal with Node builtins only
+// Node/npm entrypoints still execute JavaScript directly (`node <path>`).
+// During the Deno-first transition, this wrapper keeps `npx use-vibes`
+// working by delegating to cli.ts through tsx.
 
 import { spawn } from "node:child_process";
 import { join } from "node:path";

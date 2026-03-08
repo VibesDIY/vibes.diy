@@ -6,7 +6,7 @@ Bootstrap the `use-vibes` CLI from zero to a working `dev` → `publish` loop. F
 
 ## Principles
 
-- **Build-free**: `cli.js` bootstraps tsx, which runs `cli.ts` directly — no compile step
+- **Deno-first**: `main.deno.ts` is the primary runtime entrypoint, with Node compatibility via `cli.ts` + `cli.js`
 - **cmd-ts for routing**: subcommand parsing, option handling, help generation (adopted per Meno's PR review)
 - **cement Result pattern**: all commands return `Result<void>`, errors propagate as values
 - **Injectable CliOutput**: commands accept stdout/stderr functions for testability and future browser use
@@ -21,12 +21,12 @@ Bootstrap the `use-vibes` CLI from zero to a working `dev` → `publish` loop. F
 **Goal:** CLI runs, dispatches commands, prints help.
 
 **What was built:**
-- `cli.js` bootstrap (resolves tsx, spawns `cli.ts`) + `cli.ts` cmd-ts subcommands
+- `run-cli.ts` shared orchestration + host entrypoints (`main.deno.ts` and `cli.ts`)
 - `help` command — loads help text from `help.txt` via cement `loadAsset`
 - `whoami` command — returns `Result.Err("Not logged in")`
 - `commands/` directory with one file per command + `cli-output.ts` for injectable output
 - Stub commands for all unimplemented features (accept positional args via `restPositionals`)
-- 22 tests: 14 unit (captureOutput) + 8 smoke (spawn cli.js)
+- 22 CLI tests: 14 unit (captureOutput) + 8 smoke (spawn `deno run main.deno.ts`)
 
 ---
 
@@ -213,7 +213,7 @@ Once steps 1-8 are solid:
 ## Related docs
 
 - [cli-design.md](cli-design.md) — Full architecture: targets, vibes.json, commands
-- [cli-architecture.md](cli-architecture.md) — Implementation: cmd-ts, Result pattern, two-file bootstrap, testing
+- [cli-architecture.md](cli-architecture.md) — Implementation: Deno-first runtime, cmd-ts, Result pattern, shared runner, testing
 - [cli-mvp-code-review.md](cli-mvp-code-review.md) — Meno's PR feedback (drove cmd-ts adoption)
 - [mvp-web.md](mvp-web.md) — Web-only invite path (API handlers needed by CLI invite)
 - [mvp-invites.md](mvp-invites.md) — Permissions model and invite flag semantics

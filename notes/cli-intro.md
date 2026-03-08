@@ -23,9 +23,25 @@ npm create vibe "coffee ordering app"   # scaffold + AI-generate App.jsx
 cd coffee-order
 use-vibes login                         # authenticate once
 use-vibes dev                           # live-push to your dev group
-use-vibes edit "add a dark mode toggle" # AI-edit, auto-pushes via live
+use-vibes edit app "add a dark mode toggle" # AI-edit app.jsx, auto-pushes via live
 use-vibes publish work-lunch            # snapshot to a stable group URL
 use-vibes invite work-lunch             # share a join link
+```
+
+## Run CLI Today
+
+```bash
+# Deno-first (from monorepo root)
+deno task --config use-vibes/pkg/deno.json run-cli --help
+deno task --config use-vibes/pkg/deno.json run-cli skills
+
+# Deno CLI tests (from monorepo root)
+deno task --config use-vibes/pkg/deno.json check-cli
+deno task --config use-vibes/pkg/deno.json test-cli
+
+# Node/npm compatibility path (still supported)
+node use-vibes/pkg/cli.js --help
+npx use-vibes --help
 ```
 
 ## Packages
@@ -55,7 +71,7 @@ use-vibes invite work-lunch             # share a join link
 - [mvp-cli.md](mvp-cli.md) — First steps to build the CLI (features, interface, logic)
 - [code-mvp-lite.md](code-mvp-lite.md) — Domain model + task summary
 - [mvp-invites.md](mvp-invites.md) — Instant join links, permissions, group sharing model
-- [cli-architecture.md](cli-architecture.md) — Implementation constraints: no cmd-ts, build-free tsx, no fs.*Sync
+- [cli-architecture.md](cli-architecture.md) — Implementation constraints: Deno-first runtime, cmd-ts routing, Result pattern, no fs.*Sync
 - [cli-design.md](cli-design.md) — Full architecture: domain model, targets, vibes.json, commands
 - [cli-parts.md](cli-parts.md) — Existing repo infrastructure reusable for the CLI
 - [code-mvp.md](code-mvp.md) — Task list with full tech details (L0-L5)

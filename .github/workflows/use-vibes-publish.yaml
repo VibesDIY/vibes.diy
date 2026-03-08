@@ -15,9 +15,21 @@ jobs:
 
       - uses: ./actions/runtime
 
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: install
         shell: bash
         run: pnpm install
+
+      - name: deno-cli-check
+        shell: bash
+        run: deno task --config use-vibes/pkg/deno.json check-cli
+
+      - name: deno-cli-test
+        shell: bash
+        run: deno task --config use-vibes/pkg/deno.json test-cli
 
       - name: format-check
         shell: bash

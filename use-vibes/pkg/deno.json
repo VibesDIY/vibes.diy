@@ -1,0 +1,14 @@
+{
+  "nodeModulesDir": "manual",
+  "imports": {
+    "@vibes.diy/prompts": "../../prompts/pkg/index.ts",
+    "@vibes.diy/call-ai-v2": "../../call-ai/v2/index.ts",
+    "@vibes.diy/use-vibes-types": "../types/index.ts",
+    "call-ai": "../../call-ai/pkg/index.ts"
+  },
+  "tasks": {
+    "run-cli": "deno run --unstable-sloppy-imports --allow-read --allow-env ./main.deno.ts",
+    "test-cli": "deno test --no-check --unstable-sloppy-imports --allow-read --allow-env --allow-run=deno ../tests/cli/cli.test.ts",
+    "check-cli": "deno lint ./main.deno.ts ./run-cli.ts ./commands/cli-output-deno.ts ../tests/cli/cli.test.ts"
+  }
+}
