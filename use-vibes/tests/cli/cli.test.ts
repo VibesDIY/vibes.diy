@@ -1,16 +1,38 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CLI = resolve(__dirname, "../../pkg/cli.js");
+const CLI = resolve(__dirname, "../../pkg/cli.ts");
+
+function findTsxLoaderPath(): string {
+  const pnpmStorePath = resolve(__dirname, "../../../node_modules/.pnpm");
+  for (const entry of readdirSync(pnpmStorePath, { withFileTypes: true })) {
+    if (entry.isDirectory() === false) {
+      continue;
+    }
+    if (entry.name.startsWith("tsx@") === false) {
+      continue;
+    }
+
+    const loaderPath = resolve(pnpmStorePath, entry.name, "node_modules/tsx/dist/loader.mjs");
+    if (existsSync(loaderPath)) {
+      return loaderPath;
+    }
+  }
+
+  throw new Error("Unable to resolve tsx loader for CLI tests");
+}
+
+const TSX_LOADER = findTsxLoaderPath();
 
 function run(
   ...args: string[]
 ): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [CLI, ...args], { stdio: "pipe" });
+    const child = spawn(process.execPath, ["--import", TSX_LOADER, CLI, ...args], { stdio: "pipe" });
     let stdout = "",
       stderr = "";
     child.stdout.on("data", (d: Buffer) => (stdout += d));

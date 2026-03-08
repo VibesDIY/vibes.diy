@@ -8,6 +8,8 @@ export default defineConfig({
   test: {
     name: "use-vibes-cli",
     root: __dirname,
+    include: ["cli.test.ts"],
+    exclude: ["**/node_modules/**", "**/dist/**"],
     globals: true,
     testTimeout: 30000,
   },

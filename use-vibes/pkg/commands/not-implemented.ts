@@ -1,6 +1,11 @@
-export function notImplemented(name: string): (args: string[]) => Promise<void> {
-  return async (_args: string[]): Promise<void> => {
-    console.error(`use-vibes ${name}: not yet implemented`);
-    process.exit(1);
+import { Result } from "@adviser/cement";
+
+export interface NotImplementedOptions {
+  readonly name: string;
+}
+
+export function notImplemented(options: NotImplementedOptions): () => Promise<Result<void>> {
+  return async function runNotImplemented(): Promise<Result<void>> {
+    return Result.Err(`use-vibes ${options.name}: not yet implemented`);
   };
 }

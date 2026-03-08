@@ -1,4 +1,6 @@
-const helpText = `use-vibes — build and deploy React + Fireproof apps
+import { Result } from "@adviser/cement";
+
+export const helpText = `use-vibes — build and deploy React + Fireproof apps
 
   Agent workflow:  skills → system → generate → live/publish
   Human workflow:  login → dev → edit → publish
@@ -35,6 +37,7 @@ Example — agent building an app from scratch:
   $ use-vibes publish demo                     # freeze for sharing
 `;
 
-export async function help(_args: string[]): Promise<void> {
+export async function runHelp(): Promise<Result<void>> {
   process.stdout.write(helpText);
+  return Result.Ok(undefined);
 }

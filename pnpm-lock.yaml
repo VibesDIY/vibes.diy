@@ -661,6 +661,12 @@ importers:
 
   use-vibes/pkg:
     dependencies:
+      '@adviser/cement':
+        specifier: ^0.5.32
+        version: 0.5.32(typescript@5.9.3)
+      cmd-ts:
+        specifier: ^0.15.0
+        version: 0.15.0
       '@fireproof/core':
         specifier: 0.24.12
         version: 0.24.12(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)

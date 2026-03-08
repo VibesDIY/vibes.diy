@@ -1,4 +1,5 @@
-export async function whoami(_args: string[]): Promise<void> {
-  console.error("Not logged in. Run: use-vibes login");
-  process.exit(1);
+import { Result } from "@adviser/cement";
+
+export async function runWhoami(): Promise<Result<void>> {
+  return Result.Err("Not logged in. Run: use-vibes login");
 }
