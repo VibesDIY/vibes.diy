@@ -2,6 +2,9 @@
   "name": "use-vibes",
   "version": "0.0.0",
   "type": "module",
+  "bin": {
+    "use-vibes": "./cli.js"
+  },
   "description": "Transform any DOM element into an AI-powered micro-app",
   "scripts": {
     "build": "core-cli tsc",
@@ -30,7 +33,8 @@
     "@fireproof/core-types-base": "0.24.12",
     "@fireproof/core-types-protocols-cloud": "0.24.12",
     "@fireproof/use-fireproof": "0.24.12",
-    "@vibes.diy/use-vibes-base": "workspace:*"
+    "@vibes.diy/use-vibes-base": "workspace:*",
+    "tsx": "^4.19.0"
   },
   "peerDependencies": {
     "react": ">=19.1.0"
