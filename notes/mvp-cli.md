@@ -6,43 +6,27 @@ Bootstrap the `use-vibes` CLI from zero to a working `dev` → `publish` loop. F
 
 ## Principles
 
-- **Build-free**: tsx runs TypeScript directly, no compile step
-- **No arg parsing library**: `process.argv` + a tiny router, each command parses its own flags
+- **Build-free**: `cli.js` bootstraps tsx, which runs `cli.ts` directly — no compile step
+- **cmd-ts for routing**: subcommand parsing, option handling, help generation (adopted per Meno's PR review)
+- **cement Result pattern**: all commands return `Result<void>`, errors propagate as values
+- **Injectable CliOutput**: commands accept stdout/stderr functions for testability and future browser use
 - **No sync I/O**: `fs/promises` everywhere, including config and credential loading
 - **No localhost**: every environment is a cloud deploy with HTTPS
 - **Stdout is the API**: commands that produce data (`skills`, `system`, `whoami`) write to stdout for piping
 
 ---
 
-## Step 1: Skeleton — `help` and `whoami`
+## Step 1: Skeleton — `help` and `whoami` ✅ DONE
 
 **Goal:** CLI runs, dispatches commands, prints help.
 
-**What to build:**
-- Entry point with tsx shebang, argv router
-- `help` command — prints the help text (see [cli-design.md](cli-design.md) for the exact output)
-- `whoami` command — prints "not logged in" (auth comes next)
-- `commands/` directory with one file per command
-- `lib/` directory for shared logic (config, auth, api)
-
-**Interface:**
-```
-$ use-vibes help
-use-vibes — build and deploy React + Fireproof apps
-  ...
-
-$ use-vibes whoami
-Not logged in. Run: use-vibes login
-
-$ use-vibes bogus
-Unknown command: bogus
-Run: use-vibes help
-```
-
-**Logic:**
-- Router: `const [cmd, ...args] = process.argv.slice(2)` → lookup in commands map → call handler → fallback to help
-- Each command is `async (args: string[]) => Promise<void>`
-- Exit codes: 0 for success, 1 for errors
+**What was built:**
+- `cli.js` bootstrap (resolves tsx, spawns `cli.ts`) + `cli.ts` cmd-ts subcommands
+- `help` command — loads help text from `help.txt` via cement `loadAsset`
+- `whoami` command — returns `Result.Err("Not logged in")`
+- `commands/` directory with one file per command + `cli-output.ts` for injectable output
+- Stub commands for all unimplemented features (accept positional args via `restPositionals`)
+- 22 tests: 14 unit (captureOutput) + 8 smoke (spawn cli.js)
 
 ---
 
@@ -174,30 +158,16 @@ Published to work-lunch → https://coffee-order-work-lunch--jchris.vibecode.gar
 
 ---
 
-## Step 7: `skills` and `system`
+## Step 7: `skills` and `system` ✅ DONE
 
 **Goal:** Agents and humans can read the skill catalog and get assembled system prompts.
 
-**What to build:**
-- `skills` command — list available RAG skills with name + description
-- `system` command — assemble and print the full system prompt for selected skills
-
-**Interface:**
-```
-$ use-vibes skills
-fireproof   Local-first database with encrypted live sync
-callai      Easy API for LLM requests with streaming support
-d3          D3.js data visualization library
-...
-
-$ use-vibes system --skills fireproof,d3
-[full system prompt to stdout]
-```
-
-**Logic:**
-- `skills`: read the config catalog from `@vibes.diy/prompts`, print name + description for each
-- `system`: parse `--skills` flag, load `.txt` docs for each skill, assemble via the prompt builder, write to stdout
-- Both are pure stdout — no side effects, no auth required
+**What was built:**
+- `skills` command — lists catalog from `@vibes.diy/prompts` via `getLlmCatalog()`
+- `system` command — assembles full system prompt via `makeBaseSystemPrompt()` for selected skills
+- Both accept `CliOutput` parameter, write to stdout for piping
+- `--skills` flag via cmd-ts `option` with empty string default (no sentinel)
+- Skill validation against catalog; unknown skills → helpful error
 - Composable: `use-vibes system --skills fireproof | pbcopy`
 
 ---
@@ -243,6 +213,7 @@ Once steps 1-8 are solid:
 ## Related docs
 
 - [cli-design.md](cli-design.md) — Full architecture: targets, vibes.json, commands
-- [cli-architecture.md](cli-architecture.md) — Implementation constraints (no cmd-ts, build-free, no sync I/O)
+- [cli-architecture.md](cli-architecture.md) — Implementation: cmd-ts, Result pattern, two-file bootstrap, testing
+- [cli-mvp-code-review.md](cli-mvp-code-review.md) — Meno's PR feedback (drove cmd-ts adoption)
 - [mvp-web.md](mvp-web.md) — Web-only invite path (API handlers needed by CLI invite)
 - [mvp-invites.md](mvp-invites.md) — Permissions model and invite flag semantics

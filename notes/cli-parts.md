@@ -6,7 +6,7 @@ What's already in the repo that the `create-vibe` and `use-vibes` CLI packages c
 
 ## Existing CLI Usage: `cmd-ts`
 
-Used in call-ai and build scripts — but **not adopted for `use-vibes` CLI** (see [cli-architecture.md](cli-architecture.md) for rationale: process.argv router, no build step, no fs.*Sync).
+Used across the monorepo: call-ai, build scripts, and **the `use-vibes` CLI** (adopted per Meno's PR review — see [cli-architecture.md](cli-architecture.md) for architecture details).
 
 ### call-ai/v2/cli.ts — AI streaming CLI
 ```bash
@@ -113,7 +113,7 @@ dotenv           — .env loading
 find-up          — Config file discovery
 ```
 
-Note: `cmd-ts` is available but intentionally not used for `use-vibes` CLI — see [cli-architecture.md](cli-architecture.md).
+Note: `cmd-ts` is now used by the `use-vibes` CLI for subcommand routing, option parsing, and help generation — see [cli-architecture.md](cli-architecture.md).
 
 ---
 
@@ -136,25 +136,34 @@ Note: `cmd-ts` is available but intentionally not used for `use-vibes` CLI — s
 ### `create-vibe` (scaffolder — move into monorepo last)
 Already published from its own repo. Work here is moving it into the monorepo cleanly and doing a fresh release **after `use-vibes` CLI is solid**.
 - **call-ai streaming** from `call-ai/v2/cli.ts` for AI generation mode
-- **process.argv** for arg parsing (no cmd-ts)
+- **process.argv** for arg parsing (scaffolder is simple enough to not need cmd-ts)
 - Template files (App.jsx skeleton, package.json with `use-vibes` devDep)
 
 ### `use-vibes` (runtime CLI)
 
-Architecture: build-free tsx, process.argv router, `fs/promises` only — see [cli-architecture.md](cli-architecture.md).
+Architecture: build-free tsx, cmd-ts routing, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md).
 
-- **tsx shebang** — `#!/usr/bin/env npx tsx`, no compile step
-- **process.argv router** — ~10 commands, no parsing library needed
+- **Two-file bootstrap** — `cli.js` (plain JS) resolves tsx, spawns `cli.ts` (TypeScript)
+- **cmd-ts** — subcommand routing, option parsing, help generation
+- **cement Result pattern** — all commands return `Result<void>`, errors propagate as values
+- **Injectable CliOutput** — commands accept stdout/stderr functions for testability and future browser use
 - **`fs/promises` only** — no `fs.*Sync` anywhere
-- **Native `fs/promises.watch`** — Node 20+ recursive watcher, no chokidar
+- **Native `fs/promises.watch`** — Node 20+ recursive watcher, no chokidar (planned for `live`)
 - **ensureAppSlug API** for pushing code to cloud targets
 - **ESLint** integration for pre-push linting
 - **Device-code auth** flow (not yet built)
-- **dotenv** for config
 - **vibes.json** parsing for app identity and target resolution
 
+### Built (Steps 1 & 7)
+- `cli.js` bootstrap + `cli.ts` cmd-ts subcommands + `commands/` directory
+- `help` — loads help text from `help.txt` via cement `loadAsset`
+- `whoami` — returns `Result.Err("Not logged in")` (stub until auth)
+- `skills` — lists catalog from `@vibes.diy/prompts`
+- `system` — assembles full system prompt for selected skills
+- Stub commands for all unimplemented features (accept positional args via `restPositionals`)
+- 22 tests: 14 unit (captureOutput) + 8 smoke (spawn cli.js)
+
 ### Not yet built (new work)
-- `cli.ts` entry point with argv router + `commands/` directory
 - `lib/config.ts` — vibes.json loading + target resolution (`group` → `owner/app/group`)
 - `lib/api-client.ts` — cloud push protocol (API client for ensureAppSlug from CLI context)
 - `lib/auth.ts` — device-code login flow + credential storage

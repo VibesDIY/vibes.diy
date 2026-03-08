@@ -1,172 +1,86 @@
-# CLI Architecture: Meno's Criteria
+# CLI Architecture
 
-Meno's wish: no cmd-ts, build-free (`npx tsx` or `npx deno run`), no `fs.*Sync`.
+## Design decisions
 
-## Fireproof CLI Audit
+**cmd-ts** for subcommand routing. Initially planned to use a manual `process.argv` router, but Meno's PR review (see [cli-mvp-code-review.md](cli-mvp-code-review.md)) pushed toward cmd-ts — it handles unknown commands, option parsing, `--help`/`-h`, and type-safe args. The friend-of-Meno escape hatch: if features are missing, ask.
 
-Every CLI in `/fp/fireproof/cli/` uses cmd-ts. None match all three criteria. But the patterns are instructive.
+**Build-free**: `cli.js` spawns `node --import tsx cli.ts` — no compile step. Edit `.ts`, run it.
 
-### What fireproof does right
+**No `fs.*Sync`**: `fs/promises` everywhere, including config and credential loading.
 
-- **Build-free execution**: `run.js` bootstraps via `tsx main.ts` — no compile step needed
-- **Async file I/O**: 10 of 13 commands use zero `fs.*Sync` calls
-- **Shell via zx**: `$` syntax for subprocesses instead of manual spawn
-- **Streaming**: `quick-silver/api/cli.ts` streams large results with `processStream()`
+**cement Result pattern**: All commands return `Result<void>` from `@adviser/cement`. Errors propagate as values, not exceptions. `emitResult()` in `cli.ts` maps `Result.Err` to stderr + exitCode 1.
 
-### What violates Meno's criteria
+**Injectable `CliOutput`**: Commands accept a `CliOutput` parameter (`stdout`/`stderr` functions) with a process-based default. Tests capture output without spawning processes. Enables future browser execution.
 
-| Violation | Files |
-|---|---|
-| cmd-ts everywhere | All 13 commands in `cli/main.ts` |
-| `fs.existsSync()` | `run.js` (bootstrapper) |
-| `fs.readJSONSync()` | `build-cmd.ts` |
-| `fs.writeJSONSync()` | `build-cmd.ts`, `set-scripts-cmd.ts` |
-
-### fs.*Sync-free commands (good examples)
-
-These commands are fully async — no sync file operations:
-
-| Command | What it does | Pattern |
-|---|---|---|
-| `tsc-cmd.ts` | TypeScript compiler wrapper | zx shell, arg passthrough |
-| `retry-cmd.ts` | Retry with timeout | zx shell, `@adviser/cement` Future |
-| `well-known-cmd.ts` | JWKS endpoint fetcher | Pure fetch + jose, no file I/O |
-| `cloud-token-key-cmd.ts` | Crypto key generation | Pure crypto, stdout only |
-| `write-env-cmd.ts` | Env file generation | `fs/promises` only |
-| `device-id-cmd.ts` | Device ID + certs | `fs/promises`, Hono server for callback |
-| `update-deps-cmd.ts` | Dependency updater | `fs/promises` + zx glob |
-| `pre-signed-url.ts` | S3 signed URLs | Pure computation, stdout |
-| `dependabot-cmd.ts` | Dependabot PR automation | `gh` CLI, no file I/O |
-| `test-container-cmd.ts` | Docker container management | Async `fs.writeFile()` |
+**`loadAsset` for text files**: Help text lives in `help.txt`, loaded at runtime via cement `loadAsset` with `import.meta.url` as basePath. Same pattern as `prompts/pkg/llms/*.txt`.
 
 ---
 
-## Proposed Architecture for `use-vibes` CLI
+## Entry point: two-file bootstrap
 
-Meeting all three criteria: no cmd-ts, build-free, no `fs.*Sync`.
-
-### Arg parsing: `process.argv` + a tiny router
-
-cmd-ts is overkill for `use-vibes`. We have ~10 commands with simple args. A minimal router:
-
-```ts
-const [cmd, ...args] = process.argv.slice(2);
-
-const commands: Record<string, (args: string[]) => Promise<void>> = {
-  login,
-  whoami,
-  dev,
-  live,
-  publish,
-  generate,
-  edit,
-  skills,
-  system,
-  invite,
-  help,
-};
-
-const handler = commands[cmd] ?? help;
-await handler(args);
+```
+cli.js   ← npm bin entry (plain JS, Node builtins only)
+  └─ spawns: node --import tsx cli.ts
+cli.ts   ← cmd-ts subcommands, Result pattern, all logic
 ```
 
-No parsing library. Each command destructures its own args. `--skills fireproof,d3` is just `args.find(a => a.startsWith('--skills='))?.split('=')[1]` or a 10-line `parseFlags()` helper.
+**Why two files:** npm bin linking runs files with `node <path>`, which can't execute `.ts` without a loader. `cli.js` resolves tsx from the package's own node_modules via `createRequire`, then spawns `cli.ts` with the tsx loader registered. One extra process spawn at startup is the cost of staying build-free while working everywhere npm does.
 
-If we outgrow this, [citty](https://github.com/unjs/citty) is a modern alternative — tree-shakeable, async-first, no decorators.
+`cli.js` uses only Node builtins (`node:child_process`, `node:path`, `node:module`). zx and cement are deferred for this file until deno is the primary runtime (at which point cli.js goes away entirely).
 
-### Invocation: `npx tsx`
+---
 
-The `use-vibes` bin entry points to a `.ts` file run via tsx:
-
-```json
-{
-  "bin": {
-    "use-vibes": "./cli.ts"
-  }
-}
-```
-
-With a shebang:
-```ts
-#!/usr/bin/env npx tsx
-```
-
-Or for Deno compatibility:
-```ts
-#!/usr/bin/env -S deno run --allow-read --allow-write --allow-net
-```
-
-tsx is already in the monorepo. Zero build step — edit the `.ts` file, run it.
-
-### File I/O: `fs/promises` only
-
-```ts
-import { readFile, writeFile, access } from "node:fs/promises";
-
-// Instead of fs.existsSync():
-async function fileExists(path: string): Promise<boolean> {
-  try { await access(path); return true; } catch { return false; }
-}
-
-// Instead of fs.readJSONSync():
-async function readJSON<T>(path: string): Promise<T> {
-  return JSON.parse(await readFile(path, "utf-8"));
-}
-```
-
-vibes.json reads, config loading, file watching — all async.
-
-### File watching: native + debounce
-
-```ts
-import { watch } from "node:fs/promises";
-
-async function watchFiles(dir: string, onChange: () => Promise<void>) {
-  const watcher = watch(dir, { recursive: true });
-  let timeout: Timer | undefined;
-  for await (const event of watcher) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => onChange(), 100);
-  }
-}
-```
-
-No chokidar dependency. Node 20+ `fs/promises.watch` returns an async iterator.
-
-### Command structure
+## Command structure
 
 ```
 use-vibes/pkg/
-├── cli.ts              # shebang entry, argv router
+├── cli.js              # JS bootstrap — resolves tsx, spawns cli.ts
+├── cli.ts              # cmd-ts subcommands, emitResult, no-args→help
 ├── commands/
-│   ├── login.ts        # device-code auth
-│   ├── whoami.ts       # print current user
-│   ├── dev.ts          # live dev — extension point (calls into live)
-│   ├── live.ts         # file watch → push
-│   ├── publish.ts      # one-time push
-│   ├── generate.ts     # AI-create new vibe (slug.jsx)
-│   ├── edit.ts         # AI-edit existing vibe via call-ai
-│   ├── skills.ts       # list RAG skill catalog
-│   ├── system.ts       # emit assembled system prompt
-│   ├── invite.ts       # generate join link
-│   └── help.ts         # help text
-├── lib/
-│   ├── config.ts       # vibes.json + target resolution
-│   ├── api-client.ts   # ensureAppSlug + other API calls
-│   └── auth.ts         # credential storage
+│   ├── cli-output.ts   # CliOutput interface + defaultCliOutput
+│   ├── help.ts         # loads help.txt via loadAsset
+│   ├── help.txt        # extracted help text
+│   ├── whoami.ts       # returns Result.Err (auth not yet implemented)
+│   ├── skills.ts       # lists RAG skill catalog via @vibes.diy/prompts
+│   ├── system.ts       # assembles system prompt for selected skills
+│   └── not-implemented.ts  # factory for stub commands
 └── index.ts            # library exports (existing)
 ```
 
-### Key patterns from fireproof to adopt
+---
 
-1. **zx for shell commands** — already in the monorepo, cleaner than `child_process`
-2. **Streaming output** — `edit` command should stream diffs like quick-silver streams results
-3. **`fs/promises` everywhere** — 10 of 13 fireproof commands prove this works fine
-4. **Stdout as API** — `system` and `skills` commands write to stdout for piping, like `well-known-cmd.ts`
+## Patterns
 
-### What we skip
+### cmd-ts usage
 
-- **cmd-ts** — too heavy for simple subcommand routing
-- **fs.*Sync** — async everywhere, including config loading
-- **Build step** — tsx runs TypeScript directly
-- **chokidar** — native `fs/promises.watch` with recursive support (Node 20+)
+- `subcommands` for top-level routing (rejects unknown commands natively)
+- `command` + `option` for each subcommand
+- `restPositionals` on stub commands so they accept positional args (e.g., `generate foo bar` → "not yet implemented" instead of parse error)
+- `defaultValue: () => ""` for optional `--skills` flag; empty string = "not provided"
+- No-args and `-h`/`--help` detected before `run(app, ...)` to show help
+
+### Fireproof CLI patterns worth adopting
+
+1. **zx for shell commands** — already in the monorepo, cleaner than `child_process` (used in cli.ts commands, not cli.js bootstrap)
+2. **Streaming output** — `edit` command should stream diffs
+3. **`fs/promises` everywhere** — no sync I/O
+4. **Stdout as API** — `system` and `skills` write to stdout for piping
+
+---
+
+## Testing
+
+**Unit tests** (14): Direct import of command functions with `captureOutput()` — no process spawning, no pnpm store scanning, no `fs.*Sync`.
+
+**Smoke tests** (8): Spawn `cli.js` to verify the full bootstrap pipeline (cli.js → tsx → cli.ts → cmd-ts → command → stdout/stderr).
+
+Both run via `pnpm exec vitest run --project use-vibes-cli`.
+
+---
+
+## Key dependencies
+
+- `cmd-ts` — subcommand routing, option parsing, help generation
+- `@adviser/cement` — `Result`, `exception2Result`, `loadAsset`
+- `@vibes.diy/prompts` — skill catalog, system prompt assembly
+- `tsx` — TypeScript execution without build step

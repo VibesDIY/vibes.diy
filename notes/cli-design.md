@@ -379,18 +379,21 @@ npm registry
 │   └── scaffolds project with use-vibes as devDependency
 └── use-vibes          → library (import) + CLI (bin)
     ├── import: React hooks, useFireproof, etc.
-    └── bin: cli.ts (tsx shebang, process.argv router)
+    └── bin: cli.js → spawns cli.ts via tsx loader
 
 monorepo (existing)
-├── use-vibes/pkg      → library + new bin entry point
-│   ├── cli.ts         → shebang entry, argv router
-│   ├── commands/      → one file per command
-│   └── lib/           → config, api-client, auth
+├── use-vibes/pkg      → library + CLI entry points
+│   ├── cli.js         → JS bootstrap (resolves tsx, spawns cli.ts)
+│   ├── cli.ts         → cmd-ts subcommands, Result pattern
+│   ├── commands/      → one file per command + cli-output.ts
+│   └── lib/           → config, api-client, auth (future)
 └── (create-vibe)      → move from own repo into monorepo, fresh release (after use-vibes CLI is solid)
 ```
 
-Architecture constraints (see [cli-architecture.md](cli-architecture.md)):
-- **Build-free**: tsx runs TypeScript directly, no compile step
-- **No cmd-ts**: process.argv + tiny router, each command parses its own args
+Architecture (see [cli-architecture.md](cli-architecture.md)):
+- **Build-free**: cli.js bootstraps tsx, which runs cli.ts directly
+- **cmd-ts**: subcommand routing, option parsing, help generation
+- **cement Result pattern**: all commands return `Result<void>`
+- **Injectable CliOutput**: stdout/stderr functions for testability
 - **No fs.\*Sync**: `fs/promises` only, including config loading
 - **No chokidar**: native `fs/promises.watch` (Node 20+ recursive)
