@@ -2,6 +2,8 @@
 
 import { help } from "./commands/help.js";
 import { whoami } from "./commands/whoami.js";
+import { skills } from "./commands/skills.js";
+import { system } from "./commands/system.js";
 import { notImplemented } from "./commands/not-implemented.js";
 
 const commands: Record<string, (args: string[]) => Promise<void>> = {
@@ -12,8 +14,8 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
   live: notImplemented("live"),
   generate: notImplemented("generate"),
   edit: notImplemented("edit"),
-  skills: notImplemented("skills"),
-  system: notImplemented("system"),
+  skills,
+  system,
   publish: notImplemented("publish"),
   invite: notImplemented("invite"),
 };

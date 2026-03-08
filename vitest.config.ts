@@ -11,6 +11,7 @@ export default defineConfig({
       "call-ai/tests/unit/vitest.config.ts",
       "call-ai/tests/integration/vitest.config.ts",
       "use-vibes/tests/vitest.config.ts",
+      "use-vibes/tests/cli/vitest.config.ts",
       "prompts/tests/vitest.node.config.ts",
       "prompts/tests/vitest.browser.config.ts",
       "hosting/tests/unit/vitest.config.ts",
