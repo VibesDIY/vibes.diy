@@ -1,104 +1,20 @@
-#!/usr/bin/env -S node --import tsx
-
-import { Result, exception2Result } from "@adviser/cement";
-import { command, option, run, string, subcommands } from "cmd-ts";
+import { Result } from "@adviser/cement";
+import { command, option, run, string, subcommands, restPositionals } from "cmd-ts";
 import { runHelp } from "./commands/help.js";
 import { runWhoami } from "./commands/whoami.js";
 import { runSkills } from "./commands/skills.js";
 import { runSystem } from "./commands/system.js";
 import { notImplemented } from "./commands/not-implemented.js";
-
-interface MessageError {
-  readonly message: string;
-}
-
-function isMessageError(value: unknown): value is MessageError {
-  if (typeof value !== "object") {
-    return false;
-  }
-  if (value === null) {
-    return false;
-  }
-  if (("message" in value) === false) {
-    return false;
-  }
-  return typeof value.message === "string";
-}
-
-function toErrorMessage(value: unknown): string {
-  switch (true) {
-    case typeof value === "string":
-      return value;
-    case isMessageError(value):
-      return value.message;
-    default:
-      return "Unknown CLI error";
-  }
-}
+import { defaultCliOutput } from "./commands/cli-output.js";
 
 async function emitResult(runner: () => Promise<Result<void>>): Promise<void> {
   const result = await runner();
   if (result.isErr()) {
-    console.error(toErrorMessage(result.Err()));
+    const err = result.Err();
+    defaultCliOutput.stderr(typeof err === "string" ? err : String(err));
+    defaultCliOutput.stderr("\n");
     process.exitCode = 1;
   }
-}
-
-const skillsDefaultSentinel = "__use_vibes_default_skills__";
-const knownCommands = new Set([
-  "help",
-  "whoami",
-  "login",
-  "dev",
-  "live",
-  "generate",
-  "edit",
-  "skills",
-  "system",
-  "publish",
-  "invite",
-]);
-const skillsValueError = "--skills requires a value (e.g., --skills fireproof,d3)";
-
-function validateKnownCommand(cliArgs: readonly string[]): Result<void> {
-  if (cliArgs.length === 0) {
-    return Result.Ok(undefined);
-  }
-
-  const cmd = cliArgs[0];
-  if (cmd.startsWith("-")) {
-    return Result.Ok(undefined);
-  }
-  if (knownCommands.has(cmd)) {
-    return Result.Ok(undefined);
-  }
-
-  return Result.Err(`Unknown command: ${cmd}\nRun: use-vibes help`);
-}
-
-function validateSystemArgs(cliArgs: readonly string[]): Result<void> {
-  if (cliArgs.length === 0 || cliArgs[0] !== "system") {
-    return Result.Ok(undefined);
-  }
-
-  for (let index = 1; index < cliArgs.length; index += 1) {
-    const arg = cliArgs[index];
-    if (arg === "--skills") {
-      const value = cliArgs[index + 1];
-      if (typeof value === "undefined" || value.startsWith("-")) {
-        return Result.Err(skillsValueError);
-      }
-      continue;
-    }
-    if (arg.startsWith("--skills=")) {
-      const value = arg.slice("--skills=".length);
-      if (value.trim().length === 0) {
-        return Result.Err(skillsValueError);
-      }
-    }
-  }
-
-  return Result.Ok(undefined);
 }
 
 const helpCmd = command({
@@ -136,26 +52,22 @@ const systemCmd = command({
       type: string,
       long: "skills",
       description: "Comma-separated skills, e.g. fireproof,d3",
-      defaultValue: () => skillsDefaultSentinel,
+      defaultValue: () => "",
     }),
   },
   handler: async function handleSystem(args: { readonly skills: string }): Promise<void> {
-    await emitResult(async function runSystemCommand() {
-      switch (true) {
-        case args.skills === skillsDefaultSentinel:
-          return runSystem({});
-        default:
-          return runSystem({ skillsCsv: args.skills });
-      }
-    });
+    const skillsCsv = args.skills.length > 0 ? args.skills : undefined;
+    await emitResult(() => runSystem({ skillsCsv }));
   },
 });
 
-function createStubCommand(name: string): ReturnType<typeof command> {
+function createStubCommand(name: string) {
   return command({
     name,
     description: `${name} is not implemented yet`,
-    args: {},
+    args: {
+      _rest: restPositionals({ description: "arguments" }),
+    },
     handler: async function handleStub(): Promise<void> {
       await emitResult(notImplemented({ name }));
     },
@@ -189,26 +101,7 @@ switch (true) {
   case cliArgs.length === 1 && (cliArgs[0] === "-h" || cliArgs[0] === "--help"):
     await emitResult(runHelp);
     break;
-  default: {
-    const rKnownCommand = validateKnownCommand(cliArgs);
-    if (rKnownCommand.isErr()) {
-      console.error(rKnownCommand.Err());
-      process.exitCode = 1;
-      break;
-    }
-
-    const rSystemArgs = validateSystemArgs(cliArgs);
-    if (rSystemArgs.isErr()) {
-      console.error(rSystemArgs.Err());
-      process.exitCode = 1;
-      break;
-    }
-
-    const rRun = await exception2Result(() => run(app, cliArgs));
-    if (rRun.isErr()) {
-      console.error(toErrorMessage(rRun.Err()));
-      process.exitCode = 1;
-    }
+  default:
+    await run(app, cliArgs);
     break;
-  }
 }

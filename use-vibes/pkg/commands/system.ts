@@ -1,5 +1,6 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { makeBaseSystemPrompt, getDefaultDependencies, getLlmCatalogNames } from "@vibes.diy/prompts";
+import { type CliOutput, defaultCliOutput } from "./cli-output.js";
 
 export interface RunSystemOptions {
   readonly skillsCsv?: string;
@@ -11,11 +12,8 @@ function parseSkillsCsv(options: RunSystemOptions): Result<string[]> {
     return Result.Ok([]);
   }
 
-  switch (true) {
-    case skillsCsv.trim().length === 0:
-      return Result.Err("--skills requires a value (e.g., --skills fireproof,d3)");
-    default:
-      break;
+  if (skillsCsv.trim().length === 0) {
+    return Result.Err("--skills requires a value (e.g., --skills fireproof,d3)");
   }
 
   const parsedSkills = skillsCsv
@@ -31,25 +29,34 @@ function parseSkillsCsv(options: RunSystemOptions): Result<string[]> {
   }
 }
 
-export async function runSystem(options: RunSystemOptions): Promise<Result<void>> {
-  const rParsedSkills = parseSkillsCsv(options);
-  if (rParsedSkills.isErr()) {
-    return Result.Err(rParsedSkills.Err());
-  }
-
-  let selectedSkills: string[] = rParsedSkills.Ok();
+async function resolveSkills(parsedSkills: string[]): Promise<Result<string[]>> {
   switch (true) {
-    case selectedSkills.length > 0:
-      break;
+    case parsedSkills.length > 0:
+      return Result.Ok(parsedSkills);
     default: {
       const rDefaults = await exception2Result(() => getDefaultDependencies());
       if (rDefaults.isErr()) {
         return Result.Err(`Failed to load default skills: ${rDefaults.Err().message}`);
       }
-      selectedSkills = rDefaults.Ok();
-      break;
+      return Result.Ok(rDefaults.Ok());
     }
   }
+}
+
+export async function runSystem(
+  options: RunSystemOptions,
+  output: CliOutput = defaultCliOutput,
+): Promise<Result<void>> {
+  const rParsedSkills = parseSkillsCsv(options);
+  if (rParsedSkills.isErr()) {
+    return Result.Err(rParsedSkills.Err());
+  }
+
+  const rSelectedSkills = await resolveSkills(rParsedSkills.Ok());
+  if (rSelectedSkills.isErr()) {
+    return Result.Err(rSelectedSkills.Err());
+  }
+  const selectedSkills = rSelectedSkills.Ok();
 
   const rValidNames = await exception2Result(() => getLlmCatalogNames());
   if (rValidNames.isErr()) {
@@ -77,6 +84,6 @@ export async function runSystem(options: RunSystemOptions): Promise<Result<void>
     return Result.Err(`Failed to build system prompt: ${rPrompt.Err().message}`);
   }
 
-  process.stdout.write(rPrompt.Ok().systemPrompt);
+  output.stdout(rPrompt.Ok().systemPrompt);
   return Result.Ok(undefined);
 }

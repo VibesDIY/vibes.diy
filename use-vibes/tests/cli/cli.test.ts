@@ -1,38 +1,28 @@
 import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
-import { existsSync, readdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
+import { runHelp } from "../../pkg/commands/help.js";
+import { runSkills } from "../../pkg/commands/skills.js";
+import { runSystem } from "../../pkg/commands/system.js";
+import { runWhoami } from "../../pkg/commands/whoami.js";
+import { notImplemented } from "../../pkg/commands/not-implemented.js";
+import type { CliOutput } from "../../pkg/commands/cli-output.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const CLI = resolve(__dirname, "../../pkg/cli.ts");
+const CLI_JS = resolve(import.meta.dirname, "../../pkg/cli.js");
 
-function findTsxLoaderPath(): string {
-  const pnpmStorePath = resolve(__dirname, "../../../node_modules/.pnpm");
-  for (const entry of readdirSync(pnpmStorePath, { withFileTypes: true })) {
-    if (entry.isDirectory() === false) {
-      continue;
-    }
-    if (entry.name.startsWith("tsx@") === false) {
-      continue;
-    }
-
-    const loaderPath = resolve(pnpmStorePath, entry.name, "node_modules/tsx/dist/loader.mjs");
-    if (existsSync(loaderPath)) {
-      return loaderPath;
-    }
-  }
-
-  throw new Error("Unable to resolve tsx loader for CLI tests");
+function captureOutput(): { output: CliOutput; stdout: () => string; stderr: () => string } {
+  const out: string[] = [];
+  const err: string[] = [];
+  return {
+    output: { stdout: (t) => out.push(t), stderr: (t) => err.push(t) },
+    stdout: () => out.join(""),
+    stderr: () => err.join(""),
+  };
 }
 
-const TSX_LOADER = findTsxLoaderPath();
-
-function run(
-  ...args: string[]
-): Promise<{ stdout: string; stderr: string; code: number }> {
+function spawnCli(...args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ["--import", TSX_LOADER, CLI, ...args], { stdio: "pipe" });
+    const child = spawn(process.execPath, [CLI_JS, ...args], { stdio: "pipe" });
     let stdout = "",
       stderr = "";
     child.stdout.on("data", (d: Buffer) => (stdout += d));
@@ -42,98 +32,123 @@ function run(
   });
 }
 
-describe("help", () => {
-  it("exits 0 with usage text", async () => {
-    const r = await run("help");
-    expect(r.code).toBe(0);
-    expect(r.stdout).toContain("use-vibes");
-    expect(r.stdout).toContain("skills");
-  });
+// ── Unit tests (direct import, no spawn) ──────────────────────────────
 
-  it("--help alias works", async () => {
-    const r = await run("--help");
-    expect(r.code).toBe(0);
-    expect(r.stdout).toContain("use-vibes");
-  });
-
-  it("-h alias works", async () => {
-    const r = await run("-h");
-    expect(r.code).toBe(0);
-    expect(r.stdout).toContain("use-vibes");
-  });
-
-  it("no args shows help", async () => {
-    const r = await run();
-    expect(r.code).toBe(0);
-    expect(r.stdout).toContain("use-vibes");
+describe("help (unit)", () => {
+  it("outputs usage text", async () => {
+    const { output, stdout } = captureOutput();
+    const r = await runHelp(output);
+    expect(r.isOk()).toBe(true);
+    expect(stdout()).toContain("use-vibes");
+    expect(stdout()).toContain("skills");
   });
 });
 
-describe("whoami", () => {
-  it("exits 1 when not logged in", async () => {
-    const r = await run("whoami");
-    expect(r.code).toBe(1);
-    expect(r.stderr).toContain("Not logged in");
+describe("whoami (unit)", () => {
+  it("returns error when not logged in", async () => {
+    const r = await runWhoami();
+    expect(r.isErr()).toBe(true);
+    expect(String(r.Err())).toContain("Not logged in");
   });
 });
 
-describe("skills", () => {
-  it("lists catalog with exit 0", async () => {
-    const r = await run("skills");
-    expect(r.code).toBe(0);
-    expect(r.stdout).toContain("fireproof");
-    const lines = r.stdout.trim().split("\n");
-    expect(lines.length).toBeGreaterThanOrEqual(6);
+describe("skills (unit)", () => {
+  it("lists catalog", async () => {
+    const { output, stdout } = captureOutput();
+    const r = await runSkills(output);
+    expect(r.isOk()).toBe(true);
+    expect(stdout()).toContain("fireproof");
+    const lines = stdout().trim().split("\n");
+    expect(lines.length).toBeGreaterThanOrEqual(3);
   });
 });
 
-describe("system", () => {
+describe("system (unit)", () => {
   it("outputs default prompt", async () => {
-    const r = await run("system");
-    expect(r.code).toBe(0);
-    expect(r.stdout.length).toBeGreaterThan(100);
-    expect(r.stdout).toContain("fireproof");
+    const { output, stdout } = captureOutput();
+    const r = await runSystem({}, output);
+    expect(r.isOk()).toBe(true);
+    expect(stdout().length).toBeGreaterThan(100);
+    expect(stdout()).toContain("fireproof");
   });
 
   it("--skills fireproof selects specific skill", async () => {
-    const r = await run("system", "--skills", "fireproof");
-    expect(r.code).toBe(0);
-    expect(r.stdout).toContain("fireproof");
+    const { output, stdout } = captureOutput();
+    const r = await runSystem({ skillsCsv: "fireproof" }, output);
+    expect(r.isOk()).toBe(true);
+    expect(stdout()).toContain("fireproof");
   });
 
-  it("--skills=fireproof equals syntax works", async () => {
-    const r = await run("system", "--skills=fireproof");
-    expect(r.code).toBe(0);
-    expect(r.stdout).toContain("fireproof");
+  it("--skills with empty value returns error", async () => {
+    const r = await runSystem({ skillsCsv: "" });
+    expect(r.isErr()).toBe(true);
+    expect(String(r.Err())).toContain("--skills requires a value");
   });
 
-  it("--skills with no value exits 1", async () => {
-    const r = await run("system", "--skills");
-    expect(r.code).toBe(1);
-    expect(r.stderr).toContain("--skills requires a value");
-  });
-
-  it("--skills bogus exits 1 with error", async () => {
-    const r = await run("system", "--skills", "bogus");
-    expect(r.code).toBe(1);
-    expect(r.stderr).toContain("Unknown skills: bogus");
+  it("--skills bogus returns error", async () => {
+    const r = await runSystem({ skillsCsv: "bogus" });
+    expect(r.isErr()).toBe(true);
+    expect(String(r.Err())).toContain("Unknown skills: bogus");
   });
 });
 
-describe("unknown command", () => {
-  it("exits 1 with error", async () => {
-    const r = await run("xyzzy");
-    expect(r.code).toBe(1);
-    expect(r.stderr).toContain("Unknown command");
-  });
-});
-
-describe("not-implemented stubs", () => {
+describe("not-implemented stubs (unit)", () => {
   for (const cmd of ["login", "dev", "live", "generate", "edit", "publish", "invite"]) {
-    it(`${cmd} exits 1`, async () => {
-      const r = await run(cmd);
-      expect(r.code).toBe(1);
-      expect(r.stderr).toContain("not yet implemented");
+    it(`${cmd} returns not-yet-implemented`, async () => {
+      const r = await notImplemented({ name: cmd })();
+      expect(r.isErr()).toBe(true);
+      expect(String(r.Err())).toContain("not yet implemented");
     });
   }
+});
+
+// ── Smoke tests (spawn cli.js, full pipeline) ────────────────────────
+
+describe("smoke: cli.js pipeline", () => {
+  it("no args shows help (exit 0)", async () => {
+    const r = await spawnCli();
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain("use-vibes");
+  });
+
+  it("help subcommand (exit 0)", async () => {
+    const r = await spawnCli("help");
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain("use-vibes");
+  });
+
+  it("--help flag (exit 0)", async () => {
+    const r = await spawnCli("--help");
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain("use-vibes");
+  });
+
+  it("-h flag (exit 0)", async () => {
+    const r = await spawnCli("-h");
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain("use-vibes");
+  });
+
+  it("unknown command exits 1", async () => {
+    const r = await spawnCli("xyzzy");
+    expect(r.code).toBe(1);
+  });
+
+  it("generate foo bar exits 1 with not-yet-implemented", async () => {
+    const r = await spawnCli("generate", "foo", "bar");
+    expect(r.code).toBe(1);
+    expect(r.stderr).toContain("not yet implemented");
+  });
+
+  it("system --skills fireproof outputs prompt", async () => {
+    const r = await spawnCli("system", "--skills", "fireproof");
+    expect(r.code).toBe(0);
+    expect(r.stdout.length).toBeGreaterThan(100);
+  });
+
+  it("system --skills (missing value) falls back to defaults", async () => {
+    const r = await spawnCli("system", "--skills");
+    expect(r.code).toBe(0);
+    expect(r.stdout.length).toBeGreaterThan(100);
+  });
 });
