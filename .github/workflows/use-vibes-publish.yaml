@@ -41,13 +41,17 @@ jobs:
           echo "We NEED to work on the linting"
           pnpm run lint || true
 
-      - name: validate-all-packages
+      - name: validate-published-packages
         shell: bash
         run: |
           set -e
-          echo "Running root validation before publishing (SKIPPING TESTS)..."
-          pnpm build
-          echo "✅ All packages validated successfully (tests skipped)"
+          echo "Building packages in publish order..."
+          pnpm --filter @vibes.diy/prompts build
+          pnpm --filter call-ai build
+          pnpm --filter @vibes.diy/use-vibes-types build
+          pnpm --filter @vibes.diy/use-vibes-base build
+          pnpm --filter use-vibes build
+          echo "✅ All published packages validated"
 
       - uses: ./use-vibes/actions/publish
         with:
