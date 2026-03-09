@@ -230,9 +230,6 @@ importers:
       chalk:
         specifier: ^5.3.0
         version: 5.6.2
-      open:
-        specifier: ^10.1.0
-        version: 10.2.0
       prompts:
         specifier: ^2.4.2
         version: 2.4.2

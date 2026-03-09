@@ -1,63 +1,64 @@
 #!/usr/bin/env node
 
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import prompts from 'prompts';
 import chalk from 'chalk';
-import open from 'open';
 
-// Stylish CLI header
+const PLACEHOLDER_APP = `export default function App() {
+  return (
+    <div className="min-h-dvh grid place-items-center bg-slate-50 text-slate-900">
+      <main className="p-6 max-w-xl text-center space-y-3">
+        <h1 className="text-2xl font-semibold">Your Vibe goes here</h1>
+        <p className="text-sm opacity-60">Edit app.jsx and run use-vibes dev</p>
+      </main>
+    </div>
+  )
+}
+`;
+
 console.log();
 console.log(chalk.cyan('✨ ') + chalk.bold.magenta('create-vibe') + chalk.cyan(' ✨'));
-console.log(chalk.gray('More app for your prompt, build and deploy on Vibes DIY'));
+console.log(chalk.gray('Scaffold a new vibe project'));
 console.log();
 
 async function main() {
-  try {
+  let name = process.argv[2];
+
+  if (!name) {
+    const suggestions = [
+      'todo', 'habit-tracker', 'timer', 'grocery-list',
+      'recipe-book', 'color-palette', 'budget', 'journal',
+    ];
     const response = await prompts({
       type: 'text',
-      name: 'prompt',
-      message: chalk.bold('What do you want to build?'),
-      initial: (() => {
-        const suggestions = [
-          'a todo list',
-          'a habit tracker',
-          'a timer app',
-          'a syllabus builder',
-          'a note-taking app',
-          'a grocery list',
-          'my digital resume',
-          'a portrait generator',
-          'a flower arrangement generator',
-          'a color palette tool',
-          'a 3D spinning cube',
-          'a particle system',
-          'an animated gradient',
-          'a typing speed test'
-        ];
-        return suggestions[Math.floor(Math.random() * suggestions.length)];
-      })(),
+      name: 'name',
+      message: chalk.bold('Project name?'),
+      initial: suggestions[Math.floor(Math.random() * suggestions.length)],
     });
-
-    if (!response.prompt) {
-      console.log(chalk.yellow('No prompt provided. Goodbye!'));
-      process.exit(0);
-    }
-
-    console.log();
-    console.log(chalk.green('🚀 Opening vibes.diy with your prompt...'));
-    
-    const encodedPrompt = encodeURIComponent(response.prompt);
-    const url = `https://vibes.diy?prompt=${encodedPrompt}`;
-    
-    await open(url);
-    
-    console.log(chalk.gray(`Opened: ${url}`));
-    console.log();
-    console.log(chalk.cyan('Happy coding! 🎉'));
-    
-  } catch (error) {
-    console.error(chalk.red('Error:'), error.message);
-    process.exit(1);
+    name = response.name;
   }
+
+  if (!name) {
+    console.log(chalk.yellow('No name provided. Goodbye!'));
+    process.exit(0);
+  }
+
+  const dir = join(process.cwd(), name);
+
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, 'vibes.json'), JSON.stringify({ app: name }, null, 2) + '\n');
+  await writeFile(join(dir, 'app.jsx'), PLACEHOLDER_APP);
+
+  console.log(chalk.green(`✨ Created ${name}/`));
+  console.log();
+  console.log(`  ${chalk.cyan('cd')} ${name}`);
+  console.log(`  ${chalk.cyan('use-vibes dev')}`);
+  console.log();
+  console.log(chalk.gray('Happy vibing!'));
 }
 
-main();
+main().catch((err) => {
+  console.error(chalk.red('Error:'), err.message);
+  process.exit(1);
+});

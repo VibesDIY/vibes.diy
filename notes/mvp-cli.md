@@ -91,20 +91,22 @@ Shipped in `use-vibes@0.19.27-dev-cli`.
 
 ---
 
-## Step 8: `generate` and `edit`
+## Step 8: `edit` and `generate` signpost
 
-**Goal:** AI-create and iterate on vibes from the terminal.
+**Goal:** AI-edit existing vibes from the terminal. New vibe creation stays in `create-vibe`.
 
-- `generate <slug> "prompt"` — creates `slug.jsx` from a prompt via call-ai
-- `edit <slug|file> "prompt"` — AI-edit an existing vibe, streams diff to stdout
+- `edit "prompt"` — AI-edit app.jsx in place, streams diff to stdout
+- `generate` — prints a signpost: `cd .. && npm create vibe my-app "describe what you want"`
 - If `live` is running, saved files trigger watch → lint → push automatically
+
+AI generation of new vibes belongs in `create-vibe` at scaffold time, not in `use-vibes`. One directory = one vibe. See [create-vibe-plan.md](create-vibe-plan.md).
 
 ---
 
 ## What comes after
 
 - **`invite`** — generate pre-approved instant access tokens (needs API handlers)
-- **`create-vibe`** — move scaffolder into monorepo, wire to `use-vibes`
+- **`create-vibe`** — now in monorepo (`create-vibe/pkg/`), needs wiring to scaffold vibes.json + app.jsx (see [create-vibe-plan.md](create-vibe-plan.md))
 - **Live reload** — group URLs auto-refresh on new pushes (SSE or version polling)
 
 ---
