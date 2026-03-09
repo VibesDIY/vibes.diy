@@ -1,6 +1,7 @@
 {
   "name": "@vibes-diy/use-vibes",
   "version": "0.0.0",
+  "license": "Apache-2.0",
   "exports": "./main.deno.ts",
   "publish": {
     "include": ["main.deno.ts", "run-cli.ts", "bin.ts", "commands/"]
