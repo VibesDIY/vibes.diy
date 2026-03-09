@@ -59,4 +59,4 @@ Show me the contents of:
 - The `system` command defaults to fireproof + callai skills if no `--skills` flag is given.
 - Browse skills: `npm run use-vibes skills 2>/dev/null`
 - Note: pass `--` before flags so npm forwards them: `npm run use-vibes -- system --skills fireproof,d3`
-- Steps 3-6 (auth, config, push, dev, publish) aren't built yet — for now the app runs on vibes.diy via copy-paste or eject-vibe.
+- CLI deploy (`use-vibes login`, `dev`, `publish`) isn't built yet — for now paste app.jsx into vibes.diy or use eject-vibe for a standalone Vite project.
