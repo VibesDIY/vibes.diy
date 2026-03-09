@@ -163,10 +163,8 @@ Add CLI to the existing `use-vibes` workspace package.
 - **Tech**: Move/adapt v2 implementation into `call-ai/pkg`, bump to next major, publish. Update `prompts` to depend on published `call-ai`. Update release workflow to publish `call-ai` before `prompts`. Add npm smoke gate in CI (`npx use-vibes --help` in clean env)
 - **Dependencies**: L0 (CLI working). Unlocks: clean npm installs, removes inlined ChatMessage type from prompts
 
-### L1. Move `create-vibe` into monorepo
-Already published from its own repo. Move it in and do a fresh release **after `use-vibes` CLI is solid**.
-- **Tech**: Move `create-vibe` scaffolder into monorepo workspace. Update to generate `vibes.json` (app identity + targets) and `package.json` (scripts wired to `use-vibes`). AI generation via call-ai stays as-is
-- **Dependencies**: L2b, L3 (use-vibes CLI must be working first). Unlocks: `npm create vibe` with proper use-vibes integration
+### ~~L1. Move `create-vibe` into monorepo~~ ✅
+Scaffolder lives in `create-vibe/pkg/`, CI publishes via `create-vibe@*` tags. `npm create vibe` scaffolds `vibes.json` + `package.json` (with `use-vibes` script) + placeholder `app.jsx`. Golden path verified end-to-end. Shipped `create-vibe@1.4.0-dev`.
 
 ### L2a. CLI auth (`use-vibes login` / `use-vibes whoami`)
 Authenticate and identify the current user. Owner defaults to `whoami` result for all target resolution.
@@ -188,10 +186,10 @@ Two commands: `skills` lists the catalog with descriptions (for LLM decision-mak
 - **Tech**: `use-vibes skills` prints name + description from `getLlmCatalog()` in `@vibes.diy/prompts`. `use-vibes system --skills fireproof,d3` loads `.txt` docs, assembles via `makeBaseSystemPrompt()`, prints to stdout. Both accept `CliOutput` parameter. Skill validation against catalog; unknown skills → helpful error. Composable: `use-vibes system --skills fireproof | pbcopy`
 - **Dependencies**: L0, `@vibes.diy/prompts` package. Unlocks: L3c generate/edit (needs system prompt), BYO-token workflows
 
-### L3c. CLI generate (`use-vibes generate <slug> "prompt"`)
-AI-create a new vibe from the terminal. Creates `slug.jsx` from a natural language prompt. The slug controls the filename and becomes the vibe's identity in vibes.json.
-- **Tech**: Uses call-ai streaming + system prompt from `use-vibes system` internally. Slug must not already exist as a file. Registers the new vibe in vibes.json. If `live` is running, the new file triggers watch → lint → push automatically. Enables one directory, many vibes — rapid-fire generation from a single workspace
-- **Dependencies**: L3b (system prompt), call-ai. Unlocks: L3d edit, agent-driven development from CLI
+### L3c. CLI generate signpost (`use-vibes generate`)
+Prints documentation pointing users to `create-vibe` for new vibes: `cd .. && npm create vibe my-app "describe what you want"`. One directory = one vibe — generation belongs in `create-vibe`, not `use-vibes`.
+- **Tech**: Echo usage instructions to stdout. No AI, no call-ai dependency.
+- **Dependencies**: L0. Unlocks: clear UX boundary between create-vibe (new vibes) and use-vibes (iterate/deploy)
 
 ### L3d. CLI edit (`use-vibes edit <slug|file> "prompt"`)
 AI-edit an existing vibe from the terminal. Reads the file by slug (resolves to `slug.jsx`) or filename, sends to call-ai with prompt, writes result back, streams diff to stdout.

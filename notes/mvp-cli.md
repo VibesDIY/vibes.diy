@@ -106,7 +106,7 @@ AI generation of new vibes belongs in `create-vibe` at scaffold time, not in `us
 ## What comes after
 
 - **`invite`** — generate pre-approved instant access tokens (needs API handlers)
-- **`create-vibe`** — dry scaffold shipped (`create-vibe@1.2.0-dev`), optional AI generation via prompt arg is future (see [create-vibe-plan.md](create-vibe-plan.md))
+- **`create-vibe`** — dry scaffold shipped (`create-vibe@1.4.0-dev`), optional AI generation via prompt arg is future (see [create-vibe-plan.md](create-vibe-plan.md))
 - **Live reload** — group URLs auto-refresh on new pushes (SSE or version polling)
 
 ---
