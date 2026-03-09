@@ -44,6 +44,7 @@ The file should:
 - Use Tailwind CSS for styling
 - Use Fireproof for data persistence
 - Follow all the rules from the system prompt
+- Do NOT `npm install` additional packages — all imports are resolved automatically via esm.sh at runtime
 
 ### Step 5: Verify
 
