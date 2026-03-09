@@ -11,7 +11,7 @@ I want you to build me a vibe app using the vibes.diy CLI tools. Here's the work
 ### Step 1: Scaffold and install
 
 ```bash
-npm create vibe my-app 2>/dev/null
+npm create vibe@1.3.0-dev my-app 2>/dev/null
 cd my-app
 npm install 2>/dev/null
 ```
@@ -21,7 +21,7 @@ This creates `my-app/` with `package.json`, `vibes.json`, and a placeholder `app
 ### Step 2: Get the system prompt
 
 ```bash
-npx use-vibes system 2>/dev/null
+npm run use-vibes system 2>/dev/null
 ```
 
 Read the output — it tells you how to write app.jsx (React + Tailwind + Fireproof + callAI, single file, no TypeScript).
@@ -48,5 +48,5 @@ Show me the contents of:
 ## Notes
 
 - The `system` command defaults to fireproof + callai skills. Use `--skills fireproof,d3` to add other libraries.
-- Available skills: `npx use-vibes skills 2>/dev/null`
+- Available skills: `npm run use-vibes skills 2>/dev/null`
 - Steps 3-6 (auth, config, push, dev, publish) aren't built yet — for now the app runs on vibes.diy via copy-paste or eject-vibe.

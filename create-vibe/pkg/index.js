@@ -49,8 +49,7 @@ async function main() {
   const pkg = {
     private: true,
     scripts: {
-      dev: 'use-vibes dev',
-      publish: 'use-vibes publish',
+      'use-vibes': 'use-vibes',
     },
     devDependencies: {
       'use-vibes': 'latest',
@@ -66,7 +65,7 @@ async function main() {
   console.log();
   console.log(`  ${chalk.cyan('cd')} ${name}`);
   console.log(`  ${chalk.cyan('npm install')}`);
-  console.log(`  ${chalk.cyan('npx use-vibes dev')}`);
+  console.log(`  ${chalk.cyan('npm run use-vibes dev')}`);
   console.log();
   console.log(chalk.gray('Happy vibing!'));
 }
