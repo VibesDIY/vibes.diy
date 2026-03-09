@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "exports": "./main.deno.ts",
   "publish": {
-    "include": ["main.deno.ts", "run-cli.ts", "bin.ts", "commands/"]
+    "include": ["README.md", "main.deno.ts", "run-cli.ts", "bin.ts", "commands/"]
   },
   "nodeModulesDir": "manual",
   "imports": {
