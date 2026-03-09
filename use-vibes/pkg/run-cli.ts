@@ -1,4 +1,4 @@
-import { Result } from "@adviser/cement";
+import type { Result } from "@adviser/cement";
 import { command, option, run, string, subcommands, restPositionals } from "cmd-ts";
 import { runHelp } from "./commands/help.js";
 import { runWhoami } from "./commands/whoami.js";
