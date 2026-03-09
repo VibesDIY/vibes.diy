@@ -670,9 +670,6 @@ importers:
       react:
         specifier: '>=19.1.0'
         version: 19.2.4
-      tsx:
-        specifier: ^4.19.0
-        version: 4.21.0
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.12
