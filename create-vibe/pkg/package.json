@@ -1,0 +1,35 @@
+{
+  "name": "create-vibe",
+  "version": "0.0.0",
+  "description": "AI-powered project scaffolding tool - like create-vite but with natural language prompts",
+  "main": "index.js",
+  "bin": {
+    "create-vibe": "index.js"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "echo 'no build step'",
+    "publish": "npm publish --access public"
+  },
+  "keywords": [
+    "cli",
+    "scaffolding",
+    "vite",
+    "ai",
+    "code-generation",
+    "template"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "prompts": "^2.4.2",
+    "chalk": "^5.3.0",
+    "open": "^10.1.0"
+  },
+  "files": [
+    "index.js"
+  ]
+}

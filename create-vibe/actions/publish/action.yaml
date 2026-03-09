@@ -1,0 +1,22 @@
+name: "create-vibe-publish"
+description: "publish create-vibe to npm"
+inputs:
+  NPM_TOKEN:
+    description: "NPM token for publishing packages"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: publish
+      shell: bash
+      working-directory: create-vibe/pkg
+      env:
+        NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
+      run: |
+        set -e
+        echo "GITHUB_REF->"$GITHUB_REF
+        VERSION="${GITHUB_REF#refs/tags/create-vibe@v}"
+        echo "Publishing create-vibe@$VERSION"
+        npm version "$VERSION" --no-git-tag-version
+        echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > ~/.npmrc
+        npm publish --access public --registry https://registry.npmjs.org/

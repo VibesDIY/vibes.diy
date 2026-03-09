@@ -1,0 +1,29 @@
+name: 'create-vibe-publish'
+on:
+  push:
+    tags:
+      - 'create-vibe@*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./actions/runtime
+
+      - name: install
+        shell: bash
+        run: pnpm install
+
+      - name: validate
+        shell: bash
+        run: |
+          set -e
+          pnpm build
+          echo "All packages validated successfully"
+
+      - uses: ./create-vibe/actions/publish
+        with:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
