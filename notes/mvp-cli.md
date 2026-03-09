@@ -2,6 +2,20 @@
 
 Bootstrap the `use-vibes` CLI from zero to a working `dev` → `publish` loop.
 
+## Dependency chain
+
+```
+login → config → push → live → dev
+                     ↘ publish
+```
+
+- **login** — device-code auth, stores credentials
+- **config** — vibes.json loading + target resolution (`{whoami}/{app}/{group}`)
+- **push** — wraps `ensureAppSlug` API, needs auth token + resolved target
+- **live** — watch files → debounce → push on save
+- **dev** — sugar for `live` with group = `dev`
+- **publish** — one-time push, no watching
+
 ---
 
 ## Principles
