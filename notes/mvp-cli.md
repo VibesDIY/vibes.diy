@@ -119,7 +119,7 @@ AI generation of new vibes belongs in `create-vibe` at scaffold time, not in `us
 
 ## What comes after
 
-- **`invite`** — generate pre-approved instant access tokens (needs API handlers)
+- **Access** — the deploy URL is the join link (e.g. `vibes.diy/vibe/jchris/cleaning-crew/friends-club`). Public read by default; visitors request write access, moderators approve in real time. Pre-approved instant tokens (`use-vibes invite`) are a future convenience, not the primary flow. See [mvp-invites.md](mvp-invites.md)
 - **`create-vibe`** — dry scaffold shipped (`create-vibe@1.4.0-dev`), optional AI generation via prompt arg is future (see [create-vibe-plan.md](create-vibe-plan.md))
 - **Live reload** — group URLs auto-refresh on new pushes (SSE or version polling)
 
