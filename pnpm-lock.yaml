@@ -380,9 +380,6 @@ importers:
       '@fireproof/use-fireproof':
         specifier: 0.24.12
         version: 0.24.12(@adviser/cement@0.5.32(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@vibes.diy/call-ai-v2':
-        specifier: workspace:*
-        version: link:../../call-ai/v2
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -664,9 +661,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.32
         version: 0.5.32(typescript@5.9.3)
-      cmd-ts:
-        specifier: ^0.15.0
-        version: 0.15.0
       '@fireproof/core':
         specifier: 0.24.12
         version: 0.24.12(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -691,6 +685,9 @@ importers:
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
+      cmd-ts:
+        specifier: ^0.15.0
+        version: 0.15.0
       react:
         specifier: '>=19.1.0'
         version: 19.2.4
