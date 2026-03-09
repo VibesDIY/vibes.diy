@@ -2,12 +2,10 @@
   "name": "use-vibes",
   "version": "0.0.0",
   "type": "module",
-  "bin": {
-    "use-vibes": "./cli.js"
-  },
   "description": "Transform any DOM element into an AI-powered micro-app",
   "scripts": {
     "build": "core-cli tsc",
+    "build:npm": "deno task --config ./deno.json build-npm",
     "test": "vitest run",
     "test:cli": "deno task --config ./deno.json test-cli",
     "check:cli": "deno task --config ./deno.json check-cli",
@@ -39,8 +37,7 @@
     "@fireproof/core-types-base": "0.24.12",
     "@fireproof/core-types-protocols-cloud": "0.24.12",
     "@fireproof/use-fireproof": "0.24.12",
-    "@vibes.diy/use-vibes-base": "workspace:*",
-    "tsx": "^4.19.0"
+    "@vibes.diy/use-vibes-base": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=19.1.0"

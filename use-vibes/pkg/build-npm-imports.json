@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@vibes.diy/prompts": "npm:@vibes.diy/prompts@*",
+    "@vibes.diy/use-vibes-types": "npm:@vibes.diy/use-vibes-types@*",
+    "@vibes.diy/use-vibes-base": "npm:@vibes.diy/use-vibes-base@*",
+    "call-ai": "npm:call-ai@*"
+  }
+}

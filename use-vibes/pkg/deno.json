@@ -1,4 +1,10 @@
 {
+  "name": "@vibes-diy/use-vibes",
+  "version": "0.0.0",
+  "exports": "./main.deno.ts",
+  "publish": {
+    "include": ["main.deno.ts", "run-cli.ts", "bin.ts", "commands/"]
+  },
   "nodeModulesDir": "manual",
   "imports": {
     "@vibes.diy/prompts": "../../prompts/pkg/index.ts",
@@ -9,6 +15,7 @@
   "tasks": {
     "run-cli": "deno run --unstable-sloppy-imports --allow-read --allow-env ./main.deno.ts",
     "test-cli": "deno test --no-check --unstable-sloppy-imports --allow-read --allow-env --allow-run=deno ../tests/cli/cli.test.ts",
-    "check-cli": "deno lint ./main.deno.ts ./run-cli.ts ./commands/cli-output-deno.ts ../tests/cli/cli.test.ts"
+    "check-cli": "deno lint ./main.deno.ts ./run-cli.ts ./commands/cli-output-deno.ts ../tests/cli/cli.test.ts",
+    "build-npm": "deno run -A build-npm.ts"
   }
 }

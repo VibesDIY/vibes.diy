@@ -45,6 +45,7 @@
     "**/.react-router/**",
     "**/.netlify/**",
     "**/tests-new/**",
-    "hosting/tests/unit/**"
+    "hosting/tests/unit/**",
+    "**/build-npm.ts"
   ]
 }
