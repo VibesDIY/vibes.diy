@@ -46,14 +46,27 @@ async function main() {
 
   const dir = join(process.cwd(), name);
 
+  const pkg = {
+    private: true,
+    scripts: {
+      dev: 'use-vibes dev',
+      publish: 'use-vibes publish',
+    },
+    devDependencies: {
+      'use-vibes': 'latest',
+    },
+  };
+
   await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n');
   await writeFile(join(dir, 'vibes.json'), JSON.stringify({ app: name }, null, 2) + '\n');
   await writeFile(join(dir, 'app.jsx'), PLACEHOLDER_APP);
 
   console.log(chalk.green(`✨ Created ${name}/`));
   console.log();
   console.log(`  ${chalk.cyan('cd')} ${name}`);
-  console.log(`  ${chalk.cyan('use-vibes dev')}`);
+  console.log(`  ${chalk.cyan('npm install')}`);
+  console.log(`  ${chalk.cyan('npx use-vibes dev')}`);
   console.log();
   console.log(chalk.gray('Happy vibing!'));
 }

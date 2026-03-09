@@ -71,9 +71,9 @@ See [cli-design.md](cli-design.md) for the full schema including invite permissi
 ## How it connects to the CLI
 
 ```
-create-vibe todo "prompt"      → scaffold directory + vibes.json + AI-generate app.jsx
+create-vibe todo               → scaffold directory + vibes.json + placeholder app.jsx
 cd todo
-use-vibes edit "add dark mode" → AI-edit app.jsx in place
+use-vibes edit "add dark mode" → AI-edit app.jsx in place (future)
 use-vibes dev                  → watch → push on save → print live URL
 use-vibes publish              → one-time push to production group
 ```
@@ -90,22 +90,23 @@ To create a new vibe:
 
 **Interactive (human):**
 ```
-npm create vibe my-app       ← asks what you want to build, AI-generates app.jsx
+npm create vibe my-app       ← asks project name, writes placeholder app.jsx
 cd my-app
+# edit app.jsx (or have Claude write it)
 use-vibes dev                ← opens live URL, watches for changes
-# edit app.jsx in your editor, see changes live
 use-vibes publish            ← deploy to production
 ```
 
 **Automated (agent):**
 ```
-npm create vibe todo "a collaborative todo list"
+npm create vibe todo
 cd todo
+# agent writes app.jsx using use-vibes system prompt
 use-vibes publish
 # stdout: https://vibes.diy/jchris/todo
 ```
 
-Agents pass the prompt as an argument — no interactive question, no browser.
+The scaffold is Claude-ready — agents use `use-vibes system` to get the system prompt, then write app.jsx themselves.
 
 ## Relationship to eject-vibe
 
@@ -118,9 +119,16 @@ Agents pass the prompt as an argument — no interactive question, no browser.
 | **Deploy** | `use-vibes publish` | User manages (Netlify, etc.) |
 | **Dependencies** | None (CLI provides everything) | node_modules |
 
-## Implementation next steps
+## Current state
 
-1. **Accept name + prompt as args** — `npm create vibe todo "a todo list"` skips the interactive question
-2. **Generate vibes.json** — write app identity into the scaffolded directory
-3. **AI generation at scaffold time** — use `system --skills` + call-ai to generate app.jsx from the prompt
-4. **Drop browser-open behavior** — once the CLI can `dev`/`publish`, opening vibes.diy is no longer the primary path
+Dry scaffold shipped in `create-vibe@1.2.0-dev`:
+- `npm create vibe todo` → creates `todo/vibes.json` + `todo/app.jsx` (placeholder)
+- Interactive name prompt if no arg given
+- No AI generation yet — scaffold is Claude-ready (user brings their own AI)
+
+## Future: optional prompt → AI generation
+
+`npm create vibe todo "a collaborative todo list"` could AI-generate `app.jsx` instead of the placeholder. Requires:
+- `call-ai` as a dependency (Node 20+ compatible, already in monorepo)
+- `@vibes.diy/prompts` for `makeBaseSystemPrompt` (same pattern as `use-vibes system`)
+- `OPENROUTER_API_KEY` env var — falls back to placeholder if missing
