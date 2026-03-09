@@ -26,10 +26,10 @@ Users can browse and edit their app's Fireproof data in a visual explorer.
 - **Tech**: Integrate Selem's DB explorer (PR #1085) into the app view — likely as a panel/tab alongside code editor
 - **Dependencies**: PR #1085 polish. Unlocks: debugging, data visibility for multi-device sync
 
-### F4. Re-enable invite route + instant join link
-Users can generate an invite URL and share it manually to grant access.
-- **Tech**: Rename `invite.tsx-off` → `invite.tsx`, fix imports, register in router. Wire to `createInviteToken` API for link-style invites
-- **Dependencies**: A1 (create invite handler). Unlocks: C2 invite e2e
+### F4. Request write access + owner approval panel
+Visitors request write access from the app URL; owners approve in a live panel.
+- **Tech**: Visitor side: "Request Access" button when trying to write without membership. Owner side: live approval panel showing pending requests + approve/deny. The `invite.tsx-off` route becomes the approval panel. Wire to `requestAccess` and `approveAccess` API handlers
+- **Dependencies**: A1 (requestAccess handler), A2 (approveAccess handler). Unlocks: C2 access e2e
 
 ### F5. Mobile responsive published vibes
 Published vibes work on phones — the whole point of "cross-browser/mobile."
@@ -37,9 +37,9 @@ Published vibes work on phones — the whole point of "cross-browser/mobile."
 - **Dependencies**: F1 (needs publishing to work first to test). Unlocks: criteria #5
 
 ### F6. List users in a vibe
-Vibe owner can see who has access and who accepted invites.
-- **Tech**: UI in settings/admin panel calling `listAcceptedInvites` API. Show usernames, roles, accept status
-- **Dependencies**: A4 (list invites handler). Unlocks: invite management, revocation
+Vibe owner can see pending requests + approved members in one view. This is the approval panel from F4.
+- **Tech**: UI in approval panel showing pending access requests and current members with roles. Calls `listAccessRequests` + `listMembers` APIs
+- **Dependencies**: A4 (list members handler). Unlocks: access management, revocation
 
 ### F7. Map groupIds to sandbox appSlug
 Each group/install gets its own sandboxed data partition via appSlug mapping.
@@ -55,29 +55,29 @@ Users know when their data is syncing vs offline.
 
 ## API SERVER
 
-### A1. Expose `createInviteToken` handler
-Backend can create invite codes for sharing vibes.
-- **Tech**: New `svc/public/create-invite-token.ts` EventoHandler wrapping `invite-system.ts:40-122`. Register in `vibes-msg-evento.ts`
-- **Dependencies**: None (logic exists). Unlocks: F4 invite UI, C2 invite e2e
+### A1. Expose `requestAccess` handler
+Visitors can request write access to a group.
+- **Tech**: New EventoHandler storing access request with visitor's Clerk identity and target group. Register in `vibes-msg-evento.ts`. Adapts existing invite-system internals or adds new request table
+- **Dependencies**: None. Unlocks: F4 request UI, C2 access e2e
 
-### A2. Expose `acceptInvite` handler
-Invited users can accept and gain access to shared vibes.
-- **Tech**: New `svc/public/accept-invite.ts` EventoHandler wrapping `invite-system.ts:146-234`. Register in `vibes-msg-evento.ts`
-- **Dependencies**: A1 (need invite to accept). Unlocks: C2 invite e2e
+### A2. Expose `approveAccess` handler
+Owners can approve/deny pending access requests, granting write membership.
+- **Tech**: New EventoHandler that creates membership on approval. Owner action, not visitor action. Register in `vibes-msg-evento.ts`
+- **Dependencies**: A1 (need request to approve). Unlocks: C2 access e2e
 
 ### A3. Expose `getFPToken` handler
 Shared users get Fireproof cloud tokens for synced access.
 - **Tech**: New `svc/public/get-fp-token.ts` EventoHandler wrapping `invite-system.ts:311-392`. Returns ledger/tenant/roles for owner or shared path
 - **Dependencies**: A2 (need accepted invite for shared path). Unlocks: multi-device sync for invited users
 
-### A4. Expose `listAcceptedInvites` handler
-Vibe owners can see who accepted their invites.
-- **Tech**: New `svc/public/list-accepted-invites.ts` EventoHandler wrapping `invite-system.ts:236-295`
-- **Dependencies**: A1, A2. Unlocks: F6 user list UI
+### A4. Expose `listMembers` + `listAccessRequests` handlers
+Vibe owners can see who has access and who is waiting for approval.
+- **Tech**: New EventoHandlers — `listMembers` returns current members with roles, `listAccessRequests` returns pending requests. Wraps existing invite-system internals
+- **Dependencies**: A1, A2. Unlocks: F6 approval panel UI
 
-### A5. Expose `deleteInviteToken` + `deleteAccept` handlers
-Owners can revoke access.
-- **Tech**: Two new EventoHandlers wrapping `invite-system.ts:124-144` and `297-309`
+### A5. Expose `revokeAccess` handler
+Owners can remove members.
+- **Tech**: EventoHandler wrapping `invite-system.ts` delete logic
 - **Dependencies**: A1, A2. Unlocks: access management
 
 ### A6. Slug availability check (optional)
@@ -94,9 +94,9 @@ User goes from prompt → generated code → published URL → working app.
 - **Tech**: F1 + F2 + existing backend (`ensureAppSlug`) + existing serve pipeline (`serv-entry-point.ts` + `render-vibe.ts`)
 - **Dependencies**: F1, F2. Unlocks: criteria #4, #5
 
-### C2. Invite e2e
-Owner creates invite link → shares URL → invitee accepts → sees app + data.
-- **Tech**: F4 frontend + A1-A3 API handlers + `getFPToken` for Fireproof cloud access
+### C2. Access e2e
+Owner shares app URL → visitor reads freely → visitor requests write access → owner approves → visitor gets synced write membership.
+- **Tech**: F4 frontend (request button + approval panel) + A1-A3 API handlers + `getFPToken` for Fireproof cloud access
 - **Dependencies**: A1-A3, F4. Unlocks: criteria #7
 
 ### C3. Multi-device sync e2e
@@ -198,10 +198,10 @@ AI-edit an existing vibe from the terminal. Reads the file by slug (resolves to 
 - **Tech**: Uses call-ai streaming + system prompt from `use-vibes system` internally. If `live` is running, saved file triggers watch → lint → push automatically. Composable: `generate` + `edit` + `live` = full AI dev loop from terminal
 - **Dependencies**: L3b (system prompt), call-ai. Unlocks: iterative AI development from CLI
 
-### L4. CLI invite (`use-vibes invite <group> [flags]`)
-Generate a join link for a target group from the terminal.
-- **Tech**: Call `createInviteToken` API with `style: 'link'`, print URL to stdout. Default permissions come from the target's `invite` field in vibes.json, falling back to collaborative default (`access: "write"`, `inviteWriter: true`). Flags: `--reader`, `--no-invite`, `--invite-reader`, `--invite-writer` (see [mvp-invites.md](mvp-invites.md)). Full target path enables cross-user permissions (e.g., joe can deploy to `jchris/foo-bar/amaze` if granted)
-- **Dependencies**: A1 (invite handler). Unlocks: sharing from CLI without opening browser
+### L4. CLI invite (`use-vibes invite <group> [flags]`) — future
+Generate a pre-approved instant access token from the terminal. The primary sharing flow is just sharing the app URL — this is a convenience for quick sharing.
+- **Tech**: Call `createInviteToken` API with TTL, print URL with `?invite=TOKEN` to stdout. Token auto-approves write access within TTL window. After expiry, URL still works for public read, write falls back to request-access. No public write — Clerk sign-in always required. Flags: `--reader`, `--ttl <minutes>` (see [mvp-invites.md](mvp-invites.md))
+- **Dependencies**: A1 (requestAccess handler), createInviteToken API (future). Unlocks: quick sharing from CLI
 
 ### L5. Live reload for group URLs
 Group URLs auto-refresh when new code is pushed — feels like local dev but in the cloud.

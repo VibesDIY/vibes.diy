@@ -1,77 +1,83 @@
-# Web MVP — Instant Join Links
+# Web MVP — Public Read + Request Write Access
 
-Simplest path to working invite links, web only. No CLI, no mobile, no admin UI. Owner creates link → shares it → invitee opens it → they're in.
+Simplest path to collaborative apps, web only. No CLI, no mobile, no admin UI. Apps are public read by default. Writers request access, owners approve.
 
 ---
 
 ## The Flow
 
+### Public read (default — no machinery needed)
+
 1. Owner publishes a vibe (gets a URL)
-2. Owner clicks "Invite" → gets an instant join link
-3. Owner pastes link in Slack/text/email
-4. Invitee opens link → sees app immediately (read-only, filesystem is public)
-5. On first write attempt → Clerk sign-in pops → invite auto-accepted → full synced access
+2. Owner shares the URL in Slack/text/email
+3. Visitor opens URL → sees app and data, read-only. Done.
+
+### Write access
+
+4. Visitor wants to write → clicks "Request Access"
+5. Clerk sign-in → access request sent to owner
+6. Owner sees request in live approval panel → approves
+7. Visitor gets write membership with synced data
 
 ---
 
 ## Task Chain
 
 ### 1. P2 — Run D1 migrations
-Create `InviteTokens` + `AcceptInvites` tables in production.
+Create invite/access tables in production.
 - `pnpm run drizzle:d1-remote`
 - No code changes, just a migration run
 - **Unlocks**: everything below
 
-### 2. A1 — Expose `createInviteToken`
-New EventoHandler wrapping existing `invite-system.ts:40-122`. Register in `vibes-msg-evento.ts`.
-- The logic already exists — this is wiring it up
-- **Unlocks**: frontend can create invite links
+### 2. A1 — Expose `requestAccess` handler
+New EventoHandler for visitors to request write access. Stores the request with visitor's Clerk identity and target group.
+- **Unlocks**: visitors can request access from the app
 
-### 3. A2 — Expose `acceptInvite`
-New EventoHandler wrapping `invite-system.ts:146-234`. Register in `vibes-msg-evento.ts`.
-- **Unlocks**: invitees can accept and join
+### 3. A2 — Expose `approveAccess` handler
+New EventoHandler for owners to approve/deny pending requests. Creates membership on approval.
+- **Unlocks**: owners can grant write access
 
 ### 4. A3 — Expose `getFPToken`
 New EventoHandler wrapping `invite-system.ts:311-392`. Returns ledger/tenant/roles for shared access.
-- **Unlocks**: invitees get Fireproof cloud tokens for synced data
+- **Unlocks**: approved members get Fireproof cloud tokens for synced data
 
-### 5. F4 — Re-enable invite route
-Rename `invite.tsx-off` → `invite.tsx`, fix imports, register in router. Wire "Invite" button to call `createInviteToken` API.
-- Minimal UI: button that generates a link, copy-to-clipboard
-- Accept page: route that calls `acceptInvite` on load, redirects to app
+### 5. F4 — Request access UI + owner approval panel
+- Visitor side: "Request Access" button appears when trying to write without membership
+- Owner side: live panel showing incoming requests, approve/deny buttons
+- The `invite.tsx-off` route becomes the approval panel
 - **Unlocks**: the full loop works in the browser
 
 ### 6. P3 — Deploy
 Tag for staging, verify, tag for production.
-- Only needs A1-A3 handlers (skip A4/A5 admin handlers for now)
-- **Unlocks**: live invite links
+- Only needs A1-A3 handlers (skip admin handlers for now)
+- **Unlocks**: live access requests
 
 ### 7. P1 — Configure FPCLOUD_URL
 Set `FPCLOUD_URL` + `DASHBOARD_URL` so synced data actually flows.
-- Without this, invitees see the app but data doesn't sync
+- Without this, approved members see the app but data doesn't sync
 - Can be done in parallel with steps 2-5
 
 ---
 
 ## What's NOT in this path
 
-- **F0 sidebar reconciliation** — invite button can live anywhere for now (share modal, header, wherever it fits fastest)
+- **F0 sidebar reconciliation** — approval panel can live anywhere for now (route, modal, wherever it fits fastest)
 - **F1 publish button** — publishing already works enough to have apps with URLs
-- **F6 user list** — owner doesn't need to see who joined yet
-- **A4/A5 list/delete invites** — no admin UI, no revocation yet
+- **A5 revocation** — no member removal yet
 - **CLI** — all web
 - **Mobile** — desktop only
-- **Custom permissions** — collaborative default (writer + inviteWriter) for all invites, no `--reader` equivalent in the UI yet
+- **Custom permissions** — collaborative default (writer + inviteWriter) for all approvals. No Collaborator vs Viewer toggle yet
+- **Pre-approved tokens** — future convenience, not needed for MVP
 
 ---
 
 ## Permissions for this path
 
-Every invite uses the collaborative default:
-- `access: "write"` — invitee can read and write data
-- `inviteWriter: true` — invitee can invite others (same permissions)
+Every approval uses the collaborative default:
+- `access: "write"` — approved member can read and write data
+- `inviteWriter: true` — approved member can invite others (same permissions)
 
-No permission picker in the UI. The owner just clicks "Invite" and gets a link. Locking down to reader-only comes later with CR-03.
+No permission picker in the UI. The owner just clicks "Approve" and the visitor gets full write access. Locking down to reader-only comes later with CR-03.
 
 ---
 
@@ -81,22 +87,20 @@ After the minimal task chain ships, these three features complete the web invite
 
 ### CR-01. Progressive unauthenticated onboarding (read-first)
 
-Let new users open and use vibes in reader mode without Clerk login; require auth only at first write.
+Public read already gives unauthenticated users access to see apps and data. This CR is about making the transition to write smooth.
 
 **Frontend changes:**
-- Add `guest` session state in app shell
-- Load Fireproof local state for guest readers using install-scoped local identity
-- On first mutating action (edit/save/publish/data write), show auth gate modal instead of failing
-- After successful login, continue the blocked write action automatically
+- On first mutating action (data write), show auth gate modal instead of failing
+- After successful login, automatically trigger the access request flow
+- After approval, continue the blocked write action automatically
 
 **Backend/API changes:**
-- No new auth requirement for read paths already public
-- Ensure write paths return a clear `require-login` error shape for UX handoff
+- Ensure write paths return a clear `require-login` or `require-membership` error shape for UX handoff
 
 **Acceptance criteria:**
-- Unauthenticated user can open shared vibe and read data
-- First write triggers login modal
-- After login, intended write succeeds without redoing flow
+- Unauthenticated user can open any vibe and read data (already works — public read)
+- First write triggers login → request access flow
+- After approval, intended write succeeds without redoing flow
 
 ### CR-02. Remix branch flow with inherited read context
 
@@ -119,22 +123,38 @@ Prevent empty-state remix by giving users a branching choice and inherited read 
 - User can see source data immediately in inherited-read mode
 - New writes do not mutate original group data
 
-### CR-03. Invite link governance toggle
+### CR-03. Approval governance toggle
 
-Expose simple invite permission control in UI (Collaborator vs Viewer), using existing backend reader flag support.
+Expose simple permission control when approving access (Collaborator vs Viewer), using existing backend reader flag support.
 
 **Frontend changes:**
-- Add invite toggle in share/invite UI:
-  - `Collaborator` (default)
-  - `Viewer`
-- Map Viewer to reader invite payload; Collaborator to writer payload
-- Show permission summary in generated link card
+- Add toggle in approval panel:
+  - `Collaborator` (default) — write + inviteWriter
+  - `Viewer` — read only
+- Show permission summary next to each approved member
 
 **Backend/API changes:**
-- Reuse current invite token creation path with reader flag
-- Persist/display selected mode in invite list
+- Reuse current membership creation path with reader flag
+- Persist/display selected mode in member list
 
 **Acceptance criteria:**
-- Owner can generate both collaborator and viewer links
-- Invitee permissions match selected mode
-- Existing default behavior remains unchanged when toggle not used
+- Owner can approve as either collaborator or viewer
+- Approved member permissions match selected mode
+- Existing default behavior (collaborative) remains unchanged when toggle not used
+
+### CR-04. Pre-approved instant access tokens (future)
+
+For quick sharing (e.g., in a meeting), generate a time-limited token appended to the app URL.
+
+**Frontend changes:**
+- "Generate instant link" button in approval panel → creates URL with `?invite=TOKEN`
+- Show TTL countdown on generated link
+
+**Backend/API changes:**
+- `createInviteToken` API with TTL and permission config
+- Auto-approve any access request that arrives with a valid, non-expired token
+
+**Acceptance criteria:**
+- Token auto-approves within TTL window
+- After TTL, URL still works for public read, write falls back to request-access
+- No public write — Clerk sign-in always required

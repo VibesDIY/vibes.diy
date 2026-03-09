@@ -217,7 +217,7 @@ Before proceeding to Step 2, these items from the first release need addressing:
 ## What comes after
 
 Once steps 1-8 are solid:
-- **`invite`** — generate join links (needs API handlers from web MVP)
+- **`invite`** — (future) generate pre-approved instant access tokens (needs API handlers from web MVP)
 - **`create-vibe`** — move scaffolder into monorepo, wire to `use-vibes`
 - **Live reload** — group URLs auto-refresh on new pushes (SSE or version polling)
 

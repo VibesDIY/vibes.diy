@@ -60,9 +60,9 @@ use-vibes whoami                  # print current user (e.g., "jchris")
 use-vibes dev                     # live-push to dev group (sugar for: use-vibes live dev)
 use-vibes live work-lunch         # live-push to work-lunch group
 use-vibes publish family-reunion  # one-time push to family-reunion group
-use-vibes invite work-lunch            # join link (collaborative default: writer + inviteWriter)
-use-vibes invite work-lunch --reader   # reader + inviteReader (viral read-only)
-use-vibes invite work-lunch --no-invite  # writer, no invite powers
+use-vibes invite work-lunch            # (future) pre-approved instant access token (5 min TTL, writer)
+use-vibes invite work-lunch --reader   # (future) pre-approved token for read-only access
+use-vibes invite work-lunch --ttl 15   # (future) custom TTL in minutes
 use-vibes generate my-app "build a sales dashboard"  # AI-generate my-app.jsx (new vibe)
 use-vibes edit my-app "make the header dark"         # AI-edit my-app.jsx
 use-vibes edit my-app.jsx "add a search bar"         # AI-edit by filename
@@ -116,7 +116,7 @@ The project's `vibes.json` stores the app name and known targets:
 
 Each target tracks an `fs` array of `{ id, ts }` entries — the fsIds it has been deployed with. Targets can also carry an `invite` object — the default permissions granted by invite links for that group.
 
-- **`invite`** (optional) overrides the default permissions for `use-vibes invite <group>`. When omitted, the default is collaborative: `access: "write"`, `inviteWriter: true`. The owner can add an explicit `invite` object to lock down a group (e.g., `{ "access": "read", "inviteReader": true }`), or override per-invite on the command line (`use-vibes invite work-lunch --reader`).
+- **`invite`** (optional) overrides the default permissions granted when the owner approves access requests. When omitted, the default is collaborative: `access: "write"`, `inviteWriter: true`. The owner can add an explicit `invite` object to lock down a group (e.g., `{ "access": "read", "inviteReader": true }`). Also controls the permissions on pre-approved instant access tokens (future).
 
 - **`publish`** appends to `fs` history (newest first). Full history of what was pushed to this group.
 - **`live`** replaces its single `fs` entry on each push — only the current state matters. Old fsIds are discarded as new ones arrive during the session.
@@ -287,8 +287,8 @@ Prompts:
 
 Deploy:
   publish [group]            One-time push to target group (default: 'default')
-  invite <group> [flags]     Generate a join link (default: writer + inviteWriter)
-                             --reader, --no-invite, --invite-reader, --invite-writer
+  invite <group> [flags]     (future) Generate a pre-approved instant access token
+                             --reader, --ttl <minutes>
 
 Targets:
   Bare name:      work-lunch             → {whoami}/{app}/work-lunch
@@ -367,7 +367,7 @@ An agent in any framework (Claude Code, Agent SDK, OpenAI Agents, LangGraph) can
 | `use-vibes skills` | List available skills with descriptions (for LLM decision-making) |
 | `use-vibes system [--skills ...]` | Emit assembled system prompt to stdout for given skills |
 | `use-vibes publish [group]` | One-time push of current code to target group. No arg = `default` group (shortest URL) |
-| `use-vibes invite <group> [flags]` | Generate a join link. Default: writer + inviteWriter. Flags: `--reader`, `--no-invite`, `--invite-reader`, `--invite-writer`. See [mvp-invites.md](mvp-invites.md) for full flag semantics |
+| `use-vibes invite <group> [flags]` | (Future) Generate a pre-approved instant access token with TTL. Default: writer + inviteWriter. Flags: `--reader`, `--ttl <minutes>`. Primary sharing is just the app URL — no CLI command needed. See [mvp-invites.md](mvp-invites.md) |
 
 ---
 

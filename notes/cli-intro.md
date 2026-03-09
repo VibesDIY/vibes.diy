@@ -25,7 +25,7 @@ use-vibes login                         # authenticate once
 use-vibes dev                           # live-push to your dev group
 use-vibes edit app "add a dark mode toggle" # AI-edit app.jsx, auto-pushes via live
 use-vibes publish work-lunch            # snapshot to a stable group URL
-use-vibes invite work-lunch             # share a join link
+use-vibes invite work-lunch             # (future) pre-approved instant access token
 ```
 
 ## Run CLI Today
@@ -67,10 +67,10 @@ npx use-vibes --help
 
 ## Docs
 
-- [mvp-web.md](mvp-web.md) — Simplest web-only path to working invite links
+- [mvp-web.md](mvp-web.md) — Simplest web-only path: public read + request write access
 - [mvp-cli.md](mvp-cli.md) — First steps to build the CLI (features, interface, logic)
 - [code-mvp-lite.md](code-mvp-lite.md) — Domain model + task summary
-- [mvp-invites.md](mvp-invites.md) — Instant join links, permissions, group sharing model
+- [mvp-invites.md](mvp-invites.md) — Public read, request write, permissions, group sharing model
 - [cli-architecture.md](cli-architecture.md) — Implementation constraints: Deno-first runtime, cmd-ts routing, Result pattern, no fs.*Sync
 - [cli-design.md](cli-design.md) — Full architecture: domain model, targets, vibes.json, commands
 - [cli-parts.md](cli-parts.md) — Existing repo infrastructure reusable for the CLI
