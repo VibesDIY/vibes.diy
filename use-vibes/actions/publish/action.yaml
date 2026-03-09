@@ -94,6 +94,7 @@ runs:
           const f = 'deno.json';
           const j = JSON.parse(Deno.readTextFileSync(f));
           j.version = '${VERSION}';
+          j.nodeModulesDir = 'auto';
           j.imports = {
             '@vibes.diy/prompts': 'npm:@vibes.diy/prompts@${VERSION}',
             '@vibes.diy/use-vibes-types': 'npm:@vibes.diy/use-vibes-types@${VERSION}',
