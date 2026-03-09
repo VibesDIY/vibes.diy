@@ -2,9 +2,9 @@
 
 ## Design decisions
 
-**cmd-ts** for subcommand routing. Initially planned to use a manual `process.argv` router, but Meno's PR review (see [cli-mvp-code-review.md](cli-mvp-code-review.md)) pushed toward cmd-ts.
+**cmd-ts** for subcommand routing, option parsing, and help generation.
 
-**Deno-first runtime**: `main.deno.ts` is now the primary entrypoint in development and CI. Node keeps a compatibility wrapper for `npx use-vibes`.
+**Deno-first runtime**: `main.deno.ts` is the primary entrypoint. Node gets an npm binary via dnt.
 
 **Runtime-neutral orchestration**: `run-cli.ts` owns command wiring and dispatch. Host-specific entrypoints only provide stdout/stderr and exit-code hooks.
 
@@ -14,52 +14,53 @@
 
 **Injectable `CliOutput`**: Commands accept a `CliOutput` parameter (`stdout`/`stderr` functions), so tests can capture output without process forking.
 
-**`loadAsset` for text files**: Help text lives in `help.txt`, loaded via cement `loadAsset` with `import.meta.url` as base path.
+**`.js` import specifiers**: Local imports use `.js` extensions for Node/browser compatibility. Deno resolves these via `--unstable-sloppy-imports`.
 
 ---
 
 ## Entry points
 
 ```
-main.deno.ts  ← Deno-first CLI entrypoint
+main.deno.ts  ← Deno CLI entrypoint
   └─ calls runCli(Deno.args, runtime)
 
-cli.ts        ← Node compatibility entrypoint
+bin.ts        ← Node CLI entrypoint (compiled by dnt with #!/usr/bin/env node shebang)
   └─ calls runCli(process.argv.slice(2), runtime)
 
 run-cli.ts    ← shared cmd-ts app and dispatch logic
 ```
 
-`cli.js` remains the npm bin wrapper during transition. It exists only to execute TypeScript in Node environments that use `npx use-vibes`.
+npm users run `npx use-vibes`. dnt generates the bin entry with a proper shebang from `bin.ts`.
 
 ---
 
-## Command structure
+## File structure
 
 ```
 use-vibes/pkg/
-├── main.deno.ts           # Deno entrypoint
-├── cli.js                 # npm bin wrapper (transition)
-├── cli.ts                 # Node entrypoint
-├── run-cli.ts             # shared runtime-neutral orchestrator
-├── deno.json              # Deno tasks + local import mappings
+├── main.deno.ts              # Deno entrypoint
+├── bin.ts                    # Node entrypoint (dnt adds shebang)
+├── run-cli.ts                # shared runtime-neutral orchestrator
+├── build-npm.ts              # dnt build script (Deno-only, excluded from tsgo/ESLint)
+├── build-npm-imports.json    # npm specifiers for dnt dependency resolution
+├── deno.json                 # Deno tasks + JSR config + local import mappings
 ├── commands/
-│   ├── cli-output.ts      # CliOutput interface + Node default output
-│   ├── cli-output-deno.ts # Deno stdout/stderr implementation
-│   ├── help.ts
-│   ├── help.txt
+│   ├── cli-output.ts         # CliOutput interface + Node default output
+│   ├── cli-output-deno.ts    # Deno stdout/stderr implementation
 │   ├── whoami.ts
 │   ├── skills.ts
 │   ├── system.ts
 │   └── not-implemented.ts
-└── index.ts               # library exports
+├── scripts/
+│   └── check-local-import-specifiers.ts  # enforces .js imports
+└── index.ts                  # library exports
 ```
 
 ---
 
 ## Testing
 
-CLI tests are now `deno test` based:
+CLI tests are `deno test` based:
 
 - **Unit tests**: direct import of command functions with captured output
 - **Smoke tests**: spawn `deno run main.deno.ts` and assert exit codes/stdout/stderr
@@ -67,15 +68,27 @@ CLI tests are now `deno test` based:
 Run with:
 
 ```bash
-deno task --config use-vibes/pkg/deno.json check-cli
-deno task --config use-vibes/pkg/deno.json test-cli
+deno task --config use-vibes/pkg/deno.json check-cli   # lint + import specifier check
+deno task --config use-vibes/pkg/deno.json test-cli     # unit + smoke tests
 ```
+
+---
+
+## npm packaging
+
+`build-npm.ts` uses dnt (`@deno/dnt`) to compile TypeScript into an npm-compatible package:
+
+- Generates `bin` entry with `#!/usr/bin/env node` shebang
+- ESM-only output (`scriptModule: false` for top-level await)
+- Dependencies resolved via `build-npm-imports.json` import map
+- CI runs `PACKAGE_VERSION="$VERSION" deno run -A build-npm.ts` then publishes from `dist/npm/`
 
 ---
 
 ## Key dependencies
 
 - `cmd-ts` — subcommand routing, option parsing, help generation
-- `@adviser/cement` — `Result`, `exception2Result`, `loadAsset`
+- `@adviser/cement` — `Result`, `exception2Result`
 - `@vibes.diy/prompts` — skill catalog and system prompt assembly
+- `@deno/dnt` — Deno-to-npm build tool
 - `deno` — primary CLI runtime and test runner

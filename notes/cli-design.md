@@ -379,14 +379,14 @@ npm registry
 │   └── scaffolds project with use-vibes as devDependency
 └── use-vibes          → library (import) + CLI (bin)
     ├── import: React hooks, useFireproof, etc.
-    └── bin: cli.js → Node compatibility wrapper; Deno entrypoint is main.deno.ts
+    └── bin: bin.ts → Node entrypoint (dnt adds shebang); Deno entrypoint is main.deno.ts
 
 monorepo (existing)
 ├── use-vibes/pkg      → library + CLI entry points
 │   ├── main.deno.ts   → Deno-first CLI entrypoint
 │   ├── run-cli.ts     → shared cmd-ts routing + Result handling
-│   ├── cli.ts         → Node compatibility entrypoint
-│   ├── cli.js         → npm bin wrapper (transition path)
+│   ├── bin.ts         → Node entrypoint (compiled by dnt with shebang)
+│   ├── build-npm.ts   → dnt build script (Deno-only)
 │   ├── commands/      → one file per command + cli-output.ts
 │   └── lib/           → config, api-client, auth (future)
 └── (create-vibe)      → move from own repo into monorepo, fresh release (after use-vibes CLI is solid)

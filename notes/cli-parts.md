@@ -141,32 +141,29 @@ Already published from its own repo. Work here is moving it into the monorepo cl
 
 ### `use-vibes` (runtime CLI)
 
-Architecture: build-free tsx, cmd-ts routing, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md).
+Architecture: Deno-first with dnt for npm, cmd-ts routing, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md).
 
-- **Two-file bootstrap** — `cli.js` (plain JS) resolves tsx, spawns `cli.ts` (TypeScript)
-- **cmd-ts** — subcommand routing, option parsing, help generation
+- **Deno-first** — `main.deno.ts` primary entrypoint, `bin.ts` compiled by dnt for npm
+- **cmd-ts** — subcommand routing, option parsing, help generation (via `runSafely`)
 - **cement Result pattern** — all commands return `Result<void>`, errors propagate as values
-- **Injectable CliOutput** — commands accept stdout/stderr functions for testability and future browser use
+- **Injectable CliOutput** — commands accept stdout/stderr functions for testability
+- **`.js` import specifiers** — local imports use `.js` for Node/browser compat, Deno uses `--unstable-sloppy-imports`
 - **`fs/promises` only** — no `fs.*Sync` anywhere
-- **Native `fs/promises.watch`** — Node 20+ recursive watcher, no chokidar (planned for `live`)
-- **ensureAppSlug API** for pushing code to cloud targets
-- **ESLint** integration for pre-push linting
-- **Device-code auth** flow (not yet built)
-- **vibes.json** parsing for app identity and target resolution
+- **ensureAppSlug API** for pushing code to cloud targets (planned)
+- **Device-code auth** flow (planned)
+- **vibes.json** parsing for app identity and target resolution (planned)
 
-### Built (Steps 1 & 7)
-- `cli.js` bootstrap + `cli.ts` cmd-ts subcommands + `commands/` directory
-- `help` — loads help text from `help.txt` via cement `loadAsset`
+### Working commands
+- `help` / `--help` / `-h` — generated help from cmd-ts
 - `whoami` — returns `Result.Err("Not logged in")` (stub until auth)
 - `skills` — lists catalog from `@vibes.diy/prompts`
-- `system` — assembles full system prompt for selected skills
-- Stub commands for all unimplemented features (accept positional args via `restPositionals`)
-- 22 tests: 14 unit (captureOutput) + 8 smoke (spawn cli.js)
+- `system --skills` — assembles full system prompt for selected skills
+- Stub commands: `login`, `dev`, `live`, `generate`, `edit`, `publish`, `invite`
+- 22 Deno tests: 14 unit + 8 smoke
 
-### Not yet built (new work)
-- `lib/config.ts` — vibes.json loading + target resolution (`group` → `owner/app/group`)
-- `lib/api-client.ts` — cloud push protocol (API client for ensureAppSlug from CLI context)
-- `lib/auth.ts` — device-code login flow + credential storage
-- SSE/polling live reload injection (server-side)
+### Planned work
+- Config loading — vibes.json + target resolution (`group` → `owner/app/group`)
+- API client — cloud push protocol (ensureAppSlug from CLI context)
+- Auth — device-code login flow + credential storage
+- Live reload — SSE/polling injection (server-side)
 - Invite API client (`createInviteToken` from CLI)
-- Cross-user target permissions

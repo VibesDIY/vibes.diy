@@ -13,12 +13,12 @@ The sidebar has diverged — vibe card, publish overlay, settings, invites, and 
 
 ### F1. Wire publish button
 Users can publish their vibe to a public URL with one click.
-- **Tech**: Connect `onPublish` prop in `ResultPreviewHeaderContent.tsx` (lines 131-141) to call `ensureAppSlug` WebSocket API with extracted code
+- **Tech**: Connect `onPublish` prop in `ResultPreviewHeaderContent.tsx` to call `ensureAppSlug` WebSocket API with extracted code
 - **Dependencies**: F0 (sidebar reconciliation decides where publish lives). Unlocks: C1 publishing e2e, F5 mobile published vibes
 
 ### F2. Code editor lets you edit
 Users can hand-edit generated code and see changes live before publishing.
-- **Tech**: Export `getCode()` from `CodeEditor.tsx` (lines 25-56), ensure edits flow back to preview iframe and are captured by publish handler
+- **Tech**: Export `getCode()` from `CodeEditor.tsx`, ensure edits flow back to preview iframe and are captured by publish handler
 - **Dependencies**: None. Unlocks: F1 publish (needs to grab edited code, not just generated)
 
 ### F3. Integrate DB Explorer
@@ -67,7 +67,7 @@ Owners can approve/deny pending access requests, granting write membership.
 
 ### A3. Expose `getFPToken` handler
 Shared users get Fireproof cloud tokens for synced access.
-- **Tech**: New `svc/public/get-fp-token.ts` EventoHandler wrapping `invite-system.ts:311-392`. Returns ledger/tenant/roles for owner or shared path
+- **Tech**: New `svc/public/get-fp-token.ts` EventoHandler wrapping invite-system logic. Returns ledger/tenant/roles for owner or shared path
 - **Dependencies**: A2 (need accepted invite for shared path). Unlocks: multi-device sync for invited users
 
 ### A4. Expose `listMembers` + `listAccessRequests` handlers
@@ -153,9 +153,9 @@ Prevent unbounded growth of published vibes and assets.
 
 See [cli-design.md](cli-design.md) for full architecture.
 
-### L0. Bootstrap `use-vibes` CLI ✅ DONE
+### L0. Bootstrap `use-vibes` CLI
 Add CLI to the existing `use-vibes` workspace package.
-- **Tech**: Two-file bootstrap (`cli.js` → tsx → `cli.ts`), cmd-ts for subcommand routing, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md). `commands/` directory with one file per command, stub commands for all unimplemented features.
+- **Tech**: `bin.ts` (Node via dnt) + `main.deno.ts` (Deno), cmd-ts for subcommand routing, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md). `commands/` directory with one file per command, stub commands for all unimplemented features.
 - **Dependencies**: None. Unlocks: L2a auth, L3b skills/system
 
 ### L0b. Ship call-ai v2 as new major release (#1088)
@@ -183,7 +183,7 @@ One-time push of current code to a target group. No arg = `default` group (short
 - **Tech**: Resolve target from vibes.json, call `ensureAppSlug` with `mode: 'production'`, pin release tag. `releaseSeq` in DB handles versioning. Can override app: `use-vibes publish jchris/soup-order/work-lunch`
 - **Dependencies**: L2b. Unlocks: production deployments from CLI
 
-### L3b. CLI skills + system prompt (`use-vibes skills` / `use-vibes system`) ✅ DONE
+### L3b. CLI skills + system prompt (`use-vibes skills` / `use-vibes system`)
 Two commands: `skills` lists the catalog with descriptions (for LLM decision-making), `system` emits the full assembled prompt for selected skills.
 - **Tech**: `use-vibes skills` prints name + description from `getLlmCatalog()` in `@vibes.diy/prompts`. `use-vibes system --skills fireproof,d3` loads `.txt` docs, assembles via `makeBaseSystemPrompt()`, prints to stdout. Both accept `CliOutput` parameter. Skill validation against catalog; unknown skills → helpful error. Composable: `use-vibes system --skills fireproof | pbcopy`
 - **Dependencies**: L0, `@vibes.diy/prompts` package. Unlocks: L3c generate/edit (needs system prompt), BYO-token workflows

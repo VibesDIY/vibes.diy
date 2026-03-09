@@ -31,17 +31,17 @@ use-vibes invite work-lunch             # (future) pre-approved instant access t
 ## Run CLI Today
 
 ```bash
-# Deno-first (from monorepo root)
+# npm (published)
+npx use-vibes --help
+npx use-vibes skills
+
+# Deno (from monorepo root)
 deno task --config use-vibes/pkg/deno.json run-cli --help
 deno task --config use-vibes/pkg/deno.json run-cli skills
 
-# Deno CLI tests (from monorepo root)
+# Deno CLI tests
 deno task --config use-vibes/pkg/deno.json check-cli
 deno task --config use-vibes/pkg/deno.json test-cli
-
-# Node/npm compatibility path (still supported)
-node use-vibes/pkg/cli.js --help
-npx use-vibes --help
 ```
 
 ## Packages
@@ -69,9 +69,9 @@ npx use-vibes --help
 
 - [mvp-web.md](mvp-web.md) — Simplest web-only path: public read + request write access
 - [mvp-cli.md](mvp-cli.md) — First steps to build the CLI (features, interface, logic)
-- [code-mvp-lite.md](code-mvp-lite.md) — Domain model + task summary
 - [mvp-invites.md](mvp-invites.md) — Public read, request write, permissions, group sharing model
-- [cli-architecture.md](cli-architecture.md) — Implementation constraints: Deno-first runtime, cmd-ts routing, Result pattern, no fs.*Sync
+- [cli-architecture.md](cli-architecture.md) — Implementation: Deno-first, cmd-ts, dnt, testing
 - [cli-design.md](cli-design.md) — Full architecture: domain model, targets, vibes.json, commands
 - [cli-parts.md](cli-parts.md) — Existing repo infrastructure reusable for the CLI
+- [cli-release-process.md](cli-release-process.md) — How to tag and ship releases
 - [code-mvp.md](code-mvp.md) — Task list with full tech details (L0-L5)
