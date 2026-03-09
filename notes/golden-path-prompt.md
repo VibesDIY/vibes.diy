@@ -11,12 +11,12 @@ I want you to build me a vibe app using the vibes.diy CLI tools. Here's the work
 ### Step 1: Scaffold and install
 
 ```bash
-npm create vibe@1.4.0-dev my-app 2>/dev/null
-cd my-app
+npm create vibe@1.4.0-dev <creative-app-name> 2>/dev/null
+cd <creative-app-name>
 npm install 2>/dev/null
 ```
 
-This creates `my-app/` with `package.json`, `vibes.json`, and a placeholder `app.jsx`. The install pulls in `use-vibes` as a dev dependency.
+Pick a unique, descriptive name for your app (e.g. `beat-lab`, `recipe-box`, `mood-ring`). Don't reuse an existing directory name. This creates a new folder with `package.json`, `vibes.json`, and a placeholder `app.jsx`.
 
 ### Step 2: Browse available skills
 
@@ -36,7 +36,7 @@ Read the output — it tells you how to write app.jsx with the selected skills. 
 
 ### Step 4: Write app.jsx
 
-Now write `my-app/app.jsx` based on the system prompt instructions. Build me: **[describe your app here, e.g. "a drum machine with sequencer and synth pads"]**
+Now write `app.jsx` based on the system prompt instructions. Build me: **[describe your app here, e.g. "a drum machine with sequencer and synth pads"]**
 
 The file should:
 - Be a single JSX file with a default export
@@ -48,8 +48,8 @@ The file should:
 ### Step 5: Verify
 
 Show me the contents of:
-- `my-app/vibes.json`
-- `my-app/app.jsx`
+- `vibes.json`
+- `app.jsx`
 
 ---
 
