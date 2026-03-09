@@ -59,6 +59,7 @@ const opts = tseslint.config(
       "**/*.js.map",
       "**/*.d.ts.map",
       "**/pkg/*.js",
+      "**/build-npm.ts",
     ],
   },
   {
