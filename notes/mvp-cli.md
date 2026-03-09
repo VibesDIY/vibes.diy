@@ -101,6 +101,7 @@ Agents and humans read the skill catalog and get assembled system prompts.
 - `system --skills fireproof,d3` — assembles full system prompt (~4.7KB with docs)
 - Composable: `use-vibes system --skills fireproof | pbcopy`
 - Defaults to `fireproof,callai` when no `--skills` flag given
+- **TODO**: System prompt should tell agents not to `npm install` additional packages — all imports resolve via esm.sh at runtime
 Shipped in `use-vibes@0.19.27-dev-cli`.
 
 ---
