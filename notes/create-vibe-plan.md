@@ -1,30 +1,28 @@
 # create-vibe — scaffolder for the vibes CLI
 
-## What it does today
+## What it does
 
-`npm create vibe` (or `npx create-vibe`) asks "What do you want to build?" and opens `vibes.diy?prompt=...` in the browser. That's it — a URL launcher.
-
-Now lives in the monorepo at `create-vibe/pkg/`. CI publishes via `create-vibe@*` tags.
-
-## Where it's going
-
-The scaffolder creates a minimal project directory that the `use-vibes` CLI can work with:
+`npm create vibe my-app` scaffolds a project directory with everything needed for the `use-vibes` CLI:
 
 ```
 npm create vibe my-app
 cd my-app
-use-vibes dev
+npm install
+npm run use-vibes dev
 ```
+
+Lives in the monorepo at `create-vibe/pkg/`. CI publishes via `create-vibe@*` tags. Current release: `create-vibe@1.4.0-dev`.
 
 ### What `create-vibe my-app` produces
 
 ```
 my-app/
-├── app.jsx          ← your vibe (AI-generated or placeholder)
-└── vibes.json       ← app identity + deploy targets
+├── package.json     ← use-vibes as devDep, single "use-vibes" script
+├── app.jsx          ← your vibe (placeholder, Claude-ready)
+└── vibes.json       ← app identity ({ "app": "my-app" })
 ```
 
-That's it. No package.json, no node_modules, no build config. The `use-vibes` CLI provides the runtime — `app.jsx` is the entire app.
+The `package.json` has one script — `"use-vibes": "use-vibes"` — so all CLI commands work via `npm run use-vibes <subcommand>` (e.g. `npm run use-vibes system`, `npm run use-vibes skills`).
 
 Extra files are fine: import them from app.jsx and ESM resolution handles it. But the default is one file.
 
@@ -34,13 +32,16 @@ Each `create-vibe` invocation makes a new project directory. Want three vibes? R
 
 ```
 ~/vibes/
-├── todo/           ← npm create vibe todo "collaborative todo list"
+├── todo/           ← npm create vibe todo
+│   ├── package.json
 │   ├── app.jsx
 │   └── vibes.json
-├── meal-plan/      ← npm create vibe meal-plan "weekly meal planner"
+├── meal-plan/      ← npm create vibe meal-plan
+│   ├── package.json
 │   ├── app.jsx
 │   └── vibes.json
-└── budget/         ← npm create vibe budget "household budget tracker"
+└── budget/         ← npm create vibe budget
+    ├── package.json
     ├── app.jsx
     └── vibes.json
 ```
@@ -71,42 +72,37 @@ See [cli-design.md](cli-design.md) for the full schema including invite permissi
 ## How it connects to the CLI
 
 ```
-create-vibe todo               → scaffold directory + vibes.json + placeholder app.jsx
-cd todo
-use-vibes edit "add dark mode" → AI-edit app.jsx in place (future)
-use-vibes dev                  → watch → push on save → print live URL
-use-vibes publish              → one-time push to production group
+npm create vibe todo                    → scaffold directory with package.json + vibes.json + app.jsx
+cd todo && npm install                  → install use-vibes as devDep
+npm run use-vibes system                → get the system prompt for writing app.jsx
+npm run use-vibes dev                   → watch → push on save → print live URL (future)
+npm run use-vibes publish               → one-time push to production group (future)
 ```
 
-`create-vibe` owns AI generation at scaffold time. `use-vibes edit` handles AI iteration on existing code. `use-vibes generate` is a signpost:
-
-```
-$ use-vibes generate
-To create a new vibe:
-  cd .. && npm create vibe my-app "describe what you want"
-```
+`create-vibe` owns scaffolding. `use-vibes edit` handles AI iteration on existing code (future). `use-vibes generate` is a signpost pointing back to create-vibe.
 
 ## Two user journeys
 
 **Interactive (human):**
 ```
 npm create vibe my-app       ← asks project name, writes placeholder app.jsx
-cd my-app
-# edit app.jsx (or have Claude write it)
-use-vibes dev                ← opens live URL, watches for changes
-use-vibes publish            ← deploy to production
+cd my-app && npm install
+# edit app.jsx (or have Claude write it using npm run use-vibes system)
+npm run use-vibes dev        ← opens live URL, watches for changes
+npm run use-vibes publish    ← deploy to production
 ```
 
 **Automated (agent):**
 ```
 npm create vibe todo
-cd todo
-# agent writes app.jsx using use-vibes system prompt
-use-vibes publish
+cd todo && npm install
+npm run use-vibes system     ← agent reads the system prompt
+# agent writes app.jsx
+npm run use-vibes publish
 # stdout: https://vibes.diy/jchris/todo
 ```
 
-The scaffold is Claude-ready — agents use `use-vibes system` to get the system prompt, then write app.jsx themselves.
+The scaffold is Claude-ready — agents use `npm run use-vibes system` to get the system prompt, then write app.jsx themselves. See [golden-path-prompt.md](golden-path-prompt.md) for a tested prompt.
 
 ## Relationship to eject-vibe
 
@@ -114,17 +110,19 @@ The scaffold is Claude-ready — agents use `use-vibes system` to get the system
 
 | | create-vibe | eject-vibe |
 |---|---|---|
-| **Creates** | `app.jsx` + `vibes.json` | Full Vite project |
-| **Runtime** | `use-vibes dev` (cloud) | `npm run dev` (localhost) |
-| **Deploy** | `use-vibes publish` | User manages (Netlify, etc.) |
-| **Dependencies** | None (CLI provides everything) | node_modules |
+| **Creates** | `package.json` + `app.jsx` + `vibes.json` | Full Vite project |
+| **Runtime** | `npm run use-vibes dev` (cloud) | `npm run dev` (localhost) |
+| **Deploy** | `npm run use-vibes publish` | User manages (Netlify, etc.) |
+| **Dependencies** | `use-vibes` as devDep | Full node_modules |
 
 ## Current state
 
-Dry scaffold shipped in `create-vibe@1.2.0-dev`:
-- `npm create vibe todo` → creates `todo/vibes.json` + `todo/app.jsx` (placeholder)
+Dry scaffold shipped in `create-vibe@1.4.0-dev`:
+- `npm create vibe todo` → creates `todo/package.json` + `todo/vibes.json` + `todo/app.jsx`
+- `package.json` has `use-vibes` as devDep with single `"use-vibes": "use-vibes"` script
 - Interactive name prompt if no arg given
-- No AI generation yet — scaffold is Claude-ready (user brings their own AI)
+- No AI generation — scaffold is Claude-ready (user brings their own AI)
+- Golden path tested end-to-end: scaffold → install → system prompt → write app.jsx
 
 ## Future: optional prompt → AI generation
 
