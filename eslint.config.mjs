@@ -60,6 +60,8 @@ const opts = tseslint.config(
       "**/*.d.ts.map",
       "**/pkg/*.js",
       "**/build-npm.ts",
+      "**/main.deno.ts",
+      "**/cli-output-deno.ts",
     ],
   },
   {

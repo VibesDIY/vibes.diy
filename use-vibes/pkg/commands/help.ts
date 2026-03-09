@@ -1,5 +1,5 @@
 import { Result, loadAsset } from "@adviser/cement";
-import { type CliOutput, defaultCliOutput } from "./cli-output.js";
+import { type CliOutput, defaultCliOutput } from "./cli-output.ts";
 
 export async function runHelp(output: CliOutput = defaultCliOutput): Promise<Result<void>> {
   const rHelpText = await loadAsset("./help.txt", { basePath: () => import.meta.url });

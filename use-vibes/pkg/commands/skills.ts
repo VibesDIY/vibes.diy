@@ -1,6 +1,6 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { getLlmCatalog } from "@vibes.diy/prompts";
-import { type CliOutput, defaultCliOutput } from "./cli-output.js";
+import { type CliOutput, defaultCliOutput } from "./cli-output.ts";
 
 export async function runSkills(output: CliOutput = defaultCliOutput): Promise<Result<void>> {
   const rCatalog = await exception2Result(() => getLlmCatalog());

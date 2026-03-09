@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import type { CliOutput } from "./cli-output.js";
+import type { CliOutput } from "./cli-output.ts";
 
 export const denoCliOutput: CliOutput = {
   stdout(text: string): void {

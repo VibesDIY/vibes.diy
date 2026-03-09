@@ -1,11 +1,11 @@
 import type { Result } from "@adviser/cement";
 import { command, option, run, string, subcommands, restPositionals } from "cmd-ts";
-import { runHelp } from "./commands/help.js";
-import { runWhoami } from "./commands/whoami.js";
-import { runSkills } from "./commands/skills.js";
-import { runSystem } from "./commands/system.js";
-import { notImplemented } from "./commands/not-implemented.js";
-import type { CliOutput } from "./commands/cli-output.js";
+import { runHelp } from "./commands/help.ts";
+import { runWhoami } from "./commands/whoami.ts";
+import { runSkills } from "./commands/skills.ts";
+import { runSystem } from "./commands/system.ts";
+import { notImplemented } from "./commands/not-implemented.ts";
+import type { CliOutput } from "./commands/cli-output.ts";
 
 export interface CliRuntime {
   readonly output: CliOutput;

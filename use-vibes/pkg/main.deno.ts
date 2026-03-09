@@ -1,5 +1,6 @@
-import { denoCliOutput } from "./commands/cli-output-deno.js";
-import { runCli } from "./run-cli.js";
+/// <reference lib="deno.ns" />
+import { denoCliOutput } from "./commands/cli-output-deno.ts";
+import { runCli } from "./run-cli.ts";
 
 await runCli(Deno.args, {
   output: denoCliOutput,

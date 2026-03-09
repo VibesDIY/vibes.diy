@@ -1,6 +1,6 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { makeBaseSystemPrompt, getDefaultDependencies, getLlmCatalogNames } from "@vibes.diy/prompts";
-import { type CliOutput, defaultCliOutput } from "./cli-output.js";
+import { type CliOutput, defaultCliOutput } from "./cli-output.ts";
 
 export interface RunSystemOptions {
   readonly skillsCsv?: string;

@@ -22,6 +22,7 @@
     "strict": true,
     "alwaysStrict": true,
     "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
     "types": ["node", "deno"]
   },
   "include": [
@@ -46,6 +47,8 @@
     "**/.netlify/**",
     "**/tests-new/**",
     "hosting/tests/unit/**",
-    "**/build-npm.ts"
+    "**/build-npm.ts",
+    "**/main.deno.ts",
+    "**/cli-output-deno.ts"
   ]
 }

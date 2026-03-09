@@ -1,7 +1,7 @@
 // Node CLI entry point — compiled by dnt with #!/usr/bin/env node shebang.
 // For Deno, use main.deno.ts instead.
-import { defaultCliOutput } from "./commands/cli-output.js";
-import { runCli } from "./run-cli.js";
+import { defaultCliOutput } from "./commands/cli-output.ts";
+import { runCli } from "./run-cli.ts";
 
 await runCli(process.argv.slice(2), {
   output: defaultCliOutput,

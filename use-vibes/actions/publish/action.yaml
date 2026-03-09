@@ -101,4 +101,4 @@ runs:
           };
           Deno.writeTextFileSync(f, JSON.stringify(j, null, 2) + '\n');
         "
-        deno publish
+        deno publish --allow-dirty
