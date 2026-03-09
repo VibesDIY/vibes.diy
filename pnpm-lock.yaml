@@ -362,30 +362,9 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.32
         version: 0.5.32(typescript@5.9.3)
-      '@fireproof/core':
-        specifier: 0.24.12
-        version: 0.24.12(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-keybag':
-        specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime':
-        specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base':
-        specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
-      '@fireproof/use-fireproof':
-        specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.32(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
-      react:
-        specifier: '>=19.1.0'
-        version: 19.2.4
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.12
