@@ -16,9 +16,10 @@ Bootstrap the `use-vibes` CLI from zero to a working `dev` → `publish` loop.
 
 ---
 
-## Step 1: Skeleton — `help` and `whoami`
+## ~~Step 1: Skeleton — `help` and `whoami`~~ ✅
 
 CLI runs, dispatches commands, prints help. Stub commands for unimplemented features.
+Shipped in `use-vibes@0.19.27-dev-cli`.
 
 ---
 
@@ -78,13 +79,15 @@ CLI runs, dispatches commands, prints help. Stub commands for unimplemented feat
 
 ---
 
-## Step 7: `skills` and `system`
+## ~~Step 7: `skills` and `system`~~ ✅
 
 Agents and humans read the skill catalog and get assembled system prompts.
 
-- `skills` — lists catalog from `@vibes.diy/prompts`
-- `system --skills fireproof,d3` — assembles full system prompt
+- `skills` — lists 6 skills from `@vibes.diy/prompts` (callai, fireproof, image-gen, web-audio, d3, three-js)
+- `system --skills fireproof,d3` — assembles full system prompt (~4.7KB with docs)
 - Composable: `use-vibes system --skills fireproof | pbcopy`
+- Defaults to `fireproof,callai` when no `--skills` flag given
+Shipped in `use-vibes@0.19.27-dev-cli`.
 
 ---
 

@@ -153,7 +153,7 @@ Prevent unbounded growth of published vibes and assets.
 
 See [cli-design.md](cli-design.md) for full architecture.
 
-### L0. Bootstrap `use-vibes` CLI
+### L0. Bootstrap `use-vibes` CLI — shipped
 Add CLI to the existing `use-vibes` workspace package.
 - **Tech**: `bin.ts` (Node via dnt) + `main.deno.ts` (Deno), cmd-ts for subcommand routing, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md). `commands/` directory with one file per command, stub commands for all unimplemented features.
 - **Dependencies**: None. Unlocks: L2a auth, L3b skills/system
@@ -183,7 +183,7 @@ One-time push of current code to a target group. No arg = `default` group (short
 - **Tech**: Resolve target from vibes.json, call `ensureAppSlug` with `mode: 'production'`, pin release tag. `releaseSeq` in DB handles versioning. Can override app: `use-vibes publish jchris/soup-order/work-lunch`
 - **Dependencies**: L2b. Unlocks: production deployments from CLI
 
-### L3b. CLI skills + system prompt (`use-vibes skills` / `use-vibes system`)
+### L3b. CLI skills + system prompt (`use-vibes skills` / `use-vibes system`) — shipped
 Two commands: `skills` lists the catalog with descriptions (for LLM decision-making), `system` emits the full assembled prompt for selected skills.
 - **Tech**: `use-vibes skills` prints name + description from `getLlmCatalog()` in `@vibes.diy/prompts`. `use-vibes system --skills fireproof,d3` loads `.txt` docs, assembles via `makeBaseSystemPrompt()`, prints to stdout. Both accept `CliOutput` parameter. Skill validation against catalog; unknown skills → helpful error. Composable: `use-vibes system --skills fireproof | pbcopy`
 - **Dependencies**: L0, `@vibes.diy/prompts` package. Unlocks: L3c generate/edit (needs system prompt), BYO-token workflows
