@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import type { NavigateFunction } from "react-router-dom";
-import { S, TC } from "../lib/styles.js";
+import { S } from "../lib/styles.js";
 import { Btn } from "./Btn.js";
 import { JsonEditor } from "./JsonEditor.js";
 import { DynamicTable } from "./DynamicTable.js";
@@ -8,6 +8,8 @@ import { headersForDocs } from "./dynamicTableHelpers.js";
 import { ConfirmDialog } from "./ConfirmDialog.js";
 import { Toast } from "./Toast.js";
 import { useMobile } from "./MobileProvider.js";
+import { GridFeatures, defaultGridOptions } from "./GridFeatures.js";
+import type { GridOptions } from "./GridFeatures.js";
 
 export interface DocRecord {
   _id?: string;
@@ -25,11 +27,7 @@ interface DocDBViewerProps {
   onDelete: (docId: string) => Promise<void>;
   onCreate: (doc: Record<string, unknown>) => Promise<string>;
   onSeedData: () => Promise<void>;
-  page: number;
   totalDocs: number;
-  pageSize: number;
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number) => void;
 }
 
 export function DocDBViewer({
@@ -43,13 +41,10 @@ export function DocDBViewer({
   onDelete,
   onCreate,
   onSeedData,
-  page,
   totalDocs,
-  pageSize,
-  onPageChange,
-  onPageSizeChange,
 }: DocDBViewerProps) {
   const mob = useMobile();
+  const [gridOpts, setGridOpts] = useState<GridOptions>(defaultGridOptions);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
@@ -72,12 +67,10 @@ export function DocDBViewer({
   }, [navigate, dbPath]);
 
   const openDoc = useCallback(
-    (idx: number) => {
-      const id = docs[idx]?._id as string | undefined;
-      if (!id) return;
+    (id: string) => {
       navigate(`${dbPath}/${encodeURIComponent(id)}`);
     },
-    [docs, navigate, dbPath]
+    [navigate, dbPath]
   );
 
   const saveDoc = useCallback(
@@ -322,6 +315,7 @@ export function DocDBViewer({
             flexShrink: 0,
           }}
         >
+          <GridFeatures options={gridOpts} onChange={setGridOpts} />
           {!mob && (
             <span
               style={{
@@ -398,11 +392,8 @@ export function DocDBViewer({
               headers={headersForDocs(docs)}
               rows={docs}
               onRowClick={openDoc}
-              page={page}
               totalDocs={totalDocs}
-              pageSize={pageSize}
-              onPageChange={onPageChange}
-              onPageSizeChange={onPageSizeChange}
+              gridOptions={gridOpts}
             />
           ))}
 

@@ -13,10 +13,6 @@ export function Explorer() {
     docById,
     loading,
     totalDocs,
-    page,
-    pageSize,
-    setPage,
-    setPageSize,
     putDoc,
     deleteDoc,
     createDoc,
@@ -36,11 +32,7 @@ export function Explorer() {
         onDelete={deleteDoc}
         onCreate={createDoc}
         onSeedData={seedData}
-        page={page}
         totalDocs={totalDocs}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
       />
     </MobileProvider>
   );

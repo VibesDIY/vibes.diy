@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useFireproof } from "@fireproof/use-fireproof";
 import type { DocBase } from "@fireproof/use-fireproof";
 
@@ -7,10 +7,6 @@ interface UseFireproofDBResult {
   docById: Map<string, DocBase>;
   loading: boolean;
   totalDocs: number;
-  page: number;
-  pageSize: number;
-  setPage: (page: number) => void;
-  setPageSize: (size: number) => void;
   putDoc: (doc: Record<string, unknown>) => Promise<void>;
   deleteDoc: (id: string) => Promise<void>;
   createDoc: (doc: Record<string, unknown>) => Promise<string>;
@@ -25,9 +21,6 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
   const dbRef = useRef(database);
   dbRef.current = database;
 
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
-
   const totalDocs = allDocs.length;
 
   const docById = useMemo(() => {
@@ -37,19 +30,6 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
     }
     return map;
   }, [allDocs]);
-
-  const docs = useMemo(() => {
-    const start = page * pageSize;
-    return allDocs.slice(start, start + pageSize);
-  }, [allDocs, page, pageSize]);
-
-  const handlePageSizeChange = useCallback(
-    (newSize: number) => {
-      setPageSize(newSize);
-      setPage(0);
-    },
-    []
-  );
 
   const putDoc = useCallback(
     async (doc: Record<string, unknown>) => {
@@ -114,14 +94,10 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
   }, []);
 
   return {
-    docs,
+    docs: allDocs,
     docById,
     loading,
     totalDocs,
-    page,
-    pageSize,
-    setPage,
-    setPageSize: handlePageSizeChange,
     putDoc,
     deleteDoc,
     createDoc,
