@@ -16,7 +16,8 @@
   "tasks": {
     "run-cli": "deno run --unstable-sloppy-imports --allow-read --allow-env ./main.deno.ts",
     "test-cli": "deno test --no-check --unstable-sloppy-imports --allow-read --allow-env --allow-run=deno ../tests/cli/cli.test.ts",
-    "check-cli": "deno lint ./main.deno.ts ./run-cli.ts ./commands/cli-output-deno.ts ../tests/cli/cli.test.ts",
+    "check-local-import-specifiers": "deno run --allow-read ./scripts/check-local-import-specifiers.ts",
+    "check-cli": "deno lint ./main.deno.ts ./run-cli.ts ./commands/cli-output-deno.ts ../tests/cli/cli.test.ts && deno task check-local-import-specifiers",
     "build-npm": "deno run -A build-npm.ts"
   }
 }

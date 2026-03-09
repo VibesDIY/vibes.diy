@@ -62,6 +62,7 @@ const opts = tseslint.config(
       "**/build-npm.ts",
       "**/main.deno.ts",
       "**/cli-output-deno.ts",
+      "use-vibes/tests/cli/**",
     ],
   },
   {

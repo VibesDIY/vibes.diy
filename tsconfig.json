@@ -22,7 +22,6 @@
     "strict": true,
     "alwaysStrict": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
     "types": ["node", "deno"]
   },
   "include": [

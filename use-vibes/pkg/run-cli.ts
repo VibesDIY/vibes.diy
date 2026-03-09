@@ -1,11 +1,10 @@
 import type { Result } from "@adviser/cement";
-import { command, option, run, string, subcommands, restPositionals } from "cmd-ts";
-import { runHelp } from "./commands/help.ts";
-import { runWhoami } from "./commands/whoami.ts";
-import { runSkills } from "./commands/skills.ts";
-import { runSystem } from "./commands/system.ts";
-import { notImplemented } from "./commands/not-implemented.ts";
-import type { CliOutput } from "./commands/cli-output.ts";
+import { command, option, run, runSafely, string, subcommands, restPositionals } from "cmd-ts";
+import { runWhoami } from "./commands/whoami.js";
+import { runSkills } from "./commands/skills.js";
+import { runSystem } from "./commands/system.js";
+import { notImplemented } from "./commands/not-implemented.js";
+import type { CliOutput } from "./commands/cli-output.js";
 
 export interface CliRuntime {
   readonly output: CliOutput;
@@ -19,6 +18,22 @@ async function emitResult(runtime: CliRuntime, runner: () => Promise<Result<void
     runtime.output.stderr(typeof err === "string" ? err : String(err));
     runtime.output.stderr("\n");
     runtime.setExitCode(1);
+  }
+}
+
+async function emitGeneratedHelp(runtime: CliRuntime, app: ReturnType<typeof createApp>): Promise<void> {
+  const result = await runSafely(app, ["--help"]);
+  if (result._tag === "ok") {
+    return;
+  }
+
+  const target = result.error.config.into === "stdout" ? runtime.output.stdout : runtime.output.stderr;
+  target(result.error.config.message);
+  if (result.error.config.message.endsWith("\n") === false) {
+    target("\n");
+  }
+  if (result.error.config.exitCode !== 0) {
+    runtime.setExitCode(result.error.config.exitCode);
   }
 }
 
@@ -36,15 +51,6 @@ function createStubCommand(runtime: CliRuntime, name: string) {
 }
 
 function createApp(runtime: CliRuntime) {
-  const helpCmd = command({
-    name: "help",
-    description: "Print CLI help",
-    args: {},
-    handler: async function handleHelp(): Promise<void> {
-      await emitResult(runtime, () => runHelp(runtime.output));
-    },
-  });
-
   const whoamiCmd = command({
     name: "whoami",
     description: "Print logged in user",
@@ -84,7 +90,6 @@ function createApp(runtime: CliRuntime) {
     name: "use-vibes",
     description: "Build and deploy React + Fireproof apps",
     cmds: {
-      help: helpCmd,
       whoami: whoamiCmd,
       login: createStubCommand(runtime, "login"),
       dev: createStubCommand(runtime, "dev"),
@@ -104,10 +109,13 @@ export async function runCli(cliArgs: readonly string[], runtime: CliRuntime): P
 
   switch (true) {
     case cliArgs.length === 0:
-      await emitResult(runtime, () => runHelp(runtime.output));
+      await emitGeneratedHelp(runtime, app);
       break;
     case cliArgs.length === 1 && (cliArgs[0] === "-h" || cliArgs[0] === "--help"):
-      await emitResult(runtime, () => runHelp(runtime.output));
+      await emitGeneratedHelp(runtime, app);
+      break;
+    case cliArgs.length === 1 && cliArgs[0] === "help":
+      await emitGeneratedHelp(runtime, app);
       break;
     default:
       await run(app, [...cliArgs]);

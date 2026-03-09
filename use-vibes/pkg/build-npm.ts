@@ -36,6 +36,3 @@ await build({
   typeCheck: false,
   test: false,
 });
-
-// Copy non-TS assets that dnt doesn't handle
-await Deno.copyFile("./commands/help.txt", "./dist/npm/esm/commands/help.txt");

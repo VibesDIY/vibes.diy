@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import { resolve } from "node:path";
-import { runHelp } from "../../pkg/commands/help.js";
+import { runCli } from "../../pkg/run-cli.js";
 import { runSkills } from "../../pkg/commands/skills.js";
 import { runSystem } from "../../pkg/commands/system.js";
 import { runWhoami } from "../../pkg/commands/whoami.js";
@@ -69,8 +69,10 @@ async function spawnCli(args: readonly string[]): Promise<CliSpawnResult> {
 
 Deno.test("help (unit): outputs usage text", async function testHelpUnit(): Promise<void> {
   const captured = captureOutput();
-  const result = await runHelp(captured.output);
-  assertTrue(result.isOk(), "help should return ok");
+  await runCli([], {
+    output: captured.output,
+    setExitCode(_code: number): void {},
+  });
   assertContains(captured.stdout(), "use-vibes", "help output should include command name");
   assertContains(captured.stdout(), "skills", "help output should include skills command");
 });

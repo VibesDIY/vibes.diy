@@ -1,8 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "allowImportingTsExtensions": true
+    "outDir": "./dist"
   },
   "include": ["**/*"],
   "exclude": ["../tests/**/*", "node_modules", "dist", "build-npm.ts", "main.deno.ts", "commands/cli-output-deno.ts"]
