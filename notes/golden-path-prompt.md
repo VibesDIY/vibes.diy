@@ -11,7 +11,7 @@ I want you to build me a vibe app using the vibes.diy CLI tools. Here's the work
 ### Step 1: Scaffold and install
 
 ```bash
-npm create vibe@1.4.0-dev <creative-app-name> 2>/dev/null
+npm create vibe@1.5.0-dev <creative-app-name> 2>/dev/null
 cd <creative-app-name>
 npm install 2>/dev/null
 ```
