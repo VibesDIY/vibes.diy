@@ -4,7 +4,6 @@ inputs:
   NPM_TOKEN:
     description: "NPM token for publishing packages"
     required: true
-# your inputs here
 runs:
   using: "composite"
   steps:
@@ -30,14 +29,7 @@ runs:
         NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
       run: |
         set -e
-        #rm -f **/.npmrc # publish to the world
-        #git fetch --tags --force
-        # we need to have a safe way to store of allowedSigners
-        #git config --local --add gpg.ssh.allowedSignersFile ./allowed_signers
         echo "GITHUB_REF->"$GITHUB_REF
-        # test tag signature
-        #git tag -v $(git describe --tags --abbrev=0)
-        # should only run if a tag is set
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > ~/.npmrc
         mkdir -p dist
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
@@ -65,14 +57,7 @@ runs:
         NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
       run: |
         set -e
-        #rm -f **/.npmrc # publish to the world
-        #git fetch --tags --force
-        # we need to have a safe way to store of allowedSigners
-        #git config --local --add gpg.ssh.allowedSignersFile ./allowed_signers
         echo "GITHUB_REF->"$GITHUB_REF
-        # test tag signature
-        #git tag -v $(git describe --tags --abbrev=0)
-        # should only run if a tag is set
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > ~/.npmrc
         mkdir -p dist
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
@@ -86,14 +71,7 @@ runs:
         NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
       run: |
         set -e
-        #rm -f **/.npmrc # publish to the world
-        #git fetch --tags --force
-        # we need to have a safe way to store of allowedSigners
-        #git config --local --add gpg.ssh.allowedSignersFile ./allowed_signers
         echo "GITHUB_REF->"$GITHUB_REF
-        # test tag signature
-        #git tag -v $(git describe --tags --abbrev=0)
-        # should only run if a tag is set
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > ~/.npmrc
         mkdir -p dist
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc

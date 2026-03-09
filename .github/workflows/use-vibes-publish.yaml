@@ -37,9 +37,7 @@ jobs:
 
       - name: lint
         shell: bash
-        run: |
-          echo "We NEED to work on the linting"
-          pnpm run lint || true
+        run: pnpm run lint
 
       - name: validate-published-packages
         shell: bash

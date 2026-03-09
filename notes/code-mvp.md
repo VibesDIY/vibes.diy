@@ -158,6 +158,11 @@ Add CLI to the existing `use-vibes` workspace package.
 - **Tech**: Two-file bootstrap (`cli.js` → tsx → `cli.ts`), cmd-ts for subcommand routing, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md). `commands/` directory with one file per command, stub commands for all unimplemented features.
 - **Dependencies**: None. Unlocks: L2a auth, L3b skills/system
 
+### L0b. Ship call-ai v2 as new major release (#1088)
+`prompts` currently inlines a `ChatMessage` type as a workaround for the unpublished `@vibes.diy/call-ai-v2` workspace dep. Ship v2 as the next major of the existing `call-ai` package.
+- **Tech**: Move/adapt v2 implementation into `call-ai/pkg`, bump to next major, publish. Update `prompts` to depend on published `call-ai`. Update release workflow to publish `call-ai` before `prompts`. Add npm smoke gate in CI (`npx use-vibes --help` in clean env)
+- **Dependencies**: L0 (CLI working). Unlocks: clean npm installs, removes inlined ChatMessage type from prompts
+
 ### L1. Move `create-vibe` into monorepo
 Already published from its own repo. Move it in and do a fresh release **after `use-vibes` CLI is solid**.
 - **Tech**: Move `create-vibe` scaffolder into monorepo workspace. Update to generate `vibes.json` (app identity + targets) and `package.json` (scripts wired to `use-vibes`). AI generation via call-ai stays as-is

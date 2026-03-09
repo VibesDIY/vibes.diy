@@ -4,19 +4,35 @@ Ship a dev release of the CLI from the `jchris/cli-design` branch via GitHub Act
 
 ---
 
-## Pre-flight (verified locally)
+## Result
 
-All passing as of commit `973c2fe1`:
+**Tag:** `use-vibes@v0.19.16-dev-cli` — all 5 packages published successfully.
+
+It took 8 tag attempts (v0.19.9 through v0.19.16) to get a clean release. Issues fixed along the way:
+
+1. **pnpm version mismatch** — `actions/runtime/action.yaml` pinned `version: 10` conflicting with `packageManager` field. Fix: removed explicit version.
+2. **CFEnv type missing** — `vibes.diy/api/types/cf-env.ts` was referenced but never created (WIP from another branch). Fix: created stub interface.
+3. **Monorepo-wide type checking** — `pnpm build` at root triggers `tsgo` across all packages. Fix: scoped CI validation to only the 5 published packages.
+4. **npm token permissions** — granular access token needed "Bypass 2FA" enabled for CI automation.
+5. **Unpublished workspace dep** — `@vibes.diy/call-ai-v2` was a workspace-only package listed as a dependency of `prompts`. Fix: removed dep, inlined the ChatMessage type.
+6. **Stale lockfile** — `pnpm-lock.yaml` didn't reflect the dependency removal. Fix: ran `pnpm install`.
+
+### Smoke test
 
 ```
-deno task --config use-vibes/pkg/deno.json check-cli   # ✅ 4 files checked
-deno task --config use-vibes/pkg/deno.json test-cli     # ✅ 22/22 passed
-node use-vibes/pkg/cli.js --help                        # ✅ prints help text
+$ npx use-vibes --help
+# ✅ prints help text (with DEP0151 warning about missing exports in prompts — fixed in follow-up)
+
+$ npx use-vibes skills
+# ✅ lists available skills
+
+$ npx use-vibes system --skills fireproof
+# ✅ assembles system prompt
 ```
 
 ---
 
-## How to ship (manual steps)
+## How to ship (for future releases)
 
 ### 1. Push the branch
 
@@ -26,40 +42,36 @@ git push origin jchris/cli-design
 
 ### 2. Tag the dev release
 
-Previous tags: `use-vibes@v0.19.8-dev` → next is `use-vibes@v0.19.9-dev-cli`.
-
 ```bash
-git tag use-vibes@v0.19.9-dev-cli -m "CLI: deno-first runtime, cmd-ts routing, 22 tests"
-git push origin use-vibes@v0.19.9-dev-cli
+git tag use-vibes@v0.19.17-dev-cli -m "description"
+git push origin use-vibes@v0.19.17-dev-cli
 ```
 
 Tags can be pushed from any branch — CI triggers on the tag pattern `use-vibes@*` regardless of branch.
 
 ### 3. Monitor CI
 
-Watch the workflow at: `https://github.com/nicholasgasior/vibes.diy/actions/workflows/use-vibes-publish.yaml`
+Watch the workflow at the GitHub Actions tab, workflow `use-vibes-publish`.
 
-CI will run (in order):
-1. Deno CLI lint + test
+CI runs (in order):
+1. Deno CLI check + test
 2. `pnpm run format --check`
 3. `pnpm run lint`
-4. `pnpm build` (root validation)
-5. Publish 5 packages sequentially: prompts → call-ai → types → base → use-vibes
-
-All packages get version `0.19.9-dev-cli` extracted from the tag.
+4. Build published packages (prompts → call-ai → types → base → use-vibes)
+5. Publish 5 packages sequentially
 
 ### 4. Verify after publish
 
 ```bash
-npm view use-vibes versions --json | tail -5    # confirm version appeared
-npx use-vibes --help                            # confirm CLI works from npm
-npx use-vibes skills                            # confirm prompts package works
-npx use-vibes system --skills fireproof         # confirm system prompt assembly
+npm view use-vibes versions --json | tail -5
+npx use-vibes --help
+npx use-vibes skills
+npx use-vibes system --skills fireproof
 ```
 
 ---
 
-## What ships in this release
+## What shipped in v0.19.16-dev-cli
 
 - **Deno-first CLI runtime** — `main.deno.ts` entry point, `run-cli.ts` runtime-agnostic core
 - **Node/npm compatibility** — `cli.js` → tsx → `cli.ts` bridge for `npx use-vibes`
@@ -72,36 +84,25 @@ npx use-vibes system --skills fireproof         # confirm system prompt assembly
 
 ---
 
-## What does NOT ship (deferred)
-
-- JSR publishing (`jsr.json`, `dnt`) — follow-up
-- npm artifact smoke test in CI — follow-up
-- `--no-check` / `--unstable-sloppy-imports` cleanup — follow-up
-- Auth (`login` / `whoami`) — Step 2
-- File watching (`dev` / `live`) — Step 5
-- AI generation (`generate` / `edit`) — Step 8
-
----
-
 ## Known technical debt
 
 1. `deno test` uses `--no-check` (monorepo type-resolution friction)
 2. `--unstable-sloppy-imports` still required
 3. Node wrapper (`cli.js` + tsx) is transitional
-4. CI lint step has `|| true` (swallows failures)
+4. Trusted Publishing not yet configured (tracked in issue #1087)
 
 ---
 
-## If the tag fails
+## If a tag fails
 
-If CI fails, delete the tag and re-tag after fixing:
+Delete the tag and re-tag with the next version number:
 
 ```bash
-git tag -d use-vibes@v0.19.9-dev-cli
-git push origin :refs/tags/use-vibes@v0.19.9-dev-cli
+git tag -d use-vibes@v0.19.17-dev-cli
+git push origin :refs/tags/use-vibes@v0.19.17-dev-cli
 # fix, commit, push
-git tag use-vibes@v0.19.10-dev-cli -m "CLI: fix description"
-git push origin use-vibes@v0.19.10-dev-cli
+git tag use-vibes@v0.19.18-dev-cli -m "description"
+git push origin use-vibes@v0.19.18-dev-cli
 ```
 
 Never reuse a tag — npm caches by version number.

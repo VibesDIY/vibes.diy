@@ -16,7 +16,7 @@ Bootstrap the `use-vibes` CLI from zero to a working `dev` → `publish` loop. F
 
 ---
 
-## Step 1: Skeleton — `help` and `whoami` ✅ DONE
+## Step 1: Skeleton — `help` and `whoami` ✅ DONE (v0.19.16-dev-cli)
 
 **Goal:** CLI runs, dispatches commands, prints help.
 
@@ -27,6 +27,8 @@ Bootstrap the `use-vibes` CLI from zero to a working `dev` → `publish` loop. F
 - `commands/` directory with one file per command + `cli-output.ts` for injectable output
 - Stub commands for all unimplemented features (accept positional args via `restPositionals`)
 - 22 CLI tests: 14 unit (captureOutput) + 8 smoke (spawn `deno run main.deno.ts`)
+
+**First release:** `use-vibes@v0.19.16-dev-cli` — all 5 packages published to npm. `npx use-vibes --help` works. See [cli-first-release.md](cli-first-release.md) for release notes and lessons learned.
 
 ---
 
@@ -158,7 +160,7 @@ Published to work-lunch → https://coffee-order-work-lunch--jchris.vibecode.gar
 
 ---
 
-## Step 7: `skills` and `system` ✅ DONE
+## Step 7: `skills` and `system` ✅ DONE (v0.19.16-dev-cli)
 
 **Goal:** Agents and humans can read the skill catalog and get assembled system prompts.
 
@@ -198,6 +200,17 @@ Edited todo.jsx
 - `edit`: resolve slug to `slug.jsx` (or use filename directly). Read file, send to call-ai with prompt, write result back, stream diff to stdout
 - If `live` is running in another terminal, saved files trigger the normal watch → lint → push cycle
 - Enables one directory, many vibes — rapid-fire generation from a single workspace
+
+---
+
+## Post first release — cleanup and unblock
+
+Before proceeding to Step 2, these items from the first release need addressing:
+
+- **Ship call-ai v2 as new major** (#1088) — `prompts` inlines a `ChatMessage` type as workaround for unpublished `@vibes.diy/call-ai-v2`. Ship v2 as next major of `call-ai`, update `prompts` to depend on it
+- **Trusted Publishing** (#1087) — migrate from NPM_TOKEN to OIDC for GitHub Actions → npm auth
+- **DEP0151 warning** — `npx use-vibes` warns about missing `exports` in prompts package.json. Needs investigation of how `core-cli build` packages the dist/ output
+- **npm smoke gate in CI** — add `npx use-vibes --help` in a clean env as a post-publish verification step
 
 ---
 

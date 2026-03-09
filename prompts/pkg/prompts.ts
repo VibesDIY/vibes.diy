@@ -16,7 +16,7 @@ type ChatMessage =
     }
   | {
       readonly role: "system" | "user" | "assistant";
-      readonly content: ReadonlyArray<
+      readonly content: readonly (
         | {
             readonly type: "text";
             readonly text: string;
@@ -27,7 +27,7 @@ type ChatMessage =
               readonly url: string;
             };
           }
-      >;
+      )[];
     };
 
 // Single source of truth for the default coding model used across the repo.
