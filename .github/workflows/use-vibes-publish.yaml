@@ -35,9 +35,9 @@ jobs:
         shell: bash
         run: pnpm run format --check
 
-      - name: lint
+      - name: lint-published-packages
         shell: bash
-        run: pnpm run lint
+        run: pnpm exec eslint prompts/pkg call-ai/pkg use-vibes/types use-vibes/base use-vibes/pkg
 
       - name: validate-published-packages
         shell: bash
