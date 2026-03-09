@@ -205,3 +205,8 @@ Generate a pre-approved instant access token from the terminal. The primary shar
 Group URLs auto-refresh when new code is pushed — feels like local dev but in the cloud.
 - **Tech**: SSE endpoint or polling "version pointer" on served URL. Runtime checks for new `fsId`, triggers reload. All HTTPS, no localhost
 - **Dependencies**: L2b. Unlocks: instant feedback loop
+
+### L6. Import `eject-vibe` into monorepo — post-MVP
+Move [VibesDIY/eject-vibe](https://github.com/VibesDIY/eject-vibe) into the monorepo. Generates a standalone Vite+React+Tailwind project from an app.jsx — the escape hatch for users who want to leave the platform.
+- **Tech**: Import repo, add to pnpm workspace, set up CI with `eject-vibe@*` tags
+- **Dependencies**: None. Not MVP — current users can use the standalone repo
