@@ -39,6 +39,9 @@ import {
   ReqListApplicationChats,
   ResListApplicationChats,
   isResListApplicationChats,
+  ReqGetCertFromCsr,
+  ResGetCertFromCsr,
+  isResGetCertFromCsr,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -340,6 +343,15 @@ export class VibeDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-list-application-chats" },
       {
         resMatch: isResListApplicationChats,
+      }
+    );
+  }
+
+  getCertFromCsr(req: Req<ReqGetCertFromCsr>): Promise<Result<ResGetCertFromCsr, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-cert-from-csr" },
+      {
+        resMatch: isResGetCertFromCsr,
       }
     );
   }

@@ -1,24 +1,36 @@
 import { runCli } from "../../pkg/run-cli.js";
+import type { LoginPlatform } from "../../pkg/commands/login.js";
 import { runSkills } from "../../pkg/commands/skills.js";
 import { runSystem } from "../../pkg/commands/system.js";
 import { runWhoami } from "../../pkg/commands/whoami.js";
 import { notImplemented } from "../../pkg/commands/not-implemented.js";
 import { assertTrue, assertContains, captureOutput, spawnCli } from "./test-helpers.js";
 
+/** No-op platform adapter for tests that don't exercise login */
+const testLoginPlatform: LoginPlatform = {
+  serve(_opts, _handler) {
+    return { close() {}, finished: Promise.resolve() };
+  },
+  openBrowser: () => Promise.resolve(),
+  getEnv: (key) => Deno.env.get(key),
+};
+
 Deno.test("help (unit): outputs usage text", async function (): Promise<void> {
   const captured = captureOutput();
   await runCli([], {
     output: captured.output,
     setExitCode(_code: number): void {},
+    loginPlatform: testLoginPlatform,
   });
   assertContains(captured.stdout(), "use-vibes", "help output should include command name");
   assertContains(captured.stdout(), "skills", "help output should include skills command");
 });
 
 Deno.test("whoami (unit): returns error when not logged in", async function (): Promise<void> {
-  const result = await runWhoami();
+  const captured = captureOutput();
+  const result = await runWhoami(captured.output);
   assertTrue(result.isErr(), "whoami should return err");
-  assertContains(String(result.Err()), "Not logged in", "whoami should mention login requirement");
+  assertContains(String(result.Err()), "login", "whoami should mention login requirement");
 });
 
 Deno.test("skills (unit): lists catalog", async function (): Promise<void> {
@@ -57,7 +69,7 @@ Deno.test("system (unit): --skills bogus returns error", async function (): Prom
   assertContains(String(result.Err()), "Unknown skills: bogus", "system should report unknown skill");
 });
 
-for (const cmd of ["login", "dev", "live", "generate", "edit", "publish", "invite"] as const) {
+for (const cmd of ["dev", "live", "generate", "edit", "publish", "invite"] as const) {
   Deno.test(`not-implemented (unit): ${cmd} returns not-yet-implemented`, async function (): Promise<void> {
     const result = await notImplemented({ name: cmd })();
     assertTrue(result.isErr(), `${cmd} should return not implemented`);

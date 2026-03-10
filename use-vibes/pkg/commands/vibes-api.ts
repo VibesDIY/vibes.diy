@@ -1,6 +1,9 @@
 import { Result } from "@adviser/cement";
 import { VibeDiyApi, type VibesDiyApiParam } from "@vibes.diy/api-impl";
 import type { DashAuthType, VibesDiyApiIface } from "@vibes.diy/api-types";
+import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
+import { getKeyBag } from "@fireproof/core-keybag";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { env as processEnv } from "node:process";
 
 const DEFAULT_CLI_VIBES_API_URL = "wss://api.vibes.diy/v1/ws";
@@ -24,8 +27,30 @@ export function getCliVibesApiUrl(env: Readonly<Record<string, string | undefine
   }
 }
 
-export function getCliDashAuth(): Promise<Result<DashAuthType>> {
-  return Promise.resolve(Result.Err("Not logged in. Run: use-vibes login"));
+export async function getCliDashAuth(): Promise<Result<DashAuthType>> {
+  const sthis = ensureSuperThis();
+  const keyBag = await getKeyBag(sthis);
+  const existing = await keyBag.getDeviceId();
+
+  if (existing.deviceId.IsNone() || existing.cert.IsNone()) {
+    return Result.Err("Not logged in. Run: use-vibes login");
+  }
+
+  const jwk = existing.deviceId.unwrap();
+  const createResult = await DeviceIdKey.createFromJWK(jwk);
+  if (createResult.isErr()) {
+    return Result.Err(`Failed to load device key: ${createResult.Err()}`);
+  }
+  const deviceIdKey = createResult.Ok();
+  const cert = existing.cert.unwrap();
+  if (!cert) {
+    return Result.Err("Not logged in. Run: use-vibes login");
+  }
+
+  const signer = new DeviceIdSignMsg(sthis.txt.base64, deviceIdKey, cert.certificatePayload);
+  const token = await signer.sign({});
+
+  return Result.Ok({ type: "device-id", token } as DashAuthType);
 }
 
 export function toCliVibesApiParam(options: CliVibesApiOptions = {}): VibesDiyApiParam {

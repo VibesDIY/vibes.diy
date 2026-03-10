@@ -3,6 +3,13 @@ import { resolve, join } from "node:path";
 import { mkdir, rm } from "node:fs/promises";
 import type { CliOutput } from "../../pkg/commands/cli-output.js";
 
+// Redirect keybag to a unique /tmp path so tests don't need ~/.fireproof write access
+// and don't leak state across runs
+if (!Deno.env.get("FP_KEYBAG_URL")) {
+  const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  Deno.env.set("FP_KEYBAG_URL", `file:///tmp/use-vibes-test-keybag-${runId}`);
+}
+
 export const MAIN_DENO = resolve(import.meta.dirname, "../../pkg/main.deno.ts");
 export const DENO_CONFIG = resolve(import.meta.dirname, "../../pkg/deno.json");
 

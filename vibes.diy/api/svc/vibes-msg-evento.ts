@@ -11,6 +11,7 @@ import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
 import { getAppByAppSlugEvento } from "./public/get-app-by-app-slug.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
 import { listApplicationChats } from "./public/list-application-chats.js";
+import { getCertFromCsrEvento } from "./public/get-cert-from-csr.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -25,6 +26,7 @@ export const vibesMsgEvento = Lazy(() => {
     promptChatSection,
     ensureUserSettingsEvento,
     listApplicationChats,
+    getCertFromCsrEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

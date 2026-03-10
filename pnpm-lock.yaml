@@ -652,9 +652,15 @@ importers:
       '@fireproof/core':
         specifier: 0.24.12
         version: 0.24.12(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@fireproof/core-device-id':
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-keybag':
         specifier: 0.24.12
         version: 0.24.12(typescript@5.9.3)
+      '@fireproof/core-protocols-dashboard':
+        specifier: 0.24.12
+        version: 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       '@fireproof/core-runtime':
         specifier: 0.24.12
         version: 0.24.12(typescript@5.9.3)
@@ -662,6 +668,9 @@ importers:
         specifier: 0.24.12
         version: 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud':
+        specifier: 0.24.12
+        version: 0.24.12(typescript@5.9.3)
+      '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.12
         version: 0.24.12(typescript@5.9.3)
       '@fireproof/use-fireproof':
@@ -679,6 +688,9 @@ importers:
       cmd-ts:
         specifier: ^0.15.0
         version: 0.15.0
+      jose:
+        specifier: ^6.0.11
+        version: 6.1.3
       react:
         specifier: '>=19.1.0'
         version: 19.2.4

@@ -1,15 +1,19 @@
 import { Result } from "@adviser/cement";
-import { command, option, run, runSafely, string, subcommands, restPositionals } from "cmd-ts";
+import { command, option, flag, run, runSafely, string, subcommands, restPositionals } from "cmd-ts";
 import { runWhoami } from "./commands/whoami.js";
+import { runLogin, type LoginPlatform } from "./commands/login.js";
 import { runSkills } from "./commands/skills.js";
 import { runSystem } from "./commands/system.js";
 import { runInfo } from "./commands/info.js";
 import { notImplemented } from "./commands/not-implemented.js";
 import type { CliOutput } from "./commands/cli-output.js";
 
+export type { LoginPlatform } from "./commands/login.js";
+
 export interface CliRuntime {
   readonly output: CliOutput;
   readonly setExitCode: (code: number) => void;
+  readonly loginPlatform: LoginPlatform;
 }
 
 async function emitResult(runtime: CliRuntime, runner: () => Promise<Result<void>>): Promise<void> {
@@ -57,7 +61,7 @@ function createApp(runtime: CliRuntime) {
     description: "Print logged in user",
     args: {},
     handler: async function handleWhoami(): Promise<void> {
-      await emitResult(runtime, runWhoami);
+      await emitResult(runtime, () => runWhoami(runtime.output));
     },
   });
 
@@ -108,7 +112,45 @@ function createApp(runtime: CliRuntime) {
     description: "Build and deploy React + Fireproof apps",
     cmds: {
       whoami: whoamiCmd,
-      login: createStubCommand(runtime, "login"),
+      login: command({
+        name: "login",
+        description: "Authenticate with vibes.diy",
+        args: {
+          caUrl: option({
+            type: string,
+            long: "ca-url",
+            description: "CA URL for certificate signing (default: https://vibes.diy/csr2cert)",
+            defaultValue: () => "",
+          }),
+          timeout: option({
+            type: string,
+            long: "timeout",
+            description: "Timeout in seconds (default: 120)",
+            defaultValue: () => "120",
+          }),
+          forceRenew: flag({
+            long: "force-renew",
+            description: "Force certificate renewal",
+          }),
+        },
+        handler: async function handleLogin(args: {
+          readonly caUrl: string;
+          readonly timeout: string;
+          readonly forceRenew: boolean;
+        }): Promise<void> {
+          await emitResult(runtime, () =>
+            runLogin(
+              {
+                caUrl: args.caUrl || undefined,
+                timeout: parseInt(args.timeout, 10),
+                forceRenew: args.forceRenew,
+              },
+              runtime.output,
+              runtime.loginPlatform
+            )
+          );
+        },
+      }),
       info: infoCmd,
       dev: createStubCommand(runtime, "dev"),
       live: createStubCommand(runtime, "live"),

@@ -511,6 +511,22 @@ export function isResListApplicationChats(obj: unknown): obj is ResListApplicati
   return !(resListApplicationChats(obj) instanceof type.errors);
 }
 
+export const reqGetCertFromCsr = type({
+  type: "'vibes.diy.req-get-cert-from-csr'",
+  auth: dashAuthType,
+  csr: "string",
+});
+export type ReqGetCertFromCsr = typeof reqGetCertFromCsr.infer;
+
+export const resGetCertFromCsr = type({
+  type: "'vibes.diy.res-get-cert-from-csr'",
+  certificate: "string",
+});
+export type ResGetCertFromCsr = typeof resGetCertFromCsr.infer;
+export function isResGetCertFromCsr(obj: unknown): obj is ResGetCertFromCsr {
+  return !(resGetCertFromCsr(obj) instanceof type.errors);
+}
+
 export const evtNewFsId = type({
   type: "'vibes.diy.evt-new-fs-id'",
   userSlug: "string",

@@ -47,6 +47,7 @@ export default [
   }),
   route("legal/tos", "./routes/legal/tos.tsx", { id: "terms-of-service" }),
   route("login", "./routes/login.tsx", { id: "login" }),
+  route("csr2cert", "./routes/csr2cert.tsx", { id: "csr2cert" }),
 
   // 404 catch-all route - must be last
   route("*", "./routes/$.tsx", { id: "not-found" }),
