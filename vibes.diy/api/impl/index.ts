@@ -222,7 +222,7 @@ export class VibeDiyApi implements VibesDiyApiIface<{
               // console.log("Invalid message received, ignoring:", msg, trigger.enRequest);
               return Result.Ok(Option.None());
             }
-            if (msg.tid === tid && msgParam.resMatch(msg.payload as S)) {
+            if (msg.tid === tid && (msgParam.resMatch(msg.payload as S) || !(resError(msg.payload) instanceof type.errors))) {
               // console.log("Valid event matched for tid:", tid);
               return Result.Ok(Option.Some(trigger.enRequest));
             }
