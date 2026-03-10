@@ -62,6 +62,7 @@
         "npm:@fireproof/core@0.24.12",
         "npm:@fireproof/use-fireproof@0.24.12",
         "npm:@vitest/browser-playwright@^4.0.18",
+        "npm:arktype@^2.1.29",
         "npm:cmd-ts@0.15",
         "npm:vitest@^4.0.18"
       ]

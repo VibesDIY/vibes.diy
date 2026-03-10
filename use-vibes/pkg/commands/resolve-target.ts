@@ -35,7 +35,7 @@ export function resolveTarget(ctx: ResolveTargetContext, input?: string): Result
 
   if (slashes === 1) {
     const [targetApp, targetGroup] = input.split("/");
-    if (!targetApp || !targetGroup) {
+    if (targetApp === "" || targetGroup === "") {
       return Result.Err(`Invalid target "${input}": app and group must both be non-empty`);
     }
     return Result.Ok({
@@ -48,7 +48,7 @@ export function resolveTarget(ctx: ResolveTargetContext, input?: string): Result
 
   if (slashes === 2) {
     const [targetHandle, targetApp, targetGroup] = input.split("/");
-    if (!targetHandle || !targetApp || !targetGroup) {
+    if (targetHandle === "" || targetApp === "" || targetGroup === "") {
       return Result.Err(`Invalid target "${input}": handle, app, and group must all be non-empty`);
     }
     return Result.Ok({

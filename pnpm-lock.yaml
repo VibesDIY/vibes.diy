@@ -673,6 +673,9 @@ importers:
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
+      arktype:
+        specifier: ^2.1.29
+        version: 2.1.29
       cmd-ts:
         specifier: ^0.15.0
         version: 0.15.0

@@ -1,11 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
-import { Result } from "@adviser/cement";
+import { Result, exception2Result } from "@adviser/cement";
+import { type } from "arktype";
 
-export interface VibesConfig {
-  readonly app: string;
-  readonly targets?: Record<string, { fs?: { id: string; ts: string }[] }>;
-}
+const VibesJsonType = type({
+  app: "string > 0",
+  "targets?": "Record<string, unknown>",
+});
+
+export type VibesConfig = typeof VibesJsonType.infer;
 
 export interface FoundConfig {
   readonly path: string;
@@ -16,20 +19,11 @@ export async function findVibesJson(startDir: string): Promise<Result<FoundConfi
   let dir = startDir;
   for (;;) {
     const candidate = join(dir, "vibes.json");
-    try {
-      const raw = await readFile(candidate, "utf-8");
-      const parsed: unknown = JSON.parse(raw);
-      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-        return Result.Err(`Invalid vibes.json at ${candidate}: expected an object`);
-      }
-      const obj = parsed as Record<string, unknown>;
-      if (typeof obj.app !== "string" || obj.app === "") {
-        return Result.Err(`Invalid vibes.json at ${candidate}: "app" must be a non-empty string`);
-      }
-      return Result.Ok({ path: candidate, config: obj as unknown as VibesConfig });
-    } catch (err: unknown) {
-      const code = (err as { code?: string }).code;
-      if (code === "ENOENT") {
+
+    const readResult = await exception2Result(() => readFile(candidate, "utf-8"));
+    if (readResult.isErr()) {
+      const err = readResult.Err();
+      if (typeof err === "object" && err !== null && "code" in err && err.code === "ENOENT") {
         const parent = dirname(dir);
         if (parent === dir) {
           return Result.Err("No vibes.json found (searched up to filesystem root)");
@@ -39,5 +33,17 @@ export async function findVibesJson(startDir: string): Promise<Result<FoundConfi
       }
       return Result.Err(`Error reading ${candidate}: ${err}`);
     }
+
+    const parseResult = exception2Result(() => JSON.parse(readResult.Ok()));
+    if (parseResult.isErr()) {
+      return Result.Err(`Invalid JSON in ${candidate}: ${parseResult.Err()}`);
+    }
+
+    const validated = VibesJsonType(parseResult.Ok());
+    if (validated instanceof type.errors) {
+      return Result.Err(`Invalid vibes.json at ${candidate}: ${validated.summary}`);
+    }
+
+    return Result.Ok({ path: candidate, config: validated });
   }
 }
