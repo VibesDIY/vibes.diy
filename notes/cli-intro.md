@@ -67,9 +67,9 @@ deno task --config use-vibes/pkg/deno.json test-cli
 
 ## Docs
 
-- [mvp-web.md](mvp-web.md) — Simplest web-only path: public read + request write access
+- [mvp-web.md](mvp-web.md) — Simplest web-only path: visibility + request write access
 - [mvp-cli.md](mvp-cli.md) — First steps to build the CLI (features, interface, logic)
-- [mvp-invites.md](mvp-invites.md) — Public read, request write, permissions, group sharing model
+- [mvp-invites.md](mvp-invites.md) — Visibility, access requests, permissions, group sharing model
 - [cli-architecture.md](cli-architecture.md) — Implementation: Deno-first, cmd-ts, dnt, testing
 - [cli-design.md](cli-design.md) — Full architecture: domain model, targets, vibes.json, commands
 - [cli-parts.md](cli-parts.md) — Existing repo infrastructure reusable for the CLI

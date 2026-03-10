@@ -1,16 +1,16 @@
-# Web MVP — Public Read + Request Write Access
+# Web MVP — Visibility + Request Write Access
 
-Simplest path to collaborative apps, web only. No CLI, no mobile, no admin UI. Apps are public read by default. Writers request access, owners approve.
+Simplest path to collaborative apps, web only. No CLI, no mobile, no admin UI. Groups are private by default; owners opt in to public mode. Writers request access, owners approve.
 
 ---
 
 ## The Flow
 
-### Public read (default — no machinery needed)
+### Read access (private by default, public is opt-in)
 
-1. Owner publishes a vibe (gets a URL)
-2. Owner shares the URL in Slack/text/email
-3. Visitor opens URL → sees app and data, read-only. Done.
+1. Owner publishes a vibe (gets a URL) — group is private by default
+2. Owner enables `group.public = true` if they want unauthenticated reads
+3. If public: visitor opens URL → sees app and data, read-only. If private: visitor must sign in and have `membership.read`.
 
 ### Write access
 
@@ -87,7 +87,7 @@ After the minimal task chain ships, these three features complete the web invite
 
 ### CR-01. Progressive unauthenticated onboarding (read-first)
 
-Public read already gives unauthenticated users access to see apps and data. This CR is about making the transition to write smooth.
+When a group is public, unauthenticated users can see apps and data. This CR is about making the transition to write smooth.
 
 **Frontend changes:**
 - On first mutating action (data write), show auth gate modal instead of failing
@@ -98,7 +98,7 @@ Public read already gives unauthenticated users access to see apps and data. Thi
 - Ensure write paths return a clear `require-login` or `require-membership` error shape for UX handoff
 
 **Acceptance criteria:**
-- Unauthenticated user can open any vibe and read data (already works — public read)
+- Unauthenticated user can open any public vibe and read data
 - First write triggers login → request access flow
 - After approval, intended write succeeds without redoing flow
 
@@ -156,5 +156,5 @@ For quick sharing (e.g., in a meeting), generate a time-limited token appended t
 
 **Acceptance criteria:**
 - Token auto-approves within TTL window
-- After TTL, URL still works for public read, write falls back to request-access
+- After TTL, if group is public the URL still works for reading, write falls back to request-access
 - No public write — Clerk sign-in always required

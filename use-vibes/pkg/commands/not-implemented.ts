@@ -5,7 +5,7 @@ export interface NotImplementedOptions {
 }
 
 export function notImplemented(options: NotImplementedOptions): () => Promise<Result<void>> {
-  return async function runNotImplemented(): Promise<Result<void>> {
-    return Result.Err(`use-vibes ${options.name}: not yet implemented`);
+  return function runNotImplemented(): Promise<Result<void>> {
+    return Promise.resolve(Result.Err(`use-vibes ${options.name}: not yet implemented`));
   };
 }

@@ -56,7 +56,7 @@ This is the same pattern as `vite` — importable library AND executable CLI in 
 
 ```bash
 use-vibes login                   # device-code auth, stores credentials
-use-vibes whoami                  # print current user (e.g., "jchris")
+use-vibes whoami                  # print Clerk user ID + linked handles
 use-vibes dev                     # live-push to dev group (sugar for: use-vibes live dev)
 use-vibes live work-lunch         # live-push to work-lunch group
 use-vibes publish family-reunion  # one-time push to family-reunion group
@@ -79,7 +79,7 @@ jchris/coffee-order/work-lunch
 └owner─┘ └───app────┘ └─group──┘
 ```
 
-- **owner** — defaults to `use-vibes whoami` result (the logged-in user)
+- **owner** — a handle slug; defaults to the user's primary handle (from `use-vibes whoami`)
 - **app** — from `vibes.json` `"app"` field
 - **group** — a named audience/install (e.g., `dev`, `work-lunch`, `family-reunion`)
 
@@ -140,8 +140,9 @@ The `default` group is special only in URL handling: browsing to a target withou
 ### Permissions
 
 The full target path enables cross-user deployment:
-- Joe can deploy to `jchris/foo-bar/amaze` if jchris grants permission
-- Permissions are per-target, not per-app
+- Joe can deploy to `jchris/foo-bar/amaze` if Joe has `membership.deploy = true` for that group
+- The `deploy` flag is a membership property — the group owner grants it like any other permission flag
+- Permissions are per-group, not per-app (see [access-control.md](access-control.md) for the full model)
 
 ---
 
@@ -273,7 +274,7 @@ use-vibes — build and deploy React + Fireproof apps
 
 Auth:
   login                      Device-code auth, stores credentials locally
-  whoami                     Print the logged-in user (used as default owner)
+  whoami                     Print Clerk user ID and linked handles
 
 Develop:
   dev                        Live-push to dev group (sugar for: live dev)
@@ -359,7 +360,7 @@ An agent in any framework (Claude Code, Agent SDK, OpenAI Agents, LangGraph) can
 | `npm create vibe` | Interactive scaffold |
 | `npm create vibe "description"` | AI-generate App.jsx + scaffold |
 | `use-vibes login` | Device-code auth flow, stores credentials locally |
-| `use-vibes whoami` | Print the logged-in user (used as default owner) |
+| `use-vibes whoami` | Print Clerk user ID and linked handles |
 | `use-vibes dev` | Sugar for `use-vibes live dev` |
 | `use-vibes live <group>` | Watch files, push every save to target group |
 | `use-vibes generate <slug> "prompt"` | AI-create a new vibe (`slug.jsx`), register in vibes.json |

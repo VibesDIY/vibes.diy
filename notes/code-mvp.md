@@ -46,7 +46,12 @@ Each group/install gets its own sandboxed data partition via appSlug mapping.
 - **Tech**: Connect `installId`/`groupId` in URL structure to `appSlug` in backend. Ensure `constructVibesDatabaseName()` uses correct partitioning. **Note**: `reqEnsureAppSlug` in `msg-types.ts` currently has no `groupId` field — the CLI target model (`owner/app/group`) requires adding group support to the API request types
 - **Dependencies**: URL structure (done). Unlocks: proper multi-tenant data isolation, CLI target resolution
 
-### F8. Sync status indicator
+### F8. Case-insensitive app.jsx resolution
+Runtime accepts both `App.jsx` and `app.jsx` as the vibe entry point.
+- **Tech**: Normalize filename casing in the serve pipeline (`serv-entry-point.ts` / `render-vibe.ts`) so `App.jsx` and `app.jsx` resolve identically. If both exist, prefer `App.jsx`. Claude and other agents sometimes capitalize the filename — both should work
+- **Dependencies**: None. Unlocks: fewer broken deploys from AI-generated code
+
+### F9. Sync status indicator
 Users know when their data is syncing vs offline.
 - **Tech**: New component reading `attachState` from `useFireproof` hook, displayed in sidebar/header
 - **Dependencies**: P1 (FPCLOUD_URL must be configured). Unlocks: user confidence in sync
@@ -198,7 +203,7 @@ AI-edit an existing vibe from the terminal. Reads the file by slug (resolves to 
 
 ### L4. CLI invite (`use-vibes invite <group> [flags]`) — future
 Generate a pre-approved instant access token from the terminal. The primary sharing flow is just sharing the app URL — this is a convenience for quick sharing.
-- **Tech**: Call `createInviteToken` API with TTL, print URL with `?invite=TOKEN` to stdout. Token auto-approves write access within TTL window. After expiry, URL still works for public read, write falls back to request-access. No public write — Clerk sign-in always required. Flags: `--reader`, `--ttl <minutes>` (see [mvp-invites.md](mvp-invites.md))
+- **Tech**: Call `createInviteToken` API with TTL, print URL with `?invite=TOKEN` to stdout. Token auto-approves write access within TTL window. After expiry, if group is public the URL still works for reading; write falls back to request-access. No public write — Clerk sign-in always required. Flags: `--reader`, `--ttl <minutes>` (see [mvp-invites.md](mvp-invites.md))
 - **Dependencies**: A1 (requestAccess handler), createInviteToken API (future). Unlocks: quick sharing from CLI
 
 ### L5. Live reload for group URLs

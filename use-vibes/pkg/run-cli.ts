@@ -1,8 +1,9 @@
-import type { Result } from "@adviser/cement";
+import { Result } from "@adviser/cement";
 import { command, option, run, runSafely, string, subcommands, restPositionals } from "cmd-ts";
 import { runWhoami } from "./commands/whoami.js";
 import { runSkills } from "./commands/skills.js";
 import { runSystem } from "./commands/system.js";
+import { runInfo } from "./commands/info.js";
 import { notImplemented } from "./commands/not-implemented.js";
 import type { CliOutput } from "./commands/cli-output.js";
 
@@ -86,12 +87,29 @@ function createApp(runtime: CliRuntime) {
     },
   });
 
+  const infoCmd = command({
+    name: "info",
+    description: "Show resolved config and target",
+    args: {
+      _rest: restPositionals({ description: "optional target (group or owner/app/group)" }),
+    },
+    handler: async function handleInfo(args: { readonly _rest: readonly string[] }): Promise<void> {
+      if (args._rest.length > 1) {
+        await emitResult(runtime, () => Promise.resolve(Result.Err("info accepts at most one target argument")));
+        return;
+      }
+      const target = args._rest.length > 0 ? args._rest[0] : undefined;
+      await emitResult(runtime, () => runInfo({ target }, runtime.output));
+    },
+  });
+
   return subcommands({
     name: "use-vibes",
     description: "Build and deploy React + Fireproof apps",
     cmds: {
       whoami: whoamiCmd,
       login: createStubCommand(runtime, "login"),
+      info: infoCmd,
       dev: createStubCommand(runtime, "dev"),
       live: createStubCommand(runtime, "live"),
       generate: createStubCommand(runtime, "generate"),

@@ -1,14 +1,16 @@
-# Public Read, Request Write & Permissions
+# Visibility, Access Requests & Permissions
 
-How group sharing, access requests, and access control work.
+How group sharing, visibility, access requests, and access control work.
 
 ---
 
-## Public Read
+## Visibility
 
-Apps are readable by anyone. The filesystem is public — no auth needed to open an app URL and see it running. Most apps work fine as public read-only. No invite or request-access machinery is needed for this case.
+Groups are **private by default** — only members with `membership.read` (or the owner) can access a group's code and data.
 
-This is the baseline: share a URL, people can see your app and its data. Done.
+The owner can opt in to public mode by setting `group.public = true`. When public, anyone can open the URL and see the app running — no auth needed for reading. Write access still requires membership regardless of visibility mode.
+
+See [access-control.md](access-control.md) for the full permission model.
 
 ---
 
@@ -16,8 +18,8 @@ This is the baseline: share a URL, people can see your app and its data. Done.
 
 When a visitor wants to write data, they request access via the regular app URL. No special invite link needed.
 
-1. Visitor opens the app URL → sees the app running (public read)
-2. Visitor tries to write → prompted to sign in with Clerk
+1. Visitor opens the app URL → if group is public, sees the app running; if private, prompted to sign in
+2. Visitor tries to write → prompted to sign in with Clerk (if not already)
 3. After sign-in, visitor sends an access request to the owner
 4. Owner sees the request arrive in their live approval panel
 5. Owner approves → visitor gets write membership with synced data
@@ -43,13 +45,13 @@ Everything is anchored to Clerk's identity provider. The handle owner controls t
 
 | Action | Requires |
 |---|---|
-| Read group filesystem | Public (no auth) |
+| Read group filesystem | `group.public = true` or `membership.read` |
 | Create remix under handle | `session.clerkId` → User → owns Handle |
 | Delete remix | `session.clerkId` → User → owns Handle → owns Remix |
 | Create/delete group | `session.clerkId` → User → owns Handle that owns Group |
 | Update `group.filesystemCID` | `session.clerkId` → User → owns Handle that owns Group |
 | Rename group slug | `session.clerkId` → User → owns Handle that owns Group |
-| Read group StatePartition | Public (no auth) |
+| Read group StatePartition | `group.public = true` or `membership.read` |
 | Write group StatePartition | `membership.access` is `"write"` |
 | Invite as reader | `membership.inviteReader = true` |
 | Invite as writer | `membership.inviteWriter = true` |
@@ -68,9 +70,10 @@ Each membership carries an **access level** plus capability flags:
 | `inviteReader` | `boolean` | Can invite new members with read access |
 | `inviteWriter` | `boolean` | Can invite new members with read+write access |
 | `removeMember` | `boolean` | Can remove other members from the group |
+| `deploy` | `boolean` | Can push code to the group (`publish`, `live`) |
 | `manage` | `boolean` | Can modify other members' permission flags |
 
-`access` is a single enum, not two booleans — this makes `write = true, read = false` unrepresentable at the type level. A "reader" has `access: "read"`. A "collaborator" has `access: "write"` + `inviteReader`. An "admin" has `access: "write"` + all capability flags. The group owner implicitly has everything.
+`access` is a single enum, not two booleans — this makes `write = true, read = false` unrepresentable at the type level. A "reader" has `access: "read"`. A "collaborator" has `access: "write"` + `inviteReader`. A "deployer" has `access: "write"` + `deploy` — can push code to the group via `use-vibes publish` or `use-vibes live`. An "admin" has `access: "write"` + all capability flags. The group owner implicitly has everything.
 
 ### Current implementation vs. proposed model
 
@@ -140,7 +143,7 @@ For quick sharing (e.g., in a meeting), the owner can generate a time-limited to
 - Optional URL param: `?invite=TOKEN` appended to the regular app URL
 - Token has a TTL (e.g., 5 minutes)
 - While valid: visitor who signs in is auto-approved with the token's permissions — no owner action needed
-- After expiry: the URL still works for public read, but write access falls back to the normal request-access flow
+- After expiry: if group is public the URL still works for reading, but write access falls back to the normal request-access flow
 - **No public write** — the token grants membership, not anonymous write. Clerk sign-in is always required
 
 Generated via CLI (`use-vibes invite work-lunch`) or web UI (future). This is a convenience layer on top of request-access, not a replacement.
@@ -163,9 +166,9 @@ These aren't MVP — the approval flow handles the happy path. But the permissio
 | Command | What it does with permissions |
 |---|---|
 | `use-vibes invite <group>` | (Future) Generates a pre-approved instant access token with TTL. Inviter must have `inviteReader` or `inviteWriter` flag |
-| `use-vibes publish <group>` | Updates `filesystemCID` — requires group ownership |
-| `use-vibes live <group>` | Continuously updates `filesystemCID` — requires group ownership |
+| `use-vibes publish <group>` | Updates `filesystemCID` — requires group ownership or `membership.deploy = true` |
+| `use-vibes live <group>` | Continuously updates `filesystemCID` — requires group ownership or `membership.deploy = true` |
 
 The primary sharing flow needs no CLI command — just share the app URL. The `invite` command is a future convenience for generating pre-approved tokens.
 
-(Future feature:) Cross-user deployment works through the full target path: `use-vibes publish jchris/foo-bar/amaze` works if the pusher has ownership of that group (or jchris has granted publish access).
+Cross-user deployment works through the full target path: `use-vibes publish jchris/foo-bar/amaze` works if the pusher has `membership.deploy = true` for that group (or is the group owner). The `deploy` flag is granted by the owner like any other permission flag.

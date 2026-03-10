@@ -43,8 +43,8 @@ Shipped in `use-vibes@0.19.27-dev-cli`.
 
 - `login` — device-code auth flow via Clerk
 - Credential storage — save auth token to `~/.config/use-vibes/` or similar
-- `whoami` reads stored credentials and prints the username
-- Shared `getAuth()` returns stored user or errors with "run `use-vibes login` first"
+- `whoami` reads stored credentials and prints the Clerk user ID + all linked handles
+- Shared `getAuth()` returns stored user (Clerk ID + handles) or errors with "run `use-vibes login` first"
 
 ---
 
@@ -102,6 +102,7 @@ Agents and humans read the skill catalog and get assembled system prompts.
 - Composable: `use-vibes system --skills fireproof | pbcopy`
 - Defaults to `fireproof,callai` when no `--skills` flag given
 - **TODO**: System prompt should tell agents not to `npm install` additional packages — all imports resolve via esm.sh at runtime
+- **TODO**: Remove "coming soon" from `use-vibes/pkg/README.md` when `dev` and `publish` commands ship
 Shipped in `use-vibes@0.19.27-dev-cli`.
 
 ---
@@ -120,7 +121,7 @@ AI generation of new vibes belongs in `create-vibe` at scaffold time, not in `us
 
 ## What comes after
 
-- **Access** — the deploy URL is the join link (e.g. `vibes.diy/vibe/jchris/cleaning-crew/friends-club`). Public read by default; visitors request write access, moderators approve in real time. Pre-approved instant tokens (`use-vibes invite`) are a future convenience, not the primary flow. See [mvp-invites.md](mvp-invites.md)
+- **Access** — the deploy URL is the join link (e.g. `vibes.diy/vibe/jchris/cleaning-crew/friends-club`). Groups are private by default; owners opt in to public reads. Visitors request write access, moderators approve in real time. Pre-approved instant tokens (`use-vibes invite`) are a future convenience, not the primary flow. See [mvp-invites.md](mvp-invites.md)
 - **`create-vibe`** — dry scaffold shipped (`create-vibe@1.4.0-dev`), optional AI generation via prompt arg is future (see [create-vibe-plan.md](create-vibe-plan.md))
 - **Live reload** — group URLs auto-refresh on new pushes (SSE or version polling)
 
