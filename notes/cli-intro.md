@@ -55,7 +55,7 @@ deno task --config use-vibes/pkg/deno.json test-cli
 
 - **Agent-native**: `skills → system → generate → live/publish` — designed for AI agents, not just humans
 - **Target** = `owner/app/group` (e.g., `jchris/coffee-order/work-lunch`)
-- **Owner** defaults to `use-vibes whoami` result
+- **Owner** defaults to the user's active handle (per selection precedence: `--as` → last-used → single-handle → fail; see [access-control.md](access-control.md))
 - **App** comes from `vibes.json`
 - **Group** is the audience: `dev`, `work-lunch`, `family-reunion`, etc.
 - `use-vibes dev` is sugar for `use-vibes live dev`

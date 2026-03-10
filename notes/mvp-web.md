@@ -15,9 +15,9 @@ Simplest path to collaborative apps, web only. No CLI, no mobile, no admin UI. G
 ### Write access
 
 4. Visitor wants to write → clicks "Request Access"
-5. Clerk sign-in → access request sent to owner
-6. Owner sees request in live approval panel → approves
-7. Visitor gets write membership with synced data
+5. Clerk sign-in → visitor's active handle sends access request to owning handle
+6. Owner sees request (showing requesting handle's slug) in live approval panel → approves
+7. Requesting handle gets a Membership with write access and synced data
 
 ---
 
@@ -73,11 +73,11 @@ Set `FPCLOUD_URL` + `DASHBOARD_URL` so synced data actually flows.
 
 ## Permissions for this path
 
-Every approval uses the collaborative default:
-- `access: "write"` — approved member can read and write data
-- `inviteWriter: true` — approved member can invite others (same permissions)
+Every approval uses the collaborative default (per-handle membership):
+- `write: true` — approved handle can read and write data
+- `inviteWriter: true` — approved handle can invite others (same permissions)
 
-No permission picker in the UI. The owner just clicks "Approve" and the visitor gets full write access. Locking down to reader-only comes later with CR-03.
+No permission picker in the UI. The owner just clicks "Approve" and the requesting handle gets full write access. Locking down to reader-only comes later with CR-03.
 
 ---
 

@@ -41,10 +41,10 @@ Shipped in `use-vibes@0.19.27-dev-cli`.
 
 **Goal:** User can authenticate and their identity persists across commands.
 
-- `login` — device-code auth flow via Clerk
-- Credential storage — save auth token to `~/.config/use-vibes/` or similar
-- `whoami` reads stored credentials and prints the Clerk user ID + all linked handles
-- Shared `getAuth()` returns stored user (Clerk ID + handles) or errors with "run `use-vibes login` first"
+- `login` — device-code auth flow via Clerk, stores device cert in keybag
+- `whoami` fetches handles from the API (via device cert auth) and prints device + handle info
+- Shared `getAuth()` returns stored device cert (for API calls) or errors with "run `use-vibes login` first"
+- Handles are a server-side concept — not stored locally. The cert contains the device identity and Clerk `userId`; the API resolves `userId` → handles
 
 ---
 

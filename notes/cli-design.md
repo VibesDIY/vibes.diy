@@ -56,7 +56,7 @@ This is the same pattern as `vite` — importable library AND executable CLI in 
 
 ```bash
 use-vibes login                   # device-code auth, stores credentials
-use-vibes whoami                  # print Clerk user ID + linked handles
+use-vibes whoami                  # print device identity + linked handles
 use-vibes dev                     # live-push to dev group (sugar for: use-vibes live dev)
 use-vibes live work-lunch         # live-push to work-lunch group
 use-vibes publish family-reunion  # one-time push to family-reunion group
@@ -79,7 +79,7 @@ jchris/coffee-order/work-lunch
 └owner─┘ └───app────┘ └─group──┘
 ```
 
-- **owner** — a handle slug; defaults to the user's primary handle (from `use-vibes whoami`)
+- **owner** — a handle slug; defaults to the user's active handle (per selection precedence: `--as` → last-used → single-handle → fail; see [access-control.md](access-control.md))
 - **app** — from `vibes.json` `"app"` field
 - **group** — a named audience/install (e.g., `dev`, `work-lunch`, `family-reunion`)
 
@@ -139,9 +139,9 @@ The `default` group is special only in URL handling: browsing to a target withou
 
 ### Permissions
 
-The full target path enables cross-user deployment:
-- Joe can deploy to `jchris/foo-bar/amaze` if Joe has `membership.deploy = true` for that group
-- The `deploy` flag is a membership property — the group owner grants it like any other permission flag
+The full target path enables cross-handle deployment:
+- Joe's handle can deploy to `jchris/foo-bar/amaze` if that handle has `membership.deploy = true` for that group
+- The `deploy` flag is a membership property — the owning handle grants it like any other permission flag
 - Permissions are per-group, not per-app (see [access-control.md](access-control.md) for the full model)
 
 ---
@@ -274,7 +274,7 @@ use-vibes — build and deploy React + Fireproof apps
 
 Auth:
   login                      Device-code auth, stores credentials locally
-  whoami                     Print Clerk user ID and linked handles
+  whoami                     Print device identity and linked handles
 
 Develop:
   dev                        Live-push to dev group (sugar for: live dev)
@@ -303,6 +303,33 @@ Example — agent building an app from scratch:
   $ use-vibes dev                              # push to dev, get URL
   $ use-vibes publish demo                     # freeze for sharing
 ```
+
+---
+
+## `whoami` Details
+
+`whoami` fetches handles from the API via an authenticated call using the device cert. Handles are a server-side concept not stored in the cert.
+
+```
+$ use-vibes whoami
+Handle: @jchris
+Handle: @jchris-bot
+Device: nl5kT-dsYJvwu-N7c1OZSNNsSZ1GMOjUF5KLWltWIBs
+Certificate: valid until 2027-03-10T18:39:22.000Z
+```
+
+**Failure behavior:**
+
+| State | Output |
+|-------|--------|
+| No device key | Error: "No device identity. Run: use-vibes login" |
+| Device key but no cert | Error: "Not registered. Run: use-vibes login" |
+| Cert valid, API reachable, has handles | Prints handles + device + cert |
+| Cert valid, API unreachable | Prints device + cert + warning: "Could not reach API — handle info unavailable" |
+| Cert expired | Prints device + expired cert warning, suggests re-login |
+| Cert valid, API reachable, no handles | Prints device + cert + note: "No handles linked" |
+
+**Active handle for commands:** Commands acting on behalf of a handle (e.g., `publish`, `live`, `invite`) use the handle selection precedence from [access-control.md](access-control.md): `--as` → last-used → single-handle → fail. No server-side primary; selection is agent-local.
 
 ---
 
@@ -360,7 +387,7 @@ An agent in any framework (Claude Code, Agent SDK, OpenAI Agents, LangGraph) can
 | `npm create vibe` | Interactive scaffold |
 | `npm create vibe "description"` | AI-generate App.jsx + scaffold |
 | `use-vibes login` | Device-code auth flow, stores credentials locally |
-| `use-vibes whoami` | Print Clerk user ID and linked handles |
+| `use-vibes whoami` | Print device identity and linked handles (fetched from API) |
 | `use-vibes dev` | Sugar for `use-vibes live dev` |
 | `use-vibes live <group>` | Watch files, push every save to target group |
 | `use-vibes generate <slug> "prompt"` | AI-create a new vibe (`slug.jsx`), register in vibes.json |
