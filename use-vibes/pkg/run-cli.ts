@@ -6,6 +6,7 @@ import { runSkills } from "./commands/skills.js";
 import { runSystem } from "./commands/system.js";
 import { runInfo } from "./commands/info.js";
 import { notImplemented } from "./commands/not-implemented.js";
+import { runRegisterHandle } from "./commands/handle-register.js";
 import type { CliOutput } from "./commands/cli-output.js";
 
 export type { LoginPlatform } from "./commands/login.js";
@@ -107,6 +108,30 @@ function createApp(runtime: CliRuntime) {
     },
   });
 
+  const handleRegisterCmd = command({
+    name: "register",
+    description: "Register a handle slug",
+    args: {
+      _rest: restPositionals({ description: "optional handle slug (with or without @)" }),
+    },
+    handler: async function handleRegister(args: { readonly _rest: readonly string[] }): Promise<void> {
+      if (args._rest.length > 1) {
+        await emitResult(runtime, () => Promise.resolve(Result.Err("handle register accepts at most one slug argument")));
+        return;
+      }
+      const slug = args._rest.length > 0 ? args._rest[0] : undefined;
+      await emitResult(runtime, () => runRegisterHandle({ slug }, runtime.output));
+    },
+  });
+
+  const handleCmd = subcommands({
+    name: "handle",
+    description: "Manage handles",
+    cmds: {
+      register: handleRegisterCmd,
+    },
+  });
+
   return subcommands({
     name: "use-vibes",
     description: "Build and deploy React + Fireproof apps",
@@ -160,6 +185,7 @@ function createApp(runtime: CliRuntime) {
       system: systemCmd,
       publish: createStubCommand(runtime, "publish"),
       invite: createStubCommand(runtime, "invite"),
+      handle: handleCmd,
     },
   });
 }

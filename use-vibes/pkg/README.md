@@ -20,6 +20,7 @@ All commands run via `npm run use-vibes <command>`:
 | `system --skills fireproof,d3` | Emit the full system prompt for selected skills |
 | `login` | Authenticate with vibes.diy |
 | `whoami` | Print the logged-in user |
+| `handle register [slug]` | Register a new handle (or auto-generate one) |
 | `dev` | Watch files and push on save (coming soon) |
 | `publish` | One-time push to production (coming soon) |
 

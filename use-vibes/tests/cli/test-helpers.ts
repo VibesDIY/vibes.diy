@@ -55,6 +55,7 @@ export async function spawnCli(args: readonly string[], opts?: { cwd?: string })
       "--unstable-sloppy-imports",
       "--allow-read",
       "--allow-env",
+      "--allow-write=/tmp",
       MAIN_DENO,
       ...args,
     ],

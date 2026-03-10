@@ -42,6 +42,9 @@ import {
   ReqGetCertFromCsr,
   ResGetCertFromCsr,
   isResGetCertFromCsr,
+  ReqRegisterHandle,
+  ResRegisterHandle,
+  isResRegisterHandle,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -280,6 +283,15 @@ export class VibeDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-ensure-app-slug" },
       {
         resMatch: isResEnsureAppSlug,
+      }
+    );
+  }
+
+  registerHandle(req: Req<ReqRegisterHandle>): Promise<Result<ResRegisterHandle, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-register-handle" },
+      {
+        resMatch: isResRegisterHandle,
       }
     );
   }

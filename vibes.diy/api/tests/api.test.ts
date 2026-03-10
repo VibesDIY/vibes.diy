@@ -254,6 +254,31 @@ describe("VibesDiyApi", () => {
     expect(res.Ok().userSlug).not.toBe(res1.Ok().userSlug);
   });
 
+  it("registers handle without creating apps", async () => {
+    const handleSlug = `register-handle-${Date.now()}`;
+    const rRegistered = await api.registerHandle({
+      userSlug: handleSlug,
+    });
+    expect(rRegistered.isOk()).toBe(true);
+    expect(rRegistered.Ok().userSlug).toBe(handleSlug);
+    expect(rRegistered.Ok().userId.length).toBeGreaterThan(0);
+
+    const rRegisteredAgain = await api.registerHandle({
+      userSlug: handleSlug,
+    });
+    expect(rRegisteredAgain.isOk()).toBe(true);
+    expect(rRegisteredAgain.Ok().userSlug).toBe(handleSlug);
+    expect(rRegisteredAgain.Ok().created).toBe(rRegistered.Ok().created);
+
+    const rList = await api.listUserSlugAppSlug({
+      userSlug: handleSlug,
+    });
+    expect(rList.isOk()).toBe(true);
+    expect(rList.Ok().items.length).toBe(1);
+    expect(rList.Ok().items[0].userSlug).toBe(handleSlug);
+    expect(rList.Ok().items[0].appSlugs).toEqual([]);
+  });
+
   it("render iframe content page", async () => {
     // this is the iframe content page
     const res = await api.ensureAppSlug({

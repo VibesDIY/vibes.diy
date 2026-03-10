@@ -21,6 +21,8 @@ import {
   ResListApplicationChats,
   ReqGetCertFromCsr,
   ResGetCertFromCsr,
+  ReqRegisterHandle,
+  ResRegisterHandle,
 } from "./msg-types.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -53,6 +55,7 @@ export type Req<T> = Omit<T, "type" | "auth"> & OptionalAuth;
 
 export interface VibesDiyApiIface<_T = unknown> {
   ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>>;
+  registerHandle(req: Req<ReqRegisterHandle>): Promise<Result<ResRegisterHandle, VibesDiyError>>;
   // getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>>;
   listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>>;
   getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>>;

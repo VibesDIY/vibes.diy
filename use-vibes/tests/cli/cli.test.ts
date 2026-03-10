@@ -112,6 +112,18 @@ Deno.test("smoke: generate foo bar exits 1 with not-yet-implemented", async func
   assertContains(result.stderr, "not yet implemented", "stub generate command should report not implemented");
 });
 
+Deno.test("smoke: handle register with extra args exits 1", async function (): Promise<void> {
+  const result = await spawnCli(["handle", "register", "alice", "bob"]);
+  assertTrue(result.code === 1, "handle register with extra args should exit 1");
+  assertContains(result.stderr, "at most one slug argument", "handle register should validate argument count");
+});
+
+Deno.test("smoke: handle register requires login", async function (): Promise<void> {
+  const result = await spawnCli(["handle", "register", "alice"]);
+  assertTrue(result.code === 1, "handle register without login should exit 1");
+  assertContains(result.stderr, "use-vibes login", "handle register should mention login");
+});
+
 Deno.test("smoke: system --skills fireproof outputs prompt", async function (): Promise<void> {
   const result = await spawnCli(["system", "--skills", "fireproof"]);
   assertTrue(result.code === 0, "system with explicit skill should exit 0");

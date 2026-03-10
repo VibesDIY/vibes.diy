@@ -234,6 +234,17 @@ export const reqEnsureAppSlug = type({
 
 export type ReqEnsureAppSlug = typeof reqEnsureAppSlug.infer;
 
+export const reqRegisterHandle = type({
+  type: "'vibes.diy.req-register-handle'",
+  auth: dashAuthType,
+  "userSlug?": "string",
+});
+
+export type ReqRegisterHandle = typeof reqRegisterHandle.infer;
+export function isReqRegisterHandle(obj: unknown): obj is ReqRegisterHandle {
+  return !(reqRegisterHandle(obj) instanceof type.errors);
+}
+
 // Response types
 export const resEnsureAppSlug = type({
   type: "'vibes.diy.res-ensure-app-slug'",
@@ -253,6 +264,18 @@ export const resEnsureAppSlug = type({
 export type ResEnsureAppSlug = typeof resEnsureAppSlug.infer;
 export function isResEnsureAppSlug(obj: unknown): obj is ResEnsureAppSlug {
   return !(resEnsureAppSlug(obj) instanceof type.errors);
+}
+
+export const resRegisterHandle = type({
+  type: "'vibes.diy.res-register-handle'",
+  userId: "string",
+  userSlug: "string",
+  created: "string",
+});
+
+export type ResRegisterHandle = typeof resRegisterHandle.infer;
+export function isResRegisterHandle(obj: unknown): obj is ResRegisterHandle {
+  return !(resRegisterHandle(obj) instanceof type.errors);
 }
 
 export const reqGetChatDetails = type({
