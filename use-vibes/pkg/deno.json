@@ -11,6 +11,9 @@
     "@vibes.diy/prompts": "../../prompts/pkg/index.ts",
     "@vibes.diy/call-ai-v2": "../../call-ai/v2/index.ts",
     "@vibes.diy/use-vibes-types": "../types/index.ts",
+    "@vibes.diy/api-types": "../../vibes.diy/api/types/index.ts",
+    "@vibes.diy/api-pkg": "../../vibes.diy/api/pkg/index.ts",
+    "@vibes.diy/api-impl": "../../vibes.diy/api/impl/index.ts",
     "call-ai": "../../call-ai/pkg/index.ts"
   },
   "tasks": {
