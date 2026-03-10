@@ -1,240 +1,269 @@
 import { type } from "arktype";
-import { dashAuthType } from "./msg-types.js";
 
-export const RoleType = type({
-  type: "'admin' | 'editor' | 'viewer'",
-  // currently we only have the editor
-  // due to fireproof's current permission model,
-  // but we can expand this in the future
+const CoercedDate = type("Date | string | number").pipe((v) => (v instanceof Date ? v : new Date(v)));
+
+const tick = type({
+  count: "number", // number of requests with this access level
+  last: CoercedDate,
 });
 
-export const InviteTokenBase = type({
-  type: "'vibes.diy.invite-token'",
-  token: "string",
+export const RawEmailWithoutFrom = type({
+  to: "string[]|string",
+  subject: "string",
+  "text?": "string",
+  "html?": "string",
+});
+export type RawEmailWithoutFrom = typeof RawEmailWithoutFrom.infer;
 
+export const RawEmail = type({
+  from: "string",
+}).and(RawEmailWithoutFrom);
+export type RawEmail = typeof RawEmail.infer;
+
+export const EmailOps = type({
+  dst: "string",
+  action: "'invite-editor' | 'invite-viewer'",
   appSlug: "string",
   userSlug: "string",
-  roles: RoleType.array(),
-  ownerUserId: "string",
-  validUntil: "Date",
-  created: "Date",
+  "fsId?": "string",
+  token: "string",
+});
+export type EmailOps = typeof EmailOps.infer;
+
+export const EnablePublicAccess = type({
+  type: "'app.acl.enable.public.access'",
+  // acl: readonlyPublicAccess,
+  "tick?": tick,
 });
 
-export const InviteEmailToken = type({
-  style: "'email'",
+export type EnablePublicAccess = typeof EnablePublicAccess.infer;
+
+export function isEnablePublicAccess(obj: unknown): obj is EnablePublicAccess {
+  return !(EnablePublicAccess(obj) instanceof type.errors);
+}
+
+export const EnableRequest = type({
+  type: "'app.acl.enable.request'",
+});
+export type EnableRequestEditor = typeof EnableRequest.infer;
+export function isEnableRequest(obj: unknown): obj is EnableRequestEditor {
+  return !(EnableRequest(obj) instanceof type.errors);
+}
+
+const requestBase = type({
+  key: "string", // email or nick of the requester
+  provider: "'github' | 'google' | 'clerk'",
+  "msg?": "string",
+  userId: "string",
+  created: CoercedDate,
+});
+
+export const ActiveRequestPending = type({
+  type: "'app.acl.active.request'",
+  role: "'viewer'",
+  state: "'pending'",
+  request: requestBase,
+});
+
+export type ActiveRequestPending = typeof ActiveRequestPending.infer;
+
+export function isActiveRequestPending(obj: unknown): obj is typeof ActiveRequestPending.infer {
+  return !(ActiveRequestPending(obj) instanceof type.errors);
+}
+
+const grant = type({
+  ownerId: "string",
+  on: CoercedDate,
+});
+
+export const ActiveRequestApproved = type({
+  type: "'app.acl.active.request'",
+  role: "'editor'|'viewer'",
+  state: "'approved'",
+  request: requestBase,
+  tick: tick,
+  grant: grant,
+});
+
+export type ActiveRequestApproved = typeof ActiveRequestApproved.infer;
+
+export function isActiveRequestApproved(obj: unknown): obj is typeof ActiveRequestApproved.infer {
+  return !(ActiveRequestApproved(obj) instanceof type.errors);
+}
+
+export const ActiveRequestRejected = type({
+  type: "'app.acl.active.request'",
+  role: "'editor'|'viewer'",
+  state: "'rejected'",
+  request: requestBase,
+  grant: grant,
+});
+
+export type ActiveRequestRejected = typeof ActiveRequestRejected.infer;
+
+export function isActiveRequestRejected(obj: unknown): obj is typeof ActiveRequestRejected.infer {
+  return !(ActiveRequestRejected(obj) instanceof type.errors);
+}
+
+export const ActiveRequest = ActiveRequestPending.or(ActiveRequestApproved).or(ActiveRequestRejected);
+
+export type ActiveRequest = typeof ActiveRequest.infer;
+
+export function isActiveRequest(obj: unknown): obj is typeof ActiveRequest.infer {
+  return !(ActiveRequest(obj) instanceof type.errors);
+}
+
+const inviteBase = type({
   email: "string",
-}).and(InviteTokenBase);
-
-export type InviteEmailToken = typeof InviteEmailToken.infer;
-
-export const InviteLinkToken = type({
-  style: "'link'",
-  acceptCount: "number",
-}).and(InviteTokenBase);
-
-export type InviteLinkToken = typeof InviteLinkToken.infer;
-
-export function isInviteEmailToken(obj: unknown): obj is typeof InviteEmailToken.infer {
-  return !(InviteEmailToken(obj) instanceof type.errors);
-}
-
-export function isInviteLinkToken(obj: unknown): obj is typeof InviteLinkToken.infer {
-  return !(InviteLinkToken(obj) instanceof type.errors);
-}
-
-export const InviteToken = InviteEmailToken.or(InviteLinkToken);
-
-export type InviteToken = typeof InviteToken.infer;
-
-export const AcceptInvite = type({
-  type: "'vibes.diy.accept-token'",
-  token: "string",
-  acceptUserId: "string",
-  created: "Date",
+  created: CoercedDate,
 });
 
-// Request-specific invite payload types (without server-generated fields)
-const ReqInviteBasePayload = type({
-  appSlug: "string",
-  userSlug: "string",
-  roles: RoleType.array(),
-  "validUntil?": "Date",
-});
-
-export const ReqInviteEmailPayload = type({
-  style: "'email'",
-  email: "string",
-}).and(ReqInviteBasePayload);
-
-export type ReqInviteEmailPayload = typeof ReqInviteEmailPayload.infer;
-
-export const ReqInviteLinkPayload = type({
-  style: "'link'",
-  acceptCount: "number",
-}).and(ReqInviteBasePayload);
-
-export type ReqInviteLinkPayload = typeof ReqInviteLinkPayload.infer;
-
-export function isReqInviteEmailPayload(obj: unknown): obj is typeof ReqInviteEmailPayload.infer {
-  return !(ReqInviteEmailPayload(obj) instanceof type.errors);
-}
-
-export function isReqInviteLinkPayload(obj: unknown): obj is typeof ReqInviteLinkPayload.infer {
-  return !(ReqInviteLinkPayload(obj) instanceof type.errors);
-}
-
-export const ReqInviteToken = type({
-  type: "'req.invite'",
-  auth: dashAuthType,
-  invite: ReqInviteEmailPayload.or(ReqInviteLinkPayload),
-});
-export type ReqInviteToken = typeof ReqInviteToken.infer;
-
-export function isReqInviteToken(obj: unknown): obj is typeof ReqInviteToken.infer {
-  return !(ReqInviteToken(obj) instanceof type.errors);
-}
-
-export const ResInviteToken = type({
-  type: "'res.invite'",
-  invite: InviteToken,
-});
-
-export type ResInviteToken = typeof ResInviteToken.infer;
-
-export const ReqDeleteInviteToken = type({
-  type: "'req.delete-invite'",
-  auth: dashAuthType,
+export const ActiveInviteEditorPending = type({
+  type: "'app.acl.active.invite'",
+  role: "'editor'",
+  state: "'pending'",
+  invite: inviteBase,
   token: "string",
 });
 
-export type ReqDeleteInviteToken = typeof ReqDeleteInviteToken.infer;
+export type ActiveInviteEditorPending = typeof ActiveInviteEditorPending.infer;
 
-export function isReqDeleteInviteToken(obj: unknown): obj is typeof ReqDeleteInviteToken.infer {
-  return !(ReqDeleteInviteToken(obj) instanceof type.errors);
+export function isActiveInviteEditorPending(obj: unknown): obj is typeof ActiveInviteEditorPending.infer {
+  return !(ActiveInviteEditorPending(obj) instanceof type.errors);
 }
 
-export const ResDeleteInviteToken = type({
-  type: "'res.delete-invite'",
+export const ActiveInviteViewerPending = type({
+  type: "'app.acl.active.invite'",
+  role: "'viewer'",
+  state: "'pending'",
+  invite: inviteBase,
   token: "string",
 });
 
-export type ResDeleteInviteToken = typeof ResDeleteInviteToken.infer;
+export type ActiveInviteViewerPending = typeof ActiveInviteViewerPending.infer;
 
-export const ReqAcceptInvite = type({
-  type: "'req.accept-invite'",
-  auth: dashAuthType,
-  token: "string",
-});
-
-export type ReqAcceptInvite = typeof ReqAcceptInvite.infer;
-
-export function isReqAcceptInvite(obj: unknown): obj is typeof ReqAcceptInvite.infer {
-  return !(ReqAcceptInvite(obj) instanceof type.errors);
+export function isActiveInviteViewerPending(obj: unknown): obj is typeof ActiveInviteViewerPending.infer {
+  return !(ActiveInviteViewerPending(obj) instanceof type.errors);
 }
 
-export const AcceptedClerkInfo = type({
-  type: "'accepted-clerk-info'",
-  "email?": "string",
-  "nick?": "string",
+export const ActiveInviteEditorAccepted = type({
+  type: "'app.acl.active.invite'",
+  role: "'editor'",
+  state: "'accepted'",
+  invite: inviteBase,
+  grant: grant,
+  tick: tick,
 });
 
-export type AcceptedClerkInfo = typeof AcceptedClerkInfo.infer;
+export type ActiveInviteEditorAccepted = typeof ActiveInviteEditorAccepted.infer;
 
-export const ResAcceptInvite = type({
-  type: "'res.accept-invite'",
-  token: "string",
-  appSlug: "string",
-  userSlug: "string",
-  roles: RoleType.array(),
-  acceptedInfo: AcceptedClerkInfo.array(),
-});
-
-export type ResAcceptInvite = typeof ResAcceptInvite.infer;
-
-// Accept record as returned in list results (no acceptUserId exposed)
-export const AcceptParams = type({
-  acceptId: "string",
-  token: "string",
-  acceptedInfo: AcceptedClerkInfo,
-  created: "Date",
-});
-
-export type AcceptParams = typeof AcceptParams.infer;
-
-// Combined invite + its accepts
-export const InviteWithAccepts = type({
-  inviteParams: InviteToken,
-  accepts: AcceptParams.array(),
-});
-
-export type InviteWithAccepts = typeof InviteWithAccepts.infer;
-
-export const AppUserSlug = type({
-  appSlug: "string",
-  userSlug: "string",
-});
-
-export type AppUserSlug = typeof AppUserSlug.infer;
-
-export const ReqListAcceptedInvites = type({
-  type: "'req.list-accepted-invites'",
-  auth: dashAuthType,
-  slugs: AppUserSlug.array(),
-});
-
-export type ReqListAcceptedInvites = typeof ReqListAcceptedInvites.infer;
-
-export function isReqListAcceptedInvites(obj: unknown): obj is typeof ReqListAcceptedInvites.infer {
-  return !(ReqListAcceptedInvites(obj) instanceof type.errors);
+export function isActiveInviteEditorAccepted(obj: unknown): obj is typeof ActiveInviteEditorAccepted.infer {
+  return !(ActiveInviteEditorAccepted(obj) instanceof type.errors);
 }
 
-export const ResListAcceptedInvites = type({
-  type: "'res.list-accepted-invites'",
-  items: InviteWithAccepts.array(),
+export const ActiveInviteViewerAccepted = type({
+  type: "'app.acl.active.invite'",
+  role: "'viewer'",
+  state: "'accepted'",
+  invite: inviteBase,
+  grant: grant,
+  tick: tick,
 });
 
-export type ResListAcceptedInvites = typeof ResListAcceptedInvites.infer;
+export type ActiveInviteViewerAccepted = typeof ActiveInviteViewerAccepted.infer;
 
-export const ReqDeleteAccept = type({
-  type: "'req.delete-accept'",
-  auth: dashAuthType,
-  acceptId: "string",
-});
-
-export type ReqDeleteAccept = typeof ReqDeleteAccept.infer;
-
-export function isReqDeleteAccept(obj: unknown): obj is typeof ReqDeleteAccept.infer {
-  return !(ReqDeleteAccept(obj) instanceof type.errors);
+export function isActiveInviteViewerAccepted(obj: unknown): obj is typeof ActiveInviteViewerAccepted.infer {
+  return !(ActiveInviteViewerAccepted(obj) instanceof type.errors);
 }
 
-export const ResDeleteAccept = type({
-  type: "'res.delete-accept'",
-  acceptId: "string",
+export const ActiveInviteEditorRevoked = type({
+  type: "'app.acl.active.invite'",
+  role: "'editor'",
+  state: "'revoked'",
+  invite: inviteBase,
+  grant: grant,
+  tick: tick,
 });
 
-export type ResDeleteAccept = typeof ResDeleteAccept.infer;
+export type ActiveInviteEditorRevoked = typeof ActiveInviteEditorRevoked.infer;
 
-export const ReqGetFPToken = type({
-  type: "'req.get-fp-token'",
-  auth: dashAuthType,
-  appSlug: "string",
-  userSlug: "string",
-  DbName: "string",
-});
-
-export type ReqGetFPToken = typeof ReqGetFPToken.infer;
-
-export function isReqGetFPToken(obj: unknown): obj is typeof ReqGetFPToken.infer {
-  return !(ReqGetFPToken(obj) instanceof type.errors);
+export function isActiveInviteEditorRevoked(obj: unknown): obj is typeof ActiveInviteEditorRevoked.infer {
+  return !(ActiveInviteEditorRevoked(obj) instanceof type.errors);
 }
 
-export const ResFPToken = type({
-  type: "'res.get-fp-token'",
-  ledger: "string",
-  tenant: "string",
-  roles: RoleType.array(),
-  access: "'owner' | 'shared'",
-  token: "string",
+export const ActiveInviteViewerRevoked = type({
+  type: "'app.acl.active.invite'",
+  role: "'viewer'",
+  state: "'revoked'",
+  invite: inviteBase,
+  grant: grant,
+  tick: tick,
 });
 
-export type ResFPToken = typeof ResFPToken.infer;
+export type ActiveInviteViewerRevoked = typeof ActiveInviteViewerRevoked.infer;
+
+export function isActiveInviteViewerRevoked(obj: unknown): obj is typeof ActiveInviteViewerRevoked.infer {
+  return !(ActiveInviteViewerRevoked(obj) instanceof type.errors);
+}
+
+export const ActiveInvite = ActiveInviteEditorPending.or(ActiveInviteViewerPending)
+  .or(ActiveInviteEditorAccepted)
+  .or(ActiveInviteViewerAccepted)
+  .or(ActiveInviteEditorRevoked)
+  .or(ActiveInviteViewerRevoked);
+
+export type ActiveInvite = typeof ActiveInvite.infer;
+
+export function isActiveInvite(obj: unknown): obj is typeof ActiveInvite.infer {
+  return !(ActiveInvite(obj) instanceof type.errors);
+}
+
+export const ActiveEnableFlag = EnableRequest;
+export type ActiveEnableFlag = typeof ActiveEnableFlag.infer;
+export function isActiveEnableFlag(obj: unknown): obj is ActiveEnableFlag {
+  return !(ActiveEnableFlag(obj) instanceof type.errors);
+}
+
+export const ActiveAclEntry = EnablePublicAccess.or(ActiveRequest).or(ActiveInvite).or(ActiveEnableFlag);
+export const ActiveIdAclEntry = ActiveRequest.or(ActiveInvite);
+export type ActiveIdAclEntry = typeof ActiveIdAclEntry.infer;
+export function isActiveAclEntry(obj: unknown): obj is typeof ActiveAclEntry.infer {
+  return !(ActiveAclEntry(obj) instanceof type.errors);
+}
+// export function isActiveIdAclEntry(obj: unknown): obj is typeof ActiveIdAclEntry.infer {
+//   const res = ActiveIdAclEntry(obj);
+//   if (res instanceof type.errors) {
+//     console.log("Not an ActiveIdAclEntry:", res.summary);
+//     return false;
+//   }
+//   return !(ActiveIdAclEntry(obj) instanceof type.errors);
+// }
+
+export type ActiveAclEntry = typeof ActiveAclEntry.infer;
+
+export const ActiveInviteEditor = ActiveInviteEditorPending.or(ActiveInviteEditorAccepted).or(ActiveInviteEditorRevoked);
+export const ActiveInviteViewer = ActiveInviteViewerPending.or(ActiveInviteViewerAccepted).or(ActiveInviteViewerRevoked);
+
+export type ActiveInviteEditor = typeof ActiveInviteEditor.infer;
+export type ActiveInviteViewer = typeof ActiveInviteViewer.infer;
+
+export function isActiveInviteEditor(obj: unknown): obj is typeof ActiveInviteEditor.infer {
+  return !(ActiveInviteEditor(obj) instanceof type.errors);
+}
+
+export function isActiveInviteViewer(obj: unknown): obj is typeof ActiveInviteViewer.infer {
+  return !(ActiveInviteViewer(obj) instanceof type.errors);
+}
+
+// export function isActivePendingWithoutId(obj: ActiveAclEntry): obj is
+//   ActiveRequestEditorPending
+//   | ActiveRequestViewerPending
+//   | ActiveInviteEditorPending
+//   | ActiveInviteViewerPending
+// {
+//   const x = { id: "dummy-id", ...obj }
+//   return isActiveRequestEditorPending(x)
+//   || isActiveRequestViewerPending(x)
+//   || isActiveInviteEditorPending(x)
+//   || isActiveInviteViewerPending(x)
+// }

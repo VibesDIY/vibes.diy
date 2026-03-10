@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
 
 interface PromptsTabProps {
   isLoading: boolean;
-  chatDetails: ResGetChatDetails | null;
+  chatDetails?: ResGetChatDetails;
   screenshots: Map<string, { screenshot?: MetaScreenShot; mode?: string }>;
+  onToggleMode: (fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) => Promise<void>;
 }
 
-export function PromptsTab({ isLoading, chatDetails, screenshots }: PromptsTabProps) {
+export function PromptsTab({ isLoading, chatDetails, screenshots, onToggleMode }: PromptsTabProps) {
   const navigate = useNavigate();
+  const [toggling, setToggling] = useState<string | null>(null);
+
+  async function handleToggle(fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) {
+    setToggling(fsId);
+    try {
+      await onToggleMode(fsId, appSlug, userSlug, currentMode);
+    } finally {
+      setToggling(null);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -29,6 +40,7 @@ export function PromptsTab({ isLoading, chatDetails, screenshots }: PromptsTabPr
         const shot = info?.screenshot;
         const mode = info?.mode;
         const appUrl = `/vibe/${chatDetails.userSlug}/${chatDetails.appSlug}/${p.fsId}`;
+        const isToggling = toggling === p.fsId;
         return (
           <div key={i} className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-3">
             <p className="mb-2 text-sm text-gray-800 dark:text-gray-200">{p.prompt}</p>
@@ -63,6 +75,13 @@ export function PromptsTab({ isLoading, chatDetails, screenshots }: PromptsTabPr
                   className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   Continue Chat →
+                </button>
+                <button
+                  disabled={isToggling}
+                  onClick={() => void handleToggle(p.fsId, chatDetails.appSlug, chatDetails.userSlug, mode)}
+                  className="inline-flex items-center gap-1 rounded-md bg-green-100 dark:bg-green-900/50 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50 transition-colors disabled:opacity-50"
+                >
+                  {isToggling ? "…" : mode === "production" ? "→ dev" : "→ prod"}
                 </button>
                 {mode && (
                   <span

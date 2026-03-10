@@ -4,7 +4,6 @@ import {
   ExecutionContext,
   WebSocket as CFWebSocket,
   CfProperties,
-  R2Bucket,
 } from "@cloudflare/workers-types";
 import { createAppContext, processRequest, VibesSqlite } from "./create-handler.js";
 import { drizzle } from "drizzle-orm/d1";
@@ -42,7 +41,7 @@ export interface CFInjectMutable {
     webSocketPair: () => { client: WebSocket; server: WebSocket };
   };
   drizzle: VibesSqlite;
-  assetBucket: R2Bucket;
+  // assetBucket: R2Bucket;
   wsResponse?: Response;
   llmRequest?: (prompt: LLMRequest) => Promise<Response>;
   // readonly db?: D1Database;
@@ -89,11 +88,11 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
     ensureSuperThis({
       logger: new LoggerImpl(),
     });
-  console.log("Creating app context with netHash:", sthis.nextId(12).str)
+  console.log("Creating app context with netHash:", netHash());
   return createAppContext({
     sthis,
     ...cfDrizzle(env, ctx.drizzle),
-    s3Api: new R2ToS3Api(ctx.assetBucket, sthis),
+    s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
     // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
     cache: ctx.cache,

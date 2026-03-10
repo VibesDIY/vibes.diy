@@ -25,7 +25,6 @@ import {
   ResGetChatDetails,
   isResGetChatDetails,
   ReqGetAppByFsId,
-  ReqGetAppByAppSlug,
   ResGetAppByFsId,
   isResGetAppByFsId,
   VibesDiyApiIface,
@@ -39,6 +38,12 @@ import {
   ReqListApplicationChats,
   ResListApplicationChats,
   isResListApplicationChats,
+  ReqEnsureAppSettings,
+  ResEnsureAppSettings,
+  isResEnsureAppSettings,
+  ReqSetModeFs,
+  ResSetModeFs,
+  isResSetModeFs,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -165,16 +170,19 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     req: T,
     msgParam: Partial<Omit<MsgBase, "tid">> & { tid: string }
   ): Promise<Result<MsgBox<WithAuth<T>>, VibesDiyError>> {
-    const rDashAuth = await (req.auth ? Promise.resolve(Result.Ok(req.auth)) : this.cfg.getToken());
-    if (rDashAuth.isErr()) {
-      return Result.Err<MsgBox<WithAuth<T>>, VibesDiyError>({
-        type: "vibes.diy.error",
-        name: "VibesDiyError",
-        message: `Auth Error: ${rDashAuth.Err().message}`,
-        code: "auth-error",
-      });
+    let auth = req.auth;
+    if (req.auth?.type !== "not-loggedin") {
+      const rDashAuth = await (req.auth ? Promise.resolve(Result.Ok(req.auth)) : this.cfg.getToken());
+      if (rDashAuth.isErr()) {
+        return Result.Err<MsgBox<WithAuth<T>>, VibesDiyError>({
+          type: "vibes.diy.error",
+          name: "VibesDiyError",
+          message: `Auth Error: ${rDashAuth.Err().message}`,
+          code: "auth-error",
+        });
+      }
+      auth = rDashAuth.unwrap();
     }
-    const auth = rDashAuth.unwrap();
     const msgBox: MsgBase = {
       src: this.cfg.apiUrl,
       dst: this.cfg.me,
@@ -317,15 +325,6 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
-  getAppByAppSlug(req: Req<ReqGetAppByAppSlug>): Promise<Result<ResGetAppByFsId, VibesDiyError>> {
-    return this.request(
-      { ...req, type: "vibes.diy.req-get-app-by-app-slug" },
-      {
-        resMatch: isResGetAppByFsId,
-      }
-    );
-  }
-
   ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>> {
     return this.request(
       { ...req, type: "vibes.diy.req-ensure-user-settings" },
@@ -335,11 +334,29 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
+  ensureAppSettings(req: Req<ReqEnsureAppSettings>): Promise<Result<ResEnsureAppSettings, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-ensure-app-settings" },
+      {
+        resMatch: isResEnsureAppSettings,
+      }
+    );
+  }
+
   listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>> {
     return this.request(
       { ...req, type: "vibes.diy.req-list-application-chats" },
       {
         resMatch: isResListApplicationChats,
+      }
+    );
+  }
+
+  setSetModeFs(req: Req<ReqSetModeFs>): Promise<Result<ResSetModeFs>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-set-mode-fs" },
+      {
+        resMatch: isResSetModeFs,
       }
     );
   }

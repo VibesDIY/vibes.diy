@@ -405,7 +405,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       const promptId = vctx.sthis.nextId(96 / 8).str;
       // needs to be sent before any block events
       // to allow the client to associate incoming blocks with the promptId
-      ctx.send.send(
+      await ctx.send.send(
         ctx,
         wrapMsgBase(ctx.validated, {
           payload: {

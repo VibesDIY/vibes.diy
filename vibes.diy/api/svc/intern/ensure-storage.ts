@@ -4,7 +4,7 @@ import { VibesSqlite } from "../create-handler.js";
 import { SQLitePeer, SQLitePeerFetch } from "../peers/sql.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { base58btc } from "multiformats/bases/base58";
-import { S3Peer, S3PeerFetch } from "../peers/s3.js";
+import { S3PeerFetch } from "../peers/s3.js";
 import { FetchResult, S3Api } from "@vibes.diy/api-types";
 
 export interface CalcCidResult {
@@ -78,14 +78,13 @@ export function ensureStorage(db: VibesSqlite, s3: S3Api): Storage {
             const [lag1, lag2] = coerceStreamUint8(item).tee();
             const cider = new Cider(lag1);
             console.log("Created Cider for item, waiting for teeWriter...");
-            const peers = [new SQLitePeer(db, cider, 2^24)/* , new S3Peer(s3, cider) */];
-            const rTee = teeWriter(peers, lag2);
-            return Promise.allSettled([rTee]).then(async ([rTee]) => {
-              if (rTee.status === "rejected") {
-                return Result.Err(new Error(`Failed to write to peer: ${rTee.reason}`));
+            const peers = [new SQLitePeer(db, cider, 10 * 1024 * 1024) /*, new S3Peer(s3, cider) */];
+            return teeWriter(peers, lag2).then(async (rTee) => {
+              if (rTee.isErr()) {
+                return Result.Err(rTee);
               }
               return cider.getCID().then(({ cid, size }) => {
-                const tok = rTee.value.Ok().peer as PeerStreamWithCommit;
+                const tok = rTee.Ok().peer as PeerStreamWithCommit;
                 return tok.commit(cid).then((r) => {
                   if (r.isErr()) {
                     return Result.Err(r);

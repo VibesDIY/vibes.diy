@@ -1,4 +1,4 @@
-import { Option, URI, Result } from "@adviser/cement";
+import { Option, URI, Result, exception2Result } from "@adviser/cement";
 import { Cider, PeerStreamWithCommit, PeerWithCommit } from "../intern/ensure-storage.js";
 import { FetchResult, S3Api } from "@vibes.diy/api-types";
 
@@ -9,6 +9,7 @@ class S3PeerStream implements PeerStreamWithCommit {
   readonly tmpUrl: string;
   readonly writer: WritableStreamDefaultWriter<Uint8Array>;
   constructor(owner: S3Peer, tmpUrl: string, writer: WritableStreamDefaultWriter<Uint8Array>) {
+    console.log("S3PeerStream constructor called, tmpUrl:", tmpUrl);
     this.owner = owner;
     this.writer = writer;
     this.tmpUrl = tmpUrl;
@@ -27,7 +28,9 @@ class S3PeerStream implements PeerStreamWithCommit {
     return this.writer.close();
   }
   async commit(): Promise<Result<{ url: string }>> {
+    console.log("S3PeerStream commit called, tmpUrl:", this.tmpUrl);
     const { cid: assetID } = await this.owner.cider.getCID();
+    console.log("S3PeerStream commit called, got assetID from cider:", assetID);
     const url = `${S3_PEER_PROTOCOL}://-/${assetID}`;
     const res = await this.owner.s3.rename(this.tmpUrl, url); // rename temp file to final location
     console.log("S3PeerStream commit called, rename result:", assetID, res);
@@ -53,8 +56,12 @@ export class S3Peer implements PeerWithCommit {
     console.log("S3Peer begin called, generated tmpUrl pre genId:");
     const tmpUrl = `s3://temp/${this.s3.genId()}.tmp`;
     console.log("S3Peer begin called, generated tmpUrl:", tmpUrl);
-    const writer = await this.s3.put(tmpUrl).then((stream) => stream.getWriter());
-    return Result.Ok(new S3PeerStream(this, tmpUrl, writer));
+    const rWriter = await exception2Result(() => this.s3.put(tmpUrl).then((stream) => stream.getWriter()));
+    if (rWriter.isErr()) {
+      console.log("S3Peer begin error getting writer for tmpUrl:", tmpUrl, "error:", rWriter.Err());
+      return Result.Err(rWriter.Err());
+    }
+    return Result.Ok(new S3PeerStream(this, tmpUrl, rWriter.Ok()));
   }
 }
 

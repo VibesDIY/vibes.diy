@@ -11,6 +11,7 @@ import GtmNoScript from "./components/GtmNoScript.js";
 import { VibeDiyProvider, VibeDiyWebVars } from "./vibe-diy-provider.js";
 import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import "./app.css";
+import { Toaster } from "react-hot-toast";
 
 // Loader for root route
 export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
@@ -73,6 +74,7 @@ export default function App() {
       <AppErrorBoundary>
         <ThemeProvider>
           <CookieConsentProvider>
+            <Toaster></Toaster>
             <Outlet />
             <ClientOnly>
               <CookieBanner />

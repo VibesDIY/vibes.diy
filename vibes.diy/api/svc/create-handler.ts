@@ -1,5 +1,5 @@
 // import { auth } from "./better-auth.js";
-import { Result, param, AppContext, TriggerResult, EventoSendProvider, Logger } from "@adviser/cement";
+import { Result, param, AppContext, TriggerResult, EventoSendProvider, Logger, exception2Result } from "@adviser/cement";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { ResultSet } from "@libsql/client";
@@ -83,6 +83,11 @@ export async function createAppContext<T extends VibesSqlite>(
     VIBES_SVC_HOSTNAME_BASE: param.OPTIONAL,
     VIBES_SVC_PROTOCOL: "https",
     VIBES_SVC_PORT: param.OPTIONAL,
+
+    RESEND_API_KEY: param.REQUIRED,
+    VIBES_DIY_PUBLIC_BASE_URL: param.REQUIRED,
+
+    VIBES_DIY_FROM_EMAIL: "no-reply@vibes.diy",
 
     GTM_CONTAINER_ID: param.OPTIONAL,
     POSTHOG_KEY: param.OPTIONAL,
@@ -179,6 +184,12 @@ export async function createAppContext<T extends VibesSqlite>(
         GTM_CONTAINER_ID: envVals.GTM_CONTAINER_ID,
         POSTHOG_KEY: envVals.POSTHOG_KEY,
         POSTHOG_HOST: envVals.POSTHOG_HOST,
+
+        RESEND_API_KEY: envVals.RESEND_API_KEY,
+
+        VIBES_DIY_PUBLIC_BASE_URL: envVals.VIBES_DIY_PUBLIC_BASE_URL,
+
+        VIBES_DIY_FROM_EMAIL: envVals.VIBES_DIY_FROM_EMAIL,
         // CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
         // CALLAI_API_KEY: "CALLAI_API_KEY",
         // CALLAI_CHAT_URL: "CALLAI_CHAT_URL",
@@ -213,6 +224,31 @@ export async function createAppContext<T extends VibesSqlite>(
         cache: params.cache,
       },
     }),
+    sendEmail: async (rm) => {
+      const rRes = await exception2Result(() =>
+        fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${svcParams.vibes.env.RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...rm,
+            from: svcParams.vibes.env.VIBES_DIY_FROM_EMAIL,
+          }),
+        })
+      );
+      if (rRes.isErr()) {
+        return Result.Err(rRes);
+      }
+      const res = rRes.Ok();
+      if (!res.ok) {
+        return Result.Err(`Resend got an error: ${res.status}:${res.statusText}`);
+      }
+      const jsonTxt = await res.text();
+      const rJson = exception2Result(() => JSON.parse(jsonTxt));
+      return Result.Ok({ result: rJson.isOk() ? rJson.Ok() : jsonTxt });
+    },
     postQueue: params.postQueue,
     fetchAsset: params.fetchAsset,
     tokenApi: await tokenApi(sthis, {

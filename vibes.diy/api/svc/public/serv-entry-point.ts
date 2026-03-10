@@ -222,6 +222,8 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Err(`Invalid filesystem data ${ctx.validated.fsId}`);
     }
 
+    // console.log('fsId =>', fileSystem)
+
     const selectedFsItem = fileSystem.find((i) => i.fileName === ctx.validated.path);
     if (selectedFsItem) {
       const possiblePath = await vctx.storage.fetch(selectedFsItem.assetURI);

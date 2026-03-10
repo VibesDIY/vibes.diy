@@ -32,36 +32,36 @@ export interface RenderVibesOpts {
 }
 
 export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts): Promise<Result<EventoResultType>> {
-  console.log("renderVibe-8")
+  // console.log("renderVibe-8")
   const fsIportMap = fsItems.find((i) => i.transform?.type === "import-map");
   if (!fsIportMap) {
     return Result.Err(new Error("No import-map found in file system"));
   }
-  console.log("renderVibe-7")
+  // console.log("renderVibe-7")
   const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
   const rImportMapUint8 = await vctx.storage.fetch(fsIportMap.assetURI);
   // (ctx, fsIportMap);
-  console.log("renderVibe-6")
+  // console.log("renderVibe-6")
   if (isFetchErrResult(rImportMapUint8)) {
     return Result.Err(rImportMapUint8.error);
   }
-  console.log("renderVibe-5")
+  // console.log("renderVibe-5")
   if (isFetchNotFoundResult(rImportMapUint8)) {
     return Result.Err(new Error(`Import map not found for URI ${fsIportMap.assetURI}`));
   }
-  console.log("renderVibe-4")
+  // console.log("renderVibe-4")
   const genImport = vibesImportMap(JSON.parse(vctx.sthis.txt.decode(await stream2uint8array(rImportMapUint8.data))));
   if (genImport instanceof type.errors) {
     return Result.Err(genImport.summary);
   }
-  console.log("renderVibe-3")
+  // console.log("renderVibe-3")
 
   const deps = Dependencies.from({
     ...genImport.imports,
     ...lockedGroupsVersions,
   });
 
-  console.log("renderVibe-2")
+  // console.log("renderVibe-2")
   const importMap = await deps.renderImportMap({
     resolveFn: resolveVersionRegistry({
       fetch: defaultFetchPkgVersion({
@@ -75,11 +75,11 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
       privateUrl: pkgRepos.private.npmURL,
     }),
   });
-  console.log("renderVibe-1")
+  // console.log("renderVibe-1")
 
   const imports = fsItems.reduce(
     (acc, item, idx) => {
-      console.log(`fsItem:`, item);
+      // console.log(`fsItem:`, item);
       if (["text/javascript", "application/javascript"].includes(item.mimeType) && item.transform?.type !== "jsx-to-js") {
         acc.push({
           // import relative to support prod and dev switching
