@@ -6,6 +6,7 @@ import { BrutalistCard, VibesButton } from "@vibes.diy/base";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
 import type { ResListUserSlugAppSlugItem, ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";
+import { toast } from "react-hot-toast";
 import { AppSlugItem } from "../../components/mine/AppSlugItem.js";
 
 export function meta() {
@@ -14,7 +15,11 @@ export function meta() {
 
 export default function VibesMine(): ReactElement {
   const navigate = useNavigate();
-  const { userSlug: paramUserSlug, appSlug: paramAppSlug } = useParams<{ userSlug?: string; appSlug?: string }>();
+  const {
+    userSlug: paramUserSlug,
+    appSlug: paramAppSlug,
+    tab: paramTab,
+  } = useParams<{ userSlug?: string; appSlug?: string; tab?: string }>();
   const { vibeDiyApi } = useVibeDiy();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +29,26 @@ export default function VibesMine(): ReactElement {
   const [screenshots, setScreenshots] = useState<Map<string, { screenshot?: MetaScreenShot; mode?: string }>>(new Map());
   const [appHeadInfo, setAppHeadInfo] = useState<Map<string, { screenshot?: MetaScreenShot; mode?: string }>>(new Map());
   const cancelledRef = useRef(false);
+
+  async function onToggleMode(fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) {
+    const nextMode = currentMode === "production" ? "dev" : "production";
+    const res = await vibeDiyApi.setSetModeFs({ fsId, appSlug, userSlug, mode: nextMode });
+    if (res.isErr()) {
+      toast.error(`Failed to set mode: ${res.Err().message}`);
+      return;
+    }
+    const newMode = res.Ok().mode;
+    setScreenshots((prev) => {
+      const next = new Map(prev);
+      if (newMode === "production") {
+        for (const [id, info] of next) {
+          if (info.mode === "production") next.set(id, { ...info, mode: "dev" });
+        }
+      }
+      next.set(fsId, { ...next.get(fsId), mode: newMode });
+      return next;
+    });
+  }
 
   // Fetch chat details whenever the URL params change
   useEffect(() => {
@@ -56,7 +81,7 @@ export default function VibesMine(): ReactElement {
     }
     setScreenshots(new Map());
     for (const p of chatDetails.prompts) {
-      vibeDiyApi.getAppByFsId({ fsId: p.fsId }).then((res) => {
+      vibeDiyApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, userSlug: chatDetails.userSlug }).then((res) => {
         if (res.isErr()) return;
         const app = res.Ok();
         setScreenshots((prev) =>
@@ -84,7 +109,7 @@ export default function VibesMine(): ReactElement {
     setAppHeadInfo(new Map());
     for (const item of vibeItems) {
       for (const appSlug of item.appSlugs) {
-        vibeDiyApi.getAppByAppSlug({ userSlug: item.userSlug, appSlug }).then((res) => {
+        vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug }).then((res) => {
           if (res.isErr()) return;
           const app = res.Ok();
           setAppHeadInfo((prev) =>
@@ -133,10 +158,12 @@ export default function VibesMine(): ReactElement {
                         userSlug={item.userSlug}
                         appSlug={appSlug}
                         isSelected={isSelected}
+                        activeTab={isSelected ? paramTab : undefined}
                         isLoadingThis={loadingDetails === key}
                         headInfo={appHeadInfo.get(key)}
-                        chatDetails={isSelected ? chatDetails : null}
+                        chatDetails={isSelected ? (chatDetails ?? undefined) : undefined}
                         screenshots={screenshots}
+                        onToggleMode={onToggleMode}
                       />
                     );
                   })}

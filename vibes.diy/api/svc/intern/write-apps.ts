@@ -134,8 +134,8 @@ async function transformJSXAndImports(
           })
         );
       } else if (isVibeCodeBlock(item.vibeFileItem) && item.vibeFileItem.lang === "js") {
-        console.log("do import extraction for file:", item.fsItem.fileName);
-        const rImports = exception2Result(() => importsFromJS(item.vibeFileItem.filename));
+        console.log("do import extraction for file:", item);
+        const rImports = exception2Result(() => importsFromJS((item.vibeFileItem as VibeCodeBlock).content));
         if (rImports.isErr()) {
           console.error(`Failed to extract imports from JS for file ${item.vibeFileItem.filename}: ${rImports.Err()}`);
           return;
@@ -191,16 +191,6 @@ async function toFileSystemItems(
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<FileSystemItem>[]> {
   const givenFsItems = fs.map((f) => {
-    // console.log(`Processing fs item for file system item conversion:`,
-    // (VibeCodeBlock(f.vibeFileItem) as type.errors).summary, f.vibeFileItem)
-    /*
-      Processing fs item for file system item conversion: filename must be 
-      valid according to an anonymous predicate (was "App.jsx") {
-  type: 'code-block',
-  filename: 'App.jsx',
-  lang: 'jsx',
-  */
-
     const ret: FileSystemItem = {
       fileName: f.vibeFileItem.filename,
       assetId: f.storage.cid,
@@ -233,20 +223,9 @@ async function toFileSystemItems(
     return { ...f, fsItem: ret };
   });
 
-  // lhs import -> array of CIDs which refer to that import
   const imports = new Map<string, string[]>();
   // do transforms
   const transformed = await transformJSXAndImports(ctx, givenFsItems, imports);
-  // if (transformed.some((item) => item.isErr())) {
-  //   return Result.Err(
-  //     new Error(
-  //       `Failed to transform files: ${transformed
-  //         .filter((item) => item.isErr())
-  //         .map((item) => item.Err().message)
-  //         .join(", ")}`
-  //     )
-  //   );
-  // }
   transformed.push(
     ...(await createImportMap(
       ctx,
@@ -255,40 +234,6 @@ async function toFileSystemItems(
       imports
     ))
   );
-
-  // const rStore = await ctx.storage.ensure(
-  //   ...transformed
-  //     .filter((item) => item.prepareStorage)
-  //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  //     .map((item) => item.prepareStorage!)
-  // );
-  // if (rStore.isErr()) {
-  //   return Result.Err(rStore);
-  // }
-  // const storeMap = rStore.Ok().reduce((acc, item) => {
-  //   acc.set(item.cid, item);
-  //   return acc;
-  // }, new Map<string, StorageResult>());
-
-  // const assetUris = transformed.filter(item => item.isErr()).map((rItem) => {
-  //   const item = rItem.Ok();
-
-  // //   if (!item.prepareStorage) {
-  // //     return item;
-  // //   }
-  // //   const storeItem = storeMap.get(item.prepareStorage.cid);
-  // //   if (!storeItem) {
-  // //     throw new Error("internal error: storage result not found");
-  // //   }
-  //   return {
-  //     ...item,
-  //     fsItem: {
-  //       ...item.fsItem,
-  //       // assetURI: storeItem.getURL,
-  //       // size: storeItem.size,
-  //     },
-  //   };
-  // });
   return transformed;
 }
 
@@ -358,7 +303,7 @@ export async function ensureApps(
     mode: req.mode,
     created: new Date().toISOString(),
   };
-  // console.log("ensureApps sqlVal", sqlVal);
+  console.log("ensureApps sqlVal", sqlVal);
   // console.log("appSlug", await ctx.db.select().from(sqlAppSlugBinding).all());
   // console.log("userSlug", await ctx.db.select().from(sqlUserSlugBinding).all());
   const rIns = await exception2Result(() => ctx.db.insert(sqlApps).values(sqlVal));

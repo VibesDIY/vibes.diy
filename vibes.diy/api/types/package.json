@@ -9,7 +9,7 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.32",
+    "@adviser/cement": "^0.5.33",
     "@cloudflare/workers-types": "^4.20260128.0",
     "@fireproof/core-runtime": "^0.24.12",
     "@fireproof/core-types-base": "^0.24.12",

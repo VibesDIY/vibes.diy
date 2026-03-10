@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { SignIn, useAuth, useSession } from "@clerk/clerk-react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-import { Toaster } from "react-hot-toast";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { VibesSwitch } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
+import { toast } from "react-hot-toast";
+import { getAppByFsIdEvento } from "@vibes.diy/api-svc/public/get-app-by-fsid.js";
 
 export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
@@ -17,10 +18,17 @@ export default function VibeIframeWrapper() {
   const vctx = useVibeDiy();
   const iframeUrlRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [reqLogin, setReqLogin] = useState(false);
+  const [reqAccess, setReqAccess] = useState(false);
   const [runtimeReady, setRuntimeReady] = useState(false);
   const { isSignedIn: authSignedIn, isLoaded } = useAuth();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
+  const [searchParam] = useSearchParams();
+  const [retryCount, setRetryCount] = useState(0);
+
+  const inGetAppByFsIdRef = useRef(false);
 
   useEffect(() => {
     if (isLoaded && !authSignedIn && fsId && userSlug && appSlug) {
@@ -33,70 +41,84 @@ export default function VibeIframeWrapper() {
 
   // this is optional locked in
   const session = useSession();
+  // const auth = useAuth()
 
   useEffect(() => {
     if (iframeUrlRef.current) {
       return;
     }
-    if (fsId && userSlug && appSlug) {
-      if (!authSignedIn) {
-        return;
-      }
-      vctx.vibeDiyApi.getAppByFsId({ fsId }).then((res) => {
-        if (res.isErr()) {
-          console.error(`getAppByFsId failed with:`, res.Err());
+    if (!(appSlug && userSlug)) {
+      return;
+    }
+    if (inGetAppByFsIdRef.current) {
+      return;
+    }
+    inGetAppByFsIdRef.current = true;
+    console.log(`call`, getAppByFsIdEvento);
+    vctx.vibeDiyApi
+      .getAppByFsId({
+        fsId,
+        appSlug,
+        userSlug,
+        token: searchParam.get("token") ?? undefined,
+        auth: session.isSignedIn ? undefined : { type: "not-loggedin", token: searchParam.get("token") ?? "" },
+      })
+      .then((rRes) => {
+        inGetAppByFsIdRef.current = false;
+        if (rRes.isErr()) {
+          toast.error(`getAppByFsId failed with: ${rRes.Err().message}`);
           return;
         }
-        const app = res.Ok();
+        const res = rRes.Ok();
+        if (res.error) {
+          setNotFound(true);
+          return;
+        }
         const protocol = window.location.protocol === "https:" ? "https" : "http";
-        const port =
-          window.location.port && window.location.port !== "80" && window.location.port !== "443"
-            ? window.location.port
-            : undefined;
-        iframeUrlRef.current = calcEntryPointUrl({
-          hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
-          protocol,
-          bindings: { appSlug: app.appSlug, userSlug: app.userSlug, fsId: app.fsId },
-          port,
-        });
-        // console.log('xxxxxxx', iframeUrlRef.current)
-        setReady(true);
+        console.log(`grant`, res.grant);
+        switch (res.grant) {
+          case "not-found":
+            setNotFound(true);
+            break;
+          case "req-login.request":
+            if (authSignedIn) {
+              setReqAccess(true);
+            } else {
+              setReqLogin(true);
+              setIsSidebarVisible(true);
+            }
+            break;
+          case "req-login.invite":
+            setReqLogin(true);
+            setIsSidebarVisible(true);
+            break;
+          case "not-grant":
+            setNotFound(true);
+            break;
+          case "accepted-email-invite":
+          case "granted-access.editor":
+          case "granted-access.viewer":
+          case "public-access":
+          case "owner":
+            {
+              const port =
+                window.location.port && window.location.port !== "80" && window.location.port !== "443"
+                  ? window.location.port
+                  : undefined;
+              iframeUrlRef.current = calcEntryPointUrl({
+                hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
+                protocol,
+                bindings: { appSlug, userSlug, fsId: res.fsId },
+                port,
+              });
+              setReady(true);
+            }
+            break;
+          default:
+            toast.error(`Unexpected grant: ${res.grant}`);
+        }
       });
-      return;
-    }
-    if (!session.isSignedIn) {
-      return;
-    }
-    // TODO find public
-
-    // const sectionId = searchParam.get("sectionId");
-    //   if (userSlug && appSlug) {
-    //     vctx.vibeDiyApi
-    //       .getByUserSlugAppSlug({
-    //         userSlug,
-    //         appSlug,
-    //         // sectionId: sectionId ?? "last",
-    //       })
-    //       .then((res) => {
-    //         if (res.isErr()) {
-    //           console.error(`getByUserSlugAppSlug failed with:`, res.Err());
-    //         } else {
-    //           const url = calcEntryPointUrl({
-    //             hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
-    //             protocol: vctx.webVars.env.VIBES_SVC_PROTOCOL,
-    //             port: vctx.webVars.env.VIBES_SVC_PORT,
-    //             bindings: {
-    //                 appSlug,
-    //                 userSlug,
-    //                 fsId: res.Ok().fsId
-    //             },
-    //           });
-    //           iframeUrlRef.current = url
-    //           setReady(true);
-    //         }
-    //       });
-    //   }
-  }, [userSlug, appSlug, fsId, session.isSignedIn, authSignedIn]);
+  }, [userSlug, appSlug, fsId, session.isSignedIn, authSignedIn, retryCount]);
 
   useEffect(() => {
     if (!ready) return;
@@ -107,27 +129,61 @@ export default function VibeIframeWrapper() {
 
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
-  const showLoginOverlay = !authSignedIn && isLoaded && !!(fsId && userSlug && appSlug);
-  const loginOverlay = showLoginOverlay
+  function sendAccessRequest() {
+    // TODO: call the real request-access API
+    toast.success("Access request sent");
+    setReqAccess(false);
+    setRetryCount((c) => c + 1);
+  }
+
+  const reqAccessOverlay = reqAccess
     ? createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <SignIn routing="hash" fallbackRedirectUrl={window.location.href} />
+          <div className="rounded-lg bg-white dark:bg-gray-800 p-6 max-w-sm w-full mx-4 shadow-xl space-y-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Request access</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              This app is private. To request access, the owner <strong>{userSlug}</strong> will see your email and display name.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setReqAccess(false)}
+                className="rounded px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={sendAccessRequest}
+                className="rounded px-3 py-1.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Request access
+              </button>
+            </div>
+          </div>
         </div>,
         document.body
       )
     : null;
 
-  // if (searchParam.get("sectionId") && !session.isSignedIn) {
-  //   return <div>to use sectionId you need to be logged in</div>;
-  // }
+  const showLoginOverlay = !authSignedIn && isLoaded && (!!(fsId && userSlug && appSlug) || reqLogin);
+  const loginOverlay = showLoginOverlay
+    ? createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <SignIn routing="hash" fallbackRedirectUrl={window.location.pathname + window.location.search} />
+        </div>,
+        document.body
+      )
+    : null;
 
   if (ready && iframeUrlRef.current) {
     const myUrl = URI.from(window.location.href);
     const previewUrl = BuildURI.from(iframeUrlRef.current).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
 
+    console.log(`previewUrl`, previewUrl.toString());
+
     return (
       <>
-        <Toaster />
         <div className="fixed inset-0 bg-gray-900" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
           <iframe
             src={previewUrl.toString()}
@@ -168,12 +224,17 @@ export default function VibeIframeWrapper() {
           <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
             Login required to view this page
           </div>
+        ) : notFound ? (
+          <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
+            App not available
+          </div>
         ) : (
           <div style={{ color: "var(--vibes-text-primary)" }}>Preparing…</div>
         )}
       </div>
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
       {loginOverlay}
+      {reqAccessOverlay}
       {sharingState && (
         <AllowFireproofSharing
           state={sharingState}

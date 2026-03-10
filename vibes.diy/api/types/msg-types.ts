@@ -3,10 +3,24 @@ import { Result } from "@adviser/cement";
 import { type } from "arktype";
 import { fileSystemItem, MetaItem } from "./types.js";
 import { BlockMsgs, CoercedDate, FileSystemRef, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
+import {
+  ActiveAclEntry,
+  ActiveInviteEditorAccepted,
+  ActiveInviteEditorPending,
+  ActiveInviteEditorRevoked,
+  ActiveInviteViewerAccepted,
+  ActiveInviteViewerPending,
+  ActiveInviteViewerRevoked,
+  EnablePublicAccess,
+  ActiveRequestApproved,
+  ActiveRequestPending,
+  ActiveRequestRejected,
+  EnableRequest,
+} from "./invite.js";
 
 // Base types
 export const dashAuthType = type({
-  type: "'clerk'|'device-id'|'ucan'",
+  type: "'clerk'|'device-id'|'ucan'|'not-loggedin'",
   token: "string",
 });
 
@@ -219,6 +233,8 @@ export type ResEnsureAppSlugError = typeof resEnsureAppSlugError.infer;
 export type CodeID = string;
 export type EnvID = string;
 
+export const FSMode = type("'production'|'dev'");
+
 export const reqEnsureAppSlug = type({
   type: "'vibes.diy.req-ensure-app-slug'",
   auth: dashAuthType,
@@ -226,7 +242,7 @@ export const reqEnsureAppSlug = type({
   "userSlug?": "string", // desired user slug
   // "promptId?": "string", // used to emit events to the current chat session
   // "chatId?": "string", // used to emit events to the current chat session
-  mode: "'production'|'dev'",
+  mode: FSMode,
   // env passed to the app
   "env?": vibeUserEnv,
   fileSystem: [vibeFile, "[]"],
@@ -285,30 +301,25 @@ export function isResGetChatDetails(obj: unknown): obj is ResGetChatDetails {
 export const reqGetAppByFsId = type({
   type: "'vibes.diy.req-get-app-by-fsid'",
   "auth?": dashAuthType,
-  fsId: "string",
+  "fsId?": "string",
+  appSlug: "string",
+  userSlug: "string",
+  "token?": "string",
 });
 export type ReqGetAppByFsId = typeof reqGetAppByFsId.infer;
 export function isReqGetAppByFsId(obj: unknown): obj is ReqGetAppByFsId {
   return !(reqGetAppByFsId(obj) instanceof type.errors);
 }
 
-export const reqGetAppByAppSlug = type({
-  type: "'vibes.diy.req-get-app-by-app-slug'",
-  auth: dashAuthType,
-  userSlug: "string",
-  appSlug: "string",
-});
-export type ReqGetAppByAppSlug = typeof reqGetAppByAppSlug.infer;
-export function isReqGetAppByAppSlug(obj: unknown): obj is ReqGetAppByAppSlug {
-  return !(reqGetAppByAppSlug(obj) instanceof type.errors);
-}
-
 export const resGetAppByFsId = type({
   type: "'vibes.diy.res-get-app-by-fsid'",
+  "error?": "string",
   appSlug: "string",
   userSlug: "string",
-  fsId: "string",
+  "fsId?": "string",
   mode: "'production'|'dev'",
+  grant:
+    "'granted-access.editor'|'granted-access.viewer'|'owner'|'not-found'|'not-grant'|'public-access'|'accepted-email-invite'|'req-login.invite'|'req-login.request'",
   releaseSeq: "number",
   env: vibeUserEnv,
   fileSystem: [fileSystemItem, "[]"],
@@ -483,6 +494,60 @@ export function isResEnsureUserSettings(obj: unknown): obj is ResEnsureUserSetti
   return !(resEnsureUserSettings(obj) instanceof type.errors);
 }
 
+export const reqEnsureAppSettings = type({
+  type: "'vibes.diy.req-ensure-app-settings'",
+  auth: dashAuthType,
+  appSlug: "string",
+  userSlug: "string",
+  "aclEntry?": type({
+    entry: ActiveAclEntry,
+    op: "'delete' | 'upsert'",
+  }),
+});
+export type ReqEnsureAppSettings = typeof reqEnsureAppSettings.infer;
+
+export const AppSettings = type({
+  // type: "'vibes.diy.app-settings'",
+  entries: ActiveAclEntry.array(),
+  entry: type({
+    publicAccess: EnablePublicAccess.optional(),
+    enableRequest: EnableRequest.optional(),
+    request: type({
+      pending: ActiveRequestPending.array(),
+      approved: ActiveRequestApproved.array(),
+      rejected: ActiveRequestRejected.array(),
+    }),
+    invite: type({
+      viewers: type({
+        pending: ActiveInviteViewerPending.array(),
+        accepted: ActiveInviteViewerAccepted.array(),
+        revoked: ActiveInviteViewerRevoked.array(),
+      }),
+      editors: type({
+        pending: ActiveInviteEditorPending.array(),
+        accepted: ActiveInviteEditorAccepted.array(),
+        revoked: ActiveInviteEditorRevoked.array(),
+      }),
+    }),
+  }),
+});
+export type AppSettings = typeof AppSettings.infer;
+
+export const resEnsureAppSettings = type({
+  type: "'vibes.diy.res-ensure-app-settings'",
+  userId: "string",
+  appSlug: "string",
+  userSlug: "string",
+  "error?": "string",
+  settings: AppSettings,
+  updated: "string",
+  created: "string",
+});
+export type ResEnsureAppSettings = typeof resEnsureAppSettings.infer;
+export function isResEnsureAppSettings(obj: unknown): obj is ResEnsureAppSettings {
+  return !(resEnsureAppSettings(obj) instanceof type.errors);
+}
+
 export const reqListApplicationChats = type({
   type: "'vibes.diy.req-list-application-chats'",
   auth: dashAuthType,
@@ -523,4 +588,32 @@ export type EvtNewFsId = typeof evtNewFsId.infer;
 
 export function isEvtNewFsId(obj: unknown): obj is EvtNewFsId {
   return !(evtNewFsId(obj) instanceof type.errors);
+}
+
+export const ResSetModeFs = type({
+  type: "'vibes.diy.res-set-mode-fs'",
+  fsId: "string",
+  appSlug: "string",
+  userSlug: "string",
+  mode: FSMode,
+});
+
+export type ResSetModeFs = typeof ResSetModeFs.infer;
+export function isResSetModeFs(obj: unknown): obj is ResSetModeFs {
+  return !(ResSetModeFs(obj) instanceof type.errors);
+}
+
+export const ReqSetModeFs = type({
+  type: "'vibes.diy.req-set-mode-fs'",
+  auth: dashAuthType,
+  fsId: "string",
+  appSlug: "string",
+  userSlug: "string",
+  mode: FSMode,
+});
+
+export const reqSetModeFs = ReqSetModeFs;
+export type ReqSetModeFs = typeof ReqSetModeFs.infer;
+export function isReqSetModeFs(obj: unknown): obj is ReqSetModeFs {
+  return !(ReqSetModeFs(obj) instanceof type.errors);
 }

@@ -5,7 +5,7 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { FetchResult, LLMHeaders, MsgBase, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { FetchResult, LLMHeaders, MsgBase, RawEmailWithoutFrom, VibesFPApiParameters } from "@vibes.diy/api-types";
 
 export interface StorageResult {
   cid: string;
@@ -32,6 +32,11 @@ export interface VibesApiSQLCtx {
   connections: Set<WSSendProvider>;
   deviceCA: DeviceIdCAIf;
   logger: Logger;
+  sendEmail: (email: RawEmailWithoutFrom) => Promise<
+    Result<{
+      result: unknown;
+    }>
+  >;
   postQueue(msg: MsgBase): Promise<void>;
   netHash(): string;
   params: VibesFPApiParameters;

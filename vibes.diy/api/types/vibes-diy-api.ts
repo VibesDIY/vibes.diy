@@ -7,7 +7,6 @@ import {
   ReqGetChatDetails,
   ResGetChatDetails,
   ReqGetAppByFsId,
-  ReqGetAppByAppSlug,
   ResGetAppByFsId,
   ReqOpenChat,
   VibesDiyError,
@@ -19,6 +18,10 @@ import {
   ResEnsureUserSettings,
   ReqListApplicationChats,
   ResListApplicationChats,
+  ReqEnsureAppSettings,
+  ResEnsureAppSettings,
+  ReqSetModeFs,
+  ResSetModeFs,
 } from "./msg-types.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -55,10 +58,12 @@ export interface VibesDiyApiIface<_T = unknown> {
   listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>>;
   getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>>;
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;
-  getAppByAppSlug(req: Req<ReqGetAppByAppSlug>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>>;
   ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>>;
+  ensureAppSettings(req: Req<ReqEnsureAppSettings>): Promise<Result<ResEnsureAppSettings, VibesDiyError>>;
   listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>>;
 
   getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>>;
+
+  setSetModeFs(req: Req<ReqSetModeFs>): Promise<Result<ResSetModeFs>>;
 }
