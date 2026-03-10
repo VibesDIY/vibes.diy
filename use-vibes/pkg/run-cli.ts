@@ -59,7 +59,7 @@ function createStubCommand(runtime: CliRuntime, name: string) {
 function createApp(runtime: CliRuntime) {
   const whoamiCmd = command({
     name: "whoami",
-    description: "Print logged in user",
+    description: "Print device identity and linked handles",
     args: {},
     handler: async function handleWhoami(): Promise<void> {
       await emitResult(runtime, () => runWhoami(runtime.output));

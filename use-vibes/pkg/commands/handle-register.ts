@@ -22,16 +22,13 @@ export interface RegisterHandleApi {
 }
 
 function hasMessage(value: unknown): value is { readonly message: string } {
-  switch (true) {
-    case typeof value !== "object":
-      return false;
-    case value === null:
-      return false;
-    case !("message" in value):
-      return false;
-    default:
-      return typeof Reflect.get(value, "message") === "string";
+  if (typeof value !== "object" || value === null) {
+    return false;
   }
+  if (!("message" in value)) {
+    return false;
+  }
+  return typeof Reflect.get(value, "message") === "string";
 }
 
 function toErrorMessage(error: unknown): string {
