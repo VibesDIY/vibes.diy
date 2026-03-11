@@ -1,5 +1,6 @@
 import type { CommandExecutable } from "../executable.js";
 import { runInfo } from "../../commands/info.js";
+import { resultToExitCode } from "./result-to-exit-code.js";
 
 export const infoExec: CommandExecutable = {
   name: "info",
@@ -11,10 +12,6 @@ export const infoExec: CommandExecutable = {
     }
     const target = argv[0];
     const result = await runInfo({ target, startDir: runtime.cwd }, runtime.output);
-    if (result.isErr()) {
-      runtime.output.stderr(String(result.Err()) + "\n");
-      return 1;
-    }
-    return 0;
+    return resultToExitCode(runtime, result);
   },
 };

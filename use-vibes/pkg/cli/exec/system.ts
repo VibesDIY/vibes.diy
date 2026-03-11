@@ -1,5 +1,6 @@
 import type { CommandExecutable } from "../executable.js";
 import { runSystem } from "../../commands/system.js";
+import { resultToExitCode } from "./result-to-exit-code.js";
 
 function parseArgs(argv: string[]): { skillsCsv?: string } {
   for (let i = 0; i < argv.length; i++) {
@@ -16,10 +17,6 @@ export const systemExec: CommandExecutable = {
   async run(argv, runtime) {
     const args = parseArgs(argv);
     const result = await runSystem(args, runtime.output);
-    if (result.isErr()) {
-      runtime.output.stderr(String(result.Err()) + "\n");
-      return 1;
-    }
-    return 0;
+    return resultToExitCode(runtime, result);
   },
 };
