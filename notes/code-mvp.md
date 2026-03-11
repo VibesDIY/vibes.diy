@@ -169,7 +169,7 @@ Add CLI to the existing `use-vibes` workspace package.
 - **Dependencies**: L0 (CLI working). Unlocks: clean npm installs, removes inlined ChatMessage type from prompts
 
 ### ~~L1. Move `create-vibe` into monorepo~~ ✅
-Scaffolder lives in `create-vibe/pkg/`, CI publishes via `create-vibe@*` tags. `npm create vibe` scaffolds `vibes.json` + `package.json` (with `use-vibes` script) + placeholder `app.jsx`. Golden path verified end-to-end. Shipped `create-vibe@1.4.0-dev`.
+Scaffolder lives in `create-vibe/pkg/`, CI publishes via `create-vibe@*` tags. `npm create vibe` scaffolds `vibes.json` + `package.json` (with `use-vibes` script) + placeholder `app.jsx`. Golden path verified end-to-end. Shipped `create-vibe@1.4.0-dev`. Code is on branch `jchris/create-vibe` (separated from CLI PR).
 
 ### L2a. CLI auth (`use-vibes login` / `use-vibes whoami`)
 Authenticate and identify the current user. Active handle defaults via selection precedence (see [access-control.md](access-control.md)) for all target resolution.

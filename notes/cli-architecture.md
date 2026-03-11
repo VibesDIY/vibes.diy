@@ -2,11 +2,9 @@
 
 ## Design decisions
 
-**cmd-ts** for subcommand routing, option parsing, and help generation.
+**Thin dispatcher**: `dispatcher.ts` routes argv tokens to `CommandExecutable` implementations. No framework — just a switch on the first arg.
 
-**Deno-first runtime**: `main.deno.ts` is the primary entrypoint. Node gets an npm binary via dnt.
-
-**Runtime-neutral orchestration**: `run-cli.ts` owns command wiring and dispatch. Host-specific entrypoints only provide stdout/stderr and exit-code hooks.
+**Node runtime**: `bin.ts` is the entry point. Published via npm with `#!/usr/bin/env node` shebang.
 
 **No `fs.*Sync`**: `fs/promises` everywhere for filesystem work.
 
@@ -14,23 +12,20 @@
 
 **Injectable `CliOutput`**: Commands accept a `CliOutput` parameter (`stdout`/`stderr` functions), so tests can capture output without process forking.
 
-**`.js` import specifiers**: Local imports use `.js` extensions for Node/browser compatibility. Deno resolves these via `--unstable-sloppy-imports`.
+**`.js` import specifiers**: Local imports use `.js` extensions for Node/browser compatibility.
 
 ---
 
 ## Entry points
 
 ```
-main.deno.ts  ← Deno CLI entrypoint
-  └─ calls runCli(Deno.args, runtime)
+bin.ts        ← Node CLI entrypoint (#!/usr/bin/env node shebang)
+  └─ creates CliRuntime, calls dispatch(argv, commands, runtime)
 
-bin.ts        ← Node CLI entrypoint (compiled by dnt with #!/usr/bin/env node shebang)
-  └─ calls runCli(process.argv.slice(2), runtime)
-
-run-cli.ts    ← shared cmd-ts app and dispatch logic
+dispatcher.ts ← routes argv[0] to CommandExecutable.run()
 ```
 
-npm users run `npx use-vibes`. dnt generates the bin entry with a proper shebang from `bin.ts`.
+npm users run `npx use-vibes`.
 
 ---
 
@@ -38,29 +33,24 @@ npm users run `npx use-vibes`. dnt generates the bin entry with a proper shebang
 
 ```
 use-vibes/pkg/
-├── main.deno.ts              # Deno entrypoint
-├── bin.ts                    # Node entrypoint (dnt adds shebang)
-├── run-cli.ts                # shared runtime-neutral orchestrator
-├── build-npm.ts              # dnt build script (Deno-only, excluded from tsgo/ESLint)
-├── build-npm-imports.json    # npm specifiers for dnt dependency resolution
-├── deno.json                 # Deno tasks + JSR config + local import mappings
+├── bin.ts                    # Node entrypoint
+├── dispatcher.ts             # thin command router
+├── cli/
+│   ├── executable.ts         # CommandExecutable + CliRuntime interfaces
+│   └── exec/
+│       ├── info.ts           # info command executable
+│       ├── skills.ts         # skills command executable
+│       ├── system.ts         # system command executable
+│       ├── whoami.ts         # whoami command executable (stub)
+│       └── result-to-exit-code.ts  # Result → exit code helper
 ├── commands/
-│   ├── cli-output.ts         # CliOutput interface + Node default output
-│   ├── cli-output-deno.ts    # Deno stdout/stderr implementation
-│   ├── login.ts              # Device-code auth via Clerk CSR→cert flow
-│   ├── login-platform-deno.ts # Deno-specific platform adapter (Deno.serve, open)
-│   ├── login-platform-node.ts # Node-specific platform adapter
-│   ├── whoami.ts             # Device identity + handles from API
-│   ├── handle-register.ts    # Register a handle for the authenticated user
-│   ├── vibes-api.ts          # CLI API client (getCliDashAuth, createCliVibesApi)
-│   ├── config.ts             # vibes.json loader (walk-up discovery)
+│   ├── cli-output-node.ts    # CliOutput interface + Node implementation
+│   ├── config.ts             # vibes.json loader (find-up discovery)
 │   ├── resolve-target.ts     # Target resolution (bare → owner/app/group)
 │   ├── info.ts               # Dry-run target resolution for debugging
-│   ├── skills.ts
-│   ├── system.ts
-│   └── not-implemented.ts
-├── scripts/
-│   └── check-local-import-specifiers.ts  # enforces .js imports
+│   ├── skills.ts             # Skill catalog listing
+│   ├── system.ts             # System prompt assembly
+│   └── whoami.ts             # Identity stub (returns Err)
 └── index.ts                  # library exports
 ```
 
@@ -68,35 +58,23 @@ use-vibes/pkg/
 
 ## Testing
 
-CLI tests are `deno test` based:
+CLI tests use vitest, run via `pnpm --filter use-vibes-test run test:cli`:
 
-- **Unit tests**: direct import of command functions with captured output
-- **Smoke tests**: spawn `deno run main.deno.ts` and assert exit codes/stdout/stderr
+- **Unit tests**: direct import of command functions with `captureOutput()` helper
+- **Integration tests**: call `dispatch()` in-process with captured output, assert exit codes + stdout/stderr
+- No subprocess forking — all in-process via injectable `CliOutput`
 
 Run with:
 
 ```bash
-deno task --config use-vibes/pkg/deno.json check-cli   # lint + import specifier check
-deno task --config use-vibes/pkg/deno.json test-cli     # unit + smoke tests
+pnpm --filter use-vibes run check:cli    # eslint on dispatcher + cli/ + commands/ + tests/
+pnpm --filter use-vibes-test run test:cli # vitest with cli config
 ```
-
----
-
-## npm packaging
-
-`build-npm.ts` uses dnt (`@deno/dnt`) to compile TypeScript into an npm-compatible package:
-
-- Generates `bin` entry with `#!/usr/bin/env node` shebang
-- ESM-only output (`scriptModule: false` for top-level await)
-- Dependencies resolved via `build-npm-imports.json` import map
-- CI runs `PACKAGE_VERSION="$VERSION" deno run -A build-npm.ts` then publishes from `dist/npm/`
 
 ---
 
 ## Key dependencies
 
-- `cmd-ts` — subcommand routing, option parsing, help generation
-- `@adviser/cement` — `Result`, `exception2Result`
+- `find-up` — config file discovery (vibes.json)
+- `@adviser/cement` — `Result`, `exception2Result`, `pathOps`
 - `@vibes.diy/prompts` — skill catalog and system prompt assembly
-- `@deno/dnt` — Deno-to-npm build tool
-- `deno` — primary CLI runtime and test runner

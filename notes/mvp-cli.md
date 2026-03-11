@@ -129,7 +129,7 @@ AI generation of new vibes belongs in `create-vibe` at scaffold time, not in `us
 ## Related docs
 
 - [cli-design.md](cli-design.md) — Full architecture: targets, vibes.json, commands
-- [cli-architecture.md](cli-architecture.md) — Implementation: Deno-first, cmd-ts, dnt, testing
+- [cli-architecture.md](cli-architecture.md) — Implementation: Node-first, thin dispatcher, vitest
 - [cli-release-process.md](cli-release-process.md) — How to tag and ship releases
 - [mvp-web.md](mvp-web.md) — Web-only invite path
 - [mvp-invites.md](mvp-invites.md) — Permissions model and invite flag semantics
