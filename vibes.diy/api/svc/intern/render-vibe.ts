@@ -5,7 +5,7 @@ import {
   isFetchErrResult,
   isFetchNotFoundResult,
   VibesDiyServCtx,
-  vibesImportMap,
+  vibeImportMap,
   vibeUserEnv,
 } from "@vibes.diy/api-types";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
@@ -50,7 +50,7 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
     return Result.Err(new Error(`Import map not found for URI ${fsIportMap.assetURI}`));
   }
   // console.log("renderVibe-4")
-  const genImport = vibesImportMap(JSON.parse(vctx.sthis.txt.decode(await stream2uint8array(rImportMapUint8.data))));
+  const genImport = vibeImportMap(JSON.parse(vctx.sthis.txt.decode(await stream2uint8array(rImportMapUint8.data))));
   if (genImport instanceof type.errors) {
     return Result.Err(genImport.summary);
   }
@@ -61,7 +61,7 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
     ...lockedGroupsVersions,
   });
 
-  // console.log("renderVibe-2")
+  console.log("renderVibe-2", genImport.imports);
   const importMap = await deps.renderImportMap({
     resolveFn: resolveVersionRegistry({
       fetch: defaultFetchPkgVersion({

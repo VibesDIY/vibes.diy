@@ -10,6 +10,8 @@ export const lockedVersions = {
   MULTIFORMATS: "13.4.0",
   YAML: "2.8.2",
   TAILWINDCSS: "4.1.18",
+  REACT_ROUTER: "7.13.0",
+  AG_GRID: "35.1.0",
 };
 
 export const lockedGroupsVersions = {
@@ -59,14 +61,24 @@ export const lockedGroupsVersions = {
     "react-dom": "version:REACT",
   },
   "react-dom-helpers": {
+    "react-dom": "version:REACT",
     "react-dom/client": "version:REACT",
     "react/jsx-runtime": "version:REACT",
     "react/jsx-dev-runtime": "version:REACT",
+  },
+  "ag-grid": {
+    "ag-grid-community": "version:AG_GRID,deps:react",
+    "ag-grid-react": "version:AG_GRID,deps:react",
+  },
+  "react-router": {
+    "react-router": "version:REACT_ROUTER,deps:react",
+    "react-router-dom": "version:REACT_ROUTER,deps:react",
   },
   "vibe-runtime": {
     "@vibes.diy/base": "privateNpm:",
     "@vibes.diy/vibe-runtime": "privateNpm:",
     "@vibes.diy/vibe-types": "privateNpm:",
+    "@vibes.diy/vibe-db-explorer": "privateNpm:",
 
     // "@vibes.diy/call-ai-v2": "privateNpm:",
     // "use-vibes": "privateNpm:",

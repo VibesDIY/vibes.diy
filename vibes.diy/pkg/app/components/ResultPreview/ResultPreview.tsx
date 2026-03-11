@@ -4,6 +4,7 @@ import type { ResultPreviewProps } from "./ResultPreviewTypes.js";
 import AppSettingsView from "./AppSettingsView.js";
 import CodeEditor from "./CodeEditor.js";
 import { PreviewApp } from "./PreviewApp.js";
+import { DataView } from "./DataView.js";
 // import { useTheme } from "../../contexts/ThemeContext.js";
 
 function ResultPreview({ promptState, currentView, children }: ResultPreviewProps & { children?: React.ReactNode }) {
@@ -23,8 +24,10 @@ function ResultPreview({ promptState, currentView, children }: ResultPreviewProp
       // console.log(`PreviewApp`, currentView, promptState);
       previewArea = <PreviewApp promptState={promptState} />;
       break;
-    case currentView === "chat":
     case currentView === "data":
+      previewArea = <DataView promptState={promptState} />;
+      break;
+    case currentView === "chat":
     case currentView === "settings":
     default:
       previewArea = (
