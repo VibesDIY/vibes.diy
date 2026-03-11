@@ -37,11 +37,11 @@ const metaProps = type({
 
 export type MetaProps = typeof metaProps.infer;
 
-export const vibesImportMap = type({
+export const vibeImportMap = type({
   imports: type("Record<string, string>"),
 });
 
-export type VibesImportMap = typeof vibesImportMap.infer;
+export type VibeImportMap = typeof vibeImportMap.infer;
 
 export const vibesDiyServCtx = type({
   wrapper: {
@@ -49,7 +49,7 @@ export const vibesDiyServCtx = type({
   },
   usrEnv: vibeUserEnv,
   svcEnv: vibesSvcEnv,
-  importMap: vibesImportMap,
+  importMap: vibeImportMap,
   metaProps,
   mountJS: "string",
 }); // .and(vibesDiyMountParams);

@@ -969,6 +969,9 @@ importers:
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../../../use-vibes/base
+      '@vibes.diy/vibe-db-explorer':
+        specifier: workspace:*
+        version: link:../../vibe/db-explorer
       acorn:
         specifier: ^8.15.0
         version: 8.16.0
@@ -1540,6 +1543,46 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.3.3)(@vitest/browser-playwright@4.0.18)(@vitest/ui@4.0.18)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  vibes.diy/vibe/db-explorer:
+    dependencies:
+      '@fireproof/use-fireproof':
+        specifier: 0.24.12
+        version: 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      ag-grid-community:
+        specifier: ^35.1.0
+        version: 35.1.0
+      ag-grid-react:
+        specifier: ^35.1.0
+        version: 35.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.4(react@19.2.4)
+      react-router:
+        specifier: ^7.13.0
+        version: 7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-router-dom:
+        specifier: ^7.12.0
+        version: 7.12.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+    devDependencies:
+      '@types/react':
+        specifier: ~19.2.13
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ~19.2.2
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: ^5.1.3
+        version: 5.1.3(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   vibes.diy/vibe/runtime:
     dependencies:
@@ -4883,6 +4926,18 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  ag-charts-types@13.1.0:
+    resolution: {integrity: sha512-DytRM3CXli+Y013SC1Mr8lQBrhVTACK+11ilDHOhwUM0sRpmGuR51XFGcBKOliW1Vas1AycP31Cm3Pp0jx3hqw==}
+
+  ag-grid-community@35.1.0:
+    resolution: {integrity: sha512-yWFQfRNjv3KUBkHHzFdDOYGjPcDMU0B8Up4qG651diFlGRUGEGVs94SK73niWvk1FDZdpV9oWrwq3f30/qAoVg==}
+
+  ag-grid-react@35.1.0:
+    resolution: {integrity: sha512-n8pJh4RTpos8stzz91nEhTCZZdLy9bjQYAGxIxJ8ocVagnEsAk9T5Vz/VEKUhOGz36il68n7TVbVWSuUA3a+mg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
@@ -8067,6 +8122,9 @@ packages:
 
   promise@8.3.0:
     resolution: {integrity: sha512-rZPNPKTOYVNEEKFaq1HqTgOwZD+4/YHS5ukLzQCypkj+OkYx7iv0mA91lJlpPPZ8vMau3IIGj5Qlwrx+8iiSmg==}
+
+  prop-types@15.8.1:
+    resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
 
   property-information@7.1.0:
     resolution: {integrity: sha512-TwEZ+X+yCJmYfL7TPUOcvBZ4QfoT5YenQiJuX//0th53DE6w0xxLEtfK3iyryQFddXuvkIk51EEgrJQ0WJkOmQ==}
@@ -13134,6 +13192,19 @@ snapshots:
 
   acorn@8.16.0: {}
 
+  ag-charts-types@13.1.0: {}
+
+  ag-grid-community@35.1.0:
+    dependencies:
+      ag-charts-types: 13.1.0
+
+  ag-grid-react@35.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      ag-grid-community: 35.1.0
+      prop-types: 15.8.1
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   agent-base@7.1.4: {}
 
   agentkeepalive@4.6.0:
@@ -13680,7 +13751,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  chromium-bidi@13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3):
+  chromium-bidi@13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@6.0.6):
     dependencies:
       devtools-protocol: 0.0.1566079
       mitt: 3.0.1
@@ -13689,9 +13760,11 @@ snapshots:
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
+      - bufferutil
       - react-native-b4a
       - supports-color
       - typescript
+      - utf-8-validate
 
   chromium-edge-launcher@0.2.0:
     dependencies:
@@ -16966,6 +17039,12 @@ snapshots:
     dependencies:
       asap: 2.0.6
 
+  prop-types@15.8.1:
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
+      react-is: 16.13.1
+
   property-information@7.1.0: {}
 
   protobufjs@7.5.4:
@@ -17010,10 +17089,10 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6):
+  puppeteer-core@24.37.0(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       '@puppeteer/browsers': 2.12.0
-      chromium-bidi: 13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3)
+      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@6.0.6)
       debug: 4.4.3
       devtools-protocol: 0.0.1566079
       typed-query-selector: 2.12.0
@@ -17025,16 +17104,15 @@ snapshots:
       - bufferutil
       - react-native-b4a
       - supports-color
-      - typescript
       - utf-8-validate
 
   puppeteer@24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6):
     dependencies:
       '@puppeteer/browsers': 2.12.0
-      chromium-bidi: 13.1.0(devtools-protocol@0.0.1566079)(typescript@5.9.3)
+      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@6.0.6)
       cosmiconfig: 9.0.0(typescript@5.9.3)
       devtools-protocol: 0.0.1566079
-      puppeteer-core: 24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      puppeteer-core: 24.37.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-abort-controller

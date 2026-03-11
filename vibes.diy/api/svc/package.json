@@ -26,6 +26,7 @@
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
+    "@vibes.diy/vibe-db-explorer": "workspace:*",
     "acorn": "^8.15.0",
     "arktype": "^2.1.29",
     "cookie": "^1.1.1",

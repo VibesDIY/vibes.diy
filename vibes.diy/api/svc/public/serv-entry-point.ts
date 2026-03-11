@@ -24,6 +24,8 @@ import {
 import { type } from "arktype";
 import { renderVibe } from "../intern/render-vibe.js";
 import { parse } from "cookie";
+import { renderToReadableStream } from "react-dom/server";
+import { renderDBExplorer } from "../intern/render-db-explorer.js";
 
 // function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
 //   return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
@@ -173,6 +175,34 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     return Promise.resolve(Result.Ok(Option.None()));
   },
   handle: async (ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>): Promise<Result<EventoResultType>> => {
+    const uri = URI.from(ctx.request.url);
+    if (uri.pathname.startsWith("/.db-explorer")) {
+      // console.log('xxxxxxx', DBExplorer.toString())
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const npmUrl = captureNpmUrl(vctx, ctx.request);
+      await ctx.send.send(ctx, {
+        type: "http.Response.Body",
+        status: 200,
+        headers: {
+          "Content-Type": "text/html",
+          "Cache-Control": "public, max-age=86400",
+        },
+        body:
+          ctx.request.method === "HEAD"
+            ? ""
+            : ((await renderToReadableStream(
+                await renderDBExplorer({
+                  base: "/.db-explorer",
+                  vctx,
+                  pkgRepos: {
+                    private: npmUrl,
+                  },
+                })
+              )) as BodyInit),
+      });
+      return Result.Ok(EventoResult.Continue);
+    }
+
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
     console.log("servEntryPoint triggered with URL:", ctx.validated.url);
     let fs: typeof sqlApps.$inferSelect | undefined = undefined;
