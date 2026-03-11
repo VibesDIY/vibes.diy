@@ -144,24 +144,63 @@ export const sqlUserSettings = sqliteTable("UserSettings", {
   created: text().notNull(),
 });
 
-export const sqlInviteTokens = sqliteTable("InviteTokens", {
-  token: text().notNull().primaryKey(),
-  appSlug: text().notNull(),
-  userSlug: text().notNull(),
-  ownerUserId: text().notNull(),
-  validUntil: text().notNull(),
-  created: text().notNull(),
-  style: text({ mode: "json" }).notNull(), // InviteEmailToken.or(InviteLinkToken)
-});
-
-export const sqlAcceptInvites = sqliteTable(
-  "AcceptInvites",
+export const sqlAppSettings = sqliteTable(
+  "AppSettings",
   {
-    acceptId: text().notNull().primaryKey(), // uuid v4
-    token: text().notNull(),
-    acceptUserId: text().notNull(),
-    acceptedInfo: text({ mode: "json" }).notNull(), // InviteToken info at time of accept
+    userId: text().notNull(), // from Clerk
+    appSlug: text().notNull(),
+    userSlug: text().notNull(),
+    settings: text({ mode: "json" }).notNull(), // AclEntry.or(ActiveAclEntries)[]
+    updated: text().notNull(),
     created: text().notNull(),
   },
-  (table) => [uniqueIndex("AcceptInvites_token_acceptedUserId_idx").on(table.token, table.acceptUserId)]
+  (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] })]
 );
+
+// export const sqlActiveAcls = sqliteTable("ActiveAcls", {
+//   userId: text().notNull(), // from Clerk
+//   appSlug: text().notNull(),
+//   userSlug: text().notNull(),
+//   acl: text({ mode: "json" }).notNull(), // AclEntry
+//   updated: text().notNull(),
+//   created: text().notNull(),
+// }, (table) => [
+//   primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] }),
+// ]);
+
+// export const sqlAppCollaborators = sqliteTable(
+//   "AppCollaborators",
+//   {
+//     userId: text().notNull(), // from Clerk
+//     appSlug: text().notNull(),
+//     userSlug: text().notNull(),
+
+//     type: text().notNull(), // request.public.access| request.editor.access | request.readonly.access | invite.editor.access | invite.readonly.access
+
+//     collaborator: text({ mode: "json" }).notNull(), //
+
+//     created: text().notNull(),
+//   }
+// );
+
+// export const sqlInviteTokens = sqliteTable("InviteTokens", {
+//   token: text().notNull().primaryKey(),
+//   appSlug: text().notNull(),
+//   userSlug: text().notNull(),
+//   ownerUserId: text().notNull(),
+//   validUntil: text().notNull(),
+//   created: text().notNull(),
+//   style: text({ mode: "json" }).notNull(), // InviteEmailToken.or(InviteLinkToken)
+// });
+
+// export const sqlAcceptInvites = sqliteTable(
+//   "AcceptInvites",
+//   {
+//     acceptId: text().notNull().primaryKey(), // uuid v4
+//     token: text().notNull(),
+//     acceptUserId: text().notNull(),
+//     acceptedInfo: text({ mode: "json" }).notNull(), // InviteToken info at time of accept
+//     created: text().notNull(),
+//   },
+//   (table) => [uniqueIndex("AcceptInvites_token_acceptedUserId_idx").on(table.token, table.acceptUserId)]
+// );

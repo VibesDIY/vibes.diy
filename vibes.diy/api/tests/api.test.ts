@@ -111,6 +111,9 @@ describe("VibesDiyApi", () => {
       DASHBOARD_URL: "dashboard-url",
       DEV_SERVER_HOST: "localhost",
       DEV_SERVER_PORT: "8787",
+
+      RESEND_API_KEY: "resend-key",
+      VIBES_DIY_PUBLIC_BASE_URL: "https://no-where",
     };
 
     const fetchPair = TestFetchPair.create();

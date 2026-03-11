@@ -1,7 +1,6 @@
 import { VibesSwitch } from "@vibes.diy/base";
 import React from "react";
 import type { ReactNode } from "react";
-import { Toaster } from "react-hot-toast";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { AllowFireproofSharing } from "./AllowFireproofSharing.js";
 
@@ -36,10 +35,6 @@ export default function AppLayout({
 
   return (
     <div className="page-grid-background grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden">
-      <div>
-        <Toaster />
-      </div>
-
       {/* Content with relative positioning to appear above the background */}
       <div
         className={`flex w-full flex-col ${fullWidthChat ? "md:w-full" : "md:w-1/3"} ${

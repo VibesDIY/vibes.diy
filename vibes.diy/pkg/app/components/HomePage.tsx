@@ -4,7 +4,6 @@ import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
 import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
 import { featuredModels } from "../data/models.js";
-import { Toaster } from "react-hot-toast";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
@@ -59,9 +58,6 @@ export default function HomePage() {
 
   return (
     <>
-      <div>
-        <Toaster />
-      </div>
       <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
         <div className="px-8 pb-8 pt-0">
           {/* Hamburger menu button - top left in normal flow with z-index */}

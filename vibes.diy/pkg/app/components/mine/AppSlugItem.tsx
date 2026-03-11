@@ -3,32 +3,49 @@ import { useNavigate } from "react-router-dom";
 import type { ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
 import { PromptsTab } from "./PromptsTab.js";
 import { AppChatsTab } from "./AppChatsTab.js";
+import { SharingTab } from "./SharingTab.js";
+
+type Tab = "prompts" | "chats" | "sharing";
+
+function toTab(s: string | undefined): Tab {
+  if (s === "chats" || s === "sharing") return s;
+  return "prompts";
+}
 
 interface AppSlugItemProps {
   userSlug: string;
   appSlug: string;
   isSelected: boolean;
+  activeTab?: string;
   isLoadingThis: boolean;
   headInfo?: { screenshot?: MetaScreenShot; mode?: string };
-  chatDetails: ResGetChatDetails | null;
+  chatDetails?: ResGetChatDetails;
   screenshots: Map<string, { screenshot?: MetaScreenShot; mode?: string }>;
+  onToggleMode: (fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) => Promise<void>;
 }
 
 export function AppSlugItem({
   userSlug,
   appSlug,
   isSelected,
+  activeTab: activeTabProp,
   isLoadingThis,
   headInfo,
   chatDetails,
   screenshots,
+  onToggleMode,
 }: AppSlugItemProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"prompts" | "chats">("prompts");
+  const [activeTab, setActiveTab] = useState<Tab>(toTab(activeTabProp));
 
   useEffect(() => {
     if (!isSelected) setActiveTab("prompts");
-  }, [isSelected]);
+    else setActiveTab(toTab(activeTabProp));
+  }, [isSelected, activeTabProp]);
+
+  function navigateTab(tab: Tab) {
+    navigate(`/vibes/mine/${userSlug}/${appSlug}/${tab}`, { replace: true, preventScrollReset: true });
+  }
 
   return (
     <div
@@ -38,7 +55,7 @@ export function AppSlugItem({
         onClick={() =>
           isSelected
             ? navigate("/vibes/mine", { replace: true, preventScrollReset: true })
-            : navigate(`/vibes/mine/${userSlug}/${appSlug}`, { replace: true, preventScrollReset: true })
+            : navigate(`/vibes/mine/${userSlug}/${appSlug}/prompts`, { replace: true, preventScrollReset: true })
         }
         className="flex w-full items-center gap-3 px-4 py-3 text-left"
       >
@@ -76,24 +93,38 @@ export function AppSlugItem({
           <div className="flex gap-1 px-4 pt-2 pb-2 border-b border-gray-100 dark:border-gray-700">
             <button
               type="button"
-              onClick={() => setActiveTab("prompts")}
+              onClick={() => navigateTab("prompts")}
               className={`rounded px-3 py-1 text-xs font-medium transition-colors ${activeTab === "prompts" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"}`}
             >
               Prompts
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab("chats")}
+              onClick={() => navigateTab("chats")}
               className={`rounded px-3 py-1 text-xs font-medium transition-colors ${activeTab === "chats" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"}`}
             >
               Application Chats
             </button>
+            <button
+              type="button"
+              onClick={() => navigateTab("sharing")}
+              className={`rounded px-3 py-1 text-xs font-medium transition-colors ${activeTab === "sharing" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"}`}
+            >
+              Sharing
+            </button>
           </div>
           <div className="px-4 py-3">
             {activeTab === "prompts" ? (
-              <PromptsTab isLoading={isLoadingThis} chatDetails={chatDetails} screenshots={screenshots} />
-            ) : (
+              <PromptsTab
+                isLoading={isLoadingThis}
+                chatDetails={chatDetails}
+                screenshots={screenshots}
+                onToggleMode={onToggleMode}
+              />
+            ) : activeTab === "chats" ? (
               <AppChatsTab userSlug={userSlug} appSlug={appSlug} />
+            ) : (
+              <SharingTab userSlug={userSlug} appSlug={appSlug} />
             )}
           </div>
         </div>
