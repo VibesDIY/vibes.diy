@@ -22,9 +22,21 @@ jobs:
         shell: bash
         run: pnpm install
 
-      - name: check
+      - name: build
         shell: bash
-        run: pnpm check
+        run: pnpm build
+
+      - name: lint
+        shell: bash
+        run: pnpm lint
+
+      - name: cli-check
+        shell: bash
+        run: pnpm --filter use-vibes run check:cli
+
+      - name: cli-test
+        shell: bash
+        run: pnpm --filter use-vibes-test run test:cli
 
       - uses: ./use-vibes/actions/publish
         with:
