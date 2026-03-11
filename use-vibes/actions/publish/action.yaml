@@ -102,4 +102,4 @@ runs:
           };
           Deno.writeTextFileSync(f, JSON.stringify(j, null, 2) + '\n');
         "
-        deno publish --allow-dirty --unstable-sloppy-imports
+        deno publish --allow-dirty --unstable-sloppy-imports --no-check

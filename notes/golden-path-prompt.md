@@ -21,7 +21,7 @@ Pick a unique, descriptive name for your app (e.g. `beat-lab`, `recipe-box`, `mo
 ### Step 2: Browse available skills
 
 ```bash
-npm run use-vibes skills 2>/dev/null
+npx use-vibes skills
 ```
 
 This lists the available libraries (fireproof, callai, web-audio, d3, three-js, image-gen). Pick the ones your app needs.
@@ -29,7 +29,7 @@ This lists the available libraries (fireproof, callai, web-audio, d3, three-js, 
 ### Step 3: Get the system prompt
 
 ```bash
-npm run use-vibes -- system --skills fireproof,callai,web-audio 2>/dev/null
+npx use-vibes system --skills fireproof,callai,web-audio
 ```
 
 Read the output — it tells you how to write app.jsx with the selected skills. Adjust the `--skills` list based on what your app needs.
@@ -57,6 +57,6 @@ Show me the contents of:
 ## Notes
 
 - The `system` command defaults to fireproof + callai skills if no `--skills` flag is given.
-- Browse skills: `npm run use-vibes skills 2>/dev/null`
-- Note: pass `--` before flags so npm forwards them: `npm run use-vibes -- system --skills fireproof,d3`
-- CLI deploy (`use-vibes login`, `dev`, `publish`) isn't built yet — for now paste app.jsx into vibes.diy or use eject-vibe for a standalone Vite project.
+- Browse skills: `npx use-vibes skills`
+- When using `npm run use-vibes` instead of `npx`, pass `--` before flags so npm forwards them: `npm run use-vibes -- system --skills fireproof,d3`
+- CLI auth (`login`, `whoami`, `handle register`) and deploy (`dev`, `publish`) are coming soon — for now paste app.jsx into vibes.diy or use eject-vibe for a standalone Vite project.
