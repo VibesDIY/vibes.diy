@@ -407,23 +407,21 @@ npm registry
 │   └── scaffolds project with use-vibes as devDependency
 └── use-vibes          → library (import) + CLI (bin)
     ├── import: React hooks, useFireproof, etc.
-    └── bin: bin.ts → Node entrypoint (dnt adds shebang); Deno entrypoint is main.deno.ts
+    └── bin: bin.ts → Node entrypoint
 
-monorepo (existing)
+monorepo
 ├── use-vibes/pkg      → library + CLI entry points
-│   ├── main.deno.ts   → Deno-first CLI entrypoint
-│   ├── run-cli.ts     → shared cmd-ts routing + Result handling
-│   ├── bin.ts         → Node entrypoint (compiled by dnt with shebang)
-│   ├── build-npm.ts   → dnt build script (Deno-only)
-│   ├── commands/      → one file per command + cli-output.ts
-│   └── lib/           → config, api-client, auth (future)
-└── (create-vibe)      → move from own repo into monorepo, fresh release (after use-vibes CLI is solid)
+│   ├── bin.ts         → Node entrypoint (shebang)
+│   ├── dispatcher.ts  → thin command router
+│   ├── cli/           → executable interfaces + per-command exec wrappers
+│   ├── commands/      → command logic (needs refactor to request/response pattern)
+│   └── index.ts       → library exports
+└── create-vibe/       → on branch jchris/create-vibe
 ```
 
 Architecture (see [cli-architecture.md](cli-architecture.md)):
-- **Deno-first**: main.deno.ts is the primary CLI runtime
-- **cmd-ts**: subcommand routing, option parsing, help generation
+- **Target**: request → handler → output serializer (side-effects outside the application)
+- **Current**: thin dispatcher, commands call output directly (needs refactor)
 - **cement Result pattern**: all commands return `Result<void>`
-- **Injectable CliOutput**: stdout/stderr functions for testability
 - **No fs.\*Sync**: `fs/promises` only, including config loading
 - **No chokidar**: native `fs/promises.watch` (Node 20+ recursive)

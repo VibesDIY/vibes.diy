@@ -20,10 +20,10 @@ login → config → push → live → dev
 
 ## Principles
 
-- **Node-first**: `bin.ts` is the entry point, published via npm
-- **Thin dispatcher**: no framework — `dispatcher.ts` routes argv to `CommandExecutable` implementations
+- **Side-effects outside the application**: parse → handle → serialize. Handlers are pure functions that take typed requests and emit typed results via `{ send }`. No stdout, no fs, no process inside handlers. See [cli-architecture.md](cli-architecture.md) for the target structure.
+- **Multi-runtime**: same handler logic runs in Node, Deno, Cloudflare Workers (agent runtime), or tests. Only parse and serialize layers are runtime-specific.
+- **Node-first for now**: `bin.ts` is the entry point, published via npm
 - **cement Result pattern**: all commands return `Result<void>`, errors propagate as values
-- **Injectable CliOutput**: commands accept stdout/stderr functions for testability and future browser use
 - **No sync I/O**: `fs/promises` everywhere, including config and credential loading
 - **No localhost**: every environment is a cloud deploy with HTTPS
 - **Stdout is the API**: commands that produce data (`skills`, `system`, `whoami`) write to stdout for piping

@@ -74,7 +74,7 @@ Two wrangler configs:
 
 ## `use-vibes` CLI (current state)
 
-Architecture: Node-first, thin dispatcher, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md).
+Architecture: needs refactor to request/response/output-serializer pattern — see [cli-architecture.md](cli-architecture.md) and [cli-hello-world.md](cli-hello-world.md).
 
 ### Working commands
 - `--help` / no args — help text from dispatcher
