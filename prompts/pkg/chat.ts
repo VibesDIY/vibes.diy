@@ -1,3 +1,4 @@
+import type { DocTypes } from "@fireproof/core-types-base";
 import type { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ViewType } from "./view-state.js";
 
@@ -107,7 +108,7 @@ export interface ScreenshotDocument extends DocBase {
 }
 
 // Note: We already have a SessionDocument interface, so merged the properties
-export interface SessionDocument {
+export interface SessionDocument extends DocTypes {
   _id?: string;
   type: "session"; // Document type for Fireproof queries
   title?: string;
