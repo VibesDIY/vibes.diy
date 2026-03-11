@@ -22,33 +22,9 @@ jobs:
         shell: bash
         run: pnpm install
 
-      - name: use-vibes-cli-check
+      - name: check
         shell: bash
-        run: pnpm --filter use-vibes run check:cli
-
-      - name: use-vibes-cli-test
-        shell: bash
-        run: pnpm --filter use-vibes-test run test:cli
-
-      - name: format-check
-        shell: bash
-        run: pnpm run format --check
-
-      - name: lint
-        shell: bash
-        run: pnpm exec eslint prompts/pkg call-ai/pkg use-vibes/types use-vibes/base use-vibes/pkg
-
-      - name: validate-all-packages
-        shell: bash
-        run: |
-          set -e
-          echo "Building packages in publish order..."
-          pnpm --filter @vibes.diy/prompts build
-          pnpm --filter call-ai build
-          pnpm --filter @vibes.diy/use-vibes-types build
-          pnpm --filter @vibes.diy/use-vibes-base build
-          pnpm --filter use-vibes build
-          echo "✅ All published packages validated"
+        run: pnpm check
 
       - uses: ./use-vibes/actions/publish
         with:

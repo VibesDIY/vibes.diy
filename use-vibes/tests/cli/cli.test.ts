@@ -2,48 +2,49 @@ import { describe, expect, it } from "vitest";
 import { runSkills } from "../../pkg/commands/skills.js";
 import { runSystem } from "../../pkg/commands/system.js";
 import { runWhoami } from "../../pkg/commands/whoami.js";
-import { runCli, captureOutput } from "./test-helpers.js";
+import { runCli, makeTestRuntime } from "./test-helpers.js";
 
 describe("CLI unit commands", () => {
   it("whoami returns error when not logged in", async () => {
-    const result = await runWhoami();
+    const t = makeTestRuntime();
+    const result = await runWhoami(t.runtime);
     expect(result.isErr()).toBe(true);
     expect(String(result.Err())).toContain("Not logged in");
   });
 
   it("skills lists catalog", async () => {
-    const captured = captureOutput();
-    const result = await runSkills(captured.output);
+    const t = makeTestRuntime();
+    const result = await runSkills(t.runtime);
     expect(result.isOk()).toBe(true);
-    expect(captured.stdout()).toContain("fireproof");
-    expect(captured.stdout().trim().split("\n").length).toBeGreaterThanOrEqual(3);
+    expect(t.stdout()).toContain("fireproof");
+    expect(t.stdout().trim().split("\n").length).toBeGreaterThanOrEqual(3);
   });
 
   it("system outputs default prompt", async () => {
-    const captured = captureOutput();
-    const result = await runSystem({}, captured.output);
+    const t = makeTestRuntime();
+    const result = await runSystem({}, t.runtime);
     expect(result.isOk()).toBe(true);
-    expect(captured.stdout().length).toBeGreaterThan(100);
-    expect(captured.stdout()).toContain("fireproof");
+    expect(t.stdout().length).toBeGreaterThan(100);
+    expect(t.stdout()).toContain("fireproof");
   });
 
   it("system --skills fireproof selects specific skill", async () => {
-    const captured = captureOutput();
-    const result = await runSystem({ skillsCsv: "fireproof" }, captured.output);
+    const t = makeTestRuntime();
+    const result = await runSystem({ skillsCsv: "fireproof" }, t.runtime);
     expect(result.isOk()).toBe(true);
-    expect(captured.stdout()).toContain("fireproof");
+    expect(t.stdout()).toContain("fireproof");
   });
 
   it("system --skills with empty value returns error", async () => {
-    const captured = captureOutput();
-    const result = await runSystem({ skillsCsv: "" }, captured.output);
+    const t = makeTestRuntime();
+    const result = await runSystem({ skillsCsv: "" }, t.runtime);
     expect(result.isErr()).toBe(true);
     expect(String(result.Err())).toContain("--skills requires a value");
   });
 
   it("system --skills bogus returns error", async () => {
-    const captured = captureOutput();
-    const result = await runSystem({ skillsCsv: "bogus" }, captured.output);
+    const t = makeTestRuntime();
+    const result = await runSystem({ skillsCsv: "bogus" }, t.runtime);
     expect(result.isErr()).toBe(true);
     expect(String(result.Err())).toContain("Unknown skills: bogus");
   });

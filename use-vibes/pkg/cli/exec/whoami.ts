@@ -6,7 +6,7 @@ export const whoamiExec: CommandExecutable = {
   name: "whoami",
   description: "Print logged-in user",
   async run(_argv, runtime) {
-    const result = await runWhoami();
+    const result = await runWhoami(runtime);
     return resultToExitCode(runtime, result);
   },
 };

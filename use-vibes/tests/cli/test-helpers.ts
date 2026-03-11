@@ -4,11 +4,27 @@ import { tmpdir } from "node:os";
 import process from "node:process";
 import { dispatch } from "../../pkg/dispatcher.js";
 import type { CliOutput } from "../../pkg/commands/cli-output-node.js";
+import type { CliRuntime } from "../../pkg/cli/executable.js";
 
 export interface CliSpawnResult {
   readonly stdout: string;
   readonly stderr: string;
   readonly code: number;
+}
+
+export function makeTestRuntime(opts?: { cwd?: string }): { runtime: CliRuntime; stdout: () => string; stderr: () => string } {
+  const captured = captureOutput();
+  return {
+    runtime: {
+      cwd: opts?.cwd ?? process.cwd(),
+      output: captured.output,
+      setExitCode(_nextCode: number): void {
+        /* no-op in unit tests — use runCli for exit code testing */
+      },
+    },
+    stdout: captured.stdout,
+    stderr: captured.stderr,
+  };
 }
 
 export function captureOutput(): { output: CliOutput; stdout: () => string; stderr: () => string } {

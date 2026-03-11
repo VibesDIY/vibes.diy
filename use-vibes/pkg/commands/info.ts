@@ -1,16 +1,15 @@
-import { cwd } from "node:process";
 import { Result } from "@adviser/cement";
-import type { CliOutput } from "./cli-output-node.js";
+import type { CliRuntime } from "../cli/executable.js";
 import { findVibesJson } from "./config.js";
 import { resolveTarget } from "./resolve-target.js";
 
 export interface RunInfoOptions {
   readonly target?: string;
-  readonly startDir?: string;
 }
 
-export async function runInfo(opts: RunInfoOptions, output: CliOutput): Promise<Result<void>> {
-  const startDir = opts.startDir ?? cwd();
+export async function runInfo(opts: RunInfoOptions, runtime: CliRuntime): Promise<Result<void>> {
+  const { output } = runtime;
+  const startDir = runtime.cwd;
   const found = await findVibesJson(startDir);
   if (found.isErr()) return Result.Err(found);
 

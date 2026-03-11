@@ -16,7 +16,7 @@ export const systemExec: CommandExecutable = {
   description: "Output assembled system prompt",
   async run(argv, runtime) {
     const args = parseArgs(argv);
-    const result = await runSystem(args, runtime.output);
+    const result = await runSystem(args, runtime);
     return resultToExitCode(runtime, result);
   },
 };

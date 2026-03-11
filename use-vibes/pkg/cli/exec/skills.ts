@@ -6,7 +6,7 @@ export const skillsExec: CommandExecutable = {
   name: "skills",
   description: "List available skill libraries",
   async run(_argv, runtime) {
-    const result = await runSkills(runtime.output);
+    const result = await runSkills(runtime);
     return resultToExitCode(runtime, result);
   },
 };
