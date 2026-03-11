@@ -6,7 +6,29 @@ import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.
 
 // import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
-import { ChatMessage } from "@vibes.diy/call-ai-v2";
+
+// Temporary local type while release work tracks canonical package direction:
+// https://github.com/VibesDIY/vibes.diy/issues/1088
+type ChatMessage =
+  | {
+      readonly role: "system" | "user" | "assistant";
+      readonly content: string;
+    }
+  | {
+      readonly role: "system" | "user" | "assistant";
+      readonly content: readonly (
+        | {
+            readonly type: "text";
+            readonly text: string;
+          }
+        | {
+            readonly type: "image_url";
+            readonly image_url: {
+              readonly url: string;
+            };
+          }
+      )[];
+    };
 
 // Single source of truth for the default coding model used across the repo.
 export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
