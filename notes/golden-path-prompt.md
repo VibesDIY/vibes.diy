@@ -58,6 +58,6 @@ Show me the contents of:
 
 - The `system` command defaults to fireproof + callai skills if no `--skills` flag is given.
 - Browse skills: `npx use-vibes skills`
-- When using `npm run use-vibes` instead of `npx`, pass `--` before flags so npm forwards them: `npm run use-vibes -- system --skills fireproof,d3`
+- Project info: `npx use-vibes info` (reads vibes.json, shows app name)
 - Auth commands (`login`, `whoami`, `handle register`) and deploy commands (`dev`, `publish`) are coming soon.
 - For now paste app.jsx into vibes.diy or use eject-vibe for a standalone Vite project.
