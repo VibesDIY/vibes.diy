@@ -20,8 +20,8 @@ login → config → push → live → dev
 
 ## Principles
 
-- **Deno-first**: `main.deno.ts` is the primary runtime entrypoint, with Node compatibility via dnt (`bin.ts`)
-- **cmd-ts for routing**: subcommand parsing, option handling, help generation
+- **Node-first**: `bin.ts` is the entry point, published via npm
+- **Thin dispatcher**: no framework — `dispatcher.ts` routes argv to `CommandExecutable` implementations
 - **cement Result pattern**: all commands return `Result<void>`, errors propagate as values
 - **Injectable CliOutput**: commands accept stdout/stderr functions for testability and future browser use
 - **No sync I/O**: `fs/promises` everywhere, including config and credential loading
@@ -37,13 +37,14 @@ Shipped in `use-vibes@0.19.27-dev-cli`.
 
 ---
 
-## ~~Step 2: Auth — `login` and `whoami`~~ ✅
+## Step 2: Auth — `login` and `whoami`
 
-- `login` — device-code auth via Clerk CSR→cert flow, stores device cert + key in keybag. Platform-specific adapters for Deno (`Deno.serve`, `open`) and Node
-- `whoami` — fetches handles from API via `listUserSlugAppSlug`, prints `Handle: @slug` for each, then device fingerprint and cert expiry. API failures are non-fatal (classified: session expired vs unreachable)
-- `handle register [slug]` — registers a handle for the authenticated user (auto-generates if omitted)
-- `vibes-api.ts` — shared API client with `getCliDashAuth()` (loads device cert, signs token) and `createCliVibesApi()` (creates `VibeDiyApi` client)
-- Injectable deps pattern — commands accept `WhoamiDeps`, `RegisterHandleDeps`, `LoginPlatform` for stub-based testing
+**Status**: Not yet implemented. An earlier version was built and force-pushed away in PR #1086 per Meno's review — should use `VibesDiyApiIface` with a dummy impl instead of direct API calls.
+
+- `login` — device-code auth via Clerk CSR→cert flow
+- `whoami` — fetches handles from API, prints active handle + device info
+- `handle register [slug]` — registers a handle for the authenticated user
+- Will implement against `VibesDiyApiIface` (Meno will provide working impl)
 
 ---
 

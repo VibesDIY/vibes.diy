@@ -160,7 +160,7 @@ See [cli-design.md](cli-design.md) for full architecture.
 
 ### L0. Bootstrap `use-vibes` CLI — shipped
 Add CLI to the existing `use-vibes` workspace package.
-- **Tech**: `bin.ts` (Node via dnt) + `main.deno.ts` (Deno), cmd-ts for subcommand routing, cement Result pattern, injectable CliOutput — see [cli-architecture.md](cli-architecture.md). `commands/` directory with one file per command, stub commands for all unimplemented features.
+- **Tech**: `bin.ts` (Node entry point), thin `dispatcher.ts` routing argv to `CommandExecutable` implementations, cement Result pattern, injectable CliOutput. `commands/` directory with one file per command, `cli/exec/` directory with executable wrappers.
 - **Dependencies**: None. Unlocks: L2a auth, L3b skills/system
 
 ### L0b. Ship call-ai v2 as new major release (#1088)
@@ -171,10 +171,10 @@ Add CLI to the existing `use-vibes` workspace package.
 ### ~~L1. Move `create-vibe` into monorepo~~ ✅
 Scaffolder lives in `create-vibe/pkg/`, CI publishes via `create-vibe@*` tags. `npm create vibe` scaffolds `vibes.json` + `package.json` (with `use-vibes` script) + placeholder `app.jsx`. Golden path verified end-to-end. Shipped `create-vibe@1.4.0-dev`.
 
-### ~~L2a. CLI auth (`use-vibes login` / `use-vibes whoami`)~~ ✅
+### L2a. CLI auth (`use-vibes login` / `use-vibes whoami`)
 Authenticate and identify the current user. Active handle defaults via selection precedence (see [access-control.md](access-control.md)) for all target resolution.
-- **Tech**: `login` — CSR→cert flow via Clerk, stores device cert + key in keybag. `whoami` — fetches handles from API via `listUserSlugAppSlug`, prints handles + device + cert. `handle register` — registers handles. `vibes-api.ts` — shared CLI API client (`getCliDashAuth`, `createCliVibesApi`). Injectable deps for stub-based testing
-- **Dependencies**: L0. Unlocks: L2b (all commands need an owner)
+- **Tech**: `login` — CSR→cert flow via Clerk. `whoami` — fetches handles from API. `handle register` — registers handles. Will implement against `VibesDiyApiIface` (Meno provides working impl). An earlier version was built and removed from PR #1086 per review feedback — should not use direct API calls.
+- **Dependencies**: L0, `VibesDiyApiIface` dummy impl. Unlocks: L2b (all commands need an owner)
 
 ### L2b. CLI live (`use-vibes live <group>`)
 Watch files, push every save to a target group. `use-vibes dev` is sugar for `use-vibes live dev`. No localhost.
