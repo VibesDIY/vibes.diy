@@ -25,7 +25,7 @@ login → config → push → live → dev
 - **Node-first for now**: `bin.ts` is the entry point, published via npm
 - **cement Result pattern**: all commands return `Result<void>`, errors propagate as values
 - **No sync I/O**: `fs/promises` everywhere, including config and credential loading
-- **No localhost**: every environment is a cloud deploy with HTTPS
+- **Instant cloud deploys**: every save goes live at an HTTPS URL — no local server to run or manage
 - **Stdout is the API**: commands that produce data (`skills`, `system`, `whoami`) write to stdout for piping
 
 ---

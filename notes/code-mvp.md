@@ -177,7 +177,7 @@ Authenticate and identify the current user. Active handle defaults via selection
 - **Dependencies**: L0, `VibesDiyApiIface` dummy impl. Unlocks: L2b (all commands need an owner)
 
 ### L2b. CLI live (`use-vibes live <group>`)
-Watch files, push every save to a target group. `use-vibes dev` is sugar for `use-vibes live dev`. No localhost.
+Watch files, push every save to a target group. `use-vibes dev` is sugar for `use-vibes live dev`. Every save is instantly live at a cloud URL.
 - **Tech**: Native `fs/promises.watch` (Node 20+ recursive) → debounce → lint → push to target via API → print group URL. No chokidar. Requires login. Keep last-good-version live on lint failure. Target resolved from vibes.json: bare group → `{whoami}/{app}/{group}`, fully-qualified used as-is. URL: `{appSlug}--{userSlug}.vibecode.garden` (appSlug absorbs app+group)
 - **Dependencies**: L0, L2a, ensureAppSlug API (working). Unlocks: L3 publish, the "deploy as save" experience
 
@@ -208,7 +208,7 @@ Generate a pre-approved instant access token from the terminal. The primary shar
 
 ### L5. Live reload for group URLs
 Group URLs auto-refresh when new code is pushed — feels like local dev but in the cloud.
-- **Tech**: SSE endpoint or polling "version pointer" on served URL. Runtime checks for new `fsId`, triggers reload. All HTTPS, no localhost
+- **Tech**: SSE endpoint or polling "version pointer" on served URL. Runtime checks for new `fsId`, triggers reload. All HTTPS — feels like local dev but instantly live in the cloud
 - **Dependencies**: L2b. Unlocks: instant feedback loop
 
 ### L6. Import `eject-vibe` into monorepo — post-MVP

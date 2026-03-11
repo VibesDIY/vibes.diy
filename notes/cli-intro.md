@@ -1,6 +1,6 @@
 # CLI tools: `npx use-vibes` and `npm create vibe`
 
-Two npm packages. No localhost. Cloud-first. Agent-native.
+Two npm packages. Instant live cloud deploys. Agent-native.
 
 ## Agent Workflow
 
@@ -63,7 +63,7 @@ deno task --config use-vibes/pkg/deno.json test-cli
 - `edit` + `live` = full AI dev loop (edit writes file, live pushes it)
 - `skills` = list RAG skills for LLM decision-making. `system` = emit assembled system prompt.
 - **One directory, many vibes**: each vibe gets its own `slug.jsx` file, all managed from one `vibes.json`
-- Every environment is a cloud deploy with HTTPS. No local server.
+- Every save pushes to a live HTTPS URL instantly.
 
 ## Docs
 

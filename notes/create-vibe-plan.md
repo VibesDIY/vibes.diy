@@ -124,9 +124,40 @@ Dry scaffold shipped in `create-vibe@1.4.0-dev`:
 - No AI generation — scaffold is Claude-ready (user brings their own AI)
 - Golden path tested end-to-end: scaffold → install → system prompt → write app.jsx
 
-## Future: optional prompt → AI generation
+## Generate banner
 
-`npm create vibe todo "a collaborative todo list"` could AI-generate `app.jsx` instead of the placeholder. Requires:
-- `call-ai` as a dependency (Node 20+ compatible, already in monorepo)
-- `@vibes.diy/prompts` for `makeBaseSystemPrompt` (same pattern as `use-vibes system`)
-- `OPENROUTER_API_KEY` env var — falls back to placeholder if missing
+After scaffolding, the success output should actively guide the user into the use-vibes agent flow — not just print "cd my-app && npm install". The banner is the handoff moment from scaffolding to generation.
+
+The banner should:
+1. Print the cd + install commands as usual
+2. Then show the two-step agent flow:
+   ```
+   npx use-vibes skills               # see available libraries
+   npx use-vibes system --skills ...  # get the system prompt for Claude
+   ```
+3. Tell the user to paste the system prompt into Claude (or any AI chat) to generate app.jsx
+
+Example banner output:
+```
+✨ Your vibe is ready!
+
+  cd my-app
+  npm install
+
+Then generate your app.jsx using Claude:
+
+  npx use-vibes skills                            # see available libraries
+  npx use-vibes system --skills fireproof,callai  # get the system prompt
+
+Paste the system prompt into Claude (or any AI chat) to generate your app.
+
+Then iterate live:
+
+  npm run use-vibes dev &   # start watching + deploying in the background
+  # edit app.jsx and each save goes live instantly
+```
+
+The goal: after scaffolding, the path forward should be clear:
+- **Agents** run `use-vibes system` to get the system prompt, then write app.jsx themselves
+- **Users** will run `use-vibes edit` (not yet implemented) to get AI-assisted editing in the terminal
+
