@@ -1,76 +1,110 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  createTimeEvento,
   parseCLIToReq,
   processLineOutput,
-  runPrintTimePipeline,
-  setupPrintTimeCtx,
-  triggerHandler,
+  runTimePipeline,
+  setupTimeCtx,
+  TimeCollectSendProvider,
 } from "../../pkg/cli/time.js";
 
-describe("handler", () => {
-  it("print.time sends current time", () => {
-    const ctx = setupPrintTimeCtx({
-      now: () => new Date("2024-01-01T00:00:00.000Z"),
-    });
-    const send = vi.fn();
-
-    triggerHandler(ctx)({ type: "req.cli.print.time" }, { send });
-
-    expect(send).toHaveBeenCalledWith({
-      type: "res.cli.print.time",
-      time: expect.any(Date),
-    });
+describe("parseCLIToReq", () => {
+  it("parses [time] to req.cli.time with txt format", async () => {
+    const req = await parseCLIToReq(["time"]);
+    expect(req).toEqual({ type: "req.cli.time", format: "txt" });
   });
 
-  it("usage error sends error with code 2", () => {
-    const ctx = setupPrintTimeCtx();
-    const send = vi.fn();
-
-    triggerHandler(ctx)(
-      { type: "req.cli.usage.error", message: "bad flag" },
-      { send },
-    );
-
-    expect(send).toHaveBeenCalledWith({
-      type: "res.cli.error",
-      message: "bad flag",
-      code: 2,
-    });
-  });
-});
-
-describe("parse", () => {
-  it("parses [print --time] to print.time request", async () => {
-    const req = await parseCLIToReq(["print", "--time"]);
-    expect(req).toEqual({ type: "req.cli.print.time" });
+  it("parses [time --json] to req.cli.time with json format", async () => {
+    const req = await parseCLIToReq(["time", "--json"]);
+    expect(req).toEqual({ type: "req.cli.time", format: "json" });
   });
 
-  it("maps [print] without --time to usage error", async () => {
-    const req = await parseCLIToReq(["print"]);
+  it("parses [time --txt] to req.cli.time with txt format", async () => {
+    const req = await parseCLIToReq(["time", "--txt"]);
+    expect(req).toEqual({ type: "req.cli.time", format: "txt" });
+  });
+
+  it("maps conflicting flags to req.cli.usage.error", async () => {
+    const req = await parseCLIToReq(["time", "--json", "--txt"]);
     expect(req).toEqual({
       type: "req.cli.usage.error",
-      message: "Missing required flag: --time",
+      message: "Use either --json or --txt, not both",
     });
   });
 
-  it("maps unknown flag to usage error", async () => {
-    const req = await parseCLIToReq(["print", "--wat"]);
+  it("maps invalid option to req.cli.usage.error", async () => {
+    const req = await parseCLIToReq(["time", "--wat"]);
+    expect(req.type).toBe("req.cli.usage.error");
+    if (req.type === "req.cli.usage.error") {
+      expect(req.message).toContain("Unknown arguments");
+    }
+  });
+
+  it("maps unknown command to req.cli.usage.error", async () => {
+    const req = await parseCLIToReq(["wat"]);
     expect(req.type).toBe("req.cli.usage.error");
   });
 });
 
-describe("output", () => {
-  it("formats time to stdout", () => {
+describe("createTimeEvento", () => {
+  it("handles req.cli.time and emits res.cli.time", async () => {
+    const fixed = new Date("2024-01-01T00:00:00.000Z");
+    const evento = createTimeEvento(
+      setupTimeCtx({
+        now: () => fixed,
+      }),
+    );
+    const send = new TimeCollectSendProvider();
+
+    const rTrigger = await evento.trigger({
+      request: { type: "req.cli.time", format: "txt" },
+      send,
+    });
+
+    expect(rTrigger.isOk()).toBe(true);
+    expect(send.results).toEqual([{ type: "res.cli.time", time: fixed, format: "txt" }]);
+  });
+
+  it("handles req.cli.usage.error and emits res.cli.error code 2", async () => {
+    const evento = createTimeEvento(setupTimeCtx());
+    const send = new TimeCollectSendProvider();
+
+    const rTrigger = await evento.trigger({
+      request: { type: "req.cli.usage.error", message: "bad args" },
+      send,
+    });
+
+    expect(rTrigger.isOk()).toBe(true);
+    expect(send.results).toEqual([{ type: "res.cli.error", message: "bad args", code: 2 }]);
+  });
+});
+
+describe("processLineOutput", () => {
+  it("writes txt time format and returns 0", () => {
     const output = { out: vi.fn(), err: vi.fn() };
     const code = processLineOutput(output, [
-      { type: "res.cli.print.time", time: new Date("2024-01-01T00:00:00.000Z") },
+      { type: "res.cli.time", format: "txt", time: new Date("2024-01-01T00:00:00.000Z") },
     ]);
 
-    expect(output.out).toHaveBeenCalledWith("2024-01-01T00:00:00.000Z\n");
+    expect(output.out).toHaveBeenCalledWith("2024\n");
+    expect(output.err).not.toHaveBeenCalled();
     expect(code).toBe(0);
   });
 
-  it("formats error to stderr exit 2", () => {
+  it("writes json time format and returns 0", () => {
+    const output = { out: vi.fn(), err: vi.fn() };
+    const code = processLineOutput(output, [
+      { type: "res.cli.time", format: "json", time: new Date("2024-01-01T00:00:00.000Z") },
+    ]);
+
+    expect(output.out).toHaveBeenCalledWith(
+      '{"type":"res.cli.time","time":"2024-01-01T00:00:00.000Z"}\n',
+    );
+    expect(output.err).not.toHaveBeenCalled();
+    expect(code).toBe(0);
+  });
+
+  it("writes stderr for error result and returns 2", () => {
     const output = { out: vi.fn(), err: vi.fn() };
     const code = processLineOutput(output, [
       { type: "res.cli.error", message: "bad args", code: 2 },
@@ -81,24 +115,57 @@ describe("output", () => {
   });
 });
 
-describe("pipeline", () => {
-  it("print --time end to end", async () => {
+describe("runTimePipeline", () => {
+  it("success path with txt output", async () => {
     const output = { out: vi.fn(), err: vi.fn() };
-    const ctx = setupPrintTimeCtx({
+    const ctx = setupTimeCtx({
       now: () => new Date("2024-01-01T00:00:00.000Z"),
     });
-    const code = await runPrintTimePipeline(["print", "--time"], ctx, output);
 
-    expect(output.out).toHaveBeenCalledWith("2024-01-01T00:00:00.000Z\n");
+    const code = await runTimePipeline(["time"], ctx, output);
+
+    expect(output.out).toHaveBeenCalledWith("2024\n");
+    expect(output.err).not.toHaveBeenCalled();
     expect(code).toBe(0);
   });
 
-  it("print --wat returns usage error", async () => {
+  it("success path with json output", async () => {
     const output = { out: vi.fn(), err: vi.fn() };
-    const ctx = setupPrintTimeCtx();
-    const code = await runPrintTimePipeline(["print", "--wat"], ctx, output);
+    const ctx = setupTimeCtx({
+      now: () => new Date("2024-01-01T00:00:00.000Z"),
+    });
 
+    const code = await runTimePipeline(["time", "--json"], ctx, output);
+
+    expect(output.out).toHaveBeenCalledWith(
+      '{"type":"res.cli.time","time":"2024-01-01T00:00:00.000Z"}\n',
+    );
+    expect(output.err).not.toHaveBeenCalled();
+    expect(code).toBe(0);
+  });
+
+  it("usage error path returns code 2", async () => {
+    const output = { out: vi.fn(), err: vi.fn() };
+    const ctx = setupTimeCtx();
+
+    const code = await runTimePipeline(["time", "--wat"], ctx, output);
+
+    expect(output.out).not.toHaveBeenCalled();
     expect(output.err).toHaveBeenCalled();
     expect(code).toBe(2);
+  });
+
+  it("runtime error path returns code 1", async () => {
+    const output = { out: vi.fn(), err: vi.fn() };
+    const ctx = setupTimeCtx({
+      now: () => {
+        throw new Error("boom");
+      },
+    });
+
+    const code = await runTimePipeline(["time"], ctx, output);
+
+    expect(output.err).toHaveBeenCalledWith("Error: boom\n");
+    expect(code).toBe(1);
   });
 });
