@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Transform any DOM element into an AI-powered micro-app",
+  "bin": {
+    "use-vibes": "./bin.js"
+  },
   "scripts": {
     "build": "core-cli tsc",
     "test": "vitest run",
