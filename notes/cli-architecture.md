@@ -47,7 +47,15 @@ use-vibes/pkg/
 ├── commands/
 │   ├── cli-output.ts         # CliOutput interface + Node default output
 │   ├── cli-output-deno.ts    # Deno stdout/stderr implementation
-│   ├── whoami.ts
+│   ├── login.ts              # Device-code auth via Clerk CSR→cert flow
+│   ├── login-platform-deno.ts # Deno-specific platform adapter (Deno.serve, open)
+│   ├── login-platform-node.ts # Node-specific platform adapter
+│   ├── whoami.ts             # Device identity + handles from API
+│   ├── handle-register.ts    # Register a handle for the authenticated user
+│   ├── vibes-api.ts          # CLI API client (getCliDashAuth, createCliVibesApi)
+│   ├── config.ts             # vibes.json loader (walk-up discovery)
+│   ├── resolve-target.ts     # Target resolution (bare → owner/app/group)
+│   ├── info.ts               # Dry-run target resolution for debugging
 │   ├── skills.ts
 │   ├── system.ts
 │   └── not-implemented.ts

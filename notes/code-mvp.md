@@ -62,7 +62,7 @@ Users know when their data is syncing vs offline.
 
 ### A1. Expose `requestAccess` handler
 Visitors can request write access to a group.
-- **Tech**: New EventoHandler storing access request with visitor's Clerk identity and target group. Register in `vibes-msg-evento.ts`. Adapts existing invite-system internals or adds new request table
+- **Tech**: New EventoHandler storing access request with visitor's active handle and target group. Register in `vibes-msg-evento.ts`. Adapts existing invite-system internals or adds new request table
 - **Dependencies**: None. Unlocks: F4 request UI, C2 access e2e
 
 ### A2. Expose `approveAccess` handler
@@ -171,9 +171,9 @@ Add CLI to the existing `use-vibes` workspace package.
 ### ~~L1. Move `create-vibe` into monorepo~~ ✅
 Scaffolder lives in `create-vibe/pkg/`, CI publishes via `create-vibe@*` tags. `npm create vibe` scaffolds `vibes.json` + `package.json` (with `use-vibes` script) + placeholder `app.jsx`. Golden path verified end-to-end. Shipped `create-vibe@1.4.0-dev`.
 
-### L2a. CLI auth (`use-vibes login` / `use-vibes whoami`)
-Authenticate and identify the current user. Owner defaults to `whoami` result for all target resolution.
-- **Tech**: `use-vibes login` — device-code auth flow, stores credentials locally. `use-vibes whoami` — prints the logged-in username. Required before `live` or `publish`
+### ~~L2a. CLI auth (`use-vibes login` / `use-vibes whoami`)~~ ✅
+Authenticate and identify the current user. Active handle defaults via selection precedence (see [access-control.md](access-control.md)) for all target resolution.
+- **Tech**: `login` — CSR→cert flow via Clerk, stores device cert + key in keybag. `whoami` — fetches handles from API via `listUserSlugAppSlug`, prints handles + device + cert. `handle register` — registers handles. `vibes-api.ts` — shared CLI API client (`getCliDashAuth`, `createCliVibesApi`). Injectable deps for stub-based testing
 - **Dependencies**: L0. Unlocks: L2b (all commands need an owner)
 
 ### L2b. CLI live (`use-vibes live <group>`)

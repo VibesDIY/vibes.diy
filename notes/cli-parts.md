@@ -149,21 +149,23 @@ Architecture: Deno-first with dnt for npm, cmd-ts routing, cement Result pattern
 - **Injectable CliOutput** — commands accept stdout/stderr functions for testability
 - **`.js` import specifiers** — local imports use `.js` for Node/browser compat, Deno uses `--unstable-sloppy-imports`
 - **`fs/promises` only** — no `fs.*Sync` anywhere
-- **ensureAppSlug API** for pushing code to cloud targets (planned)
-- **Device-code auth** flow (planned)
-- **vibes.json** parsing for app identity and target resolution (planned)
+- **API client** — `vibes-api.ts` wraps `VibeDiyApi` for CLI context with `getCliDashAuth()` and `createCliVibesApi()`
+- **Device-code auth** — CSR→cert flow via Clerk, stores device cert + key in keybag
+- **vibes.json** parsing + target resolution (`group` → `owner/app/group`)
+- **Injectable deps** — commands accept deps interfaces for stub-based testing (not mocks)
 
 ### Working commands
 - `help` / `--help` / `-h` — generated help from cmd-ts
-- `whoami` — returns `Result.Err("Not logged in")` (stub until auth)
+- `login` — device-code auth via Clerk CSR→cert flow, stores credentials in keybag
+- `whoami` — prints handles (from API), device fingerprint, and cert expiry
+- `handle register [slug]` — registers a handle for the authenticated user
+- `info` — dry-run target resolution from vibes.json (debugging tool)
 - `skills` — lists catalog from `@vibes.diy/prompts`
 - `system --skills` — assembles full system prompt for selected skills
-- Stub commands: `login`, `dev`, `live`, `generate`, `edit`, `publish`, `invite`
-- 22 Deno tests: 14 unit + 8 smoke
+- Stub commands: `dev`, `live`, `generate`, `edit`, `publish`, `invite`
+- 58 Deno tests: unit + smoke across 8 test files
 
 ### Planned work
-- Config loading — vibes.json + target resolution (`group` → `owner/app/group`)
-- API client — cloud push protocol (ensureAppSlug from CLI context)
-- Auth — device-code login flow + credential storage
 - Live reload — SSE/polling injection (server-side)
+- Push — wire `ensureAppSlug` into `live`/`publish` commands
 - Invite API client (`createInviteToken` from CLI)

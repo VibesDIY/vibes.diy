@@ -37,27 +37,25 @@ Shipped in `use-vibes@0.19.27-dev-cli`.
 
 ---
 
-## Step 2: Auth — `login` and `whoami`
+## ~~Step 2: Auth — `login` and `whoami`~~ ✅
 
-**Goal:** User can authenticate and their identity persists across commands.
-
-- `login` — device-code auth flow via Clerk
-- Credential storage — save auth token to `~/.config/use-vibes/` or similar
-- `whoami` reads stored credentials and prints the Clerk user ID + all linked handles
-- Shared `getAuth()` returns stored user (Clerk ID + handles) or errors with "run `use-vibes login` first"
+- `login` — device-code auth via Clerk CSR→cert flow, stores device cert + key in keybag. Platform-specific adapters for Deno (`Deno.serve`, `open`) and Node
+- `whoami` — fetches handles from API via `listUserSlugAppSlug`, prints `Handle: @slug` for each, then device fingerprint and cert expiry. API failures are non-fatal (classified: session expired vs unreachable)
+- `handle register [slug]` — registers a handle for the authenticated user (auto-generates if omitted)
+- `vibes-api.ts` — shared API client with `getCliDashAuth()` (loads device cert, signs token) and `createCliVibesApi()` (creates `VibeDiyApi` client)
+- Injectable deps pattern — commands accept `WhoamiDeps`, `RegisterHandleDeps`, `LoginPlatform` for stub-based testing
 
 ---
 
-## Step 3: Config — `vibes.json` loading and target resolution
+## ~~Step 3: Config — `vibes.json` loading and target resolution~~ ✅
 
-**Goal:** Commands can resolve targets from vibes.json and the logged-in user.
-
-- `vibes.json` reader — walk up from cwd to find it (like `package.json`)
-- Target resolver — turns a bare group name into `{owner}/{app}/{group}`
+- `config.ts` — walks up from cwd to find `vibes.json` (like `package.json`), validates `app` field
+- `resolve-target.ts` — three-format target resolution:
   - No arg → `{whoami}/{app}/default`
   - Bare name (`work-lunch`) → `{whoami}/{app}/work-lunch`
   - Fully qualified (`jchris/soup-order/work-lunch`) → used as-is
-- Writer — updates vibes.json after pushes
+- `info` command — dry-run target resolution for debugging
+- Writer — updates vibes.json after pushes (planned)
 
 ---
 
