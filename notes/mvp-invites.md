@@ -2,7 +2,9 @@
 
 How group sharing, visibility, access requests, and access control work.
 
-> **Code vs. docs:** The current code uses `userId` for invite ownership/acceptance and `RoleType` for permissions. This doc describes the target model: `handleId`-keyed membership and invite records with capability flags. The database is empty, so we implement the target model directly.
+> **Code vs. docs:** The current code uses `userId` for invite ownership/acceptance and `RoleType` for permissions. This doc describes the target model: `handleId`-keyed membership and invite records with capability flags.
+>
+> **Implementation status (2026-03):** No invite/access-request handlers exist yet. The handle and target resolution model is stable. CLI auth will be reimplemented against `VibesDiyApiIface` before invite commands are built.
 
 ---
 

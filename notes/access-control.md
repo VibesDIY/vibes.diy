@@ -2,7 +2,9 @@
 
 Single source of truth for the vibes.diy permission system. Other docs ([mvp-invites.md](mvp-invites.md), [cli-design.md](cli-design.md), [url-structure.md](url-structure.md)) reference this model.
 
-> **Code vs. docs:** The current code uses `userId` for membership/ownership and `RoleType` (`'admin' | 'editor' | 'viewer'`) for permissions. This doc describes the target model: `handleId`-keyed membership with capability flags. The database is empty, so we implement the target model directly.
+> **Code vs. docs:** The current code uses `userId` for membership/ownership and `RoleType` (`'admin' | 'editor' | 'viewer'`) for permissions. This doc describes the target model: `handleId`-keyed membership with capability flags.
+>
+> **Implementation status (2026-03):** Target resolution and `vibes.json` config loading are shipped (`jchris/cli-design`). Handle registration API exists in Meno's backend (`listUserSlugAppSlug`, `registerUserSlug`). CLI auth (login/whoami/handle-register) was prototyped and removed from PR #1086 — will be reimplemented against `VibesDiyApiIface`. The logical model below is stable; only the CLI integration layer needs work.
 
 ---
 
