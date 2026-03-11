@@ -4,7 +4,7 @@ import { VibesSqlite } from "../create-handler.js";
 import { SQLitePeer, SQLitePeerFetch } from "../peers/sql.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { base58btc } from "multiformats/bases/base58";
-import { S3PeerFetch } from "../peers/s3.js";
+import { S3Peer, S3PeerFetch } from "../peers/s3.js";
 import { FetchResult, S3Api } from "@vibes.diy/api-types";
 
 export interface CalcCidResult {
