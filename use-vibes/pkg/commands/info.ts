@@ -12,17 +12,18 @@ export interface RunInfoOptions {
 export async function runInfo(opts: RunInfoOptions, output: CliOutput): Promise<Result<void>> {
   const startDir = opts.startDir ?? cwd();
   const found = await findVibesJson(startDir);
-  if (found.isErr()) return Result.Err(found.Err());
+  if (found.isErr()) return Result.Err(found);
 
   const { path, config } = found.Ok();
   output.stdout(`vibes.json: ${path}\n`);
   output.stdout(`app:        ${config.app}\n`);
 
   // Only resolve fully-qualified targets (owner/app/group) without auth.
-  // Bare targets need an owner from login, which isn't implemented yet.
-  if (opts.target && opts.target.includes("/")) {
+  // Partially qualified (owner/app) or bare targets need login context.
+  const slashCount = opts.target ? opts.target.split("/").length - 1 : 0;
+  if (opts.target && slashCount === 2) {
     const resolved = resolveTarget({ app: config.app, handle: "" }, opts.target);
-    if (resolved.isErr()) return Result.Err(resolved.Err());
+    if (resolved.isErr()) return Result.Err(resolved);
     output.stdout(`target:     ${resolved.Ok().full}\n`);
   } else if (opts.target) {
     output.stdout(`target:     (requires login to resolve "${opts.target}")\n`);

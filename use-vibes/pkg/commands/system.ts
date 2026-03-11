@@ -49,12 +49,12 @@ export async function runSystem(
 ): Promise<Result<void>> {
   const rParsedSkills = parseSkillsCsv(options);
   if (rParsedSkills.isErr()) {
-    return Result.Err(rParsedSkills.Err());
+    return Result.Err(rParsedSkills);
   }
 
   const rSelectedSkills = await resolveSkills(rParsedSkills.Ok());
   if (rSelectedSkills.isErr()) {
-    return Result.Err(rSelectedSkills.Err());
+    return Result.Err(rSelectedSkills);
   }
   const selectedSkills = rSelectedSkills.Ok();
 
